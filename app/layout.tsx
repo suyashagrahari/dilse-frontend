@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Dancing_Script } from "next/font/google";
 import Providers from "@/components/Providers";
+import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
+import { buildMeta, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
 const dancingScript = Dancing_Script({
@@ -11,9 +13,33 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Gifts - Make Every Moment Special",
-  description:
-    "Create stunning personalized pages for birthdays, anniversaries, apologies, and more. Share your feelings with a beautiful link.",
+  ...buildMeta(),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gifts",
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  keywords: [
+    "gifts",
+    "personalized gifts",
+    "birthday gift",
+    "valentine gift",
+    "anniversary gift",
+    "online gift maker",
+    "shareable gift page",
+    "surprise gift link",
+  ],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f43f5e",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
@@ -23,6 +49,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={dancingScript.variable}>
+      <head>
+        <OrganizationJsonLd />
+        <WebAppJsonLd />
+      </head>
       <body className="antialiased transition-colors duration-300" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>

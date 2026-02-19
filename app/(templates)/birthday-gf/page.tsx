@@ -103,7 +103,7 @@ export default function BirthdayGfPage() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers(),
         body: JSON.stringify({
           prompt: `Birthday message for ${aiName}. ${aiPrompt}`,
           templateId: "birthday-gf",

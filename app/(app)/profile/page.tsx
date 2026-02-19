@@ -24,8 +24,14 @@ import {
   Moon,
   Monitor,
   ExternalLink,
-  Share2,
   Cake,
+  Gift,
+  Users,
+  BarChart3,
+  Copy,
+  KeyRound,
+  Inbox,
+  Globe,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import {
@@ -43,6 +49,34 @@ interface DashboardStats {
   favoritesCount: number;
   generatedCount: number;
   memberSince: string;
+}
+
+interface MyCreation {
+  _id: string;
+  shareId: string;
+  templateType: string;
+  recipientName: string;
+  senderName: string;
+  isPublished: boolean;
+  hasPassword: boolean;
+  passwordRaw: string;
+  viewCount: number;
+  installCount: number;
+  updatedAt: string;
+  createdAt: string;
+}
+
+interface ReceivedPage {
+  shareId: string;
+  templateType: string;
+  recipientName: string;
+  senderName: string;
+  senderAvatar: string | null;
+  hasPassword: boolean;
+  passwordVerified: boolean;
+  passwordRaw?: string;
+  viewCount: number;
+  createdAt: string;
 }
 
 export default function ProfilePage() {
@@ -72,6 +106,14 @@ export default function ProfilePage() {
   const [mounted, setMounted] = useState(false);
   const [themeSaving, setThemeSaving] = useState(false);
 
+  const [myCreations, setMyCreations] = useState<MyCreation[]>([]);
+  const [receivedPages, setReceivedPages] = useState<ReceivedPage[]>([]);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [copiedPw, setCopiedPw] = useState<string | null>(null);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
+  const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
+
   useEffect(() => setMounted(true), []);
 
   const handleThemeChange = async (newTheme: "light" | "dark" | "system") => {
@@ -88,15 +130,19 @@ export default function ProfilePage() {
     }
   };
 
-  const [myPages, setMyPages] = useState<{ _id: string; recipientName: string; shareId: string; isPublished: boolean; updatedAt: string; type: "birthday" | "valentine" }[]>([]);
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const authHeaders = useCallback(
+    () => ({
+      Authorization: `Bearer ${accessToken}`,
+    }),
+    [accessToken]
+  );
 
   const fetchDashboard = useCallback(async () => {
     if (!accessToken) return;
     setStatsLoading(true);
     try {
       const res = await fetch(`${API_URL}/auth/dashboard`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: authHeaders(),
       });
       const data = await res.json();
       if (res.ok && data.data?.stats) {
@@ -107,33 +153,45 @@ export default function ProfilePage() {
     } finally {
       setStatsLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, authHeaders]);
 
-  const fetchMyPages = useCallback(async () => {
+  const fetchMyCreations = useCallback(async () => {
     if (!accessToken) return;
     try {
-      const authHeaders = { Authorization: `Bearer ${accessToken}` };
-      const [bdayRes, valRes] = await Promise.all([
-        fetch(`${API_URL}/birthday-pages/my`, { headers: authHeaders }),
-        fetch(`${API_URL}/valentine-pages/my`, { headers: authHeaders }),
-      ]);
-      const [bdayData, valData] = await Promise.all([bdayRes.json(), valRes.json()]);
-      const all = [
-        ...((bdayData.success ? bdayData.data : []) as Array<Record<string, unknown>>).map((p) => ({ ...p, type: "birthday" as const })),
-        ...((valData.success ? valData.data : []) as Array<Record<string, unknown>>).map((p) => ({ ...p, type: "valentine" as const })),
-      ].sort((a, b) => new Date(b.updatedAt as string).getTime() - new Date(a.updatedAt as string).getTime()) as typeof myPages;
-      setMyPages(all);
+      const res = await fetch(`${API_URL}/share/me/creations`, {
+        headers: authHeaders(),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMyCreations(result.data);
+      }
     } catch {
       // silent
     }
-  }, [accessToken]);
+  }, [accessToken, authHeaders]);
+
+  const fetchReceivedPages = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${API_URL}/share/me/received`, {
+        headers: authHeaders(),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setReceivedPages(result.data);
+      }
+    } catch {
+      // silent
+    }
+  }, [accessToken, authHeaders]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboard();
-      fetchMyPages();
+      fetchMyCreations();
+      fetchReceivedPages();
     }
-  }, [isAuthenticated, fetchDashboard, fetchMyPages]);
+  }, [isAuthenticated, fetchDashboard, fetchMyCreations, fetchReceivedPages]);
 
   const handleSaveName = async () => {
     if (!nameInput.trim() || nameInput.trim() === user?.name) {
@@ -183,6 +241,13 @@ export default function ProfilePage() {
     });
   };
 
+  const formatShortDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -191,6 +256,25 @@ export default function ProfilePage() {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  const getShareLink = (shareId: string) => {
+    return typeof window !== "undefined" ? `${window.location.origin}/${shareId}` : `/${shareId}`;
+  };
+
+  const copyToClipboard = (text: string, id: string, type: "link" | "pw") => {
+    navigator.clipboard.writeText(text);
+    if (type === "link") {
+      setCopiedLink(id);
+      setTimeout(() => setCopiedLink(null), 2000);
+    } else {
+      setCopiedPw(id);
+      setTimeout(() => setCopiedPw(null), 2000);
+    }
+  };
+
+  const templateEmoji = (type: string) => (type === "birthday" ? "🎂" : type === "valentine" ? "💝" : "🎁");
+  const templateLabel = (type: string) => (type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : "Gift");
+  const templateColor = (type: string) => (type === "birthday" ? "rose" : type === "valentine" ? "red" : "violet");
 
   if (!isAuthenticated) {
     return (
@@ -252,7 +336,6 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center text-center"
           >
-            {/* Avatar */}
             <div className="relative mb-4">
               {user?.avatar ? (
                 <img
@@ -272,7 +355,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Name (editable) */}
             {editingName ? (
               <div className="flex items-center gap-2 mb-1">
                 <input
@@ -372,6 +454,147 @@ export default function ProfilePage() {
       {/* Settings Sections */}
       <div className="px-4 pb-6">
         <div className="container max-w-lg space-y-3">
+          {/* ─── SHARED WITH YOU ─── */}
+          {receivedPages.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
+                <Inbox size={12} />
+                Shared With You
+              </h3>
+              <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden divide-y divide-border/50">
+                {receivedPages.map((page) => {
+                  const link = getShareLink(page.shareId);
+                  const color = templateColor(page.templateType);
+                  const isOpen = expandedReceived === page.shareId;
+                  const pwKey = `recv-${page.shareId}`;
+
+                  return (
+                    <div key={page.shareId}>
+                      <button
+                        onClick={() => setExpandedReceived(isOpen ? null : page.shareId)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/20 transition-colors text-left"
+                      >
+                        {page.senderAvatar ? (
+                          <img src={page.senderAvatar} alt={page.senderName} className="w-9 h-9 rounded-full object-cover ring-2 ring-border/50 shrink-0" />
+                        ) : (
+                          <div className={`w-9 h-9 rounded-full bg-gradient-to-br shrink-0 ${color === "rose" ? "from-rose-400 to-pink-500" : color === "red" ? "from-red-400 to-rose-500" : "from-violet-400 to-purple-500"} flex items-center justify-center`}>
+                            <span className="text-[10px] font-bold text-white">{getInitials(page.senderName)}</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">
+                            {templateEmoji(page.templateType)} From {page.senderName}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {templateLabel(page.templateType)} for {page.recipientName} · {formatShortDate(page.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {page.hasPassword && (
+                            <div className={`w-6 h-6 rounded-md flex items-center justify-center ${page.passwordVerified ? "bg-green-500/10" : "bg-amber-500/10"}`}>
+                              {page.passwordVerified ? <Check size={11} className="text-green-500" /> : <Lock size={11} className="text-amber-500" />}
+                            </div>
+                          )}
+                          <ChevronRight
+                            size={14}
+                            className={`text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`}
+                          />
+                        </div>
+                      </button>
+
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 space-y-2.5">
+                              <div className="flex items-center gap-2 bg-muted/20 rounded-xl px-3 py-2.5">
+                                <Globe size={13} className="text-muted-foreground shrink-0" />
+                                <p className="text-[11px] text-muted-foreground truncate flex-1 font-mono">{link}</p>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(link, page.shareId + "-recv", "link");
+                                  }}
+                                  className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                                >
+                                  {copiedLink === page.shareId + "-recv" ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(`/${page.shareId}`, "_blank");
+                                  }}
+                                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${color === "rose" ? "bg-rose-500/10 text-rose-500" : color === "red" ? "bg-red-500/10 text-red-500" : "bg-violet-500/10 text-violet-500"}`}
+                                >
+                                  <ExternalLink size={12} />
+                                </button>
+                              </div>
+
+                              {page.hasPassword && page.passwordVerified && page.passwordRaw && (
+                                <div className="flex items-center gap-2 bg-green-500/5 dark:bg-green-500/10 border border-green-200/50 dark:border-green-800/30 rounded-xl px-3 py-2.5">
+                                  <KeyRound size={13} className="text-green-500 shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] text-green-600 dark:text-green-400 font-medium mb-0.5">Password</p>
+                                    <p className="text-xs font-mono font-semibold truncate">
+                                      {visiblePw.has(pwKey) ? page.passwordRaw : "••••••••"}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVisiblePw((prev) => {
+                                          const next = new Set(prev);
+                                          if (next.has(pwKey)) next.delete(pwKey);
+                                          else next.add(pwKey);
+                                          return next;
+                                        });
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 hover:bg-green-500/20 transition-colors"
+                                    >
+                                      {visiblePw.has(pwKey) ? <EyeOff size={12} /> : <Eye size={12} />}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyToClipboard(page.passwordRaw!, page.shareId + "-rpw", "pw");
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 hover:bg-green-500/20 transition-colors"
+                                    >
+                                      {copiedPw === page.shareId + "-rpw" ? <Check size={12} /> : <Copy size={12} />}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {page.hasPassword && !page.passwordVerified && (
+                                <div className="flex items-center gap-2 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-800/30 rounded-xl px-3 py-2.5">
+                                  <Lock size={13} className="text-amber-500 shrink-0" />
+                                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                                    Enter the correct password on the page to unlock
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
           {/* Account section */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -382,7 +605,6 @@ export default function ProfilePage() {
               Account
             </h3>
             <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden divide-y divide-border/50">
-              {/* Email */}
               <div className="flex items-center gap-3 px-4 py-3.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
                   <Mail size={16} className="text-blue-500" />
@@ -393,7 +615,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Provider */}
               <div className="flex items-center gap-3 px-4 py-3.5">
                 <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
                   <Shield size={16} className="text-violet-500" />
@@ -404,7 +625,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Change Password (only for local auth) */}
               {user?.provider === "local" && (
                 <div>
                   <button
@@ -478,8 +698,8 @@ export default function ProfilePage() {
                               animate={{ opacity: 1, y: 0 }}
                               className={`text-xs px-3 py-2 rounded-lg ${
                                 pwMessage.type === "success"
-                                  ? "bg-green-50 text-green-600"
-                                  : "bg-red-50 text-red-600"
+                                  ? "bg-green-50 text-green-600 dark:bg-green-500/10"
+                                  : "bg-red-50 text-red-600 dark:bg-red-500/10"
                               }`}
                             >
                               {pwMessage.text}
@@ -529,7 +749,6 @@ export default function ProfilePage() {
                       gradient: "from-amber-400 to-orange-400",
                       iconBg: "bg-amber-500/10",
                       iconColor: "text-amber-500",
-                      desc: "Bright",
                     },
                     {
                       value: "dark" as const,
@@ -538,7 +757,6 @@ export default function ProfilePage() {
                       gradient: "from-violet-500 to-indigo-500",
                       iconBg: "bg-violet-500/10",
                       iconColor: "text-violet-500",
-                      desc: "Night",
                     },
                     {
                       value: "system" as const,
@@ -547,9 +765,8 @@ export default function ProfilePage() {
                       gradient: "from-sky-400 to-blue-500",
                       iconBg: "bg-sky-500/10",
                       iconColor: "text-sky-500",
-                      desc: "Device",
                     },
-                  ]).map(({ value, label, icon: Icon, gradient, iconBg, iconColor, desc }) => {
+                  ]).map(({ value, label, icon: Icon, gradient, iconBg, iconColor }) => {
                     const isSelected = currentTheme === value;
                     return (
                       <motion.button
@@ -591,7 +808,6 @@ export default function ProfilePage() {
                           </div>
                         </div>
 
-                        {/* Check badge */}
                         <AnimatePresence>
                           {isSelected && (
                             <motion.div
@@ -610,7 +826,6 @@ export default function ProfilePage() {
                   })}
                 </div>
 
-                {/* Saving indicator */}
                 <AnimatePresence>
                   {themeSaving && (
                     <motion.div
@@ -636,53 +851,161 @@ export default function ProfilePage() {
             </motion.div>
           )}
 
-          {/* My Creations */}
-          {myPages.length > 0 && (
+          {/* ─── MY CREATIONS ─── */}
+          {myCreations.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.28 }}
             >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
+                <Gift size={12} />
                 My Creations
               </h3>
               <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden divide-y divide-border/50">
-                {myPages.map((page) => {
-                  const shareLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${page.shareId}`;
-                  const isVal = page.type === "valentine";
+                {myCreations.map((page) => {
+                  const shareLink = getShareLink(page.shareId);
+                  const isExpanded = expandedCard === page._id;
+                  const color = templateColor(page.templateType);
+
                   return (
-                    <div key={page._id} className="flex items-center gap-3 px-4 py-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isVal ? "bg-red-500/10" : "bg-rose-500/10"}`}>
-                        {isVal ? <Heart size={16} className="text-red-500" /> : <Cake size={16} className="text-rose-500" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {isVal ? "💝" : "🎂"} For {page.recipientName}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {isVal ? "Valentine" : "Birthday"} · {page.isPublished ? "Published" : "Draft"} · {new Date(page.updatedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {page.isPublished && (
-                        <div className="flex gap-1.5 shrink-0">
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(shareLink);
-                              setCopiedLink(page._id);
-                              setTimeout(() => setCopiedLink(null), 2000);
-                            }}
-                            className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors"
-                          >
-                            {copiedLink === page._id ? <Check size={13} /> : <Share2 size={13} />}
-                          </button>
-                          <button
-                            onClick={() => window.open(`/${page.shareId}`, "_blank")}
-                            className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <ExternalLink size={13} />
-                          </button>
+                    <div key={page._id}>
+                      <button
+                        onClick={() => setExpandedCard(isExpanded ? null : page._id)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/20 transition-colors text-left"
+                      >
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          color === "rose" ? "bg-rose-500/10" : color === "red" ? "bg-red-500/10" : "bg-violet-500/10"
+                        }`}>
+                          {page.templateType === "valentine" ? (
+                            <Heart size={16} className={color === "red" ? "text-red-500" : "text-rose-500"} />
+                          ) : (
+                            <Cake size={16} className="text-rose-500" />
+                          )}
                         </div>
-                      )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {templateEmoji(page.templateType)} For {page.recipientName}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {templateLabel(page.templateType)} · {page.isPublished ? "Published" : "Draft"} · {formatShortDate(page.updatedAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {page.isPublished && (
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/40 px-2 py-1 rounded-lg">
+                              <Eye size={10} />
+                              {page.viewCount}
+                            </div>
+                          )}
+                          <ChevronRight
+                            size={14}
+                            className={`text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                          />
+                        </div>
+                      </button>
+
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 space-y-3">
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-muted/30 rounded-xl p-2.5 text-center">
+                                  <Eye size={13} className="mx-auto mb-1 text-blue-500" />
+                                  <p className="text-sm font-bold">{page.viewCount}</p>
+                                  <p className="text-[9px] text-muted-foreground">Views</p>
+                                </div>
+                                <div className="bg-muted/30 rounded-xl p-2.5 text-center">
+                                  <Users size={13} className="mx-auto mb-1 text-green-500" />
+                                  <p className="text-sm font-bold">{page.installCount}</p>
+                                  <p className="text-[9px] text-muted-foreground">Installs</p>
+                                </div>
+                                <div className="bg-muted/30 rounded-xl p-2.5 text-center">
+                                  <BarChart3 size={13} className="mx-auto mb-1 text-violet-500" />
+                                  <p className="text-sm font-bold">{page.isPublished ? "Live" : "Draft"}</p>
+                                  <p className="text-[9px] text-muted-foreground">Status</p>
+                                </div>
+                              </div>
+
+                              {page.isPublished && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 bg-muted/20 rounded-xl px-3 py-2.5">
+                                    <Globe size={13} className="text-muted-foreground shrink-0" />
+                                    <p className="text-[11px] text-muted-foreground truncate flex-1 font-mono">{shareLink}</p>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyToClipboard(shareLink, page._id, "link");
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500/20 transition-colors shrink-0"
+                                    >
+                                      {copiedLink === page._id ? <Check size={12} /> : <Copy size={12} />}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`/${page.shareId}`, "_blank");
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                                    >
+                                      <ExternalLink size={12} />
+                                    </button>
+                                  </div>
+
+                                  {page.hasPassword && (
+                                    <div className="flex items-center gap-2 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-800/30 rounded-xl px-3 py-2.5">
+                                      <KeyRound size={13} className="text-amber-500 shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium mb-0.5">Secret Password</p>
+                                        {page.passwordRaw ? (
+                                          <p className="text-xs font-mono font-semibold truncate">
+                                            {visiblePw.has(page._id) ? page.passwordRaw : "••••••••"}
+                                          </p>
+                                        ) : (
+                                          <p className="text-[10px] text-muted-foreground italic">Password protected (re-publish to track)</p>
+                                        )}
+                                      </div>
+                                      {page.passwordRaw && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setVisiblePw((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(page._id)) next.delete(page._id);
+                                                else next.add(page._id);
+                                                return next;
+                                              });
+                                            }}
+                                            className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 hover:bg-amber-500/20 transition-colors"
+                                          >
+                                            {visiblePw.has(page._id) ? <EyeOff size={12} /> : <Eye size={12} />}
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              copyToClipboard(page.passwordRaw, page._id + "-pw", "pw");
+                                            }}
+                                            className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 hover:bg-amber-500/20 transition-colors"
+                                          >
+                                            {copiedPw === page._id + "-pw" ? <Check size={12} /> : <Copy size={12} />}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })}
@@ -699,7 +1022,7 @@ export default function ProfilePage() {
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="w-full bg-card rounded-2xl shadow-card border border-border/50 flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors group"
+              className="w-full bg-card rounded-2xl shadow-card border border-border/50 flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 dark:hover:bg-red-500/5 transition-colors group"
             >
               <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 {logoutLoading ? (

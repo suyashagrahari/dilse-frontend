@@ -97,7 +97,7 @@ export default function ValentineGfPage() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers(),
         body: JSON.stringify({
           prompt: `Valentine's Day love message for ${aiName}. ${aiPrompt}`,
           templateId: "valentine-gf",

@@ -12,6 +12,7 @@ import {
   Star,
   Users,
   Zap,
+  Download,
   ChevronRight,
   Gift,
   Wand2,
@@ -32,6 +33,7 @@ const iconMap: Record<string, typeof Send> = {
   palette: Palette,
   users: Users,
   star: Star,
+  download: Download,
 };
 
 const steps = [
@@ -119,11 +121,24 @@ function FloatingOrb({ className, delay = 0 }: { className: string; delay?: numb
   );
 }
 
+const PARTICLE_SEEDS = Array.from({ length: 20 }, (_, i) => {
+  const s = (i * 2654435761) >>> 0;
+  const r1 = ((s * 16807 + 0) % 2147483647) / 2147483647;
+  const r2 = ((s * 48271 + 0) % 2147483647) / 2147483647;
+  const r3 = ((s * 69621 + 0) % 2147483647) / 2147483647;
+  const r4 = ((s * 39373 + 0) % 2147483647) / 2147483647;
+  const r5 = ((s * 75781 + 0) % 2147483647) / 2147483647;
+  return {
+    size: 2 + r1 * 3,
+    left: r2 * 100,
+    delay: r3 * 5,
+    dur: 4 + r4 * 4,
+    yExtra: 600 + r5 * 400,
+  };
+});
+
 function Particle({ index }: { index: number }) {
-  const size = 2 + Math.random() * 3;
-  const left = Math.random() * 100;
-  const animDelay = Math.random() * 5;
-  const duration = 4 + Math.random() * 4;
+  const { size, left, delay, dur, yExtra } = PARTICLE_SEEDS[index];
 
   return (
     <motion.div
@@ -135,12 +150,12 @@ function Particle({ index }: { index: number }) {
         bottom: -10,
       }}
       animate={{
-        y: [0, -600 - Math.random() * 400],
+        y: [0, -yExtra],
         opacity: [0, 1, 0],
       }}
       transition={{
-        duration,
-        delay: animDelay,
+        duration: dur,
+        delay,
         repeat: Infinity,
         ease: "easeOut",
       }}
@@ -295,8 +310,8 @@ export default function HomePage() {
                 className="group glass px-8 py-4 rounded-2xl text-lg font-bold text-foreground hover:bg-card/80 transition-all text-center flex items-center justify-center gap-2 border-border/50"
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
-              >
-                How It Works
+            >
+              How It Works
                 <Zap size={18} className="text-gold" />
               </motion.div>
             </a>
@@ -325,7 +340,7 @@ export default function HomePage() {
                         {stat.label}
                       </div>
                     </div>
-                  </div>
+        </div>
                 );
               })}
             </motion.div>
@@ -371,18 +386,18 @@ export default function HomePage() {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
           className="flex flex-wrap justify-center gap-3 md:gap-4 px-4"
-        >
-          {templateTypes.map((type, i) => (
-            <motion.div
-              key={type.id}
+          >
+            {templateTypes.map((type, i) => (
+              <motion.div
+                key={type.id}
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true }}
+                viewport={{ once: true }}
               transition={{ delay: i * 0.08, type: "spring", stiffness: 200 }}
             >
               <Link href={`/templates?type=${type.id}`}>
@@ -394,16 +409,16 @@ export default function HomePage() {
                   <span className="text-2xl">{type.emoji}</span>
                   <span className="font-bold text-foreground">{type.label}</span>
                 </motion.div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
       </section>
 
       {/* Featured Templates */}
       {data?.featured && (
         <section className="py-16 md:py-24">
-          <div className="container">
+        <div className="container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -514,13 +529,13 @@ export default function HomePage() {
                     </div>
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 dark:from-primary/15 dark:to-accent/15 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
                       <Icon size={28} className="text-primary" />
-                    </div>
+                  </div>
                     <h3 className="font-extrabold text-lg mb-2 text-foreground">
                       {step.title}
-                    </h3>
+                  </h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       {step.description}
-                    </p>
+                  </p>
                   </motion.div>
                 </motion.div>
               );
@@ -708,7 +723,7 @@ export default function HomePage() {
                         className="text-primary fill-primary group-hover:scale-125 transition-transform"
                       />
                     </motion.div>
-                  </Link>
+              </Link>
                 </motion.div>
               </div>
             </div>

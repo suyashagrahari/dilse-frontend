@@ -1,0 +1,444 @@
+"use client";
+
+import { useState, useEffect, useCallback, ComponentType, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2, HeartCrack, X, Sparkles, PenLine, Lock, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
+import AuthModal from "@/components/AuthModal";
+import { usePwa } from "@/components/PwaProvider";
+
+import BirthdayContent from "@/app/(templates)/birthday-gf/components/BirthdayContent";
+import BirthdayNav from "@/app/(templates)/birthday-gf/components/BirthdayNav";
+import ValentineContent from "@/app/(templates)/valentine-gf/components/ValentineContent";
+import ValentineNav from "@/app/(templates)/valentine-gf/components/ValentineNav";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+interface ContentRendererProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
+  tab: string;
+  onTabChange: (t: string) => void;
+}
+
+interface NavRendererProps {
+  mode: "viewer";
+  tab: string;
+  onTabChange: (t: string) => void;
+  onEdit: () => void;
+  lockedTabs?: Set<string>;
+  onInstall?: () => void;
+}
+
+interface TemplateEntry {
+  Content: ComponentType<ContentRendererProps>;
+  Nav: ComponentType<NavRendererProps>;
+  bg: string;
+  label: string;
+  mapData: (raw: Record<string, unknown>) => Record<string, unknown>;
+  defaultTab: string;
+  protectedTabs: string[];
+  verifyRoute: string;
+}
+
+const TEMPLATE_REGISTRY: Record<string, TemplateEntry> = {
+  birthday: {
+    Content: BirthdayContent as ComponentType<ContentRendererProps>,
+    Nav: BirthdayNav as ComponentType<NavRendererProps>,
+    bg: "bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950",
+    label: "birthday",
+    defaultTab: "cover",
+    protectedTabs: ["final"],
+    verifyRoute: "birthday-pages",
+    mapData: (raw) => ({
+      recipientName: raw.recipientName,
+      senderName: raw.senderName,
+      personalMessage: raw.personalMessage,
+      wishes: raw.wishes,
+      photos: raw.photos,
+      theme: raw.theme || "romantic",
+    }),
+  },
+  valentine: {
+    Content: ValentineContent as ComponentType<ContentRendererProps>,
+    Nav: ValentineNav as ComponentType<NavRendererProps>,
+    bg: "bg-gradient-to-b from-red-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-red-950/20 dark:to-slate-950",
+    label: "valentine",
+    defaultTab: "cover",
+    protectedTabs: [],
+    verifyRoute: "",
+    mapData: (raw) => ({
+      recipientName: raw.recipientName,
+      senderName: raw.senderName,
+      personalMessage: raw.personalMessage,
+      promises: raw.promises,
+      photos: raw.photos,
+      theme: raw.theme || "romantic",
+    }),
+  },
+};
+
+const SESSION_KEY = (id: string) => `unlocked_${id}`;
+
+export default function SharePage() {
+  const params = useParams();
+  const router = useRouter();
+  const shareId = params.id as string;
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const { isStandalone, platform, triggerInstall } = usePwa();
+
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+
+  const [entry, setEntry] = useState<TemplateEntry | null>(null);
+  const [editorRoute, setEditorRoute] = useState("/");
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [tab, setTab] = useState("cover");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showEditChoice, setShowEditChoice] = useState(false);
+  const [installToast, setInstallToast] = useState<string | null>(null);
+  const [senderUserId, setSenderUserId] = useState<string | null>(null);
+
+  const [hasPassword, setHasPassword] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [showPwModal, setShowPwModal] = useState(false);
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPwValue, setShowPwValue] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`${API_URL}/share/${shareId}`);
+        const result = await res.json();
+        if (result.success && result.data && result.templateType) {
+          const matched = TEMPLATE_REGISTRY[result.templateType];
+          if (matched) {
+            setEntry(matched);
+            setEditorRoute(result.editorRoute || "/");
+            setData(matched.mapData(result.data));
+            setTab(matched.defaultTab);
+            setHasPassword(!!result.hasPassword);
+            setSenderUserId(result.senderUserId || null);
+            const stored = sessionStorage.getItem(SESSION_KEY(shareId));
+            if (stored === "true") setIsUnlocked(true);
+          } else { setError(true); }
+        } else { setError(true); }
+      } catch { setError(true); }
+      finally { setLoading(false); }
+    }
+    if (shareId) load();
+  }, [shareId]);
+
+  useEffect(() => {
+    if (showAuth && isAuthenticated && accessToken) {
+      fetch(`${API_URL}/share/${shareId}/access`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }).catch(() => {});
+      setShowAuth(false);
+      router.push("/");
+    }
+  }, [isAuthenticated, showAuth, router, accessToken, shareId]);
+
+  const handleEditClick = () => {
+    if (isAuthenticated) {
+      if (accessToken) {
+        fetch(`${API_URL}/share/${shareId}/access`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }).catch(() => {});
+      }
+      setShowEditChoice(true);
+    } else {
+      setShowAuth(true);
+    }
+  };
+
+  const handleInstall = useCallback(async () => {
+    if (isStandalone) return;
+    const outcome = await triggerInstall();
+    if (outcome === "accepted") {
+      fetch(`${API_URL}/share/${shareId}/install`, { method: "POST" }).catch(() => {});
+    } else if (outcome === "unsupported") {
+      const msg =
+        platform === "ios"
+          ? "Tap the Share button ↑ then \"Add to Home Screen\""
+          : "Open browser menu (⋮) → \"Install app\"";
+      setInstallToast(msg);
+      setTimeout(() => setInstallToast(null), 4000);
+    }
+  }, [isStandalone, triggerInstall, shareId, platform]);
+
+  const lockedTabs = useMemo(() => {
+    if (!entry || !hasPassword || isUnlocked) return new Set<string>();
+    return new Set<string>(entry.protectedTabs);
+  }, [entry, hasPassword, isUnlocked]);
+
+  const handleTabChange = useCallback(
+    (t: string) => {
+      if (lockedTabs.has(t)) {
+        setPendingTab(t);
+        setPwInput("");
+        setPwError("");
+        setShowPwValue(false);
+        setShowPwModal(true);
+        return;
+      }
+      setTab(t);
+    },
+    [lockedTabs]
+  );
+
+  const handleVerify = async () => {
+    if (!entry || !pwInput.trim()) return;
+    setPwLoading(true);
+    setPwError("");
+    try {
+      const res = await fetch(`${API_URL}/${entry.verifyRoute}/share/${shareId}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwInput }),
+      });
+      const result = await res.json();
+      if (result.success && result.verified) {
+        setIsUnlocked(true);
+        sessionStorage.setItem(SESSION_KEY(shareId), "true");
+        setShowPwModal(false);
+        if (pendingTab) setTab(pendingTab);
+        setPendingTab(null);
+        if (isAuthenticated && accessToken) {
+          fetch(`${API_URL}/share/${shareId}/pw-verified`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }).catch(() => {});
+        }
+      } else {
+        setPwError("Wrong password. Try again!");
+      }
+    } catch {
+      setPwError("Something went wrong");
+    } finally { setPwLoading(false); }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-5xl mb-6"
+          >
+            🎁
+          </motion.div>
+          <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error || !entry || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center px-6">
+          <HeartCrack size={48} className="text-muted-foreground/30 mx-auto mb-4" />
+          <h2 className="text-lg font-bold mb-2">Page Not Found</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            This page doesn&apos;t exist or hasn&apos;t been published yet.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const { Content, Nav, bg, label } = entry;
+
+  return (
+    <div className={`min-h-screen ${bg} relative overflow-hidden`}>
+      <Content data={data} tab={tab} onTabChange={handleTabChange} />
+      <Nav mode="viewer" tab={tab} onTabChange={handleTabChange} onEdit={handleEditClick} lockedTabs={lockedTabs} onInstall={handleInstall} />
+
+      {/* ─── INSTALL TOAST ─── */}
+      <AnimatePresence>
+        {installToast && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            className="fixed top-4 left-4 right-4 z-50 flex justify-center pointer-events-none"
+          >
+            <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 max-w-sm pointer-events-auto">
+              <span className="text-base">📲</span>
+              <span>{installToast}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── PASSWORD MODAL ─── */}
+      <AnimatePresence>
+        {showPwModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+            onClick={() => { setShowPwModal(false); setPendingTab(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 30 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[320px]"
+            >
+              <div className="bg-background rounded-3xl shadow-2xl border border-border/40 overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500" />
+
+                <div className="px-6 pt-7 pb-6">
+                  <div className="flex flex-col items-center mb-6">
+                    <motion.div
+                      animate={{ rotate: [0, -8, 8, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center mb-4 shadow-xl shadow-rose-500/20"
+                    >
+                      <Lock size={26} className="text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-center">This Surprise is Locked</h3>
+                    <p className="text-[11px] text-muted-foreground mt-1.5 text-center leading-relaxed">
+                      Enter the secret password to<br />unlock the surprise tab
+                    </p>
+                  </div>
+
+                  <div className="relative mb-4">
+                    <input
+                      type={showPwValue ? "text" : "password"}
+                      value={pwInput}
+                      onChange={(e) => { setPwInput(e.target.value); setPwError(""); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleVerify(); }}
+                      placeholder="Enter password..."
+                      autoFocus
+                      className="w-full px-4 py-3.5 pr-11 rounded-2xl bg-muted/30 border border-border/60 focus:border-rose-400 dark:focus:border-rose-600 focus:ring-2 focus:ring-rose-400/20 focus:outline-none text-sm transition-all placeholder:text-muted-foreground/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPwValue((v) => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                    >
+                      {showPwValue ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {pwError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="flex items-center justify-center gap-1.5 text-red-500 text-xs mb-4"
+                      >
+                        <ShieldAlert size={12} />
+                        <span>{pwError}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button
+                    onClick={handleVerify}
+                    disabled={pwLoading || !pwInput.trim()}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-white text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.97] transition-all disabled:opacity-40 shadow-lg shadow-rose-500/20"
+                  >
+                    {pwLoading ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
+                    {pwLoading ? "Verifying..." : "Unlock Surprise"}
+                  </button>
+
+                  <button
+                    onClick={() => { setShowPwModal(false); setPendingTab(null); }}
+                    className="w-full mt-3 py-2 text-xs font-medium text-muted-foreground/60 hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── EDIT CHOICE SHEET ─── */}
+      <AnimatePresence>
+        {showEditChoice && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEditChoice(false)}
+              className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl shadow-2xl safe-bottom"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-border" />
+              </div>
+              <div className="px-5 pb-8 pt-2">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold">Create Your Own</h3>
+                  <button onClick={() => setShowEditChoice(false)} className="p-1 text-muted-foreground"><X size={20} /></button>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Loved this? Create a personalized {label} page for someone special!
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => { setShowEditChoice(false); router.push(editorRoute); }}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200/50 dark:border-violet-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
+                      <Sparkles size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">AI Magic</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Let AI create a beautiful page</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setShowEditChoice(false); router.push(editorRoute); }}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 to-pink-500/10 dark:from-rose-500/15 dark:to-pink-500/15 border border-rose-200/50 dark:border-rose-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg">
+                      <PenLine size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Write Manually</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Write your own heartfelt message</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAuth && (
+          <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); router.push("/"); }} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

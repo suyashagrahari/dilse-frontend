@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server";
 
-const stats = [
-  { label: "Wishes Sent", value: "10K+", icon: "send" },
-  { label: "Templates", value: "50+", icon: "palette" },
-  { label: "Happy Users", value: "5K+", icon: "users" },
-  { label: "Rating", value: "4.9★", icon: "star" },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+async function fetchInstallCount(): Promise<number> {
+  try {
+    const res = await fetch(`${API_URL}/share/stats/installs`, { next: { revalidate: 30 } });
+    const data = await res.json();
+    return data.success ? data.totalInstalls : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function formatCount(n: number): string {
+  if (n >= 10000) return `${(n / 1000).toFixed(0)}K+`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K+`;
+  return String(n);
+}
 
 const testimonials = [
   {
@@ -91,6 +102,14 @@ const featured = [
 ];
 
 export async function GET() {
+  const installs = await fetchInstallCount();
+  const stats = [
+    { label: "App Installs", value: formatCount(installs), icon: "download" },
+    { label: "Templates", value: "50+", icon: "palette" },
+    { label: "Happy Users", value: "5K+", icon: "users" },
+    { label: "Rating", value: "4.9★", icon: "star" },
+  ];
+
   return NextResponse.json({
     stats,
     testimonials,

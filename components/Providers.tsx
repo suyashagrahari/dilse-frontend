@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import PwaProvider from "@/components/PwaProvider";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
@@ -34,11 +35,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <StoreHydrator />
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            {children}
-          </TooltipProvider>
+          <PwaProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              {children}
+            </TooltipProvider>
+          </PwaProvider>
         </GoogleOAuthProvider>
       </ThemeProvider>
     </Provider>
