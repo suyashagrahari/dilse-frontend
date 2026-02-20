@@ -398,3 +398,63 @@
   --anni-maze-cell: rgba(255,255,255,0.04);
   --anni-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
 }
+
+/* ── Love GF Template ── */
+:root {
+  --love-text: #9d174d;
+  --love-text-muted: rgba(157, 23, 77, 0.6);
+  --love-text-body: rgba(0, 0, 0, 0.7);
+  --love-glow: 0 0 16px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,1), 0 1px 4px rgba(255,255,255,1);
+  --love-glow-subtle: 0 0 12px rgba(255,255,255,1), 0 0 4px rgba(255,255,255,1);
+  --love-glow-num: 0 0 10px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,1);
+  --love-glass: rgba(255,255,255,0.12);
+  --love-glass-strong: rgba(255,255,255,0.15);
+  --love-glass-border: rgba(255,255,255,0.25);
+  --love-glass-shadow: 0 4px 24px rgba(236,72,153,0.06);
+  --love-radial: rgba(252,231,243,0.45);
+  --love-radial-alt: rgba(251,207,232,0.35);
+  --love-card-bg: linear-gradient(180deg, rgba(252,231,243,0.9), rgba(251,207,232,0.7));
+  --love-card-border: rgba(236,72,153,0.1);
+  --love-romantic-bg: linear-gradient(135deg, #fce7f3, #fbcfe8, #fdf2f8);
+  --love-romantic-border: rgba(236,72,153,0.15);
+  --love-modal-bg: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 30%, #fbcfe8 100%);
+  --love-modal-fade: linear-gradient(180deg, transparent 0%, #fdf2f8 100%);
+  --love-divider: rgba(236,72,153,0.12);
+  --love-badge-bg: rgba(255,255,255,0.15);
+  --love-badge-border: rgba(255,255,255,0.3);
+  --love-pink: #ec4899;
+  --love-marquee-bg: linear-gradient(135deg, rgba(236,72,153,0.04), rgba(251,207,232,0.06));
+  --love-marquee-border: rgba(236,72,153,0.08);
+  --love-maze-wall: #f9a8d4;
+  --love-maze-cell: #ffffff;
+  --love-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.dark {
+  --love-text: #f9a8d4;
+  --love-text-muted: rgba(249,168,212,0.55);
+  --love-text-body: rgba(255,255,255,0.72);
+  --love-glow: 0 0 20px rgba(236,72,153,0.25), 0 0 8px rgba(236,72,153,0.15);
+  --love-glow-subtle: 0 0 14px rgba(236,72,153,0.2), 0 0 6px rgba(236,72,153,0.1);
+  --love-glow-num: 0 0 12px rgba(236,72,153,0.25), 0 0 4px rgba(236,72,153,0.15);
+  --love-glass: rgba(255,255,255,0.05);
+  --love-glass-strong: rgba(255,255,255,0.07);
+  --love-glass-border: rgba(255,255,255,0.1);
+  --love-glass-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  --love-radial: rgba(236,72,153,0.1);
+  --love-radial-alt: rgba(236,72,153,0.08);
+  --love-card-bg: linear-gradient(180deg, rgba(45,18,35,0.85), rgba(35,12,28,0.7));
+  --love-card-border: rgba(249,168,212,0.1);
+  --love-romantic-bg: linear-gradient(135deg, #2d1225, #28102a, #2d1225);
+  --love-romantic-border: rgba(249,168,212,0.15);
+  --love-modal-bg: linear-gradient(180deg, #1a0f16 0%, #1f1120 30%, #211328 100%);
+  --love-modal-fade: linear-gradient(180deg, transparent 0%, #1a0f16 100%);
+  --love-divider: rgba(249,168,212,0.15);
+  --love-badge-bg: rgba(255,255,255,0.06);
+  --love-badge-border: rgba(255,255,255,0.1);
+  --love-pink: #f9a8d4;
+  --love-marquee-bg: linear-gradient(135deg, rgba(236,72,153,0.06), rgba(249,168,212,0.04));
+  --love-marquee-border: rgba(249,168,212,0.08);
+  --love-maze-wall: rgba(236,72,153,0.35);
+  --love-maze-cell: rgba(255,255,255,0.04);
+  --love-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+}

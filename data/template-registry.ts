@@ -12,6 +12,7 @@ import { config as missyouGf } from "@/app/(templates)/missyou-gf/config";
 import { config as missyouBestfriend } from "@/app/(templates)/missyou-bestfriend/config";
 import { config as anniversaryGf } from "@/app/(templates)/anniversary-gf/config";
 import { config as anniversaryParents } from "@/app/(templates)/anniversary-parents/config";
+import { config as loveGf } from "@/app/(templates)/love-gf/config";
 
 const allConfigs = [
   birthdayGf,
@@ -26,6 +27,7 @@ const allConfigs = [
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
+  loveGf,
 ];
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
@@ -49,6 +51,7 @@ export const templateTypes = [
   { id: "sorry", label: "Sorry", emoji: "🥺" },
   { id: "missyou", label: "Miss You", emoji: "💫" },
   { id: "anniversary", label: "Anniversary", emoji: "💍" },
+  { id: "love", label: "Love", emoji: "💕" },
 ];
 
 export const categories = [

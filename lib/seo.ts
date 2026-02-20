@@ -146,6 +146,14 @@ export const TEMPLATE_SEO: Record<string, TemplateSeo> = {
     category: "Sorry",
     emoji: "🥺",
   },
+  "love-gf": {
+    title: "Love Page for Girlfriend | Share Your Love Anytime",
+    description:
+      "Create a beautiful, romantic love page for your girlfriend with games, gallery & music. Share anytime to express your love.",
+    keywords: ["love gift", "girlfriend love", "romantic love page", "i love you gift", "love letter online"],
+    category: "Love",
+    emoji: "💕",
+  },
 };
 
 export function getTemplateMeta(slug: string): Metadata {
