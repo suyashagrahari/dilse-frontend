@@ -1,4 +1,4 @@
-import { Heart, Mail, Infinity } from "lucide-react";
+import { Heart, Gamepad2, Images, Music } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
 
 export const config: TemplatePageConfig = {
@@ -6,25 +6,26 @@ export const config: TemplatePageConfig = {
   type: "anniversary",
   category: "gf",
   title: "Our Anniversary",
-  description: "Celebrate your love story",
+  description: "Celebrate your love story with games, gallery & music",
   emoji: "💍",
   color: "from-gold to-primary",
   previewText: "Happy Anniversary, My Love! 💍",
   bodyText:
     "Another year of us, another year of beautiful memories. You make my world complete. Here's to forever and beyond with you by my side.",
-  bgGradient: "from-yellow-50 via-rose-50 to-pink-50",
+  bgGradient: "from-rose-50 via-pink-50 to-white",
   tabs: [
     { id: "cover", icon: Heart, label: "Love" },
-    { id: "letter", icon: Mail, label: "Memories" },
-    { id: "final", icon: Infinity, label: "Forever" },
+    { id: "games", icon: Gamepad2, label: "Games" },
+    { id: "gallery", icon: Images, label: "Gallery" },
+    { id: "music", icon: Music, label: "Music" },
   ],
-  navActiveColor: "text-amber-500",
-  navActiveBg: "bg-amber-500/10",
+  navActiveColor: "text-rose-500",
+  navActiveBg: "bg-rose-500/10",
   floatStyle: "hearts",
   pages: {
     cover: {
       subtitle: "Celebrating our love story",
-      ctaText: "Relive Our Moments",
+      ctaText: "Explore Our Journey",
       floatingEmojis: ["💍", "💕", "✨", "🥂", "💖"],
     },
     letter: {
