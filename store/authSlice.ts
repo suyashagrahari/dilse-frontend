@@ -246,8 +246,12 @@ export const checkAuth = createAsyncThunk(
       });
 
       if (res.status === 401) {
-        const refreshResult = await dispatch(refreshAuth()).unwrap();
-        return refreshResult;
+        try {
+          const refreshResult = await dispatch(refreshAuth()).unwrap();
+          return refreshResult;
+        } catch {
+          return rejectWithValue("Session expired");
+        }
       }
 
       const data = await res.json();

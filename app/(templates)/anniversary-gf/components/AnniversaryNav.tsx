@@ -51,7 +51,7 @@ export default function AnniversaryNav(props: NavProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 safe-bottom pointer-events-none">
-      <div className="mx-4 mb-4 md:mx-auto md:max-w-sm pointer-events-auto">
+      <div className="mx-4 mb-4 md:mx-auto md:max-w-md lg:max-w-xl xl:max-w-2xl pointer-events-auto">
         <AnimatePresence>
           {moreOpen && (
             <>
@@ -170,7 +170,7 @@ export default function AnniversaryNav(props: NavProps) {
                     className="flex-1 relative"
                   >
                     <div
-                      className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl transition-all duration-300 ${
+                      className={`flex flex-col items-center justify-center gap-1 py-2.5 lg:py-3 rounded-xl transition-all duration-300 ${
                         active
                           ? "text-rose-500 dark:text-rose-400"
                           : "text-muted-foreground/50 hover:text-muted-foreground/80"
@@ -183,9 +183,9 @@ export default function AnniversaryNav(props: NavProps) {
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
-                      <Icon size={19} strokeWidth={active ? 2.5 : 1.5} className="relative z-10" />
+                      <Icon size={19} strokeWidth={active ? 2.5 : 1.5} className="relative z-10 lg:w-5 lg:h-5" />
                       <span
-                        className={`text-[9px] font-bold relative z-10 leading-none ${
+                        className={`text-[9px] lg:text-[10px] font-bold relative z-10 leading-none ${
                           active ? "opacity-100" : "opacity-50"
                         }`}
                       >

@@ -1,4 +1,4 @@
-const CACHE_NAME = "gifts-v2";
+const CACHE_NAME = "gifts-v3";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -22,6 +22,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
+  if (!request.url.startsWith("http")) return;
   if (request.url.includes("/api/")) return;
 
   event.respondWith(

@@ -4,19 +4,9 @@ import { useState, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipForward, SkipBack, Disc3, Heart } from "lucide-react";
 import { type ContentData } from "./types";
+import { GLASS_CARD } from "./styles";
 
-const textGlow = "0 0 16px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,1), 0 1px 4px rgba(255,255,255,1)";
-const subtleGlow = "0 0 12px rgba(255,255,255,1), 0 0 4px rgba(255,255,255,1)";
-
-const GLASS_CARD = {
-  background: "rgba(255,255,255,0.12)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1.5px solid rgba(255,255,255,0.25)",
-  boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
-} as const;
-
-export default function MusicTab({ data }: { data: ContentData }) {
+export default memo(function MusicTab({ data }: { data: ContentData }) {
   const [playing, setPlaying] = useState(false);
   const [activeTrack, setActiveTrack] = useState(0);
 
@@ -46,15 +36,13 @@ export default function MusicTab({ data }: { data: ContentData }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="px-4 pt-6 pb-24 h-screen flex flex-col overflow-hidden relative z-10"
+      className="px-4 pt-6 pb-24 h-screen flex flex-col overflow-hidden relative z-10 lg:items-center lg:pt-8"
     >
-      {/* Soft pink radial bg */}
       <div
         className="absolute inset-0 -z-10 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 40%, rgba(251,207,232,0.3) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(ellipse at 50% 40%, var(--anni-radial) 0%, transparent 70%)" }}
       />
 
-      {/* Floating emojis */}
       {["🎵", "💗", "✨", "🎶", "🌸"].map((e, i) => (
         <span
           key={i}
@@ -66,99 +54,100 @@ export default function MusicTab({ data }: { data: ContentData }) {
       ))}
 
       <h3
-        className="font-script text-2xl text-center mb-4 relative z-10"
-        style={{ color: "#881337", textShadow: textGlow }}
+        className="font-script text-2xl lg:text-3xl text-center mb-4 relative z-10"
+        style={{ color: "var(--anni-text)", textShadow: "var(--anni-glow)" }}
       >
         Our Playlist 🎶
       </h3>
 
-      {/* Music Player — glass card */}
-      <motion.div
-        className="flex-shrink-0 relative z-10 rounded-3xl p-5 overflow-hidden"
-        style={GLASS_CARD}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-      >
-        {/* Now Playing + Vinyl */}
-        <div className="flex items-center gap-4 relative z-10">
-          <motion.div
-            animate={playing ? { rotate: 360 } : { rotate: 0 }}
-            transition={playing ? { duration: 3, repeat: Infinity, ease: "linear" } : {}}
-            className="shrink-0"
-          >
-            <Disc3 size={64} style={{ color: "#881337" }} strokeWidth={1} />
-          </motion.div>
-          <div className="flex-1 min-w-0">
-            {track && (
-              <>
-                <p className="text-base font-bold text-foreground truncate">
-                  🎵 {track.title}
-                </p>
-                <p className="text-xs text-foreground/60 truncate">{track.artist}</p>
-                <p className="text-[10px] mt-1 font-medium" style={{ color: "#ec4899" }}>
-                  {playing ? "♪ Now Playing..." : "Paused"}
-                </p>
-              </>
-            )}
+      {/* Desktop: side-by-side player + playlist */}
+      <div className="flex flex-col lg:flex-row lg:gap-5 lg:w-full lg:max-w-4xl xl:max-w-5xl flex-1 min-h-0 relative z-10">
+        {/* Music Player */}
+        <motion.div
+          className="flex-shrink-0 relative z-10 rounded-3xl p-5 lg:p-6 overflow-hidden lg:flex-1 lg:self-start"
+          style={GLASS_CARD}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="flex items-center gap-4 relative z-10">
+            <motion.div
+              animate={playing ? { rotate: 360 } : { rotate: 0 }}
+              transition={playing ? { duration: 3, repeat: Infinity, ease: "linear" } : {}}
+              className="shrink-0"
+            >
+              <Disc3 size={64} style={{ color: "var(--anni-text)" }} strokeWidth={1} />
+            </motion.div>
+            <div className="flex-1 min-w-0">
+              {track && (
+                <>
+                  <p className="text-base lg:text-lg font-bold text-foreground truncate">
+                    🎵 {track.title}
+                  </p>
+                  <p className="text-xs text-foreground/60 truncate">{track.artist}</p>
+                  <p className="text-[10px] mt-1 font-medium" style={{ color: "var(--anni-pink)" }}>
+                    {playing ? "♪ Now Playing..." : "Paused"}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-6 mt-4 relative z-10">
-          <button onClick={prevTrack} className="active:scale-85 transition-transform">
-            <SkipBack size={22} style={{ color: "#881337" }} />
-          </button>
-          <button
-            onClick={togglePlay}
-            className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-            style={{ background: "linear-gradient(135deg, #e11d48, #ec4899)", boxShadow: "0 4px 15px rgba(225,29,72,0.3)" }}
-          >
-            {playing ? (
-              <Pause size={22} className="text-white" fill="white" />
-            ) : (
-              <Play size={22} className="text-white ml-0.5" fill="white" />
-            )}
-          </button>
-          <button onClick={nextTrack} className="active:scale-85 transition-transform">
-            <SkipForward size={22} style={{ color: "#881337" }} />
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Song List — scrollable, glass card */}
-      <motion.div
-        className="flex-1 min-h-0 mt-3 rounded-3xl overflow-hidden relative z-10"
-        style={GLASS_CARD}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="overflow-y-auto h-full no-scrollbar p-2">
-          <div className="space-y-1.5">
-            {data.musicTracks.map((song, i) => (
-              <TrackItem
-                key={i}
-                song={song}
-                index={i}
-                isActive={activeTrack === i}
-                isPlaying={activeTrack === i && playing}
-                onSelect={selectTrack}
-              />
-            ))}
+          <div className="flex items-center justify-center gap-6 mt-4 relative z-10">
+            <button onClick={prevTrack} className="active:scale-85 transition-transform">
+              <SkipBack size={22} style={{ color: "var(--anni-text)" }} />
+            </button>
+            <button
+              onClick={togglePlay}
+              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              style={{ background: "linear-gradient(135deg, #e11d48, #ec4899)", boxShadow: "0 4px 15px rgba(225,29,72,0.3)" }}
+            >
+              {playing ? (
+                <Pause size={22} className="text-white" fill="white" />
+              ) : (
+                <Play size={22} className="text-white ml-0.5" fill="white" />
+              )}
+            </button>
+            <button onClick={nextTrack} className="active:scale-85 transition-transform">
+              <SkipForward size={22} style={{ color: "var(--anni-text)" }} />
+            </button>
           </div>
-        </div>
-        {data.musicTracks.length > 3 && (
-          <p className="text-[10px] text-center py-1.5 font-medium" style={{ color: "rgba(136,19,55,0.4)", textShadow: "0 0 6px rgba(255,255,255,0.8)" }}>
-            ↕ Scroll for more songs
-          </p>
-        )}
-      </motion.div>
+        </motion.div>
+
+        {/* Song List */}
+        <motion.div
+          className="flex-1 min-h-0 mt-3 lg:mt-0 rounded-3xl overflow-hidden relative z-10"
+          style={GLASS_CARD}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="overflow-y-auto h-full no-scrollbar p-2">
+            <div className="space-y-1.5">
+              {data.musicTracks.map((song, i) => (
+                <TrackItem
+                  key={i}
+                  song={song}
+                  index={i}
+                  isActive={activeTrack === i}
+                  isPlaying={activeTrack === i && playing}
+                  onSelect={selectTrack}
+                />
+              ))}
+            </div>
+          </div>
+          {data.musicTracks.length > 3 && (
+            <p className="text-[10px] text-center py-1.5 font-medium" style={{ color: "var(--anni-text-muted)" }}>
+              ↕ Scroll for more songs
+            </p>
+          )}
+        </motion.div>
+      </div>
 
       {/* Footer */}
       <motion.p
         className="text-center text-xs mt-3 flex items-center justify-center gap-1 relative z-10"
-        style={{ color: "rgba(136,19,55,0.4)", textShadow: subtleGlow }}
+        style={{ color: "var(--anni-text-muted)", textShadow: "var(--anni-glow-subtle)" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -181,7 +170,7 @@ export default function MusicTab({ data }: { data: ContentData }) {
       `}</style>
     </motion.div>
   );
-}
+});
 
 const TrackItem = memo(function TrackItem({
   song,
@@ -229,7 +218,7 @@ const TrackItem = memo(function TrackItem({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm truncate ${isActive ? "font-bold" : "font-medium"}`} style={isActive ? { color: "#881337" } : {}}>
+        <p className={`text-sm truncate ${isActive ? "font-bold" : "font-medium"}`} style={isActive ? { color: "var(--anni-text)" } : {}}>
           {song.title}
         </p>
         <p className="text-[11px] text-foreground/50 truncate mt-0.5">{song.artist}</p>

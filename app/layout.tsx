@@ -49,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={dancingScript.variable}>
-      <head>
+      <head suppressHydrationWarning>
         <OrganizationJsonLd />
         <WebAppJsonLd />
       </head>

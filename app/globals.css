@@ -338,3 +338,63 @@
     50% { border-color: hsl(var(--primary) / 0.5); }
   }
 }
+
+/* ─── Anniversary template tokens (light / dark) ─── */
+:root {
+  --anni-text: #881337;
+  --anni-text-muted: rgba(136, 19, 55, 0.6);
+  --anni-text-body: rgba(0, 0, 0, 0.7);
+  --anni-glow: 0 0 16px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,1), 0 1px 4px rgba(255,255,255,1);
+  --anni-glow-subtle: 0 0 12px rgba(255,255,255,1), 0 0 4px rgba(255,255,255,1);
+  --anni-glow-num: 0 0 10px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,1);
+  --anni-glass: rgba(255,255,255,0.12);
+  --anni-glass-strong: rgba(255,255,255,0.15);
+  --anni-glass-border: rgba(255,255,255,0.25);
+  --anni-glass-shadow: 0 4px 24px rgba(225,29,72,0.06);
+  --anni-radial: rgba(251,207,232,0.4);
+  --anni-radial-alt: rgba(251,207,232,0.35);
+  --anni-card-bg: linear-gradient(180deg, rgba(255,241,242,0.9), rgba(252,231,243,0.7));
+  --anni-card-border: rgba(236,72,153,0.1);
+  --anni-romantic-bg: linear-gradient(135deg, #fff1f2, #fce7f3, #fee2e2);
+  --anni-romantic-border: rgba(236,72,153,0.15);
+  --anni-modal-bg: linear-gradient(180deg, #fef2f2 0%, #fff1f2 30%, #fce7f3 100%);
+  --anni-modal-fade: linear-gradient(180deg, transparent 0%, #fef2f2 100%);
+  --anni-divider: rgba(236,72,153,0.12);
+  --anni-badge-bg: rgba(255,255,255,0.15);
+  --anni-badge-border: rgba(255,255,255,0.3);
+  --anni-pink: #ec4899;
+  --anni-marquee-bg: linear-gradient(135deg, rgba(236,72,153,0.04), rgba(251,207,232,0.06));
+  --anni-marquee-border: rgba(236,72,153,0.08);
+  --anni-maze-wall: #d8b4fe;
+  --anni-maze-cell: #ffffff;
+  --anni-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.dark {
+  --anni-text: #fda4af;
+  --anni-text-muted: rgba(253,164,175,0.55);
+  --anni-text-body: rgba(255,255,255,0.72);
+  --anni-glow: 0 0 20px rgba(225,29,72,0.25), 0 0 8px rgba(225,29,72,0.15);
+  --anni-glow-subtle: 0 0 14px rgba(225,29,72,0.2), 0 0 6px rgba(225,29,72,0.1);
+  --anni-glow-num: 0 0 12px rgba(225,29,72,0.25), 0 0 4px rgba(225,29,72,0.15);
+  --anni-glass: rgba(255,255,255,0.05);
+  --anni-glass-strong: rgba(255,255,255,0.07);
+  --anni-glass-border: rgba(255,255,255,0.1);
+  --anni-glass-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  --anni-radial: rgba(225,29,72,0.1);
+  --anni-radial-alt: rgba(225,29,72,0.08);
+  --anni-card-bg: linear-gradient(180deg, rgba(40,18,28,0.85), rgba(30,14,22,0.7));
+  --anni-card-border: rgba(253,164,175,0.1);
+  --anni-romantic-bg: linear-gradient(135deg, #2d1520, #28102a, #2d1520);
+  --anni-romantic-border: rgba(253,164,175,0.15);
+  --anni-modal-bg: linear-gradient(180deg, #1a0f14 0%, #1f1118 30%, #211325 100%);
+  --anni-modal-fade: linear-gradient(180deg, transparent 0%, #1a0f14 100%);
+  --anni-divider: rgba(253,164,175,0.15);
+  --anni-badge-bg: rgba(255,255,255,0.06);
+  --anni-badge-border: rgba(255,255,255,0.1);
+  --anni-pink: #fb7185;
+  --anni-marquee-bg: linear-gradient(135deg, rgba(225,29,72,0.06), rgba(253,164,175,0.04));
+  --anni-marquee-border: rgba(253,164,175,0.08);
+  --anni-maze-wall: rgba(168,85,247,0.35);
+  --anni-maze-cell: rgba(255,255,255,0.04);
+  --anni-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+}

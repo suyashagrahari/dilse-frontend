@@ -1,0 +1,41 @@
+"use client";
+
+import { memo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send } from "lucide-react";
+
+interface Props {
+  visible: boolean;
+}
+
+export default memo(function PublishingOverlay({ visible }: Props) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[55] bg-black/30 dark:bg-black/50 flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center border border-rose-200/40 dark:border-rose-900/30"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 mx-auto mb-4"
+            >
+              <Send size={28} className="text-rose-500 mx-auto" />
+            </motion.div>
+            <p className="font-bold text-sm">Publishing your page...</p>
+            <p className="text-xs text-muted-foreground mt-1">Making it live for the world</p>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+});

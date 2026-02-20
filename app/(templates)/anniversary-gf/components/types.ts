@@ -21,6 +21,18 @@ export interface ContentData {
   musicTracks: MusicTrack[];
 }
 
+export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+
+export type GameId = "quiz" | "spin" | "maze" | "memory";
+
+export interface Toast {
+  id: number;
+  type: "success" | "info" | "publish";
+  title: string;
+  message?: string;
+  shareUrl?: string;
+}
+
 export const DEMO_CONTENT: ContentData = {
   recipientName: "My Love",
   senderName: "Your Forever ❤️",

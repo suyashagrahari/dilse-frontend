@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo, lazy, Suspense } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type ContentData } from "./types";
 
@@ -47,18 +47,13 @@ const doubledLeft = [...leftCards, ...leftCards];
 const doubledRight = [...rightCards, ...rightCards];
 const doubledMarquee = [...marqueeItems, ...marqueeItems];
 
-const MARQUEE_STYLE = {
-  background: "linear-gradient(135deg, rgba(236,72,153,0.04), rgba(251,207,232,0.06))",
-  border: "1px solid rgba(236,72,153,0.08)",
-} as const;
-
 const TITLE_STYLE = {
   background: "linear-gradient(90deg, #e11d48, #ec4899, #a855f7)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
 } as const;
 
-export default function GalleryTab({ data }: { data: ContentData }) {
+export default memo(function GalleryTab({ data }: { data: ContentData }) {
   const [activeLetter, setActiveLetter] = useState<PlaceholderCard | null>(null);
   const hasPhotos = data.galleryPhotos.length > 0;
 
@@ -97,14 +92,13 @@ export default function GalleryTab({ data }: { data: ContentData }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="pt-5 pb-24 h-screen flex flex-col overflow-hidden relative z-10"
+      className="pt-5 pb-24 h-screen flex flex-col overflow-hidden relative z-10 lg:pt-8"
     >
-      <h3 className="font-script text-2xl text-center mb-3 px-4" style={TITLE_STYLE}>
+      <h3 className="font-script text-2xl lg:text-3xl text-center mb-3 px-4" style={TITLE_STYLE}>
         Our Memories 📸
       </h3>
 
-      {/* Horizontal marquee — pure CSS for performance */}
-      <div className="overflow-hidden mx-4 py-2 mb-3 rounded-xl" style={MARQUEE_STYLE}>
+      <div className="overflow-hidden mx-4 py-2 mb-3 rounded-xl lg:mx-auto lg:max-w-4xl lg:w-full" style={{ background: "var(--anni-marquee-bg)", border: "1px solid var(--anni-marquee-border)" }}>
         <div className="marquee-track flex gap-8 whitespace-nowrap px-4">
           {doubledMarquee.map((item, i) => (
             <span key={i} className="text-xs text-foreground/50">{item}</span>
@@ -112,16 +106,15 @@ export default function GalleryTab({ data }: { data: ContentData }) {
         </div>
       </div>
 
-      {/* Two vertical columns — CSS animations instead of framer-motion */}
-      <div className="flex gap-2.5 px-3 overflow-hidden flex-1 lg:px-8 lg:gap-4">
+      <div className="flex gap-2.5 px-3 overflow-hidden flex-1 lg:px-8 lg:gap-4 lg:max-w-6xl xl:max-w-7xl lg:mx-auto lg:w-full">
         <div className="flex-1 overflow-hidden relative">
-          <div className="scroll-col-up flex flex-col gap-2.5">
+          <div className="scroll-col-up flex flex-col gap-2.5 lg:gap-3">
             {leftElements}
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden relative">
-          <div className="scroll-col-down flex flex-col gap-2.5 pt-20">
+          <div className="scroll-col-down flex flex-col gap-2.5 lg:gap-3 pt-20">
             {rightElements}
           </div>
         </div>
@@ -154,7 +147,6 @@ export default function GalleryTab({ data }: { data: ContentData }) {
         }
       `}</style>
 
-      {/* Modal — only mounted when active */}
       <AnimatePresence>
         {activeLetter && (
           <LetterModal card={activeLetter} onClose={closeModal} />
@@ -162,9 +154,9 @@ export default function GalleryTab({ data }: { data: ContentData }) {
       </AnimatePresence>
     </motion.div>
   );
-}
+});
 
-/* ─── Memoized Card — zero framer-motion, pure CSS tap effect ─── */
+/* ─── Memoized Card ─── */
 const StoryCardItem = memo(function StoryCardItem({
   card,
   photoUrl,
@@ -178,8 +170,8 @@ const StoryCardItem = memo(function StoryCardItem({
 
   const cardStyle = useMemo(
     () => ({
-      background: "linear-gradient(180deg, rgba(255,241,242,0.9), rgba(252,231,243,0.7))",
-      border: "1.5px solid rgba(236,72,153,0.1)",
+      background: "var(--anni-card-bg)",
+      border: "1.5px solid var(--anni-card-border)",
       boxShadow: `0 2px 12px ${card.glow}`,
     }),
     [card.glow]
@@ -204,7 +196,7 @@ const StoryCardItem = memo(function StoryCardItem({
             </div>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-6" style={CARD_BLEND} />
+        <div className="absolute bottom-0 left-0 right-0 h-6" style={{ background: "var(--anni-modal-fade)" }} />
         <div className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center" style={BADGE_STYLE}>
           <span className="text-base">{card.emoji}</span>
         </div>
@@ -212,7 +204,7 @@ const StoryCardItem = memo(function StoryCardItem({
 
       <div className="flex flex-col items-center gap-1 px-3 py-2.5 w-full">
         <p className="text-[11px] font-bold text-foreground leading-tight text-center">{card.label}</p>
-        <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: "#ec4899" }}>
+        <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: "var(--anni-pink)" }}>
           Open Letter <span className="letter-pulse">💌</span>
         </span>
       </div>
@@ -234,10 +226,9 @@ const StoryCardItem = memo(function StoryCardItem({
 const GLOSSY_OVERLAY = { background: "linear-gradient(145deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 40%, transparent 60%)" } as const;
 const CIRCLE_A = { background: "rgba(255,255,255,0.12)" } as const;
 const CIRCLE_B = { background: "rgba(255,255,255,0.08)" } as const;
-const CARD_BLEND = { background: "linear-gradient(180deg, transparent, rgba(255,241,242,0.95))" } as const;
-const BADGE_STYLE = { background: "rgba(255,255,255,0.85)", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" } as const;
+const BADGE_STYLE = { background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" } as const;
 
-/* ─── Letter Modal — only renders when opened ─── */
+/* ─── Letter Modal ─── */
 const LetterModal = memo(function LetterModal({
   card,
   onClose,
@@ -253,23 +244,22 @@ const LetterModal = memo(function LetterModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[999] overflow-y-auto"
-      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
       onClick={onClose}
     >
-      <div className="min-h-full flex items-start justify-center px-4 pt-6 pb-28">
+      <div className="min-h-full flex items-start justify-center px-4 pt-6 pb-28 lg:items-center lg:pt-0 lg:pb-0">
         <motion.div
           initial={{ scale: 0.5, y: 50, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.5, y: 50, opacity: 0 }}
           transition={{ type: "spring", stiffness: 280, damping: 22 }}
-          className="max-w-sm w-full relative rounded-3xl my-auto overflow-hidden"
+          className="max-w-sm w-full relative rounded-3xl my-auto overflow-hidden lg:max-w-md"
           style={{
-            background: "linear-gradient(180deg, #fef2f2 0%, #fff1f2 30%, #fce7f3 100%)",
+            background: "var(--anni-modal-bg)",
             boxShadow: "0 25px 60px rgba(190,50,90,0.2), 0 4px 20px rgba(0,0,0,0.1)",
           }}
           onClick={stopProp}
         >
-          {/* Gradient header */}
           <div className="relative w-full rounded-t-3xl overflow-hidden">
             <div
               className="relative w-full flex items-center justify-center"
@@ -286,12 +276,12 @@ const LetterModal = memo(function LetterModal({
                 {card.emoji}
               </motion.span>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: "linear-gradient(180deg, transparent 0%, #fef2f2 100%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: "var(--anni-modal-fade)" }} />
 
             <button
               onClick={onClose}
               className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
-              style={{ background: "rgba(255,255,255,0.85)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", color: "#e11d48" }}
+              style={{ background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", color: "#e11d48" }}
             >
               ✕
             </button>
@@ -301,13 +291,12 @@ const LetterModal = memo(function LetterModal({
               animate={{ rotate: 8, scale: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
               className="absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.85)", border: "2px dashed rgba(236,72,153,0.3)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+              style={{ background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", border: "2px dashed var(--anni-divider)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
             >
               <span className="text-lg">💌</span>
             </motion.div>
           </div>
 
-          {/* Title */}
           <div className="text-center px-6 -mt-4 relative z-10">
             <motion.span
               className="text-3xl inline-block"
@@ -316,27 +305,24 @@ const LetterModal = memo(function LetterModal({
             >
               {card.emoji}
             </motion.span>
-            <h3 className="font-script text-xl mt-1" style={{ color: "#881337" }}>{card.label}</h3>
+            <h3 className="font-script text-xl mt-1" style={{ color: "var(--anni-text)" }}>{card.label}</h3>
           </div>
 
-          {/* Divider */}
           <div className="flex items-center justify-center gap-3 my-3 px-8">
-            <div className="h-px flex-1" style={{ background: "rgba(236,72,153,0.2)" }} />
-            <span className="text-xs heart-beat" style={{ color: "#ec4899" }}>♡</span>
-            <div className="h-px flex-1" style={{ background: "rgba(236,72,153,0.2)" }} />
+            <div className="h-px flex-1" style={{ background: "var(--anni-divider)" }} />
+            <span className="text-xs heart-beat" style={{ color: "var(--anni-pink)" }}>♡</span>
+            <div className="h-px flex-1" style={{ background: "var(--anni-divider)" }} />
           </div>
 
-          {/* Letter */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="px-6 pb-2">
-            <p className="text-sm leading-relaxed italic whitespace-pre-line" style={{ color: "rgba(0,0,0,0.65)" }}>
+            <p className="text-sm leading-relaxed italic whitespace-pre-line" style={{ color: "var(--anni-text-body)" }}>
               &ldquo;{card.letter}&rdquo;
             </p>
           </motion.div>
 
-          {/* Footer */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="px-6 pt-3 pb-6 text-center">
-            <p className="font-script text-base" style={{ color: "#881337" }}>With all my love 💕</p>
-            <p className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>— Forever yours</p>
+            <p className="font-script text-base" style={{ color: "var(--anni-text)" }}>With all my love 💕</p>
+            <p className="text-[10px] mt-0.5 text-foreground/40">— Forever yours</p>
 
             <div className="my-3 py-2">
               <span className="text-2xl inline-block heart-beat">💝</span>
@@ -346,9 +332,9 @@ const LetterModal = memo(function LetterModal({
               onClick={onClose}
               className="px-8 py-2.5 text-sm font-semibold w-full rounded-xl active:scale-95 transition-transform"
               style={{
-                background: "linear-gradient(135deg, rgba(236,72,153,0.1), rgba(251,207,232,0.15))",
-                border: "1.5px solid rgba(236,72,153,0.15)",
-                color: "#881337",
+                background: "var(--anni-glass)",
+                border: "1.5px solid var(--anni-divider)",
+                color: "var(--anni-text)",
               }}
             >
               Close Letter 💕
