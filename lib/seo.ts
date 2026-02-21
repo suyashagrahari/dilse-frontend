@@ -154,6 +154,21 @@ export const TEMPLATE_SEO: Record<string, TemplateSeo> = {
     category: "Love",
     emoji: "💕",
   },
+  "wedding-shaadi": {
+    title: "Royal Indian Wedding Invitation | Digital Shaadi Card",
+    description:
+      "Create a stunning digital wedding invitation with RSVP, events timeline, photo gallery & blessings wall. Share your shaadi card instantly.",
+    keywords: [
+      "wedding invitation",
+      "shaadi card",
+      "indian wedding",
+      "digital wedding card",
+      "wedding RSVP",
+      "marriage invitation online",
+    ],
+    category: "Wedding",
+    emoji: "💍",
+  },
 };
 
 export function getTemplateMeta(slug: string): Metadata {

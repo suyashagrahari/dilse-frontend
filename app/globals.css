@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -429,6 +429,39 @@
   --love-maze-cell: #ffffff;
   --love-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.3);
 }
+
+/* ── Wedding Shaadi Template (light) ── */
+:root {
+  --wed-gold: #b8860b;
+  --wed-gold-light: #d4a843;
+  --wed-gold-dark: #8b6914;
+  --wed-gold-glow: rgba(184,134,11,0.25);
+  --wed-rose: #c77d7d;
+  --wed-slate-blue: #7b8fa8;
+  --wed-bg: 40 30% 97%;
+  --wed-fg: 30 20% 15%;
+  --wed-card: 40 20% 95%;
+  --wed-card-fg: 30 20% 15%;
+  --wed-muted: 40 15% 92%;
+  --wed-muted-fg: 30 10% 45%;
+  --wed-border: 40 15% 85%;
+  --wed-glass: rgba(255,255,255,0.65);
+  --wed-glass-strong: rgba(255,255,255,0.8);
+  --wed-glass-border: rgba(184,134,11,0.2);
+  --wed-glass-shadow: 0 4px 24px rgba(184,134,11,0.08);
+  --wed-btn-shadow: 0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.3);
+  --wed-sidebar-bg: rgba(255,252,245,0.92);
+  --wed-sidebar-border: rgba(184,134,11,0.12);
+  --wed-gradient-gold: linear-gradient(135deg, #b8860b, #d4a843);
+  --wed-gradient-bg: linear-gradient(180deg, hsl(40 30% 97%) 0%, hsl(40 20% 95%) 100%);
+  --wed-input-bg: rgba(0,0,0,0.04);
+  --wed-input-border: rgba(184,134,11,0.15);
+  --wed-accent-gold: #b8860b;
+  --wed-accent-gold-fg: #ffffff;
+  --wed-hero-overlay: rgba(255,252,245,0.75);
+  --wed-hero-gradient: linear-gradient(to bottom, rgba(255,252,245,0.5), transparent, rgba(255,252,245,0.9));
+}
+
 .dark {
   --love-text: #f9a8d4;
   --love-text-muted: rgba(249,168,212,0.55);
@@ -457,4 +490,54 @@
   --love-maze-wall: rgba(236,72,153,0.35);
   --love-maze-cell: rgba(255,255,255,0.04);
   --love-card-btn-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ── Wedding Shaadi Template (dark) ── */
+.dark {
+  --wed-gold: #d4a843;
+  --wed-gold-light: #e8c878;
+  --wed-gold-dark: #b8860b;
+  --wed-gold-glow: rgba(212,168,67,0.2);
+  --wed-rose: #d4908f;
+  --wed-slate-blue: #8fa4bd;
+  --wed-bg: 0 0% 4%;
+  --wed-fg: 40 20% 95%;
+  --wed-card: 0 0% 8%;
+  --wed-card-fg: 40 20% 95%;
+  --wed-muted: 0 0% 12%;
+  --wed-muted-fg: 0 0% 55%;
+  --wed-border: 0 0% 15%;
+  --wed-glass: rgba(255,255,255,0.04);
+  --wed-glass-strong: rgba(255,255,255,0.08);
+  --wed-glass-border: rgba(212,168,67,0.15);
+  --wed-glass-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --wed-btn-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+  --wed-sidebar-bg: rgba(10,10,10,0.92);
+  --wed-sidebar-border: rgba(212,168,67,0.12);
+  --wed-gradient-gold: linear-gradient(135deg, #d4a843, #e8c878);
+  --wed-gradient-bg: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 8%) 100%);
+  --wed-input-bg: rgba(255,255,255,0.05);
+  --wed-input-border: rgba(212,168,67,0.2);
+  --wed-accent-gold: #d4a843;
+  --wed-accent-gold-fg: #0a0a0a;
+  --wed-hero-overlay: rgba(10,10,10,0.8);
+  --wed-hero-gradient: linear-gradient(to bottom, rgba(10,10,10,0.6), transparent, rgba(10,10,10,0.95));
+}
+
+/* Wedding custom animations */
+@keyframes wed-float-particle {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+@keyframes wed-rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wed-pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--wed-gold-glow); }
+  50% { box-shadow: 0 0 40px var(--wed-gold-glow); }
 }
