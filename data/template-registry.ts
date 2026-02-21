@@ -15,6 +15,7 @@ import { config as anniversaryParents } from "@/app/(templates)/anniversary-pare
 import { config as loveGf } from "@/app/(templates)/love-gf/config";
 import { config as weddingShaadi } from "@/app/(templates)/wedding-shaadi/config";
 import { config as reception } from "@/app/(templates)/reception/config";
+import { config as eidMubarak } from "@/app/(templates)/eid-mubarak/config";
 
 const allConfigs = [
   birthdayGf,
@@ -32,6 +33,7 @@ const allConfigs = [
   loveGf,
   weddingShaadi,
   reception,
+  eidMubarak,
 ];
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
@@ -57,6 +59,7 @@ export const templateTypes = [
   { id: "anniversary", label: "Anniversary", emoji: "💍" },
   { id: "love", label: "Love", emoji: "💕" },
   { id: "wedding", label: "Wedding", emoji: "💍" },
+  { id: "festival", label: "Festival", emoji: "🌙" },
 ];
 
 export const categories = [
@@ -66,4 +69,5 @@ export const categories = [
   { id: "parents", label: "Parents", emoji: "👨‍👩‍👧" },
   { id: "bestfriend", label: "Best Friend", emoji: "💛" },
   { id: "wedding", label: "Wedding", emoji: "💍" },
+  { id: "festival", label: "Festival", emoji: "🌙" },
 ];
