@@ -524,6 +524,101 @@
   --wed-hero-gradient: linear-gradient(to bottom, rgba(10,10,10,0.6), transparent, rgba(10,10,10,0.95));
 }
 
+/* ── Reception Template — Midnight Navy + Rose-Gold + Sage ── */
+:root {
+  --rec-bg: 225 30% 6%;
+  --rec-fg: 35 20% 94%;
+  --rec-muted-fg: 220 8% 48%;
+  --rec-accent: #D4A574;
+  --rec-accent-light: #E8CBAE;
+  --rec-accent-dark: #B8875A;
+  --rec-accent-glow: rgba(212,165,116,0.14);
+  --rec-rose: #C4A6B5;
+  --rec-rose-glow: rgba(196,166,181,0.18);
+  --rec-sage: #7FB8B0;
+  --rec-sage-glow: rgba(127,184,176,0.16);
+  --rec-surface: 225 25% 9%;
+  --rec-glass: rgba(255,255,255,0.03);
+  --rec-glass-strong: rgba(255,255,255,0.055);
+  --rec-glass-border: rgba(212,165,116,0.1);
+  --rec-glass-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --rec-gradient-accent: linear-gradient(135deg, #D4A574 0%, #E8CBAE 50%, #D4A574 100%);
+  --rec-gradient-rose: linear-gradient(135deg, #C4A6B5, #d4bfc9);
+  --rec-gradient-sage: linear-gradient(135deg, #7FB8B0, #a0d0c8);
+  --rec-input-bg: rgba(255,255,255,0.035);
+  --rec-input-border: rgba(255,255,255,0.07);
+  --rec-accent-fg: #0B0F1A;
+  --rec-nav-bg: rgba(11,15,26,0.88);
+  --rec-nav-border: rgba(212,165,116,0.06);
+  /* keep old names as aliases for components not yet updated */
+  --rec-gold: var(--rec-accent);
+  --rec-gold-light: var(--rec-accent-light);
+  --rec-gold-glow: var(--rec-accent-glow);
+  --rec-gold-fg: var(--rec-accent-fg);
+  --rec-gradient-gold: var(--rec-gradient-accent);
+  --rec-blue: var(--rec-sage);
+  --rec-blue-glow: var(--rec-sage-glow);
+}
+
+/* Reception animations */
+@keyframes rec-orb-drift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  25% { transform: translate(40px, -50px) scale(1.3); opacity: 0.28; }
+  50% { transform: translate(-30px, -100px) scale(0.85); opacity: 0.18; }
+  75% { transform: translate(20px, -150px) scale(1.15); opacity: 0.22; }
+  100% { transform: translate(-10px, -200px) scale(1); opacity: 0; }
+}
+
+@keyframes rec-pulse-soft {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes rec-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rec-count-glow {
+  0%, 100% { text-shadow: 0 0 15px var(--rec-accent-glow); }
+  50% { text-shadow: 0 0 30px var(--rec-accent-glow), 0 0 60px var(--rec-accent-glow); }
+}
+
+@keyframes rec-border-rotate {
+  from { --rec-angle: 0deg; }
+  to { --rec-angle: 360deg; }
+}
+
+@keyframes rec-pin-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+.rec-pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: rec-pin-pulse 2.5s ease-in-out infinite;
+}
+
+.rec-pulse-ring--outer {
+  width: 7rem;
+  height: 7rem;
+  border: 1.5px solid rgba(212,165,116,0.2);
+  background: rgba(212,165,116,0.03);
+}
+
+.rec-pulse-ring--inner {
+  width: 5rem;
+  height: 5rem;
+  border: 1px solid rgba(212,165,116,0.25);
+  background: rgba(212,165,116,0.05);
+  animation-delay: 0.4s;
+}
+
 /* Wedding custom animations */
 @keyframes wed-float-particle {
   0% { transform: translateY(100vh) scale(0); opacity: 0; }
