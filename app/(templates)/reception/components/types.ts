@@ -84,7 +84,7 @@ export const DEMO_DATA: ReceptionData = {
     groom: "Shri Vikram Verma & Smt. Meena Verma",
   },
   galleryImages: [
-    { src: "/assets/marriage/reception.png", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
+    { src: "/assets/hero-bg.jpeg", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
     { src: "/assets/couple1.jpeg", alt: "Bride", span: "", category: "candid" },
     { src: "/assets/couple2.jpeg", alt: "Groom", span: "", category: "candid" },
     { src: "/assets/couple3.jpeg", alt: "Pre-Wedding", span: "col-span-2", category: "pre-wedding" },
