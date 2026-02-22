@@ -14,6 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Join us for a night of celebration, love & unforgettable memories.",
   bgGradient: "from-slate-950 via-slate-900 to-slate-950",
+  coverImage: "/assets/Reception/reception.png",
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "couple", icon: Heart, label: "Us" },

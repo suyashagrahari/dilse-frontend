@@ -45,7 +45,7 @@ const CoverSection = memo(function CoverSection({ data }: Props) {
     <section className="h-[calc(100vh-4rem)] lg:h-screen relative flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
         <Image
-          src="/assets/marriage/couple-hero.jpg"
+          src="/assets/marriage/weeding.png"
           alt="Wedding couple"
           fill
           className="object-cover"

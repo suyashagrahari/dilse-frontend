@@ -113,7 +113,7 @@ export const DEMO_DATA: WeddingData = {
     { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Mar", time: "7 PM", venue: "Grand Hall", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30" },
   ],
   galleryImages: [
-    { src: "/assets/marriage/couple-hero.jpg", alt: "Couple", span: "col-span-2 row-span-2" },
+    { src: "/assets/marriage/weeding.png", alt: "Couple", span: "col-span-2 row-span-2" },
     { src: "/assets/couple1.jpeg", alt: "Bride", span: "" },
     { src: "/assets/couple2.jpeg", alt: "Groom", span: "" },
     { src: "/assets/couple3.jpeg", alt: "Decoration", span: "col-span-2" },

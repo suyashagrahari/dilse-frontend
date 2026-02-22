@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import type { ReceptionData } from "./types";
+import { REC_GLASS } from "./styles";
 
 interface Props {
   data: ReceptionData;
@@ -28,22 +29,21 @@ function useCountdown(dateStr: string) {
   };
 }
 
-function CountBlock({ value, label }: { value: number; label: string }) {
+function CountCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center">
+    <div
+      className="rounded-xl px-3 py-3 md:px-5 md:py-4 min-w-[60px] md:min-w-[80px] text-center"
+      style={REC_GLASS}
+    >
       <span
-        className="text-3xl md:text-4xl font-light tabular-nums"
-        style={{
-          color: "var(--rec-accent)",
-          fontFamily: "'Cormorant Garamond', serif",
-          animation: "rec-count-glow 4s ease-in-out infinite",
-        }}
+        className="text-2xl md:text-4xl block leading-none tabular-nums"
+        style={{ color: "var(--rec-accent)", fontFamily: "'Cormorant Garamond', serif" }}
       >
         {String(value).padStart(2, "0")}
       </span>
       <span
-        className="text-[8px] mt-1 tracking-[0.35em] uppercase"
-        style={{ color: "hsl(var(--rec-muted-fg))", fontFamily: "'DM Sans', sans-serif" }}
+        className="text-[9px] md:text-[10px] tracking-widest mt-1 block uppercase"
+        style={{ color: "hsl(var(--rec-muted-fg))" }}
       >
         {label}
       </span>
@@ -152,18 +152,29 @@ const SplashSection = memo(function SplashSection({ data }: Props) {
         </motion.p>
 
         <motion.div
-          className="flex items-center justify-center gap-6 md:gap-8 mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2 md:gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
         >
-          <CountBlock value={cd.days} label="Days" />
-          <span className="text-lg font-light" style={{ color: "rgba(212,165,116,0.25)" }}>·</span>
-          <CountBlock value={cd.hours} label="Hours" />
-          <span className="text-lg font-light" style={{ color: "rgba(212,165,116,0.25)" }}>·</span>
-          <CountBlock value={cd.minutes} label="Min" />
-          <span className="text-lg font-light" style={{ color: "rgba(212,165,116,0.25)" }}>·</span>
-          <CountBlock value={cd.seconds} label="Sec" />
+          {[
+            { label: "DAYS", value: cd.days },
+            { label: "HRS", value: cd.hours },
+            { label: "MIN", value: cd.minutes },
+            { label: "SEC", value: cd.seconds },
+          ].map((unit, idx) => (
+            <div key={unit.label} className="flex items-center gap-2 md:gap-4">
+              <CountCard value={unit.value} label={unit.label} />
+              {idx < 3 && (
+                <span
+                  className="text-lg md:text-2xl font-light"
+                  style={{ color: "rgba(212,165,116,0.25)" }}
+                >
+                  :
+                </span>
+              )}
+            </div>
+          ))}
         </motion.div>
 
         <motion.div

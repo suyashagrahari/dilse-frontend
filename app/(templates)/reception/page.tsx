@@ -1,7 +1,8 @@
 "use client";
 
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
@@ -14,6 +15,8 @@ import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
+import ReceptionWelcomeOverlay from "./components/ReceptionWelcomeOverlay";
+import ReceptionBackgroundMusic from "./components/ReceptionBackgroundMusic";
 
 const CoupleReveal = lazy(() => import("./components/CoupleReveal"));
 const GallerySection = lazy(() => import("./components/GallerySection"));
@@ -39,6 +42,13 @@ function TabFallback() {
 
 export default function ReceptionPage() {
   const editor = useReceptionEditor();
+  const [welcomed, setWelcomed] = useState(false);
+  const [playMusic, setPlayMusic] = useState(false);
+
+  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
+    setPlayMusic(withMusic);
+    setWelcomed(true);
+  }, []);
 
   const coupleNames = useMemo(
     () => ({ bride: editor.content.brideName, groom: editor.content.groomName }),
@@ -52,6 +62,34 @@ export default function ReceptionPage() {
       className="h-screen relative overflow-hidden"
       style={{ background: "hsl(var(--rec-bg))", color: "hsl(var(--rec-fg))" }}
     >
+      {!welcomed && (
+        <ReceptionWelcomeOverlay
+          brideName={editor.content.brideName}
+          groomName={editor.content.groomName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
+
+      {/* Background image on all tabs */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <Image
+          src="/assets/Reception/reception.png"
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+          style={{ opacity: editor.tab === "home" ? 0.04 : 0.06 }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(var(--rec-bg) / 0.4) 0%, hsl(var(--rec-bg) / 0.6) 40%, hsl(var(--rec-bg) / 0.5) 70%, hsl(var(--rec-bg) / 0.4) 100%)",
+          }}
+        />
+      </div>
+
       <BokehParticles />
 
       <DesktopNav
@@ -158,6 +196,8 @@ export default function ReceptionPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+
+      <ReceptionBackgroundMusic shouldPlay={playMusic} />
 
       <AnimatePresence>
         {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}

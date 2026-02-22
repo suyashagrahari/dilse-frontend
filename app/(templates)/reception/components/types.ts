@@ -56,7 +56,7 @@ export const DEMO_DATA: ReceptionData = {
   venueMapQuery: "Royal+Palace+Hotel+Jaipur+Rajasthan",
   venueTimings: "7:00 PM — 11:30 PM",
   tagline: "Request the pleasure of your company",
-  heroImage: "/assets/marriage/couple-hero.jpg",
+  heroImage: "/assets/Reception/reception.png",
   bride: {
     name: "Priya Sharma",
     role: "The Bride",
@@ -84,7 +84,7 @@ export const DEMO_DATA: ReceptionData = {
     groom: "Shri Vikram Verma & Smt. Meena Verma",
   },
   galleryImages: [
-    { src: "/assets/marriage/couple-hero.jpg", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
+    { src: "/assets/marriage/reception.png", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
     { src: "/assets/couple1.jpeg", alt: "Bride", span: "", category: "candid" },
     { src: "/assets/couple2.jpeg", alt: "Groom", span: "", category: "candid" },
     { src: "/assets/couple3.jpeg", alt: "Pre-Wedding", span: "col-span-2", category: "pre-wedding" },
