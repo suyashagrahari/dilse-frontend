@@ -16,6 +16,7 @@ import { config as loveGf } from "@/app/(templates)/love-gf/config";
 import { config as weddingShaadi } from "@/app/(templates)/wedding-shaadi/config";
 import { config as reception } from "@/app/(templates)/reception/config";
 import { config as eidMubarak } from "@/app/(templates)/eid-mubarak/config";
+import { config as holi } from "@/app/(templates)/holi/config";
 
 const allConfigs = [
   birthdayGf,
@@ -34,6 +35,7 @@ const allConfigs = [
   weddingShaadi,
   reception,
   eidMubarak,
+  holi,
 ];
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -727,4 +727,164 @@
 
 .eid-glow {
   box-shadow: 0 0 20px rgba(197,160,63,0.3), 0 0 40px rgba(197,160,63,0.15);
+}
+
+/* ── Holi Template — Festival of Colors ── */
+:root {
+  --holi-bg: 0 0% 98%;
+  --holi-fg: 240 20% 10%;
+  --holi-card: 0 0% 100%;
+  --holi-border: 240 10% 90%;
+  --holi-input: 240 10% 93%;
+  --holi-muted-fg: 240 10% 42%;
+  --holi-surface: 240 10% 96%;
+  --holi-pink: #E91E63;
+  --holi-pink-light: #F06292;
+  --holi-pink-glow: rgba(233,30,99,0.2);
+  --holi-purple: #9C27B0;
+  --holi-purple-glow: rgba(156,39,176,0.2);
+  --holi-orange: #FF9800;
+  --holi-orange-glow: rgba(255,152,0,0.2);
+  --holi-blue: #03A9F4;
+  --holi-green: #4CAF50;
+  --holi-yellow: #FFEB3B;
+  --holi-coral: #FF5252;
+  --holi-glass: rgba(255,255,255,0.7);
+  --holi-glass-strong: rgba(255,255,255,0.85);
+  --holi-glass-border: rgba(233,30,99,0.12);
+  --holi-glass-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  --holi-gradient-primary: linear-gradient(135deg, #E91E63 0%, #FF9800 50%, #FFEB3B 100%);
+  --holi-gradient-cta: linear-gradient(135deg, #E91E63, #FF5722);
+  --holi-nav-bg: rgba(255,255,255,0.92);
+  --holi-nav-border: rgba(233,30,99,0.1);
+}
+
+.holi-dark {
+  --holi-bg: 260 30% 6%;
+  --holi-fg: 0 0% 95%;
+  --holi-card: 260 25% 10%;
+  --holi-border: 260 20% 16%;
+  --holi-input: 260 20% 18%;
+  --holi-muted-fg: 240 10% 55%;
+  --holi-surface: 260 25% 8%;
+  --holi-pink: #F06292;
+  --holi-pink-light: #F48FB1;
+  --holi-pink-glow: rgba(240,98,146,0.3);
+  --holi-purple: #CE93D8;
+  --holi-purple-glow: rgba(206,147,216,0.3);
+  --holi-orange: #FFB74D;
+  --holi-orange-glow: rgba(255,183,77,0.3);
+  --holi-blue: #4FC3F7;
+  --holi-green: #81C784;
+  --holi-yellow: #FFF176;
+  --holi-coral: #FF8A80;
+  --holi-glass: rgba(255,255,255,0.04);
+  --holi-glass-strong: rgba(255,255,255,0.07);
+  --holi-glass-border: rgba(240,98,146,0.15);
+  --holi-glass-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --holi-gradient-primary: linear-gradient(135deg, #F06292 0%, #FFB74D 50%, #FFF176 100%);
+  --holi-gradient-cta: linear-gradient(135deg, #F06292, #FF8A65);
+  --holi-nav-bg: rgba(20,12,30,0.92);
+  --holi-nav-border: rgba(240,98,146,0.1);
+}
+
+/* Holi animations */
+@keyframes holi-color-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.25; }
+  50% { transform: translateY(-30px) scale(1.15); opacity: 0.5; }
+}
+
+@keyframes holi-particle-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 0.7; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes holi-rainbow-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+@keyframes holi-splash-burst {
+  0% { transform: scale(0); opacity: 1; }
+  60% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+@keyframes holi-pulse-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes holi-blob-morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+  75% { border-radius: 60% 30% 50% 40% / 60% 40% 60% 50%; }
+}
+
+@keyframes holi-disc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes holi-wave-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+@keyframes holi-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--holi-pink-glow)); }
+  50% { filter: drop-shadow(0 0 20px var(--holi-pink-glow)); }
+}
+
+.holi-text-gradient {
+  background: linear-gradient(90deg, var(--holi-pink), var(--holi-orange), var(--holi-yellow), var(--holi-green), var(--holi-blue), var(--holi-purple), var(--holi-pink));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: holi-rainbow-shift 4s linear infinite;
+}
+
+.holi-color-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(40px);
+  animation: holi-color-float var(--dur, 8s) ease-in-out var(--del, 0s) infinite,
+             holi-blob-morph var(--morph, 11s) ease-in-out var(--del, 0s) infinite;
+}
+
+.holi-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: holi-particle-fall var(--dur, 10s) linear var(--del, 0s) infinite;
+}
+
+.holi-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--holi-pink), var(--holi-orange), var(--holi-yellow), var(--holi-green), var(--holi-blue), transparent);
+}
+
+.holi-shimmer-border {
+  position: relative;
+}
+.holi-shimmer-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--holi-pink), var(--holi-orange), var(--holi-yellow), var(--holi-green), var(--holi-blue), var(--holi-purple));
+  background-size: 300% 300%;
+  animation: holi-rainbow-shift 4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.holi-glow {
+  box-shadow: 0 0 20px var(--holi-pink-glow), 0 0 40px var(--holi-purple-glow);
 }
