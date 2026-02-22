@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
 
 import { useLoveEditor } from "./hooks/useLoveEditor";
@@ -18,12 +20,67 @@ import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
+import LoveWelcomeOverlay from "./components/LoveWelcomeOverlay";
+import LoveBackgroundMusic from "./components/LoveBackgroundMusic";
 
 export default function LoveGfPage() {
   const editor = useLoveEditor();
+  const [welcomed, setWelcomed] = useState(false);
+  const [playMusic, setPlayMusic] = useState(false);
+  const [playlistActive, setPlaylistActive] = useState(false);
+
+  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
+    setPlayMusic(withMusic);
+    setWelcomed(true);
+  }, []);
+
+  const handlePlaylistStateChange = useCallback((isPlaying: boolean) => {
+    setPlaylistActive(isPlaying);
+  }, []);
+
+  useEffect(() => {
+    if (editor.tab !== "music") {
+      setPlaylistActive(false);
+    }
+  }, [editor.tab]);
 
   return (
     <div className="h-screen bg-background relative overflow-hidden">
+      {!welcomed && (
+        <LoveWelcomeOverlay
+          senderName={editor.content.senderName}
+          recipientName={editor.content.recipientName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
+
+      {/* Background image on all tabs */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <Image
+          src="/assets/hero-bg.jpeg"
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+          style={{ opacity: editor.tab === "home" ? 0.03 : 0.05 }}
+        />
+        <div
+          className="absolute inset-0 dark:hidden"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 hidden dark:block"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(2,6,23,0.4) 0%, rgba(2,6,23,0.6) 50%, rgba(2,6,23,0.4) 100%)",
+          }}
+        />
+      </div>
+
       <FloatingHearts />
 
       <DesktopSidebar
@@ -46,7 +103,7 @@ export default function LoveGfPage() {
             />
           )}
           {editor.tab === "gallery" && <GallerySection key="gallery" data={editor.content} />}
-          {editor.tab === "music" && <MusicSection key="music" data={editor.content} />}
+          {editor.tab === "music" && <MusicSection key="music" data={editor.content} onPlayStateChange={handlePlaylistStateChange} />}
           {editor.tab === "games" && <GamesSection key="games" data={editor.content} />}
           {editor.tab === "notes" && <NotesSection key="notes" />}
         </AnimatePresence>
@@ -107,6 +164,8 @@ export default function LoveGfPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+
+      <LoveBackgroundMusic shouldPlay={playMusic} paused={playlistActive} />
 
       <AnimatePresence>
         {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}

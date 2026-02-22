@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback, useMemo } from "react";
+import { memo, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipForward, SkipBack, Heart } from "lucide-react";
 import type { ContentData } from "./types";
@@ -11,9 +11,13 @@ const GRADIENTS = [
   "linear-gradient(135deg, #ea580c, #f59e0b)",
   "linear-gradient(135deg, #0284c7, #38bdf8)",
   "linear-gradient(135deg, #059669, #34d399)",
+  "linear-gradient(135deg, #e11d48, #7c3aed)",
 ];
 
-interface Props { data: ContentData; }
+interface Props {
+  data: ContentData;
+  onPlayStateChange?: (isPlaying: boolean) => void;
+}
 
 const TrackRow = memo(function TrackRow({
   track, index, active, isPlaying, gradient, isLiked, onSelect, onToggleLike,
@@ -36,9 +40,9 @@ const TrackRow = memo(function TrackRow({
       <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full shrink-0 flex items-center justify-center shadow-sm" style={{ background: active ? gradient : "rgba(225,29,72,0.06)" }}>
         {isPlaying ? (
           <div className="flex items-end gap-[2px] h-3.5">
-            <span className="w-[2.5px] bg-white rounded-full eq-bar" style={{ animationDelay: "0s" }} />
-            <span className="w-[2.5px] bg-white rounded-full eq-bar" style={{ animationDelay: "0.15s" }} />
-            <span className="w-[2.5px] bg-white rounded-full eq-bar" style={{ animationDelay: "0.3s" }} />
+            <span className="w-[2.5px] bg-white rounded-full love-eq-bar" style={{ animationDelay: "0s" }} />
+            <span className="w-[2.5px] bg-white rounded-full love-eq-bar" style={{ animationDelay: "0.15s" }} />
+            <span className="w-[2.5px] bg-white rounded-full love-eq-bar" style={{ animationDelay: "0.3s" }} />
           </div>
         ) : (
           <span className="text-xs lg:text-sm">{active ? "🎵" : "🎶"}</span>
@@ -54,20 +58,85 @@ const TrackRow = memo(function TrackRow({
       </div>
 
       <style jsx>{`
-        .eq-bar { animation: eq 0.6s ease-in-out infinite alternate; }
-        @keyframes eq { 0% { height: 3px; } 100% { height: 12px; } }
+        .love-eq-bar { animation: love-eq 0.6s ease-in-out infinite alternate; }
+        @keyframes love-eq { 0% { height: 3px; } 100% { height: 12px; } }
       `}</style>
     </button>
   );
 });
 
-export default memo(function MusicSection({ data }: Props) {
+export default memo(function MusicSection({ data, onPlayStateChange }: Props) {
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [liked, setLiked] = useState<Set<number>>(new Set([0, 2]));
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const rafRef = useRef<number>(0);
 
   const tracks = data.musicTracks;
   const song = tracks[current];
+
+  const updateProgress = useCallback(() => {
+    const a = audioRef.current;
+    if (a && a.duration) {
+      setProgress(a.currentTime);
+      setDuration(a.duration);
+    }
+    rafRef.current = requestAnimationFrame(updateProgress);
+  }, []);
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (a) {
+      a.pause();
+      a.src = "";
+    }
+
+    const src = song?.src;
+    if (!src) return;
+
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audioRef.current = audio;
+
+    audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
+    audio.addEventListener("ended", () => {
+      setCurrent((c) => (c + 1) % tracks.length);
+    });
+
+    if (playing) {
+      audio.play().catch(() => {});
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(updateProgress);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      audio.pause();
+      audio.src = "";
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, tracks.length]);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) {
+      a.play().catch(() => {});
+      rafRef.current = requestAnimationFrame(updateProgress);
+      onPlayStateChange?.(true);
+    } else {
+      a.pause();
+      cancelAnimationFrame(rafRef.current);
+      onPlayStateChange?.(false);
+    }
+  }, [playing, updateProgress, onPlayStateChange]);
 
   const next = useCallback(() => { setCurrent((c) => (c + 1) % tracks.length); setPlaying(true); }, [tracks.length]);
   const prev = useCallback(() => { setCurrent((c) => (c - 1 + tracks.length) % tracks.length); setPlaying(true); }, [tracks.length]);
@@ -78,7 +147,22 @@ export default memo(function MusicSection({ data }: Props) {
     setLiked((prev) => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s; });
   }, []);
 
+  const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const a = audioRef.current;
+    if (!a || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    a.currentTime = pct * duration;
+    setProgress(a.currentTime);
+  }, [duration]);
+
   const gradient = GRADIENTS[current % GRADIENTS.length];
+
+  const fmtTime = useCallback((s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  }, []);
 
   const trackList = useMemo(() =>
     tracks.map((t, i) => (
@@ -109,7 +193,6 @@ export default memo(function MusicSection({ data }: Props) {
       <div className="absolute inset-0 -z-10 pointer-events-none"
         style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(236,72,153,0.06) 0%, transparent 70%)" }} />
 
-      {/* Title */}
       <div className="text-center pt-6 pb-3 px-4 shrink-0 lg:pt-8">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-0.5"
           style={{ background: "linear-gradient(135deg, #e11d48, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
@@ -118,12 +201,8 @@ export default memo(function MusicSection({ data }: Props) {
         <p className="text-muted-foreground text-[11px] lg:text-sm">Songs that tell our story</p>
       </div>
 
-      {/* Main content — fits in one screen */}
       <div className="flex-1 flex flex-col min-h-0 px-4 pb-24 lg:flex-row lg:gap-8 lg:max-w-6xl xl:max-w-7xl lg:mx-auto lg:w-full lg:pb-8 lg:px-8">
-
-        {/* Player Card — bigger on desktop */}
         <div className="shrink-0 rounded-2xl border border-pink-200/30 dark:border-pink-800/20 bg-white dark:bg-slate-900 shadow-md p-4 lg:w-[340px] lg:p-6 lg:self-start">
-          {/* Album art + info */}
           <div className="flex items-center gap-3.5 mb-3.5 lg:flex-col lg:items-stretch lg:gap-4">
             <motion.div
               animate={playing ? { rotate: 360 } : {}}
@@ -145,18 +224,25 @@ export default memo(function MusicSection({ data }: Props) {
             </div>
           </div>
 
-          {/* Progress */}
           <div className="mb-3">
-            <div className="h-1 bg-pink-100 dark:bg-pink-900/30 rounded-full overflow-hidden">
-              <motion.div className="h-full rounded-full" style={{ background: gradient }}
-                animate={playing ? { width: ["0%", "100%"] } : { width: "30%" }}
-                transition={playing ? { duration: 25, ease: "linear" } : {}}
+            <div
+              className="h-1 bg-pink-100 dark:bg-pink-900/30 rounded-full overflow-hidden cursor-pointer"
+              onClick={handleSeek}
+            >
+              <div
+                className="h-full rounded-full transition-[width] duration-200"
+                style={{
+                  background: gradient,
+                  width: duration > 0 ? `${(progress / duration) * 100}%` : "0%",
+                }}
               />
             </div>
-            <div className="flex justify-between text-[8px] text-muted-foreground/50 mt-0.5"><span>0:00</span><span>{song.duration}</span></div>
+            <div className="flex justify-between text-[8px] text-muted-foreground/50 mt-0.5">
+              <span>{fmtTime(progress)}</span>
+              <span>{fmtTime(duration)}</span>
+            </div>
           </div>
 
-          {/* Controls */}
           <div className="flex items-center justify-center gap-5 lg:gap-6">
             <button onClick={prev} className="text-foreground/35 hover:text-foreground active:scale-90 transition-all"><SkipBack size={18} className="lg:w-5 lg:h-5" /></button>
             <button onClick={togglePlay}
@@ -168,7 +254,6 @@ export default memo(function MusicSection({ data }: Props) {
           </div>
         </div>
 
-        {/* Playlist — scrollable within its space */}
         <div className="flex-1 min-h-0 mt-3 lg:mt-0 rounded-2xl border border-pink-200/30 dark:border-pink-800/20 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 pt-3 pb-2 lg:px-5 lg:pt-4 lg:pb-3 shrink-0 border-b border-pink-100/50 dark:border-pink-900/20">
             <p className="text-[10px] lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Playlist · {tracks.length} songs</p>
