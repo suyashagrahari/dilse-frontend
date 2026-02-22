@@ -46,23 +46,23 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
       exit={{ opacity: 0 }}
       className="h-screen flex flex-col relative overflow-y-auto overflow-x-hidden"
     >
-      {/* BG */}
+      {/* Full background with eid-family-wish */}
       <div className="absolute inset-0">
         <Image
-          src={data.heroImage}
-          alt="Eid"
+          src="/assets/Eid/eid-family-wish.png"
+          alt="Eid Mubarak"
           fill
-          className="object-cover"
+          className="object-cover object-top"
           priority
           sizes="100vw"
+          style={{ opacity: 0.12 }}
         />
       </div>
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, hsl(var(--eid-bg) / 0.55) 0%, hsl(var(--eid-bg) / 0.4) 20%, hsl(var(--eid-bg) / 0.75) 50%, hsl(var(--eid-bg) / 0.95) 75%, hsl(var(--eid-bg)) 100%)",
-          backdropFilter: "blur(4px)",
+            "linear-gradient(180deg, hsl(var(--eid-bg) / 0.4) 0%, hsl(var(--eid-bg) / 0.55) 30%, hsl(var(--eid-bg) / 0.5) 60%, hsl(var(--eid-bg) / 0.65) 85%, hsl(var(--eid-bg) / 0.8) 100%)",
         }}
       />
 

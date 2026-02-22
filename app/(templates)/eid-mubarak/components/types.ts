@@ -41,6 +41,7 @@ export interface Track {
   title: string;
   artist: string;
   duration: string;
+  src?: string;
 }
 
 export interface FamilyMember {
@@ -86,7 +87,7 @@ export const DEMO_DATA: EidData = {
       urdu: "عید کی خوشیاں آپ پر نچھاور ہوں",
       english: "May Eid's happiness shower upon you",
       emoji: "🕌",
-      image: "/assets/Eid/hero_eid.jpeg",
+      image: "/assets/Eid/eid_mubarak.jpeg",
       accent: "#3A8F7D",
       paragraph: "عید الفطر کا یہ مبارک موقع آپ کی زندگی میں بے شمار خوشیاں، برکتیں اور سکون لائے۔ اللہ تعالیٰ آپ کی تمام دعائیں قبول فرمائے۔",
       paragraphEn: "May this blessed occasion of Eid al-Fitr bring countless happiness, blessings and peace to your life. May Allah accept all your prayers.",
@@ -106,7 +107,7 @@ export const DEMO_DATA: EidData = {
       urdu: "عید کا یہ خوبصورت دن مبارک ہو",
       english: "Blessed be this beautiful day of Eid",
       emoji: "⭐",
-      image: "/assets/Eid/hero_eid.jpeg",
+      image: "/assets/Eid/eid_mubarak.jpeg",
       accent: "#E0C96E",
       paragraph: "آج کا دن خوشیوں کا دن ہے، محبت بانٹنے کا دن ہے۔ آئیے مل کر اس خوبصورت دن کو یادگار بنائیں۔",
       paragraphEn: "Today is a day of joy, a day of sharing love. Let us make this beautiful day memorable together.",
@@ -126,7 +127,7 @@ export const DEMO_DATA: EidData = {
       urdu: "عید کی رونقیں آپ کے گھر میں ہمیشہ رہیں",
       english: "May Eid's joy always remain in your home",
       emoji: "🏡",
-      image: "/assets/Eid/hero_eid.jpeg",
+      image: "/assets/Eid/eid_mubarak.jpeg",
       accent: "#5A9E8F",
       paragraph: "عید کی یہ رونقیں، خوشیاں اور مسرتیں آپ کے گھر میں ہمیشہ قائم رہیں۔",
       paragraphEn: "May the festivities, happiness, and joy of Eid always remain in your home.",
@@ -146,7 +147,7 @@ export const DEMO_DATA: EidData = {
       urdu: "اللہ کا نور آپ کی راہوں کو روشن کرے",
       english: "May Allah's light brighten your path",
       emoji: "✨",
-      image: "/assets/Eid/hero_eid.jpeg",
+      image: "/assets/Eid/eid_mubarak.jpeg",
       accent: "#8FD4C7",
       paragraph: "عید کی یہ روشنی آپ کی زندگی کے ہر لمحے کو منور کرے۔ اللہ آپ کو ہمیشہ سیدھے راستے پر چلائے۔",
       paragraphEn: "May the light of Eid illuminate every moment of your life. May Allah always guide you on the straight path.",
@@ -197,11 +198,11 @@ export const DEMO_DATA: EidData = {
     },
   ],
   playlist: [
-    { title: "Eid Mubarak", artist: "Sami Yusuf", duration: "4:32" },
-    { title: "Tala Al Badru Alayna", artist: "Traditional", duration: "3:45" },
-    { title: "Ya Mustafa", artist: "Maher Zain", duration: "5:01" },
-    { title: "Ramadan", artist: "Maher Zain", duration: "4:18" },
-    { title: "Eid Song", artist: "Native Deen", duration: "3:55" },
-    { title: "Hasbi Rabbi", artist: "Sami Yusuf", duration: "4:47" },
+    { title: "Eid Mubarak", artist: "Sami Yusuf", duration: "4:32", src: "/assets/Eid/music/eidmubarak.mp3" },
+    { title: "Tala Al Badru Alayna", artist: "Traditional", duration: "3:45", src: "/assets/Eid/music/talaalbadaru.mp3" },
+    { title: "Ya Mustafa", artist: "Maher Zain", duration: "5:01", src: "/assets/Eid/music/yamustafa.mp3" },
+    { title: "Ramadan", artist: "Maher Zain", duration: "4:18", src: "/assets/Eid/music/ramadan.mp3" },
+    { title: "Eid Ki Raat", artist: "Traditional", duration: "3:55", src: "/assets/Eid/music/eidkiraat2.mp3" },
+    { title: "Hasbi Rabbi", artist: "Sami Yusuf", duration: "4:47", src: "/assets/Eid/music/hasbirabbi.mp3" },
   ],
 };

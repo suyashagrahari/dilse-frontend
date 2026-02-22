@@ -3,6 +3,7 @@
 import { memo, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 import StarField from "./StarField";
 import type { EidData, DuaItem } from "./types";
 
@@ -28,10 +29,11 @@ const DuaModal = memo(function DuaModal({
         onClick={onClose}
       />
       <motion.div
-        className="relative rounded-2xl p-6 max-w-md w-full shadow-xl"
+        className="relative rounded-3xl max-w-md w-full shadow-2xl overflow-hidden"
         style={{
           background: "hsl(var(--eid-card))",
           border: "1px solid hsl(var(--eid-border))",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(197,160,63,0.08)",
         }}
         initial={{ scale: 0.85, opacity: 0, y: 30 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -39,14 +41,64 @@ const DuaModal = memo(function DuaModal({
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={stopProp}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3"
-          style={{ color: "hsl(var(--eid-muted-fg))" }}
-        >
-          <X size={20} />
-        </button>
-        <div className="text-center">
+        {/* Image header */}
+        <div className="relative overflow-hidden" style={{ height: 140 }}>
+          <Image
+            src="/assets/Eid/eid-dua.png"
+            alt="Eid Dua"
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 28rem) 100vw, 448px"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(197,160,63,0.15) 0%, transparent 40%, rgba(0,0,0,0.4) 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(58,143,125,0.2) 0%, transparent 50%, rgba(197,160,63,0.15) 100%)",
+            }}
+          />
+          {[...Array(5)].map((_, j) => (
+            <motion.div
+              key={j}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                left: `${15 + (j * 16) % 70}%`,
+                top: `${20 + (j * 14) % 50}%`,
+                background: `rgba(197,160,63,${0.3 + (j % 3) * 0.15})`,
+              }}
+              animate={{ scale: [1, 1.6, 1], opacity: [0.3, 0.8, 0.3] }}
+              transition={{
+                duration: 2 + (j % 2),
+                delay: j * 0.25,
+                repeat: Infinity,
+              }}
+            />
+          ))}
+          <div className="absolute inset-x-0 bottom-0 p-3 text-center">
+            <span className="text-2xl drop-shadow-lg">{dua.emoji}</span>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <X size={14} className="text-white" />
+          </button>
+        </div>
+
+        <div className="p-6 text-center">
           <div className="flex justify-center gap-2 mb-3" style={{ color: "rgba(197,160,63,0.4)" }}>
             <span>✦</span><span>❋</span><span>✦</span>
           </div>
@@ -112,37 +164,62 @@ const DuaSection = memo(function DuaSection({ data }: { data: EidData }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-28 lg:pb-8 relative z-10 scrollbar-hide">
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-2 gap-3.5 pt-2 lg:max-w-2xl lg:mx-auto">
           {duas.map((dua, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.8, rotate: -3 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ delay: i * 0.1, duration: 0.5, type: "spring" }}
-              whileHover={{ scale: 1.04, rotate: 1 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setSelected(dua)}
               className="eid-shimmer-border rounded-2xl cursor-pointer"
             >
               <div
-                className="rounded-2xl p-4 h-full flex flex-col items-center justify-center text-center min-h-[140px]"
-                style={{ background: "hsl(var(--eid-card))" }}
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  background: "hsl(var(--eid-card))",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                }}
               >
-                <span className="text-3xl mb-2">{dua.emoji}</span>
-                <p
-                  className="text-sm leading-relaxed"
-                  dir="rtl"
-                  lang="ur"
-                  style={{ color: "hsl(var(--eid-fg))", fontFamily: "'Noto Nastaliq Urdu', serif" }}
-                >
-                  {dua.title}
-                </p>
-                <p
-                  className="text-[11px] mt-1"
-                  style={{ color: "hsl(var(--eid-muted-fg))", fontFamily: "'DM Sans', sans-serif" }}
-                >
-                  {dua.titleEn}
-                </p>
+                {/* Image header */}
+                <div className="relative h-28 sm:h-32 overflow-hidden">
+                  <Image
+                    src="/assets/Eid/eid-dua.png"
+                    alt=""
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width:768px) 50vw, 25vw"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: "linear-gradient(180deg, rgba(197,160,63,0.1) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)",
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-4xl drop-shadow-lg">{dua.emoji}</span>
+                  </div>
+                </div>
+
+                {/* Text content below image */}
+                <div className="p-3 text-center">
+                  <p
+                    className="text-sm sm:text-base leading-relaxed font-medium"
+                    dir="rtl"
+                    lang="ur"
+                    style={{ color: "hsl(var(--eid-fg))", fontFamily: "'Noto Nastaliq Urdu', serif" }}
+                  >
+                    {dua.title}
+                  </p>
+                  <p
+                    className="text-[11px] sm:text-xs mt-1"
+                    style={{ color: "hsl(var(--eid-muted-fg))", fontFamily: "'DM Sans', sans-serif" }}
+                  >
+                    {dua.titleEn}
+                  </p>
+                </div>
               </div>
             </motion.div>
           ))}

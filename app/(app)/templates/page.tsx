@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -452,12 +453,30 @@ function TemplatesContent() {
                         whileTap={{ scale: 0.97 }}
                       >
                         <div className="absolute inset-0 bg-card" />
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${colors.light} dark:hidden`}
-                        />
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${colors.dark} hidden dark:block`}
-                        />
+
+                        {template.coverImage ? (
+                          <>
+                            <div className="absolute inset-0">
+                              <Image
+                                src={template.coverImage}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                sizes="(max-width:768px) 50vw, 25vw"
+                              />
+                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${colors.light} dark:hidden`}
+                            />
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${colors.dark} hidden dark:block`}
+                            />
+                          </>
+                        )}
 
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/5 via-transparent to-transparent dark:from-primary/10" />
                         <div
@@ -467,7 +486,11 @@ function TemplatesContent() {
                         <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
                           <div className="flex items-start justify-between">
                             <motion.div
-                              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/60 dark:bg-white/[0.08] backdrop-blur-sm border border-white/40 dark:border-white/[0.06] flex items-center justify-center shadow-sm"
+                              className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-sm ${
+                                template.coverImage
+                                  ? "bg-black/30 border border-white/20"
+                                  : "bg-white/60 dark:bg-white/[0.08] border border-white/40 dark:border-white/[0.06]"
+                              }`}
                               whileHover={{
                                 rotate: [0, -8, 8, 0],
                                 scale: 1.1,
@@ -488,18 +511,42 @@ function TemplatesContent() {
 
                           <div>
                             <div className="mb-2">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-foreground/[0.06] dark:bg-white/[0.08] text-muted-foreground">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                  template.coverImage
+                                    ? "bg-white/15 text-white/80 backdrop-blur-sm"
+                                    : "bg-foreground/[0.06] dark:bg-white/[0.08] text-muted-foreground"
+                                }`}
+                              >
                                 {template.type}
                               </span>
                             </div>
-                            <h3 className="font-bold text-foreground text-sm md:text-[15px] leading-tight mb-1.5 group-hover:text-primary transition-colors duration-300">
+                            <h3
+                              className={`font-bold text-sm md:text-[15px] leading-tight mb-1.5 transition-colors duration-300 ${
+                                template.coverImage
+                                  ? "text-white drop-shadow-md"
+                                  : "text-foreground group-hover:text-primary"
+                              }`}
+                            >
                               {template.title}
                             </h3>
-                            <p className="text-muted-foreground text-[11px] md:text-xs leading-relaxed line-clamp-2">
+                            <p
+                              className={`text-[11px] md:text-xs leading-relaxed line-clamp-2 ${
+                                template.coverImage
+                                  ? "text-white/70"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
                               {template.description}
                             </p>
                             <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-                              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                              <span
+                                className={`text-[10px] font-bold uppercase tracking-wider ${
+                                  template.coverImage
+                                    ? "text-white"
+                                    : "text-primary"
+                                }`}
+                              >
                                 Open
                               </span>
                               <svg
@@ -507,7 +554,11 @@ function TemplatesContent() {
                                 height="12"
                                 viewBox="0 0 12 12"
                                 fill="none"
-                                className="text-primary"
+                                className={
+                                  template.coverImage
+                                    ? "text-white"
+                                    : "text-primary"
+                                }
                               >
                                 <path
                                   d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9"
@@ -521,7 +572,9 @@ function TemplatesContent() {
                           </div>
                         </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-card/40 dark:from-card/60 to-transparent pointer-events-none" />
+                        {!template.coverImage && (
+                          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-card/40 dark:from-card/60 to-transparent pointer-events-none" />
+                        )}
                       </motion.div>
                     </Link>
                   </motion.div>

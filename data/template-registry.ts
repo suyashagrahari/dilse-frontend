@@ -48,6 +48,7 @@ function toListItem(c: typeof allConfigs[number]): TemplateListItem {
     emoji: c.emoji,
     color: c.color,
     bgGradient: c.bgGradient,
+    coverImage: c.coverImage,
   };
 }
 

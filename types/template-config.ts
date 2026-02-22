@@ -39,6 +39,7 @@ export interface TemplatePageConfig {
   previewText: string;
   bodyText: string;
   bgGradient: string;
+  coverImage?: string;
 
   tabs: TabConfig[];
   navActiveColor: string;
@@ -61,4 +62,5 @@ export interface TemplateListItem {
   emoji: string;
   color: string;
   bgGradient: string;
+  coverImage?: string;
 }

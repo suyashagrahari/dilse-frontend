@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import { useEidEditor } from "./hooks/useEidEditor";
@@ -14,6 +14,8 @@ import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
+import EidBackgroundMusic from "./components/EidBackgroundMusic";
+import EidWelcomeOverlay from "./components/EidWelcomeOverlay";
 
 const WishSection = lazy(() => import("./components/WishSection"));
 const GreetingsSection = lazy(() => import("./components/GreetingsSection"));
@@ -39,6 +41,24 @@ function TabFallback() {
 
 export default function EidMubarakPage() {
   const editor = useEidEditor();
+  const [welcomed, setWelcomed] = useState(false);
+  const [playMusic, setPlayMusic] = useState(false);
+  const [playlistActive, setPlaylistActive] = useState(false);
+
+  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
+    setPlayMusic(withMusic);
+    setWelcomed(true);
+  }, []);
+
+  const handlePlaylistStateChange = useCallback((isPlaying: boolean) => {
+    setPlaylistActive(isPlaying);
+  }, []);
+
+  useEffect(() => {
+    if (editor.tab !== "playlist") {
+      setPlaylistActive(false);
+    }
+  }, [editor.tab]);
 
   if (!editor.themeReady) return null;
 
@@ -47,6 +67,14 @@ export default function EidMubarakPage() {
       className="h-screen relative overflow-hidden"
       style={{ background: "hsl(var(--eid-bg))", color: "hsl(var(--eid-fg))" }}
     >
+      {!welcomed && (
+        <EidWelcomeOverlay
+          senderName={editor.content.senderName}
+          recipientName={editor.content.recipientName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
+
       <StarField count={20} />
 
       <DesktopSidebar
@@ -97,7 +125,7 @@ export default function EidMubarakPage() {
           {editor.tab === "playlist" && (
             <motion.div key="playlist" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
-                <PlaylistSection data={editor.content} />
+                <PlaylistSection data={editor.content} onPlayStateChange={handlePlaylistStateChange} />
               </Suspense>
             </motion.div>
           )}
@@ -152,6 +180,8 @@ export default function EidMubarakPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+
+      <EidBackgroundMusic shouldPlay={playMusic} paused={playlistActive} />
 
       <AnimatePresence>
         {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}

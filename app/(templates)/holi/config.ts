@@ -14,6 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Wishing you joy, colors, and countless blessings this Holi.",
   bgGradient: "from-pink-50 via-orange-50 to-yellow-50",
+  coverImage: "/assets/Holi/hero_holi.png",
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "wish", icon: Gift, label: "Wish" },

@@ -48,41 +48,63 @@ const GreetingModal = memo(function GreetingModal({
         transition={{ type: "spring", stiffness: 280, damping: 24 }}
         onClick={stopProp}
       >
-        {/* Header with image */}
-        <div className="relative overflow-hidden" style={{ height: 120 }}>
+        {/* Header with eid_mubarak image */}
+        <div className="relative overflow-hidden" style={{ height: 180 }}>
+          <Image
+            src="/assets/Eid/eid_mubarak.jpeg"
+            alt={card.title}
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 28rem) 100vw, 448px"
+          />
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(135deg, ${card.accent}30, rgba(197,160,63,0.15), ${card.accent}20)`,
+              background: `linear-gradient(135deg, ${card.accent}50, rgba(197,160,63,0.3), ${card.accent}40)`,
             }}
           />
           <div
-            className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-15"
+            className="absolute inset-0"
             style={{
-              background: `linear-gradient(135deg, ${card.accent}, var(--eid-gold))`,
+              background:
+                "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%)",
             }}
           />
-          <div
-            className="absolute -bottom-6 -left-6 w-16 h-16 rounded-full opacity-10"
-            style={{
-              background: `linear-gradient(135deg, var(--eid-gold), ${card.accent})`,
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
+          {[...Array(6)].map((_, j) => (
             <motion.div
-              animate={{ y: [0, -5, 0], rotate: [0, 3, -3, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
+              key={j}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                left: `${14 + (j * 13) % 72}%`,
+                top: `${18 + (j * 11) % 55}%`,
+                background: `rgba(197,160,63,${0.3 + (j % 3) * 0.1})`,
+              }}
+              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.7, 0.3] }}
+              transition={{
+                duration: 2 + (j % 3),
+                delay: j * 0.3,
+                repeat: Infinity,
+              }}
+            />
+          ))}
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <motion.h3
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-lg font-bold text-white drop-shadow-lg"
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}
             >
-              <span className="text-5xl drop-shadow-lg">💌</span>
-            </motion.div>
+              {card.title}
+            </motion.h3>
           </div>
 
           <button
             onClick={onClose}
             className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"
             style={{
-              background: "rgba(0,0,0,0.4)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(0,0,0,0.45)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              backdropFilter: "blur(8px)",
             }}
           >
             <X size={14} className="text-white" />
@@ -254,7 +276,7 @@ const GreetingCardItem = memo(function GreetingCardItem({
       }}
     >
       {/* Image header */}
-      <div className="relative h-32 lg:h-36 overflow-hidden">
+      <div className="relative h-36 lg:h-40 overflow-hidden">
         <Image
           src={card.image}
           alt={card.title}
@@ -265,23 +287,26 @@ const GreetingCardItem = memo(function GreetingCardItem({
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(180deg, ${card.accent}40 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.6) 100%)`,
+            background: `linear-gradient(180deg, ${card.accent}35 0%, transparent 35%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.7) 100%)`,
           }}
         />
         <div
-          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-sm"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"
           style={{
-            background: `${card.accent}30`,
-            border: `1px solid ${card.accent}50`,
-            backdropFilter: "blur(8px)",
+            background: `${card.accent}40`,
+            border: `1px solid ${card.accent}60`,
+            backdropFilter: "blur(10px)",
           }}
         >
           {card.emoji}
         </div>
-        <div className="absolute inset-x-0 bottom-0 p-3">
+        <div className="absolute inset-x-0 bottom-0 p-3.5">
           <h3
-            className="text-base lg:text-lg font-bold text-white leading-tight"
-            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+            className="text-base lg:text-lg font-bold text-white leading-tight drop-shadow-lg"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}
           >
             {card.title}
           </h3>
