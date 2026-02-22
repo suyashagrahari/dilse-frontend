@@ -46,6 +46,20 @@ const gradientColorMap: Record<
   },
 };
 
+const COMING_SOON_IMAGES: Record<string, string> = {
+  "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.png",
+  "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.png",
+  "birthday-parents": "/assets/TemplateComingSoon/happybirthdaymomanddad.png",
+  "birthday-bestfriend": "/assets/TemplateComingSoon/happybirhtday2.png",
+  "valentine-gf": "/assets/TemplateComingSoon/valentine.png",
+  "valentine-bestfriend": "/assets/TemplateComingSoon/galentine.png",
+  "sorry-gf": "/assets/TemplateComingSoon/sorry1.png",
+  "sorry-friend": "/assets/TemplateComingSoon/sorry2.png",
+  "missyou-gf": "/assets/TemplateComingSoon/missyou1.png",
+  "missyou-bestfriend": "/assets/TemplateComingSoon/missyou1.png",
+  "anniversary-parents": "/assets/TemplateComingSoon/wddinganiversary.png",
+};
+
 const allTypes = [
   { id: "all", label: "All Types", emoji: "✨" },
   ...templateTypes,
@@ -421,191 +435,220 @@ function TemplatesContent() {
       {/* Grid */}
       <div className="px-4 pb-8">
         <div className="container">
-          <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
-              {filtered.map((template, i) => {
-                const isFav = favSlugs.includes(template.slug);
-                const colors =
-                  gradientColorMap[template.type] ||
-                  gradientColorMap.birthday;
+          {(() => {
+            const readyTemplates = filtered.filter((t) => t.coverImage);
+            const comingSoonTemplates = filtered.filter((t) => !t.coverImage);
 
-                return (
-                  <motion.div
-                    key={template.slug}
-                    layout
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{
-                      delay: i * 0.03,
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 25,
-                    }}
-                  >
-                    <Link
-                      href={`/${template.slug}`}
-                      className="block group"
-                    >
-                      <motion.div
-                        className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden border border-border/50 dark:border-white/[0.06] transition-all duration-300"
-                        whileHover={{ y: -6, scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
-                      >
-                        <div className="absolute inset-0 bg-card" />
+            return (
+              <>
+                {readyTemplates.length > 0 && (
+                  <AnimatePresence mode="popLayout">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+                      {readyTemplates.map((template, i) => {
+                        const isFav = favSlugs.includes(template.slug);
 
-                        {template.coverImage ? (
-                          <>
-                            <div className="absolute inset-0">
-                              <Image
-                                src={template.coverImage}
-                                alt=""
-                                fill
-                                className="object-cover"
-                                sizes="(max-width:768px) 50vw, 25vw"
-                              />
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
-                          </>
-                        ) : (
-                          <>
-                            <div
-                              className={`absolute inset-0 bg-gradient-to-br ${colors.light} dark:hidden`}
-                            />
-                            <div
-                              className={`absolute inset-0 bg-gradient-to-br ${colors.dark} hidden dark:block`}
-                            />
-                          </>
-                        )}
+                        return (
+                          <motion.div
+                            key={template.slug}
+                            layout
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{
+                              delay: i * 0.03,
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 25,
+                            }}
+                          >
+                            <Link href={`/${template.slug}`} className="block group">
+                              <motion.div
+                                className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden border border-border/50 dark:border-white/[0.06] transition-all duration-300"
+                                whileHover={{ y: -6, scale: 1.02 }}
+                                whileTap={{ scale: 0.97 }}
+                              >
+                                <div className="absolute inset-0 bg-card" />
+                                <div className="absolute inset-0">
+                                  <Image
+                                    src={template.coverImage!}
+                                    alt=""
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width:768px) 50vw, 25vw"
+                                  />
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
 
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/5 via-transparent to-transparent dark:from-primary/10" />
-                        <div
-                          className={`absolute top-0 left-0 right-0 h-[2px] ${colors.accent} opacity-0 group-hover:opacity-60 transition-opacity duration-300`}
-                        />
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/5 via-transparent to-transparent dark:from-primary/10" />
 
-                        <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
-                          <div className="flex items-start justify-between">
+                                <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
+                                  <div className="flex items-start justify-between">
+                                    <motion.div
+                                      className="w-12 h-12 md:w-14 md:h-14 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-sm bg-black/30 border border-white/20"
+                                      whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }}
+                                      transition={{ duration: 0.5 }}
+                                    >
+                                      <span className="text-2xl md:text-3xl">{template.emoji}</span>
+                                    </motion.div>
+                                    <FavoriteButton
+                                      isFavorited={isFav}
+                                      onClick={(e) => handleFavorite(e, template.slug)}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <div className="mb-2">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/15 text-white/80 backdrop-blur-sm">
+                                        {template.type}
+                                      </span>
+                                    </div>
+                                    <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1.5 text-white drop-shadow-md">
+                                      {template.title}
+                                    </h3>
+                                    <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2 text-white/70">
+                                      {template.description}
+                                    </p>
+                                    <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-white">
+                                        Open
+                                      </span>
+                                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white">
+                                        <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            </Link>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </AnimatePresence>
+                )}
+
+                {comingSoonTemplates.length > 0 && (
+                  <>
+                    <div className="mt-10 mb-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border/40 dark:bg-white/[0.06]" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
+                        <span className="text-sm">🚀</span> Coming Soon
+                      </span>
+                      <div className="h-px flex-1 bg-border/40 dark:bg-white/[0.06]" />
+                    </div>
+
+                    <AnimatePresence mode="popLayout">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+                        {comingSoonTemplates.map((template, i) => {
+                          const comingSoonImg = COMING_SOON_IMAGES[template.slug];
+
+                          return (
                             <motion.div
-                              className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-sm ${
-                                template.coverImage
-                                  ? "bg-black/30 border border-white/20"
-                                  : "bg-white/60 dark:bg-white/[0.08] border border-white/40 dark:border-white/[0.06]"
-                              }`}
-                              whileHover={{
-                                rotate: [0, -8, 8, 0],
-                                scale: 1.1,
+                              key={template.slug}
+                              layout
+                              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{
+                                delay: i * 0.03,
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 25,
                               }}
-                              transition={{ duration: 0.5 }}
                             >
-                              <span className="text-2xl md:text-3xl">
-                                {template.emoji}
-                              </span>
+                              <div className="block relative">
+                                <motion.div
+                                  className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden border border-white/[0.06] transition-all duration-300"
+                                >
+                                  <div className="absolute inset-0 bg-black" />
+                                  {comingSoonImg && (
+                                    <div className="absolute inset-0">
+                                      <Image
+                                        src={comingSoonImg}
+                                        alt=""
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width:768px) 50vw, 25vw"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/75" />
+
+                                  <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
+                                    <div className="flex items-start">
+                                      <div
+                                        className="w-12 h-12 md:w-14 md:h-14 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-sm bg-black/30 border border-white/15"
+                                      >
+                                        <span className="text-2xl md:text-3xl">{template.emoji}</span>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <div className="mb-2">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/70 backdrop-blur-sm">
+                                          {template.type}
+                                        </span>
+                                      </div>
+                                      <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1.5 text-white drop-shadow-md">
+                                        {template.title}
+                                      </h3>
+                                      <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2 text-white/60">
+                                        {template.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+
+                                <div className="absolute inset-0 rounded-2xl md:rounded-3xl flex items-center justify-center z-20 pointer-events-none">
+                                  <div
+                                    className="px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest"
+                                    style={{
+                                      background: "rgba(0,0,0,0.6)",
+                                      backdropFilter: "blur(10px)",
+                                      WebkitBackdropFilter: "blur(10px)",
+                                      color: "rgba(255,255,255,0.9)",
+                                      border: "1px solid rgba(255,255,255,0.15)",
+                                      boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+                                    }}
+                                  >
+                                    Coming Soon
+                                  </div>
+                                </div>
+                              </div>
                             </motion.div>
-                            <FavoriteButton
-                              isFavorited={isFav}
-                              onClick={(e) =>
-                                handleFavorite(e, template.slug)
-                              }
-                            />
-                          </div>
+                          );
+                        })}
+                      </div>
+                    </AnimatePresence>
+                  </>
+                )}
 
-                          <div>
-                            <div className="mb-2">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                  template.coverImage
-                                    ? "bg-white/15 text-white/80 backdrop-blur-sm"
-                                    : "bg-foreground/[0.06] dark:bg-white/[0.08] text-muted-foreground"
-                                }`}
-                              >
-                                {template.type}
-                              </span>
-                            </div>
-                            <h3
-                              className={`font-bold text-sm md:text-[15px] leading-tight mb-1.5 transition-colors duration-300 ${
-                                template.coverImage
-                                  ? "text-white drop-shadow-md"
-                                  : "text-foreground group-hover:text-primary"
-                              }`}
-                            >
-                              {template.title}
-                            </h3>
-                            <p
-                              className={`text-[11px] md:text-xs leading-relaxed line-clamp-2 ${
-                                template.coverImage
-                                  ? "text-white/70"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              {template.description}
-                            </p>
-                            <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-                              <span
-                                className={`text-[10px] font-bold uppercase tracking-wider ${
-                                  template.coverImage
-                                    ? "text-white"
-                                    : "text-primary"
-                                }`}
-                              >
-                                Open
-                              </span>
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 12 12"
-                                fill="none"
-                                className={
-                                  template.coverImage
-                                    ? "text-white"
-                                    : "text-primary"
-                                }
-                              >
-                                <path
-                                  d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-
-                        {!template.coverImage && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-card/40 dark:from-card/60 to-transparent pointer-events-none" />
-                        )}
-                      </motion.div>
-                    </Link>
+                {filtered.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-20"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                      <Search size={24} className="text-muted-foreground" />
+                    </div>
+                    <p className="text-foreground font-semibold mb-1">
+                      No templates found
+                    </p>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Try adjusting your filters or search term
+                    </p>
+                    <button
+                      onClick={clearFilters}
+                      className="text-sm font-semibold text-primary hover:underline underline-offset-2"
+                    >
+                      Clear all filters
+                    </button>
                   </motion.div>
-                );
-              })}
-            </div>
-          </AnimatePresence>
-
-          {filtered.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                <Search size={24} className="text-muted-foreground" />
-              </div>
-              <p className="text-foreground font-semibold mb-1">
-                No templates found
-              </p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Try adjusting your filters or search term
-              </p>
-              <button
-                onClick={clearFilters}
-                className="text-sm font-semibold text-primary hover:underline underline-offset-2"
-              >
-                Clear all filters
-              </button>
-            </motion.div>
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>
