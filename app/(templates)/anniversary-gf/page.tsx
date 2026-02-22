@@ -1,8 +1,9 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
 
 import { useAnniversaryEditor } from "./hooks/useAnniversaryEditor";
@@ -14,6 +15,8 @@ import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
+import AnniversaryWelcomeOverlay from "./components/AnniversaryWelcomeOverlay";
+import AnniversaryBackgroundMusic from "./components/AnniversaryBackgroundMusic";
 
 const GamesTab = lazy(() => import("./components/GamesTab"));
 const GalleryTab = lazy(() => import("./components/GalleryTab"));
@@ -29,12 +32,63 @@ function TabFallback() {
 
 export default function AnniversaryGfPage() {
   const editor = useAnniversaryEditor();
+  const [welcomed, setWelcomed] = useState(false);
+  const [playMusic, setPlayMusic] = useState(false);
+  const [playlistActive, setPlaylistActive] = useState(false);
+
+  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
+    setPlayMusic(withMusic);
+    setWelcomed(true);
+  }, []);
+
+  const handlePlaylistStateChange = useCallback((isPlaying: boolean) => {
+    setPlaylistActive(isPlaying);
+  }, []);
+
+  useEffect(() => {
+    if (editor.tab !== "music") {
+      setPlaylistActive(false);
+    }
+  }, [editor.tab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50/40 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950 relative overflow-hidden">
+      {!welcomed && (
+        <AnniversaryWelcomeOverlay
+          senderName={editor.content.senderName}
+          recipientName={editor.content.recipientName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
+
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <Image
+          src="/assets/Aniversary/aniversary.png"
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+          style={{ opacity: editor.tab === "cover" ? 0.9 : 0.7 }}
+        />
+        <div
+          className="absolute inset-0 dark:hidden"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 hidden dark:block"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(2,6,23,0.4) 0%, rgba(2,6,23,0.6) 50%, rgba(2,6,23,0.4) 100%)",
+          }}
+        />
+      </div>
+
       <FloatingEmojis />
 
-      {/* Tab content */}
       <AnimatePresence mode="wait">
         {editor.tab === "cover" && (
           <CoverTab key="cover" data={editor.content} onNext={editor.goToGames} />
@@ -51,12 +105,11 @@ export default function AnniversaryGfPage() {
         )}
         {editor.tab === "music" && (
           <Suspense key="music-s" fallback={<TabFallback />}>
-            <MusicTab key="music" data={editor.content} />
+            <MusicTab key="music" data={editor.content} onPlayStateChange={handlePlaylistStateChange} />
           </Suspense>
         )}
       </AnimatePresence>
 
-      {/* Navigation */}
       <AnniversaryNav
         mode="editor"
         tab={editor.tab}
@@ -71,7 +124,6 @@ export default function AnniversaryGfPage() {
         showShare={editor.showShare}
       />
 
-      {/* Overlays */}
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
 
       <EditSheet
@@ -114,6 +166,8 @@ export default function AnniversaryGfPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+
+      <AnniversaryBackgroundMusic shouldPlay={playMusic} paused={playlistActive} />
 
       <AnimatePresence>
         {editor.showAuth && (

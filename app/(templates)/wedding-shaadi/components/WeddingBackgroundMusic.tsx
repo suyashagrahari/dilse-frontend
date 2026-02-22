@@ -111,18 +111,16 @@ const WeddingBackgroundMusic = memo(function WeddingBackgroundMusic({
       transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed bottom-28 right-4 lg:bottom-6 lg:right-6 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors"
+      className="fixed top-4 right-4 lg:top-5 lg:right-5 z-40 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
       style={{
-        background: muted ? "var(--wed-glass)" : "var(--wed-gradient-gold)",
-        backdropFilter: "blur(16px)",
-        border: "1px solid var(--wed-glass-border)",
-        boxShadow: muted
-          ? "0 4px 20px rgba(0,0,0,0.2)"
-          : "0 4px 20px var(--wed-gold-glow)",
+        background: "rgba(0,0,0,0.15)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.1)",
       }}
     >
       {muted ? (
-        <VolumeX size={16} style={{ color: "hsl(var(--wed-muted-fg))" }} />
+        <VolumeX size={16} style={{ color: "rgba(255,255,255,0.5)" }} />
       ) : (
         <motion.div
           animate={paused ? {} : { scale: [1, 1.15, 1] }}
@@ -130,7 +128,7 @@ const WeddingBackgroundMusic = memo(function WeddingBackgroundMusic({
         >
           <Volume2
             size={16}
-            style={{ color: paused ? "rgba(26,26,46,0.5)" : "#1a1a2e" }}
+            style={{ color: paused ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.7)" }}
           />
         </motion.div>
       )}

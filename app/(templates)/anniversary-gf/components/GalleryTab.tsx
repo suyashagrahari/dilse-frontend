@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { type ContentData } from "./types";
 
 const marqueeItems = [
@@ -43,6 +44,17 @@ const rightCards: PlaceholderCard[] = [
   { emoji: "⭐", bg: "linear-gradient(135deg, #eab308, #facc15)", glow: "rgba(234,179,8,0.2)", label: "Stargazing", letter: "I used to wish upon stars,\nbut then I found you.\nMy greatest wish came true, and I'm never letting go ⭐" },
 ];
 
+const DEFAULT_PHOTOS = [
+  "/assets/couple1.jpeg",
+  "/assets/couple2.jpeg",
+  "/assets/couple3.jpeg",
+  "/assets/couple4.jpeg",
+];
+
+function getPhotoForIndex(photos: string[], index: number): string {
+  return photos[index % photos.length];
+}
+
 const doubledLeft = [...leftCards, ...leftCards];
 const doubledRight = [...rightCards, ...rightCards];
 const doubledMarquee = [...marqueeItems, ...marqueeItems];
@@ -54,35 +66,45 @@ const TITLE_STYLE = {
 } as const;
 
 export default memo(function GalleryTab({ data }: { data: ContentData }) {
-  const [activeLetter, setActiveLetter] = useState<PlaceholderCard | null>(null);
-  const hasPhotos = data.galleryPhotos.length > 0;
-
+  const [activeLetter, setActiveLetter] = useState<{ card: PlaceholderCard; photo: string } | null>(null);
   const closeModal = useCallback(() => setActiveLetter(null), []);
+
+  const photos = data.galleryPhotos.length > 0 ? data.galleryPhotos : DEFAULT_PHOTOS;
+
+  const handleCardClick = useCallback((card: PlaceholderCard, photo: string) => {
+    setActiveLetter({ card, photo });
+  }, []);
 
   const leftElements = useMemo(
     () =>
-      doubledLeft.map((card, i) => (
-        <StoryCardItem
-          key={`l-${i}`}
-          card={card}
-          photoUrl={hasPhotos ? data.galleryPhotos[i % leftCards.length] : undefined}
-          onClick={setActiveLetter}
-        />
-      )),
-    [hasPhotos, data.galleryPhotos]
+      doubledLeft.map((card, i) => {
+        const photo = getPhotoForIndex(photos, i);
+        return (
+          <StoryCardItem
+            key={`l-${i}`}
+            card={card}
+            photoUrl={photo}
+            onClick={(c) => handleCardClick(c, photo)}
+          />
+        );
+      }),
+    [photos, handleCardClick]
   );
 
   const rightElements = useMemo(
     () =>
-      doubledRight.map((card, i) => (
-        <StoryCardItem
-          key={`r-${i}`}
-          card={card}
-          photoUrl={hasPhotos ? data.galleryPhotos[(i % rightCards.length) + leftCards.length] : undefined}
-          onClick={setActiveLetter}
-        />
-      )),
-    [hasPhotos, data.galleryPhotos]
+      doubledRight.map((card, i) => {
+        const photo = getPhotoForIndex(photos, i + 1);
+        return (
+          <StoryCardItem
+            key={`r-${i}`}
+            card={card}
+            photoUrl={photo}
+            onClick={(c) => handleCardClick(c, photo)}
+          />
+        );
+      }),
+    [photos, handleCardClick]
   );
 
   return (
@@ -149,7 +171,7 @@ export default memo(function GalleryTab({ data }: { data: ContentData }) {
 
       <AnimatePresence>
         {activeLetter && (
-          <LetterModal card={activeLetter} onClose={closeModal} />
+          <LetterModal card={activeLetter.card} photoUrl={activeLetter.photo} onClose={closeModal} />
         )}
       </AnimatePresence>
     </motion.div>
@@ -163,49 +185,32 @@ const StoryCardItem = memo(function StoryCardItem({
   onClick,
 }: {
   card: PlaceholderCard;
-  photoUrl?: string;
+  photoUrl: string;
   onClick: (c: PlaceholderCard) => void;
 }) {
   const handleClick = useCallback(() => onClick(card), [onClick, card]);
 
-  const cardStyle = useMemo(
-    () => ({
-      background: "var(--anni-card-bg)",
-      border: "1.5px solid var(--anni-card-border)",
-      boxShadow: `0 2px 12px ${card.glow}`,
-    }),
-    [card.glow]
-  );
-
   return (
     <button
       onClick={handleClick}
-      className="flex flex-col items-center w-full overflow-hidden rounded-2xl active:scale-[0.96] transition-transform duration-150"
-      style={cardStyle}
+      className="flex flex-col items-center w-full overflow-hidden rounded-2xl active:scale-[0.96] transition-transform duration-150 border border-pink-200/30 dark:border-pink-800/20 bg-white dark:bg-slate-900 shadow-sm"
     >
       <div className="relative w-full rounded-t-2xl overflow-hidden">
         <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
-          {photoUrl ? (
-            <img src={photoUrl} alt={card.label} className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center relative" style={{ background: card.bg }}>
-              <div className="absolute inset-0 pointer-events-none" style={GLOSSY_OVERLAY} />
-              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full pointer-events-none" style={CIRCLE_A} />
-              <div className="absolute -bottom-4 -left-4 w-10 h-10 rounded-full pointer-events-none" style={CIRCLE_B} />
-              <span className="text-4xl drop-shadow-lg relative z-10">{card.emoji}</span>
-            </div>
-          )}
+          <img src={photoUrl} alt={card.label} className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0" style={GLOSSY_OVERLAY} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-6" style={{ background: "var(--anni-modal-fade)" }} />
-        <div className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center" style={BADGE_STYLE}>
-          <span className="text-base">{card.emoji}</span>
+        <div className="absolute top-2 right-2 w-7 h-7 lg:w-9 lg:h-9 rounded-full bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm flex items-center justify-center shadow-sm">
+          <span className="text-sm lg:text-base">{card.emoji}</span>
+        </div>
+        <div className="absolute bottom-2 left-2 flex items-center gap-1">
+          <span className="text-xs lg:text-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm text-foreground rounded-full px-2 lg:px-3 py-0.5 font-semibold shadow-sm">{card.label}</span>
         </div>
       </div>
-
-      <div className="flex flex-col items-center gap-1 px-3 py-2.5 w-full">
-        <p className="text-[11px] font-bold text-foreground leading-tight text-center">{card.label}</p>
-        <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: "var(--anni-pink)" }}>
-          Open Letter <span className="letter-pulse">💌</span>
+      <div className="flex items-center justify-center gap-1 px-3 py-2 lg:py-2.5 w-full">
+        <span className="text-[10px] lg:text-xs font-semibold flex items-center gap-1" style={{ color: "var(--anni-pink)" }}>
+          Open Letter <span className="inline-block letter-pulse">💌</span>
         </span>
       </div>
 
@@ -224,16 +229,15 @@ const StoryCardItem = memo(function StoryCardItem({
 });
 
 const GLOSSY_OVERLAY = { background: "linear-gradient(145deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 40%, transparent 60%)" } as const;
-const CIRCLE_A = { background: "rgba(255,255,255,0.12)" } as const;
-const CIRCLE_B = { background: "rgba(255,255,255,0.08)" } as const;
-const BADGE_STYLE = { background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" } as const;
 
 /* ─── Letter Modal ─── */
 const LetterModal = memo(function LetterModal({
   card,
+  photoUrl,
   onClose,
 }: {
   card: PlaceholderCard;
+  photoUrl: string;
   onClose: () => void;
 }) {
   const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
@@ -253,98 +257,62 @@ const LetterModal = memo(function LetterModal({
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.5, y: 50, opacity: 0 }}
           transition={{ type: "spring", stiffness: 280, damping: 22 }}
-          className="max-w-sm w-full relative rounded-3xl my-auto overflow-hidden lg:max-w-md"
-          style={{
-            background: "var(--anni-modal-bg)",
-            boxShadow: "0 25px 60px rgba(190,50,90,0.2), 0 4px 20px rgba(0,0,0,0.1)",
-          }}
+          className="max-w-sm w-full relative rounded-3xl my-auto overflow-hidden lg:max-w-md bg-white dark:bg-slate-900 shadow-2xl"
           onClick={stopProp}
         >
           <div className="relative w-full rounded-t-3xl overflow-hidden">
-            <div
-              className="relative w-full flex items-center justify-center"
-              style={{ aspectRatio: "4/3", background: card.bg }}
-            >
-              <div className="absolute inset-0 pointer-events-none" style={GLOSSY_OVERLAY} />
-              <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full pointer-events-none" style={CIRCLE_A} />
-              <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full pointer-events-none" style={CIRCLE_B} />
-              <motion.span
-                className="text-6xl drop-shadow-lg relative z-10"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                {card.emoji}
-              </motion.span>
+            <div className="relative w-full" style={{ aspectRatio: "16/10" }}>
+              <img src={photoUrl} alt={card.label} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: "var(--anni-modal-fade)" }} />
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-slate-900 to-transparent" />
 
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
-              style={{ background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", color: "#e11d48" }}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm flex items-center justify-center shadow-md"
             >
-              ✕
+              <X size={14} className="text-foreground" />
             </button>
 
             <motion.div
               initial={{ rotate: -30, scale: 0 }}
               animate={{ rotate: 8, scale: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-              className="absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: "var(--anni-badge-bg)", backdropFilter: "blur(8px)", border: "2px dashed var(--anni-divider)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+              className="absolute top-3 left-3 w-10 h-10 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-2 border-dashed border-white/40 flex items-center justify-center shadow-md"
             >
               <span className="text-lg">💌</span>
             </motion.div>
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
+              <motion.span className="text-3xl inline-block drop-shadow-lg" animate={{ y: [0, -4, 0] }} transition={{ duration: 2, repeat: Infinity }}>{card.emoji}</motion.span>
+            </div>
           </div>
 
-          <div className="text-center px-6 -mt-4 relative z-10">
-            <motion.span
-              className="text-3xl inline-block"
-              animate={{ y: [0, -4, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              {card.emoji}
-            </motion.span>
-            <h3 className="font-script text-xl mt-1" style={{ color: "var(--anni-text)" }}>{card.label}</h3>
+          <div className="text-center px-6 pt-2">
+            <h3 className="text-lg font-bold text-foreground">{card.label}</h3>
           </div>
 
-          <div className="flex items-center justify-center gap-3 my-3 px-8">
-            <div className="h-px flex-1" style={{ background: "var(--anni-divider)" }} />
-            <span className="text-xs heart-beat" style={{ color: "var(--anni-pink)" }}>♡</span>
-            <div className="h-px flex-1" style={{ background: "var(--anni-divider)" }} />
+          <div className="flex items-center justify-center gap-3 my-2.5 px-8">
+            <div className="h-px flex-1 bg-pink-200/40 dark:bg-pink-800/20" />
+            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-xs text-pink-400">♡</motion.span>
+            <div className="h-px flex-1 bg-pink-200/40 dark:bg-pink-800/20" />
           </div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="px-6 pb-2">
-            <p className="text-sm leading-relaxed italic whitespace-pre-line" style={{ color: "var(--anni-text-body)" }}>
+            <p className="text-sm leading-relaxed italic whitespace-pre-line text-foreground/70">
               &ldquo;{card.letter}&rdquo;
             </p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="px-6 pt-3 pb-6 text-center">
-            <p className="font-script text-base" style={{ color: "var(--anni-text)" }}>With all my love 💕</p>
-            <p className="text-[10px] mt-0.5 text-foreground/40">— Forever yours</p>
-
-            <div className="my-3 py-2">
-              <span className="text-2xl inline-block heart-beat">💝</span>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="px-8 py-2.5 text-sm font-semibold w-full rounded-xl active:scale-95 transition-transform"
-              style={{
-                background: "var(--anni-glass)",
-                border: "1.5px solid var(--anni-divider)",
-                color: "var(--anni-text)",
-              }}
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="px-6 pt-2 pb-5 text-center">
+            <p className="text-sm font-semibold text-pink-500">With all my love 💕</p>
+            <p className="text-[10px] mt-0.5 text-muted-foreground">— Forever yours</p>
+            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-2xl inline-block my-2.5">💝</motion.span>
+            <button onClick={onClose}
+              className="w-full py-2.5 rounded-xl border border-pink-200/30 dark:border-pink-800/20 text-xs font-medium text-muted-foreground hover:bg-pink-50/50 dark:hover:bg-pink-900/10 active:scale-95 transition-all">
               Close Letter 💕
             </button>
           </motion.div>
-
-          <style jsx>{`
-            .heart-beat { animation: hb 1.5s ease-in-out infinite; display: inline-block; }
-            @keyframes hb { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-          `}</style>
         </motion.div>
       </div>
     </motion.div>

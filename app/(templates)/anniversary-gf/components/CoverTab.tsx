@@ -234,22 +234,7 @@ export default memo(function CoverTab({ data, onNext }: Props) {
         </div>
       </div>
 
-      {/* Explore button */}
-      <motion.div
-        className="flex-shrink-0 text-center relative z-10 mt-4 lg:mt-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1 }}
-      >
-        <button
-          onClick={onNext}
-          className="inline-flex items-center gap-2 px-6 py-3 lg:px-8 lg:py-3.5 rounded-full text-white font-semibold text-sm lg:text-base active:scale-95 transition-transform"
-          style={{ background: "linear-gradient(90deg, #e11d48, #ec4899)", boxShadow: "0 8px 25px rgba(225,29,72,0.3)" }}
-        >
-          Explore Our Journey
-          <ChevronRight size={16} />
-        </button>
-      </motion.div>
+    
 
       {/* Bounce arrow */}
       <div className="flex-1 flex items-end justify-center relative z-10 pb-2 min-h-0">
