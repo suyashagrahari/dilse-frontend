@@ -106,6 +106,13 @@ export default function HoliPage() {
         onTabChange={editor.handleTabChange}
         darkMode={editor.darkMode}
         toggleDark={editor.toggleDark}
+        onEdit={editor.handleEditClick}
+        onBack={editor.goBack}
+        showPublish={editor.showPublish}
+        showShare={editor.showShare}
+        shareLabel={editor.shareLabel}
+        onPublish={editor.handlePublish}
+        onShare={editor.handleShare}
       />
 
       <BottomNav
@@ -208,7 +215,12 @@ export default function HoliPage() {
       <BackgroundMusic shouldPlay={playMusic} paused={playlistActive} />
 
       <AnimatePresence>
-        {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}
+        {editor.showAuth && (
+          <AuthModal
+            onClose={editor.closeAuth}
+            onSuccess={editor.closeAuthSuccess}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

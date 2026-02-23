@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -20,7 +20,7 @@ import {
   ShieldCheck,
   EyeOff,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import BirthdayContent from "./components/BirthdayContent";
@@ -90,7 +90,36 @@ export default function BirthdayGfPage() {
     [accessToken]
   );
 
-  /* Always starts fresh with demo content — each edit creates a new page */
+  const searchParams = useSearchParams();
+
+  /* Load existing page when navigated from profile with ?edit=<id> */
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || !accessToken) return;
+    fetch(`${API_URL}/birthday-pages/${editId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          const d = result.data;
+          const loaded: ContentData = {
+            recipientName: d.recipientName || DEMO_CONTENT.recipientName,
+            senderName: d.senderName || DEMO_CONTENT.senderName,
+            personalMessage: d.personalMessage || DEMO_CONTENT.personalMessage,
+            wishes: d.wishes?.length ? d.wishes : DEMO_CONTENT.wishes,
+            photos: d.photos || [],
+            theme: d.theme || "romantic",
+          };
+          setContent(loaded);
+          setMf(loaded);
+          setPageId(editId);
+          setIsPersonalized(true);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const handleEditClick = () => {
     if (!isAuthenticated) { setShowAuth(true); return; }

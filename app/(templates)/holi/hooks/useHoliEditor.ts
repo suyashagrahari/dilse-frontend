@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export function useHoliEditor() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
   const [darkMode, setDarkMode] = useState(false);
@@ -42,6 +43,65 @@ export function useHoliEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Private route: show auth modal immediately if not authenticated
+  useEffect(() => {
+    if (themeReady && !isAuthenticated) {
+      setShowAuth(true);
+    }
+  }, [themeReady, isAuthenticated]);
+
+  // Load AI-prefilled data from shared viewer (sessionStorage holi_prefill)
+  useEffect(() => {
+    if (!themeReady || !isAuthenticated) return;
+    const raw = sessionStorage.getItem("holi_prefill");
+    if (!raw) return;
+    sessionStorage.removeItem("holi_prefill");
+    try {
+      const d = JSON.parse(raw) as Partial<HoliData>;
+      const loaded: HoliData = { ...DEMO_DATA, ...d };
+      setContent(loaded);
+      setMf({ ...loaded });
+      setIsPersonalized(false);
+      setEditMode("manual");
+    } catch { /* ignore bad data */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeReady, isAuthenticated]);
+
+  // Load existing page when navigated from profile with ?edit=<id>
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || !accessToken || !themeReady) return;
+    fetch(`${API_URL}/holi-pages/${editId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          const d = result.data;
+          const loaded: HoliData = {
+            ...DEMO_DATA,
+            recipientName: d.recipientName || "",
+            senderName: d.senderName || "",
+            senderFamily: d.senderFamily || "",
+            senderMembers: d.senderMembers || [],
+            senderPhoto: d.senderPhoto || "",
+            homeWishMessage: d.homeWishMessage || DEMO_DATA.homeWishMessage,
+            congratsMessage: d.congratsMessage || DEMO_DATA.congratsMessage,
+            hindiTitle: d.hindiTitle || DEMO_DATA.hindiTitle,
+            hindiSubtitle: d.hindiSubtitle || DEMO_DATA.hindiSubtitle,
+            englishSubtitle: d.englishSubtitle || DEMO_DATA.englishSubtitle,
+            holiDate: d.holiDate || DEMO_DATA.holiDate,
+          };
+          setContent(loaded);
+          setMf({ ...loaded });
+          setPageId(editId);
+          setIsPersonalized(true);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, themeReady]);
+
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [pendingContent, setPendingContent] = useState<HoliData | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +116,7 @@ export function useHoliEditor() {
 
   const [mf, setMf] = useState<HoliData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
+  const preEditContentRef = useRef<HoliData>(DEMO_DATA);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -80,7 +141,16 @@ export function useHoliEditor() {
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
+  // Called when user dismisses auth without logging in → redirect away (private route)
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    router.push("/templates");
+  }, [router]);
+
+  // Called when auth succeeds → just close the modal
+  const closeAuthSuccess = useCallback(() => {
+    setShowAuth(false);
+  }, []);
 
   const handleEditClick = useCallback(() => {
     if (!isAuthenticated) { setShowAuth(true); return; }
@@ -108,23 +178,28 @@ export function useHoliEditor() {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
-          prompt: `Happy Holi greeting for ${aiName}. ${aiPrompt}`,
+          prompt: `Happy Holi greeting from ${aiSender || "me"} to ${aiName}. ${aiPrompt}`,
           templateId: "holi",
           templateType: "festival",
         }),
       });
       const data = await res.json();
-      if (data.body) {
-        const newContent: HoliData = {
-          ...DEMO_DATA,
-          recipientName: aiName.trim(),
-          senderName: aiSender.trim() || "",
-          englishSubtitle: data.body,
-        };
-        setPendingContent(newContent);
-        setContent(newContent);
-        setEditMode("preview");
-      }
+
+      // Build a prefilled HoliData from the AI response
+      const aiContent: HoliData = {
+        ...DEMO_DATA,
+        recipientName: aiName.trim(),
+        senderName: aiSender.trim() || data.senderName || "",
+        hindiTitle: data.hindiTitle || DEMO_DATA.hindiTitle,
+        englishSubtitle: data.englishSubtitle || data.body || DEMO_DATA.englishSubtitle,
+        homeWishMessage: data.homeWishMessage || data.body || DEMO_DATA.homeWishMessage,
+        congratsMessage: data.congratsMessage || data.body || DEMO_DATA.congratsMessage,
+      };
+
+      // Switch to ai-edit mode so user can review/edit before preview
+      setMf(aiContent);
+      setManualStep(0);
+      setEditMode("ai-edit");
     } catch {
       pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
     } finally {
@@ -134,7 +209,10 @@ export function useHoliEditor() {
 
   const handleManualPreview = useCallback(() => {
     setPendingContent(mf);
-    setContent(mf);
+    setContent((prev) => {
+      preEditContentRef.current = prev; // save pre-edit state for discard
+      return mf;
+    });
     setEditMode("preview");
   }, [mf]);
 
@@ -146,13 +224,37 @@ export function useHoliEditor() {
   const saveToServer = useCallback(
     async (data: HoliData, password?: string) => {
       if (!accessToken) return;
-      const body = { ...data, password: password || "" };
+      const body = {
+        senderName: data.senderName,
+        senderFamily: data.senderFamily,
+        senderMembers: data.senderMembers,
+        senderPhoto: data.senderPhoto,
+        recipientName: data.recipientName,
+        homeWishMessage: data.homeWishMessage,
+        congratsMessage: data.congratsMessage,
+        hindiTitle: data.hindiTitle,
+        hindiSubtitle: data.hindiSubtitle,
+        englishSubtitle: data.englishSubtitle,
+        holiDate: data.holiDate,
+        password: password || "",
+      };
+
       if (pageId) {
-        await fetch(`${API_URL}/holi-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(`${API_URL}/holi-pages/${pageId}`, {
+          method: "PUT",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        return res.json();
       } else {
-        const res = await fetch(`${API_URL}/holi-pages`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(`${API_URL}/holi-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
         const result = await res.json();
         if (result.success) setPageId(result.data._id);
+        return result;
       }
     },
     [accessToken, pageId, headers],
@@ -172,7 +274,6 @@ export function useHoliEditor() {
       try {
         await saveToServer({ ...pendingContent }, pw);
         setIsPersonalized(true);
-        setShareUrl(null);
         setEditMode(null);
         setPendingContent(null);
         setHasPasswordSet(!!pw);
@@ -192,23 +293,24 @@ export function useHoliEditor() {
 
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
-    setContent(isPersonalized ? content : DEMO_DATA);
+    setContent(preEditContentRef.current); // restore pre-edit content
     setPendingContent(null);
     setEditMode("choose");
-  }, [pendingContent, isPersonalized, content]);
+  }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, { method: "POST", headers: headers() });
+      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, {
+        method: "POST",
+        headers: headers(),
+      });
       const result = await res.json();
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
-        setPageId(null);
-        setIsPersonalized(false);
-        setHasPasswordSet(false);
+        // Keep pageId so user can edit and republish to the same URL
         pushToast({
           type: "publish",
           title: "Published!",
@@ -249,14 +351,16 @@ export function useHoliEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth,
+    goBack, closeAuth, closeAuthSuccess,
     handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
 
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    // Show publish if user has personalized but not yet published
+    showPublish: isPersonalized && !publishing,
+    // Show share/copy after publishing
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

@@ -337,12 +337,54 @@ const HomeSection = memo(function HomeSection({ data }: { data: HoliData }) {
           ))}
         </motion.div>
 
+        {/* Home page personal wish card */}
+        {data.homeWishMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.25 }}
+            className="w-full max-w-sm mt-5 rounded-2xl px-5 py-4 relative overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+          >
+            {/* Rainbow top accent */}
+            <div
+              className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
+              style={{
+                background: "linear-gradient(90deg, #FF6B9D, #FF8C42, #FFD700, #4CAF50, #38BDF8, #A855F7)",
+              }}
+            />
+            <motion.span
+              className="block text-center text-sm mb-2"
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            >
+              ✨
+            </motion.span>
+            <p
+              className="text-sm leading-relaxed text-center text-white/90"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              {data.homeWishMessage}
+            </p>
+            {data.senderName && data.senderName !== "Your Name" && (
+              <p className="text-[10px] text-center mt-2 text-white/50 font-medium">
+                — {data.senderName}
+              </p>
+            )}
+          </motion.div>
+        )}
+
         {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="mt-8 text-xs flex flex-col items-center gap-1 text-white/40"
+          className="mt-6 text-xs flex flex-col items-center gap-1 text-white/40"
         >
           <span style={{ fontFamily: "'DM Sans', sans-serif" }}>Scroll to Celebrate</span>
           <motion.span

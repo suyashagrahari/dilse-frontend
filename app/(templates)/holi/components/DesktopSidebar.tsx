@@ -2,7 +2,7 @@
 
 import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Home, Heart, Music, Info, Gift, Sun, Moon } from "lucide-react";
+import { Home, Heart, Music, Info, Gift, Sun, Moon, Pencil, Send, Share2, ArrowLeft } from "lucide-react";
 import { TABS, type TabId } from "./types";
 
 const TAB_ICONS: Record<TabId, typeof Home> = {
@@ -26,9 +26,20 @@ interface Props {
   onTabChange: (id: TabId) => void;
   darkMode: boolean;
   toggleDark: () => void;
+  onEdit: () => void;
+  onBack: () => void;
+  showPublish?: boolean;
+  showShare?: boolean;
+  shareLabel?: string;
+  onPublish?: () => void;
+  onShare?: () => void;
 }
 
-export default memo(function DesktopSidebar({ tab, onTabChange, darkMode, toggleDark }: Props) {
+export default memo(function DesktopSidebar({
+  tab, onTabChange, darkMode, toggleDark,
+  onEdit, onBack,
+  showPublish, showShare, shareLabel, onPublish, onShare,
+}: Props) {
   const handleTab = useCallback(
     (id: TabId) => () => onTabChange(id),
     [onTabChange],
@@ -42,6 +53,7 @@ export default memo(function DesktopSidebar({ tab, onTabChange, darkMode, toggle
         borderRight: "1px solid hsl(var(--holi-border))",
       }}
     >
+      {/* Logo */}
       <div className="p-6 pb-4 text-center" style={{ borderBottom: "1px solid hsl(var(--holi-border))" }}>
         <motion.div
           className="text-4xl mb-2"
@@ -64,6 +76,7 @@ export default memo(function DesktopSidebar({ tab, onTabChange, darkMode, toggle
         </p>
       </div>
 
+      {/* Tab nav */}
       <nav className="flex-1 p-4 space-y-1">
         {TABS.map(({ id, label }) => {
           const Icon = TAB_ICONS[id];
@@ -89,23 +102,64 @@ export default memo(function DesktopSidebar({ tab, onTabChange, darkMode, toggle
         })}
       </nav>
 
-      <div
-        className="p-4 flex items-center justify-between"
-        style={{ borderTop: "1px solid hsl(var(--holi-border))" }}
-      >
-        <p
-          className="text-xs"
-          style={{ color: "hsl(var(--holi-muted-fg))", fontFamily: "'Noto Serif Devanagari', serif" }}
+      {/* Actions footer */}
+      <div className="p-4 space-y-2" style={{ borderTop: "1px solid hsl(var(--holi-border))" }}>
+
+        {/* Edit — always visible */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onEdit}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+          style={{ background: "var(--holi-gradient-cta)", color: "#fff", boxShadow: "0 4px 18px rgba(233,30,99,0.3)", fontFamily: "'DM Sans', sans-serif" }}
         >
-          होली मुबारक! 🎨
-        </p>
-        <button
-          onClick={toggleDark}
-          className="p-2 rounded-lg transition-all"
-          style={{ color: "hsl(var(--holi-muted-fg))" }}
-        >
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+          <Pencil size={15} />
+          Edit Card
+        </motion.button>
+
+        {/* Publish — conditional */}
+        {showPublish && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onPublish}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+            style={{ background: "rgba(76,175,80,0.15)", color: "var(--holi-green)", border: "1px solid rgba(76,175,80,0.3)", fontFamily: "'DM Sans', sans-serif" }}
+          >
+            <Send size={15} />
+            Publish
+          </motion.button>
+        )}
+
+        {/* Share / Copy — conditional */}
+        {showShare && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onShare}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+            style={{ background: "rgba(255,152,0,0.12)", color: "var(--holi-orange)", border: "1px solid rgba(255,152,0,0.25)", fontFamily: "'DM Sans', sans-serif" }}
+          >
+            <Share2 size={15} />
+            {shareLabel || "Share"}
+          </motion.button>
+        )}
+
+        {/* Back + theme row */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+            style={{ color: "hsl(var(--holi-muted-fg))", background: "hsl(var(--holi-surface))" }}
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+          <button
+            onClick={toggleDark}
+            className="p-2 rounded-lg transition-all hover:opacity-80"
+            style={{ color: "hsl(var(--holi-muted-fg))" }}
+          >
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
       </div>
     </aside>
   );

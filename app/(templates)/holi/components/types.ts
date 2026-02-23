@@ -1,5 +1,5 @@
 export type TabId = "home" | "wish" | "greetings" | "playlist" | "more";
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export type EditMode = null | "choose" | "ai" | "ai-edit" | "manual" | "preview" | "password";
 
 export interface Toast {
   id: number;
@@ -57,7 +57,8 @@ export interface HoliData {
   senderMembers: FamilyMember[];
   senderPhoto: string;
   recipientName: string;
-  congratsMessage: string;
+  homeWishMessage: string;   // shown on Home page as a personal wish card
+  congratsMessage: string;   // shown on Wish page as the family wish card
   holiDate: string;
   heroImage: string;
   hindiTitle: string;
@@ -74,6 +75,7 @@ export const DEMO_DATA: HoliData = {
   senderMembers: [],
   senderPhoto: "",
   recipientName: "",
+  homeWishMessage: "Wishing you a Holi filled with vibrant colors, laughter, and the warmth of loved ones! 🌈",
   congratsMessage:
     "Wishing you and your family a very colorful and joyful Holi! May this festival bring happiness, love, and prosperity to your life. Happy Holi from our family to yours!",
   holiDate: "2026-03-14T00:00:00",

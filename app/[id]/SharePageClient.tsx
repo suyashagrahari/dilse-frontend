@@ -12,6 +12,7 @@ import BirthdayContent from "@/app/(templates)/birthday-gf/components/BirthdayCo
 import BirthdayNav from "@/app/(templates)/birthday-gf/components/BirthdayNav";
 import ValentineContent from "@/app/(templates)/valentine-gf/components/ValentineContent";
 import ValentineNav from "@/app/(templates)/valentine-gf/components/ValentineNav";
+import HoliViewer from "./HoliViewer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -93,6 +94,7 @@ export default function SharePage() {
   const [entry, setEntry] = useState<TemplateEntry | null>(null);
   const [editorRoute, setEditorRoute] = useState("/");
   const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [templateType, setTemplateType] = useState<string>("");
   const [tab, setTab] = useState("cover");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -116,14 +118,23 @@ export default function SharePage() {
         const res = await fetch(`${API_URL}/share/${shareId}`);
         const result = await res.json();
         if (result.success && result.data && result.templateType) {
+          setTemplateType(result.templateType);
+          setHasPassword(!!result.hasPassword);
+          setSenderUserId(result.senderUserId || null);
+
+          // Holi has its own full-page viewer — just store raw data
+          if (result.templateType === "holi") {
+            setData(result.data);
+            setLoading(false);
+            return;
+          }
+
           const matched = TEMPLATE_REGISTRY[result.templateType];
           if (matched) {
             setEntry(matched);
             setEditorRoute(result.editorRoute || "/");
             setData(matched.mapData(result.data));
             setTab(matched.defaultTab);
-            setHasPassword(!!result.hasPassword);
-            setSenderUserId(result.senderUserId || null);
             const stored = sessionStorage.getItem(SESSION_KEY(shareId));
             if (stored === "true") setIsUnlocked(true);
           } else { setError(true); }
@@ -241,6 +252,11 @@ export default function SharePage() {
         </motion.div>
       </div>
     );
+  }
+
+  // Holi has its own full-page viewer
+  if (!loading && templateType === "holi" && data) {
+    return <HoliViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {

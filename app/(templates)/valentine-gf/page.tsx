@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -17,7 +17,7 @@ import {
   Eye,
   Send,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import ValentineContent from "./components/ValentineContent";
@@ -84,7 +84,36 @@ export default function ValentineGfPage() {
     [accessToken]
   );
 
-  /* Always starts fresh with demo content — each edit creates a new page */
+  const searchParams = useSearchParams();
+
+  /* Load existing page when navigated from profile with ?edit=<id> */
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || !accessToken) return;
+    fetch(`${API_URL}/valentine-pages/${editId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          const d = result.data;
+          const loaded: ValentineData = {
+            recipientName: d.recipientName || DEMO_CONTENT.recipientName,
+            senderName: d.senderName || DEMO_CONTENT.senderName,
+            personalMessage: d.personalMessage || DEMO_CONTENT.personalMessage,
+            promises: d.promises?.length ? d.promises : DEMO_CONTENT.promises,
+            photos: d.photos || [],
+            theme: d.theme || "romantic",
+          };
+          setContent(loaded);
+          setMf(loaded);
+          setPageId(editId);
+          setIsPersonalized(true);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const handleEditClick = () => {
     if (!isAuthenticated) { setShowAuth(true); return; }

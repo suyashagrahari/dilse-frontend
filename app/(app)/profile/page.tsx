@@ -272,9 +272,10 @@ export default function ProfilePage() {
     }
   };
 
-  const templateEmoji = (type: string) => (type === "birthday" ? "🎂" : type === "valentine" ? "💝" : "🎁");
-  const templateLabel = (type: string) => (type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : "Gift");
-  const templateColor = (type: string) => (type === "birthday" ? "rose" : type === "valentine" ? "red" : "violet");
+  const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : "🎁";
+  const templateLabel = (type: string) => type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : type === "holi" ? "Holi" : "Gift";
+  const templateColor = (type: string) => type === "birthday" ? "rose" : type === "valentine" ? "red" : "violet";
+  const editorRoute = (type: string) => type === "birthday" ? "/birthday-gf" : type === "valentine" ? "/valentine-gf" : type === "holi" ? "/holi" : "/templates";
 
   if (!isAuthenticated) {
     return (
@@ -878,7 +879,9 @@ export default function ProfilePage() {
                           color === "rose" ? "bg-rose-500/10" : color === "red" ? "bg-red-500/10" : "bg-violet-500/10"
                         }`}>
                           {page.templateType === "valentine" ? (
-                            <Heart size={16} className={color === "red" ? "text-red-500" : "text-rose-500"} />
+                            <Heart size={16} className="text-red-500" />
+                          ) : page.templateType === "holi" ? (
+                            <Sparkles size={16} className="text-violet-500" />
                           ) : (
                             <Cake size={16} className="text-rose-500" />
                           )}
@@ -915,6 +918,23 @@ export default function ProfilePage() {
                             className="overflow-hidden"
                           >
                             <div className="px-4 pb-4 space-y-3">
+                              {/* Edit button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`${editorRoute(page.templateType)}?edit=${page._id}`);
+                                }}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] hover:opacity-90"
+                                style={{
+                                  background: "linear-gradient(135deg, #E91E63, #FF5722)",
+                                  color: "#fff",
+                                  boxShadow: "0 4px 14px rgba(233,30,99,0.25)",
+                                }}
+                              >
+                                <Edit3 size={14} />
+                                Edit This Card
+                              </button>
+
                               <div className="grid grid-cols-3 gap-2">
                                 <div className="bg-muted/30 rounded-xl p-2.5 text-center">
                                   <Eye size={13} className="mx-auto mb-1 text-blue-500" />
