@@ -13,6 +13,7 @@ import BirthdayNav from "@/app/(templates)/birthday-gf/components/BirthdayNav";
 import ValentineContent from "@/app/(templates)/valentine-gf/components/ValentineContent";
 import ValentineNav from "@/app/(templates)/valentine-gf/components/ValentineNav";
 import HoliViewer from "./HoliViewer";
+import EidViewer from "./EidViewer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -122,8 +123,8 @@ export default function SharePage() {
           setHasPassword(!!result.hasPassword);
           setSenderUserId(result.senderUserId || null);
 
-          // Holi has its own full-page viewer — just store raw data
-          if (result.templateType === "holi") {
+          // Holi and Eid have their own full-page viewers — just store raw data
+          if (result.templateType === "holi" || result.templateType === "eid") {
             setData(result.data);
             setLoading(false);
             return;
@@ -257,6 +258,11 @@ export default function SharePage() {
   // Holi has its own full-page viewer
   if (!loading && templateType === "holi" && data) {
     return <HoliViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Eid has its own full-page viewer
+  if (!loading && templateType === "eid" && data) {
+    return <EidViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {

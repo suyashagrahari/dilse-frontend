@@ -122,15 +122,17 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
           </motion.div>
 
           {/* Sender name */}
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-base sm:text-lg font-bold text-center mb-3"
-            style={{ color: "hsl(var(--holi-fg))" }}
-          >
-            {data.senderName}
-          </motion.p>
+          {data.senderName && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-base sm:text-lg font-bold text-center mb-3"
+              style={{ color: "hsl(var(--holi-fg))" }}
+            >
+              {data.senderName}
+            </motion.p>
+          )}
 
           {/* Photo avatar */}
           <motion.div
@@ -208,6 +210,26 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
             </motion.div>
           )}
 
+          {/* Recipient or General heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.52 }}
+            className="mb-3 text-center"
+          >
+            {data.recipientName ? (
+              <p className="text-sm font-semibold" style={{ color: "hsl(var(--holi-fg))" }}>
+                Dear{" "}
+                <span style={{ color: "var(--holi-pink)", fontWeight: 700 }}>{data.recipientName}</span>
+                , 🎨
+              </p>
+            ) : (
+              <p className="text-xs font-medium" style={{ color: "hsl(var(--holi-muted-fg))" }}>
+                🌈 For All My Friends &amp; Family
+              </p>
+            )}
+          </motion.div>
+
           {/* Message glass card */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -240,11 +262,13 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
           {/* Signature */}
           <div className="w-full max-w-sm lg:max-w-md px-5 py-2 mb-4 text-center">
             <p className="text-sm italic font-semibold holi-text-gradient">
-              With colorful wishes,
+              {data.recipientName ? "With colorful wishes," : "Happy Holi to all,"}
             </p>
-            <p className="text-xs font-bold mt-0.5" style={{ color: "hsl(var(--holi-fg))" }}>
-              {data.senderName} 🎨
-            </p>
+            {data.senderName && (
+              <p className="text-xs font-bold mt-0.5" style={{ color: "hsl(var(--holi-fg))" }}>
+                {data.senderName} 🎨
+              </p>
+            )}
           </div>
 
           {/* Rotating quote */}

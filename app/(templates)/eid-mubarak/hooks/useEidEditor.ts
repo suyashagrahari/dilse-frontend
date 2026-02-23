@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type EidData, DEMO_DATA } from "../components/types";
 
@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export function useEidEditor() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
   const [darkMode, setDarkMode] = useState(true);
@@ -56,6 +57,7 @@ export function useEidEditor() {
 
   const [mf, setMf] = useState<EidData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
+  const preEditContentRef = useRef<EidData>(DEMO_DATA);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -78,9 +80,68 @@ export function useEidEditor() {
     [accessToken],
   );
 
+  // Load AI-prefilled data from shared viewer (sessionStorage eid_prefill)
+  useEffect(() => {
+    if (!themeReady || !isAuthenticated) return;
+    const raw = sessionStorage.getItem("eid_prefill");
+    if (!raw) return;
+    sessionStorage.removeItem("eid_prefill");
+    try {
+      const d = JSON.parse(raw) as Partial<EidData>;
+      const loaded: EidData = { ...DEMO_DATA, ...d };
+      setContent(loaded);
+      setMf({ ...loaded });
+      setIsPersonalized(false);
+      setEditMode("manual");
+    } catch { /* ignore bad data */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeReady, isAuthenticated]);
+
+  // Load existing page when navigated from profile with ?edit=<id>
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || !accessToken || !themeReady) return;
+    fetch(`${API_URL}/eid-pages/${editId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          const d = result.data;
+          const loaded: EidData = {
+            ...DEMO_DATA,
+            recipientName: d.recipientName || "",
+            senderName: d.senderName || "",
+            senderFamily: d.senderFamily || "",
+            senderMembers: d.senderMembers || [],
+            senderPhoto: d.senderPhoto || "",
+            homeWishMessage: d.homeWishMessage || DEMO_DATA.homeWishMessage,
+            congratsMessage: d.congratsMessage || DEMO_DATA.congratsMessage,
+            urduTitle: d.urduTitle || DEMO_DATA.urduTitle,
+            urduSubtitle: d.urduSubtitle || DEMO_DATA.urduSubtitle,
+            englishSubtitle: d.englishSubtitle || DEMO_DATA.englishSubtitle,
+            eidDate: d.eidDate || DEMO_DATA.eidDate,
+          };
+          setContent(loaded);
+          setMf({ ...loaded });
+          setPageId(editId);
+          setIsPersonalized(true);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, themeReady]);
+
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
+
   const closeAuth = useCallback(() => setShowAuth(false), []);
+
+  // After successful login from edit click → show edit modal
+  const closeAuthSuccess = useCallback(() => {
+    setShowAuth(false);
+    setEditMode("choose");
+  }, []);
 
   const handleEditClick = useCallback(() => {
     if (!isAuthenticated) { setShowAuth(true); return; }
@@ -101,30 +162,36 @@ export function useEidEditor() {
   }, [isPersonalized, content]);
 
   const handleAiGenerate = useCallback(async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
+    if (!aiSender.trim() || !aiPrompt.trim()) return;
     setAiLoading(true);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
-          prompt: `Eid Mubarak greeting for ${aiName}. ${aiPrompt}`,
+          prompt: aiName.trim()
+            ? `Eid Mubarak greeting from ${aiSender} to ${aiName}. ${aiPrompt}`
+            : `Eid Mubarak general greeting from ${aiSender}. ${aiPrompt}`,
           templateId: "eid-mubarak",
-          templateType: "festival",
+          templateType: "eid",
         }),
       });
       const data = await res.json();
-      if (data.body) {
-        const newContent: EidData = {
-          ...DEMO_DATA,
-          recipientName: aiName.trim(),
-          senderName: aiSender.trim() || "",
-          englishSubtitle: data.body,
-        };
-        setPendingContent(newContent);
-        setContent(newContent);
-        setEditMode("preview");
-      }
+
+      const aiContent: EidData = {
+        ...DEMO_DATA,
+        recipientName: aiName.trim(),
+        senderName: aiSender.trim() || data.senderName || "",
+        urduTitle: data.urduTitle || DEMO_DATA.urduTitle,
+        englishSubtitle: data.englishSubtitle || data.body || DEMO_DATA.englishSubtitle,
+        homeWishMessage: data.homeWishMessage || data.body || DEMO_DATA.homeWishMessage,
+        congratsMessage: data.congratsMessage || data.body || DEMO_DATA.congratsMessage,
+      };
+
+      // Switch to ai-edit mode so user can review/edit before preview
+      setMf(aiContent);
+      setManualStep(0);
+      setEditMode("ai-edit");
     } catch {
       pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
     } finally {
@@ -134,7 +201,10 @@ export function useEidEditor() {
 
   const handleManualPreview = useCallback(() => {
     setPendingContent(mf);
-    setContent(mf);
+    setContent((prev) => {
+      preEditContentRef.current = prev;
+      return mf;
+    });
     setEditMode("preview");
   }, [mf]);
 
@@ -146,13 +216,37 @@ export function useEidEditor() {
   const saveToServer = useCallback(
     async (data: EidData, password?: string) => {
       if (!accessToken) return;
-      const body = { ...data, password: password || "" };
+      const body = {
+        senderName: data.senderName,
+        senderFamily: data.senderFamily,
+        senderMembers: data.senderMembers,
+        senderPhoto: data.senderPhoto,
+        recipientName: data.recipientName,
+        homeWishMessage: data.homeWishMessage,
+        congratsMessage: data.congratsMessage,
+        urduTitle: data.urduTitle,
+        urduSubtitle: data.urduSubtitle,
+        englishSubtitle: data.englishSubtitle,
+        eidDate: data.eidDate,
+        password: password || "",
+      };
+
       if (pageId) {
-        await fetch(`${API_URL}/eid-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(`${API_URL}/eid-pages/${pageId}`, {
+          method: "PUT",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        return res.json();
       } else {
-        const res = await fetch(`${API_URL}/eid-pages`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(`${API_URL}/eid-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
         const result = await res.json();
         if (result.success) setPageId(result.data._id);
+        return result;
       }
     },
     [accessToken, pageId, headers],
@@ -172,7 +266,6 @@ export function useEidEditor() {
       try {
         await saveToServer({ ...pendingContent }, pw);
         setIsPersonalized(true);
-        setShareUrl(null);
         setEditMode(null);
         setPendingContent(null);
         setHasPasswordSet(!!pw);
@@ -192,23 +285,24 @@ export function useEidEditor() {
 
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
-    setContent(isPersonalized ? content : DEMO_DATA);
+    setContent(preEditContentRef.current);
     setPendingContent(null);
     setEditMode("choose");
-  }, [pendingContent, isPersonalized, content]);
+  }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/eid-pages/${pageId}/publish`, { method: "POST", headers: headers() });
+      const res = await fetch(`${API_URL}/eid-pages/${pageId}/publish`, {
+        method: "POST",
+        headers: headers(),
+      });
       const result = await res.json();
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
-        setPageId(null);
-        setIsPersonalized(false);
-        setHasPasswordSet(false);
+        // Keep pageId so user can edit and republish to the same URL
         pushToast({
           type: "publish",
           title: "Published!",
@@ -249,14 +343,16 @@ export function useEidEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth,
+    goBack, closeAuth, closeAuthSuccess,
     handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
 
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    // Show publish if user has personalized but not yet publishing
+    showPublish: isPersonalized && !publishing,
+    // Show share/copy after publishing
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

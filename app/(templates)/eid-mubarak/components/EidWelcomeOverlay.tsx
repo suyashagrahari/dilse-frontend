@@ -34,7 +34,7 @@ const EidWelcomeOverlay = memo(function EidWelcomeOverlay({
     setTimeout(() => onEnter(playMusic), 700);
   };
 
-  const displayName = recipientName || "You";
+  const isGeneral = !recipientName.trim();
 
   return (
     <AnimatePresence>
@@ -210,7 +210,7 @@ const EidWelcomeOverlay = memo(function EidWelcomeOverlay({
                 fontFamily: "'Outfit', sans-serif",
               }}
             >
-              Eid Mubarak, {displayName}! ✨
+              {isGeneral ? "Eid Mubarak to All! ✨" : `Eid Mubarak, ${recipientName}! ✨`}
             </motion.p>
 
             {/* From sender */}
@@ -224,17 +224,19 @@ const EidWelcomeOverlay = memo(function EidWelcomeOverlay({
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              A blessed greeting from{" "}
-              <span
-                className="font-bold"
-                style={{
-                  background: "linear-gradient(135deg, var(--eid-gold), var(--eid-teal))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {senderName}
-              </span>
+              {senderName ? (
+                <>A blessed greeting from{" "}
+                <span
+                  className="font-bold"
+                  style={{
+                    background: "linear-gradient(135deg, var(--eid-gold), var(--eid-teal))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {senderName}
+                </span></>
+              ) : "A blessed Eid greeting for everyone"}
             </motion.p>
 
             {/* Gold line */}

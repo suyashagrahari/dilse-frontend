@@ -171,14 +171,16 @@ export function useHoliEditor() {
   }, [isPersonalized, content]);
 
   const handleAiGenerate = useCallback(async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
+    if (!aiSender.trim() || !aiPrompt.trim()) return;
     setAiLoading(true);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({
-          prompt: `Happy Holi greeting from ${aiSender || "me"} to ${aiName}. ${aiPrompt}`,
+          prompt: aiName.trim()
+            ? `Happy Holi greeting from ${aiSender} to ${aiName}. ${aiPrompt}`
+            : `Happy Holi general greeting from ${aiSender}. ${aiPrompt}`,
           templateId: "holi",
           templateType: "festival",
         }),

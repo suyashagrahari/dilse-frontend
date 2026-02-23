@@ -272,10 +272,10 @@ export default function ProfilePage() {
     }
   };
 
-  const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : "🎁";
-  const templateLabel = (type: string) => type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : type === "holi" ? "Holi" : "Gift";
+  const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : type === "eid" ? "🌙" : "🎁";
+  const templateLabel = (type: string) => type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : type === "holi" ? "Holi" : type === "eid" ? "Eid" : "Gift";
   const templateColor = (type: string) => type === "birthday" ? "rose" : type === "valentine" ? "red" : "violet";
-  const editorRoute = (type: string) => type === "birthday" ? "/birthday-gf" : type === "valentine" ? "/valentine-gf" : type === "holi" ? "/holi" : "/templates";
+  const editorRoute = (type: string) => type === "birthday" ? "/birthday-gf" : type === "valentine" ? "/valentine-gf" : type === "holi" ? "/holi" : type === "eid" ? "/eid-mubarak" : "/templates";
 
   if (!isAuthenticated) {
     return (

@@ -153,13 +153,18 @@ export default memo(function EditSheet(props: Props) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>Recipient Name</label>
-                    <input value={props.aiName} onChange={(e) => props.setAiName(e.target.value)} placeholder="e.g. Priya" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>
+                      Your Name <span style={{ color: "var(--holi-pink)" }}>*</span>
+                    </label>
+                    <input value={props.aiSender} onChange={(e) => props.setAiSender(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>From</label>
-                    <input value={props.aiSender} onChange={(e) => props.setAiSender(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>
+                      Who are you wishing?{" "}
+                      <span className="font-normal opacity-60">(optional)</span>
+                    </label>
+                    <input value={props.aiName} onChange={(e) => props.setAiName(e.target.value)} placeholder="e.g. Priya" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
                   </div>
 
                   <div>
@@ -171,7 +176,7 @@ export default memo(function EditSheet(props: Props) {
                     <button onClick={() => setEditMode("choose")} className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1" style={{ background: "hsl(var(--holi-surface))", color: "hsl(var(--holi-fg))", border: "1px solid hsl(var(--holi-border))" }}>
                       <ChevronLeft size={14} /> Back
                     </button>
-                    <button onClick={props.onAiGenerate} disabled={props.aiLoading || !props.aiName.trim() || !props.aiPrompt.trim()} className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}>
+                    <button onClick={props.onAiGenerate} disabled={props.aiLoading || !props.aiSender.trim() || !props.aiPrompt.trim()} className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}>
                       {props.aiLoading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate</>}
                     </button>
                   </div>
@@ -282,13 +287,18 @@ function FormSteps(props: Props & { fileInputRef: React.RefObject<HTMLInputEleme
           </div>
 
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>Recipient</label>
-            <input value={props.mf.recipientName} onChange={(e) => props.updateMf("recipientName", e.target.value)} placeholder="Name" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>
+              Your Name <span style={{ color: "var(--holi-pink)" }}>*</span>
+            </label>
+            <input value={props.mf.senderName} onChange={(e) => props.updateMf("senderName", e.target.value)} placeholder="Your name" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>From</label>
-            <input value={props.mf.senderName} onChange={(e) => props.updateMf("senderName", e.target.value)} placeholder="Your name" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: "hsl(var(--holi-muted-fg))" }}>
+              Who are you wishing?{" "}
+              <span className="font-normal opacity-60">(optional)</span>
+            </label>
+            <input value={props.mf.recipientName} onChange={(e) => props.updateMf("recipientName", e.target.value)} placeholder="Leave empty for a general card" className="w-full px-4 py-3 text-sm" style={HOLI_INPUT} />
           </div>
 
           <div>
@@ -356,7 +366,12 @@ function FormSteps(props: Props & { fileInputRef: React.RefObject<HTMLInputEleme
         </button>
 
         {props.manualStep < MANUAL_STEPS.length - 1 ? (
-          <button onClick={() => props.setManualStep(props.manualStep + 1)} className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1" style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}>
+          <button
+            onClick={() => props.setManualStep(props.manualStep + 1)}
+            disabled={props.manualStep === 0 && !props.mf.senderName.trim()}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1 disabled:opacity-40"
+            style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}
+          >
             Next <ChevronRight size={14} />
           </button>
         ) : (

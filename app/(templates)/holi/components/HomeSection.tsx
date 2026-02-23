@@ -358,6 +358,13 @@ const HomeSection = memo(function HomeSection({ data }: { data: HoliData }) {
                 background: "linear-gradient(90deg, #FF6B9D, #FF8C42, #FFD700, #4CAF50, #38BDF8, #A855F7)",
               }}
             />
+            {/* Recipient / General label */}
+            <p
+              className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-bold text-center mb-2 text-white/50"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              {data.recipientName ? `For ${data.recipientName} 🎨` : "For Everyone 🌈"}
+            </p>
             <motion.span
               className="block text-center text-sm mb-2"
               animate={{ y: [0, -3, 0] }}

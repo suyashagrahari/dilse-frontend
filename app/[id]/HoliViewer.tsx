@@ -400,14 +400,16 @@ function InlineCreateSheet({ accessToken, onClose, onOpenInEditor }: InlineCreat
   }, [step]);
 
   const handleGenerate = useCallback(async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
+    if (!aiSender.trim() || !aiPrompt.trim()) return;
     setAiLoading(true); setGenError("");
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
-          prompt: `Happy Holi greeting from ${aiSender.trim() || "me"} to ${aiName.trim()}. ${aiPrompt}`,
+          prompt: aiName.trim()
+            ? `Happy Holi greeting from ${aiSender.trim()} to ${aiName.trim()}. ${aiPrompt}`
+            : `Happy Holi general greeting from ${aiSender.trim()}. ${aiPrompt}`,
           templateId: "holi",
           templateType: "festival",
         }),
@@ -572,25 +574,25 @@ function InlineCreateSheet({ accessToken, onClose, onOpenInEditor }: InlineCreat
                 transition={{ duration: 0.22 }}
                 className="px-5 pb-6 pt-1 space-y-3">
 
-                {/* Recipient */}
-                <div>
-                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5"
-                    style={{ color: "hsl(var(--holi-muted-fg))" }}>
-                    <User size={11}/> Who are you wishing? *
-                  </label>
-                  <input ref={nameRef} value={aiName} onChange={e => setAiName(e.target.value)}
-                    placeholder="e.g. Priya, Rahul, Mom…"
-                    style={inputStyle}/>
-                </div>
-
                 {/* Sender */}
                 <div>
                   <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5"
                     style={{ color: "hsl(var(--holi-muted-fg))" }}>
-                    <User size={11}/> Your name (optional)
+                    <User size={11}/> Your name *
                   </label>
-                  <input value={aiSender} onChange={e => setAiSender(e.target.value)}
+                  <input ref={nameRef} value={aiSender} onChange={e => setAiSender(e.target.value)}
                     placeholder="e.g. Rohan…"
+                    style={inputStyle}/>
+                </div>
+
+                {/* Recipient */}
+                <div>
+                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5"
+                    style={{ color: "hsl(var(--holi-muted-fg))" }}>
+                    <User size={11}/> Who are you wishing? <span style={{ color: "hsl(var(--holi-muted-fg))", fontWeight: 400 }}>(optional)</span>
+                  </label>
+                  <input value={aiName} onChange={e => setAiName(e.target.value)}
+                    placeholder="e.g. Priya, Rahul, Mom… or leave empty for a general card"
                     style={inputStyle}/>
                 </div>
 
@@ -616,7 +618,7 @@ function InlineCreateSheet({ accessToken, onClose, onOpenInEditor }: InlineCreat
                 </AnimatePresence>
 
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleGenerate}
-                  disabled={aiLoading || !aiName.trim() || !aiPrompt.trim()}
+                  disabled={aiLoading || !aiSender.trim() || !aiPrompt.trim()}
                   className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 relative overflow-hidden disabled:opacity-50"
                   style={{ background: "var(--holi-gradient-cta)", color: "#fff", boxShadow: "0 8px 24px rgba(233,30,99,0.3)" }}>
                   {!aiLoading && (
@@ -753,12 +755,21 @@ function ViewerSidebar({ tab, onTabChange, darkMode, toggleDark, data }: Sidebar
                 </span>
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[10px] font-medium" style={{ color:"hsl(var(--holi-muted-fg))" }}>Card from</p>
               <p className="text-xs font-bold truncate" style={{ color:"hsl(var(--holi-fg))" }}>{data.senderName}</p>
             </div>
-            <motion.div className="ml-auto text-base" animate={{ rotate:[0,15,-15,0] }}
+            <motion.div className="text-base" animate={{ rotate:[0,15,-15,0] }}
               transition={{ duration:2, repeat:Infinity, repeatDelay:3 }}>🎨</motion.div>
+          </div>
+          {/* For label */}
+          <div className="mt-2 flex items-center gap-1.5">
+            <div className="h-px flex-1" style={{ background:"hsl(var(--holi-border))" }}/>
+            <p className="text-[9px] font-bold uppercase tracking-widest"
+              style={{ color: data.recipientName ? "var(--holi-pink)" : "hsl(var(--holi-muted-fg))" }}>
+              {data.recipientName ? `For ${data.recipientName}` : "For Everyone 🌈"}
+            </p>
+            <div className="h-px flex-1" style={{ background:"hsl(var(--holi-border))" }}/>
           </div>
         </div>
       )}

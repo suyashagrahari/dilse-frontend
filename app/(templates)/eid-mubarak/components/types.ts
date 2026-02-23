@@ -1,5 +1,5 @@
 export type TabId = "home" | "wish" | "greetings" | "playlist" | "dua";
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export type EditMode = null | "choose" | "ai" | "ai-edit" | "manual" | "preview" | "password";
 
 export interface Toast {
   id: number;
@@ -55,6 +55,7 @@ export interface EidData {
   senderMembers: FamilyMember[];
   senderPhoto: string;
   recipientName: string;
+  homeWishMessage: string;
   congratsMessage: string;
   eidDate: string;
   heroImage: string;
@@ -75,6 +76,7 @@ export const DEMO_DATA: EidData = {
   ],
   senderPhoto: "",
   recipientName: "",
+  homeWishMessage: "Every moment we share becomes a treasure I hold close to my heart. Thank you for being the reason I smile every single day. May this Eid fill your heart with pure joy and boundless happiness.",
   congratsMessage: "Wishing you and your family a very blessed Eid! May this Eid bring joy, happiness, and prosperity to your life. Eid Mubarak from our family to yours!",
   eidDate: "2026-03-20T00:00:00",
   heroImage: "/assets/Eid/hero_eid.jpeg",

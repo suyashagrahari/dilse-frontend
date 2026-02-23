@@ -125,15 +125,17 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
         </motion.h1>
 
         {/* Sender name */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-base sm:text-lg font-bold text-center mb-4"
-          style={{ color: "hsl(var(--eid-fg))" }}
-        >
-          {data.senderName}
-        </motion.p>
+        {data.senderName && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-base sm:text-lg font-bold text-center mb-4"
+            style={{ color: "hsl(var(--eid-fg))" }}
+          >
+            {data.senderName}
+          </motion.p>
+        )}
 
         {/* Photo */}
         <motion.div
@@ -265,15 +267,35 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
           </motion.div>
         )}
 
-        {/* Message — directly on the page */}
+        {/* Recipient or General heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.52 }}
+          className="mb-3 text-center"
+        >
+          {data.recipientName ? (
+            <p className="text-sm font-semibold" style={{ color: "hsl(var(--eid-fg))" }}>
+              Dear{" "}
+              <span style={{ color: "var(--eid-gold)", fontWeight: 700 }}>{data.recipientName}</span>
+              , 🌙
+            </p>
+          ) : (
+            <p className="text-xs font-medium" style={{ color: "hsl(var(--eid-muted-fg))" }}>
+              🌙 For All Our Friends &amp; Family
+            </p>
+          )}
+        </motion.div>
+
+        {/* Family wish message card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.55 }}
-          className="w-full max-w-sm lg:max-w-lg mb-4"
+          className="w-full max-w-sm lg:max-w-lg mb-5"
         >
           <motion.span
-            className="block text-center text-sm mb-2"
+            className="block text-center text-sm mb-3"
             animate={{ y: [0, -3, 0] }}
             transition={{ duration: 2.5, repeat: Infinity }}
             style={{ color: "var(--eid-gold)", opacity: 0.5 }}
@@ -281,26 +303,29 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
             <Sparkles size={14} className="mx-auto" />
           </motion.span>
 
-          <p
-            className="text-sm leading-relaxed text-center mb-3"
+          {/* Wish card */}
+          <div
+            className="rounded-2xl px-5 py-5 relative overflow-hidden"
             style={{
-              color: "hsl(var(--eid-fg) / 0.8)",
-              fontFamily: "'DM Sans', sans-serif",
+              background: "hsl(var(--eid-card) / 0.6)",
+              border: "1px solid rgba(197,160,63,0.18)",
+              backdropFilter: "blur(12px)",
             }}
           >
-            {data.congratsMessage}
-          </p>
+            {/* Subtle gold strip at top */}
+            <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: "var(--eid-gradient-gold)", opacity: 0.5 }} />
 
-          <p
-            className="text-sm leading-relaxed text-center"
-            style={{
-              color: "hsl(var(--eid-fg) / 0.7)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            Every moment we share becomes a treasure I hold close to my heart.
-            Thank you for being the reason I smile every single day.
-          </p>
+            <p
+              className="text-sm leading-[1.85] text-center"
+              style={{
+                color: "hsl(var(--eid-fg) / 0.88)",
+                fontFamily: "'DM Sans', sans-serif",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {data.congratsMessage}
+            </p>
+          </div>
         </motion.div>
 
         {/* Signature */}
@@ -313,7 +338,7 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
             className="text-sm italic font-semibold"
             style={{ color: "var(--eid-gold)" }}
           >
-            With all my love,
+            {data.recipientName ? "With all my love," : "With Eid blessings,"}
           </p>
           <p
             className="text-xs font-bold mt-0.5"

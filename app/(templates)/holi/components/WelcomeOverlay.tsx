@@ -39,7 +39,7 @@ const WelcomeOverlay = memo(function WelcomeOverlay({
     setTimeout(() => onEnter(playMusic), 700);
   };
 
-  const displayName = recipientName || "You";
+  const isGeneral = !recipientName.trim();
 
   return (
     <AnimatePresence>
@@ -216,7 +216,7 @@ const WelcomeOverlay = memo(function WelcomeOverlay({
                 fontFamily: "'Outfit', sans-serif",
               }}
             >
-              Happy Holi, {displayName}! 🌈
+              {isGeneral ? "Happy Holi to All! 🌈" : `Happy Holi, ${recipientName}! 🌈`}
             </motion.p>
 
             {/* From sender */}
@@ -230,8 +230,10 @@ const WelcomeOverlay = memo(function WelcomeOverlay({
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              A colorful greeting from{" "}
-              <span className="font-bold holi-text-gradient">{senderName}</span>
+              {senderName ? (
+                <>A colorful greeting from{" "}
+                <span className="font-bold holi-text-gradient">{senderName}</span></>
+              ) : "A festive Holi greeting for everyone"}
             </motion.p>
 
             {/* Rainbow line */}
