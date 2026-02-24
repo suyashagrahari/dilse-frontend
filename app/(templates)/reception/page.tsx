@@ -8,6 +8,7 @@ import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
 import BokehParticles from "./components/BokehParticles";
 import DesktopNav from "./components/DesktopNav";
+import DesktopRightPanel from "./components/DesktopRightPanel";
 import BottomNav from "./components/BottomNav";
 import SplashSection from "./components/SplashSection";
 import ToastStack from "./components/ToastStack";
@@ -70,7 +71,7 @@ export default function ReceptionPage() {
         />
       )}
 
-      {/* Background image on all tabs */}
+      {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
           src="/assets/Reception/reception.png"
@@ -98,6 +99,19 @@ export default function ReceptionPage() {
         coupleNames={coupleNames}
         darkMode={editor.darkMode}
         toggleDark={editor.toggleDark}
+        onBack={editor.goBack}
+        onEdit={editor.handleEditClick}
+        showPublish={editor.showPublish}
+        showShare={editor.showShare}
+        shareLabel={editor.shareLabel}
+        onPublish={editor.handlePublish}
+        onShare={editor.handleShare}
+      />
+
+      <DesktopRightPanel
+        content={editor.content}
+        shareUrl={editor.shareUrl}
+        isPersonalized={editor.isPersonalized}
       />
 
       <BottomNav
@@ -114,7 +128,7 @@ export default function ReceptionPage() {
         toggleDark={editor.toggleDark}
       />
 
-      <div className="h-full overflow-y-auto no-scrollbar pb-24 lg:pb-0">
+      <div className="lg:ml-64 xl:mr-72 h-full overflow-y-auto no-scrollbar pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           {editor.tab === "home" && (
             <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
@@ -168,13 +182,17 @@ export default function ReceptionPage() {
         aiPrompt={editor.aiPrompt}
         setAiPrompt={editor.setAiPrompt}
         aiLoading={editor.aiLoading}
+        extractLoading={editor.extractLoading}
         mf={editor.mf}
         manualStep={editor.manualStep}
         setManualStep={editor.setManualStep}
         updateMf={editor.updateMf}
-        onStartAi={editor.startAiMode}
+        onStartAiText={editor.startAiTextMode}
+        onStartAiCard={editor.startAiCardMode}
         onStartManual={editor.startManualMode}
+        onCardExtract={editor.handleCardExtract}
         onAiGenerate={editor.handleAiGenerate}
+        onAiEditPreview={editor.handleAiEditPreview}
         onManualPreview={editor.handleManualPreview}
       />
 
@@ -200,7 +218,9 @@ export default function ReceptionPage() {
       <ReceptionBackgroundMusic shouldPlay={playMusic} />
 
       <AnimatePresence>
-        {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}
+        {editor.showAuth && (
+          <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />
+        )}
       </AnimatePresence>
     </div>
   );

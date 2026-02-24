@@ -98,8 +98,8 @@ export default function HoliPage() {
         </div>
       )}
 
-      <ColorBlobs count={8} />
-      <ParticleRain count={14} />
+      <ColorBlobs count={5} />
+      <ParticleRain count={7} />
 
       <DesktopSidebar
         tab={editor.tab}

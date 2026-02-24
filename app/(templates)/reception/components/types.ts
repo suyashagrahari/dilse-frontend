@@ -1,5 +1,5 @@
 export type TabId = "home" | "couple" | "gallery" | "location" | "blessings";
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export type EditMode = null | "choose" | "ai-card" | "ai-text" | "ai-edit" | "manual" | "preview" | "password";
 
 export interface Toast {
   id: number;
@@ -9,12 +9,12 @@ export interface Toast {
   shareUrl?: string;
 }
 
-export const TABS: { id: TabId; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "couple", label: "Us" },
-  { id: "gallery", label: "Gallery" },
-  { id: "location", label: "Location" },
-  { id: "blessings", label: "Blessings" },
+export const TABS: { id: TabId; label: string; emoji: string }[] = [
+  { id: "home", label: "Home", emoji: "🏠" },
+  { id: "couple", label: "Us", emoji: "💑" },
+  { id: "gallery", label: "Gallery", emoji: "📸" },
+  { id: "location", label: "Location", emoji: "📍" },
+  { id: "blessings", label: "Blessings", emoji: "🙏" },
 ];
 
 export interface PersonInfo {

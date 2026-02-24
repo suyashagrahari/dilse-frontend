@@ -48,11 +48,16 @@ export function useReceptionEditor() {
   const [showPwValue, setShowPwValue] = useState(false);
   const [hasPasswordSet, setHasPasswordSet] = useState(false);
 
+  // AI text mode
   const [aiName, setAiName] = useState("");
   const [aiSender, setAiSender] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
+  // AI card extraction
+  const [extractLoading, setExtractLoading] = useState(false);
+
+  // Shared form data (used for manual + ai-edit modes)
   const [mf, setMf] = useState<ReceptionData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
 
@@ -81,17 +86,28 @@ export function useReceptionEditor() {
   const goBack = useCallback(() => router.push("/templates"), [router]);
   const closeAuth = useCallback(() => setShowAuth(false), []);
 
+  // After successful auth, open edit sheet
+  const closeAuthSuccess = useCallback(() => {
+    setShowAuth(false);
+    setEditMode("choose");
+  }, []);
+
   const handleEditClick = useCallback(() => {
     if (!isAuthenticated) { setShowAuth(true); return; }
     setEditMode("choose");
   }, [isAuthenticated]);
 
-  const startAiMode = useCallback(() => {
+  const startAiTextMode = useCallback(() => {
     setAiName(isPersonalized ? content.brideName : "");
     setAiSender(isPersonalized ? content.groomName : "");
     setAiPrompt("");
-    setEditMode("ai");
-  }, [isPersonalized, content.brideName, content.groomName]);
+    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    setEditMode("ai-text");
+  }, [isPersonalized, content]);
+
+  const startAiCardMode = useCallback(() => {
+    setEditMode("ai-card");
+  }, []);
 
   const startManualMode = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
@@ -99,6 +115,17 @@ export function useReceptionEditor() {
     setEditMode("manual");
   }, [isPersonalized, content]);
 
+  const updateMf = useCallback(
+    (key: keyof ReceptionData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
+    [],
+  );
+
+  const bulkUpdateMf = useCallback(
+    (data: Partial<ReceptionData>) => setMf((p) => ({ ...p, ...data })),
+    [],
+  );
+
+  // AI text generation → goes to ai-edit mode for review
   const handleAiGenerate = useCallback(async () => {
     if (!aiName.trim() || !aiPrompt.trim()) return;
     setAiLoading(true);
@@ -109,21 +136,33 @@ export function useReceptionEditor() {
         body: JSON.stringify({
           prompt: `Reception invitation for ${aiName} & ${aiSender}. ${aiPrompt}`,
           templateId: "reception",
-          templateType: "wedding",
+          templateType: "reception",
         }),
       });
       const data = await res.json();
-      if (data.body) {
-        const newContent: ReceptionData = {
-          ...DEMO_DATA,
-          brideName: aiName.trim(),
-          groomName: aiSender.trim() || "Partner",
-          bride: { ...DEMO_DATA.bride, name: aiName.trim(), description: data.body },
-          groom: { ...DEMO_DATA.groom, name: aiSender.trim() || "Partner" },
-        };
-        setPendingContent(newContent);
-        setContent(newContent);
-        setEditMode("preview");
+      if (data.body || data.brideDescription || data.tagline) {
+        const generated = data;
+        // Merge AI output into mf so user can review in ai-edit mode
+        setMf((prev) => ({
+          ...prev,
+          brideName: aiName.trim() || prev.brideName,
+          groomName: aiSender.trim() || prev.groomName,
+          tagline: generated.tagline || prev.tagline,
+          venueTimings: generated.venueTimings || prev.venueTimings,
+          bride: {
+            ...prev.bride,
+            name: aiName.trim() || prev.bride.name,
+            description: generated.brideDescription || generated.body || prev.bride.description,
+          },
+          groom: {
+            ...prev.groom,
+            name: aiSender.trim() || prev.groom.name,
+            description: generated.groomDescription || prev.groom.description,
+          },
+        }));
+        setEditMode("ai-edit");
+      } else {
+        pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
@@ -132,6 +171,64 @@ export function useReceptionEditor() {
     }
   }, [aiName, aiSender, aiPrompt, headers, pushToast]);
 
+  // Card extraction via OpenAI Vision → goes to ai-edit for review
+  const handleCardExtract = useCallback(async (images: string[]) => {
+    if (images.length === 0) return;
+    setExtractLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/reception-pages/extract-card`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ images }),
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        setMf((prev) => ({
+          ...prev,
+          brideName: d.brideName || prev.brideName,
+          groomName: d.groomName || prev.groomName,
+          receptionDate: d.receptionDate || prev.receptionDate,
+          venue: d.venue || prev.venue,
+          venueAddress: d.venueAddress || prev.venueAddress,
+          venueMapQuery: d.venueMapQuery || prev.venueMapQuery,
+          venueTimings: d.venueTimings || prev.venueTimings,
+          tagline: d.tagline || prev.tagline,
+          bride: {
+            ...prev.bride,
+            name: d.brideName || prev.bride.name,
+            description: d.brideDescription || prev.bride.description,
+          },
+          groom: {
+            ...prev.groom,
+            name: d.groomName || prev.groom.name,
+            description: d.groomDescription || prev.groom.description,
+          },
+          families: {
+            bride: d.familyBride || prev.families.bride,
+            groom: d.familyGroom || prev.families.groom,
+          },
+        }));
+        setEditMode("ai-edit");
+      } else {
+        pushToast({ type: "info", title: "Extraction failed", message: result.error || "Please try again" });
+      }
+    } catch {
+      pushToast({ type: "info", title: "Extraction failed", message: "Please try again" });
+    } finally {
+      setExtractLoading(false);
+    }
+  }, [headers, pushToast]);
+
+  // After ai-edit review → preview
+  const handleAiEditPreview = useCallback(() => {
+    if (!mf.brideName.trim()) return;
+    const newContent: ReceptionData = { ...mf };
+    setPendingContent(newContent);
+    setContent(newContent);
+    setEditMode("preview");
+  }, [mf]);
+
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim()) return;
     setPendingContent(mf);
@@ -139,19 +236,33 @@ export function useReceptionEditor() {
     setEditMode("preview");
   }, [mf]);
 
-  const updateMf = useCallback(
-    (key: keyof ReceptionData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
-    [],
-  );
-
   const saveToServer = useCallback(
     async (data: ReceptionData, password?: string) => {
       if (!accessToken) return;
-      const body = { ...data, password: password || "" };
+      const body = {
+        brideName: data.brideName,
+        groomName: data.groomName,
+        receptionDate: data.receptionDate,
+        venue: data.venue,
+        venueAddress: data.venueAddress,
+        venueMapQuery: data.venueMapQuery,
+        venueTimings: data.venueTimings,
+        tagline: data.tagline,
+        heroImage: data.heroImage,
+        bride: data.bride,
+        groom: data.groom,
+        families: data.families,
+        galleryImages: data.galleryImages,
+        password: password || "",
+      };
       if (pageId) {
-        await fetch(`${API_URL}/reception-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
+        await fetch(`${API_URL}/reception-pages/${pageId}`, {
+          method: "PUT", headers: headers(), body: JSON.stringify(body),
+        });
       } else {
-        const res = await fetch(`${API_URL}/reception-pages`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(`${API_URL}/reception-pages`, {
+          method: "POST", headers: headers(), body: JSON.stringify(body),
+        });
         const result = await res.json();
         if (result.success) setPageId(result.data._id);
       }
@@ -202,13 +313,14 @@ export function useReceptionEditor() {
     if (!pageId) return;
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/reception-pages/${pageId}/publish`, { method: "POST", headers: headers() });
+      const res = await fetch(`${API_URL}/reception-pages/${pageId}/publish`, {
+        method: "POST", headers: headers(),
+      });
       const result = await res.json();
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
-        setPageId(null);
-        setIsPersonalized(false);
+        // Keep pageId so user can edit + republish
         setHasPasswordSet(false);
         pushToast({
           type: "publish",
@@ -242,22 +354,22 @@ export function useReceptionEditor() {
   return {
     tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
-    aiName, aiSender, aiPrompt, aiLoading,
+    aiName, aiSender, aiPrompt, aiLoading, extractLoading,
     mf, manualStep,
     darkMode, themeReady, toggleDark,
 
     setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
-    setPagePassword, setShowPwValue,
-    updateMf, handleTabChange,
+    setPagePassword, setShowPwValue, setMf,
+    updateMf, bulkUpdateMf, handleTabChange,
 
-    goBack, closeAuth,
-    handleEditClick, startAiMode, startManualMode,
-    handleAiGenerate, handleManualPreview,
+    goBack, closeAuth, closeAuthSuccess,
+    handleEditClick, startAiTextMode, startAiCardMode, startManualMode,
+    handleAiGenerate, handleCardExtract, handleAiEditPreview, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
 
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    showPublish: isPersonalized && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

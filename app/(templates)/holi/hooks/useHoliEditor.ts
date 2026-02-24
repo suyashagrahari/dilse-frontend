@@ -43,13 +43,6 @@ export function useHoliEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Private route: show auth modal immediately if not authenticated
-  useEffect(() => {
-    if (themeReady && !isAuthenticated) {
-      setShowAuth(true);
-    }
-  }, [themeReady, isAuthenticated]);
-
   // Load AI-prefilled data from shared viewer (sessionStorage holi_prefill)
   useEffect(() => {
     if (!themeReady || !isAuthenticated) return;

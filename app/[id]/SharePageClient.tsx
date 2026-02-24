@@ -15,6 +15,7 @@ import ValentineNav from "@/app/(templates)/valentine-gf/components/ValentineNav
 import HoliViewer from "./HoliViewer";
 import EidViewer from "./EidViewer";
 import WeddingViewer from "./WeddingViewer";
+import ReceptionViewer from "./ReceptionViewer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -124,8 +125,8 @@ export default function SharePage() {
           setHasPassword(!!result.hasPassword);
           setSenderUserId(result.senderUserId || null);
 
-          // Holi, Eid and Wedding have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding") {
+          // Holi, Eid, Wedding and Reception have their own full-page viewers — just store raw data
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception") {
             setData(result.data);
             setLoading(false);
             return;
@@ -269,6 +270,11 @@ export default function SharePage() {
   // Wedding has its own full-page viewer
   if (!loading && templateType === "wedding" && data) {
     return <WeddingViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Reception has its own full-page viewer
+  if (!loading && templateType === "reception" && data) {
+    return <ReceptionViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {

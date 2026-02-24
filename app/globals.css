@@ -550,6 +550,8 @@
   --rec-accent-fg: #0B0F1A;
   --rec-nav-bg: rgba(11,15,26,0.88);
   --rec-nav-border: rgba(212,165,116,0.06);
+  --rec-sidebar-bg: rgba(11,15,26,0.94);
+  --rec-sidebar-border: rgba(212,165,116,0.09);
   /* keep old names as aliases for components not yet updated */
   --rec-gold: var(--rec-accent);
   --rec-gold-light: var(--rec-accent-light);
@@ -850,16 +852,32 @@
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(40px);
-  animation: holi-color-float var(--dur, 8s) ease-in-out var(--del, 0s) infinite,
-             holi-blob-morph var(--morph, 11s) ease-in-out var(--del, 0s) infinite;
+  filter: blur(18px);
+  will-change: transform;
+  transform: translateZ(0);
+  animation: holi-color-float var(--dur, 8s) ease-in-out var(--del, 0s) infinite;
 }
 
 .holi-particle {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
+  will-change: transform;
+  transform: translateZ(0);
   animation: holi-particle-fall var(--dur, 10s) linear var(--del, 0s) infinite;
+}
+
+@keyframes holi-powder-pulse {
+  0%, 100% { transform: translateZ(0) scale(0.85); opacity: 0.3; }
+  50% { transform: translateZ(0) scale(1.1); opacity: 0.5; }
+}
+
+.holi-powder-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  animation: holi-powder-pulse var(--dur, 6s) ease-in-out var(--del, 0s) infinite;
 }
 
 .holi-divider {
