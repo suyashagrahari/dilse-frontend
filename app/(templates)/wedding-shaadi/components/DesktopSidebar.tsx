@@ -2,7 +2,10 @@
 
 import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Home, Heart, CalendarDays, Image, Flower2, Sun, Moon, ArrowLeft } from "lucide-react";
+import {
+  Home, Heart, CalendarDays, Image, Flower2,
+  Sun, Moon, Pencil, Send, Share2, ArrowLeft,
+} from "lucide-react";
 import { TABS, type TabId } from "./types";
 
 const TAB_ICONS: Record<TabId, typeof Home> = {
@@ -20,15 +23,17 @@ interface Props {
   darkMode: boolean;
   toggleDark: () => void;
   onBack: () => void;
+  onEdit: () => void;
+  showPublish?: boolean;
+  showShare?: boolean;
+  shareLabel?: string;
+  onPublish?: () => void;
+  onShare?: () => void;
 }
 
 export default memo(function DesktopSidebar({
-  tab,
-  onTabChange,
-  coupleNames,
-  darkMode,
-  toggleDark,
-  onBack,
+  tab, onTabChange, coupleNames, darkMode, toggleDark, onBack,
+  onEdit, showPublish, showShare, shareLabel, onPublish, onShare,
 }: Props) {
   const handleTab = useCallback(
     (id: TabId) => () => onTabChange(id),
@@ -40,7 +45,7 @@ export default memo(function DesktopSidebar({
       initial={{ x: -80, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 z-40 py-6 px-3"
+      className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 z-40"
       style={{
         background: "var(--wed-sidebar-bg)",
         backdropFilter: "blur(24px)",
@@ -48,14 +53,18 @@ export default memo(function DesktopSidebar({
         borderRight: "1px solid var(--wed-sidebar-border)",
       }}
     >
-      <div className="text-center mb-8 px-3">
+      {/* Header */}
+      <div
+        className="text-center py-6 px-4"
+        style={{ borderBottom: "1px solid var(--wed-sidebar-border)" }}
+      >
         <motion.div
           animate={{ scale: [1, 1.06, 1] }}
           transition={{ duration: 3, repeat: Infinity }}
-          className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-3 shadow-sm"
+          className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-3 shadow-md"
           style={{
             background: "var(--wed-gradient-gold)",
-            boxShadow: "0 0 20px var(--wed-gold-glow)",
+            boxShadow: "0 0 24px var(--wed-gold-glow)",
           }}
         >
           💍
@@ -68,38 +77,37 @@ export default memo(function DesktopSidebar({
             WebkitTextFillColor: "transparent",
           }}
         >
-          {coupleNames.bride} & {coupleNames.groom}
+          {coupleNames.bride || "Bride"} &amp; {coupleNames.groom || "Groom"}
         </h2>
-        <p className="text-[10px] mt-0.5" style={{ color: "var(--wed-gold)" }}>
-          शुभ विवाह
+        <p className="text-[11px] mt-0.5" style={{ color: "var(--wed-gold)", fontFamily: "'Noto Serif Devanagari', serif" }}>
+          शुभ विवाह ✨
         </p>
       </div>
 
-      <nav className="flex-1 space-y-1 px-1">
-        {TABS.map(({ id, label }) => {
+      {/* Tab navigation */}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {TABS.map(({ id, label, emoji }) => {
           const Icon = TAB_ICONS[id];
           const active = tab === id;
           return (
             <motion.button
               key={id}
-              whileHover={{ x: 2 }}
+              whileHover={{ x: 3 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleTab(id)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200 text-sm font-medium"
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-sm font-medium transition-all"
               style={
                 active
                   ? {
-                      background: darkMode
-                        ? "rgba(212,168,67,0.1)"
-                        : "rgba(184,134,11,0.08)",
+                      background: darkMode ? "rgba(212,168,67,0.12)" : "rgba(184,134,11,0.08)",
                       color: "var(--wed-accent-gold)",
-                      border: `1px solid ${darkMode ? "rgba(212,168,67,0.2)" : "rgba(184,134,11,0.15)"}`,
+                      border: `1px solid ${darkMode ? "rgba(212,168,67,0.25)" : "rgba(184,134,11,0.18)"}`,
                     }
-                  : { color: "var(--wed-muted-fg)" as unknown as string }
-            }
+                  : { color: "hsl(var(--wed-muted-fg))", border: "1px solid transparent" }
+              }
             >
               <Icon size={17} strokeWidth={active ? 2.2 : 1.5} />
-              {label}
+              <span>{emoji} {label}</span>
               {active && (
                 <motion.div
                   layoutId="wed-sidebar-dot"
@@ -112,23 +120,77 @@ export default memo(function DesktopSidebar({
         })}
       </nav>
 
-      <div className="px-1 space-y-1 mt-4 pt-4" style={{ borderTop: "1px solid var(--wed-sidebar-border)" }}>
-        <button
-          onClick={toggleDark}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-          style={{ color: "hsl(var(--wed-muted-fg))" }}
+      {/* Action buttons footer */}
+      <div
+        className="p-3 space-y-2"
+        style={{ borderTop: "1px solid var(--wed-sidebar-border)" }}
+      >
+        {/* Edit — always visible */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onEdit}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
+          style={{
+            background: "var(--wed-gradient-gold)",
+            boxShadow: "0 4px 18px var(--wed-gold-glow)",
+          }}
         >
-          {darkMode ? <Sun size={17} strokeWidth={1.5} /> : <Moon size={17} strokeWidth={1.5} />}
-          {darkMode ? "Light Mode" : "Dark Mode"}
-        </button>
-        <button
-          onClick={onBack}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-          style={{ color: "hsl(var(--wed-muted-fg))" }}
-        >
-          <ArrowLeft size={17} strokeWidth={1.5} />
-          Back to Templates
-        </button>
+          <Pencil size={15} />
+          Edit Invitation
+        </motion.button>
+
+        {/* Publish — after saving */}
+        {showPublish && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onPublish}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+            style={{
+              background: "rgba(16,185,129,0.12)",
+              color: "#10b981",
+              border: "1px solid rgba(16,185,129,0.3)",
+            }}
+          >
+            <Send size={15} />
+            Publish
+          </motion.button>
+        )}
+
+        {/* Share — after publishing */}
+        {showShare && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onShare}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+            style={{
+              background: "rgba(99,102,241,0.12)",
+              color: "#818cf8",
+              border: "1px solid rgba(99,102,241,0.25)",
+            }}
+          >
+            <Share2 size={15} />
+            {shareLabel || "Share"}
+          </motion.button>
+        )}
+
+        {/* Back + theme toggle */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+            style={{ color: "hsl(var(--wed-muted-fg))", background: "var(--wed-glass)" }}
+          >
+            <ArrowLeft size={13} />
+            Back
+          </button>
+          <button
+            onClick={toggleDark}
+            className="p-2 rounded-lg transition-all hover:opacity-80"
+            style={{ color: "hsl(var(--wed-muted-fg))" }}
+          >
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
       </div>
     </motion.aside>
   );

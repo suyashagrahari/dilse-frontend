@@ -99,6 +99,12 @@ export default function WeddingShadiPage() {
         darkMode={editor.darkMode}
         toggleDark={editor.toggleDark}
         onBack={editor.goBack}
+        onEdit={editor.handleEditClick}
+        showPublish={editor.showPublish}
+        showShare={editor.showShare}
+        shareLabel={editor.shareLabel}
+        onPublish={editor.handlePublish}
+        onShare={editor.handleShare}
       />
 
       <BottomNav
@@ -169,13 +175,16 @@ export default function WeddingShadiPage() {
         aiPrompt={editor.aiPrompt}
         setAiPrompt={editor.setAiPrompt}
         aiLoading={editor.aiLoading}
+        extractLoading={editor.extractLoading}
         mf={editor.mf}
         manualStep={editor.manualStep}
         setManualStep={editor.setManualStep}
         updateMf={editor.updateMf}
         onStartAi={editor.startAiMode}
         onStartManual={editor.startManualMode}
+        onCardExtract={editor.handleCardExtract}
         onAiGenerate={editor.handleAiGenerate}
+        onAiEditPreview={editor.handleAiEditPreview}
         onManualPreview={editor.handleManualPreview}
       />
 
@@ -201,7 +210,7 @@ export default function WeddingShadiPage() {
       <WeddingBackgroundMusic shouldPlay={playMusic} />
 
       <AnimatePresence>
-        {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuth} />}
+        {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />}
       </AnimatePresence>
     </div>
   );

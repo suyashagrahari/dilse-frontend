@@ -1,38 +1,41 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye } from "lucide-react";
-import type { WeddingData, EditMode } from "./types";
+import {
+  X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye,
+  Upload, Image as ImageIcon, MapPin, ExternalLink, Camera, Zap,
+} from "lucide-react";
+import type { WeddingData, EditMode, WeddingEvent } from "./types";
 import { GOLD_GRADIENT, AMBER_GRADIENT } from "./styles";
 
-const MANUAL_STEPS = ["Names", "Details", "Message", "Gallery"];
+const GALLERY_SPANS = ["col-span-2 row-span-2", "", "", "col-span-2", "", ""];
+const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions"];
 
 interface Props {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
-  aiName: string;
-  setAiName: (v: string) => void;
-  aiSender: string;
-  setAiSender: (v: string) => void;
-  aiPrompt: string;
-  setAiPrompt: (v: string) => void;
+  aiName: string; setAiName: (v: string) => void;
+  aiSender: string; setAiSender: (v: string) => void;
+  aiPrompt: string; setAiPrompt: (v: string) => void;
   aiLoading: boolean;
+  extractLoading: boolean;
   mf: WeddingData;
-  manualStep: number;
-  setManualStep: (v: number) => void;
+  manualStep: number; setManualStep: (v: number) => void;
   updateMf: (key: keyof WeddingData, val: unknown) => void;
   onStartAi: () => void;
   onStartManual: () => void;
+  onCardExtract: (files: File[]) => void;
   onAiGenerate: () => void;
+  onAiEditPreview: () => void;
   onManualPreview: () => void;
 }
 
 export default memo(function EditSheet({
   editMode, setEditMode,
   aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading,
-  mf, manualStep, setManualStep, updateMf,
-  onStartAi, onStartManual, onAiGenerate, onManualPreview,
+  extractLoading, mf, manualStep, setManualStep, updateMf,
+  onStartAi, onStartManual, onCardExtract, onAiGenerate, onAiEditPreview, onManualPreview,
 }: Props) {
   const visible = editMode !== null && editMode !== "preview" && editMode !== "password";
 
@@ -41,31 +44,43 @@ export default memo(function EditSheet({
       {visible && (
         <>
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setEditMode(null)}
-            className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60"
+            className="fixed inset-0 z-50 bg-black/50"
           />
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
+            className="fixed bottom-0 left-0 right-0 z-50 max-h-[92vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
           >
             <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
 
             {editMode === "choose" && <ChoosePanel setEditMode={setEditMode} onStartAi={onStartAi} onStartManual={onStartManual} />}
-            {editMode === "ai" && (
-              <AiPanel
+            {editMode === "ai" && <AiChoosePanel setEditMode={setEditMode} />}
+            {editMode === "ai-card" && (
+              <AiCardPanel
+                setEditMode={setEditMode}
+                extractLoading={extractLoading}
+                onExtract={onCardExtract}
+              />
+            )}
+            {editMode === "ai-text" && (
+              <AiTextPanel
                 setEditMode={setEditMode}
                 aiName={aiName} setAiName={setAiName}
                 aiSender={aiSender} setAiSender={setAiSender}
                 aiPrompt={aiPrompt} setAiPrompt={setAiPrompt}
                 aiLoading={aiLoading} onGenerate={onAiGenerate}
+                mf={mf} updateMf={updateMf}
+              />
+            )}
+            {editMode === "ai-edit" && (
+              <AiEditPanel
+                setEditMode={setEditMode}
+                mf={mf} updateMf={updateMf}
+                onPreview={onAiEditPreview}
               />
             )}
             {editMode === "manual" && (
@@ -82,7 +97,10 @@ export default memo(function EditSheet({
   );
 });
 
-function ChoosePanel({ setEditMode, onStartAi, onStartManual }: { setEditMode: (m: EditMode) => void; onStartAi: () => void; onStartManual: () => void }) {
+// ── Choose mode ────────────────────────────────────────────────────────────────
+function ChoosePanel({ setEditMode, onStartAi, onStartManual }: {
+  setEditMode: (m: EditMode) => void; onStartAi: () => void; onStartManual: () => void;
+}) {
   return (
     <div className="px-5 pb-8 pt-2">
       <div className="flex items-center justify-between mb-6">
@@ -92,27 +110,27 @@ function ChoosePanel({ setEditMode, onStartAi, onStartManual }: { setEditMode: (
       <div className="space-y-3">
         <button
           onClick={onStartAi}
-          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 dark:from-amber-500/15 dark:to-yellow-500/15 border border-amber-200/50 dark:border-amber-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-200/50 dark:border-amber-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
         >
           <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: AMBER_GRADIENT }}>
             <Sparkles size={20} className="text-white" />
           </div>
           <div>
             <p className="font-bold text-sm">Generate with AI</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Describe your wedding & AI creates the invitation</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Upload shaadi card or describe your wedding</p>
           </div>
           <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
         </button>
         <button
           onClick={onStartManual}
-          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-yellow-500/10 to-amber-500/10 dark:from-yellow-500/15 dark:to-amber-500/15 border border-yellow-200/50 dark:border-yellow-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-200/50 dark:border-yellow-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
         >
           <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: GOLD_GRADIENT }}>
             <PenLine size={20} className="text-white" />
           </div>
           <div>
-            <p className="font-bold text-sm">Write Manually</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Fill in each field yourself</p>
+            <p className="font-bold text-sm">Fill Manually</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Add photos, events, gallery images yourself</p>
           </div>
           <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
         </button>
@@ -121,52 +139,279 @@ function ChoosePanel({ setEditMode, onStartAi, onStartManual }: { setEditMode: (
   );
 }
 
-function AiPanel({
-  setEditMode, aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading, onGenerate,
-}: {
-  setEditMode: (m: EditMode) => void;
-  aiName: string; setAiName: (v: string) => void;
-  aiSender: string; setAiSender: (v: string) => void;
-  aiPrompt: string; setAiPrompt: (v: string) => void;
-  aiLoading: boolean; onGenerate: () => void;
-}) {
+// ── AI: choose card vs text ────────────────────────────────────────────────────
+function AiChoosePanel({ setEditMode }: { setEditMode: (m: EditMode) => void }) {
   return (
     <div className="px-5 pb-8 pt-2">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
-        <h3 className="text-lg font-bold flex items-center gap-2"><Sparkles size={16} className="text-amber-500" /> AI Magic</h3>
+        <h3 className="text-lg font-bold flex items-center gap-2"><Sparkles size={16} className="text-amber-500" /> AI Options</h3>
       </div>
-      <div className="space-y-4">
-        <FieldGroup label="Bride Name *">
-          <input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Priya" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 dark:focus:border-amber-700 focus:outline-none text-sm transition-all" />
-        </FieldGroup>
-        <FieldGroup label="Groom Name *">
-          <input value={aiSender} onChange={(e) => setAiSender(e.target.value)} placeholder="e.g. Rahul" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 dark:focus:border-amber-700 focus:outline-none text-sm transition-all" />
-        </FieldGroup>
-        <FieldGroup label="Describe your wedding *">
-          <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="e.g. A royal Rajasthani wedding in Jaipur with traditional ceremonies..." rows={4} className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 dark:focus:border-amber-700 focus:outline-none text-sm transition-all resize-none" />
-        </FieldGroup>
+      <div className="space-y-3">
         <button
-          onClick={onGenerate}
-          disabled={aiLoading || !aiName.trim() || !aiPrompt.trim()}
-          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
-          style={{ background: AMBER_GRADIENT }}
+          onClick={() => setEditMode("ai-card")}
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-200/50 dark:border-violet-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
         >
-          {aiLoading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate Invitation ✨</>}
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #8B5CF6, #7C3AED)" }}>
+            <Upload size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Upload Shaadi Card</p>
+            <p className="text-xs text-muted-foreground mt-0.5">AI reads your invitation card & fills all fields automatically</p>
+          </div>
+          <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
+        </button>
+        <button
+          onClick={() => setEditMode("ai-text")}
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/50 dark:border-amber-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
+        >
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: AMBER_GRADIENT }}>
+            <Zap size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Describe Your Wedding</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Tell AI about the couple & it generates the invitation</p>
+          </div>
+          <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
         </button>
       </div>
     </div>
   );
 }
 
-function ManualPanel({
-  setEditMode, mf, manualStep, setManualStep, updateMf, onPreview,
-}: {
+// ── AI: upload shaadi card ─────────────────────────────────────────────────────
+function AiCardPanel({ setEditMode, extractLoading, onExtract }: {
   setEditMode: (m: EditMode) => void;
-  mf: WeddingData; manualStep: number; setManualStep: (v: number) => void;
-  updateMf: (key: keyof WeddingData, val: unknown) => void;
+  extractLoading: boolean;
+  onExtract: (files: File[]) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleFiles = useCallback((selected: FileList | null) => {
+    if (!selected) return;
+    const arr = Array.from(selected).slice(0, 3);
+    setFiles(arr);
+    const urls = arr.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+  }, []);
+
+  return (
+    <div className="px-5 pb-8 pt-2">
+      <div className="flex items-center gap-3 mb-5">
+        <button onClick={() => setEditMode("ai")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
+        <h3 className="text-lg font-bold flex items-center gap-2">
+          <Upload size={16} className="text-violet-500" /> Upload Shaadi Card
+        </h3>
+      </div>
+
+      <p className="text-xs text-muted-foreground mb-4">
+        Upload your wedding invitation card(s). AI will automatically read and extract bride name, groom name, venue, dates, family names, and events.
+      </p>
+
+      <div
+        onClick={() => inputRef.current?.click()}
+        className="w-full border-2 border-dashed border-border/60 hover:border-amber-400/60 rounded-2xl p-6 flex flex-col items-center gap-3 cursor-pointer transition-colors mb-4"
+      >
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #8B5CF6, #7C3AED)" }}>
+          <ImageIcon size={22} className="text-white" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold">Drop shaadi cards here</p>
+          <p className="text-xs text-muted-foreground mt-0.5">or tap to browse · Up to 3 images</p>
+        </div>
+        <input
+          ref={inputRef} type="file" accept="image/*" multiple className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+
+      {previews.length > 0 && (
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+          {previews.map((src, i) => (
+            <div key={i} className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-border/50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => onExtract(files)}
+        disabled={extractLoading || files.length === 0}
+        className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
+        style={{ background: "linear-gradient(135deg, #8B5CF6, #7C3AED)" }}
+      >
+        {extractLoading
+          ? <><Loader2 size={16} className="animate-spin" /> Reading card…</>
+          : <><Sparkles size={16} /> Extract & Auto-Fill ✨</>
+        }
+      </button>
+      <p className="text-center text-[10px] text-muted-foreground mt-2">
+        ✨ Powered by AI Vision · Works with any shaadi card
+      </p>
+    </div>
+  );
+}
+
+// ── AI: text description ───────────────────────────────────────────────────────
+function AiTextPanel({ setEditMode, aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading, onGenerate, mf, updateMf }: {
+  setEditMode: (m: EditMode) => void;
+  aiName: string; setAiName: (v: string) => void;
+  aiSender: string; setAiSender: (v: string) => void;
+  aiPrompt: string; setAiPrompt: (v: string) => void;
+  aiLoading: boolean; onGenerate: () => void;
+  mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void;
+}) {
+  const handlePhotoUpload = (role: "bride" | "groom", file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large. Please use an image under 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      if (role === "bride") updateMf("bride", { ...mf.bride, photo: src });
+      else updateMf("groom", { ...mf.groom, photo: src });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="px-5 pb-8 pt-2">
+      <div className="flex items-center gap-3 mb-6">
+        <button onClick={() => setEditMode("ai")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
+        <h3 className="text-lg font-bold flex items-center gap-2"><Zap size={16} className="text-amber-500" /> Describe Wedding</h3>
+      </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Bride Name *">
+            <input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Priya" className={INPUT_CLS} />
+          </Field>
+          <Field label="Groom Name *">
+            <input value={aiSender} onChange={(e) => setAiSender(e.target.value)} placeholder="e.g. Rahul" className={INPUT_CLS} />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <PhotoUpload label="Bride Photo (optional)" photo={mf.bride.photo} onUpload={(f) => handlePhotoUpload("bride", f)} />
+          <PhotoUpload label="Groom Photo (optional)" photo={mf.groom.photo} onUpload={(f) => handlePhotoUpload("groom", f)} />
+        </div>
+
+        <Field label="Describe your wedding *">
+          <textarea
+            value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="e.g. A royal Rajasthani wedding in Jaipur with traditional ceremonies, family values, and elegant decor..."
+            rows={4} className={INPUT_CLS + " resize-none"}
+          />
+        </Field>
+        <button
+          onClick={onGenerate}
+          disabled={aiLoading || (!aiName.trim() && !aiSender.trim()) || !aiPrompt.trim()}
+          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
+          style={{ background: AMBER_GRADIENT }}
+        >
+          {aiLoading
+            ? <><Loader2 size={16} className="animate-spin" /> Generating…</>
+            : <><Sparkles size={16} /> Generate Invitation ✨</>
+          }
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── AI-Edit: review & edit AI-extracted/generated data ────────────────────────
+function AiEditPanel({ setEditMode, mf, updateMf, onPreview }: {
+  setEditMode: (m: EditMode) => void;
+  mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void;
   onPreview: () => void;
 }) {
+  return (
+    <div className="px-5 pb-8 pt-2">
+      <div className="flex items-center gap-3 mb-2">
+        <button onClick={() => setEditMode("ai")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
+        <h3 className="text-lg font-bold flex items-center gap-2"><Eye size={16} className="text-amber-500" /> Review & Edit</h3>
+      </div>
+      <p className="text-xs text-muted-foreground mb-5">AI has filled these details. Review and edit before previewing.</p>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Bride Name *">
+            <input value={mf.brideName} onChange={(e) => updateMf("brideName", e.target.value)} placeholder="Bride" className={INPUT_CLS} />
+          </Field>
+          <Field label="Groom Name *">
+            <input value={mf.groomName} onChange={(e) => updateMf("groomName", e.target.value)} placeholder="Groom" className={INPUT_CLS} />
+          </Field>
+        </div>
+
+        <Field label="Wedding Date & Time">
+          <input type="datetime-local" value={mf.weddingDate.slice(0, 16)} onChange={(e) => updateMf("weddingDate", e.target.value + ":00+05:30")} className={INPUT_CLS} />
+        </Field>
+
+        <Field label="Venue / City">
+          <div className="relative">
+            <input value={mf.venue} onChange={(e) => updateMf("venue", e.target.value)} placeholder="e.g. Jaipur" className={INPUT_CLS + " pr-10"} />
+            {mf.venue.trim() && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mf.venue)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500"
+                title="View on Google Maps"
+              >
+                <ExternalLink size={14} />
+              </a>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+            <MapPin size={9} /> Click the icon to preview on Google Maps
+          </p>
+        </Field>
+
+        <Field label="Sanskrit / Hindi Blessing">
+          <input value={mf.blessing} onChange={(e) => updateMf("blessing", e.target.value)} placeholder="ॐ शुभ विवाह" className={INPUT_CLS} />
+        </Field>
+
+        <Field label="Bride's Description">
+          <textarea value={mf.bride.description} onChange={(e) => updateMf("bride", { ...mf.bride, description: e.target.value })} rows={2} placeholder="About the bride..." className={INPUT_CLS + " resize-none"} />
+        </Field>
+
+        <Field label="Groom's Description">
+          <textarea value={mf.groom.description} onChange={(e) => updateMf("groom", { ...mf.groom, description: e.target.value })} rows={2} placeholder="About the groom..." className={INPUT_CLS + " resize-none"} />
+        </Field>
+
+        <Field label="Bride's Parents">
+          <input value={mf.brideFamily.parents} onChange={(e) => updateMf("brideFamily", { ...mf.brideFamily, parents: e.target.value })} placeholder="e.g. Shri Ram & Smt. Sita" className={INPUT_CLS} />
+        </Field>
+
+        <Field label="Groom's Parents">
+          <input value={mf.groomFamily.parents} onChange={(e) => updateMf("groomFamily", { ...mf.groomFamily, parents: e.target.value })} placeholder="e.g. Shri Mohan & Smt. Meena" className={INPUT_CLS} />
+        </Field>
+
+        <button
+          onClick={onPreview}
+          disabled={!mf.brideName.trim() && !mf.groomName.trim()}
+          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          style={{ background: GOLD_GRADIENT }}
+        >
+          <Eye size={16} /> Preview Invitation
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Manual: 5-step form ────────────────────────────────────────────────────────
+function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onPreview }: {
+  setEditMode: (m: EditMode) => void;
+  mf: WeddingData; manualStep: number; setManualStep: (v: number) => void;
+  updateMf: (k: keyof WeddingData, v: unknown) => void;
+  onPreview: () => void;
+}) {
+  const canAdvance = manualStep === 0 ? (mf.brideName.trim() || mf.groomName.trim()) : true;
+
   return (
     <div className="px-5 pb-8 pt-2">
       <div className="flex items-center gap-3 mb-4">
@@ -180,11 +425,16 @@ function ManualPanel({
         ))}
       </div>
 
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+        Step {manualStep + 1} — {MANUAL_STEPS[manualStep]}
+      </p>
+
       <AnimatePresence mode="wait">
-        {manualStep === 0 && <NamesStep key="s0" mf={mf} updateMf={updateMf} />}
+        {manualStep === 0 && <NamesPhotosStep key="s0" mf={mf} updateMf={updateMf} />}
         {manualStep === 1 && <DetailsStep key="s1" mf={mf} updateMf={updateMf} />}
-        {manualStep === 2 && <MessageStep key="s2" mf={mf} updateMf={updateMf} />}
-        {manualStep === 3 && <GalleryStep key="s3" />}
+        {manualStep === 2 && <EventsStep key="s2" mf={mf} updateMf={updateMf} />}
+        {manualStep === 3 && <GalleryStep key="s3" mf={mf} updateMf={updateMf} />}
+        {manualStep === 4 && <DescriptionsStep key="s4" mf={mf} updateMf={updateMf} />}
       </AnimatePresence>
 
       <div className="flex gap-3 mt-6">
@@ -193,12 +443,22 @@ function ManualPanel({
             <ChevronLeft size={18} />
           </button>
         )}
-        {manualStep < 3 ? (
-          <button onClick={() => setManualStep(manualStep + 1)} className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5" style={{ background: GOLD_GRADIENT }}>
+        {manualStep < MANUAL_STEPS.length - 1 ? (
+          <button
+            onClick={() => setManualStep(manualStep + 1)}
+            disabled={!canAdvance}
+            className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+            style={{ background: GOLD_GRADIENT }}
+          >
             Continue <ChevronRight size={16} />
           </button>
         ) : (
-          <button onClick={onPreview} disabled={!mf.brideName.trim()} className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50" style={{ background: GOLD_GRADIENT }}>
+          <button
+            onClick={onPreview}
+            disabled={!mf.brideName.trim() && !mf.groomName.trim()}
+            className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+            style={{ background: GOLD_GRADIENT }}
+          >
             <Eye size={16} /> Preview
           </button>
         )}
@@ -207,7 +467,251 @@ function ManualPanel({
   );
 }
 
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+// ── Step 0: Names + Photos ─────────────────────────────────────────────────────
+function NamesPhotosStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  const handlePhotoUpload = (role: "bride" | "groom", file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large. Please use an image under 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      if (role === "bride") updateMf("bride", { ...mf.bride, photo: src });
+      else updateMf("groom", { ...mf.groom, photo: src });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Bride Name *">
+          <input value={mf.brideName} onChange={(e) => updateMf("brideName", e.target.value)} placeholder="e.g. Priya" className={INPUT_CLS} />
+        </Field>
+        <Field label="Groom Name *">
+          <input value={mf.groomName} onChange={(e) => updateMf("groomName", e.target.value)} placeholder="e.g. Rahul" className={INPUT_CLS} />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <PhotoUpload label="Bride Photo" photo={mf.bride.photo} onUpload={(f) => handlePhotoUpload("bride", f)} />
+        <PhotoUpload label="Groom Photo" photo={mf.groom.photo} onUpload={(f) => handlePhotoUpload("groom", f)} />
+      </div>
+    </motion.div>
+  );
+}
+
+function PhotoUpload({ label, photo, onUpload }: { label: string; photo: string; onUpload: (f: File) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div>
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label>
+      <div
+        onClick={() => ref.current?.click()}
+        className="w-full aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-amber-400/60 cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden relative"
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+            <Camera size={20} />
+            <span className="text-[10px]">Upload photo</span>
+          </div>
+        )}
+        {photo && (
+          <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Camera size={20} className="text-white" />
+          </div>
+        )}
+        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUpload(e.target.files[0]); }} />
+      </div>
+    </div>
+  );
+}
+
+// ── Step 1: Details ────────────────────────────────────────────────────────────
+function DetailsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  return (
+    <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <Field label="Wedding Date & Time">
+        <input type="datetime-local" value={mf.weddingDate.slice(0, 16)} onChange={(e) => updateMf("weddingDate", e.target.value + ":00+05:30")} className={INPUT_CLS} />
+      </Field>
+      <Field label="Main Venue / City">
+        <div className="relative">
+          <input value={mf.venue} onChange={(e) => updateMf("venue", e.target.value)} placeholder="e.g. Jaipur Palace Lawns, Jaipur" className={INPUT_CLS + " pr-10"} />
+          {mf.venue.trim() && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mf.venue)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500"
+              title="View on Google Maps"
+            >
+              <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+        {mf.venue.trim() && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mf.venue)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="text-[10px] text-amber-500 mt-1 flex items-center gap-1 hover:underline"
+          >
+            <MapPin size={9} /> View &ldquo;{mf.venue}&rdquo; on Google Maps
+          </a>
+        )}
+      </Field>
+      <Field label="Sanskrit / Hindi Blessing">
+        <input value={mf.blessing} onChange={(e) => updateMf("blessing", e.target.value)} placeholder="e.g. ॐ शुभ विवाह" className={INPUT_CLS} />
+      </Field>
+      <Field label="Bride's Family (Parents)">
+        <input value={mf.brideFamily.parents} onChange={(e) => updateMf("brideFamily", { ...mf.brideFamily, parents: e.target.value })} placeholder="e.g. Shri Ram Sharma & Smt. Sita Sharma" className={INPUT_CLS} />
+      </Field>
+      <Field label="Groom's Family (Parents)">
+        <input value={mf.groomFamily.parents} onChange={(e) => updateMf("groomFamily", { ...mf.groomFamily, parents: e.target.value })} placeholder="e.g. Shri Mohan Verma & Smt. Meena Verma" className={INPUT_CLS} />
+      </Field>
+    </motion.div>
+  );
+}
+
+// ── Step 2: Events ─────────────────────────────────────────────────────────────
+function EventsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  const updateEvent = (idx: number, field: keyof WeddingEvent, value: string) => {
+    const updated = mf.events.map((ev, i) => i === idx ? { ...ev, [field]: value } : ev);
+    updateMf("events", updated);
+  };
+
+  return (
+    <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <p className="text-xs text-muted-foreground">Fill in details for each wedding event. Leave fields empty to use defaults.</p>
+      {mf.events.map((ev, i) => (
+        <div key={i} className="p-3 rounded-xl border border-border/40 bg-muted/20 space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">{ev.icon}</span>
+            <p className="text-sm font-semibold">{ev.name} <span className="text-muted-foreground font-normal">({ev.hindi})</span></p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input value={ev.date} onChange={(e) => updateEvent(i, "date", e.target.value)} placeholder="Date (e.g. 13 Mar)" className={INPUT_CLS_SM} />
+            <input value={ev.time} onChange={(e) => updateEvent(i, "time", e.target.value)} placeholder="Time (e.g. 6 PM)" className={INPUT_CLS_SM} />
+          </div>
+          <div className="relative">
+            <input value={ev.venue} onChange={(e) => updateEvent(i, "venue", e.target.value)} placeholder="Venue name" className={INPUT_CLS_SM + " pr-8"} />
+            {ev.venue.trim() && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venue + " " + mf.venue)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-500"
+              >
+                <ExternalLink size={11} />
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+// ── Step 3: Gallery ────────────────────────────────────────────────────────────
+function GalleryStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  const slots = Array.from({ length: 6 });
+  const galleryImages = mf.galleryImages;
+
+  const handleImageUpload = (idx: number, file: File) => {
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Image too large. Please use an image under 8MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      const updated = [...galleryImages];
+      updated[idx] = { src, alt: `Photo ${idx + 1}`, span: GALLERY_SPANS[idx] };
+      updateMf("galleryImages", updated);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = (idx: number) => {
+    const updated = [...galleryImages];
+    updated.splice(idx, 1);
+    updateMf("galleryImages", updated);
+  };
+
+  return (
+    <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
+      <p className="text-xs text-muted-foreground">Upload up to 6 gallery photos. First photo will be featured large.</p>
+      <div className="grid grid-cols-3 gap-2">
+        {slots.map((_, i) => {
+          const img = galleryImages[i];
+          return <GallerySlot key={i} index={i} image={img} onUpload={(f) => handleImageUpload(i, f)} onRemove={() => removeImage(i)} />;
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+function GallerySlot({ index, image, onUpload, onRemove }: {
+  index: number;
+  image?: { src: string; alt: string; span?: string };
+  onUpload: (f: File) => void;
+  onRemove: () => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div
+      onClick={() => !image && ref.current?.click()}
+      className={`relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${image ? "border-amber-400/40" : "border-dashed border-border/50 hover:border-amber-400/50"}`}
+    >
+      {image ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image.src} alt="" className="w-full h-full object-cover" />
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center text-[10px] hover:bg-red-500 transition-colors"
+          >×</button>
+        </>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
+          <ImageIcon size={16} />
+          <span className="text-[9px]">Photo {index + 1}</span>
+        </div>
+      )}
+      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUpload(e.target.files[0]); }} />
+    </div>
+  );
+}
+
+// ── Step 4: Descriptions ───────────────────────────────────────────────────────
+function DescriptionsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  return (
+    <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <Field label="Bride's Description">
+        <textarea value={mf.bride.description} onChange={(e) => updateMf("bride", { ...mf.bride, description: e.target.value })} rows={3} placeholder="About the bride..." className={INPUT_CLS + " resize-none"} />
+      </Field>
+      <Field label="Groom's Description">
+        <textarea value={mf.groom.description} onChange={(e) => updateMf("groom", { ...mf.groom, description: e.target.value })} rows={3} placeholder="About the groom..." className={INPUT_CLS + " resize-none"} />
+      </Field>
+      <Field label="Bride's Parents">
+        <input value={mf.brideFamily.parents} onChange={(e) => updateMf("brideFamily", { ...mf.brideFamily, parents: e.target.value })} placeholder="e.g. Shri Ram Sharma & Smt. Sita Sharma" className={INPUT_CLS} />
+      </Field>
+      <Field label="Bride's Grandparents">
+        <input value={mf.brideFamily.grandparents} onChange={(e) => updateMf("brideFamily", { ...mf.brideFamily, grandparents: e.target.value })} placeholder="Optional" className={INPUT_CLS} />
+      </Field>
+      <Field label="Groom's Parents">
+        <input value={mf.groomFamily.parents} onChange={(e) => updateMf("groomFamily", { ...mf.groomFamily, parents: e.target.value })} placeholder="e.g. Shri Mohan Verma & Smt. Meena Verma" className={INPUT_CLS} />
+      </Field>
+      <Field label="Groom's Grandparents">
+        <input value={mf.groomFamily.grandparents} onChange={(e) => updateMf("groomFamily", { ...mf.groomFamily, grandparents: e.target.value })} placeholder="Optional" className={INPUT_CLS} />
+      </Field>
+    </motion.div>
+  );
+}
+
+// ── Shared helpers ─────────────────────────────────────────────────────────────
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label>
@@ -216,54 +720,5 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-function NamesStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
-  return (
-    <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <FieldGroup label="Bride Name *">
-        <input value={mf.brideName} onChange={(e) => updateMf("brideName", e.target.value)} placeholder="e.g. Priya" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm" />
-      </FieldGroup>
-      <FieldGroup label="Groom Name *">
-        <input value={mf.groomName} onChange={(e) => updateMf("groomName", e.target.value)} placeholder="e.g. Rahul" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm" />
-      </FieldGroup>
-    </motion.div>
-  );
-}
-
-function DetailsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
-  return (
-    <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <FieldGroup label="Wedding Date">
-        <input type="datetime-local" value={mf.weddingDate.slice(0, 16)} onChange={(e) => updateMf("weddingDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm" />
-      </FieldGroup>
-      <FieldGroup label="Venue / City">
-        <input value={mf.venue} onChange={(e) => updateMf("venue", e.target.value)} placeholder="e.g. Jaipur" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm" />
-      </FieldGroup>
-      <FieldGroup label="Hindi Blessing">
-        <input value={mf.blessing} onChange={(e) => updateMf("blessing", e.target.value)} placeholder="e.g. ॐ शुभ विवाह" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm" />
-      </FieldGroup>
-    </motion.div>
-  );
-}
-
-function MessageStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
-  return (
-    <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <FieldGroup label="Bride Description">
-        <textarea value={mf.bride.description} onChange={(e) => updateMf("bride", { ...mf.bride, description: e.target.value })} rows={3} placeholder="About the bride..." className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm resize-none" />
-      </FieldGroup>
-      <FieldGroup label="Groom Description">
-        <textarea value={mf.groom.description} onChange={(e) => updateMf("groom", { ...mf.groom, description: e.target.value })} rows={3} placeholder="About the groom..." className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm resize-none" />
-      </FieldGroup>
-    </motion.div>
-  );
-}
-
-function GalleryStep() {
-  return (
-    <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <p className="text-xs text-muted-foreground text-center py-4">
-        Gallery photos can be customized after publishing. Click Preview to see your invitation.
-      </p>
-    </motion.div>
-  );
-}
+const INPUT_CLS = "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-amber-300 dark:focus:border-amber-700 focus:outline-none text-sm transition-all";
+const INPUT_CLS_SM = "w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:border-amber-300 focus:outline-none text-sm";

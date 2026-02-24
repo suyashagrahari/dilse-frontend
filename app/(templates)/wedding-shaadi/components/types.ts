@@ -1,5 +1,14 @@
 export type TabId = "home" | "couple" | "events" | "gallery" | "blessings";
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export type EditMode =
+  | null
+  | "choose"
+  | "ai"
+  | "ai-card"
+  | "ai-text"
+  | "ai-edit"
+  | "manual"
+  | "preview"
+  | "password";
 
 export interface Toast {
   id: number;
@@ -74,7 +83,7 @@ export const DEMO_DATA: WeddingData = {
     roleHindi: "दुल्हन",
     description:
       "A soul who paints the world with kindness. Loves chai, mountains, and her family.",
-    photo: "/assets/couple1.jpeg",
+    photo: "",
     tags: [
       { emoji: "🎓", label: "MBA" },
       { emoji: "💼", label: "Designer" },
@@ -87,7 +96,7 @@ export const DEMO_DATA: WeddingData = {
     roleHindi: "दूल्हा",
     description:
       "A gentleman with a golden heart. Lives for cricket, code, and creating memories.",
-    photo: "/assets/couple2.jpeg",
+    photo: "",
     tags: [
       { emoji: "🎓", label: "B.Tech" },
       { emoji: "💼", label: "Engineer" },
