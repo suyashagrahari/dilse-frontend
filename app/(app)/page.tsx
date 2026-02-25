@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -151,6 +152,7 @@ const TESTI_CHIPS = ["Anniversary", "Love Letter", "Wedding Invite", "Apology St
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { setTheme: setNextTheme } = useTheme();
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [showPreloader, setShowPreloader] = useState(true);
   const [loaderProgress, setLoaderProgress] = useState(0);
@@ -180,8 +182,10 @@ export default function HomePage() {
     const stored = localStorage.getItem("theme");
     if (stored === "dark" || stored === "light") {
       setTheme(stored);
+      setNextTheme(stored);
     }
     // No OS preference fallback — default is light
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Apply theme to <html>
@@ -417,6 +421,7 @@ export default function HomePage() {
       setTheme(newTheme);
     }
     localStorage.setItem("theme", newTheme);
+    setNextTheme(newTheme);
   };
 
   const galleryDouble = [...GALLERY_CARDS, ...GALLERY_CARDS];
