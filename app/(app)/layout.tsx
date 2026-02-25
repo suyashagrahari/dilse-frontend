@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import BottomNav from "@/components/BottomNav";
+import DesktopNav from "@/components/DesktopNav";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 import { buildMeta } from "@/lib/seo";
 
@@ -17,6 +18,7 @@ export default function AppLayout({
   return (
     <div className="pb-24 md:pb-0">
       <WebsiteJsonLd />
+      <DesktopNav />
       {children}
       <BottomNav />
     </div>

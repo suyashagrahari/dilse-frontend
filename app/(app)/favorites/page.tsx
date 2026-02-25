@@ -30,7 +30,7 @@ export default function FavoritesPage() {
   /* ── Not authenticated ── */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+      <div className="min-h-screen md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
         <div className="px-5 pt-10 pb-6 max-w-lg mx-auto">
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
             <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>Saved</p>
@@ -60,7 +60,7 @@ export default function FavoritesPage() {
   /* ── Loading ── */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-bg)" }}>
+      <div className="min-h-screen md:pt-20 flex items-center justify-center" style={{ background: "var(--app-bg)" }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--app-accent)", borderTopColor: "transparent" }} />
           <p className="text-sm" style={{ color: "var(--app-text-faint)" }}>Loading favorites...</p>
@@ -72,7 +72,7 @@ export default function FavoritesPage() {
   /* ── Empty ── */
   if (favorited.length === 0) {
     return (
-      <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+      <div className="min-h-screen md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
         <div className="px-5 pt-10 pb-6 max-w-lg mx-auto">
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
             <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>Saved</p>

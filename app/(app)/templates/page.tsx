@@ -201,10 +201,10 @@ function TemplatesContent() {
   const comingSoonTemplates = filtered.filter((t) => !t.coverImage);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Sticky search bar ── */}
-      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: "var(--app-sticky)", borderColor: "var(--app-sticky-border)" }}>
+      <div className="sticky top-0 md:top-20 z-40 backdrop-blur-xl border-b" style={{ background: "var(--app-sticky)", borderColor: "var(--app-sticky-border)" }}>
         <div className="px-4 py-3 max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="relative max-w-xl mx-auto">
             <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--app-text-faint)" }} />
