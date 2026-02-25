@@ -40,7 +40,7 @@ function TabFallback() {
   );
 }
 
-export default function WeddingShadiPage() {
+function WeddingShadiPage() {
   const editor = useWeddingEditor();
   const [welcomed, setWelcomed] = useState(false);
   const [playMusic, setPlayMusic] = useState(false);
@@ -213,5 +213,13 @@ export default function WeddingShadiPage() {
         {editor.showAuth && <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function WeddingShadiPageWrapper() {
+  return (
+    <Suspense>
+      <WeddingShadiPage />
+    </Suspense>
   );
 }

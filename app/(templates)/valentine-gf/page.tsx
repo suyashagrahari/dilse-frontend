@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -34,7 +34,7 @@ interface Toast {
   shareUrl?: string;
 }
 
-export default function ValentineGfPage() {
+function ValentineGfPage() {
   const router = useRouter();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
@@ -567,5 +567,13 @@ export default function ValentineGfPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function ValentineGfPageWrapper() {
+  return (
+    <Suspense>
+      <ValentineGfPage />
+    </Suspense>
   );
 }

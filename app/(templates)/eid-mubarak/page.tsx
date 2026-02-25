@@ -39,7 +39,7 @@ function TabFallback() {
   );
 }
 
-export default function EidMubarakPage() {
+function EidMubarakPage() {
   const editor = useEidEditor();
   const [welcomed, setWelcomed] = useState(false);
   const [playMusic, setPlayMusic] = useState(false);
@@ -198,5 +198,13 @@ export default function EidMubarakPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function EidMubarakPageWrapper() {
+  return (
+    <Suspense>
+      <EidMubarakPage />
+    </Suspense>
   );
 }

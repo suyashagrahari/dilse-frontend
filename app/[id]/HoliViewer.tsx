@@ -879,7 +879,7 @@ function ViewerRightPanel({ data, onCreateTab, onStart }: { data: HoliData; onCr
         <div className="space-y-1.5 mb-4">
           {["AI-generated wishes","Your photo + family name","Password protection","Shareable link"].map(f=>(
             <div key={f} className="flex items-center gap-2">
-              <Sparkles size={10} style={{ color:"var(--holi-pink)", shrink:0 }}/>
+              <Sparkles size={10} style={{ color:"var(--holi-pink)", flexShrink:0 }}/>
               <span className="text-[11px]" style={{ color:"hsl(var(--holi-muted-fg))" }}>{f}</span>
             </div>
           ))}

@@ -41,7 +41,7 @@ function TabFallback() {
   );
 }
 
-export default function HoliPage() {
+function HoliPage() {
   const editor = useHoliEditor();
   const [welcomed, setWelcomed] = useState(false);
   const [playMusic, setPlayMusic] = useState(false);
@@ -223,5 +223,13 @@ export default function HoliPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function HoliPageWrapper() {
+  return (
+    <Suspense>
+      <HoliPage />
+    </Suspense>
   );
 }
