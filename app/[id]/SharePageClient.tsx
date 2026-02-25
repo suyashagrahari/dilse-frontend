@@ -19,6 +19,12 @@ import ReceptionViewer from "./ReceptionViewer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  return headers;
+}
+
 interface ContentRendererProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
@@ -118,7 +124,7 @@ export default function SharePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/share/${shareId}`);
+        const res = await fetch(`${API_URL}/share/${shareId}`, { headers: apiHeaders() });
         const result = await res.json();
         if (result.success && result.data && result.templateType) {
           setTemplateType(result.templateType);
@@ -152,7 +158,7 @@ export default function SharePage() {
     if (showAuth && isAuthenticated && accessToken) {
       fetch(`${API_URL}/share/${shareId}/access`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: apiHeaders({ Authorization: `Bearer ${accessToken}` }),
       }).catch(() => {});
       setShowAuth(false);
       router.push("/");
@@ -164,7 +170,7 @@ export default function SharePage() {
       if (accessToken) {
         fetch(`${API_URL}/share/${shareId}/access`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: apiHeaders({ Authorization: `Bearer ${accessToken}` }),
         }).catch(() => {});
       }
       setShowEditChoice(true);
@@ -215,7 +221,7 @@ export default function SharePage() {
     try {
       const res = await fetch(`${API_URL}/${entry.verifyRoute}/share/${shareId}/verify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ password: pwInput }),
       });
       const result = await res.json();
@@ -228,7 +234,7 @@ export default function SharePage() {
         if (isAuthenticated && accessToken) {
           fetch(`${API_URL}/share/${shareId}/pw-verified`, {
             method: "POST",
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: apiHeaders({ Authorization: `Bearer ${accessToken}` }),
           }).catch(() => {});
         }
       } else {
