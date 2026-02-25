@@ -67,6 +67,10 @@ export const toggleFavoriteAsync = createAsyncThunk(
           body: JSON.stringify({ templateSlug: slug }),
         });
         if (!res.ok) {
+          // 409 means it's already favorited on the backend — sync state
+          if (res.status === 409) {
+            return { slug, action: "added" as const };
+          }
           const data = await res.json();
           return rejectWithValue(data.error);
         }

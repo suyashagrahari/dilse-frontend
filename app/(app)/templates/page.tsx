@@ -9,7 +9,7 @@ import { templateList, categories, templateTypes } from "@/data/template-registr
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { toggleFavoriteAsync } from "@/store/favoritesSlice";
+import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
@@ -142,6 +142,13 @@ function TemplatesContent() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
+  const favFetched = useAppSelector((s) => s.favorites.fetched);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+
+  // Fetch favorites if authenticated but not yet loaded
+  useEffect(() => {
+    if (isAuthenticated && !favFetched) dispatch(fetchFavorites());
+  }, [dispatch, isAuthenticated, favFetched]);
 
   const {
     search, setSearch,

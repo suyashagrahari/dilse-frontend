@@ -100,7 +100,7 @@ export default function FavoritesPage() {
 
   /* ── Favorites grid ── */
   return (
-    <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
 
       {/* Header */}
       <div className="px-5 pt-10 pb-6 max-w-5xl mx-auto">
