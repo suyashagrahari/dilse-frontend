@@ -27,36 +27,43 @@ const COMING_SOON_IMAGES: Record<string, string> = {
 
 const allTypes = [{ id: "all", label: "All", emoji: "✨" }, ...templateTypes];
 
-function Pill({ item, isActive, layoutId, onSelect }: {
+function Pill({ item, isActive, onSelect }: {
   item: { id: string; label: string; emoji: string };
-  isActive: boolean; layoutId: string; onSelect: (id: string) => void;
+  isActive: boolean; onSelect: (id: string) => void;
 }) {
   return (
-    <button onClick={() => onSelect(item.id)} className="relative shrink-0 select-none">
-      {isActive && (
-        <motion.div
-          layoutId={layoutId}
-          className="absolute inset-0 rounded-full"
-          style={{ background: "var(--app-accent)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-      )}
+    <motion.button
+      onClick={() => onSelect(item.id)}
+      className="relative shrink-0 select-none"
+      whileTap={{ scale: 0.94 }}
+    >
       <div
-        className={`relative z-10 whitespace-nowrap px-4 py-1.5 rounded-full text-[12px] font-bold flex items-center gap-1.5 border transition-all duration-200 ${
-          isActive ? "border-transparent" : "app-pill-inactive"
-        }`}
-        style={isActive ? { color: "var(--app-accent-fg)" } : {}}
+        className="whitespace-nowrap px-4 py-2 rounded-full text-[12px] font-bold flex items-center gap-1.5 border transition-all duration-200"
+        style={
+          isActive
+            ? {
+                background: "var(--app-accent)",
+                color: "var(--app-accent-fg)",
+                borderColor: "transparent",
+                boxShadow: "0 0 14px var(--app-accent-a35)",
+              }
+            : {
+                background: "transparent",
+                color: "var(--app-text-muted)",
+                borderColor: "var(--app-accent-a25)",
+              }
+        }
       >
         <span className="text-sm leading-none">{item.emoji}</span>
         <span>{item.label}</span>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
-function InfiniteScrollPills({ items, selected, onSelect, layoutId, speed = 25, direction = "rtl" }: {
+function InfiniteScrollPills({ items, selected, onSelect, speed = 25, direction = "rtl" }: {
   items: { id: string; label: string; emoji: string }[];
-  selected: string; onSelect: (id: string) => void; layoutId: string;
+  selected: string; onSelect: (id: string) => void;
   speed?: number; direction?: "rtl" | "ltr";
 }) {
   const fixedItem = items[0];
@@ -145,7 +152,7 @@ function InfiniteScrollPills({ items, selected, onSelect, layoutId, speed = 25, 
   return (
     <div className="flex items-center">
       <div className="relative z-20 shrink-0 pl-4 pr-2">
-        <Pill item={fixedItem} isActive={selected === fixedItem.id} layoutId={layoutId} onSelect={handleFixedSelect} />
+        <Pill item={fixedItem} isActive={selected === fixedItem.id} onSelect={handleFixedSelect} />
       </div>
       <div className="relative overflow-hidden flex-1 cursor-grab active:cursor-grabbing touch-pan-y"
         onMouseEnter={onHoverStart} onMouseLeave={onHoverEnd}
@@ -157,7 +164,7 @@ function InfiniteScrollPills({ items, selected, onSelect, layoutId, speed = 25, 
           {[0, 1, 2].map((setIndex) => (
             <div key={setIndex} data-set={setIndex} className="flex gap-2 px-1 shrink-0">
               {scrollingItems.map((item) => (
-                <Pill key={`${setIndex}-${item.id}`} item={item} isActive={selected === item.id} layoutId={layoutId} onSelect={handleScrollingSelect} />
+                <Pill key={`${setIndex}-${item.id}`} item={item} isActive={selected === item.id} onSelect={handleScrollingSelect} />
               ))}
             </div>
           ))}
@@ -226,10 +233,10 @@ function TemplatesContent() {
       {/* ── Filter rows ── */}
       <div className="pt-4 pb-2 space-y-2">
         <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <InfiniteScrollPills items={allTypes} selected={selectedType} onSelect={setSelectedType} layoutId="type-pill" speed={20} direction="rtl" />
+          <InfiniteScrollPills items={allTypes} selected={selectedType} onSelect={setSelectedType} speed={20} direction="rtl" />
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.08 }}>
-          <InfiniteScrollPills items={categories} selected={selectedCategory} onSelect={setSelectedCategory} layoutId="category-pill" speed={18} direction="ltr" />
+          <InfiniteScrollPills items={categories} selected={selectedCategory} onSelect={setSelectedCategory} speed={18} direction="ltr" />
         </motion.div>
       </div>
 
