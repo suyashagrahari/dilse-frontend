@@ -16,6 +16,12 @@ import AuthModal from "@/components/AuthModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  return headers;
+}
+
 interface DashboardStats { favoritesCount: number; generatedCount: number; memberSince: string; }
 interface MyCreation {
   _id: string; shareId: string; templateType: string; recipientName: string;
@@ -84,7 +90,7 @@ export default function ProfilePage() {
     }
   };
 
-  const authHeaders = useCallback(() => ({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
+  const authHeaders = useCallback(() => apiHeaders({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
 
   const fetchDashboard = useCallback(async () => {
     if (!accessToken) return;
