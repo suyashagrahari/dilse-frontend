@@ -29,6 +29,13 @@ const initialState: AuthState = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Bypass ngrok browser interstitial page when using a tunnel
+function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...extra };
+  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  return headers;
+}
+
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (
@@ -38,7 +45,7 @@ export const registerUser = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({ name, email, password }),
       });
       const data = await res.json();
@@ -59,7 +66,7 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
@@ -86,7 +93,7 @@ export const googleLogin = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({ credential, profile }),
       });
       const data = await res.json();
@@ -113,7 +120,7 @@ export const refreshAuth = createAsyncThunk(
 
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({ refreshToken: token }),
       });
       const data = await res.json();
@@ -138,10 +145,7 @@ export const updateProfile = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
         body: JSON.stringify({ name, avatar }),
       });
       const data = await res.json();
@@ -166,10 +170,7 @@ export const changePassword = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/password`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
@@ -194,10 +195,7 @@ export const updateTheme = createAsyncThunk(
     try {
       const res = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
         body: JSON.stringify({ theme }),
       });
       const data = await res.json();
@@ -242,7 +240,7 @@ export const checkAuth = createAsyncThunk(
 
     try {
       const res = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
       });
 
       if (res.status === 401) {
