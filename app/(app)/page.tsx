@@ -180,9 +180,8 @@ export default function HomePage() {
     const stored = localStorage.getItem("theme");
     if (stored === "dark" || stored === "light") {
       setTheme(stored);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
     }
+    // No OS preference fallback — default is light
   }, []);
 
   // ── Apply theme to <html>
