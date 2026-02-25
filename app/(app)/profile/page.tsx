@@ -173,7 +173,7 @@ export default function ProfilePage() {
   /* ── Not authenticated ── */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+      <div className="min-h-screen md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
         <div className="flex items-center justify-center px-4 mt-24">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
@@ -592,7 +592,7 @@ export default function ProfilePage() {
   ) : null;
 
   return (
-    <div className="min-h-screen pb-8 md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen pb-8 md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Two-column on desktop, single column on mobile ── */}
       <div className="md:max-w-6xl md:mx-auto md:px-8 md:py-8 md:flex md:gap-8 md:items-start">

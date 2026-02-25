@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense, useCallback } from "react";
+import { useEffect, Suspense, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { templateList, categories, templateTypes } from "@/data/template-registry";
-import { Search, X, Sparkles } from "lucide-react";
+import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync } from "@/store/favoritesSlice";
+import { useTemplateSearch } from "@/components/TemplateSearchProvider";
+
+// Slugs temporarily treated as coming-soon even though they have a coverImage
+const FORCE_COMING_SOON = new Set(["anniversary-gf", "love-gf"]);
 
 const COMING_SOON_IMAGES: Record<string, string> = {
+  // Temporarily coming soon (have real cover images)
+  "anniversary-gf": "/assets/Aniversary/aniversary.png",
+  "love-gf": "/assets/hero-bg.jpeg",
+  // Already coming soon
   "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.png",
   "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.png",
   "birthday-parents": "/assets/TemplateComingSoon/happybirthdaymomanddad.png",
@@ -27,161 +35,129 @@ const COMING_SOON_IMAGES: Record<string, string> = {
 
 const allTypes = [{ id: "all", label: "All", emoji: "✨" }, ...templateTypes];
 
-function Pill({ item, isActive, onSelect }: {
-  item: { id: string; label: string; emoji: string };
-  isActive: boolean; onSelect: (id: string) => void;
+function FilterModal({
+  show, onClose,
+  selectedType, setSelectedType,
+  selectedCategory, setSelectedCategory,
+  onClear, filteredCount,
+  hasActiveFilters,
+}: {
+  show: boolean; onClose: () => void;
+  selectedType: string; setSelectedType: (v: string) => void;
+  selectedCategory: string; setSelectedCategory: (v: string) => void;
+  onClear: () => void; filteredCount: number; hasActiveFilters: boolean;
 }) {
   return (
-    <motion.button
-      onClick={() => onSelect(item.id)}
-      className="relative shrink-0 select-none"
-      whileTap={{ scale: 0.94 }}
-    >
-      <div
-        className="whitespace-nowrap px-4 py-2 rounded-full text-[12px] font-bold flex items-center gap-1.5 border transition-all duration-200"
-        style={
-          isActive
-            ? {
-                background: "var(--app-accent)",
-                color: "var(--app-accent-fg)",
-                borderColor: "transparent",
-                boxShadow: "0 0 14px var(--app-accent-a35)",
-              }
-            : {
-                background: "transparent",
-                color: "var(--app-text-muted)",
-                borderColor: "var(--app-accent-a25)",
-              }
-        }
-      >
-        <span className="text-sm leading-none">{item.emoji}</span>
-        <span>{item.label}</span>
-      </div>
-    </motion.button>
-  );
-}
+    <AnimatePresence>
+      {show && (
+        <motion.div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+          <motion.div
+            className="relative w-full md:max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden"
+            style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}>
+            <div className="p-6 pb-safe-bottom">
+              {/* Handle */}
+              <div className="w-12 h-1 rounded-full mx-auto mb-5 md:hidden" style={{ background: "var(--app-border)" }} />
 
-function InfiniteScrollPills({ items, selected, onSelect, speed = 25, direction = "rtl" }: {
-  items: { id: string; label: string; emoji: string }[];
-  selected: string; onSelect: (id: string) => void;
-  speed?: number; direction?: "rtl" | "ltr";
-}) {
-  const fixedItem = items[0];
-  const scrollingItems = items.slice(1);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const offsetRef = useRef(0);
-  const rafRef = useRef<number>(0);
-  const lastTimeRef = useRef(0);
-  const setWidthRef = useRef(0);
-  const isDraggingRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const dragOffsetStartRef = useRef(0);
-  const pausedRef = useRef(false);
-  const resumeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const hasDraggedRef = useRef(false);
-  const dirMul = direction === "rtl" ? -1 : 1;
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-black" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--app-text)" }}>
+                  Filter Templates
+                </h3>
+                <div className="flex items-center gap-2">
+                  {hasActiveFilters && (
+                    <button onClick={onClear}
+                      className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                      style={{ color: "var(--app-accent)", background: "var(--app-accent-a08)", border: "1px solid var(--app-accent-a25)" }}>
+                      Clear all
+                    </button>
+                  )}
+                  <button onClick={onClose}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
 
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const firstSet = track.querySelector("[data-set='0']") as HTMLElement;
-    if (firstSet) setWidthRef.current = firstSet.offsetWidth;
-  }, [scrollingItems]);
+              <div className="space-y-5">
+                {/* Type */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>
+                    Type
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {allTypes.map((t) => (
+                      <button key={t.id} onClick={() => setSelectedType(t.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                        style={{
+                          background: selectedType === t.id ? "var(--app-accent)" : "var(--app-surface)",
+                          color: selectedType === t.id ? "var(--app-accent-fg)" : "var(--app-text)",
+                          border: `1px solid ${selectedType === t.id ? "transparent" : "var(--app-border)"}`,
+                        }}>
+                        <span>{t.emoji}</span> {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-  const wrapOffset = useCallback((val: number) => {
-    const w = setWidthRef.current;
-    if (w <= 0) return val;
-    let v = val % w;
-    if (v > 0) v -= w;
-    return v;
-  }, []);
+                {/* Category */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>
+                    Category
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((c) => (
+                      <button key={c.id} onClick={() => setSelectedCategory(c.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                        style={{
+                          background: selectedCategory === c.id ? "var(--app-accent)" : "var(--app-surface)",
+                          color: selectedCategory === c.id ? "var(--app-accent-fg)" : "var(--app-text)",
+                          border: `1px solid ${selectedCategory === c.id ? "transparent" : "var(--app-border)"}`,
+                        }}>
+                        <span>{c.emoji}</span> {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    if (direction === "ltr") offsetRef.current = -setWidthRef.current;
-    const animate = (time: number) => {
-      if (lastTimeRef.current === 0) lastTimeRef.current = time;
-      const delta = (time - lastTimeRef.current) / 1000;
-      lastTimeRef.current = time;
-      if (!pausedRef.current && !isDraggingRef.current && setWidthRef.current > 0) {
-        offsetRef.current += dirMul * speed * delta;
-        offsetRef.current = wrapOffset(offsetRef.current);
-      }
-      track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
-      rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [speed, dirMul, wrapOffset, direction]);
-
-  const scheduleResume = useCallback(() => {
-    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    resumeTimerRef.current = setTimeout(() => { pausedRef.current = false; }, 2000);
-  }, []);
-
-  useEffect(() => () => { if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current); }, []);
-
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    isDraggingRef.current = true; hasDraggedRef.current = false; pausedRef.current = true;
-    dragStartXRef.current = e.clientX; dragOffsetStartRef.current = offsetRef.current;
-    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }, []);
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDraggingRef.current) return;
-    const dx = e.clientX - dragStartXRef.current;
-    if (Math.abs(dx) > 3) hasDraggedRef.current = true;
-    offsetRef.current = wrapOffset(dragOffsetStartRef.current + dx);
-  }, [wrapOffset]);
-
-  const onPointerUp = useCallback(() => { isDraggingRef.current = false; scheduleResume(); }, [scheduleResume]);
-
-  const handleScrollingSelect = useCallback((id: string) => {
-    if (hasDraggedRef.current) return;
-    onSelect(id); pausedRef.current = true;
-    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    scheduleResume();
-  }, [onSelect, scheduleResume]);
-
-  const handleFixedSelect = useCallback(() => { onSelect(fixedItem.id); }, [onSelect, fixedItem.id]);
-  const onHoverStart = useCallback(() => { pausedRef.current = true; if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current); }, []);
-  const onHoverEnd = useCallback(() => { if (!isDraggingRef.current) scheduleResume(); }, [scheduleResume]);
-
-  return (
-    <div className="flex items-center">
-      <div className="relative z-20 shrink-0 pl-4 pr-2">
-        <Pill item={fixedItem} isActive={selected === fixedItem.id} onSelect={handleFixedSelect} />
-      </div>
-      <div className="relative overflow-hidden flex-1 cursor-grab active:cursor-grabbing touch-pan-y"
-        onMouseEnter={onHoverStart} onMouseLeave={onHoverEnd}
-        onPointerDown={onPointerDown} onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
-        <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, var(--app-bg), transparent)" }} />
-        <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, var(--app-bg), transparent)" }} />
-        <div ref={trackRef} className="flex will-change-transform py-0.5" style={{ width: "max-content" }}>
-          {[0, 1, 2].map((setIndex) => (
-            <div key={setIndex} data-set={setIndex} className="flex gap-2 px-1 shrink-0">
-              {scrollingItems.map((item) => (
-                <Pill key={`${setIndex}-${item.id}`} item={item} isActive={selected === item.id} onSelect={handleScrollingSelect} />
-              ))}
+              <button onClick={onClose}
+                className="w-full mt-6 py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+                style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+                <Sparkles size={15} />
+                Show {filteredCount} Template{filteredCount !== 1 ? "s" : ""}
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 function TemplatesContent() {
   const searchParams = useSearchParams();
-  const initialType = searchParams.get("type") || "all";
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedType, setSelectedType] = useState(initialType);
-  const [search, setSearch] = useState("");
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
+
+  const {
+    search, setSearch,
+    showFilter, setShowFilter,
+    selectedType, setSelectedType,
+    selectedCategory, setSelectedCategory,
+    setFilteredCount,
+    hasActiveFilters, clearFilters,
+  } = useTemplateSearch();
+
+  // Sync URL type param on mount
+  useEffect(() => {
+    const typeFromUrl = searchParams.get("type");
+    if (typeFromUrl && typeFromUrl !== "all") setSelectedType(typeFromUrl);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFavorite = useCallback((e: React.MouseEvent, slug: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -195,64 +171,82 @@ function TemplatesContent() {
     return matchCategory && matchType && matchSearch;
   });
 
-  const clearFilters = () => { setSelectedType("all"); setSelectedCategory("all"); setSearch(""); };
-  const hasActiveFilters = selectedType !== "all" || selectedCategory !== "all" || search;
-  const readyTemplates = filtered.filter((t) => t.coverImage);
-  const comingSoonTemplates = filtered.filter((t) => !t.coverImage);
+  // Keep navbar count in sync
+  useEffect(() => { setFilteredCount(filtered.length); }, [filtered.length, setFilteredCount]);
+
+  const readyTemplates = filtered.filter((t) => t.coverImage && !FORCE_COMING_SOON.has(t.slug));
+  const comingSoonTemplates = filtered.filter((t) => !t.coverImage || FORCE_COMING_SOON.has(t.slug));
 
   return (
-    <div className="min-h-screen md:pt-20" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ── Sticky search bar ── */}
-      <div className="sticky top-0 md:top-20 z-40 backdrop-blur-xl border-b" style={{ background: "var(--app-sticky)", borderColor: "var(--app-sticky-border)" }}>
-        <div className="px-4 py-3 max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="relative max-w-xl mx-auto">
+      {/* ── Filter Modal ── */}
+      <FilterModal
+        show={showFilter} onClose={() => setShowFilter(false)}
+        selectedType={selectedType} setSelectedType={setSelectedType}
+        selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory}
+        onClear={clearFilters} filteredCount={filtered.length}
+        hasActiveFilters={hasActiveFilters}
+      />
+
+      {/* ── Mobile sticky search + filter ── */}
+      <div className="sticky top-0 md:hidden z-40 backdrop-blur-xl border-b"
+        style={{ background: "var(--app-sticky)", borderColor: "var(--app-sticky-border)" }}>
+        <div className="px-4 py-3 flex items-center gap-2">
+          <div className="relative flex-1">
             <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--app-text-faint)" }} />
-            <input
-              type="text" placeholder="Search templates..." value={search}
+            <input type="text" placeholder="Search templates..." value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="app-input w-full pl-11 pr-24 py-3 rounded-2xl text-sm transition-all"
-            />
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-              {search && (
-                <button onClick={() => setSearch("")} className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                  <X size={10} />
-                </button>
-              )}
-              <div className="px-2.5 py-1 rounded-xl flex items-center gap-1.5"
-                style={{ background: "var(--app-accent-a12)", border: "1px solid var(--app-accent-a25)" }}>
-                <Sparkles size={11} style={{ color: "var(--app-accent)" }} />
-                <span className="text-[11px] font-bold tabular-nums" style={{ color: "var(--app-accent)" }}>{filtered.length}</span>
-              </div>
-            </div>
-          </motion.div>
+              className="app-input w-full pl-11 pr-10 py-3 rounded-2xl text-sm transition-all" />
+            {search && (
+              <button onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center"
+                style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
+                <X size={10} />
+              </button>
+            )}
+          </div>
+          <button onClick={() => setShowFilter(true)}
+            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all"
+            style={{
+              background: hasActiveFilters ? "var(--app-accent)" : "var(--app-surface)",
+              color: hasActiveFilters ? "var(--app-accent-fg)" : "var(--app-text)",
+              border: `1px solid ${hasActiveFilters ? "transparent" : "var(--app-border)"}`,
+            }}>
+            <SlidersHorizontal size={16} />
+          </button>
+          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl shrink-0"
+            style={{ background: "var(--app-accent-a12)", border: "1px solid var(--app-accent-a25)" }}>
+            <Sparkles size={11} style={{ color: "var(--app-accent)" }} />
+            <span className="text-[11px] font-bold tabular-nums" style={{ color: "var(--app-accent)" }}>{filtered.length}</span>
+          </div>
         </div>
       </div>
-
-      {/* ── Filter rows ── */}
-      <div className="pt-4 pb-2 space-y-2">
-        <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <InfiniteScrollPills items={allTypes} selected={selectedType} onSelect={setSelectedType} speed={20} direction="rtl" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.08 }}>
-          <InfiniteScrollPills items={categories} selected={selectedCategory} onSelect={setSelectedCategory} speed={18} direction="ltr" />
-        </motion.div>
-      </div>
-
-      {/* ── Clear filters ── */}
-      {hasActiveFilters && (
-        <div className="px-4 py-2 flex justify-center">
-          <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={clearFilters}
-            className="text-xs font-bold flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all"
-            style={{ color: "var(--app-accent)", border: "1px solid var(--app-accent-a25)", background: "var(--app-accent-a08)" }}>
-            <X size={10} /> Clear filters
-          </motion.button>
-        </div>
-      )}
 
       {/* ── Template grid ── */}
-      <div className="px-4 pb-12">
+      <div className="px-3 pt-5 pb-12 md:px-6 md:pt-6 md:pb-16">
+
+        {/* Page header */}
+        <motion.div
+          className="mb-10 md:mb-12 text-center"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+        >
+          <p
+            className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3"
+            style={{ color: "var(--app-accent)" }}
+          >
+            Discover
+          </p>
+          <h1
+            className="font-black uppercase leading-none tracking-tighter text-4xl md:text-6xl lg:text-[5.5rem]"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            <span style={{ color: "var(--app-text)" }}>Explore </span>
+            <span style={{ color: "var(--app-accent)" }}>Templates.</span>
+          </h1>
+        </motion.div>
 
         {/* Ready templates */}
         {readyTemplates.length > 0 && (
@@ -270,19 +264,25 @@ function TemplatesContent() {
                         className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
                         style={{ border: "1px solid var(--app-border)" }}
                         whileHover={{ y: -6, scale: 1.02, boxShadow: "var(--app-hover-glow)" }}
-                        whileTap={{ scale: 0.97 }}>
+                        whileTap={{ scale: 0.98 }}>
                         <div className="absolute inset-0" style={{ background: "var(--app-card-img-bg)" }} />
-                        <div className="absolute inset-0">
-                          <Image src={template.coverImage!} alt="" fill className="object-cover" sizes="(max-width:768px) 50vw, 25vw" />
-                        </div>
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.82))" }} />
-                        {/* accent bottom bar on hover */}
-                        <div className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }} />
+                        {template.coverImage ? (
+                          <>
+                            <div className="absolute inset-0">
+                              <Image src={template.coverImage} alt="" fill className="object-cover" sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw" />
+                            </div>
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.82))" }} />
+                          </>
+                        ) : (
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--app-accent-a08), rgba(0,0,0,0) 70%)" }} />
+                        )}
 
-                        <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
+                        {/* Accent bottom bar on hover */}
+                        <div className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }} />
+
+                        <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
                           <div className="flex items-start justify-between">
-                            <motion.div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
+                            <motion.div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
                               style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)" }}
                               whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }} transition={{ duration: 0.5 }}>
                               <span className="text-xl md:text-2xl">{template.emoji}</span>
@@ -291,11 +291,11 @@ function TemplatesContent() {
                           </div>
                           <div>
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
-                              style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", backdropFilter: "blur(4px)" }}>
+                              style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", backdropFilter: "blur(4px)" }}>
                               {template.type}
                             </span>
                             <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1 text-white">{template.title}</h3>
-                            <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.5)" }}>{template.description}</p>
+                            <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.45)" }}>{template.description}</p>
                             <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
                               <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--app-accent)" }}>Open</span>
                               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--app-accent)" }}>
@@ -316,13 +316,27 @@ function TemplatesContent() {
         {/* Coming Soon */}
         {comingSoonTemplates.length > 0 && (
           <>
-            <div className="mt-10 mb-5 flex items-center gap-3">
-              <div className="h-px flex-1" style={{ background: "var(--app-accent-a12)" }} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] flex items-center gap-2" style={{ color: "var(--app-accent)" }}>
-                🚀 Coming Soon
-              </span>
-              <div className="h-px flex-1" style={{ background: "var(--app-accent-a12)" }} />
-            </div>
+            {/* ── Coming Soon heading ── */}
+            <motion.div
+              className="mt-16 mb-10 text-center flex flex-col items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 24 }}
+            >
+              {/* Top accent line */}
+              <div className="w-10 h-[3px] rounded-full mb-5" style={{ background: "var(--app-accent)" }} />
+
+              <h2
+                className="font-black uppercase leading-none tracking-tighter text-4xl md:text-6xl lg:text-[5.5rem]"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                <span style={{ color: "var(--app-text)" }}>More Templates </span>
+                <span style={{ color: "var(--app-accent)" }}>Coming Soon.</span>
+              </h2>
+
+              {/* Bottom accent line */}
+              <div className="w-16 h-[3px] rounded-full mt-5" style={{ background: "var(--app-accent-a35)" }} />
+            </motion.div>
             <AnimatePresence mode="popLayout">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 {comingSoonTemplates.map((template, i) => {
@@ -337,12 +351,12 @@ function TemplatesContent() {
                           <div className="absolute inset-0" style={{ background: "var(--app-cs-bg)" }} />
                           {comingSoonImg && (
                             <div className="absolute inset-0">
-                              <Image src={comingSoonImg} alt="" fill className="object-cover opacity-65" sizes="(max-width:768px) 50vw, 25vw" />
+                              <Image src={comingSoonImg} alt="" fill className="object-cover opacity-65" sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw" />
                             </div>
                           )}
                           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85))" }} />
-                          <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
-                            <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
+                          <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
                               style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}>
                               <span className="text-xl md:text-2xl">{template.emoji}</span>
                             </div>
