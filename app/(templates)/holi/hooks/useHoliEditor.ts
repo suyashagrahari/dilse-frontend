@@ -18,8 +18,12 @@ export function useHoliEditor() {
 
   useEffect(() => {
     const saved = localStorage.getItem("holi-theme");
-    if (saved === "dark") setDarkMode(true);
-    else setDarkMode(false);
+    if (saved) {
+      setDarkMode(saved === "dark");
+    } else {
+      const global = localStorage.getItem("theme"); // set by next-themes
+      setDarkMode(global === "dark"); // only dark if user explicitly chose dark (holi defaults light)
+    }
     setThemeReady(true);
   }, []);
 

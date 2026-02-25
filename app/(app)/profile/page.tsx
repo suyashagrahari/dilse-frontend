@@ -265,14 +265,16 @@ export default function ProfilePage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
       className="grid grid-cols-3 gap-3">
       {[
-        { icon: <Heart size={18} style={{ color: "#f43f5e" }} />, value: statsLoading ? "…" : stats?.favoritesCount ?? 0, label: "Favorites" },
-        { icon: <Sparkles size={18} style={{ color: "var(--app-accent)" }} />, value: statsLoading ? "…" : stats?.generatedCount ?? 0, label: "Generated" },
-        { icon: <Calendar size={18} style={{ color: "#60a5fa" }} />, value: statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today", label: "Member", small: true },
+        { icon: <Heart size={20} style={{ color: "#f43f5e" }} />, value: statsLoading ? "…" : stats?.favoritesCount ?? 0, label: "Favorites" },
+        { icon: <Sparkles size={20} style={{ color: "var(--app-accent)" }} />, value: statsLoading ? "…" : stats?.generatedCount ?? 0, label: "Generated" },
+        { icon: <Calendar size={20} style={{ color: "#60a5fa" }} />, value: statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today", label: "Member", small: true },
       ].map(({ icon, value, label, small }) => (
-        <div key={label} className="rounded-2xl p-4 text-center" style={cardStyle}>
-          <div className="flex justify-center mb-2">{icon}</div>
-          <p className={`font-black ${small ? "text-sm leading-tight" : "text-xl"}`} style={{ color: "var(--app-text)" }}>{value}</p>
-          <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "var(--app-text-faint)" }}>{label}</p>
+        <div key={label} className="rounded-2xl p-4 pt-5 pb-4 text-center flex flex-col items-center" style={cardStyle}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style={{ background: "var(--app-surface)" }}>
+            {icon}
+          </div>
+          <p className={`font-black leading-tight ${small ? "text-sm" : "text-2xl"}`} style={{ color: "var(--app-text)" }}>{value}</p>
+          <p className="text-[9px] uppercase tracking-widest mt-1.5 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
         </div>
       ))}
     </motion.div>
@@ -430,38 +432,38 @@ export default function ProfilePage() {
               <AnimatePresence>
                 {isExpanded && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                    <div className="px-4 pb-4 space-y-3">
+                    <div className="px-4 pb-5 md:px-5 md:pb-6 space-y-3 md:space-y-4">
                       <button onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                        className="w-full flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-sm md:text-[15px] font-bold transition-all hover:opacity-90 hover:scale-[1.01]"
                         style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                        <Edit3 size={14} /> Edit This Card
+                        <Edit3 size={15} /> Edit This Card
                       </button>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[{ icon: <Eye size={12} style={{ color: "#60a5fa" }} />, val: page.viewCount, label: "Views" },
-                          { icon: <Users size={12} style={{ color: "var(--app-accent)" }} />, val: page.installCount, label: "Installs" },
-                          { icon: <BarChart3 size={12} style={{ color: "#a78bfa" }} />, val: page.isPublished ? "Live" : "Draft", label: "Status" }
+                      <div className="grid grid-cols-3 gap-2 md:gap-3">
+                        {[{ icon: <Eye size={14} style={{ color: "#60a5fa" }} />, val: page.viewCount, label: "Views" },
+                          { icon: <Users size={14} style={{ color: "var(--app-accent)" }} />, val: page.installCount, label: "Installs" },
+                          { icon: <BarChart3 size={14} style={{ color: "#a78bfa" }} />, val: page.isPublished ? "Live" : "Draft", label: "Status" }
                         ].map(({ icon, val, label }) => (
-                          <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: "var(--app-surface)" }}>
-                            <div className="flex justify-center mb-1">{icon}</div>
-                            <p className="text-sm font-black" style={{ color: "var(--app-text)" }}>{val}</p>
-                            <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--app-text-faint)" }}>{label}</p>
+                          <div key={label} className="rounded-xl md:rounded-2xl p-3 md:p-4 text-center flex flex-col items-center" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: "var(--app-bg)" }}>{icon}</div>
+                            <p className="text-sm md:text-lg font-black leading-tight" style={{ color: "var(--app-text)" }}>{val}</p>
+                            <p className="text-[9px] md:text-[10px] uppercase tracking-wider mt-1 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
                           </div>
                         ))}
                       </div>
                       {page.isPublished && (
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--app-surface)" }}>
-                            <Globe size={12} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
-                            <p className="text-[11px] truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{shareLink}</p>
+                          <div className="flex items-center gap-2.5 rounded-xl md:rounded-2xl px-3.5 md:px-4 py-3 md:py-3.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
+                            <Globe size={13} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
+                            <p className="text-[11px] md:text-xs truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{shareLink}</p>
                             <button onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
                               style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                              {copiedLink === page._id ? <Check size={12} /> : <Copy size={12} />}
+                              {copiedLink === page._id ? <Check size={13} /> : <Copy size={13} />}
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); window.open(`/${page.shareId}`, "_blank"); }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                              style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                              <ExternalLink size={12} />
+                              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                              style={{ background: "var(--app-border)", color: "var(--app-text-muted)" }}>
+                              <ExternalLink size={13} />
                             </button>
                           </div>
                           {page.hasPassword && (
@@ -608,7 +610,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0">
+          <div className="px-5 pt-4 pb-5 md:px-0 md:pt-4 md:pb-0">
             {StatsBlock}
           </div>
 

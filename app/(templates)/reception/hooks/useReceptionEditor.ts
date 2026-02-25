@@ -17,8 +17,12 @@ export function useReceptionEditor() {
 
   useEffect(() => {
     const saved = localStorage.getItem("reception-theme");
-    if (saved === "light") setDarkMode(false);
-    else setDarkMode(true);
+    if (saved) {
+      setDarkMode(saved === "dark");
+    } else {
+      const global = localStorage.getItem("theme"); // set by next-themes
+      setDarkMode(global !== "light"); // dark unless user explicitly chose light
+    }
     setThemeReady(true);
   }, []);
 
@@ -32,6 +36,18 @@ export function useReceptionEditor() {
       localStorage.setItem("reception-theme", "light");
     }
   }, [darkMode, themeReady]);
+
+  // Restore global theme when navigating away so next-themes stays in sync
+  useEffect(() => {
+    return () => {
+      const global = localStorage.getItem("theme");
+      if (global === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
+        document.documentElement.classList.add("dark");
+      }
+    };
+  }, []);
 
   const [tab, setTab] = useState<TabId>("home");
   const [content, setContent] = useState<ReceptionData>(DEMO_DATA);

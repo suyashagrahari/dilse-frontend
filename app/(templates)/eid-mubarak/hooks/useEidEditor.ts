@@ -18,8 +18,12 @@ export function useEidEditor() {
 
   useEffect(() => {
     const saved = localStorage.getItem("eid-theme");
-    if (saved === "light") setDarkMode(false);
-    else setDarkMode(true);
+    if (saved) {
+      setDarkMode(saved === "dark");
+    } else {
+      const global = localStorage.getItem("theme"); // set by next-themes
+      setDarkMode(global !== "light"); // dark unless user explicitly chose light
+    }
     setThemeReady(true);
   }, []);
 

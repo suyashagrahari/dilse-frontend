@@ -85,8 +85,14 @@ export function useWeddingEditor() {
 
   useEffect(() => {
     const saved = localStorage.getItem("wedding-shaadi-theme");
-    if (saved === "light") setDarkMode(false);
-    else setDarkMode(true);
+    if (saved) {
+      // User previously changed theme within this template — respect it
+      setDarkMode(saved === "dark");
+    } else {
+      // First visit — match the user's global app theme preference
+      const global = localStorage.getItem("theme"); // set by next-themes
+      setDarkMode(global !== "light"); // dark unless user explicitly chose light
+    }
     setThemeReady(true);
   }, []);
 
@@ -101,6 +107,18 @@ export function useWeddingEditor() {
       localStorage.setItem("wedding-shaadi-theme", "light");
     }
   }, [darkMode, themeReady]);
+
+  // Restore global theme when navigating away so next-themes stays in sync
+  useEffect(() => {
+    return () => {
+      const global = localStorage.getItem("theme");
+      if (global === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
+        document.documentElement.classList.add("dark");
+      }
+    };
+  }, []);
 
   const [tab, setTab] = useState<TabId>("home");
   const [content, setContent] = useState<WeddingData>(DEMO_DATA);
