@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
-  Eye, EyeOff, Loader2, ChevronRight, Shield, Sun, Moon, Monitor,
+  Eye, EyeOff, Loader2, ChevronRight, Shield, Sun, Moon,
   ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Inbox, Globe,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -447,11 +447,10 @@ export default function ProfilePage() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
               {sectionLabel("Appearance")}
               <div className="rounded-2xl p-4" style={cardStyle}>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {([
                     { value: "light" as const, label: "Light", icon: Sun, color: "#fbbf24" },
                     { value: "dark" as const, label: "Dark", icon: Moon, color: "#a78bfa" },
-                    { value: "system" as const, label: "Auto", icon: Monitor, color: "#60a5fa" },
                   ]).map(({ value, label, icon: Icon, color }) => {
                     const isSelected = currentTheme === value;
                     return (
