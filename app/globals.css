@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  background-color: var(--app-bg);
+}
+
 @layer base {
   :root {
     --background: 0 0% 99%;
@@ -127,6 +131,122 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
   }
+}
+
+/* ── App UI shell tokens ── */
+:root {
+  /* Theme-adaptive accent (pink/rose in light) */
+  --app-accent: hsl(350, 80%, 58%);
+  --app-accent-fg: #ffffff;
+  --app-accent-a06: hsl(350 80% 58% / 0.06);
+  --app-accent-a08: hsl(350 80% 58% / 0.08);
+  --app-accent-a10: hsl(350 80% 58% / 0.10);
+  --app-accent-a12: hsl(350 80% 58% / 0.12);
+  --app-accent-a15: hsl(350 80% 58% / 0.15);
+  --app-accent-a20: hsl(350 80% 58% / 0.20);
+  --app-accent-a25: hsl(350 80% 58% / 0.25);
+  --app-accent-a35: hsl(350 80% 58% / 0.35);
+  --app-hover-glow: 0 20px 60px hsl(350 80% 58% / 0.12), 0 0 0 1px hsl(350 80% 58% / 0.18);
+
+  --app-bg: #f9f9f9;
+  --app-surface: rgba(0,0,0,0.032);
+  --app-surface-hov: rgba(0,0,0,0.052);
+  --app-border: rgba(0,0,0,0.075);
+  --app-border-faint: rgba(0,0,0,0.042);
+  --app-text: #0a0a0a;
+  --app-text-muted: rgba(0,0,0,0.48);
+  --app-text-faint: rgba(0,0,0,0.28);
+  --app-text-ultra-faint: rgba(0,0,0,0.15);
+  --app-sticky: rgba(249,249,249,0.93);
+  --app-sticky-border: hsl(350 80% 58% / 0.18);
+  --app-input-bg: rgba(0,0,0,0.04);
+  --app-input-bg-focus: rgba(0,0,0,0.06);
+  --app-input-border: rgba(0,0,0,0.085);
+  --app-pill-text: rgba(0,0,0,0.42);
+  --app-pill-border: rgba(0,0,0,0.1);
+  --app-pill-text-hov: rgba(0,0,0,0.72);
+  --app-pill-border-hov: rgba(0,0,0,0.18);
+  --app-card-img-bg: #e0e0e0;
+  --app-badge-bg: rgba(0,0,0,0.07);
+  --app-badge-text: rgba(0,0,0,0.52);
+  --app-emoji-bg: rgba(0,0,0,0.07);
+  --app-emoji-border: rgba(0,0,0,0.1);
+  --app-cs-bg: #e2e2e2;
+  --app-nav-bg: rgba(255,255,255,0.93);
+  --app-nav-border: rgba(0,0,0,0.1);
+  --app-nav-icon: #111111;
+  --app-nav-icon-muted: rgba(0,0,0,0.38);
+  --app-nav-create-border: #d8d8d8;
+}
+.dark {
+  /* Theme-adaptive accent (neon green in dark) */
+  --app-accent: #39FF14;
+  --app-accent-fg: #000000;
+  --app-accent-a06: rgba(57,255,20,0.06);
+  --app-accent-a08: rgba(57,255,20,0.08);
+  --app-accent-a10: rgba(57,255,20,0.10);
+  --app-accent-a12: rgba(57,255,20,0.12);
+  --app-accent-a15: rgba(57,255,20,0.15);
+  --app-accent-a20: rgba(57,255,20,0.20);
+  --app-accent-a25: rgba(57,255,20,0.25);
+  --app-accent-a35: rgba(57,255,20,0.35);
+  --app-hover-glow: 0 20px 60px rgba(57,255,20,0.1), 0 0 0 1px rgba(57,255,20,0.15);
+
+  --app-bg: #050505;
+  --app-surface: rgba(255,255,255,0.03);
+  --app-surface-hov: rgba(255,255,255,0.05);
+  --app-border: rgba(255,255,255,0.07);
+  --app-border-faint: rgba(255,255,255,0.04);
+  --app-text: #ffffff;
+  --app-text-muted: rgba(255,255,255,0.45);
+  --app-text-faint: rgba(255,255,255,0.25);
+  --app-text-ultra-faint: rgba(255,255,255,0.12);
+  --app-sticky: rgba(5,5,5,0.92);
+  --app-sticky-border: rgba(57,255,20,0.08);
+  --app-input-bg: rgba(255,255,255,0.05);
+  --app-input-bg-focus: rgba(255,255,255,0.07);
+  --app-input-border: rgba(255,255,255,0.07);
+  --app-pill-text: rgba(255,255,255,0.45);
+  --app-pill-border: rgba(255,255,255,0.08);
+  --app-pill-text-hov: rgba(255,255,255,0.8);
+  --app-pill-border-hov: rgba(255,255,255,0.2);
+  --app-card-img-bg: #111111;
+  --app-badge-bg: rgba(255,255,255,0.1);
+  --app-badge-text: rgba(255,255,255,0.6);
+  --app-emoji-bg: rgba(0,0,0,0.35);
+  --app-emoji-border: rgba(255,255,255,0.18);
+  --app-cs-bg: #0a0a0a;
+  --app-nav-bg: rgba(0,0,0,0.9);
+  --app-nav-border: rgba(57,255,20,0.12);
+  --app-nav-icon: #ffffff;
+  --app-nav-icon-muted: rgba(255,255,255,0.45);
+  --app-nav-create-border: #111111;
+}
+
+/* App UI utility classes */
+.app-pill-inactive {
+  color: var(--app-pill-text);
+  border-color: var(--app-pill-border);
+}
+.app-pill-inactive:hover {
+  color: var(--app-pill-text-hov);
+  border-color: var(--app-pill-border-hov);
+}
+.app-input {
+  background: var(--app-input-bg);
+  border: 1px solid var(--app-input-border);
+  color: var(--app-text);
+}
+.app-input::placeholder {
+  color: var(--app-text-faint);
+}
+.app-input:focus {
+  background: var(--app-input-bg-focus);
+  border-color: rgba(57,255,20,0.35);
+  outline: none;
+}
+.app-row-hover:hover {
+  background: var(--app-surface-hov);
 }
 
 @layer components {

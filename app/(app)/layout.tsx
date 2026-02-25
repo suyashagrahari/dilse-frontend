@@ -15,7 +15,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="pb-24">
+    <div className="pb-24 md:pb-0">
       <WebsiteJsonLd />
       {children}
       <BottomNav />

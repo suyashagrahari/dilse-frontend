@@ -2,41 +2,13 @@
 
 import { useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Bookmark } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import Link from "next/link";
 import Image from "next/image";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { templateList } from "@/data/template-registry";
-
-const gradientColorMap: Record<string, { light: string; dark: string; accent: string }> = {
-  birthday: {
-    light: "from-rose-100/80 via-pink-50/60 to-amber-50/40",
-    dark: "from-rose-500/15 via-pink-500/10 to-amber-500/5",
-    accent: "bg-rose-500",
-  },
-  valentine: {
-    light: "from-red-100/80 via-pink-50/60 to-rose-50/40",
-    dark: "from-red-500/15 via-pink-500/10 to-rose-500/5",
-    accent: "bg-red-500",
-  },
-  sorry: {
-    light: "from-blue-100/80 via-cyan-50/60 to-indigo-50/40",
-    dark: "from-blue-500/15 via-cyan-500/10 to-indigo-500/5",
-    accent: "bg-blue-500",
-  },
-  missyou: {
-    light: "from-violet-100/80 via-purple-50/60 to-indigo-50/40",
-    dark: "from-violet-500/15 via-purple-500/10 to-indigo-500/5",
-    accent: "bg-violet-500",
-  },
-  anniversary: {
-    light: "from-amber-100/80 via-orange-50/60 to-yellow-50/40",
-    dark: "from-amber-500/15 via-orange-500/10 to-yellow-500/5",
-    accent: "bg-amber-500",
-  },
-};
 
 export default function FavoritesPage() {
   const dispatch = useAppDispatch();
@@ -45,58 +17,39 @@ export default function FavoritesPage() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchFavorites());
-    }
+    if (isAuthenticated) dispatch(fetchFavorites());
   }, [dispatch, isAuthenticated]);
 
   const favorited = templateList.filter((t) => favSlugs.includes(t.slug));
 
-  const handleRemove = useCallback(
-    (e: React.MouseEvent, slug: string) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dispatch(toggleFavoriteAsync(slug));
-    },
-    [dispatch]
-  );
+  const handleRemove = useCallback((e: React.MouseEvent, slug: string) => {
+    e.preventDefault(); e.stopPropagation();
+    dispatch(toggleFavoriteAsync(slug));
+  }, [dispatch]);
 
+  /* ── Not authenticated ── */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen">
-        <div className="px-4 pt-6 pb-4 md:pt-10">
-          <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <span className="text-xs uppercase tracking-[0.2em] text-primary font-bold">
-                Saved
-              </span>
-              <h1 className="text-2xl md:text-4xl font-extrabold mt-1 mb-2">
-                Your <span className="text-gradient">Favorites</span>
-              </h1>
-            </motion.div>
-          </div>
+      <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+        <div className="px-5 pt-10 pb-6 max-w-lg mx-auto">
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>Saved</p>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Your <span style={{ color: "var(--app-accent)" }}>Favorites</span>
+            </h1>
+          </motion.div>
         </div>
-        <div className="flex items-center justify-center px-4 mt-16 md:mt-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <div className="w-20 h-20 rounded-3xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center mx-auto mb-6">
-              <Heart size={32} className="text-primary" />
+
+        <div className="flex items-center justify-center px-4 mt-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
+              <Heart size={32} style={{ color: "var(--app-accent)" }} />
             </div>
-            <h2 className="text-2xl font-extrabold mb-2">Sign in to see favorites</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Log in to save and view your favorite templates across devices.
-            </p>
-            <Link
-              href="/templates"
-              className="inline-flex gradient-hero text-primary-foreground px-6 py-3 rounded-xl font-semibold shadow-soft"
-            >
-              Browse Templates
+            <h2 className="text-2xl font-black mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Sign in to see favorites</h2>
+            <p className="text-sm mb-8" style={{ color: "var(--app-text-muted)" }}>Log in to save and view your favorite templates across all devices.</p>
+            <Link href="/templates" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all hover:scale-105"
+              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+              Browse Templates →
             </Link>
           </motion.div>
         </div>
@@ -104,187 +57,130 @@ export default function FavoritesPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <div className="px-4 pt-6 pb-4 md:pt-10">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <span className="text-xs uppercase tracking-[0.2em] text-primary font-bold">
-              Saved
-            </span>
-            <h1 className="text-2xl md:text-4xl font-extrabold mt-1 mb-2">
-              Your <span className="text-gradient">Favorites</span>
-            </h1>
-            <p className="text-muted-foreground text-sm md:text-base">
-              {loading
-                ? "Loading your favorites..."
-                : favorited.length > 0
-                ? `${favorited.length} template${favorited.length > 1 ? "s" : ""} saved`
-                : "Templates you\u2019ve saved for quick access"}
-            </p>
-          </motion.div>
+  /* ── Loading ── */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-bg)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--app-accent)", borderTopColor: "transparent" }} />
+          <p className="text-sm" style={{ color: "var(--app-text-faint)" }}>Loading favorites...</p>
         </div>
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="flex items-center justify-center mt-16">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <p className="text-muted-foreground text-sm">Loading favorites...</p>
-          </div>
+  /* ── Empty ── */
+  if (favorited.length === 0) {
+    return (
+      <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+        <div className="px-5 pt-10 pb-6 max-w-lg mx-auto">
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>Saved</p>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Your <span style={{ color: "var(--app-accent)" }}>Favorites</span>
+            </h1>
+          </motion.div>
         </div>
-      ) : favorited.length > 0 ? (
-        <div className="px-4 pb-8">
-          <div className="container">
-            <AnimatePresence mode="popLayout">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
-                {favorited.map((template, i) => {
-                  const colors = gradientColorMap[template.type] || gradientColorMap.birthday;
-
-                  return (
-                    <motion.div
-                      key={template.slug}
-                      layout
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-                    >
-                      <Link href={`/${template.slug}`} className="block group">
-                        <motion.div
-                          className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden border border-border/50 dark:border-white/[0.06] transition-all duration-300"
-                          whileHover={{ y: -6, scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="absolute inset-0 bg-card" />
-
-                          {template.coverImage ? (
-                            <>
-                              <div className="absolute inset-0">
-                                <Image
-                                  src={template.coverImage}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                  sizes="(max-width:768px) 50vw, 25vw"
-                                />
-                              </div>
-                              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
-                            </>
-                          ) : (
-                            <>
-                              <div className={`absolute inset-0 bg-gradient-to-br ${colors.light} dark:hidden`} />
-                              <div className={`absolute inset-0 bg-gradient-to-br ${colors.dark} hidden dark:block`} />
-                            </>
-                          )}
-
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/5 via-transparent to-transparent dark:from-primary/10" />
-                          <div className={`absolute top-0 left-0 right-0 h-[2px] ${colors.accent} opacity-0 group-hover:opacity-60 transition-opacity duration-300`} />
-
-                          <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
-                            <div className="flex items-start justify-between">
-                              <motion.div
-                                className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-sm ${
-                                  template.coverImage
-                                    ? "bg-black/30 border border-white/20"
-                                    : "bg-white/60 dark:bg-white/[0.08] border border-white/40 dark:border-white/[0.06]"
-                                }`}
-                                whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }}
-                                transition={{ duration: 0.5 }}
-                              >
-                                <span className="text-2xl md:text-3xl">
-                                  {template.emoji}
-                                </span>
-                              </motion.div>
-                              <FavoriteButton
-                                isFavorited={true}
-                                onClick={(e) => handleRemove(e, template.slug)}
-                              />
-                            </div>
-
-                            <div>
-                              <div className="mb-2">
-                                <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                    template.coverImage
-                                      ? "bg-white/15 text-white/80 backdrop-blur-sm"
-                                      : "bg-foreground/[0.06] dark:bg-white/[0.08] text-muted-foreground"
-                                  }`}
-                                >
-                                  {template.type}
-                                </span>
-                              </div>
-                              <h3
-                                className={`font-bold text-sm md:text-[15px] leading-tight mb-1.5 transition-colors duration-300 ${
-                                  template.coverImage
-                                    ? "text-white drop-shadow-md"
-                                    : "text-foreground group-hover:text-primary"
-                                }`}
-                              >
-                                {template.title}
-                              </h3>
-                              <p
-                                className={`text-[11px] md:text-xs leading-relaxed line-clamp-2 ${
-                                  template.coverImage
-                                    ? "text-white/70"
-                                    : "text-muted-foreground"
-                                }`}
-                              >
-                                {template.description}
-                              </p>
-                              <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-                                <span
-                                  className={`text-[10px] font-bold uppercase tracking-wider ${
-                                    template.coverImage ? "text-white" : "text-primary"
-                                  }`}
-                                >
-                                  Open
-                                </span>
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={template.coverImage ? "text-white" : "text-primary"}>
-                                  <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              </div>
-                            </div>
-                          </div>
-
-                          {!template.coverImage && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-card/40 dark:from-card/60 to-transparent pointer-events-none" />
-                          )}
-                        </motion.div>
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </AnimatePresence>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center px-4 mt-16 md:mt-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <div className="w-20 h-20 rounded-3xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center mx-auto mb-6">
-              <Heart size={32} className="text-primary" />
+        <div className="flex items-center justify-center px-4 mt-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
+              <Bookmark size={32} style={{ color: "var(--app-accent)" }} />
             </div>
-            <h2 className="text-2xl font-extrabold mb-2">No favorites yet</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Browse templates and tap the heart to save your favorites here!
-            </p>
-            <Link
-              href="/templates"
-              className="inline-flex gradient-hero text-primary-foreground px-6 py-3 rounded-xl font-semibold shadow-soft"
-            >
-              Browse Templates
+            <h2 className="text-2xl font-black mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>No favorites yet</h2>
+            <p className="text-sm mb-8" style={{ color: "var(--app-text-muted)" }}>Browse templates and tap the heart to save your favorites here.</p>
+            <Link href="/templates" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all hover:scale-105"
+              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+              Browse Templates →
             </Link>
           </motion.div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  /* ── Favorites grid ── */
+  return (
+    <div className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Header */}
+      <div className="px-5 pt-10 pb-6 max-w-5xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-3" style={{ color: "var(--app-accent)" }}>Saved</p>
+          <div className="flex items-end justify-between gap-4">
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Your <span style={{ color: "var(--app-accent)" }}>Favorites</span>
+            </h1>
+            <div className="shrink-0 px-3 py-1.5 rounded-full text-sm font-bold mb-1" style={{ background: "var(--app-accent-a10)", border: "1px solid var(--app-accent-a25)", color: "var(--app-accent)" }}>
+              {favorited.length} saved
+            </div>
+          </div>
+          <p className="text-sm mt-3" style={{ color: "var(--app-text-faint)" }}>
+            Templates you&apos;ve saved for quick access
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Grid */}
+      <div className="px-4 pb-12 max-w-5xl mx-auto">
+        <AnimatePresence mode="popLayout">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {favorited.map((template, i) => (
+              <motion.div key={template.slug} layout
+                initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}>
+                <Link href={`/${template.slug}`} className="block group">
+                  <motion.div
+                    className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
+                    style={{ border: "1px solid var(--app-border)" }}
+                    whileHover={{ y: -6, scale: 1.02, boxShadow: "var(--app-hover-glow)" }}
+                    whileTap={{ scale: 0.98 }}>
+                    <div className="absolute inset-0" style={{ background: "var(--app-card-img-bg)" }} />
+                    {template.coverImage ? (
+                      <>
+                        <div className="absolute inset-0">
+                          <Image src={template.coverImage} alt="" fill className="object-cover" sizes="(max-width:768px) 50vw, 25vw" />
+                        </div>
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.82))" }} />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--app-accent-a08), rgba(0,0,0,0) 70%)" }} />
+                    )}
+
+                    {/* Accent bottom bar on hover */}
+                    <div className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }} />
+
+                    <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
+                      <div className="flex items-start justify-between">
+                        <motion.div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
+                          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)" }}
+                          whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }} transition={{ duration: 0.5 }}>
+                          <span className="text-xl md:text-2xl">{template.emoji}</span>
+                        </motion.div>
+                        <FavoriteButton isFavorited={true} onClick={(e) => handleRemove(e, template.slug)} />
+                      </div>
+                      <div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
+                          style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", backdropFilter: "blur(4px)" }}>
+                          {template.type}
+                        </span>
+                        <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1 text-white">{template.title}</h3>
+                        <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.45)" }}>{template.description}</p>
+                        <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--app-accent)" }}>Open</span>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--app-accent)" }}>
+                            <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
