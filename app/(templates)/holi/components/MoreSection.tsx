@@ -54,7 +54,7 @@ const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "-40px" },
-  transition: { delay, duration: 0.5, ease: "easeOut" },
+  transition: { delay, duration: 0.5, ease: "easeOut" as const },
 });
 
 const SectionHeading = memo(function SectionHeading({ title }: { title: string }) {
