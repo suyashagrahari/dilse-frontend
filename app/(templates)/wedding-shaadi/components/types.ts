@@ -34,6 +34,7 @@ export interface WeddingEvent {
   time: string;
   venue: string;
   accent: string;
+  disabled?: boolean;
 }
 
 export interface Wish {
@@ -114,12 +115,12 @@ export const DEMO_DATA: WeddingData = {
     grandparents: "Shri Hari Verma & Smt. Savitri Verma",
   },
   events: [
-    { name: "Haldi", hindi: "हल्दी", icon: "🌿", date: "13 Mar", time: "10 AM", venue: "Sharma Residence", accent: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30" },
-    { name: "Mehendi", hindi: "मेहंदी", icon: "🌸", date: "13 Mar", time: "6 PM", venue: "Royal Garden", accent: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30" },
-    { name: "Sangeet", hindi: "संगीत", icon: "🎶", date: "14 Mar", time: "7 PM", venue: "Grand Ballroom", accent: "from-violet-500/20 to-violet-600/5 border-violet-500/30" },
-    { name: "Baraat", hindi: "बारात", icon: "🐴", date: "15 Mar", time: "9 AM", venue: "City Palace Road", accent: "from-rose-500/20 to-rose-500/5 border-rose-500/30" },
-    { name: "Wedding", hindi: "विवाह", icon: "🔥", date: "15 Mar", time: "11 AM", venue: "Jaipur Palace Lawns", accent: "from-amber-500/20 to-amber-500/5 border-amber-500/30" },
-    { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Mar", time: "7 PM", venue: "Grand Hall", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30" },
+    { name: "Haldi", hindi: "हल्दी", icon: "🌿", date: "13 Mar", time: "10 AM", venue: "Sharma Residence", accent: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30", disabled: false },
+    { name: "Mehendi", hindi: "मेहंदी", icon: "🌸", date: "13 Mar", time: "6 PM", venue: "Royal Garden", accent: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30", disabled: false },
+    { name: "Sangeet", hindi: "संगीत", icon: "🎶", date: "14 Mar", time: "7 PM", venue: "Grand Ballroom", accent: "from-violet-500/20 to-violet-600/5 border-violet-500/30", disabled: false },
+    { name: "Baraat", hindi: "बारात", icon: "🐴", date: "15 Mar", time: "9 AM", venue: "City Palace Road", accent: "from-rose-500/20 to-rose-500/5 border-rose-500/30", disabled: false },
+    { name: "Wedding", hindi: "विवाह", icon: "🔥", date: "15 Mar", time: "11 AM", venue: "Jaipur Palace Lawns", accent: "from-amber-500/20 to-amber-500/5 border-amber-500/30", disabled: false },
+    { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Mar", time: "7 PM", venue: "Grand Hall", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30", disabled: false },
   ],
   galleryImages: [
     { src: "/assets/marriage/weeding.png", alt: "Couple", span: "col-span-2 row-span-2" },

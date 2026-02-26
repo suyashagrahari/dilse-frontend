@@ -5,10 +5,68 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type WeddingData, DEMO_DATA } from "../components/types";
 
-import { API_URL, IS_NGROK } from "@/lib/config";
+import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
+
+const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
+const parseTimeToMinutes = (time: string): number => {
+  const cleaned = time.trim().toUpperCase();
+  const match = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const hourRaw = Number(match[1]);
+  const minutes = Number(match[2] || "0");
+  const ampm = match[3];
+  let hour = hourRaw % 12;
+  if (ampm === "PM") hour += 12;
+  return hour * 60 + minutes;
+};
+
+const parseDateAndTimeToEpoch = (date: string, time: string): number => {
+  const trimmedDate = date.trim();
+  if (!trimmedDate) return Number.MAX_SAFE_INTEGER;
+  const parts = trimmedDate.split(/\s+/);
+  if (parts.length < 2) return Number.MAX_SAFE_INTEGER;
+
+  const day = Number(parts[0]);
+  const monthIdx = MONTH_MAP[parts[1].toLowerCase()];
+  if (!Number.isFinite(day) || monthIdx === undefined) return Number.MAX_SAFE_INTEGER;
+
+  const year = new Date().getFullYear();
+  const eventDate = new Date(year, monthIdx, day);
+  eventDate.setHours(0, 0, 0, 0);
+  eventDate.setMinutes(parseTimeToMinutes(time));
+  return eventDate.getTime();
+};
+
+const sortWeddingEvents = (events: WeddingData["events"]) =>
+  [...events].sort((a, b) => {
+    if (Boolean(a.disabled) !== Boolean(b.disabled)) return a.disabled ? 1 : -1;
+    const aEpoch = parseDateAndTimeToEpoch(a.date, a.time);
+    const bEpoch = parseDateAndTimeToEpoch(b.date, b.time);
+    if (aEpoch === bEpoch) return a.name.localeCompare(b.name);
+    return aEpoch - bEpoch;
+  });
 
 // ── Helper: map DB fields → WeddingData ────────────────────────────────────────
 function dbToWeddingData(d: Record<string, unknown>): WeddingData {
+  const rawEvents = ((d.events as WeddingData["events"]) || DEMO_DATA.events).map((ev) => ({
+    ...ev,
+    disabled: Boolean(ev.disabled),
+  }));
+
   return {
     ...DEMO_DATA,
     brideName: (d.brideName as string) || "",
@@ -40,7 +98,7 @@ function dbToWeddingData(d: Record<string, unknown>): WeddingData {
       parents: (d.groomFamilyParents as string) || DEMO_DATA.groomFamily.parents,
       grandparents: (d.groomFamilyGrandparents as string) || DEMO_DATA.groomFamily.grandparents,
     },
-    events: (d.events as WeddingData["events"]) || DEMO_DATA.events,
+    events: sortWeddingEvents(rawEvents),
     galleryImages: ((d.galleryImages as { src: string; alt: string }[]) || []).map((g, i) => ({
       src: g.src,
       alt: g.alt || `Photo ${i + 1}`,
@@ -68,7 +126,7 @@ function weddingDataToBody(data: WeddingData, password?: string) {
     groomTags: data.groom.tags,
     groomFamilyParents: data.groomFamily.parents,
     groomFamilyGrandparents: data.groomFamily.grandparents,
-    events: data.events,
+    events: sortWeddingEvents(data.events),
     galleryImages: data.galleryImages.map((g) => ({ src: g.src, alt: g.alt })),
     password: password || "",
   };
@@ -287,6 +345,7 @@ export function useWeddingEditor() {
               date: ev.date || "",
               time: ev.time || "",
               venue: ev.venue || "",
+              disabled: false,
             })),
           };
           setAiEditData(extracted);
@@ -451,15 +510,16 @@ export function useWeddingEditor() {
       });
       const result = await res.json();
       if (result.success) {
-        const url = result.data.shareUrl;
-        setShareUrl(url);
-        setShareId(result.data.shareId);
+        const publishedShareId = result.data.shareId as string;
+        const normalizedShareUrl = publishedShareId ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}` : (result.data.shareUrl as string);
+        setShareUrl(normalizedShareUrl);
+        setShareId(publishedShareId);
         // Keep pageId so user can edit and republish
         pushToast({
           type: "publish",
           title: "Published! 🎊",
           message: hasPasswordSet ? "Invitation is password-protected" : "Your wedding invitation is now live",
-          shareUrl: url,
+          shareUrl: normalizedShareUrl,
         });
       }
     } catch {

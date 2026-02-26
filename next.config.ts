@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "gifts-media-prod-123.s3.ap-south-1.amazonaws.com",
+      },
     ],
   },
 

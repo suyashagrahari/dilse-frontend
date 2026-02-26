@@ -4,13 +4,65 @@ import { memo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye,
-  Upload, Image as ImageIcon, MapPin, ExternalLink, Camera, Zap,
+  Upload, Image as ImageIcon, MapPin, ExternalLink, Camera, Zap, Trash2, Plus,
 } from "lucide-react";
 import type { WeddingData, EditMode, WeddingEvent } from "./types";
 import { GOLD_GRADIENT, AMBER_GRADIENT } from "./styles";
 
 const GALLERY_SPANS = ["col-span-2 row-span-2", "", "", "col-span-2", "", ""];
 const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions"];
+
+const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
+const parseTimeToMinutes = (time: string): number => {
+  const cleaned = time.trim().toUpperCase();
+  const match = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const hourRaw = Number(match[1]);
+  const mins = Number(match[2] || "0");
+  const ampm = match[3];
+  let hour = hourRaw % 12;
+  if (ampm === "PM") hour += 12;
+  return hour * 60 + mins;
+};
+
+const parseDateAndTimeToEpoch = (date: string, time: string): number => {
+  const trimmedDate = date.trim();
+  if (!trimmedDate) return Number.MAX_SAFE_INTEGER;
+  const parts = trimmedDate.split(/\s+/);
+  if (parts.length < 2) return Number.MAX_SAFE_INTEGER;
+  const day = Number(parts[0]);
+  const monthIdx = MONTH_MAP[parts[1].toLowerCase()];
+  if (!Number.isFinite(day) || monthIdx === undefined) return Number.MAX_SAFE_INTEGER;
+
+  const year = new Date().getFullYear();
+  const d = new Date(year, monthIdx, day);
+  d.setHours(0, 0, 0, 0);
+  d.setMinutes(parseTimeToMinutes(time));
+  return d.getTime();
+};
+
+const sortWeddingEvents = (events: WeddingData["events"]) =>
+  [...events].sort((a, b) => {
+    if (Boolean(a.disabled) !== Boolean(b.disabled)) return a.disabled ? 1 : -1;
+    const aEpoch = parseDateAndTimeToEpoch(a.date, a.time);
+    const bEpoch = parseDateAndTimeToEpoch(b.date, b.time);
+    if (aEpoch === bEpoch) return a.name.localeCompare(b.name);
+    return aEpoch - bEpoch;
+  });
 
 interface Props {
   editMode: EditMode;
@@ -587,26 +639,53 @@ function DetailsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof We
 
 // ── Step 2: Events ─────────────────────────────────────────────────────────────
 function EventsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  const sortedEvents = [...mf.events]
+    .map((event, originalIndex) => ({ ...event, originalIndex }))
+    .sort((a, b) => {
+      if (Boolean(a.disabled) !== Boolean(b.disabled)) return a.disabled ? 1 : -1;
+      const aEpoch = parseDateAndTimeToEpoch(a.date, a.time);
+      const bEpoch = parseDateAndTimeToEpoch(b.date, b.time);
+      if (aEpoch === bEpoch) return a.name.localeCompare(b.name);
+      return aEpoch - bEpoch;
+    });
+
+  const activeEvents = sortedEvents.filter((ev) => !ev.disabled);
+  const disabledEvents = sortedEvents.filter((ev) => ev.disabled);
+
   const updateEvent = (idx: number, field: keyof WeddingEvent, value: string) => {
-    const updated = mf.events.map((ev, i) => i === idx ? { ...ev, [field]: value } : ev);
-    updateMf("events", updated);
+    const updated = mf.events.map((ev, i) => (i === idx ? { ...ev, [field]: value } : ev));
+    updateMf("events", sortWeddingEvents(updated));
+  };
+
+  const setEventDisabled = (idx: number, disabled: boolean) => {
+    const updated = mf.events.map((ev, i) => (i === idx ? { ...ev, disabled } : ev));
+    updateMf("events", sortWeddingEvents(updated));
   };
 
   return (
     <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
       <p className="text-xs text-muted-foreground">Fill in details for each wedding event. Leave fields empty to use defaults.</p>
-      {mf.events.map((ev, i) => (
-        <div key={i} className="p-3 rounded-xl border border-border/40 bg-muted/20 space-y-2">
+      {activeEvents.map((ev) => (
+        <div key={`${ev.name}-${ev.originalIndex}`} className="p-3 rounded-xl border border-border/40 bg-muted/20 space-y-2">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-base">{ev.icon}</span>
             <p className="text-sm font-semibold">{ev.name} <span className="text-muted-foreground font-normal">({ev.hindi})</span></p>
+            <button
+              type="button"
+              onClick={() => setEventDisabled(ev.originalIndex, true)}
+              className="ml-auto w-7 h-7 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-red-400 hover:border-red-400/40 transition-colors"
+              aria-label={`Remove ${ev.name}`}
+              title="Remove event"
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input value={ev.date} onChange={(e) => updateEvent(i, "date", e.target.value)} placeholder="Date (e.g. 13 Mar)" className={INPUT_CLS_SM} />
-            <input value={ev.time} onChange={(e) => updateEvent(i, "time", e.target.value)} placeholder="Time (e.g. 6 PM)" className={INPUT_CLS_SM} />
+            <input value={ev.date} onChange={(e) => updateEvent(ev.originalIndex, "date", e.target.value)} placeholder="Date (e.g. 13 Mar)" className={INPUT_CLS_SM} />
+            <input value={ev.time} onChange={(e) => updateEvent(ev.originalIndex, "time", e.target.value)} placeholder="Time (e.g. 6 PM)" className={INPUT_CLS_SM} />
           </div>
           <div className="relative">
-            <input value={ev.venue} onChange={(e) => updateEvent(i, "venue", e.target.value)} placeholder="Venue name" className={INPUT_CLS_SM + " pr-8"} />
+            <input value={ev.venue} onChange={(e) => updateEvent(ev.originalIndex, "venue", e.target.value)} placeholder="Venue name" className={INPUT_CLS_SM + " pr-8"} />
             {ev.venue.trim() && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venue + " " + mf.venue)}`}
@@ -619,6 +698,35 @@ function EventsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof Wed
           </div>
         </div>
       ))}
+
+      {disabledEvents.length > 0 && (
+        <div className="pt-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Removed Events
+          </p>
+          <div className="space-y-2">
+            {disabledEvents.map((ev) => (
+              <div
+                key={`${ev.name}-${ev.originalIndex}-disabled`}
+                className="rounded-xl border border-border/40 bg-muted/10 px-3 py-2.5 flex items-center justify-between"
+              >
+                <p className="text-xs text-muted-foreground">
+                  {ev.icon} {ev.name}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setEventDisabled(ev.originalIndex, false)}
+                  className="w-7 h-7 rounded-lg border border-amber-400/40 text-amber-500 flex items-center justify-center"
+                  aria-label={`Add ${ev.name}`}
+                  title="Add event back"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

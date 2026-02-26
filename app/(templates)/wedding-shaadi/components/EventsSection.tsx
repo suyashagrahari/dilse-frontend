@@ -10,6 +10,48 @@ interface Props {
   data: WeddingData;
 }
 
+const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
+const parseTimeToMinutes = (time: string): number => {
+  const cleaned = time.trim().toUpperCase();
+  const match = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const hourRaw = Number(match[1]);
+  const minutes = Number(match[2] || "0");
+  const ampm = match[3];
+  let hour = hourRaw % 12;
+  if (ampm === "PM") hour += 12;
+  return hour * 60 + minutes;
+};
+
+const parseDateAndTimeToEpoch = (date: string, time: string): number => {
+  const trimmedDate = date.trim();
+  if (!trimmedDate) return Number.MAX_SAFE_INTEGER;
+  const parts = trimmedDate.split(/\s+/);
+  if (parts.length < 2) return Number.MAX_SAFE_INTEGER;
+  const day = Number(parts[0]);
+  const monthIdx = MONTH_MAP[parts[1].toLowerCase()];
+  if (!Number.isFinite(day) || monthIdx === undefined) return Number.MAX_SAFE_INTEGER;
+  const year = new Date().getFullYear();
+  const d = new Date(year, monthIdx, day);
+  d.setHours(0, 0, 0, 0);
+  d.setMinutes(parseTimeToMinutes(time));
+  return d.getTime();
+};
+
 const EVENT_WISDOM: Record<string, { verse: string; meaning: string }> = {
   Haldi: {
     verse: "हल्दी का रंग, सूरज सा तेज़ — शुभ की शुरुआत, प्रेम का सजावट",
@@ -255,7 +297,18 @@ function MobileEventCard({ event, idx }: { event: WeddingEvent; idx: number }) {
 }
 
 const EventsSection = memo(function EventsSection({ data }: Props) {
-  const events = useMemo(() => data.events, [data.events]);
+  const events = useMemo(
+    () =>
+      [...data.events]
+        .filter((event) => !event.disabled)
+        .sort((a, b) => {
+          const aEpoch = parseDateAndTimeToEpoch(a.date, a.time);
+          const bEpoch = parseDateAndTimeToEpoch(b.date, b.time);
+          if (aEpoch === bEpoch) return a.name.localeCompare(b.name);
+          return aEpoch - bEpoch;
+        }),
+    [data.events]
+  );
 
   return (
     <section className="min-h-[calc(100vh-5rem)] lg:min-h-screen flex items-start lg:items-center py-8 lg:py-12 px-4">
