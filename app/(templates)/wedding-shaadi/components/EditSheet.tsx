@@ -49,49 +49,57 @@ export default memo(function EditSheet({
             className="fixed inset-0 z-50 bg-black/50"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 24 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
-            className="fixed left-1/2 top-1/2 z-50 w-[min(94vw,44rem)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto bg-background rounded-3xl shadow-2xl"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 pointer-events-none"
           >
-            <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
-              <div className="w-10 h-1 rounded-full bg-border" />
-            </div>
+            <motion.div
+              initial={{ scale: 0.96, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 12 }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-background rounded-3xl shadow-2xl pointer-events-auto"
+            >
+              <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
+                <div className="w-10 h-1 rounded-full bg-border" />
+              </div>
 
-            {editMode === "choose" && <ChoosePanel setEditMode={setEditMode} onStartAi={onStartAi} onStartManual={onStartManual} />}
-            {editMode === "ai" && <AiChoosePanel setEditMode={setEditMode} />}
-            {editMode === "ai-card" && (
-              <AiCardPanel
-                setEditMode={setEditMode}
-                extractLoading={extractLoading}
-                onExtract={onCardExtract}
-              />
-            )}
-            {editMode === "ai-text" && (
-              <AiTextPanel
-                setEditMode={setEditMode}
-                aiName={aiName} setAiName={setAiName}
-                aiSender={aiSender} setAiSender={setAiSender}
-                aiPrompt={aiPrompt} setAiPrompt={setAiPrompt}
-                aiLoading={aiLoading} onGenerate={onAiGenerate}
-                mf={mf} updateMf={updateMf}
-              />
-            )}
-            {editMode === "ai-edit" && (
-              <AiEditPanel
-                setEditMode={setEditMode}
-                mf={mf} updateMf={updateMf}
-                onPreview={onAiEditPreview}
-              />
-            )}
-            {editMode === "manual" && (
-              <ManualPanel
-                setEditMode={setEditMode}
-                mf={mf} manualStep={manualStep} setManualStep={setManualStep}
-                updateMf={updateMf} onPreview={onManualPreview}
-              />
-            )}
+              {editMode === "choose" && <ChoosePanel setEditMode={setEditMode} onStartAi={onStartAi} onStartManual={onStartManual} />}
+              {editMode === "ai" && <AiChoosePanel setEditMode={setEditMode} />}
+              {editMode === "ai-card" && (
+                <AiCardPanel
+                  setEditMode={setEditMode}
+                  extractLoading={extractLoading}
+                  onExtract={onCardExtract}
+                />
+              )}
+              {editMode === "ai-text" && (
+                <AiTextPanel
+                  setEditMode={setEditMode}
+                  aiName={aiName} setAiName={setAiName}
+                  aiSender={aiSender} setAiSender={setAiSender}
+                  aiPrompt={aiPrompt} setAiPrompt={setAiPrompt}
+                  aiLoading={aiLoading} onGenerate={onAiGenerate}
+                  mf={mf} updateMf={updateMf}
+                />
+              )}
+              {editMode === "ai-edit" && (
+                <AiEditPanel
+                  setEditMode={setEditMode}
+                  mf={mf} updateMf={updateMf}
+                  onPreview={onAiEditPreview}
+                />
+              )}
+              {editMode === "manual" && (
+                <ManualPanel
+                  setEditMode={setEditMode}
+                  mf={mf} manualStep={manualStep} setManualStep={setManualStep}
+                  updateMf={updateMf} onPreview={onManualPreview}
+                />
+              )}
+            </motion.div>
           </motion.div>
         </>
       )}
