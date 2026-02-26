@@ -19,7 +19,7 @@ const CoupleSection  = lazy(() => import("@/app/(templates)/wedding-shaadi/compo
 const EventsSection  = lazy(() => import("@/app/(templates)/wedding-shaadi/components/EventsSection"));
 const GallerySection = lazy(() => import("@/app/(templates)/wedding-shaadi/components/GallerySection"));
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 type ViewerTabId = TabId | "create";
 
@@ -699,7 +699,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
     setPwLoading(true); setPwError("");
     try {
       const res = await fetch(`${API_URL}/wedding-pages/share/${shareId}/verify`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
         body: JSON.stringify({ password: pw }),
       });
       const result = await res.json();
@@ -714,7 +714,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
     setBlessingLoading(true);
     try {
       const res = await fetch(`${API_URL}/wedding-pages/share/${shareId}/blessings`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
         body: JSON.stringify({ name: blessingName.trim(), message: blessingMsg.trim() }),
       });
       const result = await res.json();

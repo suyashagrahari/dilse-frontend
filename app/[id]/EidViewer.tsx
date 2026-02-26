@@ -25,7 +25,7 @@ const GreetingsSection = lazy(() => import("@/app/(templates)/eid-mubarak/compon
 const PlaylistSection  = lazy(() => import("@/app/(templates)/eid-mubarak/components/PlaylistSection"));
 const DuaSection       = lazy(() => import("@/app/(templates)/eid-mubarak/components/DuaSection"));
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 type ViewerTabId = TabId | "create";
 
@@ -80,7 +80,7 @@ function EidPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked:
     setLoading(true); setError("");
     try {
       const res = await fetch(`${API_URL}/eid-pages/share/${shareId}/verify`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
         body: JSON.stringify({ password: pw }),
       });
       const result = await res.json();

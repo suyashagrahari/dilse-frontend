@@ -19,7 +19,7 @@ const CoupleReveal    = lazy(() => import("@/app/(templates)/reception/component
 const GallerySection  = lazy(() => import("@/app/(templates)/reception/components/GallerySection"));
 const LocationSection = lazy(() => import("@/app/(templates)/reception/components/LocationSection"));
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 type ViewerTabId = TabId | "create";
 
@@ -672,7 +672,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
     setPwLoading(true); setPwError("");
     try {
       const res = await fetch(`${API_URL}/reception-pages/share/${shareId}/verify`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
         body: JSON.stringify({ password: pw }),
       });
       const result = await res.json();
@@ -687,7 +687,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
     setBlessingLoading(true);
     try {
       const res = await fetch(`${API_URL}/reception-pages/share/${shareId}/blessings`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
         body: JSON.stringify({ name: blessingName.trim(), message: blessingMsg.trim() }),
       });
       const result = await res.json();

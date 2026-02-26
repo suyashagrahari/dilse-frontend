@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 async function fetchInstallCount(): Promise<number> {
   try {
-    const res = await fetch(`${API_URL}/share/stats/installs`, { next: { revalidate: 30 } });
+    const headers: Record<string, string> = IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {};
+    const res = await fetch(`${API_URL}/share/stats/installs`, { next: { revalidate: 30 }, headers });
     const data = await res.json();
     return data.success ? data.totalInstalls : 0;
   } catch {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 export function useAnniversaryEditor() {
   const router = useRouter();
@@ -54,7 +54,11 @@ export function useAnniversaryEditor() {
   }, []);
 
   const headers = useCallback(
-    () => ({ "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` }),
+    () => ({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    }),
     [accessToken],
   );
 

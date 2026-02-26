@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type EidData, DEMO_DATA } from "../components/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 export function useEidEditor() {
   const router = useRouter();
@@ -80,7 +80,11 @@ export function useEidEditor() {
   }, []);
 
   const headers = useCallback(
-    () => ({ "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` }),
+    () => ({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    }),
     [accessToken],
   );
 
@@ -106,7 +110,10 @@ export function useEidEditor() {
     const editId = searchParams.get("edit");
     if (!editId || !accessToken || !themeReady) return;
     fetch(`${API_URL}/eid-pages/${editId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+      },
     })
       .then((r) => r.json())
       .then((result) => {

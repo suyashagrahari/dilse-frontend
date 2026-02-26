@@ -7,7 +7,7 @@ import type { HoliData, EditMode } from "./types";
 import { HOLI_INPUT } from "./styles";
 
 const MANUAL_STEPS = ["Basics", "Message", "Details"];
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 interface Props {
   editMode: EditMode;

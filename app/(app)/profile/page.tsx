@@ -13,12 +13,11 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, updateTheme } from "@/store/authSlice";
 import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
-  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
   return headers;
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "gifts-v3";
+const CACHE_NAME = "gifts-v4";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -23,6 +23,15 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
   if (!request.url.startsWith("http")) return;
+
+  // Only cache same-origin requests.
+  // Cross-origin requests (Google OAuth, CDNs, ngrok API) must NOT be intercepted —
+  // they either require credentials/CORS handling we can't replicate, or must reach
+  // the network directly every time.
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Pass API calls through to the network — never cache dynamic data.
   if (request.url.includes("/api/")) return;
 
   event.respondWith(

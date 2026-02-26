@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +11,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : {}),
+        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
       },
       body: JSON.stringify(body),
     });

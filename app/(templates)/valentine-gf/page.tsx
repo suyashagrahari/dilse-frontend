@@ -24,7 +24,7 @@ import ValentineContent from "./components/ValentineContent";
 import ValentineNav from "./components/ValentineNav";
 import { type ValentineData, type TabId, DEMO_CONTENT } from "./components/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 interface Toast {
   id: number;
@@ -80,6 +80,7 @@ function ValentineGfPage() {
     () => ({
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
     }),
     [accessToken]
   );
@@ -91,7 +92,10 @@ function ValentineGfPage() {
     const editId = searchParams.get("edit");
     if (!editId || !accessToken) return;
     fetch(`${API_URL}/valentine-pages/${editId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+      },
     })
       .then((r) => r.json())
       .then((result) => {
