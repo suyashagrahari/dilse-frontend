@@ -8,7 +8,11 @@
 
 type AppEnv = "local" | "ngrok" | "production";
 
-const APP_ENV = (process.env.NEXT_PUBLIC_APP_ENV || "local") as AppEnv;
+// Safe default:
+// - `next dev` => local
+// - Vercel / `next build` => production
+const DEFAULT_ENV: AppEnv = process.env.NODE_ENV === "production" ? "production" : "local";
+const APP_ENV = (process.env.NEXT_PUBLIC_APP_ENV || DEFAULT_ENV) as AppEnv;
 
 const configs: Record<AppEnv, { apiUrl: string; siteUrl: string }> = {
   local: {
