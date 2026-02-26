@@ -15,6 +15,12 @@ function getToken(): string | null {
   return localStorage.getItem("gifts_access_token");
 }
 
+function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...extra };
+  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  return headers;
+}
+
 export const fetchFavorites = createAsyncThunk(
   "favorites/fetch",
   async (_, { rejectWithValue }) => {
@@ -23,7 +29,7 @@ export const fetchFavorites = createAsyncThunk(
 
     try {
       const res = await fetch(`${API_URL}/favorites`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error);
@@ -50,7 +56,7 @@ export const toggleFavoriteAsync = createAsyncThunk(
       if (isFav) {
         const res = await fetch(`${API_URL}/favorites/${slug}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: apiHeaders({ Authorization: `Bearer ${token}` }),
         });
         if (!res.ok) {
           const data = await res.json();
@@ -60,10 +66,7 @@ export const toggleFavoriteAsync = createAsyncThunk(
       } else {
         const res = await fetch(`${API_URL}/favorites`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: apiHeaders({ Authorization: `Bearer ${token}` }),
           body: JSON.stringify({ templateSlug: slug }),
         });
         if (!res.ok) {
