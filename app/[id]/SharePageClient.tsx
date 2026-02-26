@@ -1,29 +1,66 @@
 "use client";
 
 import { useState, useEffect, useCallback, ComponentType, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, HeartCrack, X, Sparkles, PenLine, Lock, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import { usePwa } from "@/components/PwaProvider";
-
-import BirthdayContent from "@/app/(templates)/birthday-gf/components/BirthdayContent";
-import BirthdayNav from "@/app/(templates)/birthday-gf/components/BirthdayNav";
-import ValentineContent from "@/app/(templates)/valentine-gf/components/ValentineContent";
-import ValentineNav from "@/app/(templates)/valentine-gf/components/ValentineNav";
-import HoliViewer from "./HoliViewer";
-import EidViewer from "./EidViewer";
-import WeddingViewer from "./WeddingViewer";
-import ReceptionViewer from "./ReceptionViewer";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
-  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
   return headers;
 }
+
+// ── Skeleton shown while a heavy viewer chunk downloads ─────────────────────
+function ViewerSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
+      <div className="text-center">
+        <div className="text-5xl mb-6 animate-bounce">🎁</div>
+        <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
+        <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Lazy-load heavy viewer components (~1000 lines / ~40KB each) ─────────────
+// Only the viewer matching the current share page's template type is downloaded.
+const HoliViewer = dynamic(() => import("./HoliViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const EidViewer = dynamic(() => import("./EidViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const WeddingViewer = dynamic(() => import("./WeddingViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ReceptionViewer = dynamic(() => import("./ReceptionViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+
+// ── Lazy-load template-specific content (birthday / valentine) ───────────────
+const BirthdayContent = dynamic(
+  () => import("@/app/(templates)/birthday-gf/components/BirthdayContent")
+);
+const BirthdayNav = dynamic(
+  () => import("@/app/(templates)/birthday-gf/components/BirthdayNav")
+);
+const ValentineContent = dynamic(
+  () => import("@/app/(templates)/valentine-gf/components/ValentineContent")
+);
+const ValentineNav = dynamic(
+  () => import("@/app/(templates)/valentine-gf/components/ValentineNav")
+);
 
 interface ContentRendererProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

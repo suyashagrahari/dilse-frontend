@@ -50,6 +50,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={dancingScript.variable}>
       <head suppressHydrationWarning>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <OrganizationJsonLd />
         <WebAppJsonLd />
       </head>

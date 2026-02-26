@@ -188,6 +188,29 @@ export function getTemplateMeta(slug: string): Metadata {
   });
 }
 
+// Maps templateType (as returned by the API) → metadata
+const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
+  birthday:    { emoji: "🎂", label: "Birthday" },
+  valentine:   { emoji: "💝", label: "Valentine's" },
+  anniversary: { emoji: "💍", label: "Anniversary" },
+  wedding:     { emoji: "💍", label: "Wedding" },
+  reception:   { emoji: "🎊", label: "Reception" },
+  eid:         { emoji: "🌙", label: "Eid Mubarak" },
+  holi:        { emoji: "🌈", label: "Holi" },
+  missyou:     { emoji: "💭", label: "Miss You" },
+  sorry:       { emoji: "🥺", label: "Sorry" },
+  love:        { emoji: "💕", label: "Love" },
+  gift:        { emoji: "🎁", label: "Gift" },
+};
+
+// Maps templateType → local cover image path (must match /public assets)
+const TEMPLATE_COVER_IMAGES: Record<string, string> = {
+  wedding:   "/assets/marriage/weeding.png",
+  reception: "/assets/Reception/reception.png",
+  eid:       "/assets/Eid/hero_eid.jpeg",
+  holi:      "/assets/Holi/hero_holi.png",
+};
+
 interface SharePageSeo {
   templateType: string;
   recipientName: string;
@@ -196,14 +219,21 @@ interface SharePageSeo {
 }
 
 export function getSharePageMeta({ templateType, recipientName, senderName, shareId }: SharePageSeo): Metadata {
-  const tpl = Object.values(TEMPLATE_SEO).find((t) => t.category.toLowerCase() === templateType);
-  const emoji = tpl?.emoji || "🎁";
-  const category = tpl?.category || "Gift";
+  const info = TEMPLATE_TYPE_INFO[templateType] ?? { emoji: "🎁", label: "Gift" };
 
-  const title = `${emoji} ${category} for ${recipientName} from ${senderName}`;
-  const description = `${senderName} created a special ${category.toLowerCase()} surprise for ${recipientName}. Open to see the magic!`;
+  const title = `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
+  const description = `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
-  const ogImageUrl = `${SITE_URL}/api/og?type=${encodeURIComponent(templateType)}&recipient=${encodeURIComponent(recipientName)}&sender=${encodeURIComponent(senderName)}`;
+  // Use the template's real cover image when available — shows the actual design in link previews.
+  // Fall back to the dynamically generated /api/og gradient card.
+  const coverPath = TEMPLATE_COVER_IMAGES[templateType];
+  const ogImageUrl = coverPath
+    ? `${SITE_URL}${coverPath}`
+    : `${SITE_URL}/api/og?type=${encodeURIComponent(templateType)}&recipient=${encodeURIComponent(recipientName)}&sender=${encodeURIComponent(senderName)}`;
+
+  const ogImageMeta = coverPath
+    ? { url: ogImageUrl, width: 1280, height: 853, alt: title }
+    : { url: ogImageUrl, width: 1200, height: 630, alt: title };
 
   return buildMeta({
     title: `${title} | ${SITE_NAME}`,
@@ -213,7 +243,7 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
       description,
       url: `${SITE_URL}/${shareId}`,
       type: "article",
-      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
+      images: [ogImageMeta],
     },
     twitter: {
       card: "summary_large_image",

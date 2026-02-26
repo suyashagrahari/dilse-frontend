@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { getSharePageMeta, buildMeta, SITE_URL } from "@/lib/seo";
 import { SharePageJsonLd } from "@/components/JsonLd";
 import SharePageClient from "./SharePageClient";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL } from "@/lib/config";
 
 interface SharePageData {
   success: boolean;

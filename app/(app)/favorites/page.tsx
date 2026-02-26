@@ -3,9 +3,8 @@
 import { useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Bookmark } from "lucide-react";
-import FavoriteButton from "@/components/FavoriteButton";
+import TemplateCard from "@/components/TemplateCard";
 import Link from "next/link";
-import Image from "next/image";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { templateList } from "@/data/template-registry";
@@ -125,58 +124,13 @@ export default function FavoritesPage() {
         <AnimatePresence mode="popLayout">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {favorited.map((template, i) => (
-              <motion.div key={template.slug} layout
-                initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}>
-                <Link href={`/${template.slug}`} className="block group">
-                  <motion.div
-                    className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
-                    style={{ border: "1px solid var(--app-border)" }}
-                    whileHover={{ y: -6, scale: 1.02, boxShadow: "var(--app-hover-glow)" }}
-                    whileTap={{ scale: 0.98 }}>
-                    <div className="absolute inset-0" style={{ background: "var(--app-card-img-bg)" }} />
-                    {template.coverImage ? (
-                      <>
-                        <div className="absolute inset-0">
-                          <Image src={template.coverImage} alt="" fill className="object-cover" sizes="(max-width:768px) 50vw, 25vw" />
-                        </div>
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.82))" }} />
-                      </>
-                    ) : (
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--app-accent-a08), rgba(0,0,0,0) 70%)" }} />
-                    )}
-
-                    {/* Accent bottom bar on hover */}
-                    <div className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }} />
-
-                    <div className="relative h-full p-4 md:p-5 flex flex-col justify-between z-10">
-                      <div className="flex items-start justify-between">
-                        <motion.div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
-                          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)" }}
-                          whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }} transition={{ duration: 0.5 }}>
-                          <span className="text-xl md:text-2xl">{template.emoji}</span>
-                        </motion.div>
-                        <FavoriteButton isFavorited={true} onClick={(e) => handleRemove(e, template.slug)} />
-                      </div>
-                      <div>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
-                          style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", backdropFilter: "blur(4px)" }}>
-                          {template.type}
-                        </span>
-                        <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1 text-white">{template.title}</h3>
-                        <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.45)" }}>{template.description}</p>
-                        <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--app-accent)" }}>Open</span>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--app-accent)" }}>
-                            <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </motion.div>
+              <TemplateCard
+                key={template.slug}
+                template={template}
+                isFav={true}
+                index={i}
+                onFavorite={handleRemove}
+              />
             ))}
           </div>
         </AnimatePresence>

@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   // (Vercel handles this automatically; this applies when self-hosting)
   compress: true,
 
+  // ── Turbopack (default in Next.js 16) ──────────────────────────────────
+  // root silences the "multiple lockfiles" workspace warning.
+  // Turbopack handles code splitting automatically; no extra config needed.
+  turbopack: {
+    root: __dirname,
+  },
+
   // ── Image optimisation ─────────────────────────────────────────────────
   images: {
     // Serve modern formats: AVIF is ~50% smaller than WebP, WebP ~30% smaller than JPEG
@@ -86,15 +93,15 @@ const nextConfig: NextConfig = {
         ],
       },
 
-      // ── Favicon / PWA icons ────────────────────────────────────────────────
+      // ── Favicon ────────────────────────────────────────────────────────────
       {
-        source: "/(favicon.ico|icons/(.*))",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=86400",
-          },
-        ],
+        source: "/favicon.ico",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
+      },
+      // ── PWA icons ──────────────────────────────────────────────────────────
+      {
+        source: "/icons/:file*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
       },
 
       // ── Security headers on every route ───────────────────────────────────

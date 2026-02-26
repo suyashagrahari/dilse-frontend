@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 
 interface FavoriteButtonProps {
@@ -9,7 +10,8 @@ interface FavoriteButtonProps {
   className?: string;
 }
 
-export default function FavoriteButton({
+/** Memoized — skips re-render when isFavorited and onClick haven't changed */
+const FavoriteButton = memo(function FavoriteButton({
   isFavorited,
   onClick,
   size = 18,
@@ -18,6 +20,7 @@ export default function FavoriteButton({
   return (
     <button
       onClick={onClick}
+      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
       className={`relative w-9 h-9 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md flex items-center justify-center transition-all hover:scale-110 active:scale-90 border border-white/30 dark:border-white/10 shadow-sm ${className}`}
     >
       {isFavorited && (
@@ -49,4 +52,6 @@ export default function FavoriteButton({
       </motion.svg>
     </button>
   );
-}
+});
+
+export default FavoriteButton;

@@ -5,6 +5,7 @@ import { WebsiteJsonLd } from "@/components/JsonLd";
 import { buildMeta } from "@/lib/seo";
 import { TemplateSearchProvider } from "@/components/TemplateSearchProvider";
 import GlobalEffects from "@/components/GlobalEffects";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = buildMeta({
   title: "Gifts - Make Every Moment Special | Personalized Gift Pages",
@@ -23,7 +24,7 @@ export default function AppLayout({
         <WebsiteJsonLd />
         <GlobalEffects />
         <DesktopNav />
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
         <BottomNav />
       </div>
     </TemplateSearchProvider>
