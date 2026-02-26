@@ -49,9 +49,11 @@ export default memo(function EditSheet({
             className="fixed inset-0 z-50 bg-black/50"
           />
           <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[92vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
+            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 24 }}
+            transition={{ type: "spring", stiffness: 320, damping: 30 }}
+            className="fixed left-1/2 top-1/2 z-50 w-[min(94vw,44rem)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto bg-background rounded-3xl shadow-2xl"
           >
             <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
               <div className="w-10 h-1 rounded-full bg-border" />

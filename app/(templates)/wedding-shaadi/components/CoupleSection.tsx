@@ -11,6 +11,9 @@ interface Props {
   data: WeddingData;
 }
 
+const BRIDE_FALLBACK_PHOTO = "/assets/couple1.jpeg";
+const GROOM_FALLBACK_PHOTO = "/assets/couple2.jpeg";
+
 const SHLOKAS = [
   "सप्तपदी — सात फेरों का बंधन, सात जन्मों का वचन",
   "गृहलक्ष्मी — गृह की शोभा, प्रेम की ज्योति",
@@ -91,7 +94,13 @@ function FamilyModal({
               className="w-20 h-20 rounded-full overflow-hidden relative z-10"
               style={{ border: "2px solid var(--wed-glass-border)" }}
             >
-              <Image src={person.photo} alt={person.name} fill className="object-cover" sizes="80px" />
+              <Image
+                src={person.photo || (person.role === "The Groom" ? GROOM_FALLBACK_PHOTO : BRIDE_FALLBACK_PHOTO)}
+                alt={person.name}
+                fill
+                className="object-cover"
+                sizes="80px"
+              />
             </div>
             <div
               className="absolute inset-[-4px] rounded-full"
@@ -194,7 +203,7 @@ function MobileProfileCard({
             style={{ border: "2px solid var(--wed-glass-border)" }}
           >
             <Image
-              src={person.photo}
+              src={person.photo || (person.role === "The Groom" ? GROOM_FALLBACK_PHOTO : BRIDE_FALLBACK_PHOTO)}
               alt={person.name}
               fill
               className="object-cover"
@@ -282,7 +291,13 @@ function DesktopProfileCard({
           className="w-56 h-56 rounded-full overflow-hidden relative z-10"
           style={{ border: "2px solid var(--wed-glass-border)" }}
         >
-          <Image src={person.photo} alt={person.name} fill className="object-cover" sizes="224px" />
+          <Image
+            src={person.photo || (person.role === "The Groom" ? GROOM_FALLBACK_PHOTO : BRIDE_FALLBACK_PHOTO)}
+            alt={person.name}
+            fill
+            className="object-cover"
+            sizes="224px"
+          />
         </div>
         <div
           className="absolute inset-[-6px] rounded-full"
