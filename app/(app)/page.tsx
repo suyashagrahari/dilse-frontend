@@ -9,6 +9,11 @@ import { useTheme } from "next-themes";
 import { templateList } from "@/data/template-registry";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const HERO_CARDS = [
@@ -189,6 +194,13 @@ function HomePage() {
   const [beamWidth, setBeamWidth] = useState("0");
   const [heroPaused, setHeroPaused] = useState(false);
   const [platformTotals, setPlatformTotals] = useState<PlatformTotals>(DEFAULT_PLATFORM_TOTALS);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [isBraveBrowser, setIsBraveBrowser] = useState(false);
+  const [isChromeBrowser, setIsChromeBrowser] = useState(false);
+  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const metricsRef = useRef<HTMLDivElement>(null);
@@ -214,6 +226,27 @@ function HomePage() {
     router.push("/manifesto");
   }, [router]);
 
+  const handleDownloadApp = React.useCallback(async () => {
+    if (deferredInstallPrompt) {
+      try {
+        setIsInstalling(true);
+        await deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          setDeferredInstallPrompt(null);
+        }
+      } catch {
+        // Fall back to manual steps when prompt invocation fails.
+        setShowInstallHelp(true);
+      } finally {
+        setIsInstalling(false);
+      }
+      return;
+    }
+
+    setShowInstallHelp(true);
+  }, [deferredInstallPrompt]);
+
   const formatStatValue = React.useCallback((value: number) => value.toLocaleString("en-IN"), []);
 
   const heroStats = [
@@ -238,6 +271,49 @@ function HomePage() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  // ── Browser + install prompt detection
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const chromeLike = /Chrome|CriOS/i.test(ua) && !/Edg|OPR|SamsungBrowser/i.test(ua);
+    const safariLike = /Safari/i.test(ua) && !/Chrome|CriOS|Edg|OPR/i.test(ua);
+    const iosDevice = /iPhone|iPad|iPod/i.test(ua);
+
+    setIsChromeBrowser(chromeLike);
+    setIsSafariBrowser(safariLike);
+    setIsIOS(iosDevice);
+
+    const navWithBrave = navigator as Navigator & {
+      brave?: { isBrave?: () => Promise<boolean> };
+    };
+
+    if (navWithBrave.brave?.isBrave) {
+      navWithBrave.brave
+        .isBrave()
+        .then((value) => setIsBraveBrowser(Boolean(value)))
+        .catch(() => setIsBraveBrowser(false));
+    }
+  }, []);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    const onAppInstalled = () => {
+      setDeferredInstallPrompt(null);
+      setShowInstallHelp(false);
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, []);
 
   // ── Load fonts
   useEffect(() => {
@@ -783,9 +859,22 @@ function HomePage() {
           <Link href="/profile" className="w-10 h-10 rounded-full bg-surface border border-borderLight flex items-center justify-center hover:scale-110 transition-all text-dark" aria-label="Profile">
             <i className="ph-bold ph-user text-lg" />
           </Link>
-          <Link href="/templates" className="bg-dark text-white px-8 py-3 rounded-full text-sm font-bold hover:scale-105 transition-transform shadow-lg">
-            Start Building
-          </Link>
+          <button
+            type="button"
+            onClick={handleDownloadApp}
+            className="bg-dark text-white px-8 py-3 rounded-full text-sm font-bold hover:scale-105 transition-transform shadow-lg"
+            style={
+              theme === "dark"
+                ? {
+                    background: "#39FF14",
+                    color: "#04130a",
+                    boxShadow: "0 0 0 1px rgba(57,255,20,0.35), 0 8px 30px rgba(57,255,20,0.35)",
+                  }
+                : undefined
+            }
+          >
+            {isInstalling ? "Installing..." : "Download App"}
+          </button>
         </div>
       </header>
 
@@ -802,9 +891,14 @@ function HomePage() {
           <button onClick={toggleTheme} className="theme-toggle w-9 h-9 rounded-full bg-surface flex items-center justify-center tap-effect border border-borderLight shadow-sm text-dark" aria-label="Toggle theme">
             <i className={`${theme === "dark" ? "ph-bold ph-sun" : "ph-bold ph-moon"} text-lg`} />
           </button>
-          <Link href="/profile" className="w-9 h-9 rounded-full bg-surface flex items-center justify-center tap-effect border border-borderLight shadow-sm text-dark" aria-label="Profile">
-            <i className="ph-bold ph-user text-lg" />
-          </Link>
+          <button
+            type="button"
+            onClick={handleDownloadApp}
+            className="theme-toggle w-9 h-9 rounded-full bg-surface flex items-center justify-center tap-effect border border-borderLight text-dark"
+            aria-label="Download app"
+          >
+            <i className="ph-bold ph-download-simple text-lg" />
+          </button>
         </div>
       </header>
 
@@ -1465,11 +1559,37 @@ function HomePage() {
             </div>
 
             <div className="mt-12 md:mt-16 reveal">
-              <button className="hidden md:flex bg-dark text-white px-14 py-7 rounded-full font-bold uppercase tracking-widest text-base hover:scale-105 hover:bg-accent1 transition-all duration-300 shadow-[0_20px_60px_rgba(0,0,0,0.25)] items-center gap-3">
-                Open The Studio <i className="ph-bold ph-arrow-right text-xl" />
+              <button
+                type="button"
+                onClick={handleDownloadApp}
+                className="hidden md:flex bg-dark text-white px-14 py-7 rounded-full font-bold uppercase tracking-widest text-base hover:scale-105 hover:bg-accent1 transition-all duration-300 shadow-[0_20px_60px_rgba(0,0,0,0.25)] items-center gap-3"
+                style={
+                  theme === "dark"
+                    ? {
+                        background: "#39FF14",
+                        color: "#04130a",
+                        boxShadow: "0 0 0 1px rgba(57,255,20,0.35), 0 14px 45px rgba(57,255,20,0.32)",
+                      }
+                    : undefined
+                }
+              >
+                {isInstalling ? "Installing..." : "Download App"} <i className="ph-bold ph-download-simple text-xl" />
               </button>
-              <button className="md:hidden tap-effect bg-dark text-white px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-2xl w-full max-w-sm">
-                Download App
+              <button
+                type="button"
+                onClick={handleDownloadApp}
+                className="md:hidden tap-effect bg-dark text-white px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-2xl w-full max-w-sm"
+                style={
+                  theme === "dark"
+                    ? {
+                        background: "#39FF14",
+                        color: "#04130a",
+                        boxShadow: "0 0 0 1px rgba(57,255,20,0.35), 0 14px 45px rgba(57,255,20,0.32)",
+                      }
+                    : undefined
+                }
+              >
+                {isInstalling ? "Installing..." : "Download App"}
               </button>
             </div>
           </div>
@@ -1501,6 +1621,111 @@ function HomePage() {
           </Link>
         </nav>
       </div>
+
+      {showInstallHelp && (
+        <div className="fixed inset-0 z-[220] flex items-end md:items-center justify-center">
+          <button
+            type="button"
+            className="absolute inset-0"
+            style={{
+              background: theme === "dark" ? "rgba(0,0,0,0.8)" : "rgba(17,17,17,0.68)",
+            }}
+            onClick={() => setShowInstallHelp(false)}
+            aria-label="Close install help"
+          />
+          <div
+            className="relative w-full md:max-w-md rounded-t-3xl md:rounded-3xl p-6 md:p-7"
+            style={{
+              background: theme === "dark" ? "#0b0b0b" : "#ffffff",
+              border: "1px solid var(--app-border)",
+            }}
+          >
+            <div className="w-12 h-1 rounded-full mx-auto mb-5 md:hidden" style={{ background: "var(--app-border)" }} />
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-2" style={{ color: "var(--app-accent)" }}>
+                  Install App
+                </p>
+                <h3 className="text-xl font-black tracking-tight" style={{ color: "var(--app-text)", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Add Gifts To Your Home Screen
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInstallHelp(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--app-bg)", color: "var(--app-text-muted)" }}
+                aria-label="Close"
+              >
+                <i className="ph-bold ph-x text-sm" />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-5">
+              {isIOS || isSafariBrowser ? (
+                <>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 1</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Tap the <strong>Share</strong> icon in your browser.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 2</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Select <strong>Add to Home Screen</strong>.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 3</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Confirm by tapping <strong>Add</strong>.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 1</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Open browser menu (<strong>⋮</strong>) on the top-right.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 2</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl p-3.5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border-faint)" }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--app-accent)" }}>Step 3</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>
+                      Confirm installation to finish setup.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="rounded-2xl p-3.5 mb-5" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-accent-a20)" }}>
+              <p className="text-xs font-semibold" style={{ color: "var(--app-text)" }}>
+                {isBraveBrowser || isChromeBrowser
+                  ? "Tip: On Brave/Chrome, this installs as a fast full-screen app."
+                  : "Tip: Use Chrome or Brave for one-tap install prompt support."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowInstallHelp(false)}
+              className="w-full py-3.5 rounded-2xl font-bold text-sm"
+              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
