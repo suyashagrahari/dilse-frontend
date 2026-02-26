@@ -3,7 +3,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { templateList } from "@/data/template-registry";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -110,6 +114,10 @@ const GALLERY_CARDS = [
   },
 ];
 
+// Slugs currently treated as coming soon in templates list.
+const FORCE_COMING_SOON_ROUTES = new Set(["/anniversary-gf", "/love-gf"]);
+const AVAILABLE_TEMPLATE_ROUTES = new Set(templateList.map((t) => `/${t.slug}`));
+
 const TESTIMONIALS = [
   {
     initials: "AR", name: "Arjun", role: "Anniversary Creator",
@@ -149,9 +157,22 @@ const GALLERY_MORPH = ["Moment.", "Story.", "Memory.", "Forever.", "Journey.", "
 
 const TESTI_CHIPS = ["Anniversary", "Love Letter", "Wedding Invite", "Apology Story", "Birthday Bash", "Festival Wish"];
 
+type PlatformTotals = {
+  totalSharedLinks: number;
+  totalVisitors: number;
+  totalInstalls: number;
+};
+
+const DEFAULT_PLATFORM_TOTALS = {
+  totalSharedLinks: 10000,
+  totalVisitors: 15000,
+  totalInstalls: 3000,
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function HomePage() {
+function HomePage() {
+  const router = useRouter();
   const { setTheme: setNextTheme } = useTheme();
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [showPreloader, setShowPreloader] = useState(true);
@@ -167,6 +188,7 @@ export default function HomePage() {
   const [stepsActive, setStepsActive] = useState(-1);
   const [beamWidth, setBeamWidth] = useState("0");
   const [heroPaused, setHeroPaused] = useState(false);
+  const [platformTotals, setPlatformTotals] = useState<PlatformTotals>(DEFAULT_PLATFORM_TOTALS);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const metricsRef = useRef<HTMLDivElement>(null);
@@ -176,6 +198,30 @@ export default function HomePage() {
   const canvasRunning = useRef(false);
   const canvasRAF = useRef(0);
   const stepsTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const openTemplate = React.useCallback(
+    (href: string) => {
+      if (!AVAILABLE_TEMPLATE_ROUTES.has(href) || FORCE_COMING_SOON_ROUTES.has(href)) {
+        router.push("/templates");
+        return;
+      }
+      router.push(href);
+    },
+    [router]
+  );
+
+  const openManifesto = React.useCallback(() => {
+    router.push("/manifesto");
+  }, [router]);
+
+  const formatStatValue = React.useCallback((value: number) => value.toLocaleString("en-IN"), []);
+
+  const heroStats = [
+    { value: formatStatValue(platformTotals.totalSharedLinks), label: "Shared Links" },
+    { value: formatStatValue(platformTotals.totalVisitors), label: "Website Visitors" },
+    { value: formatStatValue(platformTotals.totalInstalls), label: "App Downloads" },
+    { value: "100%", label: "Safe & Secure" },
+  ];
 
   // ── Theme init
   useEffect(() => {
@@ -201,6 +247,37 @@ export default function HomePage() {
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
+  }, []);
+
+  // ── Platform analytics stats
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchPlatformStats = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
+
+        const response = await fetch(`${API_URL}/analytics/overview`, { headers, cache: "no-store" });
+        const payload = await response.json();
+
+        if (!response.ok || !payload?.success || !payload?.data?.totals) return;
+        if (cancelled) return;
+
+        setPlatformTotals({
+          totalSharedLinks: Number(payload.data.totals.totalSharedLinks) || DEFAULT_PLATFORM_TOTALS.totalSharedLinks,
+          totalVisitors: Number(payload.data.totals.totalVisitors) || DEFAULT_PLATFORM_TOTALS.totalVisitors,
+          totalInstalls: Number(payload.data.totals.totalInstalls) || DEFAULT_PLATFORM_TOTALS.totalInstalls,
+        });
+      } catch {
+        // Keep default seeded values when API is unavailable.
+      }
+    };
+
+    fetchPlatformStats();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Preloader
@@ -769,16 +846,20 @@ export default function HomePage() {
                 <Link href="/templates" className="bg-dark text-white px-4 md:px-10 py-4 md:py-5 rounded-full font-bold text-[11px] md:text-sm tracking-wide hover:bg-accent1 transition-colors flex-1 md:flex-none flex items-center justify-center gap-2 shadow-xl whitespace-nowrap">
                   Explore Templates <i className="ph-bold ph-arrow-right" />
                 </Link>
-                <button className="bg-surface border border-borderLight text-dark px-4 md:px-10 py-4 md:py-5 rounded-full font-bold text-[11px] md:text-sm tracking-wide flex-1 md:flex-none flex items-center justify-center gap-2 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={openManifesto}
+                  className="bg-surface border border-borderLight text-dark px-4 md:px-10 py-4 md:py-5 rounded-full font-bold text-[11px] md:text-sm tracking-wide flex-1 md:flex-none flex items-center justify-center gap-2 whitespace-nowrap hover:border-accent1 hover:text-accent1 transition-colors"
+                >
                   Read The Manifesto
                 </button>
               </div>
 
-              <div className="mt-16 hidden md:grid grid-cols-3 gap-6 border-t border-borderLight pt-8 reveal">
-                {[["5M+", "Experiences Created"], ["4.9", "App Store Rating"], ["100%", "Encrypted Privacy"]].map(([v, t]) => (
-                  <div key={t}>
-                    <h4 className="text-3xl md:text-4xl font-display font-black text-dark">{v}</h4>
-                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-dark/50 font-bold mt-1">{t}</p>
+              <div className="mt-16 hidden md:grid grid-cols-4 gap-6 border-t border-borderLight pt-8 reveal">
+                {heroStats.map((stat) => (
+                  <div key={stat.label}>
+                    <h4 className="text-3xl md:text-4xl font-display font-black text-dark">{stat.value}</h4>
+                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-dark/50 font-bold mt-1">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -792,7 +873,20 @@ export default function HomePage() {
             >
               <div className="hero-card-stack border border-borderLight shadow-2xl">
                 {HERO_CARDS.map((card, idx) => (
-                  <div key={card.id} className={`hero-showcase-card${idx === heroIndex ? " is-active" : ""}`}>
+                  <div
+                    key={card.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openTemplate(card.href)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openTemplate(card.href);
+                      }
+                    }}
+                    className={`hero-showcase-card${idx === heroIndex ? " is-active" : ""}`}
+                    aria-label={`Open ${card.title} template`}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={card.img} className="w-full h-full object-cover" alt={card.title} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/5" />
@@ -832,18 +926,31 @@ export default function HomePage() {
         {/* ════ MOBILE HERO PAGE 2 ════ */}
         <section className="md:hidden w-full bg-bg px-5 pb-8 pt-6 reveal">
           <div className="max-w-xl mx-auto">
-            <div className="grid grid-cols-3 gap-4 border-t border-borderLight pt-6">
-              {[["5M+", "Experiences Created"], ["4.9", "App Store Rating"], ["100%", "Encrypted Privacy"]].map(([v, t]) => (
-                <div key={t}>
-                  <h4 className="text-3xl font-display font-black text-dark">{v}</h4>
-                  <p className="text-[10px] uppercase tracking-widest text-dark/50 font-bold mt-1">{t}</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-t border-borderLight pt-6">
+              {heroStats.map((stat) => (
+                <div key={stat.label}>
+                  <h4 className="text-3xl font-display font-black text-dark">{stat.value}</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-dark/50 font-bold mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-6 mobile-feature-stack bg-dark border border-borderLight shadow-2xl">
               {HERO_CARDS.map((card, idx) => (
-                <article key={card.id} className={`mobile-feature-card${idx === mobileHeroIndex ? " is-active" : ""}`}>
+                <div
+                  key={card.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openTemplate(card.href)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openTemplate(card.href);
+                    }
+                  }}
+                  className={`mobile-feature-card${idx === mobileHeroIndex ? " is-active" : ""}`}
+                  aria-label={`Open ${card.title} template`}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={card.img} className="absolute inset-0 w-full h-full object-cover opacity-90" alt={card.title} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -861,7 +968,7 @@ export default function HomePage() {
                       Open <i className="ph-bold ph-arrow-right" />
                     </span>
                   </div>
-                </article>
+                </div>
               ))}
             </div>
           </div>
@@ -1009,7 +1116,13 @@ export default function HomePage() {
             {/* Infinite gallery marquee */}
             <div id="gallery-track" className="gallery-track flex gap-8 w-max">
               {galleryDouble.map((card, idx) => (
-                <Link key={`${card.alt}-${idx}`} href={card.href} className="gallery-card w-[340px] h-[560px] shrink-0">
+                <button
+                  key={`${card.alt}-${idx}`}
+                  type="button"
+                  onClick={() => openTemplate(card.href)}
+                  className="gallery-card w-[340px] h-[560px] shrink-0 text-left"
+                  aria-label={`Open ${card.title} template`}
+                >
                   <div className="gallery-card-inner h-full border border-borderLight shadow-lg">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={card.img} className="absolute inset-0 w-full h-full object-cover" loading="lazy" alt={card.alt} />
@@ -1029,7 +1142,7 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -1046,7 +1159,13 @@ export default function HomePage() {
           </div>
           <div className="flex overflow-x-auto gap-4 app-carousel pb-8 px-5">
             {GALLERY_CARDS.map((card) => (
-              <Link key={card.alt} href={card.href} className="carousel-item flex-shrink-0 w-[85vw] h-[65vh] rounded-[2rem] bg-dark relative overflow-hidden group tap-effect shadow-xl border border-borderLight">
+              <button
+                key={card.alt}
+                type="button"
+                onClick={() => openTemplate(card.href)}
+                className="carousel-item flex-shrink-0 w-[85vw] h-[65vh] rounded-[2rem] bg-dark relative overflow-hidden group tap-effect shadow-xl border border-borderLight text-left"
+                aria-label={`Open ${card.title} template`}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={card.img} className="absolute inset-0 w-full h-full object-cover opacity-90" alt={card.alt} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
@@ -1062,7 +1181,7 @@ export default function HomePage() {
                   <p className="text-sm text-white/70 font-medium mb-4">{card.desc}</p>
                   <span className="text-xs font-bold uppercase tracking-widest text-white/90">OPEN →</span>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         </section>
@@ -1361,21 +1480,21 @@ export default function HomePage() {
       {/* ── Mobile Bottom Dock ──────────────────────── */}
       <div className="md:hidden fixed bottom-0 left-0 w-full z-50 pb-6 pt-2 px-4 pointer-events-none">
         <nav className="mobile-dock w-full rounded-[2rem] px-3 py-3 flex justify-between items-center shadow-[0_20px_40px_rgba(0,0,0,0.3)] pointer-events-auto">
-          <a href="#" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white">
-            <i className="ph-fill ph-house text-2xl" />
-            <span className="text-[8px] font-bold uppercase mt-1">Home</span>
-          </a>
+          <Link href="/manifesto" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white/80 hover:text-white transition-colors">
+            <i className="ph-bold ph-scroll text-2xl" />
+            <span className="text-[8px] font-bold uppercase mt-1">Manifesto</span>
+          </Link>
           <Link href="/templates" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white/50 hover:text-white transition-colors">
             <i className="ph-bold ph-compass text-2xl" />
             <span className="text-[8px] font-bold uppercase mt-1">Explore</span>
           </Link>
-          <button className="relative -top-6 w-16 h-16 rounded-full bg-accent1 text-white flex items-center justify-center tap-effect shadow-[0_10px_30px_rgba(255,51,102,0.4)] border-4 border-[#1a1a1a]">
-            <i className="ph-bold ph-plus text-3xl" />
-          </button>
-          <a href="#" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white/70 hover:text-white transition-colors">
+          <Link href="/" className="relative -top-6 w-16 h-16 rounded-full bg-accent1 text-white flex items-center justify-center tap-effect shadow-[0_10px_30px_rgba(255,51,102,0.4)] border-4 border-[#1a1a1a]">
+            <i className="ph-fill ph-house text-3xl" />
+          </Link>
+          <Link href="/favorites" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white/70 hover:text-white transition-colors">
             <i className="ph-bold ph-bookmark-simple text-2xl" />
             <span className="text-[8px] font-bold uppercase mt-1">Saved</span>
-          </a>
+          </Link>
           <Link href="/profile" className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl tap-effect text-white/50 hover:text-white transition-colors">
             <i className="ph-bold ph-user text-2xl" />
             <span className="text-[8px] font-bold uppercase mt-1">Profile</span>
@@ -1385,3 +1504,5 @@ export default function HomePage() {
     </>
   );
 }
+
+export default dynamic(() => Promise.resolve(HomePage), { ssr: false });

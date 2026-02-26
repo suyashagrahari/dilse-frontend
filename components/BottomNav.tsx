@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Bookmark, User, Plus } from "lucide-react";
+import { Home, Compass, Bookmark, User, ScrollText } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -18,10 +18,10 @@ export default function BottomNav() {
         style={{ background: "var(--app-nav-bg)", border: "1px solid var(--app-nav-border)" }}
       >
         <div className="grid grid-cols-5 items-end">
-          <Link href="/" className="flex flex-col items-center gap-1">
-            <Home size={22} style={{ color: pathname === "/" ? activeColor : mutedColor }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: pathname === "/" ? activeColor : mutedColor }}>
-              Home
+          <Link href="/manifesto" className="flex flex-col items-center gap-1">
+            <ScrollText size={22} style={{ color: pathname.startsWith("/manifesto") ? activeColor : mutedColor }} />
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: pathname.startsWith("/manifesto") ? activeColor : mutedColor }}>
+              Manifesto
             </span>
           </Link>
 
@@ -33,8 +33,8 @@ export default function BottomNav() {
           </Link>
 
           <Link
-            href="/templates"
-            aria-label="Create"
+            href="/"
+            aria-label="Home"
             className="-mt-8 mx-auto h-16 w-16 rounded-full grid place-items-center"
             style={{
               background: "var(--app-accent)",
@@ -43,7 +43,7 @@ export default function BottomNav() {
               boxShadow: "0 10px 30px var(--app-accent-a35)",
             }}
           >
-            <Plus size={30} />
+            <Home size={30} />
           </Link>
 
           <Link href="/favorites" className="flex flex-col items-center gap-1">

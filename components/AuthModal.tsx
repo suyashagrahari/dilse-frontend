@@ -153,16 +153,17 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-foreground/25 backdrop-blur-md z-[70]"
+        className="fixed inset-0 bg-foreground/25 backdrop-blur-md z-[120]"
         onClick={onClose}
       />
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 320 }}
-        className="fixed bottom-0 left-0 right-0 z-[70] bg-card rounded-t-[28px] shadow-elevated max-h-[92vh] overflow-hidden safe-bottom flex flex-col"
-      >
+      <div className="fixed inset-0 z-[130] flex items-end md:items-center md:justify-center pointer-events-none">
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: "100%", opacity: 0, scale: 0.98 }}
+          transition={{ type: "spring", damping: 30, stiffness: 320 }}
+          className="w-full bg-card rounded-t-[28px] shadow-elevated max-h-[92vh] overflow-hidden safe-bottom flex flex-col pointer-events-auto md:max-w-[460px] md:rounded-3xl md:max-h-[88vh]"
+        >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-9 h-1 rounded-full bg-muted-foreground/20" />
@@ -199,7 +200,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 pb-8">
+        <div className="flex-1 overflow-y-auto px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-8 md:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -361,7 +362,8 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </motion.div>
           </AnimatePresence>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </>
   );
 }
