@@ -27,12 +27,12 @@ const initialState: AuthState = {
   error: null,
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 // Bypass ngrok browser interstitial page when using a tunnel
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { "Content-Type": "application/json", ...extra };
-  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
   return headers;
 }
 

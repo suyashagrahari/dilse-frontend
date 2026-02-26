@@ -8,7 +8,7 @@ interface FavoritesState {
   fetched: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL, IS_NGROK } from "@/lib/config";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -17,7 +17,7 @@ function getToken(): string | null {
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { "Content-Type": "application/json", ...extra };
-  if (API_URL.includes("ngrok")) headers["ngrok-skip-browser-warning"] = "true";
+  if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
   return headers;
 }
 

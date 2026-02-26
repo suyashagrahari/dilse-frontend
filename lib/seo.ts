@@ -4,7 +4,8 @@ export const SITE_NAME = "Gifts";
 export const SITE_TAGLINE = "Make Every Moment Special";
 export const SITE_DESCRIPTION =
   "Create stunning personalized pages for birthdays, anniversaries, Valentine's Day, and more. Share your feelings with a beautiful link.";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+import { SITE_URL as _SITE_URL } from "@/lib/config";
+export const SITE_URL = _SITE_URL;
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/icons/icon-512.png`;
 
 export function buildMeta(overrides: Partial<Metadata> & { title?: string; description?: string } = {}): Metadata {
