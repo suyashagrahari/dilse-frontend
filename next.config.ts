@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ── Standalone output for Docker deployment ─────────────────────────────
+  // Produces a self-contained .next/standalone directory with a minimal
+  // Node.js server — required for the production Docker image.
+  output: "standalone",
+
   // ── Remove X-Powered-By header ─────────────────────────────────────────
   poweredByHeader: false,
 
