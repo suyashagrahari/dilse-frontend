@@ -81,7 +81,12 @@ function FamilyModal({
         />
 
         <button
-          onClick={onClose}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full z-10 transition-all active:scale-90"
           style={GLASS_CARD}
         >
