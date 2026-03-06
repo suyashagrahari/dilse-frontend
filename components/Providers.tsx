@@ -16,6 +16,19 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 function StoreHydrator() {
   useEffect(() => {
+    // Consume auth tokens dropped in hash by the Google bridge redirect flow
+    if (window.location.hash.includes("auth_access=")) {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get("auth_access");
+      const refreshToken = hashParams.get("auth_refresh");
+      if (accessToken && refreshToken) {
+        localStorage.setItem("gifts_access_token", accessToken);
+        localStorage.setItem("gifts_refresh_token", refreshToken);
+        // Remove auth tokens from URL bar
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+
     store.dispatch(hydrateAuth());
     const token = localStorage.getItem("gifts_access_token");
     if (token) {
