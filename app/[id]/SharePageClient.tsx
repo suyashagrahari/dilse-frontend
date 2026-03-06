@@ -128,10 +128,10 @@ const TEMPLATE_REGISTRY: Record<string, TemplateEntry> = {
 
 const SESSION_KEY = (id: string) => `unlocked_${id}`;
 
-export default function SharePage() {
+export default function SharePage({ shareIdOverride }: { shareIdOverride?: string } = {}) {
   const params = useParams();
   const router = useRouter();
-  const shareId = params.id as string;
+  const shareId = shareIdOverride || (params.shareId as string) || (params.id as string);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const { isStandalone, platform, triggerInstall } = usePwa();
 

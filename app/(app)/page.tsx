@@ -918,7 +918,7 @@ function HomePage() {
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-accent1" />
                   </span>
                   <span className="text-xs md:text-sm uppercase tracking-[0.2em] font-display font-bold text-dark">
-                    Platform Update &apos;26
+                    Platform Update &apos;25
                   </span>
                 </div>
               </div>
