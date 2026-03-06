@@ -14,18 +14,24 @@ type AppEnv = "local" | "ngrok" | "production";
 const DEFAULT_ENV: AppEnv = process.env.NODE_ENV === "production" ? "production" : "local";
 const APP_ENV = (process.env.NEXT_PUBLIC_APP_ENV || DEFAULT_ENV) as AppEnv;
 
-const configs: Record<AppEnv, { apiUrl: string; siteUrl: string }> = {
+const configs: Record<AppEnv, { apiUrl: string; siteUrl: string; rootDomain: string }> = {
   local: {
     apiUrl: process.env.NEXT_PUBLIC_LOCAL_API_URL || "http://localhost:5000/api",
     siteUrl: process.env.NEXT_PUBLIC_LOCAL_SITE_URL || "http://localhost:3000",
+    // No subdomain routing on localhost
+    rootDomain: "",
   },
   ngrok: {
     apiUrl: process.env.NEXT_PUBLIC_NGROK_API_URL || "",
     siteUrl: process.env.NEXT_PUBLIC_NGROK_SITE_URL || "",
+    // Dev subdomain domain, e.g. klyro.digital
+    rootDomain: process.env.NEXT_PUBLIC_NGROK_ROOT_DOMAIN || "",
   },
   production: {
     apiUrl: process.env.NEXT_PUBLIC_PROD_API_URL || "",
-    siteUrl: process.env.NEXT_PUBLIC_PROD_SITE_URL || "https://dilse-tau.vercel.app",
+    siteUrl: process.env.NEXT_PUBLIC_PROD_SITE_URL || "https://subhsandesh.in",
+    // Production domain, e.g. subhsandesh.in
+    rootDomain: process.env.NEXT_PUBLIC_PROD_ROOT_DOMAIN || "",
   },
 };
 
@@ -40,8 +46,16 @@ export const SITE_URL = selected.siteUrl;
 /** The active environment name */
 export const ENV = APP_ENV;
 
-/** Whether we're using an ngrok tunnel (adds bypass header in fetch) */
-export const IS_NGROK = APP_ENV === "ngrok" || API_URL.includes("ngrok");
+/** Whether we're using a raw ngrok tunnel (adds bypass header in fetch) */
+export const IS_NGROK = API_URL.includes("ngrok-free.app") || API_URL.includes("ngrok.io");
 
 /** Whether running in production */
 export const IS_PROD = APP_ENV === "production";
+
+/**
+ * Root domain for wildcard subdomain routing.
+ * Dev:        klyro.digital  → {username}.klyro.digital/{shareId}
+ * Production: subhsandesh.in → {username}.subhsandesh.in/{shareId}
+ * Local:      ""             → path-based /{username}/{shareId}
+ */
+export const ROOT_DOMAIN = selected.rootDomain;

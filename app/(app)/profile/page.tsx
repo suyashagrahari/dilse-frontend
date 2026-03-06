@@ -7,18 +7,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
   Eye, EyeOff, Loader2, ChevronRight, Shield, Sun, Moon,
-  ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Inbox, Globe,
+  ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
+  AtSign, Link2,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { updateProfile, changePassword, logoutUser, updateTheme } from "@/store/authSlice";
+import { updateProfile, changePassword, logoutUser, updateTheme, setSubdomain as setSubdomainAction } from "@/store/authSlice";
+import { API_URL, IS_NGROK, SITE_URL, ROOT_DOMAIN } from "@/lib/config";
 import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
-import { API_URL, IS_NGROK } from "@/lib/config";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
   if (IS_NGROK) headers["ngrok-skip-browser-warning"] = "true";
   return headers;
+}
+
+const SUBDOMAIN_RESERVED = new Set(["www","admin","api","mail","support","help","docs","blog","app","auth","login","signup","register","dashboard","static","assets","cdn","dev","test","staging","prod","u","user","users","share","gift","gifts","dilse"]);
+
+function validateSubdomainLocal(val: string): string | null {
+  if (!val) return null;
+  if (val.length < 3) return "At least 3 characters required";
+  if (val.length > 30) return "Max 30 characters";
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(val) && !/^[a-z0-9]{3}$/.test(val)) return "Only lowercase letters, numbers, hyphens (no leading/trailing hyphens)";
+  if (val.includes("--")) return "No consecutive hyphens";
+  if (SUBDOMAIN_RESERVED.has(val)) return "This name is reserved";
+  return null;
 }
 
 interface DashboardStats { favoritesCount: number; generatedCount: number; memberSince: string; }
@@ -79,7 +92,46 @@ export default function ProfilePage() {
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
   const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
 
+  // Subdomain state
+  const [editingSubdomain, setEditingSubdomain] = useState(false);
+  const [subdomainInput, setSubdomainInput] = useState("");
+  const [subdomainLoading, setSubdomainLoading] = useState(false);
+  const [subdomainStatus, setSubdomainStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const [subdomainStatusMsg, setSubdomainStatusMsg] = useState("");
+  const [subdomainCopied, setSubdomainCopied] = useState(false);
+
   useEffect(() => setMounted(true), []);
+
+  // Debounced availability check
+  useEffect(() => {
+    if (!editingSubdomain || !subdomainInput) { setSubdomainStatus("idle"); return; }
+    const lower = subdomainInput.toLowerCase();
+    const localErr = validateSubdomainLocal(lower);
+    if (localErr) { setSubdomainStatus("invalid"); setSubdomainStatusMsg(localErr); return; }
+    if (lower === user?.subdomain) { setSubdomainStatus("available"); setSubdomainStatusMsg("This is your current subdomain"); return; }
+    setSubdomainStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/subdomain/check?name=${encodeURIComponent(lower)}`, { headers: authHeaders() });
+        const data = await res.json();
+        if (data.available) { setSubdomainStatus("available"); setSubdomainStatusMsg("Available!"); }
+        else { setSubdomainStatus("taken"); setSubdomainStatusMsg(data.reason || "Not available"); }
+      } catch { setSubdomainStatus("idle"); }
+    }, 500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subdomainInput, editingSubdomain]);
+
+  const handleSaveSubdomain = async () => {
+    if (!subdomainInput.trim() || subdomainStatus !== "available") return;
+    setSubdomainLoading(true);
+    try {
+      await dispatch(setSubdomainAction(subdomainInput.toLowerCase().trim())).unwrap();
+      setEditingSubdomain(false);
+      setSubdomainInput("");
+      setSubdomainStatus("idle");
+    } catch { /* error shown in UI */ } finally { setSubdomainLoading(false); }
+  };
 
   const handleThemeChange = async (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
@@ -152,7 +204,15 @@ export default function ProfilePage() {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const formatShortDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-  const getShareLink = (shareId: string) => typeof window !== "undefined" ? `${window.location.origin}/${shareId}` : `/${shareId}`;
+  const getShareLink = (shareId: string) => {
+    if (user?.subdomain) {
+      // True subdomain URL: abc.subhsandesh.in/shareId
+      if (ROOT_DOMAIN) return `https://${user.subdomain}.${ROOT_DOMAIN}/${shareId}`;
+      // Local dev fallback: localhost:3000/abc/shareId
+      return `${SITE_URL}/${user.subdomain}/${shareId}`;
+    }
+    return typeof window !== "undefined" ? `${window.location.origin}/${shareId}` : `/${shareId}`;
+  };
 
   const copyToClipboard = (text: string, id: string, type: "link" | "pw") => {
     navigator.clipboard.writeText(text);
@@ -243,6 +303,12 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {user?.subdomain && (
+        <div className="flex items-center gap-1.5 mb-1.5 px-3 py-1 rounded-full" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-accent-a20)" }}>
+          <AtSign size={11} style={{ color: "var(--app-accent)" }} />
+          <span className="text-xs font-bold" style={{ color: "var(--app-accent)" }}>{user.subdomain}</span>
+        </div>
+      )}
       <p className="text-sm flex items-center gap-1.5 mb-2" style={{ color: "var(--app-text-muted)" }}>
         <Mail size={12} /> {user?.email}
       </p>
@@ -322,6 +388,157 @@ export default function ProfilePage() {
       </div>
     </motion.div>
   ) : null;
+
+  const subdomainStatusColor = subdomainStatus === "available" ? "#22c55e" : subdomainStatus === "taken" || subdomainStatus === "invalid" ? "#f87171" : "var(--app-text-faint)";
+
+  const SubdomainBlock = (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+      {sectionLabel("My Personal Link")}
+      <div className="rounded-2xl overflow-hidden" style={cardStyle}>
+        {!editingSubdomain ? (
+          <div>
+            {user?.subdomain ? (
+              <div className="p-4 space-y-3">
+                {/* Current subdomain display */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
+                    <AtSign size={15} style={{ color: "var(--app-accent)" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--app-text-faint)" }}>Your Handle</p>
+                    <p className="text-base font-black" style={{ color: "var(--app-accent)", fontFamily: "'Space Grotesk', sans-serif" }}>@{user.subdomain}</p>
+                  </div>
+                  <button onClick={() => { setSubdomainInput(user.subdomain || ""); setEditingSubdomain(true); }}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                    style={{ background: "var(--app-surface)", color: "var(--app-text-faint)" }}>
+                    <Edit3 size={13} />
+                  </button>
+                </div>
+
+                {/* URL preview */}
+                <div className="rounded-xl p-3" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a15)" }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--app-accent)" }}>Your Share Links</p>
+                  <div className="flex items-center gap-2">
+                    <Link2 size={11} style={{ color: "var(--app-accent)" }} className="shrink-0" />
+                    <p className="text-[11px] font-mono truncate flex-1" style={{ color: "var(--app-text-muted)" }}>
+                      {ROOT_DOMAIN
+                        ? <><span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{user.subdomain}</span>.{ROOT_DOMAIN}/<span style={{ color: "var(--app-text-faint)" }}>page-id</span></>
+                        : <>{SITE_URL}/{user.subdomain}/<span style={{ color: "var(--app-text-faint)" }}>page-id</span></>
+                      }
+                    </p>
+                    <button
+                      onClick={() => {
+                        const base = ROOT_DOMAIN ? `https://${user.subdomain}.${ROOT_DOMAIN}/` : `${SITE_URL}/u/${user.subdomain}/`;
+                        navigator.clipboard.writeText(base);
+                        setSubdomainCopied(true);
+                        setTimeout(() => setSubdomainCopied(false), 2000);
+                      }}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                      style={{ background: "var(--app-accent-a10)", color: "var(--app-accent)" }}>
+                      {subdomainCopied ? <Check size={11} /> : <Copy size={11} />}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-center" style={{ color: "var(--app-text-ultra-faint)" }}>
+                  All your shared pages use this personalized link
+                </p>
+              </div>
+            ) : (
+              <button onClick={() => { setSubdomainInput(""); setEditingSubdomain(true); }}
+                className="app-row-hover w-full flex items-center gap-3 px-4 py-4 text-left transition-colors">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
+                  <AtSign size={16} style={{ color: "var(--app-accent)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: "var(--app-text)" }}>Claim Your Personal Link</p>
+                  <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>e.g. dilse.app/<span style={{ color: "var(--app-accent)" }}>yourname</span>/page</p>
+                </div>
+                <div className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+                  Claim
+                </div>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <AtSign size={14} style={{ color: "var(--app-accent)" }} />
+              <p className="text-sm font-bold" style={{ color: "var(--app-text)" }}>
+                {user?.subdomain ? "Change Your Handle" : "Choose Your Handle"}
+              </p>
+            </div>
+
+            {/* Input */}
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                <span className="text-sm font-bold" style={{ color: "var(--app-text-faint)" }}>@</span>
+              </div>
+              <input
+                type="text"
+                value={subdomainInput}
+                onChange={(e) => setSubdomainInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                placeholder="yourname"
+                maxLength={30}
+                autoFocus
+                className="app-input w-full pl-8 pr-4 py-3 rounded-xl text-sm focus:outline-none transition-all font-mono"
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--app-accent-a35)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--app-input-border)"; }}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveSubdomain()}
+              />
+            </div>
+
+            {/* URL preview while typing */}
+            {subdomainInput && (
+              <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--app-text-faint)" }}>Preview</p>
+                <p className="text-[11px] font-mono truncate" style={{ color: "var(--app-text-muted)" }}>
+                  {ROOT_DOMAIN
+                    ? <><span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{subdomainInput}</span>.{ROOT_DOMAIN}/page-id</>
+                    : <>{SITE_URL}/<span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{subdomainInput}</span>/page-id</>
+                  }
+                </p>
+              </div>
+            )}
+
+            {/* Status message */}
+            <AnimatePresence mode="wait">
+              {subdomainInput && subdomainStatus !== "idle" && (
+                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg"
+                  style={{ background: subdomainStatus === "available" ? "rgba(34,197,94,0.08)" : subdomainStatus === "checking" ? "var(--app-surface)" : "rgba(248,113,113,0.08)", color: subdomainStatusColor }}>
+                  {subdomainStatus === "checking" ? <Loader2 size={11} className="animate-spin shrink-0" /> :
+                   subdomainStatus === "available" ? <Check size={11} className="shrink-0" /> :
+                   <X size={11} className="shrink-0" />}
+                  {subdomainStatus === "checking" ? "Checking availability…" : subdomainStatusMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Rules */}
+            <p className="text-[10px]" style={{ color: "var(--app-text-ultra-faint)" }}>
+              3–30 chars · lowercase letters, numbers, hyphens · no leading/trailing hyphens
+            </p>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button onClick={handleSaveSubdomain}
+                disabled={subdomainLoading || subdomainStatus !== "available" || !subdomainInput}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+                {subdomainLoading ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save Handle</>}
+              </button>
+              <button onClick={() => { setEditingSubdomain(false); setSubdomainInput(""); setSubdomainStatus("idle"); }}
+                className="px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
 
   const AccountBlock = (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -459,7 +676,7 @@ export default function ProfilePage() {
                               style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
                               {copiedLink === page._id ? <Check size={13} /> : <Copy size={13} />}
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); window.open(`/${page.shareId}`, "_blank"); }}
+                            <button onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
                               className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
                               style={{ background: "var(--app-border)", color: "var(--app-text-muted)" }}>
                               <ExternalLink size={13} />
@@ -478,7 +695,15 @@ export default function ProfilePage() {
                               </div>
                               {page.passwordRaw && (
                                 <div className="flex items-center gap-1 shrink-0">
-                                  <button onClick={(e) => { e.stopPropagation(); setVisiblePw((p) => { const n = new Set(p); n.has(page._id) ? n.delete(page._id) : n.add(page._id); return n; }); }}
+                                  <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVisiblePw((p) => {
+                                      const n = new Set(p);
+                                      if (n.has(page._id)) n.delete(page._id);
+                                      else n.add(page._id);
+                                      return n;
+                                    });
+                                  }}
                                     className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
                                     {visiblePw.has(page._id) ? <EyeOff size={12} /> : <Eye size={12} />}
                                   </button>
@@ -555,6 +780,7 @@ export default function ProfilePage() {
                           style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
                           <ExternalLink size={12} />
                         </button>
+
                       </div>
                       {page.hasPassword && page.passwordVerified && page.passwordRaw && (
                         <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a15)" }}>
@@ -564,7 +790,15 @@ export default function ProfilePage() {
                             <p className="text-xs font-mono font-semibold truncate" style={{ color: "var(--app-text)" }}>{visiblePw.has(pwKey) ? page.passwordRaw : "••••••••"}</p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={(e) => { e.stopPropagation(); setVisiblePw((p) => { const n = new Set(p); n.has(pwKey) ? n.delete(pwKey) : n.add(pwKey); return n; }); }}
+                            <button onClick={(e) => {
+                              e.stopPropagation();
+                              setVisiblePw((p) => {
+                                const n = new Set(p);
+                                if (n.has(pwKey)) n.delete(pwKey);
+                                else n.add(pwKey);
+                                return n;
+                              });
+                            }}
                               className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
                               {visiblePw.has(pwKey) ? <EyeOff size={12} /> : <Eye size={12} />}
                             </button>
@@ -616,6 +850,11 @@ export default function ProfilePage() {
           {/* Appearance */}
           <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
             {AppearanceBlock}
+          </div>
+
+          {/* Subdomain / Personal Link */}
+          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
+            {SubdomainBlock}
           </div>
 
           {/* Account */}

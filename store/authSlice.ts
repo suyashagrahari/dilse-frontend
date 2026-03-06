@@ -7,6 +7,7 @@ export interface AuthUser {
   avatar?: string;
   provider: "local" | "google";
   theme?: "light" | "dark" | "system";
+  subdomain?: string;
 }
 
 interface AuthState {
@@ -176,6 +177,27 @@ export const changePassword = createAsyncThunk(
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Failed to change password");
       return data.message;
+    } catch {
+      return rejectWithValue("Network error");
+    }
+  }
+);
+
+export const setSubdomain = createAsyncThunk(
+  "auth/setSubdomain",
+  async (subdomain: string, { getState, rejectWithValue }) => {
+    const state = getState() as { auth: AuthState };
+    const token = state.auth.accessToken;
+    if (!token) return rejectWithValue("Not authenticated");
+    try {
+      const res = await fetch(`${API_URL}/auth/subdomain`, {
+        method: "PUT",
+        headers: apiHeaders({ Authorization: `Bearer ${token}` }),
+        body: JSON.stringify({ subdomain }),
+      });
+      const data = await res.json();
+      if (!res.ok) return rejectWithValue(data.error || "Failed to set subdomain");
+      return data.data;
     } catch {
       return rejectWithValue("Network error");
     }
@@ -364,7 +386,7 @@ const authSlice = createSlice({
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
         if (action.payload.user) {
-          state.user = action.payload.user;
+          state.user = { ...state.user, ...action.payload.user };
           state.isAuthenticated = true;
         }
         if (action.payload.accessToken) {
@@ -391,6 +413,13 @@ const authSlice = createSlice({
           state.user.name = action.payload.name;
           state.user.avatar = action.payload.avatar;
           if (action.payload.theme) state.user.theme = action.payload.theme;
+          if (action.payload.subdomain !== undefined) state.user.subdomain = action.payload.subdomain;
+        }
+      })
+
+      .addCase(setSubdomain.fulfilled, (state, action) => {
+        if (state.user) {
+          state.user.subdomain = action.payload.subdomain;
         }
       })
 
