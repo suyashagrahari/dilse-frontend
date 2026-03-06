@@ -21,6 +21,7 @@ import {
   clearAuthError,
 } from "@/store/authSlice";
 import { fetchFavorites } from "@/store/favoritesSlice";
+import { ROOT_DOMAIN, SITE_URL } from "@/lib/config";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -110,39 +111,74 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     }
   }, [mode, name, email, password, dispatch, onSuccess]);
 
-  const handleGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setGoogleLoading(true);
-      try {
-        const userInfo = await fetch(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
-        );
-        const profile = await userInfo.json();
+  // Helper: finish login after we have an access_token (used by both flows)
+  const finishGoogleLogin = useCallback(async (accessToken: string) => {
+    setGoogleLoading(true);
+    try {
+      const userInfo = await fetch(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const profile = await userInfo.json();
+      await dispatch(
+        googleLogin({
+          credential: accessToken,
+          profile: {
+            email: profile.email,
+            name: profile.name,
+            picture: profile.picture,
+            sub: profile.sub,
+          },
+        })
+      ).unwrap();
+      dispatch(fetchFavorites());
+      onSuccess();
+    } catch {
+      // Error handled by Redux
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [dispatch, onSuccess]);
 
-        await dispatch(
-          googleLogin({
-            credential: tokenResponse.access_token,
-            profile: {
-              email: profile.email,
-              name: profile.name,
-              picture: profile.picture,
-              sub: profile.sub,
-            },
-          })
-        ).unwrap();
-        dispatch(fetchFavorites());
-        onSuccess();
-      } catch {
-        // Error handled by Redux
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    onError: () => {
-      setValidationError("Google sign-in failed. Please try again.");
-    },
+  // Direct Google login — works when origin is on the root domain
+  const handleGoogleDirect = useGoogleLogin({
+    onSuccess: (tokenResponse) => finishGoogleLogin(tokenResponse.access_token),
+    onError: () => setValidationError("Google sign-in failed. Please try again."),
   });
+
+  // When on a subdomain, open a popup on the root domain to do the OAuth there,
+  // then receive the token via postMessage (avoids Google's no-wildcard-origin restriction)
+  const handleGoogle = useCallback(() => {
+    const isSubdomain =
+      ROOT_DOMAIN &&
+      typeof window !== "undefined" &&
+      window.location.hostname !== ROOT_DOMAIN &&
+      window.location.hostname !== `www.${ROOT_DOMAIN}`;
+
+    if (isSubdomain) {
+      const popup = window.open(
+        `${SITE_URL}/auth/google-bridge`,
+        "google-auth-bridge",
+        "width=500,height=600,left=400,top=150"
+      );
+      if (!popup) {
+        setValidationError("Popup blocked. Please allow popups and try again.");
+        return;
+      }
+      const handler = (e: MessageEvent) => {
+        if (e.data?.type === "GOOGLE_BRIDGE_SUCCESS") {
+          window.removeEventListener("message", handler);
+          finishGoogleLogin(e.data.accessToken);
+        } else if (e.data?.type === "GOOGLE_BRIDGE_ERROR") {
+          window.removeEventListener("message", handler);
+          setValidationError("Google sign-in failed. Please try again.");
+        }
+      };
+      window.addEventListener("message", handler);
+    } else {
+      handleGoogleDirect();
+    }
+  }, [handleGoogleDirect, finishGoogleLogin]);
 
   const displayError = validationError || error;
   const anyLoading = isLoading || googleLoading;
