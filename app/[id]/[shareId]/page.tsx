@@ -30,9 +30,9 @@ async function fetchShareData(username: string, shareId: string): Promise<ShareP
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ username: string; shareId: string }>;
+  params: Promise<{ id: string; shareId: string }>;
 }): Promise<Metadata> {
-  const { username, shareId } = await params;
+  const { id: username, shareId } = await params;
   const result = await fetchShareData(username, shareId);
 
   if (!result?.success || !result.data || !result.templateType) {
@@ -63,9 +63,9 @@ export async function generateMetadata({
 export default async function SubdomainSharePage({
   params,
 }: {
-  params: Promise<{ username: string; shareId: string }>;
+  params: Promise<{ id: string; shareId: string }>;
 }) {
-  const { username, shareId } = await params;
+  const { id: username, shareId } = await params;
   const result = await fetchShareData(username, shareId);
 
   const senderName = result?.data?.senderName || "Someone Special";
