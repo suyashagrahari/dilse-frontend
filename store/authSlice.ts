@@ -329,6 +329,18 @@ const authSlice = createSlice({
     clearAuthError(state) {
       state.error = null;
     },
+    setAuthData(
+      state,
+      action: PayloadAction<{ user: AuthUser; accessToken: string; refreshToken: string }>
+    ) {
+      state.user = action.payload.user;
+      state.accessToken = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken;
+      state.isAuthenticated = true;
+      state.isLoading = false;
+      state.error = null;
+      saveToStorage(action.payload.accessToken, action.payload.refreshToken);
+    },
     hydrateAuth(state) {
       if (typeof window !== "undefined") {
         const token = localStorage.getItem("gifts_access_token");
@@ -440,5 +452,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError, hydrateAuth } = authSlice.actions;
+export const { logout, clearAuthError, setAuthData, hydrateAuth } = authSlice.actions;
 export default authSlice.reducer;

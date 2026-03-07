@@ -146,8 +146,9 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     onError: () => setValidationError("Google sign-in failed. Please try again."),
   });
 
-  // When on a subdomain, open a popup on the root domain to do the OAuth there,
-  // then receive the token via postMessage (avoids Google's no-wildcard-origin restriction)
+  // When on a subdomain, redirect the current page to the bridge on the root domain
+  // so Google OAuth runs there (avoids Google's no-wildcard-origin restriction).
+  // After auth, the bridge redirects back here with tokens in the URL hash.
   const handleGoogle = useCallback(() => {
     const isSubdomain =
       ROOT_DOMAIN &&
@@ -156,29 +157,12 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       window.location.hostname !== `www.${ROOT_DOMAIN}`;
 
     if (isSubdomain) {
-      const popup = window.open(
-        `${SITE_URL}/auth/google-bridge`,
-        "google-auth-bridge",
-        "width=500,height=600,left=400,top=150"
-      );
-      if (!popup) {
-        setValidationError("Popup blocked. Please allow popups and try again.");
-        return;
-      }
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === "GOOGLE_BRIDGE_SUCCESS") {
-          window.removeEventListener("message", handler);
-          finishGoogleLogin(e.data.accessToken);
-        } else if (e.data?.type === "GOOGLE_BRIDGE_ERROR") {
-          window.removeEventListener("message", handler);
-          setValidationError("Google sign-in failed. Please try again.");
-        }
-      };
-      window.addEventListener("message", handler);
+      const returnTo = window.location.href;
+      window.location.href = `${SITE_URL}/auth/google-bridge?return_to=${encodeURIComponent(returnTo)}`;
     } else {
       handleGoogleDirect();
     }
-  }, [handleGoogleDirect, finishGoogleLogin]);
+  }, [handleGoogleDirect]);
 
   const displayError = validationError || error;
   const anyLoading = isLoading || googleLoading;
