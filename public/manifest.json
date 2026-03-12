@@ -1,13 +1,13 @@
 {
-  "name": "Gifts - Make Every Moment Special",
-  "short_name": "Gifts",
-  "description": "Create stunning personalized pages for birthdays, anniversaries, and more.",
+  "name": "SubhSandesh - Make Every Moment Special",
+  "short_name": "SubhSandesh",
+  "description": "Create stunning digital celebration pages for birthdays, weddings & festivals — with photos, music and heartfelt messages.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#f43f5e",
+  "background_color": "#f5ede6",
+  "theme_color": "#3d0c11",
   "orientation": "portrait",
   "icons": [
     {

@@ -18,7 +18,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Gifts",
+    title: "SubhSandesh",
+    startupImage: "/icons/icon-512.png",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-512.png",
+    shortcut: "/icons/icon-192.png",
   },
   alternates: {
     canonical: SITE_URL,
