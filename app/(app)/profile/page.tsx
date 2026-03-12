@@ -2,19 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
-  Eye, EyeOff, Loader2, ChevronRight, Shield, Sun, Moon,
+  Eye, EyeOff, Loader2, ChevronRight, Shield,
   ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
-  AtSign, Link2,
+  AtSign, Link2, Share2,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { updateProfile, changePassword, logoutUser, updateTheme, setSubdomain as setSubdomainAction } from "@/store/authSlice";
+import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
 import { API_URL, IS_NGROK, SITE_URL, ROOT_DOMAIN } from "@/lib/config";
 import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
+import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
+import SocialShareSheet from "@/components/SocialShareSheet";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -23,6 +24,81 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 }
 
 const SUBDOMAIN_RESERVED = new Set(["www","admin","api","mail","support","help","docs","blog","app","auth","login","signup","register","dashboard","static","assets","cdn","dev","test","staging","prod","u","user","users","share","gift","gifts","dilse"]);
+
+const UI = {
+  bg: "#f5ede6",
+  bgSoft: "#fbf6f1",
+  text: "#2a0a0e",
+  textMuted: "#7a5555",
+  accent: "#c9a84c",
+  border: "rgba(61,12,17,0.16)",
+};
+const CORNER_FILTER =
+  "brightness(0) saturate(100%) invert(8%) sepia(55%) saturate(2800%) hue-rotate(330deg) brightness(90%) contrast(120%)";
+const LIGHT_VARS: Record<string, string> = {
+  "--app-bg": "#f5ede6",
+  "--app-bg-dark": "#f0e6dc",
+  "--app-surface": "rgba(255,255,255,0.78)",
+  "--app-border": "rgba(61,12,17,0.16)",
+  "--app-border-faint": "rgba(61,12,17,0.10)",
+  "--app-text": "#2a0a0e",
+  "--app-text-muted": "#7a5555",
+  "--app-text-faint": "#9a7070",
+  "--app-text-ultra-faint": "rgba(122,85,85,0.72)",
+  "--app-accent": "#c9a84c",
+  "--app-accent-fg": "#1a0507",
+  "--app-accent-a06": "rgba(201,168,76,0.06)",
+  "--app-accent-a08": "rgba(201,168,76,0.08)",
+  "--app-accent-a10": "rgba(201,168,76,0.10)",
+  "--app-accent-a12": "rgba(201,168,76,0.12)",
+  "--app-accent-a15": "rgba(201,168,76,0.15)",
+  "--app-accent-a20": "rgba(201,168,76,0.20)",
+  "--app-accent-a25": "rgba(201,168,76,0.25)",
+  "--app-accent-a35": "rgba(201,168,76,0.35)",
+  "--app-input-bg": "rgba(255,255,255,0.82)",
+  "--app-input-border": "rgba(61,12,17,0.16)",
+};
+
+function ProfileShell({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const prevBodyBg = document.body.style.background;
+    const prevHtmlBg = document.documentElement.style.background;
+    document.body.style.background = UI.bg;
+    document.documentElement.style.background = UI.bg;
+    return () => {
+      document.body.style.background = prevBodyBg;
+      document.documentElement.style.background = prevHtmlBg;
+    };
+  }, []);
+
+  return (
+    <div
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(180deg, ${UI.bgSoft} 0%, ${UI.bg} 52%, ${UI.bgSoft} 100%)`,
+        backgroundColor: UI.bg,
+        color: UI.text,
+        fontFamily: "'Inter', sans-serif",
+        minHeight: "100dvh",
+        overflowX: "hidden",
+        ...LIGHT_VARS,
+      } as React.CSSProperties}
+    >
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER }} />
+      </div>
+      <LuxuryMobileTopBrand />
+      <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+    </div>
+  );
+}
 
 function validateSubdomainLocal(val: string): string | null {
   if (!val) return null;
@@ -45,6 +121,7 @@ interface ReceivedPage {
   senderAvatar: string | null; hasPassword: boolean; passwordVerified: boolean;
   passwordRaw?: string; viewCount: number; createdAt: string;
 }
+type ProfilePanel = "personal-link" | "account" | "creations" | "received";
 
 /* ── Reusable row component ── */
 function Row({ icon, label, value, accent = "green" }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent?: "green" | "blue" | "violet" | "amber" }) {
@@ -81,9 +158,6 @@ export default function ProfilePage() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMessage, setPwMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [logoutLoading, setLogoutLoading] = useState(false);
-  const { theme: currentTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [themeSaving, setThemeSaving] = useState(false);
   const [myCreations, setMyCreations] = useState<MyCreation[]>([]);
   const [receivedPages, setReceivedPages] = useState<ReceivedPage[]>([]);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -91,6 +165,10 @@ export default function ProfilePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
   const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
+  const [activePanel, setActivePanel] = useState<ProfilePanel>("personal-link");
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareTargetUrl, setShareTargetUrl] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string>("Celebrate with me on SubhSandesh! ✨");
 
   // Subdomain state
   const [editingSubdomain, setEditingSubdomain] = useState(false);
@@ -100,7 +178,6 @@ export default function ProfilePage() {
   const [subdomainStatusMsg, setSubdomainStatusMsg] = useState("");
   const [subdomainCopied, setSubdomainCopied] = useState(false);
 
-  useEffect(() => setMounted(true), []);
 
   // Debounced availability check
   useEffect(() => {
@@ -131,14 +208,6 @@ export default function ProfilePage() {
       setSubdomainInput("");
       setSubdomainStatus("idle");
     } catch { /* error shown in UI */ } finally { setSubdomainLoading(false); }
-  };
-
-  const handleThemeChange = async (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme);
-    if (isAuthenticated) {
-      setThemeSaving(true);
-      try { await dispatch(updateTheme(newTheme)).unwrap(); } catch { /* silent */ } finally { setThemeSaving(false); }
-    }
   };
 
   const authHeaders = useCallback(() => apiHeaders({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
@@ -219,12 +288,17 @@ export default function ProfilePage() {
     if (type === "link") { setCopiedLink(id); setTimeout(() => setCopiedLink(null), 2000); }
     else { setCopiedPw(id); setTimeout(() => setCopiedPw(null), 2000); }
   };
+  const openSocialShare = (url: string, message?: string) => {
+    setShareTargetUrl(url);
+    setShareMessage(message?.trim() || "Celebrate with me on SubhSandesh! ✨");
+    setShareSheetOpen(true);
+  };
 
   const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : type === "eid" ? "🌙" : "🎁";
   const templateLabel = (type: string) => type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : type === "holi" ? "Holi" : type === "eid" ? "Eid" : "Gift";
   const editorRoute = (type: string) => type === "birthday" ? "/birthday-gf" : type === "valentine" ? "/valentine-gf" : type === "holi" ? "/holi" : type === "eid" ? "/eid-mubarak" : "/templates";
 
-  const cardStyle = { background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: "1rem" };
+  const cardStyle = { background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)", borderRadius: "1rem" };
   const sectionLabel = (text: string) => (
     <p className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2 px-1 flex items-center gap-1.5" style={{ color: "var(--app-accent)" }}>{text}</p>
   );
@@ -232,16 +306,26 @@ export default function ProfilePage() {
   /* ── Not authenticated ── */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
-        <div className="flex items-center justify-center px-4 mt-24">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
-              <User size={32} style={{ color: "var(--app-accent)" }} />
+      <ProfileShell>
+        <div className="flex items-center justify-center px-4 mt-24 md:mt-28">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)" }}>
+              <User size={32} style={{ color: "#c9a84c" }} />
             </div>
-            <h2 className="text-2xl font-black mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Sign in to continue</h2>
-            <p className="text-sm mb-8" style={{ color: "var(--app-text-muted)" }}>Log in to manage your profile, view your dashboard, and personalize templates.</p>
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3" style={{ color: "var(--app-accent)" }}>
+              Profile Access
+            </p>
+            <h2
+              className="leading-[0.95] tracking-[-0.03em] text-[38px] md:text-[64px] mb-3"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, color: "#2a0a0e" }}
+            >
+              Sign In <em style={{ color: "#c9a84c", fontStyle: "italic" }}>to Continue.</em>
+            </h2>
+            <p className="text-sm md:text-base mb-8 max-w-xl mx-auto" style={{ color: "#7a5555" }}>
+              Log in to manage your profile, view your dashboard, and personalize templates.
+            </p>
             <button onClick={() => setShowAuth(true)} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-105"
-              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
+              style={{ background: "#3d0c11", color: "#f5ede6" }}>
               Sign In
             </button>
           </motion.div>
@@ -249,7 +333,7 @@ export default function ProfilePage() {
         <AnimatePresence>
           {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => setShowAuth(false)} />}
         </AnimatePresence>
-      </div>
+      </ProfileShell>
     );
   }
 
@@ -294,7 +378,7 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl md:text-2xl font-black" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--app-text)" }}>{user?.name}</h1>
+          <h1 className="text-xl md:text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif", color: "#2a0a0e" }}>{user?.name}</h1>
           <button onClick={() => { setNameInput(user?.name || ""); setEditingName(true); }}
             className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{ background: "var(--app-surface)", color: "var(--app-text-faint)" }}>
@@ -345,50 +429,6 @@ export default function ProfilePage() {
     </motion.div>
   );
 
-  const AppearanceBlock = mounted ? (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-      {sectionLabel("Appearance")}
-      <div className="rounded-2xl p-4" style={cardStyle}>
-        <div className="grid grid-cols-2 gap-3">
-          {([
-            { value: "light" as const, label: "Light", icon: Sun, color: "#fbbf24" },
-            { value: "dark" as const, label: "Dark", icon: Moon, color: "#a78bfa" },
-          ]).map(({ value, label, icon: Icon, color }) => {
-            const isSelected = currentTheme === value;
-            return (
-              <motion.button key={value} onClick={() => handleThemeChange(value)} whileTap={{ scale: 0.95 }}
-                className="relative rounded-2xl p-[1.5px] transition-all duration-300"
-                style={{ background: isSelected ? color : "var(--app-border)" }}>
-                <div className="rounded-[14px] py-3 px-2 flex flex-col items-center gap-1.5" style={{ background: "var(--app-bg)" }}>
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: isSelected ? `${color}20` : "var(--app-surface)" }}>
-                    <Icon size={17} style={{ color: isSelected ? color : "var(--app-text-faint)" }} />
-                  </div>
-                  <p className="text-[11px] font-semibold" style={{ color: isSelected ? "var(--app-text)" : "var(--app-text-muted)" }}>{label}</p>
-                </div>
-                {isSelected && (
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: color }}>
-                    <Check size={10} color="#000" strokeWidth={3} />
-                  </motion.div>
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
-        {themeSaving && (
-          <div className="flex items-center justify-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--app-border-faint)" }}>
-            <Loader2 size={12} className="animate-spin" style={{ color: "var(--app-accent)" }} />
-            <span className="text-xs" style={{ color: "var(--app-text-faint)" }}>Saving preference…</span>
-          </div>
-        )}
-        <p className="text-[11px] text-center mt-3" style={{ color: "var(--app-text-ultra-faint)" }}>
-          Preference saved to your account
-        </p>
-      </div>
-    </motion.div>
-  ) : null;
-
   const subdomainStatusColor = subdomainStatus === "available" ? "#22c55e" : subdomainStatus === "taken" || subdomainStatus === "invalid" ? "#f87171" : "var(--app-text-faint)";
 
   const SubdomainBlock = (
@@ -406,7 +446,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--app-text-faint)" }}>Your Handle</p>
-                    <p className="text-base font-black" style={{ color: "var(--app-accent)", fontFamily: "'Space Grotesk', sans-serif" }}>@{user.subdomain}</p>
+                    <p className="text-base font-black" style={{ color: "#c9a84c", fontFamily: "'Playfair Display', serif" }}>@{user.subdomain}</p>
                   </div>
                   <button onClick={() => { setSubdomainInput(user.subdomain || ""); setEditingSubdomain(true); }}
                     className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
@@ -617,113 +657,126 @@ export default function ProfilePage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
       {sectionLabel("My Creations")}
       <div className="overflow-hidden rounded-2xl" style={cardStyle}>
-        {myCreations.map((page) => {
-          const shareLink = getShareLink(page.shareId);
-          const isExpanded = expandedCard === page._id;
-          return (
-            <div key={page._id} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-              <button onClick={() => setExpandedCard(isExpanded ? null : page._id)}
-                className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
-                  {page.templateType === "valentine" ? <Gift size={16} style={{ color: "#f43f5e" }} /> :
-                   page.templateType === "holi" ? <Sparkles size={16} style={{ color: "#a78bfa" }} /> :
-                   page.templateType === "eid" ? <span className="text-base">🌙</span> :
-                   <Cake size={16} style={{ color: "var(--app-accent)" }} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</p>
-                  <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>
-                    {templateLabel(page.templateType)} · {page.isPublished ? "Published" : "Draft"} · {formatShortDate(page.updatedAt)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {page.isPublished && (
-                    <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg" style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                      <Eye size={10} /> {page.viewCount}
-                    </div>
-                  )}
-                  <ChevronRight size={14} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
-                </div>
-              </button>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                    <div className="px-4 pb-5 md:px-5 md:pb-6 space-y-3 md:space-y-4">
-                      <button onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
-                        className="w-full flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-sm md:text-[15px] font-bold transition-all hover:opacity-90 hover:scale-[1.01]"
-                        style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                        <Edit3 size={15} /> Edit This Card
-                      </button>
-                      <div className="grid grid-cols-3 gap-2 md:gap-3">
-                        {[{ icon: <Eye size={14} style={{ color: "#60a5fa" }} />, val: page.viewCount, label: "Views" },
-                          { icon: <Users size={14} style={{ color: "var(--app-accent)" }} />, val: page.installCount, label: "Installs" },
-                          { icon: <BarChart3 size={14} style={{ color: "#a78bfa" }} />, val: page.isPublished ? "Live" : "Draft", label: "Status" }
-                        ].map(({ icon, val, label }) => (
-                          <div key={label} className="rounded-xl md:rounded-2xl p-3 md:p-4 text-center flex flex-col items-center" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: "var(--app-bg)" }}>{icon}</div>
-                            <p className="text-sm md:text-lg font-black leading-tight" style={{ color: "var(--app-text)" }}>{val}</p>
-                            <p className="text-[9px] md:text-[10px] uppercase tracking-wider mt-1 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
-                          </div>
-                        ))}
+        <div className="max-h-[68vh] overflow-y-auto">
+          {myCreations.map((page) => {
+            const shareLink = getShareLink(page.shareId);
+            const isExpanded = expandedCard === page._id;
+            return (
+              <div key={page._id} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
+                <button onClick={() => setExpandedCard(isExpanded ? null : page._id)}
+                  className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
+                    {page.templateType === "valentine" ? <Gift size={16} style={{ color: "#f43f5e" }} /> :
+                     page.templateType === "holi" ? <Sparkles size={16} style={{ color: "#a78bfa" }} /> :
+                     page.templateType === "eid" ? <span className="text-base">🌙</span> :
+                     <Cake size={16} style={{ color: "var(--app-accent)" }} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</p>
+                    <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>
+                      {templateLabel(page.templateType)} · {page.isPublished ? "Published" : "Draft"} · {formatShortDate(page.updatedAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {page.isPublished && (
+                      <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg" style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
+                        <Eye size={10} /> {page.viewCount}
                       </div>
-                      {page.isPublished && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2.5 rounded-xl md:rounded-2xl px-3.5 md:px-4 py-3 md:py-3.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
-                            <Globe size={13} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
-                            <p className="text-[11px] md:text-xs truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{shareLink}</p>
-                            <button onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
-                              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                              style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                              {copiedLink === page._id ? <Check size={13} /> : <Copy size={13} />}
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
-                              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                              style={{ background: "var(--app-border)", color: "var(--app-text-muted)" }}>
-                              <ExternalLink size={13} />
-                            </button>
-                          </div>
-                          {page.hasPassword && (
-                            <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
-                              <KeyRound size={12} style={{ color: "#f59e0b" }} className="shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-medium mb-0.5" style={{ color: "#f59e0b" }}>Secret Password</p>
-                                {page.passwordRaw ? (
-                                  <p className="text-xs font-mono font-semibold truncate" style={{ color: "var(--app-text)" }}>{visiblePw.has(page._id) ? page.passwordRaw : "••••••••"}</p>
-                                ) : (
-                                  <p className="text-[10px] italic" style={{ color: "var(--app-text-faint)" }}>Protected (re-publish to track)</p>
+                    )}
+                    <ChevronRight size={14} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                      <div className="px-4 pb-5 md:px-5 md:pb-6 space-y-3 md:space-y-4">
+                        <button onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
+                          className="w-full flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-sm md:text-[15px] font-bold transition-all hover:opacity-90 hover:scale-[1.01]"
+                          style={{ background: "#3d0c11", color: "#f5ede6" }}>
+                          <Edit3 size={15} /> Edit This Card
+                        </button>
+                        <div className="grid grid-cols-3 gap-2 md:gap-3">
+                          {[{ icon: <Eye size={14} style={{ color: "#60a5fa" }} />, val: page.viewCount, label: "Views" },
+                            { icon: <Users size={14} style={{ color: "var(--app-accent)" }} />, val: page.installCount, label: "Installs" },
+                            { icon: <BarChart3 size={14} style={{ color: "#a78bfa" }} />, val: page.isPublished ? "Live" : "Draft", label: "Status" }
+                          ].map(({ icon, val, label }) => (
+                            <div key={label} className="rounded-xl md:rounded-2xl p-3 md:p-4 text-center flex flex-col items-center" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
+                              <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: "var(--app-bg)" }}>{icon}</div>
+                              <p className="text-sm md:text-lg font-black leading-tight" style={{ color: "var(--app-text)" }}>{val}</p>
+                              <p className="text-[9px] md:text-[10px] uppercase tracking-wider mt-1 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {page.isPublished && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2.5 rounded-xl md:rounded-2xl px-3.5 md:px-4 py-3 md:py-3.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
+                              <Globe size={13} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
+                              <p className="text-[11px] md:text-xs truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{shareLink}</p>
+                              <button onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
+                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                                style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
+                                {copiedLink === page._id ? <Check size={13} /> : <Copy size={13} />}
+                              </button>
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                openSocialShare(
+                                  shareLink,
+                                  `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`
+                                );
+                              }}
+                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                                style={{ background: "var(--app-accent-a10)", color: "var(--app-accent)" }}>
+                                <Share2 size={13} />
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
+                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
+                                style={{ background: "var(--app-border)", color: "var(--app-text-muted)" }}>
+                                <ExternalLink size={13} />
+                              </button>
+                            </div>
+                            {page.hasPassword && (
+                              <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
+                                <KeyRound size={12} style={{ color: "#f59e0b" }} className="shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[10px] font-medium mb-0.5" style={{ color: "#f59e0b" }}>Secret Password</p>
+                                  {page.passwordRaw ? (
+                                    <p className="text-xs font-mono font-semibold truncate" style={{ color: "var(--app-text)" }}>{visiblePw.has(page._id) ? page.passwordRaw : "••••••••"}</p>
+                                  ) : (
+                                    <p className="text-[10px] italic" style={{ color: "var(--app-text-faint)" }}>Protected (re-publish to track)</p>
+                                  )}
+                                </div>
+                                {page.passwordRaw && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVisiblePw((p) => {
+                                        const n = new Set(p);
+                                        if (n.has(page._id)) n.delete(page._id);
+                                        else n.add(page._id);
+                                        return n;
+                                      });
+                                    }}
+                                      className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                                      {visiblePw.has(page._id) ? <EyeOff size={12} /> : <Eye size={12} />}
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); copyToClipboard(page.passwordRaw, page._id + "-pw", "pw"); }}
+                                      className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                                      {copiedPw === page._id + "-pw" ? <Check size={12} /> : <Copy size={12} />}
+                                    </button>
+                                  </div>
                                 )}
                               </div>
-                              {page.passwordRaw && (
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    setVisiblePw((p) => {
-                                      const n = new Set(p);
-                                      if (n.has(page._id)) n.delete(page._id);
-                                      else n.add(page._id);
-                                      return n;
-                                    });
-                                  }}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                                    {visiblePw.has(page._id) ? <EyeOff size={12} /> : <Eye size={12} />}
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); copyToClipboard(page.passwordRaw, page._id + "-pw", "pw"); }}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                                    {copiedPw === page._id + "-pw" ? <Check size={12} /> : <Copy size={12} />}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   ) : null;
@@ -775,6 +828,17 @@ export default function ProfilePage() {
                           style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
                           {copiedLink === page.shareId + "-recv" ? <Check size={12} style={{ color: "var(--app-accent)" }} /> : <Copy size={12} />}
                         </button>
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                openSocialShare(
+                                  link,
+                                  `${page.senderName || "Someone"} sent a ${templateLabel(page.templateType)} greeting${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`
+                                );
+                              }}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
+                                <Share2 size={12} />
+                              </button>
                         <button onClick={(e) => { e.stopPropagation(); window.open(`/${page.shareId}`, "_blank"); }}
                           className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                           style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
@@ -826,96 +890,151 @@ export default function ProfilePage() {
     </motion.div>
   ) : null;
 
+  const EmptyReceivedBlock = (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+      {sectionLabel("Shared With You")}
+      <div
+        className="rounded-2xl p-6 text-center flex flex-col items-center gap-2.5"
+        style={cardStyle}
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{ background: "var(--app-accent-a08)" }}
+        >
+          <Users size={20} style={{ color: "var(--app-accent)" }} />
+        </div>
+        <p className="font-bold text-sm md:text-base" style={{ color: "var(--app-text)" }}>
+          No shared pages yet
+        </p>
+        <p className="text-xs md:text-sm" style={{ color: "var(--app-text-muted)" }}>
+          Pages shared with you will appear here.
+        </p>
+      </div>
+    </motion.div>
+  );
+
+  const EmptyCreationsBlock = (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+      className="rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3 min-h-[240px]"
+      style={cardStyle}>
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--app-accent-a08)" }}>
+        <Sparkles size={24} style={{ color: "var(--app-accent)" }} />
+      </div>
+      <p className="font-bold text-base" style={{ color: "var(--app-text)" }}>No creations yet</p>
+      <p className="text-sm" style={{ color: "var(--app-text-muted)" }}>Start building your first personalized gift page</p>
+      <button onClick={() => router.push("/templates")}
+        className="mt-1 px-6 py-2.5 rounded-full text-sm font-bold"
+        style={{ background: "#3d0c11", color: "#f5ede6" }}>
+        Browse Templates
+      </button>
+    </motion.div>
+  );
+
+  const activePanelContent =
+    activePanel === "personal-link" ? SubdomainBlock :
+    activePanel === "account" ? AccountBlock :
+    activePanel === "creations" ? (CreationsBlock ?? EmptyCreationsBlock) :
+    (ReceivedBlock ?? EmptyReceivedBlock);
+
   return (
-    <div className="min-h-screen pb-8 md:pt-[88px]" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "'Inter', sans-serif" }}>
+    <ProfileShell>
+      <div className="md:max-w-7xl md:mx-auto md:px-6 lg:px-8 md:pt-24 md:pb-10">
+        {/* Desktop: Sidebar navigation + active panel */}
+        <div className="hidden md:flex md:gap-12 md:items-start">
+          <div className="w-[340px] shrink-0 sticky top-28 space-y-5">
+            <div className="rounded-3xl p-6" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)" }}>
+              {AvatarBlock}
+            </div>
 
-      {/* ── Two-column on desktop, single column on mobile ── */}
-      <div className="md:max-w-6xl md:mx-auto md:px-8 md:py-8 md:flex md:gap-8 md:items-start">
+            {StatsBlock}
 
-        {/* ── LEFT: Profile sidebar ── */}
-        <div className="md:w-[360px] md:shrink-0 md:sticky md:top-24">
+            <div className="rounded-2xl p-2" style={cardStyle}>
+              {([
+                { id: "personal-link" as ProfilePanel, icon: <AtSign size={15} />, label: "Personal Link", hint: "Handle and share URL" },
+                { id: "account" as ProfilePanel, icon: <Shield size={15} />, label: "Account Settings", hint: "Email and password" },
+                { id: "creations" as ProfilePanel, icon: <Sparkles size={15} />, label: "My Creations", hint: `${myCreations.length} item${myCreations.length === 1 ? "" : "s"}` },
+                { id: "received" as ProfilePanel, icon: <Users size={15} />, label: "Shared With You", hint: `${receivedPages.length} item${receivedPages.length === 1 ? "" : "s"}` },
+              ]).map((item) => {
+                const active = activePanel === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActivePanel(item.id)}
+                    className="w-full text-left rounded-xl px-3.5 py-3 mb-1 last:mb-0 transition-all"
+                    style={{
+                      background: active ? "var(--app-accent-a08)" : "transparent",
+                      border: `1px solid ${active ? "var(--app-accent-a20)" : "transparent"}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{
+                          background: active ? "var(--app-accent-a15)" : "var(--app-surface)",
+                          color: active ? "var(--app-accent)" : "var(--app-text-faint)",
+                        }}
+                      >
+                        {item.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: active ? "var(--app-text)" : "var(--app-text-muted)" }}>
+                          {item.label}
+                        </p>
+                        <p className="text-[11px] truncate" style={{ color: "var(--app-text-faint)" }}>
+                          {item.hint}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Avatar card */}
-          <div className="px-5 pt-10 pb-5 md:p-0">
-            <div className="rounded-3xl p-6" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
+            {LogoutBlock}
+          </div>
+
+          <div className="flex-1 min-w-0 space-y-5">
+            {activePanelContent}
+            {activePanel === "creations" && (
+              <div className="hidden md:flex justify-end pt-1">
+                <button
+                  onClick={() => router.push("/templates")}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all hover:scale-105"
+                  style={{ background: "#3d0c11", color: "#f5ede6", boxShadow: "0 10px 24px rgba(61,12,17,0.2)" }}
+                >
+                  <Sparkles size={15} /> New Creation
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile: stacked layout */}
+        <div className="md:hidden">
+          <div className="px-5 pt-4 pb-5">
+            <div className="rounded-3xl p-6" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)" }}>
               {AvatarBlock}
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="px-5 pt-4 pb-5 md:px-0 md:pt-4 md:pb-0">
-            {StatsBlock}
-          </div>
-
-          {/* Appearance */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
-            {AppearanceBlock}
-          </div>
-
-          {/* Subdomain / Personal Link */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
-            {SubdomainBlock}
-          </div>
-
-          {/* Account */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
-            {AccountBlock}
-          </div>
-
-          {/* Logout */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
-            {LogoutBlock}
-          </div>
+          <div className="px-5 pt-4 pb-5">{StatsBlock}</div>
+          <div className="px-5 pb-5">{SubdomainBlock}</div>
+          <div className="px-5 pb-5">{AccountBlock}</div>
+          <div className="px-5 pb-5">{CreationsBlock ?? EmptyCreationsBlock}</div>
+          <div className="px-5 pb-5">{ReceivedBlock ?? EmptyReceivedBlock}</div>
+          <div className="px-5 pb-5">{LogoutBlock}</div>
         </div>
-
-        {/* ── RIGHT: Creations panel ── */}
-        <div className="flex-1 min-w-0">
-
-          {/* Desktop header for the right panel */}
-          <div className="hidden md:flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-black tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--app-text)" }}>
-                My Dashboard
-              </h2>
-              <p className="text-sm mt-0.5" style={{ color: "var(--app-text-muted)" }}>
-                {myCreations.length} creation{myCreations.length !== 1 ? "s" : ""}
-                {receivedPages.length > 0 ? ` · ${receivedPages.length} received` : ""}
-              </p>
-            </div>
-            <button onClick={() => router.push("/templates")}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105"
-              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-              <Sparkles size={14} /> New Creation
-            </button>
-          </div>
-
-          {/* Creations */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0">
-            {CreationsBlock ?? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                className="rounded-2xl p-8 text-center hidden md:flex flex-col items-center gap-3"
-                style={cardStyle}>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--app-accent-a08)" }}>
-                  <Sparkles size={24} style={{ color: "var(--app-accent)" }} />
-                </div>
-                <p className="font-bold text-base" style={{ color: "var(--app-text)" }}>No creations yet</p>
-                <p className="text-sm" style={{ color: "var(--app-text-muted)" }}>Start building your first personalized gift page</p>
-                <button onClick={() => router.push("/templates")}
-                  className="mt-1 px-6 py-2.5 rounded-full text-sm font-bold"
-                  style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                  Browse Templates
-                </button>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Received */}
-          <div className="px-5 pb-5 md:px-0 md:pb-0 md:mt-4">
-            {ReceivedBlock}
-          </div>
-        </div>
-
       </div>
-    </div>
+      <SocialShareSheet
+        open={shareSheetOpen}
+        onClose={() => setShareSheetOpen(false)}
+        shareUrl={shareTargetUrl}
+        shareMessage={shareMessage}
+        onCopy={(url) => {
+          if (!url) return;
+          copyToClipboard(url, "profile-share-sheet", "link");
+        }}
+      />
+    </ProfileShell>
   );
 }

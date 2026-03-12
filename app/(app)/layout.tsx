@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import BottomNav from "@/components/BottomNav";
-import DesktopNav from "@/components/DesktopNav";
+import NavMount from "@/components/NavMount";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 import { buildMeta } from "@/lib/seo";
 import { TemplateSearchProvider } from "@/components/TemplateSearchProvider";
 import GlobalEffects from "@/components/GlobalEffects";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import AppLayoutShell from "./AppLayoutShell";
 
 export const metadata: Metadata = buildMeta({
-  title: "Gifts - Make Every Moment Special | Personalized Gift Pages",
+  title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
   description:
-    "Create stunning personalized gift pages for birthdays, Valentine's Day, anniversaries, and more. Design, customize, and share beautiful surprises with a unique link.",
+    "Create stunning personalised celebration pages for weddings, birthdays, Holi, Eid, and every Indian occasion. AI-powered messages, photo galleries, music playlists, and more.",
 });
 
 export default function AppLayout({
@@ -20,13 +20,12 @@ export default function AppLayout({
 }) {
   return (
     <TemplateSearchProvider>
-      <div className="pb-24 md:pb-0">
+      <AppLayoutShell>
         <WebsiteJsonLd />
         <GlobalEffects />
-        <DesktopNav />
+        <NavMount />
         <ErrorBoundary>{children}</ErrorBoundary>
-        <BottomNav />
-      </div>
+      </AppLayoutShell>
     </TemplateSearchProvider>
   );
 }

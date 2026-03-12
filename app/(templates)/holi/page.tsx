@@ -4,6 +4,7 @@ import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
+import SocialShareSheet from "@/components/SocialShareSheet";
 import { useHoliEditor } from "./hooks/useHoliEditor";
 
 import ColorBlobs from "./components/ColorBlobs";
@@ -172,6 +173,13 @@ function HoliPage() {
       </main>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+      <SocialShareSheet
+        open={editor.showShareSheet}
+        onClose={editor.closeShareSheet}
+        shareUrl={editor.shareUrl}
+        onCopy={editor.handleCopy}
+        shareMessage={`${editor.content.senderName || "Someone"} is sending Holi wishes${editor.content.recipientName ? ` to ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+      />
 
       <EditSheet
         editMode={editor.editMode}

@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
+import SocialShareSheet from "@/components/SocialShareSheet";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
 import BokehParticles from "./components/BokehParticles";
@@ -171,6 +172,13 @@ export default function ReceptionPage() {
       </div>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+      <SocialShareSheet
+        open={editor.showShareSheet}
+        onClose={editor.closeShareSheet}
+        shareUrl={editor.shareUrl}
+        onCopy={editor.handleCopy}
+        shareMessage={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`}
+      />
 
       <EditSheet
         editMode={editor.editMode}

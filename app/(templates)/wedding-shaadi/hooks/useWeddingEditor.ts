@@ -183,6 +183,7 @@ export function useWeddingEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -542,7 +543,12 @@ export function useWeddingEditor() {
     [shareUrl, pushToast],
   );
 
-  const handleShare = useCallback(() => handleCopy(), [handleCopy]);
+  const handleShare = useCallback(() => {
+    if (!shareUrl) return;
+    setShowShareSheet(true);
+  }, [shareUrl]);
+
+  const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   // Add blessing (from editor preview - same page)
   const addBlessing = useCallback(
@@ -569,7 +575,7 @@ export function useWeddingEditor() {
   );
 
   return {
-    tab, content, editMode, isPersonalized, shareUrl, shareId, copied, showAuth,
+    tab, content, editMode, isPersonalized, shareUrl, showShareSheet, shareId, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading, extractLoading,
     mf, manualStep, aiEditData,
@@ -579,7 +585,7 @@ export function useWeddingEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth, closeAuthSuccess,
+    goBack, closeAuth, closeAuthSuccess, closeShareSheet,
     handleEditClick, startAiMode, startManualMode,
     handleCardExtract, handleAiGenerate, handleAiEditPreview,
     handleManualPreview,

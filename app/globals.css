@@ -125,7 +125,10 @@ html, body {
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-display);
+    background-color: var(--app-bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--app-text);
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -222,6 +225,55 @@ html, body {
   --app-nav-icon-muted: rgba(255,255,255,0.45);
   --app-nav-create-border: #111111;
 }
+
+/* ── SubhSandesh Design System ── */
+:root {
+  --app-bg: #f5ede6;
+  --app-bg-dark: #0d0102;
+  --app-text: #2a0a0e;
+  --app-text-muted: #6b4545;
+  --app-text-faint: #9a7070;
+  --app-accent: #c9a84c;
+  --app-accent-fg: #2a0a0e;
+  --app-accent-a35: rgba(201,168,76,0.35);
+  --app-surface: rgba(255,255,255,0.7);
+  --app-border: rgba(61,12,17,0.14);
+  --app-nav-bg: rgba(245,237,230,0.95);
+  --app-nav-border: rgba(61,12,17,0.12);
+  --app-nav-icon-muted: rgba(61,12,17,0.45);
+  --app-nav-create-border: #f5ede6;
+  --app-primary: #3d0c11;
+  --app-primary-hover: #2a0809;
+}
+.dark {
+  --app-bg: #120306;
+  --app-bg-dark: #0d0102;
+  --app-text: #f5ede6;
+  --app-text-muted: rgba(245,237,230,0.65);
+  --app-text-faint: rgba(245,237,230,0.4);
+  --app-accent: #c9a84c;
+  --app-accent-fg: #120306;
+  --app-accent-a35: rgba(201,168,76,0.35);
+  --app-surface: rgba(18,3,6,0.7);
+  --app-border: rgba(201,168,76,0.2);
+  --app-nav-bg: rgba(18,3,6,0.95);
+  --app-nav-border: rgba(201,168,76,0.2);
+  --app-nav-icon-muted: rgba(201,168,76,0.55);
+  --app-nav-create-border: #120306;
+  --app-primary: #c9a84c;
+  --app-primary-hover: #d4af54;
+}
+
+@keyframes shimmer { 0%,100%{opacity:0.7} 50%{opacity:1} }
+@keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes pulseSlow { 0%,100%{opacity:0.15} 50%{opacity:0.30} }
+@keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f5ede6; }
+::-webkit-scrollbar-thumb { background: #3d0c11; border-radius: 3px; }
 
 /* App UI utility classes */
 .app-pill-inactive {
@@ -1025,4 +1077,112 @@ html, body {
 
 .holi-glow {
   box-shadow: 0 0 20px var(--holi-pink-glow), 0 0 40px var(--holi-purple-glow);
+}
+
+/* ── SubhSandesh Landing Page: Mobile Responsive ── */
+html {
+  overflow-x: hidden;
+}
+body {
+  overflow-x: hidden;
+}
+
+/* Hero grid: 2-col on desktop, 1-col on mobile */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 0.88fr 1.12fr;
+  gap: 56px;
+  align-items: center;
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+  .hero-section {
+    min-height: auto !important;
+    padding-top: 80px !important;
+    padding-bottom: 40px !important;
+  }
+  .hero-copy-pane {
+    text-align: center !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-kicker {
+    justify-content: center !important;
+  }
+  .hero-stats {
+    justify-content: center !important;
+  }
+  .hero-btns {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100%;
+  }
+  .hero-note {
+    text-align: center !important;
+  }
+  .hero-inner {
+    padding: 0 20px !important;
+  }
+}
+
+/* Stat divider */
+.stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(61,12,17,0.14);
+  flex-shrink: 0;
+}
+
+/* Marquee track */
+.marquee-inner {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+.marquee-inner:hover {
+  animation-play-state: paused;
+}
+.occ-track { display: flex; animation: marquee 38s linear infinite; width: max-content; }
+.occ-scroll-wrap:hover .occ-track { animation-play-state: paused; }
+.rev-track { display: flex; animation: marquee 40s linear infinite; width: max-content; }
+.rev-track-r { display: flex; animation: marquee 44s linear infinite reverse; width: max-content; }
+.rev-wrap:hover .rev-track,
+.rev-wrap:hover .rev-track-r { animation-play-state: paused; }
+
+/* Hide desktop corners on mobile, show mobile corners */
+@media (max-width: 768px) {
+  .landing-corner-desktop { display: none !important; }
+  .landing-corner-mobile { display: block !important; }
+}
+@media (min-width: 769px) {
+  .landing-corner-mobile { display: none !important; }
+}
+
+/* How it works path */
+@media (max-width: 768px) {
+  .hiw-path, .hiw-arrow { display: none !important; }
+  .hiw-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+}
+
+/* Solution grid */
+@media (max-width: 768px) {
+  .sol-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .arch-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+}
+
+/* Features */
+@media (max-width: 768px) {
+  .feat-split { gap: 24px !important; }
+  .feat-showcase { height: 400px !important; }
+}
+
+/* Section padding on mobile */
+@media (max-width: 768px) {
+  .sec-pad { padding-top: 72px !important; padding-bottom: 72px !important; }
+  .sec-inner { padding-left: 20px !important; padding-right: 20px !important; }
 }

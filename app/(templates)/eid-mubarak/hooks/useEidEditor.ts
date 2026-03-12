@@ -44,6 +44,7 @@ export function useEidEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -341,10 +342,15 @@ export function useEidEditor() {
     [shareUrl, pushToast],
   );
 
-  const handleShare = useCallback(() => handleCopy(), [handleCopy]);
+  const handleShare = useCallback(() => {
+    if (!shareUrl) return;
+    setShowShareSheet(true);
+  }, [shareUrl]);
+
+  const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   return {
-    tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
+    tab, content, editMode, isPersonalized, shareUrl, showShareSheet, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, manualStep,
@@ -354,7 +360,7 @@ export function useEidEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth, closeAuthSuccess,
+    goBack, closeAuth, closeAuthSuccess, closeShareSheet,
     handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,

@@ -3,6 +3,7 @@
 import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import SocialShareSheet from "@/components/SocialShareSheet";
 import { useEidEditor } from "./hooks/useEidEditor";
 
 import StarField from "./components/StarField";
@@ -150,6 +151,13 @@ function EidMubarakPage() {
       </main>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+      <SocialShareSheet
+        open={editor.showShareSheet}
+        onClose={editor.closeShareSheet}
+        shareUrl={editor.shareUrl}
+        onCopy={editor.handleCopy}
+        shareMessage={`${editor.content.senderName || "Someone"} is sharing Eid Mubarak wishes${editor.content.recipientName ? ` for ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+      />
 
       <EditSheet
         editMode={editor.editMode}

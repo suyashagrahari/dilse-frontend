@@ -1,3 +1,5 @@
+"use client";
+
 import { configureStore } from "@reduxjs/toolkit";
 import templateEditReducer from "./templateEditSlice";
 import authReducer from "./authSlice";
