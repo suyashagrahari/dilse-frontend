@@ -957,9 +957,21 @@ export default function ProfilePage() {
     </motion.div>
   );
 
-  const myReferralLink = typeof window !== "undefined"
-    ? `${window.location.origin}/?ref=${referralInfo?.referralCode ?? user?.referralCode ?? ""}`
-    : `/?ref=${referralInfo?.referralCode ?? user?.referralCode ?? ""}`;
+  const refCode = referralInfo?.referralCode ?? user?.referralCode ?? "";
+  const myReferralLink = (() => {
+    if (user?.subdomain && ROOT_DOMAIN) {
+      // e.g. https://suyash.subhsandesh.in/?ref=CODE
+      return `https://${user.subdomain}.${ROOT_DOMAIN}/?ref=${refCode}`;
+    }
+    if (user?.subdomain && SITE_URL) {
+      // local dev fallback: http://localhost:3000/suyash/?ref=CODE
+      return `${SITE_URL}/${user.subdomain}/?ref=${refCode}`;
+    }
+    // No subdomain — use plain origin
+    return typeof window !== "undefined"
+      ? `${window.location.origin}/?ref=${refCode}`
+      : `${SITE_URL}/?ref=${refCode}`;
+  })();
 
   const txLabel = (type: string) => {
     if (type === "referral_signup") return "Joined via your referral";
