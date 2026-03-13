@@ -10,6 +10,8 @@ export interface AuthUser {
   provider: "local" | "google";
   theme?: "light" | "dark" | "system";
   subdomain?: string;
+  points?: number;
+  referralCode?: string;
 }
 
 interface AuthState {
@@ -46,13 +48,15 @@ export const registerUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      const referralCode = typeof window !== "undefined" ? localStorage.getItem("ref_code") ?? undefined : undefined;
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: apiHeaders(),
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Registration failed");
+      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");
@@ -94,13 +98,15 @@ export const googleLogin = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      const referralCode = typeof window !== "undefined" ? localStorage.getItem("ref_code") ?? undefined : undefined;
       const res = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: apiHeaders(),
-        body: JSON.stringify({ credential, profile }),
+        body: JSON.stringify({ credential, profile, referralCode }),
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Google login failed");
+      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");
@@ -316,6 +322,10 @@ function handleAuthFulfilled(
   saveToStorage(action.payload.accessToken, action.payload.refreshToken);
 }
 
+export const syncPoints = (points: number) => (dispatch: (action: { type: string; payload: number }) => void) => {
+  dispatch({ type: "auth/setPoints", payload: points });
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -352,6 +362,9 @@ const authSlice = createSlice({
           state.refreshToken = refresh;
         }
       }
+    },
+    setPoints(state, action: PayloadAction<number>) {
+      if (state.user) state.user.points = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -454,5 +467,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError, setAuthData, hydrateAuth } = authSlice.actions;
+export const { logout, clearAuthError, setAuthData, hydrateAuth, setPoints } = authSlice.actions;
 export default authSlice.reducer;

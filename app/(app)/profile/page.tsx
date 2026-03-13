@@ -7,7 +7,7 @@ import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
   Eye, EyeOff, Loader2, ChevronRight, Shield,
   ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
-  AtSign, Link2, Share2,
+  AtSign, Link2, Share2, Star, TrendingUp, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
@@ -121,7 +121,9 @@ interface ReceivedPage {
   senderAvatar: string | null; hasPassword: boolean; passwordVerified: boolean;
   passwordRaw?: string; viewCount: number; createdAt: string;
 }
-type ProfilePanel = "personal-link" | "account" | "creations" | "received";
+type ProfilePanel = "personal-link" | "account" | "creations" | "received" | "referral";
+interface ReferralInfo { points: number; totalPointsEarned: number; referralCode: string; referralCount: number; }
+interface PointTx { _id: string; type: string; delta: number; balance: number; meta: Record<string, string>; createdAt: string; }
 
 /* ── Reusable row component ── */
 function Row({ icon, label, value, accent = "green" }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent?: "green" | "blue" | "violet" | "amber" }) {
@@ -169,6 +171,11 @@ export default function ProfilePage() {
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareTargetUrl, setShareTargetUrl] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string>("Celebrate with me on SubhSandesh! ✨");
+
+  // Referral state
+  const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
+  const [pointsTxs, setPointsTxs] = useState<PointTx[]>([]);
+  const [referralCopied, setReferralCopied] = useState(false);
 
   // Subdomain state
   const [editingSubdomain, setEditingSubdomain] = useState(false);
@@ -240,9 +247,29 @@ export default function ProfilePage() {
     } catch { /* silent */ }
   }, [accessToken, authHeaders]);
 
+  const fetchReferralInfo = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const [infoRes, txRes] = await Promise.all([
+        fetch(`${API_URL}/referral/info`, { headers: authHeaders() }),
+        fetch(`${API_URL}/referral/transactions`, { headers: authHeaders() }),
+      ]);
+      const [infoData, txData] = await Promise.all([infoRes.json(), txRes.json()]);
+      if (infoData.success) setReferralInfo(infoData.data);
+      if (txData.success) setPointsTxs(txData.data);
+    } catch { /* silent */ }
+  }, [accessToken, authHeaders]);
+
   useEffect(() => {
-    if (isAuthenticated) { fetchDashboard(); fetchMyCreations(); fetchReceivedPages(); }
-  }, [isAuthenticated, fetchDashboard, fetchMyCreations, fetchReceivedPages]);
+    if (isAuthenticated) { fetchDashboard(); fetchMyCreations(); fetchReceivedPages(); fetchReferralInfo(); }
+  }, [isAuthenticated, fetchDashboard, fetchMyCreations, fetchReceivedPages, fetchReferralInfo]);
+
+  // Handle #referral hash to auto-navigate to referral tab
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#referral") {
+      setActivePanel("referral");
+    }
+  }, []);
 
   const handleSaveName = async () => {
     if (!nameInput.trim() || nameInput.trim() === user?.name) { setEditingName(false); return; }
@@ -930,10 +957,148 @@ export default function ProfilePage() {
     </motion.div>
   );
 
+  const myReferralLink = typeof window !== "undefined"
+    ? `${window.location.origin}/?ref=${referralInfo?.referralCode ?? user?.referralCode ?? ""}`
+    : `/?ref=${referralInfo?.referralCode ?? user?.referralCode ?? ""}`;
+
+  const txLabel = (type: string) => {
+    if (type === "referral_signup") return "Joined via your referral";
+    if (type === "referral_reward") return "Friend joined using your link";
+    if (type === "template_spend") return "Created a template";
+    if (type === "purchase") return "Purchased points";
+    if (type === "admin_grant") return "Bonus points granted";
+    return type;
+  };
+
+  const ReferralBlock = (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+      {sectionLabel("Points & Referrals")}
+
+      {/* Points balance card */}
+      <div className="rounded-2xl p-5 mb-4" style={{ background: "linear-gradient(135deg, #3d0c11 0%, #5a1520 60%, #3d0c11 100%)", border: "1px solid rgba(242,207,116,0.3)" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1" style={{ color: "rgba(242,207,116,0.7)" }}>Your Points</p>
+            <div className="flex items-end gap-2">
+              <p className="text-5xl font-black" style={{ color: "#f2cf74", fontFamily: "'Playfair Display', serif", lineHeight: 1 }}>
+                {referralInfo?.points ?? user?.points ?? 0}
+              </p>
+              <p className="text-sm font-bold pb-1" style={{ color: "rgba(242,207,116,0.6)" }}>pts</p>
+            </div>
+          </div>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(242,207,116,0.15)", border: "1px solid rgba(242,207,116,0.25)" }}>
+            <Star size={26} style={{ color: "#f2cf74" }} />
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 pt-3" style={{ borderTop: "1px solid rgba(242,207,116,0.15)" }}>
+          <TrendingUp size={12} style={{ color: "rgba(242,207,116,0.6)" }} />
+          <p className="text-[11px]" style={{ color: "rgba(242,207,116,0.6)" }}>
+            Total earned: <span style={{ color: "#f2cf74", fontWeight: 700 }}>{referralInfo?.totalPointsEarned ?? 0} pts</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Referral link card */}
+      <div className="rounded-2xl overflow-hidden mb-4" style={cardStyle}>
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a10)" }}>
+              <Gift size={16} style={{ color: "var(--app-accent)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold" style={{ color: "var(--app-text)" }}>Refer a Friend</p>
+              <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>Both of you get <span style={{ color: "var(--app-accent)", fontWeight: 700 }}>100 points</span> when they sign up</p>
+            </div>
+          </div>
+
+          {/* Referral code badge */}
+          <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
+            <p className="text-xs font-bold uppercase tracking-widest flex-1" style={{ color: "var(--app-accent)" }}>
+              Your Code: <span style={{ fontSize: 14, letterSpacing: "0.3em" }}>{referralInfo?.referralCode ?? user?.referralCode ?? "..."}</span>
+            </p>
+          </div>
+
+          {/* Referral link with copy */}
+          <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid var(--app-border)" }}>
+            <Link2 size={11} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
+            <p className="text-[11px] font-mono truncate flex-1" style={{ color: "var(--app-text-muted)" }}>
+              {myReferralLink}
+            </p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(myReferralLink); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all hover:scale-110"
+              style={{ background: referralCopied ? "var(--app-accent)" : "var(--app-surface)", color: referralCopied ? "#1a0507" : "var(--app-text-faint)" }}
+            >
+              {referralCopied ? <Check size={12} /> : <Copy size={12} />}
+            </button>
+          </div>
+
+          {/* Share button */}
+          <button
+            onClick={() => openSocialShare(myReferralLink, `🎁 Join SubhSandesh and get 100 bonus points! Use my referral link to sign up and create beautiful celebration pages.`)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
+            style={{ background: "#3d0c11", color: "#f5ede6", boxShadow: "0 6px 18px rgba(61,12,17,0.25)" }}
+          >
+            <Share2 size={15} />
+            Share Referral Link
+          </button>
+        </div>
+
+        {/* Stats row */}
+        <div className="flex divide-x" style={{ borderTop: "1px solid var(--app-border-faint)", divideColor: "var(--app-border-faint)" } as React.CSSProperties}>
+          <div className="flex-1 py-3 text-center">
+            <p className="text-xl font-black" style={{ color: "var(--app-text)" }}>{referralInfo?.referralCount ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--app-text-faint)" }}>Friends Referred</p>
+          </div>
+          <div className="flex-1 py-3 text-center">
+            <p className="text-xl font-black" style={{ color: "var(--app-accent)" }}>{(referralInfo?.referralCount ?? 0) * 100}</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--app-text-faint)" }}>Points Earned</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Points history */}
+      {pointsTxs.length > 0 && (
+        <div className="rounded-2xl overflow-hidden" style={cardStyle}>
+          <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--app-accent)" }}>Points History</p>
+          </div>
+          {pointsTxs.slice(0, 10).map((tx) => (
+            <div key={tx._id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: tx.delta > 0 ? "rgba(34,197,94,0.1)" : "rgba(248,113,113,0.1)" }}>
+                {tx.delta > 0
+                  ? <ArrowUpRight size={14} style={{ color: "#22c55e" }} />
+                  : <ArrowDownRight size={14} style={{ color: "#f87171" }} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold truncate" style={{ color: "var(--app-text)" }}>{txLabel(tx.type)}</p>
+                {tx.meta?.referrerName && <p className="text-[10px] truncate" style={{ color: "var(--app-text-faint)" }}>via {tx.meta.referrerName}</p>}
+                {tx.meta?.refereeName && <p className="text-[10px] truncate" style={{ color: "var(--app-text-faint)" }}>{tx.meta.refereeName}</p>}
+                <p className="text-[10px]" style={{ color: "var(--app-text-faint)" }}>{formatShortDate(tx.createdAt)}</p>
+              </div>
+              <p className="text-sm font-black shrink-0" style={{ color: tx.delta > 0 ? "#22c55e" : "#f87171" }}>
+                {tx.delta > 0 ? "+" : ""}{tx.delta}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {pointsTxs.length === 0 && (
+        <div className="rounded-2xl p-8 text-center" style={cardStyle}>
+          <Star size={28} className="mx-auto mb-3" style={{ color: "var(--app-accent)", opacity: 0.5 }} />
+          <p className="text-sm font-semibold mb-1" style={{ color: "var(--app-text)" }}>No points yet</p>
+          <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>Share your referral link to start earning 100 points per friend.</p>
+        </div>
+      )}
+    </motion.div>
+  );
+
   const activePanelContent =
     activePanel === "personal-link" ? SubdomainBlock :
     activePanel === "account" ? AccountBlock :
     activePanel === "creations" ? (CreationsBlock ?? EmptyCreationsBlock) :
+    activePanel === "referral" ? ReferralBlock :
     (ReceivedBlock ?? EmptyReceivedBlock);
 
   return (
@@ -954,6 +1119,7 @@ export default function ProfilePage() {
                 { id: "account" as ProfilePanel, icon: <Shield size={15} />, label: "Account Settings", hint: "Email and password" },
                 { id: "creations" as ProfilePanel, icon: <Sparkles size={15} />, label: "My Creations", hint: `${myCreations.length} item${myCreations.length === 1 ? "" : "s"}` },
                 { id: "received" as ProfilePanel, icon: <Users size={15} />, label: "Shared With You", hint: `${receivedPages.length} item${receivedPages.length === 1 ? "" : "s"}` },
+                { id: "referral" as ProfilePanel, icon: <Gift size={15} />, label: "Refer & Earn", hint: `${referralInfo?.points ?? user?.points ?? 0} pts · ${referralInfo?.referralCount ?? 0} friends` },
               ]).map((item) => {
                 const active = activePanel === item.id;
                 return (
@@ -1019,6 +1185,7 @@ export default function ProfilePage() {
 
           <div className="px-5 pt-4 pb-5">{StatsBlock}</div>
           <div className="px-5 pb-5">{SubdomainBlock}</div>
+          <div id="referral" className="px-5 pb-5">{ReferralBlock}</div>
           <div className="px-5 pb-5">{AccountBlock}</div>
           <div className="px-5 pb-5">{CreationsBlock ?? EmptyCreationsBlock}</div>
           <div className="px-5 pb-5">{ReceivedBlock ?? EmptyReceivedBlock}</div>

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -151,6 +151,7 @@ export default function BottomNav() {
             >
               {[
                 { label: "Profile", icon: <User size={15} />, href: "/profile" },
+                { label: "Refer & Earn", icon: <Gift size={15} />, href: "/profile#referral" },
                 { label: "About Us", icon: <Info size={15} />, href: "/about-us" },
                 { label: "Contact Us", icon: <Mail size={15} />, href: "/contact-us" },
                 { label: "Help", icon: <HelpCircle size={15} />, href: "/help" },
