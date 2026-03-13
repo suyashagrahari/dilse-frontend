@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import RefCodeCapture from "@/components/RefCodeCapture";
+import ReferralWelcomeOverlay from "@/components/ReferralWelcomeOverlay";
 
 export default function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -50,6 +51,7 @@ export default function AppLayoutShell({ children }: { children: React.ReactNode
   return (
     <div className={isHome ? "" : "pb-24 md:pb-0"}>
       <Suspense fallback={null}><RefCodeCapture /></Suspense>
+      <ReferralWelcomeOverlay />
       {children}
       {showInitialLoader && (
         <div

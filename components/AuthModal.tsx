@@ -26,6 +26,7 @@ import { ROOT_DOMAIN, SITE_URL } from "@/lib/config";
 interface AuthModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  defaultMode?: "login" | "register";
 }
 
 type AuthMode = "login" | "register";
@@ -53,11 +54,11 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }: AuthModalProps) {
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((s) => s.auth);
 
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(defaultMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
