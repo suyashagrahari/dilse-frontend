@@ -71,19 +71,24 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
   const [googleLoading, setGoogleLoading] = useState(false);
 
   // OTP state
-  const [otpValue, setOtpValue] = useState("");
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [otpEmail, setOtpEmail] = useState("");
+  const [otpError, setOtpError] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const otpValue = digits.join("");
 
   // Switch to OTP screen when pendingVerification is set
   useEffect(() => {
     if (pendingVerification?.email) {
       setOtpEmail(pendingVerification.email);
       setMode("otp");
-      setOtpValue("");
+      setDigits(["", "", "", "", "", ""]);
       setValidationError("");
+      setOtpError(false);
       startResendCooldown();
+      setTimeout(() => digitRefs.current[0]?.focus(), 100);
     }
   }, [pendingVerification]);
 
@@ -99,6 +104,47 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
   }
 
   useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+
+  const handleDigitChange = useCallback((index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    setDigits((prev) => {
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
+    setOtpError(false);
+    dispatch(clearAuthError());
+    if (digit && index < 5) {
+      setTimeout(() => digitRefs.current[index + 1]?.focus(), 0);
+    }
+  }, [dispatch]);
+
+  const handleDigitKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (digits[index]) {
+        setDigits((prev) => { const n = [...prev]; n[index] = ""; return n; });
+      } else if (index > 0) {
+        digitRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      digitRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      digitRefs.current[index + 1]?.focus();
+    }
+    // Enter handled in handleVerifyOtp via button click
+  }, [digits]);
+
+  const handleOtpPaste = useCallback((e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = [...pasted.split(""), ...Array(6).fill("")].slice(0, 6) as string[];
+    setDigits(next);
+    setOtpError(false);
+    dispatch(clearAuthError());
+    const focusIdx = Math.min(pasted.length, 5);
+    setTimeout(() => digitRefs.current[focusIdx]?.focus(), 0);
+  }, [dispatch]);
 
   const switchMode = useCallback(() => {
     setMode((m) => (m === "login" || m === "otp" ? "register" : "login"));
@@ -150,7 +196,9 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
 
   const handleVerifyOtp = useCallback(async () => {
     if (otpValue.length !== 6) {
-      setValidationError("Please enter the 6-digit code");
+      setOtpError(true);
+      setValidationError("Please enter all 6 digits");
+      setTimeout(() => setOtpError(false), 600);
       return;
     }
     try {
@@ -158,7 +206,12 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
       dispatch(fetchFavorites());
       onSuccess();
     } catch {
-      // Error shown via redux error
+      setOtpError(true);
+      setDigits(["", "", "", "", "", ""]);
+      setTimeout(() => {
+        setOtpError(false);
+        digitRefs.current[0]?.focus();
+      }, 600);
     }
   }, [otpValue, otpEmail, dispatch, onSuccess]);
 
@@ -345,88 +398,175 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
               {/* ── OTP SCREEN ── */}
               {mode === "otp" && (
                 <>
-                  {/* Icon */}
-                  <div className="flex justify-center py-2">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "rgba(201,168,76,0.12)", border: "1.5px solid rgba(201,168,76,0.35)" }}>
-                      <ShieldCheck size={28} style={{ color: "#c9a84c" }} />
-                    </div>
+                  {/* Decorative icon */}
+                  <div className="flex justify-center pt-1 pb-2">
+                    <motion.div
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                      className="relative"
+                    >
+                      <div style={{
+                        width: 76, height: 76, borderRadius: 22,
+                        background: "linear-gradient(135deg,rgba(201,168,76,0.14) 0%,rgba(201,168,76,0.04) 100%)",
+                        border: "2px solid rgba(201,168,76,0.42)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 8px 24px rgba(201,168,76,0.14)",
+                      }}>
+                        <Mail size={32} style={{ color: "#c9a84c" }} />
+                      </div>
+                      {/* Verified badge */}
+                      <div style={{
+                        position: "absolute", bottom: -6, right: -6,
+                        width: 26, height: 26, borderRadius: "50%",
+                        background: "linear-gradient(135deg,#4d1016,#3d0c11)",
+                        border: "2px solid #f5ede6",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <ShieldCheck size={12} style={{ color: "#c9a84c" }} />
+                      </div>
+                    </motion.div>
                   </div>
 
-                  {/* OTP input */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={6}
-                      value={otpValue}
-                      onChange={(e) => {
-                        setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6));
-                        setValidationError("");
-                        dispatch(clearAuthError());
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
-                      placeholder="Enter 6-digit code"
-                      autoFocus
-                      style={{
-                        ...fieldStyle,
-                        textAlign: "center",
-                        fontSize: 26,
-                        fontWeight: 700,
-                        letterSpacing: "0.28em",
-                        paddingLeft: 16,
-                        paddingRight: 16,
-                      }}
-                      disabled={isLoading}
-                    />
+                  {/* 6 digit boxes */}
+                  <motion.div
+                    className="flex justify-center gap-2"
+                    animate={otpError ? { x: [0, -6, 6, -6, 6, -3, 3, 0] } : {}}
+                    transition={{ duration: 0.45 }}
+                  >
+                    {digits.map((digit, i) => (
+                      <motion.input
+                        key={i}
+                        ref={(el) => { digitRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
+                        value={digit}
+                        onChange={(e) => handleDigitChange(i, e.target.value)}
+                        onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                        onPaste={handleOtpPaste}
+                        onFocus={(e) => e.target.select()}
+                        disabled={isLoading}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05, type: "spring", stiffness: 300, damping: 22 }}
+                        style={{
+                          width: 46, height: 58,
+                          textAlign: "center",
+                          fontSize: 24, fontWeight: 800,
+                          borderRadius: 14,
+                          background: digit
+                            ? "linear-gradient(135deg,rgba(201,168,76,0.1) 0%,rgba(201,168,76,0.04) 100%)"
+                            : "rgba(255,255,255,0.92)",
+                          border: `2px solid ${
+                            otpError
+                              ? "rgba(159,49,49,0.5)"
+                              : digit
+                              ? "rgba(201,168,76,0.65)"
+                              : "rgba(61,12,17,0.14)"
+                          }`,
+                          color: "#2a0a0e",
+                          outline: "none",
+                          boxShadow: digit && !otpError
+                            ? "0 3px 12px rgba(201,168,76,0.18)"
+                            : otpError
+                            ? "0 3px 12px rgba(159,49,49,0.12)"
+                            : "none",
+                          transition: "border 0.18s ease, background 0.18s ease, box-shadow 0.18s ease",
+                          cursor: "text",
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+
+                  {/* Digit progress dots */}
+                  <div className="flex justify-center gap-1.5 pb-1">
+                    {digits.map((d, i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ scale: d ? 1 : 0.7, opacity: d ? 1 : 0.3 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        style={{
+                          width: d ? 18 : 6, height: 6,
+                          borderRadius: 99,
+                          background: otpError ? "rgba(159,49,49,0.5)" : d ? "#c9a84c" : "rgba(61,12,17,0.18)",
+                          transition: "width 0.2s ease",
+                        }}
+                      />
+                    ))}
                   </div>
 
-                  {/* Error */}
+                  {/* Error message */}
                   <AnimatePresence>
                     {displayError && (
                       <motion.div
-                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                        className="flex items-start gap-2 text-sm rounded-xl px-4 py-2.5"
-                        style={{ color: "#9f3131", background: "rgba(159,49,49,0.08)", border: "1px solid rgba(159,49,49,0.2)" }}
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="flex items-center gap-2 text-sm rounded-xl px-4 py-2.5"
+                        style={{ color: "#9f3131", background: "rgba(159,49,49,0.07)", border: "1px solid rgba(159,49,49,0.18)" }}
                       >
-                        <span className="shrink-0 mt-0.5">!</span>
+                        <span className="shrink-0 font-bold">!</span>
                         <span>{displayError}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
                   {/* Verify button */}
-                  <button
+                  <motion.button
                     onClick={handleVerifyOtp}
                     disabled={isLoading || otpValue.length !== 6}
-                    className="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] mt-1"
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     style={{
-                      background: "linear-gradient(145deg,#4d1016 0%,#3d0c11 60%,#2c090d 100%)",
+                      background: otpValue.length === 6
+                        ? "linear-gradient(145deg,#4d1016 0%,#3d0c11 60%,#2c090d 100%)"
+                        : "linear-gradient(145deg,#8a5a5a 0%,#7a4a4a 100%)",
                       color: "#f5ede6",
-                      boxShadow: "0 12px 28px rgba(61,12,17,0.25), inset 0 1px 0 rgba(255,220,160,0.18)",
-                      border: "1px solid rgba(201,168,76,0.38)",
+                      boxShadow: otpValue.length === 6 ? "0 12px 28px rgba(61,12,17,0.28), inset 0 1px 0 rgba(255,220,160,0.18)" : "none",
+                      border: "1px solid rgba(201,168,76,0.35)",
+                      transition: "all 0.25s ease",
                     }}
                   >
-                    {isLoading ? <><Loader2 size={16} className="animate-spin" />Verifying...</> : <><ShieldCheck size={15} />Verify Email</>}
-                  </button>
+                    {isLoading
+                      ? <><Loader2 size={16} className="animate-spin" />Verifying...</>
+                      : <><ShieldCheck size={15} />Verify Email</>
+                    }
+                  </motion.button>
 
-                  {/* Resend */}
-                  <div className="text-center pt-1">
-                    <button
-                      onClick={handleResendOtp}
-                      disabled={resendCooldown > 0 || isLoading}
-                      className="inline-flex items-center gap-1.5 text-[13px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ color: resendCooldown > 0 ? "#9a7070" : "#c9a84c" }}
-                    >
-                      <RotateCcw size={13} />
-                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
-                    </button>
+                  {/* Resend with circular timer */}
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    {resendCooldown > 0 ? (
+                      <>
+                        <svg width="22" height="22" viewBox="0 0 22 22" className="shrink-0" style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx="11" cy="11" r="8.5" fill="none" stroke="rgba(61,12,17,0.1)" strokeWidth="2.5" />
+                          <circle
+                            cx="11" cy="11" r="8.5" fill="none"
+                            stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 8.5}`}
+                            strokeDashoffset={`${2 * Math.PI * 8.5 * (resendCooldown / 60)}`}
+                            style={{ transition: "stroke-dashoffset 1s linear" }}
+                          />
+                        </svg>
+                        <span style={{ fontSize: 13, color: "#9a7070", fontWeight: 500 }}>
+                          Resend in <strong style={{ color: "#7a5555" }}>{resendCooldown}s</strong>
+                        </span>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleResendOtp}
+                        disabled={isLoading}
+                        className="inline-flex items-center gap-1.5 text-[13px] font-semibold transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{ color: "#c9a84c" }}
+                      >
+                        <RotateCcw size={13} />
+                        Didn&apos;t receive it? Resend code
+                      </button>
+                    )}
                   </div>
 
-                  {/* Back to login */}
-                  <p className="text-center text-[13px] pb-2" style={{ color: "#7a5555" }}>
+                  {/* Back */}
+                  <p className="text-center text-[12px] pb-1" style={{ color: "#9a7070" }}>
                     Wrong account?{" "}
-                    <button onClick={switchMode} className="font-semibold" style={{ color: "#c9a84c" }}>
+                    <button onClick={switchMode} className="font-semibold underline underline-offset-2" style={{ color: "#7a5555" }}>
                       Back to sign in
                     </button>
                   </p>
