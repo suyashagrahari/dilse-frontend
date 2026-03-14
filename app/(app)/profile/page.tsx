@@ -967,10 +967,9 @@ export default function ProfilePage() {
       // local dev fallback: http://localhost:3000/suyash/?ref=CODE
       return `${SITE_URL}/${user.subdomain}/?ref=${refCode}`;
     }
-    // No subdomain — use plain origin
-    return typeof window !== "undefined"
-      ? `${window.location.origin}/?ref=${refCode}`
-      : `${SITE_URL}/?ref=${refCode}`;
+    // No subdomain — always use the main domain, never the current window origin
+    // (user may be visiting via someone else's subdomain)
+    return `${SITE_URL}/?ref=${refCode}`;
   })();
 
   const txLabel = (type: string) => {
