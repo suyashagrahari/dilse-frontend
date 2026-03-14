@@ -21,6 +21,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  pendingVerification: { email: string } | null;
 }
 
 const initialState: AuthState = {
@@ -30,6 +31,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  pendingVerification: null,
 };
 
 import { API_URL, IS_NGROK } from "@/lib/config";
@@ -64,6 +66,43 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const verifyOtp = createAsyncThunk(
+  "auth/verifyOtp",
+  async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) return rejectWithValue(data.error || "Verification failed");
+      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
+      return data.data;
+    } catch {
+      return rejectWithValue("Network error. Please try again.");
+    }
+  }
+);
+
+export const resendOtp = createAsyncThunk(
+  "auth/resendOtp",
+  async ({ email }: { email: string }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-otp`, {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) return rejectWithValue(data.error || "Failed to resend code");
+      return data.message;
+    } catch {
+      return rejectWithValue("Network error. Please try again.");
+    }
+  }
+);
+
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (
@@ -77,7 +116,13 @@ export const loginUser = createAsyncThunk(
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) return rejectWithValue(data.error || "Login failed");
+      if (!res.ok) {
+        // Unverified account — treat as fulfilled so we can show OTP screen
+        if (res.status === 403 && data.requiresVerification) {
+          return { requiresVerification: true, email: data.email };
+        }
+        return rejectWithValue(data.error || "Login failed");
+      }
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");
@@ -366,6 +411,9 @@ const authSlice = createSlice({
     setPoints(state, action: PayloadAction<number>) {
       if (state.user) state.user.points = action.payload;
     },
+    clearPendingVerification(state) {
+      state.pendingVerification = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -373,7 +421,16 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, handleAuthFulfilled)
+      .addCase(registerUser.fulfilled, (state, action) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload = action.payload as any;
+        if (payload?.requiresVerification) {
+          state.pendingVerification = { email: payload.email };
+          state.isLoading = false;
+          return;
+        }
+        handleAuthFulfilled(state, action as Parameters<typeof handleAuthFulfilled>[1]);
+      })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
@@ -383,8 +440,30 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, handleAuthFulfilled)
+      .addCase(loginUser.fulfilled, (state, action) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload = action.payload as any;
+        if (payload?.requiresVerification) {
+          state.pendingVerification = { email: payload.email };
+          state.isLoading = false;
+          return;
+        }
+        handleAuthFulfilled(state, action as Parameters<typeof handleAuthFulfilled>[1]);
+      })
       .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(verifyOtp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.pendingVerification = null;
+        handleAuthFulfilled(state, action as Parameters<typeof handleAuthFulfilled>[1]);
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
@@ -467,5 +546,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError, setAuthData, hydrateAuth, setPoints } = authSlice.actions;
+export const { logout, clearAuthError, setAuthData, hydrateAuth, setPoints, clearPendingVerification } = authSlice.actions;
 export default authSlice.reducer;

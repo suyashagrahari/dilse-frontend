@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
   Mail,
   Lock,
   User,
@@ -11,6 +10,8 @@ import {
   EyeOff,
   ArrowRight,
   Loader2,
+  ShieldCheck,
+  RotateCcw,
 } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -18,7 +19,10 @@ import {
   registerUser,
   loginUser,
   googleLogin,
+  verifyOtp,
+  resendOtp,
   clearAuthError,
+  clearPendingVerification,
 } from "@/store/authSlice";
 import { fetchFavorites } from "@/store/favoritesSlice";
 import { ROOT_DOMAIN, SITE_URL } from "@/lib/config";
@@ -29,7 +33,7 @@ interface AuthModalProps {
   defaultMode?: "login" | "register";
 }
 
-type AuthMode = "login" | "register";
+type AuthMode = "login" | "register" | "otp";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -56,7 +60,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }: AuthModalProps) {
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((s) => s.auth);
+  const { isLoading, error, pendingVerification } = useAppSelector((s) => s.auth);
 
   const [mode, setMode] = useState<AuthMode>(defaultMode);
   const [name, setName] = useState("");
@@ -66,10 +70,41 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
   const [validationError, setValidationError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  // OTP state
+  const [otpValue, setOtpValue] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Switch to OTP screen when pendingVerification is set
+  useEffect(() => {
+    if (pendingVerification?.email) {
+      setOtpEmail(pendingVerification.email);
+      setMode("otp");
+      setOtpValue("");
+      setValidationError("");
+      startResendCooldown();
+    }
+  }, [pendingVerification]);
+
+  function startResendCooldown() {
+    setResendCooldown(60);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((c) => {
+        if (c <= 1) { clearInterval(cooldownRef.current!); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+
   const switchMode = useCallback(() => {
-    setMode((m) => (m === "login" ? "register" : "login"));
+    setMode((m) => (m === "login" || m === "otp" ? "register" : "login"));
     setValidationError("");
     dispatch(clearAuthError());
+    dispatch(clearPendingVerification());
   }, [dispatch]);
 
   const validate = (): boolean => {
@@ -100,17 +135,43 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
   const handleSubmit = useCallback(async () => {
     if (!validate()) return;
     try {
-      if (mode === "register") {
-        await dispatch(registerUser({ name, email, password })).unwrap();
-      } else {
-        await dispatch(loginUser({ email, password })).unwrap();
-      }
+      const result = mode === "register"
+        ? await dispatch(registerUser({ name, email, password })).unwrap()
+        : await dispatch(loginUser({ email, password })).unwrap();
+      // If requiresVerification, extraReducers already set pendingVerification → useEffect switches to OTP
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((result as any)?.requiresVerification) return;
       dispatch(fetchFavorites());
       onSuccess();
     } catch {
       // Error handled by Redux
     }
   }, [mode, name, email, password, dispatch, onSuccess]);
+
+  const handleVerifyOtp = useCallback(async () => {
+    if (otpValue.length !== 6) {
+      setValidationError("Please enter the 6-digit code");
+      return;
+    }
+    try {
+      await dispatch(verifyOtp({ email: otpEmail, otp: otpValue })).unwrap();
+      dispatch(fetchFavorites());
+      onSuccess();
+    } catch {
+      // Error shown via redux error
+    }
+  }, [otpValue, otpEmail, dispatch, onSuccess]);
+
+  const handleResendOtp = useCallback(async () => {
+    if (resendCooldown > 0) return;
+    try {
+      await dispatch(resendOtp({ email: otpEmail })).unwrap();
+      startResendCooldown();
+      setValidationError("");
+    } catch {
+      // Error shown via redux error
+    }
+  }, [otpEmail, resendCooldown, dispatch]);
 
   // Helper: finish login after we have an access_token (used by both flows)
   const finishGoogleLogin = useCallback(async (accessToken: string) => {
@@ -167,6 +228,9 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
 
   const displayError = validationError || error;
   const anyLoading = isLoading || googleLoading;
+  const maskedEmail = otpEmail
+    ? otpEmail.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(Math.max(1, b.length)) + c)
+    : "";
   const CORNER_FILTER =
     "brightness(0) saturate(100%) invert(8%) sepia(55%) saturate(2800%) hue-rotate(330deg) brightness(90%) contrast(120%)";
 
@@ -250,7 +314,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
               animate={{ opacity: 1, y: 0 }}
               style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, lineHeight: 1.02, fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.02em" }}
             >
-              {mode === "login" ? "Welcome Back" : "Create Account"}
+              {mode === "otp" ? "Check Your Email" : mode === "login" ? "Welcome Back" : "Create Account"}
             </motion.h3>
           </div>
           <motion.p
@@ -259,7 +323,9 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
             animate={{ opacity: 1 }}
             style={{ fontSize: 14, color: "#7a5555" }}
           >
-            {mode === "login"
+            {mode === "otp"
+              ? `We sent a 6-digit code to ${maskedEmail}`
+              : mode === "login"
               ? "Sign in to save and personalize your templates"
               : "Join to create beautiful personalized gifts"}
           </motion.p>
@@ -270,12 +336,105 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
-              initial={{ opacity: 0, x: mode === "login" ? -60 : 60 }}
+              initial={{ opacity: 0, x: mode === "otp" ? 60 : mode === "login" ? -60 : 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: mode === "login" ? 60 : -60 }}
               transition={{ type: "spring", stiffness: 350, damping: 32 }}
               className="space-y-3"
             >
+              {/* ── OTP SCREEN ── */}
+              {mode === "otp" && (
+                <>
+                  {/* Icon */}
+                  <div className="flex justify-center py-2">
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "rgba(201,168,76,0.12)", border: "1.5px solid rgba(201,168,76,0.35)" }}>
+                      <ShieldCheck size={28} style={{ color: "#c9a84c" }} />
+                    </div>
+                  </div>
+
+                  {/* OTP input */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={otpValue}
+                      onChange={(e) => {
+                        setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        setValidationError("");
+                        dispatch(clearAuthError());
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
+                      placeholder="Enter 6-digit code"
+                      autoFocus
+                      style={{
+                        ...fieldStyle,
+                        textAlign: "center",
+                        fontSize: 26,
+                        fontWeight: 700,
+                        letterSpacing: "0.28em",
+                        paddingLeft: 16,
+                        paddingRight: 16,
+                      }}
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* Error */}
+                  <AnimatePresence>
+                    {displayError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                        className="flex items-start gap-2 text-sm rounded-xl px-4 py-2.5"
+                        style={{ color: "#9f3131", background: "rgba(159,49,49,0.08)", border: "1px solid rgba(159,49,49,0.2)" }}
+                      >
+                        <span className="shrink-0 mt-0.5">!</span>
+                        <span>{displayError}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Verify button */}
+                  <button
+                    onClick={handleVerifyOtp}
+                    disabled={isLoading || otpValue.length !== 6}
+                    className="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] mt-1"
+                    style={{
+                      background: "linear-gradient(145deg,#4d1016 0%,#3d0c11 60%,#2c090d 100%)",
+                      color: "#f5ede6",
+                      boxShadow: "0 12px 28px rgba(61,12,17,0.25), inset 0 1px 0 rgba(255,220,160,0.18)",
+                      border: "1px solid rgba(201,168,76,0.38)",
+                    }}
+                  >
+                    {isLoading ? <><Loader2 size={16} className="animate-spin" />Verifying...</> : <><ShieldCheck size={15} />Verify Email</>}
+                  </button>
+
+                  {/* Resend */}
+                  <div className="text-center pt-1">
+                    <button
+                      onClick={handleResendOtp}
+                      disabled={resendCooldown > 0 || isLoading}
+                      className="inline-flex items-center gap-1.5 text-[13px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ color: resendCooldown > 0 ? "#9a7070" : "#c9a84c" }}
+                    >
+                      <RotateCcw size={13} />
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
+                    </button>
+                  </div>
+
+                  {/* Back to login */}
+                  <p className="text-center text-[13px] pb-2" style={{ color: "#7a5555" }}>
+                    Wrong account?{" "}
+                    <button onClick={switchMode} className="font-semibold" style={{ color: "#c9a84c" }}>
+                      Back to sign in
+                    </button>
+                  </p>
+                </>
+              )}
+
+              {/* ── LOGIN / REGISTER SCREEN ── */}
+              {mode !== "otp" && (<>
               {/* Form Fields */}
               {mode === "register" && (
                 <motion.div
@@ -438,6 +597,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
                   {mode === "login" ? "Sign Up" : "Sign In"}
                 </button>
               </p>
+              </>)}
             </motion.div>
           </AnimatePresence>
         </div>
