@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { OCCASIONS } from "./data";
+
+const OCCASION_ROUTES: Record<string, string> = {
+  'Weddings & Shaadi': '/wedding-shaadi',
+  'Birthdays': '/birthday',
+  "Valentine's Day": '/valentine',
+  'Holi': '/holi',
+  'Eid Mubarak': '/eid-mubarak',
+  'Reception': '/reception',
+};
 
 const stagger = {
   hidden: {},
@@ -24,10 +33,10 @@ function OccIcon({ type, size = 18, color = '#c9a84c' }: { type: string; size?: 
   return <svg {...c}><path d="M12 3.8l1.5 3.6 3.6 1.5-3.6 1.5-1.5 3.6-1.5-3.6-3.6-1.5 3.6-1.5L12 3.8z" /></svg>;
 }
 
-function OccCard({ occ }: { occ: typeof OCCASIONS[0] }) {
+function OccCard({ occ, onClick }: { occ: typeof OCCASIONS[0]; onClick: () => void }) {
   const [hov, setHov] = useState(false);
   return (
-    <div className="occ-card-wrap" style={{ flexShrink: 0, width: 200 }} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+    <div className="occ-card-wrap" style={{ flexShrink: 0, width: 200, cursor: 'pointer' }} onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
       <div style={{
         borderRadius: '54% 54% 18px 18px / 20% 20% 18px 18px',
         overflow: 'hidden', height: 300, position: 'relative',
@@ -62,7 +71,64 @@ function OccCard({ occ }: { occ: typeof OCCASIONS[0] }) {
 
 export default function OccasionsSection() {
   const router = useRouter();
-  const allCards = [...OCCASIONS, ...OCCASIONS];
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const pausedRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const lastTsRef = useRef<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const normalizeScrollPosition = (el: HTMLDivElement) => {
+    const half = el.scrollWidth / 2;
+    if (!half) return;
+    if (el.scrollLeft >= half) el.scrollLeft -= half;
+    if (el.scrollLeft < 0) el.scrollLeft += half;
+  };
+
+  const scrollTrack = (direction: "left" | "right") => {
+    const el = trackRef.current;
+    if (!el) return;
+    normalizeScrollPosition(el);
+    const step = Math.max(220, Math.floor(el.clientWidth * 0.62));
+    el.scrollBy({
+      left: direction === "left" ? -step : step,
+      behavior: "smooth",
+    });
+  };
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth <= 768);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
+    const el = trackRef.current;
+    if (!el) return;
+
+    const speedPxPerMs = 0.038;
+
+    const tick = (ts: number) => {
+      if (lastTsRef.current == null) lastTsRef.current = ts;
+      const dt = ts - lastTsRef.current;
+      lastTsRef.current = ts;
+
+      if (!pausedRef.current) {
+        el.scrollLeft += dt * speedPxPerMs;
+        normalizeScrollPosition(el);
+      }
+
+      rafRef.current = window.requestAnimationFrame(tick);
+    };
+
+    rafRef.current = window.requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastTsRef.current = null;
+    };
+  }, [isMobile]);
 
   return (
     <section id="occasions" className="occ-section" style={{ background: 'linear-gradient(180deg,#1e0305 0%,#3d0c11 45%,#1e0305 100%)', padding: '110px 0 120px', position: 'relative', overflow: 'hidden' }}>
@@ -110,24 +176,95 @@ export default function OccasionsSection() {
         </motion.div>
       </div>
 
-      {/* Infinite scroll track */}
+      {/* Manual scroll track */}
       <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.8 }} style={{ position: 'relative', zIndex: 1 }}>
-        <div className="occ-fade-l" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 140, background: 'linear-gradient(90deg,#1e0305,transparent)', zIndex: 10, pointerEvents: 'none' }} />
-        <div className="occ-fade-r" style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 140, background: 'linear-gradient(270deg,#1e0305,transparent)', zIndex: 10, pointerEvents: 'none' }} />
+        <div className="occ-fade-l" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 80, background: 'linear-gradient(90deg,#1e0305,transparent)', zIndex: 10, pointerEvents: 'none' }} />
+        <div className="occ-fade-r" style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 80, background: 'linear-gradient(270deg,#1e0305,transparent)', zIndex: 10, pointerEvents: 'none' }} />
 
-        <div style={{ overflow: 'hidden', padding: '16px 0 20px' }}>
-          <div style={{ display: 'flex', gap: 20, animation: 'marquee 32s linear infinite', width: 'max-content' }}>
-            {allCards.map((o, i) => <OccCard key={i} occ={o} />)}
+        <button
+          type="button"
+          onClick={() => scrollTrack("left")}
+          aria-label="Scroll occasions left"
+          style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 34,
+            height: 34,
+            borderRadius: 999,
+            border: "1px solid rgba(201,168,76,0.35)",
+            background: "rgba(30,3,5,0.78)",
+            color: "#c9a84c",
+            zIndex: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollTrack("right")}
+          aria-label="Scroll occasions right"
+          style={{
+            position: "absolute",
+            right: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 34,
+            height: 34,
+            borderRadius: 999,
+            border: "1px solid rgba(201,168,76,0.35)",
+            background: "rgba(30,3,5,0.78)",
+            color: "#c9a84c",
+            zIndex: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+
+        <div
+          ref={trackRef}
+          className="occ-scroll-track"
+          onMouseEnter={() => { pausedRef.current = true; }}
+          onMouseLeave={() => { pausedRef.current = false; }}
+          onTouchStart={() => { pausedRef.current = true; }}
+          onTouchEnd={() => { pausedRef.current = false; }}
+          onTouchCancel={() => { pausedRef.current = false; }}
+          style={{ overflowX: 'auto', padding: '16px 44px 20px', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        >
+          <div style={{ display: 'flex', gap: 20, width: 'max-content' }}>
+            {(isMobile ? OCCASIONS : [...OCCASIONS, ...OCCASIONS]).map((o, i) => (
+              <OccCard key={`${o.name}-${i}`} occ={o} onClick={() => router.push(OCCASION_ROUTES[o.name] || '/templates')} />
+            ))}
           </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ width: 28, height: 1, background: 'rgba(201,168,76,0.3)' }} />
-          <span className="occ-hint-desktop" style={{ fontSize: 11, color: 'rgba(245,237,230,0.3)', letterSpacing: '0.12em', fontWeight: 600 }}>HOVER TO PAUSE · SCROLL TO EXPLORE</span>
-          <span className="occ-hint-mobile" style={{ display: 'none', fontSize: 10, color: 'rgba(245,237,230,0.3)', letterSpacing: '0.12em', fontWeight: 600 }}>SWIPE TO EXPLORE</span>
+          <span className="occ-hint-desktop" style={{ fontSize: 11, color: 'rgba(245,237,230,0.3)', letterSpacing: '0.12em', fontWeight: 600 }}>SCROLL TO EXPLORE · CLICK TO CREATE</span>
+          <span className="occ-hint-mobile" style={{ display: 'none', fontSize: 10, color: 'rgba(245,237,230,0.3)', letterSpacing: '0.12em', fontWeight: 600 }}>SWIPE TO EXPLORE · TAP TO CREATE</span>
           <div style={{ width: 28, height: 1, background: 'rgba(201,168,76,0.3)' }} />
         </div>
       </motion.div>
+
+      <style>{`
+        .occ-scroll-track::-webkit-scrollbar { display: none; }
+        .occ-scroll-track { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
       {/* CTA */}
       <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.7, delay: 0.2 }}

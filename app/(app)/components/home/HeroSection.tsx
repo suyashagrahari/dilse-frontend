@@ -1,6 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+
+const SHOWCASE_ROUTES: Record<string, string> = {
+  holi: '/holi',
+  eid: '/eid-mubarak',
+  birthday: '/birthday',
+  anniversary: '/templates',
+  wedding: '/wedding-shaadi',
+  family: '/templates',
+};
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { SHOWCASE_ITEMS } from "./data";
@@ -28,6 +37,9 @@ function getCardSize(off: number) {
 export default function HeroSection() {
   const [active, setActive] = useState(0);
   const router = useRouter();
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const didSwipeRef = useRef(false);
   const tab = useMemo(() => SHOWCASE_ITEMS[active], [active]);
   const tagLabels = useMemo(
     () => SHOWCASE_ITEMS.map((s) => s.tag.charAt(0) + s.tag.slice(1).toLowerCase()),
@@ -53,9 +65,46 @@ export default function HeroSection() {
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
   const selectItem = useCallback((index: number) => setActive(index), []);
   const selectOffsetItem = useCallback(
-    (offset: number) => setActive((prev) => ((prev + offset) % TOT + TOT) % TOT),
-    []
+    (offset: number, itemId?: string) => {
+      if (didSwipeRef.current) {
+        didSwipeRef.current = false;
+        return;
+      }
+      if (offset === 0 && itemId) {
+        router.push(SHOWCASE_ROUTES[itemId] || '/templates');
+      } else {
+        setActive((prev) => ((prev + offset) % TOT + TOT) % TOT);
+      }
+    },
+    [router]
   );
+
+  const onCarouselTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const t = e.touches[0];
+    touchStartXRef.current = t.clientX;
+    touchStartYRef.current = t.clientY;
+  };
+
+  const onCarouselTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartXRef.current == null || touchStartYRef.current == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartXRef.current;
+    const dy = t.clientY - touchStartYRef.current;
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    if (Math.abs(dx) < 34 || Math.abs(dx) < Math.abs(dy)) return;
+
+    didSwipeRef.current = true;
+    setActive((prev) => ((prev + (dx < 0 ? 1 : -1)) % TOT + TOT) % TOT);
+    window.setTimeout(() => {
+      didSwipeRef.current = false;
+    }, 180);
+  };
+
+  const moveCarousel = useCallback((dir: "prev" | "next") => {
+    setActive((prev) => ((prev + (dir === "next" ? 1 : -1)) % TOT + TOT) % TOT);
+  }, []);
 
   return (
     <section id="hero" className="hero-section" style={{
@@ -252,7 +301,68 @@ export default function HeroSection() {
             </div>
 
             {/* Sliding Carousel */}
-            <div style={{ position: 'relative', marginTop: 14, overflow: 'hidden', height: 226 }}>
+            <div
+              style={{ position: 'relative', marginTop: 14, overflow: 'hidden', height: 226, touchAction: 'pan-y' }}
+              onTouchStart={onCarouselTouchStart}
+              onTouchEnd={onCarouselTouchEnd}
+            >
+              <button
+                type="button"
+                className="hero-carousel-arrow hero-carousel-arrow-left"
+                onClick={() => moveCarousel("prev")}
+                aria-label="Previous template"
+                style={{
+                  position: "absolute",
+                  left: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  border: "1px solid rgba(61,12,17,0.18)",
+                  background: "rgba(245,237,230,0.88)",
+                  color: "#3d0c11",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  zIndex: 20,
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="hero-carousel-arrow hero-carousel-arrow-right"
+                onClick={() => moveCarousel("next")}
+                aria-label="Next template"
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  border: "1px solid rgba(61,12,17,0.18)",
+                  background: "rgba(245,237,230,0.88)",
+                  color: "#3d0c11",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  zIndex: 20,
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+
               {carouselCards.map(({ key, item, offset }) => {
                 const sz = getCardSize(offset);
                 const isC = offset === 0;
@@ -262,7 +372,7 @@ export default function HeroSection() {
                     key={key}
                     animate={{ x: xPos, opacity: sz.op, y: sz.y, width: sz.w, height: sz.h }}
                     transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-                    onClick={() => selectOffsetItem(offset)}
+                    onClick={() => selectOffsetItem(offset, item.id)}
                     style={{
                       position: 'absolute', left: '50%', top: isC ? 18 : 32,
                       borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
@@ -293,6 +403,11 @@ export default function HeroSection() {
                     {isC && (
                       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)' }} />
                     )}
+                    {isC && (
+                      <div style={{ position: 'absolute', top: 9, left: 9, background: 'rgba(201,168,76,0.18)', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 4, padding: '2px 6px', fontSize: 7, fontWeight: 700, letterSpacing: '1.2px', color: '#c9a84c' }}>
+                        OPEN →
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
@@ -308,9 +423,11 @@ export default function HeroSection() {
       </div>
 
       <style>{`
+        .hero-carousel-arrow { display: none; }
         @media (max-width: 768px) {
           .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .hero-copy-pane { text-align: center; }
+          .hero-carousel-arrow { display: inline-flex; }
         }
       `}</style>
     </section>
