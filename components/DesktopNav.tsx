@@ -56,9 +56,9 @@ export default function DesktopNav() {
     padding: "0 2px",
     color: active ? "#8b5a2b" : "#2a0a0e",
     opacity: active ? 1 : 0.72,
-    fontSize: 11.5,
+    fontSize: "clamp(10px, 0.72vw, 11.5px)",
     fontWeight: 700,
-    letterSpacing: "0.24em",
+    letterSpacing: "0.2em",
     textTransform: "uppercase",
     cursor: "pointer",
     whiteSpace: "nowrap",
@@ -69,7 +69,7 @@ export default function DesktopNav() {
   return (
     <header
       className="hidden md:flex fixed top-0 left-0 right-0 z-50 justify-center"
-      style={{ padding: "14px 140px 0", pointerEvents: "none" }}
+      style={{ padding: "14px clamp(20px, 5vw, 120px) 0", pointerEvents: "none" }}
     >
       <motion.div
         initial={{ opacity: 0, y: -24 }}
@@ -77,8 +77,7 @@ export default function DesktopNav() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         style={{
           pointerEvents: "all",
-          width: "100%",
-          maxWidth: 860,
+          width: "min(1180px, calc(100vw - 56px))",
           background: scrolled ? "rgba(245,237,230,0.97)" : "rgba(245,237,230,0.92)",
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
@@ -88,27 +87,27 @@ export default function DesktopNav() {
             ? "0 8px 32px rgba(61,12,17,0.13)"
             : "0 4px 20px rgba(61,12,17,0.08)",
           transition: "all 0.35s ease",
-          padding: "0 28px",
+          padding: "0 clamp(14px, 1.8vw, 28px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           height: 60,
-          gap: 8,
+          gap: 12,
         }}
       >
         {/* Left side */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", minWidth: 0 }}>
+        <div style={{ width: "clamp(220px, 30vw, 340px)", display: "flex", alignItems: "center", justifyContent: "flex-start", minWidth: 0 }}>
           <Link href="/" className="flex items-center  shrink-0" style={{ textDecoration: "none" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 68, height: 68, objectFit: "contain", flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.25px", userSelect: "none", lineHeight: 1 }}>
+            <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 56, height: 56, objectFit: "contain", flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 1.35vw, 22px)", fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.2px", userSelect: "none", lineHeight: 1 }}>
               SubhSandesh
             </span>
           </Link>
         </div>
 
         {/* Middle tabs */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 22 }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(14px, 1.6vw, 22px)", minWidth: 0 }}>
           <button onClick={() => router.push("/templates")} style={tabTextStyle(pathname.startsWith("/templates"))}>
             Templates
           </button>
@@ -118,10 +117,16 @@ export default function DesktopNav() {
           >
             Favorite
           </button>
+          <button onClick={() => router.push("/about-us")} style={tabTextStyle(pathname.startsWith("/about-us"))}>
+            About Us
+          </button>
+          <button onClick={() => router.push("/contact-us")} style={tabTextStyle(pathname.startsWith("/contact-us"))}>
+            Contact Us
+          </button>
         </div>
 
         {/* Right actions */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+        <div style={{ width: "clamp(220px, 30vw, 340px)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, minWidth: 0 }}>
           {isTemplates && (
             <>
               <AnimatePresence>

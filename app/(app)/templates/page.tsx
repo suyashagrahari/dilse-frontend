@@ -343,10 +343,13 @@ function TemplatesContent() {
       {/* ── Mobile fixed luxury nav (landing style) ── */}
       <div className="fixed top-0 left-0 right-0 md:hidden z-40 pt-2" style={{ background: "transparent" }}>
         <div
-          className="mx-auto mb-2 px-3 py-2 rounded-[999px] flex items-center justify-between gap-2"
+          className="mx-auto mb-2 rounded-[999px] flex items-center justify-between gap-2"
           style={{
-            width: "calc(100% - 108px)",
+            width: "calc(100%)",
             maxWidth: 318,
+            minWidth: 240,
+            minHeight: 58,
+            padding: "2px 12px",
             background: "rgba(245,237,230,0.92)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
@@ -354,9 +357,18 @@ function TemplatesContent() {
             boxShadow: "0 6px 24px rgba(61,12,17,0.12)",
           }}
         >
-          <Link href="/" className="inline-flex items-center min-w-0" style={{ textDecoration: "none" }} aria-label="Go to home hero">
+          <Link
+            href="/"
+            className="inline-flex items-center min-w-0"
+            style={{
+              textDecoration: "none",
+              // gap: 7,
+              maxWidth: "calc(100% - 92px)",
+            }}
+            aria-label="Go to home hero"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }} />
+            <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -365,13 +377,18 @@ function TemplatesContent() {
                 color: UI.text,
                 lineHeight: 1,
                 whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               SubhSandesh
             </span>
           </Link>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div
+            className="flex items-center gap-1.5"
+            style={{ marginLeft: "auto", width: "fit-content", flexShrink: 0, position: "relative", zIndex: 1 }}
+          >
             <button
               onClick={() => setShowSearch(true)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
