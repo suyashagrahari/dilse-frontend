@@ -173,7 +173,7 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
         };
 
         const rzp = new (
-          window as Window & { Razorpay: new (opts: unknown) => { open: () => void } }
+          window as unknown as { Razorpay: new (opts: unknown) => { open: () => void } }
         ).Razorpay(options);
 
         rzp.open();
@@ -214,7 +214,7 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
 function loadRazorpayScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     // Already loaded
-    if ((window as Window & { Razorpay?: unknown }).Razorpay) {
+    if ((window as unknown as { Razorpay?: unknown }).Razorpay) {
       resolve();
       return;
     }
