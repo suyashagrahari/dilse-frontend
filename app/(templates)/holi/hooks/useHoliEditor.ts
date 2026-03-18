@@ -6,6 +6,8 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { useTemplatePayment } from "@/hooks/useTemplatePayment";
+import { getClientPricing } from "@/config/templatePricing";
 
 export function useHoliEditor() {
   const router = useRouter();
@@ -121,6 +123,12 @@ export function useHoliEditor() {
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Payment hook — manages Razorpay checkout + points deduction flow
+  const payment = useTemplatePayment();
+
+  // Stable ref so the payment-complete effect can call the latest handlePublish
+  const handlePublishRef = useRef<() => Promise<void>>(async () => {});
   const toastIdRef = useRef(0);
 
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
@@ -314,6 +322,7 @@ export function useHoliEditor() {
         headers: headers(),
       });
       const result = await res.json();
+
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
@@ -324,13 +333,37 @@ export function useHoliEditor() {
           message: hasPasswordSet ? "Card is password-protected" : "Your Holi card is now live",
           shareUrl: url,
         });
+      } else if (result.error === "PAYMENT_REQUIRED") {
+        // Server says payment needed — open payment modal
+        const pricing = getClientPricing("holi");
+        if (pricing) {
+          payment.openPaymentModal({ templateType: "holi", pageId, pricing });
+        } else {
+          pushToast({ type: "info", title: "Payment required", message: "Please complete payment to publish" });
+        }
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: result.error || "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId, headers, hasPasswordSet, pushToast, payment.openPaymentModal]);
+
+  // Keep ref up to date so the effect below always calls the latest version
+  useEffect(() => {
+    handlePublishRef.current = handlePublish;
+  }, [handlePublish]);
+
+  // After payment completes, retry the publish — server will now allow it
+  useEffect(() => {
+    if (payment.paymentJustCompleted) {
+      payment.resetPaymentCompleted();
+      handlePublishRef.current();
+    }
+  }, [payment.paymentJustCompleted, payment.resetPaymentCompleted]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -369,6 +402,9 @@ export function useHoliEditor() {
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
+
+    // Payment modal
+    payment,
 
     // Show publish if user has personalized but not yet published
     showPublish: isPersonalized && !publishing,

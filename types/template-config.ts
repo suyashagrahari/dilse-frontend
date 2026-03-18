@@ -63,4 +63,5 @@ export interface TemplateListItem {
   color: string;
   bgGradient: string;
   coverImage?: string;
+  isPremium?: boolean;   // true → show Crown badge on card
 }

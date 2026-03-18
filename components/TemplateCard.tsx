@@ -4,6 +4,7 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Crown } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import type { TemplateListItem } from "@/types/template-config";
 
@@ -68,6 +69,23 @@ const TemplateCard = memo(function TemplateCard({
             className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }}
           />
+
+          {/* Premium crown badge — top-left ribbon */}
+          {template.isPremium && (
+            <div className="absolute top-0 left-0 z-20">
+              <div
+                className="flex items-center gap-1 px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-black uppercase tracking-widest"
+                style={{
+                  background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+                  color: "#000",
+                  boxShadow: "0 2px 10px rgba(255,165,0,0.45)",
+                }}
+              >
+                <Crown size={8} fill="currentColor" />
+                Premium
+              </div>
+            </div>
+          )}
 
           {/* Card content */}
           <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">

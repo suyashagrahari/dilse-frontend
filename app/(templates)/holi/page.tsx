@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
+import PaymentModal from "@/components/PaymentModal";
 import { useHoliEditor } from "./hooks/useHoliEditor";
 
 import ColorBlobs from "./components/ColorBlobs";
@@ -230,6 +231,19 @@ function HoliPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Payment modal — shown when user tries to publish without paying */}
+      {editor.payment.paymentModal && (
+        <PaymentModal
+          open={!!editor.payment.paymentModal}
+          pricing={editor.payment.paymentModal.pricing}
+          paymentStatus={editor.payment.paymentStatus}
+          paymentError={editor.payment.paymentError}
+          onClose={editor.payment.closePaymentModal}
+          onSpendPoints={editor.payment.handleSpendPoints}
+          onRazorpay={editor.payment.handleRazorpayPayment}
+        />
+      )}
     </div>
   );
 }
