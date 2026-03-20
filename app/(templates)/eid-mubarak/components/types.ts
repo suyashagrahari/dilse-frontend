@@ -1,5 +1,5 @@
 export type TabId = "home" | "wish" | "greetings" | "playlist" | "dua";
-export type EditMode = null | "choose" | "ai" | "ai-edit" | "manual" | "preview" | "password";
+export type EditMode = null | "choose" | "ai" | "ai-edit" | "manual" | "preview";
 
 export interface Toast {
   id: number;
