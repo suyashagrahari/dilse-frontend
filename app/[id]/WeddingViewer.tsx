@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Home, Heart, Calendar, Camera, HandHeart, ArrowLeft,
   Sun, Moon, MapPin, ExternalLink, Lock, Eye, EyeOff,
-  ShieldAlert, Loader2, Share2, Check, Copy, MoreHorizontal,
+  ShieldAlert, Loader2, Share2, Check, Copy,
   Wand2, PenLine, ChevronRight, Sparkles, User, X, Edit3, Zap,
 } from "lucide-react";
 import { type WeddingData, type TabId, TABS, DEMO_DATA } from "@/app/(templates)/wedding-shaadi/components/types";
@@ -657,7 +657,6 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
   const [tab, setTab] = useState<ViewerTabId>("home");
   const [data, setData] = useState<WeddingData>(mapData(rawData));
   const [copied, setCopied] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
@@ -738,7 +737,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
-  const handleTabChange = useCallback((id: ViewerTabId) => { setTab(id); setMoreOpen(false); }, []);
+  const handleTabChange = useCallback((id: ViewerTabId) => { setTab(id); }, []);
   const toggleDark = useCallback(() => setDarkMode((d) => !d), []);
 
   const handleStartCreating = useCallback(() => {
@@ -799,21 +798,6 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
       </div>
     );
   }
-
-  const moreItems = [
-    {
-      icon: darkMode ? Sun : Moon,
-      label: darkMode ? "Light" : "Dark",
-      color: darkMode ? "#f59e0b" : "#8b5cf6",
-      bg: darkMode ? "rgba(245,158,11,0.12)" : "rgba(139,92,246,0.12)",
-      action: () => { toggleDark(); setMoreOpen(false); },
-    },
-    {
-      icon: ArrowLeft, label: "Back",
-      color: "hsl(var(--wed-muted-fg))", bg: "rgba(0,0,0,0.05)",
-      action: () => { setMoreOpen(false); router.back(); },
-    },
-  ];
 
   return (
     <div className="h-screen relative overflow-hidden"
@@ -949,31 +933,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
       {/* ── Mobile floating bottom nav ────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none lg:hidden">
         <div className="flex justify-center mb-3 pointer-events-auto">
-          <AnimatePresence>
-            {moreOpen && (
-              <>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={() => setMoreOpen(false)} className="fixed inset-0 bg-black/40 backdrop-blur-[3px] -z-10" />
-                <motion.div className="absolute bottom-full mb-3 flex gap-3"
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
-                  {moreItems.map((item, i) => (
-                    <motion.button key={item.label}
-                      initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.7 }} transition={{ delay: i * 0.04 }}
-                      onClick={item.action} className="flex flex-col items-center gap-1">
-                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        style={{ background: item.bg, border: `1px solid ${item.bg}` }}>
-                        <item.icon size={17} style={{ color: item.color }} strokeWidth={1.8} />
-                      </div>
-                      <span className="text-[8px] font-medium" style={{ color: "hsl(var(--wed-muted-fg))" }}>{item.label}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* Floating nav pill */}
+          {/* Floating nav pill — tabs + Create only, no More */}
           <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-2xl"
             style={{
               background: "hsl(var(--wed-card)/0.92)",
@@ -985,7 +945,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
             {/* Regular tabs */}
             {TABS.map(({ id, label }) => {
               const Icon = TAB_ICONS[id];
-              const active = tab === id && !moreOpen;
+              const active = tab === id;
               return (
                 <button key={id} onClick={() => handleTabChange(id)} className="relative flex flex-col items-center py-1 px-2.5">
                   {active ? (
@@ -1010,7 +970,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
 
             {/* Create tab */}
             <button onClick={() => handleTabChange("create")} className="relative flex flex-col items-center py-1 px-2">
-              {tab === "create" && !moreOpen ? (
+              {tab === "create" ? (
                 <motion.div layoutId="wed-viewer-nav-active"
                   className="absolute -top-4 w-10 h-10 rounded-full flex items-center justify-center text-white"
                   style={{ background: GOLD_CTA, boxShadow: "0 4px 16px rgba(245,158,11,0.5)" }}
@@ -1027,28 +987,8 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
                 </div>
               )}
               <span className="text-[9px] font-bold"
-                style={{ color: "#f59e0b", marginTop: tab === "create" && !moreOpen ? "1.25rem" : "0.125rem" }}>
+                style={{ color: "#f59e0b", marginTop: tab === "create" ? "1.25rem" : "0.125rem" }}>
                 Create
-              </span>
-            </button>
-
-            <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--wed-border))" }} />
-
-            {/* More */}
-            <button onClick={() => setMoreOpen((o) => !o)} className="relative flex flex-col items-center py-1 px-2">
-              {moreOpen ? (
-                <motion.div layoutId="wed-viewer-nav-active"
-                  className="absolute -top-4 w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ background: "hsl(var(--wed-surface))", border: "1px solid hsl(var(--wed-border))" }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}>
-                  <MoreHorizontal size={18} style={{ color: "hsl(var(--wed-fg))" }} strokeWidth={2} />
-                </motion.div>
-              ) : (
-                <MoreHorizontal size={18} strokeWidth={1.5} style={{ color: "hsl(var(--wed-muted-fg))" }} />
-              )}
-              <span className="text-[9px] font-semibold"
-                style={{ color: moreOpen ? "hsl(var(--wed-fg))" : "hsl(var(--wed-muted-fg))", marginTop: moreOpen ? "1.25rem" : "0.125rem" }}>
-                More
               </span>
             </button>
           </div>

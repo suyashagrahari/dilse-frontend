@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -92,10 +93,10 @@ const GallerySection = memo(function GallerySection({ data }: Props) {
           ))}
         </div>
 
-        <AnimatePresence>
-          {selected !== null && (
+        {selected !== null && createPortal(
+          <AnimatePresence>
             <motion.div
-              className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4"
               style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(20px)" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -108,7 +109,7 @@ const GallerySection = memo(function GallerySection({ data }: Props) {
                   background: "rgba(255,255,255,0.1)",
                   border: "1px solid rgba(255,255,255,0.2)",
                 }}
-                onClick={closeLightbox}
+                onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
               >
                 <X className="w-5 h-5 text-white" />
               </button>
@@ -152,8 +153,9 @@ const GallerySection = memo(function GallerySection({ data }: Props) {
                 />
               </motion.div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
     </section>
   );

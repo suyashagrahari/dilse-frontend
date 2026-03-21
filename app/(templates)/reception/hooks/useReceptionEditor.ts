@@ -77,6 +77,16 @@ export function useReceptionEditor() {
   // Shared form data (used for manual + ai-edit modes)
   const [mf, setMf] = useState<ReceptionData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
+  const preEditContentRef = useRef<ReceptionData>(DEMO_DATA);
+  const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+
+  // Persist draft to sessionStorage
+  useEffect(() => {
+    const isDemoData = mf.brideName === DEMO_DATA.brideName && mf.groomName === DEMO_DATA.groomName && !mf.bride.photo && !mf.groom.photo;
+    if (!isDemoData) {
+      try { sessionStorage.setItem("reception_mf_draft", JSON.stringify(mf)); } catch {}
+    }
+  }, [mf]);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -131,7 +141,16 @@ export function useReceptionEditor() {
   }, []);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    if (isPersonalized) {
+      setMf({ ...content });
+    } else {
+      try {
+        const draft = sessionStorage.getItem("reception_mf_draft");
+        setMf(draft ? JSON.parse(draft) : { ...DEMO_DATA });
+      } catch {
+        setMf({ ...DEMO_DATA });
+      }
+    }
     setManualStep(0);
     setEditMode("manual");
   }, [isPersonalized, content]);
@@ -244,16 +263,17 @@ export function useReceptionEditor() {
   // After ai-edit review → preview
   const handleAiEditPreview = useCallback(() => {
     if (!mf.brideName.trim()) return;
-    const newContent: ReceptionData = { ...mf };
-    setPendingContent(newContent);
-    setContent(newContent);
+    setPendingContent(mf);
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "ai-edit";
     setEditMode("preview");
   }, [mf]);
 
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim()) return;
     setPendingContent(mf);
-    setContent(mf);
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "manual";
     setEditMode("preview");
   }, [mf]);
 
@@ -291,44 +311,47 @@ export function useReceptionEditor() {
     [accessToken, pageId, headers],
   );
 
-  const handleConfirmSave = useCallback(() => {
+  const handleConfirmSave = useCallback(async () => {
     if (!pendingContent) return;
-    setPagePassword("");
-    setShowPwValue(false);
-    setEditMode("password");
-  }, [pendingContent]);
+    setSaving(true);
+    try {
+      await saveToServer({ ...pendingContent }, pagePassword);
+      setIsPersonalized(true);
+      setShareUrl(null);
+      setEditMode(null);
+      setPendingContent(null);
+      setHasPasswordSet(!!pagePassword);
+      try { sessionStorage.removeItem("reception_mf_draft"); } catch {}
+      pushToast({
+        type: "success",
+        title: pagePassword ? "Saved with password!" : "Changes saved!",
+        message: pagePassword ? "Share the password with your guests" : "Your invitation is ready to publish",
+      });
+    } catch {
+      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingContent, pagePassword, saveToServer, pushToast]);
 
-  const handlePasswordDone = useCallback(
-    async (pw: string) => {
-      if (!pendingContent) return;
-      setSaving(true);
-      try {
-        await saveToServer({ ...pendingContent }, pw);
-        setIsPersonalized(true);
-        setShareUrl(null);
-        setEditMode(null);
-        setPendingContent(null);
-        setHasPasswordSet(!!pw);
-        pushToast({
-          type: "success",
-          title: pw ? "Saved with password protection!" : "Changes saved!",
-          message: pw ? "Share the password with your guests" : "Your invitation is ready to publish",
-        });
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setSaving(false);
-      }
-    },
-    [pendingContent, saveToServer, pushToast],
-  );
+  // Keep handlePasswordDone for any legacy callers
+  const handlePasswordDone = handleConfirmSave;
 
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
-    setContent(isPersonalized ? content : DEMO_DATA);
+    setContent(preEditContentRef.current);
     setPendingContent(null);
-    setEditMode("choose");
-  }, [pendingContent, isPersonalized, content]);
+    const source = previewSourceRef.current;
+    previewSourceRef.current = null;
+    if (source === "manual") {
+      setManualStep(5);
+      setEditMode("manual");
+    } else if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setEditMode("choose");
+    }
+  }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;

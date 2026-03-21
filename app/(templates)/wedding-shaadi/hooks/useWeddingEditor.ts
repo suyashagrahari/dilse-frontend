@@ -147,9 +147,8 @@ export function useWeddingEditor() {
       // User previously changed theme within this template — respect it
       setDarkMode(saved === "dark");
     } else {
-      // First visit — match the user's global app theme preference
-      const global = localStorage.getItem("theme"); // set by next-themes
-      setDarkMode(global !== "light"); // dark unless user explicitly chose light
+      // Default is always dark for the wedding template
+      setDarkMode(true);
     }
     setThemeReady(true);
   }, []);
@@ -208,6 +207,19 @@ export function useWeddingEditor() {
   const [mf, setMf] = useState<WeddingData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<WeddingData>(DEMO_DATA);
+  const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+
+  // Persist draft form data to sessionStorage so user doesn't lose progress
+  useEffect(() => {
+    const isDemoData =
+      mf.brideName === DEMO_DATA.brideName &&
+      mf.groomName === DEMO_DATA.groomName &&
+      !mf.bride.photo &&
+      !mf.groom.photo;
+    if (!isDemoData) {
+      try { sessionStorage.setItem("wedding_mf_draft", JSON.stringify(mf)); } catch {}
+    }
+  }, [mf]);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -279,7 +291,16 @@ export function useWeddingEditor() {
   }, [isPersonalized, content.brideName, content.groomName]);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    if (isPersonalized) {
+      setMf({ ...content });
+    } else {
+      try {
+        const draft = sessionStorage.getItem("wedding_mf_draft");
+        setMf(draft ? JSON.parse(draft) : { ...DEMO_DATA });
+      } catch {
+        setMf({ ...DEMO_DATA });
+      }
+    }
     setManualStep(0);
     setEditMode("manual");
   }, [isPersonalized, content]);
@@ -409,13 +430,14 @@ export function useWeddingEditor() {
     }
   }, [aiName, aiSender, aiPrompt, mf, headers, pushToast]);
 
-  // When user confirms ai-edit, go to manual to fine-tune or preview directly
+  // When user confirms ai-edit, go to preview (password already in manual step 6)
   const handleAiEditPreview = useCallback(() => {
     setPendingContent(mf);
     setContent((prev) => {
       preEditContentRef.current = prev;
       return mf;
     });
+    previewSourceRef.current = "ai-edit";
     setEditMode("preview");
   }, [mf]);
 
@@ -426,6 +448,7 @@ export function useWeddingEditor() {
       preEditContentRef.current = prev;
       return mf;
     });
+    previewSourceRef.current = "manual";
     setEditMode("preview");
   }, [mf]);
 
@@ -463,13 +486,7 @@ export function useWeddingEditor() {
     [accessToken, pageId, headers],
   );
 
-  const handleConfirmSave = useCallback(() => {
-    if (!pendingContent) return;
-    setPagePassword("");
-    setShowPwValue(false);
-    setEditMode("password");
-  }, [pendingContent]);
-
+  // handlePasswordDone defined first so handleConfirmSave can call it
   const handlePasswordDone = useCallback(
     async (pw: string) => {
       if (!pendingContent) return;
@@ -480,6 +497,8 @@ export function useWeddingEditor() {
         setEditMode(null);
         setPendingContent(null);
         setHasPasswordSet(!!pw);
+        // Clear draft from sessionStorage after successful save
+        try { sessionStorage.removeItem("wedding_mf_draft"); } catch {}
         pushToast({
           type: "success",
           title: pw ? "Saved with password!" : "Changes saved!",
@@ -494,11 +513,28 @@ export function useWeddingEditor() {
     [pendingContent, saveToServer, pushToast],
   );
 
+  // Uses pagePassword already set in pre-password step — no param needed
+  const handleConfirmSave = useCallback(
+    () => {
+      handlePasswordDone(pagePassword);
+    },
+    [handlePasswordDone, pagePassword],
+  );
+
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
     setContent(preEditContentRef.current);
     setPendingContent(null);
-    setEditMode("choose");
+    const source = previewSourceRef.current;
+    previewSourceRef.current = null;
+    if (source === "manual") {
+      setManualStep(5); // go back to password step
+      setEditMode("manual");
+    } else if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setEditMode("choose");
+    }
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {

@@ -3,6 +3,7 @@
 import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
 import PaymentModal from "@/components/PaymentModal";
@@ -15,7 +16,6 @@ import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
-import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import BackgroundMusic from "./components/BackgroundMusic";
@@ -78,7 +78,8 @@ function HoliPage() {
           onEnter={handleWelcomeEnter}
         />
       )}
-      {/* Global background image — hidden on Home tab (Home has its own hero) */}
+
+      {/* Global background image — hidden on Home tab */}
       {editor.tab !== "home" && (
         <div className="absolute inset-0 z-0 pointer-events-none">
           <Image
@@ -97,6 +98,107 @@ function HoliPage() {
                 "linear-gradient(180deg, hsl(var(--holi-bg) / 0.4) 0%, hsl(var(--holi-bg) / 0.65) 40%, hsl(var(--holi-bg) / 0.5) 70%, hsl(var(--holi-bg) / 0.4) 100%)",
             }}
           />
+        </div>
+      )}
+
+      {/* Floating Back button — top-left, mobile only */}
+      {welcomed && (
+        <div className="fixed top-4 left-4 z-50 lg:hidden">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={editor.editMode === "preview" ? editor.handleDiscardPreview : editor.goBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-xl font-medium text-xs"
+            style={{
+              background: "var(--holi-nav-bg)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid var(--holi-nav-border)",
+              color: "hsl(var(--holi-muted-fg))",
+            }}
+          >
+            <ArrowLeft size={14} />
+            {editor.editMode === "preview" ? "Back & Edit" : "Back"}
+          </motion.button>
+        </div>
+      )}
+
+      {/* Floating Create / Save / Publish / Share button — top-right, mobile only */}
+      {welcomed && (
+        <div className="fixed top-4 right-4 z-50 lg:hidden">
+          <AnimatePresence mode="wait">
+            {editor.editMode === "preview" ? (
+              <motion.button
+                key="save"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleConfirmSave}
+                disabled={editor.saving}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl disabled:opacity-70"
+                style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}
+              >
+                {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {editor.saving ? "Saving…" : "Save"}
+              </motion.button>
+            ) : !editor.isPersonalized ? (
+              <motion.button
+                key="create"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleEditClick}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{ background: "var(--holi-gradient-cta)", color: "#fff" }}
+              >
+                <Sparkles size={14} />
+                Create
+              </motion.button>
+            ) : !editor.shareUrl ? (
+              <motion.button
+                key="publish"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handlePublish}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{
+                  background: "rgba(16,185,129,0.15)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  color: "#10b981",
+                  border: "1px solid rgba(16,185,129,0.35)",
+                }}
+              >
+                <Send size={14} />
+                Publish
+              </motion.button>
+            ) : (
+              <motion.button
+                key="share"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleShare}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{
+                  background: "rgba(99,102,241,0.15)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  color: "#818cf8",
+                  border: "1px solid rgba(99,102,241,0.3)",
+                }}
+              >
+                <Share2 size={14} />
+                Share
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -121,14 +223,9 @@ function HoliPage() {
         tab={editor.tab}
         onTabChange={editor.handleTabChange}
         onEdit={editor.handleEditClick}
-        onBack={editor.goBack}
-        showPublish={editor.showPublish}
-        showShare={editor.showShare}
-        shareLabel={editor.shareLabel}
-        onPublish={editor.handlePublish}
-        onShare={editor.handleShare}
-        darkMode={editor.darkMode}
-        toggleDark={editor.toggleDark}
+        isPersonalized={editor.isPersonalized}
+        isPreview={editor.editMode === "preview"}
+        isEditing={!!editor.editMode && editor.editMode !== "preview"}
       />
 
       <main className="h-full overflow-y-auto no-scrollbar pb-24 lg:pb-0 lg:ml-56">
@@ -196,24 +293,17 @@ function HoliPage() {
         manualStep={editor.manualStep}
         setManualStep={editor.setManualStep}
         updateMf={editor.updateMf}
+        pagePassword={editor.pagePassword}
+        setPagePassword={editor.setPagePassword}
         onStartAi={editor.startAiMode}
         onStartManual={editor.startManualMode}
         onAiGenerate={editor.handleAiGenerate}
         onManualPreview={editor.handleManualPreview}
-      />
-
-      <PasswordSheet
-        visible={editor.editMode === "password"}
-        saving={editor.saving}
-        password={editor.pagePassword}
-        setPassword={editor.setPagePassword}
-        showValue={editor.showPwValue}
-        setShowValue={editor.setShowPwValue}
-        onDone={editor.handlePasswordDone}
+        onAiEditPreview={editor.handleAiEditPreview}
       />
 
       <PreviewBar
-        visible={editor.editMode === "preview"}
+        visible={false}
         saving={editor.saving}
         onDiscard={editor.handleDiscardPreview}
         onConfirm={editor.handleConfirmSave}

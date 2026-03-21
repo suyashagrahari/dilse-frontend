@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Users, X, Sparkles, Heart } from "lucide-react";
@@ -266,11 +267,12 @@ function MobileProfileCard({
         </button>
       </motion.div>
 
-      <AnimatePresence>
-        {showFamily && (
+      {showFamily && createPortal(
+        <AnimatePresence>
           <FamilyModal family={family} person={person} shloka={shloka} onClose={close} />
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }

@@ -63,6 +63,15 @@ export function useEidEditor() {
   const [mf, setMf] = useState<EidData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<EidData>(DEMO_DATA);
+  const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+
+  // Persist draft to sessionStorage
+  useEffect(() => {
+    const isDemoData = mf.senderName === DEMO_DATA.senderName && mf.recipientName === DEMO_DATA.recipientName && !mf.senderPhoto;
+    if (!isDemoData) {
+      try { sessionStorage.setItem("eid_mf_draft", JSON.stringify(mf)); } catch {}
+    }
+  }, [mf]);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -168,7 +177,16 @@ export function useEidEditor() {
   }, [isPersonalized, content.recipientName, content.senderName]);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    if (isPersonalized) {
+      setMf({ ...content });
+    } else {
+      try {
+        const draft = sessionStorage.getItem("eid_mf_draft");
+        setMf(draft ? JSON.parse(draft) : { ...DEMO_DATA });
+      } catch {
+        setMf({ ...DEMO_DATA });
+      }
+    }
     setManualStep(0);
     setEditMode("manual");
   }, [isPersonalized, content]);
@@ -212,11 +230,18 @@ export function useEidEditor() {
   }, [aiName, aiSender, aiPrompt, headers, pushToast]);
 
   const handleManualPreview = useCallback(() => {
+    if (!mf.senderName.trim()) return;
     setPendingContent(mf);
-    setContent((prev) => {
-      preEditContentRef.current = prev;
-      return mf;
-    });
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "manual";
+    setEditMode("preview");
+  }, [mf]);
+
+  const handleAiEditPreview = useCallback(() => {
+    if (!mf.senderName.trim()) return;
+    setPendingContent(mf);
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "ai-edit";
     setEditMode("preview");
   }, [mf]);
 
@@ -249,7 +274,9 @@ export function useEidEditor() {
           headers: headers(),
           body: JSON.stringify(body),
         });
-        return res.json();
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error || "Save failed");
+        return result;
       } else {
         const res = await fetch(`${API_URL}/eid-pages`, {
           method: "POST",
@@ -257,49 +284,54 @@ export function useEidEditor() {
           body: JSON.stringify(body),
         });
         const result = await res.json();
-        if (result.success) setPageId(result.data._id);
+        if (!result.success) throw new Error(result.error || "Save failed");
+        setPageId(result.data._id);
         return result;
       }
     },
     [accessToken, pageId, headers],
   );
 
-  const handleConfirmSave = useCallback(() => {
+  const handleConfirmSave = useCallback(async () => {
     if (!pendingContent) return;
-    setPagePassword("");
-    setShowPwValue(false);
-    setEditMode("password");
-  }, [pendingContent]);
+    setSaving(true);
+    try {
+      await saveToServer({ ...pendingContent }, pagePassword);
+      setIsPersonalized(true);
+      setShareUrl(null);
+      setEditMode(null);
+      setPendingContent(null);
+      setHasPasswordSet(!!pagePassword);
+      try { sessionStorage.removeItem("eid_mf_draft"); } catch {}
+      pushToast({
+        type: "success",
+        title: pagePassword ? "Saved with password!" : "Card saved!",
+        message: pagePassword ? "Share the password with recipients" : "Tap Publish to make it live",
+      });
+    } catch {
+      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingContent, pagePassword, saveToServer, pushToast]);
 
-  const handlePasswordDone = useCallback(
-    async (pw: string) => {
-      if (!pendingContent) return;
-      setSaving(true);
-      try {
-        await saveToServer({ ...pendingContent }, pw);
-        setIsPersonalized(true);
-        setEditMode(null);
-        setPendingContent(null);
-        setHasPasswordSet(!!pw);
-        pushToast({
-          type: "success",
-          title: pw ? "Saved with password!" : "Changes saved!",
-          message: pw ? "Share the password with recipients" : "Your Eid card is ready to publish",
-        });
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setSaving(false);
-      }
-    },
-    [pendingContent, saveToServer, pushToast],
-  );
+  // Keep for legacy callers
+  const handlePasswordDone = handleConfirmSave;
 
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
     setContent(preEditContentRef.current);
     setPendingContent(null);
-    setEditMode("choose");
+    const source = previewSourceRef.current;
+    previewSourceRef.current = null;
+    if (source === "manual") {
+      setManualStep(4);
+      setEditMode("manual");
+    } else if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setEditMode("choose");
+    }
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
@@ -362,7 +394,7 @@ export function useEidEditor() {
 
     goBack, closeAuth, closeAuthSuccess, closeShareSheet,
     handleEditClick, startAiMode, startManualMode,
-    handleAiGenerate, handleManualPreview,
+    handleAiGenerate, handleManualPreview, handleAiEditPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
