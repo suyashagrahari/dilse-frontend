@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, memo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home, Heart, Music, Info, Gift,
-  MoreHorizontal, Pencil, Send, Share2, ArrowLeft, Sun, Moon,
-} from "lucide-react";
+import { memo } from "react";
+import { motion } from "framer-motion";
+import { Home, Heart, Music, Info, Gift, Pencil } from "lucide-react";
 import { TABS, type TabId } from "./types";
 
 const TAB_ICONS: Record<TabId, typeof Home> = {
@@ -28,83 +25,15 @@ interface Props {
   tab: TabId;
   onTabChange: (id: TabId) => void;
   onEdit: () => void;
-  onBack: () => void;
-  showPublish: boolean;
-  showShare: boolean;
-  shareLabel: string;
-  onPublish: () => void;
-  onShare: () => void;
-  darkMode: boolean;
-  toggleDark: () => void;
+  isPersonalized: boolean;
+  isPreview: boolean;
+  isEditing: boolean;
 }
 
-export default memo(function BottomNav({
-  tab, onTabChange, onEdit, onBack,
-  showPublish, showShare, shareLabel, onPublish, onShare,
-  darkMode, toggleDark,
-}: Props) {
-  const [moreOpen, setMoreOpen] = useState(false);
-
-  const handleTab = useCallback(
-    (id: TabId) => () => { onTabChange(id); setMoreOpen(false); },
-    [onTabChange],
-  );
-
-  const handleThemeToggle = useCallback(() => { toggleDark(); setMoreOpen(false); }, [toggleDark]);
-
-  const moreItems = [
-    { icon: Pencil, label: "Edit", color: "var(--holi-pink)", bg: "rgba(233,30,99,0.15)", action: () => { setMoreOpen(false); onEdit(); } },
-    ...(showPublish ? [{ icon: Send, label: "Publish", color: "var(--holi-green)", bg: "rgba(76,175,80,0.15)", action: () => { setMoreOpen(false); onPublish(); } }] : []),
-    ...(showShare ? [{ icon: Share2, label: shareLabel, color: "var(--holi-orange)", bg: "rgba(255,152,0,0.12)", action: () => { setMoreOpen(false); onShare(); } }] : []),
-    { icon: darkMode ? Sun : Moon, label: darkMode ? "Light" : "Dark", color: darkMode ? "var(--holi-yellow)" : "var(--holi-purple)", bg: darkMode ? "rgba(255,235,59,0.12)" : "rgba(156,39,176,0.12)", action: handleThemeToggle },
-    { icon: ArrowLeft, label: "Back", color: "hsl(var(--holi-muted-fg))", bg: "rgba(0,0,0,0.05)", action: () => { setMoreOpen(false); onBack(); } },
-  ];
-
+export default memo(function BottomNav({ tab, onTabChange, onEdit, isPersonalized, isPreview, isEditing }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none lg:hidden">
       <div className="flex justify-center mb-3 pointer-events-auto">
-        <AnimatePresence>
-          {moreOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMoreOpen(false)}
-                className="fixed inset-0 bg-black/40 backdrop-blur-[3px] -z-10"
-              />
-              <motion.div
-                className="absolute bottom-full mb-3 flex gap-3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-              >
-                {moreItems.map((item, i) => (
-                  <motion.button
-                    key={item.label}
-                    initial={{ opacity: 0, scale: 0.7 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.7 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={item.action}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div
-                      className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-90"
-                      style={{ background: item.bg, border: `1px solid ${item.bg}` }}
-                    >
-                      <item.icon size={17} style={{ color: item.color }} strokeWidth={1.8} />
-                    </div>
-                    <span className="text-[8px] font-medium" style={{ color: "hsl(var(--holi-muted-fg))" }}>
-                      {item.label}
-                    </span>
-                  </motion.button>
-                ))}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
         <div
           className="flex items-center gap-0.5 px-2 py-1.5 rounded-2xl"
           style={{
@@ -118,11 +47,11 @@ export default memo(function BottomNav({
           {TABS.map(({ id, label }) => {
             const Icon = TAB_ICONS[id];
             const color = TAB_COLORS[id];
-            const active = tab === id && !moreOpen;
+            const active = tab === id;
             return (
               <button
                 key={id}
-                onClick={handleTab(id)}
+                onClick={() => onTabChange(id)}
                 className="relative flex flex-col items-center py-1 px-2.5"
               >
                 {active ? (
@@ -154,37 +83,23 @@ export default memo(function BottomNav({
             );
           })}
 
-          <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--holi-border))" }} />
-
-          <button
-            onClick={() => setMoreOpen((o) => !o)}
-            className="relative flex flex-col items-center py-1 px-2"
-          >
-            {moreOpen ? (
-              <motion.div
-                layoutId="holi-nav-active"
-                className="absolute -top-4 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{
-                  background: "var(--holi-gradient-cta)",
-                  boxShadow: "0 4px 16px rgba(233,30,99,0.4)",
-                }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          {isPersonalized && !isPreview && !isEditing && (
+            <>
+              <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--holi-border))" }} />
+              <button
+                onClick={onEdit}
+                className="relative flex flex-col items-center py-1 px-2"
               >
-                <MoreHorizontal size={18} style={{ color: "#fff" }} strokeWidth={2} />
-              </motion.div>
-            ) : (
-              <MoreHorizontal size={18} strokeWidth={1.5} style={{ color: "hsl(var(--holi-muted-fg))" }} />
-            )}
-            <span
-              className="text-[9px] font-semibold"
-              style={{
-                color: moreOpen ? "var(--holi-pink)" : "hsl(var(--holi-muted-fg))",
-                marginTop: moreOpen ? "1.25rem" : "0.125rem",
-              }}
-            >
-              More
-            </span>
-          </button>
+                <Pencil size={18} strokeWidth={1.5} style={{ color: "var(--holi-pink)" }} />
+                <span
+                  className="text-[9px] font-semibold"
+                  style={{ color: "var(--holi-pink)", marginTop: "0.125rem", fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  Edit
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

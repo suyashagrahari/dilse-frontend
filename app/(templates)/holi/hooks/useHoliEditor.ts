@@ -6,6 +6,8 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { useTemplatePayment } from "@/hooks/useTemplatePayment";
+import { getClientPricing } from "@/config/templatePricing";
 
 export function useHoliEditor() {
   const router = useRouter();
@@ -44,6 +46,7 @@ export function useHoliEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -117,9 +120,24 @@ export function useHoliEditor() {
   const [mf, setMf] = useState<HoliData>({ ...DEMO_DATA });
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<HoliData>(DEMO_DATA);
+  const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+
+  // Persist draft to sessionStorage
+  useEffect(() => {
+    const isDemoData = mf.senderName === DEMO_DATA.senderName && mf.recipientName === DEMO_DATA.recipientName && !mf.senderPhoto;
+    if (!isDemoData) {
+      try { sessionStorage.setItem("holi_mf_draft", JSON.stringify(mf)); } catch {}
+    }
+  }, [mf]);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Payment hook — manages Razorpay checkout + points deduction flow
+  const payment = useTemplatePayment();
+
+  // Stable ref so the payment-complete effect can call the latest handlePublish
+  const handlePublishRef = useRef<() => Promise<void>>(async () => {});
   const toastIdRef = useRef(0);
 
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
@@ -169,7 +187,16 @@ export function useHoliEditor() {
   }, [isPersonalized, content.recipientName, content.senderName]);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    if (isPersonalized) {
+      setMf({ ...content });
+    } else {
+      try {
+        const draft = sessionStorage.getItem("holi_mf_draft");
+        setMf(draft ? JSON.parse(draft) : { ...DEMO_DATA });
+      } catch {
+        setMf({ ...DEMO_DATA });
+      }
+    }
     setManualStep(0);
     setEditMode("manual");
   }, [isPersonalized, content]);
@@ -214,11 +241,18 @@ export function useHoliEditor() {
   }, [aiName, aiSender, aiPrompt, headers, pushToast]);
 
   const handleManualPreview = useCallback(() => {
+    if (!mf.senderName.trim()) return;
     setPendingContent(mf);
-    setContent((prev) => {
-      preEditContentRef.current = prev; // save pre-edit state for discard
-      return mf;
-    });
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "manual";
+    setEditMode("preview");
+  }, [mf]);
+
+  const handleAiEditPreview = useCallback(() => {
+    if (!mf.senderName.trim()) return;
+    setPendingContent(mf);
+    setContent((prev) => { preEditContentRef.current = prev; return mf; });
+    previewSourceRef.current = "ai-edit";
     setEditMode("preview");
   }, [mf]);
 
@@ -251,7 +285,9 @@ export function useHoliEditor() {
           headers: headers(),
           body: JSON.stringify(body),
         });
-        return res.json();
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error || "Save failed");
+        return result;
       } else {
         const res = await fetch(`${API_URL}/holi-pages`, {
           method: "POST",
@@ -259,49 +295,54 @@ export function useHoliEditor() {
           body: JSON.stringify(body),
         });
         const result = await res.json();
-        if (result.success) setPageId(result.data._id);
+        if (!result.success) throw new Error(result.error || "Save failed");
+        setPageId(result.data._id);
         return result;
       }
     },
     [accessToken, pageId, headers],
   );
 
-  const handleConfirmSave = useCallback(() => {
+  const handleConfirmSave = useCallback(async () => {
     if (!pendingContent) return;
-    setPagePassword("");
-    setShowPwValue(false);
-    setEditMode("password");
-  }, [pendingContent]);
+    setSaving(true);
+    try {
+      await saveToServer({ ...pendingContent }, pagePassword);
+      setIsPersonalized(true);
+      setShareUrl(null);
+      setEditMode(null);
+      setPendingContent(null);
+      setHasPasswordSet(!!pagePassword);
+      try { sessionStorage.removeItem("holi_mf_draft"); } catch {}
+      pushToast({
+        type: "success",
+        title: pagePassword ? "Saved with password!" : "Card saved!",
+        message: pagePassword ? "Share the password with recipients" : "Tap Publish to make it live",
+      });
+    } catch {
+      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+    } finally {
+      setSaving(false);
+    }
+  }, [pendingContent, pagePassword, saveToServer, pushToast]);
 
-  const handlePasswordDone = useCallback(
-    async (pw: string) => {
-      if (!pendingContent) return;
-      setSaving(true);
-      try {
-        await saveToServer({ ...pendingContent }, pw);
-        setIsPersonalized(true);
-        setEditMode(null);
-        setPendingContent(null);
-        setHasPasswordSet(!!pw);
-        pushToast({
-          type: "success",
-          title: pw ? "Saved with password!" : "Changes saved!",
-          message: pw ? "Share the password with recipients" : "Your Holi card is ready to publish",
-        });
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setSaving(false);
-      }
-    },
-    [pendingContent, saveToServer, pushToast],
-  );
+  // Keep for legacy callers
+  const handlePasswordDone = handleConfirmSave;
 
   const handleDiscardPreview = useCallback(() => {
     if (!pendingContent) { setEditMode(null); return; }
-    setContent(preEditContentRef.current); // restore pre-edit content
+    setContent(preEditContentRef.current);
     setPendingContent(null);
-    setEditMode("choose");
+    const source = previewSourceRef.current;
+    previewSourceRef.current = null;
+    if (source === "manual") {
+      setManualStep(3);
+      setEditMode("manual");
+    } else if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setEditMode("choose");
+    }
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
@@ -313,6 +354,7 @@ export function useHoliEditor() {
         headers: headers(),
       });
       const result = await res.json();
+
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
@@ -323,13 +365,37 @@ export function useHoliEditor() {
           message: hasPasswordSet ? "Card is password-protected" : "Your Holi card is now live",
           shareUrl: url,
         });
+      } else if (result.error === "PAYMENT_REQUIRED") {
+        // Server says payment needed — open payment modal
+        const pricing = getClientPricing("holi");
+        if (pricing) {
+          payment.openPaymentModal({ templateType: "holi", pageId, pricing });
+        } else {
+          pushToast({ type: "info", title: "Payment required", message: "Please complete payment to publish" });
+        }
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: result.error || "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId, headers, hasPasswordSet, pushToast, payment.openPaymentModal]);
+
+  // Keep ref up to date so the effect below always calls the latest version
+  useEffect(() => {
+    handlePublishRef.current = handlePublish;
+  }, [handlePublish]);
+
+  // After payment completes, retry the publish — server will now allow it
+  useEffect(() => {
+    if (payment.paymentJustCompleted) {
+      payment.resetPaymentCompleted();
+      handlePublishRef.current();
+    }
+  }, [payment.paymentJustCompleted, payment.resetPaymentCompleted]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -344,10 +410,15 @@ export function useHoliEditor() {
     [shareUrl, pushToast],
   );
 
-  const handleShare = useCallback(() => handleCopy(), [handleCopy]);
+  const handleShare = useCallback(() => {
+    if (!shareUrl) return;
+    setShowShareSheet(true);
+  }, [shareUrl]);
+
+  const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   return {
-    tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
+    tab, content, editMode, isPersonalized, shareUrl, showShareSheet, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, manualStep,
@@ -357,12 +428,15 @@ export function useHoliEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth, closeAuthSuccess,
+    goBack, closeAuth, closeAuthSuccess, closeShareSheet,
     handleEditClick, startAiMode, startManualMode,
-    handleAiGenerate, handleManualPreview,
+    handleAiGenerate, handleManualPreview, handleAiEditPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
+
+    // Payment modal
+    payment,
 
     // Show publish if user has personalized but not yet published
     showPublish: isPersonalized && !publishing,

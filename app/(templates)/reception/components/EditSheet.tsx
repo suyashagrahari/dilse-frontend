@@ -3,13 +3,13 @@
 import { memo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye,
-  Upload, ImagePlus, ScanLine, Trash2,
+  X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye, EyeOff,
+  Upload, ImagePlus, ScanLine, Trash2, Lock, ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
 import type { ReceptionData, EditMode } from "./types";
 
-const MANUAL_STEPS = ["Names", "Details", "Photos", "Descriptions", "Gallery"];
+const MANUAL_STEPS = ["Names", "Details", "Photos", "Descriptions", "Gallery", "Password"];
 const GOLD = "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)";
 const AMBER = "linear-gradient(90deg, #C9A84C, #A68636)";
 
@@ -28,6 +28,8 @@ interface Props {
   manualStep: number;
   setManualStep: (v: number) => void;
   updateMf: (key: keyof ReceptionData, val: unknown) => void;
+  pagePassword: string;
+  setPagePassword: (v: string) => void;
   onStartAiText: () => void;
   onStartAiCard: () => void;
   onStartManual: () => void;
@@ -42,10 +44,11 @@ export default memo(function EditSheet({
   aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading,
   extractLoading,
   mf, manualStep, setManualStep, updateMf,
+  pagePassword, setPagePassword,
   onStartAiText, onStartAiCard, onStartManual,
   onCardExtract, onAiGenerate, onAiEditPreview, onManualPreview,
 }: Props) {
-  const visible = editMode !== null && editMode !== "preview" && editMode !== "password";
+  const visible = editMode !== null && editMode !== "preview";
 
   return (
     <AnimatePresence>
@@ -56,14 +59,14 @@ export default memo(function EditSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setEditMode(null)}
-            className="fixed inset-0 z-50 bg-black/60"
+            className="fixed inset-0 z-[60] bg-black/60"
           />
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[92vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
+            className="fixed bottom-0 left-0 right-0 z-[60] max-h-[78vh] lg:max-h-[90vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
           >
             <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
               <div className="w-10 h-1 rounded-full bg-border" />
@@ -106,6 +109,7 @@ export default memo(function EditSheet({
                 setEditMode={setEditMode}
                 mf={mf} manualStep={manualStep} setManualStep={setManualStep}
                 updateMf={updateMf} onPreview={onManualPreview}
+                pagePassword={pagePassword} setPagePassword={setPagePassword}
               />
             )}
           </motion.div>
@@ -494,35 +498,42 @@ function AiEditPanel({
 
 // ── Manual panel ───────────────────────────────────────────────────────────────
 function ManualPanel({
-  setEditMode, mf, manualStep, setManualStep, updateMf, onPreview,
+  setEditMode, mf, manualStep, setManualStep, updateMf, onPreview, pagePassword, setPagePassword,
 }: {
   setEditMode: (m: EditMode) => void;
   mf: ReceptionData; manualStep: number; setManualStep: (v: number) => void;
   updateMf: (key: keyof ReceptionData, val: unknown) => void;
   onPreview: () => void;
+  pagePassword: string; setPagePassword: (v: string) => void;
 }) {
+  const isPasswordStep = manualStep === 5;
+
   return (
     <div className="px-5 pb-8 pt-2">
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
         <h3 className="text-lg font-bold flex items-center gap-2"><PenLine size={16} style={{ color: "#C9A84C" }} /> Manual Edit</h3>
       </div>
-      <div className="flex gap-1 mb-6">
+      <div className="flex gap-1 mb-5">
         {MANUAL_STEPS.map((s, i) => (
           <button
             key={s}
-            onClick={() => setManualStep(i)}
+            onClick={() => !isPasswordStep && setManualStep(i)}
             className="flex-1 h-1 rounded-full transition-all"
             style={{ background: i <= manualStep ? "#C9A84C" : "hsl(var(--border))" }}
           />
         ))}
       </div>
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+        Step {manualStep + 1} of {MANUAL_STEPS.length} — {MANUAL_STEPS[manualStep]}
+      </p>
       <AnimatePresence mode="wait">
         {manualStep === 0 && <NamesStep key="s0" mf={mf} updateMf={updateMf} />}
         {manualStep === 1 && <DetailsStep key="s1" mf={mf} updateMf={updateMf} />}
         {manualStep === 2 && <PhotosStep key="s2" mf={mf} updateMf={updateMf} />}
         {manualStep === 3 && <DescriptionsStep key="s3" mf={mf} updateMf={updateMf} />}
         {manualStep === 4 && <GalleryStep key="s4" mf={mf} updateMf={updateMf} />}
+        {manualStep === 5 && <PasswordStep key="s5" password={pagePassword} setPassword={setPagePassword} />}
       </AnimatePresence>
       <div className="flex gap-3 mt-6">
         {manualStep > 0 && (
@@ -533,7 +544,23 @@ function ManualPanel({
             <ChevronLeft size={18} />
           </button>
         )}
-        {manualStep < MANUAL_STEPS.length - 1 ? (
+        {isPasswordStep ? (
+          <>
+            <button
+              onClick={() => { setPagePassword(""); onPreview(); }}
+              className="flex-1 py-3 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={onPreview}
+              className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5"
+              style={{ background: GOLD, color: "#080808" }}
+            >
+              <Eye size={14} /> Set & Preview
+            </button>
+          </>
+        ) : manualStep < MANUAL_STEPS.length - 1 ? (
           <button
             onClick={() => setManualStep(manualStep + 1)}
             className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
@@ -541,16 +568,7 @@ function ManualPanel({
           >
             Continue <ChevronRight size={16} />
           </button>
-        ) : (
-          <button
-            onClick={onPreview}
-            disabled={!mf.brideName.trim()}
-            className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
-            style={{ background: GOLD, color: "#080808" }}
-          >
-            <Eye size={16} /> Preview
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -703,6 +721,48 @@ function GalleryStep({ mf, updateMf }: { mf: ReceptionData; updateMf: (k: keyof 
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
+    </motion.div>
+  );
+}
+
+// ── Password step ──────────────────────────────────────────────────────────────
+function PasswordStep({ password, setPassword }: { password: string; setPassword: (v: string) => void }) {
+  const [showPw, setShowPw] = useState(false);
+  return (
+    <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <div className="flex items-center gap-3 p-4 rounded-2xl border border-amber-400/20" style={{ background: "rgba(201,168,76,0.06)" }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(201,168,76,0.15)" }}>
+          <ShieldCheck size={18} style={{ color: "#C9A84C" }} />
+        </div>
+        <div>
+          <p className="text-sm font-bold">Protect Your Invitation</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Add a password so only invited guests can view it. This is optional.</p>
+        </div>
+      </div>
+      <div className="bg-muted/20 rounded-2xl p-4 border border-border/40">
+        <div className="flex items-center gap-2 mb-3">
+          <Lock size={13} className="text-muted-foreground" />
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Password (optional)</label>
+        </div>
+        <div className="relative">
+          <input
+            type={showPw ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter a password for guests..."
+            className="w-full px-4 py-3 pr-10 rounded-xl bg-background border border-border/50 focus:border-amber-600 focus:outline-none text-sm transition-all"
+          />
+          <button type="button" onClick={() => setShowPw((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground">
+            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+        {password && (
+          <p className="text-[11px] text-amber-500 mt-2 flex items-center gap-1">
+            <Lock size={10} /> Remember to share this password with your guests
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -112,17 +113,17 @@ const GallerySection = memo(function GallerySection({ data }: Props) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {lightbox !== null && filtered[lightbox] && (
+      {lightbox !== null && filtered[lightbox] && createPortal(
+        <AnimatePresence>
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="fixed inset-0 z-[200] flex items-center justify-center"
             style={{ background: "rgba(11,15,26,0.95)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeLightbox}
           >
-            <button onClick={closeLightbox} className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center z-10" style={REC_GLASS}>
+            <button onClick={(e) => { e.stopPropagation(); closeLightbox(); }} className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center z-10" style={REC_GLASS}>
               <X size={16} style={{ color: "hsl(var(--rec-muted-fg))" }} />
             </button>
             {lightbox > 0 && (
@@ -151,8 +152,9 @@ const GallerySection = memo(function GallerySection({ data }: Props) {
               </span>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </section>
   );
 });

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getSharePageMeta, buildMeta, SITE_URL } from "@/lib/seo";
 import { SharePageJsonLd } from "@/components/JsonLd";
-import SharePageClient from "./SharePageClient";
+import SharePageWrapper from "./SharePageWrapper";
 import { API_URL } from "@/lib/config";
 
 interface SharePageData {
@@ -80,7 +80,7 @@ export default async function SharePage({
         datePublished={createdAt}
         authorName={senderName}
       />
-      <SharePageClient />
+      <SharePageWrapper />
     </>
   );
 }

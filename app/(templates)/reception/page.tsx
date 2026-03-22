@@ -3,7 +3,9 @@
 import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import SocialShareSheet from "@/components/SocialShareSheet";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
 import BokehParticles from "./components/BokehParticles";
@@ -13,7 +15,6 @@ import BottomNav from "./components/BottomNav";
 import SplashSection from "./components/SplashSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
-import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ReceptionWelcomeOverlay from "./components/ReceptionWelcomeOverlay";
@@ -71,6 +72,107 @@ export default function ReceptionPage() {
         />
       )}
 
+      {/* Floating Back button — top-left, mobile only */}
+      {welcomed && (
+        <div className="fixed top-4 left-4 z-50 lg:hidden">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={editor.editMode === "preview" ? editor.handleDiscardPreview : editor.goBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-xl font-medium text-xs"
+            style={{
+              background: "var(--rec-nav-bg)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid var(--rec-nav-border)",
+              color: "hsl(var(--rec-muted-fg))",
+            }}
+          >
+            <ArrowLeft size={14} />
+            {editor.editMode === "preview" ? "Back & Edit" : "Back"}
+          </motion.button>
+        </div>
+      )}
+
+      {/* Floating Save / Create / Publish / Share button — top-right, mobile only */}
+      {welcomed && (
+        <div className="fixed top-4 right-4 z-50 lg:hidden">
+          <AnimatePresence mode="wait">
+            {editor.editMode === "preview" ? (
+              <motion.button
+                key="save"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleConfirmSave}
+                disabled={editor.saving}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl disabled:opacity-70"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
+              >
+                {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {editor.saving ? "Saving…" : "Save"}
+              </motion.button>
+            ) : !editor.isPersonalized ? (
+              <motion.button
+                key="create"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleEditClick}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
+              >
+                <Sparkles size={14} />
+                Create
+              </motion.button>
+            ) : !editor.shareUrl ? (
+              <motion.button
+                key="publish"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handlePublish}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{
+                  background: "rgba(16,185,129,0.15)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  color: "#10b981",
+                  border: "1px solid rgba(16,185,129,0.35)",
+                }}
+              >
+                <Send size={14} />
+                Publish
+              </motion.button>
+            ) : (
+              <motion.button
+                key="share"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleShare}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{
+                  background: "rgba(99,102,241,0.15)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  color: "#818cf8",
+                  border: "1px solid rgba(99,102,241,0.3)",
+                }}
+              >
+                <Share2 size={14} />
+                Share
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
@@ -118,14 +220,8 @@ export default function ReceptionPage() {
         tab={editor.tab}
         onTabChange={editor.handleTabChange}
         onEdit={editor.handleEditClick}
-        onBack={editor.goBack}
-        showPublish={editor.showPublish}
-        showShare={editor.showShare}
-        shareLabel={editor.shareLabel}
-        onPublish={editor.handlePublish}
-        onShare={editor.handleShare}
-        darkMode={editor.darkMode}
-        toggleDark={editor.toggleDark}
+        isPersonalized={editor.isPersonalized}
+        isPreview={editor.editMode === "preview"}
       />
 
       <div className="lg:ml-64 xl:mr-72 h-full overflow-y-auto no-scrollbar pb-20 lg:pb-0">
@@ -171,6 +267,13 @@ export default function ReceptionPage() {
       </div>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+      <SocialShareSheet
+        open={editor.showShareSheet}
+        onClose={editor.closeShareSheet}
+        shareUrl={editor.shareUrl}
+        onCopy={editor.handleCopy}
+        shareMessage={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`}
+      />
 
       <EditSheet
         editMode={editor.editMode}
@@ -187,6 +290,8 @@ export default function ReceptionPage() {
         manualStep={editor.manualStep}
         setManualStep={editor.setManualStep}
         updateMf={editor.updateMf}
+        pagePassword={editor.pagePassword}
+        setPagePassword={editor.setPagePassword}
         onStartAiText={editor.startAiTextMode}
         onStartAiCard={editor.startAiCardMode}
         onStartManual={editor.startManualMode}
@@ -196,18 +301,8 @@ export default function ReceptionPage() {
         onManualPreview={editor.handleManualPreview}
       />
 
-      <PasswordSheet
-        visible={editor.editMode === "password"}
-        saving={editor.saving}
-        password={editor.pagePassword}
-        setPassword={editor.setPagePassword}
-        showValue={editor.showPwValue}
-        setShowValue={editor.setShowPwValue}
-        onDone={editor.handlePasswordDone}
-      />
-
       <PreviewBar
-        visible={editor.editMode === "preview"}
+        visible={false}
         saving={editor.saving}
         onDiscard={editor.handleDiscardPreview}
         onConfirm={editor.handleConfirmSave}

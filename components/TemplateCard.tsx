@@ -4,6 +4,7 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Crown } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import type { TemplateListItem } from "@/types/template-config";
 
@@ -33,8 +34,8 @@ const TemplateCard = memo(function TemplateCard({
       <Link href={`/${template.slug}`} className="block group">
         <motion.div
           className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
-          style={{ border: "1px solid var(--app-border)" }}
-          whileHover={{ y: -6, scale: 1.02, boxShadow: "var(--app-hover-glow)" }}
+          style={{ border: "1px solid rgba(61,12,17,0.15)" }}
+          whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 60px rgba(61,12,17,0.2), 0 0 0 1.5px rgba(201,168,76,0.5)" }}
           whileTap={{ scale: 0.98 }}
         >
           {/* Background */}
@@ -69,6 +70,23 @@ const TemplateCard = memo(function TemplateCard({
             style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }}
           />
 
+          {/* Premium crown badge — top-left ribbon */}
+          {template.isPremium && (
+            <div className="absolute top-0 left-0 z-20">
+              <div
+                className="flex items-center gap-1 px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-black uppercase tracking-widest"
+                style={{
+                  background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+                  color: "#000",
+                  boxShadow: "0 2px 10px rgba(255,165,0,0.45)",
+                }}
+              >
+                <Crown size={8} fill="currentColor" />
+                Premium
+              </div>
+            </div>
+          )}
+
           {/* Card content */}
           <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
             {/* Top row: emoji icon + favorite button */}
@@ -96,14 +114,14 @@ const TemplateCard = memo(function TemplateCard({
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
                 style={{
-                  background: "rgba(255,255,255,0.1)",
-                  color: "rgba(255,255,255,0.55)",
+                  background: "rgba(201,168,76,0.18)",
+                  color: "#c9a84c",
                   backdropFilter: "blur(4px)",
                 }}
               >
                 {template.type}
               </span>
-              <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1 text-white">
+              <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1 text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                 {template.title}
               </h3>
               <p
@@ -115,7 +133,7 @@ const TemplateCard = memo(function TemplateCard({
               <div className="mt-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
                 <span
                   className="text-[10px] font-bold uppercase tracking-wider"
-                  style={{ color: "var(--app-accent)" }}
+                  style={{ color: "#c9a84c" }}
                 >
                   Open
                 </span>
@@ -124,7 +142,7 @@ const TemplateCard = memo(function TemplateCard({
                   height="12"
                   viewBox="0 0 12 12"
                   fill="none"
-                  style={{ color: "var(--app-accent)" }}
+                  style={{ color: "#c9a84c" }}
                 >
                   <path
                     d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9"

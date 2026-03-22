@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Clock, Calendar, Sparkles } from "lucide-react";
 import type { WeddingData, WeddingEvent } from "./types";
@@ -289,9 +290,12 @@ function MobileEventCard({ event, idx }: { event: WeddingEvent; idx: number }) {
         </button>
       </motion.div>
 
-      <AnimatePresence>
-        {showModal && <EventModal event={event} onClose={close} />}
-      </AnimatePresence>
+      {showModal && createPortal(
+        <AnimatePresence>
+          <EventModal event={event} onClose={close} />
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }

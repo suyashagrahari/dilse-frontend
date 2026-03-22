@@ -37,8 +37,25 @@ export default function PwaProvider({ children }: { children: ReactNode }) {
   const [platform, setPlatform] = useState<Platform>("other");
 
   useEffect(() => {
+    const isProd = process.env.NODE_ENV === "production";
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      if (isProd) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      } else {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((reg) => {
+            reg.unregister().catch(() => {});
+          });
+        }).catch(() => {});
+
+        if ("caches" in window) {
+          caches.keys().then((keys) => {
+            keys.forEach((key) => {
+              caches.delete(key).catch(() => {});
+            });
+          }).catch(() => {});
+        }
+      }
     }
 
     setPlatform(detectPlatform());

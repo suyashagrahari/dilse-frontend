@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildMeta } from "@/lib/seo";
+import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 
 export const metadata: Metadata = buildMeta({
   title: "The Manifesto | Gifts",
@@ -31,13 +32,46 @@ const principles = [
   },
 ];
 
+const UI = {
+  bg: "#f5ede6",
+  bgSoft: "#fbf6f1",
+  text: "#2a0a0e",
+  textMuted: "#7a5555",
+  textFaint: "#9d7b7b",
+  accent: "#c9a84c",
+  accentFg: "#1a0507",
+  border: "rgba(61,12,17,0.16)",
+  borderFaint: "rgba(61,12,17,0.1)",
+  surface: "rgba(255,255,255,0.76)",
+};
+
+const CORNER_FILTER =
+  "brightness(0) saturate(100%) invert(8%) sepia(55%) saturate(2800%) hue-rotate(330deg) brightness(90%) contrast(120%)";
+
 export default function ManifestoPage() {
   return (
-    <main className="min-h-screen" style={{ background: "var(--app-bg)", color: "var(--app-text)" }}>
-      <div
-        className="mx-auto max-w-6xl px-5 pt-20 pb-16 md:px-10 md:pt-28"
-      >
-        <section className="relative text-center mb-14 md:mb-20 overflow-hidden rounded-[2rem] border px-5 py-10 md:py-14 md:px-10" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
+    <main
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        background: UI.bg,
+        color: UI.text,
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER }} />
+      </div>
+      <LuxuryMobileTopBrand />
+
+      <div className="mx-auto max-w-6xl px-5 pt-10 pb-16 md:px-10 md:pt-28" style={{ position: "relative", zIndex: 1 }}>
+        <section className="relative text-center mb-14 md:mb-20 overflow-hidden rounded-[2rem] border px-5 py-10 md:py-14 md:px-10" style={{ borderColor: UI.border, background: UI.surface }}>
           <div
             aria-hidden
             style={{
@@ -46,7 +80,7 @@ export default function ManifestoPage() {
               borderRadius: 9999,
               filter: "blur(24px)",
               opacity: 0.25,
-              background: "var(--app-accent-a25)",
+              background: "rgba(201,168,76,0.25)",
               width: 180,
               height: 180,
               top: -40,
@@ -61,7 +95,7 @@ export default function ManifestoPage() {
               borderRadius: 9999,
               filter: "blur(24px)",
               opacity: 0.2,
-              background: "var(--app-accent-a25)",
+              background: "rgba(201,168,76,0.25)",
               width: 140,
               height: 140,
               right: -20,
@@ -71,21 +105,21 @@ export default function ManifestoPage() {
 
           <p
             className="text-[11px] font-bold uppercase tracking-[0.32em] mb-4 animate-slide-up"
-            style={{ color: "var(--app-accent)" }}
+            style={{ color: UI.accent }}
           >
             The Manifesto
           </p>
           <h1
-            className="font-black uppercase tracking-tighter leading-[0.9] text-5xl md:text-7xl animate-slide-up"
-            style={{ fontFamily: "'Space Grotesk', sans-serif", animationDelay: "120ms" }}
+            className="leading-[0.92] tracking-[-0.03em] text-[42px] md:text-[74px] animate-slide-up"
+            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, animationDelay: "120ms" }}
           >
             Design The Moment.
             <br />
-            <span style={{ color: "var(--app-accent)" }}>Deliver The Feeling.</span>
+            <span style={{ color: UI.accent, fontStyle: "italic" }}>Deliver The Feeling.</span>
           </h1>
           <p
             className="mx-auto mt-6 max-w-3xl text-base md:text-lg animate-slide-up"
-            style={{ color: "var(--app-text-muted)", animationDelay: "220ms" }}
+            style={{ color: UI.textMuted, animationDelay: "220ms" }}
           >
             Gifts exists to turn simple messages into meaningful experiences. Instead of sending plain text, you send a
             crafted moment that feels personal, alive, and unforgettable.
@@ -94,12 +128,12 @@ export default function ManifestoPage() {
 
         <section className="mb-8 md:mb-10">
           <h2
-            className="text-2xl md:text-4xl font-black tracking-tight mb-2 animate-slide-up"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-[34px] md:text-[56px] leading-[0.95] tracking-[-0.03em] mb-2 animate-slide-up"
+            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
           >
             Our Core Principles
           </h2>
-          <p className="text-sm md:text-base animate-slide-up" style={{ color: "var(--app-text-muted)", animationDelay: "100ms" }}>
+          <p className="text-sm md:text-base animate-slide-up" style={{ color: UI.textMuted, animationDelay: "100ms" }}>
             Every template, animation, and interaction follows these fundamentals.
           </p>
         </section>
@@ -110,21 +144,21 @@ export default function ManifestoPage() {
               key={p.id}
               className="rounded-3xl border p-6 md:p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--app-accent-a35)] animate-slide-up"
               style={{
-                borderColor: "var(--app-border)",
-                background: "var(--app-surface)",
+                borderColor: UI.border,
+                background: UI.surface,
                 animationDelay: `${idx * 90}ms`,
               }}
             >
               <p
                 className="text-xs font-black tracking-[0.25em] mb-3"
-                style={{ color: "var(--app-accent)", fontFamily: "'Space Grotesk', sans-serif" }}
+                style={{ color: UI.accent, fontFamily: "'Playfair Display', serif" }}
               >
                 {p.id}
               </p>
-              <h2 className="text-2xl font-black tracking-tight mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h2 className="text-[34px] leading-[1.05] mb-3" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
                 {p.title}
               </h2>
-              <p className="text-sm md:text-base leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
+              <p className="text-sm md:text-base leading-relaxed" style={{ color: UI.textMuted }}>
                 {p.body}
               </p>
             </article>
@@ -133,11 +167,11 @@ export default function ManifestoPage() {
 
         <section
           className="rounded-[2rem] border p-6 md:p-10 mb-10 animate-slide-up"
-          style={{ borderColor: "var(--app-border)", background: "var(--app-surface)", animationDelay: "120ms" }}
+          style={{ borderColor: UI.border, background: UI.surface, animationDelay: "120ms" }}
         >
-          <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h3 className="text-[34px] md:text-[56px] leading-[0.95] tracking-[-0.03em] mb-4" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
             Best Way To Create
-            <span style={{ color: "var(--app-accent)" }}> The Perfect Surprise</span>
+            <span style={{ color: UI.accent, fontStyle: "italic" }}> The Perfect Surprise</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
@@ -157,14 +191,14 @@ export default function ManifestoPage() {
                 text: "Preview before sharing, add password when needed, and send it at the perfect moment.",
               },
             ].map((item) => (
-              <div key={item.step} className="rounded-2xl border p-4" style={{ borderColor: "var(--app-border-faint)", background: "transparent" }}>
-                <p className="text-xs font-black tracking-[0.2em] mb-2" style={{ color: "var(--app-accent)" }}>
+              <div key={item.step} className="rounded-2xl border p-4" style={{ borderColor: UI.borderFaint, background: "transparent" }}>
+                <p className="text-xs font-black tracking-[0.2em] mb-2" style={{ color: UI.accent }}>
                   STEP {item.step}
                 </p>
-                <h4 className="text-lg font-black mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <h4 className="text-2xl leading-[1.08] mb-2" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
                   {item.title}
                 </h4>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: UI.textMuted }}>
                   {item.text}
                 </p>
               </div>
@@ -175,30 +209,30 @@ export default function ManifestoPage() {
         <section
           className="rounded-[2rem] border p-6 md:p-10 text-center animate-slide-up"
           style={{
-            borderColor: "var(--app-border)",
-            background: "linear-gradient(135deg, var(--app-accent-a10), transparent), var(--app-surface)",
+            borderColor: UI.border,
+            background: "linear-gradient(135deg, rgba(201,168,76,0.1), transparent), rgba(255,255,255,0.76)",
             animationDelay: "200ms",
           }}
         >
-          <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h3 className="text-[36px] md:text-[60px] leading-[0.95] tracking-[-0.03em] mb-4" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
             Build Something
-            <span style={{ color: "var(--app-accent)" }}> Unforgettable.</span>
+            <span style={{ color: UI.accent, fontStyle: "italic" }}> Unforgettable.</span>
           </h3>
-          <p className="mx-auto max-w-2xl text-sm md:text-base mb-8" style={{ color: "var(--app-text-muted)" }}>
+          <p className="mx-auto max-w-2xl text-sm md:text-base mb-8" style={{ color: UI.textMuted }}>
             Pick a template. Add your story. Publish a private link. One moment can become a forever memory.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/templates"
               className="w-full sm:w-auto rounded-full px-7 py-3.5 text-sm font-black uppercase tracking-[0.16em] transition-all hover:opacity-90"
-              style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}
+              style={{ background: UI.accent, color: UI.accentFg }}
             >
               Start Building
             </Link>
             <Link
               href="/"
               className="w-full sm:w-auto rounded-full border px-7 py-3.5 text-sm font-black uppercase tracking-[0.16em] transition-colors hover:border-[var(--app-accent-a35)]"
-              style={{ borderColor: "var(--app-border)", color: "var(--app-text)" }}
+              style={{ borderColor: UI.border, color: UI.text }}
             >
               Back To Home
             </Link>

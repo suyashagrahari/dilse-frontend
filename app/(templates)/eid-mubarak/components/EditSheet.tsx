@@ -1,8 +1,8 @@
 "use client";
 
-import { memo, useRef, useCallback } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye, Camera, ImagePlus, Trash2 } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Eye, Camera, ImagePlus, Trash2, ShieldCheck, Lock, EyeOff } from "lucide-react";
 import type { EidData, EditMode } from "./types";
 
 // Compress image to base64 via canvas — keeps file tiny for DB storage
@@ -31,7 +31,7 @@ function compressToBase64(file: File, maxPx = 300, quality = 0.75): Promise<stri
   });
 }
 
-const MANUAL_STEPS = ["Basics", "Personal Wish", "Family Wish", "Customize"];
+const MANUAL_STEPS = ["Basics", "Personal Wish", "Family Wish", "Customize", "Password"];
 const GOLD_GRAD = "var(--eid-gradient-gold)";
 
 interface Props {
@@ -44,8 +44,9 @@ interface Props {
   mf: EidData;
   manualStep: number; setManualStep: (v: number) => void;
   updateMf: (key: keyof EidData, val: unknown) => void;
+  pagePassword: string; setPagePassword: (v: string) => void;
   onStartAi: () => void; onStartManual: () => void;
-  onAiGenerate: () => void; onManualPreview: () => void;
+  onAiGenerate: () => void; onManualPreview: () => void; onAiEditPreview: () => void;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -54,6 +55,47 @@ const inputStyle: React.CSSProperties = {
   color: "hsl(var(--eid-fg))",
   borderRadius: "0.75rem",
 };
+
+function EidPasswordStep({ password, setPassword }: { password: string; setPassword: (v: string) => void }) {
+  const [showPw, setShowPw] = useState(false);
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: "rgba(197,160,63,0.06)", border: "1px solid rgba(197,160,63,0.15)" }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(197,160,63,0.15)" }}>
+          <ShieldCheck size={18} style={{ color: "var(--eid-gold)" }} />
+        </div>
+        <div>
+          <p className="text-sm font-bold" style={{ color: "hsl(var(--eid-fg))" }}>Protect Your Card</p>
+          <p className="text-xs" style={{ color: "hsl(var(--eid-muted-fg))" }}>Optional — skip if not needed</p>
+        </div>
+      </div>
+      <div className="rounded-2xl p-4" style={{ background: "hsl(var(--eid-surface))", border: "1px solid hsl(var(--eid-border))" }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Lock size={13} style={{ color: "hsl(var(--eid-muted-fg))" }} />
+          <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--eid-muted-fg))" }}>Password (optional)</label>
+        </div>
+        <div className="relative">
+          <input
+            type={showPw ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter a password for recipients..."
+            className="w-full px-4 py-3 pr-10 text-sm outline-none"
+            style={{ background: "hsl(var(--eid-input))", border: "1px solid hsl(var(--eid-border))", borderRadius: "0.75rem", color: "hsl(var(--eid-fg))" }}
+          />
+          <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "hsl(var(--eid-muted-fg))" }}>
+            {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        </div>
+        {password && (
+          <p className="text-[11px] mt-2 flex items-center gap-1" style={{ color: "var(--eid-gold)" }}>
+            <Lock size={10} /> Remember to share this password with recipients
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 export default memo(function EditSheet(props: Props) {
   const { editMode, setEditMode } = props;
@@ -417,6 +459,11 @@ export default memo(function EditSheet(props: Props) {
                     </>
                   )}
 
+                  {/* ── Step 4: Password ── */}
+                  {props.manualStep === 4 && (
+                    <EidPasswordStep password={props.pagePassword} setPassword={props.setPagePassword} />
+                  )}
+
                   {/* Nav buttons */}
                   <div className="flex gap-3 pt-1">
                     <button
@@ -434,11 +481,18 @@ export default memo(function EditSheet(props: Props) {
                         Next <ChevronRight size={14} />
                       </button>
                     ) : (
-                      <button onClick={props.onManualPreview}
-                        className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
-                        style={{ background: GOLD_GRAD, color: "hsl(var(--eid-bg))" }}>
-                        <Eye size={14} /> Preview
-                      </button>
+                      <>
+                        <button onClick={() => { props.setPagePassword(""); editMode === "ai-edit" ? props.onAiEditPreview() : props.onManualPreview(); }}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold"
+                          style={{ background: "hsl(var(--eid-surface))", color: "hsl(var(--eid-muted-fg))", border: "1px solid hsl(var(--eid-border))" }}>
+                          Skip
+                        </button>
+                        <button onClick={() => editMode === "ai-edit" ? props.onAiEditPreview() : props.onManualPreview()}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
+                          style={{ background: GOLD_GRAD, color: "hsl(var(--eid-bg))" }}>
+                          <Eye size={14} /> Preview
+                        </button>
+                      </>
                     )}
                   </div>
                 </>

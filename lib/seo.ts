@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-export const SITE_NAME = "Gifts";
+export const SITE_NAME = "SubhSandesh";
 export const SITE_TAGLINE = "Make Every Moment Special";
 export const SITE_DESCRIPTION =
   "Create stunning personalized pages for birthdays, anniversaries, Valentine's Day, and more. Share your feelings with a beautiful link.";
 import { SITE_URL as _SITE_URL } from "@/lib/config";
 export const SITE_URL = _SITE_URL;
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/icons/icon-512.png`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export function buildMeta(overrides: Partial<Metadata> & { title?: string; description?: string } = {}): Metadata {
   const title = overrides.title || `${SITE_NAME} - ${SITE_TAGLINE}`;
@@ -22,7 +22,7 @@ export function buildMeta(overrides: Partial<Metadata> & { title?: string; descr
       siteName: SITE_NAME,
       type: "website",
       locale: "en_US",
-      images: [{ url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: SITE_NAME }],
+      images: [{ url: DEFAULT_OG_IMAGE, width: 1370, height: 784, alt: SITE_NAME }],
       ...(typeof overrides.openGraph === "object" ? overrides.openGraph : {}),
     },
     twitter: {

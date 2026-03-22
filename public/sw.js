@@ -1,4 +1,4 @@
-const CACHE_NAME = "gifts-v4";
+const CACHE_NAME = "gifts-v5";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -31,8 +31,22 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Always use network for document navigations to avoid stale HTML/hydration drift.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(() => caches.match("/").then((cached) => cached || new Response("Offline", { status: 503 })))
+    );
+    return;
+  }
+
   // Pass API calls through to the network — never cache dynamic data.
   if (request.url.includes("/api/")) return;
+
+  // Cache only static assets; dynamic route/data requests should stay network-first.
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    /\.[a-z0-9]+$/i.test(url.pathname);
+  if (!isStaticAsset) return;
 
   event.respondWith(
     fetch(request)

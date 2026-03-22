@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Home, Heart, Camera, MapPin, Flower2, ArrowLeft,
   Sun, Moon, Lock, Eye, EyeOff, ShieldAlert, Loader2,
-  Share2, Check, Copy, MoreHorizontal, Wand2, PenLine,
+  Share2, Check, Copy, Wand2, PenLine,
   ChevronRight, Sparkles, User, X, Edit3, Zap, HandHeart,
 } from "lucide-react";
 import { type ReceptionData, type TabId, TABS, DEMO_DATA } from "@/app/(templates)/reception/components/types";
@@ -631,7 +631,6 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
   const [tab, setTab] = useState<ViewerTabId>("home");
   const [data, setData] = useState<ReceptionData>(mapData(rawData));
   const [copied, setCopied] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
@@ -710,7 +709,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
-  const handleTabChange = useCallback((id: ViewerTabId) => { setTab(id); setMoreOpen(false); }, []);
+  const handleTabChange = useCallback((id: ViewerTabId) => { setTab(id); }, []);
   const toggleDark = useCallback(() => setDarkMode((d) => !d), []);
 
   const handleStartCreating = useCallback(() => {
@@ -767,21 +766,6 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
       </div>
     );
   }
-
-  const moreItems = [
-    {
-      icon: darkMode ? Sun : Moon,
-      label: darkMode ? "Light" : "Dark",
-      color: darkMode ? "#C9A84C" : "#8b5cf6",
-      bg: darkMode ? "rgba(201,168,76,0.12)" : "rgba(139,92,246,0.12)",
-      action: () => { toggleDark(); setMoreOpen(false); },
-    },
-    {
-      icon: ArrowLeft, label: "Back",
-      color: "hsl(var(--muted-foreground))", bg: "rgba(0,0,0,0.05)",
-      action: () => { setMoreOpen(false); router.back(); },
-    },
-  ];
 
   return (
     <div className="h-screen relative overflow-hidden bg-background">
@@ -906,37 +890,13 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
       {/* ── Mobile floating bottom nav ─────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none lg:hidden">
         <div className="flex justify-center mb-3 pointer-events-auto">
-          <AnimatePresence>
-            {moreOpen && (
-              <>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={() => setMoreOpen(false)} className="fixed inset-0 bg-black/40 backdrop-blur-[3px] -z-10" />
-                <motion.div className="absolute bottom-full mb-3 flex gap-3"
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
-                  {moreItems.map((item, i) => (
-                    <motion.button key={item.label}
-                      initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.7 }} transition={{ delay: i * 0.04 }}
-                      onClick={item.action} className="flex flex-col items-center gap-1">
-                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        style={{ background: item.bg, border: `1px solid ${item.bg}` }}>
-                        <item.icon size={17} style={{ color: item.color }} strokeWidth={1.8} />
-                      </div>
-                      <span className="text-[8px] font-medium text-muted-foreground">{item.label}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-
           {/* Floating nav pill */}
           <div className="flex items-center gap-0.5 px-2 py-1.5 rounded-2xl bg-card/92 border border-border"
             style={{ backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
 
             {TABS.map(({ id, label }) => {
               const Icon = TAB_ICONS[id];
-              const active = tab === id && !moreOpen;
+              const active = tab === id;
               return (
                 <button key={id} onClick={() => handleTabChange(id)} className="relative flex flex-col items-center py-1 px-2.5">
                   {active ? (
@@ -961,7 +921,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
 
             {/* Create tab */}
             <button onClick={() => handleTabChange("create")} className="relative flex flex-col items-center py-1 px-2">
-              {tab === "create" && !moreOpen ? (
+              {tab === "create" ? (
                 <motion.div layoutId="rec-viewer-nav-active"
                   className="absolute -top-4 w-10 h-10 rounded-full flex items-center justify-center text-white"
                   style={{ background: AMBER_CTA, boxShadow: "0 4px 16px rgba(201,168,76,0.5)" }}
@@ -978,29 +938,11 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
                 </div>
               )}
               <span className="text-[9px] font-bold"
-                style={{ color: "#C9A84C", marginTop: tab === "create" && !moreOpen ? "1.25rem" : "0.125rem" }}>
+                style={{ color: "#C9A84C", marginTop: tab === "create" ? "1.25rem" : "0.125rem" }}>
                 Create
               </span>
             </button>
 
-            <div className="w-px h-7 mx-0.5 bg-border" />
-
-            {/* More */}
-            <button onClick={() => setMoreOpen((o) => !o)} className="relative flex flex-col items-center py-1 px-2">
-              {moreOpen ? (
-                <motion.div layoutId="rec-viewer-nav-active"
-                  className="absolute -top-4 w-10 h-10 rounded-full flex items-center justify-center bg-muted border border-border"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}>
-                  <MoreHorizontal size={18} strokeWidth={2} />
-                </motion.div>
-              ) : (
-                <MoreHorizontal size={18} strokeWidth={1.5} className="text-muted-foreground" />
-              )}
-              <span className="text-[9px] font-semibold"
-                style={{ color: moreOpen ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))", marginTop: moreOpen ? "1.25rem" : "0.125rem" }}>
-                More
-              </span>
-            </button>
           </div>
         </div>
       </div>
