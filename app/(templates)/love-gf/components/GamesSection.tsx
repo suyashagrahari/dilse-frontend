@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback, useRef } from "react";
+import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
 import type { ContentData, QuizQuestion } from "./types";
