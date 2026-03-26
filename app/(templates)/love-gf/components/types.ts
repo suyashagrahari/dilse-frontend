@@ -4,6 +4,11 @@ export interface QuizQuestion {
   correct: number;
 }
 
+export interface TruthDareItem {
+  type: "truth" | "dare";
+  text: string;
+}
+
 export interface PhotoItem {
   url: string;    // base64 data URL
   letter: string; // love letter / caption
@@ -27,6 +32,7 @@ export interface ContentData {
   homePhotos: string[];        // 4 home polaroid photos (base64)
   galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
+  truthDareQuestions: TruthDareItem[];
   spinItems: string[];
   musicTracks: MusicTrack[];
 }
@@ -62,6 +68,7 @@ export const DEMO_CONTENT: ContentData = {
   loveDate: "",
   homePhotos: [],
   galleryPhotos: [],
+  truthDareQuestions: [],
   quizQuestions: [
     {
       question: "What's their favorite thing about you?",

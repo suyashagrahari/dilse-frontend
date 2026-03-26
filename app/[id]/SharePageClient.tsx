@@ -51,6 +51,10 @@ const ShaadiCardViewer = dynamic(() => import("./ShaadiCardViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const LoveGfViewer = dynamic(() => import("./LoveGfViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -172,8 +176,8 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setHasPassword(!!result.hasPassword);
           setSenderUserId(result.senderUserId || null);
 
-          // Holi, Eid, Wedding, Reception and Shaadi have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi") {
+          // Holi, Eid, Wedding, Reception, Shaadi and Love-GF have their own full-page viewers — just store raw data
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "love-gf") {
             setData(result.data);
             setLoading(false);
             return;
@@ -327,6 +331,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Shaadi Card has its own full-page viewer
   if (!loading && templateType === "shaadi" && data) {
     return <ShaadiCardViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Love GF has its own full-page viewer
+  if (!loading && templateType === "love-gf" && data) {
+    return <LoveGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {

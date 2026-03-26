@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { type ContentData, type EditMode, type PhotoItem } from "./types";
+import { type ContentData, type EditMode, type PhotoItem, type QuizQuestion, type TruthDareItem } from "./types";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_MID = "rgba(108, 74, 46, 0.55)";
@@ -20,7 +20,55 @@ const TEXTAREA_STYLE: React.CSSProperties = {
   ...INPUT_STYLE, resize: "vertical" as const, minHeight: 90, lineHeight: 1.6,
 };
 
-const STEP_LABELS = ["Names", "Message", "Wish", "Photos", "Gallery", "Finish"];
+const STEP_LABELS = ["Names", "Message", "Wish", "Photos", "Gallery", "Quiz", "Games", "Finish"];
+
+// ── Pre-made Truth/Dare libraries ────────────────────────────────────────────
+
+const TRUTH_LIBRARY = [
+  "What was your first thought when you saw me? 💭",
+  "What's your favorite memory of us together? 🌹",
+  "When did you first realize you had feelings for me? 🥰",
+  "What do you find most attractive about me? 👀",
+  "What song do you think of when you think of me? 🎵",
+  "What's one thing I do that makes you feel most loved? 💗",
+  "What's the most romantic thing you've ever imagined doing for me? 🌟",
+  "If you could relive one moment with me, which would it be? ✨",
+  "What quality of mine do you love most? 💖",
+  "What's the funniest thing I've ever done? 😂",
+  "What's something you've never told me but want to? 🤫",
+  "Describe our love story in 3 sentences 📖",
+  "What do you miss most when we're apart? 💔",
+  "What's your idea of a perfect date with me? 🌙",
+  "What small thing do I do that means a lot to you? 🌸",
+  "If you could describe me in 3 words, what would they be? 💕",
+  "What's one wish you have for our relationship? 🌠",
+  "What's your favorite thing we do together? 🥂",
+  "What's the first thing you notice about me when I walk in? 👑",
+  "What moment with me made you the happiest? 🎉",
+];
+
+const DARE_LIBRARY = [
+  "Send me a voice note saying 'I love you' in 5 different ways 🎤",
+  "Write me a short poem right now and send it 📝",
+  "Change your phone wallpaper to a photo of us for a week 📸",
+  "Tell me something you love about me for each letter of my name 💌",
+  "Describe our love story in exactly 10 words 💬",
+  "Name 5 things you're grateful for about me right now ✨",
+  "Sing the first line of a song that reminds you of me 🎵",
+  "Write a 3-sentence love letter and send it to me right now 💌",
+  "Plan our dream date — 3 activities, full details, right now! 🌙",
+  "Compliment me 3 times without using the word 'beautiful' 💎",
+  "Share a secret you've never told anyone 🤫",
+  "Create a nickname for me right now and explain why 🥰",
+  "Describe our first meeting like you're narrating a movie 🎬",
+  "Tell me the thing about me that always makes your day better ☀️",
+  "Text me the most heartfelt thing you've ever wanted to say 💬",
+  "List 10 reasons you love me — as fast as you can! 🚀",
+  "Say 'I choose you every single day' out loud 3 times 💕",
+  "Make a wish for us out loud right now 🌠",
+  "Describe your perfect future with me in 30 seconds ⏰",
+  "Send me a screenshot of our first conversation 📱",
+];
 
 async function compressToBase64(file: File, maxDim = 900): Promise<string> {
   return new Promise((resolve) => {
@@ -68,6 +116,14 @@ export default function EditSheet({
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [showPw, setShowPw] = useState(false);
   const [pw, setPw] = useState("");
+
+  // Quiz step state
+  const [quizEditIdx, setQuizEditIdx] = useState<number | null>(null);
+
+  // Truth/Dare step state
+  const [tdTab, setTdTab] = useState<"truth" | "dare">("truth");
+  const [customInput, setCustomInput] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   if (!editMode || editMode === "preview" || editMode === "password") return null;
 
@@ -120,13 +176,13 @@ export default function EditSheet({
   const progressBar = (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        {STEP_LABELS.map((label, i) => (
+        {STEP_LABELS.map((lbl, i) => (
           <span key={i} style={{
-            fontFamily: CURSIVE, fontSize: 10, letterSpacing: "0.05em",
+            fontFamily: CURSIVE, fontSize: 9, letterSpacing: "0.05em",
             color: i <= manualStep ? WARM : "rgb(160,120,80)",
             fontWeight: i === manualStep ? 700 : 400,
             opacity: i <= manualStep ? 1 : 0.45,
-          }}>{label}</span>
+          }}>{lbl}</span>
         ))}
       </div>
       <div style={{ height: 3, background: "rgba(158,126,97,0.15)", borderRadius: 2 }}>
@@ -175,6 +231,63 @@ export default function EditSheet({
     while (updated.length <= index) updated.push("");
     updated[index] = b64;
     updateMf("homePhotos", updated);
+  };
+
+  // ── Quiz helpers ─────────────────────────────────────────────────────────
+
+  const quizQuestions: QuizQuestion[] = mf.quizQuestions || [];
+
+  const updateQuizQuestion = (idx: number, update: Partial<QuizQuestion>) => {
+    const updated = [...quizQuestions];
+    updated[idx] = { ...updated[idx], ...update };
+    updateMf("quizQuestions", updated);
+  };
+
+  const updateQuizOption = (qIdx: number, oIdx: number, val: string) => {
+    const updated = [...quizQuestions];
+    const opts = [...(updated[qIdx].options || ["", "", "", ""])];
+    opts[oIdx] = val;
+    updated[qIdx] = { ...updated[qIdx], options: opts };
+    updateMf("quizQuestions", updated);
+  };
+
+  const addQuizQuestion = () => {
+    if (quizQuestions.length >= 10) return;
+    const newQ: QuizQuestion = { question: "", options: ["", "", "", ""], correct: 0 };
+    const updated = [...quizQuestions, newQ];
+    updateMf("quizQuestions", updated);
+    setQuizEditIdx(updated.length - 1);
+  };
+
+  const removeQuizQuestion = (idx: number) => {
+    const updated = quizQuestions.filter((_, i) => i !== idx);
+    updateMf("quizQuestions", updated);
+    if (quizEditIdx === idx) setQuizEditIdx(null);
+  };
+
+  // ── Truth/Dare helpers ───────────────────────────────────────────────────
+
+  const truthDareQuestions: TruthDareItem[] = mf.truthDareQuestions || [];
+  const currentLibrary = tdTab === "truth" ? TRUTH_LIBRARY : DARE_LIBRARY;
+  const selectedTexts = new Set(truthDareQuestions.map((q) => q.text));
+
+  const addTdItem = (text: string, type: "truth" | "dare") => {
+    if (selectedTexts.has(text)) return;
+    updateMf("truthDareQuestions", [...truthDareQuestions, { type, text }]);
+  };
+
+  const removeTdItem = (text: string) => {
+    updateMf("truthDareQuestions", truthDareQuestions.filter((q) => q.text !== text));
+  };
+
+  const addCustomTd = () => {
+    const trimmed = customInput.trim();
+    if (!trimmed) return;
+    if (!selectedTexts.has(trimmed)) {
+      updateMf("truthDareQuestions", [...truthDareQuestions, { type: tdTab, text: trimmed }]);
+    }
+    setCustomInput("");
+    setShowCustomInput(false);
   };
 
   // ── CHOOSE MODE ──────────────────────────────────────────────────────────
@@ -228,7 +341,7 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr("✨ AI Magic")}
           <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 16, lineHeight: 1.6 }}>
-            AI will write a heartfelt message, wish card, photo captions & quiz questions.
+            AI will write a heartfelt message, wish card, photo captions, quiz questions & truth/dare.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
@@ -625,8 +738,263 @@ export default function EditSheet({
       );
     }
 
-    // Step 5: Password + Save
+    // Step 5: Quiz Questions
     if (manualStep === 5) return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Quiz Questions 🎯")}
+          {progressBar}
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.5 }}>
+            Create custom quiz questions for the Games section. Up to 10 questions.
+          </p>
+
+          {quizQuestions.length === 0 ? (
+            <div style={{
+              padding: "24px 0", textAlign: "center",
+              fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.45)", lineHeight: 1.6,
+            }}>
+              No quiz questions yet.<br />
+              <span style={{ fontSize: 12, opacity: 0.7 }}>Add custom questions or skip — default ones will be used.</span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+              {quizQuestions.map((q, qi) => (
+                <div key={qi} style={{
+                  borderRadius: 12, border: `1.5px solid ${quizEditIdx === qi ? "rgba(158,126,97,0.55)" : "rgba(158,126,97,0.22)"}`,
+                  background: quizEditIdx === qi ? "rgba(158,126,97,0.06)" : "rgba(255,252,246,0.7)",
+                  overflow: "hidden",
+                }}>
+                  {/* Question header row */}
+                  <div
+                    onClick={() => setQuizEditIdx(quizEditIdx === qi ? null : qi)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", cursor: "pointer",
+                    }}
+                  >
+                    <span style={{
+                      fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: WARM,
+                      flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {qi + 1}. {q.question || <span style={{ opacity: 0.4 }}>Untitled question</span>}
+                    </span>
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 8 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeQuizQuestion(qi); }}
+                        style={{
+                          padding: "2px 8px", borderRadius: 6, border: "none",
+                          background: "rgba(180,60,50,0.08)",
+                          fontFamily: CURSIVE, fontSize: 11, color: "rgba(180,60,50,0.8)", cursor: "pointer",
+                        }}>✕</button>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.45)" }}>
+                        {quizEditIdx === qi ? "▲" : "▼"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expanded editor */}
+                  {quizEditIdx === qi && (
+                    <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div>
+                        {label("Question")}
+                        <input
+                          value={q.question}
+                          onChange={(e) => updateQuizQuestion(qi, { question: e.target.value })}
+                          placeholder="e.g. What's my favourite movie?"
+                          style={INPUT_STYLE}
+                        />
+                      </div>
+                      <div>
+                        {label("Options (A/B/C/D) — click radio to mark correct")}
+                        {[0, 1, 2, 3].map((oi) => (
+                          <div key={oi} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
+                            <input
+                              type="radio"
+                              name={`quiz-correct-${qi}`}
+                              checked={q.correct === oi}
+                              onChange={() => updateQuizQuestion(qi, { correct: oi })}
+                              style={{ accentColor: "rgb(158,126,97)", cursor: "pointer", flexShrink: 0 }}
+                            />
+                            <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM, flexShrink: 0, width: 16 }}>
+                              {["A", "B", "C", "D"][oi]}
+                            </span>
+                            <input
+                              value={(q.options || ["", "", "", ""])[oi] || ""}
+                              onChange={(e) => updateQuizOption(qi, oi, e.target.value)}
+                              placeholder={`Option ${["A", "B", "C", "D"][oi]}`}
+                              style={{ ...INPUT_STYLE, flex: 1 }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{
+                        fontFamily: CURSIVE, fontSize: 11, color: "rgb(70,140,60)",
+                        background: "rgba(70,140,60,0.07)", borderRadius: 8, padding: "6px 10px",
+                      }}>
+                        ✓ Correct answer: Option {["A", "B", "C", "D"][q.correct] || "A"} — {(q.options || [])[q.correct] || "not set"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {quizQuestions.length < 10 && (
+            <button
+              onClick={addQuizQuestion}
+              style={{
+                width: "100%", padding: "10px 0", borderRadius: 10, marginBottom: 16,
+                border: "1.5px dashed rgba(158,126,97,0.40)",
+                background: "rgba(158,126,97,0.04)", cursor: "pointer",
+                fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.65)",
+              }}>
+              + Add Question ({quizQuestions.length}/10)
+            </button>
+          )}
+
+          <div style={{ display: "flex", gap: 10 }}>
+            {ghostBtn("← Back", () => setManualStep(4))}
+            {primaryBtn("Next →", () => setManualStep(6))}
+          </div>
+        </div>
+      </div>
+    );
+
+    // Step 6: Truth & Dare
+    if (manualStep === 6) {
+      const selectedTruths = truthDareQuestions.filter((q) => q.type === "truth");
+      const selectedDares = truthDareQuestions.filter((q) => q.type === "dare");
+
+      return (
+        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+          <div style={sheet}>
+            {hdr("Truth & Dare 💕")}
+            {progressBar}
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.5 }}>
+              Pick questions from the library or add your own. These mix with defaults in the game.
+            </p>
+
+            {/* Tab toggle */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {(["truth", "dare"] as const).map((t) => (
+                <button key={t} onClick={() => { setTdTab(t); setShowCustomInput(false); }}
+                  style={{
+                    flex: 1, padding: "9px 0", borderRadius: 50,
+                    border: tdTab === t ? "1.5px solid rgba(158,126,97,0.55)" : "1px solid rgba(158,126,97,0.25)",
+                    background: tdTab === t ? "rgba(158,126,97,0.12)" : "transparent",
+                    fontFamily: CURSIVE, fontSize: 14, fontWeight: tdTab === t ? 700 : 400,
+                    color: tdTab === t ? WARM : "rgba(108,74,46,0.55)", cursor: "pointer",
+                  }}>
+                  {t === "truth" ? `💭 Truth (${selectedTruths.length})` : `🎯 Dare (${selectedDares.length})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Selected items for current tab */}
+            {(tdTab === "truth" ? selectedTruths : selectedDares).length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.55)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Selected ({tdTab === "truth" ? selectedTruths.length : selectedDares.length})
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(tdTab === "truth" ? selectedTruths : selectedDares).map((q) => (
+                    <div key={q.text} style={{
+                      display: "flex", alignItems: "flex-start", gap: 8,
+                      padding: "8px 12px", borderRadius: 10,
+                      background: tdTab === "truth" ? "rgba(140,100,180,0.09)" : "rgba(200,130,60,0.09)",
+                      border: tdTab === "truth" ? "1px solid rgba(140,100,180,0.22)" : "1px solid rgba(200,130,60,0.22)",
+                    }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, flex: 1, lineHeight: 1.4 }}>{q.text}</span>
+                      <button onClick={() => removeTdItem(q.text)} style={{
+                        border: "none", background: "transparent", cursor: "pointer",
+                        fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0, lineHeight: 1,
+                      }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Library */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.55)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Library — tap + to add
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+                {currentLibrary.map((text) => {
+                  const isSelected = selectedTexts.has(text);
+                  return (
+                    <div key={text} style={{
+                      display: "flex", alignItems: "flex-start", gap: 8,
+                      padding: "8px 12px", borderRadius: 10,
+                      background: isSelected ? "rgba(158,126,97,0.06)" : "rgba(255,252,246,0.7)",
+                      border: `1px solid ${isSelected ? "rgba(158,126,97,0.35)" : "rgba(158,126,97,0.18)"}`,
+                      opacity: isSelected ? 0.55 : 1,
+                    }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, flex: 1, lineHeight: 1.4 }}>{text}</span>
+                      {!isSelected && (
+                        <button onClick={() => addTdItem(text, tdTab)} style={{
+                          border: "none",
+                          background: tdTab === "truth" ? "rgba(140,100,180,0.14)" : "rgba(200,130,60,0.14)",
+                          borderRadius: 6, cursor: "pointer",
+                          fontFamily: CURSIVE, fontSize: 16, fontWeight: 700,
+                          color: tdTab === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
+                          padding: "0 8px", lineHeight: "24px", flexShrink: 0,
+                        }}>+</button>
+                      )}
+                      {isSelected && (
+                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.5)", flexShrink: 0 }}>✓</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom question input */}
+            {showCustomInput ? (
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                <input
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addCustomTd()}
+                  placeholder={`Your custom ${tdTab} question...`}
+                  style={{ ...INPUT_STYLE, flex: 1 }}
+                  autoFocus
+                />
+                <button onClick={addCustomTd} disabled={!customInput.trim()} style={{
+                  padding: "10px 16px", borderRadius: 8, border: "none",
+                  background: customInput.trim() ? "rgba(158,126,97,0.85)" : "rgba(158,126,97,0.25)",
+                  fontFamily: CURSIVE, fontSize: 13, color: "#fff", cursor: customInput.trim() ? "pointer" : "not-allowed",
+                }}>Add</button>
+                <button onClick={() => { setShowCustomInput(false); setCustomInput(""); }} style={{
+                  padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(158,126,97,0.3)",
+                  background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM, cursor: "pointer",
+                }}>✕</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowCustomInput(true)} style={{
+                width: "100%", padding: "9px 0", borderRadius: 10, marginBottom: 14,
+                border: "1.5px dashed rgba(158,126,97,0.35)",
+                background: "rgba(158,126,97,0.03)", cursor: "pointer",
+                fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.60)",
+              }}>
+                + Custom {tdTab === "truth" ? "Truth" : "Dare"}
+              </button>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              {ghostBtn("← Back", () => setManualStep(5))}
+              {primaryBtn("Next →", () => setManualStep(7))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 7: Password + Save
+    if (manualStep === 7) return (
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
           {hdr("Save your page ♡")}
@@ -644,6 +1012,10 @@ export default function EditSheet({
               {homePhotos.filter(Boolean).length} home photo{homePhotos.filter(Boolean).length !== 1 ? "s" : ""}
               {" · "}
               {(mf.galleryPhotos || []).filter((p) => p.url).length} gallery photo{(mf.galleryPhotos || []).filter((p) => p.url).length !== 1 ? "s" : ""}
+              {" · "}
+              {quizQuestions.length} quiz question{quizQuestions.length !== 1 ? "s" : ""}
+              {" · "}
+              {truthDareQuestions.length} truth/dare
             </div>
           </div>
 
@@ -669,7 +1041,7 @@ export default function EditSheet({
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            {ghostBtn("← Back", () => setManualStep(4))}
+            {ghostBtn("← Back", () => setManualStep(6))}
             {primaryBtn(
               saving ? "Saving..." : "Save ♡",
               () => onSaveWithPassword({ ...mf }, pw),

@@ -71,9 +71,10 @@ export function useLoveEditor() {
               personalMessage: d.personalMessage || prev.personalMessage,
               wishMessage:     d.wishMessage     || prev.wishMessage,
               loveDate:        d.loveDate        || prev.loveDate,
-              homePhotos:      d.homePhotos      || [],
-              galleryPhotos:   (d.galleryPhotos  || []).map(normalizePhoto),
-              quizQuestions:   d.quizQuestions   || [],
+              homePhotos:         d.homePhotos         || [],
+              galleryPhotos:      (d.galleryPhotos  || []).map(normalizePhoto),
+              quizQuestions:      d.quizQuestions      || [],
+              truthDareQuestions: d.truthDareQuestions || [],
             }));
             setPageId(id);
             setIsPersonalized(true);
@@ -155,15 +156,16 @@ export function useLoveEditor() {
     async (data: ContentData, password?: string) => {
       if (!accessToken) return;
       const body = {
-        recipientName:   data.recipientName,
-        senderName:      data.senderName,
-        personalMessage: data.personalMessage,
-        wishMessage:     data.wishMessage,
-        loveDate:        data.loveDate,
-        homePhotos:      data.homePhotos    || [],
-        galleryPhotos:   data.galleryPhotos || [],
-        quizQuestions:   data.quizQuestions || [],
-        password:        password || "",
+        recipientName:      data.recipientName,
+        senderName:         data.senderName,
+        personalMessage:    data.personalMessage,
+        wishMessage:        data.wishMessage,
+        loveDate:           data.loveDate,
+        homePhotos:         data.homePhotos         || [],
+        galleryPhotos:      data.galleryPhotos      || [],
+        quizQuestions:      data.quizQuestions      || [],
+        truthDareQuestions: data.truthDareQuestions || [],
+        password:           password || "",
       };
       if (pageId) {
         await fetch(`${API_URL}/love-gf-pages/${pageId}`, {
@@ -243,6 +245,11 @@ export function useLoveEditor() {
           wishMessage:     data.wishMessage || content.wishMessage,
           galleryPhotos:   galleryWithLetters,
           quizQuestions:   data.quizQuestions || content.quizQuestions || [],
+          truthDareQuestions: [
+            ...(data.truthQuestions || []).map((text: string) => ({ type: "truth" as const, text })),
+            ...(data.dareQuestions || []).map((text: string) => ({ type: "dare" as const, text })),
+            ...(content.truthDareQuestions || []),
+          ].slice(0, 20),
         };
         setMf(newContent);
         setManualStep(0);
@@ -334,6 +341,8 @@ export function useLoveEditor() {
     }
   }, [pageId, headers, pushToast]);
 
+  const [showShareSheet, setShowShareSheet] = useState(false);
+
   const handleCopy = useCallback(
     (url?: string) => {
       const link = url || shareUrl;
@@ -347,7 +356,9 @@ export function useLoveEditor() {
     [shareUrl, pushToast],
   );
 
-  const handleShare = useCallback(() => handleCopy(), [handleCopy]);
+  const handleShare = useCallback(() => {
+    if (shareUrl) setShowShareSheet(true);
+  }, [shareUrl]);
 
   // Extract shareId from shareUrl (last path segment)
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
@@ -357,6 +368,7 @@ export function useLoveEditor() {
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, manualStep, pendingContent,
+    showShareSheet, setShowShareSheet,
 
     setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,

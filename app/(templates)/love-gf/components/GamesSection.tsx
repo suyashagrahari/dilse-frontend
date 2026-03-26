@@ -3,7 +3,7 @@
 import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
-import type { ContentData, QuizQuestion } from "./types";
+import type { ContentData, QuizQuestion, TruthDareItem } from "./types";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
@@ -11,6 +11,12 @@ const CREAM_CARD = "rgba(250, 248, 242, 0.95)";
 const CREAM_SOLID = "rgba(245, 240, 232, 0.98)";
 const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+export interface QuizAttemptRecord {
+  score: number;
+  total: number;
+  playedAt: string;
+}
 
 const QUIZ_POOL: QuizQuestion[] = [
   { question: "What's their favorite thing about you?", options: ["Your smile 😊", "Your laugh 😄", "Your kindness 💗", "Your eyes 👀"], correct: 0 },
@@ -36,25 +42,46 @@ const CORRECT_MSGS = [
 ];
 
 const WRONG_MSGS = [
-  "Close but not quite! Let's try again 😘", "Someone needs a study date! 💌",
-  "Aww, we need more pillow talks! 🛋️", "Guess we need another date night! 🌙",
+  "Almost! But close to perfect, just like you 😘",
+  "Hmm... guess we need more pillow talks! 🛋️",
+  "Not quite! But your smile makes up for it 💕",
+  "Wrong answer... but you're still my favorite person 🥰",
+  "Oops! Looks like we need another date night to figure that out 🌙",
+  "So close! But loving you is never wrong 💗",
 ];
 
 function pickRandom<T>(arr: T[], count: number): T[] {
   return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
-function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
+function formatDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
+interface LoveQuizProps {
+  questions: QuizQuestion[];
+  shareId: string | null;
+  initialAttempts: QuizAttemptRecord[];
+}
+
+function LoveQuiz({ questions: customQs, shareId, initialAttempts }: LoveQuizProps) {
   const [sessionQs, setSessionQs] = useState<QuizQuestion[]>([]);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [attempts, setAttempts] = useState<QuizAttemptRecord[]>(initialAttempts || []);
+  const [showHistory, setShowHistory] = useState(false);
+  const [savingAttempt, setSavingAttempt] = useState(false);
 
   useEffect(() => {
-    const pool = customQs.length >= 10 ? customQs : QUIZ_POOL;
-    setSessionQs(pickRandom(pool, 10));
+    const pool = customQs.length >= 5 ? customQs : QUIZ_POOL;
+    setSessionQs(pickRandom(pool, Math.min(10, pool.length)));
   }, [customQs]);
 
   const q = sessionQs[step];
@@ -63,41 +90,145 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
     if (selected !== null || !q) return;
     setSelected(i);
     const isCorrect = i === q.correct;
-    if (isCorrect) { setScore((s) => s + 1); setFeedback(CORRECT_MSGS[Math.floor(Math.random() * CORRECT_MSGS.length)]); }
-    else { setFeedback(WRONG_MSGS[Math.floor(Math.random() * WRONG_MSGS.length)]); }
+    if (isCorrect) {
+      setScore((s) => s + 1);
+      setFeedback(CORRECT_MSGS[Math.floor(Math.random() * CORRECT_MSGS.length)]);
+    } else {
+      setFeedback(WRONG_MSGS[Math.floor(Math.random() * WRONG_MSGS.length)]);
+    }
     setTimeout(() => {
       setFeedback("");
       if (step + 1 < sessionQs.length) { setStep((s) => s + 1); setSelected(null); }
       else setDone(true);
-    }, 1500);
+    }, 1800);
   }, [selected, q, step, sessionQs.length]);
 
+  const finishAndSave = useCallback(async (finalScore: number, total: number) => {
+    const newAttempt: QuizAttemptRecord = {
+      score: finalScore,
+      total,
+      playedAt: new Date().toISOString(),
+    };
+    setAttempts((prev) => [newAttempt, ...prev]);
+    if (shareId) {
+      setSavingAttempt(true);
+      try {
+        await fetch(`${API_URL}/love-gf-pages/share/${shareId}/quiz-attempt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ score: finalScore, total }),
+        });
+      } catch {
+        // ignore
+      } finally {
+        setSavingAttempt(false);
+      }
+    }
+  }, [shareId]);
+
+  // Save attempt when done
+  useEffect(() => {
+    if (done && sessionQs.length > 0) {
+      finishAndSave(score, sessionQs.length);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
+
   const restart = () => {
-    setSessionQs(pickRandom(QUIZ_POOL, 10));
+    const pool = customQs.length >= 5 ? customQs : QUIZ_POOL;
+    setSessionQs(pickRandom(pool, Math.min(10, pool.length)));
     setStep(0); setScore(0); setSelected(null); setDone(false); setFeedback("");
   };
 
-  if (!q) return null;
+  if (!q && !done) return null;
 
   if (done) {
-    const pct = score / sessionQs.length;
+    const total = sessionQs.length;
+    const pct = total > 0 ? score / total : 0;
     const emoji = pct === 1 ? "👑" : pct >= 0.7 ? "💕" : pct >= 0.4 ? "💖" : "💝";
-    const msg = pct === 1 ? "PERFECT! You know each other inside out!" : pct >= 0.7 ? "Amazing! You two are soulmates!" : pct >= 0.4 ? "Pretty good! More date nights coming!" : "Time for some heart-to-hearts! 💌";
+    const msg = pct === 1
+      ? "PERFECT! You know each other inside out!"
+      : pct >= 0.7 ? "Amazing! You two are soulmates!"
+      : pct >= 0.4 ? "Pretty good! More date nights coming!"
+      : "Time for some heart-to-hearts! 💌";
+
     return (
       <div style={{ textAlign: "center", padding: "20px 0" }}>
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ fontSize: 48, display: "inline-block", marginBottom: 8 }}>{emoji}</motion.span>
-        <h3 style={{ fontFamily: CURSIVE, fontSize: 20, fontWeight: 700, color: WARM, margin: 0 }}>{score}/{sessionQs.length}</h3>
+        <motion.span
+          initial={{ scale: 0 }} animate={{ scale: 1 }}
+          style={{ fontSize: 52, display: "inline-block", marginBottom: 8 }}
+        >
+          {emoji}
+        </motion.span>
+        <h3 style={{ fontFamily: CURSIVE, fontSize: 24, fontWeight: 700, color: WARM, margin: 0 }}>
+          {score} / {total}
+        </h3>
         <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.60)", margin: "4px 0 20px" }}>{msg}</p>
         <button onClick={restart}
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "10px 20px", borderRadius: 12, border: "none",
+            padding: "10px 24px", borderRadius: 12, border: "none",
             background: "linear-gradient(135deg, rgb(180,100,80), rgb(160,70,60))",
             color: "rgba(250,248,242,0.95)", fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
             cursor: "pointer", boxShadow: "0 4px 14px rgba(80,50,20,0.22)",
           }}>
-          <RotateCcw size={13} /> New Round 💕
+          <RotateCcw size={13} /> Play Again 💕
         </button>
+        {savingAttempt && (
+          <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.45)", marginTop: 8 }}>Saving...</p>
+        )}
+
+        {/* Quiz History */}
+        {attempts.length > 0 && (
+          <div style={{ marginTop: 24, textAlign: "left" }}>
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: "rgba(158,126,97,0.06)", border: `1px solid ${WARM_BORDER}`,
+                borderRadius: 10, padding: "8px 14px", cursor: "pointer",
+              }}
+            >
+              <span style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: WARM }}>
+                🏆 Your Quiz History ({attempts.length})
+              </span>
+              <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.50)" }}>
+                {showHistory ? "▲" : "▼"}
+              </span>
+            </button>
+            <AnimatePresence>
+              {showHistory && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                    {attempts.map((a, idx) => {
+                      const p = a.total > 0 ? a.score / a.total : 0;
+                      const em = p === 1 ? "👑" : p >= 0.7 ? "💕" : p >= 0.4 ? "💖" : "💝";
+                      return (
+                        <div key={idx} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "8px 12px", borderRadius: 8,
+                          background: "rgba(255,252,246,0.7)", border: `1px solid ${WARM_BORDER}`,
+                        }}>
+                          <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.60)" }}>
+                            {formatDate(a.playedAt)}
+                          </span>
+                          <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM }}>
+                            {em} {a.score}/{a.total}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     );
   }
@@ -166,7 +297,9 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
   );
 }
 
-const TRUTHS = [
+// ── Default Truth/Dare pools ─────────────────────────────────────────────────
+
+const DEFAULT_TRUTHS = [
   "What's your favorite memory of us? 💭",
   "What made you fall for me? 💕",
   "What's your biggest dream for us? 🌟",
@@ -183,7 +316,7 @@ const TRUTHS = [
   "What's your favorite thing we do together? 🥂",
 ];
 
-const DARES = [
+const DEFAULT_DARES = [
   "Send me a voice message saying 'I love you' right now! 🎤",
   "Change your profile pic to a photo of us for 24 hours! 📸",
   "Write me a 3-line poem! 📝",
@@ -215,7 +348,12 @@ interface HistoryEntry {
   answer: string;
 }
 
-function TruthOrDare({ shareId }: { shareId: string | null }) {
+interface TruthOrDareProps {
+  shareId: string | null;
+  customTruthDare: TruthDareItem[];
+}
+
+function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
   const [card, setCard] = useState("");
   const [used, setUsed] = useState<Set<string>>(new Set());
@@ -229,9 +367,19 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
   const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const getTruths = useCallback(() => {
+    const customs = customTruthDare.filter((q) => q.type === "truth").map((q) => q.text);
+    return [...customs, ...DEFAULT_TRUTHS];
+  }, [customTruthDare]);
+
+  const getDares = useCallback(() => {
+    const customs = customTruthDare.filter((q) => q.type === "dare").map((q) => q.text);
+    return [...customs, ...DEFAULT_DARES];
+  }, [customTruthDare]);
+
   const pick = useCallback((m: "truth" | "dare") => {
     setMode(m);
-    const arr = m === "truth" ? TRUTHS : DARES;
+    const arr = m === "truth" ? getTruths() : getDares();
     const available = arr.filter((t) => !used.has(t));
     const pool = available.length > 0 ? available : arr;
     const choice = pool[Math.floor(Math.random() * pool.length)];
@@ -242,7 +390,7 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
     setDareCompleted(false);
     setCompletionMsg("");
     setTimeout(() => textareaRef.current?.focus(), 300);
-  }, [used]);
+  }, [used, getTruths, getDares]);
 
   const addToHistory = useCallback((type: "truth" | "dare", prompt: string, ans: string) => {
     setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans }, ...prev]);
@@ -281,7 +429,6 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
     }
   }, [shareId, card, answer, addToHistory]);
 
-  // Instantly pick a random truth or dare — no spinner
   const nextCard = useCallback(() => {
     const chosen: "truth" | "dare" = Math.random() < 0.5 ? "truth" : "dare";
     pick(chosen);
@@ -324,7 +471,7 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
 
       {/* Active card area */}
       <AnimatePresence mode="wait">
-          {!card ? (
+        {!card ? (
           <motion.div key="empty"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{
@@ -356,7 +503,7 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                  textTransform: "uppercase", letterSpacing: "0.12em",
+                  textTransform: "uppercase" as const, letterSpacing: "0.12em",
                   color: mode === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
                   background: mode === "truth" ? "rgba(140,100,180,0.14)" : "rgba(200,130,60,0.14)",
                   padding: "2px 10px", borderRadius: 999,
@@ -374,7 +521,7 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
                 <label style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase",
+                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase" as const,
                   letterSpacing: "0.08em", display: "block", marginBottom: 6,
                 }}>
                   Your honest answer ✍️
@@ -447,7 +594,7 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
                 <label style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase",
+                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase" as const,
                   letterSpacing: "0.08em", display: "block", marginBottom: 6,
                 }}>
                   How did it go? (optional) ✍️
@@ -552,7 +699,6 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
       {/* ── Game Journal / History ── */}
       {history.length > 0 && (
         <div style={{ marginTop: 20 }}>
-          {/* Journal header */}
           <button
             onClick={() => setShowHistory((v) => !v)}
             style={{
@@ -630,7 +776,6 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
                           overflow: "hidden",
                         }}
                       >
-                        {/* Subtle left accent bar */}
                         <div style={{
                           position: "absolute", top: 0, left: 0, width: 3, bottom: 0,
                           borderRadius: "14px 0 0 14px",
@@ -640,10 +785,9 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
                         }} />
 
                         <div style={{ paddingLeft: 8 }}>
-                          {/* Badge */}
                           <span style={{
                             fontFamily: CURSIVE, fontSize: 9, fontWeight: 700,
-                            textTransform: "uppercase", letterSpacing: "0.1em",
+                            textTransform: "uppercase" as const, letterSpacing: "0.1em",
                             color: entry.type === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
                             background: entry.type === "truth" ? "rgba(140,100,180,0.12)" : "rgba(200,130,60,0.12)",
                             padding: "2px 8px", borderRadius: 999, display: "inline-block",
@@ -652,7 +796,6 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
                             {entry.type === "truth" ? "💭 Truth" : "🎯 Dare"}
                           </span>
 
-                          {/* Question/Dare prompt */}
                           <p style={{
                             fontFamily: CURSIVE, fontSize: 12, fontWeight: 600,
                             color: WARM, margin: "0 0 6px", lineHeight: 1.4,
@@ -660,14 +803,12 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
                             {entry.prompt}
                           </p>
 
-                          {/* Divider */}
                           <div style={{
                             height: 1, background: entry.type === "truth"
                               ? "rgba(140,100,180,0.15)" : "rgba(200,130,60,0.15)",
                             margin: "6px 0",
                           }} />
 
-                          {/* Answer */}
                           <p style={{
                             fontFamily: CURSIVE, fontSize: 12, fontStyle: "italic",
                             color: "rgba(90,60,35,0.85)", margin: 0, lineHeight: 1.55,
@@ -689,13 +830,17 @@ function TruthOrDare({ shareId }: { shareId: string | null }) {
 }
 
 const GAMES = [
-  { id: "quiz", label: "Love Quiz", emoji: "🧠", desc: "10 random questions each round!" },
+  { id: "quiz", label: "Love Quiz", emoji: "🎯", desc: "Personalized questions each round!" },
   { id: "tod", label: "Truth or Dare", emoji: "🎲", desc: "New challenges every time!" },
 ];
 
-interface Props { data: ContentData; shareId?: string | null; }
+interface Props {
+  data: ContentData;
+  shareId?: string | null;
+  quizAttempts?: QuizAttemptRecord[];
+}
 
-export default memo(function GamesSection({ data, shareId = null }: Props) {
+export default memo(function GamesSection({ data, shareId = null, quizAttempts = [] }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   return (
@@ -760,8 +905,8 @@ export default memo(function GamesSection({ data, shareId = null }: Props) {
             className="lg:p-6 lg:flex-1"
           >
             {activeGame === "quiz"
-              ? <LoveQuiz questions={data.quizQuestions} />
-              : <TruthOrDare shareId={shareId} />
+              ? <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} initialAttempts={quizAttempts} />
+              : <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} />
             }
           </motion.div>
         </div>

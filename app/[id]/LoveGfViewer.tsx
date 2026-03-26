@@ -1,319 +1,395 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
-import AuthModal from "@/components/AuthModal";
-import { AnimatePresence } from "framer-motion";
+import { useState, useCallback, lazy, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Lock, X } from "lucide-react";
+import { API_URL, IS_NGROK } from "@/lib/config";
+import HomeSection from "@/app/(templates)/love-gf/components/HomeSection";
+import WishSection from "@/app/(templates)/love-gf/components/WishSection";
+import BottomNav from "@/app/(templates)/love-gf/components/BottomNav";
+import ScrapbookBg from "@/app/(templates)/love-gf/components/ScrapbookBg";
+import {
+  type ContentData, type TabId, type PhotoItem, type QuizQuestion,
+  type TruthDareItem, DEMO_CONTENT,
+} from "@/app/(templates)/love-gf/components/types";
+
+const GallerySection = lazy(() => import("@/app/(templates)/love-gf/components/GallerySection"));
+const MusicSection   = lazy(() => import("@/app/(templates)/love-gf/components/MusicSection"));
+const GamesSection   = lazy(() => import("@/app/(templates)/love-gf/components/GamesSection"));
+const NotesSection   = lazy(() => import("@/app/(templates)/love-gf/components/NotesSection"));
 
 const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const WARM = "rgb(108, 74, 46)";
-const WARM_MID = "rgba(108, 74, 46, 0.55)";
+const WARM    = "rgb(108, 74, 46)";
 
-interface LoveGfData {
-  recipientName: string;
-  senderName: string;
-  personalMessage: string;
-  wishMessage: string;
-  loveDate: string;
-  galleryPhotos: string[];
+function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return IS_NGROK ? { "ngrok-skip-browser-warning": "true", ...extra } : extra;
 }
 
-const TABS = [
-  { id: "home", label: "Home", icon: "♡" },
-  { id: "message", label: "Message", icon: "✦" },
-  { id: "photos", label: "Photos", icon: "📷" },
-  { id: "wish", label: "Wish", icon: "✿" },
-];
+function normalizePhoto(p: unknown): PhotoItem {
+  if (typeof p === "string") return { url: p, letter: "", cropX: 50, cropY: 50 };
+  const obj = p as Record<string, unknown>;
+  return {
+    url:    String(obj.url    ?? ""),
+    letter: String(obj.letter ?? ""),
+    cropX:  Number(obj.cropX  ?? 50),
+    cropY:  Number(obj.cropY  ?? 50),
+  };
+}
 
-function ScrapbookCanvas({ data }: { data: LoveGfData }) {
-  const photos = data.galleryPhotos || [];
-  const p = (i: number) => photos[i] || "";
+function rawToContentData(raw: Record<string, unknown>): ContentData {
+  return {
+    ...DEMO_CONTENT,
+    recipientName:      String(raw.recipientName   ?? ""),
+    senderName:         String(raw.senderName      ?? ""),
+    personalMessage:    String(raw.personalMessage ?? DEMO_CONTENT.personalMessage),
+    wishMessage:        String(raw.wishMessage     ?? DEMO_CONTENT.wishMessage),
+    loveDate:           String(raw.loveDate        ?? ""),
+    homePhotos:         (raw.homePhotos as string[]          | undefined) ?? [],
+    galleryPhotos:      ((raw.galleryPhotos as unknown[]     | undefined) ?? []).map(normalizePhoto),
+    quizQuestions:      (raw.quizQuestions    as QuizQuestion[]    | undefined) ?? [],
+    truthDareQuestions: (raw.truthDareQuestions as TruthDareItem[] | undefined) ?? [],
+  };
+}
 
-  const polStyle = (extra: React.CSSProperties = {}): React.CSSProperties => ({
-    position: "absolute",
-    background: "#faf8f2",
-    boxShadow: "3px 6px 22px rgba(0,0,0,0.28), 0 1px 6px rgba(0,0,0,0.13)",
-    ...extra,
-  });
+type QuizAttemptRecord = { score: number; total: number; playedAt: string };
 
-  const photoInner = (src: string, idx: number) => (
-    <div style={{ position: "absolute", inset: "5% 6% 21% 10%", background: "#e8e0d5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-      ) : (
-        <span style={{ fontFamily: CURSIVE, fontSize: "clamp(9px,2.5vw,12px)", color: WARM, opacity: 0.45 }}>photo {idx}</span>
-      )}
-    </div>
-  );
-
+function SectionLoader() {
   return (
-    <div style={{
-      position: "relative",
-      width: "100%",
-      maxWidth: "min(100vw, calc((100svh - 120px) * 2 / 3))",
-      aspectRatio: "2 / 3",
-      background: "transparent",
-      overflow: "hidden",
-      flexShrink: 0,
-    }}>
-      <div className="hidden sm:block" style={{ position: "absolute", inset: 0 }} aria-hidden>
-        <Image src="/love/image18.webp" alt="" fill style={{ objectFit: "cover" }} />
+    <ScrapbookBg>
+      <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontFamily: CURSIVE, fontSize: 20, color: WARM, opacity: 0.6 }}>loading...</p>
       </div>
-
-      {/* Torn paper left */}
-      <div style={{ position:"absolute",left:"-33.8%",top:"14.1%",width:"87.6%",height:"21.0%",transform:"rotate(92.09deg)",zIndex:1,opacity:0.9,mixBlendMode:"multiply" }}>
-        <Image src="/love/image17.webp" alt="" width={1600} height={577} style={{ width:"100%",height:"100%",display:"block",objectFit:"fill" }} />
-      </div>
-      {/* Sticky note */}
-      <div style={{ position:"absolute",left:"43.9%",top:"7.0%",width:"47.2%",transform:"rotate(8deg)",zIndex:2 }}>
-        <Image src="/love/image16.webp" alt="" width={780} height={605} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      {/* Torn paper right */}
-      <div style={{ position:"absolute",left:"46.2%",top:"73.8%",width:"87.6%",height:"21.0%",transform:"rotate(-83.58deg)",zIndex:3,opacity:0.9,mixBlendMode:"multiply" }}>
-        <Image src="/love/image15.webp" alt="" width={1600} height={577} style={{ width:"100%",height:"100%",display:"block",objectFit:"fill" }} />
-      </div>
-      {/* Photo 2 */}
-      <div style={polStyle({ left:"49.3%",top:"22.5%",width:"40.3%",height:"28.2%",transform:"rotate(15deg)",zIndex:4 })}>
-        {photoInner(p(1), 2)}
-      </div>
-      {/* Photo 4 */}
-      <div style={polStyle({ left:"44.6%",top:"51.8%",width:"43.9%",height:"41.3%",transform:"rotate(8deg)",zIndex:5 })}>
-        {photoInner(p(3), 4)}
-      </div>
-      {/* Photo 3 */}
-      <div style={polStyle({ left:"7.3%",top:"57.1%",width:"40.3%",height:"28.2%",transform:"rotate(-9deg)",zIndex:6 })}>
-        {photoInner(p(2), 3)}
-      </div>
-      {/* Botanicals */}
-      <div style={{ position:"absolute",left:"67.6%",top:"25.9%",width:"41.3%",transform:"rotate(8deg)",zIndex:7,mixBlendMode:"multiply" }}>
-        <Image src="/love/image11.webp" alt="" width={312} height={508} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      <div style={{ position:"absolute",left:"72.7%",top:"21.4%",width:"6.9%",transform:"rotate(15deg)",zIndex:8,mixBlendMode:"multiply" }}>
-        <Image src="/love/image9.webp" alt="" width={200} height={200} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      <div style={{ position:"absolute",left:"21.1%",top:"55.5%",width:"6.9%",transform:"rotate(-9deg)",zIndex:9,mixBlendMode:"multiply" }}>
-        <Image src="/love/image10.webp" alt="" width={200} height={200} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      <div style={{ position:"absolute",left:"16.7%",top:"83.5%",width:"25.0%",transform:"rotate(12deg)",zIndex:10,mixBlendMode:"multiply" }}>
-        <Image src="/love/image8.webp" alt="" width={240} height={360} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      <div style={{ position:"absolute",left:"4.2%",top:"72.3%",width:"23.0%",transform:"rotate(-30deg)",zIndex:11,mixBlendMode:"multiply" }}>
-        <Image src="/love/image7.webp" alt="" width={174} height={459} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      <div style={{ position:"absolute",left:"80.4%",top:"-3.3%",width:"27.8%",transform:"rotate(26.17deg)",zIndex:12,mixBlendMode:"multiply" }}>
-        <Image src="/love/image6.webp" alt="" width={210} height={228} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      {/* Love you text */}
-      <div style={{ position:"absolute",left:"51.6%",top:"10.1%",width:"37.3%",transform:"rotate(8deg)",zIndex:13 }}>
-        <span style={{ display:"block", fontFamily:CURSIVE, fontSize:"clamp(24px,12.5vw,54px)", color:"rgb(158,126,97)", fontWeight:700, whiteSpace:"nowrap" }}>
-          {data.recipientName ? `for ${data.recipientName}` : "love you!"}
-        </span>
-      </div>
-      {/* Photo 1 main */}
-      <div style={polStyle({ left:"10.6%",top:"14.1%",width:"43.9%",height:"41.3%",transform:"rotate(-6deg)",zIndex:14 })}>
-        {photoInner(p(0), 1)}
-      </div>
-      {/* Yarrow */}
-      <div style={{ position:"absolute",left:"-6.8%",top:"-0.4%",width:"28.5%",transform:"rotate(18.83deg)",zIndex:15,mixBlendMode:"multiply" }}>
-        <Image src="/love/image4.webp" alt="" width={215} height={355} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-      {/* Center flower */}
-      <div style={{ position:"absolute",left:"43.8%",top:"44.2%",width:"16.1%",zIndex:16,mixBlendMode:"multiply" }}>
-        <Image src="/love/image3.webp" alt="" width={122} height={121} style={{ width:"100%",height:"auto",display:"block" }} />
-      </div>
-    </div>
+    </ScrapbookBg>
   );
 }
 
-function PaperSection({ children }: { children: React.ReactNode }) {
+// ── Password Gate ────────────────────────────────────────────────────────────
+
+function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => void }) {
+  const [pw, setPw]           = useState("");
+  const [show, setShow]       = useState(false);
+  const [error, setError]     = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleVerify = async () => {
+    if (!pw.trim()) return;
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`${API_URL}/love-gf-pages/share/${shareId}/verify`, {
+        method: "POST",
+        headers: apiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ password: pw }),
+      });
+      const result = await res.json();
+      if (result.success && result.verified) {
+        onUnlock();
+      } else {
+        setError("Wrong password. Try again 💔");
+      }
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally { setLoading(false); }
+  };
+
   return (
     <div style={{
-      minHeight: "100svh", width: "100%", position: "relative", overflow: "hidden",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: "60px 20px 100px",
-      background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(28,15,6,0.28) 100%), url(/love/image18.webp) center/cover no-repeat`,
+      minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: `radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(28,15,6,0.28) 100%), url(/love/image18.webp) center / cover no-repeat`,
+      padding: "24px 20px",
     }}>
-      {/* botanical corners */}
-      {[
-        { src: "/love/image4.webp", w: 215, h: 355, style: { top:"-2%", left:"-4%", width:"clamp(70px,18vw,150px)", transform:"rotate(18deg)" } },
-        { src: "/love/image6.webp", w: 210, h: 228, style: { top:"-2%", right:"-3%", width:"clamp(60px,15vw,130px)", transform:"rotate(-20deg) scaleX(-1)" } },
-        { src: "/love/image7.webp", w: 174, h: 459, style: { bottom:"-2%", left:"-2%", width:"clamp(60px,14vw,120px)", transform:"rotate(-25deg)" } },
-        { src: "/love/image8.webp", w: 240, h: 360, style: { bottom:"-1%", right:"-1%", width:"clamp(55px,12vw,100px)", transform:"rotate(15deg) scaleX(-1)" } },
-      ].map((b, i) => (
-        <div key={i} aria-hidden style={{ position:"absolute", pointerEvents:"none", mixBlendMode:"multiply", opacity:0.65, zIndex:1, ...b.style }}>
-          <Image src={b.src} alt="" width={b.w} height={b.h} style={{ width:"100%", height:"auto", display:"block" }} />
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');`}</style>
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        style={{
+          maxWidth: 340, width: "100%", borderRadius: 24,
+          background: "rgba(250,246,240,0.97)",
+          boxShadow: "0 30px 80px rgba(40,22,8,0.35)",
+          padding: "32px 28px", textAlign: "center",
+        }}
+      >
+        <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+          <Lock size={32} color={WARM} style={{ margin: "0 auto 16px" }} />
+        </motion.div>
+        <h2 style={{ fontFamily: CURSIVE, fontSize: 22, fontWeight: 700, color: WARM, marginBottom: 6 }}>
+          This page is private ♡
+        </h2>
+        <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.65)", marginBottom: 24, lineHeight: 1.6 }}>
+          Enter the password to open your surprise
+        </p>
+        <div style={{ position: "relative", marginBottom: 16 }}>
+          <input
+            type={show ? "text" : "password"}
+            value={pw}
+            onChange={(e) => { setPw(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            placeholder="Enter password..."
+            autoFocus
+            style={{
+              width: "100%", padding: "12px 48px 12px 16px", borderRadius: 12,
+              border: `1.5px solid ${error ? "rgba(180,60,50,0.45)" : "rgba(158,126,97,0.35)"}`,
+              background: "rgba(255,252,246,0.9)",
+              fontFamily: CURSIVE, fontSize: 15, color: WARM, outline: "none", boxSizing: "border-box",
+            }}
+          />
+          <button onClick={() => setShow((v) => !v)} style={{
+            position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+            border: "none", background: "transparent", cursor: "pointer", color: WARM, opacity: 0.5,
+            display: "flex", alignItems: "center",
+          }}>
+            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
         </div>
-      ))}
-      <div style={{ position: "relative", zIndex: 2, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        {children}
-      </div>
+        {error && (
+          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(180,60,50,0.8)", marginBottom: 10 }}>{error}</p>
+        )}
+        <button onClick={handleVerify} disabled={!pw.trim() || loading}
+          style={{
+            width: "100%", padding: "13px 0", borderRadius: 50, border: "none",
+            background: pw.trim() ? "linear-gradient(135deg, rgb(158,126,97), rgb(120,85,55))" : "rgba(158,126,97,0.3)",
+            fontFamily: CURSIVE, fontSize: 16, fontWeight: 700, color: "#fff",
+            cursor: pw.trim() ? "pointer" : "not-allowed",
+            boxShadow: pw.trim() ? "0 6px 20px rgba(108,74,46,0.35)" : "none",
+          }}>
+          {loading ? "Opening..." : "Open ♡"}
+        </button>
+      </motion.div>
     </div>
   );
 }
 
-interface ViewerProps {
-  data: LoveGfData;
-  shareId: string;
-  hasPassword: boolean;
-}
+// ── Share Sheet ──────────────────────────────────────────────────────────────
 
-export default function LoveGfViewer({ data, shareId, hasPassword }: ViewerProps) {
-  const router = useRouter();
-  const { isAuthenticated } = useAppSelector((s) => s.auth);
-  const [tab, setTab] = useState("home");
-  const [showAuth, setShowAuth] = useState(false);
+function ShareSheet({ url, onClose }: { url: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
 
-  const handleCreateClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
-    router.push("/love-gf");
-  }, [isAuthenticated, router]);
+  const copy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  const onAuthSuccess = useCallback(() => {
-    setShowAuth(false);
-    sessionStorage.setItem("love_gf_prefill", JSON.stringify({
-      recipientName: data.recipientName,
-      senderName: data.senderName,
-    }));
-    router.push("/love-gf");
-  }, [router, data]);
+  const whatsapp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(`A love page just for you ♡ ${url}`)}`, "_blank");
+  };
+
+  const nativeShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: "A love page for you ♡", url }).catch(() => {});
+    }
+  };
+
+  const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 500,
+        background: "rgba(40,22,8,0.50)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        style={{
+          width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0",
+          background: "rgba(250,246,240,0.98)",
+          padding: "28px 24px 40px",
+          boxShadow: "0 -20px 60px rgba(80,50,20,0.25)",
+        }}
+        onClick={stopProp}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h3 style={{ fontFamily: CURSIVE, fontSize: 20, fontWeight: 700, color: WARM, margin: 0 }}>
+            Share this love page ♡
+          </h3>
+          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", opacity: 0.6, display: "flex", alignItems: "center" }}>
+            <X size={20} color={WARM} />
+          </button>
+        </div>
+
+        <div style={{
+          padding: "10px 14px", borderRadius: 10, marginBottom: 20,
+          background: "rgba(158,126,97,0.08)", border: "1px solid rgba(158,126,97,0.22)",
+          fontFamily: CURSIVE, fontSize: 13, color: "rgb(108,74,46)",
+          wordBreak: "break-all", lineHeight: 1.6,
+        }}>
+          {url}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={copy} style={{
+            padding: "14px 20px", borderRadius: 14, border: "none",
+            background: copied
+              ? "rgba(80,140,80,0.12)"
+              : "linear-gradient(135deg, rgb(158,126,97), rgb(120,85,55))",
+            fontFamily: CURSIVE, fontSize: 15, fontWeight: 700,
+            color: copied ? "rgb(60,120,60)" : "#fff",
+            cursor: "pointer", textAlign: "left",
+            boxShadow: copied ? "none" : "0 4px 16px rgba(108,74,46,0.25)",
+            transition: "all 0.2s",
+          }}>
+            {copied ? "✓  Link Copied!" : "🔗  Copy Link"}
+          </button>
+
+          <button onClick={whatsapp} style={{
+            padding: "14px 20px", borderRadius: 14,
+            border: "1.5px solid rgba(37,211,102,0.40)",
+            background: "rgba(37,211,102,0.07)",
+            fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "rgb(30,150,70)",
+            cursor: "pointer", textAlign: "left",
+          }}>
+            💬  Share on WhatsApp
+          </button>
+
+          {typeof navigator !== "undefined" && "share" in navigator && (
+            <button onClick={nativeShare} style={{
+              padding: "14px 20px", borderRadius: 14,
+              border: "1.5px solid rgba(158,126,97,0.30)",
+              background: "rgba(158,126,97,0.06)",
+              fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: WARM,
+              cursor: "pointer", textAlign: "left",
+            }}>
+              ↗  More options...
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Main Viewer ──────────────────────────────────────────────────────────────
+
+interface Props {
+  rawData: Record<string, unknown>;
+  hasPassword: boolean;
+  shareId: string;
+}
+
+export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
+  const [unlocked, setUnlocked] = useState(!hasPassword);
+  const [tab, setTab]           = useState<TabId>("home");
+  const [showShareSheet, setShowShareSheet] = useState(false);
+
+  const content = rawToContentData(rawData);
+  const quizAttempts: QuizAttemptRecord[] =
+    (rawData.quizAttempts as QuizAttemptRecord[] | undefined) ?? [];
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const handleTabChange = useCallback((id: TabId) => setTab(id), []);
+
+  if (!unlocked) {
+    return <PasswordGate shareId={shareId} onUnlock={() => setUnlocked(true)} />;
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100dvh", width: "100%", overflow: "hidden", position: "relative",
+        background: `radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(28,15,6,0.28) 100%), url(/love/image18.webp) center / cover no-repeat`,
+      }}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #faf6f0; }
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
+        body, html { margin: 0; padding: 0; background: #faf6f0; }
+        * { box-sizing: border-box; }
+        @media (max-width: 1023px) { body { overflow: hidden; } }
       `}</style>
 
-      {/* Tab content */}
-      {tab === "home" && (
-        <div style={{
-          minHeight: "100svh", width: "100%",
-          background: `radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(28,15,6,0.32) 100%), url(/love/image18.webp) center/cover no-repeat`,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          padding: "0 0 100px",
-        }}>
-          <p style={{ fontFamily:CURSIVE, fontSize:"clamp(15px,4.2vw,21px)", fontWeight:600, color:WARM, opacity:0.88, letterSpacing:"0.04em", textAlign:"center", padding:"22px 24px 10px" }}>
-            every love story is beautiful
-          </p>
-          <ScrapbookCanvas data={data} />
-          {data.senderName && (
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(13px,3.5vw,17px)", color:WARM, opacity:0.7, textAlign:"center", padding:"10px 24px 4px", letterSpacing:"0.06em" }}>
-              — from {data.senderName} ♡
-            </p>
-          )}
-          <button onClick={handleCreateClick} style={{
-            margin:"16px 0 0", padding:"10px 28px", borderRadius:50,
-            border:`1.5px solid ${WARM_MID}`, background:"rgba(158,126,97,0.12)",
-            fontFamily:CURSIVE, fontSize:"clamp(14px,3.8vw,17px)", fontWeight:600, color:WARM,
-            cursor:"pointer", letterSpacing:"0.04em",
-          }}>
-            ✦ Create your own ✦
+      {/* Top bar */}
+      <div
+        className="lg:hidden"
+        style={{
+          position: "fixed", top: 12, left: 0, right: 0, zIndex: 101,
+          paddingTop: "env(safe-area-inset-top, 16px)",
+          paddingLeft: 16, paddingRight: 16, pointerEvents: "auto",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          {content.senderName ? (
+            <span style={{
+              padding: "7px 12px", borderRadius: 12,
+              border: "1px solid rgba(158,126,97,0.20)",
+              background: "rgba(250,246,240,0.88)", backdropFilter: "blur(10px)",
+              fontFamily: CURSIVE, fontSize: 13, color: WARM, opacity: 0.85,
+            }}>
+              from {content.senderName} ♡
+            </span>
+          ) : <div />}
+
+          <button
+            onClick={() => setShowShareSheet(true)}
+            style={{
+              padding: "8px 16px", borderRadius: 999,
+              border: "none",
+              background: "rgba(250,246,240,0.88)", backdropFilter: "blur(10px)",
+              fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM, cursor: "pointer",
+            }}
+          >
+            Share ♡
           </button>
         </div>
-      )}
+      </div>
 
-      {tab === "message" && (
-        <PaperSection>
-          <div style={{ width:"100%", maxWidth:440, background:"rgba(250,248,242,0.90)", borderRadius:8, padding:"36px 28px", boxShadow:"0 20px 60px rgba(80,50,20,0.18),0 4px 16px rgba(80,50,20,0.10)" }}>
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(11px,3vw,14px)", color:WARM, opacity:0.6, letterSpacing:"0.14em", textAlign:"center", marginBottom:20, textTransform:"uppercase" }}>
-              a letter to you
-            </p>
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(17px,4.8vw,24px)", color:"rgb(90,60,35)", lineHeight:1.8, textAlign:"center" }}>
-              {data.personalMessage}
-            </p>
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(15px,4vw,20px)", color:WARM, opacity:0.75, textAlign:"right", marginTop:24 }}>
-              — {data.senderName || "Always Yours"} ♡
-            </p>
-          </div>
-        </PaperSection>
-      )}
+      {/* Main content */}
+      <main style={{ height: "100dvh", overflow: "hidden" }}>
+        {tab === "home" && (
+          <HomeSection data={content} isPersonalized={true} onEditClick={() => {}} />
+        )}
+        {tab === "wish" && (
+          <WishSection data={content} isPersonalized={true} />
+        )}
+        {tab === "gallery" && (
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <GallerySection data={content} />
+            </Suspense>
+          </ScrapbookBg>
+        )}
+        {tab === "music" && (
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <MusicSection data={content} onPlayStateChange={() => {}} />
+            </Suspense>
+          </ScrapbookBg>
+        )}
+        {tab === "games" && (
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <GamesSection data={content} shareId={shareId} quizAttempts={quizAttempts} />
+            </Suspense>
+          </ScrapbookBg>
+        )}
+        {tab === "notes" && (
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <NotesSection />
+            </Suspense>
+          </ScrapbookBg>
+        )}
+      </main>
 
-      {tab === "photos" && (
-        <PaperSection>
-          <p style={{ fontFamily:CURSIVE, fontSize:"clamp(18px,5vw,26px)", fontWeight:700, color:WARM, opacity:0.88, marginBottom:20 }}>
-            our moments ♡
-          </p>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, width:"calc(100% - 40px)", maxWidth:380 }}>
-            {[0,1,2,3].map((i) => (
-              <div key={i} style={{ aspectRatio:"3/4", borderRadius:4, overflow:"hidden", background:"#faf8f2", boxShadow:"3px 6px 22px rgba(0,0,0,0.25)" }}>
-                {data.galleryPhotos?.[i] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.galleryPhotos[i]} alt="" style={{ width:"100%",height:"100%",objectFit:"cover",display:"block" }} />
-                ) : (
-                  <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(135deg,#ede8df,#d9d0c3)" }}>
-                    <span style={{ fontFamily:CURSIVE, fontSize:"clamp(10px,3vw,14px)", color:WARM, opacity:0.45 }}>photo {i+1}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </PaperSection>
-      )}
-
-      {tab === "wish" && (
-        <PaperSection>
-          <div style={{ width:"calc(100% - 40px)", maxWidth:420, position:"relative", background:"rgba(250,248,242,0.90)", borderRadius:8, padding:"36px 28px 44px", boxShadow:"0 20px 60px rgba(80,50,20,0.18),0 4px 16px rgba(80,50,20,0.10),0 0 0 1px rgba(158,126,97,0.15)" }}>
-            <div style={{ position:"absolute",top:0,left:"10%",right:"10%",height:3,background:"linear-gradient(90deg,transparent,rgba(158,126,97,0.5),transparent)",borderRadius:2 }} />
-            <div style={{ position:"absolute",bottom:0,left:"10%",right:"10%",height:3,background:"linear-gradient(90deg,transparent,rgba(158,126,97,0.5),transparent)",borderRadius:2 }} />
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(11px,3vw,14px)", color:WARM, opacity:0.6, letterSpacing:"0.14em", textAlign:"center", marginBottom:20, textTransform:"uppercase" }}>
-              a little note for you
-            </p>
-            {data.recipientName && (
-              <p style={{ fontFamily:CURSIVE, fontSize:"clamp(18px,5vw,26px)", fontWeight:600, color:WARM, textAlign:"center", marginBottom:20 }}>
-                dear {data.recipientName},
-              </p>
-            )}
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(16px,4.5vw,22px)", color:"rgb(90,60,35)", lineHeight:1.8, textAlign:"center" }}>
-              {data.wishMessage}
-            </p>
-            <p style={{ fontFamily:CURSIVE, fontSize:"clamp(14px,3.8vw,19px)", color:WARM, opacity:0.75, textAlign:"right", marginTop:24 }}>
-              — {data.senderName || "Always Yours"} ♡
-            </p>
-          </div>
-          <button onClick={handleCreateClick} style={{
-            marginTop:24, padding:"10px 28px", borderRadius:50,
-            border:`1.5px solid ${WARM_MID}`, background:"rgba(158,126,97,0.12)",
-            fontFamily:CURSIVE, fontSize:"clamp(14px,3.8vw,17px)", fontWeight:600, color:WARM,
-            cursor:"pointer", letterSpacing:"0.04em",
-          }}>
-            ✦ Create yours ✦
-          </button>
-        </PaperSection>
-      )}
-
-      {/* Bottom navbar */}
-      <nav style={{
-        position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-        background:"rgba(250,246,240,0.94)", backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)",
-        borderTop:"1px solid rgba(158,126,97,0.22)",
-        display:"flex", justifyContent:"space-around", alignItems:"center",
-        padding:"5px 0 calc(6px + env(safe-area-inset-bottom,0px))",
-      }}>
-        {TABS.map((t) => {
-          const active = t.id === tab;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              display:"flex", flexDirection:"column", alignItems:"center", gap:2,
-              border:"none", background:"transparent", cursor:"pointer", flex:1, padding:"3px 4px",
-              opacity: active ? 1 : 0.50,
-            }}>
-              <span style={{ fontSize:"clamp(13px,3.8vw,16px)" }}>{t.icon}</span>
-              <span style={{ fontFamily:CURSIVE, fontSize:"clamp(9px,2.3vw,11px)", fontWeight:active?700:400, color:active?WARM:"rgb(140,105,75)", letterSpacing:"0.04em" }}>
-                {t.label}
-              </span>
-              {active && <div style={{ width:14, height:2, borderRadius:1, background:"linear-gradient(90deg,rgba(158,126,97,0.4),rgb(158,126,97),rgba(158,126,97,0.4))" }} />}
-            </button>
-          );
-        })}
-      </nav>
+      <BottomNav
+        mode="viewer"
+        tab={tab}
+        onTabChange={handleTabChange}
+        onEdit={() => {}}
+        showPublish={false}
+        showShare={false}
+        shareLabel="Share"
+        onPublish={() => {}}
+        onShare={() => setShowShareSheet(true)}
+        onBack={() => {}}
+      />
 
       <AnimatePresence>
-        {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={onAuthSuccess} />}
+        {showShareSheet && (
+          <ShareSheet url={shareUrl} onClose={() => setShowShareSheet(false)} />
+        )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
