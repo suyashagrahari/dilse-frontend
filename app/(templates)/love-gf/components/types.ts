@@ -7,6 +7,8 @@ export interface QuizQuestion {
 export interface TruthDareItem {
   type: "truth" | "dare";
   text: string;
+  photoUrl?: string;
+  audioUrl?: string;
 }
 
 export interface PhotoItem {

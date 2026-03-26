@@ -70,6 +70,39 @@ const DARE_LIBRARY = [
   "Send me a screenshot of our first conversation 📱",
 ];
 
+const QUIZ_LIBRARY: QuizQuestion[] = [
+  { question: "What's my favorite comfort food? 🍕", options: ["Pizza", "Ice cream", "Chocolate", "Home-cooked meal"], correct: 0 },
+  { question: "What color do I love most? 🎨", options: ["Rose pink", "Ocean blue", "Warm gold", "Earthy green"], correct: 0 },
+  { question: "How do I like to spend a lazy Sunday? ☀️", options: ["Sleep in all day", "Netflix & cuddles", "Cook together", "Go on a walk"], correct: 1 },
+  { question: "What's my go-to mood booster? 💖", options: ["Music 🎵", "Your hugs 🤗", "Chocolate 🍫", "A long walk"], correct: 1 },
+  { question: "Which season makes me happiest? 🌸", options: ["Spring flowers", "Summer sun", "Cozy autumn", "Snowy winter"], correct: 0 },
+  { question: "My idea of a perfect date is...? 🌙", options: ["Fancy restaurant", "Picnic under stars", "Movie marathon", "Cooking together"], correct: 1 },
+  { question: "What do I do first thing every morning? ☕", options: ["Check my phone", "Make coffee/tea", "Think of you 💕", "Stretch & yawn"], correct: 2 },
+  { question: "What's my love language? 💝", options: ["Words of affirmation", "Quality time", "Physical touch", "Acts of service"], correct: 1 },
+  { question: "What kind of music do I love most? 🎵", options: ["Romantic ballads", "Pop hits", "Old classics", "Indie vibes"], correct: 0 },
+  { question: "If I could travel anywhere, I'd go to... ✈️", options: ["Paris, France 🗼", "Bali, Indonesia 🌴", "Santorini, Greece 🏛️", "Kyoto, Japan 🌸"], correct: 0 },
+  { question: "My biggest dream is to... 🌟", options: ["Travel the world", "Build a cozy home", "Have a family", "Achieve something great"], correct: 1 },
+  { question: "What do I love most about relationships? 💕", options: ["Deep conversations", "Silly moments together", "Feeling understood", "Growing together"], correct: 2 },
+  { question: "How do I show I care? 🌹", options: ["Surprise gifts", "Acts of kindness", "Heartfelt words", "Just being there"], correct: 3 },
+  { question: "What's my guilty pleasure? 😅", options: ["Reality TV", "Eating dessert first", "Replaying old memories", "Online shopping"], correct: 0 },
+  { question: "What makes me laugh the most? 😂", options: ["Silly jokes", "Funny movies", "You being goofy 🥰", "Memes"], correct: 2 },
+  { question: "My ideal weekend getaway is... 🏕️", options: ["Beach resort", "Mountain cabin", "City adventure", "Road trip"], correct: 1 },
+  { question: "What do I value most in a person? 💎", options: ["Loyalty", "Kindness", "Sense of humor", "Ambition"], correct: 0 },
+  { question: "When stressed, I usually... 😮‍💨", options: ["Call you first 💕", "Listen to music", "Take a long walk", "Eat comfort food"], correct: 0 },
+  { question: "My favorite time of day with you is... ✨", options: ["Morning cuddles", "Afternoon adventures", "Evening talks", "Late night laughs"], correct: 3 },
+  { question: "What's my hidden talent? 🌟", options: ["Singing", "Making people smile", "Cooking", "Storytelling"], correct: 1 },
+  { question: "Which movie genre do I love? 🎬", options: ["Romantic comedy", "Adventure", "Thriller", "Animated"], correct: 0 },
+  { question: "My favorite way to say 'I love you' is... 💌", options: ["A long heartfelt text", "A surprise hug", "Cooking your favorite meal", "Just looking at you"], correct: 3 },
+  { question: "What flower represents me best? 🌸", options: ["Rose — passionate", "Sunflower — bright", "Daisy — simple & pure", "Orchid — unique"], correct: 0 },
+  { question: "If I were a dessert, I'd be... 🍰", options: ["Warm chocolate lava cake", "Light fruit tart", "Classic vanilla ice cream", "Tiramisu — complex & sweet"], correct: 3 },
+  { question: "What do I think about when I miss you? 💭", options: ["Your smile", "Our last hug", "Your voice", "All of the above 💕"], correct: 3 },
+  { question: "How do I handle arguments? 🕊️", options: ["Talk it through calmly", "Need space first", "Make you laugh it off", "Write my feelings down"], correct: 0 },
+  { question: "What's my favorite thing to do together? 🥂", options: ["Cook and eat", "Watch things together", "Go on spontaneous outings", "Just stay in and talk"], correct: 3 },
+  { question: "What kind of texts do I love getting? 📱", options: ["'Thinking of you' texts", "Long heartfelt paragraphs", "Funny memes just for me", "Voice notes"], correct: 0 },
+  { question: "My dream home would be... 🏡", options: ["Cozy cottage in the countryside", "Modern apartment in the city", "Beach house by the ocean", "Anywhere as long as you're there 💕"], correct: 3 },
+  { question: "What do I believe is the secret to lasting love? 🔑", options: ["Communication always", "Lots of laughter", "Never stopping dating each other", "Being each other's best friend"], correct: 3 },
+];
+
 async function compressToBase64(file: File, maxDim = 900): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -124,6 +157,10 @@ export default function EditSheet({
   const [tdTab, setTdTab] = useState<"truth" | "dare">("truth");
   const [customInput, setCustomInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [showQuizLibrary, setShowQuizLibrary] = useState(false);
+  const darePhotoRef = useRef<HTMLInputElement | null>(null);
+  const dareAudioRef = useRef<HTMLInputElement | null>(null);
+  const [dareMediaTarget, setDareMediaTarget] = useState<string | null>(null);
 
   if (!editMode || editMode === "preview" || editMode === "password") return null;
 
@@ -289,6 +326,20 @@ export default function EditSheet({
     setCustomInput("");
     setShowCustomInput(false);
   };
+
+  const updateTdItem = (text: string, update: Partial<TruthDareItem>) => {
+    const updated = truthDareQuestions.map((q) => q.text === text ? { ...q, ...update } : q);
+    updateMf("truthDareQuestions", updated);
+  };
+
+  const readAudioAsBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      if (file.size > 8 * 1024 * 1024) { reject(new Error("Audio too large (max 8MB)")); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   // ── CHOOSE MODE ──────────────────────────────────────────────────────────
 
@@ -840,6 +891,67 @@ export default function EditSheet({
             </div>
           )}
 
+          {/* Quiz Library */}
+          {showQuizLibrary ? (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <span style={{ fontFamily: CURSIVE, fontSize: 12, fontWeight: 700, color: WARM }}>
+                  💕 30 Cute Question Templates
+                </span>
+                <button onClick={() => setShowQuizLibrary(false)} style={{
+                  border: "none", background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM, cursor: "pointer",
+                }}>✕ Close</button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto" }}>
+                {QUIZ_LIBRARY.map((q, li) => {
+                  const alreadyAdded = quizQuestions.some((existing) => existing.question === q.question);
+                  return (
+                    <div key={li} style={{
+                      padding: "9px 12px", borderRadius: 10,
+                      background: alreadyAdded ? "rgba(158,126,97,0.06)" : "rgba(255,252,246,0.8)",
+                      border: `1px solid ${alreadyAdded ? "rgba(158,126,97,0.35)" : "rgba(158,126,97,0.18)"}`,
+                      display: "flex", alignItems: "flex-start", gap: 8, opacity: alreadyAdded ? 0.55 : 1,
+                    }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: WARM, margin: 0, lineHeight: 1.4 }}>{q.question}</p>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.55)", margin: "2px 0 0", lineHeight: 1.3 }}>
+                          {q.options.map((o, oi) => (
+                            <span key={oi}>{oi > 0 ? " · " : ""}<span style={{ color: oi === q.correct ? "rgb(70,130,60)" : undefined }}>{o}{oi === q.correct ? " ✓" : ""}</span></span>
+                          ))}
+                        </p>
+                      </div>
+                      {!alreadyAdded && quizQuestions.length < 10 && (
+                        <button
+                          onClick={() => {
+                            const updated = [...quizQuestions, { ...q }];
+                            updateMf("quizQuestions", updated);
+                            setQuizEditIdx(updated.length - 1);
+                          }}
+                          style={{
+                            flexShrink: 0, padding: "2px 10px", borderRadius: 6, border: "none",
+                            background: "rgba(158,126,97,0.18)", fontFamily: CURSIVE, fontSize: 15,
+                            fontWeight: 700, color: WARM, cursor: "pointer", lineHeight: "22px",
+                          }}>+</button>
+                      )}
+                      {alreadyAdded && <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.45)", flexShrink: 0 }}>✓</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowQuizLibrary(true)}
+              style={{
+                width: "100%", padding: "10px 0", borderRadius: 10, marginBottom: 10,
+                border: "1.5px solid rgba(158,126,97,0.30)",
+                background: "rgba(158,126,97,0.05)", cursor: "pointer",
+                fontFamily: CURSIVE, fontSize: 14, color: WARM,
+              }}>
+              💕 Browse 30 cute question templates
+            </button>
+          )}
+
           {quizQuestions.length < 10 && (
             <button
               onClick={addQuizQuestion}
@@ -849,7 +961,7 @@ export default function EditSheet({
                 background: "rgba(158,126,97,0.04)", cursor: "pointer",
                 fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.65)",
               }}>
-              + Add Question ({quizQuestions.length}/10)
+              + Create custom question ({quizQuestions.length}/10)
             </button>
           )}
 
@@ -900,21 +1012,101 @@ export default function EditSheet({
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {(tdTab === "truth" ? selectedTruths : selectedDares).map((q) => (
                     <div key={q.text} style={{
-                      display: "flex", alignItems: "flex-start", gap: 8,
-                      padding: "8px 12px", borderRadius: 10,
+                      borderRadius: 10,
                       background: tdTab === "truth" ? "rgba(140,100,180,0.09)" : "rgba(200,130,60,0.09)",
                       border: tdTab === "truth" ? "1px solid rgba(140,100,180,0.22)" : "1px solid rgba(200,130,60,0.22)",
+                      overflow: "hidden",
                     }}>
-                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, flex: 1, lineHeight: 1.4 }}>{q.text}</span>
-                      <button onClick={() => removeTdItem(q.text)} style={{
-                        border: "none", background: "transparent", cursor: "pointer",
-                        fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0, lineHeight: 1,
-                      }}>×</button>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px" }}>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, flex: 1, lineHeight: 1.4 }}>{q.text}</span>
+                        <button onClick={() => removeTdItem(q.text)} style={{
+                          border: "none", background: "transparent", cursor: "pointer",
+                          fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0, lineHeight: 1,
+                        }}>×</button>
+                      </div>
+                      {/* Media attachments for dares */}
+                      {tdTab === "dare" && (
+                        <div style={{ padding: "0 12px 10px", display: "flex", gap: 8, flexWrap: "wrap" as const }}>
+                          {/* Photo attachment */}
+                          {q.photoUrl ? (
+                            <div style={{ position: "relative", display: "inline-flex" }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={q.photoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />
+                              <button onClick={() => updateTdItem(q.text, { photoUrl: "" })} style={{
+                                position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%",
+                                background: "rgba(180,60,50,0.85)", border: "none", cursor: "pointer",
+                                fontFamily: CURSIVE, fontSize: 10, color: "#fff",
+                                display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
+                              }}>×</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setDareMediaTarget(q.text); darePhotoRef.current?.click(); }}
+                              style={{
+                                padding: "4px 10px", borderRadius: 6,
+                                border: "1px dashed rgba(200,130,60,0.40)",
+                                background: "rgba(200,130,60,0.06)", cursor: "pointer",
+                                fontFamily: CURSIVE, fontSize: 11, color: "rgb(160,90,30)",
+                              }}>📸 Add photo</button>
+                          )}
+                          {/* Audio attachment */}
+                          {q.audioUrl ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <audio controls src={q.audioUrl} style={{ height: 28, maxWidth: 140 }} />
+                              <button onClick={() => updateTdItem(q.text, { audioUrl: "" })} style={{
+                                border: "none", background: "transparent", cursor: "pointer",
+                                fontFamily: CURSIVE, fontSize: 13, color: "rgba(180,60,50,0.7)",
+                              }}>×</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setDareMediaTarget(q.text); dareAudioRef.current?.click(); }}
+                              style={{
+                                padding: "4px 10px", borderRadius: 6,
+                                border: "1px dashed rgba(200,130,60,0.40)",
+                                background: "rgba(200,130,60,0.06)", cursor: "pointer",
+                                fontFamily: CURSIVE, fontSize: 11, color: "rgb(160,90,30)",
+                              }}>🎤 Add audio</button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Hidden file inputs for dare media */}
+            <input
+              ref={darePhotoRef}
+              type="file" accept="image/*" style={{ display: "none" }}
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f && dareMediaTarget) {
+                  const b64 = await compressToBase64(f);
+                  updateTdItem(dareMediaTarget, { photoUrl: b64 });
+                  setDareMediaTarget(null);
+                }
+                e.target.value = "";
+              }}
+            />
+            <input
+              ref={dareAudioRef}
+              type="file" accept="audio/mp3,audio/mpeg,audio/wav,audio/*" style={{ display: "none" }}
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f && dareMediaTarget) {
+                  try {
+                    const b64 = await readAudioAsBase64(f);
+                    updateTdItem(dareMediaTarget, { audioUrl: b64 });
+                  } catch {
+                    // ignore (too large)
+                  }
+                  setDareMediaTarget(null);
+                }
+                e.target.value = "";
+              }}
+            />
 
             {/* Library */}
             <div style={{ marginBottom: 14 }}>

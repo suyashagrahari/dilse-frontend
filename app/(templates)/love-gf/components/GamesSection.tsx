@@ -34,6 +34,21 @@ const QUIZ_POOL: QuizQuestion[] = [
   { question: "What's their favorite flower?", options: ["Roses 🌹", "Sunflowers 🌻", "Tulips 🌷", "Lilies 🌺"], correct: 0 },
   { question: "How do they show love?", options: ["Hugs & kisses 🤗", "Thoughtful gifts 🎁", "Cooking for you 🍳", "Sweet texts 💌"], correct: 0 },
   { question: "What's their favorite holiday?", options: ["Valentine's Day 💕", "Christmas 🎄", "New Year's 🎆", "Their birthday 🎂"], correct: 0 },
+  { question: "What's our favorite thing to cook together?", options: ["Pasta 🍝", "Desserts 🍰", "Breakfast 🍳", "Anything, just together"], correct: 3 },
+  { question: "What's the first thing I noticed about you?", options: ["Your smile 😊", "Your eyes ✨", "Your laugh 😄", "Your kindness 💗"], correct: 1 },
+  { question: "What's your superpower in our relationship?", options: ["Making me laugh", "Always knowing how I feel", "Cheering me up", "Being endlessly patient"], correct: 1 },
+  { question: "What do you think I dream about most?", options: ["Adventures together", "A cozy life with you", "Our future family", "All of the above 💕"], correct: 3 },
+  { question: "Which emoji best describes me?", options: ["🌸 Soft & sweet", "✨ Bright & bubbly", "🌙 Dreamy & calm", "🔥 Passionate & bold"], correct: 1 },
+  { question: "If we were a song, we'd be...?", options: ["A love ballad 🎵", "An upbeat pop anthem", "A slow dance tune", "A playlist of everything"], correct: 3 },
+  { question: "What's my favorite way to be surprised?", options: ["Surprise date 🌹", "Handwritten note 💌", "Unexpected cuddles 🤗", "Small thoughtful gifts"], correct: 0 },
+  { question: "On a rainy day, I'd rather...?", options: ["Stay in with you 🏠", "Watch rain from a café ☕", "Cuddle and watch movies", "Read books together 📚"], correct: 2 },
+  { question: "What do I love most about you?", options: ["Your warmth & care", "How you make me laugh", "That you always listen", "Everything 💕"], correct: 3 },
+  { question: "What's our 'thing'?", options: ["Late night talks 🌙", "Inside jokes 😂", "Long drives together 🚗", "Random adventures 🗺️"], correct: 0 },
+  { question: "What do I secretly smile about?", options: ["Funny memories of us", "Your texts out of nowhere", "Watching you laugh", "Thinking of our future"], correct: 3 },
+  { question: "How would I describe our relationship in one word?", options: ["Home 🏡", "Adventure 🌟", "Forever 💕", "Magic ✨"], correct: 0 },
+  { question: "What's my favourite time we spent together?", options: ["Our first date 🌹", "A trip we took together ✈️", "A random Tuesday that turned magical ✨", "Every single day 💕"], correct: 2 },
+  { question: "When I'm sad, what always helps?", options: ["Your voice calling me", "A tight hug from you 🤗", "Funny videos you send", "Just knowing you're there"], correct: 1 },
+  { question: "What would I say is the best thing about us?", options: ["We make each other better 💖", "We laugh together constantly", "We're each other's safe space", "We never stop choosing each other"], correct: 3 },
 ];
 
 const CORRECT_MSGS = [
@@ -354,8 +369,9 @@ interface TruthOrDareProps {
 }
 
 function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
+  type ActiveCard = { text: string; photoUrl?: string; audioUrl?: string };
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
-  const [card, setCard] = useState("");
+  const [card, setCard] = useState<ActiveCard | null>(null);
   const [used, setUsed] = useState<Set<string>>(new Set());
   const [answer, setAnswer] = useState("");
   const [saved, setSaved] = useState(false);
@@ -366,29 +382,40 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [responseAudioUrl, setResponseAudioUrl] = useState("");
+  const [responseAudioLoading, setResponseAudioLoading] = useState(false);
+  const [responsePhotoUrl, setResponsePhotoUrl] = useState("");
+  const responseAudioInputRef = useRef<HTMLInputElement | null>(null);
+  const responsePhotoInputRef = useRef<HTMLInputElement | null>(null);
 
-  const getTruths = useCallback(() => {
-    const customs = customTruthDare.filter((q) => q.type === "truth").map((q) => q.text);
-    return [...customs, ...DEFAULT_TRUTHS];
+  const getTruths = useCallback((): ActiveCard[] => {
+    const customs = customTruthDare.filter((q) => q.type === "truth").map((q) => ({ text: q.text }));
+    const defaults = DEFAULT_TRUTHS.map((t) => ({ text: t }));
+    return [...customs, ...defaults];
   }, [customTruthDare]);
 
-  const getDares = useCallback(() => {
-    const customs = customTruthDare.filter((q) => q.type === "dare").map((q) => q.text);
-    return [...customs, ...DEFAULT_DARES];
+  const getDares = useCallback((): ActiveCard[] => {
+    const customs = customTruthDare.filter((q) => q.type === "dare").map((q) => ({
+      text: q.text, photoUrl: q.photoUrl || "", audioUrl: q.audioUrl || "",
+    }));
+    const defaults = DEFAULT_DARES.map((t) => ({ text: t }));
+    return [...customs, ...defaults];
   }, [customTruthDare]);
 
   const pick = useCallback((m: "truth" | "dare") => {
     setMode(m);
     const arr = m === "truth" ? getTruths() : getDares();
-    const available = arr.filter((t) => !used.has(t));
+    const available = arr.filter((t) => !used.has(t.text));
     const pool = available.length > 0 ? available : arr;
     const choice = pool[Math.floor(Math.random() * pool.length)];
     setCard(choice);
-    setUsed((prev) => new Set(prev).add(choice));
+    setUsed((prev) => new Set(prev).add(choice.text));
     setAnswer("");
     setSaved(false);
     setDareCompleted(false);
     setCompletionMsg("");
+    setResponseAudioUrl("");
+    setResponsePhotoUrl("");
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [used, getTruths, getDares]);
 
@@ -404,10 +431,10 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
         await fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: mode, prompt: card, answer: answer.trim() }),
+          body: JSON.stringify({ type: mode, prompt: card.text, answer: answer.trim() }),
         });
       }
-      addToHistory(mode ?? "truth", card, answer.trim());
+      addToHistory(mode ?? "truth", card.text, answer.trim());
       setSaved(true);
     } finally {
       setSaving(false);
@@ -415,19 +442,25 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   }, [answer, card, mode, shareId, addToHistory]);
 
   const handleDareComplete = useCallback(() => {
+    if (!card) return;
     const msg = DARE_COMPLETIONS[Math.floor(Math.random() * DARE_COMPLETIONS.length)];
     setCompletionMsg(msg);
     setDareCompleted(true);
     const note = answer.trim() || "Dare completed! 🔥";
-    addToHistory("dare", card, note);
+    addToHistory("dare", card.text, note);
     if (shareId && card) {
+      const body: Record<string, string> = { type: "dare", prompt: card.text, answer: note };
+      if (responseAudioUrl) body.mediaUrl = responseAudioUrl;
+      else if (responsePhotoUrl) body.mediaUrl = responsePhotoUrl;
       fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "dare", prompt: card, answer: note }),
+        body: JSON.stringify(body),
       }).catch(() => {});
     }
-  }, [shareId, card, answer, addToHistory]);
+    setResponseAudioUrl("");
+    setResponsePhotoUrl("");
+  }, [shareId, card, answer, addToHistory, responseAudioUrl, responsePhotoUrl]);
 
   const nextCard = useCallback(() => {
     const chosen: "truth" | "dare" = Math.random() < 0.5 ? "truth" : "dare";
@@ -435,8 +468,9 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   }, [pick]);
 
   const reset = useCallback(() => {
-    setUsed(new Set()); setCard(""); setMode(null);
+    setUsed(new Set()); setCard(null); setMode(null);
     setAnswer(""); setSaved(false); setDareCompleted(false); setCompletionMsg("");
+    setResponseAudioUrl(""); setResponsePhotoUrl("");
   }, []);
 
   const filteredHistory = history.filter((h) => historyFilter === "all" || h.type === historyFilter);
@@ -471,7 +505,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
 
       {/* Active card area */}
       <AnimatePresence mode="wait">
-        {!card ? (
+        {!card || !card.text ? (
           <motion.div key="empty"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{
@@ -487,7 +521,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
             </p>
           </motion.div>
         ) : (
-          <motion.div key={card}
+          <motion.div key={card.text}
             initial={{ scale: 0.88, opacity: 0, rotateY: -15 }}
             animate={{ scale: 1, opacity: 1, rotateY: 0 }}
             exit={{ scale: 0.88, opacity: 0 }}
@@ -512,9 +546,37 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                 </span>
               </div>
               <p style={{ fontFamily: CURSIVE, fontWeight: 700, color: WARM, fontSize: 15, margin: 0, lineHeight: 1.5 }}>
-                {card}
+                {card.text}
               </p>
             </div>
+
+            {/* Creator's attached media */}
+            {mode === "dare" && card && (card.photoUrl || card.audioUrl) && (
+              <div style={{ marginBottom: 12 }}>
+                {card.photoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={card.photoUrl}
+                    alt=""
+                    style={{
+                      width: "100%", maxHeight: 200, objectFit: "cover",
+                      borderRadius: 12, marginBottom: card.audioUrl ? 8 : 0,
+                    }}
+                  />
+                )}
+                {card.audioUrl && (
+                  <div style={{
+                    padding: "8px 12px", borderRadius: 10,
+                    background: "rgba(200,130,60,0.08)", border: "1px solid rgba(200,130,60,0.20)",
+                  }}>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(160,90,30)", margin: "0 0 6px" }}>
+                      🎤 Listen first...
+                    </p>
+                    <audio controls src={card.audioUrl} style={{ width: "100%" }} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Truth: answer textarea */}
             {mode === "truth" && !saved && (
@@ -592,6 +654,98 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
             {/* Dare: how did it go + I did it button */}
             {mode === "dare" && !dareCompleted && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                {/* Viewer response media */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  {/* Audio response */}
+                  {responseAudioUrl ? (
+                    <div style={{
+                      flex: 1, padding: "8px 12px", borderRadius: 10,
+                      background: "rgba(200,130,60,0.08)", border: "1px solid rgba(200,130,60,0.20)",
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <audio controls src={responseAudioUrl} style={{ flex: 1, height: 28 }} />
+                      <button onClick={() => setResponseAudioUrl("")} style={{
+                        border: "none", background: "transparent", cursor: "pointer",
+                        fontFamily: CURSIVE, fontSize: 13, color: "rgba(180,60,50,0.7)",
+                      }}>×</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => responseAudioInputRef.current?.click()}
+                      disabled={responseAudioLoading}
+                      style={{
+                        flex: 1, padding: "8px 0", borderRadius: 10,
+                        border: "1.5px dashed rgba(200,130,60,0.35)",
+                        background: "rgba(200,130,60,0.05)", cursor: "pointer",
+                        fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      }}>
+                      🎤 {responseAudioLoading ? "Processing..." : "Upload audio 🎵"}
+                    </button>
+                  )}
+                  {/* Photo response */}
+                  {responsePhotoUrl ? (
+                    <div style={{ position: "relative" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={responsePhotoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
+                      <button onClick={() => setResponsePhotoUrl("")} style={{
+                        position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%",
+                        background: "rgba(180,60,50,0.85)", border: "none", cursor: "pointer",
+                        fontFamily: CURSIVE, fontSize: 10, color: "#fff",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>×</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => responsePhotoInputRef.current?.click()}
+                      style={{
+                        padding: "8px 12px", borderRadius: 10,
+                        border: "1.5px dashed rgba(200,130,60,0.35)",
+                        background: "rgba(200,130,60,0.05)", cursor: "pointer",
+                        fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>📸</button>
+                  )}
+                </div>
+                {/* Hidden file inputs for viewer responses */}
+                <input
+                  ref={responseAudioInputRef}
+                  type="file" accept="audio/mp3,audio/mpeg,audio/wav,audio/*" style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.size > 8 * 1024 * 1024) return; // 8MB limit
+                    setResponseAudioLoading(true);
+                    try {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => { setResponseAudioUrl(ev.target?.result as string); setResponseAudioLoading(false); };
+                      reader.onerror = () => setResponseAudioLoading(false);
+                      reader.readAsDataURL(f);
+                    } catch { setResponseAudioLoading(false); }
+                    e.target.value = "";
+                  }}
+                />
+                <input
+                  ref={responsePhotoInputRef}
+                  type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    // compress
+                    const canvas = document.createElement("canvas");
+                    const img = new window.Image();
+                    const url = URL.createObjectURL(f);
+                    img.onload = () => {
+                      const ratio = Math.min(600 / img.width, 600 / img.height, 1);
+                      canvas.width = img.width * ratio; canvas.height = img.height * ratio;
+                      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                      setResponsePhotoUrl(canvas.toDataURL("image/jpeg", 0.80));
+                      URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                    e.target.value = "";
+                  }}
+                />
                 <label style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
                   color: "rgba(108,74,46,0.55)", textTransform: "uppercase" as const,
