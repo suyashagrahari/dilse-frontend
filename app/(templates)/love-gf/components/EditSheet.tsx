@@ -1,329 +1,356 @@
 "use client";
 
-import { memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, ChevronLeft, Sparkles, PenLine, Loader2, Plus, Trash2, Eye } from "lucide-react";
-import type { ContentData, EditMode } from "./types";
-import { PINK_GRADIENT, VIOLET_GRADIENT } from "./styles";
+import { useRef } from "react";
+import { type ContentData, type EditMode } from "./types";
 
-const MANUAL_STEPS = ["Names", "Love Note", "Photos", "Music"];
+const WARM = "rgb(108, 74, 46)";
+const WARM_MID = "rgba(108, 74, 46, 0.55)";
+const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const PAPER = "rgba(250, 246, 240, 0.98)";
+
+const INPUT_STYLE: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", borderRadius: 8,
+  border: "1.5px solid rgba(158, 126, 97, 0.35)",
+  background: "rgba(255,252,246,0.9)",
+  fontFamily: "inherit", fontSize: 14, color: "rgb(60, 40, 20)",
+  outline: "none", boxSizing: "border-box",
+};
+
+const TEXTAREA_STYLE: React.CSSProperties = {
+  ...INPUT_STYLE, resize: "vertical", minHeight: 90, lineHeight: 1.6,
+};
+
+const STEP_LABELS = ["Names", "Message", "Wish Card", "Photos", "Password"];
+
+async function compressToBase64(file: File, maxDim = 800): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 interface Props {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
-  aiName: string;
-  setAiName: (v: string) => void;
-  aiSender: string;
-  setAiSender: (v: string) => void;
-  aiPrompt: string;
-  setAiPrompt: (v: string) => void;
-  aiLoading: boolean;
-  mf: ContentData;
-  manualStep: number;
-  setManualStep: (v: number) => void;
-  photoInput: string;
-  setPhotoInput: (v: string) => void;
-  updateMf: (key: keyof ContentData, val: unknown) => void;
-  onStartAi: () => void;
-  onStartManual: () => void;
-  onAiGenerate: () => void;
-  onManualPreview: () => void;
-}
-
-export default memo(function EditSheet({
-  editMode, setEditMode,
-  aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading,
-  mf, manualStep, setManualStep, photoInput, setPhotoInput, updateMf,
-  onStartAi, onStartManual, onAiGenerate, onManualPreview,
-}: Props) {
-  const visible = editMode !== null && editMode !== "preview" && editMode !== "password";
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setEditMode(null)}
-            className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60"
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom lg:left-1/2 lg:-translate-x-1/2 lg:max-w-xl"
-          >
-            <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
-              <div className="w-10 h-1 rounded-full bg-border" />
-            </div>
-
-            {editMode === "choose" && <ChoosePanel setEditMode={setEditMode} onStartAi={onStartAi} onStartManual={onStartManual} />}
-            {editMode === "ai" && (
-              <AiPanel
-                setEditMode={setEditMode}
-                aiName={aiName} setAiName={setAiName}
-                aiSender={aiSender} setAiSender={setAiSender}
-                aiPrompt={aiPrompt} setAiPrompt={setAiPrompt}
-                aiLoading={aiLoading} onGenerate={onAiGenerate}
-              />
-            )}
-            {editMode === "manual" && (
-              <ManualPanel
-                setEditMode={setEditMode}
-                mf={mf} manualStep={manualStep} setManualStep={setManualStep}
-                photoInput={photoInput} setPhotoInput={setPhotoInput}
-                updateMf={updateMf} onPreview={onManualPreview}
-              />
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-});
-
-function ChoosePanel({ setEditMode, onStartAi, onStartManual }: { setEditMode: (m: EditMode) => void; onStartAi: () => void; onStartManual: () => void }) {
-  return (
-    <div className="px-5 pb-8 pt-2">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold">Customize Your Love Page</h3>
-        <button onClick={() => setEditMode(null)} className="p-1 text-muted-foreground"><X size={20} /></button>
-      </div>
-      <div className="space-y-3">
-        <button
-          onClick={onStartAi}
-          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200/50 dark:border-violet-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
-        >
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: VIOLET_GRADIENT }}>
-            <Sparkles size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="font-bold text-sm">Generate with AI</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Describe what you want & AI creates it</p>
-          </div>
-          <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
-        </button>
-        <button
-          onClick={onStartManual}
-          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 dark:from-pink-500/15 dark:to-rose-500/15 border border-pink-200/50 dark:border-pink-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
-        >
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: PINK_GRADIENT }}>
-            <PenLine size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="font-bold text-sm">Write Manually</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Fill in each field yourself</p>
-          </div>
-          <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AiPanel({
-  setEditMode, aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading, onGenerate,
-}: {
-  setEditMode: (m: EditMode) => void;
   aiName: string; setAiName: (v: string) => void;
   aiSender: string; setAiSender: (v: string) => void;
   aiPrompt: string; setAiPrompt: (v: string) => void;
-  aiLoading: boolean; onGenerate: () => void;
-}) {
-  return (
-    <div className="px-5 pb-8 pt-2">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
-        <h3 className="text-lg font-bold flex items-center gap-2"><Sparkles size={16} className="text-violet-500" /> AI Magic</h3>
-      </div>
-      <div className="space-y-4">
-        <FieldGroup label="Their Name *">
-          <input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Sarah" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all" />
-        </FieldGroup>
-        <FieldGroup label="Your Name">
-          <input value={aiSender} onChange={(e) => setAiSender(e.target.value)} placeholder="e.g. Alex" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all" />
-        </FieldGroup>
-        <FieldGroup label="Describe what you want *">
-          <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="e.g. A romantic love message for my girlfriend who loves stargazing..." rows={4} className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all resize-none" />
-        </FieldGroup>
-        <button
-          onClick={onGenerate}
-          disabled={aiLoading || !aiName.trim() || !aiPrompt.trim()}
-          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform"
-          style={{ background: VIOLET_GRADIENT }}
-        >
-          {aiLoading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate Magic ✨</>}
-        </button>
-      </div>
-    </div>
-  );
+  aiLoading: boolean;
+  mf: ContentData; manualStep: number; setManualStep: (n: number) => void;
+  updateMf: (k: keyof ContentData, v: unknown) => void;
+  onStartAi: () => void; onStartManual: () => void;
+  onAiGenerate: () => void; onManualPreview: () => void;
 }
 
-function ManualPanel({
-  setEditMode, mf, manualStep, setManualStep, photoInput, setPhotoInput, updateMf, onPreview,
-}: {
-  setEditMode: (m: EditMode) => void;
-  mf: ContentData; manualStep: number; setManualStep: (v: number) => void;
-  photoInput: string; setPhotoInput: (v: string) => void;
-  updateMf: (key: keyof ContentData, val: unknown) => void;
-  onPreview: () => void;
-}) {
-  return (
-    <div className="px-5 pb-8 pt-2">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
-        <h3 className="text-lg font-bold flex items-center gap-2"><PenLine size={16} className="text-pink-500" /> Manual Edit</h3>
-      </div>
+export default function EditSheet({
+  editMode, setEditMode,
+  aiName, setAiName, aiSender, setAiSender, aiPrompt, setAiPrompt, aiLoading,
+  mf, manualStep, setManualStep, updateMf,
+  onStartAi, onStartManual, onAiGenerate, onManualPreview,
+}: Props) {
+  const fileInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-      <div className="flex gap-1 mb-6">
-        {MANUAL_STEPS.map((s, i) => (
-          <button key={s} onClick={() => setManualStep(i)} className={`flex-1 h-1 rounded-full transition-all ${i <= manualStep ? "bg-pink-500" : "bg-border"}`} />
-        ))}
-      </div>
+  if (!editMode || editMode === "preview" || editMode === "password") return null;
 
-      <AnimatePresence mode="wait">
-        {manualStep === 0 && <NamesStep key="s0" mf={mf} updateMf={updateMf} />}
-        {manualStep === 1 && <MessageStep key="s1" mf={mf} updateMf={updateMf} />}
-        {manualStep === 2 && <PhotosStep key="s2" mf={mf} updateMf={updateMf} photoInput={photoInput} setPhotoInput={setPhotoInput} />}
-        {manualStep === 3 && <MusicStep key="s3" mf={mf} updateMf={updateMf} />}
-      </AnimatePresence>
-
-      <div className="flex gap-3 mt-6">
-        {manualStep > 0 && (
-          <button onClick={() => setManualStep(manualStep - 1)} className="w-11 h-11 rounded-xl border border-border/50 flex items-center justify-center text-muted-foreground">
-            <ChevronLeft size={18} />
-          </button>
-        )}
-        {manualStep < 3 ? (
-          <button onClick={() => setManualStep(manualStep + 1)} className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5" style={{ background: PINK_GRADIENT }}>
-            Continue <ChevronRight size={16} />
-          </button>
-        ) : (
-          <button onClick={onPreview} disabled={!mf.recipientName.trim()} className="flex-1 py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50" style={{ background: PINK_GRADIENT }}>
-            <Eye size={16} /> Preview
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function NamesStep({ mf, updateMf }: { mf: ContentData; updateMf: (k: keyof ContentData, v: unknown) => void }) {
-  return (
-    <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <FieldGroup label="Their Name *">
-        <input value={mf.recipientName} onChange={(e) => updateMf("recipientName", e.target.value)} placeholder="e.g. Sarah" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-sm" />
-      </FieldGroup>
-      <FieldGroup label="Your Name">
-        <input value={mf.senderName} onChange={(e) => updateMf("senderName", e.target.value)} placeholder="e.g. Alex" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-sm" />
-      </FieldGroup>
-    </motion.div>
-  );
-}
-
-function MessageStep({ mf, updateMf }: { mf: ContentData; updateMf: (k: keyof ContentData, v: unknown) => void }) {
-  return (
-    <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-      <FieldGroup label="Your Love Message">
-        <textarea value={mf.personalMessage} onChange={(e) => updateMf("personalMessage", e.target.value)} rows={7} placeholder="Write your heartfelt love message..." className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-sm resize-none" />
-      </FieldGroup>
-    </motion.div>
-  );
-}
-
-function PhotosStep({ mf, updateMf, photoInput, setPhotoInput }: { mf: ContentData; updateMf: (k: keyof ContentData, v: unknown) => void; photoInput: string; setPhotoInput: (v: string) => void }) {
-  const addPhoto = () => {
-    if (photoInput.trim()) {
-      updateMf("galleryPhotos", [...mf.galleryPhotos, photoInput.trim()]);
-      setPhotoInput("");
-    }
+  const handlePhotoUpload = async (index: number, file: File) => {
+    const b64 = await compressToBase64(file);
+    const photos = [...(mf.galleryPhotos || [])];
+    while (photos.length <= index) photos.push("");
+    photos[index] = b64;
+    updateMf("galleryPhotos", photos);
   };
 
-  return (
-    <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-      <div className="flex gap-2">
-        <input
-          value={photoInput}
-          onChange={(e) => setPhotoInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") addPhoto(); }}
-          placeholder="Paste image URL..."
-          className="flex-1 px-4 py-2.5 rounded-xl bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-sm"
-        />
-        <button onClick={addPhoto} disabled={!photoInput.trim()} className="px-4 rounded-xl bg-pink-500 text-white disabled:opacity-30 shrink-0">
-          <Plus size={16} />
-        </button>
-      </div>
-      {mf.galleryPhotos.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {mf.galleryPhotos.map((url, i) => (
-            <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border/50 group">
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => updateMf("galleryPhotos", mf.galleryPhotos.filter((_, j) => j !== i))}
-                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      {mf.galleryPhotos.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-4">No photos yet. Add image URLs above.</p>
-      )}
-    </motion.div>
-  );
-}
+  const overlay: React.CSSProperties = {
+    position: "fixed", inset: 0, zIndex: 200,
+    background: "rgba(40, 25, 10, 0.55)",
+    backdropFilter: "blur(4px)",
+    display: "flex", alignItems: "flex-end", justifyContent: "center",
+  };
 
-function MusicStep({ mf, updateMf }: { mf: ContentData; updateMf: (k: keyof ContentData, v: unknown) => void }) {
-  return (
-    <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
-      {mf.musicTracks.map((track, i) => (
-        <div key={i} className="flex gap-2 items-start">
-          <div className="flex-1 space-y-1.5">
-            <input
-              value={track.title}
-              onChange={(e) => { const tracks = [...mf.musicTracks]; tracks[i] = { ...tracks[i], title: e.target.value }; updateMf("musicTracks", tracks); }}
-              placeholder="Song title"
-              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-sm"
-            />
-            <input
-              value={track.artist}
-              onChange={(e) => { const tracks = [...mf.musicTracks]; tracks[i] = { ...tracks[i], artist: e.target.value }; updateMf("musicTracks", tracks); }}
-              placeholder="Artist name"
-              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:border-pink-300 focus:outline-none text-xs"
-            />
-          </div>
-          {mf.musicTracks.length > 1 && (
-            <button
-              onClick={() => updateMf("musicTracks", mf.musicTracks.filter((_, j) => j !== i))}
-              className="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 mt-1"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
-      ))}
-      {mf.musicTracks.length < 8 && (
-        <button
-          onClick={() => updateMf("musicTracks", [...mf.musicTracks, { title: "", artist: "", duration: "3:30" }])}
-          className="flex items-center gap-1.5 text-sm text-pink-500 font-semibold"
-        >
-          <Plus size={14} /> Add track
-        </button>
-      )}
-    </motion.div>
+  const sheet: React.CSSProperties = {
+    width: "100%", maxWidth: 520,
+    background: PAPER,
+    borderRadius: "20px 20px 0 0",
+    padding: "28px 24px 40px",
+    maxHeight: "88svh",
+    overflowY: "auto",
+    boxShadow: "0 -20px 60px rgba(80,50,20,0.25)",
+  };
+
+  const hdr = (title: string) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <h2 style={{ fontFamily: CURSIVE, fontSize: 22, fontWeight: 700, color: WARM, margin: 0 }}>{title}</h2>
+      <button onClick={() => setEditMode(null)} style={{
+        border: "none", background: "transparent", cursor: "pointer",
+        fontFamily: CURSIVE, fontSize: 20, color: "rgb(140,105,75)", lineHeight: 1,
+      }}>✕</button>
+    </div>
   );
+
+  const btn = (label: string, onClick: () => void, primary = false, disabled = false) => (
+    <button onClick={onClick} disabled={disabled} style={{
+      flex: 1, padding: "11px 0", borderRadius: 50,
+      border: primary ? "none" : `1.5px solid ${WARM_MID}`,
+      background: primary
+        ? "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)"
+        : "transparent",
+      fontFamily: CURSIVE, fontSize: 15, fontWeight: 700,
+      color: primary ? "#fff" : WARM,
+      cursor: disabled ? "not-allowed" : "pointer",
+      opacity: disabled ? 0.5 : 1,
+      boxShadow: primary ? "0 4px 16px rgba(108,74,46,0.30)" : "none",
+      letterSpacing: "0.03em",
+    }}>{label}</button>
+  );
+
+  const progressBar = (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        {STEP_LABELS.map((label, i) => (
+          <span key={i} style={{
+            fontFamily: CURSIVE, fontSize: 10, letterSpacing: "0.05em",
+            color: i <= manualStep ? WARM : "rgb(160,120,80)",
+            fontWeight: i === manualStep ? 700 : 400, opacity: i <= manualStep ? 1 : 0.50,
+          }}>{label}</span>
+        ))}
+      </div>
+      <div style={{ height: 3, background: "rgba(158,126,97,0.15)", borderRadius: 2 }}>
+        <div style={{
+          height: "100%", borderRadius: 2,
+          width: `${((manualStep + 1) / STEP_LABELS.length) * 100}%`,
+          background: "linear-gradient(90deg, rgba(158,126,97,0.6), rgb(158,126,97))",
+          transition: "width 0.3s ease",
+        }} />
+      </div>
+    </div>
+  );
+
+  const backBtn = () => (
+    <button onClick={() => setManualStep(manualStep - 1)} style={{
+      flex: 1, padding: "11px 0", borderRadius: 50,
+      border: `1.5px solid ${WARM_MID}`, background: "transparent",
+      fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", cursor: "pointer",
+    }}>← Back</button>
+  );
+
+  // ── CHOOSE MODE ──────────────────────────────────────────────────────────
+  if (editMode === "choose") {
+    return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Create your love page ♡")}
+          <p style={{ fontFamily: CURSIVE, fontSize: 15, color: "rgb(130,95,65)", marginBottom: 20, lineHeight: 1.6 }}>
+            Tell your love story beautifully.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { label: "✨ AI Magic", sub: "Write names + a few words — AI crafts a beautiful love message", action: onStartAi },
+              { label: "✍ Write yourself", sub: "Fill step by step — your words, your photos, your story", action: onStartManual },
+            ].map((opt) => (
+              <button key={opt.label} onClick={opt.action} style={{
+                padding: "16px 20px", borderRadius: 12,
+                border: "1.5px solid rgba(158,126,97,0.35)",
+                background: "rgba(158,126,97,0.06)", cursor: "pointer", textAlign: "left",
+              }}>
+                <div style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: WARM, marginBottom: 4 }}>{opt.label}</div>
+                <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", opacity: 0.85 }}>{opt.sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── AI MODE ──────────────────────────────────────────────────────────────
+  if (editMode === "ai") {
+    return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("✨ AI Magic")}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              { label: "Their name *", value: aiName, set: setAiName, placeholder: "e.g. Priya, Sarah, Maya..." },
+              { label: "Your name", value: aiSender, set: setAiSender, placeholder: "e.g. Arjun, James..." },
+            ].map((f) => (
+              <div key={f.label}>
+                <label style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, display: "block", marginBottom: 6 }}>{f.label}</label>
+                <input value={f.value} onChange={(e) => f.set(e.target.value)} placeholder={f.placeholder} style={INPUT_STYLE} />
+              </div>
+            ))}
+            <div>
+              <label style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, display: "block", marginBottom: 6 }}>
+                What makes your love special? *
+              </label>
+              <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="e.g. She always makes me laugh, we love hiking, 2 years together..."
+                style={TEXTAREA_STYLE} />
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setEditMode("choose")} style={{
+                flex: 1, padding: "11px 0", borderRadius: 50,
+                border: `1.5px solid ${WARM_MID}`, background: "transparent",
+                fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", cursor: "pointer",
+              }}>← Back</button>
+              {btn(aiLoading ? "Writing..." : "✨ Generate", onAiGenerate, true, aiLoading || !aiName.trim() || !aiPrompt.trim())}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MANUAL MODE ──────────────────────────────────────────────────────────
+  if (editMode === "manual") {
+    if (manualStep === 0) return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Your Story")}
+          {progressBar}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <label style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, display: "block", marginBottom: 6 }}>Their name *</label>
+              <input value={mf.recipientName} onChange={(e) => updateMf("recipientName", e.target.value)}
+                placeholder="Your love's name..." style={INPUT_STYLE} />
+            </div>
+            <div>
+              <label style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, display: "block", marginBottom: 6 }}>Your name</label>
+              <input value={mf.senderName} onChange={(e) => updateMf("senderName", e.target.value)}
+                placeholder="Your name..." style={INPUT_STYLE} />
+            </div>
+            <div>
+              <label style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, display: "block", marginBottom: 6 }}>Special date (optional)</label>
+              <input type="date" value={mf.loveDate} onChange={(e) => updateMf("loveDate", e.target.value)} style={INPUT_STYLE} />
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <button onClick={() => setEditMode("choose")} style={{
+                flex: 1, padding: "11px 0", borderRadius: 50,
+                border: `1.5px solid ${WARM_MID}`, background: "transparent",
+                fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", cursor: "pointer",
+              }}>← Back</button>
+              {btn("Next →", () => setManualStep(1), true, !mf.recipientName.trim())}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (manualStep === 1) return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Love Message")}
+          {progressBar}
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
+            A heartfelt message that appears on the main page.
+          </p>
+          <textarea value={mf.personalMessage} onChange={(e) => updateMf("personalMessage", e.target.value)}
+            placeholder="Every moment with you..." style={{ ...TEXTAREA_STYLE, minHeight: 130 }} />
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            {backBtn()}
+            {btn("Next →", () => setManualStep(2), true)}
+          </div>
+        </div>
+      </div>
+    );
+
+    if (manualStep === 2) return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Wish Card")}
+          {progressBar}
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
+            A tender note for the wish card section.
+          </p>
+          <textarea value={mf.wishMessage} onChange={(e) => updateMf("wishMessage", e.target.value)}
+            placeholder="To the one who holds my heart..." style={{ ...TEXTAREA_STYLE, minHeight: 110 }} />
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            {backBtn()}
+            {btn("Next →", () => setManualStep(3), true)}
+          </div>
+        </div>
+      </div>
+    );
+
+    if (manualStep === 3) return (
+      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+        <div style={sheet}>
+          {hdr("Your Photos ♡")}
+          {progressBar}
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
+            Upload up to 4 couple photos — they appear as polaroids in the scrapbook.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {[0, 1, 2, 3].map((i) => {
+              const photo = (mf.galleryPhotos || [])[i];
+              return (
+                <div key={i} onClick={() => fileInputsRef.current[i]?.click()} style={{
+                  aspectRatio: "3/4", borderRadius: 8,
+                  border: `2px dashed rgba(158,126,97,${photo ? "0.5" : "0.3"})`,
+                  background: photo ? "transparent" : "rgba(158,126,97,0.04)",
+                  cursor: "pointer", overflow: "hidden", position: "relative",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 22, opacity: 0.4, marginBottom: 4 }}>📷</div>
+                      <div style={{ fontFamily: CURSIVE, fontSize: 11, color: WARM, opacity: 0.55 }}>Photo {i + 1}</div>
+                    </div>
+                  )}
+                  <input ref={(el) => { fileInputsRef.current[i] = el; }} type="file" accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(i, f); }} />
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            {backBtn()}
+            {btn("Next →", () => setManualStep(4), true)}
+          </div>
+        </div>
+      </div>
+    );
+
+    if (manualStep === 4) {
+      const pwKey = "_manualPw" as keyof ContentData;
+      return (
+        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+          <div style={sheet}>
+            {hdr("Password (optional)")}
+            {progressBar}
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
+              Add a password so only your special someone can view this page.
+            </p>
+            <input type="text"
+              value={(((mf as unknown as Record<string, unknown>)[pwKey as string] as string | undefined) || "")}
+              onChange={(e) => updateMf(pwKey, e.target.value)}
+              placeholder="Leave blank for no password"
+              style={INPUT_STYLE} />
+            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              {backBtn()}
+              {btn("Preview ♡", onManualPreview, true)}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  return null;
 }

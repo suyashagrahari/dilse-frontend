@@ -1,9 +1,16 @@
 "use client";
 
-import { memo, useState, useMemo, useCallback, useEffect } from "react";
+import { memo, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, RotateCcw, Shuffle } from "lucide-react";
+import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
 import type { ContentData, QuizQuestion } from "./types";
+
+const WARM = "rgb(108, 74, 46)";
+const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
+const CREAM_CARD = "rgba(250, 248, 242, 0.95)";
+const CREAM_SOLID = "rgba(245, 240, 232, 0.98)";
+const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 const QUIZ_POOL: QuizQuestion[] = [
   { question: "What's their favorite thing about you?", options: ["Your smile 😊", "Your laugh 😄", "Your kindness 💗", "Your eyes 👀"], correct: 0 },
@@ -21,41 +28,20 @@ const QUIZ_POOL: QuizQuestion[] = [
   { question: "What's their favorite flower?", options: ["Roses 🌹", "Sunflowers 🌻", "Tulips 🌷", "Lilies 🌺"], correct: 0 },
   { question: "How do they show love?", options: ["Hugs & kisses 🤗", "Thoughtful gifts 🎁", "Cooking for you 🍳", "Sweet texts 💌"], correct: 0 },
   { question: "What's their favorite holiday?", options: ["Valentine's Day 💕", "Christmas 🎄", "New Year's 🎆", "Their birthday 🎂"], correct: 0 },
-  { question: "What makes them laugh the most?", options: ["Your jokes 😂", "Memes 📱", "Funny movies 🎬", "Inside jokes 🤭"], correct: 3 },
-  { question: "What's their ideal vacation?", options: ["Beach resort 🏖️", "Mountain cabin 🏔️", "City exploring 🌆", "Road trip 🚗"], correct: 0 },
-  { question: "What's their morning routine like?", options: ["Early bird ☀️", "Snooze master 😴", "Coffee first ☕", "Phone check 📱"], correct: 2 },
-  { question: "What nickname do they call you?", options: ["Baby 👶", "Honey 🍯", "Love 💕", "Something unique ✨"], correct: 3 },
-  { question: "What's their pet peeve?", options: ["Being late ⏰", "Messy rooms 🧹", "Loud chewing 😤", "Ignored texts 📵"], correct: 3 },
-  { question: "What's their favorite dessert?", options: ["Cake 🎂", "Ice cream 🍨", "Cookies 🍪", "Tiramisu ☕"], correct: 1 },
-  { question: "What would be their superpower?", options: ["Time travel ⏳", "Mind reading 🧠", "Teleportation 🌀", "Invisibility 👻"], correct: 2 },
-  { question: "What song reminds them of you?", options: ["Perfect ✨", "All of Me 🎹", "Thinking Out Loud 🎸", "A Thousand Years 🕊️"], correct: 0 },
-  { question: "What's their biggest dream?", options: ["Travel world 🌍", "Start business 💼", "Happy family 👨‍👩‍👧", "Creative career 🎨"], correct: 2 },
-  { question: "What do they value most?", options: ["Honesty 💎", "Loyalty 🤝", "Humor 😄", "Kindness 💗"], correct: 1 },
-  { question: "What's their go-to drink?", options: ["Coffee ☕", "Tea 🍵", "Bubble tea 🧋", "Smoothie 🥤"], correct: 2 },
-  { question: "What would they do with a free day?", options: ["Netflix binge 📺", "Outdoor adventure 🏕️", "Spa day 💆", "Cook together 👨‍🍳"], correct: 3 },
-  { question: "First thing they notice about someone?", options: ["Smile 😊", "Eyes 👀", "Personality 💫", "Style 👗"], correct: 0 },
-  { question: "Their dream dinner guest?", options: ["Celebrity crush 🌟", "Historical figure 📚", "Fictional character 🧙", "Future self 🔮"], correct: 3 },
-  { question: "How they handle disagreements?", options: ["Talk it out 🗣️", "Give space first 🌿", "Write feelings down ✍️", "Hug it out 🤗"], correct: 0 },
 ];
 
 const CORRECT_MSGS = [
   "You know me so well! 💕", "Are you reading my mind? ✨", "Perfect match! 💗",
   "You really pay attention! 🥰", "Soulmate energy! 💫", "That's exactly right! 🎯",
-  "You truly get me! 💖", "We're so in sync! 🦋", "Love that you know this! 💕",
-  "Mind = Blown! You nailed it! ⭐",
 ];
 
 const WRONG_MSGS = [
   "Close but not quite! Let's try again 😘", "Someone needs a study date! 💌",
   "Aww, we need more pillow talks! 🛋️", "Guess we need another date night! 🌙",
-  "Love isn't about perfection! 💕", "That was a tricky one! 🤭",
-  "Time for more quality time! ☕", "Don't worry, I still love you! 💗",
-  "Good guess though! Keep trying! ✨", "Let me tell you all about it tonight 🥰",
 ];
 
 function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
 function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
@@ -98,12 +84,18 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
     const emoji = pct === 1 ? "👑" : pct >= 0.7 ? "💕" : pct >= 0.4 ? "💖" : "💝";
     const msg = pct === 1 ? "PERFECT! You know each other inside out!" : pct >= 0.7 ? "Amazing! You two are soulmates!" : pct >= 0.4 ? "Pretty good! More date nights coming!" : "Time for some heart-to-hearts! 💌";
     return (
-      <div className="text-center py-5">
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-5xl inline-block mb-2">{emoji}</motion.span>
-        <h3 className="text-lg font-bold text-foreground">{score}/{sessionQs.length}</h3>
-        <p className="text-xs text-muted-foreground mt-1 mb-5">{msg}</p>
-        <button onClick={restart} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-xs font-semibold active:scale-95 transition-transform"
-          style={{ background: "linear-gradient(135deg, hsl(338 80% 60%), hsl(350 85% 55%))" }}>
+      <div style={{ textAlign: "center", padding: "20px 0" }}>
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ fontSize: 48, display: "inline-block", marginBottom: 8 }}>{emoji}</motion.span>
+        <h3 style={{ fontFamily: CURSIVE, fontSize: 20, fontWeight: 700, color: WARM, margin: 0 }}>{score}/{sessionQs.length}</h3>
+        <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.60)", margin: "4px 0 20px" }}>{msg}</p>
+        <button onClick={restart}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "10px 20px", borderRadius: 12, border: "none",
+            background: "linear-gradient(135deg, rgb(180,100,80), rgb(160,70,60))",
+            color: "rgba(250,248,242,0.95)", fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
+            cursor: "pointer", boxShadow: "0 4px 14px rgba(80,50,20,0.22)",
+          }}>
           <RotateCcw size={13} /> New Round 💕
         </button>
       </div>
@@ -112,29 +104,48 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Question {step + 1} of {sessionQs.length}</span>
-        <span className="text-[10px] lg:text-xs text-muted-foreground flex items-center gap-1"><Heart size={9} className="fill-pink-500 text-pink-500" />{score}</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.55)" }}>Question {step + 1} of {sessionQs.length}</span>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.55)", display: "flex", alignItems: "center", gap: 4 }}>
+          <Heart size={9} style={{ fill: WARM, color: WARM }} />{score}
+        </span>
       </div>
-      <div className="flex gap-0.5 mb-4 lg:mb-5">
+
+      <div style={{ display: "flex", gap: 3, marginBottom: 16 }}>
         {sessionQs.map((_, i) => (
-          <div key={i} className={`h-1 lg:h-1.5 flex-1 rounded-full transition-all ${i < step ? "bg-pink-500" : i === step ? "bg-pink-300" : "bg-muted"}`} />
+          <div key={i} style={{
+            height: 4, flex: 1, borderRadius: 999,
+            background: i < step ? WARM : i === step ? "rgba(108,74,46,0.45)" : "rgba(158,126,97,0.18)",
+            transition: "all 0.3s",
+          }} />
         ))}
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div key={step} initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }}>
-          <p className="text-sm lg:text-lg font-semibold text-foreground mb-4 lg:mb-5">{q.question}</p>
-          <div className="grid grid-cols-2 gap-2 lg:gap-3">
-            {q.options.map((opt, i) => (
-              <motion.button key={i} whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(i)}
-                className={`p-2.5 lg:p-4 rounded-xl text-xs lg:text-sm font-medium text-left border transition-all ${
-                  selected === null ? "bg-muted/50 border-border/40 hover:border-pink-300 dark:hover:border-pink-700"
-                    : i === q.correct ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-700 dark:text-emerald-400"
-                    : selected === i ? "bg-red-50 dark:bg-red-900/20 border-red-400 text-red-700 dark:text-red-400"
-                    : "bg-muted/30 border-border/20 opacity-40"
-                }`}>{opt}</motion.button>
-            ))}
+          <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: WARM, marginBottom: 16 }}>{q.question}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {q.options.map((opt, i) => {
+              let bg = "rgba(250,248,242,0.60)";
+              let border = WARM_BORDER;
+              let color = "rgb(90,60,35)";
+              if (selected !== null) {
+                if (i === q.correct) { bg = "rgba(120,160,100,0.18)"; border = "rgba(100,140,80,0.50)"; color = "rgb(70,120,60)"; }
+                else if (selected === i) { bg = "rgba(180,80,60,0.14)"; border = "rgba(160,60,40,0.40)"; color = "rgb(160,60,40)"; }
+                else { bg = "rgba(250,248,242,0.25)"; border = "rgba(158,126,97,0.08)"; color = "rgba(90,60,35,0.35)"; }
+              }
+              return (
+                <motion.button key={i} whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(i)}
+                  style={{
+                    padding: "10px 14px", borderRadius: 12, textAlign: "left",
+                    border: `1px solid ${border}`, background: bg,
+                    fontFamily: CURSIVE, fontSize: 12, fontWeight: 500, color,
+                    cursor: "pointer", transition: "all 0.2s",
+                  }}>
+                  {opt}
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
       </AnimatePresence>
@@ -142,7 +153,11 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
       <AnimatePresence>
         {feedback && (
           <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className={`text-xs font-medium italic text-center mt-3 ${selected !== null && q && selected === q.correct ? "text-emerald-500" : "text-pink-500"}`}>
+            style={{
+              fontFamily: CURSIVE, fontSize: 12, fontStyle: "italic",
+              textAlign: "center", marginTop: 12,
+              color: selected !== null && q && selected === q.correct ? "rgb(70,120,60)" : WARM,
+            }}>
             {feedback}
           </motion.p>
         )}
@@ -152,29 +167,69 @@ function LoveQuiz({ questions: customQs }: { questions: QuizQuestion[] }) {
 }
 
 const TRUTHS = [
-  "What's your favorite memory of us? 💭", "What made you fall for me? 💕", "What's your biggest dream for us? 🌟",
-  "What song reminds you of me? 🎵", "What's one thing you love most about me? 💖", "When did you first know you loved me? 🥰",
-  "What's the funniest thing I've done? 😂", "What do you miss most when we're apart? 💔", "What's your favorite date we've had? 🌹",
-  "If you could relive one moment with us, which? ✨", "What's your favorite thing I cook? 🍳", "What about me surprised you the most? 🤔",
-  "What's the best gift I've given you? 🎁", "Describe me in three words 💕", "What's something you've never told me? 🤫",
+  "What's your favorite memory of us? 💭",
+  "What made you fall for me? 💕",
+  "What's your biggest dream for us? 🌟",
+  "What song reminds you of me? 🎵",
+  "What's one thing you love most about me? 💖",
+  "When did you first know you loved me? 🥰",
+  "What's the funniest thing I've done? 😂",
+  "What do you miss most when we're apart? 💔",
+  "What's your favorite date we've had? 🌹",
+  "If you could relive one moment with us, which? ✨",
+  "Describe me in three words 💕",
+  "What's something you've never told me? 🤫",
+  "What do you love about our relationship? 🌸",
+  "What's your favorite thing we do together? 🥂",
 ];
 
 const DARES = [
-  "Send a voice message saying 'I love you'! 🎤", "Change your profile pic to us for a day! 📸",
-  "Write me a 3-line poem right now! 📝", "Do your best impression of me! 🎭",
-  "Send a virtual hug emoji 5 times! 🤗", "Call me and sing our song! 🎵",
-  "Write 5 things you love about me! ✍️", "Post a story tagging me with a heart! 📱",
-  "Give me your best pick-up line! 💬", "Record yourself doing a silly dance! 💃",
-  "Make me laugh in 10 seconds! 😂", "Text my best friend about how much you love me! 📱",
-  "Plan our next date right now! 📅", "Send me the cutest selfie! 🤳", "Recreate our first photo together! 📸",
+  "Send me a voice message saying 'I love you' right now! 🎤",
+  "Change your profile pic to a photo of us for 24 hours! 📸",
+  "Write me a 3-line poem! 📝",
+  "Do your best impression of me! 🎭",
+  "Send me 5 heart emojis one by one! 🤗",
+  "Call me and sing the first line of our song! 🎵",
+  "List 5 things you love about me right now! ✍️",
+  "Post a story tagging me with a heart! 📱",
+  "Give me your best pick-up line! 💬",
+  "Plan our next date in the next 2 minutes! 📅",
+  "Send me the cutest selfie you can take! 🤳",
+  "Screen-record yourself doing a silly dance! 💃",
+  "Make me laugh using only emojis! 😂",
+  "Write a text to my bestie about how much you love me! 📱",
 ];
 
-function TruthOrDare() {
+const DARE_COMPLETIONS = [
+  "Done! That felt amazing! 🔥",
+  "I crushed it! 💪",
+  "Challenge accepted & completed! ⚡",
+  "Consider it done, my love! 💕",
+  "That was wild but I did it! 🫶",
+];
+
+interface HistoryEntry {
+  id: number;
+  type: "truth" | "dare";
+  prompt: string;
+  answer: string;
+}
+
+function TruthOrDare({ shareId }: { shareId: string | null }) {
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
   const [card, setCard] = useState("");
   const [used, setUsed] = useState<Set<string>>(new Set());
+  const [answer, setAnswer] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dareCompleted, setDareCompleted] = useState(false);
+  const [completionMsg, setCompletionMsg] = useState("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const pick = (m: "truth" | "dare") => {
+  const pick = useCallback((m: "truth" | "dare") => {
     setMode(m);
     const arr = m === "truth" ? TRUTHS : DARES;
     const available = arr.filter((t) => !used.has(t));
@@ -182,43 +237,452 @@ function TruthOrDare() {
     const choice = pool[Math.floor(Math.random() * pool.length)];
     setCard(choice);
     setUsed((prev) => new Set(prev).add(choice));
-  };
+    setAnswer("");
+    setSaved(false);
+    setDareCompleted(false);
+    setCompletionMsg("");
+    setTimeout(() => textareaRef.current?.focus(), 300);
+  }, [used]);
+
+  const addToHistory = useCallback((type: "truth" | "dare", prompt: string, ans: string) => {
+    setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans }, ...prev]);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!answer.trim() || !card) return;
+    setSaving(true);
+    try {
+      if (shareId) {
+        await fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: mode, prompt: card, answer: answer.trim() }),
+        });
+      }
+      addToHistory(mode ?? "truth", card, answer.trim());
+      setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  }, [answer, card, mode, shareId, addToHistory]);
+
+  const handleDareComplete = useCallback(() => {
+    const msg = DARE_COMPLETIONS[Math.floor(Math.random() * DARE_COMPLETIONS.length)];
+    setCompletionMsg(msg);
+    setDareCompleted(true);
+    const note = answer.trim() || "Dare completed! 🔥";
+    addToHistory("dare", card, note);
+    if (shareId && card) {
+      fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "dare", prompt: card, answer: note }),
+      }).catch(() => {});
+    }
+  }, [shareId, card, answer, addToHistory]);
+
+  // Instantly pick a random truth or dare — no spinner
+  const nextCard = useCallback(() => {
+    const chosen: "truth" | "dare" = Math.random() < 0.5 ? "truth" : "dare";
+    pick(chosen);
+  }, [pick]);
+
+  const reset = useCallback(() => {
+    setUsed(new Set()); setCard(""); setMode(null);
+    setAnswer(""); setSaved(false); setDareCompleted(false); setCompletionMsg("");
+  }, []);
+
+  const filteredHistory = history.filter((h) => historyFilter === "all" || h.type === historyFilter);
+  const truthCount = history.filter((h) => h.type === "truth").length;
+  const dareCount = history.filter((h) => h.type === "dare").length;
 
   return (
-    <div className="text-center">
-      <AnimatePresence mode="wait">
-        {card ? (
-          <motion.div key={card}
-            initial={{ scale: 0.85, opacity: 0, rotateY: 90 }}
-            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-            exit={{ scale: 0.85, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className={`rounded-2xl border p-5 mb-4 ${mode === "truth" ? "bg-violet-50 dark:bg-violet-900/10 border-violet-200 dark:border-violet-800/30" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30"}`}
-          >
-            <div className="text-3xl lg:text-4xl mb-2 lg:mb-3">{mode === "truth" ? "💭" : "🎯"}</div>
-            <p className="font-semibold text-foreground text-sm lg:text-base">{card}</p>
-          </motion.div>
-        ) : (
-          <div className="rounded-2xl border border-border/30 bg-card p-5 lg:p-8 mb-4 flex items-center justify-center min-h-[100px] lg:min-h-[140px]">
-            <p className="text-muted-foreground text-xs lg:text-sm">Pick Truth or Dare to start 💕</p>
-          </div>
-        )}
-      </AnimatePresence>
-      <div className="flex gap-2 lg:gap-3">
+    <div>
+      {/* Picker buttons */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => pick("truth")}
-          className="flex-1 py-2.5 lg:py-3.5 rounded-xl bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/30 text-violet-600 dark:text-violet-400 font-semibold text-xs lg:text-sm">
-          💭 Truth
+          style={{
+            flex: 1, padding: "10px 0", borderRadius: 12,
+            background: mode === "truth" ? "rgba(140,100,180,0.18)" : "rgba(180,140,200,0.10)",
+            border: mode === "truth" ? "1.5px solid rgba(140,100,180,0.35)" : "1px solid rgba(150,100,180,0.20)",
+            fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "rgb(100,60,140)",
+            cursor: "pointer", boxShadow: mode === "truth" ? "0 3px 12px rgba(140,100,180,0.15)" : "none",
+          }}>
+          💭 Truth {truthCount > 0 && <span style={{ fontSize: 10, opacity: 0.7 }}>({truthCount})</span>}
         </motion.button>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => pick("dare")}
-          className="flex-1 py-2.5 lg:py-3.5 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400 font-semibold text-xs lg:text-sm">
-          🎯 Dare
+          style={{
+            flex: 1, padding: "10px 0", borderRadius: 12,
+            background: mode === "dare" ? "rgba(200,130,60,0.18)" : "rgba(200,160,80,0.10)",
+            border: mode === "dare" ? "1.5px solid rgba(200,130,60,0.35)" : "1px solid rgba(180,140,60,0.20)",
+            fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "rgb(160,90,30)",
+            cursor: "pointer", boxShadow: mode === "dare" ? "0 3px 12px rgba(200,130,60,0.15)" : "none",
+          }}>
+          🎯 Dare {dareCount > 0 && <span style={{ fontSize: 10, opacity: 0.7 }}>({dareCount})</span>}
         </motion.button>
       </div>
+
+      {/* Active card area */}
+      <AnimatePresence mode="wait">
+          {!card ? (
+          <motion.div key="empty"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              borderRadius: 16, border: `1px solid ${WARM_BORDER}`,
+              background: "rgba(250,248,242,0.50)",
+              padding: "28px 20px", textAlign: "center",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 32 }}>🎴</span>
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.50)", margin: 0 }}>
+              Pick Truth or Dare to start 💕
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div key={card}
+            initial={{ scale: 0.88, opacity: 0, rotateY: -15 }}
+            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+            exit={{ scale: 0.88, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 250, damping: 22 }}
+          >
+            {/* Card */}
+            <div style={{
+              borderRadius: 16,
+              border: mode === "truth" ? "1.5px solid rgba(140,100,180,0.28)" : "1.5px solid rgba(200,130,60,0.28)",
+              background: mode === "truth" ? "rgba(160,120,200,0.10)" : "rgba(220,160,80,0.10)",
+              padding: "16px 20px", marginBottom: 14,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{
+                  fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: "0.12em",
+                  color: mode === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
+                  background: mode === "truth" ? "rgba(140,100,180,0.14)" : "rgba(200,130,60,0.14)",
+                  padding: "2px 10px", borderRadius: 999,
+                }}>
+                  {mode === "truth" ? "💭 Truth" : "🎯 Dare"}
+                </span>
+              </div>
+              <p style={{ fontFamily: CURSIVE, fontWeight: 700, color: WARM, fontSize: 15, margin: 0, lineHeight: 1.5 }}>
+                {card}
+              </p>
+            </div>
+
+            {/* Truth: answer textarea */}
+            {mode === "truth" && !saved && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                <label style={{
+                  fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
+                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase",
+                  letterSpacing: "0.08em", display: "block", marginBottom: 6,
+                }}>
+                  Your honest answer ✍️
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  rows={3}
+                  placeholder="Write your honest answer here... 💕"
+                  style={{
+                    width: "100%", resize: "none",
+                    background: "rgba(250,248,242,0.70)",
+                    border: "1.5px solid rgba(140,100,180,0.25)",
+                    borderRadius: 12, padding: "10px 12px",
+                    fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                    outline: "none", lineHeight: 1.6, boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.border = "1.5px solid rgba(140,100,180,0.50)"; }}
+                  onBlur={(e) => { e.currentTarget.style.border = "1.5px solid rgba(140,100,180,0.25)"; }}
+                />
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={handleSave} disabled={!answer.trim() || saving}
+                    style={{
+                      flex: 1, padding: "10px 0", borderRadius: 12, border: "none",
+                      background: answer.trim() ? "linear-gradient(135deg, rgb(120,80,160), rgb(100,60,140))" : "rgba(158,126,97,0.15)",
+                      color: answer.trim() ? "rgba(250,248,242,0.95)" : "rgba(108,74,46,0.40)",
+                      fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
+                      cursor: answer.trim() ? "pointer" : "not-allowed",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      boxShadow: answer.trim() ? "0 4px 12px rgba(100,60,140,0.25)" : "none",
+                    }}>
+                    <Send size={12} /> {saving ? "Saving..." : "Save Answer 💕"}
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={nextCard}
+                    style={{
+                      padding: "10px 16px", borderRadius: 12,
+                      border: `1px solid ${WARM_BORDER}`, background: "rgba(250,248,242,0.60)",
+                      fontFamily: CURSIVE, fontSize: 12, color: WARM, cursor: "pointer",
+                    }}>
+                    Skip →
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Truth: saved confirmation */}
+            {mode === "truth" && saved && (
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                style={{
+                  borderRadius: 14, border: "1.5px solid rgba(100,160,80,0.30)",
+                  background: "rgba(100,160,80,0.10)",
+                  padding: "12px 16px", textAlign: "center", marginBottom: 10,
+                }}>
+                <CheckCircle2 size={18} color="rgb(80,140,60)" style={{ margin: "0 auto 4px" }} />
+                <p style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "rgb(70,120,50)", margin: 0 }}>
+                  Answer saved! 💚
+                </p>
+                <p style={{
+                  fontFamily: CURSIVE, fontSize: 12, color: "rgba(70,120,50,0.80)",
+                  fontStyle: "italic", marginTop: 4, lineHeight: 1.5,
+                }}>
+                  &ldquo;{answer}&rdquo;
+                </p>
+              </motion.div>
+            )}
+
+            {/* Dare: how did it go + I did it button */}
+            {mode === "dare" && !dareCompleted && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                <label style={{
+                  fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
+                  color: "rgba(108,74,46,0.55)", textTransform: "uppercase",
+                  letterSpacing: "0.08em", display: "block", marginBottom: 6,
+                }}>
+                  How did it go? (optional) ✍️
+                </label>
+                <textarea
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  rows={2}
+                  placeholder="Tell me how you did the dare... 😜"
+                  style={{
+                    width: "100%", resize: "none",
+                    background: "rgba(250,248,242,0.70)",
+                    border: "1.5px solid rgba(200,130,60,0.25)",
+                    borderRadius: 12, padding: "10px 12px",
+                    fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                    outline: "none", lineHeight: 1.6, boxSizing: "border-box",
+                    marginBottom: 10,
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.border = "1.5px solid rgba(200,130,60,0.50)"; }}
+                  onBlur={(e) => { e.currentTarget.style.border = "1.5px solid rgba(200,130,60,0.25)"; }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <motion.button whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }} onClick={handleDareComplete}
+                    style={{
+                      flex: 1, padding: "12px 0", borderRadius: 12, border: "none",
+                      background: "linear-gradient(135deg, rgb(200,130,60), rgb(180,100,40))",
+                      color: "rgba(250,248,242,0.95)",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                      boxShadow: "0 4px 16px rgba(180,100,40,0.30)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}>
+                    🔥 I Did It!
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={nextCard}
+                    style={{
+                      padding: "12px 16px", borderRadius: 12,
+                      border: `1px solid ${WARM_BORDER}`, background: "rgba(250,248,242,0.60)",
+                      fontFamily: CURSIVE, fontSize: 12, color: WARM, cursor: "pointer",
+                    }}>
+                    Skip →
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Dare: completed celebration */}
+            {mode === "dare" && dareCompleted && (
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                style={{
+                  borderRadius: 14, border: "1.5px solid rgba(200,130,60,0.35)",
+                  background: "rgba(220,160,80,0.12)",
+                  padding: "16px", textAlign: "center", marginBottom: 10,
+                }}>
+                <motion.span
+                  animate={{ rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.2, 1.2, 1] }}
+                  transition={{ duration: 0.6 }}
+                  style={{ fontSize: 32, display: "inline-block", marginBottom: 6 }}
+                >🔥</motion.span>
+                <p style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: "rgb(160,90,30)", margin: 0 }}>
+                  {completionMsg}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Next challenge — shown after truth saved or dare completed */}
+            {((mode === "truth" && saved) || (mode === "dare" && dareCompleted)) && (
+              <motion.button
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={nextCard}
+                style={{
+                  width: "100%", padding: "13px 0", borderRadius: 14, border: "none",
+                  background: "linear-gradient(135deg, rgb(160,80,70), rgb(130,55,45))",
+                  color: "rgba(250,248,242,0.95)",
+                  fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 6px 20px rgba(80,50,20,0.28)",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  marginTop: 4,
+                }}>
+                <span>🎲</span> Next Challenge <span style={{ color: "rgba(255,220,100,0.9)" }}>✦</span>
+              </motion.button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset */}
       {used.size > 0 && (
-        <button onClick={() => { setUsed(new Set()); setCard(""); setMode(null); }}
-          className="mt-3 lg:mt-4 text-[10px] lg:text-xs text-muted-foreground flex items-center gap-1 mx-auto hover:text-foreground">
-          <Shuffle size={10} /> Shuffle all
+        <button onClick={reset}
+          style={{
+            marginTop: 8, display: "flex", alignItems: "center", gap: 4, margin: "8px auto 0",
+            background: "none", border: "none", fontFamily: CURSIVE, fontSize: 10,
+            color: "rgba(108,74,46,0.40)", cursor: "pointer",
+          }}>
+          ↺ Reset all
         </button>
+      )}
+
+      {/* ── Game Journal / History ── */}
+      {history.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          {/* Journal header */}
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "none", border: "none", cursor: "pointer", padding: "0 2px 10px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM }}>
+                📖 Our Game Journal
+              </span>
+              <span style={{
+                fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
+                background: "rgba(158,126,97,0.18)", color: WARM,
+                padding: "2px 8px", borderRadius: 999,
+              }}>
+                {history.length}
+              </span>
+            </div>
+            <motion.span
+              animate={{ rotate: showHistory ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.55)" }}
+            >
+              ▾
+            </motion.span>
+          </button>
+
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{ overflow: "hidden" }}
+              >
+                {/* Filter tabs */}
+                <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                  {(["all", "truth", "dare"] as const).map((f) => (
+                    <button key={f} onClick={() => setHistoryFilter(f)}
+                      style={{
+                        padding: "4px 12px", borderRadius: 999,
+                        border: historyFilter === f ? `1.5px solid ${WARM_BORDER}` : "1px solid transparent",
+                        background: historyFilter === f ? "rgba(158,126,97,0.14)" : "transparent",
+                        fontFamily: CURSIVE, fontSize: 11, fontWeight: historyFilter === f ? 700 : 400,
+                        color: historyFilter === f ? WARM : "rgba(108,74,46,0.50)",
+                        cursor: "pointer", transition: "all 0.15s",
+                      }}>
+                      {f === "all" ? `All (${history.length})` : f === "truth" ? `💭 Truths (${truthCount})` : `🎯 Dares (${dareCount})`}
+                    </button>
+                  ))}
+                </div>
+
+                {/* History entries */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <AnimatePresence>
+                    {filteredHistory.map((entry, idx) => (
+                      <motion.div
+                        key={entry.id}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 12 }}
+                        transition={{ delay: idx * 0.04 }}
+                        style={{
+                          borderRadius: 14,
+                          border: entry.type === "truth"
+                            ? "1px solid rgba(140,100,180,0.22)"
+                            : "1px solid rgba(200,130,60,0.22)",
+                          background: entry.type === "truth"
+                            ? "rgba(160,120,200,0.07)"
+                            : "rgba(220,160,80,0.07)",
+                          padding: "12px 14px",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {/* Subtle left accent bar */}
+                        <div style={{
+                          position: "absolute", top: 0, left: 0, width: 3, bottom: 0,
+                          borderRadius: "14px 0 0 14px",
+                          background: entry.type === "truth"
+                            ? "rgba(140,100,180,0.50)"
+                            : "rgba(200,130,60,0.50)",
+                        }} />
+
+                        <div style={{ paddingLeft: 8 }}>
+                          {/* Badge */}
+                          <span style={{
+                            fontFamily: CURSIVE, fontSize: 9, fontWeight: 700,
+                            textTransform: "uppercase", letterSpacing: "0.1em",
+                            color: entry.type === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
+                            background: entry.type === "truth" ? "rgba(140,100,180,0.12)" : "rgba(200,130,60,0.12)",
+                            padding: "2px 8px", borderRadius: 999, display: "inline-block",
+                            marginBottom: 6,
+                          }}>
+                            {entry.type === "truth" ? "💭 Truth" : "🎯 Dare"}
+                          </span>
+
+                          {/* Question/Dare prompt */}
+                          <p style={{
+                            fontFamily: CURSIVE, fontSize: 12, fontWeight: 600,
+                            color: WARM, margin: "0 0 6px", lineHeight: 1.4,
+                          }}>
+                            {entry.prompt}
+                          </p>
+
+                          {/* Divider */}
+                          <div style={{
+                            height: 1, background: entry.type === "truth"
+                              ? "rgba(140,100,180,0.15)" : "rgba(200,130,60,0.15)",
+                            margin: "6px 0",
+                          }} />
+
+                          {/* Answer */}
+                          <p style={{
+                            fontFamily: CURSIVE, fontSize: 12, fontStyle: "italic",
+                            color: "rgba(90,60,35,0.85)", margin: 0, lineHeight: 1.55,
+                          }}>
+                            {entry.type === "truth" ? `"${entry.answer}"` : `✓ ${entry.answer}`}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );
@@ -229,9 +693,9 @@ const GAMES = [
   { id: "tod", label: "Truth or Dare", emoji: "🎲", desc: "New challenges every time!" },
 ];
 
-interface Props { data: ContentData; }
+interface Props { data: ContentData; shareId?: string | null; }
 
-export default memo(function GamesSection({ data }: Props) {
+export default memo(function GamesSection({ data, shareId = null }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   return (
@@ -239,36 +703,66 @@ export default memo(function GamesSection({ data }: Props) {
       initial={{ opacity: 0, x: 60 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
-      className="h-screen flex flex-col overflow-y-auto overflow-x-hidden bg-gradient-to-b from-pink-50/40 via-background to-background dark:from-pink-950/10"
+      style={{ height: "100svh", display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 10 }}
     >
-      <div className="flex-1 px-4 pt-7 pb-24 lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8">
-        <div className="text-center mb-5 lg:mb-8">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-0.5"
-            style={{ background: "linear-gradient(135deg, hsl(338 80% 60%), hsl(280 60% 55%))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+      <div style={{ flex: 1, padding: "28px 16px 96px" }} className="lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8">
+        {/* Title */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <h2 style={{
+            fontFamily: CURSIVE,
+            fontSize: "clamp(22px, 5.5vw, 32px)",
+            fontWeight: 700, color: WARM, margin: 0,
+            textShadow: "0 2px 8px rgba(250,248,242,0.6)",
+          }}>
             Love Games 🎮
           </h2>
-          <p className="text-muted-foreground text-[11px] lg:text-sm">Play together, grow closer</p>
+          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.55)", marginTop: 4 }}>Play together, grow closer</p>
         </div>
 
         <div className="lg:flex lg:gap-8 lg:items-start">
-          {/* Game picker — sidebar on desktop */}
-          <div className="grid grid-cols-2 gap-2.5 mb-5 lg:flex lg:flex-col lg:w-56 lg:shrink-0 lg:mb-0 lg:gap-3">
-            {GAMES.map((g) => (
-              <motion.button key={g.id} whileTap={{ scale: 0.97 }} onClick={() => setActiveGame(g.id)}
-                className={`rounded-2xl border p-3.5 lg:p-4 text-left transition-all ${
-                  activeGame === g.id ? "bg-pink-50 dark:bg-pink-500/10 border-pink-200 dark:border-pink-800/30" : "bg-card border-border/30 hover:border-pink-200/50 dark:hover:border-pink-800/20"
-                }`}>
-                <div className="text-xl lg:text-2xl mb-1">{g.emoji}</div>
-                <p className="font-semibold text-xs lg:text-sm text-foreground">{g.label}</p>
-                <p className="text-[9px] lg:text-xs text-muted-foreground mt-0.5">{g.desc}</p>
-              </motion.button>
-            ))}
+          {/* Game picker */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}
+            className="lg:flex lg:flex-col lg:w-52 lg:shrink-0 lg:mb-0 lg:gap-3"
+          >
+            {GAMES.map((g) => {
+              const isActive = activeGame === g.id;
+              return (
+                <motion.button key={g.id} whileTap={{ scale: 0.97 }} onClick={() => setActiveGame(g.id)}
+                  style={{
+                    borderRadius: 16,
+                    border: isActive ? "1.5px solid rgba(158,126,97,0.45)" : `1px solid ${WARM_BORDER}`,
+                    padding: "14px 16px", textAlign: "left",
+                    background: isActive ? CREAM_SOLID : "rgba(250,248,242,0.55)",
+                    boxShadow: isActive ? "0 6px 20px rgba(80,50,20,0.16), inset 0 1px 0 rgba(255,255,255,0.5)" : "none",
+                    cursor: "pointer", transition: "all 0.2s",
+                  }}>
+                  <div style={{ fontSize: 22, marginBottom: 4 }}>{g.emoji}</div>
+                  <p style={{
+                    fontFamily: CURSIVE, fontWeight: 700, fontSize: 14,
+                    color: isActive ? WARM : "rgba(108,74,46,0.70)", margin: 0,
+                  }}>{g.label}</p>
+                  <p style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(108,74,46,0.50)", marginTop: 2 }}>{g.desc}</p>
+                  {isActive && (
+                    <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${WARM}, transparent)`, borderRadius: 999, marginTop: 8 }} />
+                  )}
+                </motion.button>
+              );
+            })}
           </div>
 
-          {/* Game content — fills remaining space */}
+          {/* Game content */}
           <motion.div key={activeGame} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border/30 bg-card p-4 lg:p-6 shadow-sm lg:flex-1">
-            {activeGame === "quiz" ? <LoveQuiz questions={data.quizQuestions} /> : <TruthOrDare />}
+            style={{
+              borderRadius: 20, border: `1px solid ${WARM_BORDER}`,
+              background: CREAM_CARD, padding: 16,
+              boxShadow: "0 6px 24px rgba(80,50,20,0.12)",
+            }}
+            className="lg:p-6 lg:flex-1"
+          >
+            {activeGame === "quiz"
+              ? <LoveQuiz questions={data.quizQuestions} />
+              : <TruthOrDare shareId={shareId} />
+            }
           </motion.div>
         </div>
       </div>
