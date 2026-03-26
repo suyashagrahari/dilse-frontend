@@ -361,6 +361,7 @@ interface HistoryEntry {
   type: "truth" | "dare";
   prompt: string;
   answer: string;
+  mediaUrl?: string;
 }
 
 interface TruthOrDareProps {
@@ -383,9 +384,12 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [responseAudioUrl, setResponseAudioUrl] = useState("");
-  const [responseAudioLoading, setResponseAudioLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [responsePhotoUrl, setResponsePhotoUrl] = useState("");
-  const responseAudioInputRef = useRef<HTMLInputElement | null>(null);
   const responsePhotoInputRef = useRef<HTMLInputElement | null>(null);
 
   const getTruths = useCallback((): ActiveCard[] => {
@@ -419,8 +423,44 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [used, getTruths, getDares]);
 
-  const addToHistory = useCallback((type: "truth" | "dare", prompt: string, ans: string) => {
-    setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans }, ...prev]);
+  const addToHistory = useCallback((type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string) => {
+    setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans, ...(mediaUrl && { mediaUrl }) }, ...prev]);
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType =
+        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm")
+            ? "audio/webm"
+            : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      recordChunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) recordChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(recordChunksRef.current, { type: mimeType });
+        const reader = new FileReader();
+        reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
+        reader.readAsDataURL(blob);
+      };
+      recorder.start();
+      recorderRef.current = recorder;
+      setRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+    } catch {
+      // mic not available or denied
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    setRecording(false);
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -447,7 +487,8 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setCompletionMsg(msg);
     setDareCompleted(true);
     const note = answer.trim() || "Dare completed! 🔥";
-    addToHistory("dare", card.text, note);
+    const mediaUrl = responseAudioUrl || responsePhotoUrl || undefined;
+    addToHistory("dare", card.text, note, mediaUrl);
     if (shareId && card) {
       const body: Record<string, string> = { type: "dare", prompt: card.text, answer: note };
       if (responseAudioUrl) body.mediaUrl = responseAudioUrl;
@@ -471,6 +512,9 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setUsed(new Set()); setCard(null); setMode(null);
     setAnswer(""); setSaved(false); setDareCompleted(false); setCompletionMsg("");
     setResponseAudioUrl(""); setResponsePhotoUrl("");
+    if (recorderRef.current) { recorderRef.current.stop(); recorderRef.current = null; }
+    setRecording(false);
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
   }, []);
 
   const filteredHistory = history.filter((h) => historyFilter === "all" || h.type === historyFilter);
@@ -479,6 +523,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
 
   return (
     <div>
+      <style>{`@keyframes lgf-rec-dot{0%,100%{opacity:1}50%{opacity:0.25}}`}</style>
       {/* Picker buttons */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => pick("truth")}
@@ -657,30 +702,44 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                 {/* Viewer response media */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                   {/* Audio response */}
+                  {/* Audio response — MediaRecorder, no file picker */}
                   {responseAudioUrl ? (
                     <div style={{
-                      flex: 1, padding: "8px 12px", borderRadius: 10,
+                      flex: 1, padding: "6px 10px", borderRadius: 10,
                       background: "rgba(200,130,60,0.08)", border: "1px solid rgba(200,130,60,0.20)",
-                      display: "flex", alignItems: "center", gap: 8,
+                      display: "flex", alignItems: "center", gap: 6,
                     }}>
-                      <audio controls src={responseAudioUrl} style={{ flex: 1, height: 28 }} />
+                      <span style={{ fontSize: 13, flexShrink: 0 }}>🎤</span>
+                      <audio controls src={responseAudioUrl} style={{ flex: 1, height: 24 }} />
                       <button onClick={() => setResponseAudioUrl("")} style={{
                         border: "none", background: "transparent", cursor: "pointer",
-                        fontFamily: CURSIVE, fontSize: 13, color: "rgba(180,60,50,0.7)",
+                        fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0,
                       }}>×</button>
                     </div>
+                  ) : recording ? (
+                    <button onClick={stopRecording} style={{
+                      flex: 1, padding: "9px 14px", borderRadius: 10,
+                      border: "1.5px solid rgba(200,60,60,0.40)",
+                      background: "rgba(220,60,60,0.08)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 12, color: "rgb(180,50,50)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: "50%",
+                        background: "rgb(220,50,50)", display: "inline-block", flexShrink: 0,
+                        animation: "lgf-rec-dot 1s ease-in-out infinite",
+                      }} />
+                      {String(Math.floor(recordSeconds / 60)).padStart(2, "0")}:{String(recordSeconds % 60).padStart(2, "0")} · Stop
+                    </button>
                   ) : (
-                    <button
-                      onClick={() => responseAudioInputRef.current?.click()}
-                      disabled={responseAudioLoading}
-                      style={{
-                        flex: 1, padding: "8px 0", borderRadius: 10,
-                        border: "1.5px dashed rgba(200,130,60,0.35)",
-                        background: "rgba(200,130,60,0.05)", cursor: "pointer",
-                        fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                      }}>
-                      🎤 {responseAudioLoading ? "Processing..." : "Upload audio 🎵"}
+                    <button onClick={startRecording} style={{
+                      flex: 1, padding: "9px 0", borderRadius: 10,
+                      border: "1.5px dashed rgba(200,130,60,0.35)",
+                      background: "rgba(200,130,60,0.05)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                    }}>
+                      🎤 Record voice
                     </button>
                   )}
                   {/* Photo response */}
@@ -707,24 +766,6 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                       }}>📸</button>
                   )}
                 </div>
-                {/* Hidden file inputs for viewer responses */}
-                <input
-                  ref={responseAudioInputRef}
-                  type="file" accept="audio/mp3,audio/mpeg,audio/wav,audio/*" style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    if (f.size > 8 * 1024 * 1024) return; // 8MB limit
-                    setResponseAudioLoading(true);
-                    try {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => { setResponseAudioUrl(ev.target?.result as string); setResponseAudioLoading(false); };
-                      reader.onerror = () => setResponseAudioLoading(false);
-                      reader.readAsDataURL(f);
-                    } catch { setResponseAudioLoading(false); }
-                    e.target.value = "";
-                  }}
-                />
                 <input
                   ref={responsePhotoInputRef}
                   type="file" accept="image/*" style={{ display: "none" }}
@@ -969,6 +1010,33 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                           }}>
                             {entry.type === "truth" ? `"${entry.answer}"` : `✓ ${entry.answer}`}
                           </p>
+
+                          {/* Media response */}
+                          {entry.mediaUrl && (
+                            <div style={{ marginTop: 8 }}>
+                              {entry.mediaUrl.startsWith("data:image/") || /\.(webp|jpg|jpeg|png|gif)(\?|$)/i.test(entry.mediaUrl) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={entry.mediaUrl}
+                                  alt="response"
+                                  style={{
+                                    width: "100%", maxHeight: 140,
+                                    objectFit: "cover", borderRadius: 10,
+                                  }}
+                                />
+                              ) : (
+                                <div style={{
+                                  display: "flex", alignItems: "center", gap: 6,
+                                  padding: "6px 10px", borderRadius: 8,
+                                  background: "rgba(200,130,60,0.07)",
+                                  border: "1px solid rgba(200,130,60,0.18)",
+                                }}>
+                                  <span style={{ fontSize: 13, flexShrink: 0 }}>🎤</span>
+                                  <audio controls src={entry.mediaUrl} style={{ flex: 1, height: 22 }} />
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     ))}
