@@ -37,9 +37,9 @@ interface Props {
  * but with user's actual gallery photos in the polaroid frames.
  */
 export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
-  const photos = data.galleryPhotos || [];
+  const homePhotos = data.homePhotos || [];
   const defaultCardPhotos = ["/love/image5.webp", "/love/image14.webp", "/love/imaghe12.webp", "/love/image13.webp"];
-  const p = (i: number) => photos[i] || defaultCardPhotos[i] || "";
+  const p = (i: number) => homePhotos[i] || defaultCardPhotos[i] || "";
 
   return (
     <div

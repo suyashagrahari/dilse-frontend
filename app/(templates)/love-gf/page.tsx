@@ -218,7 +218,8 @@ function LoveGfPageInner() {
         onStartAi={editor.startAiMode}
         onStartManual={editor.startManualMode}
         onAiGenerate={editor.handleAiGenerate}
-        onManualPreview={editor.handleManualPreview}
+        onSaveWithPassword={editor.handleManualSave}
+        saving={editor.saving}
       />
 
       <PasswordSheet

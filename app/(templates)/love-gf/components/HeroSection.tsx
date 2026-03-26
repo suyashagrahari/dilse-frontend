@@ -76,8 +76,8 @@ export default memo(function HeroSection({ data, onGoGallery, onGoNotes }: Props
   const closeLetter = useCallback(() => setLetterOpen(false), []);
   const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
-  const hasPhoto = data.galleryPhotos.length > 0;
-  const avatarPhoto = hasPhoto ? data.galleryPhotos[0] : "/assets/couple1.jpeg";
+  const hasPhoto = data.galleryPhotos.length > 0 && !!data.galleryPhotos[0]?.url;
+  const avatarPhoto = hasPhoto ? data.galleryPhotos[0].url : "/assets/couple1.jpeg";
 
   if (!mounted) return null;
 

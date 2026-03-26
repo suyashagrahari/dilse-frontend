@@ -4,6 +4,13 @@ export interface QuizQuestion {
   correct: number;
 }
 
+export interface PhotoItem {
+  url: string;    // base64 data URL
+  letter: string; // love letter / caption
+  cropX: number;  // 0-100 for CSS object-position-x
+  cropY: number;  // 0-100 for CSS object-position-y
+}
+
 export interface MusicTrack {
   title: string;
   artist: string;
@@ -17,13 +24,14 @@ export interface ContentData {
   personalMessage: string;
   wishMessage: string;
   loveDate: string;
+  homePhotos: string[];        // 4 home polaroid photos (base64)
+  galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
   spinItems: string[];
-  galleryPhotos: string[];
   musicTracks: MusicTrack[];
 }
 
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export type EditMode = null | "choose" | "ai" | "ai-review" | "manual" | "preview" | "password";
 
 export type TabId = "home" | "wish" | "gallery" | "music" | "games" | "notes";
 
@@ -36,12 +44,12 @@ export interface Toast {
 }
 
 export const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "home", label: "Home", icon: "♡" },
-  { id: "wish", label: "Wish", icon: "✦" },
+  { id: "home",    label: "Home",   icon: "♡" },
+  { id: "wish",    label: "Wish",   icon: "✦" },
   { id: "gallery", label: "Photos", icon: "📷" },
-  { id: "music", label: "Music", icon: "♫" },
-  { id: "games", label: "Games", icon: "✿" },
-  { id: "notes", label: "Notes", icon: "✉" },
+  { id: "music",   label: "Music",  icon: "♫" },
+  { id: "games",   label: "Games",  icon: "✿" },
+  { id: "notes",   label: "Notes",  icon: "✉" },
 ];
 
 export const DEMO_CONTENT: ContentData = {
@@ -52,6 +60,8 @@ export const DEMO_CONTENT: ContentData = {
   wishMessage:
     "To the one who holds my heart — thank you for every laugh, every hug, every quiet moment that felt like the whole world. You are my favourite person. Love you to the moon and back ♡",
   loveDate: "",
+  homePhotos: [],
+  galleryPhotos: [],
   quizQuestions: [
     {
       question: "What's their favorite thing about you?",
@@ -77,11 +87,10 @@ export const DEMO_CONTENT: ContentData = {
     "Stargazing 🌟",
     "Surprise Date ❤️",
   ],
-  galleryPhotos: [],
   musicTracks: [
-    { title: "Perfect", artist: "Ed Sheeran", duration: "4:23" },
-    { title: "All of Me", artist: "John Legend", duration: "4:29" },
-    { title: "A Thousand Years", artist: "Christina Perri", duration: "4:46" },
-    { title: "Thinking Out Loud", artist: "Ed Sheeran", duration: "4:41" },
+    { title: "Perfect",           artist: "Ed Sheeran",     duration: "4:23" },
+    { title: "All of Me",         artist: "John Legend",    duration: "4:29" },
+    { title: "A Thousand Years",  artist: "Christina Perri",duration: "4:46" },
+    { title: "Thinking Out Loud", artist: "Ed Sheeran",     duration: "4:41" },
   ],
 };

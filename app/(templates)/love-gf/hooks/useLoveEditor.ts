@@ -3,8 +3,19 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
+import { type ContentData, type PhotoItem, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
+
+function normalizePhoto(p: unknown): PhotoItem {
+  if (typeof p === "string") return { url: p, letter: "", cropX: 50, cropY: 50 };
+  const obj = p as Record<string, unknown>;
+  return {
+    url:    String(obj.url    ?? ""),
+    letter: String(obj.letter ?? ""),
+    cropX:  Number(obj.cropX  ?? 50),
+    cropY:  Number(obj.cropY  ?? 50),
+  };
+}
 
 export function useLoveEditor() {
   const router = useRouter();
@@ -55,12 +66,14 @@ export function useLoveEditor() {
             const d = result.data;
             setContent((prev) => ({
               ...prev,
-              recipientName: d.recipientName || prev.recipientName,
-              senderName: d.senderName || prev.senderName,
+              recipientName:   d.recipientName   || prev.recipientName,
+              senderName:      d.senderName      || prev.senderName,
               personalMessage: d.personalMessage || prev.personalMessage,
-              wishMessage: d.wishMessage || prev.wishMessage,
-              loveDate: d.loveDate || prev.loveDate,
-              galleryPhotos: d.galleryPhotos || [],
+              wishMessage:     d.wishMessage     || prev.wishMessage,
+              loveDate:        d.loveDate        || prev.loveDate,
+              homePhotos:      d.homePhotos      || [],
+              galleryPhotos:   (d.galleryPhotos  || []).map(normalizePhoto),
+              quizQuestions:   d.quizQuestions   || [],
             }));
             setPageId(id);
             setIsPersonalized(true);
@@ -138,64 +151,19 @@ export function useLoveEditor() {
     setEditMode("manual");
   }, [isPersonalized, content]);
 
-  const handleAiGenerate = useCallback(async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({
-          prompt: `Love message for ${aiName} from ${aiSender || "your partner"}. ${aiPrompt}`,
-          templateId: "love-gf",
-          templateType: "love-gf",
-        }),
-      });
-      const data = await res.json();
-      if (data.personalMessage || data.body) {
-        const newContent: ContentData = {
-          ...content,
-          recipientName: aiName.trim(),
-          senderName: aiSender.trim() || content.senderName,
-          personalMessage: data.personalMessage || data.body || content.personalMessage,
-          wishMessage: data.wishMessage || content.wishMessage,
-        };
-        setPendingContent(newContent);
-        setContent(newContent);
-        setEditMode("preview");
-      } else {
-        pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
-      }
-    } catch {
-      pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
-    } finally {
-      setAiLoading(false);
-    }
-  }, [aiName, aiPrompt, aiSender, headers, content, pushToast]);
-
-  const handleManualPreview = useCallback(() => {
-    if (!mf.recipientName.trim()) return;
-    setPendingContent(mf);
-    setContent(mf);
-    setEditMode("preview");
-  }, [mf]);
-
-  const updateMf = useCallback(
-    (key: keyof ContentData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
-    [],
-  );
-
   const saveToServer = useCallback(
     async (data: ContentData, password?: string) => {
       if (!accessToken) return;
       const body = {
-        recipientName: data.recipientName,
-        senderName: data.senderName,
+        recipientName:   data.recipientName,
+        senderName:      data.senderName,
         personalMessage: data.personalMessage,
-        wishMessage: data.wishMessage,
-        loveDate: data.loveDate,
-        galleryPhotos: data.galleryPhotos,
-        password: password || "",
+        wishMessage:     data.wishMessage,
+        loveDate:        data.loveDate,
+        homePhotos:      data.homePhotos    || [],
+        galleryPhotos:   data.galleryPhotos || [],
+        quizQuestions:   data.quizQuestions || [],
+        password:        password || "",
       };
       if (pageId) {
         await fetch(`${API_URL}/love-gf-pages/${pageId}`, {
@@ -215,6 +183,92 @@ export function useLoveEditor() {
     },
     [accessToken, pageId, headers],
   );
+
+  // Direct save (called from EditSheet final step — no PreviewBar)
+  const handleManualSave = useCallback(
+    async (data: ContentData, pw: string) => {
+      setSaving(true);
+      try {
+        await saveToServer(data, pw);
+        setContent(data);
+        setIsPersonalized(true);
+        setShareUrl(null);
+        setEditMode(null);
+        setPendingContent(null);
+        pushToast({
+          type: "success",
+          title: pw ? "Saved with password!" : "Changes saved!",
+          message: pw ? "Share the password with your love" : "Ready to publish ♡",
+        });
+      } catch {
+        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+      } finally {
+        setSaving(false);
+      }
+    },
+    [saveToServer, pushToast],
+  );
+
+  const handleAiGenerate = useCallback(async () => {
+    if (!aiName.trim() || !aiPrompt.trim()) return;
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          prompt: `Love message for ${aiName} from ${aiSender || "your partner"}. ${aiPrompt}`,
+          templateId: "love-gf",
+          templateType: "love-gf",
+        }),
+      });
+      const data = await res.json();
+      if (data.personalMessage || data.body) {
+        // Merge AI photo letters into existing gallery photos (preserve uploaded URLs)
+        const existing = (content.galleryPhotos || []).map(normalizePhoto);
+        const photoLetters: string[] = data.photoLetters || [];
+        const count = Math.max(existing.length, photoLetters.length);
+        const galleryWithLetters: PhotoItem[] = Array.from({ length: count }, (_, i) => ({
+          url:    existing[i]?.url    ?? "",
+          letter: photoLetters[i]    ?? existing[i]?.letter ?? "",
+          cropX:  existing[i]?.cropX ?? 50,
+          cropY:  existing[i]?.cropY ?? 50,
+        }));
+
+        const newContent: ContentData = {
+          ...content,
+          recipientName:   aiName.trim(),
+          senderName:      aiSender.trim() || content.senderName,
+          personalMessage: data.personalMessage || data.body || content.personalMessage,
+          wishMessage:     data.wishMessage || content.wishMessage,
+          galleryPhotos:   galleryWithLetters,
+          quizQuestions:   data.quizQuestions || content.quizQuestions || [],
+        };
+        setMf(newContent);
+        setManualStep(0);
+        setEditMode("ai-review");
+      } else {
+        pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
+      }
+    } catch {
+      pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
+    } finally {
+      setAiLoading(false);
+    }
+  }, [aiName, aiPrompt, aiSender, headers, content, pushToast]);
+
+  const updateMf = useCallback(
+    (key: keyof ContentData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
+    [],
+  );
+
+  // Legacy preview/password flow (kept for compatibility)
+  const handleManualPreview = useCallback(() => {
+    if (!mf.recipientName.trim()) return;
+    setPendingContent(mf);
+    setContent(mf);
+    setEditMode("preview");
+  }, [mf]);
 
   const handleConfirmSave = useCallback(() => {
     if (!pendingContent) return;
@@ -302,7 +356,7 @@ export function useLoveEditor() {
     tab, content, editMode, isPersonalized, shareUrl, shareId, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
-    mf, manualStep,
+    mf, manualStep, pendingContent,
 
     setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,
@@ -310,7 +364,7 @@ export function useLoveEditor() {
 
     goBack, closeAuth, closeAuthSuccess,
     handleEditClick, startAiMode, startManualMode,
-    handleAiGenerate, handleManualPreview,
+    handleAiGenerate, handleManualPreview, handleManualSave,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
