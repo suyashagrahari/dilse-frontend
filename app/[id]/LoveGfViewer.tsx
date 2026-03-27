@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import WishSection from "@/app/(templates)/love-gf/components/WishSection";
 import BottomNav from "@/app/(templates)/love-gf/components/BottomNav";
 import DesktopSidebar from "@/app/(templates)/love-gf/components/DesktopSidebar";
 import ScrapbookBg from "@/app/(templates)/love-gf/components/ScrapbookBg";
+import LoveWelcomeOverlay from "@/app/(templates)/love-gf/components/LoveWelcomeOverlay";
+import LoveBackgroundMusic from "@/app/(templates)/love-gf/components/LoveBackgroundMusic";
 import {
   type ContentData,
   type TabId,
@@ -177,8 +179,11 @@ interface Props {
 
 export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
   const router  = useRouter();
-  const [unlocked, setUnlocked] = useState(!hasPassword);
-  const [tab, setTab]           = useState<TabId>("home");
+  const [unlocked,       setUnlocked]       = useState(!hasPassword);
+  const [tab,            setTab]            = useState<TabId>("home");
+  const [welcomed,       setWelcomed]       = useState(false);
+  const [playMusic,      setPlayMusic]      = useState(false);
+  const [playlistActive, setPlaylistActive] = useState(false);
 
   const content      = rawToContentData(rawData);
   const quizAttempts: QuizAttemptRecord[] =
@@ -186,26 +191,14 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
   const gameResponses: ServerGameResponse[] =
     (rawData.gameResponses as ServerGameResponse[] | undefined) ?? [];
 
-  const handleTabChange = useCallback((id: TabId) => setTab(id), []);
+  const handleTabChange    = useCallback((id: TabId) => setTab(id), []);
+  const handleWelcomeEnter = useCallback((withMusic: boolean) => {
+    setPlayMusic(withMusic);
+    setWelcomed(true);
+  }, []);
 
-  // Ambient background music on home tab
-  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
-  useEffect(() => {
-    const firstWithSrc = content.musicTracks.find((t) => t.src);
-    if (!firstWithSrc?.src) return;
-    if (tab === "home") {
-      if (!bgAudioRef.current) {
-        bgAudioRef.current = new Audio(firstWithSrc.src);
-        bgAudioRef.current.loop = true;
-        bgAudioRef.current.volume = 0.18;
-      }
-      bgAudioRef.current.play().catch(() => {});
-    } else {
-      bgAudioRef.current?.pause();
-    }
-    return () => { bgAudioRef.current?.pause(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+  // Background music pauses while user is actively playing the playlist
+  const bgPaused = tab === "music" && playlistActive;
 
   if (!unlocked) {
     return <PasswordGate shareId={shareId} onUnlock={() => setUnlocked(true)} />;
@@ -223,7 +216,19 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         @media (max-width: 1023px) { body { overflow: hidden; } }
       `}</style>
 
-      {/* Desktop sidebar — shows "Create yours" via onEdit */}
+      {/* Welcome overlay — shown until user taps enter */}
+      {!welcomed && (
+        <LoveWelcomeOverlay
+          senderName={content.senderName}
+          recipientName={content.recipientName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
+
+      {/* Ambient background music */}
+      <LoveBackgroundMusic shouldPlay={playMusic} paused={bgPaused} />
+
+      {/* Desktop sidebar */}
       <DesktopSidebar
         tab={tab}
         onTabChange={handleTabChange}
@@ -234,14 +239,10 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         showShare={false}
       />
 
-      {/* Main content — same layout as page.tsx */}
+      {/* Main content */}
       <main className="lg:ml-56" style={{ height: "100dvh", overflow: "hidden" }}>
         {tab === "home" && (
-          <HomeSection
-            data={content}
-            isPersonalized={true}
-            onEditClick={() => router.push("/love-gf")}
-          />
+          <HomeSection data={content} isPersonalized={true} onEditClick={() => router.push("/love-gf")} />
         )}
         {tab === "wish" && (
           <WishSection data={content} isPersonalized={true} />
@@ -253,20 +254,6 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
             </Suspense>
           </ScrapbookBg>
         )}
-        {tab === "music" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <MusicSection data={content} onPlayStateChange={() => {}} />
-            </Suspense>
-          </ScrapbookBg>
-        )}
-        {tab === "games" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <GamesSection data={content} shareId={shareId} quizAttempts={quizAttempts} initialGameResponses={gameResponses} />
-            </Suspense>
-          </ScrapbookBg>
-        )}
         {tab === "notes" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
@@ -274,6 +261,34 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
             </Suspense>
           </ScrapbookBg>
         )}
+
+        {/*
+          Music & Games sections stay MOUNTED once first rendered (display:none preserves
+          React state so playlist position and game history survive tab switches).
+        */}
+        <div style={{ display: tab === "music" ? "block" : "none" }}>
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <MusicSection
+                data={content}
+                onPlayStateChange={setPlaylistActive}
+              />
+            </Suspense>
+          </ScrapbookBg>
+        </div>
+
+        <div style={{ display: tab === "games" ? "block" : "none" }}>
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <GamesSection
+                data={content}
+                shareId={shareId}
+                quizAttempts={quizAttempts}
+                initialGameResponses={gameResponses}
+              />
+            </Suspense>
+          </ScrapbookBg>
+        </div>
       </main>
 
       <BottomNav

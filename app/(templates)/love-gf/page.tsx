@@ -16,6 +16,7 @@ import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ScrapbookBg from "./components/ScrapbookBg";
+import LoveBackgroundMusic from "./components/LoveBackgroundMusic";
 
 const GallerySection = lazy(() => import("./components/GallerySection"));
 const MusicSection = lazy(() => import("./components/MusicSection"));
@@ -151,6 +152,7 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
 
 function LoveGfPageInner() {
   const editor = useLoveEditor();
+  const [playlistActive, setPlaylistActive] = useState(false);
 
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
@@ -261,6 +263,9 @@ function LoveGfPageInner() {
         onShare={editor.handleShare}
       />
 
+      {/* Ambient background music — pauses while playlist is playing */}
+      <LoveBackgroundMusic shouldPlay paused={editor.tab === "music" && playlistActive} />
+
       <main
         className="lg:ml-56"
         style={{ height: "100dvh", paddingBottom: 0, overflow: "hidden" }}
@@ -282,14 +287,24 @@ function LoveGfPageInner() {
             </Suspense>
           </ScrapbookBg>
         )}
-        {editor.tab === "music" && (
+        {editor.tab === "notes" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
-              <MusicSection data={editor.content} onPlayStateChange={() => {}} />
+              <NotesSection />
             </Suspense>
           </ScrapbookBg>
         )}
-        {editor.tab === "games" && (
+
+        {/* Music & Games stay MOUNTED (display:none) to preserve play state and game history */}
+        <div style={{ display: editor.tab === "music" ? "block" : "none" }}>
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <MusicSection data={editor.content} onPlayStateChange={setPlaylistActive} />
+            </Suspense>
+          </ScrapbookBg>
+        </div>
+
+        <div style={{ display: editor.tab === "games" ? "block" : "none" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <GamesSection
@@ -300,14 +315,7 @@ function LoveGfPageInner() {
               />
             </Suspense>
           </ScrapbookBg>
-        )}
-        {editor.tab === "notes" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <NotesSection />
-            </Suspense>
-          </ScrapbookBg>
-        )}
+        </div>
       </main>
 
       <BottomNav
