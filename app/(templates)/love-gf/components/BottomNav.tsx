@@ -29,11 +29,13 @@ interface Props {
   onPublish?: () => void;
   onShare?: () => void;
   onBack?: () => void;
+  onCreateYours?: () => void;
 }
 
 export default function BottomNav({
   mode, tab, onTabChange,
   onEdit, showPublish, showShare, shareLabel, onPublish, onShare,
+  onCreateYours,
 }: Props) {
   return (
     <nav
@@ -62,6 +64,13 @@ export default function BottomNav({
           paddingTop: 6,
         }}
       >
+        <style>{`
+          @keyframes lgf-create-glow {
+            0%,100%{box-shadow:0 0 10px 2px rgba(195,90,68,0.50),0 3px 12px rgba(80,30,20,0.25)}
+            50%{box-shadow:0 0 20px 6px rgba(195,90,68,0.70),0 5px 18px rgba(80,30,20,0.35)}
+          }
+          .lgf-create-tab{animation:lgf-create-glow 2s ease-in-out infinite}
+        `}</style>
         {/* Tab row */}
         <div
           style={{
@@ -169,6 +178,45 @@ export default function BottomNav({
               </motion.button>
             );
           })}
+
+          {/* Viewer-only: glowing Create ♡ tab */}
+          {mode === "viewer" && onCreateYours && (
+            <motion.button
+              onClick={onCreateYours}
+              whileTap={{ scale: 0.93 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
+              className="lgf-create-tab"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1,
+                padding: "5px 8px",
+                borderRadius: 14,
+                border: "none",
+                background: "linear-gradient(135deg, rgb(195,90,68) 0%, rgb(150,52,40) 100%)",
+                cursor: "pointer",
+                flexShrink: 0,
+                marginLeft: 4,
+              }}
+            >
+              <span style={{ fontSize: 15, lineHeight: 1 }}>✦</span>
+              <span style={{
+                fontFamily: CURSIVE,
+                fontSize: "clamp(7px, 1.8vw, 9px)",
+                fontWeight: 700,
+                color: "#fff",
+                letterSpacing: "0.03em",
+                lineHeight: 1,
+                textAlign: "center",
+                whiteSpace: "nowrap",
+              }}>
+                Create ♡
+              </span>
+            </motion.button>
+          )}
         </div>
       </motion.div>
     </nav>

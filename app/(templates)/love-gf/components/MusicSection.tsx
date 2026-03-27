@@ -155,7 +155,9 @@ export default memo(function MusicSection({ data, onPlayStateChange }: Props) {
   const next = useCallback(() => { setCurrent((c) => (c + 1) % tracks.length); setPlaying(true); }, [tracks.length]);
   const prev = useCallback(() => { setCurrent((c) => (c - 1 + tracks.length) % tracks.length); setPlaying(true); }, [tracks.length]);
   const togglePlay = useCallback(() => setPlaying((p) => !p), []);
-  const selectTrack = useCallback((i: number) => { setCurrent(i); setPlaying(true); }, []);
+  const selectTrack = useCallback((i: number) => {
+    if (i === current) { setPlaying((p) => !p); } else { setCurrent(i); setPlaying(true); }
+  }, [current]);
   const toggleLike = useCallback((i: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setLiked((prev) => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s; });

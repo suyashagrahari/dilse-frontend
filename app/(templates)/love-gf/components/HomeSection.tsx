@@ -300,7 +300,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
             whiteSpace: "nowrap",
             pointerEvents: "none",
           }}>
-            {isPersonalized && data.recipientName ? `for ${data.recipientName}` : "love you!"}
+            love you!
           </span>
         </div>
 

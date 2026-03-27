@@ -386,6 +386,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const [responseAudioUrl, setResponseAudioUrl] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
+  const [micError, setMicError] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordChunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -420,6 +421,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setCompletionMsg("");
     setResponseAudioUrl("");
     setResponsePhotoUrl("");
+    setMicError(false);
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [used, getTruths, getDares]);
 
@@ -428,32 +430,49 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   }, []);
 
   const startRecording = useCallback(async () => {
+    setMicError(false);
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType =
-        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-          ? "audio/webm;codecs=opus"
-          : typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm")
-            ? "audio/webm"
-            : "audio/mp4";
-      const recorder = new MediaRecorder(stream, { mimeType });
-      recordChunksRef.current = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) recordChunksRef.current.push(e.data); };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(recordChunksRef.current, { type: mimeType });
-        const reader = new FileReader();
-        reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
-        reader.readAsDataURL(blob);
-      };
-      recorder.start();
-      recorderRef.current = recorder;
-      setRecording(true);
-      setRecordSeconds(0);
-      recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      // mic not available or denied
+      setMicError(true);
+      return;
     }
+    // Pick best supported mimeType
+    let mimeType = "";
+    const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+    for (const c of candidates) {
+      try {
+        if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c)) {
+          mimeType = c; break;
+        }
+      } catch { /* ignore */ }
+    }
+    let recorder: MediaRecorder;
+    try {
+      recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    } catch {
+      try { recorder = new MediaRecorder(stream); } catch {
+        stream.getTracks().forEach((t) => t.stop());
+        setMicError(true);
+        return;
+      }
+    }
+    const effectiveMime = recorder.mimeType || mimeType || "audio/webm";
+    recordChunksRef.current = [];
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) recordChunksRef.current.push(e.data); };
+    recorder.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(recordChunksRef.current, { type: effectiveMime });
+      const reader = new FileReader();
+      reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
+      reader.readAsDataURL(blob);
+    };
+    recorder.start(200); // timeslice for more frequent ondataavailable
+    recorderRef.current = recorder;
+    setRecording(true);
+    setRecordSeconds(0);
+    recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
   }, []);
 
   const stopRecording = useCallback(() => {
@@ -511,7 +530,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const reset = useCallback(() => {
     setUsed(new Set()); setCard(null); setMode(null);
     setAnswer(""); setSaved(false); setDareCompleted(false); setCompletionMsg("");
-    setResponseAudioUrl(""); setResponsePhotoUrl("");
+    setResponseAudioUrl(""); setResponsePhotoUrl(""); setMicError(false);
     if (recorderRef.current) { recorderRef.current.stop(); recorderRef.current = null; }
     setRecording(false);
     if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
@@ -734,12 +753,13 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                   ) : (
                     <button onClick={startRecording} style={{
                       flex: 1, padding: "9px 0", borderRadius: 10,
-                      border: "1.5px dashed rgba(200,130,60,0.35)",
-                      background: "rgba(200,130,60,0.05)", cursor: "pointer",
-                      fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
+                      border: micError ? "1.5px solid rgba(180,60,50,0.45)" : "1.5px dashed rgba(200,130,60,0.35)",
+                      background: micError ? "rgba(180,60,50,0.06)" : "rgba(200,130,60,0.05)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 12,
+                      color: micError ? "rgb(160,50,40)" : "rgb(160,90,30)",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     }}>
-                      🎤 Record voice
+                      {micError ? "🚫 Mic denied — tap to retry" : "🎤 Record voice"}
                     </button>
                   )}
                   {/* Photo response */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -165,39 +165,6 @@ function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => 
   );
 }
 
-// ── Glowing Create CTA ────────────────────────────────────────────────────────
-
-function GlowingCreateBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <>
-      <style>{`
-        @keyframes lgf-cta-pulse {
-          0%,100%{box-shadow:0 0 18px 4px rgba(195,90,68,0.55),0 6px 22px rgba(80,30,20,0.30)}
-          50%{box-shadow:0 0 32px 10px rgba(195,90,68,0.75),0 8px 28px rgba(80,30,20,0.40)}
-        }
-        .lgf-cta{animation:lgf-cta-pulse 2.2s ease-in-out infinite}
-      `}</style>
-      <motion.button
-        className="lgf-cta lg:hidden"
-        onClick={onClick}
-        initial={{ opacity: 0, y: 20, scale: 0.85 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 1.8, duration: 0.5, type: "spring", stiffness: 260, damping: 22 }}
-        whileTap={{ scale: 0.93 }}
-        style={{
-          position: "fixed", bottom: 76, right: 16, zIndex: 98,
-          padding: "11px 18px", borderRadius: 50, border: "none",
-          background: "linear-gradient(135deg, rgb(195,95,75) 0%, rgb(148,52,40) 100%)",
-          color: "#fff", fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
-          cursor: "pointer", letterSpacing: "0.03em",
-          display: "flex", alignItems: "center", gap: 6,
-        }}
-      >
-        <span style={{ fontSize: 14 }}>✦</span> Create yours ♡
-      </motion.button>
-    </>
-  );
-}
 
 // ── Main Viewer ───────────────────────────────────────────────────────────────
 
@@ -218,6 +185,25 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
 
+  // Ambient background music on home tab
+  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const firstWithSrc = content.musicTracks.find((t) => t.src);
+    if (!firstWithSrc?.src) return;
+    if (tab === "home") {
+      if (!bgAudioRef.current) {
+        bgAudioRef.current = new Audio(firstWithSrc.src);
+        bgAudioRef.current.loop = true;
+        bgAudioRef.current.volume = 0.18;
+      }
+      bgAudioRef.current.play().catch(() => {});
+    } else {
+      bgAudioRef.current?.pause();
+    }
+    return () => { bgAudioRef.current?.pause(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   if (!unlocked) {
     return <PasswordGate shareId={shareId} onUnlock={() => setUnlocked(true)} />;
   }
@@ -233,30 +219,6 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         * { box-sizing: border-box; }
         @media (max-width: 1023px) { body { overflow: hidden; } }
       `}</style>
-
-      {/* Mobile top bar — sender name only, centered */}
-      <div
-        className="lg:hidden"
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 101,
-          paddingTop: "max(env(safe-area-inset-top), 12px)",
-          paddingBottom: 8,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        {content.senderName && (
-          <span style={{
-            padding: "6px 16px", borderRadius: 20,
-            border: "1px solid rgba(158,126,97,0.22)",
-            background: "rgba(250,246,240,0.82)", backdropFilter: "blur(10px)",
-            fontFamily: CURSIVE, fontSize: 13, color: WARM,
-            pointerEvents: "auto",
-          }}>
-            from {content.senderName} ♡
-          </span>
-        )}
-      </div>
 
       {/* Desktop sidebar — shows "Create yours" via onEdit */}
       <DesktopSidebar
@@ -322,10 +284,8 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         onPublish={() => {}}
         onShare={() => {}}
         onBack={() => router.push("/templates")}
+        onCreateYours={() => router.push("/love-gf")}
       />
-
-      {/* Glowing mobile CTA */}
-      <GlowingCreateBtn onClick={() => router.push("/love-gf")} />
     </div>
   );
 }
