@@ -13,12 +13,11 @@ import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
-const FORCE_COMING_SOON = new Set(["anniversary-gf", "love-gf"]);
+const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
 
 const COMING_SOON_IMAGES: Record<string, string> = {
   // Temporarily coming soon (have real cover images)
   "anniversary-gf": "/assets/Aniversary/aniversary.png",
-  "love-gf": "/assets/hero-bg.jpeg",
   // Already coming soon
   "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.png",
   "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.png",

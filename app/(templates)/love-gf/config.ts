@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "You are the reason my heart beats a little faster. Every moment with you is a gift I treasure, today and always.",
   bgGradient: "from-pink-50 via-rose-50 to-white",
-  coverImage: "/assets/hero-bg.jpeg",
+  coverImage: "/template/lovegf.png",
   tabs: [
     { id: "cover", icon: Heart, label: "Love" },
     { id: "games", icon: Gamepad2, label: "Games" },
