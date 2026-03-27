@@ -1,10 +1,11 @@
 "use client";
 
-import { memo, useState, useCallback, useEffect, useRef } from "react";
+import { memo, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
 import type { ContentData, QuizQuestion, TruthDareItem } from "./types";
 import MiniAudioPlayer from "./MiniAudioPlayer";
+import GameHistory, { type HistoryEntry, type QuizRecord } from "./GameHistory";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
@@ -357,14 +358,6 @@ const DARE_COMPLETIONS = [
   "That was wild but I did it! 🫶",
 ];
 
-interface HistoryEntry {
-  id: number;
-  type: "truth" | "dare";
-  prompt: string;
-  answer: string;
-  mediaUrl?: string;
-}
-
 export interface ServerGameResponse {
   type: "truth" | "dare";
   prompt: string;
@@ -376,10 +369,12 @@ export interface ServerGameResponse {
 interface TruthOrDareProps {
   shareId: string | null;
   customTruthDare: TruthDareItem[];
-  initialResponses?: ServerGameResponse[];
+  history: HistoryEntry[];
+  onAddToHistory: (type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string, savedAt?: string) => void;
+  onUpdateMediaUrl: (id: number, url: string) => void;
 }
 
-function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthOrDareProps) {
+function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpdateMediaUrl }: TruthOrDareProps) {
   type ActiveCard = { text: string; photoUrl?: string; audioUrl?: string };
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
   const [card, setCard] = useState<ActiveCard | null>(null);
@@ -389,17 +384,6 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
   const [saving, setSaving] = useState(false);
   const [dareCompleted, setDareCompleted] = useState(false);
   const [completionMsg, setCompletionMsg] = useState("");
-  const [history, setHistory] = useState<HistoryEntry[]>(() =>
-    initialResponses.map((r, i) => ({
-      id: -(i + 1), // negative IDs for server entries to avoid collision
-      type: r.type,
-      prompt: r.prompt,
-      answer: r.answer,
-      mediaUrl: r.mediaUrl,
-    }))
-  );
-  const [showHistory, setShowHistory] = useState(initialResponses.length > 0);
-  const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [responseAudioUrl, setResponseAudioUrl] = useState("");
   const [recording, setRecording] = useState(false);
@@ -441,10 +425,6 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
     setResponsePhotoUrl("");
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [used, getTruths, getDares]);
-
-  const addToHistory = useCallback((type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string) => {
-    setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans, ...(mediaUrl && { mediaUrl }) }, ...prev]);
-  }, []);
 
   // Load an audio file chosen from device storage as a base64 data URL
   const loadAudioFile = useCallback((file: File) => {
@@ -516,6 +496,7 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
     if (!answer.trim() || !card) return;
     setSaving(true);
     try {
+      const savedAt = new Date().toISOString();
       if (shareId) {
         await fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
           method: "POST",
@@ -523,34 +504,43 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
           body: JSON.stringify({ type: mode, prompt: card.text, answer: answer.trim() }),
         });
       }
-      addToHistory(mode ?? "truth", card.text, answer.trim());
+      onAddToHistory(mode ?? "truth", card.text, answer.trim(), undefined, savedAt);
       setSaved(true);
     } finally {
       setSaving(false);
     }
-  }, [answer, card, mode, shareId, addToHistory]);
+  }, [answer, card, mode, shareId, onAddToHistory]);
 
-  const handleDareComplete = useCallback(() => {
+  const handleDareComplete = useCallback(async () => {
     if (!card) return;
     const msg = DARE_COMPLETIONS[Math.floor(Math.random() * DARE_COMPLETIONS.length)];
     setCompletionMsg(msg);
     setDareCompleted(true);
     const note = answer.trim() || "Dare completed! 🔥";
-    const mediaUrl = responseAudioUrl || responsePhotoUrl || undefined;
-    addToHistory("dare", card.text, note, mediaUrl);
-    if (shareId && card) {
+    const localMediaUrl = responseAudioUrl || responsePhotoUrl || undefined;
+    const savedAt = new Date().toISOString();
+    const entryId = Date.now();
+    onAddToHistory("dare", card.text, note, localMediaUrl, savedAt);
+    if (shareId) {
       const body: Record<string, string> = { type: "dare", prompt: card.text, answer: note };
       if (responseAudioUrl) body.mediaUrl = responseAudioUrl;
       else if (responsePhotoUrl) body.mediaUrl = responsePhotoUrl;
-      fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }).catch(() => {});
+      try {
+        const res = await fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        // Server uploads media to S3 and returns the S3 URL — update our history entry
+        if (result?.data?.mediaUrl && result.data.mediaUrl !== localMediaUrl) {
+          onUpdateMediaUrl(entryId, result.data.mediaUrl);
+        }
+      } catch { /* ignore */ }
     }
     setResponseAudioUrl("");
     setResponsePhotoUrl("");
-  }, [shareId, card, answer, addToHistory, responseAudioUrl, responsePhotoUrl]);
+  }, [shareId, card, answer, onAddToHistory, onUpdateMediaUrl, responseAudioUrl, responsePhotoUrl]);
 
   const nextCard = useCallback(() => {
     const chosen: "truth" | "dare" = Math.random() < 0.5 ? "truth" : "dare";
@@ -566,9 +556,8 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
     if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
   }, []);
 
-  const filteredHistory = history.filter((h) => historyFilter === "all" || h.type === historyFilter);
-  const truthCount = history.filter((h) => h.type === "truth").length;
-  const dareCount = history.filter((h) => h.type === "dare").length;
+  const truthCount = useMemo(() => history.filter((h) => h.type === "truth").length, [history]);
+  const dareCount  = useMemo(() => history.filter((h) => h.type === "dare").length,  [history]);
 
   return (
     <div>
@@ -942,162 +931,14 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
           ↺ Reset all
         </button>
       )}
-
-      {/* ── Game Journal / History ── */}
-      {history.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <button
-            onClick={() => setShowHistory((v) => !v)}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "none", border: "none", cursor: "pointer", padding: "0 2px 10px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM }}>
-                📖 Our Game Journal
-              </span>
-              <span style={{
-                fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                background: "rgba(158,126,97,0.18)", color: WARM,
-                padding: "2px 8px", borderRadius: 999,
-              }}>
-                {history.length}
-              </span>
-            </div>
-            <motion.span
-              animate={{ rotate: showHistory ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.55)" }}
-            >
-              ▾
-            </motion.span>
-          </button>
-
-          <AnimatePresence>
-            {showHistory && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25 }}
-                style={{ overflow: "hidden" }}
-              >
-                {/* Filter tabs */}
-                <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                  {(["all", "truth", "dare"] as const).map((f) => (
-                    <button key={f} onClick={() => setHistoryFilter(f)}
-                      style={{
-                        padding: "4px 12px", borderRadius: 999,
-                        border: historyFilter === f ? `1.5px solid ${WARM_BORDER}` : "1px solid transparent",
-                        background: historyFilter === f ? "rgba(158,126,97,0.14)" : "transparent",
-                        fontFamily: CURSIVE, fontSize: 11, fontWeight: historyFilter === f ? 700 : 400,
-                        color: historyFilter === f ? WARM : "rgba(108,74,46,0.50)",
-                        cursor: "pointer", transition: "all 0.15s",
-                      }}>
-                      {f === "all" ? `All (${history.length})` : f === "truth" ? `💭 Truths (${truthCount})` : `🎯 Dares (${dareCount})`}
-                    </button>
-                  ))}
-                </div>
-
-                {/* History entries */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <AnimatePresence>
-                    {filteredHistory.map((entry, idx) => (
-                      <motion.div
-                        key={entry.id}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 12 }}
-                        transition={{ delay: idx * 0.04 }}
-                        style={{
-                          borderRadius: 14,
-                          border: entry.type === "truth"
-                            ? "1px solid rgba(140,100,180,0.22)"
-                            : "1px solid rgba(200,130,60,0.22)",
-                          background: entry.type === "truth"
-                            ? "rgba(160,120,200,0.07)"
-                            : "rgba(220,160,80,0.07)",
-                          padding: "12px 14px",
-                          position: "relative",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div style={{
-                          position: "absolute", top: 0, left: 0, width: 3, bottom: 0,
-                          borderRadius: "14px 0 0 14px",
-                          background: entry.type === "truth"
-                            ? "rgba(140,100,180,0.50)"
-                            : "rgba(200,130,60,0.50)",
-                        }} />
-
-                        <div style={{ paddingLeft: 8 }}>
-                          <span style={{
-                            fontFamily: CURSIVE, fontSize: 9, fontWeight: 700,
-                            textTransform: "uppercase" as const, letterSpacing: "0.1em",
-                            color: entry.type === "truth" ? "rgb(100,60,140)" : "rgb(160,90,30)",
-                            background: entry.type === "truth" ? "rgba(140,100,180,0.12)" : "rgba(200,130,60,0.12)",
-                            padding: "2px 8px", borderRadius: 999, display: "inline-block",
-                            marginBottom: 6,
-                          }}>
-                            {entry.type === "truth" ? "💭 Truth" : "🎯 Dare"}
-                          </span>
-
-                          <p style={{
-                            fontFamily: CURSIVE, fontSize: 12, fontWeight: 600,
-                            color: WARM, margin: "0 0 6px", lineHeight: 1.4,
-                          }}>
-                            {entry.prompt}
-                          </p>
-
-                          <div style={{
-                            height: 1, background: entry.type === "truth"
-                              ? "rgba(140,100,180,0.15)" : "rgba(200,130,60,0.15)",
-                            margin: "6px 0",
-                          }} />
-
-                          <p style={{
-                            fontFamily: CURSIVE, fontSize: 12, fontStyle: "italic",
-                            color: "rgba(90,60,35,0.85)", margin: 0, lineHeight: 1.55,
-                          }}>
-                            {entry.type === "truth" ? `"${entry.answer}"` : `✓ ${entry.answer}`}
-                          </p>
-
-                          {/* Media response */}
-                          {entry.mediaUrl && (
-                            <div style={{ marginTop: 8 }}>
-                              {entry.mediaUrl.startsWith("data:image/") || /\.(webp|jpg|jpeg|png|gif)(\?|$)/i.test(entry.mediaUrl) ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={entry.mediaUrl}
-                                  alt="response"
-                                  style={{
-                                    width: "100%", maxHeight: 140,
-                                    objectFit: "cover", borderRadius: 10,
-                                  }}
-                                />
-                              ) : (
-                                <MiniAudioPlayer src={entry.mediaUrl!} />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
     </div>
   );
 }
 
 const GAMES = [
-  { id: "quiz", label: "Love Quiz", emoji: "🎯", desc: "Personalized questions each round!" },
-  { id: "tod", label: "Truth or Dare", emoji: "🎲", desc: "New challenges every time!" },
+  { id: "quiz",    label: "Love Quiz",    emoji: "🎯", desc: "Personalized questions each round!" },
+  { id: "tod",     label: "Truth or Dare", emoji: "🎲", desc: "New challenges every time!" },
+  { id: "history", label: "Our Story",    emoji: "📖", desc: "All your game moments together!" },
 ];
 
 interface Props {
@@ -1109,6 +950,36 @@ interface Props {
 
 export default memo(function GamesSection({ data, shareId = null, quizAttempts = [], initialGameResponses = [] }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
+
+  // Lifted history state — shared between TruthOrDare and GameHistory tab
+  const [history, setHistory] = useState<HistoryEntry[]>(() =>
+    initialGameResponses.map((r, i) => ({
+      id: -(i + 1),
+      type: r.type,
+      prompt: r.prompt,
+      answer: r.answer,
+      mediaUrl: r.mediaUrl,
+      savedAt: r.savedAt,
+    }))
+  );
+
+  const addToHistory = useCallback((
+    type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string, savedAt?: string
+  ) => {
+    const id = Date.now();
+    setHistory((prev) => [{
+      id, type, prompt, answer: ans,
+      ...(mediaUrl  && { mediaUrl }),
+      ...(savedAt   && { savedAt }),
+    }, ...prev]);
+  }, []);
+
+  const updateHistoryMediaUrl = useCallback((id: number, url: string) => {
+    setHistory((prev) => prev.map((e) => e.id === id ? { ...e, mediaUrl: url } : e));
+  }, []);
+
+  // Convert QuizAttemptRecord[] to QuizRecord[] (same shape, just different name)
+  const quizRecords = quizAttempts as QuizRecord[];
 
   return (
     <motion.div
@@ -1133,7 +1004,7 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
 
         <div className="lg:flex lg:gap-8 lg:items-start">
           {/* Game picker */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}
             className="lg:flex lg:flex-col lg:w-52 lg:shrink-0 lg:mb-0 lg:gap-3"
           >
             {GAMES.map((g) => {
@@ -1171,10 +1042,21 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
             }}
             className="lg:p-6 lg:flex-1"
           >
-            {activeGame === "quiz"
-              ? <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} initialAttempts={quizAttempts} />
-              : <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} initialResponses={initialGameResponses} />
-            }
+            {activeGame === "quiz" && (
+              <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} initialAttempts={quizAttempts} />
+            )}
+            {activeGame === "tod" && (
+              <TruthOrDare
+                shareId={shareId}
+                customTruthDare={data.truthDareQuestions || []}
+                history={history}
+                onAddToHistory={addToHistory}
+                onUpdateMediaUrl={updateHistoryMediaUrl}
+              />
+            )}
+            {activeGame === "history" && (
+              <GameHistory history={history} quizAttempts={quizRecords} />
+            )}
           </motion.div>
         </div>
       </div>
