@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback, useMemo } from "react";
+import { memo, useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Heart, X } from "lucide-react";
 
@@ -27,11 +27,31 @@ const TEMPLATES = [
 
 interface Note { id: number; from: string; message: string; mood: string; time: string; }
 
-const DEFAULT_NOTES: Note[] = [
+// Demo notes only shown in editor/preview (no shareId)
+const DEMO_NOTES: Note[] = [
   { id: 1, from: "Your Love", message: "Good morning beautiful! You were in my dreams last night 🌅", mood: "☀️", time: "8:30 AM" },
   { id: 2, from: "Secret Admirer", message: "You make my heart do the most embarrassing things 💕", mood: "💕", time: "2:15 PM" },
   { id: 3, from: "Your Sunshine", message: "Can't stop thinking about you. You're my everything 🌙", mood: "🥺", time: "11:42 PM" },
 ];
+
+function lsKey(shareId?: string | null) {
+  return `lgf-notes-${shareId || "preview"}`;
+}
+
+function loadFromStorage(shareId?: string | null): Note[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(lsKey(shareId));
+    if (!raw) return null;
+    return JSON.parse(raw) as Note[];
+  } catch { return null; }
+}
+
+function saveToStorage(notes: Note[], shareId?: string | null) {
+  try {
+    localStorage.setItem(lsKey(shareId), JSON.stringify(notes));
+  } catch { /* quota exceeded or private mode */ }
+}
 
 const NoteCard = memo(function NoteCard({ note, onSelect }: { note: Note; onSelect: (n: Note) => void }) {
   const handleClick = useCallback(() => onSelect(note), [onSelect, note]);
@@ -98,7 +118,6 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
           overflow: "hidden",
         }}
       >
-        {/* Header */}
         <div style={{
           height: 80, display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative",
@@ -183,13 +202,32 @@ const MoodButton = memo(function MoodButton({ emoji, active, onSelect }: { emoji
   );
 });
 
-export default memo(function NotesSection() {
+interface NotesSectionProps {
+  shareId?: string | null;
+}
+
+export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
   const [from, setFrom] = useState("");
   const [message, setMessage] = useState("");
   const [mood, setMood] = useState("💕");
-  const [notes, setNotes] = useState<Note[]>(DEFAULT_NOTES);
+  // Start with DEMO_NOTES only in editor (no shareId). Viewer starts empty, loads from localStorage.
+  const [notes, setNotes] = useState<Note[]>(() => {
+    if (typeof window === "undefined") return shareId ? [] : DEMO_NOTES;
+    const stored = loadFromStorage(shareId);
+    if (stored !== null) return stored;
+    return shareId ? [] : DEMO_NOTES;
+  });
   const [sent, setSent] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+
+  // On mount (after hydration), load from localStorage if not already loaded
+  useEffect(() => {
+    const stored = loadFromStorage(shareId);
+    if (stored !== null) {
+      setNotes(stored);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSend = useCallback(() => {
     if (!message.trim()) return;
@@ -200,11 +238,15 @@ export default memo(function NotesSection() {
       mood,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
-    setNotes((n) => [newNote, ...n]);
+    setNotes((prev) => {
+      const updated = [newNote, ...prev];
+      saveToStorage(updated, shareId);
+      return updated;
+    });
     setMessage(""); setFrom("");
     setSent(true);
     setTimeout(() => setSent(false), 3000);
-  }, [from, message, mood]);
+  }, [from, message, mood, shareId]);
 
   const useTemplate = useCallback(() => {
     setMessage(TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)]);
@@ -243,7 +285,6 @@ export default memo(function NotesSection() {
       style={{ height: "100svh", display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 10 }}
     >
       <div style={{ flex: 1, padding: "28px 16px 96px" }} className="lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8">
-        {/* Title */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <h2 style={{
             fontFamily: CURSIVE,
@@ -254,7 +295,9 @@ export default memo(function NotesSection() {
             Love Notes 💌
           </h2>
           <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.55)", marginTop: 4 }}>
-            Send a sweet surprise note
+            {shareId
+              ? "Write a sweet note — only you can see it on this device ♡"
+              : "Send a sweet surprise note"}
           </p>
         </div>
 
@@ -316,12 +359,12 @@ export default memo(function NotesSection() {
                 cursor: "pointer", boxShadow: "0 4px 14px rgba(80,50,20,0.22)", transition: "all 0.15s",
               }}>
               <Heart size={12} style={{ fill: "rgba(250,248,242,0.95)", color: "rgba(250,248,242,0.95)" }} />
-              {sent ? "Sent with Love! 💕" : "Send Love Note 💌"}
+              {sent ? "Saved! 💕" : "Save Note 💌"}
             </button>
 
             {sent && (
               <p style={{ fontFamily: CURSIVE, textAlign: "center", fontSize: 11, color: WARM, fontWeight: 600, marginTop: 8 }}>
-                Your love note is flying! 💌✨
+                Note saved to your device! 💌✨
               </p>
             )}
           </div>
@@ -333,13 +376,25 @@ export default memo(function NotesSection() {
               color: "rgba(108,74,46,0.55)", letterSpacing: "0.08em",
               textTransform: "uppercase", marginBottom: 10,
             }}>
-              Love Notes · {notes.length}
+              My Notes · {notes.length}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: "60vh", overflowY: "auto" }}
-              className="no-scrollbar"
-            >
-              {noteCards}
-            </div>
+            {notes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 16px" }}>
+                <span style={{ fontSize: 36, display: "block", marginBottom: 10 }}>📝</span>
+                <p style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM, margin: "0 0 6px" }}>
+                  No notes yet
+                </p>
+                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.55)", margin: 0, lineHeight: 1.6 }}>
+                  Write your first love note — only you can see it here ♡
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: "60vh", overflowY: "auto" }}
+                className="no-scrollbar"
+              >
+                {noteCards}
+              </div>
+            )}
           </div>
         </div>
       </div>

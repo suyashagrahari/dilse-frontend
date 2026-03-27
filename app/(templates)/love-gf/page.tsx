@@ -290,7 +290,7 @@ function LoveGfPageInner() {
         {editor.tab === "notes" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
-              <NotesSection />
+              <NotesSection shareId={editor.shareId} />
             </Suspense>
           </ScrapbookBg>
         )}

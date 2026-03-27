@@ -495,19 +495,18 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
   const handleSave = useCallback(async () => {
     if (!answer.trim() || !card) return;
     setSaving(true);
-    try {
-      const savedAt = new Date().toISOString();
-      if (shareId) {
-        await fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: mode, prompt: card.text, answer: answer.trim() }),
-        });
-      }
-      onAddToHistory(mode ?? "truth", card.text, answer.trim(), undefined, savedAt);
-      setSaved(true);
-    } finally {
-      setSaving(false);
+    const savedAt = new Date().toISOString();
+    // Optimistic update — always add to local state immediately
+    onAddToHistory(mode ?? "truth", card.text, answer.trim(), undefined, savedAt);
+    setSaved(true);
+    setSaving(false);
+    // Persist to server in background (non-blocking)
+    if (shareId) {
+      fetch(`${API_URL}/love-gf-pages/share/${shareId}/game-response`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: mode, prompt: card.text, answer: answer.trim() }),
+      }).catch(() => {});
     }
   }, [answer, card, mode, shareId, onAddToHistory]);
 

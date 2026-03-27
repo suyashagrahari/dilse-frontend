@@ -257,7 +257,7 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         {tab === "notes" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
-              <NotesSection />
+              <NotesSection shareId={shareId} />
             </Suspense>
           </ScrapbookBg>
         )}
