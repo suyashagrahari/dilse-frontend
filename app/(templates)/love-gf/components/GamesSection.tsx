@@ -82,17 +82,17 @@ function formatDate(dateStr: string): string {
 interface LoveQuizProps {
   questions: QuizQuestion[];
   shareId: string | null;
-  initialAttempts: QuizAttemptRecord[];
+  attempts: QuizAttemptRecord[];
+  onAttemptAdded: (a: QuizAttemptRecord) => void;
 }
 
-function LoveQuiz({ questions: customQs, shareId, initialAttempts }: LoveQuizProps) {
+function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: LoveQuizProps) {
   const [sessionQs, setSessionQs] = useState<QuizQuestion[]>([]);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [attempts, setAttempts] = useState<QuizAttemptRecord[]>(initialAttempts || []);
   const [showHistory, setShowHistory] = useState(false);
   const [savingAttempt, setSavingAttempt] = useState(false);
 
@@ -126,7 +126,7 @@ function LoveQuiz({ questions: customQs, shareId, initialAttempts }: LoveQuizPro
       total,
       playedAt: new Date().toISOString(),
     };
-    setAttempts((prev) => [newAttempt, ...prev]);
+    onAttemptAdded(newAttempt);
     if (shareId) {
       setSavingAttempt(true);
       try {
@@ -948,7 +948,7 @@ interface Props {
   initialGameResponses?: ServerGameResponse[];
 }
 
-export default memo(function GamesSection({ data, shareId = null, quizAttempts = [], initialGameResponses = [] }: Props) {
+export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [] }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   // Lifted history state — shared between TruthOrDare and GameHistory tab
@@ -963,6 +963,33 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
     }))
   );
 
+  // Lifted quiz attempts state — controlled here so self-fetch can update it
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>(initialQA);
+
+  // Self-fetch on mount to guarantee fresh data after refresh
+  useEffect(() => {
+    if (!shareId) return;
+    fetch(`${API_URL}/love-gf-pages/share/${shareId}`)
+      .then((r) => r.json())
+      .then((result) => {
+        if (!result.success || !result.data) return;
+        const responses: ServerGameResponse[] = Array.isArray(result.data.gameResponses)
+          ? result.data.gameResponses : [];
+        const attempts: QuizAttemptRecord[] = Array.isArray(result.data.quizAttempts)
+          ? result.data.quizAttempts : [];
+        setHistory(responses.map((r, i) => ({
+          id: -(i + 1),
+          type: r.type,
+          prompt: r.prompt,
+          answer: r.answer,
+          mediaUrl: r.mediaUrl,
+          savedAt: r.savedAt,
+        })));
+        setQuizAttempts(attempts);
+      })
+      .catch(() => {});
+  }, [shareId]);
+
   const addToHistory = useCallback((
     type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string, savedAt?: string
   ) => {
@@ -976,6 +1003,10 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
 
   const updateHistoryMediaUrl = useCallback((id: number, url: string) => {
     setHistory((prev) => prev.map((e) => e.id === id ? { ...e, mediaUrl: url } : e));
+  }, []);
+
+  const addQuizAttempt = useCallback((attempt: QuizAttemptRecord) => {
+    setQuizAttempts((prev) => [attempt, ...prev]);
   }, []);
 
   // Convert QuizAttemptRecord[] to QuizRecord[] (same shape, just different name)
@@ -1043,7 +1074,7 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
             className="lg:p-6 lg:flex-1"
           >
             {activeGame === "quiz" && (
-              <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} initialAttempts={quizAttempts} />
+              <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} attempts={quizAttempts} onAttemptAdded={addQuizAttempt} />
             )}
             {activeGame === "tod" && (
               <TruthOrDare
