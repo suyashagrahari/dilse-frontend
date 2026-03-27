@@ -292,7 +292,12 @@ function LoveGfPageInner() {
         {editor.tab === "games" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
-              <GamesSection data={editor.content} shareId={editor.shareId} />
+              <GamesSection
+                data={editor.content}
+                shareId={editor.shareId}
+                quizAttempts={editor.quizAttemptsFromDB}
+                initialGameResponses={editor.gameResponsesFromDB as unknown as import("./components/GamesSection").ServerGameResponse[]}
+              />
             </Suspense>
           </ScrapbookBg>
         )}

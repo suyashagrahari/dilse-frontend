@@ -4,6 +4,7 @@ import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
 import type { ContentData, QuizQuestion, TruthDareItem } from "./types";
+import MiniAudioPlayer from "./MiniAudioPlayer";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
@@ -658,14 +659,11 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
                   />
                 )}
                 {card.audioUrl && (
-                  <div style={{
-                    padding: "8px 12px", borderRadius: 10,
-                    background: "rgba(200,130,60,0.08)", border: "1px solid rgba(200,130,60,0.20)",
-                  }}>
+                  <div style={{ marginBottom: 4 }}>
                     <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(160,90,30)", margin: "0 0 6px" }}>
                       🎤 Listen first...
                     </p>
-                    <audio controls src={card.audioUrl} style={{ width: "100%" }} />
+                    <MiniAudioPlayer src={card.audioUrl} />
                   </div>
                 )}
               </div>
@@ -752,17 +750,11 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
                   {/* Audio response */}
                   {/* Audio response — MediaRecorder, no file picker */}
                   {responseAudioUrl ? (
-                    <div style={{
-                      flex: 1, padding: "6px 10px", borderRadius: 10,
-                      background: "rgba(200,130,60,0.08)", border: "1px solid rgba(200,130,60,0.20)",
-                      display: "flex", alignItems: "center", gap: 6,
-                    }}>
-                      <span style={{ fontSize: 13, flexShrink: 0 }}>🎤</span>
-                      <audio controls src={responseAudioUrl} style={{ flex: 1, height: 24 }} />
-                      <button onClick={() => setResponseAudioUrl("")} style={{
-                        border: "none", background: "transparent", cursor: "pointer",
-                        fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0,
-                      }}>×</button>
+                    <div style={{ flex: 1 }}>
+                      <MiniAudioPlayer
+                        src={responseAudioUrl}
+                        onRemove={() => setResponseAudioUrl("")}
+                      />
                     </div>
                   ) : recording ? (
                     <button onClick={stopRecording} style={{
@@ -1085,15 +1077,7 @@ function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthO
                                   }}
                                 />
                               ) : (
-                                <div style={{
-                                  display: "flex", alignItems: "center", gap: 6,
-                                  padding: "6px 10px", borderRadius: 8,
-                                  background: "rgba(200,130,60,0.07)",
-                                  border: "1px solid rgba(200,130,60,0.18)",
-                                }}>
-                                  <span style={{ fontSize: 13, flexShrink: 0 }}>🎤</span>
-                                  <audio controls src={entry.mediaUrl} style={{ flex: 1, height: 22 }} />
-                                </div>
+                                <MiniAudioPlayer src={entry.mediaUrl!} />
                               )}
                             </div>
                           )}

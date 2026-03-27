@@ -50,6 +50,10 @@ export function useLoveEditor() {
 
   const preEditContentRef = useRef<ContentData>(DEMO_CONTENT);
 
+  // Game data from DB (persisted across refreshes)
+  const [gameResponsesFromDB, setGameResponsesFromDB] = useState<Record<string, unknown>[]>([]);
+  const [quizAttemptsFromDB, setQuizAttemptsFromDB]   = useState<{ score: number; total: number; playedAt: string }[]>([]);
+
   // Load existing page from searchParams or sessionStorage prefill
   useEffect(() => {
     const id = searchParams.get("id");
@@ -83,6 +87,9 @@ export function useLoveEditor() {
             } else {
               setShareUrl(null);
             }
+            // Persist game data across refreshes
+            if (Array.isArray(d.gameResponses)) setGameResponsesFromDB(d.gameResponses);
+            if (Array.isArray(d.quizAttempts))  setQuizAttemptsFromDB(d.quizAttempts);
           }
         })
         .catch(() => {});
@@ -380,6 +387,8 @@ export function useLoveEditor() {
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
+
+    gameResponsesFromDB, quizAttemptsFromDB,
 
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
