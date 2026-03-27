@@ -4,12 +4,12 @@ import { memo, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Heart, X } from "lucide-react";
 import MiniAudioPlayer from "./MiniAudioPlayer";
+import { API_URL } from "@/lib/config";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
 const CREAM_CARD = "rgba(250, 248, 242, 0.90)";
 const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 const MOODS = [
   { emoji: "💕", label: "Love" }, { emoji: "🥺", label: "Miss You" }, { emoji: "😊", label: "Happy" },

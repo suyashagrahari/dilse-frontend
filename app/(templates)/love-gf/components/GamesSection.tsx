@@ -6,13 +6,13 @@ import { Heart, RotateCcw, Send, CheckCircle2 } from "lucide-react";
 import type { ContentData, QuizQuestion, TruthDareItem } from "./types";
 import MiniAudioPlayer from "./MiniAudioPlayer";
 import GameHistory, { type HistoryEntry, type QuizRecord } from "./GameHistory";
+import { API_URL } from "@/lib/config";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
 const CREAM_CARD = "rgba(250, 248, 242, 0.95)";
 const CREAM_SOLID = "rgba(245, 240, 232, 0.98)";
 const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export interface QuizAttemptRecord {
   score: number;
