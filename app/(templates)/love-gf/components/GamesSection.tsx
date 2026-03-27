@@ -364,12 +364,21 @@ interface HistoryEntry {
   mediaUrl?: string;
 }
 
+export interface ServerGameResponse {
+  type: "truth" | "dare";
+  prompt: string;
+  answer: string;
+  savedAt?: string;
+  mediaUrl?: string;
+}
+
 interface TruthOrDareProps {
   shareId: string | null;
   customTruthDare: TruthDareItem[];
+  initialResponses?: ServerGameResponse[];
 }
 
-function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
+function TruthOrDare({ shareId, customTruthDare, initialResponses = [] }: TruthOrDareProps) {
   type ActiveCard = { text: string; photoUrl?: string; audioUrl?: string };
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
   const [card, setCard] = useState<ActiveCard | null>(null);
@@ -379,17 +388,25 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const [saving, setSaving] = useState(false);
   const [dareCompleted, setDareCompleted] = useState(false);
   const [completionMsg, setCompletionMsg] = useState("");
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(() =>
+    initialResponses.map((r, i) => ({
+      id: -(i + 1), // negative IDs for server entries to avoid collision
+      type: r.type,
+      prompt: r.prompt,
+      answer: r.answer,
+      mediaUrl: r.mediaUrl,
+    }))
+  );
+  const [showHistory, setShowHistory] = useState(initialResponses.length > 0);
   const [historyFilter, setHistoryFilter] = useState<"all" | "truth" | "dare">("all");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [responseAudioUrl, setResponseAudioUrl] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
-  const [micError, setMicError] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordChunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioFileInputRef = useRef<HTMLInputElement | null>(null);
   const [responsePhotoUrl, setResponsePhotoUrl] = useState("");
   const responsePhotoInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -421,7 +438,6 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setCompletionMsg("");
     setResponseAudioUrl("");
     setResponsePhotoUrl("");
-    setMicError(false);
     setTimeout(() => textareaRef.current?.focus(), 300);
   }, [used, getTruths, getDares]);
 
@@ -429,13 +445,25 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     setHistory((prev) => [{ id: Date.now(), type, prompt, answer: ans, ...(mediaUrl && { mediaUrl }) }, ...prev]);
   }, []);
 
+  // Load an audio file chosen from device storage as a base64 data URL
+  const loadAudioFile = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }, []);
+
   const startRecording = useCallback(async () => {
-    setMicError(false);
     let stream: MediaStream;
+    // If getUserMedia is not available at all, go straight to file picker
+    if (!navigator.mediaDevices?.getUserMedia) {
+      audioFileInputRef.current?.click();
+      return;
+    }
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      setMicError(true);
+      // Mic denied / not found — silently open audio file picker instead
+      audioFileInputRef.current?.click();
       return;
     }
     // Pick best supported mimeType
@@ -454,7 +482,8 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
     } catch {
       try { recorder = new MediaRecorder(stream); } catch {
         stream.getTracks().forEach((t) => t.stop());
-        setMicError(true);
+        // Fall back to file picker
+        audioFileInputRef.current?.click();
         return;
       }
     }
@@ -468,7 +497,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
       reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
       reader.readAsDataURL(blob);
     };
-    recorder.start(200); // timeslice for more frequent ondataavailable
+    recorder.start(200);
     recorderRef.current = recorder;
     setRecording(true);
     setRecordSeconds(0);
@@ -530,7 +559,7 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
   const reset = useCallback(() => {
     setUsed(new Set()); setCard(null); setMode(null);
     setAnswer(""); setSaved(false); setDareCompleted(false); setCompletionMsg("");
-    setResponseAudioUrl(""); setResponsePhotoUrl(""); setMicError(false);
+    setResponseAudioUrl(""); setResponsePhotoUrl("");
     if (recorderRef.current) { recorderRef.current.stop(); recorderRef.current = null; }
     setRecording(false);
     if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
@@ -753,13 +782,12 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                   ) : (
                     <button onClick={startRecording} style={{
                       flex: 1, padding: "9px 0", borderRadius: 10,
-                      border: micError ? "1.5px solid rgba(180,60,50,0.45)" : "1.5px dashed rgba(200,130,60,0.35)",
-                      background: micError ? "rgba(180,60,50,0.06)" : "rgba(200,130,60,0.05)", cursor: "pointer",
-                      fontFamily: CURSIVE, fontSize: 12,
-                      color: micError ? "rgb(160,50,40)" : "rgb(160,90,30)",
+                      border: "1.5px dashed rgba(200,130,60,0.35)",
+                      background: "rgba(200,130,60,0.05)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 12, color: "rgb(160,90,30)",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     }}>
-                      {micError ? "🚫 Mic denied — tap to retry" : "🎤 Record voice"}
+                      🎤 Record voice
                     </button>
                   )}
                   {/* Photo response */}
@@ -804,6 +832,18 @@ function TruthOrDare({ shareId, customTruthDare }: TruthOrDareProps) {
                       URL.revokeObjectURL(url);
                     };
                     img.src = url;
+                    e.target.value = "";
+                  }}
+                />
+                {/* Hidden audio file picker — fallback when mic is blocked */}
+                <input
+                  ref={audioFileInputRef}
+                  type="file"
+                  accept="audio/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) loadAudioFile(f);
                     e.target.value = "";
                   }}
                 />
@@ -1080,9 +1120,10 @@ interface Props {
   data: ContentData;
   shareId?: string | null;
   quizAttempts?: QuizAttemptRecord[];
+  initialGameResponses?: ServerGameResponse[];
 }
 
-export default memo(function GamesSection({ data, shareId = null, quizAttempts = [] }: Props) {
+export default memo(function GamesSection({ data, shareId = null, quizAttempts = [], initialGameResponses = [] }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   return (
@@ -1148,7 +1189,7 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts =
           >
             {activeGame === "quiz"
               ? <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} initialAttempts={quizAttempts} />
-              : <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} />
+              : <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} initialResponses={initialGameResponses} />
             }
           </motion.div>
         </div>

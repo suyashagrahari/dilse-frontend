@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { ContentData } from "./types";
 
@@ -32,9 +33,16 @@ interface Props {
   onEditClick: () => void;
 }
 
+const spring = (delay: number, stiffness = 160, damping = 22) => ({
+  type: "spring" as const,
+  stiffness,
+  damping,
+  delay,
+});
+
 /**
- * Scrapbook collage home section — same layout as /love/page.tsx
- * but with user's actual gallery photos in the polaroid frames.
+ * Scrapbook collage home section with Canva-style entrance animations.
+ * Each polaroid and decoration flies in from a unique direction.
  */
 export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
   const homePhotos = data.homePhotos || [];
@@ -58,9 +66,12 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
         overflow: "hidden",
       }}
     >
-      {/* Phone frame corners (premium rounded border) */}
-      <div
+      {/* Phone frame corners */}
+      <motion.div
         aria-hidden="true"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.05 }}
         style={{
           position: "absolute",
           inset: 0,
@@ -71,13 +82,12 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           zIndex: 1,
         }}
       />
-      {/* Scrapbook canvas — 2:3 ratio, fills phone width */}
+
+      {/* Scrapbook canvas */}
       <div
         style={{
           position: "relative",
           zIndex: 2,
-          // Always fill the phone height, then clamp to viewport width.
-          // This removes leftover top/bottom gaps and keeps the collage centered.
           width: "min(100vw, calc(100dvh * 2 / 3))",
           height: "100%",
           background: "transparent",
@@ -86,271 +96,287 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
         }}
       >
         {/* Corner brackets */}
-        <div
+        <motion.div
           aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
+        >
+          <div style={{ position: "absolute", top: 12, left: 12, width: 44, height: 44, borderLeft: "3px solid rgba(158, 126, 97, 0.42)", borderTop: "3px solid rgba(158, 126, 97, 0.42)", borderTopLeftRadius: 16, opacity: 0.7 }} />
+          <div style={{ position: "absolute", top: 12, right: 12, width: 44, height: 44, borderRight: "3px solid rgba(158, 126, 97, 0.42)", borderTop: "3px solid rgba(158, 126, 97, 0.42)", borderTopRightRadius: 16, opacity: 0.7 }} />
+          <div style={{ position: "absolute", bottom: 12, left: 12, width: 44, height: 44, borderLeft: "3px solid rgba(158, 126, 97, 0.42)", borderBottom: "3px solid rgba(158, 126, 97, 0.42)", borderBottomLeftRadius: 16, opacity: 0.7 }} />
+          <div style={{ position: "absolute", bottom: 12, right: 12, width: 44, height: 44, borderRight: "3px solid rgba(158, 126, 97, 0.42)", borderBottom: "3px solid rgba(158, 126, 97, 0.42)", borderBottomRightRadius: 16, opacity: 0.7 }} />
+        </motion.div>
+
+        {/* Canvas paper background (desktop only) */}
+        <div className="hidden sm:block" style={{ position: "absolute", inset: 0 }} aria-hidden="true">
+          <Image src="/love/image18.webp" alt="" fill priority style={{ objectFit: "cover", objectPosition: "center" }} />
+        </div>
+
+        {/* ── Torn paper LEFT — slides in from left ── */}
+        <motion.div
+          style={{ position: "absolute", left: "-33.8%", top: "0", width: "87.6%", height: "21.0%", zIndex: 1, mixBlendMode: "multiply" }}
+          initial={{ x: -120, opacity: 0 }}
+          animate={{ x: 0, opacity: 0.9 }}
+          transition={spring(0.08, 200, 28)}
+        >
+          <div style={{ transform: "rotate(92.09deg)", width: "100%", height: "100%" }}>
+            <Image src="/love/image17.webp" alt="" width={1600} height={577} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
+          </div>
+        </motion.div>
+
+        {/* ── Sticky note — drops from top ── */}
+        <motion.div
+          style={{ position: "absolute", left: "42.8%", top: "6.6%", width: "48.6%", zIndex: 2 }}
+          initial={{ y: -80, rotate: 12, opacity: 0 }}
+          animate={{ y: 0, rotate: 8, opacity: 1 }}
+          transition={spring(0.45, 220, 18)}
+        >
+          <Image src="/love/image16.webp" alt="note" width={780} height={605} style={{ width: "100%", height: "auto", display: "block" }} />
+        </motion.div>
+
+        {/* ── Torn paper RIGHT — slides in from right ── */}
+        <motion.div
+          style={{ position: "absolute", left: "46.2%", top: "73.8%", width: "87.6%", height: "21.0%", zIndex: 3, mixBlendMode: "multiply" }}
+          initial={{ x: 120, opacity: 0 }}
+          animate={{ x: 0, opacity: 0.9 }}
+          transition={spring(0.1, 200, 28)}
+        >
+          <div style={{ transform: "rotate(-83.58deg)", width: "100%", height: "100%" }}>
+            <Image src="/love/image15.webp" alt="" width={1600} height={400} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
+          </div>
+        </motion.div>
+
+        {/* ── Photo 2 (top-right polaroid) — drops from top-right ── */}
+        <motion.div
           style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 3,
+            position: "absolute", left: "48%", top: "18%", width: "45.2%", height: "25.2%",
+            zIndex: 4, background: "#faf8f2",
+            boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)",
           }}
+          initial={{ x: 100, y: -100, rotate: 30, opacity: 0 }}
+          animate={{ x: 0, y: 0, rotate: 18, opacity: 1 }}
+          transition={spring(0.5, 180, 20)}
         >
-          {/* top-left */}
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              left: 12,
-              width: 44,
-              height: 44,
-              borderLeft: "3px solid rgba(158, 126, 97, 0.42)",
-              borderTop: "3px solid rgba(158, 126, 97, 0.42)",
-              borderTopLeftRadius: 16,
-              opacity: 0.7,
-            }}
-          />
-          {/* top-right */}
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              width: 44,
-              height: 44,
-              borderRight: "3px solid rgba(158, 126, 97, 0.42)",
-              borderTop: "3px solid rgba(158, 126, 97, 0.42)",
-              borderTopRightRadius: 16,
-              opacity: 0.7,
-            }}
-          />
-          {/* bottom-left */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 12,
-              left: 12,
-              width: 44,
-              height: 44,
-              borderLeft: "3px solid rgba(158, 126, 97, 0.42)",
-              borderBottom: "3px solid rgba(158, 126, 97, 0.42)",
-              borderBottomLeftRadius: 16,
-              opacity: 0.7,
-            }}
-          />
-          {/* bottom-right */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 12,
-              right: 12,
-              width: 44,
-              height: 44,
-              borderRight: "3px solid rgba(158, 126, 97, 0.42)",
-              borderBottom: "3px solid rgba(158, 126, 97, 0.42)",
-              borderBottomRightRadius: 16,
-              opacity: 0.7,
-            }}
-          />
-        </div>
-
-        {/* Canvas paper background (desktop only inside isolated card) */}
-        <div
-          className="hidden sm:block"
-          style={{ position: "absolute", inset: 0 }}
-          aria-hidden="true"
-        >
-          <Image src="/love/image18.webp" alt="" fill priority
-            style={{ objectFit: "cover", objectPosition: "center" }} />
-        </div>
-
-        {/* ── Torn paper LEFT ── */}
-        <div style={{ position: "absolute", left: "-33.8%", top: "0", width: "87.6%", height: "21.0%",
-          transform: "rotate(92.09deg)", zIndex: 1, opacity: 0.9, mixBlendMode: "multiply" }}>
-          <Image src="/love/image17.webp" alt="" width={1600} height={577}
-            style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
-        </div>
-
-        {/* ── Sticky note ── */}
-        <div style={{ position: "absolute", left: "42.8%", top: "6.6%", width: "48.6%",
-          transform: "rotate(8deg)", zIndex: 2 }}>
-          <Image src="/love/image16.webp" alt="note" width={780} height={605}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
-
-        {/* ── Torn paper RIGHT ── */}
-        <div style={{ position: "absolute", left: "46.2%", top: "73.8%", width: "87.6%", height: "21.0%",
-          transform: "rotate(-83.58deg)", zIndex: 3, opacity: 0.9, mixBlendMode: "multiply" }}>
-          <Image src="/love/image15.webp" alt="" width={1600} height={400}
-            style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
-        </div>
-
-        {/* ── Photo 2 (top-right polaroid) ── */}
-        <div style={{ position: "absolute", left: "48%", top: "18%", width: "45.2%", height: "25.2%",
-          transform: "rotate(18deg)", zIndex: 4,
-          background: "#faf8f2", boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)" }}>
           {p(1) ? (
             <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(1)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }}
-                sizes="43vw" />
+              <Image src={p(1)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
             </div>
           ) : (
             <PhotoPlaceholder index={2} />
           )}
-        </div>
+        </motion.div>
 
-        {/* ── Photo 4 (bottom-right tall polaroid) ── */}
-        <div style={{ position: "absolute", left: "47%", top: "46%", width: "49.1%", height: "28.2%",
-          transform: "rotate(10deg)", zIndex: 20,
-          background: "#faf8f2", boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)" }}>
+        {/* ── Photo 4 (bottom-right tall polaroid) — slides from right ── */}
+        <motion.div
+          style={{
+            position: "absolute", left: "47%", top: "46%", width: "49.1%", height: "28.2%",
+            zIndex: 20, background: "#faf8f2",
+            boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)",
+          }}
+          initial={{ x: 140, y: 60, rotate: 20, opacity: 0 }}
+          animate={{ x: 0, y: 0, rotate: 10, opacity: 1 }}
+          transition={spring(0.65, 170, 22)}
+        >
           {p(3) ? (
             <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(3)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }}
-                sizes="47vw" />
+              <Image src={p(3)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="47vw" />
             </div>
           ) : (
             <PhotoPlaceholder index={4} />
           )}
-        </div>
+        </motion.div>
 
-        {/* ── Photo 3 (bottom-left polaroid) ── */}
-        <div style={{ position: "absolute", left: "9.2%", top: "50%", width: "45.1%", height: "25.3%",
-          transform: "rotate(-9deg)", zIndex: 25,
-          background: "#faf8f2", boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)" }}>
+        {/* ── Photo 3 (bottom-left polaroid) — slides from bottom-left ── */}
+        <motion.div
+          style={{
+            position: "absolute", left: "9.2%", top: "50%", width: "45.1%", height: "25.3%",
+            zIndex: 25, background: "#faf8f2",
+            boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)",
+          }}
+          initial={{ x: -100, y: 100, rotate: -22, opacity: 0 }}
+          animate={{ x: 0, y: 0, rotate: -9, opacity: 1 }}
+          transition={spring(0.58, 175, 21)}
+        >
           {p(2) ? (
             <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(2)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }}
-                sizes="43vw" />
+              <Image src={p(2)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
             </div>
           ) : (
             <PhotoPlaceholder index={3} />
           )}
-        </div>
+        </motion.div>
 
-        {/* ── Right botanical ── */}
-        <div style={{ position: "absolute", left: "65.8%", top: "25.4%", width: "41.8%",
-          transform: "rotate(8deg)", zIndex: 30, mixBlendMode: "multiply" }}>
-          <Image src="/love/image11.webp" alt="" width={312} height={508}
-            style={{ width: "100%", height: "32%", display: "block" }} />
-        </div>
+        {/* ── Right botanical — fades + slides from right ── */}
+        <motion.div
+          style={{ position: "absolute", left: "65.8%", top: "25.4%", width: "41.8%", zIndex: 30, mixBlendMode: "multiply" }}
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={spring(0.72, 200, 26)}
+        >
+          <div style={{ transform: "rotate(8deg)" }}>
+            <Image src="/love/image11.webp" alt="" width={312} height={508} style={{ width: "100%", height: "32%", display: "block" }} />
+          </div>
+        </motion.div>
 
-        {/* ── Pushpin 1 ── */}
-        <div style={{ position: "absolute", left: "70.9%", top: "20.2%", width: "7.2%",
-          transform: "rotate(15deg)", zIndex: 8, mixBlendMode: "multiply" }}>
-          <div
-            aria-hidden="true"
-            style={{
-              width: "100%",
-              aspectRatio: "1 / 1",
-              borderRadius: "999px",
+        {/* ── Pushpin 1 — drops from top ── */}
+        <motion.div
+          style={{ position: "absolute", left: "70.9%", top: "20.2%", width: "7.2%", zIndex: 8, mixBlendMode: "multiply" }}
+          initial={{ y: -30, scale: 0, opacity: 0 }}
+          animate={{ y: 0, scale: 1, opacity: 1 }}
+          transition={spring(0.55, 300, 18)}
+        >
+          <div style={{ transform: "rotate(15deg)" }}>
+            <div aria-hidden="true" style={{
+              width: "100%", aspectRatio: "1 / 1", borderRadius: "999px",
               background: "radial-gradient(circle at 35% 30%, #f9f9fb 0%, #ececef 55%, #d3d3d8 100%)",
               border: "1.5px solid rgba(135,135,145,0.35)",
               boxShadow: "0 3px 8px rgba(0,0,0,0.28), inset 0 1px 2px rgba(255,255,255,0.7)",
-            }}
-          />
-        </div>
+            }} />
+          </div>
+        </motion.div>
 
-        {/* ── Pushpin 2 ── */}
-        <div style={{ position: "absolute", left: "22.8%", top: "51.8%", width: "7.2%",
-          transform: "rotate(-9deg)", zIndex: 9, mixBlendMode: "multiply" }}>
-          <div
-            aria-hidden="true"
-            style={{
-              width: "100%",
-              aspectRatio: "1 / 1",
-              borderRadius: "999px",
+        {/* ── Pushpin 2 — drops from top ── */}
+        <motion.div
+          style={{ position: "absolute", left: "22.8%", top: "51.8%", width: "7.2%", zIndex: 9, mixBlendMode: "multiply" }}
+          initial={{ y: -30, scale: 0, opacity: 0 }}
+          animate={{ y: 0, scale: 1, opacity: 1 }}
+          transition={spring(0.62, 300, 18)}
+        >
+          <div style={{ transform: "rotate(-9deg)" }}>
+            <div aria-hidden="true" style={{
+              width: "100%", aspectRatio: "1 / 1", borderRadius: "999px",
               background: "radial-gradient(circle at 35% 30%, #f9f9fb 0%, #ececef 55%, #d3d3d8 100%)",
               border: "1.5px solid rgba(135,135,145,0.35)",
               boxShadow: "0 3px 8px rgba(0,0,0,0.28), inset 0 1px 2px rgba(255,255,255,0.7)",
-            }}
-          />
-        </div>
+            }} />
+          </div>
+        </motion.div>
 
-        {/* ── Bottom flower ── */}
-        <div style={{ position: "absolute", left: "13%", top: "80.4%", width: "25.4%",
-          transform: "rotate(12deg)", zIndex: 35, mixBlendMode: "multiply" }}>
-          <Image src="/love/image8.webp" alt="" width={240} height={360}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
+        {/* ── Bottom flower — slides from bottom-left ── */}
+        <motion.div
+          style={{ position: "absolute", left: "13%", top: "80.4%", width: "25.4%", zIndex: 35, mixBlendMode: "multiply" }}
+          initial={{ x: -40, y: 60, opacity: 0 }}
+          animate={{ x: 0, y: 0, opacity: 1 }}
+          transition={spring(0.78, 190, 24)}
+        >
+          <div style={{ transform: "rotate(12deg)" }}>
+            <Image src="/love/image8.webp" alt="" width={240} height={360} style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+        </motion.div>
 
-        {/* ── Fern ── */}
-        <div style={{ position: "absolute", left: "5%", top: "68.7%", width: "23.5%",
-          transform: "rotate(-30deg)", zIndex: 34, mixBlendMode: "multiply" }}>
-          <Image src="/love/image7.webp" alt="" width={174} height={459}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
+        {/* ── Fern — slides from bottom-left ── */}
+        <motion.div
+          style={{ position: "absolute", left: "5%", top: "68.7%", width: "23.5%", zIndex: 34, mixBlendMode: "multiply" }}
+          initial={{ x: -50, y: 40, opacity: 0 }}
+          animate={{ x: 0, y: 0, opacity: 1 }}
+          transition={spring(0.75, 185, 24)}
+        >
+          <div style={{ transform: "rotate(-30deg)" }}>
+            <Image src="/love/image7.webp" alt="" width={174} height={459} style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+        </motion.div>
 
-        {/* ── Dandelion ── */}
-        <div style={{ position: "absolute", left: "77.8%", top: "-2.4%", width: "28.2%",
-          transform: "rotate(26.17deg)", zIndex: 12, mixBlendMode: "multiply" }}>
-          <Image src="/love/image6.webp" alt="" width={210} height={228}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
+        {/* ── Dandelion — drops from top-right ── */}
+        <motion.div
+          style={{ position: "absolute", left: "77.8%", top: "-2.4%", width: "28.2%", zIndex: 12, mixBlendMode: "multiply" }}
+          initial={{ y: -50, x: 30, opacity: 0 }}
+          animate={{ y: 0, x: 0, opacity: 1 }}
+          transition={spring(0.2, 190, 24)}
+        >
+          <div style={{ transform: "rotate(26.17deg)" }}>
+            <Image src="/love/image6.webp" alt="" width={210} height={228} style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+        </motion.div>
 
-        {/* ── "love you!" cursive text ── */}
-        <div style={{ position: "absolute", left: "50.3%", top: "9.0%", width: "39.1%",
-          transform: "rotate(8deg)", zIndex: 13 }}>
-          <span style={{
-            display: "block",
-            fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
-            fontSize: "clamp(24px, 12.5vw, 54px)",
-            color: "rgb(158, 126, 97)",
-            fontWeight: 700,
-            letterSpacing: "0.01em",
-            lineHeight: 1.2,
-            whiteSpace: "nowrap",
-            pointerEvents: "none",
-          }}>
-            love you!
-          </span>
-        </div>
+        {/* ── "love you!" cursive text — bounces in from top ── */}
+        <motion.div
+          style={{ position: "absolute", left: "50.3%", top: "9.0%", width: "39.1%", zIndex: 13 }}
+          initial={{ y: -40, scale: 0.6, opacity: 0 }}
+          animate={{ y: 0, scale: 1, opacity: 1 }}
+          transition={spring(0.38, 240, 16)}
+        >
+          <div style={{ transform: "rotate(8deg)" }}>
+            <span style={{
+              display: "block",
+              fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
+              fontSize: "clamp(24px, 12.5vw, 54px)",
+              color: "rgb(158, 126, 97)",
+              fontWeight: 700,
+              letterSpacing: "0.01em",
+              lineHeight: 1.2,
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+            }}>
+              love you!
+            </span>
+          </div>
+        </motion.div>
 
-        {/* ── Photo 1 LARGE (main polaroid) ── */}
-        <div style={{ position: "absolute", left: "9%", top: "18.6%", width: "45.6%", height: "30%",
-          transform: "rotate(-12deg)", zIndex: 14,
-          background: "#faf8f2", boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)" }}>
+        {/* ── Photo 1 LARGE (main polaroid) — slides from left ── */}
+        <motion.div
+          style={{
+            position: "absolute", left: "9%", top: "18.6%", width: "45.6%", height: "30%",
+            zIndex: 14, background: "#faf8f2",
+            boxShadow: "3px 6px 22px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.15)",
+          }}
+          initial={{ x: -180, y: 30, rotate: -22, opacity: 0 }}
+          animate={{ x: 0, y: 0, rotate: -12, opacity: 1 }}
+          transition={spring(0.3, 160, 22)}
+        >
           {p(0) ? (
             <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(0)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center 10%" }}
-                sizes="44vw" />
+              <Image src={p(0)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center 10%" }} sizes="44vw" />
             </div>
           ) : (
             <PhotoPlaceholder index={1} />
           )}
-        </div>
+        </motion.div>
 
-        {/* ── Top-left yarrow botanical ── */}
-        <div style={{ position: "absolute", left: "-4.6%", top: "-0.1%", width: "29.2%",
-          transform: "rotate(18.83deg)", zIndex: 15, mixBlendMode: "multiply" }}>
-          <Image src="/love/image4.webp" alt="" width={215} height={355}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
+        {/* ── Top-left yarrow botanical — slides from top-left ── */}
+        <motion.div
+          style={{ position: "absolute", left: "-4.6%", top: "-0.1%", width: "29.2%", zIndex: 15, mixBlendMode: "multiply" }}
+          initial={{ x: -50, y: -40, opacity: 0 }}
+          animate={{ x: 0, y: 0, opacity: 1 }}
+          transition={spring(0.18, 185, 24)}
+        >
+          <div style={{ transform: "rotate(18.83deg)" }}>
+            <Image src="/love/image4.webp" alt="" width={215} height={355} style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+        </motion.div>
 
-        {/* ── Center pressed flower ── */}
-        <div style={{ position: "absolute", left: "44.2%", top: "42.1%", width: "16.5%", zIndex: 36,
-          mixBlendMode: "multiply" }}>
-          <Image src="/love/image3.webp" alt="" width={122} height={121}
-            style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
+        {/* ── Center pressed flower — pops in from center ── */}
+        <motion.div
+          style={{ position: "absolute", left: "44.2%", top: "42.1%", width: "16.5%", zIndex: 36, mixBlendMode: "multiply" }}
+          initial={{ scale: 0, rotate: -60, opacity: 0 }}
+          animate={{ scale: 1, rotate: 0, opacity: 1 }}
+          transition={spring(0.7, 280, 18)}
+        >
+          <Image src="/love/image3.webp" alt="" width={122} height={121} style={{ width: "100%", height: "auto", display: "block" }} />
+        </motion.div>
       </div>
 
       {/* Below canvas: sender name */}
       {isPersonalized && data.senderName && (
-        <p style={{
-          marginTop: 12,
-          fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
-          fontSize: "clamp(13px, 3.5vw, 18px)",
-          color: "rgb(108, 74, 46)",
-          opacity: 0.75,
-          letterSpacing: "0.08em",
-          textAlign: "center",
-          padding: "0 16px 8px",
-          pointerEvents: "none",
-        }}>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 0.75, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
+          style={{
+            marginTop: 12,
+            fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
+            fontSize: "clamp(13px, 3.5vw, 18px)",
+            color: "rgb(108, 74, 46)",
+            letterSpacing: "0.08em",
+            textAlign: "center",
+            padding: "0 16px 8px",
+            pointerEvents: "none",
+          }}
+        >
           — from {data.senderName} ♡
-        </p>
+        </motion.p>
       )}
-
-      {/* No explicit CTA button here: editing is started from the top "Create" button */}
     </div>
   );
 }

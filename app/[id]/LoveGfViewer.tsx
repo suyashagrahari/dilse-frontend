@@ -18,6 +18,7 @@ import {
   type TruthDareItem,
   DEMO_CONTENT,
 } from "@/app/(templates)/love-gf/components/types";
+import type { ServerGameResponse } from "@/app/(templates)/love-gf/components/GamesSection";
 
 const GallerySection = lazy(() => import("@/app/(templates)/love-gf/components/GallerySection"));
 const MusicSection   = lazy(() => import("@/app/(templates)/love-gf/components/MusicSection"));
@@ -182,6 +183,8 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
   const content      = rawToContentData(rawData);
   const quizAttempts: QuizAttemptRecord[] =
     (rawData.quizAttempts as QuizAttemptRecord[] | undefined) ?? [];
+  const gameResponses: ServerGameResponse[] =
+    (rawData.gameResponses as ServerGameResponse[] | undefined) ?? [];
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
 
@@ -260,7 +263,7 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         {tab === "games" && (
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
-              <GamesSection data={content} shareId={shareId} quizAttempts={quizAttempts} />
+              <GamesSection data={content} shareId={shareId} quizAttempts={quizAttempts} initialGameResponses={gameResponses} />
             </Suspense>
           </ScrapbookBg>
         )}
