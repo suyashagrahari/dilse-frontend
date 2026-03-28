@@ -18,6 +18,31 @@ export interface PhotoItem {
   cropY: number;  // 0-100 for CSS object-position-y
 }
 
+/** Single circular home hero photo (same framing controls as gallery) */
+export interface HomeCoverPhoto {
+  url: string;
+  cropX: number;
+  cropY: number;
+  /** 100 = default fill; higher zooms in within the circle */
+  scale: number;
+}
+
+export const EMPTY_HOME_COVER: HomeCoverPhoto = {
+  url: "",
+  cropX: 50,
+  cropY: 50,
+  scale: 100,
+};
+
+export function clampHomeCoverCrop(c: HomeCoverPhoto): HomeCoverPhoto {
+  return {
+    url: c.url,
+    cropX: Math.min(100, Math.max(0, Number.isFinite(c.cropX) ? c.cropX : 50)),
+    cropY: Math.min(100, Math.max(0, Number.isFinite(c.cropY) ? c.cropY : 50)),
+    scale: Math.min(200, Math.max(100, Number.isFinite(c.scale) ? c.scale : 100)),
+  };
+}
+
 export interface MusicTrack {
   title: string;
   artist: string;
@@ -31,12 +56,52 @@ export interface ContentData {
   personalMessage: string;
   wishMessage: string;
   loveDate: string;
-  homePhotos: string[];        // 4 home polaroid photos (base64)
+  homeCoverPhoto: HomeCoverPhoto;
+  /** Legacy darling pages only; cleared when saving a new home cover */
+  homePhotos: string[];
   galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
   truthDareQuestions: TruthDareItem[];
   spinItems: string[];
   musicTracks: MusicTrack[];
+}
+
+/** Template / preview: circular home when the creator has not uploaded yet (matches hero art) */
+export const DARLING_HOME_DEFAULT_COVER: HomeCoverPhoto = {
+  url: "/assets/hero-bg.jpeg",
+  cropX: 50,
+  cropY: 32,
+  scale: 118,
+};
+
+/** True when the page has a real user upload (not the default template photo). */
+export function hasDarlingUserHomeCover(
+  data: Pick<ContentData, "homeCoverPhoto" | "homePhotos">
+): boolean {
+  const u = data.homeCoverPhoto?.url?.trim();
+  if (u) return true;
+  return Boolean((data.homePhotos || []).some((x) => typeof x === "string" && Boolean(x?.trim())));
+}
+
+/** Darling home: user cover → legacy slot → default demo circle for template preview */
+export function getDarlingHomeCoverDisplay(
+  data: Pick<ContentData, "homeCoverPhoto" | "homePhotos">
+): HomeCoverPhoto {
+  const saved = data.homeCoverPhoto ? clampHomeCoverCrop(data.homeCoverPhoto) : EMPTY_HOME_COVER;
+  if (saved.url.trim()) return saved;
+  const legacy = (data.homePhotos || []).find((x): x is string => typeof x === "string" && Boolean(x?.trim()));
+  if (legacy) return { ...EMPTY_HOME_COVER, url: legacy.trim() };
+  return { ...DARLING_HOME_DEFAULT_COVER };
+}
+
+/** Love GF: circle layout only when user chose the new single-photo home (not legacy polaroids) */
+export function loveGfUsesCircleOnly(data: Pick<ContentData, "homeCoverPhoto">): boolean {
+  return Boolean(data.homeCoverPhoto?.url?.trim());
+}
+
+export function getLoveGfCircleCover(data: ContentData): HomeCoverPhoto {
+  if (data.homeCoverPhoto?.url?.trim()) return clampHomeCoverCrop(data.homeCoverPhoto);
+  return EMPTY_HOME_COVER;
 }
 
 export type EditMode = null | "choose" | "ai" | "ai-review" | "manual" | "preview" | "password";
@@ -68,6 +133,7 @@ export const DEMO_CONTENT: ContentData = {
   wishMessage:
     "To the one who holds my heart — thank you for every laugh, every hug, every quiet moment that felt like the whole world. You are my favourite person. Love you to the moon and back ♡",
   loveDate: "",
+  homeCoverPhoto: { ...EMPTY_HOME_COVER },
   homePhotos: [],
   galleryPhotos: [],
   truthDareQuestions: [],

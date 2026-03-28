@@ -18,6 +18,29 @@ export interface PhotoItem {
   cropY: number;  // 0-100 for CSS object-position-y
 }
 
+export interface HomeCoverPhoto {
+  url: string;
+  cropX: number;
+  cropY: number;
+  scale: number;
+}
+
+export const EMPTY_HOME_COVER: HomeCoverPhoto = {
+  url: "",
+  cropX: 50,
+  cropY: 50,
+  scale: 100,
+};
+
+export function clampHomeCoverCrop(c: HomeCoverPhoto): HomeCoverPhoto {
+  return {
+    url: c.url,
+    cropX: Math.min(100, Math.max(0, Number.isFinite(c.cropX) ? c.cropX : 50)),
+    cropY: Math.min(100, Math.max(0, Number.isFinite(c.cropY) ? c.cropY : 50)),
+    scale: Math.min(200, Math.max(100, Number.isFinite(c.scale) ? c.scale : 100)),
+  };
+}
+
 export interface MusicTrack {
   title: string;
   artist: string;
@@ -31,12 +54,22 @@ export interface ContentData {
   personalMessage: string;
   wishMessage: string;
   loveDate: string;
-  homePhotos: string[];        // 4 home polaroid photos (base64)
+  homeCoverPhoto: HomeCoverPhoto;
+  homePhotos: string[];
   galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
   truthDareQuestions: TruthDareItem[];
   spinItems: string[];
   musicTracks: MusicTrack[];
+}
+
+export function loveGfUsesCircleOnly(data: Pick<ContentData, "homeCoverPhoto">): boolean {
+  return Boolean(data.homeCoverPhoto?.url?.trim());
+}
+
+export function getLoveGfCircleCover(data: ContentData): HomeCoverPhoto {
+  if (data.homeCoverPhoto?.url?.trim()) return clampHomeCoverCrop(data.homeCoverPhoto);
+  return EMPTY_HOME_COVER;
 }
 
 export type EditMode = null | "choose" | "ai" | "ai-review" | "manual" | "preview" | "password";
@@ -68,6 +101,7 @@ export const DEMO_CONTENT: ContentData = {
   wishMessage:
     "To the one who holds my heart — thank you for every laugh, every hug, every quiet moment that felt like the whole world. You are my favourite person. Love you to the moon and back ♡",
   loveDate: "",
+  homeCoverPhoto: { ...EMPTY_HOME_COVER },
   homePhotos: [],
   galleryPhotos: [],
   truthDareQuestions: [],

@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Mail, Clock, X, Sparkles } from "lucide-react";
-import type { ContentData, TabId } from "./types";
+import {
+  type ContentData,
+  type TabId,
+  getDarlingHomeCoverDisplay,
+  hasDarlingUserHomeCover,
+} from "./types";
 
 const PINK      = "#ff3d6b";
 const PURPLE    = "#a855f7";
@@ -14,6 +19,9 @@ const HERO_BG   = "/assets/hero-bg.jpeg";
 
 /** Fixed anchor so the home template always shows a live-looking countdown before a real date is set */
 const PREVIEW_LOVE_DATE = "2022-02-14T15:30:00";
+
+/** Stable placeholder so timer digits match SSR and first client paint (avoids hydration mismatch). */
+const TIMER_PLACEHOLDER = { years: 0, months: 0, days: 0, hours: 0, mins: 0, secs: 0 };
 
 function computeElapsed(dateStr: string) {
   if (!dateStr) return null;
@@ -52,21 +60,25 @@ interface Props {
 
 export default function HomeSection({ data, isPersonalized: _isPersonalized, onEditClick }: Props) {
   const hasRealLoveDate = Boolean(data.loveDate?.trim()) && computeElapsed(data.loveDate) !== null;
-  const timerSource = hasRealLoveDate ? data.loveDate : PREVIEW_LOVE_DATE;
 
-  const [elapsed, setElapsed] = useState(() => computeElapsed(timerSource));
+  /** null until after mount — never call Date-based computeElapsed during SSR/first render */
+  const [elapsedLive, setElapsedLive] = useState<ReturnType<typeof computeElapsed> | null>(null);
   const [letterOpen, setLetterOpen] = useState(false);
 
   useEffect(() => {
     const src = hasRealLoveDate ? data.loveDate : PREVIEW_LOVE_DATE;
     const tick = () => {
-      const next = computeElapsed(src);
-      if (next) setElapsed(next);
+      setElapsedLive(computeElapsed(src));
     };
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, [hasRealLoveDate, data.loveDate]);
+
+  const elapsedForDisplay = elapsedLive ?? TIMER_PLACEHOLDER;
+
+  const homeCover = getDarlingHomeCoverDisplay(data);
+  const hasUserHomePhoto = hasDarlingUserHomeCover(data);
 
   const wishTrim = data.wishMessage?.trim() ?? "";
   const personalTrim = data.personalMessage?.trim() ?? "";
@@ -79,16 +91,147 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
     return wishTrim || personalTrim;
   })();
 
-  const timerUnits = elapsed
-    ? [
-        { val: elapsed.years,  label: "Years",  accent: PINK   },
-        { val: elapsed.months, label: "Months", accent: PURPLE },
-        { val: elapsed.days,   label: "Days",   accent: PINK   },
-        { val: elapsed.hours,  label: "Hours",  accent: PURPLE },
-        { val: elapsed.mins,   label: "Minutes", accent: PINK   },
-        { val: elapsed.secs,   label: "Seconds", accent: PURPLE },
-      ]
-    : null;
+  const timerUnits = [
+    { val: elapsedForDisplay.years,  label: "Years",   accent: PINK   },
+    { val: elapsedForDisplay.months, label: "Months",  accent: PURPLE },
+    { val: elapsedForDisplay.days,   label: "Days",    accent: PINK   },
+    { val: elapsedForDisplay.hours,  label: "Hours",   accent: PURPLE },
+    { val: elapsedForDisplay.mins,   label: "Minutes", accent: PINK   },
+    { val: elapsedForDisplay.secs,   label: "Seconds", accent: PURPLE },
+  ];
+
+  const namesHeader = (
+    <motion.div
+      key="names-header"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12 }}
+      style={{ textAlign: "center", width: "100%" }}
+    >
+      <div style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        gap: 5, marginBottom: 6,
+        padding: "4px 11px", borderRadius: 999,
+        background: "rgba(255,61,107,0.10)",
+        border: "1px solid rgba(255,61,107,0.22)",
+        backdropFilter: "blur(10px)",
+      }}>
+        <Sparkles size={11} color={PINK} strokeWidth={2} aria-hidden />
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.55)" }}>
+          FOR YOU
+        </span>
+      </div>
+      <h1 style={{
+        fontSize: "clamp(22px, 6.2vw, 32px)", fontWeight: 800, margin: 0,
+        background: GRAD,
+        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+        lineHeight: 1.12,
+        textShadow: "0 0 40px rgba(255,61,107,0.15)",
+      }}>
+        {data.senderName || "Always Yours"} & {data.recipientName || "My Love"}
+      </h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 7 }}>
+        <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.22))" }} />
+        <p style={{ margin: 0, fontSize: 11, color: TEXT_SOFT, letterSpacing: "0.03em", fontWeight: 500 }}>
+          Together through every moment 💜
+        </p>
+        <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.22))" }} />
+      </div>
+    </motion.div>
+  );
+
+  const circleHero = (
+    <motion.div
+      key="circle-hero"
+      initial={{ opacity: 0, scale: 0.88 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.05, type: "spring", stiffness: 280, damping: 22 }}
+      style={{
+        position: "relative",
+        width: "clamp(124px, 34vw, 156px)",
+        height: "clamp(124px, 34vw, 156px)",
+        margin: "0 auto 6px",
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: -14,
+          borderRadius: "50%",
+          border: "1.5px dashed rgba(255,61,107,0.38)",
+          boxShadow: "0 0 32px rgba(255,61,107,0.12)",
+          pointerEvents: "none",
+        }}
+        aria-hidden
+      />
+      {([
+        { emoji: "💕" as const, style: { top: "-4%", left: "12%" }, delay: 0 },
+        { emoji: "✨" as const, style: { top: "8%", right: "-2%" }, delay: 0.2 },
+        { emoji: "💕" as const, style: { bottom: "4%", right: "14%" }, delay: 0.4 },
+        { emoji: "✨" as const, style: { bottom: "-2%", left: "4%" }, delay: 0.15 },
+      ]).map(({ emoji, style: pos, delay }) => (
+        <motion.span
+          key={`${emoji}-${JSON.stringify(pos)}`}
+          aria-hidden
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1, y: [0, -3, 0] }}
+          transition={{
+            delay: 0.12 + delay,
+            y: { duration: 2.8 + delay, repeat: Infinity, ease: "easeInOut" },
+          }}
+          style={{
+            position: "absolute",
+            ...pos,
+            fontSize: 15,
+            filter: "drop-shadow(0 0 8px rgba(255,61,107,0.55))",
+            pointerEvents: "none",
+          }}
+        >
+          {emoji}
+        </motion.span>
+      ))}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "50%",
+          padding: 4,
+          background: GRAD,
+          boxShadow: `
+            0 0 0 1px rgba(255,255,255,0.12) inset,
+            0 16px 48px rgba(255,61,107,0.35),
+            0 8px 32px rgba(168,85,247,0.25)
+          `,
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "rgba(12,10,22,0.92)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={homeCover.url}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: `${homeCover.cropX}% ${homeCover.cropY}%`,
+              transform: `scale(${homeCover.scale / 100})`,
+              transformOrigin: `${homeCover.cropX}% ${homeCover.cropY}%`,
+            }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div style={{
@@ -113,7 +256,26 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
             filter: "saturate(1.06) contrast(1.02)",
           }}
         />
-        {/* Softer top so artwork shows; stronger bottom vignette for card readability */}
+        {/* Soft ambient from their photo — hero jpeg + vignette still read on top */}
+        {hasUserHomePhoto ? (
+          <div
+            className="absolute inset-0 overflow-hidden"
+            style={{ opacity: 0.55 }}
+            aria-hidden
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={homeCover.url}
+              alt=""
+              className="absolute left-1/2 top-[28%] h-[min(120%,100vw)] w-[min(120%,100vw)] max-w-none -translate-x-1/2 -translate-y-1/2 scale-[1.35]"
+              style={{
+                objectFit: "cover",
+                objectPosition: `${homeCover.cropX}% ${homeCover.cropY}%`,
+                filter: "blur(48px) saturate(1.15)",
+              }}
+            />
+          </div>
+        ) : null}
         <div
           className="absolute inset-0"
           style={{
@@ -141,38 +303,8 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
         className="lg:max-w-md lg:gap-3 lg:px-6"
       >
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          style={{ textAlign: "center", width: "100%" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            gap: 5, marginBottom: 6,
-            padding: "4px 11px", borderRadius: 999,
-            background: "rgba(255,61,107,0.10)",
-            border: "1px solid rgba(255,61,107,0.22)",
-            backdropFilter: "blur(10px)",
-          }}>
-            <Sparkles size={11} color={PINK} strokeWidth={2} aria-hidden />
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.55)" }}>
-              FOR YOU
-            </span>
-          </div>
-          <h1 style={{
-            fontSize: "clamp(22px, 6.2vw, 32px)", fontWeight: 800, margin: 0,
-            background: GRAD,
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            lineHeight: 1.12,
-            textShadow: "0 0 40px rgba(255,61,107,0.15)",
-          }}>
-            {data.senderName || "Always Yours"} & {data.recipientName || "My Love"}
-          </h1>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 7 }}>
-            <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.22))" }} />
-            <p style={{ margin: 0, fontSize: 11, color: TEXT_SOFT, letterSpacing: "0.03em", fontWeight: 500 }}>
-              Together through every moment 💜
-            </p>
-            <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.22))" }} />
-          </div>
-        </motion.div>
+        {circleHero}
+        {namesHeader}
 
         <motion.button
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
@@ -199,9 +331,9 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
             <Mail size={19} color={PINK} strokeWidth={1.8} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "0.01em" }}>Read the letter</p>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "0.01em" }}>Love Letter</p>
             <p style={{ margin: "2px 0 0", fontSize: 11, color: TEXT_DIM, lineHeight: 1.35 }}>
-              Tap to open your letter
+              Tap to read your special message
             </p>
           </div>
           <div style={{
@@ -255,16 +387,15 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
               <span style={{ fontSize: 21, lineHeight: 1, opacity: 0.9 }} aria-hidden>💍</span>
             </div>
 
-            {timerUnits ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: 6,
-                  opacity: hasRealLoveDate ? 1 : 0.92,
-                }}
-              >
-                {timerUnits.map(({ val, label, accent }) => (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 6,
+                opacity: hasRealLoveDate ? 1 : 0.92,
+              }}
+            >
+              {timerUnits.map(({ val, label, accent }) => (
                   <div
                     key={label}
                     style={{
@@ -304,7 +435,7 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
                     }}>
                       {label}
                     </p>
-                    {label === "Seconds" && (
+                    {label === "Seconds" && elapsedLive !== null && (
                       <motion.div
                         animate={{ opacity: [0.4, 1, 0.4] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -317,8 +448,7 @@ export default function HomeSection({ data, isPersonalized: _isPersonalized, onE
                     )}
                   </div>
                 ))}
-              </div>
-            ) : null}
+            </div>
           </div>
         </motion.div>
       </div>

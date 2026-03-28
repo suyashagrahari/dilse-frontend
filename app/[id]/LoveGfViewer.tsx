@@ -19,6 +19,8 @@ import {
   type QuizQuestion,
   type TruthDareItem,
   DEMO_CONTENT,
+  EMPTY_HOME_COVER,
+  clampHomeCoverCrop,
 } from "@/app/(templates)/love-gf/components/types";
 import type { ServerGameResponse } from "@/app/(templates)/love-gf/components/GamesSection";
 
@@ -45,6 +47,17 @@ function normalizePhoto(p: unknown): PhotoItem {
   };
 }
 
+function normalizeHomeCoverRaw(raw: unknown) {
+  if (!raw || typeof raw !== "object") return { ...EMPTY_HOME_COVER };
+  const o = raw as Record<string, unknown>;
+  return clampHomeCoverCrop({
+    url: String(o.url ?? ""),
+    cropX: Number(o.cropX ?? 50),
+    cropY: Number(o.cropY ?? 50),
+    scale: Number(o.scale ?? 100),
+  });
+}
+
 function rawToContentData(raw: Record<string, unknown>): ContentData {
   return {
     ...DEMO_CONTENT,
@@ -53,6 +66,7 @@ function rawToContentData(raw: Record<string, unknown>): ContentData {
     personalMessage:    String(raw.personalMessage ?? DEMO_CONTENT.personalMessage),
     wishMessage:        String(raw.wishMessage     ?? DEMO_CONTENT.wishMessage),
     loveDate:           String(raw.loveDate        ?? ""),
+    homeCoverPhoto:     normalizeHomeCoverRaw(raw.homeCoverPhoto),
     homePhotos:         (raw.homePhotos         as string[]         | undefined) ?? [],
     galleryPhotos:      ((raw.galleryPhotos     as unknown[]        | undefined) ?? []).map(normalizePhoto),
     quizQuestions:      (raw.quizQuestions      as QuizQuestion[]   | undefined) ?? [],

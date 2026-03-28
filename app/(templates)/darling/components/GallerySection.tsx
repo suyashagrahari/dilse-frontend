@@ -438,11 +438,11 @@ export default memo(function GallerySection({ data, titleInTopBar = false }: Pro
     <>
       <style jsx global>{`
         .drl-gallery-root-pad {
-          padding-top: max(46px, calc(env(safe-area-inset-top, 0px) + 38px));
+          padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 48px));
         }
         @media (min-width: 1024px) {
           .drl-gallery-root-pad {
-            padding-top: 20px;
+            padding-top: 28px;
           }
         }
         .drl-gallery-heading-desktop {
@@ -460,7 +460,7 @@ export default memo(function GallerySection({ data, titleInTopBar = false }: Pro
           .drl-gallery-heading-desktop {
             display: flex;
             font-size: clamp(22px, 2.4vw, 34px);
-            margin-bottom: 14px;
+            margin-bottom: 18px;
           }
         }
         @keyframes drl-marquee {
@@ -523,9 +523,9 @@ export default memo(function GallerySection({ data, titleInTopBar = false }: Pro
       <div className="flex flex-1 min-h-0 w-full flex-col lg:max-w-[min(1320px,calc(100vw-7rem))] lg:mx-auto lg:px-8 xl:px-10">
       {/* Marquee */}
       <div
-        className="mx-4 mb-3 shrink-0 overflow-hidden rounded-xl lg:mx-0 lg:mb-4"
+        className="mx-4 mb-3 mt-3 shrink-0 overflow-hidden rounded-xl lg:mx-0 lg:mb-4 lg:mt-4"
         style={{
-          padding: "8px 0",
+          padding: "10px 0",
           background: CARD, border: `1px solid ${CARD_BORDER}`,
         }}
       >

@@ -1,7 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { type ContentData, type EditMode, type PhotoItem, type QuizQuestion, type TruthDareItem } from "./types";
+import {
+  type ContentData,
+  type EditMode,
+  type HomeCoverPhoto,
+  type PhotoItem,
+  type QuizQuestion,
+  type TruthDareItem,
+  EMPTY_HOME_COVER,
+} from "./types";
 
 const WARM = "rgb(108, 74, 46)";
 const WARM_MID = "rgba(108, 74, 46, 0.55)";
@@ -144,7 +152,7 @@ export default function EditSheet({
   mf, manualStep, setManualStep, updateMf,
   onStartAi, onStartManual, onAiGenerate, onSaveWithPassword, saving,
 }: Props) {
-  const homeFileRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const homeCoverFileRef = useRef<HTMLInputElement | null>(null);
   const galleryFileRef = useRef<HTMLInputElement | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [showPw, setShowPw] = useState(false);
@@ -260,14 +268,11 @@ export default function EditSheet({
     if (galleryIdx >= updated.length && galleryIdx > 0) setGalleryIdx(galleryIdx - 1);
   };
 
-  const homePhotos: string[] = mf.homePhotos || [];
+  const hc: HomeCoverPhoto = mf.homeCoverPhoto ?? EMPTY_HOME_COVER;
 
-  const handleHomePhotoUpload = async (index: number, file: File) => {
+  const handleHomeCoverUpload = async (file: File) => {
     const b64 = await compressToBase64(file);
-    const updated = [...homePhotos];
-    while (updated.length <= index) updated.push("");
-    updated[index] = b64;
-    updateMf("homePhotos", updated);
+    updateMf("homeCoverPhoto", { ...hc, url: b64 });
   };
 
   // ── Quiz helpers ─────────────────────────────────────────────────────────
@@ -507,72 +512,119 @@ export default function EditSheet({
       </div>
     );
 
-    // Step 3: Home Photos (4 scrapbook polaroids)
+    // Step 3: Home cover — one circular photo + framing (gallery-style)
     if (manualStep === 3) return (
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
-          {hdr("Home Scrapbook ♡")}
+          {hdr("Home Photo ♡")}
           {progressBar}
           <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
-            Upload 4 photos — they appear as polaroids in the scrapbook home page.
+            Upload one photo — it shows in a circle on the home page. Use the sliders to position and zoom, same as Gallery photos.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {[0, 1, 2, 3].map((i) => {
-              const photo = homePhotos[i] || "";
-              return (
-                <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div
-                    onClick={() => homeFileRefs.current[i]?.click()}
-                    style={{
-                      aspectRatio: "3/4", borderRadius: 10,
-                      border: `2px dashed rgba(158,126,97,${photo ? "0.55" : "0.30"})`,
-                      background: photo ? "transparent" : "rgba(158,126,97,0.04)",
-                      cursor: "pointer", overflow: "hidden", position: "relative",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                    {photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 22, opacity: 0.35, marginBottom: 4 }}>📷</div>
-                        <div style={{ fontFamily: CURSIVE, fontSize: 11, color: WARM, opacity: 0.5 }}>
-                          Photo {i + 1}
-                        </div>
-                      </div>
-                    )}
-                    {photo && (
-                      <div style={{
-                        position: "absolute", inset: 0,
-                        background: "rgba(0,0,0,0)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        transition: "background 0.15s",
-                      }}>
-                        <span style={{
-                          fontFamily: CURSIVE, fontSize: 11, color: "#fff", opacity: 0,
-                          background: "rgba(0,0,0,0.4)", borderRadius: 6, padding: "2px 8px",
-                        }}>change</span>
-                      </div>
-                    )}
-                    <input
-                      ref={(el) => { homeFileRefs.current[i] = el; }}
-                      type="file" accept="image/*" style={{ display: "none" }}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHomePhotoUpload(i, f); }}
-                    />
-                  </div>
-                  {photo && (
-                    <button onClick={() => {
-                      const updated = [...homePhotos];
-                      updated[i] = "";
-                      updateMf("homePhotos", updated);
-                    }} style={{
-                      padding: "3px 0", border: "none", background: "transparent",
-                      fontFamily: CURSIVE, fontSize: 11, color: "rgba(180,60,50,0.7)", cursor: "pointer",
-                    }}>✕ remove</button>
-                  )}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") homeCoverFileRef.current?.click(); }}
+              onClick={() => homeCoverFileRef.current?.click()}
+              style={{
+                width: "min(220px, 70vw)",
+                aspectRatio: "1",
+                borderRadius: "50%",
+                border: `2px dashed rgba(158,126,97,${hc.url ? "0.55" : "0.30"})`,
+                cursor: "pointer",
+                overflow: "hidden",
+                position: "relative",
+                background: hc.url ? "transparent" : "rgba(158,126,97,0.06)",
+                boxShadow: hc.url ? "0 8px 28px rgba(40,22,8,0.2)" : "none",
+              }}
+            >
+              {hc.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={hc.url}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: `${hc.cropX}% ${hc.cropY}%`,
+                    transform: `scale(${hc.scale / 100})`,
+                    transformOrigin: `${hc.cropX}% ${hc.cropY}%`,
+                  }}
+                />
+              ) : (
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <div style={{ fontSize: 36, opacity: 0.35 }}>📷</div>
+                  <div style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM, opacity: 0.55 }}>Tap to upload</div>
                 </div>
-              );
-            })}
+              )}
+              <input
+                ref={homeCoverFileRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHomeCoverUpload(f); }}
+              />
+            </div>
+            {hc.url && (
+              <button
+                type="button"
+                onClick={() => updateMf("homeCoverPhoto", { ...EMPTY_HOME_COVER })}
+                style={{
+                  padding: "4px 12px", border: "none", background: "transparent",
+                  fontFamily: CURSIVE, fontSize: 12, color: "rgba(180,60,50,0.75)", cursor: "pointer",
+                }}
+              >
+                ✕ Remove photo
+              </button>
+            )}
+            {hc.url && (
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Horizontal position</span>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropX}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={hc.cropX}
+                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropX: Number(e.target.value) })}
+                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
+                  />
+                </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Vertical position</span>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropY}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={hc.cropY}
+                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropY: Number(e.target.value) })}
+                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
+                  />
+                </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Zoom (fill frame)</span>
+                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.scale}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={100}
+                    max={200}
+                    value={hc.scale}
+                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, scale: Number(e.target.value) })}
+                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
             {ghostBtn("← Back", () => setManualStep(2))}
@@ -1201,7 +1253,7 @@ export default function EditSheet({
               For {mf.recipientName || "your love"} ♡
             </div>
             <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", lineHeight: 1.6 }}>
-              {homePhotos.filter(Boolean).length} home photo{homePhotos.filter(Boolean).length !== 1 ? "s" : ""}
+              {mf.homeCoverPhoto?.url?.trim() ? "1 home photo" : "No home photo"}
               {" · "}
               {(mf.galleryPhotos || []).filter((p) => p.url).length} gallery photo{(mf.galleryPhotos || []).filter((p) => p.url).length !== 1 ? "s" : ""}
               {" · "}

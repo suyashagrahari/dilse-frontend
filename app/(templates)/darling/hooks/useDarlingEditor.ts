@@ -3,7 +3,17 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type ContentData, type PhotoItem, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
+import {
+  type ContentData,
+  type HomeCoverPhoto,
+  type PhotoItem,
+  type TabId,
+  type EditMode,
+  type Toast,
+  DEMO_CONTENT,
+  EMPTY_HOME_COVER,
+  clampHomeCoverCrop,
+} from "../components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 function normalizePhoto(p: unknown): PhotoItem {
@@ -15,6 +25,17 @@ function normalizePhoto(p: unknown): PhotoItem {
     cropX:  Number(obj.cropX  ?? 50),
     cropY:  Number(obj.cropY  ?? 50),
   };
+}
+
+function normalizeHomeCoverFromApi(raw: unknown): HomeCoverPhoto {
+  if (!raw || typeof raw !== "object") return { ...EMPTY_HOME_COVER };
+  const o = raw as Record<string, unknown>;
+  return clampHomeCoverCrop({
+    url: String(o.url ?? ""),
+    cropX: Number(o.cropX ?? 50),
+    cropY: Number(o.cropY ?? 50),
+    scale: Number(o.scale ?? 100),
+  });
 }
 
 export function useDarlingEditor() {
@@ -75,7 +96,8 @@ export function useDarlingEditor() {
               personalMessage: d.personalMessage || prev.personalMessage,
               wishMessage:     d.wishMessage     || prev.wishMessage,
               loveDate:        d.loveDate        || prev.loveDate,
-              homePhotos:         d.homePhotos         || [],
+              homeCoverPhoto:   normalizeHomeCoverFromApi(d.homeCoverPhoto),
+              homePhotos:         Array.isArray(d.homePhotos) ? d.homePhotos : [],
               galleryPhotos:      (d.galleryPhotos  || []).map(normalizePhoto),
               quizQuestions:      d.quizQuestions      || [],
               truthDareQuestions: d.truthDareQuestions || [],
@@ -168,7 +190,9 @@ export function useDarlingEditor() {
         personalMessage:    data.personalMessage,
         wishMessage:        data.wishMessage,
         loveDate:           data.loveDate,
-        homePhotos:         data.homePhotos         || [],
+        homeCoverPhoto:     data.homeCoverPhoto,
+        homePhotos:
+          data.homeCoverPhoto?.url?.trim() ? [] : (data.homePhotos || []),
         galleryPhotos:      data.galleryPhotos      || [],
         quizQuestions:      data.quizQuestions      || [],
         truthDareQuestions: data.truthDareQuestions || [],
