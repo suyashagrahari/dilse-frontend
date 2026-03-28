@@ -6,10 +6,11 @@ import { Send, Heart, X } from "lucide-react";
 import MiniAudioPlayer from "./MiniAudioPlayer";
 import { API_URL } from "@/lib/config";
 
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_BORDER = "rgba(201, 144, 106, 0.22)";
-const DARK_CARD = "rgba(12, 6, 20, 0.82)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const ROSE = "#ff3d6b";
+const ROSE_BORDER = "rgba(255, 61, 107, 0.18)";
+const DARK_CARD = "rgba(255,255,255,0.06)";
+const GRAD_LINE = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
+const CURSIVE = "system-ui, sans-serif";
 
 const MOODS = [
   { emoji: "💕", label: "Love" }, { emoji: "🥺", label: "Miss You" }, { emoji: "😊", label: "Happy" },
@@ -83,21 +84,21 @@ const NoteCard = memo(function NoteCard({ note, onSelect }: { note: Note; onSele
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 28, height: 28, borderRadius: "50%",
-            background: "rgba(201,144,106,0.14)",
+            background: "rgba(255,61,107,0.14)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
           }}>{note.mood}</div>
           <span style={{ fontFamily: CURSIVE, fontWeight: 700, fontSize: 13, color: ROSE }}>{note.from}</span>
         </div>
-        <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.45)" }}>{formatTime(note.savedAt)}</span>
+        <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(255,61,107,0.45)" }}>{formatTime(note.savedAt)}</span>
       </div>
       <p style={{
-        fontFamily: CURSIVE, fontSize: 12, color: "rgb(250, 240, 230)", lineHeight: 1.6,
+        fontFamily: CURSIVE, fontSize: 12, color: "#fff", lineHeight: 1.6,
         overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2,
         WebkitBoxOrient: "vertical", margin: 0,
       }}>{note.message}</p>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-        {note.mediaType === "audio" && <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.55)" }}>🎤 Voice note</span>}
-        {note.mediaType === "image" && <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.55)" }}>📸 Photo</span>}
+        {note.mediaType === "audio" && <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(255,61,107,0.55)" }}>🎤 Voice note</span>}
+        {note.mediaType === "image" && <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(255,61,107,0.55)" }}>📸 Photo</span>}
         <span style={{ fontFamily: CURSIVE, fontSize: 11, fontWeight: 600, color: ROSE, marginLeft: "auto" }}>
           Read →
         </span>
@@ -129,7 +130,7 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
           width: "100%", maxWidth: 360,
           background: "rgba(18, 8, 28, 0.97)",
           borderRadius: 24,
-          boxShadow: "0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,144,106,0.18)",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,61,107,0.18)",
           border: `1px solid ${ROSE_BORDER}`,
           overflow: "hidden",
         }}
@@ -137,13 +138,13 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
         <div style={{
           height: 72, display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative",
-          background: "linear-gradient(135deg, rgba(201,144,106,0.18), rgba(160,100,65,0.12), rgba(201,144,106,0.14))",
+          background: "linear-gradient(135deg, rgba(255,61,107,0.18), rgba(160,100,65,0.12), rgba(255,61,107,0.14))",
         }}>
           <span style={{ fontSize: 32 }}>{note.mood}</span>
           <button onClick={onClose} style={{
             position: "absolute", top: 10, right: 10,
             width: 28, height: 28, borderRadius: "50%",
-            background: "rgba(12,6,20,0.75)", border: `1px solid ${ROSE_BORDER}`,
+            background: "rgba(255,255,255,0.06)", border: `1px solid ${ROSE_BORDER}`,
             display: "flex", alignItems: "center", justifyContent: "center",
             cursor: "pointer",
           }}>
@@ -155,20 +156,20 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: ROSE }}>{note.from}</span>
             <span style={{
-              fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.60)",
-              background: "rgba(201,144,106,0.10)", padding: "2px 10px", borderRadius: 999,
+              fontFamily: CURSIVE, fontSize: 10, color: "rgba(255,61,107,0.60)",
+              background: "rgba(255,61,107,0.10)", padding: "2px 10px", borderRadius: 999,
             }}>{formatTime(note.savedAt)}</span>
           </div>
 
           <div style={{ height: 1, background: ROSE_BORDER, margin: "0 0 12px" }} />
 
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(250, 240, 230)", lineHeight: 1.75, fontStyle: "italic", margin: "0 0 14px" }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "#fff", lineHeight: 1.75, fontStyle: "italic", margin: "0 0 14px" }}>
             &ldquo;{note.message}&rdquo;
           </p>
 
           {note.mediaType === "audio" && note.mediaUrl && (
             <div style={{ marginBottom: 14 }}>
-              <MiniAudioPlayer src={note.mediaUrl} accentColor={ROSE} bgColor="rgba(201,144,106,0.06)" borderColor={ROSE_BORDER} />
+              <MiniAudioPlayer src={note.mediaUrl} accentColor={ROSE} bgColor="rgba(255,61,107,0.06)" borderColor={ROSE_BORDER} />
             </div>
           )}
 
@@ -185,7 +186,7 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
             style={{
               width: "100%", padding: "10px 0", borderRadius: 12,
               border: `1px solid ${ROSE_BORDER}`,
-              background: "rgba(201,144,106,0.08)",
+              background: "rgba(255,61,107,0.08)",
               fontFamily: CURSIVE, fontSize: 12, fontWeight: 600, color: ROSE,
               cursor: "pointer",
             }}>
@@ -197,16 +198,19 @@ const NoteModal = memo(function NoteModal({ note, onClose }: { note: Note; onClo
   );
 });
 
-const MoodButton = memo(function MoodButton({ emoji, active, onSelect }: { emoji: string; active: boolean; onSelect: (e: string) => void }) {
+const MoodButton = memo(function MoodButton({
+  emoji, active, onSelect, compact,
+}: { emoji: string; active: boolean; onSelect: (e: string) => void; compact?: boolean }) {
   const handleClick = useCallback(() => onSelect(emoji), [onSelect, emoji]);
+  const s = compact ? 30 : 36;
   return (
     <button onClick={handleClick}
       style={{
-        width: 36, height: 36, borderRadius: 10, fontSize: 16,
+        width: s, height: s, borderRadius: compact ? 8 : 10, fontSize: compact ? 14 : 16,
         display: "flex", alignItems: "center", justifyContent: "center",
-        border: active ? `1.5px solid rgba(201,144,106,0.50)` : `1px solid ${ROSE_BORDER}`,
-        background: active ? "rgba(201,144,106,0.16)" : "rgba(12,6,20,0.60)",
-        transform: active ? "scale(1.08)" : "scale(1)",
+        border: active ? `1.5px solid rgba(255,61,107,0.50)` : `1px solid ${ROSE_BORDER}`,
+        background: active ? "rgba(255,61,107,0.16)" : "rgba(255,255,255,0.04)",
+        transform: active ? "scale(1.06)" : "scale(1)",
         cursor: "pointer", transition: "all 0.15s",
       }}
     >{emoji}</button>
@@ -215,9 +219,10 @@ const MoodButton = memo(function MoodButton({ emoji, active, onSelect }: { emoji
 
 interface NotesSectionProps {
   shareId?: string | null;
+  titleInTopBar?: boolean;
 }
 
-export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
+export default memo(function NotesSection({ shareId, titleInTopBar = false }: NotesSectionProps = {}) {
   const [notes, setNotes]       = useState<Note[]>([]);
   const [loading, setLoading]   = useState(!!shareId);
   const [from, setFrom]         = useState("");
@@ -365,16 +370,16 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
   );
 
   const inputStyle = {
-    width: "100%", background: "rgba(12,6,20,0.55)",
-    border: `1px solid ${ROSE_BORDER}`, borderRadius: 12,
-    padding: "10px 12px",
-    fontFamily: CURSIVE, fontSize: 13, color: "rgb(250, 240, 230)",
+    width: "100%", background: "rgba(255,255,255,0.04)",
+    border: `1px solid ${ROSE_BORDER}`, borderRadius: titleInTopBar ? 10 : 12,
+    padding: titleInTopBar ? "8px 10px" : "10px 12px",
+    fontFamily: CURSIVE, fontSize: titleInTopBar ? 12.5 : 13, color: "#fff",
     outline: "none", transition: "all 0.15s",
   } as React.CSSProperties;
 
   const labelStyle = {
     fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-    color: "rgba(201,144,106,0.55)", letterSpacing: "0.08em",
+    color: "rgba(255,61,107,0.55)", letterSpacing: "0.08em",
     textTransform: "uppercase" as const, display: "block", marginBottom: 4,
   };
 
@@ -384,57 +389,145 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
-      style={{ height: "100svh", display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 10 }}
+      style={{
+        height: "100svh",
+        display: "flex",
+        flexDirection: "column",
+        overflowY: "auto",
+        overflowX: "hidden",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d0b18",
+      }}
     >
       <style>{`@keyframes drl-rec-dot{0%,100%{opacity:1}50%{opacity:0.25}}`}</style>
 
-      <div style={{ flex: 1, padding: "28px 16px 96px" }} className="lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8">
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h2 style={{
-            fontFamily: CURSIVE, fontSize: "clamp(22px, 5.5vw, 32px)",
-            fontWeight: 700, color: ROSE, margin: 0,
-            textShadow: "0 2px 12px rgba(201,144,106,0.35)",
-          }}>
-            Love Notes 💌
-          </h2>
-          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.55)", marginTop: 4 }}>
-            Shared notes — everyone who opens this page can read them ♡
-          </p>
-        </div>
+      <div
+        style={{
+          flex: 1,
+          padding: titleInTopBar
+            ? "max(46px, calc(env(safe-area-inset-top, 0px) + 34px)) 12px 92px"
+            : "28px 16px 96px",
+        }}
+        className="lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8"
+      >
+        {titleInTopBar ? (
+          <>
+            <div
+              className="lg:hidden"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                width: "100%",
+                marginBottom: 14,
+                paddingLeft: 16,
+                paddingRight: 16,
+                boxSizing: "border-box",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: CURSIVE,
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.55)",
+                  margin: 0,
+                  lineHeight: 1.45,
+                  textAlign: "center",
+                  maxWidth: 300,
+                  width: "100%",
+                }}
+              >
+                Shared notes — everyone can read them ♡
+              </p>
+              <div
+                aria-hidden
+                style={{
+                  height: 3,
+                  width: 72,
+                  marginTop: 10,
+                  borderRadius: 999,
+                  background: GRAD_LINE,
+                  opacity: 0.7,
+                  flexShrink: 0,
+                }}
+              />
+            </div>
+            <div className="hidden lg:block" style={{ textAlign: "center", marginBottom: 20 }}>
+              <h2 style={{
+                fontFamily: CURSIVE, fontSize: "clamp(22px, 5.5vw, 32px)",
+                fontWeight: 800, margin: 0,
+                background: GRAD_LINE,
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>
+                Love Notes 💌
+              </h2>
+              <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.55)", marginTop: 4 }}>
+                Shared notes — everyone who opens this page can read them ♡
+              </p>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <h2 style={{
+              fontFamily: CURSIVE, fontSize: "clamp(22px, 5.5vw, 32px)",
+              fontWeight: 800, margin: 0,
+              background: GRAD_LINE,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>
+              Love Notes 💌
+            </h2>
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.55)", marginTop: 4 }}>
+              Shared notes — everyone who opens this page can read them ♡
+            </p>
+          </div>
+        )}
 
-        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-8">
+        <div className={`flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 ${titleInTopBar ? "gap-3" : "gap-4"}`}>
           {/* Write a note */}
           <div style={{
-            borderRadius: 20, border: `1px solid ${ROSE_BORDER}`,
-            background: DARK_CARD, padding: 16,
-            boxShadow: "0 6px 24px rgba(0,0,0,0.30)",
+            borderRadius: titleInTopBar ? 16 : 20,
+            border: `1px solid ${ROSE_BORDER}`,
+            background: DARK_CARD,
+            padding: titleInTopBar ? 12 : 16,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
           }} className="lg:p-6">
-            <p style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: ROSE, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
-              <Send size={12} color={ROSE} /> Write a Note
+            <p style={{
+              fontFamily: CURSIVE,
+              fontSize: titleInTopBar ? 12 : 13,
+              fontWeight: 700,
+              color: ROSE,
+              marginBottom: titleInTopBar ? 10 : 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}>
+              <Send size={titleInTopBar ? 11 : 12} color={ROSE} /> Write a Note
             </p>
 
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: titleInTopBar ? 8 : 12 }}>
               <label style={labelStyle}>From (optional)</label>
               <input
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 placeholder="Your name or nickname"
                 style={inputStyle}
-                onFocus={(e) => { e.currentTarget.style.border = `1.5px solid rgba(201,144,106,0.45)`; e.currentTarget.style.background = "rgba(12,6,20,0.80)"; }}
-                onBlur={(e) => { e.currentTarget.style.border = `1px solid ${ROSE_BORDER}`; e.currentTarget.style.background = "rgba(12,6,20,0.55)"; }}
+                onFocus={(e) => { e.currentTarget.style.border = `1.5px solid rgba(255,61,107,0.45)`; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                onBlur={(e) => { e.currentTarget.style.border = `1px solid ${ROSE_BORDER}`; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               />
             </div>
 
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: titleInTopBar ? 8 : 12 }}>
               <label style={labelStyle}>Mood</label>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: titleInTopBar ? 5 : 6, flexWrap: "wrap" }}>
                 {MOODS.map((m) => (
-                  <MoodButton key={m.emoji} emoji={m.emoji} active={mood === m.emoji} onSelect={setMood} />
+                  <MoodButton key={m.emoji} emoji={m.emoji} active={mood === m.emoji} onSelect={setMood} compact={titleInTopBar} />
                 ))}
               </div>
             </div>
 
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: titleInTopBar ? 6 : 8 }}>
               <label style={labelStyle}>Your Message</label>
               <textarea
                 value={message}
@@ -442,17 +535,17 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
                 rows={3}
                 placeholder="Pour your heart out here..."
                 style={{ ...inputStyle, resize: "none" }}
-                onFocus={(e) => { e.currentTarget.style.border = `1.5px solid rgba(201,144,106,0.45)`; e.currentTarget.style.background = "rgba(12,6,20,0.80)"; }}
-                onBlur={(e) => { e.currentTarget.style.border = `1px solid ${ROSE_BORDER}`; e.currentTarget.style.background = "rgba(12,6,20,0.55)"; }}
+                onFocus={(e) => { e.currentTarget.style.border = `1.5px solid rgba(255,61,107,0.45)`; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                onBlur={(e) => { e.currentTarget.style.border = `1px solid ${ROSE_BORDER}`; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               />
             </div>
 
             {/* Voice + Photo row */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <div style={{ display: "flex", gap: titleInTopBar ? 6 : 8, marginBottom: titleInTopBar ? 8 : 10 }}>
               {/* Voice */}
               {voiceUrl ? (
                 <div style={{ flex: 1 }}>
-                  <MiniAudioPlayer src={voiceUrl} accentColor={ROSE} bgColor="rgba(201,144,106,0.06)" borderColor={ROSE_BORDER} onRemove={() => setVoiceUrl("")} />
+                  <MiniAudioPlayer src={voiceUrl} accentColor={ROSE} bgColor="rgba(255,61,107,0.06)" borderColor={ROSE_BORDER} onRemove={() => setVoiceUrl("")} />
                 </div>
               ) : recording ? (
                 <button onClick={stopRecording} style={{
@@ -471,7 +564,7 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
               ) : (
                 <button onClick={startRecording} style={{
                   flex: 1, padding: "9px 0", borderRadius: 10,
-                  border: "1.5px dashed rgba(201,144,106,0.35)", background: "rgba(201,144,106,0.05)",
+                  border: "1.5px dashed rgba(255,61,107,0.35)", background: "rgba(255,61,107,0.05)",
                   cursor: "pointer", fontFamily: CURSIVE, fontSize: 12, color: ROSE,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                 }}>
@@ -496,7 +589,7 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
                   onClick={() => photoInputRef.current?.click()}
                   style={{
                     padding: "8px 12px", borderRadius: 10,
-                    border: "1.5px dashed rgba(201,144,106,0.35)", background: "rgba(201,144,106,0.05)",
+                    border: "1.5px dashed rgba(255,61,107,0.35)", background: "rgba(255,61,107,0.05)",
                     cursor: "pointer", fontFamily: CURSIVE, fontSize: 12, color: ROSE,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>📸</button>
@@ -523,23 +616,23 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
               }} />
 
             <button onClick={useTemplate}
-              style={{ fontFamily: CURSIVE, fontSize: 11, color: ROSE, background: "none", border: "none", cursor: "pointer", marginBottom: 12, fontWeight: 600 }}>
+              style={{ fontFamily: CURSIVE, fontSize: 10.5, color: ROSE, background: "none", border: "none", cursor: "pointer", marginBottom: titleInTopBar ? 8 : 12, fontWeight: 600 }}>
               ✨ Use a love template
             </button>
 
             <button onClick={handleSend} disabled={!message.trim() || sending}
               style={{
-                width: "100%", padding: "11px 0", borderRadius: 12, border: "none",
+                width: "100%", padding: titleInTopBar ? "9px 0" : "11px 0", borderRadius: titleInTopBar ? 10 : 12, border: "none",
                 background: message.trim()
-                  ? "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))"
-                  : "rgba(201,144,106,0.12)",
-                color: message.trim() ? "rgba(250,240,230,0.95)" : "rgba(201,144,106,0.35)",
-                fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
+                  ? "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)"
+                  : "rgba(255,61,107,0.12)",
+                color: message.trim() ? "rgba(255,255,255,0.95)" : "rgba(255,61,107,0.35)",
+                fontFamily: CURSIVE, fontSize: titleInTopBar ? 12 : 13, fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 cursor: message.trim() ? "pointer" : "not-allowed",
-                boxShadow: message.trim() ? "0 4px 14px rgba(201,144,106,0.28)" : "none",
+                boxShadow: message.trim() ? "0 4px 14px rgba(255,61,107,0.28)" : "none",
               }}>
-              <Heart size={12} style={{ fill: message.trim() ? "rgba(250,240,230,0.95)" : "rgba(201,144,106,0.35)", color: "inherit" }} />
+              <Heart size={12} style={{ fill: message.trim() ? "rgba(255,255,255,0.95)" : "rgba(255,61,107,0.35)", color: "inherit" }} />
               {sent ? "Note shared! 💕" : sending ? "Sending..." : "Share Note 💌"}
             </button>
 
@@ -554,7 +647,7 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
           <div>
             <p style={{
               fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-              color: "rgba(201,144,106,0.55)", letterSpacing: "0.08em",
+              color: "rgba(255,61,107,0.55)", letterSpacing: "0.08em",
               textTransform: "uppercase", marginBottom: 10,
             }}>
               Love Notes · {notes.length}
@@ -562,7 +655,7 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
 
             {loading ? (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
-                <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.45)", margin: 0 }}>loading notes...</p>
+                <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.45)", margin: 0 }}>loading notes...</p>
               </div>
             ) : notes.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
@@ -570,7 +663,7 @@ export default memo(function NotesSection({ shareId }: NotesSectionProps = {}) {
                 <p style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: ROSE, margin: "0 0 6px" }}>
                   No notes yet
                 </p>
-                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", margin: 0, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0, lineHeight: 1.6 }}>
                   Be the first to leave a love note ♡
                 </p>
               </div>

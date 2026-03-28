@@ -8,11 +8,13 @@ import MiniAudioPlayer from "./MiniAudioPlayer";
 import GameHistory, { type HistoryEntry, type QuizRecord } from "./GameHistory";
 import { API_URL } from "@/lib/config";
 
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_BORDER = "rgba(201, 144, 106, 0.22)";
-const DARK_CARD = "rgba(12, 6, 20, 0.85)";
-const DARK_SOLID = "rgba(18, 8, 28, 0.95)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const ROSE = "#ff3d6b";
+const GRAD = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
+const ROSE_BORDER = "rgba(255, 61, 107, 0.22)";
+const CARD_BORDER_SOFT = "rgba(255,255,255,0.09)";
+const DARK_CARD = "rgba(255,255,255,0.06)";
+const DARK_SOLID = "rgba(13,11,24,0.96)";
+const CURSIVE = "system-ui, sans-serif";
 
 export interface QuizAttemptRecord {
   score: number;
@@ -177,22 +179,22 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
         >
           {emoji}
         </motion.span>
-        <h3 style={{ fontFamily: CURSIVE, fontSize: 24, fontWeight: 700, color: "rgb(250, 240, 230)", margin: 0 }}>
+        <h3 style={{ fontFamily: CURSIVE, fontSize: 24, fontWeight: 700, color: "#fff", margin: 0 }}>
           {score} / {total}
         </h3>
-        <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(250,240,230,0.60)", margin: "4px 0 20px" }}>{msg}</p>
+        <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,255,255,0.55)", margin: "4px 0 20px" }}>{msg}</p>
         <button onClick={restart}
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             padding: "10px 24px", borderRadius: 12, border: "none",
-            background: "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))",
-            color: "rgba(250,240,230,0.95)", fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
-            cursor: "pointer", boxShadow: "0 4px 14px rgba(201,144,106,0.35)",
+            background: "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)",
+            color: "rgba(255,255,255,0.95)", fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
+            cursor: "pointer", boxShadow: "0 4px 14px rgba(255,61,107,0.35)",
           }}>
           <RotateCcw size={13} /> Play Again 💕
         </button>
         {savingAttempt && (
-          <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)", marginTop: 8 }}>Saving...</p>
+          <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)", marginTop: 8 }}>Saving...</p>
         )}
 
         {/* Quiz History */}
@@ -202,14 +204,14 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
               onClick={() => setShowHistory((v) => !v)}
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                background: "rgba(201,144,106,0.06)", border: `1px solid ${ROSE_BORDER}`,
+                background: "rgba(255,61,107,0.06)", border: `1px solid ${ROSE_BORDER}`,
                 borderRadius: 10, padding: "8px 14px", cursor: "pointer",
               }}
             >
-              <span style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "rgb(250, 240, 230)" }}>
+              <span style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "#fff" }}>
                 🏆 Your Quiz History ({attempts.length})
               </span>
-              <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(250,240,230,0.50)" }}>
+              <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,255,255,0.40)" }}>
                 {showHistory ? "▲" : "▼"}
               </span>
             </button>
@@ -229,12 +231,12 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
                         <div key={idx} style={{
                           display: "flex", alignItems: "center", justifyContent: "space-between",
                           padding: "8px 12px", borderRadius: 8,
-                          background: "rgba(12,6,20,0.75)", border: `1px solid ${ROSE_BORDER}`,
+                          background: "rgba(255,255,255,0.04)", border: `1px solid ${ROSE_BORDER}`,
                         }}>
-                          <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(250,240,230,0.60)" }}>
+                          <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
                             {formatDate(a.playedAt)}
                           </span>
-                          <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: "rgb(250, 240, 230)" }}>
+                          <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: "#fff" }}>
                             {em} {a.score}/{a.total}
                           </span>
                         </div>
@@ -253,8 +255,8 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(250,240,230,0.55)" }}>Question {step + 1} of {sessionQs.length}</span>
-        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(250,240,230,0.55)", display: "flex", alignItems: "center", gap: 4 }}>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>Question {step + 1} of {sessionQs.length}</span>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 4 }}>
           <Heart size={9} style={{ fill: ROSE, color: ROSE }} />{score}
         </span>
       </div>
@@ -263,7 +265,7 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
         {sessionQs.map((_, i) => (
           <div key={i} style={{
             height: 4, flex: 1, borderRadius: 999,
-            background: i < step ? ROSE : i === step ? "rgba(201,144,106,0.45)" : "rgba(201,144,106,0.18)",
+            background: i < step ? ROSE : i === step ? "rgba(255,61,107,0.45)" : "rgba(255,61,107,0.18)",
             transition: "all 0.3s",
           }} />
         ))}
@@ -271,16 +273,16 @@ function LoveQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: Lo
 
       <AnimatePresence mode="wait">
         <motion.div key={step} initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }}>
-          <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "rgb(250, 240, 230)", marginBottom: 16 }}>{q.question}</p>
+          <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{q.question}</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {q.options.map((opt, i) => {
-              let bg = "rgba(12,6,20,0.60)";
+              let bg = "rgba(255,255,255,0.04)";
               let border = ROSE_BORDER;
-              let color = "rgba(250,240,230,0.85)";
+              let color = "rgba(255,255,255,0.85)";
               if (selected !== null) {
                 if (i === q.correct) { bg = "rgba(120,160,100,0.18)"; border = "rgba(100,140,80,0.50)"; color = "rgb(140,200,120)"; }
                 else if (selected === i) { bg = "rgba(180,80,60,0.14)"; border = "rgba(160,60,40,0.40)"; color = "rgb(200,100,80)"; }
-                else { bg = "rgba(12,6,20,0.25)"; border = "rgba(201,144,106,0.08)"; color = "rgba(250,240,230,0.35)"; }
+                else { bg = "rgba(255,255,255,0.02)"; border = "rgba(255,61,107,0.08)"; color = "rgba(255,255,255,0.25)"; }
               }
               return (
                 <motion.button key={i} whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(i)}
@@ -568,10 +570,10 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => pick("dare")}
           style={{
             flex: 1, padding: "10px 0", borderRadius: 12,
-            background: mode === "dare" ? "rgba(201,144,106,0.18)" : "rgba(201,144,106,0.08)",
-            border: mode === "dare" ? "1.5px solid rgba(201,144,106,0.35)" : "1px solid rgba(201,144,106,0.18)",
+            background: mode === "dare" ? "rgba(255,61,107,0.18)" : "rgba(255,61,107,0.08)",
+            border: mode === "dare" ? "1.5px solid rgba(255,61,107,0.35)" : "1px solid rgba(255,61,107,0.18)",
             fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: ROSE,
-            cursor: "pointer", boxShadow: mode === "dare" ? "0 3px 12px rgba(201,144,106,0.15)" : "none",
+            cursor: "pointer", boxShadow: mode === "dare" ? "0 3px 12px rgba(255,61,107,0.15)" : "none",
           }}>
           🎯 Dare {dareCount > 0 && <span style={{ fontSize: 10, opacity: 0.7 }}>({dareCount})</span>}
         </motion.button>
@@ -584,13 +586,13 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{
               borderRadius: 16, border: `1px solid ${ROSE_BORDER}`,
-              background: "rgba(12,6,20,0.50)",
+              background: "rgba(255,255,255,0.03)",
               padding: "28px 20px", textAlign: "center",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
             }}
           >
             <span style={{ fontSize: 32 }}>🎴</span>
-            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.60)", margin: 0 }}>
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.60)", margin: 0 }}>
               Pick Truth or Dare to start 💕
             </p>
           </motion.div>
@@ -604,8 +606,8 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
             {/* Card */}
             <div style={{
               borderRadius: 16,
-              border: mode === "truth" ? "1.5px solid rgba(140,100,180,0.28)" : "1.5px solid rgba(201,144,106,0.28)",
-              background: mode === "truth" ? "rgba(140,100,180,0.08)" : "rgba(201,144,106,0.08)",
+              border: mode === "truth" ? "1.5px solid rgba(140,100,180,0.28)" : "1.5px solid rgba(255,61,107,0.28)",
+              background: mode === "truth" ? "rgba(140,100,180,0.08)" : "rgba(255,61,107,0.08)",
               padding: "16px 20px", marginBottom: 14,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -613,13 +615,13 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
                   textTransform: "uppercase" as const, letterSpacing: "0.12em",
                   color: mode === "truth" ? "rgb(160,120,210)" : ROSE,
-                  background: mode === "truth" ? "rgba(140,100,180,0.14)" : "rgba(201,144,106,0.14)",
+                  background: mode === "truth" ? "rgba(140,100,180,0.14)" : "rgba(255,61,107,0.14)",
                   padding: "2px 10px", borderRadius: 999,
                 }}>
                   {mode === "truth" ? "💭 Truth" : "🎯 Dare"}
                 </span>
               </div>
-              <p style={{ fontFamily: CURSIVE, fontWeight: 700, color: "rgb(250, 240, 230)", fontSize: 15, margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: CURSIVE, fontWeight: 700, color: "#fff", fontSize: 15, margin: 0, lineHeight: 1.5 }}>
                 {card.text}
               </p>
             </div>
@@ -654,7 +656,7 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
                 <label style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                  color: "rgba(201,144,106,0.65)", textTransform: "uppercase" as const,
+                  color: "rgba(255,61,107,0.65)", textTransform: "uppercase" as const,
                   letterSpacing: "0.08em", display: "block", marginBottom: 6,
                 }}>
                   Your honest answer ✍️
@@ -667,10 +669,10 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   placeholder="Write your honest answer here... 💕"
                   style={{
                     width: "100%", resize: "none",
-                    background: "rgba(12,6,20,0.70)",
+                    background: "rgba(255,255,255,0.05)",
                     border: "1.5px solid rgba(140,100,180,0.25)",
                     borderRadius: 12, padding: "10px 12px",
-                    fontFamily: CURSIVE, fontSize: 13, color: "rgb(250, 240, 230)",
+                    fontFamily: CURSIVE, fontSize: 13, color: "#fff",
                     outline: "none", lineHeight: 1.6, boxSizing: "border-box",
                   }}
                   onFocus={(e) => { e.currentTarget.style.border = "1.5px solid rgba(140,100,180,0.50)"; }}
@@ -680,8 +682,8 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   <motion.button whileTap={{ scale: 0.95 }} onClick={handleSave} disabled={!answer.trim() || saving}
                     style={{
                       flex: 1, padding: "10px 0", borderRadius: 12, border: "none",
-                      background: answer.trim() ? "linear-gradient(135deg, rgb(140,100,180), rgb(110,70,150))" : "rgba(201,144,106,0.15)",
-                      color: answer.trim() ? "rgba(250,240,230,0.95)" : "rgba(201,144,106,0.40)",
+                      background: answer.trim() ? "linear-gradient(135deg, rgb(140,100,180), rgb(110,70,150))" : "rgba(255,61,107,0.15)",
+                      color: answer.trim() ? "rgba(255,255,255,0.95)" : "rgba(255,61,107,0.40)",
                       fontFamily: CURSIVE, fontSize: 13, fontWeight: 700,
                       cursor: answer.trim() ? "pointer" : "not-allowed",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
@@ -692,7 +694,7 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   <motion.button whileTap={{ scale: 0.95 }} onClick={nextCard}
                     style={{
                       padding: "10px 16px", borderRadius: 12,
-                      border: `1px solid ${ROSE_BORDER}`, background: "rgba(12,6,20,0.60)",
+                      border: `1px solid ${ROSE_BORDER}`, background: "rgba(255,255,255,0.04)",
                       fontFamily: CURSIVE, fontSize: 12, color: ROSE, cursor: "pointer",
                     }}>
                     Skip →
@@ -752,8 +754,8 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   ) : (
                     <button onClick={startRecording} style={{
                       flex: 1, padding: "9px 0", borderRadius: 10,
-                      border: "1.5px dashed rgba(201,144,106,0.35)",
-                      background: "rgba(201,144,106,0.05)", cursor: "pointer",
+                      border: "1.5px dashed rgba(255,61,107,0.35)",
+                      background: "rgba(255,61,107,0.05)", cursor: "pointer",
                       fontFamily: CURSIVE, fontSize: 12, color: ROSE,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     }}>
@@ -777,8 +779,8 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                       onClick={() => responsePhotoInputRef.current?.click()}
                       style={{
                         padding: "8px 12px", borderRadius: 10,
-                        border: "1.5px dashed rgba(201,144,106,0.35)",
-                        background: "rgba(201,144,106,0.05)", cursor: "pointer",
+                        border: "1.5px dashed rgba(255,61,107,0.35)",
+                        background: "rgba(255,61,107,0.05)", cursor: "pointer",
                         fontFamily: CURSIVE, fontSize: 12, color: ROSE,
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}>📸</button>
@@ -817,7 +819,7 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                 />
                 <label style={{
                   fontFamily: CURSIVE, fontSize: 10, fontWeight: 700,
-                  color: "rgba(201,144,106,0.65)", textTransform: "uppercase" as const,
+                  color: "rgba(255,61,107,0.65)", textTransform: "uppercase" as const,
                   letterSpacing: "0.08em", display: "block", marginBottom: 6,
                 }}>
                   How did it go? (optional) ✍️
@@ -829,24 +831,24 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   placeholder="Tell me how you did the dare... 😜"
                   style={{
                     width: "100%", resize: "none",
-                    background: "rgba(12,6,20,0.70)",
-                    border: "1.5px solid rgba(201,144,106,0.25)",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1.5px solid rgba(255,61,107,0.25)",
                     borderRadius: 12, padding: "10px 12px",
-                    fontFamily: CURSIVE, fontSize: 13, color: "rgb(250, 240, 230)",
+                    fontFamily: CURSIVE, fontSize: 13, color: "#fff",
                     outline: "none", lineHeight: 1.6, boxSizing: "border-box",
                     marginBottom: 10,
                   }}
-                  onFocus={(e) => { e.currentTarget.style.border = "1.5px solid rgba(201,144,106,0.50)"; }}
-                  onBlur={(e) => { e.currentTarget.style.border = "1.5px solid rgba(201,144,106,0.25)"; }}
+                  onFocus={(e) => { e.currentTarget.style.border = "1.5px solid rgba(255,61,107,0.50)"; }}
+                  onBlur={(e) => { e.currentTarget.style.border = "1.5px solid rgba(255,61,107,0.25)"; }}
                 />
                 <div style={{ display: "flex", gap: 8 }}>
                   <motion.button whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }} onClick={handleDareComplete}
                     style={{
                       flex: 1, padding: "12px 0", borderRadius: 12, border: "none",
-                      background: "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))",
-                      color: "rgba(250,240,230,0.95)",
+                      background: "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)",
+                      color: "rgba(255,255,255,0.95)",
                       fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                      boxShadow: "0 4px 16px rgba(201,144,106,0.35)",
+                      boxShadow: "0 4px 16px rgba(255,61,107,0.35)",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     }}>
                     🔥 I Did It!
@@ -854,7 +856,7 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                   <motion.button whileTap={{ scale: 0.95 }} onClick={nextCard}
                     style={{
                       padding: "12px 16px", borderRadius: 12,
-                      border: `1px solid ${ROSE_BORDER}`, background: "rgba(12,6,20,0.60)",
+                      border: `1px solid ${ROSE_BORDER}`, background: "rgba(255,255,255,0.04)",
                       fontFamily: CURSIVE, fontSize: 12, color: ROSE, cursor: "pointer",
                     }}>
                     Skip →
@@ -870,8 +872,8 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 style={{
-                  borderRadius: 14, border: "1.5px solid rgba(201,144,106,0.35)",
-                  background: "rgba(201,144,106,0.10)",
+                  borderRadius: 14, border: "1.5px solid rgba(255,61,107,0.35)",
+                  background: "rgba(255,61,107,0.10)",
                   padding: "16px", textAlign: "center", marginBottom: 10,
                 }}>
                 <motion.span
@@ -893,10 +895,10 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                 onClick={nextCard}
                 style={{
                   width: "100%", padding: "13px 0", borderRadius: 14, border: "none",
-                  background: "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))",
-                  color: "rgba(250,240,230,0.95)",
+                  background: "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)",
+                  color: "rgba(255,255,255,0.95)",
                   fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  boxShadow: "0 6px 20px rgba(201,144,106,0.35)",
+                  boxShadow: "0 6px 20px rgba(255,61,107,0.35)",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   marginTop: 4,
                 }}>
@@ -913,7 +915,7 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
           style={{
             marginTop: 8, display: "flex", alignItems: "center", gap: 4, margin: "8px auto 0",
             background: "none", border: "none", fontFamily: CURSIVE, fontSize: 10,
-            color: "rgba(201,144,106,0.40)", cursor: "pointer",
+            color: "rgba(255,61,107,0.40)", cursor: "pointer",
           }}>
           ↺ Reset all
         </button>
@@ -933,9 +935,17 @@ interface Props {
   shareId?: string | null;
   quizAttempts?: QuizAttemptRecord[];
   initialGameResponses?: ServerGameResponse[];
+  /** Editor mobile: title in page top bar; show compact subtitle only. */
+  titleInTopBar?: boolean;
 }
 
-export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [] }: Props) {
+export default memo(function GamesSection({
+  data,
+  shareId = null,
+  quizAttempts: initialQA = [],
+  initialGameResponses = [],
+  titleInTopBar = false,
+}: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   // Lifted history state — shared between TruthOrDare and GameHistory tab
@@ -1004,47 +1014,139 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
       initial={{ opacity: 0, x: 60 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
-      style={{ height: "100svh", display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 10 }}
+      style={{
+        height: "100svh",
+        display: "flex",
+        flexDirection: "column",
+        overflowY: "auto",
+        overflowX: "hidden",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d0b18",
+      }}
     >
-      <div style={{ flex: 1, padding: "28px 16px 96px" }} className="lg:pt-10 lg:max-w-5xl lg:mx-auto lg:w-full lg:px-8">
-        {/* Title */}
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h2 style={{
-            fontFamily: CURSIVE,
-            fontSize: "clamp(22px, 5.5vw, 32px)",
-            fontWeight: 700, color: "rgb(250, 240, 230)", margin: 0,
-            textShadow: "0 2px 8px rgba(0,0,0,0.4)",
-          }}>
-            Love Games 🎮
-          </h2>
-          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.70)", marginTop: 4 }}>Play together, grow closer</p>
-        </div>
+      <div
+        style={{
+          flex: 1,
+          padding: titleInTopBar
+            ? "max(46px, calc(env(safe-area-inset-top, 0px) + 36px)) 12px 92px"
+            : "28px 16px 96px",
+        }}
+        className="lg:flex lg:min-h-0 lg:flex-col lg:pt-8 lg:max-w-6xl xl:max-w-7xl lg:mx-auto lg:w-full lg:px-10 xl:px-12 lg:pb-12"
+      >
+        {titleInTopBar ? (
+          <>
+            <div
+              className="lg:hidden"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                width: "100%",
+                marginBottom: 14,
+                paddingLeft: 16,
+                paddingRight: 16,
+                boxSizing: "border-box",
+              }}
+            >
+              <p style={{
+                margin: 0,
+                fontSize: 12,
+                color: "rgba(255,255,255,0.52)",
+                letterSpacing: "0.02em",
+                lineHeight: 1.45,
+                textAlign: "center",
+                maxWidth: 300,
+                width: "100%",
+              }}>
+                Play together, grow closer
+              </p>
+              <div
+                aria-hidden
+                style={{
+                  height: 3,
+                  width: 72,
+                  marginTop: 10,
+                  borderRadius: 999,
+                  background: GRAD,
+                  opacity: 0.65,
+                  flexShrink: 0,
+                }}
+              />
+            </div>
+            <div className="hidden lg:block" style={{ textAlign: "center", marginBottom: 24 }}>
+              <h2 style={{
+                fontFamily: CURSIVE,
+                fontSize: "clamp(26px, 2.8vw, 38px)",
+                fontWeight: 800, margin: 0,
+                background: GRAD,
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>
+                Love Games 🎮
+              </h2>
+              <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,255,255,0.48)", marginTop: 6 }}>Play together, grow closer</p>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <h2 style={{
+              fontFamily: CURSIVE,
+              fontSize: "clamp(22px, 5.5vw, 32px)",
+              fontWeight: 800, margin: 0,
+              background: GRAD,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>
+              Love Games 🎮
+            </h2>
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>Play together, grow closer</p>
+          </div>
+        )}
 
-        <div className="lg:flex lg:gap-8 lg:items-start">
-          {/* Game picker */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}
-            className="lg:flex lg:flex-col lg:w-52 lg:shrink-0 lg:mb-0 lg:gap-3"
-          >
+        <div className="lg:flex lg:flex-1 lg:min-h-0 lg:gap-10 lg:items-stretch">
+          {/* Game picker: 3-across on mobile; stacked column on desktop (inline grid was overriding lg:flex) */}
+          <div className="mb-3.5 grid w-full grid-cols-3 gap-[7px] lg:mb-0 lg:flex lg:h-full lg:min-h-0 lg:w-60 lg:shrink-0 lg:flex-col lg:gap-3 xl:w-64">
             {GAMES.map((g) => {
               const isActive = activeGame === g.id;
               return (
                 <motion.button key={g.id} whileTap={{ scale: 0.97 }} onClick={() => setActiveGame(g.id)}
+                  className="flex w-full flex-col items-center text-center max-lg:p-[11px_8px] lg:min-h-0 lg:flex-1 lg:justify-between lg:gap-2 lg:rounded-2xl lg:px-4 lg:py-5"
                   style={{
-                    borderRadius: 16,
-                    border: isActive ? "1.5px solid rgba(201,144,106,0.45)" : `1px solid ${ROSE_BORDER}`,
-                    padding: "14px 16px", textAlign: "left",
-                    background: isActive ? DARK_SOLID : "rgba(12,6,20,0.55)",
-                    boxShadow: isActive ? "0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(201,144,106,0.12)" : "none",
+                    borderRadius: 14,
+                    border: isActive
+                      ? `1px solid rgba(255,61,107,0.42)`
+                      : `1px solid ${CARD_BORDER_SOFT}`,
+                    background: isActive
+                      ? `linear-gradient(165deg, ${DARK_SOLID} 0%, rgba(255,61,107,0.06) 100%)`
+                      : "rgba(255,255,255,0.04)",
+                    boxShadow: isActive
+                      ? "0 4px 18px rgba(0,0,0,0.35), 0 0 20px rgba(255,61,107,0.12), inset 0 1px 0 rgba(255,255,255,0.06)"
+                      : "inset 0 1px 0 rgba(255,255,255,0.04)",
                     cursor: "pointer", transition: "all 0.2s",
-                  }}>
-                  <div style={{ fontSize: 22, marginBottom: 4 }}>{g.emoji}</div>
-                  <p style={{
-                    fontFamily: CURSIVE, fontWeight: 700, fontSize: 14,
-                    color: isActive ? "rgb(250, 240, 230)" : "rgba(250,240,230,0.70)", margin: 0,
-                  }}>{g.label}</p>
-                  <p style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.55)", marginTop: 2 }}>{g.desc}</p>
+                  }}
+                >
+                  <div className="flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-1 lg:min-h-0 lg:gap-2">
+                    <div className="shrink-0 text-[1.35rem] leading-none lg:text-3xl" aria-hidden>{g.emoji}</div>
+                    <p style={{
+                      fontFamily: CURSIVE, fontWeight: 700, fontSize: 13,
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.62)", margin: 0, lineHeight: 1.25,
+                      textAlign: "center",
+                    }} className="max-w-full px-0.5 lg:text-[0.95rem]">{g.label}</p>
+                    <p style={{
+                      fontFamily: CURSIVE, fontSize: 9.5, color: isActive ? "rgba(255,61,107,0.75)" : "rgba(255,255,255,0.32)",
+                      margin: 0, lineHeight: 1.35,
+                      textAlign: "center",
+                    }} className="max-w-[11.5rem] px-0.5 lg:max-w-none lg:text-[0.7rem] lg:leading-snug">{g.desc}</p>
+                  </div>
                   {isActive && (
-                    <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${ROSE}, transparent)`, borderRadius: 999, marginTop: 8 }} />
+                    <div
+                      className="mt-2 w-full max-w-[85%] shrink-0 lg:mt-1"
+                      style={{
+                        height: 2,
+                        background: `linear-gradient(90deg, transparent, ${ROSE}, transparent)`,
+                        borderRadius: 999,
+                        opacity: 0.9,
+                      }}
+                    />
                   )}
                 </motion.button>
               );
@@ -1054,11 +1156,13 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
           {/* Game content */}
           <motion.div key={activeGame} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             style={{
-              borderRadius: 20, border: `1px solid ${ROSE_BORDER}`,
-              background: DARK_CARD, padding: 16,
-              boxShadow: "0 6px 24px rgba(0,0,0,0.30)",
+              borderRadius: 18,
+              border: `1px solid ${ROSE_BORDER}`,
+              background: `linear-gradient(180deg, ${DARK_CARD} 0%, rgba(255,61,107,0.03) 100%)`,
+              padding: 14,
+              boxShadow: "0 8px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.05)",
             }}
-            className="lg:p-6 lg:flex-1"
+            className="lg:flex lg:min-h-[min(560px,calc(100svh-15rem))] lg:flex-1 lg:flex-col lg:self-stretch lg:rounded-2xl lg:p-8"
           >
             {activeGame === "quiz" && (
               <LoveQuiz questions={data.quizQuestions || []} shareId={shareId} attempts={quizAttempts} onAttemptAdded={addQuizAttempt} />

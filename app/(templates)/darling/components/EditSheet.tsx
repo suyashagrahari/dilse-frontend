@@ -3,21 +3,22 @@
 import { useRef, useState } from "react";
 import { type ContentData, type EditMode, type PhotoItem, type QuizQuestion, type TruthDareItem } from "./types";
 
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_MID = "rgba(201, 144, 106, 0.55)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const DARK_SHEET = "rgba(14, 7, 24, 0.98)";
+const ROSE = "#ff3d6b";
+const ROSE_MID = "rgba(255,61,107,0.55)";
+const CURSIVE = "system-ui, sans-serif";
+const DARK_SHEET = "rgba(13, 11, 24, 0.99)";
 
 const INPUT_STYLE: React.CSSProperties = {
-  width: "100%", padding: "10px 14px", borderRadius: 8,
-  border: "1.5px solid rgba(201, 144, 106, 0.35)",
-  background: "rgba(12, 6, 20, 0.70)",
-  fontFamily: "inherit", fontSize: 14, color: "rgb(250, 240, 230)",
+  width: "100%", padding: "12px 16px", borderRadius: 12,
+  border: "1.5px solid rgba(255,61,107,0.22)",
+  background: "rgba(255,255,255,0.04)",
+  fontFamily: "inherit", fontSize: 14, color: "#fff",
   outline: "none", boxSizing: "border-box",
+  transition: "border-color 0.2s",
 };
 
 const TEXTAREA_STYLE: React.CSSProperties = {
-  ...INPUT_STYLE, resize: "vertical" as const, minHeight: 90, lineHeight: 1.6,
+  ...INPUT_STYLE, resize: "vertical" as const, minHeight: 90, lineHeight: 1.65,
 };
 
 const STEP_LABELS = ["Names", "Message", "Wish", "Photos", "Gallery", "Quiz", "Games", "Finish"];
@@ -179,7 +180,7 @@ export default function EditSheet({
     borderRadius: "20px 20px 0 0", padding: "28px 24px 40px",
     maxHeight: "90svh", overflowY: "auto",
     boxShadow: "0 -20px 60px rgba(0,0,0,0.55)",
-    border: "1px solid rgba(201,144,106,0.18)",
+    border: "1px solid rgba(255,61,107,0.18)",
     borderBottom: "none",
   };
 
@@ -188,7 +189,7 @@ export default function EditSheet({
       <h2 style={{ fontFamily: CURSIVE, fontSize: 22, fontWeight: 700, color: ROSE, margin: 0 }}>{title}</h2>
       <button onClick={() => setEditMode(null)} style={{
         border: "none", background: "transparent", cursor: "pointer",
-        fontFamily: CURSIVE, fontSize: 20, color: "rgba(201,144,106,0.60)", lineHeight: 1,
+        fontFamily: CURSIVE, fontSize: 20, color: "rgba(255,61,107,0.60)", lineHeight: 1,
       }}>✕</button>
     </div>
   );
@@ -196,10 +197,10 @@ export default function EditSheet({
   const primaryBtn = (label: string, onClick: () => void, disabled = false) => (
     <button onClick={onClick} disabled={disabled} style={{
       flex: 1, padding: "12px 0", borderRadius: 50, border: "none",
-      background: disabled ? "rgba(201,144,106,0.20)" : "linear-gradient(135deg, rgb(201,144,106) 0%, rgb(160,100,65) 100%)",
-      fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: disabled ? "rgba(201,144,106,0.40)" : "#fff",
+      background: disabled ? "rgba(255,61,107,0.20)" : "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)",
+      fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: disabled ? "rgba(255,61,107,0.40)" : "#fff",
       cursor: disabled ? "not-allowed" : "pointer",
-      boxShadow: disabled ? "none" : "0 4px 16px rgba(201,144,106,0.35)",
+      boxShadow: disabled ? "none" : "0 4px 16px rgba(255,61,107,0.35)",
       letterSpacing: "0.03em",
     }}>{label}</button>
   );
@@ -208,7 +209,7 @@ export default function EditSheet({
     <button onClick={onClick} style={{
       flex: 1, padding: "12px 0", borderRadius: 50,
       border: `1.5px solid ${ROSE_MID}`, background: "transparent",
-      fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.70)", cursor: "pointer",
+      fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.70)", cursor: "pointer",
     }}>{label}</button>
   );
 
@@ -218,17 +219,17 @@ export default function EditSheet({
         {STEP_LABELS.map((lbl, i) => (
           <span key={i} style={{
             fontFamily: CURSIVE, fontSize: 9, letterSpacing: "0.05em",
-            color: i <= manualStep ? ROSE : "rgba(201,144,106,0.45)",
+            color: i <= manualStep ? ROSE : "rgba(255,61,107,0.45)",
             fontWeight: i === manualStep ? 700 : 400,
             opacity: i <= manualStep ? 1 : 0.45,
           }}>{lbl}</span>
         ))}
       </div>
-      <div style={{ height: 3, background: "rgba(201,144,106,0.15)", borderRadius: 2 }}>
+      <div style={{ height: 3, background: "rgba(255,61,107,0.15)", borderRadius: 2 }}>
         <div style={{
           height: "100%", borderRadius: 2,
           width: `${((manualStep + 1) / STEP_LABELS.length) * 100}%`,
-          background: "linear-gradient(90deg, rgba(201,144,106,0.6), rgb(201,144,106))",
+          background: "linear-gradient(90deg, rgba(255,61,107,0.6), #ff3d6b)",
           transition: "width 0.3s ease",
         }} />
       </div>
@@ -350,7 +351,7 @@ export default function EditSheet({
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
           {hdr("Create your darling page ♡")}
-          <p style={{ fontFamily: CURSIVE, fontSize: 15, color: "rgba(201,144,106,0.70)", marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 15, color: "rgba(255,61,107,0.70)", marginBottom: 20, lineHeight: 1.6 }}>
             Tell your love story, beautifully.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -368,14 +369,14 @@ export default function EditSheet({
             ].map((opt) => (
               <button key={opt.label} onClick={opt.action} style={{
                 padding: "16px 20px", borderRadius: 14,
-                border: "1.5px solid rgba(201,144,106,0.30)",
-                background: "rgba(201,144,106,0.06)", cursor: "pointer", textAlign: "left",
+                border: "1.5px solid rgba(255,61,107,0.30)",
+                background: "rgba(255,61,107,0.06)", cursor: "pointer", textAlign: "left",
                 transition: "background 0.15s",
               }}>
                 <div style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: ROSE, marginBottom: 4 }}>
                   {opt.icon} {opt.label}
                 </div>
-                <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.65)", lineHeight: 1.5 }}>
+                <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.65)", lineHeight: 1.5 }}>
                   {opt.sub}
                 </div>
               </button>
@@ -393,7 +394,7 @@ export default function EditSheet({
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
           {hdr("✨ AI Magic")}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 16, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 16, lineHeight: 1.6 }}>
             AI will write a heartfelt message, wish card, photo captions, quiz questions & truth/dare.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -441,8 +442,8 @@ export default function EditSheet({
           {isReview && (
             <div style={{
               padding: "10px 14px", borderRadius: 10, marginBottom: 16,
-              background: "rgba(201,144,106,0.08)", border: "1px solid rgba(201,144,106,0.25)",
-              fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.80)", lineHeight: 1.5,
+              background: "rgba(255,61,107,0.08)", border: "1px solid rgba(255,61,107,0.25)",
+              fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.80)", lineHeight: 1.5,
             }}>
               ✨ AI has written your messages! Review and edit each step, then save.
             </div>
@@ -477,7 +478,7 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr(isReview ? `${reviewTitle} — Message` : "Love Message")}
           {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
             A heartfelt message shown on the home page.
           </p>
           <textarea value={mf.personalMessage} onChange={(e) => updateMf("personalMessage", e.target.value)}
@@ -496,7 +497,7 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr(isReview ? `${reviewTitle} — Wish Card` : "Wish Card")}
           {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
             A tender note for the wish section.
           </p>
           <textarea value={mf.wishMessage} onChange={(e) => updateMf("wishMessage", e.target.value)}
@@ -515,7 +516,7 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr("Home Photos ♡")}
           {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.6 }}>
             Upload 4 photos — they appear as polaroids in the home page.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -527,8 +528,8 @@ export default function EditSheet({
                     onClick={() => homeFileRefs.current[i]?.click()}
                     style={{
                       aspectRatio: "3/4", borderRadius: 10,
-                      border: `2px dashed rgba(201,144,106,${photo ? "0.55" : "0.25"})`,
-                      background: photo ? "transparent" : "rgba(201,144,106,0.04)",
+                      border: `2px dashed rgba(255,61,107,${photo ? "0.55" : "0.25"})`,
+                      background: photo ? "transparent" : "rgba(255,61,107,0.04)",
                       cursor: "pointer", overflow: "hidden", position: "relative",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
@@ -581,7 +582,7 @@ export default function EditSheet({
           <div style={sheet}>
             {hdr("Gallery Photos 📷")}
             {progressBar}
-            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
               Upload up to 10 photos. Adjust crop position and add a love letter for each.
             </p>
 
@@ -593,9 +594,9 @@ export default function EditSheet({
                   onClick={() => setGalleryIdx(i)}
                   style={{
                     flexShrink: 0, width: 52, height: 52, borderRadius: 10,
-                    border: `2px solid ${i === galleryIdx ? "rgb(201,144,106)" : "rgba(201,144,106,0.25)"}`,
+                    border: `2px solid ${i === galleryIdx ? "#ff3d6b" : "rgba(255,61,107,0.25)"}`,
                     overflow: "hidden", padding: 0, cursor: "pointer", background: "transparent",
-                    boxShadow: i === galleryIdx ? "0 2px 8px rgba(201,144,106,0.30)" : "none",
+                    boxShadow: i === galleryIdx ? "0 2px 8px rgba(255,61,107,0.30)" : "none",
                   }}>
                   {p.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -607,7 +608,7 @@ export default function EditSheet({
                     <div style={{
                       width: "100%", height: "100%", display: "flex",
                       alignItems: "center", justifyContent: "center",
-                      background: "rgba(201,144,106,0.06)",
+                      background: "rgba(255,61,107,0.06)",
                       fontFamily: CURSIVE, fontSize: 10, color: ROSE,
                     }}>{i + 1}</div>
                   )}
@@ -622,8 +623,8 @@ export default function EditSheet({
                   }}
                   style={{
                     flexShrink: 0, width: 52, height: 52, borderRadius: 10,
-                    border: "2px dashed rgba(201,144,106,0.30)",
-                    background: "rgba(201,144,106,0.04)", cursor: "pointer",
+                    border: "2px dashed rgba(255,61,107,0.30)",
+                    background: "rgba(255,61,107,0.04)", cursor: "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: CURSIVE, fontSize: 22, color: ROSE, opacity: 0.6,
                   }}>+</button>
@@ -633,7 +634,7 @@ export default function EditSheet({
             {galleryPhotos.length === 0 ? (
               <div style={{
                 padding: "32px 0", textAlign: "center",
-                fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.45)",
+                fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.45)",
                 lineHeight: 1.6,
               }}>
                 No photos yet.<br />
@@ -644,14 +645,14 @@ export default function EditSheet({
                   }}
                   style={{
                     marginTop: 10, padding: "8px 20px", borderRadius: 50,
-                    border: "1.5px solid rgba(201,144,106,0.35)",
+                    border: "1.5px solid rgba(255,61,107,0.35)",
                     background: "transparent", fontFamily: CURSIVE, fontSize: 14,
                     color: ROSE, cursor: "pointer",
                   }}>+ Add your first photo</button>
               </div>
             ) : (
               <div>
-                <div style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", marginBottom: 8, textAlign: "right" }}>
+                <div style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", marginBottom: 8, textAlign: "right" }}>
                   Photo {galleryIdx + 1} of {galleryPhotos.length}
                 </div>
 
@@ -660,9 +661,9 @@ export default function EditSheet({
                   onClick={() => galleryFileRef.current?.click()}
                   style={{
                     width: "100%", aspectRatio: "4/3", borderRadius: 12,
-                    border: `2px dashed rgba(201,144,106,${currentGalleryPhoto.url ? "0.50" : "0.25"})`,
+                    border: `2px dashed rgba(255,61,107,${currentGalleryPhoto.url ? "0.50" : "0.25"})`,
                     overflow: "hidden", position: "relative", cursor: "pointer",
-                    background: currentGalleryPhoto.url ? "transparent" : "rgba(201,144,106,0.04)",
+                    background: currentGalleryPhoto.url ? "transparent" : "rgba(255,61,107,0.04)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     marginBottom: 12,
                   }}>
@@ -708,23 +709,23 @@ export default function EditSheet({
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                         <span style={{ fontFamily: CURSIVE, fontSize: 12, color: ROSE }}>Horizontal position</span>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)" }}>{currentGalleryPhoto.cropX}%</span>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)" }}>{currentGalleryPhoto.cropX}%</span>
                       </div>
                       <input
                         type="range" min={0} max={100} value={currentGalleryPhoto.cropX}
                         onChange={(e) => updateGalleryPhoto({ cropX: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "rgb(201,144,106)" }}
+                        style={{ width: "100%", accentColor: "#ff3d6b" }}
                       />
                     </div>
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                         <span style={{ fontFamily: CURSIVE, fontSize: 12, color: ROSE }}>Vertical position</span>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)" }}>{currentGalleryPhoto.cropY}%</span>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)" }}>{currentGalleryPhoto.cropY}%</span>
                       </div>
                       <input
                         type="range" min={0} max={100} value={currentGalleryPhoto.cropY}
                         onChange={(e) => updateGalleryPhoto({ cropY: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "rgb(201,144,106)" }}
+                        style={{ width: "100%", accentColor: "#ff3d6b" }}
                       />
                     </div>
                   </div>
@@ -745,7 +746,7 @@ export default function EditSheet({
                 <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "space-between", alignItems: "center" }}>
                   <button onClick={() => setGalleryIdx((i) => Math.max(0, i - 1))} disabled={galleryIdx === 0}
                     style={{
-                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(201,144,106,0.25)`,
+                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(255,61,107,0.25)`,
                       background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: ROSE,
                       cursor: galleryIdx === 0 ? "not-allowed" : "pointer", opacity: galleryIdx === 0 ? 0.35 : 1,
                     }}>← Prev</button>
@@ -760,7 +761,7 @@ export default function EditSheet({
                   <button onClick={() => setGalleryIdx((i) => Math.min(galleryPhotos.length - 1, i + 1))}
                     disabled={galleryIdx === galleryPhotos.length - 1}
                     style={{
-                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(201,144,106,0.25)`,
+                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(255,61,107,0.25)`,
                       background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: ROSE,
                       cursor: galleryIdx === galleryPhotos.length - 1 ? "not-allowed" : "pointer",
                       opacity: galleryIdx === galleryPhotos.length - 1 ? 0.35 : 1,
@@ -784,14 +785,14 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr("Quiz Questions 🎯")}
           {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
+          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
             Create custom quiz questions for the Games section. Up to 10 questions.
           </p>
 
           {quizQuestions.length === 0 ? (
             <div style={{
               padding: "24px 0", textAlign: "center",
-              fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.45)", lineHeight: 1.6,
+              fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.45)", lineHeight: 1.6,
             }}>
               No quiz questions yet.<br />
               <span style={{ fontSize: 12, opacity: 0.7 }}>Add custom questions or skip — default ones will be used.</span>
@@ -800,8 +801,8 @@ export default function EditSheet({
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
               {quizQuestions.map((q, qi) => (
                 <div key={qi} style={{
-                  borderRadius: 12, border: `1.5px solid ${quizEditIdx === qi ? "rgba(201,144,106,0.55)" : "rgba(201,144,106,0.18)"}`,
-                  background: quizEditIdx === qi ? "rgba(201,144,106,0.06)" : "rgba(12,6,20,0.50)",
+                  borderRadius: 12, border: `1.5px solid ${quizEditIdx === qi ? "rgba(255,61,107,0.55)" : "rgba(255,61,107,0.18)"}`,
+                  background: quizEditIdx === qi ? "rgba(255,61,107,0.06)" : "rgba(255,255,255,0.03)",
                   overflow: "hidden",
                 }}>
                   <div
@@ -825,7 +826,7 @@ export default function EditSheet({
                           background: "rgba(180,60,50,0.08)",
                           fontFamily: CURSIVE, fontSize: 11, color: "rgba(180,60,50,0.8)", cursor: "pointer",
                         }}>✕</button>
-                      <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.45)" }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.45)" }}>
                         {quizEditIdx === qi ? "▲" : "▼"}
                       </span>
                     </div>
@@ -851,7 +852,7 @@ export default function EditSheet({
                               name={`quiz-correct-${qi}`}
                               checked={q.correct === oi}
                               onChange={() => updateQuizQuestion(qi, { correct: oi })}
-                              style={{ accentColor: "rgb(201,144,106)", cursor: "pointer", flexShrink: 0 }}
+                              style={{ accentColor: "#ff3d6b", cursor: "pointer", flexShrink: 0 }}
                             />
                             <span style={{ fontFamily: CURSIVE, fontSize: 12, color: ROSE, flexShrink: 0, width: 16 }}>
                               {["A", "B", "C", "D"][oi]}
@@ -895,13 +896,13 @@ export default function EditSheet({
                   return (
                     <div key={li} style={{
                       padding: "9px 12px", borderRadius: 10,
-                      background: alreadyAdded ? "rgba(201,144,106,0.06)" : "rgba(12,6,20,0.50)",
-                      border: `1px solid ${alreadyAdded ? "rgba(201,144,106,0.35)" : "rgba(201,144,106,0.18)"}`,
+                      background: alreadyAdded ? "rgba(255,61,107,0.06)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${alreadyAdded ? "rgba(255,61,107,0.35)" : "rgba(255,61,107,0.18)"}`,
                       display: "flex", alignItems: "flex-start", gap: 8, opacity: alreadyAdded ? 0.55 : 1,
                     }}>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: ROSE, margin: 0, lineHeight: 1.4 }}>{q.question}</p>
-                        <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)", margin: "2px 0 0", lineHeight: 1.3 }}>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)", margin: "2px 0 0", lineHeight: 1.3 }}>
                           {q.options.map((o, oi) => (
                             <span key={oi}>{oi > 0 ? " · " : ""}<span style={{ color: oi === q.correct ? "rgb(55,160,95)" : undefined }}>{o}{oi === q.correct ? " ✓" : ""}</span></span>
                           ))}
@@ -916,11 +917,11 @@ export default function EditSheet({
                           }}
                           style={{
                             flexShrink: 0, padding: "2px 10px", borderRadius: 6, border: "none",
-                            background: "rgba(201,144,106,0.18)", fontFamily: CURSIVE, fontSize: 15,
+                            background: "rgba(255,61,107,0.18)", fontFamily: CURSIVE, fontSize: 15,
                             fontWeight: 700, color: ROSE, cursor: "pointer", lineHeight: "22px",
                           }}>+</button>
                       )}
-                      {alreadyAdded && <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.45)", flexShrink: 0 }}>✓</span>}
+                      {alreadyAdded && <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.45)", flexShrink: 0 }}>✓</span>}
                     </div>
                   );
                 })}
@@ -931,8 +932,8 @@ export default function EditSheet({
               onClick={() => setShowQuizLibrary(true)}
               style={{
                 width: "100%", padding: "10px 0", borderRadius: 10, marginBottom: 10,
-                border: "1.5px solid rgba(201,144,106,0.25)",
-                background: "rgba(201,144,106,0.05)", cursor: "pointer",
+                border: "1.5px solid rgba(255,61,107,0.25)",
+                background: "rgba(255,61,107,0.05)", cursor: "pointer",
                 fontFamily: CURSIVE, fontSize: 14, color: ROSE,
               }}>
               💕 Browse 30 cute question templates
@@ -944,9 +945,9 @@ export default function EditSheet({
               onClick={addQuizQuestion}
               style={{
                 width: "100%", padding: "10px 0", borderRadius: 10, marginBottom: 16,
-                border: "1.5px dashed rgba(201,144,106,0.35)",
-                background: "rgba(201,144,106,0.04)", cursor: "pointer",
-                fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.60)",
+                border: "1.5px dashed rgba(255,61,107,0.35)",
+                background: "rgba(255,61,107,0.04)", cursor: "pointer",
+                fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.60)",
               }}>
               + Create custom question ({quizQuestions.length}/10)
             </button>
@@ -970,7 +971,7 @@ export default function EditSheet({
           <div style={sheet}>
             {hdr("Truth & Dare 💕")}
             {progressBar}
-            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
               Pick questions from the library or add your own. These mix with defaults in the game.
             </p>
 
@@ -980,10 +981,10 @@ export default function EditSheet({
                 <button key={t} onClick={() => { setTdTab(t); setShowCustomInput(false); }}
                   style={{
                     flex: 1, padding: "9px 0", borderRadius: 50,
-                    border: tdTab === t ? "1.5px solid rgba(201,144,106,0.55)" : "1px solid rgba(201,144,106,0.20)",
-                    background: tdTab === t ? "rgba(201,144,106,0.12)" : "transparent",
+                    border: tdTab === t ? "1.5px solid rgba(255,61,107,0.55)" : "1px solid rgba(255,61,107,0.20)",
+                    background: tdTab === t ? "rgba(255,61,107,0.12)" : "transparent",
                     fontFamily: CURSIVE, fontSize: 14, fontWeight: tdTab === t ? 700 : 400,
-                    color: tdTab === t ? ROSE : "rgba(201,144,106,0.50)", cursor: "pointer",
+                    color: tdTab === t ? ROSE : "rgba(255,61,107,0.50)", cursor: "pointer",
                   }}>
                   {t === "truth" ? `💭 Truth (${selectedTruths.length})` : `🎯 Dare (${selectedDares.length})`}
                 </button>
@@ -993,19 +994,19 @@ export default function EditSheet({
             {/* Selected items for current tab */}
             {(tdTab === "truth" ? selectedTruths : selectedDares).length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   Selected ({tdTab === "truth" ? selectedTruths.length : selectedDares.length})
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {(tdTab === "truth" ? selectedTruths : selectedDares).map((q) => (
                     <div key={q.text} style={{
                       borderRadius: 10,
-                      background: tdTab === "truth" ? "rgba(140,100,200,0.09)" : "rgba(201,144,106,0.09)",
-                      border: tdTab === "truth" ? "1px solid rgba(140,100,200,0.22)" : "1px solid rgba(201,144,106,0.22)",
+                      background: tdTab === "truth" ? "rgba(140,100,200,0.09)" : "rgba(255,61,107,0.09)",
+                      border: tdTab === "truth" ? "1px solid rgba(140,100,200,0.22)" : "1px solid rgba(255,61,107,0.22)",
                       overflow: "hidden",
                     }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px" }}>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(250,240,230)", flex: 1, lineHeight: 1.4 }}>{q.text}</span>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "#fff", flex: 1, lineHeight: 1.4 }}>{q.text}</span>
                         <button onClick={() => removeTdItem(q.text)} style={{
                           border: "none", background: "transparent", cursor: "pointer",
                           fontFamily: CURSIVE, fontSize: 14, color: "rgba(180,60,50,0.7)", flexShrink: 0, lineHeight: 1,
@@ -1029,8 +1030,8 @@ export default function EditSheet({
                               onClick={() => { setDareMediaTarget(q.text); darePhotoRef.current?.click(); }}
                               style={{
                                 padding: "4px 10px", borderRadius: 6,
-                                border: "1px dashed rgba(201,144,106,0.35)",
-                                background: "rgba(201,144,106,0.06)", cursor: "pointer",
+                                border: "1px dashed rgba(255,61,107,0.35)",
+                                background: "rgba(255,61,107,0.06)", cursor: "pointer",
                                 fontFamily: CURSIVE, fontSize: 11, color: ROSE,
                               }}>📸 Add photo</button>
                           )}
@@ -1047,8 +1048,8 @@ export default function EditSheet({
                               onClick={() => { setDareMediaTarget(q.text); dareAudioRef.current?.click(); }}
                               style={{
                                 padding: "4px 10px", borderRadius: 6,
-                                border: "1px dashed rgba(201,144,106,0.35)",
-                                background: "rgba(201,144,106,0.06)", cursor: "pointer",
+                                border: "1px dashed rgba(255,61,107,0.35)",
+                                background: "rgba(255,61,107,0.06)", cursor: "pointer",
                                 fontFamily: CURSIVE, fontSize: 11, color: ROSE,
                               }}>🎤 Add audio</button>
                           )}
@@ -1092,7 +1093,7 @@ export default function EditSheet({
 
             {/* Library */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.55)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <div style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.55)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Library — tap + to add
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
@@ -1102,15 +1103,15 @@ export default function EditSheet({
                     <div key={text} style={{
                       display: "flex", alignItems: "flex-start", gap: 8,
                       padding: "8px 12px", borderRadius: 10,
-                      background: isSelected ? "rgba(201,144,106,0.06)" : "rgba(12,6,20,0.50)",
-                      border: `1px solid ${isSelected ? "rgba(201,144,106,0.35)" : "rgba(201,144,106,0.18)"}`,
+                      background: isSelected ? "rgba(255,61,107,0.06)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${isSelected ? "rgba(255,61,107,0.35)" : "rgba(255,61,107,0.18)"}`,
                       opacity: isSelected ? 0.55 : 1,
                     }}>
-                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(250,240,230)", flex: 1, lineHeight: 1.4 }}>{text}</span>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "#fff", flex: 1, lineHeight: 1.4 }}>{text}</span>
                       {!isSelected && (
                         <button onClick={() => addTdItem(text, tdTab)} style={{
                           border: "none",
-                          background: tdTab === "truth" ? "rgba(140,100,200,0.14)" : "rgba(201,144,106,0.14)",
+                          background: tdTab === "truth" ? "rgba(140,100,200,0.14)" : "rgba(255,61,107,0.14)",
                           borderRadius: 6, cursor: "pointer",
                           fontFamily: CURSIVE, fontSize: 16, fontWeight: 700,
                           color: tdTab === "truth" ? "rgb(160,120,220)" : ROSE,
@@ -1118,7 +1119,7 @@ export default function EditSheet({
                         }}>+</button>
                       )}
                       {isSelected && (
-                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(201,144,106,0.5)", flexShrink: 0 }}>✓</span>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(255,61,107,0.5)", flexShrink: 0 }}>✓</span>
                       )}
                     </div>
                   );
@@ -1139,20 +1140,20 @@ export default function EditSheet({
                 />
                 <button onClick={addCustomTd} disabled={!customInput.trim()} style={{
                   padding: "10px 16px", borderRadius: 8, border: "none",
-                  background: customInput.trim() ? "rgba(201,144,106,0.85)" : "rgba(201,144,106,0.25)",
+                  background: customInput.trim() ? "rgba(255,61,107,0.85)" : "rgba(255,61,107,0.25)",
                   fontFamily: CURSIVE, fontSize: 13, color: "#fff", cursor: customInput.trim() ? "pointer" : "not-allowed",
                 }}>Add</button>
                 <button onClick={() => { setShowCustomInput(false); setCustomInput(""); }} style={{
-                  padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(201,144,106,0.25)",
+                  padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,61,107,0.25)",
                   background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: ROSE, cursor: "pointer",
                 }}>✕</button>
               </div>
             ) : (
               <button onClick={() => setShowCustomInput(true)} style={{
                 width: "100%", padding: "9px 0", borderRadius: 10, marginBottom: 14,
-                border: "1.5px dashed rgba(201,144,106,0.30)",
-                background: "rgba(201,144,106,0.03)", cursor: "pointer",
-                fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.55)",
+                border: "1.5px dashed rgba(255,61,107,0.30)",
+                background: "rgba(255,61,107,0.03)", cursor: "pointer",
+                fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.55)",
               }}>
                 + Custom {tdTab === "truth" ? "Truth" : "Dare"}
               </button>
@@ -1177,12 +1178,12 @@ export default function EditSheet({
           {/* Summary card */}
           <div style={{
             padding: "14px 16px", borderRadius: 12, marginBottom: 20,
-            background: "rgba(201,144,106,0.07)", border: "1px solid rgba(201,144,106,0.22)",
+            background: "rgba(255,61,107,0.07)", border: "1px solid rgba(255,61,107,0.22)",
           }}>
             <div style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, marginBottom: 6 }}>
               For {mf.recipientName || "your love"} ♡
             </div>
-            <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.70)", lineHeight: 1.6 }}>
+            <div style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.70)", lineHeight: 1.6 }}>
               {homePhotos.filter(Boolean).length} home photo{homePhotos.filter(Boolean).length !== 1 ? "s" : ""}
               {" · "}
               {(mf.galleryPhotos || []).filter((p) => p.url).length} gallery photo{(mf.galleryPhotos || []).filter((p) => p.url).length !== 1 ? "s" : ""}
@@ -1195,7 +1196,7 @@ export default function EditSheet({
 
           <div style={{ marginBottom: 20 }}>
             {label("Password (optional)")}
-            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(201,144,106,0.65)", marginBottom: 10, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,61,107,0.65)", marginBottom: 10, lineHeight: 1.5 }}>
               Add a password so only your special someone can view this page.
             </p>
             <div style={{ position: "relative" }}>

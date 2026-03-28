@@ -4,8 +4,8 @@ import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "lucide-react";
 
-const ROSE = "rgb(201, 144, 106)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const ROSE = "#ff3d6b";
+const CURSIVE = "system-ui, sans-serif";
 
 interface Props {
   visible: boolean;
@@ -37,7 +37,7 @@ export default memo(function PublishingOverlay({ visible }: Props) {
               borderRadius: 24,
               padding: "32px 40px",
               boxShadow: "0 24px 80px rgba(0,0,0,0.60)",
-              border: "1px solid rgba(201,144,106,0.20)",
+              border: "1px solid rgba(255,61,107,0.20)",
               textAlign: "center",
             }}
           >
@@ -51,7 +51,7 @@ export default memo(function PublishingOverlay({ visible }: Props) {
             <p style={{ fontFamily: CURSIVE, fontSize: 16, fontWeight: 700, color: ROSE, margin: "0 0 4px" }}>
               Publishing your darling page...
             </p>
-            <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", margin: 0 }}>
+            <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
               Making it live for your special someone
             </p>
           </motion.div>

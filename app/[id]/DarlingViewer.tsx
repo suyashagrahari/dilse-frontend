@@ -27,8 +27,9 @@ const MusicSection   = lazy(() => import("@/app/(templates)/darling/components/M
 const GamesSection   = lazy(() => import("@/app/(templates)/darling/components/GamesSection"));
 const NotesSection   = lazy(() => import("@/app/(templates)/darling/components/NotesSection"));
 
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const ROSE    = "rgb(201, 144, 106)";
+const CURSIVE = "system-ui, sans-serif";
+const ROSE    = "#ff3d6b";
+const GRAD    = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   return IS_NGROK ? { "ngrok-skip-browser-warning": "true", ...extra } : extra;
@@ -103,17 +104,16 @@ function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => 
   return (
     <div style={{
       minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: `radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(8,4,18,0.55) 100%), url(/love/image18.webp) center / cover no-repeat`,
+      background: "#0d0b18",
       padding: "24px 20px",
     }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');`}</style>
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         style={{
           maxWidth: 340, width: "100%", borderRadius: 24,
           background: "rgba(10, 5, 20, 0.97)",
           boxShadow: "0 30px 80px rgba(0,0,0,0.65)",
-          border: "1px solid rgba(201,144,106,0.20)",
+          border: "1px solid rgba(255,61,107,0.20)",
           padding: "32px 28px", textAlign: "center",
         }}
       >
@@ -123,7 +123,7 @@ function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => 
         <h2 style={{ fontFamily: CURSIVE, fontSize: 22, fontWeight: 700, color: ROSE, marginBottom: 6 }}>
           This page is private ♡
         </h2>
-        <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(201,144,106,0.60)", marginBottom: 24, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(255,61,107,0.60)", marginBottom: 24, lineHeight: 1.6 }}>
           Enter the password to open your surprise
         </p>
         <div style={{ position: "relative", marginBottom: 16 }}>
@@ -136,9 +136,9 @@ function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => 
             autoFocus
             style={{
               width: "100%", padding: "12px 48px 12px 16px", borderRadius: 12,
-              border: `1.5px solid ${error ? "rgba(180,60,50,0.45)" : "rgba(201,144,106,0.28)"}`,
-              background: "rgba(12, 6, 20, 0.80)",
-              fontFamily: CURSIVE, fontSize: 15, color: "rgb(250, 240, 230)", outline: "none",
+              border: `1.5px solid ${error ? "rgba(180,60,50,0.45)" : "rgba(255,61,107,0.28)"}`,
+              background: "rgba(13, 11, 24, 0.85)",
+              fontFamily: CURSIVE, fontSize: 15, color: "#fff", outline: "none",
               boxSizing: "border-box",
             }}
           />
@@ -156,11 +156,11 @@ function PasswordGate({ shareId, onUnlock }: { shareId: string; onUnlock: () => 
         <button onClick={handleVerify} disabled={!pw.trim() || loading} style={{
           width: "100%", padding: "13px 0", borderRadius: 50, border: "none",
           background: pw.trim()
-            ? "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))"
-            : "rgba(201,144,106,0.20)",
+            ? "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)"
+            : "rgba(255,61,107,0.20)",
           fontFamily: CURSIVE, fontSize: 16, fontWeight: 700, color: "#fff",
           cursor: pw.trim() ? "pointer" : "not-allowed",
-          boxShadow: pw.trim() ? "0 6px 20px rgba(201,144,106,0.35)" : "none",
+          boxShadow: pw.trim() ? "0 6px 20px rgba(255,61,107,0.35)" : "none",
         }}>
           {loading ? "Opening..." : "Open ♡"}
         </button>
@@ -208,11 +208,10 @@ export default function DarlingViewer({ rawData, hasPassword, shareId }: Props) 
   return (
     <div style={{
       minHeight: "100dvh", width: "100%", overflow: "hidden", position: "relative",
-      background: `radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(8,4,18,0.55) 100%), url(/love/image18.webp) center / cover no-repeat fixed`,
+      background: "#0d0b18",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
-        body, html { margin: 0; padding: 0; background: rgb(8, 4, 18); }
+        body, html { margin: 0; padding: 0; background: #0d0b18; }
         * { box-sizing: border-box; }
         @media (max-width: 1023px) { body { overflow: hidden; } }
       `}</style>
@@ -243,7 +242,7 @@ export default function DarlingViewer({ rawData, hasPassword, shareId }: Props) 
       {/* Main content */}
       <main className="lg:ml-56" style={{ height: "100dvh", overflow: "hidden" }}>
         {tab === "home" && (
-          <HomeSection data={content} isPersonalized={true} onEditClick={() => router.push("/darling")} />
+          <HomeSection data={content} isPersonalized={true} onEditClick={() => router.push("/darling")} onTabChange={handleTabChange} />
         )}
         {tab === "wish" && (
           <WishSection data={content} isPersonalized={true} />

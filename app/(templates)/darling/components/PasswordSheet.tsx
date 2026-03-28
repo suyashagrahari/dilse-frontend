@@ -4,9 +4,9 @@ import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ShieldCheck, Eye, EyeOff, Loader2 } from "lucide-react";
 
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_DIM = "rgba(201, 144, 106, 0.55)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const ROSE = "#ff3d6b";
+const ROSE_DIM = "rgba(255,61,107,0.55)";
+const CURSIVE = "system-ui, sans-serif";
 
 interface Props {
   visible: boolean;
@@ -39,19 +39,19 @@ export default memo(function PasswordSheet({ visible, saving, password, setPassw
               background: "rgba(14, 7, 24, 0.98)",
               borderRadius: "20px 20px 0 0",
               boxShadow: "0 -12px 60px rgba(0,0,0,0.55)",
-              border: "1px solid rgba(201,144,106,0.18)",
+              border: "1px solid rgba(255,61,107,0.18)",
               borderBottom: "none",
             }}
           >
             <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4 }}>
-              <div style={{ width: 40, height: 4, borderRadius: 999, background: "rgba(201,144,106,0.25)" }} />
+              <div style={{ width: 40, height: 4, borderRadius: 999, background: "rgba(255,61,107,0.25)" }} />
             </div>
             <div style={{ padding: "8px 20px 40px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
-                  background: "rgba(201,144,106,0.10)",
-                  border: "1px solid rgba(201,144,106,0.20)",
+                  background: "rgba(255,61,107,0.10)",
+                  border: "1px solid rgba(255,61,107,0.20)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   <ShieldCheck size={20} style={{ color: ROSE }} />
@@ -67,8 +67,8 @@ export default memo(function PasswordSheet({ visible, saving, password, setPassw
               </div>
 
               <div style={{
-                marginTop: 20, background: "rgba(201,144,106,0.05)", borderRadius: 16,
-                padding: 16, border: "1px solid rgba(201,144,106,0.15)",
+                marginTop: 20, background: "rgba(255,61,107,0.05)", borderRadius: 16,
+                padding: 16, border: "1px solid rgba(255,61,107,0.15)",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                   <Lock size={14} style={{ color: ROSE_DIM }} />
@@ -84,8 +84,8 @@ export default memo(function PasswordSheet({ visible, saving, password, setPassw
                     placeholder="Enter a password..."
                     style={{
                       width: "100%", padding: "12px 40px 12px 14px",
-                      borderRadius: 12, border: `1px solid rgba(201,144,106,0.25)`,
-                      background: "rgba(12, 6, 20, 0.80)", color: "rgb(250, 240, 230)",
+                      borderRadius: 12, border: `1px solid rgba(255,61,107,0.25)`,
+                      background: "rgba(255,255,255,0.04)", color: "#fff",
                       fontFamily: CURSIVE, fontSize: 14, outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -118,7 +118,7 @@ export default memo(function PasswordSheet({ visible, saving, password, setPassw
                   disabled={saving}
                   style={{
                     flex: 1, padding: "13px 0", borderRadius: 12,
-                    border: "1.5px solid rgba(201,144,106,0.25)", background: "transparent",
+                    border: "1.5px solid rgba(255,61,107,0.25)", background: "transparent",
                     fontFamily: CURSIVE, fontSize: 14, fontWeight: 600, color: ROSE_DIM,
                     cursor: "pointer",
                   }}
@@ -130,11 +130,11 @@ export default memo(function PasswordSheet({ visible, saving, password, setPassw
                   disabled={saving || !password.trim()}
                   style={{
                     flex: 1, padding: "13px 0", borderRadius: 12, border: "none",
-                    background: "linear-gradient(135deg, rgb(201,144,106) 0%, rgb(160,100,65) 100%)",
+                    background: "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)",
                     fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: "#fff",
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     opacity: saving || !password.trim() ? 0.5 : 1,
-                    boxShadow: "0 4px 16px rgba(201,144,106,0.35)",
+                    boxShadow: "0 4px 16px rgba(255,61,107,0.35)",
                   }}
                 >
                   {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Lock size={14} />}

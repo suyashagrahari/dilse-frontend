@@ -4,16 +4,19 @@ import { motion } from "framer-motion";
 import { Camera, Gamepad2, Heart, Mail, Music, Sparkles, type LucideIcon } from "lucide-react";
 import { TABS, type TabId } from "./types";
 
-const ROSE = "rgb(201, 144, 106)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const PINK    = "#ff3d6b";
+const GRAD    = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
+const GLASS   = "rgba(13, 11, 24, 0.88)";
+const BORDER  = "rgba(255, 61, 107, 0.18)";
+const BORDER_SOFT = "rgba(255, 255, 255, 0.08)";
 
 const TAB_ICONS: Record<TabId, LucideIcon> = {
-  home: Heart,
-  wish: Sparkles,
+  home:    Heart,
+  wish:    Sparkles,
   gallery: Camera,
-  music: Music,
-  games: Gamepad2,
-  notes: Mail,
+  music:   Music,
+  games:   Gamepad2,
+  notes:   Mail,
 };
 
 interface Props {
@@ -32,7 +35,6 @@ interface Props {
 
 export default function BottomNav({
   mode, tab, onTabChange,
-  onEdit, showPublish, showShare, shareLabel, onPublish, onShare,
   onCreateYours,
 }: Props) {
   return (
@@ -40,181 +42,190 @@ export default function BottomNav({
       className="lg:hidden"
       style={{
         position: "fixed",
-        bottom: 10, left: 0, right: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 100,
-        pointerEvents: "auto",
+        padding: "0 14px calc(env(safe-area-inset-bottom, 0px) + 14px)",
+        pointerEvents: "none",
       }}
     >
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+      {/* Soft glow under the dock */}
+      <div
+        aria-hidden
         style={{
-          width: "calc(100% - 24px)",
+          position: "absolute",
+          left: "50%",
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)",
+          transform: "translateX(-50%)",
+          width: "min(92%, 420px)",
+          height: 56,
+          borderRadius: 999,
+          background: "radial-gradient(ellipse 80% 100% at 50% 100%, rgba(255,61,107,0.14), transparent 65%)",
+          pointerEvents: "none",
+          filter: "blur(8px)",
+        }}
+      />
+
+      <div
+        style={{
+          pointerEvents: "auto",
+          position: "relative",
           margin: "0 auto",
-          background: "rgba(8, 4, 18, 0.92)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          border: "1px solid rgba(201, 144, 106, 0.18)",
-          borderRadius: 18,
-          boxShadow: "0 -10px 30px rgba(0,0,0,0.35)",
-          padding: "4px 10px env(safe-area-inset-bottom, 0px)",
-          paddingTop: 6,
+          maxWidth: 440,
+          borderRadius: 999,
+          padding: "10px 8px 10px",
+          background: GLASS,
+          backdropFilter: "blur(24px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+          border: `1px solid ${BORDER_SOFT}`,
+          boxShadow: `
+            0 4px 24px rgba(0,0,0,0.45),
+            0 0 0 1px ${BORDER} inset,
+            0 1px 0 rgba(255,255,255,0.06) inset
+          `,
         }}
       >
-        <style>{`
-          @keyframes drl-create-glow {
-            0%,100%{box-shadow:0 0 10px 2px rgba(201,144,106,0.50),0 3px 12px rgba(0,0,0,0.35)}
-            50%{box-shadow:0 0 20px 6px rgba(201,144,106,0.70),0 5px 18px rgba(0,0,0,0.45)}
-          }
-          .drl-create-tab{animation:drl-create-glow 2s ease-in-out infinite}
-        `}</style>
-        {/* Tab row */}
         <div
           style={{
             display: "flex",
-            justifyContent: "space-around",
+            justifyContent: "space-between",
             alignItems: "center",
-            padding: "0 2px",
+            gap: 2,
           }}
         >
           {TABS.map((t) => {
             const active = t.id === tab;
             const Icon = TAB_ICONS[t.id];
+            const displayLabel = t.label;
 
             return (
               <motion.button
                 key={t.id}
                 onClick={() => onTabChange(t.id)}
-                whileTap={{ scale: 0.96 }}
-                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.92 }}
                 style={{
-                  position: "relative",
+                  flex: 1,
+                  minWidth: 0,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 1,
-                  padding: "4px 4px",
+                  gap: 4,
+                  padding: "2px 0",
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
-                  flex: 1,
-                  opacity: active ? 1 : 0.50,
-                  transition: "opacity 0.15s",
                 }}
               >
                 <div
                   style={{
+                    position: "relative",
                     width: 40,
-                    height: 40,
+                    height: 36,
+                    borderRadius: 14,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    position: "relative",
-                    borderRadius: 15,
                   }}
                 >
                   {active && (
                     <motion.div
-                      layoutId="darling-nav-active"
-                      initial={false}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                      layoutId="darling-nav-pill"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
                       style={{
                         position: "absolute",
-                        inset: 2,
+                        inset: 0,
                         borderRadius: 14,
-                        background: "linear-gradient(135deg, rgba(201,144,106,0.22), rgba(160,100,65,0.10))",
-                        boxShadow: "0 12px 26px rgba(201,144,106,0.18)",
-                        border: "1px solid rgba(201,144,106,0.26)",
+                        background: "linear-gradient(145deg, rgba(255,61,107,0.22) 0%, rgba(168,85,247,0.14) 100%)",
+                        border: "1px solid rgba(255,61,107,0.28)",
+                        boxShadow: "0 2px 12px rgba(255,61,107,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
                       }}
                     />
                   )}
-
                   <Icon
                     size={19}
-                    strokeWidth={active ? 2.4 : 1.8}
+                    strokeWidth={active ? 2.5 : 1.75}
                     style={{
                       position: "relative",
-                      zIndex: 2,
-                      color: active ? ROSE : "rgba(201, 144, 106, 0.60)",
-                      filter: active ? "drop-shadow(0 8px 16px rgba(201,144,106,0.30))" : "none",
+                      zIndex: 1,
+                      color: active ? PINK : "rgba(255,255,255,0.38)",
+                      filter: active ? "drop-shadow(0 0 8px rgba(255,61,107,0.55))" : "none",
+                      transition: "color 0.2s ease",
                     }}
+                    fill={active && t.id === "home" ? "rgba(255,61,107,0.22)" : "none"}
                   />
                 </div>
-
                 <span
                   style={{
-                    fontFamily: CURSIVE,
-                    fontSize: "clamp(8px, 2vw, 10px)",
-                    fontWeight: active ? 700 : 400,
-                    color: active ? ROSE : "rgba(201, 144, 106, 0.60)",
-                    letterSpacing: "0.04em",
+                    fontSize: 10,
+                    fontWeight: active ? 700 : 500,
+                    color: active ? PINK : "rgba(255,255,255,0.36)",
+                    letterSpacing: "0.02em",
+                    transition: "color 0.2s ease",
                     lineHeight: 1,
-                    textAlign: "center",
+                    maxWidth: "100%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    padding: "0 1px",
                   }}
                 >
-                  {t.label}
+                  {displayLabel}
                 </span>
-                {active && (
-                  <motion.span
-                    initial={{ opacity: 0, scaleX: 0.7 }}
-                    animate={{ opacity: 1, scaleX: 1 }}
-                    transition={{ type: "spring", stiffness: 240, damping: 20 }}
-                    style={{
-                      width: 22,
-                      height: 2,
-                      borderRadius: 999,
-                      background: "linear-gradient(90deg, rgba(201,144,106,0.15), rgba(201,144,106,0.95), rgba(201,144,106,0.15))",
-                      marginTop: 2,
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
               </motion.button>
             );
           })}
 
-          {/* Viewer-only: glowing Create ♡ tab */}
           {mode === "viewer" && onCreateYours && (
             <motion.button
               onClick={onCreateYours}
-              whileTap={{ scale: 0.93 }}
-              initial={{ opacity: 0, scale: 0.8 }}
+              whileTap={{ scale: 0.92 }}
+              initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
-              className="drl-create-tab"
+              transition={{ delay: 0.45, type: "spring", stiffness: 280, damping: 22 }}
               style={{
+                flex: 1,
+                minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 1,
-                padding: "5px 8px",
-                borderRadius: 14,
+                gap: 4,
+                padding: "2px 0",
                 border: "none",
-                background: "linear-gradient(135deg, rgb(201,144,106) 0%, rgb(160,100,65) 100%)",
+                background: "transparent",
                 cursor: "pointer",
-                flexShrink: 0,
-                marginLeft: 4,
               }}
             >
-              <span style={{ fontSize: 15, lineHeight: 1 }}>✦</span>
-              <span style={{
-                fontFamily: CURSIVE,
-                fontSize: "clamp(7px, 1.8vw, 9px)",
-                fontWeight: 700,
-                color: "#fff",
-                letterSpacing: "0.03em",
-                lineHeight: 1,
-                textAlign: "center",
-                whiteSpace: "nowrap",
-              }}>
-                Create ♡
+              <div
+                style={{
+                  width: 40,
+                  height: 36,
+                  borderRadius: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: GRAD,
+                  boxShadow: "0 4px 16px rgba(255,61,107,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
+                <span style={{ fontSize: 15, color: "#fff", lineHeight: 1 }}>✦</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: PINK,
+                  letterSpacing: "0.02em",
+                  lineHeight: 1,
+                }}
+              >
+                Create
               </span>
             </motion.button>
           )}
         </div>
-      </motion.div>
+      </div>
     </nav>
   );
 }

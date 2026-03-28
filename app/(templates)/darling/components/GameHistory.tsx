@@ -4,10 +4,10 @@ import { memo, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MiniAudioPlayer from "./MiniAudioPlayer";
 
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_DIM = "rgba(201, 144, 106, 0.55)";
-const ROSE_FAINT = "rgba(201, 144, 106, 0.30)";
+const CURSIVE = "system-ui, sans-serif";
+const ROSE = "#ff3d6b";
+const ROSE_DIM = "rgba(255,61,107,0.55)";
+const ROSE_FAINT = "rgba(255,61,107,0.20)";
 
 export interface HistoryEntry {
   id: number;
@@ -71,8 +71,8 @@ const StatCard = memo(function StatCard({
     <div style={{
       flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
       gap: 3, padding: "10px 4px", borderRadius: 14,
-      background: "rgba(12, 6, 20, 0.82)",
-      border: "1px solid rgba(201, 144, 106, 0.18)",
+      background: "rgba(13, 11, 24, 0.98)",
+      border: "1px solid rgba(255,61,107,0.18)",
       boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
     }}>
       <span style={{ fontSize: 20 }}>{emoji}</span>
@@ -92,7 +92,7 @@ const TodCard = memo(function TodCard({
 }: { entry: HistoryEntry; index: number }) {
   const isTruth = entry.type === "truth";
   const truthColor = { accent: "rgb(140, 100, 200)", bg: "rgba(140,100,200,0.07)", border: "rgba(140,100,200,0.18)", bar: "rgba(140,100,200,0.50)" };
-  const dareColor  = { accent: "rgb(201, 144, 106)", bg: "rgba(201,144,106,0.07)",  border: "rgba(201,144,106,0.18)",  bar: "rgba(201,144,106,0.50)"  };
+  const dareColor  = { accent: "#ff3d6b", bg: "rgba(255,61,107,0.07)",  border: "rgba(255,61,107,0.18)",  bar: "rgba(255,61,107,0.50)"  };
   const c = isTruth ? truthColor : dareColor;
 
   const hasAudio = !!entry.mediaUrl && isAudioUrl(entry.mediaUrl);
@@ -138,7 +138,7 @@ const TodCard = memo(function TodCard({
         {/* Prompt */}
         <p style={{
           fontFamily: CURSIVE, fontSize: 12, fontWeight: 700,
-          color: "rgb(250, 240, 230)", margin: "0 0 6px", lineHeight: 1.45,
+          color: "#fff", margin: "0 0 6px", lineHeight: 1.45,
         }}>
           {entry.prompt}
         </p>
@@ -149,7 +149,7 @@ const TodCard = memo(function TodCard({
         {/* Answer */}
         <p style={{
           fontFamily: CURSIVE, fontSize: 12, fontStyle: "italic",
-          color: "rgba(250, 240, 230, 0.75)", margin: 0, lineHeight: 1.55,
+          color: "rgba(255, 255, 255, 0.70)", margin: 0, lineHeight: 1.55,
         }}>
           {isTruth ? `"${entry.answer}"` : `✓ ${entry.answer}`}
         </p>
@@ -293,7 +293,7 @@ const GameHistory = memo(function GameHistory({ history, quizAttempts }: Props) 
         style={{ textAlign: "center", padding: "36px 16px" }}
       >
         <span style={{ fontSize: 52, display: "block", marginBottom: 12 }}>📖</span>
-        <p style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: "rgb(250, 240, 230)", margin: "0 0 8px" }}>
+        <p style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: "#fff", margin: "0 0 8px" }}>
           No history yet
         </p>
         <p style={{ fontFamily: CURSIVE, fontSize: 13, color: ROSE_DIM, margin: 0, lineHeight: 1.6 }}>
@@ -313,7 +313,7 @@ const GameHistory = memo(function GameHistory({ history, quizAttempts }: Props) 
       >
         <StatCard emoji="🎮" value={total}          label="Total games" color={ROSE} />
         <StatCard emoji="💭" value={truthCount}     label="Truths"      color="rgb(140,100,200)" />
-        <StatCard emoji="🎯" value={dareCount}      label="Dares"       color="rgb(201,144,106)" />
+        <StatCard emoji="🎯" value={dareCount}      label="Dares"       color="#ff3d6b" />
         <StatCard emoji="🏆" value={bestQuiz ?? "--"} label="Best quiz" color="rgb(55,125,75)" />
       </motion.div>
 
@@ -327,9 +327,9 @@ const GameHistory = memo(function GameHistory({ history, quizAttempts }: Props) 
             style={{
               flexShrink: 0, padding: "6px 16px", borderRadius: 999,
               border: filter === tab.id
-                ? "1.5px solid rgba(201,144,106,0.45)"
-                : "1px solid rgba(201,144,106,0.18)",
-              background: filter === tab.id ? "rgba(201,144,106,0.16)" : "transparent",
+                ? "1.5px solid rgba(255,61,107,0.45)"
+                : "1px solid rgba(255,61,107,0.18)",
+              background: filter === tab.id ? "rgba(255,61,107,0.16)" : "transparent",
               fontFamily: CURSIVE, fontSize: 12,
               fontWeight: filter === tab.id ? 700 : 400,
               color: filter === tab.id ? ROSE : ROSE_DIM,

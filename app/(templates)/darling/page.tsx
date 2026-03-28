@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useMemo, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Camera, Mail, Music2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 
 import { useDarlingEditor } from "./hooks/useDarlingEditor";
@@ -23,8 +24,9 @@ const MusicSection = lazy(() => import("./components/MusicSection"));
 const GamesSection = lazy(() => import("./components/GamesSection"));
 const NotesSection = lazy(() => import("./components/NotesSection"));
 
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const ROSE = "rgb(201, 144, 106)";
+const CURSIVE = "system-ui, sans-serif";
+const ROSE = "#ff3d6b";
+const GRAD = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
 
 function SectionLoader() {
   return (
@@ -71,7 +73,7 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
         style={{
           width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0",
           background: "rgba(14, 7, 24, 0.98)",
-          border: "1px solid rgba(201,144,106,0.18)",
+          border: "1px solid rgba(255,61,107,0.18)",
           borderBottom: "none",
           padding: "28px 24px 44px",
           boxShadow: "0 -12px 60px rgba(0,0,0,0.55)",
@@ -89,11 +91,11 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
 
         {/* URL preview */}
         <div style={{
-          background: "rgba(201,144,106,0.07)", borderRadius: 12,
+          background: "rgba(255,61,107,0.07)", borderRadius: 12,
           padding: "10px 14px", marginBottom: 20,
-          fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.70)",
+          fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.70)",
           wordBreak: "break-all", lineHeight: 1.5,
-          border: "1px solid rgba(201,144,106,0.15)",
+          border: "1px solid rgba(255,61,107,0.15)",
         }}>
           {url}
         </div>
@@ -102,8 +104,8 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
           <button onClick={copy} style={{
             display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
             borderRadius: 14,
-            border: copied ? "1.5px solid rgba(201,144,106,0.40)" : "1.5px solid rgba(201,144,106,0.20)",
-            background: copied ? "rgba(201,144,106,0.10)" : "rgba(201,144,106,0.04)",
+            border: copied ? "1.5px solid rgba(255,61,107,0.40)" : "1.5px solid rgba(255,61,107,0.20)",
+            background: copied ? "rgba(255,61,107,0.10)" : "rgba(255,61,107,0.04)",
             cursor: "pointer", textAlign: "left",
           }}>
             <span style={{ fontSize: 22 }}>{copied ? "✓" : "🔗"}</span>
@@ -111,7 +113,7 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
               <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>
                 {copied ? "Copied!" : "Copy Link"}
               </p>
-              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", margin: 0 }}>
+              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
                 Copy the link to share anywhere
               </p>
             </div>
@@ -120,13 +122,13 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
           <button onClick={whatsapp} style={{
             display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
             borderRadius: 14, border: "1.5px solid rgba(37,211,102,0.20)",
-            background: "rgba(201,144,106,0.04)",
+            background: "rgba(255,61,107,0.04)",
             cursor: "pointer", textAlign: "left",
           }}>
             <span style={{ fontSize: 22 }}>💬</span>
             <div>
               <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>WhatsApp</p>
-              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", margin: 0 }}>
+              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
                 Send via WhatsApp
               </p>
             </div>
@@ -135,14 +137,14 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
           {typeof navigator !== "undefined" && "share" in navigator && (
             <button onClick={nativeShare} style={{
               display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-              borderRadius: 14, border: "1.5px solid rgba(201,144,106,0.20)",
-              background: "rgba(201,144,106,0.04)",
+              borderRadius: 14, border: "1.5px solid rgba(255,61,107,0.20)",
+              background: "rgba(255,61,107,0.04)",
               cursor: "pointer", textAlign: "left",
             }}>
               <span style={{ fontSize: 22 }}>↗️</span>
               <div>
                 <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>Share</p>
-                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(201,144,106,0.55)", margin: 0 }}>
+                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
                   Share via other apps
                 </p>
               </div>
@@ -164,6 +166,31 @@ function DarlingPageInner() {
       ? { label: "♡ Publish", onClick: editor.handlePublish }
       : { label: "✦ Create", onClick: editor.handleEditClick };
 
+  const galleryUserCount = useMemo(
+    () => (editor.content.galleryPhotos || []).filter((p) => p.url).length,
+    [editor.content.galleryPhotos],
+  );
+  /** Compact top bar; center title on these tabs (not Home) */
+  const showCenterTitle =
+    editor.tab === "gallery" || editor.tab === "games" || editor.tab === "music"
+    || editor.tab === "notes" || editor.tab === "wish";
+
+  const centerH2: CSSProperties = {
+    margin: 0,
+    padding: 0,
+    fontSize: "1em",
+    fontWeight: 800,
+    lineHeight: 1.08,
+    letterSpacing: "-0.02em",
+    background: GRAD,
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
+
   return (
     <div
       style={{
@@ -171,15 +198,11 @@ function DarlingPageInner() {
         width: "100%",
         overflow: "hidden",
         position: "relative",
-        background: `
-          radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(8,4,18,0.55) 100%),
-          url(/love/image18.webp) center / cover no-repeat fixed
-        `,
+        background: "#0d0b18",
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');
-        body, html { margin: 0; padding: 0; background: rgb(8, 4, 18); }
+        body, html { margin: 0; padding: 0; background: #0d0b18; }
         * { box-sizing: border-box; }
         @media (max-width: 1023px) {
           body { overflow: hidden; }
@@ -191,13 +214,14 @@ function DarlingPageInner() {
         className="lg:hidden"
         style={{
           position: "fixed",
-          top: 12,
+          top: 10,
           left: 0,
           right: 0,
           zIndex: 101,
-          paddingTop: "env(safe-area-inset-top, 16px)",
-          paddingLeft: 16,
-          paddingRight: 16,
+          paddingTop: "max(6px, env(safe-area-inset-top, 14px))",
+          paddingBottom: 4,
+          paddingLeft: 12,
+          paddingRight: 12,
           pointerEvents: "auto",
         }}
       >
@@ -205,48 +229,162 @@ function DarlingPageInner() {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: 10,
+            gap: showCenterTitle ? 6 : 8,
+            width: "100%",
+            minHeight: 36,
           }}
         >
           <button
             onClick={editor.goBack}
             style={{
-              padding: "8px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(201,144,106,0.18)",
-              background: "rgba(8, 4, 18, 0.80)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              fontFamily: CURSIVE,
-              fontSize: 14,
-              fontWeight: 600,
-              color: ROSE,
+              display: "flex", alignItems: "center", gap: 3,
+              padding: "5px 9px",
+              borderRadius: 50,
+              border: "1px solid rgba(255,61,107,0.22)",
+              background: "rgba(255,61,107,0.07)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#fff",
               cursor: "pointer",
               letterSpacing: "0.02em",
+              boxShadow: "0 3px 14px rgba(255,61,107,0.08)",
+              flexShrink: 0,
             }}
           >
             ← Back
           </button>
 
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: showCenterTitle ? "0 2px" : 0,
+              fontSize: showCenterTitle ? "clamp(11.5px, 3.5vw, 16px)" : undefined,
+            }}
+          >
+            {editor.tab === "gallery" ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4em",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  padding: "2px 6px",
+                }}
+              >
+                <h2 style={centerH2}>
+                  {galleryUserCount > 0
+                    ? `Our Memories (${galleryUserCount})`
+                    : "Our Memories"}
+                </h2>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    lineHeight: 0,
+                    flexShrink: 0,
+                    transform: "translateY(0.05em)",
+                  }}
+                  aria-hidden
+                >
+                  <Camera
+                    color={ROSE}
+                    strokeWidth={2.25}
+                    style={{ width: "0.9em", height: "0.9em", display: "block" }}
+                  />
+                </span>
+              </div>
+            ) : editor.tab === "games" ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35em",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  padding: "2px 6px",
+                }}
+              >
+                <h2 style={centerH2}>Love Games</h2>
+                <span style={{ fontSize: "0.95em", lineHeight: 1, flexShrink: 0 }} aria-hidden>🎮</span>
+              </div>
+            ) : editor.tab === "music" ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35em",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  padding: "2px 6px",
+                }}
+              >
+                <h2 style={centerH2}>Our Playlist</h2>
+                <Music2 color={ROSE} strokeWidth={2.2} style={{ width: "0.9em", height: "0.9em", flexShrink: 0 }} aria-hidden />
+              </div>
+            ) : editor.tab === "notes" ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35em",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  padding: "2px 6px",
+                }}
+              >
+                <h2 style={centerH2}>Love Notes</h2>
+                <Mail color={ROSE} strokeWidth={2.2} style={{ width: "0.9em", height: "0.9em", flexShrink: 0 }} aria-hidden />
+              </div>
+            ) : editor.tab === "wish" ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35em",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  padding: "2px 6px",
+                }}
+              >
+                <h2 style={centerH2}>Love Letter</h2>
+                <Sparkles color={ROSE} strokeWidth={2.2} style={{ width: "0.9em", height: "0.9em", flexShrink: 0 }} aria-hidden />
+              </div>
+            ) : null}
+          </div>
+
           <button
             onClick={topAction.onClick}
             style={{
-              padding: "8px 16px",
-              borderRadius: 999,
-              border: editor.showShare ? "1.5px solid rgba(201,144,106,0.30)" : "none",
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "5px 11px",
+              borderRadius: 50,
+              border: editor.showShare ? "1.5px solid rgba(255,61,107,0.35)" : "none",
               background: editor.showPublish
-                ? "linear-gradient(135deg, rgb(201,144,106) 0%, rgb(160,100,65) 100%)"
+                ? GRAD
                 : editor.showShare
-                  ? "rgba(201,144,106,0.08)"
-                  : "rgba(201,144,106,0.80)",
-              color: editor.showShare ? ROSE : "#fff",
-              fontFamily: CURSIVE,
-              fontSize: 14,
+                  ? "rgba(255,61,107,0.12)"
+                  : GRAD,
+              color: "#fff",
+              fontSize: 11,
               fontWeight: 700,
               cursor: "pointer",
               letterSpacing: "0.02em",
-              boxShadow: editor.showPublish ? "0 6px 18px rgba(201,144,106,0.35)" : "none",
+              boxShadow: (editor.showPublish || (!editor.showShare && !editor.showPublish))
+                ? "0 4px 16px rgba(255,61,107,0.26)"
+                : "none",
+              flexShrink: 0,
             }}
           >
             {topAction.label}
@@ -279,22 +417,23 @@ function DarlingPageInner() {
             data={editor.content}
             isPersonalized={editor.isPersonalized}
             onEditClick={editor.handleEditClick}
+            onTabChange={editor.handleTabChange}
           />
         )}
         {editor.tab === "wish" && (
-          <WishSection data={editor.content} isPersonalized={editor.isPersonalized} />
+          <WishSection data={editor.content} isPersonalized={editor.isPersonalized} titleInTopBar />
         )}
         {editor.tab === "gallery" && (
           <DarlingBg>
             <Suspense fallback={<SectionLoader />}>
-              <GallerySection data={editor.content} />
+              <GallerySection data={editor.content} titleInTopBar />
             </Suspense>
           </DarlingBg>
         )}
         {editor.tab === "notes" && (
           <DarlingBg>
             <Suspense fallback={<SectionLoader />}>
-              <NotesSection shareId={editor.shareId} />
+              <NotesSection shareId={editor.shareId} titleInTopBar />
             </Suspense>
           </DarlingBg>
         )}
@@ -303,7 +442,7 @@ function DarlingPageInner() {
         <div style={{ display: editor.tab === "music" ? "block" : "none" }}>
           <DarlingBg>
             <Suspense fallback={<SectionLoader />}>
-              <MusicSection data={editor.content} onPlayStateChange={setPlaylistActive} />
+              <MusicSection data={editor.content} onPlayStateChange={setPlaylistActive} titleInTopBar />
             </Suspense>
           </DarlingBg>
         </div>
@@ -316,6 +455,7 @@ function DarlingPageInner() {
                 shareId={editor.shareId}
                 quizAttempts={editor.quizAttemptsFromDB}
                 initialGameResponses={editor.gameResponsesFromDB as unknown as import("./components/GamesSection").ServerGameResponse[]}
+                titleInTopBar
               />
             </Suspense>
           </DarlingBg>

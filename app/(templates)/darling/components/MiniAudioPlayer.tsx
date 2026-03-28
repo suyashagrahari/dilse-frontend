@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const CURSIVE = "system-ui, sans-serif";
 
 interface Props {
   src: string;
@@ -18,9 +18,9 @@ const BAR_HEIGHTS = [0.45, 0.75, 0.55, 1, 0.65, 0.85, 0.4, 0.7, 0.5, 0.9];
 export default function MiniAudioPlayer({
   src,
   onRemove,
-  accentColor = "rgb(201, 144, 106)",
-  bgColor = "rgba(201, 144, 106, 0.08)",
-  borderColor = "rgba(201, 144, 106, 0.22)",
+  accentColor = "#ff3d6b",
+  bgColor = "rgba(255,61,107,0.08)",
+  borderColor = "rgba(255,61,107,0.20)",
 }: Props) {
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -143,7 +143,7 @@ export default function MiniAudioPlayer({
           onClick={seek}
           style={{
             height: 5, borderRadius: 999, cursor: "pointer",
-            background: `rgba(${accentColor.match(/\d+/g)?.join(",") ?? "201,144,106"},0.18)`,
+            background: `rgba(${accentColor.match(/\d+/g)?.join(",") ?? "255,61,107"},0.18)`,
             position: "relative", overflow: "hidden",
           }}
         >
@@ -160,17 +160,17 @@ export default function MiniAudioPlayer({
             left: `${pct * 100}%`,
             width: 10, height: 10, borderRadius: "50%",
             background: accentColor,
-            boxShadow: `0 0 0 2px rgba(12,6,20,0.8), 0 0 0 3px ${accentColor}`,
+            boxShadow: `0 0 0 2px rgba(13,11,24,0.8), 0 0 0 3px ${accentColor}`,
             opacity: duration > 0 ? 1 : 0,
           }} />
         </div>
 
         {/* Time */}
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: CURSIVE, fontSize: 9, color: "rgba(201,144,106,0.65)" }}>
+          <span style={{ fontFamily: CURSIVE, fontSize: 9, color: "rgba(255,61,107,0.65)" }}>
             {loading ? "loading…" : fmt(current)}
           </span>
-          <span style={{ fontFamily: CURSIVE, fontSize: 9, color: "rgba(201,144,106,0.45)" }}>
+          <span style={{ fontFamily: CURSIVE, fontSize: 9, color: "rgba(255,61,107,0.45)" }}>
             {loading || !duration ? "--:--" : fmt(duration)}
           </span>
         </div>
@@ -184,12 +184,12 @@ export default function MiniAudioPlayer({
         style={{
           width: 34, height: 34, borderRadius: "50%", border: "none",
           background: playing
-            ? "rgba(201,144,106,0.15)"
+            ? "rgba(255,61,107,0.15)"
             : accentColor,
           color: playing ? accentColor : "#fff",
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: loading ? "default" : "pointer", flexShrink: 0,
-          boxShadow: playing ? "none" : "0 3px 10px rgba(201,144,106,0.35)",
+          boxShadow: playing ? "none" : "0 3px 10px rgba(255,61,107,0.35)",
           transition: "all 0.2s",
         }}
       >

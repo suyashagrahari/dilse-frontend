@@ -1,379 +1,447 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { ContentData } from "./types";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, Mail, Clock, X, Sparkles } from "lucide-react";
+import type { ContentData, TabId } from "./types";
 
-// Placeholder shown when user hasn't uploaded a photo
-function PhotoPlaceholder({ index }: { index: number }) {
-  return (
-    <div
-      style={{
-        position: "absolute", inset: "5% 6% 8% 10%",
-        background: "linear-gradient(135deg, rgba(20,10,35,0.90) 0%, rgba(30,15,50,0.95) 100%)",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", gap: 4,
-      }}
-    >
-      <span style={{ fontSize: "clamp(18px, 5vw, 28px)", opacity: 0.45 }}>📷</span>
-      <span style={{
-        fontFamily: "'Dancing Script', cursive",
-        fontSize: "clamp(9px, 2.2vw, 13px)",
-        color: "rgb(201, 144, 106)", opacity: 0.6, textAlign: "center",
-      }}>
-        photo {index}
-      </span>
-    </div>
-  );
+const PINK      = "#ff3d6b";
+const PURPLE    = "#a855f7";
+const GRAD      = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
+const TEXT_DIM  = "rgba(255,255,255,0.50)";
+const TEXT_SOFT = "rgba(255,255,255,0.75)";
+const HERO_BG   = "/assets/hero-bg.jpeg";
+
+/** Fixed anchor so the home template always shows a live-looking countdown before a real date is set */
+const PREVIEW_LOVE_DATE = "2022-02-14T15:30:00";
+
+function computeElapsed(dateStr: string) {
+  if (!dateStr) return null;
+  const start = new Date(dateStr);
+  if (isNaN(start.getTime())) return null;
+  const now = new Date();
+  if (start > now) return null;
+
+  let years  = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  let days   = now.getDate() - start.getDate();
+  let hours  = now.getHours() - start.getHours();
+  let mins   = now.getMinutes() - start.getMinutes();
+  let secs   = now.getSeconds() - start.getSeconds();
+
+  if (secs  < 0) { secs  += 60; mins--;   }
+  if (mins  < 0) { mins  += 60; hours--;  }
+  if (hours < 0) { hours += 24; days--;   }
+  if (days  < 0) {
+    const prev = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prev.getDate();
+    months--;
+  }
+  if (months < 0) { months += 12; years--; }
+  if (years  < 0) return null;
+
+  return { years, months, days, hours, mins, secs };
 }
 
 interface Props {
   data: ContentData;
   isPersonalized: boolean;
   onEditClick: () => void;
+  onTabChange?: (tab: TabId) => void;
 }
 
-const spring = (delay: number, stiffness = 160, damping = 22) => ({
-  type: "spring" as const,
-  stiffness,
-  damping,
-  delay,
-});
+export default function HomeSection({ data, isPersonalized: _isPersonalized, onEditClick }: Props) {
+  const hasRealLoveDate = Boolean(data.loveDate?.trim()) && computeElapsed(data.loveDate) !== null;
+  const timerSource = hasRealLoveDate ? data.loveDate : PREVIEW_LOVE_DATE;
 
-export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
-  const homePhotos = data.homePhotos || [];
-  const defaultCardPhotos = ["/love/image5.webp", "/love/image14.webp", "/love/imaghe12.webp", "/love/image13.webp"];
-  const p = (i: number) => homePhotos[i] || defaultCardPhotos[i] || "";
+  const [elapsed, setElapsed] = useState(() => computeElapsed(timerSource));
+  const [letterOpen, setLetterOpen] = useState(false);
+
+  useEffect(() => {
+    const src = hasRealLoveDate ? data.loveDate : PREVIEW_LOVE_DATE;
+    const tick = () => {
+      const next = computeElapsed(src);
+      if (next) setElapsed(next);
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [hasRealLoveDate, data.loveDate]);
+
+  const wishTrim = data.wishMessage?.trim() ?? "";
+  const personalTrim = data.personalMessage?.trim() ?? "";
+  /** Single letter: merge wish + personal into one flow (no separate sections). */
+  const combinedLetter = (() => {
+    if (wishTrim && personalTrim) {
+      if (wishTrim === personalTrim) return wishTrim;
+      return `${wishTrim}\n\n${personalTrim}`;
+    }
+    return wishTrim || personalTrim;
+  })();
+
+  const timerUnits = elapsed
+    ? [
+        { val: elapsed.years,  label: "Years",  accent: PINK   },
+        { val: elapsed.months, label: "Months", accent: PURPLE },
+        { val: elapsed.days,   label: "Days",   accent: PINK   },
+        { val: elapsed.hours,  label: "Hours",  accent: PURPLE },
+        { val: elapsed.mins,   label: "Minutes", accent: PINK   },
+        { val: elapsed.secs,   label: "Seconds", accent: PURPLE },
+      ]
+    : null;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        height: "100dvh",
-        width: "100%",
-        background: `
-          radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(8,4,18,0.55) 100%),
-          url(/love/image18.webp) center / cover no-repeat
-        `,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-      }}
-    >
-      {/* Phone frame corners */}
-      <motion.div
-        aria-hidden="true"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.05 }}
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 28,
-          pointerEvents: "none",
-          border: "1.5px solid rgba(201, 144, 106, 0.22)",
-          boxShadow: "0 18px 60px rgba(0,0,0,0.30)",
-          zIndex: 1,
-        }}
-      />
-
-      {/* Scrapbook canvas */}
+    <div style={{
+      height: "100dvh", width: "100%",
+      background: "#0d0b18",
+      overflowY: "auto", overflowX: "hidden",
+      position: "relative",
+    }}>
+      {/* Full-bleed hero — framing tuned for portrait (couple centered) vs landscape */}
       <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          width: "min(100vw, calc(100dvh * 2 / 3))",
-          height: "100%",
-          background: "transparent",
-          overflow: "hidden",
-          flexShrink: 0,
-        }}
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
       >
-        {/* Corner brackets */}
-        <motion.div
-          aria-hidden="true"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
-        >
-          <div style={{ position: "absolute", top: 12, left: 12, width: 44, height: 44, borderLeft: "3px solid rgba(201, 144, 106, 0.42)", borderTop: "3px solid rgba(201, 144, 106, 0.42)", borderTopLeftRadius: 16, opacity: 0.7 }} />
-          <div style={{ position: "absolute", top: 12, right: 12, width: 44, height: 44, borderRight: "3px solid rgba(201, 144, 106, 0.42)", borderTop: "3px solid rgba(201, 144, 106, 0.42)", borderTopRightRadius: 16, opacity: 0.7 }} />
-          <div style={{ position: "absolute", bottom: 12, left: 12, width: 44, height: 44, borderLeft: "3px solid rgba(201, 144, 106, 0.42)", borderBottom: "3px solid rgba(201, 144, 106, 0.42)", borderBottomLeftRadius: 16, opacity: 0.7 }} />
-          <div style={{ position: "absolute", bottom: 12, right: 12, width: 44, height: 44, borderRight: "3px solid rgba(201, 144, 106, 0.42)", borderBottom: "3px solid rgba(201, 144, 106, 0.42)", borderBottomRightRadius: 16, opacity: 0.7 }} />
-        </motion.div>
-
-        {/* Canvas background (desktop only) */}
-        <div className="hidden sm:block" style={{ position: "absolute", inset: 0 }} aria-hidden="true">
-          <Image src="/love/image18.webp" alt="" fill priority style={{ objectFit: "cover", objectPosition: "center" }} />
-        </div>
-
-        {/* ── Torn paper LEFT — slides in from left ── */}
-        <motion.div
-          style={{ position: "absolute", left: "-33.8%", top: "0", width: "87.6%", height: "21.0%", zIndex: 1, mixBlendMode: "multiply" }}
-          initial={{ x: -120, opacity: 0 }}
-          animate={{ x: 0, opacity: 0.9 }}
-          transition={spring(0.08, 200, 28)}
-        >
-          <div style={{ transform: "rotate(92.09deg)", width: "100%", height: "100%" }}>
-            <Image src="/love/image17.webp" alt="" width={1600} height={577} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
-          </div>
-        </motion.div>
-
-        {/* ── Sticky note — drops from top ── */}
-        <motion.div
-          style={{ position: "absolute", left: "42.8%", top: "6.6%", width: "48.6%", zIndex: 2 }}
-          initial={{ y: -80, rotate: 12, opacity: 0 }}
-          animate={{ y: 0, rotate: 8, opacity: 1 }}
-          transition={spring(0.45, 220, 18)}
-        >
-          <Image src="/love/image16.webp" alt="note" width={780} height={605} style={{ width: "100%", height: "auto", display: "block" }} />
-        </motion.div>
-
-        {/* ── Torn paper RIGHT — slides in from right ── */}
-        <motion.div
-          style={{ position: "absolute", left: "46.2%", top: "73.8%", width: "87.6%", height: "21.0%", zIndex: 3, mixBlendMode: "multiply" }}
-          initial={{ x: 120, opacity: 0 }}
-          animate={{ x: 0, opacity: 0.9 }}
-          transition={spring(0.1, 200, 28)}
-        >
-          <div style={{ transform: "rotate(-83.58deg)", width: "100%", height: "100%" }}>
-            <Image src="/love/image15.webp" alt="" width={1600} height={400} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
-          </div>
-        </motion.div>
-
-        {/* ── Photo 2 (top-right polaroid) ── */}
-        <motion.div
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={HERO_BG}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-[center_30%] min-[480px]:object-[center_34%] md:object-[center_38%] lg:object-[center_42%] xl:object-center"
           style={{
-            position: "absolute", left: "48%", top: "18%", width: "45.2%", height: "25.2%",
-            zIndex: 4, background: "rgba(12, 6, 20, 0.90)",
-            boxShadow: "3px 6px 22px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,144,106,0.12)",
+            filter: "saturate(1.06) contrast(1.02)",
           }}
-          initial={{ x: 100, y: -100, rotate: 30, opacity: 0 }}
-          animate={{ x: 0, y: 0, rotate: 18, opacity: 1 }}
-          transition={spring(0.5, 180, 20)}
-        >
-          {p(1) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(1)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
-            </div>
-          ) : (
-            <PhotoPlaceholder index={2} />
-          )}
-        </motion.div>
-
-        {/* ── Photo 4 (bottom-right tall polaroid) ── */}
-        <motion.div
+        />
+        {/* Softer top so artwork shows; stronger bottom vignette for card readability */}
+        <div
+          className="absolute inset-0"
           style={{
-            position: "absolute", left: "47%", top: "46%", width: "49.1%", height: "28.2%",
-            zIndex: 20, background: "rgba(12, 6, 20, 0.90)",
-            boxShadow: "3px 6px 22px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,144,106,0.12)",
+            background: `
+              linear-gradient(180deg,
+                rgba(8,6,20,0.45) 0%,
+                rgba(13,11,24,0.28) 28%,
+                rgba(13,11,24,0.42) 52%,
+                rgba(10,8,18,0.72) 78%,
+                rgba(8,6,16,0.92) 100%
+              ),
+              radial-gradient(ellipse 95% 55% at 50% 0%, rgba(255,61,107,0.10), transparent 50%),
+              radial-gradient(ellipse 130% 65% at 50% 100%, rgba(10,8,22,0.65), transparent 58%)
+            `,
           }}
-          initial={{ x: 140, y: 60, rotate: 20, opacity: 0 }}
-          animate={{ x: 0, y: 0, rotate: 10, opacity: 1 }}
-          transition={spring(0.65, 170, 22)}
-        >
-          {p(3) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(3)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="47vw" />
-            </div>
-          ) : (
-            <PhotoPlaceholder index={4} />
-          )}
-        </motion.div>
+        />
+      </div>
 
-        {/* ── Photo 3 (bottom-left polaroid) ── */}
-        <motion.div
-          style={{
-            position: "absolute", left: "9.2%", top: "50%", width: "45.1%", height: "25.3%",
-            zIndex: 25, background: "rgba(12, 6, 20, 0.90)",
-            boxShadow: "3px 6px 22px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,144,106,0.12)",
-          }}
-          initial={{ x: -100, y: 100, rotate: -22, opacity: 0 }}
-          animate={{ x: 0, y: 0, rotate: -9, opacity: 1 }}
-          transition={spring(0.58, 175, 21)}
-        >
-          {p(2) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(2)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
-            </div>
-          ) : (
-            <PhotoPlaceholder index={3} />
-          )}
-        </motion.div>
+      <div style={{
+        position: "relative", zIndex: 1,
+        padding: "max(48px, calc(env(safe-area-inset-top, 0px) + 42px)) 14px 92px",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        gap: 11, maxWidth: 480, margin: "0 auto",
+      }}
+        className="lg:max-w-md lg:gap-3 lg:px-6"
+      >
 
-        {/* ── Right botanical ── */}
-        <motion.div
-          style={{ position: "absolute", left: "65.8%", top: "25.4%", width: "41.8%", zIndex: 30, mixBlendMode: "multiply" }}
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={spring(0.72, 200, 26)}
-        >
-          <div style={{ transform: "rotate(8deg)" }}>
-            <Image src="/love/image11.webp" alt="" width={312} height={508} style={{ width: "100%", height: "32%", display: "block" }} />
-          </div>
-        </motion.div>
-
-        {/* ── Pushpin 1 ── */}
-        <motion.div
-          style={{ position: "absolute", left: "70.9%", top: "20.2%", width: "7.2%", zIndex: 8, mixBlendMode: "multiply" }}
-          initial={{ y: -30, scale: 0, opacity: 0 }}
-          animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={spring(0.55, 300, 18)}
-        >
-          <div style={{ transform: "rotate(15deg)" }}>
-            <div aria-hidden="true" style={{
-              width: "100%", aspectRatio: "1 / 1", borderRadius: "999px",
-              background: "radial-gradient(circle at 35% 30%, rgba(201,144,106,0.9) 0%, rgba(160,100,65,0.8) 55%, rgba(120,70,40,0.9) 100%)",
-              border: "1.5px solid rgba(201,144,106,0.45)",
-              boxShadow: "0 3px 8px rgba(0,0,0,0.50), inset 0 1px 2px rgba(255,200,150,0.4)",
-            }} />
-          </div>
-        </motion.div>
-
-        {/* ── Pushpin 2 ── */}
-        <motion.div
-          style={{ position: "absolute", left: "22.8%", top: "51.8%", width: "7.2%", zIndex: 9, mixBlendMode: "multiply" }}
-          initial={{ y: -30, scale: 0, opacity: 0 }}
-          animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={spring(0.62, 300, 18)}
-        >
-          <div style={{ transform: "rotate(-9deg)" }}>
-            <div aria-hidden="true" style={{
-              width: "100%", aspectRatio: "1 / 1", borderRadius: "999px",
-              background: "radial-gradient(circle at 35% 30%, rgba(201,144,106,0.9) 0%, rgba(160,100,65,0.8) 55%, rgba(120,70,40,0.9) 100%)",
-              border: "1.5px solid rgba(201,144,106,0.45)",
-              boxShadow: "0 3px 8px rgba(0,0,0,0.50), inset 0 1px 2px rgba(255,200,150,0.4)",
-            }} />
-          </div>
-        </motion.div>
-
-        {/* ── Bottom flower ── */}
-        <motion.div
-          style={{ position: "absolute", left: "13%", top: "80.4%", width: "25.4%", zIndex: 35, mixBlendMode: "multiply" }}
-          initial={{ x: -40, y: 60, opacity: 0 }}
-          animate={{ x: 0, y: 0, opacity: 1 }}
-          transition={spring(0.78, 190, 24)}
-        >
-          <div style={{ transform: "rotate(12deg)" }}>
-            <Image src="/love/image8.webp" alt="" width={240} height={360} style={{ width: "100%", height: "auto", display: "block" }} />
-          </div>
-        </motion.div>
-
-        {/* ── Fern ── */}
-        <motion.div
-          style={{ position: "absolute", left: "5%", top: "68.7%", width: "23.5%", zIndex: 34, mixBlendMode: "multiply" }}
-          initial={{ x: -50, y: 40, opacity: 0 }}
-          animate={{ x: 0, y: 0, opacity: 1 }}
-          transition={spring(0.75, 185, 24)}
-        >
-          <div style={{ transform: "rotate(-30deg)" }}>
-            <Image src="/love/image7.webp" alt="" width={174} height={459} style={{ width: "100%", height: "auto", display: "block" }} />
-          </div>
-        </motion.div>
-
-        {/* ── Dandelion ── */}
-        <motion.div
-          style={{ position: "absolute", left: "77.8%", top: "-2.4%", width: "28.2%", zIndex: 12, mixBlendMode: "multiply" }}
-          initial={{ y: -50, x: 30, opacity: 0 }}
-          animate={{ y: 0, x: 0, opacity: 1 }}
-          transition={spring(0.2, 190, 24)}
-        >
-          <div style={{ transform: "rotate(26.17deg)" }}>
-            <Image src="/love/image6.webp" alt="" width={210} height={228} style={{ width: "100%", height: "auto", display: "block" }} />
-          </div>
-        </motion.div>
-
-        {/* ── "love you!" cursive text ── */}
-        <motion.div
-          style={{ position: "absolute", left: "50.3%", top: "9.0%", width: "39.1%", zIndex: 13 }}
-          initial={{ y: -40, scale: 0.6, opacity: 0 }}
-          animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={spring(0.38, 240, 16)}
-        >
-          <div style={{ transform: "rotate(8deg)" }}>
-            <span style={{
-              display: "block",
-              fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
-              fontSize: "clamp(24px, 12.5vw, 54px)",
-              color: "rgb(201, 144, 106)",
-              fontWeight: 700,
-              letterSpacing: "0.01em",
-              lineHeight: 1.2,
-              whiteSpace: "nowrap",
-              pointerEvents: "none",
-              textShadow: "0 2px 12px rgba(201,144,106,0.40)",
-            }}>
-              love you!
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          style={{ textAlign: "center", width: "100%" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            gap: 5, marginBottom: 6,
+            padding: "4px 11px", borderRadius: 999,
+            background: "rgba(255,61,107,0.10)",
+            border: "1px solid rgba(255,61,107,0.22)",
+            backdropFilter: "blur(10px)",
+          }}>
+            <Sparkles size={11} color={PINK} strokeWidth={2} aria-hidden />
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.55)" }}>
+              FOR YOU
             </span>
           </div>
-        </motion.div>
-
-        {/* ── Photo 1 LARGE (main polaroid) ── */}
-        <motion.div
-          style={{
-            position: "absolute", left: "9%", top: "18.6%", width: "45.6%", height: "30%",
-            zIndex: 14, background: "rgba(12, 6, 20, 0.90)",
-            boxShadow: "3px 6px 22px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,144,106,0.12)",
-          }}
-          initial={{ x: -180, y: 30, rotate: -22, opacity: 0 }}
-          animate={{ x: 0, y: 0, rotate: -12, opacity: 1 }}
-          transition={spring(0.3, 160, 22)}
-        >
-          {p(0) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(0)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center 10%" }} sizes="44vw" />
-            </div>
-          ) : (
-            <PhotoPlaceholder index={1} />
-          )}
-        </motion.div>
-
-        {/* ── Top-left yarrow botanical ── */}
-        <motion.div
-          style={{ position: "absolute", left: "-4.6%", top: "-0.1%", width: "29.2%", zIndex: 15, mixBlendMode: "multiply" }}
-          initial={{ x: -50, y: -40, opacity: 0 }}
-          animate={{ x: 0, y: 0, opacity: 1 }}
-          transition={spring(0.18, 185, 24)}
-        >
-          <div style={{ transform: "rotate(18.83deg)" }}>
-            <Image src="/love/image4.webp" alt="" width={215} height={355} style={{ width: "100%", height: "auto", display: "block" }} />
+          <h1 style={{
+            fontSize: "clamp(22px, 6.2vw, 32px)", fontWeight: 800, margin: 0,
+            background: GRAD,
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            lineHeight: 1.12,
+            textShadow: "0 0 40px rgba(255,61,107,0.15)",
+          }}>
+            {data.senderName || "Always Yours"} & {data.recipientName || "My Love"}
+          </h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 7 }}>
+            <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.22))" }} />
+            <p style={{ margin: 0, fontSize: 11, color: TEXT_SOFT, letterSpacing: "0.03em", fontWeight: 500 }}>
+              Together through every moment 💜
+            </p>
+            <div style={{ height: 1, flex: 1, maxWidth: 40, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.22))" }} />
           </div>
         </motion.div>
 
-        {/* ── Center pressed flower ── */}
-        <motion.div
-          style={{ position: "absolute", left: "44.2%", top: "42.1%", width: "16.5%", zIndex: 36, mixBlendMode: "multiply" }}
-          initial={{ scale: 0, rotate: -60, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={spring(0.7, 280, 18)}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setLetterOpen(true)}
+          type="button"
+          style={{
+            width: "100%", display: "flex", alignItems: "center", gap: 11,
+            padding: "11px 13px", borderRadius: 18,
+            background: "linear-gradient(135deg, rgba(255,61,107,0.12), rgba(168,85,247,0.06))",
+            border: "1px solid rgba(255,61,107,0.28)",
+            cursor: "pointer", textAlign: "left",
+            backdropFilter: "blur(14px)",
+            boxShadow: "0 6px 22px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04) inset",
+          }}
         >
-          <Image src="/love/image3.webp" alt="" width={122} height={121} style={{ width: "100%", height: "auto", display: "block" }} />
+          <div style={{
+            width: 42, height: 42, borderRadius: 14, flexShrink: 0,
+            background: "linear-gradient(145deg, rgba(255,61,107,0.35), rgba(168,85,247,0.22))",
+            border: "1px solid rgba(255,61,107,0.35)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 3px 12px rgba(255,61,107,0.18)",
+          }}>
+            <Mail size={19} color={PINK} strokeWidth={1.8} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "0.01em" }}>Read the letter</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: TEXT_DIM, lineHeight: 1.35 }}>
+              Tap to open your letter
+            </p>
+          </div>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "rgba(255,61,107,0.18)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid rgba(255,61,107,0.25)",
+          }}>
+            <ChevronRight size={14} color={PINK} />
+          </div>
+        </motion.button>
+
+        {/* Together timer — creative glass strips */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          style={{
+            width: "100%",
+            borderRadius: 20,
+            padding: "2px",
+            background: "linear-gradient(135deg, rgba(255,61,107,0.35), rgba(168,85,247,0.2), rgba(255,61,107,0.15))",
+            boxShadow: "0 8px 28px rgba(0,0,0,0.32)",
+          }}
+        >
+          <div style={{
+            borderRadius: 18,
+            background: "rgba(12,10,22,0.72)",
+            backdropFilter: "blur(16px)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "11px 10px 10px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10, paddingLeft: 2 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 12,
+                background: "linear-gradient(135deg, rgba(255,61,107,0.25), rgba(168,85,247,0.2))",
+                border: "1px solid rgba(255,61,107,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 3px 10px rgba(255,61,107,0.12)",
+              }}>
+                <Clock size={15} color={PINK} strokeWidth={1.9} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  margin: 0, fontSize: 15, fontWeight: 800,
+                  background: GRAD,
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>Our time together</p>
+                <p style={{ margin: "2px 0 0", fontSize: 9, color: TEXT_DIM, letterSpacing: "0.1em", fontWeight: 600 }}>
+                  {hasRealLoveDate ? "LIVE · EVERY SECOND" : "PREVIEW · SAMPLE DATE"}
+                </p>
+              </div>
+              <span style={{ fontSize: 21, lineHeight: 1, opacity: 0.9 }} aria-hidden>💍</span>
+            </div>
+
+            {timerUnits ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  gap: 6,
+                  opacity: hasRealLoveDate ? 1 : 0.92,
+                }}
+              >
+                {timerUnits.map(({ val, label, accent }) => (
+                  <div
+                    key={label}
+                    style={{
+                      position: "relative",
+                      borderRadius: 13,
+                      padding: "9px 5px 8px",
+                      textAlign: "center",
+                      background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+                      border: `1px solid ${hasRealLoveDate ? "rgba(255,255,255,0.08)" : "rgba(255,61,107,0.12)"}`,
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div style={{
+                      position: "absolute", top: 0, left: "15%", right: "15%", height: 2,
+                      borderRadius: 999,
+                      background: accent === PINK
+                        ? "linear-gradient(90deg, transparent, rgba(255,61,107,0.85), transparent)"
+                        : "linear-gradient(90deg, transparent, rgba(168,85,247,0.85), transparent)",
+                      opacity: 0.9,
+                    }} />
+                    <p style={{
+                      margin: 0, lineHeight: 1,
+                      fontSize: "clamp(19px, 5.5vw, 26px)",
+                      fontWeight: 800, color: accent,
+                      fontVariantNumeric: "tabular-nums",
+                      letterSpacing: "-0.02em",
+                    }}>
+                      {String(val).padStart(2, "0")}
+                    </p>
+                    <p style={{
+                      margin: "5px 0 0", fontSize: 8,
+                      letterSpacing: "0.12em",
+                      color: "rgba(255,255,255,0.36)",
+                      fontWeight: 700,
+                      textTransform: "uppercase" as const,
+                    }}>
+                      {label}
+                    </p>
+                    {label === "Seconds" && (
+                      <motion.div
+                        animate={{ opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{
+                          position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
+                          width: 3, height: 3, borderRadius: "50%", background: PINK,
+                          boxShadow: `0 0 8px ${PINK}`,
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </motion.div>
       </div>
 
-      {/* Below canvas: sender name */}
-      {isPersonalized && data.senderName && (
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 0.75, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
-          style={{
-            marginTop: 12,
-            fontFamily: "'Dancing Script', 'Brush Script MT', cursive",
-            fontSize: "clamp(13px, 3.5vw, 18px)",
-            color: "rgb(201, 144, 106)",
-            letterSpacing: "0.08em",
-            textAlign: "center",
-            padding: "0 16px 8px",
-            pointerEvents: "none",
-          }}
-        >
-          — from {data.senderName} ♡
-        </motion.p>
-      )}
+      <AnimatePresence>
+        {letterOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 250,
+              background: "rgba(4, 2, 12, 0.72)",
+              backdropFilter: "blur(10px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "24px 16px",
+            }}
+            onClick={() => setLetterOpen(false)}
+            role="presentation"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%", maxWidth: 420, maxHeight: "min(78vh, 620px)",
+                borderRadius: 26,
+                overflow: "hidden",
+                background: "linear-gradient(165deg, rgba(18,14,32,0.98) 0%, rgba(12,10,24,0.99) 100%)",
+                border: "1px solid rgba(255,61,107,0.25)",
+                boxShadow: "0 28px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05) inset",
+                display: "flex", flexDirection: "column",
+              }}
+            >
+              <div style={{
+                flexShrink: 0,
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "18px 18px 14px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "linear-gradient(180deg, rgba(255,61,107,0.08) 0%, transparent 100%)",
+              }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  background: "linear-gradient(135deg, rgba(255,61,107,0.3), rgba(168,85,247,0.2))",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "1px solid rgba(255,61,107,0.3)",
+                }}>
+                  <Mail size={22} color={PINK} strokeWidth={1.8} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: "#fff" }}>Your letter</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 10, color: TEXT_DIM, letterSpacing: "0.04em", lineHeight: 1.35 }}>
+                    For you, with love
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLetterOpen(false)}
+                  aria-label="Close"
+                  style={{
+                    width: 38, height: 38, borderRadius: "50%",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.06)",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <X size={18} color="rgba(255,255,255,0.65)" />
+                </button>
+              </div>
+
+              <div style={{
+                flex: 1, minHeight: 0, overflowY: "auto",
+                padding: "16px 18px 18px",
+                WebkitOverflowScrolling: "touch",
+              }}>
+                {combinedLetter ? (
+                  <p style={{
+                    margin: 0,
+                    fontSize: 14, lineHeight: 1.82,
+                    color: "rgba(255,255,255,0.88)",
+                    whiteSpace: "pre-wrap",
+                  }}>
+                    {combinedLetter}
+                  </p>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "8px 6px 4px" }}>
+                    <p style={{ margin: 0, fontSize: 13, color: TEXT_DIM, lineHeight: 1.6 }}>
+                      Write your letter in the editor — it will show here.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setLetterOpen(false); onEditClick(); }}
+                      style={{
+                        marginTop: 14, padding: "10px 24px", borderRadius: 999,
+                        background: GRAD, border: "none", color: "#fff",
+                        fontWeight: 700, fontSize: 12, cursor: "pointer",
+                      }}
+                    >
+                      Open editor
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                flexShrink: 0,
+                padding: "10px 16px 14px",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                textAlign: "center",
+              }}>
+                <p style={{ margin: 0, fontSize: 11, color: TEXT_DIM, letterSpacing: "0.06em" }}>
+                  <span style={{ color: TEXT_SOFT }}>{data.senderName || "Yours"}</span>
+                  {" · "}
+                  <span style={{ color: TEXT_SOFT }}>{data.recipientName || "My love"}</span>
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

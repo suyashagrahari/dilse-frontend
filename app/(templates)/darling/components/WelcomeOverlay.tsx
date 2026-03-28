@@ -3,9 +3,10 @@
 import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
-const ROSE = "rgb(201, 144, 106)";
-const ROSE_DIM = "rgba(201, 144, 106, 0.60)";
+const PINK    = "#ff3d6b";
+const PURPLE  = "#a855f7";
+const GRAD    = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
+const TEXT_DIM = "rgba(255,255,255,0.50)";
 
 interface DarlingWelcomeOverlayProps {
   senderName: string;
@@ -13,13 +14,13 @@ interface DarlingWelcomeOverlayProps {
   onEnter: (playMusic: boolean) => void;
 }
 
-const PETALS = [
-  { emoji: "🌹", x: "8%",  y: "12%", delay: 0,    dur: 4.5 },
-  { emoji: "✨", x: "78%", y: "8%",  delay: 0.4,  dur: 5   },
-  { emoji: "💫", x: "4%",  y: "68%", delay: 0.8,  dur: 4   },
-  { emoji: "🌹", x: "88%", y: "62%", delay: 0.2,  dur: 5.5 },
-  { emoji: "⭐", x: "45%", y: "4%",  delay: 0.6,  dur: 4.2 },
-  { emoji: "✨", x: "38%", y: "88%", delay: 1.0,  dur: 4.8 },
+const FLOATS = [
+  { emoji: "💗", x: "8%",  y: "12%", delay: 0,   dur: 4.5 },
+  { emoji: "✨", x: "78%", y: "8%",  delay: 0.4, dur: 5   },
+  { emoji: "💫", x: "4%",  y: "68%", delay: 0.8, dur: 4   },
+  { emoji: "💗", x: "88%", y: "62%", delay: 0.2, dur: 5.5 },
+  { emoji: "⭐", x: "45%", y: "4%",  delay: 0.6, dur: 4.2 },
+  { emoji: "💜", x: "38%", y: "88%", delay: 1.0, dur: 4.8 },
 ];
 
 const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
@@ -44,26 +45,19 @@ const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
           transition={{ duration: 0.65, ease: "easeInOut" }}
           style={{
             position: "fixed", inset: 0, zIndex: 200,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: `
-              radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(8,4,18,0.55) 100%),
-              url(/love/image18.webp) center / cover no-repeat
-            `,
+            background: "#0d0d1a",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
             padding: "24px 20px",
           }}
         >
-          <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');`}</style>
-
           {/* Floating decorations */}
-          {PETALS.map((p, i) => (
+          {FLOATS.map((p, i) => (
             <motion.div
               key={i}
               style={{
-                position: "absolute",
-                left: p.x, top: p.y,
-                fontSize: 18,
-                pointerEvents: "none",
-                opacity: 0.65,
+                position: "absolute", left: p.x, top: p.y,
+                fontSize: 18, pointerEvents: "none", opacity: 0.5,
               }}
               animate={{ y: [0, -10, 0], rotate: [0, 12, -8, 0] }}
               transition={{ duration: p.dur, repeat: Infinity, ease: "easeInOut", delay: p.delay }}
@@ -72,172 +66,167 @@ const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
             </motion.div>
           ))}
 
-          {/* Card */}
+          {/* Glow blob */}
+          <div style={{
+            position: "absolute",
+            top: "20%", left: "50%", transform: "translateX(-50%)",
+            width: 220, height: 220, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,61,107,0.18) 0%, rgba(168,85,247,0.10) 50%, transparent 70%)",
+            pointerEvents: "none",
+            filter: "blur(20px)",
+          }} />
+
+          {/* Main content */}
           <motion.div
-            initial={{ scale: 0.88, opacity: 0, y: 18 }}
-            animate={{ scale: 1,    opacity: 1, y: 0  }}
-            transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.55 }}
             style={{
-              width: "100%", maxWidth: 340,
-              borderRadius: 24,
-              background: "rgba(10, 5, 20, 0.97)",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.70), 0 0 0 1px rgba(201,144,106,0.18)",
-              border: "1px solid rgba(201,144,106,0.20)",
-              padding: "36px 28px 32px",
-              textAlign: "center",
-              position: "relative",
-              overflow: "hidden",
+              width: "100%", maxWidth: 360,
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 0,
             }}
           >
-            {/* Top decorative bar */}
-            <div style={{
-              position: "absolute", top: 0, left: 0, right: 0, height: 4,
-              background: "linear-gradient(90deg, transparent, rgba(201,144,106,0.55), rgba(201,144,106,0.75), rgba(201,144,106,0.55), transparent)",
-              borderRadius: "24px 24px 0 0",
-            }} />
-
-            {/* Heart icon */}
+            {/* Glowing heart circle */}
             <motion.div
-              style={{ marginBottom: 16 }}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.25 }}
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                width: 90, height: 90, borderRadius: "50%",
+                background: "rgba(255,61,107,0.10)",
+                border: "1.5px solid rgba(255,61,107,0.22)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 24,
+                boxShadow: "0 0 40px rgba(255,61,107,0.22), 0 0 80px rgba(168,85,247,0.12)",
+              }}
             >
-              <motion.div
-                animate={{ scale: [1, 1.12, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  width: 68, height: 68, borderRadius: "50%",
-                  background: "rgba(201,144,106,0.10)",
-                  border: "1.5px solid rgba(201,144,106,0.25)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto",
-                  boxShadow: "0 0 28px rgba(201,144,106,0.25)",
-                }}
-              >
-                <span style={{ fontSize: 34, lineHeight: 1 }}>💕</span>
-              </motion.div>
+              <span style={{ fontSize: 40, lineHeight: 1 }}>💗</span>
             </motion.div>
 
-            {/* "A love page for" tag */}
-            <motion.p
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                fontFamily: CURSIVE, fontSize: 12, color: ROSE_DIM,
-                letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                margin: "0 0 8px",
-              }}
-            >
-              A love page for
-            </motion.p>
+            {/* Badge */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: 999, padding: "5px 14px",
+              marginBottom: 16,
+            }}>
+              <span style={{ fontSize: 12 }}>✦</span>
+              <span style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.15em",
+                color: "rgba(255,255,255,0.65)", textTransform: "uppercase" as const,
+              }}>
+                A LOVE LETTER
+              </span>
+              <span style={{ fontSize: 12 }}>✦</span>
+            </div>
 
-            {/* Recipient name */}
+            {/* "I Love You" title */}
             <motion.h1
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              transition={{ delay: 0.35 }}
               style={{
-                fontFamily: CURSIVE, fontSize: 34, fontWeight: 700, color: ROSE,
-                margin: "0 0 6px", lineHeight: 1.1,
-                textShadow: "0 2px 12px rgba(201,144,106,0.35)",
+                fontSize: "clamp(38px, 12vw, 56px)", fontWeight: 800,
+                margin: "0 0 12px",
+                background: GRAD,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                textAlign: "center",
+                lineHeight: 1.1,
               }}
             >
-              {displayName} ♡
+              I Love You
             </motion.h1>
 
-            {/* From line */}
-            <motion.p
+            {/* Hey recipient + From */}
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.65 }}
+              transition={{ delay: 0.5 }}
               style={{
-                fontFamily: CURSIVE, fontSize: 14, color: ROSE_DIM,
-                margin: "0 0 22px", lineHeight: 1.6,
+                textAlign: "center", marginBottom: 20,
+                background: "rgba(255,255,255,0.04)",
+                borderRadius: 16, padding: "14px 24px",
+                border: "1px solid rgba(255,255,255,0.07)",
               }}
             >
-              with love from{" "}
-              <span style={{ color: ROSE, fontWeight: 700 }}>{senderName || "someone who cares"}</span>
-            </motion.p>
+              <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>
+                Hey, {displayName}! 💗
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: 14, color: TEXT_DIM }}>
+                A special surprise from{" "}
+                <span style={{ color: PINK, fontWeight: 700 }}>
+                  {senderName || "someone special"}
+                </span>
+              </p>
+            </motion.div>
 
-            {/* Divider */}
+            {/* Gradient line */}
             <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: 0.75, duration: 0.5 }}
+              initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
               style={{
-                height: 1, margin: "0 auto 22px",
-                width: "80%",
-                background: "linear-gradient(90deg, transparent, rgba(201,144,106,0.40), transparent)",
-                borderRadius: 999,
+                width: "100%", height: 1.5, borderRadius: 999,
+                background: GRAD, marginBottom: 16,
               }}
             />
 
             {/* Music card */}
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.85, type: "spring", stiffness: 220, damping: 22 }}
+              transition={{ delay: 0.7 }}
               style={{
-                borderRadius: 16,
-                border: "1px solid rgba(201,144,106,0.20)",
-                background: "rgba(201,144,106,0.06)",
-                padding: "14px 16px",
-                marginBottom: 18,
+                width: "100%", borderRadius: 18,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                padding: "16px 18px",
+                marginBottom: 14,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
-                <motion.span
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                  style={{ fontSize: 18 }}
-                >
-                  🎵
-                </motion.span>
-                <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: ROSE }}>
-                  Romantic background music
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 18 }}>🎵</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
+                  Romantic Background Music
                 </span>
               </div>
-              <p style={{
-                fontFamily: CURSIVE, fontSize: 11, color: ROSE_DIM,
-                margin: 0, lineHeight: 1.55,
-              }}>
-                Set the mood with love melodies playing softly in the background
+              <p style={{ margin: 0, fontSize: 12, color: TEXT_DIM, lineHeight: 1.5 }}>
+                Enhance your experience with beautiful love melodies
               </p>
             </motion.div>
 
             {/* Buttons */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0 }}
-              style={{ display: "flex", gap: 10 }}
+              transition={{ delay: 0.85 }}
+              style={{ display: "flex", gap: 10, width: "100%" }}
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                whileHover={{ scale: 1.02 }}
                 onClick={() => handleEnter(true)}
                 style={{
-                  flex: 1, padding: "13px 0", borderRadius: 999, border: "none",
-                  background: "linear-gradient(135deg, rgb(201,144,106), rgb(160,100,65))",
-                  fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "#fff",
+                  flex: 1, padding: "15px 0", borderRadius: 14, border: "none",
+                  background: GRAD,
+                  fontSize: 15, fontWeight: 700, color: "#fff",
                   cursor: "pointer",
-                  boxShadow: "0 6px 20px rgba(201,144,106,0.38)",
+                  boxShadow: "0 6px 24px rgba(255,61,107,0.40)",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}
               >
-                ♫ Play &amp; Enter
+                <span style={{ fontSize: 14 }}>🔊</span> Play &amp; Enter
               </motion.button>
 
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleEnter(false)}
                 style={{
-                  flex: "0 0 auto", padding: "13px 18px", borderRadius: 999,
-                  border: "1.5px solid rgba(201,144,106,0.28)",
-                  background: "rgba(12,6,20,0.50)",
-                  fontFamily: CURSIVE, fontSize: 14, fontWeight: 600, color: ROSE_DIM,
+                  flex: "0 0 auto", padding: "15px 20px", borderRadius: 14,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.60)",
                   cursor: "pointer",
                 }}
               >
@@ -245,17 +234,16 @@ const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
               </motion.button>
             </motion.div>
 
-            {/* Footer note */}
+            {/* Footer */}
             <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.25 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 1.1 }}
               style={{
-                fontFamily: CURSIVE, fontSize: 10, color: "rgba(201,144,106,0.35)",
-                margin: "16px 0 0", letterSpacing: "0.05em",
+                marginTop: 20, fontSize: 11, letterSpacing: "0.12em",
+                color: "rgba(255,255,255,0.25)", textTransform: "uppercase" as const,
               }}
             >
-              made with love ♡
+              MADE WITH 🤍 JUST FOR YOU
             </motion.p>
           </motion.div>
         </motion.div>

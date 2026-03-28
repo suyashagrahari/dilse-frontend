@@ -116,11 +116,11 @@ const DarlingBackgroundMusic = memo(function DarlingBackgroundMusic({
         background: "rgba(8, 4, 18, 0.70)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        border: "1px solid rgba(201,144,106,0.18)",
+        border: "1px solid rgba(255,61,107,0.18)",
       }}
     >
       {muted ? (
-        <VolumeX size={16} style={{ color: "rgba(201,144,106,0.50)" }} />
+        <VolumeX size={16} style={{ color: "rgba(255,61,107,0.50)" }} />
       ) : (
         <motion.div
           animate={paused ? {} : { scale: [1, 1.15, 1] }}
@@ -128,7 +128,7 @@ const DarlingBackgroundMusic = memo(function DarlingBackgroundMusic({
         >
           <Volume2
             size={16}
-            style={{ color: paused ? "rgba(201,144,106,0.40)" : "rgba(201,144,106,0.80)" }}
+            style={{ color: paused ? "rgba(255,61,107,0.40)" : "rgba(255,61,107,0.80)" }}
           />
         </motion.div>
       )}

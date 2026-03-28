@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Sparkles, Send, Copy, ExternalLink } from "lucide-react";
 import type { Toast } from "./types";
 
-const ROSE = "rgb(201, 144, 106)";
-const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const ROSE = "#ff3d6b";
+const CURSIVE = "system-ui, sans-serif";
 
 interface Props {
   toasts: Toast[];
@@ -36,7 +36,7 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
               boxShadow: "0 8px 30px rgba(0,0,0,0.50)",
               border: toast.type === "publish"
                 ? "1px solid rgba(55,200,100,0.30)"
-                : "1px solid rgba(201,144,106,0.20)",
+                : "1px solid rgba(255,61,107,0.20)",
               background: toast.type === "publish"
                 ? "linear-gradient(135deg, rgba(40,160,80,0.95), rgba(30,130,65,0.95))"
                 : "rgba(14, 7, 24, 0.97)",
@@ -50,7 +50,7 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                     ? "rgba(255,255,255,0.15)"
                     : toast.type === "success"
                       ? "rgba(55,200,100,0.12)"
-                      : "rgba(201,144,106,0.12)",
+                      : "rgba(255,61,107,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2,
                 }}>
                   {toast.type === "publish" ? (
@@ -71,7 +71,7 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                   {toast.message && (
                     <p style={{
                       fontFamily: CURSIVE, fontSize: 12, margin: "2px 0 0",
-                      color: toast.type === "publish" ? "rgba(255,255,255,0.80)" : "rgba(201,144,106,0.55)",
+                      color: toast.type === "publish" ? "rgba(255,255,255,0.80)" : "rgba(255,61,107,0.55)",
                     }}>
                       {toast.message}
                     </p>
@@ -108,7 +108,7 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                   style={{
                     padding: 2, borderRadius: "50%", border: "none", background: "transparent",
                     cursor: "pointer", flexShrink: 0,
-                    color: toast.type === "publish" ? "rgba(255,255,255,0.55)" : "rgba(201,144,106,0.40)",
+                    color: toast.type === "publish" ? "rgba(255,255,255,0.55)" : "rgba(255,61,107,0.40)",
                   }}
                 >
                   <X size={14} />
@@ -119,7 +119,7 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                   initial={{ scaleX: 1 }}
                   animate={{ scaleX: 0 }}
                   transition={{ duration: 3.5, ease: "linear" }}
-                  style={{ height: 2, background: "rgba(201,144,106,0.35)", transformOrigin: "left" }}
+                  style={{ height: 2, background: "rgba(255,61,107,0.35)", transformOrigin: "left" }}
                 />
               )}
             </div>
