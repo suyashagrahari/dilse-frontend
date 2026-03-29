@@ -13,6 +13,7 @@ import HomeSection from "./components/HomeSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
+import ShaadiBackgroundMusic from "./components/ShaadiBackgroundMusic";
 
 const CoupleSection  = lazy(() => import("./components/CoupleSection"));
 const EventsSection  = lazy(() => import("./components/EventsSection"));
@@ -177,6 +178,7 @@ function ShaadiCardPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+      <ShaadiBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
 
       <div className="lg:ml-64 h-full overflow-y-auto no-scrollbar">
         <AnimatePresence mode="wait">

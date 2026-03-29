@@ -8,13 +8,13 @@ import {
   Lock, Eye, EyeOff, ShieldAlert, Loader2,
   Share2, Check, Wand2, PenLine, ChevronRight,
   Sparkles, User, X, Edit3, Zap, Send, ArrowLeft,
-  Music2, Pause,
 } from "lucide-react";
 import { type ShaadiData, type TabId, TABS, DEMO_DATA } from "@/app/(templates)/shaadi-card/components/types";
 import AuthModal from "@/components/AuthModal";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 
+const ShaadiBackgroundMusic = lazy(() => import("@/app/(templates)/shaadi-card/components/ShaadiBackgroundMusic"));
 const HomeSection    = lazy(() => import("@/app/(templates)/shaadi-card/components/HomeSection"));
 const CoupleSection  = lazy(() => import("@/app/(templates)/shaadi-card/components/CoupleSection"));
 const EventsSection  = lazy(() => import("@/app/(templates)/shaadi-card/components/EventsSection"));
@@ -56,74 +56,6 @@ function TabFallback() {
       <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
         style={{ borderColor: C_ACCENT, borderTopColor: "transparent" }} />
     </div>
-  );
-}
-
-function MusicPlayer() {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  const toggle = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio || !ready) return;
-    if (playing) {
-      audio.pause();
-      setPlaying(false);
-    } else {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    }
-  }, [playing, ready]);
-
-  return (
-    <>
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio
-        ref={audioRef}
-        src="/shaadi-card/music/ratein.mp3"
-        loop
-        preload="metadata"
-        onCanPlay={() => setReady(true)}
-      />
-      <motion.button
-        type="button"
-        onClick={toggle}
-        aria-label={playing ? "Pause music" : "Play music"}
-        title={playing ? "Pause music" : "Play background music"}
-        className="fixed z-[50] rounded-full flex items-center justify-center select-none"
-        style={{
-          width: 44,
-          height: 44,
-          right: 16,
-          bottom: "calc(5.8rem + env(safe-area-inset-bottom, 0px))",
-          background: playing
-            ? `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`
-            : "rgba(255,252,250,0.94)",
-          border: `1.5px solid ${playing ? `${C_ACCENT}60` : `${C_ACCENT}28`}`,
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          boxShadow: playing
-            ? `0 0 0 6px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`
-            : "0 4px 16px rgba(109,43,59,0.14)",
-        }}
-        animate={playing ? {
-          boxShadow: [
-            `0 0 0 4px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`,
-            `0 0 0 10px ${C_ACCENT}08, 0 6px 24px ${C_ACCENT}40`,
-            `0 0 0 4px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`,
-          ],
-        } : {}}
-        transition={playing ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : {}}
-        whileTap={{ scale: 0.9 }}
-        initial={{ opacity: 0, scale: 0.8 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-      >
-        {playing
-          ? <Pause size={17} style={{ color: "white" }} />
-          : <Music2 size={17} style={{ color: C_ACCENT }} />
-        }
-      </motion.button>
-    </>
   );
 }
 
@@ -915,8 +847,9 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
   return (
     <div className="min-h-screen relative flex" style={{ background: C_BG }}>
 
-      {/* ── Background music player ───────────────────────────── */}
-      <MusicPlayer />
+      <Suspense fallback={null}>
+        <ShaadiBackgroundMusic shouldPlay={true} />
+      </Suspense>
 
       {/* ── Desktop left sidebar ───────────────────────────────── */}
       <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-screen z-30 select-none"
