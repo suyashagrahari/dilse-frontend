@@ -14,11 +14,31 @@ import { useEffect, useState } from "react";
 /* ─── Canvas ──────────────────────────────────────────────────────────── */
 const CW = 1080;
 const CH = 1920;
+/**
+ * Pixel layout matched from Canva export (1080×1920 artboard, translate = left/top).
+ * https://media-public… assets in the reference map to local /shaadi-card/* equivalents.
+ */
+const CANVA = {
+  /** Top corners — compact inset so florals stay visible and don’t dominate the header */
+  topFloral: { w: 380, h: 336, leftL: 14, top: 14, leftR: CW - 380 - 14 },
+  theWeddingOf: { left: 288.701, top: 228.684, w: 523.216, h: 67.7806 },
+  names: { left: 222.862, top: 325.464, w: 634.277, h: 330.325 },
+  wreath: { left: (CW - 560) / 2, top: 534.663, w: 560, h: 325.126 },
+  month: { left: 449.301, top: 865.789, w: 206.986, h: 43.945 },
+  weekday: { left: 251.299, top: 924.841, w: 255.889, h: 54.1722 },
+  dayNum: { left: 480.306, top: 909.734, w: 144.975, h: 84.3861 },
+  time: { left: 625.281, top: 924.841, w: 190.644, h: 54.1722 },
+  lineFlowerL: { left: 286.847, top: 999.892, w: 184.792, h: 63.1652 },
+  year: { left: 449.301, top: 994.12, w: 206.986, h: 43.945 },
+  lineFlowerR: { left: 639.86, top: 1006.48, w: 184.792, h: 63.1652 },
+  address: { left: 222.862, top: 1098.99, w: 677.478, h: 43.2939 },
+  mandap: { left: 280.556, top: 1189.4, w: 535.005, h: 613.027 },
+  couple: { left: 387.513, top: 1352.06, w: 397.257, h: 605.239 },
+  floralBottomL: { left: -221.288, top: 1447.05, w: 734.668, h: 613.141 },
+  floralBottomR: { left: 513.379, top: 1447.05, w: 734.668, h: 613.141 },
+} as const;
 
-/* ─── Bottom nav height on mobile (px) ───────────────────────────────── */
-const MOBILE_NAV_H = 68;
-
-/* ─── Design tokens ──────────────────────────────────────────────────── */
+/* ─── Design tokens (Canva-style invite: cream + wine + soft rose) ───── */
 const C_DARK   = "rgb(109,43,59)";
 const C_MED    = "rgb(203,107,130)";
 const C_SCRIPT = "rgb(171,28,62)";
@@ -32,69 +52,8 @@ const SPRING_SM = { type: "spring", stiffness: 80,  damping: 15 } as const;
 const SPRING_MD = { type: "spring", stiffness: 60,  damping: 13 } as const;
 const SPRING_LG = { type: "spring", stiffness: 45,  damping: 12 } as const;
 
-/* ─── Petal seeds (SSR-safe) ──────────────────────────────────────────── */
+/* ─── Petals (SSR-safe; empty = static Canva-style canvas) ─────────────── */
 interface Petal { id: number; x: number; delay: number; dur: number; size: number; hue: number }
-const PETAL_SEEDS: Omit<Petal, "id">[] = [
-  { x: 4,  delay: 0.0, dur: 7.5, size: 7,  hue: 340 },
-  { x: 11, delay: 1.3, dur: 8.0, size: 9,  hue: 350 },
-  { x: 21, delay: 2.6, dur: 6.8, size: 6,  hue: 330 },
-  { x: 29, delay: 0.5, dur: 9.0, size: 10, hue: 345 },
-  { x: 39, delay: 1.9, dur: 7.2, size: 7,  hue: 355 },
-  { x: 47, delay: 3.2, dur: 8.5, size: 8,  hue: 338 },
-  { x: 57, delay: 0.8, dur: 6.5, size: 6,  hue: 348 },
-  { x: 64, delay: 2.1, dur: 9.2, size: 9,  hue: 332 },
-  { x: 73, delay: 1.0, dur: 7.8, size: 7,  hue: 342 },
-  { x: 81, delay: 3.5, dur: 8.2, size: 8,  hue: 358 },
-  { x: 89, delay: 0.4, dur: 7.0, size: 6,  hue: 335 },
-  { x: 95, delay: 2.8, dur: 6.9, size: 10, hue: 352 },
-  { x: 16, delay: 4.0, dur: 8.8, size: 7,  hue: 340 },
-  { x: 52, delay: 1.5, dur: 7.4, size: 9,  hue: 347 },
-  { x: 77, delay: 4.5, dur: 8.1, size: 6,  hue: 336 },
-];
-
-interface SparkDot { id: number; x: number; y: number; delay: number; sz: number }
-const SPARKS: SparkDot[] = [
-  { id: 0, x: 13, y: 28, delay: 0.0, sz: 9  },
-  { id: 1, x: 83, y: 24, delay: 0.9, sz: 11 },
-  { id: 2, x: 22, y: 52, delay: 1.7, sz: 7  },
-  { id: 3, x: 76, y: 47, delay: 0.4, sz: 10 },
-  { id: 4, x: 9,  y: 74, delay: 2.1, sz: 8  },
-  { id: 5, x: 89, y: 68, delay: 1.2, sz: 7  },
-  { id: 6, x: 45, y: 36, delay: 2.5, sz: 9  },
-  { id: 7, x: 57, y: 82, delay: 1.4, sz: 6  },
-  { id: 8, x: 33, y: 17, delay: 0.7, sz: 11 },
-  { id: 9, x: 66, y: 91, delay: 1.9, sz: 8  },
-];
-
-/* ─── Decorative SVG ──────────────────────────────────────────────────── */
-function LineFlower({ flip }: { flip?: boolean }) {
-  return (
-    <svg width="185" height="63" viewBox="0 0 185 63" fill="none"
-      style={{ display: "block", transform: flip ? "scaleX(-1)" : undefined }}>
-      <g transform="translate(28,31)">
-        {[0, 72, 144, 216, 288].map((a) => (
-          <g key={a} transform={`rotate(${a})`}>
-            <ellipse cx="0" cy="-10.5" rx="5.5" ry="9"
-              fill="none" stroke="#cb6b82" strokeWidth="1.35" />
-          </g>
-        ))}
-        <circle cx="0" cy="0" r="4.5" fill="none" stroke="#cb6b82" strokeWidth="1.2" />
-        <circle cx="0" cy="0" r="2"   fill="#cb6b82" opacity="0.9" />
-      </g>
-      <path d="M46 31 Q80 26 114 31 Q140 36 172 29"
-        stroke="#cb6b82" strokeWidth="1.2" strokeLinecap="round" />
-      <g transform="translate(114,22)">
-        {[0, 90, 180, 270].map((a) => (
-          <g key={a} transform={`rotate(${a})`}>
-            <ellipse cx="0" cy="-5.5" rx="3" ry="5"
-              fill="none" stroke="#cb6b82" strokeWidth="1" opacity="0.65" />
-          </g>
-        ))}
-        <circle cx="0" cy="0" r="2" fill="#cb6b82" opacity="0.55" />
-      </g>
-    </svg>
-  );
-}
 
 /* ─── Date helpers ────────────────────────────────────────────────────── */
 function formatWeddingDate(iso: string) {
@@ -109,9 +68,35 @@ function formatWeddingDate(iso: string) {
     const ampm    = h >= 12 ? "PM" : "AM";
     const h12     = h % 12 || 12;
     const hhmm    = `${h12}:${String(m).padStart(2, "0")}`;
-    return { day, month, weekday, hhmm, ampm, year: String(d.getFullYear()) };
+    const timeLine =
+      m === 0
+        ? `${String(h12).padStart(2, "0")} ${ampm}`
+        : `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${ampm}`;
+    const timeLower = timeLine.toLowerCase();
+    const weekdayLower = d.toLocaleString("en-IN", { weekday: "long" }).toLowerCase();
+    return {
+      day,
+      month,
+      weekday,
+      weekdayLower,
+      hhmm,
+      ampm,
+      year: String(d.getFullYear()),
+      timeLine,
+      timeLower,
+    };
   } catch {
-    return { day: "15", month: "April", weekday: "WEDNESDAY", hhmm: "11:00", ampm: "AM", year: "2026" };
+    return {
+      day: "15",
+      month: "April",
+      weekday: "WEDNESDAY",
+      weekdayLower: "wednesday",
+      hhmm: "11:00",
+      ampm: "AM",
+      year: "2026",
+      timeLine: "11 AM",
+      timeLower: "11 am",
+    };
   }
 }
 
@@ -127,10 +112,14 @@ interface Props {
 export default function InvitationCard({ brideName, groomName, weddingDate, venue, blessing }: Props) {
   const [scale,   setScale]   = useState<number | null>(null);
   const [desktop, setDesktop] = useState(false);
-  const [availH,  setAvailH]  = useState(0);
   const [petals,  setPetals]  = useState<Petal[]>([]);
   const controls = useAnimation();
   const dateInfo = formatWeddingDate(weddingDate);
+  const bride = brideName || "Ananya";
+  const groom = groomName || "Arjun";
+  const yearHalf = dateInfo.year.length >= 4
+    ? [dateInfo.year.slice(0, 2), dateInfo.year.slice(2)] as [string, string]
+    : [dateInfo.year, ""] as [string, string];
 
   /* ── scale calculation ─────────────────────────────────────────── */
   useEffect(() => {
@@ -140,18 +129,15 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
       const isDesk = vw >= 1024;
       setDesktop(isDesk);
       if (isDesk) {
-        // Desktop: card fits in 44% of sidebar-adjusted width, 88% of height
-        const usableW = (vw - 256) * 0.44;
-        const usableH = vh * 0.88;
+        const usableW = vw * 0.56;
+        const usableH = vh * 0.90;
         setScale(Math.min(usableW / CW, usableH / CH));
-        setAvailH(vh);
       } else {
         // Mobile: card fills the FULL viewport (nav overlays on top)
         // Use width-based scale so card never overflows screen width
         const scaleW = vw / CW;
         const scaleH = vh / CH;
         setScale(Math.max(scaleW, scaleH));
-        setAvailH(vh);
       }
     };
     update();
@@ -159,23 +145,83 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  useEffect(() => { setPetals(PETAL_SEEDS.map((p, i) => ({ ...p, id: i }))); }, []);
+  useEffect(() => {
+    setPetals([]);
+  }, []);
   useEffect(() => { if (scale !== null) controls.start("visible"); }, [scale, controls]);
 
-  if (scale === null) return <div style={{ width: "100vw", height: "100vh", background: "#FDF5F0" }} />;
+  if (scale === null) return <div style={{ width: "100vw", height: "100vh", background: "#FDFBF7" }} />;
 
   const W = Math.round(CW * scale);
   const H = Math.round(CH * scale);
+
+  /** Phone: compact vertical stack, split title, glass date card — desktop keeps Canva coords */
+  const phone = !desktop;
+  const PL = phone
+    ? {
+        oyTitle: -12,
+        oyNames: -4,
+        oyDate: -100,
+        oyYearLine: -100,
+        oyAddress: -118,
+        splitTitle: true,
+        nameSize: 78,
+        ampSize: 20,
+        nameShadow:
+          "0 1px 0 rgba(255,255,255,0.5), 0 6px 22px rgba(109,43,59,0.06), 0 18px 40px rgba(171,28,62,0.04)",
+        titleLine1: 18,
+        titleLine2: 14,
+        titleLetter1: "0.32em",
+        titleLetter2: "0.56em",
+        titleBoxH: 72,
+        namesBoxH: 220,
+        monthFs: 35,
+        rowFs: 42,
+        dayFs: 46,
+        yearFs: 36,
+        addressFs: 31,
+        blessingFs: 30,
+        /** Lily wreath — scaled to sit in the gap between names and date row */
+        wreathW: 472,
+        wreathH: 158,
+        wreathTop: 604,
+      }
+    : {
+        oyTitle: 0,
+        oyNames: 0,
+        oyDate: 0,
+        oyYearLine: 0,
+        oyAddress: 0,
+        blessingTop: 1142,
+        splitTitle: false,
+        nameSize: 128,
+        ampSize: 32,
+        nameShadow: "0 1px 0 rgba(255,255,255,0.35), 0 8px 28px rgba(171,28,62,0.06)",
+        titleLine1: 52,
+        titleLine2: 52,
+        titleLetter1: "0.12em",
+        titleLetter2: "0.12em",
+        titleBoxH: CANVA.theWeddingOf.h,
+        namesBoxH: 320,
+        monthFs: 43,
+        rowFs: 53,
+        dayFs: 53,
+        yearFs: 40,
+        addressFs: 36,
+        blessingFs: 38,
+        wreathW: CANVA.wreath.w,
+        wreathH: CANVA.wreath.h,
+        wreathTop: CANVA.wreath.top,
+      };
 
   /* ════════════════════════════════════════════════════════════════
      CARD CANVAS — shared between mobile + desktop
      ════════════════════════════════════════════════════════════════ */
   const cardCanvas = (
-    <div style={{ width: W, height: H, overflow: "hidden", position: "relative", flexShrink: 0, borderRadius: desktop ? 16 : 0 }}>
+    <div style={{ width: W, height: H, overflow: "hidden", position: "relative", flexShrink: 0, borderRadius: 0 }}>
       {/* 1080×1920 inner canvas */}
       <div style={{ width: CW, height: CH, position: "absolute", top: 0, left: 0, transformOrigin: "0 0", transform: `scale(${scale})` }}>
 
-        {/* ── Falling petals ── */}
         {petals.map((p) => (
           <motion.div key={p.id} className="pointer-events-none" style={{
             position: "absolute", zIndex: 50,
@@ -184,211 +230,717 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
             background: `radial-gradient(circle at 35% 35%, hsl(${p.hue},92%,90%), hsl(${p.hue},76%,68%))`,
             filter: "blur(0.4px)",
           }}
-            animate={{ y: "108vh", x: [0, 18, -12, 22, -8, 0], rotate: [0, 360], opacity: [0, 0.9, 0.9, 0.9, 0] }}
+            animate={{ y: "108vh", x: [0, 12, -8, 14, -5, 0], rotate: [0, 360], opacity: [0, 0.42, 0.42, 0.38, 0] }}
             transition={{ duration: p.dur, delay: p.delay, ease: "linear", opacity: { times: [0, 0.04, 0.5, 0.92, 1] } }}
           />
         ))}
 
-        {/* ── Sparkles ── */}
-        {SPARKS.map((s) => (
-          <motion.div key={s.id} style={{ position: "absolute", zIndex: 40, left: `${s.x}%`, top: `${s.y}%`, pointerEvents: "none" }}
-            animate={{ scale: [0, 1.3, 0.8, 1.1, 0], opacity: [0, 1, 0.6, 0.9, 0], rotate: [0, 45, 90, 135, 180] }}
-            transition={{ duration: 2, delay: s.delay + 1.5, ease: "easeInOut" }}>
-            <svg width={s.sz} height={s.sz} viewBox="0 0 20 20">
-              <path d="M10 0L11.8 8.2L20 10L11.8 11.8L10 20L8.2 11.8L0 10L8.2 8.2Z" fill="#db7093" opacity="0.78" />
-            </svg>
-          </motion.div>
-        ))}
-
-        {/* ── BG ── */}
+        {/* ── BG + cream wash (Canva: white poster + soft pink) ── */}
         <motion.div style={{ position: "absolute", inset: 0 }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ duration: 1.4, ease: "easeOut" }}>
           <Image src="/shaadi-card/image10.webp" alt="" fill style={{ objectFit: "cover" }} priority />
         </motion.div>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: "none",
+            background: "rgba(255, 255, 255, 0.38)",
+            mixBlendMode: "soft-light",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 880,
+            width: CW,
+            height: CH - 880,
+            zIndex: 2,
+            pointerEvents: "none",
+            background: "linear-gradient(to top, rgba(253, 244, 248, 0.35) 0%, transparent 55%)",
+          }}
+        />
 
-        {/* ── Bottom-right blossoms — top=1300 anchored at canvas bottom ── */}
-        <motion.div style={{ position: "absolute", left: 390, top: 1220, width: 850, height: 700, mixBlendMode: "multiply", zIndex: 5 }}
-          initial={{ opacity: 0, x: 140, y: 80 }} animate={{ opacity: 1, x: 0, y: 0 }}
-          transition={{ ...SPRING_LG, delay: 3.5 }}>
-          <div style={{ position: "relative", width: "100%", height: "100%" }}>
-            <Image src="/shaadi-card/image6.webp" alt="" fill style={{ objectFit: "contain" }} />
+        {/* Lower stack — Canva paint order: mandap → couple → bottom florals → top corners */}
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.mandap.left,
+            top: CANVA.mandap.top,
+            width: CANVA.mandap.w,
+            height: CANVA.mandap.h,
+            zIndex: 10,
+          }}
+          initial={{ opacity: 0, y: 48 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SPRING_LG, delay: 0.55 }}
+        >
+          <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
+            <Image
+              src="/shaadi-card/image9.png"
+              alt="mandap"
+              fill
+              sizes="540px"
+              style={{ objectFit: "contain", objectPosition: "50% 100%" }}
+            />
           </div>
         </motion.div>
 
-        {/* ── Bottom-left blossoms (mirrored) ── */}
-        <motion.div style={{ position: "absolute", left: -160, top: 1220, width: 850, height: 700, mixBlendMode: "multiply", zIndex: 5 }}
-          initial={{ opacity: 0, x: -140, y: 80 }} animate={{ opacity: 1, x: 0, y: 0 }}
-          transition={{ ...SPRING_LG, delay: 3.6 }}>
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.couple.left,
+            top: CANVA.couple.top,
+            width: CANVA.couple.w,
+            height: CANVA.couple.h,
+            zIndex: 12,
+          }}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SPRING_LG, delay: 0.7 }}
+        >
+          <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
+            <Image
+              src="/shaadi-card/image8.png"
+              alt="couple"
+              fill
+              sizes="400px"
+              style={{ objectFit: "contain", objectPosition: "50% 100%" }}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.floralBottomL.left,
+            top: CANVA.floralBottomL.top,
+            width: CANVA.floralBottomL.w,
+            height: CANVA.floralBottomL.h,
+            zIndex: 14,
+            mixBlendMode: "multiply",
+            opacity: 0.92,
+          }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 0.92, y: 0 }}
+          transition={{ ...SPRING_MD, delay: 0.85 }}
+        >
           <div style={{ transform: "scaleX(-1)", width: "100%", height: "100%" }}>
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
-              <Image src="/shaadi-card/image7.webp" alt="" fill style={{ objectFit: "contain" }} />
+              <Image
+                src="/shaadi-card/image7.webp"
+                alt=""
+                fill
+                sizes="735px"
+                style={{ objectFit: "contain", objectPosition: "left bottom" }}
+              />
             </div>
           </div>
         </motion.div>
 
-        {/* ── Mandap — top=1020, height=900 → bottom=1920, 290px taller than before ── */}
-        <motion.div style={{ position: "absolute", left: 180, top: 1020, width: 720, height: 900, zIndex: 10 }}
-          initial={{ opacity: 0, y: 120 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING_LG, delay: 3.0 }}>
-          <motion.div style={{ position: "relative", width: "100%", height: "100%" }}
-            animate={{ y: [0, -14, 0] }} transition={{ duration: 4.5, ease: "easeInOut", delay: 4.2, repeat: Infinity }}>
-            <Image src="/shaadi-card/image9.png" alt="mandap" fill style={{ objectFit: "contain" }} />
-          </motion.div>
-        </motion.div>
-
-        {/* ── Couple — top=1210, width=560, height=710 → centred inside mandap ── */}
-        <motion.div style={{ position: "absolute", left: 260, top: 1210, width: 560, height: 710, zIndex: 15 }}
-          initial={{ opacity: 0, y: 120 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING_LG, delay: 3.3 }}>
-          <motion.div style={{ position: "relative", width: "100%", height: "100%" }}
-            animate={{ y: [0, -10, 0] }} transition={{ duration: 5, ease: "easeInOut", delay: 4.5, repeat: Infinity }}>
-            <Image src="/shaadi-card/image8.png" alt="couple" fill style={{ objectFit: "contain" }} />
-          </motion.div>
-        </motion.div>
-
-        {/* ── Top-right corner bouquet ── */}
-        <motion.div style={{ position: "absolute", left: 760, top: -20, width: 320, height: 290, mixBlendMode: "multiply" }}
-          initial={{ opacity: 0, x: 60, y: -60, scale: 0.8 }} animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          transition={{ ...SPRING_MD, delay: 0.3 }}>
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.floralBottomR.left,
+            top: CANVA.floralBottomR.top,
+            width: CANVA.floralBottomR.w,
+            height: CANVA.floralBottomR.h,
+            zIndex: 14,
+            mixBlendMode: "multiply",
+            opacity: 0.92,
+          }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 0.92, y: 0 }}
+          transition={{ ...SPRING_MD, delay: 0.9 }}
+        >
           <div style={{ position: "relative", width: "100%", height: "100%" }}>
-            <Image src="/shaadi-card/image4.webp" alt="" fill priority style={{ objectFit: "contain", objectPosition: "left top" }} />
+            <Image
+              src="/shaadi-card/image6.webp"
+              alt=""
+              fill
+              sizes="735px"
+              style={{ objectFit: "contain", objectPosition: "right bottom" }}
+            />
           </div>
         </motion.div>
 
-        {/* ── Top-left corner bouquet (mirrored) ── */}
-        <motion.div style={{ position: "absolute", left: 0, top: -20, width: 320, height: 290, mixBlendMode: "multiply" }}
-          initial={{ opacity: 0, x: -60, y: -60, scale: 0.8 }} animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          transition={{ ...SPRING_MD, delay: 0.4 }}>
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.topFloral.leftR,
+            top: CANVA.topFloral.top,
+            width: CANVA.topFloral.w,
+            height: CANVA.topFloral.h,
+            zIndex: 16,
+            mixBlendMode: "multiply",
+            opacity: 0.82,
+          }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 0.82, y: 0 }}
+          transition={{ ...SPRING_MD, delay: 0.2 }}
+        >
+          <div style={{ position: "relative", width: "100%", height: "100%" }}>
+            <Image
+              src="/shaadi-card/image4.webp"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1024px) 42vw, 380px"
+              style={{ objectFit: "contain", objectPosition: "right top" }}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.topFloral.leftL,
+            top: CANVA.topFloral.top,
+            width: CANVA.topFloral.w,
+            height: CANVA.topFloral.h,
+            zIndex: 16,
+            mixBlendMode: "multiply",
+            opacity: 0.82,
+          }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 0.82, y: 0 }}
+          transition={{ ...SPRING_MD, delay: 0.25 }}
+        >
           <div style={{ transform: "scaleX(-1)", width: "100%", height: "100%" }}>
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
-              <Image src="/shaadi-card/image5.webp" alt="" fill priority style={{ objectFit: "contain", objectPosition: "left top" }} />
+              <Image
+                src="/shaadi-card/image5.webp"
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 1024px) 42vw, 380px"
+                style={{ objectFit: "contain", objectPosition: "left top" }}
+              />
             </div>
           </div>
         </motion.div>
 
-        {/* ── "THE WEDDING OF" ── delay 0.7s */}
-        <motion.div style={{ position: "absolute", left: 0, top: 155, width: 1080 }}
-          initial={{ opacity: 0, y: 28, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.7, ease: EASE_OUT }}>
-          <p style={{
-            margin: 0, textAlign: "center",
-            fontFamily: F_CINZEL, fontSize: 64, fontWeight: 400,
-            color: C_MED, lineHeight: "84px",
-            textTransform: "uppercase", letterSpacing: "0.06em",
+        {/* Couple names — two-line stack + typographic & (no card-style chrome) */}
+        <motion.h2
+          style={{
+            position: "absolute",
+            left: CANVA.names.left,
+            top: CANVA.names.top + PL.oyNames + (phone ? 16 : 36),
+            width: CANVA.names.w,
+            height: PL.namesBoxH,
+            zIndex: 22,
+            margin: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            padding: phone ? "0 24px" : "0 16px",
+            fontWeight: 700,
+            color: C_SCRIPT,
+            textAlign: "center",
+          }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SPRING_SM, delay: 0.35 }}
+        >
+          <span style={{
+            display: "block",
+            fontFamily: F_DANCING,
+            fontSize: PL.nameSize,
+            lineHeight: 1.08,
+            textShadow: PL.nameShadow,
+            letterSpacing: "-0.02em",
           }}>
-            The Wedding of
-          </p>
-        </motion.div>
-
-        {/* ── Names ── delay 1.0s */}
-        <motion.div style={{ position: "absolute", left: 0, top: 254, width: 1080 }}
-          initial={{ opacity: 0, scale: 0.75, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ ...SPRING_SM, delay: 1.0 }}>
-          <p style={{
-            margin: 0, textAlign: "center",
-            fontFamily: F_DANCING, fontSize: 160, fontWeight: 700,
-            color: C_SCRIPT, lineHeight: "140px",
+            {bride}
+          </span>
+          <span
+            style={{
+              display: "block",
+              margin: phone ? "6px 0 4px" : "8px 0 6px",
+              fontFamily: F_CINZEL,
+              fontSize: PL.ampSize,
+              fontWeight: 400,
+              color: C_MED,
+              letterSpacing: "0.28em",
+              lineHeight: 1,
+              opacity: 0.92,
+            }}
+            aria-hidden
+          >
+            &
+          </span>
+          <span style={{
+            display: "block",
+            fontFamily: F_DANCING,
+            fontSize: PL.nameSize,
+            lineHeight: 1.08,
+            textShadow: PL.nameShadow,
+            letterSpacing: "-0.02em",
           }}>
-            {brideName || "Ananya"}&nbsp;&amp;<br />{groomName || "Arjun"}
-          </p>
+            {groom}
+          </span>
+        </motion.h2>
+
+        <motion.header
+          style={{
+            position: "absolute",
+            left: CANVA.theWeddingOf.left,
+            top: CANVA.theWeddingOf.top + PL.oyTitle,
+            width: CANVA.theWeddingOf.w,
+            height: PL.titleBoxH,
+            zIndex: 23,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: 0,
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, delay: 0.15, ease: EASE_OUT }}
+        >
+          {PL.splitTitle ? (
+            <>
+              <span style={{
+                fontFamily: F_CINZEL,
+                fontSize: PL.titleLine1,
+                fontWeight: 300,
+                color: C_MED,
+                lineHeight: 1.15,
+                textTransform: "uppercase",
+                letterSpacing: PL.titleLetter1,
+                opacity: 0.82,
+                textShadow: "0 1px 0 rgba(255,255,255,0.55)",
+              }}>
+                The Wedding
+              </span>
+              <span style={{
+                fontFamily: F_CINZEL,
+                fontSize: PL.titleLine2,
+                fontWeight: 300,
+                color: C_MED,
+                lineHeight: 1.2,
+                textTransform: "uppercase",
+                letterSpacing: "0.58em",
+                paddingLeft: "0.58em",
+                marginTop: 2,
+                opacity: 0.7,
+                textShadow: "0 1px 0 rgba(255,255,255,0.4)",
+              }}>
+                O F
+              </span>
+            </>
+          ) : (
+            <span style={{
+              fontFamily: F_CINZEL,
+              fontSize: PL.titleLine1,
+              fontWeight: 400,
+              color: C_MED,
+              lineHeight: "68px",
+              textTransform: "uppercase",
+              letterSpacing: PL.titleLetter1,
+              textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+            }}>
+              The Wedding of
+            </span>
+          )}
+        </motion.header>
+
+        {/* White lily wreath — between title block and date; soft multiply into watercolor */}
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ ...SPRING_SM, delay: 0.45 }}
+          style={{
+            position: "absolute",
+            left: phone ? (CW - PL.wreathW) / 2 : CANVA.wreath.left,
+            top: PL.wreathTop,
+            width: PL.wreathW,
+            height: PL.wreathH,
+            zIndex: 21,
+            mixBlendMode: "multiply",
+            opacity: phone ? 0.9 : 0.92,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.06) contrast(0.98)" }}>
+            <Image
+              src="/shaadi-card/image1.webp"
+              alt=""
+              fill
+              sizes={phone ? "(max-width: 1024px) 60vw, 472px" : "560px"}
+              style={{ objectFit: "contain", objectPosition: "center bottom" }}
+            />
+          </div>
         </motion.div>
 
-        {/* ── Lily wreath — compact: h:220 ── delay 1.6s */}
-        <motion.div style={{ position: "absolute", left: 310, top: 516, width: 460, height: 220, mixBlendMode: "multiply" }}
-          initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ ...SPRING_SM, delay: 1.6 }}>
-          <motion.div style={{ position: "relative", width: "100%", height: "100%" }}
-            animate={{ scale: [1, 1.04, 1], y: [0, -8, 0] }}
-            transition={{ duration: 5, ease: "easeInOut", delay: 2.8, repeat: Infinity }}>
-            <Image src="/shaadi-card/image1.webp" alt="lily wreath" fill style={{ objectFit: "contain" }} />
-          </motion.div>
-        </motion.div>
+        {/* Mobile: date / place / blessing — text only, painted on the invite (no card, no panel) */}
+        {phone ? (
+          <motion.article
+            aria-label="Wedding date, time, and location"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.52, ease: EASE_OUT }}
+            style={{
+              position: "absolute",
+              left: 36,
+              top: CANVA.month.top + PL.oyDate,
+              width: CW - 72,
+              zIndex: 24,
+              textAlign: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <p style={{
+              margin: 0,
+              fontFamily: F_CINZEL,
+              fontSize: 26,
+              fontWeight: 500,
+              color: C_MED,
+              letterSpacing: "0.38em",
+              textTransform: "uppercase",
+              lineHeight: 1.25,
+              textShadow: "0 1px 0 rgba(255,255,255,0.75)",
+            }}>
+              {dateInfo.month}
+            </p>
+            <p style={{
+              margin: "18px 0 0",
+              fontFamily: F_LORA,
+              fontSize: 34,
+              fontWeight: 700,
+              color: C_DARK,
+              lineHeight: 1.3,
+              textShadow: "0 1px 1px rgba(255,255,255,0.85)",
+            }}>
+              <span style={{ fontWeight: 700 }}>{dateInfo.weekdayLower}</span>
+              <span style={{
+                display: "inline-block",
+                margin: "0 14px",
+                fontSize: 48,
+                fontWeight: 700,
+                color: C_MED,
+                letterSpacing: "-0.03em",
+                lineHeight: 1,
+              }}>
+                {dateInfo.day}
+              </span>
+              <span style={{ fontWeight: 700 }}>{dateInfo.timeLower}</span>
+            </p>
+            <p style={{
+              margin: "20px 0 0",
+              fontFamily: F_LORA,
+              fontSize: 40,
+              fontWeight: 400,
+              color: C_DARK,
+              lineHeight: 1.22,
+              letterSpacing: "0.05em",
+              textShadow: "0 1px 0 rgba(255,255,255,0.75)",
+            }}>
+              {yearHalf[1] ? (
+                <>
+                  <span style={{ fontWeight: 300, opacity: 0.78 }}>{yearHalf[0]}</span>
+                  <span style={{ margin: "0 10px", color: "rgba(109,43,59,0.38)", fontWeight: 300, fontSize: "0.95em" }}>|</span>
+                  <span style={{ fontWeight: 600, color: C_SCRIPT }}>{yearHalf[1]}</span>
+                </>
+              ) : (
+                dateInfo.year
+              )}
+            </p>
+            <p style={{
+              margin: "20px 0 0",
+              fontFamily: F_LORA,
+              fontSize: 30,
+              fontWeight: 500,
+              color: C_DARK,
+              letterSpacing: "0.14em",
+              lineHeight: 1.4,
+              textShadow: "0 1px 1px rgba(255,255,255,0.8)",
+            }}>
+              {venue || "Udaipur"}
+            </p>
+            <p style={{
+              margin: "16px 0 0",
+              fontFamily: F_DANCING,
+              fontSize: 34,
+              fontWeight: 700,
+              color: C_SCRIPT,
+              lineHeight: 1.35,
+              opacity: 0.96,
+            }}>
+              {blessing || "ॐ शुभ विवाह"}
+            </p>
+          </motion.article>
+        ) : null}
 
-        {/* ═══════════════════════════════════════════════════════════
-            DATE SECTION — compact, centred on x=540
-            Month → [WEEKDAY | BIG-DATE | HH:MM] → LineFlower YEAR LineFlower
-            → Venue → Blessing
-            Total height ~240px (was ~320px) → frees 80px for illustration
-            ═══════════════════════════════════════════════════════════ */}
-
-        {/* Month name */}
-        <motion.div style={{ position: "absolute", left: 290, top: 744, width: 500 }}
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.0, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "center", fontFamily: F_LORA, fontSize: 34, fontWeight: 400, color: C_DARK, lineHeight: "46px" }}>
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.month.left,
+            top: CANVA.month.top + PL.oyDate,
+            width: CANVA.month.w,
+            height: CANVA.month.h,
+            zIndex: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.55, delay: 0.65 }}
+        >
+          <p style={{
+            margin: 0,
+            fontFamily: F_LORA,
+            fontSize: PL.monthFs,
+            fontWeight: 400,
+            color: C_DARK,
+            lineHeight: "60px",
+            letterSpacing: "0",
+          }}>
             {dateInfo.month}
           </p>
         </motion.div>
+        ) : null}
 
-        {/* Left: Weekday */}
-        <motion.div style={{ position: "absolute", left: 150, top: 792, width: 295 }}
-          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.15, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "right", fontFamily: F_LORA, fontSize: 33, fontWeight: 700, color: C_DARK, lineHeight: "46px", textTransform: "uppercase" }}>
-            {dateInfo.weekday}
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.weekday.left,
+            top: CANVA.weekday.top + PL.oyDate,
+            width: CANVA.weekday.w,
+            height: CANVA.weekday.h,
+            zIndex: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            paddingRight: 4,
+            boxSizing: "border-box",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.55, delay: 0.72 }}
+        >
+          <p style={{
+            margin: 0,
+            fontFamily: F_LORA,
+            fontSize: PL.rowFs,
+            fontWeight: 700,
+            color: C_DARK,
+            lineHeight: "74px",
+            textTransform: "lowercase",
+            letterSpacing: "0",
+          }}>
+            {dateInfo.weekdayLower}
           </p>
         </motion.div>
+        ) : null}
 
-        {/* Center: big day number */}
-        <motion.div style={{ position: "absolute", left: 443, top: 775, width: 168 }}
-          initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ ...SPRING_SM, delay: 2.3 }}>
-          <motion.p
-            style={{ margin: 0, textAlign: "center", fontFamily: F_LORA, fontSize: 76, fontWeight: 700, color: C_MED, lineHeight: "90px" }}
-            animate={{ scale: [1, 1.1, 1, 1.05, 1] }}
-            transition={{ duration: 1.8, ease: "easeInOut", delay: 3.2 }}>
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.dayNum.left,
+            top: CANVA.dayNum.top + PL.oyDate,
+            width: CANVA.dayNum.w,
+            height: CANVA.dayNum.h,
+            zIndex: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.55, delay: 0.78 }}
+        >
+          <p style={{
+            margin: 0,
+            fontFamily: F_LORA,
+            fontSize: PL.dayFs,
+            fontWeight: 700,
+            color: C_MED,
+            lineHeight: "74px",
+            textTransform: "uppercase",
+            textShadow: "none",
+          }}>
             {dateInfo.day}
-          </motion.p>
-        </motion.div>
-
-        {/* Right: HH:MM AM/PM */}
-        <motion.div style={{ position: "absolute", left: 609, top: 792, width: 295 }}
-          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.25, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "left", fontFamily: F_LORA, fontSize: 33, fontWeight: 700, color: C_DARK, lineHeight: "46px" }}>
-            {dateInfo.hhmm} <span style={{ fontSize: 25, fontWeight: 400, color: C_MED }}>{dateInfo.ampm}</span>
           </p>
         </motion.div>
+        ) : null}
 
-        {/* Line flowers + year row */}
-        <motion.div style={{ position: "absolute", left: 148, top: 836 }}
-          initial={{ opacity: 0, scale: 0.6, x: -20 }} animate={{ opacity: 1, scale: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 2.5, ease: EASE_OUT }}>
-          <LineFlower />
-        </motion.div>
-
-        <motion.div style={{ position: "absolute", left: 395, top: 830, width: 290 }}
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.55, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "center", fontFamily: F_LORA, fontSize: 33, fontWeight: 400, color: C_DARK, lineHeight: "46px" }}>
-            {dateInfo.year}
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.time.left,
+            top: CANVA.time.top + PL.oyDate,
+            width: CANVA.time.w,
+            height: CANVA.time.h,
+            zIndex: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            paddingLeft: 4,
+            boxSizing: "border-box",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.55, delay: 0.84 }}
+        >
+          <p style={{
+            margin: 0,
+            fontFamily: F_LORA,
+            fontSize: PL.rowFs,
+            fontWeight: 700,
+            color: C_DARK,
+            lineHeight: "74px",
+            textTransform: "lowercase",
+            letterSpacing: "0",
+          }}>
+            {dateInfo.timeLower}
           </p>
         </motion.div>
+        ) : null}
 
-        <motion.div style={{ position: "absolute", left: 638, top: 836 }}
-          initial={{ opacity: 0, scale: 0.6, x: 20 }} animate={{ opacity: 1, scale: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 2.6, ease: EASE_OUT }}>
-          <LineFlower flip />
-        </motion.div>
+        {/* Year — desktop: split lockup */}
+        {!phone ? (
+        <motion.p
+          style={{
+            position: "absolute",
+            left: (CW - 320) / 2,
+            top: CANVA.year.top + PL.oyYearLine,
+            width: 320,
+            minHeight: 72,
+            zIndex: 24,
+            margin: 0,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: yearHalf[1] ? 20 : 0,
+          }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.88, duration: 0.45, ease: EASE_OUT }}
+        >
+          {yearHalf[1] ? (
+            <>
+              <span style={{
+                fontFamily: F_LORA,
+                fontSize: PL.yearFs + 6,
+                fontWeight: 300,
+                color: C_DARK,
+                letterSpacing: "0.12em",
+                lineHeight: 1,
+                opacity: 0.88,
+              }}>
+                {yearHalf[0]}
+              </span>
+              <span
+                aria-hidden
+                style={{
+                  width: 2,
+                  height: 42,
+                  borderRadius: 2,
+                  background: "linear-gradient(180deg, rgba(203,107,130,0), rgba(203,107,130,0.55), rgba(203,107,130,0))",
+                  boxShadow: "0 0 12px rgba(203,107,130,0.25)",
+                }}
+              />
+              <span style={{
+                fontFamily: F_LORA,
+                fontSize: PL.yearFs + 6,
+                fontWeight: 600,
+                color: C_SCRIPT,
+                letterSpacing: "0.06em",
+                lineHeight: 1,
+              }}>
+                {yearHalf[1]}
+              </span>
+            </>
+          ) : (
+            <span style={{
+              fontFamily: F_LORA,
+              fontSize: PL.yearFs + 6,
+              fontWeight: 500,
+              color: C_DARK,
+              letterSpacing: "0.1em",
+              lineHeight: 1,
+            }}>
+              {dateInfo.year}
+            </span>
+          )}
+        </motion.p>
+        ) : null}
 
-        {/* Venue */}
-        <motion.div style={{ position: "absolute", left: 190, top: 882, width: 700 }}
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.8, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "center", fontFamily: F_LORA, fontSize: 32, fontWeight: 400, color: C_DARK, lineHeight: "44px" }}>
-            {venue || "Udaipur"}
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.address.left,
+            top: CANVA.address.top + PL.oyAddress,
+            width: CANVA.address.w,
+            minHeight: CANVA.address.h,
+            zIndex: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.0 }}
+        >
+          <p style={{
+            margin: 0,
+            textAlign: "center",
+            fontFamily: F_LORA,
+            fontSize: PL.addressFs,
+            fontWeight: 400,
+            color: C_DARK,
+            lineHeight: "48px",
+            padding: "0 12px",
+            letterSpacing: "0",
+          }}>
+            {venue || "123 Anywhere St., Any City, ST 12345"}
           </p>
         </motion.div>
+        ) : null}
 
-        {/* Blessing — bottom≈986, gap to mandap (1020)=34px */}
-        <motion.div style={{ position: "absolute", left: 190, top: 930, width: 700 }}
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 2.95, ease: EASE_OUT }}>
-          <p style={{ margin: 0, textAlign: "center", fontFamily: F_DANCING, fontSize: 46, fontWeight: 700, color: C_SCRIPT, lineHeight: "58px", opacity: 0.88 }}>
+        {!phone ? (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: CANVA.address.left,
+            top: PL.blessingTop,
+            width: CANVA.address.w,
+            zIndex: 25,
+          }}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 1.08 }}
+        >
+          <p style={{
+            margin: 0,
+            textAlign: "center",
+            fontFamily: F_DANCING,
+            fontSize: PL.blessingFs,
+            fontWeight: 700,
+            color: C_SCRIPT,
+            lineHeight: "48px",
+            opacity: 0.92,
+            letterSpacing: "0",
+            textShadow: "none",
+          }}>
             {blessing || "ॐ शुभ विवाह"}
           </p>
         </motion.div>
+        ) : null}
 
       </div>{/* /inner canvas */}
     </div>
@@ -404,7 +956,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         position: "fixed",
         inset: 0,
         overflow: "hidden",
-        background: "#f0d6e0",
+        background: "#FDFBF7",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -416,160 +968,62 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
   }
 
   /* ════════════════════════════════════════════════════════════════
-     DESKTOP LAYOUT  — blurred bg + card centre + info panels
+     DESKTOP LAYOUT — beautifully centred card, watercolor background
      ════════════════════════════════════════════════════════════════ */
   return (
     <div style={{
-      width: "100%", height: "100vh", overflow: "hidden",
+      width: "100%", height: "100vh", minHeight: "100dvh", overflow: "hidden",
       display: "flex", alignItems: "center", justifyContent: "center",
       position: "relative",
     }}>
-      {/* Blurred bg */}
+      {/* Crisp watercolor background */}
       <div style={{
         position: "absolute", inset: 0, zIndex: 0,
         backgroundImage: "url(/shaadi-card/image10.webp)",
-        backgroundSize: "cover", backgroundPosition: "center",
-        filter: "blur(20px) brightness(1.06)",
-        transform: "scale(1.1)",
+        backgroundSize: "cover", backgroundPosition: "center top",
       }} />
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 1,
-        background: "linear-gradient(160deg, rgba(255,235,245,0.62), rgba(220,165,190,0.48))",
-      }} />
+      {/* Soft white wash */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "rgba(255,252,250,0.46)" }} />
+      {/* Top fade */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 2, height: 140,
+        background: "linear-gradient(to bottom, rgba(253,248,244,0.88), transparent)" }} />
+      {/* Bottom fade */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 2, height: 180,
+        background: "linear-gradient(to top, rgba(253,248,244,0.92), transparent)" }} />
 
-      {/* BG petals */}
-      {petals.slice(0, 8).map((p) => (
-        <motion.div key={`bg-${p.id}`} style={{
-          position: "absolute", zIndex: 2,
-          width: p.size + 4, height: p.size + 4, left: `${p.x}%`, top: -(p.size + 4),
-          borderRadius: "50%",
-          background: `radial-gradient(circle at 35% 35%, hsl(${p.hue},92%,90%), hsl(${p.hue},76%,68%))`,
-          filter: "blur(0.6px)", pointerEvents: "none",
-        }}
-          animate={{ y: "108vh", x: [0, 22, -14, 18, -8, 0], rotate: [0, 360], opacity: [0, 0.7, 0.7, 0.7, 0] }}
-          transition={{ duration: p.dur + 2, delay: p.delay, ease: "linear", opacity: { times: [0, 0.04, 0.5, 0.92, 1] } }}
-        />
-      ))}
+      {/* Corner florals */}
+      <div style={{ position: "absolute", top: 0, left: 0, zIndex: 3, width: 260, height: 240, opacity: 0.9, mixBlendMode: "multiply", pointerEvents: "none" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%", transform: "scaleX(-1)" }}>
+          <Image src="/shaadi-card/image5.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left top" }} />
+        </div>
+      </div>
+      <div style={{ position: "absolute", top: 0, right: 0, zIndex: 3, width: 260, height: 240, opacity: 0.9, mixBlendMode: "multiply", pointerEvents: "none" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          <Image src="/shaadi-card/image4.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right top" }} />
+        </div>
+      </div>
+      <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 3, width: 280, height: 240, opacity: 0.85, mixBlendMode: "multiply", pointerEvents: "none" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%", transform: "scaleX(-1)" }}>
+          <Image src="/shaadi-card/image7.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left bottom" }} />
+        </div>
+      </div>
+      <div style={{ position: "absolute", bottom: 0, right: 0, zIndex: 3, width: 280, height: 240, opacity: 0.85, mixBlendMode: "multiply", pointerEvents: "none" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          <Image src="/shaadi-card/image6.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right bottom" }} />
+        </div>
+      </div>
 
-      {/* ── Left info panel ──────────────────────────────────────── */}
+      {/* Centred invitation card */}
       <motion.div
-        style={{
-          position: "relative", zIndex: 5,
-          width: 260, marginRight: 40, flexShrink: 0,
-          display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 22,
-        }}
-        initial={{ opacity: 0, x: -60 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 1.1, delay: 0.6, ease: EASE_OUT }}>
-
-        <div style={{ opacity: 0.9, mixBlendMode: "multiply" }}>
-          <Image src="/shaadi-card/image6.webp" alt="" width={240} height={180}
-            style={{ objectFit: "contain", filter: "drop-shadow(0 4px 14px rgba(171,28,62,0.20))" }} />
-        </div>
-
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: "0 0 5px", fontFamily: F_CINZEL, fontSize: 11, fontWeight: 400, color: C_MED, letterSpacing: "0.2em", textTransform: "uppercase" }}>
-            You are cordially invited to
-          </p>
-          <p style={{ margin: 0, fontFamily: F_CINZEL, fontSize: 21, fontWeight: 400, color: C_DARK, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-            The Wedding of
-          </p>
-        </div>
-
-        <p style={{ margin: 0, textAlign: "right", fontFamily: F_DANCING, fontSize: 50, fontWeight: 700, color: C_SCRIPT, lineHeight: "1.15" }}>
-          {brideName || "Ananya"}&nbsp;&amp;<br />{groomName || "Arjun"}
-        </p>
-
-        <div style={{ width: "100%", height: 1, background: `linear-gradient(to left, ${C_MED}, transparent)`, opacity: 0.4 }} />
-
-        <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 12 }}>
-          {[
-            { label: "DATE",  value: `${dateInfo.weekday[0] + dateInfo.weekday.slice(1).toLowerCase()}, ${dateInfo.month} ${dateInfo.day}` },
-            { label: "YEAR",  value: dateInfo.year },
-            { label: "TIME",  value: `${dateInfo.hhmm} ${dateInfo.ampm}` },
-            { label: "VENUE", value: venue || "Udaipur" },
-          ].map((row) => (
-            <div key={row.label} style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <p style={{ margin: "0 0 2px", fontFamily: F_CINZEL, fontSize: 9, letterSpacing: "0.22em", color: C_MED, textTransform: "uppercase" }}>
-                {row.label}
-              </p>
-              <p style={{ margin: 0, fontFamily: F_LORA, fontSize: 14, color: C_DARK, lineHeight: "1.5" }}>
-                {row.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* ── Centre card ──────────────────────────────────────────── */}
-      <motion.div
-        style={{ position: "relative", zIndex: 10, flexShrink: 0 }}
-        initial={{ opacity: 0, y: 40, scale: 0.94 }}
+        style={{ position: "relative", zIndex: 10 }}
+        initial={{ opacity: 0, y: 36, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 1.0, delay: 0.3, ease: EASE_OUT }}>
-        <div style={{ boxShadow: "0 28px 80px rgba(109,43,59,0.30), 0 8px 24px rgba(109,43,59,0.18)", borderRadius: 16, overflow: "hidden" }}>
+        transition={{ duration: 0.95, ease: EASE_OUT }}
+      >
+        <div style={{ boxShadow: "0 32px 90px rgba(109,43,59,0.28), 0 10px 30px rgba(109,43,59,0.14)", overflow: "hidden" }}>
           {cardCanvas}
         </div>
       </motion.div>
-
-      {/* ── Right info panel ─────────────────────────────────────── */}
-      <motion.div
-        style={{
-          position: "relative", zIndex: 5,
-          width: 260, marginLeft: 40, flexShrink: 0,
-          display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 22,
-        }}
-        initial={{ opacity: 0, x: 60 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 1.1, delay: 0.7, ease: EASE_OUT }}>
-
-        <div style={{ opacity: 0.9, mixBlendMode: "multiply", transform: "scaleX(-1)" }}>
-          <Image src="/shaadi-card/image7.webp" alt="" width={240} height={180}
-            style={{ objectFit: "contain", filter: "drop-shadow(0 4px 14px rgba(171,28,62,0.18))" }} />
-        </div>
-
-        <div style={{ textAlign: "left" }}>
-          <p style={{ margin: "0 0 6px", fontFamily: F_CINZEL, fontSize: 11, fontWeight: 400, color: C_MED, letterSpacing: "0.18em", textTransform: "uppercase" }}>
-            Save the date
-          </p>
-          <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
-            <span style={{ fontFamily: F_LORA, fontSize: 62, fontWeight: 700, color: C_MED, lineHeight: 1 }}>{dateInfo.day}</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontFamily: F_CINZEL, fontSize: 13, color: C_DARK, letterSpacing: "0.1em", textTransform: "uppercase" }}>{dateInfo.month}</span>
-              <span style={{ fontFamily: F_CINZEL, fontSize: 13, color: C_DARK, letterSpacing: "0.1em", textTransform: "uppercase" }}>{dateInfo.year}</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ width: "100%", height: 1, background: `linear-gradient(to right, ${C_MED}, transparent)`, opacity: 0.4 }} />
-
-        <div style={{ textAlign: "left" }}>
-          <p style={{ margin: "0 0 5px", fontFamily: F_CINZEL, fontSize: 9, letterSpacing: "0.22em", color: C_MED, textTransform: "uppercase" }}>Blessing</p>
-          <p style={{ margin: 0, fontFamily: F_DANCING, fontSize: 22, fontWeight: 700, color: C_SCRIPT, lineHeight: "1.5" }}>
-            {blessing || "ॐ शुभ विवाह"}
-          </p>
-        </div>
-
-        <div style={{ textAlign: "left" }}>
-          <p style={{ margin: "0 0 5px", fontFamily: F_CINZEL, fontSize: 9, letterSpacing: "0.22em", color: C_MED, textTransform: "uppercase" }}>Dress Code</p>
-          <p style={{ margin: 0, fontFamily: F_LORA, fontSize: 14, color: C_DARK }}>
-            Traditional / Ethnic
-          </p>
-        </div>
-
-        <div style={{ textAlign: "left" }}>
-          <p style={{ margin: "0 0 5px", fontFamily: F_CINZEL, fontSize: 9, letterSpacing: "0.22em", color: C_MED, textTransform: "uppercase" }}>R.S.V.P.</p>
-          <p style={{ margin: 0, fontFamily: F_LORA, fontSize: 13, color: C_DARK, lineHeight: "1.7" }}>
-            Kindly confirm your<br />attendance with family
-          </p>
-        </div>
-
-        <div style={{ opacity: 0.85, mixBlendMode: "multiply", marginTop: "auto" }}>
-          <Image src="/shaadi-card/image4.webp" alt="" width={200} height={160}
-            style={{ objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(171,28,62,0.15))" }} />
-        </div>
-      </motion.div>
-
     </div>
   );
 }

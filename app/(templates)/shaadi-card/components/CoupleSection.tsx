@@ -10,84 +10,72 @@ const C_ACCENT = "#AB1C3E";
 const C_MED = "#CB6B82";
 const C_DARK = "#6D2B3B";
 const C_BG = "#FDFBF7";
+const C_SCRIPT = "#AB1C3E";
 
 const F_CINZEL = "var(--font-cinzel), ui-serif, Georgia, serif";
 const F_LORA = "var(--font-lora), Georgia, serif";
 const F_DANCING = "var(--font-dancing), cursive";
 
-/** True-corner floral overlays — flush top-0/bottom-0 so blooms sit in actual corners */
+function formatDate(iso: string) {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) throw new Error("invalid");
+    const h = d.getHours(), m = d.getMinutes();
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    const time = m === 0
+      ? `${h12} ${ampm}`
+      : `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+    return {
+      day: String(d.getDate()).padStart(2, "0"),
+      month: d.toLocaleString("en-IN", { month: "long" }),
+      weekday: d.toLocaleString("en-IN", { weekday: "long" }),
+      year: String(d.getFullYear()),
+      time,
+    };
+  } catch {
+    return { day: "15", month: "April", weekday: "Wednesday", year: "2026", time: "11 AM" };
+  }
+}
+
+/** True-corner floral overlays */
 function InvitationStyleCorners() {
   return (
     <>
-      {/* Top left */}
       <div
         className="pointer-events-none absolute left-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px, 40vw, 240px)", height: "clamp(110px, 22vh, 260px)", opacity: 0.88 }}
         aria-hidden
       >
         <div className="relative h-full w-full scale-x-[-1]">
-          <Image
-            src="/shaadi-card/image5.webp"
-            alt=""
-            fill
-            sizes="240px"
-            className="object-contain"
-            style={{ objectPosition: "left top" }}
-          />
+          <Image src="/shaadi-card/image5.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "left top" }} />
         </div>
       </div>
-
-      {/* Top right */}
       <div
         className="pointer-events-none absolute right-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px, 40vw, 240px)", height: "clamp(110px, 22vh, 260px)", opacity: 0.88 }}
         aria-hidden
       >
         <div className="relative h-full w-full">
-          <Image
-            src="/shaadi-card/image4.webp"
-            alt=""
-            fill
-            sizes="240px"
-            className="object-contain"
-            style={{ objectPosition: "right top" }}
-          />
+          <Image src="/shaadi-card/image4.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "right top" }} />
         </div>
       </div>
-
-      {/* Bottom left */}
       <div
         className="pointer-events-none absolute bottom-[-20px] left-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px, 50vw, 380px)", height: "clamp(140px, 28vh, 300px)", opacity: 0.95 }}
         aria-hidden
       >
         <div className="relative h-full w-full scale-x-[-1]">
-          <Image
-            src="/shaadi-card/image7.webp"
-            alt=""
-            fill
-            sizes="380px"
-            className="object-contain"
-            style={{ objectPosition: "left bottom" }}
-          />
+          <Image src="/shaadi-card/image7.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "left bottom" }} />
         </div>
       </div>
-
-      {/* Bottom right */}
       <div
         className="pointer-events-none absolute bottom-[-20px] right-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px, 50vw, 380px)", height: "clamp(140px, 28vh, 300px)", opacity: 0.95 }}
         aria-hidden
       >
         <div className="relative h-full w-full">
-          <Image
-            src="/shaadi-card/image6.webp"
-            alt=""
-            fill
-            sizes="380px"
-            className="object-contain"
-            style={{ objectPosition: "right bottom" }}
-          />
+          <Image src="/shaadi-card/image6.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "right bottom" }} />
         </div>
       </div>
     </>
@@ -98,45 +86,19 @@ function HomeMatchBackground() {
   return (
     <>
       <div className="pointer-events-none absolute inset-0 z-0 min-h-full" style={{ background: C_BG }}>
-        <Image
-          src="/shaadi-card/image10.webp"
-          alt=""
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-        />
+        <Image src="/shaadi-card/image10.webp" alt="" fill className="object-cover" sizes="100vw" priority />
       </div>
-      <div
-        className="pointer-events-none absolute inset-0 z-[1]"
-        style={{ background: "rgba(255,255,255,0.38)", mixBlendMode: "soft-light" }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2]"
-        style={{ height: "55%", background: "linear-gradient(to top, rgba(253,244,248,0.42) 0%, transparent 100%)" }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-[32%] max-h-[280px]"
-        style={{ background: "linear-gradient(to bottom, rgba(255,251,248,0.45) 0%, transparent 100%)" }}
-        aria-hidden
-      />
+      <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "rgba(255,255,255,0.38)", mixBlendMode: "soft-light" }} aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2]" style={{ height: "55%", background: "linear-gradient(to top, rgba(253,244,248,0.42) 0%, transparent 100%)" }} aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-[32%] max-h-[280px]" style={{ background: "linear-gradient(to bottom, rgba(255,251,248,0.45) 0%, transparent 100%)" }} aria-hidden />
     </>
   );
 }
 
-const modalScrollHide =
-  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+const modalScrollHide = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
 
-function FamilyModal({
-  open, onClose, person, family, accentLabel,
-}: {
-  open: boolean;
-  onClose: () => void;
-  person: CoupleInfo;
-  family: FamilyInfo;
-  accentLabel: string;
+function FamilyModal({ open, onClose, person, family, accentLabel }: {
+  open: boolean; onClose: () => void; person: CoupleInfo; family: FamilyInfo; accentLabel: string;
 }) {
   return (
     <AnimatePresence>
@@ -144,139 +106,67 @@ function FamilyModal({
         <motion.div
           className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6"
           style={{ background: "rgba(35,18,28,0.5)", backdropFilter: "blur(4px)" }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="family-modal-title"
+            role="dialog" aria-modal="true" aria-labelledby="family-modal-title"
             className={`relative w-full max-w-[min(92vw,400px)] max-h-[min(82dvh,600px)] overflow-y-auto overflow-x-hidden rounded-[26px] shadow-2xl ${modalScrollHide}`}
-            style={{
-              background: `linear-gradient(180deg, rgba(255,250,248,0.98) 0%, #FFF9F7 100%)`,
-              border: `1px solid ${C_MED}30`,
-              boxShadow: "0 20px 50px rgba(109,43,59,0.15)",
-            }}
-            initial={{ opacity: 0, scale: 0.94, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 6 }}
+            style={{ background: "linear-gradient(180deg, rgba(255,250,248,0.98) 0%, #FFF9F7 100%)", border: `1px solid ${C_MED}30`, boxShadow: "0 20px 50px rgba(109,43,59,0.15)" }}
+            initial={{ opacity: 0, scale: 0.94, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 6 }}
             transition={{ type: "spring", stiffness: 400, damping: 34 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="relative h-[min(36vh,220px)] overflow-hidden sm:h-52"
-              style={{ background: `linear-gradient(145deg, ${C_MED}40 0%, ${C_ACCENT}28 50%, ${C_MED}32 100%)` }}
-            >
+            <div className="relative h-[min(36vh,220px)] overflow-hidden sm:h-52" style={{ background: `linear-gradient(145deg, ${C_MED}40 0%, ${C_ACCENT}28 50%, ${C_MED}32 100%)` }}>
               {person.photo ? (
-                <Image src={person.photo} alt="" fill className="object-cover" sizes="(max-width:640px) 92vw, 400px" />
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={person.photo} alt="" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  {/* Dot pattern bg */}
-                  <div className="absolute inset-0 opacity-15" style={{
-                    backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1.5px, transparent 1.5px)`,
-                    backgroundSize: "22px 22px",
-                  }} />
-                  {/* Petal rings */}
-                  <div
-                    className="relative flex items-center justify-center rounded-full"
-                    style={{
-                      width: 96, height: 96,
-                      background: "rgba(255,255,255,0.60)",
-                      border: `2.5px solid ${C_ACCENT}38`,
-                      boxShadow: `0 0 0 8px ${C_ACCENT}12, 0 0 0 16px ${C_ACCENT}06, 0 8px 28px ${C_ACCENT}22`,
-                    }}
-                  >
-                    <span className="text-5xl leading-none sm:text-6xl">
-                      {accentLabel === "bride" ? "👰" : "🤵"}
-                    </span>
+                  <div className="absolute inset-0 opacity-15" style={{ backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1.5px, transparent 1.5px)`, backgroundSize: "22px 22px" }} />
+                  <div className="relative flex items-center justify-center rounded-full" style={{ width: 96, height: 96, background: "rgba(255,255,255,0.60)", border: `2.5px solid ${C_ACCENT}38`, boxShadow: `0 0 0 8px ${C_ACCENT}12, 0 0 0 16px ${C_ACCENT}06, 0 8px 28px ${C_ACCENT}22` }}>
+                    <span className="text-5xl leading-none sm:text-6xl">{accentLabel === "bride" ? "👰" : "🤵"}</span>
                   </div>
-                  <span
-                    className="relative text-[10px] font-bold uppercase tracking-[0.2em]"
-                    style={{ fontFamily: F_CINZEL, color: "rgba(255,255,255,0.82)" }}
-                  >
+                  <span className="relative text-[10px] font-bold uppercase tracking-[0.2em]" style={{ fontFamily: F_CINZEL, color: "rgba(255,255,255,0.82)" }}>
                     {accentLabel === "bride" ? "The Bride" : "The Groom"}
                   </span>
                 </div>
               )}
-              <button
-                type="button"
-                onClick={onClose}
-                className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-md transition-transform active:scale-95"
-                style={{ background: "rgba(255,255,255,0.95)", color: C_DARK }}
-                aria-label="Close"
-              >
+              <button type="button" onClick={onClose} className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-md transition-transform active:scale-95" style={{ background: "rgba(255,255,255,0.95)", color: C_DARK }} aria-label="Close">
                 <X size={17} />
               </button>
-              <div
-                className="absolute bottom-0 left-0 right-0 px-4 py-2.5 sm:px-5 sm:py-3"
-                style={{ background: "linear-gradient(transparent, rgba(253,245,240,0.98))" }}
-              >
-                <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] sm:text-[10px]"
-                  style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>
-                  {person.roleHindi} · {person.role}
-                </p>
-                <h2 id="family-modal-title" className="text-lg font-bold sm:text-xl" style={{ fontFamily: F_LORA, color: C_DARK }}>
-                  {person.name}
-                </h2>
+              <div className="absolute bottom-0 left-0 right-0 px-4 py-2.5 sm:px-5 sm:py-3" style={{ background: "linear-gradient(transparent, rgba(253,245,240,0.98))" }}>
+                <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] sm:text-[10px]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>{person.roleHindi} · {person.role}</p>
+                <h2 id="family-modal-title" className="text-lg font-bold sm:text-xl" style={{ fontFamily: F_LORA, color: C_DARK }}>{person.name}</h2>
               </div>
             </div>
-
             <div className="space-y-3 px-4 py-4 sm:space-y-4 sm:px-5 sm:py-5">
               <div>
-                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold" style={{ fontFamily: F_CINZEL, color: C_MED }}>
-                  <Sparkles size={11} /> About
-                </p>
-                <p className="text-[13px] leading-snug sm:text-sm sm:leading-relaxed" style={{ fontFamily: F_LORA, color: C_DARK }}>
-                  {person.description}
-                </p>
+                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold" style={{ fontFamily: F_CINZEL, color: C_MED }}><Sparkles size={11} /> About</p>
+                <p className="text-[13px] leading-snug sm:text-sm sm:leading-relaxed" style={{ fontFamily: F_LORA, color: C_DARK }}>{person.description}</p>
               </div>
-
               {person.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {person.tags.map((tag) => (
-                    <span
-                      key={tag.label}
-                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium sm:text-xs"
-                      style={{ background: `${C_ACCENT}10`, color: C_DARK, border: `1px solid ${C_ACCENT}16`, fontFamily: F_LORA }}
-                    >
+                    <span key={tag.label} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium sm:text-xs" style={{ background: `${C_ACCENT}10`, color: C_DARK, border: `1px solid ${C_ACCENT}16`, fontFamily: F_LORA }}>
                       {tag.emoji} {tag.label}
                     </span>
                   ))}
                 </div>
               )}
-
-              <div
-                className="space-y-2 rounded-xl p-3 sm:rounded-2xl sm:p-4"
-                style={{ background: `${C_ACCENT}06`, border: `1px solid ${C_ACCENT}16` }}
-              >
+              <div className="space-y-2 rounded-xl p-3 sm:rounded-2xl sm:p-4" style={{ background: `${C_ACCENT}06`, border: `1px solid ${C_ACCENT}16` }}>
                 <div className="flex items-center gap-2">
                   <Users size={15} style={{ color: C_ACCENT }} />
-                  <h3 className="text-xs font-bold sm:text-sm" style={{ fontFamily: F_CINZEL, color: C_DARK }}>
-                    {family.title}
-                  </h3>
+                  <h3 className="text-xs font-bold sm:text-sm" style={{ fontFamily: F_CINZEL, color: C_DARK }}>{family.title}</h3>
                 </div>
                 <div className="space-y-1.5 text-[12px] sm:text-sm" style={{ fontFamily: F_LORA, color: C_DARK }}>
-                  <p>
-                    <span className="font-semibold" style={{ color: C_ACCENT }}>Parents</span>
-                    <br />{family.parents || "—"}
-                  </p>
+                  <p><span className="font-semibold" style={{ color: C_ACCENT }}>Parents</span><br />{family.parents || "—"}</p>
                   {family.grandparents ? (
-                    <p>
-                      <span className="font-semibold" style={{ color: C_ACCENT }}>Grandparents</span>
-                      <br /><span style={{ color: C_MED }}>{family.grandparents}</span>
-                    </p>
+                    <p><span className="font-semibold" style={{ color: C_ACCENT }}>Grandparents</span><br /><span style={{ color: C_MED }}>{family.grandparents}</span></p>
                   ) : null}
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.99] sm:rounded-2xl sm:py-3 sm:text-sm"
-                style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`, fontFamily: F_CINZEL }}
-              >
+              <button type="button" onClick={onClose} className="w-full rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.99] sm:rounded-2xl sm:py-3 sm:text-sm" style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`, fontFamily: F_CINZEL }}>
                 Close
               </button>
             </div>
@@ -290,13 +180,14 @@ function FamilyModal({
 export default memo(function CoupleSection({ data }: Props) {
   const [modal, setModal] = useState<ModalSide>(null);
   const close = useCallback(() => setModal(null), []);
+  const dateInfo = formatDate(data.weddingDate);
 
   return (
     <section
-      className="relative isolate flex min-h-[100dvh] w-full flex-col overflow-hidden lg:min-h-[100dvh] lg:py-10"
+      className="relative isolate flex min-h-[100dvh] w-full flex-col overflow-hidden"
       style={{ background: C_BG }}
     >
-      {/* Background + corner florals — corners flush to edges */}
+      {/* Shared background + corner florals */}
       <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
         <div className="relative h-full w-full">
           <HomeMatchBackground />
@@ -304,162 +195,78 @@ export default memo(function CoupleSection({ data }: Props) {
         </div>
       </div>
 
+      {/* ══════════════════════════════════════════════
+          MOBILE LAYOUT — cards (hidden on desktop)
+          ══════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="relative z-[4] flex min-h-0 flex-1 flex-col px-4 pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))] pt-16 sm:px-5 sm:pt-20 lg:mx-auto lg:max-w-lg lg:px-6 lg:pb-8 lg:pt-8"
+        className="lg:hidden relative z-[4] flex min-h-0 flex-1 flex-col px-4 pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))] pt-20 sm:px-5 sm:pt-24"
       >
         {/* Header */}
         <header className="mb-5 shrink-0 text-center sm:mb-6">
           <motion.div
             className="mb-2 inline-flex items-center gap-2 rounded-full px-4 py-1.5"
-            style={{
-              background: `linear-gradient(135deg, ${C_ACCENT}14, ${C_MED}10)`,
-              border: `1px solid ${C_ACCENT}28`,
-              boxShadow: `0 2px 12px ${C_ACCENT}10`,
-            }}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
+            style={{ background: `linear-gradient(135deg, ${C_ACCENT}14, ${C_MED}10)`, border: `1px solid ${C_ACCENT}28`, boxShadow: `0 2px 12px ${C_ACCENT}10` }}
+            initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
           >
             <Heart size={12} style={{ color: C_ACCENT }} fill={C_ACCENT} className="opacity-90" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>
-              Us
-            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>Us</span>
           </motion.div>
-
-          <h2
-            className="mb-1 text-[1.65rem] font-bold leading-tight sm:text-3xl lg:text-4xl"
-            style={{ fontFamily: F_DANCING, color: C_DARK }}
-          >
-            {data.brideName}{" "}
-            <span style={{ color: C_MED }}>&amp;</span>{" "}
-            {data.groomName}
+          <h2 className="mb-1 leading-tight" style={{ fontFamily: F_DANCING, color: C_DARK, fontSize: "clamp(1.7rem, 6vw, 2.6rem)", fontWeight: 700 }}>
+            {data.brideName}{" "}<span style={{ color: C_MED, fontWeight: 400 }}>&amp;</span>{" "}{data.groomName}
           </h2>
-          <p className="mx-auto max-w-xs text-[11px] leading-snug sm:text-sm" style={{ fontFamily: F_LORA, color: C_MED }}>
+          <p className="mx-auto max-w-xs" style={{ fontFamily: F_LORA, fontSize: 10, fontWeight: 300, color: C_MED, opacity: 0.72, letterSpacing: "0.04em" }}>
             Tap a card — family &amp; story.
           </p>
         </header>
 
         {/* Cards */}
         <div className="flex min-h-0 flex-1 flex-col gap-3 sm:gap-4">
-          {(
-            [
-              { side: "bride" as const, person: data.bride, family: data.brideFamily },
-              { side: "groom" as const, person: data.groom, family: data.groomFamily },
-            ] as const
-          ).map(({ side, person, family }, idx) => (
+          {([
+            { side: "bride" as const, person: data.bride, family: data.brideFamily },
+            { side: "groom" as const, person: data.groom, family: data.groomFamily },
+          ] as const).map(({ side, person, family }, idx) => (
             <motion.button
-              key={side}
-              type="button"
-              onClick={() => setModal(side)}
+              key={side} type="button" onClick={() => setModal(side)}
               className="group relative flex flex-[1] overflow-hidden text-left"
-              style={{
-                borderRadius: 22,
-                background: "rgba(255,252,250,0.82)",
-                backdropFilter: "blur(18px)",
-                WebkitBackdropFilter: "blur(18px)",
-                border: "1.5px solid rgba(255,255,255,0.95)",
-                boxShadow: `0 8px 32px rgba(109,43,59,0.10), 0 2px 8px rgba(171,28,62,0.06), inset 0 1px 0 rgba(255,255,255,0.85)`,
-              }}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
+              style={{ borderRadius: 22, background: "rgba(255,252,250,0.82)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", border: "1.5px solid rgba(255,255,255,0.95)", boxShadow: "0 8px 32px rgba(109,43,59,0.10), 0 2px 8px rgba(171,28,62,0.06), inset 0 1px 0 rgba(255,255,255,0.85)" }}
+              initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08 + idx * 0.1, duration: 0.42 }}
               whileTap={{ scale: 0.985 }}
             >
               {/* Photo column */}
-              <div
-                className="relative shrink-0"
-                style={{ width: "42%", maxWidth: 180 }}
-              >
+              <div className="relative shrink-0 overflow-hidden" style={{ width: "42%", maxWidth: 180, minHeight: 160 }}>
                 {person.photo ? (
-                  <Image
-                    src={person.photo}
-                    alt={person.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width:768px) 42vw, 180px"
-                  />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={person.photo} alt={person.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
-                  <div
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-                    style={{
-                      background: `linear-gradient(160deg, ${C_MED}30 0%, ${C_ACCENT}18 60%, ${C_MED}22 100%)`,
-                    }}
-                  >
-                    {/* Decorative dots pattern */}
-                    <div className="absolute inset-0 opacity-20" style={{
-                      backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1px, transparent 1px)`,
-                      backgroundSize: "18px 18px",
-                    }} />
-                    {/* Petal ring */}
-                    <div
-                      className="relative flex items-center justify-center rounded-full"
-                      style={{
-                        width: 68, height: 68,
-                        background: "rgba(255,255,255,0.55)",
-                        border: `2px solid ${C_ACCENT}30`,
-                        boxShadow: `0 0 0 6px ${C_ACCENT}10, 0 4px 18px ${C_ACCENT}18`,
-                      }}
-                    >
-                      <span className="text-4xl leading-none">
-                        {side === "bride" ? "👰" : "🤵"}
-                      </span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: `linear-gradient(160deg, ${C_MED}30 0%, ${C_ACCENT}18 60%, ${C_MED}22 100%)` }}>
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1px, transparent 1px)`, backgroundSize: "18px 18px" }} />
+                    <div className="relative flex items-center justify-center rounded-full" style={{ width: 68, height: 68, background: "rgba(255,255,255,0.55)", border: `2px solid ${C_ACCENT}30`, boxShadow: `0 0 0 6px ${C_ACCENT}10, 0 4px 18px ${C_ACCENT}18` }}>
+                      <span className="text-4xl leading-none">{side === "bride" ? "👰" : "🤵"}</span>
                     </div>
-                    <span
-                      className="relative text-[9px] font-semibold uppercase tracking-[0.15em]"
-                      style={{ fontFamily: F_CINZEL, color: C_ACCENT, opacity: 0.85 }}
-                    >
+                    <span className="relative text-[9px] font-semibold uppercase tracking-[0.15em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT, opacity: 0.85 }}>
                       {side === "bride" ? "Dulhan" : "Dulha"}
                     </span>
                   </div>
                 )}
-                {/* Right edge fade */}
-                <div
-                  className="absolute inset-y-0 right-0 w-8 pointer-events-none"
-                  style={{ background: "linear-gradient(to right, transparent, rgba(255,252,250,0.82))" }}
-                />
+                <div className="absolute inset-y-0 right-0 w-8 pointer-events-none" style={{ background: "linear-gradient(to right, transparent, rgba(255,252,250,0.82))" }} />
               </div>
 
               {/* Content column */}
               <div className="flex min-w-0 flex-1 flex-col justify-between px-3 py-3.5 sm:px-4 sm:py-4">
                 <div>
-                  {/* Role badge */}
-                  <span
-                    className="mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em] sm:text-[9px]"
-                    style={{
-                      fontFamily: F_CINZEL,
-                      color: C_ACCENT,
-                      background: `${C_ACCENT}12`,
-                      border: `1px solid ${C_ACCENT}20`,
-                    }}
-                  >
+                  <span className="mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em] sm:text-[9px]" style={{ fontFamily: F_CINZEL, color: C_ACCENT, background: `${C_ACCENT}12`, border: `1px solid ${C_ACCENT}20` }}>
                     {person.roleHindi}
                   </span>
-
-                  <p className="mb-1 line-clamp-1 text-base font-bold leading-tight sm:text-lg" style={{ fontFamily: F_LORA, color: C_DARK }}>
-                    {person.name}
-                  </p>
-                  <p className="line-clamp-3 text-[10.5px] leading-relaxed sm:text-xs" style={{ fontFamily: F_LORA, color: C_MED }}>
-                    {person.description}
-                  </p>
+                  <p className="mb-1 line-clamp-1 text-base font-bold leading-tight sm:text-lg" style={{ fontFamily: F_LORA, color: C_DARK }}>{person.name}</p>
+                  <p className="line-clamp-3 text-[10.5px] leading-relaxed sm:text-xs" style={{ fontFamily: F_LORA, color: C_MED }}>{person.description}</p>
                 </div>
-
-                {/* Open family strip */}
-                <div
-                  className="mt-3 flex items-center justify-between rounded-xl px-3 py-2"
-                  style={{
-                    background: `linear-gradient(135deg, ${C_ACCENT}09, ${C_MED}06)`,
-                    border: `1px dashed ${C_ACCENT}28`,
-                  }}
-                >
-                  <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]" style={{ fontFamily: F_CINZEL, color: C_DARK }}>
-                    {family.title}
-                  </span>
-                  <span
-                    className="flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"
-                    style={{ color: C_ACCENT }}
-                  >
+                <div className="mt-3 flex items-center justify-between rounded-xl px-3 py-2" style={{ background: `linear-gradient(135deg, ${C_ACCENT}09, ${C_MED}06)`, border: `1px dashed ${C_ACCENT}28` }}>
+                  <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]" style={{ fontFamily: F_CINZEL, color: C_DARK }}>{family.title}</span>
+                  <span className="flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]" style={{ color: C_ACCENT }}>
                     Open <ChevronRight size={11} />
                   </span>
                 </div>
@@ -468,6 +275,169 @@ export default memo(function CoupleSection({ data }: Props) {
           ))}
         </div>
       </motion.div>
+
+      {/* ══════════════════════════════════════════════
+          DESKTOP LAYOUT — no cards, illustration hero
+          ══════════════════════════════════════════════ */}
+      <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:relative lg:z-[4] lg:min-h-[100dvh]">
+        {/* Text block — top */}
+        <motion.div
+          className="flex flex-col items-center text-center px-8 pt-10 pb-2 shrink-0"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* Badge */}
+          <motion.div
+            className="mb-4 inline-flex items-center gap-2 rounded-full px-5 py-2"
+            style={{ background: `linear-gradient(135deg, ${C_ACCENT}14, ${C_MED}10)`, border: `1px solid ${C_ACCENT}28`, boxShadow: `0 2px 16px ${C_ACCENT}10` }}
+            initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Heart size={13} style={{ color: C_ACCENT }} fill={C_ACCENT} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>Our Story</span>
+          </motion.div>
+
+          {/* Couple names — two columns side by side on desktop */}
+          <motion.div
+            className="flex items-center gap-8 w-full max-w-2xl justify-center"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.1 }}
+          >
+            {/* Bride */}
+            <div className="flex flex-col items-center flex-1">
+              <div className="mb-1.5 w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                style={{ background: `linear-gradient(135deg, ${C_ACCENT}16, ${C_MED}12)`, border: `1px solid ${C_ACCENT}22` }}>
+                👰
+              </div>
+              <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.22em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>
+                {data.bride.roleHindi}
+              </p>
+              <h2 style={{ fontFamily: F_DANCING, color: C_DARK, fontSize: "clamp(2rem, 3.2vw, 3.4rem)", fontWeight: 700, lineHeight: 1.08, margin: 0, textShadow: "0 2px 14px rgba(171,28,62,0.09)", textAlign: "center" }}>
+                {data.brideName || "Ananya"}
+              </h2>
+              <p className="mt-1.5 line-clamp-2 text-center text-[12px] leading-snug opacity-80" style={{ fontFamily: F_LORA, color: C_MED, fontStyle: "italic", maxWidth: 200 }}>
+                {data.bride.description}
+              </p>
+            </div>
+
+            {/* Centre & divider */}
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div style={{ width: 1, height: 48, background: `linear-gradient(to bottom, transparent, ${C_MED}45, transparent)` }} />
+              <span style={{ fontFamily: F_CINZEL, fontSize: "1.1rem", color: C_MED, letterSpacing: "0.32em", opacity: 0.8 }}>&amp;</span>
+              <div style={{ width: 1, height: 48, background: `linear-gradient(to bottom, transparent, ${C_MED}45, transparent)` }} />
+            </div>
+
+            {/* Groom */}
+            <div className="flex flex-col items-center flex-1">
+              <div className="mb-1.5 w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                style={{ background: `linear-gradient(135deg, ${C_ACCENT}16, ${C_MED}12)`, border: `1px solid ${C_ACCENT}22` }}>
+                🤵
+              </div>
+              <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.22em]" style={{ fontFamily: F_CINZEL, color: C_ACCENT }}>
+                {data.groom.roleHindi}
+              </p>
+              <h2 style={{ fontFamily: F_DANCING, color: C_DARK, fontSize: "clamp(2rem, 3.2vw, 3.4rem)", fontWeight: 700, lineHeight: 1.08, margin: 0, textShadow: "0 2px 14px rgba(171,28,62,0.09)", textAlign: "center" }}>
+                {data.groomName || "Arjun"}
+              </h2>
+              <p className="mt-1.5 line-clamp-2 text-center text-[12px] leading-snug opacity-80" style={{ fontFamily: F_LORA, color: C_MED, fontStyle: "italic", maxWidth: 200 }}>
+                {data.groom.description}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Lily wreath divider */}
+          <motion.div
+            className="relative my-3"
+            style={{ width: "min(360px, 36vw)", height: 52 }}
+            initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Image
+              src="/shaadi-card/image1.webp"
+              alt=""
+              fill
+              sizes="360px"
+              style={{ objectFit: "contain", objectPosition: "center", opacity: 0.72, mixBlendMode: "multiply" }}
+            />
+          </motion.div>
+
+          {/* Date + venue + blessing */}
+          <motion.div
+            className="flex flex-col items-center gap-1.5"
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.28 }}
+          >
+            <p style={{ fontFamily: F_CINZEL, fontSize: "0.85rem", color: C_DARK, letterSpacing: "0.16em", lineHeight: 1.7, margin: 0, opacity: 0.86 }}>
+              {dateInfo.weekday} &nbsp;·&nbsp; {dateInfo.day} {dateInfo.month} {dateInfo.year} &nbsp;·&nbsp; {dateInfo.time}
+            </p>
+            <p style={{ fontFamily: F_LORA, fontSize: "0.9rem", color: C_MED, fontStyle: "italic", margin: 0 }}>
+              {data.venue || "Udaipur"}
+            </p>
+            <p style={{ fontFamily: F_DANCING, fontSize: "1.55rem", color: C_SCRIPT, fontWeight: 700, margin: "2px 0 0", opacity: 0.9 }}>
+              {data.blessing || "ॐ शुभ विवाह"}
+            </p>
+          </motion.div>
+        </motion.div>
+
+        {/* Couple illustration — bottom hero */}
+        <motion.div
+          className="relative flex flex-1 items-end justify-center overflow-hidden"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* Bottom florals — wide spread behind illustration */}
+          <div
+            className="pointer-events-none absolute bottom-0 left-[-5%] z-[1]"
+            style={{ width: "38%", height: "52%", opacity: 0.92, mixBlendMode: "multiply" }}
+            aria-hidden
+          >
+            <div className="relative h-full w-full scale-x-[-1]">
+              <Image src="/shaadi-card/image7.webp" alt="" fill sizes="40vw" style={{ objectFit: "contain", objectPosition: "left bottom" }} />
+            </div>
+          </div>
+          <div
+            className="pointer-events-none absolute bottom-0 right-[-5%] z-[1]"
+            style={{ width: "38%", height: "52%", opacity: 0.92, mixBlendMode: "multiply" }}
+            aria-hidden
+          >
+            <div className="relative h-full w-full">
+              <Image src="/shaadi-card/image6.webp" alt="" fill sizes="40vw" style={{ objectFit: "contain", objectPosition: "right bottom" }} />
+            </div>
+          </div>
+
+          {/* Mandap + Couple stacked illustration */}
+          <div
+            className="relative z-[5] flex items-end justify-center"
+            style={{ width: "min(700px, 58vw)", height: "min(560px, 62vh)" }}
+          >
+            {/* Mandap arch (background) */}
+            <div className="absolute inset-0">
+              <Image
+                src="/shaadi-card/image9.png"
+                alt="mandap"
+                fill
+                sizes="(max-width: 1440px) 52vw, 640px"
+                style={{ objectFit: "contain", objectPosition: "center bottom" }}
+              />
+            </div>
+            {/* Couple (foreground, centred slightly lower) */}
+            <div
+              className="absolute bottom-0"
+              style={{ left: "12%", right: "8%", height: "88%" }}
+            >
+              <Image
+                src="/shaadi-card/image8.png"
+                alt="couple"
+                fill
+                sizes="(max-width: 1440px) 42vw, 520px"
+                style={{ objectFit: "contain", objectPosition: "center bottom" }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
       <FamilyModal open={modal === "bride"} onClose={close} person={data.bride} family={data.brideFamily} accentLabel="bride" />
       <FamilyModal open={modal === "groom"} onClose={close} person={data.groom} family={data.groomFamily} accentLabel="groom" />

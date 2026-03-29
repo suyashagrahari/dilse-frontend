@@ -7,7 +7,7 @@ interface Props { data: ShaadiData }
 
 export default function HomeSection({ data }: Props) {
   return (
-    <div style={{ height: "100vh" }}>
+    <div className="min-h-[100dvh] min-h-screen lg:min-h-[calc(100dvh-0px)] w-full">
       <InvitationCard
         brideName={data.brideName}
         groomName={data.groomName}

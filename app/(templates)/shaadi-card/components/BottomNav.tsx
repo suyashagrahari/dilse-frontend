@@ -57,19 +57,23 @@ export default memo(function BottomNav({
                     {active && (
                       <motion.div
                         layoutId="sc-nav-bg"
-                        className="absolute inset-1 rounded-lg"
-                        style={{ background: `${C_ACCENT}12` }}
+                        className="absolute inset-0.5 rounded-xl"
+                        style={{
+                          background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,245,248,0.98))",
+                          border: `1px solid ${C_ACCENT}38`,
+                          boxShadow: `0 2px 10px rgba(171,28,62,0.12), inset 0 1px 0 rgba(255,255,255,0.9)`,
+                        }}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
                     <Icon
-                      size={18}
-                      strokeWidth={active ? 2.2 : 1.5}
+                      size={19}
+                      strokeWidth={active ? 2.35 : 1.5}
                       className="relative z-10"
                       style={{ color: active ? C_ACCENT : C_MED }}
                     />
                     <span
-                      className={`text-[9px] font-semibold relative z-10 ${active ? "" : "opacity-60"}`}
+                      className={`text-[10px] font-bold relative z-10 tracking-tight ${active ? "" : "opacity-65"}`}
                       style={{ color: active ? C_ACCENT : C_MED }}
                     >
                       {label}

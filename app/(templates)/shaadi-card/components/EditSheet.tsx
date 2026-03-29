@@ -596,16 +596,32 @@ function NamesPhotosStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof
 
 function PhotoUpload({ label, photo, onUpload }: { label: string; photo: string; onUpload: (f: File) => void }) {
   const ref = useRef<HTMLInputElement>(null);
+  const [posX, setPosX] = useState(50);
+  const [posY, setPosY] = useState(30);
+  const [zoom, setZoom] = useState(100);
+
+  const imgStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${posX}% ${posY}%`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: `${posX}% ${posY}%`,
+    transition: "transform 0.15s ease, object-position 0.15s ease",
+  };
+
   return (
-    <div>
+    <div className="space-y-2">
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label>
+      {/* Photo preview */}
       <div
         onClick={() => ref.current?.click()}
-        className="w-full aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-rose-400/60 cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden relative"
+        className="w-full rounded-xl border-2 border-dashed border-border/60 hover:border-rose-400/60 cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden relative"
+        style={{ aspectRatio: "1 / 1" }}
       >
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" className="w-full h-full object-cover" />
+          <img src={photo} alt="" style={imgStyle} />
         ) : (
           <div className="flex flex-col items-center gap-1 text-muted-foreground">
             <Camera size={20} />
@@ -619,6 +635,59 @@ function PhotoUpload({ label, photo, onUpload }: { label: string; photo: string;
         )}
         <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUpload(e.target.files[0]); }} />
       </div>
+
+      {/* Adjustment controls — shown only when a photo is uploaded */}
+      {photo && (
+        <div className="rounded-xl p-3 space-y-2.5" style={{ background: "rgba(171,28,62,0.04)", border: "1px solid rgba(171,28,62,0.10)" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: C_MED }}>Adjust Photo</p>
+
+          {/* Horizontal */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>← Horiz →</span>
+            <input
+              type="range" min={0} max={100} value={posX}
+              onChange={(e) => setPosX(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: C_ACCENT }}
+            />
+          </div>
+
+          {/* Vertical */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>↑ Vert ↓</span>
+            <input
+              type="range" min={0} max={100} value={posY}
+              onChange={(e) => setPosY(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: C_ACCENT }}
+            />
+          </div>
+
+          {/* Zoom */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>⊖ Zoom ⊕</span>
+            <input
+              type="range" min={100} max={200} value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: C_ACCENT }}
+            />
+            <span className="text-[10px] w-8 text-right shrink-0" style={{ color: C_MED }}>{zoom}%</span>
+          </div>
+
+          {/* Reset */}
+          {(posX !== 50 || posY !== 30 || zoom !== 100) && (
+            <button
+              type="button"
+              onClick={() => { setPosX(50); setPosY(30); setZoom(100); }}
+              className="text-[10px] underline"
+              style={{ color: C_MED }}
+            >
+              Reset position
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -727,6 +796,13 @@ function EventsStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof Shaa
               </a>
             )}
           </div>
+          <textarea
+            value={ev.details || ""}
+            onChange={(e) => updateEvent(ev.originalIndex, "details", e.target.value)}
+            placeholder="Longer description for guests (shown when they tap the event on the invite)"
+            rows={3}
+            className={INPUT_CLS_SM + " resize-none"}
+          />
         </div>
       ))}
 

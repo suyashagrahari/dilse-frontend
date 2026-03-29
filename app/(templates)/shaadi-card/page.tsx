@@ -12,6 +12,7 @@ import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
+import PublishingOverlay from "./components/PublishingOverlay";
 
 const CoupleSection  = lazy(() => import("./components/CoupleSection"));
 const EventsSection  = lazy(() => import("./components/EventsSection"));
@@ -31,7 +32,7 @@ function TabFallback() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: "#FDF5F0" }}
+      style={{ background: "#FDFBF7" }}
     >
       <div
         className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
@@ -54,7 +55,7 @@ function ShaadiCardPage() {
   return (
     <div
       className="relative overflow-hidden"
-      style={{ background: "#f0d6e0", height: "100dvh" }}
+      style={{ background: "#FDFBF7", height: "100dvh" }}
     >
       {/* Floating Back button — top-left, mobile only */}
       <div className="fixed top-4 left-4 z-50 lg:hidden">
@@ -175,6 +176,8 @@ function ShaadiCardPage() {
         isPreview={editor.editMode === "preview"}
       />
 
+      <PublishingOverlay visible={editor.publishing} />
+
       <div className="lg:ml-64 h-full overflow-y-auto no-scrollbar">
         <AnimatePresence mode="wait">
           {editor.tab === "home" && (
@@ -185,7 +188,7 @@ function ShaadiCardPage() {
           )}
 
           {editor.tab === "couple" && (
-            <motion.div key="couple" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+            <motion.div key="couple" className="pb-0 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
                 <CoupleSection data={editor.content} />
               </Suspense>

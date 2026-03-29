@@ -65,6 +65,7 @@ function dbToShaadiData(d: Record<string, unknown>): ShaadiData {
   const rawEvents = ((d.events as ShaadiData["events"]) || DEMO_DATA.events).map((ev) => ({
     ...ev,
     disabled: Boolean(ev.disabled),
+    details: typeof ev.details === "string" ? ev.details : "",
   }));
 
   return {
@@ -104,7 +105,11 @@ function dbToShaadiData(d: Record<string, unknown>): ShaadiData {
       alt: g.alt || `Photo ${i + 1}`,
       span: i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-2" : "",
     })),
-    wishes: (d.blessings as { name: string; message: string }[]) || DEMO_DATA.wishes,
+    wishes: ((d.blessings as { name: string; message: string; voiceUrl?: string }[]) || DEMO_DATA.wishes).map((b) => ({
+      name: b.name,
+      message: b.message,
+      ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
+    })),
   };
 }
 
@@ -340,11 +345,12 @@ export function useShaadiCardEditor() {
               parents: (d.groomFamilyParents as string) || "",
               grandparents: (d.groomFamilyGrandparents as string) || "",
             },
-            events: ((d.events as { name: string; date: string; time: string; venue: string }[]) || []).map((ev, i) => ({
+            events: ((d.events as { name: string; date: string; time: string; venue: string; details?: string }[]) || []).map((ev, i) => ({
               ...DEMO_DATA.events[i] || DEMO_DATA.events[4],
               date: ev.date || "",
               time: ev.time || "",
               venue: ev.venue || "",
+              details: ev.details || "",
               disabled: false,
             })),
           };
@@ -562,19 +568,27 @@ export function useShaadiCardEditor() {
 
   // Add blessing
   const addBlessing = useCallback(
-    async (name: string, message: string) => {
+    async (name: string, message: string, voiceDataUrl?: string) => {
       if (!shareId) return false;
       try {
         const res = await fetch(`${API_URL}/shaadi-card-pages/share/${shareId}/blessings`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, message }),
+          body: JSON.stringify({
+            name,
+            message: message || "",
+            ...(voiceDataUrl ? { voiceDataUrl } : {}),
+          }),
         });
         const result = await res.json();
         if (result.success) {
           setContent((prev) => ({
             ...prev,
-            wishes: result.data.map((b: { name: string; message: string }) => ({ name: b.name, message: b.message })),
+            wishes: result.data.map((b: { name: string; message: string; voiceUrl?: string }) => ({
+              name: b.name,
+              message: b.message,
+              ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
+            })),
           }));
           return true;
         }

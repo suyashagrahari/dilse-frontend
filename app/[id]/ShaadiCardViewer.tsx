@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   Home, Heart, Calendar, Camera, HandHeart,
   Lock, Eye, EyeOff, ShieldAlert, Loader2,
-  Share2, Check, Copy, Wand2, PenLine, ChevronRight,
-  Sparkles, User, X, Edit3, Zap, Send,
+  Share2, Check, Wand2, PenLine, ChevronRight,
+  Sparkles, User, X, Edit3, Zap, Send, ArrowLeft,
+  Music2, Pause,
 } from "lucide-react";
 import { type ShaadiData, type TabId, TABS, DEMO_DATA } from "@/app/(templates)/shaadi-card/components/types";
 import AuthModal from "@/components/AuthModal";
@@ -55,6 +56,74 @@ function TabFallback() {
       <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
         style={{ borderColor: C_ACCENT, borderTopColor: "transparent" }} />
     </div>
+  );
+}
+
+function MusicPlayer() {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const toggle = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !ready) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  }, [playing, ready]);
+
+  return (
+    <>
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio
+        ref={audioRef}
+        src="/shaadi-card/music/ratein.mp3"
+        loop
+        preload="metadata"
+        onCanPlay={() => setReady(true)}
+      />
+      <motion.button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Pause music" : "Play music"}
+        title={playing ? "Pause music" : "Play background music"}
+        className="fixed z-[50] rounded-full flex items-center justify-center select-none"
+        style={{
+          width: 44,
+          height: 44,
+          right: 16,
+          bottom: "calc(5.8rem + env(safe-area-inset-bottom, 0px))",
+          background: playing
+            ? `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`
+            : "rgba(255,252,250,0.94)",
+          border: `1.5px solid ${playing ? `${C_ACCENT}60` : `${C_ACCENT}28`}`,
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          boxShadow: playing
+            ? `0 0 0 6px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`
+            : "0 4px 16px rgba(109,43,59,0.14)",
+        }}
+        animate={playing ? {
+          boxShadow: [
+            `0 0 0 4px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`,
+            `0 0 0 10px ${C_ACCENT}08, 0 6px 24px ${C_ACCENT}40`,
+            `0 0 0 4px ${C_ACCENT}18, 0 6px 24px ${C_ACCENT}45`,
+          ],
+        } : {}}
+        transition={playing ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : {}}
+        whileTap={{ scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.8 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+      >
+        {playing
+          ? <Pause size={17} style={{ color: "white" }} />
+          : <Music2 size={17} style={{ color: C_ACCENT }} />
+        }
+      </motion.button>
+    </>
   );
 }
 
@@ -704,7 +773,6 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
 
   const [tab, setTab] = useState<ViewerTabId>("home");
   const [data, setData] = useState<ShaadiData>(mapData(rawData));
-  const [copied, setCopied] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
@@ -738,12 +806,6 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
       setPwLoading(false);
     }
   }, [pw, shareId]);
-
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [shareUrl]);
 
   const handleCreateStart = useCallback(() => {
     if (!isAuthenticated) {
@@ -847,56 +909,193 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
     { id: "create", label: "Create" },
   ];
 
+  const F_DANCING = "var(--font-dancing), cursive";
+  const F_CINZEL  = "var(--font-cinzel), serif";
+
   return (
-    <div className="min-h-screen relative" style={{ background: C_BG }}>
-      {/* Main content */}
-      <div className="pb-24 lg:pb-0">
-        <AnimatePresence mode="wait">
-          {tab === "home" && (
-            <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <HomeSection data={data} />
-              </Suspense>
-            </motion.div>
-          )}
-          {tab === "couple" && (
-            <motion.div key="couple" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <CoupleSection data={data} />
-              </Suspense>
-            </motion.div>
-          )}
-          {tab === "events" && (
-            <motion.div key="events" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <EventsSection data={data} />
-              </Suspense>
-            </motion.div>
-          )}
-          {tab === "gallery" && (
-            <motion.div key="gallery" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <GallerySection data={data} />
-              </Suspense>
-            </motion.div>
-          )}
-          {tab === "blessings" && (
-            <motion.div key="blessings" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <Suspense fallback={<TabFallback />}>
-                <WishesSection data={data} shareId={shareId} />
-              </Suspense>
-            </motion.div>
-          )}
-          {tab === "create" && (
-            <motion.div key="create" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <CreateSection data={data} onStart={handleCreateStart} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <div className="min-h-screen relative flex" style={{ background: C_BG }}>
+
+      {/* ── Background music player ───────────────────────────── */}
+      <MusicPlayer />
+
+      {/* ── Desktop left sidebar ───────────────────────────────── */}
+      <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-screen z-30 select-none"
+        style={{
+          width: 224,
+          background: "rgba(255,252,250,0.92)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRight: `1px solid rgba(171,28,62,0.10)`,
+          boxShadow: "4px 0 24px rgba(109,43,59,0.06)",
+        }}>
+        {/* Sidebar header */}
+        <div className="px-5 pt-6 pb-4 border-b" style={{ borderColor: `rgba(171,28,62,0.08)` }}>
+          {/* Ring icon */}
+          <div className="flex items-center justify-center mb-3">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+              style={{ background: `linear-gradient(135deg, ${C_ACCENT}18, ${C_MED}14)`, border: `1px solid ${C_ACCENT}22` }}>
+              💍
+            </div>
+          </div>
+          <p className="text-center font-bold leading-tight mb-0.5"
+            style={{ fontFamily: F_DANCING, fontSize: 20, color: C_DARK }}>
+            {data.brideName}&nbsp;&amp;&nbsp;{data.groomName}
+          </p>
+          <p className="text-center text-[10px]" style={{ fontFamily: F_CINZEL, color: C_MED, opacity: 0.8 }}>
+            {data.blessing || "शुभ विवाह ✦"}
+          </p>
+        </div>
+
+        {/* Sidebar nav */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {allTabs.map(({ id, label }) => {
+            const active = tab === id;
+            const isCreate = id === "create";
+            const Icon = !isCreate ? TAB_ICONS[id as TabId] : Sparkles;
+            return (
+              <button
+                key={id}
+                onClick={() => setTab(id as ViewerTabId)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left relative"
+                style={{
+                  background: active
+                    ? isCreate ? `linear-gradient(135deg, ${C_ACCENT}ee, ${C_MED}cc)` : `${C_ACCENT}12`
+                    : "transparent",
+                  color: active ? (isCreate ? "white" : C_ACCENT) : C_DARK,
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {isCreate && !active && (
+                  <motion.div
+                    className="absolute inset-0 rounded-xl pointer-events-none"
+                    animate={{ boxShadow: [`0 0 0px ${C_ACCENT}00`, `0 0 8px 2px ${C_ACCENT}44`, `0 0 0px ${C_ACCENT}00`], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ background: `linear-gradient(135deg, ${C_ACCENT}15, ${C_MED}18)`, border: `1px solid ${C_ACCENT}35` }}
+                  />
+                )}
+                <Icon size={17} strokeWidth={active ? 2.2 : 1.6} className="shrink-0 relative z-10"
+                  style={{ color: active ? (isCreate ? "white" : C_ACCENT) : C_MED }} />
+                <span className="text-sm relative z-10" style={{ fontFamily: F_CINZEL, letterSpacing: "0.04em" }}>{label}</span>
+                {active && !isCreate && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: C_ACCENT }} />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sidebar footer — Back + Share */}
+        <div className="px-3 pb-5 pt-3 border-t space-y-2" style={{ borderColor: `rgba(171,28,62,0.08)` }}>
+          <button
+            onClick={() => router.back()}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
+            style={{ color: C_MED, fontFamily: F_CINZEL, letterSpacing: "0.04em" }}
+          >
+            <ArrowLeft size={15} strokeWidth={1.6} />
+            Back
+          </button>
+          <button
+            onClick={() => { navigator.clipboard.writeText(shareUrl); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-colors text-white"
+            style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`, boxShadow: `0 4px 16px ${C_ACCENT}35` }}
+          >
+            <Share2 size={15} />
+            Share Invitation
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content (offset on desktop) ──────────────────── */}
+      <div className="flex-1 min-w-0 lg:ml-56">
+
+        {/* Mobile floating header — Back (left) + Create (right) */}
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-50 pointer-events-none">
+          <div className="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2 pointer-events-auto">
+            <motion.button
+              onClick={() => router.back()}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-lg"
+              style={{
+                background: "rgba(255,252,250,0.90)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: `1px solid rgba(171,28,62,0.14)`,
+                color: C_DARK,
+                boxShadow: "0 4px 18px rgba(109,43,59,0.13)",
+              }}
+            >
+              <ArrowLeft size={14} strokeWidth={2} style={{ color: C_ACCENT }} />
+              <span style={{ fontFamily: F_CINZEL, fontSize: 11, letterSpacing: "0.06em" }}>Back</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleCreateStart}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`,
+                boxShadow: `0 4px 18px ${C_ACCENT}45`,
+              }}
+            >
+              <Sparkles size={13} strokeWidth={1.8} />
+              <span style={{ fontFamily: F_CINZEL, fontSize: 11, letterSpacing: "0.06em" }}>Create</span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div className="pb-24 lg:pb-0">
+          <AnimatePresence mode="wait">
+            {tab === "home" && (
+              <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <Suspense fallback={<TabFallback />}>
+                  <HomeSection data={data} />
+                </Suspense>
+              </motion.div>
+            )}
+            {tab === "couple" && (
+              <motion.div key="couple" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <Suspense fallback={<TabFallback />}>
+                  <CoupleSection data={data} />
+                </Suspense>
+              </motion.div>
+            )}
+            {tab === "events" && (
+              <motion.div key="events" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <Suspense fallback={<TabFallback />}>
+                  <EventsSection data={data} />
+                </Suspense>
+              </motion.div>
+            )}
+            {tab === "gallery" && (
+              <motion.div key="gallery" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <Suspense fallback={<TabFallback />}>
+                  <GallerySection data={data} />
+                </Suspense>
+              </motion.div>
+            )}
+            {tab === "blessings" && (
+              <motion.div key="blessings" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <Suspense fallback={<TabFallback />}>
+                  <WishesSection data={data} shareId={shareId} />
+                </Suspense>
+              </motion.div>
+            )}
+            {tab === "create" && (
+              <motion.div key="create" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+                <CreateSection data={data} onStart={handleCreateStart} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
+      {/* Bottom navigation — mobile only */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
         <div className="mx-auto max-w-xs sm:max-w-sm md:max-w-lg mb-3 px-3 pointer-events-auto">
           <div className="relative rounded-2xl shadow-lg overflow-hidden"
             style={{
@@ -909,46 +1108,58 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
             <div className="flex items-stretch px-1.5 py-1">
               {allTabs.map(({ id, label }) => {
                 const active = tab === id;
-                const Icon = id !== "create" ? TAB_ICONS[id as TabId] : Sparkles;
+                const isCreate = id === "create";
+                const Icon = !isCreate ? TAB_ICONS[id as TabId] : Sparkles;
                 return (
                   <button key={id} onClick={() => setTab(id as ViewerTabId)} className="flex-1 relative">
+                    {/* Glow ring for Create button */}
+                    {isCreate && !active && (
+                      <motion.div
+                        className="absolute inset-0.5 rounded-xl pointer-events-none"
+                        animate={{
+                          boxShadow: [
+                            `0 0 0px 0px ${C_ACCENT}00`,
+                            `0 0 10px 3px ${C_ACCENT}55`,
+                            `0 0 0px 0px ${C_ACCENT}00`,
+                          ],
+                          opacity: [0.6, 1, 0.6],
+                        }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{
+                          background: `linear-gradient(135deg, ${C_ACCENT}18, ${C_MED}22)`,
+                          border: `1px solid ${C_ACCENT}40`,
+                        }}
+                      />
+                    )}
                     <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-all duration-200">
                       {active && (
                         <motion.div
                           layoutId="sv-nav-bg"
                           className="absolute inset-0.5 rounded-xl"
                           style={{
-                            background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,245,248,0.98))",
+                            background: isCreate
+                              ? `linear-gradient(135deg, ${C_ACCENT}ee, ${C_MED}dd)`
+                              : "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,245,248,0.98))",
                             border: `1px solid ${C_ACCENT}38`,
-                            boxShadow: `0 2px 10px rgba(171,28,62,0.12), inset 0 1px 0 rgba(255,255,255,0.9)`,
+                            boxShadow: isCreate
+                              ? `0 4px 16px ${C_ACCENT}55, inset 0 1px 0 rgba(255,255,255,0.25)`
+                              : `0 2px 10px rgba(171,28,62,0.12), inset 0 1px 0 rgba(255,255,255,0.9)`,
                           }}
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
-                      <Icon size={19} strokeWidth={active ? 2.35 : 1.5} className="relative z-10"
-                        style={{ color: active ? C_ACCENT : C_MED }} />
+                      <Icon size={isCreate ? 18 : 19}
+                        strokeWidth={active ? 2.35 : (isCreate ? 1.8 : 1.5)}
+                        className="relative z-10"
+                        style={{ color: active && isCreate ? "white" : active ? C_ACCENT : isCreate ? C_ACCENT : C_MED }} />
                       <span className={`text-[10px] font-bold relative z-10 tracking-tight ${active ? "" : "opacity-65"}`}
-                        style={{ color: active ? C_ACCENT : C_MED }}>
+                        style={{ color: active && isCreate ? "white" : active ? C_ACCENT : isCreate ? C_ACCENT : C_MED, fontWeight: isCreate ? 700 : undefined }}>
                         {label}
                       </span>
                     </div>
                   </button>
                 );
               })}
-
-              {/* Share button */}
-              <button onClick={handleCopy} className="flex-1 relative">
-                <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl">
-                  {copied ? (
-                    <Check size={18} strokeWidth={2} className="relative z-10" style={{ color: "#10b981" }} />
-                  ) : (
-                    <Copy size={18} strokeWidth={1.5} className="relative z-10" style={{ color: C_MED }} />
-                  )}
-                  <span className="text-[9px] font-semibold relative z-10 opacity-60" style={{ color: C_MED }}>
-                    {copied ? "Copied!" : "Copy"}
-                  </span>
-                </div>
-              </button>
             </div>
           </div>
         </div>

@@ -33,6 +33,8 @@ export interface WeddingEvent {
   date: string;
   time: string;
   venue: string;
+  /** Shown in the event detail modal */
+  details: string;
   accent: string;
   disabled?: boolean;
 }
@@ -40,6 +42,8 @@ export interface WeddingEvent {
 export interface Wish {
   name: string;
   message: string;
+  /** URL from server after voice upload */
+  voiceUrl?: string;
 }
 
 export interface CoupleInfo {
@@ -118,12 +122,12 @@ export const DEMO_DATA: ShaadiData = {
     grandparents: "Shri Harbans Kapoor & Smt. Pushpa Kapoor",
   },
   events: [
-    { name: "Haldi", hindi: "हल्दी", icon: "🌿", date: "13 Apr", time: "10 AM", venue: "Mehta Residence", accent: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30", disabled: false },
-    { name: "Mehendi", hindi: "मेहंदी", icon: "🌸", date: "13 Apr", time: "6 PM", venue: "Rose Garden", accent: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30", disabled: false },
-    { name: "Sangeet", hindi: "संगीत", icon: "🎶", date: "14 Apr", time: "7 PM", venue: "Lake Palace Ballroom", accent: "from-violet-500/20 to-violet-600/5 border-violet-500/30", disabled: false },
-    { name: "Baraat", hindi: "बारात", icon: "🐴", date: "15 Apr", time: "9 AM", venue: "City Chowk", accent: "from-rose-500/20 to-rose-500/5 border-rose-500/30", disabled: false },
-    { name: "Wedding", hindi: "विवाह", icon: "🔥", date: "15 Apr", time: "11 AM", venue: "Fateh Sagar Palace", accent: "from-amber-500/20 to-amber-500/5 border-amber-500/30", disabled: false },
-    { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Apr", time: "7 PM", venue: "Grand Haveli Hall", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30", disabled: false },
+    { name: "Haldi", hindi: "हल्दी", icon: "🌿", date: "13 Apr", time: "10 AM", venue: "Mehta Residence", details: "Turmeric ceremony with close family. Please wear comfortable yellow or pastel outfits.", accent: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30", disabled: false },
+    { name: "Mehendi", hindi: "मेहंदी", icon: "🌸", date: "13 Apr", time: "6 PM", venue: "Rose Garden", details: "Music, mehendi artists, and dinner under the stars. Casual festive attire welcome.", accent: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30", disabled: false },
+    { name: "Sangeet", hindi: "संगीत", icon: "🎶", date: "14 Apr", time: "7 PM", venue: "Lake Palace Ballroom", details: "Performances, dance floor, and celebration night. Glamorous ethnic or fusion looks encouraged.", accent: "from-violet-500/20 to-violet-600/5 border-violet-500/30", disabled: false },
+    { name: "Baraat", hindi: "बारात", icon: "🐴", date: "15 Apr", time: "9 AM", venue: "City Chowk", details: "Groom’s procession arrives at the venue. Guests may join the baraat or meet at the palace gates.", accent: "from-rose-500/20 to-rose-500/5 border-rose-500/30", disabled: false },
+    { name: "Wedding", hindi: "विवाह", icon: "🔥", date: "15 Apr", time: "11 AM", venue: "Fateh Sagar Palace", details: "Sacred vows and rituals followed by lunch. Traditional Indian attire requested.", accent: "from-amber-500/20 to-amber-500/5 border-amber-500/30", disabled: false },
+    { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Apr", time: "7 PM", venue: "Grand Haveli Hall", details: "Dinner, speeches, and dancing. Formal or cocktail ethnic wear.", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30", disabled: false },
   ],
   galleryImages: [
     { src: "/assets/marriage/weeding.png", alt: "Couple", span: "col-span-2 row-span-2" },
