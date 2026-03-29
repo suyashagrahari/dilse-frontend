@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, lazy, Suspense, type ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +18,7 @@ const HomeSection    = lazy(() => import("@/app/(templates)/shaadi-card/componen
 const CoupleSection  = lazy(() => import("@/app/(templates)/shaadi-card/components/CoupleSection"));
 const EventsSection  = lazy(() => import("@/app/(templates)/shaadi-card/components/EventsSection"));
 const GallerySection = lazy(() => import("@/app/(templates)/shaadi-card/components/GallerySection"));
+const WishesSection  = lazy(() => import("@/app/(templates)/shaadi-card/components/WishesSection"));
 
 const C_ACCENT = "#AB1C3E";
 const C_MED    = "#CB6B82";
@@ -93,13 +94,18 @@ function mapData(d: Record<string, unknown>): ShaadiData {
     events: ((d.events as ShaadiData["events"]) || DEMO_DATA.events).map((ev) => ({
       ...ev,
       disabled: Boolean(ev.disabled),
+      details: typeof ev.details === "string" ? ev.details : "",
     })),
     galleryImages: ((d.galleryImages as { src: string; alt: string }[]) || []).map((g, i) => ({
       src: g.src,
       alt: g.alt || `Photo ${i + 1}`,
       span: i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-2" : "",
     })),
-    wishes: (d.blessings as { name: string; message: string }[]) || [],
+    wishes: ((d.blessings as { name: string; message: string; voiceUrl?: string }[]) || []).map((b) => ({
+      name: b.name,
+      message: b.message || "",
+      ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
+    })),
   };
 }
 
@@ -490,29 +496,116 @@ function InlineCreateSheet({ accessToken, onClose, onOpenInEditor }: {
   );
 }
 
-// ── BlessingsWall form ────────────────────────────────────────────────────────
-function BlessingsInput({ shareId, onAdded }: { shareId: string; onAdded: (name: string, message: string) => void }) {
+type WishRow = { name: string; message: string; voiceUrl?: string };
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── BlessingsWall form (text + optional voice record / upload) ────────────────
+function BlessingsInput({
+  shareId,
+  onUpdated,
+}: {
+  shareId: string;
+  onUpdated: (wishes: WishRow[]) => void;
+}) {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [voiceLabel, setVoiceLabel] = useState<string | null>(null);
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const clearVoice = useCallback(() => {
+    setVoiceBlob(null);
+    setVoiceLabel(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
+  const toggleRecord = useCallback(async () => {
+    if (recording && mediaRef.current && mediaRef.current.state !== "inactive") {
+      mediaRef.current.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const mr = new MediaRecorder(stream, { mimeType: mime });
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size) chunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || mime });
+        if (blob.size > 0) {
+          setVoiceBlob(blob);
+          setVoiceLabel("Voice note recorded");
+        }
+        mediaRef.current = null;
+      };
+      mr.start();
+      mediaRef.current = mr;
+      setRecording(true);
+    } catch {
+      /* mic denied or unavailable */
+    }
+  }, [recording]);
+
+  const onPickFile = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("audio/")) {
+      e.target.value = "";
+      return;
+    }
+    setVoiceBlob(f);
+    setVoiceLabel(f.name);
+  }, []);
 
   const handleSubmit = async () => {
-    if (!name.trim() || !message.trim()) return;
+    if (!name.trim()) return;
+    if (!message.trim() && !voiceBlob) return;
     setLoading(true);
     try {
+      let voiceDataUrl: string | undefined;
+      if (voiceBlob) {
+        voiceDataUrl = await blobToDataUrl(voiceBlob);
+      }
       const res = await fetch(`${API_URL}/shaadi-card-pages/share/${shareId}/blessings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), message: message.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          message: message.trim(),
+          ...(voiceDataUrl ? { voiceDataUrl } : {}),
+        }),
       });
       const result = await res.json();
-      if (result.success) {
-        onAdded(name.trim(), message.trim());
+      if (result.success && Array.isArray(result.data)) {
+        const wishes: WishRow[] = result.data.map((b: { name: string; message: string; voiceUrl?: string }) => ({
+          name: b.name,
+          message: b.message || "",
+          ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
+        }));
+        onUpdated(wishes);
         setDone(true);
       }
     } catch { /* ignore */ }
-    finally { setLoading(false); }
+    finally {
+      setLoading(false);
+    }
   };
 
   if (done) {
@@ -524,24 +617,69 @@ function BlessingsInput({ shareId, onAdded }: { shareId: string; onAdded: (name:
     );
   }
 
+  const canSend = name.trim() && (message.trim() || voiceBlob);
+
   return (
     <div className="rounded-2xl p-4" style={{ background: C_CARD, border: `1px solid ${C_MED}25` }}>
       <p className="text-sm font-bold mb-3" style={{ color: C_DARK }}>Leave a Blessing 🙏</p>
+      <p className="text-[11px] mb-3 leading-relaxed" style={{ color: C_MED }}>
+        Write a message, record a short voice note, or upload an audio file (MP3, WAV, WebM — max ~20 MB).
+      </p>
       <div className="space-y-2">
         <input
-          value={name} onChange={(e) => setName(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
           className="w-full px-3 py-2.5 rounded-xl text-sm border border-border/50 bg-background outline-none focus:border-rose-300 transition-colors"
         />
         <textarea
-          value={message} onChange={(e) => setMessage(e.target.value)}
-          placeholder="Your heartfelt message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Your heartfelt message (optional if you send voice)"
           rows={3}
           className="w-full px-3 py-2.5 rounded-xl text-sm border border-border/50 bg-background outline-none focus:border-rose-300 resize-none transition-colors"
         />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={toggleRecord}
+            className="flex-1 min-w-[120px] py-2 rounded-xl text-xs font-bold border"
+            style={{
+              borderColor: recording ? "#ef4444" : `${C_MED}40`,
+              color: recording ? "#ef4444" : C_DARK,
+              background: recording ? "rgba(239,68,68,0.08)" : "transparent",
+            }}
+          >
+            {recording ? "Stop recording" : "Record voice"}
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 min-w-[120px] py-2 rounded-xl text-xs font-bold border"
+            style={{ borderColor: `${C_MED}40`, color: C_DARK }}
+          >
+            Upload audio
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={onPickFile}
+          />
+        </div>
+        {voiceLabel && (
+          <div className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded-lg" style={{ background: `${C_ACCENT}08` }}>
+            <span className="truncate" style={{ color: C_DARK }}>{voiceLabel}</span>
+            <button type="button" onClick={clearVoice} className="shrink-0 font-semibold" style={{ color: C_ACCENT }}>
+              Remove
+            </button>
+          </div>
+        )}
         <button
+          type="button"
           onClick={handleSubmit}
-          disabled={loading || !name.trim() || !message.trim()}
+          disabled={loading || !canSend}
           className="w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-white disabled:opacity-50"
           style={{ background: ROSE_CTA }}
         >
@@ -632,11 +770,8 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
     router.push("/shaadi-card");
   }, [router]);
 
-  const handleBlessingAdded = useCallback((name: string, message: string) => {
-    setData((prev) => ({
-      ...prev,
-      wishes: [...(prev.wishes || []), { name, message }],
-    }));
+  const handleBlessingsUpdated = useCallback((wishes: WishRow[]) => {
+    setData((prev) => ({ ...prev, wishes }));
   }, []);
 
   // Password gate screen
@@ -747,31 +882,9 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
           )}
           {tab === "blessings" && (
             <motion.div key="blessings" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <div className="min-h-screen py-10 px-4 pb-28" style={{ background: `linear-gradient(180deg, ${C_BG} 0%, #FAE8E8 100%)` }}>
-                <div className="max-w-2xl mx-auto space-y-5">
-                  <h2 className="text-2xl font-bold text-center" style={{ color: C_DARK }}>Blessings 🙏</h2>
-
-                  <BlessingsInput shareId={shareId} onAdded={handleBlessingAdded} />
-
-                  {data.wishes.length > 0 && (
-                    <div className="columns-1 sm:columns-2 gap-4 space-y-4">
-                      {data.wishes.map((wish, i) => (
-                        <div key={i} className="break-inside-avoid rounded-2xl p-4 shadow-sm"
-                          style={{ background: C_CARD, border: `1px solid ${C_MED}25` }}>
-                          <p className="text-sm leading-relaxed mb-3" style={{ color: C_DARK }}>{wish.message}</p>
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                              style={{ background: `${C_ACCENT}18`, color: C_ACCENT }}>
-                              {wish.name.charAt(0).toUpperCase()}
-                            </div>
-                            <p className="text-xs font-semibold" style={{ color: C_MED }}>{wish.name}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Suspense fallback={<TabFallback />}>
+                <WishesSection data={data} shareId={shareId} />
+              </Suspense>
             </motion.div>
           )}
           {tab === "create" && (
@@ -801,13 +914,20 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
                   <button key={id} onClick={() => setTab(id as ViewerTabId)} className="flex-1 relative">
                     <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-all duration-200">
                       {active && (
-                        <motion.div layoutId="sv-nav-bg" className="absolute inset-1 rounded-lg"
-                          style={{ background: `${C_ACCENT}12` }}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                        <motion.div
+                          layoutId="sv-nav-bg"
+                          className="absolute inset-0.5 rounded-xl"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,245,248,0.98))",
+                            border: `1px solid ${C_ACCENT}38`,
+                            boxShadow: `0 2px 10px rgba(171,28,62,0.12), inset 0 1px 0 rgba(255,255,255,0.9)`,
+                          }}
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
                       )}
-                      <Icon size={18} strokeWidth={active ? 2.2 : 1.5} className="relative z-10"
+                      <Icon size={19} strokeWidth={active ? 2.35 : 1.5} className="relative z-10"
                         style={{ color: active ? C_ACCENT : C_MED }} />
-                      <span className={`text-[9px] font-semibold relative z-10 ${active ? "" : "opacity-60"}`}
+                      <span className={`text-[10px] font-bold relative z-10 tracking-tight ${active ? "" : "opacity-65"}`}
                         style={{ color: active ? C_ACCENT : C_MED }}>
                         {label}
                       </span>
