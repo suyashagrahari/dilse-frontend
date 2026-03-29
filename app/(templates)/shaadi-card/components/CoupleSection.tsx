@@ -21,7 +21,7 @@ function InvitationStyleCorners() {
     <>
       {/* Top left */}
       <div
-        className="pointer-events-none absolute left-0 top-0 z-[3] mix-blend-multiply"
+        className="pointer-events-none absolute left-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px, 40vw, 240px)", height: "clamp(110px, 22vh, 260px)", opacity: 0.88 }}
         aria-hidden
       >
@@ -39,7 +39,7 @@ function InvitationStyleCorners() {
 
       {/* Top right */}
       <div
-        className="pointer-events-none absolute right-0 top-0 z-[3] mix-blend-multiply"
+        className="pointer-events-none absolute right-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px, 40vw, 240px)", height: "clamp(110px, 22vh, 260px)", opacity: 0.88 }}
         aria-hidden
       >
@@ -57,7 +57,7 @@ function InvitationStyleCorners() {
 
       {/* Bottom left */}
       <div
-        className="pointer-events-none absolute bottom-0 left-0 z-[3] mix-blend-multiply"
+        className="pointer-events-none absolute bottom-[-20px] left-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px, 50vw, 380px)", height: "clamp(140px, 28vh, 300px)", opacity: 0.95 }}
         aria-hidden
       >
@@ -75,7 +75,7 @@ function InvitationStyleCorners() {
 
       {/* Bottom right */}
       <div
-        className="pointer-events-none absolute bottom-0 right-0 z-[3] mix-blend-multiply"
+        className="pointer-events-none absolute bottom-[-20px] right-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px, 50vw, 380px)", height: "clamp(140px, 28vh, 300px)", opacity: 0.95 }}
         aria-hidden
       >
@@ -166,14 +166,38 @@ function FamilyModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="relative h-[min(32vh,200px)] overflow-hidden sm:h-44"
-              style={{ background: `linear-gradient(145deg, ${C_MED}36, ${C_ACCENT}26)` }}
+              className="relative h-[min(36vh,220px)] overflow-hidden sm:h-52"
+              style={{ background: `linear-gradient(145deg, ${C_MED}40 0%, ${C_ACCENT}28 50%, ${C_MED}32 100%)` }}
             >
               {person.photo ? (
                 <Image src={person.photo} alt="" fill className="object-cover" sizes="(max-width:640px) 92vw, 400px" />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-90 sm:text-7xl">
-                  {accentLabel === "bride" ? "👰" : "🤵"}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  {/* Dot pattern bg */}
+                  <div className="absolute inset-0 opacity-15" style={{
+                    backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1.5px, transparent 1.5px)`,
+                    backgroundSize: "22px 22px",
+                  }} />
+                  {/* Petal rings */}
+                  <div
+                    className="relative flex items-center justify-center rounded-full"
+                    style={{
+                      width: 96, height: 96,
+                      background: "rgba(255,255,255,0.60)",
+                      border: `2.5px solid ${C_ACCENT}38`,
+                      boxShadow: `0 0 0 8px ${C_ACCENT}12, 0 0 0 16px ${C_ACCENT}06, 0 8px 28px ${C_ACCENT}22`,
+                    }}
+                  >
+                    <span className="text-5xl leading-none sm:text-6xl">
+                      {accentLabel === "bride" ? "👰" : "🤵"}
+                    </span>
+                  </div>
+                  <span
+                    className="relative text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ fontFamily: F_CINZEL, color: "rgba(255,255,255,0.82)" }}
+                  >
+                    {accentLabel === "bride" ? "The Bride" : "The Groom"}
+                  </span>
                 </div>
               )}
               <button
@@ -358,11 +382,35 @@ export default memo(function CoupleSection({ data }: Props) {
                   />
                 ) : (
                   <div
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{ background: `linear-gradient(160deg, ${C_MED}28, ${C_ACCENT}18)` }}
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                    style={{
+                      background: `linear-gradient(160deg, ${C_MED}30 0%, ${C_ACCENT}18 60%, ${C_MED}22 100%)`,
+                    }}
                   >
-                    <span className="text-5xl sm:text-6xl">
-                      {side === "bride" ? "👰" : "🤵"}
+                    {/* Decorative dots pattern */}
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: `radial-gradient(circle, ${C_ACCENT} 1px, transparent 1px)`,
+                      backgroundSize: "18px 18px",
+                    }} />
+                    {/* Petal ring */}
+                    <div
+                      className="relative flex items-center justify-center rounded-full"
+                      style={{
+                        width: 68, height: 68,
+                        background: "rgba(255,255,255,0.55)",
+                        border: `2px solid ${C_ACCENT}30`,
+                        boxShadow: `0 0 0 6px ${C_ACCENT}10, 0 4px 18px ${C_ACCENT}18`,
+                      }}
+                    >
+                      <span className="text-4xl leading-none">
+                        {side === "bride" ? "👰" : "🤵"}
+                      </span>
+                    </div>
+                    <span
+                      className="relative text-[9px] font-semibold uppercase tracking-[0.15em]"
+                      style={{ fontFamily: F_CINZEL, color: C_ACCENT, opacity: 0.85 }}
+                    >
+                      {side === "bride" ? "Dulhan" : "Dulha"}
                     </span>
                   </div>
                 )}
