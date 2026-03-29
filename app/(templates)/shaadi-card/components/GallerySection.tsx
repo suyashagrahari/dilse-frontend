@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Heart, Camera, X, Maximize2 } from "lucide-react";
+import { Heart, Camera, X, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ShaadiData } from "./types";
 
 const C_ACCENT = "#AB1C3E";
@@ -138,11 +138,29 @@ function cellClass(i: number, total: number): string {
 }
 
 export default memo(function GallerySection({ data }: Props) {
-  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const images = data.galleryImages;
   const total = images.length;
-
   const gridKey = useMemo(() => images.map((g) => g.src).join("|"), [images]);
+
+  const openAt = useCallback((i: number) => setLightboxIdx(i), []);
+  const close   = useCallback(() => setLightboxIdx(null), []);
+  const prev    = useCallback(() => setLightboxIdx((i) => i === null ? null : (i - 1 + total) % total), [total]);
+  const next    = useCallback(() => setLightboxIdx((i) => i === null ? null : (i + 1) % total), [total]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft")  { e.preventDefault(); prev(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); next(); }
+      if (e.key === "Escape")     { e.preventDefault(); close(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIdx, prev, next, close]);
+
+  const currentImg = lightboxIdx !== null ? images[lightboxIdx] : null;
 
   return (
     <section
@@ -252,7 +270,7 @@ export default memo(function GallerySection({ data }: Props) {
                 transition={{ delay: 0.05 * Math.min(i, 8), duration: 0.45 }}
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setLightbox({ src: img.src, alt: img.alt || `Photo ${i + 1}` })}
+                onClick={() => openAt(i)}
               >
                 <Image
                   src={img.src}
@@ -302,76 +320,120 @@ export default memo(function GallerySection({ data }: Props) {
         )}
       </motion.div>
 
-      {/* Lightbox */}
+      {/* Lightbox with left/right arrows */}
       <AnimatePresence>
-        {lightbox && (
+        {currentImg && lightboxIdx !== null && (
           <motion.div
+            key="lightbox-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6"
             style={{ background: "rgba(20,8,16,0.92)" }}
-            onClick={() => setLightbox(null)}
+            onClick={close}
           >
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.88, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 280, damping: 26 }}
-              className="relative w-full max-w-3xl max-h-[88vh] rounded-3xl overflow-hidden shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                border: `2px solid ${C_MED}40`,
-                boxShadow: `0 0 0 1px ${C_ACCENT}20, 0 24px 60px rgba(20,8,16,0.60), 0 0 40px rgba(171,28,62,0.18)`,
-              }}
-            >
-              {/* Close button top-right of image */}
+            {/* Left arrow */}
+            {total > 1 && (
               <button
                 type="button"
-                onClick={() => setLightbox(null)}
-                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
-                style={{ background: "rgba(20,8,16,0.70)", color: "rgba(255,255,255,0.90)", backdropFilter: "blur(4px)" }}
-                aria-label="Close"
+                onClick={(e) => { e.stopPropagation(); prev(); }}
+                className="absolute left-3 sm:left-5 z-20 flex h-11 w-11 items-center justify-center rounded-full shadow-xl transition-transform active:scale-90"
+                style={{ background: "rgba(255,255,255,0.12)", color: "#fff", backdropFilter: "blur(8px)", border: `1px solid rgba(255,255,255,0.20)` }}
+                aria-label="Previous photo"
               >
-                <X size={17} />
+                <ChevronLeft size={22} />
               </button>
+            )}
 
-              {/* Image */}
-              <div
-                className="relative w-full bg-black/50"
-                style={{ minHeight: "200px", maxHeight: "min(78vh, 820px)" }}
+            {/* Right arrow */}
+            {total > 1 && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); next(); }}
+                className="absolute right-3 sm:right-5 z-20 flex h-11 w-11 items-center justify-center rounded-full shadow-xl transition-transform active:scale-90"
+                style={{ background: "rgba(255,255,255,0.12)", color: "#fff", backdropFilter: "blur(8px)", border: `1px solid rgba(255,255,255,0.20)` }}
+                aria-label="Next photo"
               >
-                <Image
-                  src={lightbox.src}
-                  alt={lightbox.alt}
-                  width={1200}
-                  height={1400}
-                  className="w-full h-full object-contain max-h-[78vh]"
-                  style={{ maxHeight: "min(78vh, 820px)" }}
-                />
-              </div>
+                <ChevronRight size={22} />
+              </button>
+            )}
 
-              {/* Caption bar with gradient bg */}
-              <div
-                className="px-5 py-3 flex items-center justify-between gap-2"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={lightboxIdx}
+                initial={{ scale: 0.94, opacity: 0, x: 20 }}
+                animate={{ scale: 1, opacity: 1, x: 0 }}
+                exit={{ scale: 0.94, opacity: 0, x: -20 }}
+                transition={{ type: "spring", stiffness: 320, damping: 28 }}
+                className="relative w-full max-w-3xl max-h-[88vh] rounded-3xl overflow-hidden shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
                 style={{
-                  background: `linear-gradient(135deg, rgba(20,8,16,0.95) 0%, rgba(109,43,59,0.92) 100%)`,
-                  borderTop: `1px solid ${C_MED}25`,
+                  border: `2px solid ${C_MED}40`,
+                  boxShadow: `0 0 0 1px ${C_ACCENT}20, 0 24px 60px rgba(20,8,16,0.60), 0 0 40px rgba(171,28,62,0.18)`,
                 }}
               >
-                <p
-                  className="text-sm font-medium truncate"
-                  style={{ fontFamily: F_LORA, color: "rgba(255,240,245,0.90)" }}
+                {/* Close button */}
+                <button
+                  type="button"
+                  onClick={close}
+                  className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
+                  style={{ background: "rgba(20,8,16,0.70)", color: "rgba(255,255,255,0.90)", backdropFilter: "blur(4px)" }}
+                  aria-label="Close"
                 >
-                  {lightbox.alt}
-                </p>
-                <Heart
-                  size={14}
-                  className="shrink-0"
-                  style={{ color: C_MED, fill: `${C_MED}50` }}
-                />
-              </div>
-            </motion.div>
+                  <X size={17} />
+                </button>
+
+                {/* Counter pill */}
+                {total > 1 && (
+                  <div
+                    className="absolute left-3 top-3 z-10 px-3 py-1 rounded-full text-[11px] font-semibold"
+                    style={{ background: "rgba(20,8,16,0.65)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(4px)", fontFamily: F_CINZEL }}
+                  >
+                    {lightboxIdx + 1} / {total}
+                  </div>
+                )}
+
+                {/* Image */}
+                <div className="relative w-full bg-black/50" style={{ minHeight: "200px", maxHeight: "min(78vh, 820px)" }}>
+                  <Image
+                    src={currentImg.src}
+                    alt={currentImg.alt || `Photo ${lightboxIdx + 1}`}
+                    width={1200}
+                    height={1400}
+                    className="w-full h-full object-contain max-h-[78vh]"
+                    style={{ maxHeight: "min(78vh, 820px)" }}
+                  />
+                </div>
+
+                {/* Caption bar */}
+                <div
+                  className="px-5 py-3 flex items-center justify-between gap-2"
+                  style={{ background: `linear-gradient(135deg, rgba(20,8,16,0.95) 0%, rgba(109,43,59,0.92) 100%)`, borderTop: `1px solid ${C_MED}25` }}
+                >
+                  <p className="text-sm font-medium truncate" style={{ fontFamily: F_LORA, color: "rgba(255,240,245,0.90)" }}>
+                    {currentImg.alt || `Moment ${lightboxIdx + 1}`}
+                  </p>
+                  {total > 1 && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {images.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setLightboxIdx(i); }}
+                          className="rounded-full transition-all"
+                          style={{
+                            width: i === lightboxIdx ? 16 : 6,
+                            height: 6,
+                            background: i === lightboxIdx ? C_ACCENT : `${C_MED}50`,
+                          }}
+                          aria-label={`Go to photo ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
