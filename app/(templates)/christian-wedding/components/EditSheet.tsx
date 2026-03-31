@@ -335,18 +335,40 @@ function AiTextPanel({ setEditMode, aiName, setAiName, aiSender, setAiSender, ai
   aiLoading: boolean; onGenerate: () => void;
   mf: ShaadiData; updateMf: (k: keyof ShaadiData, v: unknown) => void;
 }) {
-  const handlePhotoUpload = (role: "bride" | "groom", file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image too large. Please use an image under 5MB.");
-      return;
-    }
+  const brideRef = useRef<HTMLInputElement>(null);
+  const groomRef = useRef<HTMLInputElement>(null);
+  const [brideAdj, setBrideAdj] = useState<PhotoAdjust>({ posX: 50, posY: 30, zoom: 100 });
+  const [groomAdj, setGroomAdj] = useState<PhotoAdjust>({ posX: 50, posY: 30, zoom: 100 });
+  const [photoModal, setPhotoModal] = useState<PhotoModalState>(null);
+
+  const handleFile = useCallback((role: "bride" | "groom", file: File) => {
+    if (file.size > 5 * 1024 * 1024) { alert("Image too large. Please use under 5 MB."); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target?.result as string;
-      if (role === "bride") updateMf("bride", { ...mf.bride, photo: src });
-      else updateMf("groom", { ...mf.groom, photo: src });
+      const adj = role === "bride" ? brideAdj : groomAdj;
+      setPhotoModal({ role, src, adjust: adj });
     };
     reader.readAsDataURL(file);
+  }, [brideAdj, groomAdj]);
+
+  const handleModalConfirm = useCallback((adj: PhotoAdjust) => {
+    if (!photoModal) return;
+    if (photoModal.role === "bride") {
+      updateMf("bride", { ...mf.bride, photo: photoModal.src });
+      setBrideAdj(adj);
+    } else {
+      updateMf("groom", { ...mf.groom, photo: photoModal.src });
+      setGroomAdj(adj);
+    }
+    setPhotoModal(null);
+  }, [photoModal, mf.bride, mf.groom, updateMf]);
+
+  const openEditModal = (role: "bride" | "groom") => {
+    const photo = role === "bride" ? mf.bride.photo : mf.groom.photo;
+    if (!photo) return;
+    const adj = role === "bride" ? brideAdj : groomAdj;
+    setPhotoModal({ role, src: photo, adjust: adj });
   };
 
   return (
@@ -368,9 +390,16 @@ function AiTextPanel({ setEditMode, aiName, setAiName, aiSender, setAiSender, ai
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <PhotoUpload label="Bride Photo (optional)" photo={mf.bride.photo} onUpload={(f) => handlePhotoUpload("bride", f)} />
-          <PhotoUpload label="Groom Photo (optional)" photo={mf.groom.photo} onUpload={(f) => handlePhotoUpload("groom", f)} />
+          <PhotoSlot label="Bride Photo (optional)" photo={mf.bride.photo} adjust={brideAdj}
+            onTapEmpty={() => brideRef.current?.click()} onTapEdit={() => openEditModal("bride")} />
+          <PhotoSlot label="Groom Photo (optional)" photo={mf.groom.photo} adjust={groomAdj}
+            onTapEmpty={() => groomRef.current?.click()} onTapEdit={() => openEditModal("groom")} />
         </div>
+
+        <input ref={brideRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => { if (e.target.files?.[0]) handleFile("bride", e.target.files[0]); e.target.value = ""; }} />
+        <input ref={groomRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => { if (e.target.files?.[0]) handleFile("groom", e.target.files[0]); e.target.value = ""; }} />
 
         <Field label="Describe your wedding *">
           <textarea
@@ -391,6 +420,13 @@ function AiTextPanel({ setEditMode, aiName, setAiName, aiSender, setAiSender, ai
           }
         </button>
       </div>
+
+      <AnimatePresence>
+        {photoModal && (
+          <PhotoAdjustModal src={photoModal.src} initial={photoModal.adjust}
+            onConfirm={handleModalConfirm} onCancel={() => setPhotoModal(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -560,19 +596,44 @@ function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onP
 }
 
 // ── Step 0: Names + Photos ─────────────────────────────────────────────────────
+type PhotoAdjust = { posX: number; posY: number; zoom: number };
+type PhotoModalState = { role: "bride" | "groom"; src: string; adjust: PhotoAdjust } | null;
+
 function NamesPhotosStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof ShaadiData, v: unknown) => void }) {
-  const handlePhotoUpload = (role: "bride" | "groom", file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image too large. Please use an image under 5MB.");
-      return;
-    }
+  const brideRef = useRef<HTMLInputElement>(null);
+  const groomRef = useRef<HTMLInputElement>(null);
+  const [brideAdj, setBrideAdj] = useState<PhotoAdjust>({ posX: 50, posY: 30, zoom: 100 });
+  const [groomAdj, setGroomAdj] = useState<PhotoAdjust>({ posX: 50, posY: 30, zoom: 100 });
+  const [modal, setModal] = useState<PhotoModalState>(null);
+
+  const handleFile = useCallback((role: "bride" | "groom", file: File) => {
+    if (file.size > 5 * 1024 * 1024) { alert("Image too large. Please use under 5 MB."); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target?.result as string;
-      if (role === "bride") updateMf("bride", { ...mf.bride, photo: src });
-      else updateMf("groom", { ...mf.groom, photo: src });
+      const adj = role === "bride" ? brideAdj : groomAdj;
+      setModal({ role, src, adjust: adj });
     };
     reader.readAsDataURL(file);
+  }, [brideAdj, groomAdj]);
+
+  const handleModalConfirm = useCallback((adj: PhotoAdjust) => {
+    if (!modal) return;
+    if (modal.role === "bride") {
+      updateMf("bride", { ...mf.bride, photo: modal.src });
+      setBrideAdj(adj);
+    } else {
+      updateMf("groom", { ...mf.groom, photo: modal.src });
+      setGroomAdj(adj);
+    }
+    setModal(null);
+  }, [modal, mf.bride, mf.groom, updateMf]);
+
+  const openEditModal = (role: "bride" | "groom") => {
+    const photo = role === "bride" ? mf.bride.photo : mf.groom.photo;
+    if (!photo) return;
+    const adj = role === "bride" ? brideAdj : groomAdj;
+    setModal({ role, src: photo, adjust: adj });
   };
 
   return (
@@ -587,108 +648,140 @@ function NamesPhotosStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <PhotoUpload label="Bride Photo" photo={mf.bride.photo} onUpload={(f) => handlePhotoUpload("bride", f)} />
-        <PhotoUpload label="Groom Photo" photo={mf.groom.photo} onUpload={(f) => handlePhotoUpload("groom", f)} />
+        <PhotoSlot label="Bride Photo" photo={mf.bride.photo} adjust={brideAdj}
+          onTapEmpty={() => brideRef.current?.click()} onTapEdit={() => openEditModal("bride")} />
+        <PhotoSlot label="Groom Photo" photo={mf.groom.photo} adjust={groomAdj}
+          onTapEmpty={() => groomRef.current?.click()} onTapEdit={() => openEditModal("groom")} />
       </div>
+
+      <input ref={brideRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { if (e.target.files?.[0]) handleFile("bride", e.target.files[0]); e.target.value = ""; }} />
+      <input ref={groomRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { if (e.target.files?.[0]) handleFile("groom", e.target.files[0]); e.target.value = ""; }} />
+
+      <AnimatePresence>
+        {modal && (
+          <PhotoAdjustModal src={modal.src} initial={modal.adjust}
+            onConfirm={handleModalConfirm} onCancel={() => setModal(null)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
 
-function PhotoUpload({ label, photo, onUpload }: { label: string; photo: string; onUpload: (f: File) => void }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [posX, setPosX] = useState(50);
-  const [posY, setPosY] = useState(30);
-  const [zoom, setZoom] = useState(100);
-
-  const imgStyle: React.CSSProperties = {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    objectPosition: `${posX}% ${posY}%`,
-    transform: `scale(${zoom / 100})`,
-    transformOrigin: `${posX}% ${posY}%`,
-    transition: "transform 0.15s ease, object-position 0.15s ease",
-  };
+function PhotoSlot({ label, photo, adjust, onTapEmpty, onTapEdit }: {
+  label: string; photo: string; adjust: PhotoAdjust;
+  onTapEmpty: () => void; onTapEdit: () => void;
+}) {
+  const imgStyle: React.CSSProperties = photo ? {
+    width: "100%", height: "100%", objectFit: "cover",
+    objectPosition: `${adjust.posX}% ${adjust.posY}%`,
+    transform: `scale(${adjust.zoom / 100})`,
+    transformOrigin: `${adjust.posX}% ${adjust.posY}%`,
+  } : {};
 
   return (
-    <div className="space-y-2">
-      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label>
-      {/* Photo preview */}
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">{label}</label>
       <div
-        onClick={() => ref.current?.click()}
-        className="w-full rounded-xl border-2 border-dashed border-border/60 hover:border-rose-400/60 cursor-pointer transition-colors flex flex-col items-center justify-center overflow-hidden relative"
-        style={{ aspectRatio: "1 / 1" }}
+        onClick={() => (photo ? onTapEdit() : onTapEmpty())}
+        className={`w-full rounded-xl border-2 overflow-hidden cursor-pointer transition-colors flex flex-col items-center justify-center relative ${photo ? "" : "border-dashed border-border/60 hover:border-emerald-400/60"}`}
+        style={{ aspectRatio: "1 / 1", ...(photo ? { borderColor: `${C_ACCENT}40`, borderStyle: "solid" } : {}) }}
       >
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" style={imgStyle} />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photo} alt="" style={imgStyle} draggable={false} />
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center">
+              <Camera size={20} className="text-white opacity-0 hover:opacity-100 transition-opacity" />
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center gap-1 text-muted-foreground">
             <Camera size={20} />
             <span className="text-[10px]">Upload photo</span>
           </div>
         )}
-        {photo && (
-          <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Camera size={20} className="text-white" />
-          </div>
-        )}
-        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUpload(e.target.files[0]); }} />
       </div>
-
-      {/* Adjustment controls — shown only when a photo is uploaded */}
-      {photo && (
-        <div className="rounded-xl p-3 space-y-2.5" style={{ background: "rgba(171,28,62,0.04)", border: "1px solid rgba(171,28,62,0.10)" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: C_MED }}>Adjust Photo</p>
-
-          {/* Horizontal */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>← Horiz →</span>
-            <input
-              type="range" min={0} max={100} value={posX}
-              onChange={(e) => setPosX(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-              style={{ accentColor: C_ACCENT }}
-            />
-          </div>
-
-          {/* Vertical */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>↑ Vert ↓</span>
-            <input
-              type="range" min={0} max={100} value={posY}
-              onChange={(e) => setPosY(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-              style={{ accentColor: C_ACCENT }}
-            />
-          </div>
-
-          {/* Zoom */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] w-14 shrink-0" style={{ color: C_ACCENT }}>⊖ Zoom ⊕</span>
-            <input
-              type="range" min={100} max={200} value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-              style={{ accentColor: C_ACCENT }}
-            />
-            <span className="text-[10px] w-8 text-right shrink-0" style={{ color: C_MED }}>{zoom}%</span>
-          </div>
-
-          {/* Reset */}
-          {(posX !== 50 || posY !== 30 || zoom !== 100) && (
-            <button
-              type="button"
-              onClick={() => { setPosX(50); setPosY(30); setZoom(100); }}
-              className="text-[10px] underline"
-              style={{ color: C_MED }}
-            >
-              Reset position
-            </button>
-          )}
-        </div>
-      )}
     </div>
+  );
+}
+
+function PhotoAdjustModal({ src, initial, onConfirm, onCancel }: {
+  src: string; initial: PhotoAdjust;
+  onConfirm: (adj: PhotoAdjust) => void; onCancel: () => void;
+}) {
+  const [posX, setPosX] = useState(initial.posX);
+  const [posY, setPosY] = useState(initial.posY);
+  const [zoom, setZoom] = useState(initial.zoom);
+
+  const previewStyle: React.CSSProperties = {
+    width: "100%", height: "100%", objectFit: "cover",
+    objectPosition: `${posX}% ${posY}%`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: `${posX}% ${posY}%`,
+    transition: "transform 0.12s ease, object-position 0.12s ease",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xs bg-background rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="relative w-full overflow-hidden bg-black/10" style={{ aspectRatio: "1/1" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" style={previewStyle} draggable={false} />
+        </div>
+
+        <div className="px-4 pt-3 pb-4 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: C_ACCENT }}>Adjust Photo</p>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Horiz</span>
+              <input type="range" min={0} max={100} value={posX} onChange={(e) => setPosX(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Vert</span>
+              <input type="range" min={0} max={100} value={posY} onChange={(e) => setPosY(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Zoom</span>
+              <input type="range" min={100} max={200} value={zoom} onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+              <span className="text-[10px] w-9 text-right shrink-0 tabular-nums font-medium" style={{ color: C_MED }}>{zoom}%</span>
+            </div>
+          </div>
+
+          {(posX !== 50 || posY !== 30 || zoom !== 100) && (
+            <button type="button" onClick={() => { setPosX(50); setPosY(30); setZoom(100); }}
+              className="text-[10px] underline" style={{ color: C_MED }}>Reset</button>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button onClick={onCancel}
+              className="flex-1 py-2.5 rounded-xl border border-border/50 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors">
+              Cancel
+            </button>
+            <button onClick={() => onConfirm({ posX, posY, zoom })}
+              className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-1.5"
+              style={{ background: ROSE_GRADIENT }}>
+              ✓ Done
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -832,65 +925,133 @@ function EventsStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof Shaa
 }
 
 // ── Step 3: Gallery ────────────────────────────────────────────────────────────
+type AdjustData = { posX: number; posY: number; zoom: number };
+type ModalState = { idx: number; src: string; adjust: AdjustData } | null;
+
 function GalleryStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof ShaadiData, v: unknown) => void }) {
   const slots = Array.from({ length: 6 });
   const galleryImages = mf.galleryImages;
+  const [adjustMap, setAdjustMap] = useState<Record<number, AdjustData>>({});
+  const [modal, setModal] = useState<ModalState>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingSlotRef = useRef<number>(0);
 
-  const handleImageUpload = (idx: number, file: File) => {
-    if (file.size > 8 * 1024 * 1024) {
-      alert("Image too large. Please use an image under 8MB.");
-      return;
-    }
+  const openUploadForSlot = (idx: number) => {
+    pendingSlotRef.current = idx;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { alert("Image too large. Please use under 8 MB."); return; }
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const src = e.target?.result as string;
-      const updated = [...galleryImages];
-      updated[idx] = { src, alt: `Photo ${idx + 1}`, span: GALLERY_SPANS[idx] };
-      updateMf("galleryImages", updated);
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      const idx = pendingSlotRef.current;
+      const existing = adjustMap[idx];
+      setModal({ idx, src, adjust: existing ?? { posX: 50, posY: 50, zoom: 100 } });
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
+  }, [adjustMap]);
+
+  const openEditModal = (idx: number) => {
+    const img = galleryImages[idx];
+    if (!img) return;
+    const existing = adjustMap[idx] ?? { posX: 50, posY: 50, zoom: 100 };
+    setModal({ idx, src: img.src, adjust: existing });
   };
+
+  const handleModalConfirm = useCallback((adj: AdjustData) => {
+    if (!modal) return;
+    const updated = [...galleryImages];
+    updated[modal.idx] = { src: modal.src, alt: `Photo ${modal.idx + 1}`, span: GALLERY_SPANS[modal.idx] };
+    updateMf("galleryImages", updated);
+    setAdjustMap((prev) => ({ ...prev, [modal.idx]: adj }));
+    setModal(null);
+  }, [modal, galleryImages, updateMf]);
 
   const removeImage = (idx: number) => {
     const updated = [...galleryImages];
     updated.splice(idx, 1);
     updateMf("galleryImages", updated);
+    setAdjustMap((prev) => { const n = { ...prev }; delete n[idx]; return n; });
   };
 
   return (
     <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
       <p className="text-xs text-muted-foreground">Upload up to 6 gallery photos. First photo will be featured large.</p>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelected} />
+
       <div className="grid grid-cols-3 gap-2">
         {slots.map((_, i) => {
           const img = galleryImages[i];
-          return <GallerySlot key={i} index={i} image={img} onUpload={(f) => handleImageUpload(i, f)} onRemove={() => removeImage(i)} />;
+          const adj = adjustMap[i];
+          return (
+            <GallerySlot
+              key={i} index={i} image={img} adjust={adj}
+              onTapEmpty={() => openUploadForSlot(i)}
+              onTapEdit={() => openEditModal(i)}
+              onRemove={() => removeImage(i)}
+            />
+          );
         })}
       </div>
+
+      <AnimatePresence>
+        {modal && (
+          <GalleryAdjustModal
+            src={modal.src}
+            initial={modal.adjust}
+            onConfirm={handleModalConfirm}
+            onCancel={() => setModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
 
-function GallerySlot({ index, image, onUpload, onRemove }: {
+function GallerySlot({ index, image, adjust, onTapEmpty, onTapEdit, onRemove }: {
   index: number;
   image?: { src: string; alt: string; span?: string };
-  onUpload: (f: File) => void;
+  adjust?: AdjustData;
+  onTapEmpty: () => void;
+  onTapEdit: () => void;
   onRemove: () => void;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
+  const posX = adjust?.posX ?? 50;
+  const posY = adjust?.posY ?? 50;
+  const zoom = adjust?.zoom ?? 100;
+
+  const imgStyle: React.CSSProperties = {
+    width: "100%", height: "100%", objectFit: "cover" as const,
+    objectPosition: `${posX}% ${posY}%`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: `${posX}% ${posY}%`,
+  };
+
   return (
     <div
-      onClick={() => !image && ref.current?.click()}
-      className={`relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${image ? "" : "border-dashed border-border/50 hover:border-rose-400/50"}`}
+      onClick={() => (image ? onTapEdit() : onTapEmpty())}
+      className={`relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${image ? "" : "border-dashed border-border/50 hover:border-emerald-400/50"}`}
       style={image ? { borderColor: `${C_ACCENT}40`, borderWidth: 2, borderStyle: "solid" } : undefined}
     >
       {image ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.src} alt="" className="w-full h-full object-cover" />
+          <img src={image.src} alt="" style={imgStyle} draggable={false} />
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
             className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center text-[10px] hover:bg-red-500 transition-colors"
           >×</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onTapEdit(); }}
+            className="absolute bottom-1 left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] transition-colors"
+            style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}
+            title="Adjust photo"
+          >✎</button>
         </>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
@@ -898,8 +1059,88 @@ function GallerySlot({ index, image, onUpload, onRemove }: {
           <span className="text-[9px]">Photo {index + 1}</span>
         </div>
       )}
-      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUpload(e.target.files[0]); }} />
     </div>
+  );
+}
+
+function GalleryAdjustModal({ src, initial, onConfirm, onCancel }: {
+  src: string; initial: AdjustData;
+  onConfirm: (adj: AdjustData) => void;
+  onCancel: () => void;
+}) {
+  const [posX, setPosX] = useState(initial.posX);
+  const [posY, setPosY] = useState(initial.posY);
+  const [zoom, setZoom] = useState(initial.zoom);
+
+  const previewStyle: React.CSSProperties = {
+    width: "100%", height: "100%", objectFit: "cover",
+    objectPosition: `${posX}% ${posY}%`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: `${posX}% ${posY}%`,
+    transition: "transform 0.12s ease, object-position 0.12s ease",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xs bg-background rounded-2xl shadow-2xl overflow-hidden"
+      >
+        {/* Image preview */}
+        <div className="relative w-full overflow-hidden bg-black/10" style={{ aspectRatio: "1/1" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" style={previewStyle} draggable={false} />
+        </div>
+
+        {/* Controls */}
+        <div className="px-4 pt-3 pb-4 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: C_ACCENT }}>Adjust Photo</p>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Horiz</span>
+              <input type="range" min={0} max={100} value={posX} onChange={(e) => setPosX(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Vert</span>
+              <input type="range" min={0} max={100} value={posY} onChange={(e) => setPosY(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] shrink-0 font-medium whitespace-nowrap" style={{ color: C_ACCENT, width: 40 }}>Zoom</span>
+              <input type="range" min={100} max={200} value={zoom} onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: C_ACCENT }} />
+              <span className="text-[10px] w-9 text-right shrink-0 tabular-nums font-medium" style={{ color: C_MED }}>{zoom}%</span>
+            </div>
+          </div>
+
+          {(posX !== 50 || posY !== 50 || zoom !== 100) && (
+            <button type="button" onClick={() => { setPosX(50); setPosY(50); setZoom(100); }}
+              className="text-[10px] underline" style={{ color: C_MED }}>Reset</button>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button onClick={onCancel}
+              className="flex-1 py-2.5 rounded-xl border border-border/50 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors">
+              Cancel
+            </button>
+            <button onClick={() => onConfirm({ posX, posY, zoom })}
+              className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-1.5"
+              style={{ background: ROSE_GRADIENT }}>
+              ✓ Done
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
