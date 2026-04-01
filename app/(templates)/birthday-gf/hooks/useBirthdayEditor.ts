@@ -375,7 +375,7 @@ export function useBirthdayEditor() {
         navigator.clipboard.writeText(link);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-        if (!url) pushToast({ type: "success", title: "Link copied!" });
+        if (!url) pushToast({ type: "success", title: "Link copied!", message: "Share link is on your clipboard." });
       }
     },
     [shareUrl, pushToast],

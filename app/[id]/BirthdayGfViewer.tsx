@@ -432,7 +432,7 @@ export default function BirthdayGfViewer({
       {/* Main content */}
       <main className="lg:ml-56" style={{ height: "100dvh", overflow: "hidden" }}>
         {tab === "home" && (
-          <HomeSection data={data} isPersonalized={true} onEditClick={() => router.push(editorRoute)} />
+          <HomeSection data={data} isPersonalized={true} />
         )}
 
         {tab === "gallery" && (
