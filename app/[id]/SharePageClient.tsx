@@ -63,6 +63,10 @@ const DarlingViewer = dynamic(() => import("./DarlingViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const BirthdayGfViewer = dynamic(() => import("./BirthdayGfViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -185,7 +189,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf") {
             setData(result.data);
             setLoading(false);
             return;
@@ -354,6 +358,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Darling has its own full-page viewer
   if (!loading && templateType === "darling" && data) {
     return <DarlingViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Birthday GF has its own full-page viewer
+  if (!loading && templateType === "birthday-gf" && data) {
+    return <BirthdayGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {
