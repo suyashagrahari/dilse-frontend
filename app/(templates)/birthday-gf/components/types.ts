@@ -77,7 +77,9 @@ export type TabId = "home" | "gallery" | "songs" | "games" | "surprise";
 export interface Toast {
   id: number;
   message: string;
-  type?: "success" | "error" | "info";
+  title?: string;
+  type?: "success" | "error" | "info" | "publish";
+  shareUrl?: string;
 }
 
 export const DEMO_DATA: BirthdayData = {
