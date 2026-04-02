@@ -11,6 +11,7 @@ import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
+import PublishSheet from "./components/PublishSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import BirthdayBgMusic from "./components/BirthdayBgMusic";
 
@@ -304,7 +305,7 @@ function BirthdayGfPageInner() {
         )}
 
         {/* Songs & Games stay MOUNTED (display:none) to preserve play state and game history */}
-        <div style={{ display: editor.tab === "songs" ? "block" : "none" }}>
+        <div style={{ display: editor.tab === "songs" ? "block" : "none", height: "100%" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <SongsSection data={editor.content} onPlayingChange={handleSongPlayingChange} />
@@ -312,7 +313,7 @@ function BirthdayGfPageInner() {
           </ScrapbookBg>
         </div>
 
-        <div style={{ display: editor.tab === "games" ? "block" : "none" }}>
+        <div style={{ display: editor.tab === "games" ? "block" : "none", height: "100%" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <GamesSection
@@ -365,6 +366,18 @@ function BirthdayGfPageInner() {
         onAiGenerate={editor.handleAiGenerate}
         onSaveWithPassword={editor.handleManualSave}
         saving={editor.saving}
+      />
+
+      <PublishSheet
+        open={editor.showPublishSheet}
+        recipientName={editor.content.recipientName}
+        hasPassword={!!editor.pagePassword}
+        publishing={editor.publishing}
+        onPublish={() => {
+          editor.handlePublish();
+          editor.setShowPublishSheet(false);
+        }}
+        onClose={() => editor.setShowPublishSheet(false)}
       />
 
       <PublishingOverlay visible={editor.publishing} />

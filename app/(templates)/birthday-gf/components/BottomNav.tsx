@@ -70,8 +70,8 @@ export default function BottomNav({
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 22 }}
         style={{
-          width: "calc(70%)",
-          maxWidth: 420,
+          width: "calc(90%)",
+          maxWidth: 460,
           margin: "0 auto 10px",
           background: "linear-gradient(135deg, rgba(253,248,240,0.95) 0%, rgba(240,228,210,0.95) 100%)",
           backdropFilter: "blur(20px)",
@@ -104,7 +104,7 @@ export default function BottomNav({
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 2,
-                  padding: "6px 12px",
+                  padding: "6px 8px",
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",

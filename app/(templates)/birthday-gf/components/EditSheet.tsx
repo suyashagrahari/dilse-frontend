@@ -317,6 +317,62 @@ export default function EditSheet({
   const [tdTab, setTdTab] = useState<"truth" | "dare">("truth");
   const [customTdText, setCustomTdText] = useState("");
 
+  // ── All hooks must be before any early return ───────────────────────────────
+
+  const hc: HomeCoverPhoto = mf.homeCoverPhoto ?? EMPTY_HOME_COVER;
+
+  const handlePhotoFile = useCallback(async (file: File, role: "cover" | "photo1" | "photo2") => {
+    const b64 = await compressToBase64(file);
+    const defaultAdj: PhotoAdjust = { posX: 50, posY: role === "cover" ? 30 : 50, zoom: 100 };
+    setPhotoModal({ role, src: b64, adjust: defaultAdj });
+  }, []);
+
+  const handlePhotoModalConfirm = useCallback((adj: PhotoAdjust) => {
+    if (!photoModal) return;
+    const { role, src } = photoModal;
+    setPhotoAdjusts((prev) => ({ ...prev, [role]: adj }));
+    if (role === "cover") {
+      updateMf("homeCoverPhoto", { url: src, cropX: adj.posX, cropY: adj.posY, scale: adj.zoom });
+    } else if (role === "photo1") {
+      updateMf("homePhoto1", src);
+    } else {
+      updateMf("homePhoto2", src);
+    }
+    setPhotoModal(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoModal]);
+
+  const openPhotoEditModal = useCallback((role: "cover" | "photo1" | "photo2") => {
+    const src = role === "cover" ? hc.url : role === "photo1" ? mf.homePhoto1 : mf.homePhoto2;
+    if (!src) return;
+    const adj = role === "cover"
+      ? { posX: hc.cropX, posY: hc.cropY, zoom: hc.scale }
+      : photoAdjusts[role];
+    setPhotoModal({ role, src, adjust: adj });
+  }, [hc, mf.homePhoto1, mf.homePhoto2, photoAdjusts]);
+
+  const galleryPhotos: PhotoItem[] = mf.galleryPhotos || [];
+
+  const handleGalleryFile = useCallback(async (file: File, slotIdx: number) => {
+    const b64 = await compressToBase64(file);
+    setGalleryModal({ idx: slotIdx, src: b64, adjust: { posX: 50, posY: 50, zoom: 100 } });
+  }, []);
+
+  const handleGalleryModalConfirm = useCallback((adj: PhotoAdjust) => {
+    if (!galleryModal) return;
+    const { idx, src } = galleryModal;
+    setGalleryAdjusts((prev) => ({ ...prev, [idx]: adj }));
+    const updated = [...galleryPhotos];
+    if (idx < updated.length) {
+      updated[idx] = { ...updated[idx], url: src, cropX: adj.posX, cropY: adj.posY };
+    } else {
+      updated.push({ url: src, caption: "", cropX: adj.posX, cropY: adj.posY });
+    }
+    updateMf("galleryPhotos", updated);
+    setGalleryModal(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [galleryModal, galleryPhotos]);
+
   if (!editMode || editMode === "preview" || editMode === "password") return null;
 
   const isReview = editMode === "ai-review";
@@ -393,62 +449,10 @@ export default function EditSheet({
   );
 
   // ── Photo upload helpers ────────────────────────────────────────────────────
-
-  const hc: HomeCoverPhoto = mf.homeCoverPhoto ?? EMPTY_HOME_COVER;
-
-  const handlePhotoFile = useCallback(async (file: File, role: PhotoModalRole) => {
-    const b64 = await compressToBase64(file);
-    const defaultAdj: PhotoAdjust = { posX: 50, posY: role === "cover" ? 30 : 50, zoom: 100 };
-    setPhotoModal({ role, src: b64, adjust: defaultAdj });
-  }, []);
-
-  const handlePhotoModalConfirm = useCallback((adj: PhotoAdjust) => {
-    if (!photoModal) return;
-    const { role, src } = photoModal;
-    setPhotoAdjusts((prev) => ({ ...prev, [role]: adj }));
-    if (role === "cover") {
-      updateMf("homeCoverPhoto", { url: src, cropX: adj.posX, cropY: adj.posY, scale: adj.zoom });
-    } else if (role === "photo1") {
-      updateMf("homePhoto1", src);
-    } else {
-      updateMf("homePhoto2", src);
-    }
-    setPhotoModal(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoModal]);
-
-  const openPhotoEditModal = useCallback((role: PhotoModalRole) => {
-    const src = role === "cover" ? hc.url : role === "photo1" ? mf.homePhoto1 : mf.homePhoto2;
-    if (!src) return;
-    const adj = role === "cover"
-      ? { posX: hc.cropX, posY: hc.cropY, zoom: hc.scale }
-      : photoAdjusts[role];
-    setPhotoModal({ role, src, adjust: adj });
-  }, [hc, mf.homePhoto1, mf.homePhoto2, photoAdjusts]);
+  // (handlePhotoFile, handlePhotoModalConfirm, openPhotoEditModal, handleGalleryFile,
+  //  handleGalleryModalConfirm are declared before the early return above)
 
   // ── Gallery helpers ─────────────────────────────────────────────────────────
-
-  const galleryPhotos: PhotoItem[] = mf.galleryPhotos || [];
-
-  const handleGalleryFile = useCallback(async (file: File, slotIdx: number) => {
-    const b64 = await compressToBase64(file);
-    setGalleryModal({ idx: slotIdx, src: b64, adjust: { posX: 50, posY: 50, zoom: 100 } });
-  }, []);
-
-  const handleGalleryModalConfirm = useCallback((adj: PhotoAdjust) => {
-    if (!galleryModal) return;
-    const { idx, src } = galleryModal;
-    setGalleryAdjusts((prev) => ({ ...prev, [idx]: adj }));
-    const updated = [...galleryPhotos];
-    if (idx < updated.length) {
-      updated[idx] = { ...updated[idx], url: src, cropX: adj.posX, cropY: adj.posY };
-    } else {
-      updated.push({ url: src, caption: "", cropX: adj.posX, cropY: adj.posY });
-    }
-    updateMf("galleryPhotos", updated);
-    setGalleryModal(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [galleryModal, galleryPhotos]);
 
   const updateGalleryCaption = (idx: number, caption: string) => {
     const updated = galleryPhotos.map((p, i) => i === idx ? { ...p, caption } : p);
@@ -890,39 +894,53 @@ export default function EditSheet({
         <div style={sheet}>
           {hdr("Songs 🎵")}
           {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.65)", marginBottom: 14, lineHeight: 1.5 }}>
-            Add up to 5 favourite songs (title & artist only).
+          <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.65)", marginBottom: 16, lineHeight: 1.5 }}>
+            Your birthday playlist — songs added to the Songs tab will appear here.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 16 }}>
-            {musicTracks.map((track, idx) => (
-              <div key={idx} style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: "1px solid rgba(93,63,49,0.20)", background: "rgba(93,63,49,0.04)",
-                display: "flex", flexDirection: "column", gap: 8,
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: CURSIVE, fontSize: 13, color: BROWN, fontWeight: 600 }}>Track {idx + 1}</span>
-                  <button onClick={() => removeTrack(idx)} style={{
-                    border: "none", background: "transparent", cursor: "pointer",
-                    fontFamily: CURSIVE, fontSize: 12, color: "#c0392b",
-                  }}>Remove</button>
-                </div>
-                <input value={track.title} onChange={(e) => updateTrack(idx, "title", e.target.value)}
-                  placeholder="Song title..." style={{ ...INPUT_STYLE, fontSize: 13 }} />
-                <input value={track.artist} onChange={(e) => updateTrack(idx, "artist", e.target.value)}
-                  placeholder="Artist name..." style={{ ...INPUT_STYLE, fontSize: 13 }} />
-              </div>
-            ))}
-          </div>
-          {musicTracks.length < 5 && (
-            <button onClick={addTrack} style={{
-              width: "100%", padding: "10px 0", borderRadius: 10, marginBottom: 16,
-              border: "1.5px dashed rgba(93,63,49,0.35)", background: "rgba(93,63,49,0.04)",
-              fontFamily: CURSIVE, fontSize: 14, color: "rgba(93,63,49,0.65)", cursor: "pointer",
+
+          {musicTracks.length === 0 ? (
+            <div style={{
+              padding: "28px 16px", borderRadius: 12, textAlign: "center",
+              border: "1.5px dashed rgba(93,63,49,0.25)", background: "rgba(93,63,49,0.03)",
+              marginBottom: 16,
             }}>
-              + Add Track ({musicTracks.length}/5)
-            </button>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🎵</div>
+              <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.50)", margin: 0 }}>
+                No songs added yet. You can add songs from the Songs tab after publishing.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+              {musicTracks.map((track, idx) => (
+                <div key={idx} style={{
+                  padding: "10px 14px", borderRadius: 10,
+                  border: "1px solid rgba(93,63,49,0.18)", background: "rgba(93,63,49,0.04)",
+                  display: "flex", alignItems: "center", gap: 12,
+                }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                    background: "linear-gradient(135deg, rgba(173,104,74,0.20), rgba(93,63,49,0.12))",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14,
+                  }}>🎵</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 14, color: BROWN, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {track.title || "Untitled"}
+                    </p>
+                    {track.artist && (
+                      <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(93,63,49,0.55)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {track.artist}
+                      </p>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(93,63,49,0.38)", flexShrink: 0 }}>
+                    {idx + 1}/{musicTracks.length}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
+
           <div style={{ display: "flex", gap: 10 }}>
             {ghostBtn("← Back", () => setManualStep(3))}
             {primaryBtn("Next →", () => setManualStep(5))}

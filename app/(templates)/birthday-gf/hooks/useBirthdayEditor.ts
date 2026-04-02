@@ -185,8 +185,8 @@ export function useBirthdayEditor() {
   }, [isPersonalized, content]);
 
   const saveToServer = useCallback(
-    async (data: BirthdayData, password?: string) => {
-      if (!accessToken) return;
+    async (data: BirthdayData, password?: string): Promise<string | null> => {
+      if (!accessToken) return null;
       const body = {
         recipientName:      data.recipientName,
         senderName:         data.senderName,
@@ -210,6 +210,7 @@ export function useBirthdayEditor() {
           headers: headers(),
           body: JSON.stringify(body),
         });
+        return pageId;
       } else {
         const res = await fetch(`${API_URL}/birthday-gf-pages`, {
           method: "POST",
@@ -217,28 +218,33 @@ export function useBirthdayEditor() {
           body: JSON.stringify(body),
         });
         const result = await res.json();
-        if (result.success) setPageId(result.data._id);
+        if (result.success) {
+          setPageId(result.data._id);
+          return result.data._id as string;
+        }
+        return null;
       }
     },
     [accessToken, pageId, headers],
   );
 
-  // Direct save (called from EditSheet final step — no PreviewBar)
+  // Direct save — shows PublishSheet after success (called from EditSheet final step)
   const handleManualSave = useCallback(
     async (data: BirthdayData, pw: string) => {
       setSaving(true);
       try {
-        await saveToServer(data, pw);
+        const savedId = await saveToServer(data, pw);
+        if (!savedId) {
+          pushToast({ type: "info", title: "Save failed", message: "Please log in and try again" });
+          return;
+        }
         setContent(data);
         setIsPersonalized(true);
         setShareUrl(null);
         setEditMode(null);
         setPendingContent(null);
-        pushToast({
-          type: "success",
-          title: pw ? "Saved with password!" : "Changes saved!",
-          message: pw ? "Share the password with your friend" : "Ready to publish 🎂",
-        });
+        // Show the publish sheet so the user can publish (payment gate can be added here later)
+        setShowPublishSheet(true);
       } catch {
         pushToast({ type: "info", title: "Save failed", message: "Please try again" });
       } finally {
@@ -367,6 +373,7 @@ export function useBirthdayEditor() {
   }, [pageId, headers, pushToast]);
 
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showPublishSheet, setShowPublishSheet] = useState(false);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -394,6 +401,7 @@ export function useBirthdayEditor() {
     aiName, aiSender, aiPrompt, aiLoading,
     mf, manualStep, pendingContent,
     showShareSheet, setShowShareSheet,
+    showPublishSheet, setShowPublishSheet,
 
     setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Copy, ExternalLink } from "lucide-react";
+import { X } from "lucide-react";
 import type { Toast } from "./types";
 
 interface Props {
@@ -19,7 +19,8 @@ function getToastEmoji(type?: Toast["type"]): string {
   switch (type) {
     case "success": return "🎉";
     case "error":   return "❌";
-    case "info":    return "🎂";
+    case "publish": return "🎂";
+    case "info":    return "ℹ️";
     default:        return "🎂";
   }
 }
@@ -103,47 +104,18 @@ export default function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                   {/* Content */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
-                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700,
+                      fontFamily: CURSIVE, fontSize: 15, fontWeight: 700,
                       color: styles.titleColor, margin: 0, lineHeight: 1.3,
                     }}>
-                      {toast.message}
+                      {toast.title || toast.message}
                     </p>
-
-                    {/* Share URL actions */}
-                    {"shareUrl" in toast && (toast as Toast & { shareUrl?: string }).shareUrl && (
-                      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                        <button
-                          onClick={() => {
-                            const url = (toast as Toast & { shareUrl?: string }).shareUrl;
-                            onCopy?.(url);
-                            onDismiss(toast.id);
-                          }}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 5,
-                            padding: "6px 12px", borderRadius: 10, border: "none",
-                            background: `linear-gradient(135deg, ${TERRACOTTA}, ${BROWN})`,
-                            color: "#fff", fontFamily: CURSIVE, fontSize: 11, fontWeight: 700,
-                            cursor: "pointer",
-                          }}>
-                          <Copy size={11} /> Copy Link
-                        </button>
-                        <button
-                          onClick={() => {
-                            const url = (toast as Toast & { shareUrl?: string }).shareUrl;
-                            if (url) window.open(url, "_blank");
-                            onDismiss(toast.id);
-                          }}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 5,
-                            padding: "6px 12px", borderRadius: 10,
-                            border: `1px solid rgba(173,104,74,0.25)`,
-                            background: "rgba(173,104,74,0.08)",
-                            color: WARM, fontFamily: CURSIVE, fontSize: 11, fontWeight: 700,
-                            cursor: "pointer",
-                          }}>
-                          <ExternalLink size={11} /> Open
-                        </button>
-                      </div>
+                    {toast.message && toast.title && (
+                      <p style={{
+                        fontFamily: CURSIVE, fontSize: 12,
+                        color: styles.msgColor, margin: "3px 0 0", lineHeight: 1.4,
+                      }}>
+                        {toast.message}
+                      </p>
                     )}
                   </div>
 
