@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useLayoutEffect, useMemo, useRef, useCallback, type RefObject } from "react";
 
 const ASSET = "/christan-wedding";
 
@@ -19,6 +19,15 @@ const ORIG = {
   names: 355,
   month: 395, daterow: 412, year: 450, addr: 468,
 };
+
+const INNER_TOP = 25;
+const INNER_H = 559;
+
+/** Portrait mode stretches the inner frame; all other layouts need fixed artboard height or content vanishes below “Join Us”. */
+function restoreDefaultInnerFrame(inner: HTMLElement) {
+  inner.style.top = `${INNER_TOP}px`;
+  inner.style.height = `${INNER_H}px`;
+}
 
 function formatWeddingDate(iso: string) {
   try {
@@ -52,9 +61,17 @@ interface Props {
   weddingDate: string;
   venue: string;
   blessing?: string;
+  /** When set (desktop home hero), scale the card to this element instead of full viewport width */
+  measureRef?: RefObject<HTMLElement | null>;
 }
 
-export default function ChristianInvitationCard({ brideName, groomName, weddingDate, venue }: Props) {
+export default function ChristianInvitationCard({
+  brideName,
+  groomName,
+  weddingDate,
+  venue,
+  measureRef,
+}: Props) {
   const dateInfo = useMemo(() => formatWeddingDate(weddingDate), [weddingDate]);
   const b = brideName.trim() || "Jane";
   const g = groomName.trim() || "Andrew";
@@ -147,6 +164,7 @@ export default function ChristianInvitationCard({ brideName, groomName, weddingD
       const offY = Math.round((vh - CH * s) / 2);
 
       resetMobile(inner);
+      restoreDefaultInnerFrame(inner);
       card.style.width = "";
       card.style.height = "";
       wrap.style.cssText = `width:${vw}px;height:${vh}px;overflow:hidden;position:fixed;top:0;left:0;z-index:30;`;
@@ -158,28 +176,66 @@ export default function ChristianInvitationCard({ brideName, groomName, weddingD
       card.style.boxShadow = "none";
     } else {
       resetMobile(inner);
-      const s = Math.min((vw - 320) / CW, (vh - 48) / CH, 1);
+      restoreDefaultInnerFrame(inner);
+      const sidebarW = vw >= 1024 ? 256 : 0;
+      const gutterX = vw >= 1024 ? 72 : 40;
+      const gutterY = vw >= 1024 ? 80 : 48;
+      const measure = measureRef?.current;
+      const useMeasure = vw >= 1024 && measure && measure.clientWidth > 120;
+      let availW: number;
+      let availH: number;
+      if (useMeasure) {
+        availW = Math.max(280, measure!.clientWidth - 32);
+        const mh = measure!.clientHeight;
+        availH = Math.max(400, mh > 300 ? mh - 32 : vh - gutterY);
+      } else {
+        availW = Math.max(280, vw - sidebarW - gutterX);
+        availH = Math.max(360, vh - gutterY);
+      }
+      /** Allow modest upscale on desktop so type reads like a large invite (first-image feel) */
+      const maxScale = vw >= 1536 ? 1.26 : vw >= 1280 ? 1.18 : vw >= 1024 ? 1.1 : 1;
+      let s = Math.min(availW / CW, availH / CH, maxScale);
+      if (!Number.isFinite(s) || s < 0.2) {
+        s = Math.min(
+          Math.max(280, vw - sidebarW - gutterX) / CW,
+          Math.max(360, vh - gutterY) / CH,
+          maxScale,
+        );
+      }
 
-      wrap.style.cssText = `width:${Math.round(CW * s)}px;height:${Math.round(CH * s)}px;position:relative;margin:0 auto;`;
-      card.style.width = "";
-      card.style.height = "";
+      wrap.style.cssText = `width:${Math.round(CW * s)}px;height:${Math.round(CH * s)}px;position:relative;margin:0 auto;overflow:visible;`;
+      card.style.width = `${CW}px`;
+      card.style.height = `${CH}px`;
       card.style.transform = `scale(${s})`;
       card.style.transformOrigin = "0 0";
       card.style.left = "0";
       card.style.top = "0";
-      card.style.borderRadius = "2px";
-      card.style.boxShadow = "0 20px 50px rgba(84,107,87,0.13), 0 6px 16px rgba(84,107,87,0.07)";
+      card.style.borderRadius = vw >= 1024 ? "8px" : "2px";
+      card.style.boxShadow = vw >= 1024
+        ? "0 32px 64px -16px rgba(45,62,50,0.14), 0 16px 32px -12px rgba(84,107,87,0.12), 0 0 0 1px rgba(84,107,87,0.07), inset 0 1px 0 rgba(255,255,255,0.85)"
+        : "0 20px 50px rgba(84,107,87,0.13), 0 6px 16px rgba(84,107,87,0.07)";
     }
-  }, []);
+  }, [measureRef]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     fit();
     window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, [fit]);
+    const el = measureRef?.current;
+    const ro = el ? new ResizeObserver(() => requestAnimationFrame(fit)) : null;
+    if (el && ro) ro.observe(el);
+    const t = requestAnimationFrame(() => fit());
+    return () => {
+      window.removeEventListener("resize", fit);
+      ro?.disconnect();
+      cancelAnimationFrame(t);
+    };
+  }, [fit, measureRef]);
 
   return (
-    <div ref={wrapRef}>
+    <div
+      ref={wrapRef}
+      className="relative mx-auto shrink-0 lg:min-h-[520px] lg:min-w-[280px]"
+    >
       <div
         ref={cardRef}
         style={{
@@ -194,9 +250,10 @@ export default function ChristianInvitationCard({ brideName, groomName, weddingD
           ref={innerRef}
           style={{
             position: "absolute",
-            left: 18, top: 25,
-            width: 397, height: 559,
+            left: 18, top: INNER_TOP,
+            width: 397, height: INNER_H,
             overflow: "visible",
+            isolation: "isolate",
           }}
         >
           {/* Watercolor stains */}
@@ -321,8 +378,6 @@ export default function ChristianInvitationCard({ brideName, groomName, weddingD
 }
 
 function resetMobile(inner: HTMLElement) {
-  inner.style.top = "";
-  inner.style.height = "";
   const sels = ["joinus", "sub", "couple", "rings", "accent-l", "accent-r", "names", "month", "daterow", "year", "addr"];
   sels.forEach((s) => {
     const e = inner.querySelector<HTMLElement>(`[data-el='${s}']`);

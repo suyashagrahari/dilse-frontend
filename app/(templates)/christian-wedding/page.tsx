@@ -173,19 +173,24 @@ function ChristianWeddingPage() {
       <PublishingOverlay visible={editor.publishing} />
       <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
 
-      {/* Fixed page chrome — stays in place while content scrolls */}
-      {editor.tab !== "home" && (
-        <div className="pointer-events-none absolute inset-0 z-[1] lg:ml-64" aria-hidden>
-          <div className="relative h-full w-full">
-            <ChristianPageChrome />
-          </div>
+      {/* Fixed page chrome (corners, stains, gradients) — all tabs including home on desktop */}
+      <div className="pointer-events-none absolute inset-0 z-[1] lg:ml-64" aria-hidden>
+        <div className="relative h-full min-h-[100dvh] w-full">
+          <ChristianPageChrome />
         </div>
-      )}
+      </div>
 
       <div className="no-scrollbar relative z-[2] h-full overflow-y-auto lg:ml-64">
         <AnimatePresence mode="wait">
           {editor.tab === "home" && (
-            <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+            <motion.div
+              key="home"
+              className="min-h-full overflow-visible"
+              variants={PAGE_VARIANTS}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
               <HomeSection data={editor.content} />
             </motion.div>
           )}

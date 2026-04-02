@@ -4,12 +4,13 @@ import { memo, useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 
-const TARGET_VOLUME = 0.14;
-const FADE_STEP = 0.004;
-const FADE_INTERVAL = 40;
+/** Soft enough to sit under copy; hymn/instrumental reads louder than light ambient pads. */
+const TARGET_VOLUME = 0.5;
+const FADE_STEP = 0.0035;
+const FADE_INTERVAL = 45;
 
-/** Reuses the same ambient track as the Shaadi card editor (file lives under /public/shaadi-card/music/). */
-const AUDIO_SRC = "/shaadi-card/music/ratein.mp3";
+/** Christian wedding template — /public/christan-wedding/BeThouMyVision.mp3 */
+const AUDIO_SRC = "/christan-wedding/BeThouMyVision.mp3";
 
 interface Props {
   shouldPlay: boolean;
@@ -114,10 +115,8 @@ const ChristianBackgroundMusic = memo(function ChristianBackgroundMusic({
       transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed z-[60] flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 z-[60] flex h-9 w-9 items-center justify-center rounded-full transition-colors lg:bottom-6 lg:right-6"
       style={{
-        bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
-        right: 16,
         background: "rgba(84,107,87,0.12)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, Heart, CalendarDays, Image as ImageIcon, Flower2,
   Lock, Eye, EyeOff, ShieldAlert, Loader2,
-  Sparkles,
+  Sparkles, Music2, VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import NextImage from "next/image";
@@ -105,6 +105,195 @@ function mapData(d: Record<string, unknown>): ShaadiData {
   };
 }
 
+/* ─── Audio Entry Gate ─────────────────────────────────────────────────── */
+function AudioEntryGate({
+  brideName,
+  groomName,
+  weddingDate,
+  venue,
+  onEnter,
+}: {
+  brideName: string;
+  groomName: string;
+  weddingDate: string;
+  venue: string;
+  onEnter: (withMusic: boolean) => void;
+}) {
+  const date = (() => {
+    try {
+      const d = new Date(weddingDate);
+      if (isNaN(d.getTime())) throw new Error();
+      return {
+        day: d.getDate(),
+        month: d.toLocaleString("en-US", { month: "long" }),
+        year: d.getFullYear(),
+        weekday: d.toLocaleString("en-US", { weekday: "long" }),
+      };
+    } catch {
+      return { day: 22, month: "July", year: 2026, weekday: "Saturday" };
+    }
+  })();
+  const venueLine = (venue || "").split(",")[0].trim();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 z-[500] flex flex-col items-center justify-center px-5"
+      style={{ background: "linear-gradient(160deg, #f5f3ee 0%, #eceae3 60%, #e8e6de 100%)" }}
+    >
+      {/* Faint corner brackets */}
+      {[
+        { top: 20, left: 20, rotate: "0deg" },
+        { top: 20, right: 20, rotate: "90deg" },
+        { bottom: 20, right: 20, rotate: "180deg" },
+        { bottom: 20, left: 20, rotate: "270deg" },
+      ].map((pos, i) => (
+        <svg key={i} width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden
+          style={{ position: "absolute", ...pos, opacity: 0.18 }}>
+          <path d="M2 30 L2 2 L30 2" stroke="#546B57" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        </svg>
+      ))}
+
+      {/* Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full flex flex-col items-center text-center"
+        style={{ maxWidth: 340 }}
+      >
+        {/* Top ornament */}
+        <svg width="100" height="24" viewBox="0 0 100 24" fill="none" aria-hidden style={{ marginBottom: 20, opacity: 0.6 }}>
+          <path d="M50 12 C40 5 28 3 16 7" stroke="#7A9B7E" strokeWidth="1" strokeLinecap="round" />
+          <path d="M50 12 C60 5 72 3 84 7" stroke="#7A9B7E" strokeWidth="1" strokeLinecap="round" />
+          <ellipse cx="20" cy="6" rx="5" ry="3" transform="rotate(-20 20 6)" fill="#A8C4AC" opacity="0.6" />
+          <ellipse cx="80" cy="6" rx="5" ry="3" transform="rotate(20 80 6)" fill="#A8C4AC" opacity="0.6" />
+          <circle cx="50" cy="12" r="2" fill="#7A9B7E" opacity="0.8" />
+        </svg>
+
+        {/* "You're invited" label */}
+        <span style={{
+          fontFamily: F_CINZEL,
+          fontSize: "0.55rem",
+          fontWeight: 700,
+          letterSpacing: "0.36em",
+          textTransform: "uppercase",
+          color: "#7A9B7E",
+          marginBottom: 18,
+          display: "block",
+        }}>
+          You&apos;re Invited
+        </span>
+
+        {/* Names */}
+        <span style={{
+          fontFamily: F_DANCING,
+          fontSize: "4.5rem",
+          color: "#3D5441",
+          lineHeight: 1.0,
+          display: "block",
+        }}>
+          {brideName || "Jane"}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "8px 0 4px" }}>
+          <div style={{ height: 1, width: 44, background: "linear-gradient(90deg, transparent, #A8C4AC)" }} aria-hidden />
+          <span style={{ fontFamily: F_DANCING, fontSize: "1.8rem", color: "#7A9B7E", lineHeight: 1 }}>&amp;</span>
+          <div style={{ height: 1, width: 44, background: "linear-gradient(90deg, #A8C4AC, transparent)" }} aria-hidden />
+        </div>
+        <span style={{
+          fontFamily: F_DANCING,
+          fontSize: "4.5rem",
+          color: "#3D5441",
+          lineHeight: 1.0,
+          display: "block",
+          marginBottom: 24,
+        }}>
+          {groomName || "Andrew"}
+        </span>
+
+        {/* Ornament divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 22, width: "100%" }}>
+          <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, transparent, #A8C4AC60)" }} aria-hidden />
+          <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#A8C4AC" }} aria-hidden />
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#546B57", opacity: 0.5 }} aria-hidden />
+          <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#A8C4AC" }} aria-hidden />
+          <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, #A8C4AC60, transparent)" }} aria-hidden />
+        </div>
+
+        {/* Date + venue */}
+        <span style={{
+          fontFamily: F_CINZEL,
+          fontSize: "0.6rem",
+          fontWeight: 600,
+          letterSpacing: "0.24em",
+          textTransform: "uppercase",
+          color: "#7A9B7E",
+          marginBottom: 4,
+          display: "block",
+        }}>
+          {date.weekday}, {date.month} {date.day}, {date.year}
+        </span>
+        {venueLine && (
+          <span style={{
+            fontFamily: "var(--font-lora), Lora, serif",
+            fontSize: "0.85rem",
+            color: "#546B57",
+            opacity: 0.75,
+            marginBottom: 36,
+            display: "block",
+          }}>
+            {venueLine}
+          </span>
+        )}
+
+        {/* Action buttons */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onEnter(true)}
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-white font-bold text-sm"
+            style={{
+              background: "linear-gradient(135deg, #546B57, #7A9B7E)",
+              fontFamily: F_CINZEL,
+              letterSpacing: "0.08em",
+              boxShadow: "0 8px 24px #546B5730",
+            }}
+          >
+            <Music2 size={16} />
+            Enter with Music
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onEnter(false)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium"
+            style={{
+              background: "transparent",
+              border: "1px solid #A8C4AC80",
+              fontFamily: F_CINZEL,
+              letterSpacing: "0.08em",
+              color: "#7A9B7E",
+            }}
+          >
+            <VolumeX size={15} />
+            Continue without Music
+          </motion.button>
+        </div>
+
+        {/* Bottom ornament */}
+        <svg width="80" height="16" viewBox="0 0 80 16" fill="none" aria-hidden style={{ marginTop: 28, opacity: 0.35 }}>
+          <line x1="0" y1="8" x2="32" y2="8" stroke="#7A9B7E" strokeWidth="0.8" />
+          <circle cx="40" cy="8" r="3" fill="none" stroke="#7A9B7E" strokeWidth="1" />
+          <line x1="48" y1="8" x2="80" y2="8" stroke="#7A9B7E" strokeWidth="0.8" />
+        </svg>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 interface ChristianWeddingViewerProps {
   rawData: Record<string, unknown>;
   shareId: string;
@@ -114,6 +303,14 @@ interface ChristianWeddingViewerProps {
 export default function ChristianWeddingViewer({ rawData, shareId, hasPassword }: ChristianWeddingViewerProps) {
   const [tab, setTab] = useState<TabId>("home");
   const [data, setData] = useState<ShaadiData>(mapData(rawData));
+
+  const [entered, setEntered] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(false);
+
+  const handleEnter = useCallback((withMusic: boolean) => {
+    setMusicEnabled(withMusic);
+    setEntered(true);
+  }, []);
 
   const [locked, setLocked] = useState(hasPassword);
   const [pw, setPw] = useState("");
@@ -146,6 +343,22 @@ export default function ChristianWeddingViewer({ rawData, shareId, hasPassword }
     setData((prev) => ({ ...prev, wishes }));
   }, []);
 
+
+  if (!entered) {
+    return (
+      <div className={FONT_VARS}>
+        <AnimatePresence>
+          <AudioEntryGate
+            brideName={data.brideName}
+            groomName={data.groomName}
+            weddingDate={data.weddingDate}
+            venue={data.venue}
+            onEnter={handleEnter}
+          />
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   if (locked) {
     return (
@@ -233,7 +446,7 @@ export default function ChristianWeddingViewer({ rawData, shareId, hasPassword }
       <div className="relative overflow-hidden" style={{ background: "#fcfcfa", height: "100dvh" }}>
 
         <Suspense fallback={null}>
-          <ChristianBackgroundMusic shouldPlay={true} />
+          <ChristianBackgroundMusic shouldPlay={musicEnabled} />
         </Suspense>
 
         {/* Company branding — top right */}

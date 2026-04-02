@@ -11,7 +11,6 @@ import { TABS, type TabId } from "./types";
 const C_ACCENT = "#546B57";
 const C_MED    = "#7A9B7E";
 const C_DARK   = "#2D3E32";
-const C_BG     = "#FDF5F0";
 const C_CARD   = "#FFFAF8";
 
 const TAB_ICONS: Record<TabId, typeof Home> = {
@@ -52,8 +51,8 @@ export default memo(function DesktopSidebar({
       className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 z-40"
       style={{
         background: C_CARD,
-        borderRight: `1px solid ${C_MED}25`,
-        boxShadow: "4px 0 24px rgba(109,43,59,0.06)",
+        borderRight: `1px solid ${C_MED}22`,
+        boxShadow: "4px 0 32px rgba(45,62,50,0.05), 1px 0 0 rgba(255,255,255,0.6) inset",
       }}
     >
       {/* Header */}
@@ -75,8 +74,8 @@ export default memo(function DesktopSidebar({
         <h2 className="text-base font-bold leading-tight" style={{ color: C_DARK }}>
           {coupleNames.bride || "Bride"} &amp; {coupleNames.groom || "Groom"}
         </h2>
-        <p className="text-[11px] mt-0.5" style={{ color: C_MED, fontFamily: "'Noto Serif Devanagari', serif" }}>
-          शुभ विवाह ✨
+        <p className="text-[10px] mt-1 font-medium uppercase tracking-[0.22em]" style={{ color: C_MED }}>
+          Faith · Love · Joy
         </p>
       </div>
 
@@ -103,7 +102,7 @@ export default memo(function DesktopSidebar({
               }
             >
               <Icon size={17} strokeWidth={active ? 2.2 : 1.5} />
-              <span>{emoji} {label}</span>
+              <span>{label}</span>
               {active && (
                 <motion.div
                   layoutId="sc-sidebar-dot"
