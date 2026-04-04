@@ -65,9 +65,10 @@ export default function HomePage() {
             box-shadow: none !important;
           }
 
+          /* Main shell already reserves ~58px for fixed MobileTopBar — keep hero top padding minimal */
           .hero-section {
             min-height: auto !important;
-            padding-top: 52px !important;
+            padding-top: 10px !important;
             padding-bottom: 34px !important;
           }
 

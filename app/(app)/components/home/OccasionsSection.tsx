@@ -1,18 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { OCCASIONS } from "./data";
 
-const OCCASION_ROUTES: Record<string, string> = {
-  'Weddings & Shaadi': '/wedding-shaadi',
-  'Birthdays': '/birthday',
-  "Valentine's Day": '/valentine',
-  'Holi': '/holi',
-  'Eid Mubarak': '/eid-mubarak',
-  'Reception': '/reception',
-};
+type OccasionCard = (typeof OCCASIONS)[number];
 
 const stagger = {
   hidden: {},
@@ -33,7 +27,7 @@ function OccIcon({ type, size = 18, color = '#c9a84c' }: { type: string; size?: 
   return <svg {...c}><path d="M12 3.8l1.5 3.6 3.6 1.5-3.6 1.5-1.5 3.6-1.5-3.6-3.6-1.5 3.6-1.5L12 3.8z" /></svg>;
 }
 
-function OccCard({ occ, onClick }: { occ: typeof OCCASIONS[0]; onClick: () => void }) {
+function OccCard({ occ, onClick }: { occ: OccasionCard; onClick: () => void }) {
   const [hov, setHov] = useState(false);
   return (
     <div className="occ-card-wrap" style={{ flexShrink: 0, width: 200, cursor: 'pointer' }} onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
@@ -44,8 +38,15 @@ function OccCard({ occ, onClick }: { occ: typeof OCCASIONS[0]; onClick: () => vo
         boxShadow: hov ? '0 28px 72px rgba(0,0,0,0.6),0 0 0 1px rgba(201,168,76,0.2)' : '0 10px 36px rgba(0,0,0,0.4)',
         transition: 'border-color 0.35s,box-shadow 0.35s',
       }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={occ.img} alt={occ.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: hov ? 'scale(1.09)' : 'scale(1)', transition: 'transform 0.85s cubic-bezier(0.22,1,0.36,1)' }} />
+        <Image
+          src={occ.img}
+          alt={occ.name}
+          width={400}
+          height={600}
+          className="h-full w-full object-cover"
+          style={{ display: 'block', transform: hov ? 'scale(1.09)' : 'scale(1)', transition: 'transform 0.85s cubic-bezier(0.22,1,0.36,1)' }}
+          sizes="200px"
+        />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(20,2,2,0.96) 0%,rgba(20,2,2,0.38) 48%,transparent 100%)' }} />
         {hov && <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.9),transparent)' }} />}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px', textAlign: 'center' }}>
@@ -248,7 +249,7 @@ export default function OccasionsSection() {
         >
           <div style={{ display: 'flex', gap: 20, width: 'max-content' }}>
             {(isMobile ? OCCASIONS : [...OCCASIONS, ...OCCASIONS]).map((o, i) => (
-              <OccCard key={`${o.name}-${i}`} occ={o} onClick={() => router.push(OCCASION_ROUTES[o.name] || '/templates')} />
+              <OccCard key={`${o.href}-${i}`} occ={o} onClick={() => router.push(o.href)} />
             ))}
           </div>
         </div>
@@ -276,7 +277,7 @@ export default function OccasionsSection() {
           VIEW ALL TEMPLATES →
         </motion.button>
         <p className="occ-cta-sub" style={{ marginTop: 14, fontSize: 12, color: 'rgba(245,237,230,0.32)', letterSpacing: '0.06em' }}>
-          12+ occasions · New templates added regularly
+          {OCCASIONS.length} curated templates · New designs added regularly
         </p>
       </motion.div>
     </section>
