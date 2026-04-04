@@ -199,6 +199,7 @@ export function getTemplateMeta(slug: string): Metadata {
 // Maps templateType (as returned by the API) → metadata
 const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   birthday:    { emoji: "🎂", label: "Birthday" },
+  "birthday-gf": { emoji: "🎂", label: "Birthday" },
   valentine:   { emoji: "💝", label: "Valentine's" },
   anniversary: { emoji: "💍", label: "Anniversary" },
   wedding:     { emoji: "💍", label: "Wedding" },
@@ -208,15 +209,17 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   missyou:     { emoji: "💭", label: "Miss You" },
   sorry:       { emoji: "🥺", label: "Sorry" },
   love:        { emoji: "💕", label: "Love" },
+  shaadi:      { emoji: "💍", label: "Wedding" },
   gift:        { emoji: "🎁", label: "Gift" },
 };
 
 // Maps templateType → local cover image path (must match /public assets)
 const TEMPLATE_COVER_IMAGES: Record<string, string> = {
-  wedding:   "/assets/marriage/weeding.png",
-  reception: "/assets/Reception/reception.png",
-  eid:       "/assets/Eid/hero_eid.jpeg",
-  holi:      "/assets/Holi/hero_holi.png",
+  "birthday-gf": "/assets/Birthday1/birthdaytemplate1.png",
+  wedding:        "/assets/marriage/weeding.png",
+  reception:      "/assets/Reception/reception.png",
+  eid:            "/assets/Eid/hero_eid.jpeg",
+  holi:           "/assets/Holi/hero_holi.png",
 };
 
 interface SharePageSeo {
@@ -239,8 +242,12 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
     ? `${SITE_URL}${coverPath}`
     : `${SITE_URL}/api/og?type=${encodeURIComponent(templateType)}&recipient=${encodeURIComponent(recipientName)}&sender=${encodeURIComponent(senderName)}`;
 
+  // Portrait templates (birthday-gf) use their real image dimensions
+  const PORTRAIT_TEMPLATES = new Set(["birthday-gf"]);
   const ogImageMeta = coverPath
-    ? { url: ogImageUrl, width: 1280, height: 853, alt: title }
+    ? PORTRAIT_TEMPLATES.has(templateType)
+      ? { url: ogImageUrl, width: 630, height: 1122, alt: title }
+      : { url: ogImageUrl, width: 1280, height: 853, alt: title }
     : { url: ogImageUrl, width: 1200, height: 630, alt: title };
 
   return buildMeta({
