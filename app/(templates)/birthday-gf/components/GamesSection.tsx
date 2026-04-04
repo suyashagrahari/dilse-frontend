@@ -138,6 +138,12 @@ const FILTER_TABS: { id: FilterType; label: string; emoji: string }[] = [
 
 function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: HistoryEntry[]; quizRecords: QuizAttemptRecord[]; quizAnswers?: QuizAnswerRecord[] }) {
   const [filter, setFilter] = useState<FilterType>("all");
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const toggleExpand = (key: string) => setExpandedKeys(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
 
   const truthCount = useMemo(() => entries.filter(e => e.type === "truth").length, [entries]);
   const dareCount  = useMemo(() => entries.filter(e => e.type === "dare").length,  [entries]);
@@ -238,89 +244,172 @@ function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: Hist
               if (item.kind === "tod") {
                 const isTruth = item.entry.type === "truth";
                 const c = isTruth
-                  ? { accent: BROWN, bg: "rgba(93,63,49,0.07)", border: "rgba(93,63,49,0.18)", bar: "rgba(93,63,49,0.50)" }
-                  : { accent: TERRACOTTA, bg: "rgba(173,104,74,0.07)", border: "rgba(173,104,74,0.20)", bar: "rgba(173,104,74,0.55)" };
+                  ? { accent: BROWN, bg: "rgba(93,63,49,0.05)", border: "rgba(93,63,49,0.16)", bar: "rgba(93,63,49,0.45)" }
+                  : { accent: TERRACOTTA, bg: "rgba(173,104,74,0.05)", border: "rgba(173,104,74,0.18)", bar: "rgba(173,104,74,0.50)" };
+                const key = `t-${item.entry.id}`;
+                const isOpen = expandedKeys.has(key);
                 return (
-                  <motion.div key={`t-${item.entry.id}`} layout
-                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ delay: i * 0.03, type: "spring", stiffness: 320, damping: 26 }}
-                    style={{ borderRadius: 16, border: `1px solid ${c.border}`, background: c.bg, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "16px 0 0 16px", background: c.bar }} />
-                    <div style={{ paddingLeft: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: c.accent, background: `${c.accent}18`, padding: "3px 10px", borderRadius: 999 }}>
-                          {isTruth ? "💭 Truth" : "🎲 Dare"}
-                        </span>
-                        {item.entry.savedAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.40)" }}>{formatTime(item.entry.savedAt)}</span>}
+                  <motion.div key={key} layout
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ delay: i * 0.025, type: "spring", stiffness: 340, damping: 28 }}
+                    style={{ borderRadius: 14, border: `1px solid ${c.border}`, background: c.bg, position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: c.bar }} />
+                    {/* Collapsed header */}
+                    <button onClick={() => toggleExpand(key)}
+                      style={{
+                        width: "100%", background: "none", border: "none", cursor: "pointer",
+                        padding: "10px 12px 10px 18px", display: "flex", alignItems: "center", gap: 10, textAlign: "left",
+                      }}>
+                      <span style={{
+                        flexShrink: 0, fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+                        textTransform: "uppercase" as const, letterSpacing: "0.08em",
+                        color: c.accent, background: `${c.accent}16`, padding: "3px 9px", borderRadius: 999,
+                      }}>
+                        {isTruth ? "💭 Truth" : "🎲 Dare"}
+                      </span>
+                      <span style={{
+                        flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM,
+                        lineHeight: 1.45, overflow: "hidden", display: "-webkit-box",
+                        WebkitLineClamp: isOpen ? undefined : 2,
+                        WebkitBoxOrient: "vertical" as const,
+                      }}>
+                        {item.entry.prompt}
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        {item.entry.savedAt && (
+                          <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>
+                            {formatTime(item.entry.savedAt)}
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: 10, color: "rgba(108,74,46,0.40)",
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s", display: "inline-block",
+                        }}>▼</span>
                       </div>
-                      <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700, color: WARM, margin: "0 0 6px", lineHeight: 1.5 }}>{item.entry.prompt}</p>
-                      <div style={{ height: 1, background: `${c.accent}14`, margin: "8px 0" }} />
-                      <p style={{ fontFamily: SERIF, fontSize: 13, fontStyle: "italic", color: "rgba(90,60,35,0.85)", margin: 0, lineHeight: 1.6 }}>
-                        {isTruth ? `"${item.entry.answer}"` : `✓ ${item.entry.answer}`}
-                      </p>
-                      {item.entry.mediaUrl && isAudioUrl(item.entry.mediaUrl) && (
-                        <div style={{ marginTop: 10 }}>
-                          <MiniAudioPlayer
-                            src={item.entry.mediaUrl}
-                            accentColor={c.accent}
-                            bgColor={`${c.accent}08`}
-                            borderColor={c.border}
-                          />
-                        </div>
+                    </button>
+                    {/* Expanded answer */}
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: "easeInOut" }}
+                          style={{ overflow: "hidden" }}>
+                          <div style={{ borderTop: `1px solid ${c.border}`, padding: "10px 18px 12px" }}>
+                            <p style={{ fontFamily: SERIF, fontSize: 13, fontStyle: "italic", color: "rgba(80,55,30,0.85)", margin: 0, lineHeight: 1.65 }}>
+                              {isTruth ? `"${item.entry.answer}"` : `✓ ${item.entry.answer}`}
+                            </p>
+                            {item.entry.mediaUrl && isAudioUrl(item.entry.mediaUrl) && (
+                              <div style={{ marginTop: 10 }}>
+                                <MiniAudioPlayer src={item.entry.mediaUrl} accentColor={c.accent} bgColor={`${c.accent}08`} borderColor={c.border} />
+                              </div>
+                            )}
+                            {item.entry.mediaUrl && isImageUrl(item.entry.mediaUrl) && (
+                              <div style={{ marginTop: 8, borderRadius: 10, overflow: "hidden" }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={item.entry.mediaUrl} alt="response" loading="lazy"
+                                  style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }} />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
                       )}
-                      {item.entry.mediaUrl && isImageUrl(item.entry.mediaUrl) && (
-                        <div style={{ marginTop: 8, borderRadius: 10, overflow: "hidden" }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={item.entry.mediaUrl}
-                            alt="response"
-                            loading="lazy"
-                            style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    </AnimatePresence>
                   </motion.div>
                 );
               } else if (item.kind === "quiz-ans") {
                 const isCorrect = item.answer.isCorrect;
                 const accent = isCorrect ? "rgb(55,125,75)" : TERRACOTTA;
-                const bg = isCorrect ? "rgba(55,160,95,0.06)" : "rgba(173,104,74,0.07)";
-                const border = isCorrect ? "rgba(55,125,75,0.20)" : "rgba(173,104,74,0.22)";
-                const bar = isCorrect ? "rgba(55,125,75,0.50)" : "rgba(173,104,74,0.55)";
+                const bg = isCorrect ? "rgba(55,160,95,0.05)" : "rgba(173,104,74,0.05)";
+                const border = isCorrect ? "rgba(55,125,75,0.18)" : "rgba(173,104,74,0.20)";
+                const bar = isCorrect ? "rgba(55,125,75,0.45)" : "rgba(173,104,74,0.50)";
+                const key = `qa-${item.idx}`;
+                const isOpen = expandedKeys.has(key);
                 return (
-                  <motion.div key={`qa-${item.idx}`} layout
-                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ delay: i * 0.03, type: "spring", stiffness: 320, damping: 26 }}
-                    style={{ borderRadius: 16, border: `1px solid ${border}`, background: bg, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "16px 0 0 16px", background: bar }} />
-                    <div style={{ paddingLeft: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: accent, background: `${accent}18`, padding: "3px 10px", borderRadius: 999 }}>
-                          {isCorrect ? "✅ Correct" : "❌ Wrong"}
-                        </span>
-                        {item.answer.answeredAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.40)" }}>{formatTime(item.answer.answeredAt)}</span>}
+                  <motion.div key={key} layout
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ delay: i * 0.025, type: "spring", stiffness: 340, damping: 28 }}
+                    style={{ borderRadius: 14, border: `1px solid ${border}`, background: bg, position: "relative", overflow: "hidden" }}>
+                    {/* Left accent bar */}
+                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: bar }} />
+                    {/* Collapsed header — always visible, click to expand */}
+                    <button onClick={() => toggleExpand(key)}
+                      style={{
+                        width: "100%", background: "none", border: "none", cursor: "pointer",
+                        padding: "10px 12px 10px 18px", display: "flex", alignItems: "center", gap: 10, textAlign: "left",
+                      }}>
+                      {/* Correct/Wrong badge */}
+                      <span style={{
+                        flexShrink: 0, fontSize: 14,
+                        width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                        background: isCorrect ? "rgba(55,125,75,0.14)" : "rgba(173,104,74,0.14)",
+                      }}>
+                        {isCorrect ? "✓" : "✗"}
+                      </span>
+                      {/* Question text */}
+                      <span style={{
+                        flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM,
+                        lineHeight: 1.45, overflow: "hidden", display: "-webkit-box",
+                        WebkitLineClamp: isOpen ? undefined : 2,
+                        WebkitBoxOrient: "vertical" as const,
+                      }}>
+                        {item.answer.question}
+                      </span>
+                      {/* Time + chevron */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        {item.answer.answeredAt && (
+                          <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>
+                            {formatTime(item.answer.answeredAt)}
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: 10, color: "rgba(108,74,46,0.40)",
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                          display: "inline-block",
+                        }}>▼</span>
                       </div>
-                      <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700, color: WARM, margin: "0 0 8px", lineHeight: 1.5 }}>{item.answer.question}</p>
-                      <div style={{ height: 1, background: `${accent}14`, margin: "6px 0 8px" }} />
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        {item.answer.options.map((opt, oi) => {
-                          const isSelected = oi === item.answer.selected;
-                          const isRight = oi === item.answer.correct;
-                          let optBg = "transparent";
-                          let optColor = "rgba(90,60,35,0.45)";
-                          let optBorder = "transparent";
-                          if (isRight) { optBg = "rgba(55,125,75,0.10)"; optColor = "rgb(55,125,75)"; optBorder = "rgba(55,125,75,0.30)"; }
-                          else if (isSelected && !isRight) { optBg = "rgba(173,104,74,0.10)"; optColor = TERRACOTTA; optBorder = "rgba(173,104,74,0.30)"; }
-                          return (
-                            <div key={oi} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 8, background: optBg, border: `1px solid ${optBorder}` }}>
-                              <span style={{ fontSize: 11, flexShrink: 0 }}>{isRight ? "✓" : isSelected ? "✗" : "·"}</span>
-                              <span style={{ fontFamily: SERIF, fontSize: 12, color: optColor, lineHeight: 1.4 }}>{opt}</span>
+                    </button>
+                    {/* Expanded answer detail */}
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: "easeInOut" }}
+                          style={{ overflow: "hidden" }}>
+                          <div style={{ borderTop: `1px solid ${border}`, padding: "10px 18px 12px" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                              {item.answer.options.map((opt, oi) => {
+                                const isSelected = oi === item.answer.selected;
+                                const isRight = oi === item.answer.correct;
+                                let optBg = "transparent";
+                                let optColor = "rgba(90,60,35,0.42)";
+                                let optWeight = 400;
+                                if (isRight) { optBg = "rgba(55,125,75,0.10)"; optColor = "rgb(45,115,65)"; optWeight = 700; }
+                                else if (isSelected && !isRight) { optBg = "rgba(173,104,74,0.10)"; optColor = TERRACOTTA; optWeight = 600; }
+                                return (
+                                  <div key={oi} style={{
+                                    display: "flex", alignItems: "center", gap: 8,
+                                    padding: "6px 10px", borderRadius: 9, background: optBg,
+                                  }}>
+                                    <span style={{ fontSize: 12, flexShrink: 0, color: optColor, fontWeight: 700 }}>
+                                      {isRight ? "✓" : isSelected ? "✗" : "·"}
+                                    </span>
+                                    <span style={{ fontFamily: SERIF, fontSize: 13, color: optColor, fontWeight: optWeight, lineHeight: 1.4 }}>
+                                      {opt}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 );
               } else {
