@@ -136,13 +136,63 @@ const FILTER_TABS: { id: FilterType; label: string; emoji: string }[] = [
   { id: "quiz",  label: "Quiz",  emoji: "🏆" },
 ];
 
+function QuizAnswerCard({ answer, idx, delay }: { answer: QuizAnswerRecord; idx: number; delay: number }) {
+  const [open, setOpen] = useState(false);
+  const isCorrect = answer.isCorrect;
+  const accent = isCorrect ? "rgb(55,125,75)" : TERRACOTTA;
+  const bg = isCorrect ? "rgba(55,160,95,0.05)" : "rgba(173,104,74,0.05)";
+  const border = isCorrect ? "rgba(55,125,75,0.18)" : "rgba(173,104,74,0.20)";
+  const bar = isCorrect ? "rgba(55,125,75,0.45)" : "rgba(173,104,74,0.50)";
+  return (
+    <motion.div layout key={`qa-${idx}`}
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: "spring", stiffness: 340, damping: 28 }}
+      style={{ borderRadius: 12, border: `1px solid ${border}`, background: bg, position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "12px 0 0 12px", background: bar }} />
+      <button onClick={() => setOpen(v => !v)} style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: "9px 12px 9px 16px", display: "flex", alignItems: "center", gap: 10, textAlign: "left" }}>
+        <span style={{ flexShrink: 0, width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: isCorrect ? "rgba(55,125,75,0.14)" : "rgba(173,104,74,0.14)", color: accent }}>
+          {isCorrect ? "✓" : "✗"}
+        </span>
+        <span style={{ flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM, lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: open ? undefined : 2, WebkitBoxOrient: "vertical" as const }}>
+          {answer.question}
+        </span>
+        <span style={{ fontSize: 9, color: "rgba(108,74,46,0.38)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.18s", display: "inline-block", flexShrink: 0 }}>▼</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }} style={{ overflow: "hidden" }}>
+            <div style={{ borderTop: `1px solid ${border}`, padding: "8px 16px 10px" }}>
+              {answer.options.map((opt, oi) => {
+                const isSel = oi === answer.selected;
+                const isRight = oi === answer.correct;
+                let optBg = "transparent"; let optColor = "rgba(90,60,35,0.38)"; let w = 400;
+                if (isRight) { optBg = "rgba(55,125,75,0.09)"; optColor = "rgb(45,115,65)"; w = 700; }
+                else if (isSel && !isRight) { optBg = "rgba(173,104,74,0.09)"; optColor = TERRACOTTA; w = 600; }
+                return (
+                  <div key={oi} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 8, background: optBg }}>
+                    <span style={{ fontSize: 11, color: optColor, fontWeight: 700, flexShrink: 0 }}>{isRight ? "✓" : isSel ? "✗" : "·"}</span>
+                    <span style={{ fontFamily: SERIF, fontSize: 12, color: optColor, fontWeight: w, lineHeight: 1.4 }}>{opt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: HistoryEntry[]; quizRecords: QuizAttemptRecord[]; quizAnswers?: QuizAnswerRecord[] }) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [expandedAttempts, setExpandedAttempts] = useState<Set<number>>(new Set());
+
   const toggleExpand = (key: string) => setExpandedKeys(prev => {
-    const next = new Set(prev);
-    if (next.has(key)) next.delete(key); else next.add(key);
-    return next;
+    const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next;
+  });
+  const toggleAttempt = (idx: number) => setExpandedAttempts(prev => {
+    const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next;
   });
 
   const truthCount = useMemo(() => entries.filter(e => e.type === "truth").length, [entries]);
@@ -153,61 +203,44 @@ function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: Hist
     return `${best.score}/${best.total}`;
   }, [quizRecords]);
 
-  const total = entries.length + quizRecords.length + quizAnswers.length;
+  // Group quiz answers by session (each attempt.total answers belong to one session)
+  const quizSessions = useMemo(() => {
+    const sessions: QuizAnswerRecord[][] = [];
+    let offset = 0;
+    quizRecords.forEach(attempt => {
+      sessions.push(quizAnswers.slice(offset, offset + attempt.total));
+      offset += attempt.total;
+    });
+    return sessions;
+  }, [quizAnswers, quizRecords]);
 
-  if (total === 0) {
+  const total = entries.length + quizRecords.length;
+  if (total === 0 && quizAnswers.length === 0) {
     return (
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        style={{ textAlign: "center", padding: "36px 16px" }}>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center", padding: "36px 16px" }}>
         <span style={{ fontSize: 52, display: "block", marginBottom: 12 }}>🎮</span>
-        <p style={{ fontFamily: CURSIVE, fontSize: 22, color: WARM, margin: "0 0 8px" }}>
-          No history yet
-        </p>
+        <p style={{ fontFamily: CURSIVE, fontSize: 22, color: WARM, margin: "0 0 8px" }}>No history yet</p>
         <p style={{ fontFamily: SERIF, fontSize: 14, color: "rgba(108,74,46,0.55)", margin: 0, lineHeight: 1.6 }}>
-          Play some Birthday Truth or Dare and Quizzes — your story will appear here 🎂
+          Play Birthday Truth or Dare and Quizzes — your story appears here 🎂
         </p>
       </motion.div>
     );
   }
 
-  type TodItem  = { kind: "tod";  entry: HistoryEntry };
-  type QuizItem = { kind: "quiz"; attempt: QuizAttemptRecord; idx: number };
-  type QuizAnsItem = { kind: "quiz-ans"; answer: QuizAnswerRecord; idx: number };
-  const timeline: (TodItem | QuizItem | QuizAnsItem)[] = useMemo(() => {
-    const items: (TodItem | QuizItem | QuizAnsItem)[] = [];
-    if (filter !== "quiz") {
-      const filtered = filter === "all" ? entries : entries.filter(e => e.type === filter);
-      filtered.forEach(entry => items.push({ kind: "tod", entry }));
-    }
-    if (filter !== "truth" && filter !== "dare") {
-      quizAnswers.forEach((answer, idx) => items.push({ kind: "quiz-ans", answer, idx }));
-      if (filter === "quiz") {
-        quizRecords.forEach((attempt, idx) => items.push({ kind: "quiz", attempt, idx }));
-      } else {
-        quizRecords.forEach((attempt, idx) => items.push({ kind: "quiz", attempt, idx }));
-      }
-    }
-    return items;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, quizRecords, quizAnswers, filter]);
+  const todEntries = filter === "quiz" ? [] : filter === "all" ? entries : entries.filter(e => e.type === filter);
+  const showQuiz = filter === "all" || filter === "quiz";
 
   return (
     <div>
       {/* Stats */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {[
-          { emoji: "🎮", value: total,          label: "Total games", color: WARM },
-          { emoji: "💭", value: truthCount,     label: "Truths",      color: BROWN },
-          { emoji: "🎲", value: dareCount,      label: "Dares",       color: TERRACOTTA },
-          { emoji: "🏆", value: bestQuiz ?? "--", label: "Best quiz", color: "rgb(55,125,75)" },
+          { emoji: "🎮", value: entries.length + quizRecords.length, label: "Total",    color: WARM },
+          { emoji: "💭", value: truthCount,                          label: "Truths",   color: BROWN },
+          { emoji: "🎲", value: dareCount,                           label: "Dares",    color: TERRACOTTA },
+          { emoji: "🏆", value: bestQuiz ?? "--",                    label: "Best quiz",color: "rgb(55,125,75)" },
         ].map((s) => (
-          <div key={s.label} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            gap: 3, padding: "10px 4px", borderRadius: 14,
-            background: "rgba(250,245,237,0.85)", border: `1px solid ${WARM_BORDER}`,
-            boxShadow: "0 2px 8px rgba(80,50,20,0.06)",
-          }}>
+          <div key={s.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px", borderRadius: 14, background: "rgba(250,245,237,0.85)", border: `1px solid ${WARM_BORDER}`, boxShadow: "0 2px 8px rgba(80,50,20,0.06)" }}>
             <span style={{ fontSize: 18 }}>{s.emoji}</span>
             <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</span>
             <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.50)", textAlign: "center" }}>{s.label}</span>
@@ -217,236 +250,128 @@ function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: Hist
 
       {/* Filter pills */}
       <style>{`.bgf-filter-scroll::-webkit-scrollbar{height:3px}.bgf-filter-scroll::-webkit-scrollbar-track{background:transparent}.bgf-filter-scroll::-webkit-scrollbar-thumb{background:rgba(173,104,74,0.28);border-radius:999px}.bgf-filter-scroll{scrollbar-width:thin;scrollbar-color:rgba(173,104,74,0.28) transparent}`}</style>
-      <div className="bgf-filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+      <div className="bgf-filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 , marginTop: 16}}>
         {FILTER_TABS.map(tab => (
           <motion.button key={tab.id} whileTap={{ scale: 0.93 }} onClick={() => setFilter(tab.id)}
-            style={{
-              flexShrink: 0, padding: "6px 16px", borderRadius: 999,
-              border: filter === tab.id ? `1.5px solid rgba(173,104,74,0.45)` : `1px solid ${WARM_BORDER}`,
-              background: filter === tab.id ? "rgba(173,104,74,0.14)" : "transparent",
-              fontFamily: SERIF, fontSize: 12, fontWeight: filter === tab.id ? 700 : 400,
-              color: filter === tab.id ? WARM : "rgba(108,74,46,0.50)", cursor: "pointer", transition: "all 0.15s",
-            }}>
+            style={{ flexShrink: 0, padding: "6px 16px", borderRadius: 999, border: filter === tab.id ? `1.5px solid rgba(173,104,74,0.45)` : `1px solid ${WARM_BORDER}`, background: filter === tab.id ? "rgba(173,104,74,0.14)" : "transparent", fontFamily: SERIF, fontSize: 12, fontWeight: filter === tab.id ? 700 : 400, color: filter === tab.id ? WARM : "rgba(108,74,46,0.50)", cursor: "pointer", transition: "all 0.15s" }}>
             {tab.emoji} {tab.label}
           </motion.button>
         ))}
       </div>
 
-      {/* Timeline */}
-      <AnimatePresence mode="popLayout">
-        {timeline.length === 0 ? (
-          <motion.p key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ fontFamily: SERIF, fontSize: 13, color: "rgba(108,74,46,0.50)", textAlign: "center", padding: "20px 0" }}>
-            No {filter} entries yet 🎂
-          </motion.p>
-        ) : (
-          <motion.div key="list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {timeline.map((item, i) => {
-              if (item.kind === "tod") {
-                const isTruth = item.entry.type === "truth";
-                const c = isTruth
-                  ? { accent: BROWN, bg: "rgba(93,63,49,0.05)", border: "rgba(93,63,49,0.16)", bar: "rgba(93,63,49,0.45)" }
-                  : { accent: TERRACOTTA, bg: "rgba(173,104,74,0.05)", border: "rgba(173,104,74,0.18)", bar: "rgba(173,104,74,0.50)" };
-                const key = `t-${item.entry.id}`;
-                const isOpen = expandedKeys.has(key);
-                return (
-                  <motion.div key={key} layout
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ delay: i * 0.025, type: "spring", stiffness: 340, damping: 28 }}
-                    style={{ borderRadius: 14, border: `1px solid ${c.border}`, background: c.bg, position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: c.bar }} />
-                    {/* Collapsed header */}
-                    <button onClick={() => toggleExpand(key)}
-                      style={{
-                        width: "100%", background: "none", border: "none", cursor: "pointer",
-                        padding: "10px 12px 10px 18px", display: "flex", alignItems: "center", gap: 10, textAlign: "left",
-                      }}>
-                      <span style={{
-                        flexShrink: 0, fontFamily: SERIF, fontSize: 10, fontWeight: 700,
-                        textTransform: "uppercase" as const, letterSpacing: "0.08em",
-                        color: c.accent, background: `${c.accent}16`, padding: "3px 9px", borderRadius: 999,
-                      }}>
-                        {isTruth ? "💭 Truth" : "🎲 Dare"}
-                      </span>
-                      <span style={{
-                        flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM,
-                        lineHeight: 1.45, overflow: "hidden", display: "-webkit-box",
-                        WebkitLineClamp: isOpen ? undefined : 2,
-                        WebkitBoxOrient: "vertical" as const,
-                      }}>
-                        {item.entry.prompt}
-                      </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        {item.entry.savedAt && (
-                          <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>
-                            {formatTime(item.entry.savedAt)}
-                          </span>
-                        )}
-                        <span style={{
-                          fontSize: 10, color: "rgba(108,74,46,0.40)",
-                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                          transition: "transform 0.2s", display: "inline-block",
-                        }}>▼</span>
-                      </div>
-                    </button>
-                    {/* Expanded answer */}
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.22, ease: "easeInOut" }}
-                          style={{ overflow: "hidden" }}>
-                          <div style={{ borderTop: `1px solid ${c.border}`, padding: "10px 18px 12px" }}>
-                            <p style={{ fontFamily: SERIF, fontSize: 13, fontStyle: "italic", color: "rgba(80,55,30,0.85)", margin: 0, lineHeight: 1.65 }}>
-                              {isTruth ? `"${item.entry.answer}"` : `✓ ${item.entry.answer}`}
-                            </p>
-                            {item.entry.mediaUrl && isAudioUrl(item.entry.mediaUrl) && (
-                              <div style={{ marginTop: 10 }}>
-                                <MiniAudioPlayer src={item.entry.mediaUrl} accentColor={c.accent} bgColor={`${c.accent}08`} borderColor={c.border} />
-                              </div>
-                            )}
-                            {item.entry.mediaUrl && isImageUrl(item.entry.mediaUrl) && (
-                              <div style={{ marginTop: 8, borderRadius: 10, overflow: "hidden" }}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={item.entry.mediaUrl} alt="response" loading="lazy"
-                                  style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }} />
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              } else if (item.kind === "quiz-ans") {
-                const isCorrect = item.answer.isCorrect;
-                const accent = isCorrect ? "rgb(55,125,75)" : TERRACOTTA;
-                const bg = isCorrect ? "rgba(55,160,95,0.05)" : "rgba(173,104,74,0.05)";
-                const border = isCorrect ? "rgba(55,125,75,0.18)" : "rgba(173,104,74,0.20)";
-                const bar = isCorrect ? "rgba(55,125,75,0.45)" : "rgba(173,104,74,0.50)";
-                const key = `qa-${item.idx}`;
-                const isOpen = expandedKeys.has(key);
-                return (
-                  <motion.div key={key} layout
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ delay: i * 0.025, type: "spring", stiffness: 340, damping: 28 }}
-                    style={{ borderRadius: 14, border: `1px solid ${border}`, background: bg, position: "relative", overflow: "hidden" }}>
-                    {/* Left accent bar */}
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: bar }} />
-                    {/* Collapsed header — always visible, click to expand */}
-                    <button onClick={() => toggleExpand(key)}
-                      style={{
-                        width: "100%", background: "none", border: "none", cursor: "pointer",
-                        padding: "10px 12px 10px 18px", display: "flex", alignItems: "center", gap: 10, textAlign: "left",
-                      }}>
-                      {/* Correct/Wrong badge */}
-                      <span style={{
-                        flexShrink: 0, fontSize: 14,
-                        width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                        background: isCorrect ? "rgba(55,125,75,0.14)" : "rgba(173,104,74,0.14)",
-                      }}>
-                        {isCorrect ? "✓" : "✗"}
-                      </span>
-                      {/* Question text */}
-                      <span style={{
-                        flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM,
-                        lineHeight: 1.45, overflow: "hidden", display: "-webkit-box",
-                        WebkitLineClamp: isOpen ? undefined : 2,
-                        WebkitBoxOrient: "vertical" as const,
-                      }}>
-                        {item.answer.question}
-                      </span>
-                      {/* Time + chevron */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        {item.answer.answeredAt && (
-                          <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>
-                            {formatTime(item.answer.answeredAt)}
-                          </span>
-                        )}
-                        <span style={{
-                          fontSize: 10, color: "rgba(108,74,46,0.40)",
-                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                          transition: "transform 0.2s",
-                          display: "inline-block",
-                        }}>▼</span>
-                      </div>
-                    </button>
-                    {/* Expanded answer detail */}
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.22, ease: "easeInOut" }}
-                          style={{ overflow: "hidden" }}>
-                          <div style={{ borderTop: `1px solid ${border}`, padding: "10px 18px 12px" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                              {item.answer.options.map((opt, oi) => {
-                                const isSelected = oi === item.answer.selected;
-                                const isRight = oi === item.answer.correct;
-                                let optBg = "transparent";
-                                let optColor = "rgba(90,60,35,0.42)";
-                                let optWeight = 400;
-                                if (isRight) { optBg = "rgba(55,125,75,0.10)"; optColor = "rgb(45,115,65)"; optWeight = 700; }
-                                else if (isSelected && !isRight) { optBg = "rgba(173,104,74,0.10)"; optColor = TERRACOTTA; optWeight = 600; }
-                                return (
-                                  <div key={oi} style={{
-                                    display: "flex", alignItems: "center", gap: 8,
-                                    padding: "6px 10px", borderRadius: 9, background: optBg,
-                                  }}>
-                                    <span style={{ fontSize: 12, flexShrink: 0, color: optColor, fontWeight: 700 }}>
-                                      {isRight ? "✓" : isSelected ? "✗" : "·"}
-                                    </span>
-                                    <span style={{ fontFamily: SERIF, fontSize: 13, color: optColor, fontWeight: optWeight, lineHeight: 1.4 }}>
-                                      {opt}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              } else {
-                const pct = item.attempt.total > 0 ? item.attempt.score / item.attempt.total : 0;
-                const em = pct === 1 ? "👑" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "🎂" : "🎊";
-                const msg = pct === 1 ? "Perfect score!" : pct >= 0.7 ? "Amazing!" : pct >= 0.4 ? "Good try!" : "Keep going!";
-                const green = "rgb(55,125,75)";
-                return (
-                  <motion.div key={`q-${item.idx}`} layout
-                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ delay: i * 0.03, type: "spring", stiffness: 320, damping: 26 }}
-                    style={{ borderRadius: 16, border: "1px solid rgba(55,125,75,0.20)", background: "rgba(55,160,95,0.06)", padding: "12px 14px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "16px 0 0 16px", background: "rgba(55,125,75,0.50)" }} />
-                    <span style={{ fontSize: 26, flexShrink: 0, paddingLeft: 10 }}>{em}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                        <span style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: green, background: "rgba(55,125,75,0.10)", padding: "3px 10px", borderRadius: 999 }}>🏆 Quiz</span>
-                        {item.attempt.playedAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.40)" }}>{formatTime(item.attempt.playedAt)}</span>}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: green, lineHeight: 1 }}>{item.attempt.score}/{item.attempt.total}</span>
-                        <span style={{ fontFamily: SERIF, fontSize: 11, color: "rgba(55,125,75,0.65)" }}>{msg}</span>
-                      </div>
-                      <div style={{ height: 4, borderRadius: 999, background: "rgba(55,125,75,0.14)", overflow: "hidden" }}>
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${pct * 100}%` }}
-                          transition={{ duration: 0.9, delay: i * 0.03 + 0.2, ease: "easeOut" }}
-                          style={{ height: "100%", borderRadius: 999, background: green }} />
-                      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* ── Quiz attempt cards (each expandable to show its Q&A) ── */}
+        {showQuiz && quizRecords.map((attempt, ai) => {
+          const pct = attempt.total > 0 ? attempt.score / attempt.total : 0;
+          const em = pct === 1 ? "👑" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "🎂" : "🎊";
+          const msg = pct === 1 ? "Perfect score!" : pct >= 0.7 ? "Amazing!" : pct >= 0.4 ? "Good try!" : "Keep going!";
+          const green = "rgb(55,125,75)";
+          const isOpen = expandedAttempts.has(ai);
+          const sessionAnswers = quizSessions[ai] || [];
+          return (
+            <motion.div key={`qa-session-${ai}`} layout
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: ai * 0.04, type: "spring", stiffness: 320, damping: 26 }}
+              style={{ borderRadius: 14, border: "1px solid rgba(55,125,75,0.20)", background: "rgba(55,160,95,0.05)", overflow: "hidden", position: "relative" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: "rgba(55,125,75,0.45)" }} />
+              {/* Summary row — click to expand */}
+              <button onClick={() => toggleAttempt(ai)}
+                style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: "12px 14px 12px 18px", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
+                <span style={{ fontSize: 24, flexShrink: 0 }}>{em}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: green, background: "rgba(55,125,75,0.10)", padding: "2px 9px", borderRadius: 999 }}>🏆 Quiz</span>
+                    {attempt.playedAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>{formatTime(attempt.playedAt)}</span>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: green }}>{attempt.score}/{attempt.total}</span>
+                    <span style={{ fontFamily: SERIF, fontSize: 11, color: "rgba(55,125,75,0.65)" }}>{msg}</span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 999, background: "rgba(55,125,75,0.12)", overflow: "hidden" }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct * 100}%` }} transition={{ duration: 0.8, delay: ai * 0.04 + 0.2, ease: "easeOut" }}
+                      style={{ height: "100%", borderRadius: 999, background: green }} />
+                  </div>
+                </div>
+                {sessionAnswers.length > 0 && (
+                  <span style={{ fontSize: 9, color: "rgba(55,125,75,0.50)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.18s", display: "inline-block", flexShrink: 0 }}>▼</span>
+                )}
+              </button>
+              {/* Expandable Q&A list for this session */}
+              <AnimatePresence>
+                {isOpen && sessionAnswers.length > 0 && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: "easeInOut" }} style={{ overflow: "hidden" }}>
+                    <div style={{ borderTop: "1px solid rgba(55,125,75,0.14)", padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {sessionAnswers.map((ans, qi) => (
+                        <QuizAnswerCard key={qi} answer={ans} idx={qi} delay={qi * 0.025} />
+                      ))}
                     </div>
                   </motion.div>
-                );
-              }
-            })}
-          </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+
+        {/* ── Truth / Dare accordion cards ── */}
+        {todEntries.map((entry, i) => {
+          const isTruth = entry.type === "truth";
+          const c = isTruth
+            ? { accent: BROWN, bg: "rgba(93,63,49,0.05)", border: "rgba(93,63,49,0.16)", bar: "rgba(93,63,49,0.45)" }
+            : { accent: TERRACOTTA, bg: "rgba(173,104,74,0.05)", border: "rgba(173,104,74,0.18)", bar: "rgba(173,104,74,0.50)" };
+          const key = `t-${entry.id}`;
+          const isOpen = expandedKeys.has(key);
+          return (
+            <motion.div key={key} layout
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ delay: i * 0.025, type: "spring", stiffness: 340, damping: 28 }}
+              style={{ borderRadius: 14, border: `1px solid ${c.border}`, background: c.bg, position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "14px 0 0 14px", background: c.bar }} />
+              <button onClick={() => toggleExpand(key)}
+                style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: "10px 12px 10px 18px", display: "flex", alignItems: "center", gap: 10, textAlign: "left" }}>
+                <span style={{ flexShrink: 0, fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: c.accent, background: `${c.accent}16`, padding: "3px 9px", borderRadius: 999 }}>
+                  {isTruth ? "💭 Truth" : "🎲 Dare"}
+                </span>
+                <span style={{ flex: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: WARM, lineHeight: 1.45, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: isOpen ? undefined : 2, WebkitBoxOrient: "vertical" as const }}>
+                  {entry.prompt}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  {entry.savedAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.38)" }}>{formatTime(entry.savedAt)}</span>}
+                  <span style={{ fontSize: 9, color: "rgba(108,74,46,0.38)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.18s", display: "inline-block" }}>▼</span>
+                </div>
+              </button>
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: "easeInOut" }} style={{ overflow: "hidden" }}>
+                    <div style={{ borderTop: `1px solid ${c.border}`, padding: "10px 18px 12px" }}>
+                      <p style={{ fontFamily: SERIF, fontSize: 13, fontStyle: "italic", color: "rgba(80,55,30,0.85)", margin: 0, lineHeight: 1.65 }}>
+                        {isTruth ? `"${entry.answer}"` : `✓ ${entry.answer}`}
+                      </p>
+                      {entry.mediaUrl && isAudioUrl(entry.mediaUrl) && (
+                        <div style={{ marginTop: 10 }}>
+                          <MiniAudioPlayer src={entry.mediaUrl} accentColor={c.accent} bgColor={`${c.accent}08`} borderColor={c.border} />
+                        </div>
+                      )}
+                      {entry.mediaUrl && isImageUrl(entry.mediaUrl) && (
+                        <div style={{ marginTop: 8, borderRadius: 10, overflow: "hidden" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={entry.mediaUrl} alt="response" loading="lazy" style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }} />
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+
+        {/* Empty state */}
+        {todEntries.length === 0 && (!showQuiz || quizRecords.length === 0) && (
+          <p style={{ fontFamily: SERIF, fontSize: 13, color: "rgba(108,74,46,0.50)", textAlign: "center", padding: "20px 0" }}>
+            No {filter} entries yet 🎂
+          </p>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
