@@ -40,6 +40,7 @@ const GLOBAL_ROUTE_PREFIXES = [
   "/valentine-bestfriend",
   "/valentine-gf",
   "/wedding-shaadi",
+  "/christian-wedding",
 ];
 
 function isGlobalRoute(pathname: string): boolean {

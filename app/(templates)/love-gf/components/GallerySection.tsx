@@ -3,32 +3,35 @@
 import { memo, useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import type { ContentData } from "./types";
+import type { ContentData, PhotoItem } from "./types";
+
+const WARM = "rgb(108, 74, 46)";
+const WARM_BORDER = "rgba(158, 126, 97, 0.22)";
+const CREAM_CARD = "rgba(250, 248, 242, 0.90)";
+const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+
+// ── Demo story cards (shown when user has no photos) ──────────────────────
 
 interface StoryCard {
   emoji: string;
   bg: string;
-  glow: string;
   label: string;
   letter: string;
 }
 
-const leftCards: StoryCard[] = [
-  { emoji: "🌅", bg: "linear-gradient(135deg, #f97316, #ec4899)", glow: "rgba(249,115,22,0.15)", label: "Golden Hour", letter: "Every sunset reminds me of the warmth you bring into my life.\nThe way the light dances in your eyes makes every evening magical.\nYou are my golden hour, forever and always 🌅" },
-  { emoji: "🌸", bg: "linear-gradient(135deg, #f9a8d4, #c084fc)", glow: "rgba(249,168,212,0.15)", label: "Cherry Blossoms", letter: "Like cherry blossoms in spring, our love blooms more beautifully with each passing day.\nYou are my favorite season,\nmy sweetest chapter, my forever bloom 🌸" },
-  { emoji: "🎆", bg: "linear-gradient(135deg, #6366f1, #ec4899)", glow: "rgba(99,102,241,0.15)", label: "Fireworks", letter: "Every moment with you feels like fireworks —\nbright, beautiful, and absolutely breathtaking.\nYou light up my world like nobody else 🎆" },
-  { emoji: "💕", bg: "linear-gradient(135deg, #e11d48, #f43f5e)", glow: "rgba(225,29,72,0.15)", label: "Our Song", letter: "Every melody reminds me of you.\nYou are the music in my life,\nthe rhythm of my heart, the lyrics of my soul 🎵" },
-  { emoji: "🧁", bg: "linear-gradient(135deg, #db2777, #f472b6)", glow: "rgba(219,39,119,0.15)", label: "Sweet Surprise", letter: "You are the sweetest surprise\nlife ever gave me.\nEvery day with you is a gift I never want to stop unwrapping 🧁" },
-  { emoji: "🌺", bg: "linear-gradient(135deg, #f43f5e, #fb7185)", glow: "rgba(244,63,94,0.15)", label: "Spring Day", letter: "You brought spring into my life\nwhen everything was winter.\nYou are my bloom, my sunshine, my warmth 🌺" },
-];
-
-const rightCards: StoryCard[] = [
-  { emoji: "✨", bg: "linear-gradient(135deg, #ec4899, #f43f5e)", glow: "rgba(236,72,153,0.15)", label: "Date Night", letter: "Our date nights are my favorite.\nWhether it's a fancy dinner or just staying in,\nevery moment with you is perfect and precious ✨" },
-  { emoji: "🌙", bg: "linear-gradient(135deg, #1e3a5f, #6366f1)", glow: "rgba(99,102,241,0.15)", label: "Stargazing", letter: "Under the stars with you, I realized\nthat no constellation could ever be as beautiful\nas the universe we've built together 🌙" },
-  { emoji: "🌹", bg: "linear-gradient(135deg, #be123c, #ec4899)", glow: "rgba(190,18,60,0.15)", label: "Forever Yours", letter: "I promise to love you through every season,\nevery storm, and every sunrise.\nYou are my forever, my always 🌹" },
-  { emoji: "💐", bg: "linear-gradient(135deg, #10b981, #34d399)", glow: "rgba(16,185,129,0.15)", label: "Special Moment", letter: "In the quietest moments with you,\nI find the loudest happiness.\nYou are my forever peace, my calm in every storm 💐" },
-  { emoji: "⭐", bg: "linear-gradient(135deg, #eab308, #facc15)", glow: "rgba(234,179,8,0.15)", label: "Wishing Star", letter: "I used to wish upon stars,\nbut then I found you.\nMy greatest wish came true, and I'm never letting go ⭐" },
-  { emoji: "✈️", bg: "linear-gradient(135deg, #0ea5e9, #38bdf8)", glow: "rgba(14,165,233,0.15)", label: "Adventure", letter: "With you, even getting lost\nis an adventure I'd choose\nevery single time, without a doubt ✈️" },
+const demoCards: StoryCard[] = [
+  { emoji: "🌅", bg: "linear-gradient(135deg, #c9956c, #e8b89a)", label: "Golden Hour",    letter: "Every sunset reminds me of the warmth you bring into my life.\nThe way the light dances in your eyes makes every evening magical.\nYou are my golden hour, forever and always 🌅" },
+  { emoji: "🌸", bg: "linear-gradient(135deg, #d4a5a5, #e8c5c5)", label: "Cherry Blossoms",letter: "Like cherry blossoms in spring, our love blooms more beautifully with each passing day.\nYou are my favorite season, my sweetest chapter, my forever bloom 🌸" },
+  { emoji: "🎆", bg: "linear-gradient(135deg, #9e7e6e, #b8948a)", label: "Fireworks",       letter: "Every moment with you feels like fireworks — bright, beautiful, and absolutely breathtaking.\nYou light up my world like nobody else 🎆" },
+  { emoji: "💕", bg: "linear-gradient(135deg, #b4665e, #c97878)", label: "Our Song",         letter: "Every melody reminds me of you.\nYou are the music in my life, the rhythm of my heart, the lyrics of my soul 🎵" },
+  { emoji: "🧁", bg: "linear-gradient(135deg, #c47e7e, #d49a9a)", label: "Sweet Surprise",   letter: "You are the sweetest surprise life ever gave me.\nEvery day with you is a gift I never want to stop unwrapping 🧁" },
+  { emoji: "🌺", bg: "linear-gradient(135deg, #b86060, #cb8080)", label: "Spring Day",        letter: "You brought spring into my life when everything was winter.\nYou are my bloom, my sunshine, my warmth 🌺" },
+  { emoji: "✨", bg: "linear-gradient(135deg, #c4826a, #d8a090)", label: "Date Night",        letter: "Our date nights are my favorite.\nWhether it's a fancy dinner or just staying in, every moment with you is perfect ✨" },
+  { emoji: "🌙", bg: "linear-gradient(135deg, #6e7e8e, #8e9eae)", label: "Stargazing",        letter: "Under the stars with you, I realized that no constellation could ever be as beautiful\nas the universe we've built together 🌙" },
+  { emoji: "🌹", bg: "linear-gradient(135deg, #a85858, #c47878)", label: "Forever Yours",     letter: "I promise to love you through every season, every storm, and every sunrise.\nYou are my forever, my always 🌹" },
+  { emoji: "⭐", bg: "linear-gradient(135deg, #c4a060, #d4b870)", label: "Wishing Star",      letter: "I used to wish upon stars, but then I found you.\nMy greatest wish came true, and I'm never letting go ⭐" },
+  { emoji: "💐", bg: "linear-gradient(135deg, #7e9e8e, #9ebaa0)", label: "Special Moment",    letter: "In the quietest moments with you, I find the loudest happiness.\nYou are my forever peace, my calm in every storm 💐" },
+  { emoji: "✈️", bg: "linear-gradient(135deg, #7e9ea8, #9ebec8)", label: "Adventure",         letter: "With you, even getting lost is an adventure I'd choose every single time ✈️" },
 ];
 
 const DEFAULT_PHOTOS = [
@@ -37,9 +40,6 @@ const DEFAULT_PHOTOS = [
   "/assets/couple3.jpeg",
   "/assets/couple4.jpeg",
 ];
-
-const doubledLeft = [...leftCards, ...leftCards];
-const doubledRight = [...rightCards, ...rightCards];
 
 const marqueeItems = [
   "Every love story is beautiful, but ours is my favorite 💕",
@@ -51,51 +51,265 @@ const marqueeItems = [
 ];
 const doubledMarquee = [...marqueeItems, ...marqueeItems];
 
-const GLOSSY = { background: "linear-gradient(145deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 40%, transparent 60%)" } as const;
+// ── User Photo Letter Modal ────────────────────────────────────────────────
 
-const TITLE_STYLE = {
-  background: "linear-gradient(135deg, #e11d48, #a855f7)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-} as const;
-
-function getPhotoForIndex(photos: string[], index: number): string {
-  return photos[index % photos.length];
-}
-
-const CardItem = memo(function CardItem({
-  card, photoUrl, onClick,
+const UserPhotoModal = memo(function UserPhotoModal({
+  photo, index, total, onClose, onPrev, onNext,
 }: {
-  card: StoryCard;
-  photoUrl: string;
-  onClick: (c: StoryCard) => void;
+  photo: PhotoItem; index: number; total: number;
+  onClose: () => void; onPrev: () => void; onNext: () => void;
 }) {
-  const handleClick = useCallback(() => onClick(card), [onClick, card]);
+  const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
   return (
-    <button
-      onClick={handleClick}
-      className="flex flex-col items-center w-full overflow-hidden rounded-2xl border border-pink-200/30 dark:border-pink-800/20 bg-white dark:bg-slate-900 active:scale-[0.96] transition-transform duration-150 shadow-sm"
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 999, overflowY: "auto",
+        background: "rgba(40,22,8,0.55)", backdropFilter: "blur(10px)",
+      }}
+      onClick={onClose}
     >
-      <div className="relative w-full rounded-t-2xl overflow-hidden">
-        <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
-          <img src={photoUrl} alt={card.label} className="w-full h-full object-cover" loading="lazy" />
-          <div className="absolute inset-0" style={GLOSSY} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-        </div>
-        <div className="absolute top-2 right-2 w-7 h-7 lg:w-9 lg:h-9 rounded-full bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm flex items-center justify-center shadow-sm">
-          <span className="text-sm lg:text-base">{card.emoji}</span>
-        </div>
-        <div className="absolute bottom-2 left-2 flex items-center gap-1">
-          <span className="text-xs lg:text-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm text-foreground rounded-full px-2 lg:px-3 py-0.5 font-semibold shadow-sm">{card.label}</span>
-        </div>
+      <div style={{ minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+        <motion.div
+          initial={{ scale: 0.85, y: 40, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.85, y: 40, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          style={{
+            maxWidth: 400, width: "100%", position: "relative",
+            borderRadius: 24, overflow: "hidden",
+            background: CREAM_CARD,
+            boxShadow: "0 30px 80px rgba(40,22,8,0.35), 0 0 0 1px rgba(158,126,97,0.18)",
+            border: `1px solid ${WARM_BORDER}`,
+          }}
+          onClick={stopProp}
+        >
+          {/* Photo */}
+          <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", overflow: "hidden" }}>
+            <img
+              src={photo.url}
+              alt=""
+              style={{
+                width: "100%", height: "100%", objectFit: "cover", display: "block",
+                objectPosition: `${photo.cropX}% ${photo.cropY}%`,
+              }}
+            />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,22,8,0.45), rgba(40,22,8,0.05))" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 56, background: `linear-gradient(to top, ${CREAM_CARD}, transparent)` }} />
+
+            <button onClick={onClose}
+              style={{
+                position: "absolute", top: 12, right: 12,
+                width: 32, height: 32, borderRadius: "50%",
+                background: "rgba(250,248,242,0.75)", backdropFilter: "blur(4px)",
+                border: `1px solid ${WARM_BORDER}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", boxShadow: "0 2px 8px rgba(80,50,20,0.15)",
+              }}>
+              <X size={13} color={WARM} />
+            </button>
+
+            <motion.div
+              initial={{ rotate: -30, scale: 0 }} animate={{ rotate: 8, scale: 1 }}
+              transition={{ delay: 0.25, type: "spring", stiffness: 300 }}
+              style={{
+                position: "absolute", top: 12, left: 12,
+                width: 36, height: 36, borderRadius: "50%",
+                background: "rgba(250,248,242,0.75)", backdropFilter: "blur(4px)",
+                border: "2px dashed rgba(158,126,97,0.40)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(80,50,20,0.12)", fontSize: 16,
+              }}
+            >💌</motion.div>
+
+            <div style={{
+              position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
+              fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.6)", whiteSpace: "nowrap",
+            }}>
+              {index + 1} / {total}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 28px 0" }}>
+            <div style={{ height: 1, flex: 1, background: WARM_BORDER }} />
+            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+              style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, opacity: 0.7 }}>♡</motion.span>
+            <div style={{ height: 1, flex: 1, background: WARM_BORDER }} />
+          </div>
+
+          {/* Letter */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            style={{ padding: "10px 24px 16px" }}>
+            {photo.letter ? (
+              <p style={{
+                fontFamily: CURSIVE, fontSize: 15, lineHeight: 1.75,
+                fontStyle: "italic", whiteSpace: "pre-line", color: "rgb(90, 60, 35)",
+              }}>
+                &ldquo;{photo.letter}&rdquo;
+              </p>
+            ) : (
+              <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.45)", textAlign: "center", fontStyle: "italic" }}>
+                No letter added for this photo.
+              </p>
+            )}
+          </motion.div>
+
+          {/* Nav + Close */}
+          <div style={{ display: "flex", gap: 8, padding: "0 24px 20px" }}>
+            <button onClick={onPrev} disabled={index === 0}
+              style={{
+                flex: 1, padding: "9px 0", borderRadius: 10,
+                border: `1px solid ${WARM_BORDER}`,
+                background: "rgba(158,126,97,0.06)",
+                fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                cursor: index === 0 ? "not-allowed" : "pointer",
+                opacity: index === 0 ? 0.4 : 1,
+              }}>← Prev</button>
+            <button onClick={onClose}
+              style={{
+                flex: 1, padding: "9px 0", borderRadius: 10,
+                border: "none",
+                background: "linear-gradient(135deg, rgb(158,126,97), rgb(120,85,55))",
+                fontFamily: CURSIVE, fontSize: 13, color: "#fff", fontWeight: 700,
+                cursor: "pointer",
+              }}>Close 💕</button>
+            <button onClick={onNext} disabled={index === total - 1}
+              style={{
+                flex: 1, padding: "9px 0", borderRadius: 10,
+                border: `1px solid ${WARM_BORDER}`,
+                background: "rgba(158,126,97,0.06)",
+                fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                cursor: index === total - 1 ? "not-allowed" : "pointer",
+                opacity: index === total - 1 ? 0.4 : 1,
+              }}>Next →</button>
+          </div>
+        </motion.div>
       </div>
-      <div className="flex items-center justify-center gap-1 px-3 py-2 lg:py-2.5 w-full">
-        <span className="text-[10px] lg:text-xs font-semibold text-pink-500 flex items-center gap-1">
-          Open Letter <span className="inline-block letter-pulse">💌</span>
+    </motion.div>
+  );
+});
+
+// ── Demo Letter Modal (for default cards) ─────────────────────────────────
+
+const DemoLetterModal = memo(function DemoLetterModal({
+  card, photoUrl, onClose,
+}: { card: StoryCard; photoUrl: string; onClose: () => void }) {
+  const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 999, overflowY: "auto",
+        background: "rgba(40,22,8,0.55)", backdropFilter: "blur(10px)",
+      }}
+      onClick={onClose}
+    >
+      <div style={{ minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+        <motion.div
+          initial={{ scale: 0.85, y: 40, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.85, y: 40, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          style={{
+            maxWidth: 400, width: "100%", borderRadius: 24, overflow: "hidden",
+            background: CREAM_CARD,
+            boxShadow: "0 30px 80px rgba(40,22,8,0.35), 0 0 0 1px rgba(158,126,97,0.18)",
+          }}
+          onClick={stopProp}
+        >
+          <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", overflow: "hidden" }}>
+            <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,22,8,0.5), rgba(40,22,8,0.1))" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: `linear-gradient(to top, ${CREAM_CARD}, transparent)` }} />
+            <button onClick={onClose} style={{
+              position: "absolute", top: 12, right: 12,
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(250,248,242,0.70)", backdropFilter: "blur(4px)",
+              border: `1px solid ${WARM_BORDER}`,
+              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+            }}>
+              <X size={13} color={WARM} />
+            </button>
+          </div>
+
+          <div style={{ padding: "16px 24px 20px" }}>
+            <h3 style={{ fontFamily: CURSIVE, fontSize: 20, fontWeight: 700, color: WARM, margin: "0 0 8px", textAlign: "center" }}>
+              {card.emoji} {card.label}
+            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "8px 0 12px" }}>
+              <div style={{ height: 1, flex: 1, background: WARM_BORDER }} />
+              <span style={{ fontFamily: CURSIVE, fontSize: 14, color: WARM, opacity: 0.6 }}>♡</span>
+              <div style={{ height: 1, flex: 1, background: WARM_BORDER }} />
+            </div>
+            <p style={{
+              fontFamily: CURSIVE, fontSize: 15, lineHeight: 1.75,
+              fontStyle: "italic", whiteSpace: "pre-line", color: "rgb(90,60,35)",
+            }}>
+              &ldquo;{card.letter}&rdquo;
+            </p>
+            <button onClick={onClose}
+              style={{
+                display: "block", width: "100%", marginTop: 16, padding: "10px 0", borderRadius: 12,
+                border: `1px solid ${WARM_BORDER}`, background: "rgba(158,126,97,0.08)",
+                fontFamily: CURSIVE, fontSize: 13, fontWeight: 600, color: WARM, cursor: "pointer",
+              }}>
+              Close Letter 💕
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+});
+
+// ── User Photo Card ────────────────────────────────────────────────────────
+
+const UserPhotoCard = memo(function UserPhotoCard({
+  photo, onClick,
+}: { photo: PhotoItem; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        width: "100%", overflow: "hidden", borderRadius: 16,
+        border: `1px solid ${WARM_BORDER}`,
+        background: CREAM_CARD,
+        boxShadow: "0 4px 16px rgba(80,50,20,0.12)",
+        cursor: "pointer", padding: 0,
+      }}
+    >
+      <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", overflow: "hidden", borderRadius: "16px 16px 0 0" }}>
+        <img
+          src={photo.url} alt=""
+          style={{
+            width: "100%", height: "100%", objectFit: "cover", display: "block",
+            objectPosition: `${photo.cropX}% ${photo.cropY}%`,
+          }}
+          loading="lazy"
+        />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(80,50,20,0.30), transparent)" }} />
+        {photo.letter && (
+          <div style={{ position: "absolute", bottom: 8, left: 8 }}>
+            <span style={{
+              fontFamily: CURSIVE, fontSize: 11, fontWeight: 600,
+              color: "rgba(250,248,242,0.95)",
+              background: "rgba(80,50,20,0.55)", backdropFilter: "blur(4px)",
+              borderRadius: 999, padding: "2px 10px",
+            }}>
+              has letter 💌
+            </span>
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "8px 12px", width: "100%" }}>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, fontWeight: 600, color: WARM, display: "flex", alignItems: "center", gap: 4 }}>
+          Open Memory <span className="letter-pulse">💌</span>
         </span>
       </div>
-
       <style jsx>{`
         .letter-pulse { animation: lp 1.5s ease-in-out infinite; display: inline-block; }
         @keyframes lp { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
@@ -104,123 +318,81 @@ const CardItem = memo(function CardItem({
   );
 });
 
-const LetterModal = memo(function LetterModal({ card, photoUrl, onClose }: { card: StoryCard; photoUrl: string; onClose: () => void }) {
-  const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
+// ── Demo Card ────────────────────────────────────────────────────────────
 
+const DemoCard = memo(function DemoCard({
+  card, photoUrl, onClick,
+}: { card: StoryCard; photoUrl: string; onClick: () => void }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[999] overflow-y-auto"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
-      onClick={onClose}
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex", flexDirection: "column", width: "100%", overflow: "hidden",
+        borderRadius: 16, border: `1px solid ${WARM_BORDER}`, background: CREAM_CARD,
+        boxShadow: "0 4px 16px rgba(80,50,20,0.12)", cursor: "pointer", padding: 0,
+      }}
     >
-      <div className="min-h-full flex items-start justify-center px-4 pt-6 pb-28 lg:items-center lg:pt-0 lg:pb-0">
-        <motion.div
-          initial={{ scale: 0.5, y: 50, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.5, y: 50, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 280, damping: 22 }}
-          className="max-w-sm w-full relative rounded-3xl my-auto overflow-hidden lg:max-w-md bg-white dark:bg-slate-900 shadow-2xl"
-          onClick={stopProp}
-        >
-          {/* Photo header */}
-          <div className="relative w-full rounded-t-3xl overflow-hidden">
-            <div className="relative w-full" style={{ aspectRatio: "16/10" }}>
-              <img src={photoUrl} alt={card.label} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-slate-900 to-transparent" />
-
-            <button onClick={onClose}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm flex items-center justify-center shadow-md">
-              <X size={14} className="text-foreground" />
-            </button>
-
-            <motion.div
-              initial={{ rotate: -30, scale: 0 }} animate={{ rotate: 8, scale: 1 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-              className="absolute top-3 left-3 w-10 h-10 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-2 border-dashed border-white/40 flex items-center justify-center shadow-md"
-            >
-              <span className="text-lg">💌</span>
-            </motion.div>
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-              <motion.span className="text-3xl inline-block drop-shadow-lg" animate={{ y: [0, -4, 0] }} transition={{ duration: 2, repeat: Infinity }}>{card.emoji}</motion.span>
-            </div>
-          </div>
-
-          <div className="text-center px-6 pt-2">
-            <h3 className="text-lg font-bold text-foreground">{card.label}</h3>
-          </div>
-
-          <div className="flex items-center justify-center gap-3 my-2.5 px-8">
-            <div className="h-px flex-1 bg-pink-200/40 dark:bg-pink-800/20" />
-            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-xs text-pink-400">♡</motion.span>
-            <div className="h-px flex-1 bg-pink-200/40 dark:bg-pink-800/20" />
-          </div>
-
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="px-6 pb-2">
-            <p className="text-sm leading-relaxed italic whitespace-pre-line text-foreground/70">
-              &ldquo;{card.letter}&rdquo;
-            </p>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="px-6 pt-2 pb-5 text-center">
-            <p className="text-sm font-semibold text-pink-500">With all my love 💕</p>
-            <p className="text-[10px] mt-0.5 text-muted-foreground">— Forever yours</p>
-            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-2xl inline-block my-2.5">💝</motion.span>
-            <button onClick={onClose}
-              className="w-full py-2.5 rounded-xl border border-pink-200/30 dark:border-pink-800/20 text-xs font-medium text-muted-foreground hover:bg-pink-50/50 dark:hover:bg-pink-900/10 active:scale-95 transition-all">
-              Close Letter 💕
-            </button>
-          </motion.div>
-        </motion.div>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", borderRadius: "16px 16px 0 0", overflow: "hidden" }}>
+        <img src={photoUrl} alt={card.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(80,50,20,0.35), transparent)" }} />
+        <div style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%",
+          background: "rgba(250,248,242,0.80)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+          {card.emoji}
+        </div>
+        <div style={{ position: "absolute", bottom: 8, left: 8 }}>
+          <span style={{
+            fontFamily: CURSIVE, fontSize: 11, fontWeight: 600,
+            color: "rgba(250,248,242,0.95)", background: "rgba(80,50,20,0.55)",
+            backdropFilter: "blur(4px)", borderRadius: 999, padding: "2px 10px",
+          }}>
+            {card.label}
+          </span>
+        </div>
       </div>
-    </motion.div>
+      <div style={{ padding: "8px 12px" }}>
+        <span style={{ fontFamily: CURSIVE, fontSize: 11, fontWeight: 600, color: WARM }}>
+          Open Letter <span>💌</span>
+        </span>
+      </div>
+    </button>
   );
 });
+
+// ── Main GallerySection ────────────────────────────────────────────────────
 
 interface Props { data: ContentData; }
 
 export default memo(function GallerySection({ data }: Props) {
-  const [activeLetter, setActiveLetter] = useState<{ card: StoryCard; photo: string } | null>(null);
-  const closeModal = useCallback(() => setActiveLetter(null), []);
+  const [activeUserPhoto, setActiveUserPhoto] = useState<number | null>(null);
+  const [activeDemoCard, setActiveDemoCard] = useState<{ card: StoryCard; photo: string } | null>(null);
 
-  const photos = data.galleryPhotos.length > 0 ? data.galleryPhotos : DEFAULT_PHOTOS;
+  const userPhotos = (data.galleryPhotos || []).filter((p) => p.url);
+  const hasUserPhotos = userPhotos.length > 0;
 
-  const handleCardClick = useCallback((card: StoryCard, photo: string) => {
-    setActiveLetter({ card, photo });
-  }, []);
+  // Build column arrays — duplicate to fill for infinite scroll effect
+  const leftItems = useMemo(() => {
+    if (hasUserPhotos) {
+      const doubled = [...userPhotos, ...userPhotos, ...userPhotos];
+      return doubled.filter((_, i) => i % 2 === 0);
+    }
+    const doubled = [...demoCards, ...demoCards];
+    return doubled.filter((_, i) => i % 2 === 0);
+  }, [hasUserPhotos, userPhotos]);
 
-  const leftElements = useMemo(
-    () => doubledLeft.map((card, i) => {
-      const photo = getPhotoForIndex(photos, i);
-      return (
-        <CardItem
-          key={`l-${i}`}
-          card={card}
-          photoUrl={photo}
-          onClick={(c) => handleCardClick(c, photo)}
-        />
-      );
-    }),
-    [photos, handleCardClick],
-  );
+  const rightItems = useMemo(() => {
+    if (hasUserPhotos) {
+      const doubled = [...userPhotos, ...userPhotos, ...userPhotos];
+      return doubled.filter((_, i) => i % 2 !== 0);
+    }
+    const doubled = [...demoCards, ...demoCards];
+    return doubled.filter((_, i) => i % 2 !== 0);
+  }, [hasUserPhotos, userPhotos]);
 
-  const rightElements = useMemo(
-    () => doubledRight.map((card, i) => {
-      const photo = getPhotoForIndex(photos, i + 1);
-      return (
-        <CardItem
-          key={`r-${i}`}
-          card={card}
-          photoUrl={photo}
-          onClick={(c) => handleCardClick(c, photo)}
-        />
-      );
-    }),
-    [photos, handleCardClick],
-  );
+  const defaultPhotos = DEFAULT_PHOTOS;
+
+  const handleUserClick = useCallback((idx: number) => setActiveUserPhoto(idx % userPhotos.length), [userPhotos.length]);
+  const handleDemoClick = useCallback((card: StoryCard, photo: string) => setActiveDemoCard({ card, photo }), []);
 
   return (
     <motion.div
@@ -229,62 +401,82 @@ export default memo(function GallerySection({ data }: Props) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="pt-5 pb-24 h-screen flex flex-col overflow-hidden relative z-10 lg:pt-8"
+      style={{ paddingTop: 20, paddingBottom: 96, height: "100svh", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 10 }}
     >
-      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-center mb-2 lg:mb-4 px-4 shrink-0" style={TITLE_STYLE}>
-        Our Memories 📸
+      {/* Title */}
+      <h3 style={{
+        fontFamily: CURSIVE, fontSize: "clamp(20px, 5vw, 30px)", fontWeight: 700,
+        color: WARM, textAlign: "center", marginBottom: 8, padding: "0 16px", flexShrink: 0,
+        textShadow: "0 2px 8px rgba(250,248,242,0.6)",
+      }}>
+        {hasUserPhotos ? `Our Memories 📸 (${userPhotos.length})` : "Our Memories 📸"}
       </h3>
 
-      <div className="overflow-hidden mx-4 py-2 mb-3 rounded-xl bg-pink-50/60 dark:bg-pink-950/10 border border-pink-100 dark:border-pink-900/20 lg:mx-auto lg:max-w-6xl xl:max-w-7xl lg:w-full shrink-0">
-        <div className="marquee-track flex gap-8 whitespace-nowrap px-4">
+      {/* Marquee */}
+      <div style={{
+        overflow: "hidden", margin: "0 16px 12px", padding: "6px 0", borderRadius: 12,
+        background: "rgba(250,248,242,0.60)", border: `1px solid ${WARM_BORDER}`, flexShrink: 0,
+      }}>
+        <div className="marquee-track" style={{ display: "flex", gap: 32, whiteSpace: "nowrap", padding: "0 16px" }}>
           {doubledMarquee.map((item, i) => (
-            <span key={i} className="text-xs text-foreground/40">{item}</span>
+            <span key={i} style={{ fontFamily: CURSIVE, fontSize: 11, color: WARM, opacity: 0.7 }}>{item}</span>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-2.5 px-3 overflow-hidden flex-1 lg:px-8 lg:gap-4 lg:max-w-6xl xl:max-w-7xl lg:mx-auto lg:w-full">
-        <div className="flex-1 overflow-hidden relative">
-          <div className="scroll-col-up flex flex-col gap-2.5 lg:gap-3">
-            {leftElements}
+      {/* Two-column scroll */}
+      <div style={{ display: "flex", gap: 10, padding: "0 12px", overflow: "hidden", flex: 1 }}>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <div className="scroll-col-up" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {leftItems.map((item, i) =>
+              hasUserPhotos ? (
+                <UserPhotoCard key={`l-${i}`} photo={item as PhotoItem} onClick={() => handleUserClick(i * 2)} />
+              ) : (
+                <DemoCard key={`l-${i}`} card={item as StoryCard} photoUrl={defaultPhotos[i % defaultPhotos.length]} onClick={() => handleDemoClick(item as StoryCard, defaultPhotos[i % defaultPhotos.length])} />
+              )
+            )}
           </div>
         </div>
-        <div className="flex-1 overflow-hidden relative">
-          <div className="scroll-col-down flex flex-col gap-2.5 lg:gap-3 pt-20">
-            {rightElements}
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <div className="scroll-col-down" style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 80 }}>
+            {rightItems.map((item, i) =>
+              hasUserPhotos ? (
+                <UserPhotoCard key={`r-${i}`} photo={item as PhotoItem} onClick={() => handleUserClick(i * 2 + 1)} />
+              ) : (
+                <DemoCard key={`r-${i}`} card={item as StoryCard} photoUrl={defaultPhotos[(i + 1) % defaultPhotos.length]} onClick={() => handleDemoClick(item as StoryCard, defaultPhotos[(i + 1) % defaultPhotos.length])} />
+              )
+            )}
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes marquee-x {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scroll-up {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-50%); }
-        }
-        @keyframes scroll-down {
-          0% { transform: translateY(-50%); }
-          100% { transform: translateY(0); }
-        }
-        .marquee-track {
-          animation: marquee-x 22s linear infinite;
-          will-change: transform;
-        }
-        .scroll-col-up {
-          animation: scroll-up 30s linear infinite;
-          will-change: transform;
-        }
-        .scroll-col-down {
-          animation: scroll-down 32s linear infinite;
-          will-change: transform;
-        }
+        @keyframes marquee-x { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes scroll-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        @keyframes scroll-down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+        .marquee-track { animation: marquee-x 22s linear infinite; will-change: transform; }
+        .scroll-col-up { animation: scroll-up 30s linear infinite; will-change: transform; }
+        .scroll-col-down { animation: scroll-down 32s linear infinite; will-change: transform; }
       `}</style>
 
       <AnimatePresence>
-        {activeLetter && <LetterModal card={activeLetter.card} photoUrl={activeLetter.photo} onClose={closeModal} />}
+        {activeUserPhoto !== null && (
+          <UserPhotoModal
+            photo={userPhotos[activeUserPhoto]}
+            index={activeUserPhoto}
+            total={userPhotos.length}
+            onClose={() => setActiveUserPhoto(null)}
+            onPrev={() => setActiveUserPhoto((p) => Math.max(0, (p ?? 0) - 1))}
+            onNext={() => setActiveUserPhoto((p) => Math.min(userPhotos.length - 1, (p ?? 0) + 1))}
+          />
+        )}
+        {activeDemoCard && (
+          <DemoLetterModal
+            card={activeDemoCard.card}
+            photoUrl={activeDemoCard.photo}
+            onClose={() => setActiveDemoCard(null)}
+          />
+        )}
       </AnimatePresence>
     </motion.div>
   );

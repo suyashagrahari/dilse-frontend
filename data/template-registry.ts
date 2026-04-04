@@ -14,10 +14,13 @@ import { config as missyouBestfriend } from "@/app/(templates)/missyou-bestfrien
 import { config as anniversaryGf } from "@/app/(templates)/anniversary-gf/config";
 import { config as anniversaryParents } from "@/app/(templates)/anniversary-parents/config";
 import { config as loveGf } from "@/app/(templates)/love-gf/config";
+import { config as darling } from "@/app/(templates)/darling/config";
 import { config as weddingShaadi } from "@/app/(templates)/wedding-shaadi/config";
 import { config as reception } from "@/app/(templates)/reception/config";
 import { config as eidMubarak } from "@/app/(templates)/eid-mubarak/config";
 import { config as holi } from "@/app/(templates)/holi/config";
+import { config as shaadiCard } from "@/app/(templates)/shaadi-card/config";
+import { config as christianWedding } from "@/app/(templates)/christian-wedding/config";
 
 const allConfigs = [
   birthdayGf,
@@ -33,10 +36,13 @@ const allConfigs = [
   anniversaryGf,
   anniversaryParents,
   loveGf,
+  darling,
   weddingShaadi,
   reception,
   eidMubarak,
   holi,
+  shaadiCard,
+  christianWedding,
 ];
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

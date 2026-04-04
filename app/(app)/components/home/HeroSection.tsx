@@ -1,23 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-
-const SHOWCASE_ROUTES: Record<string, string> = {
-  holi: '/holi',
-  eid: '/eid-mubarak',
-  birthday: '/birthday',
-  anniversary: '/templates',
-  wedding: '/wedding-shaadi',
-  family: '/templates',
-};
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { SHOWCASE_ITEMS } from "./data";
 
 const STATS = [
-  { n: '10K+', l: 'Pages Created' },
-  { n: '6', l: 'Occasions' },
-  { n: '∞', l: 'Memories Made' },
+  { n: "10K+", l: "Pages Created" },
+  { n: String(SHOWCASE_ITEMS.length), l: "Templates" },
+  { n: "∞", l: "Memories Made" },
 ];
 
 const TOT = SHOWCASE_ITEMS.length;
@@ -41,10 +33,6 @@ export default function HeroSection() {
   const touchStartYRef = useRef<number | null>(null);
   const didSwipeRef = useRef(false);
   const tab = useMemo(() => SHOWCASE_ITEMS[active], [active]);
-  const tagLabels = useMemo(
-    () => SHOWCASE_ITEMS.map((s) => s.tag.charAt(0) + s.tag.slice(1).toLowerCase()),
-    []
-  );
 
   useEffect(() => {
     const t = setInterval(() => setActive(p => (p + 1) % TOT), 3200);
@@ -63,21 +51,27 @@ export default function HeroSection() {
   );
 
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
-  const selectItem = useCallback((index: number) => setActive(index), []);
   const selectOffsetItem = useCallback(
-    (offset: number, itemId?: string) => {
+    (offset: number, href?: string) => {
       if (didSwipeRef.current) {
         didSwipeRef.current = false;
         return;
       }
-      if (offset === 0 && itemId) {
-        router.push(SHOWCASE_ROUTES[itemId] || '/templates');
+      if (offset === 0 && href) {
+        router.push(href);
       } else {
         setActive((prev) => ((prev + offset) % TOT + TOT) % TOT);
       }
     },
     [router]
   );
+
+  const openActiveTemplate = useCallback(() => {
+    router.push(tab.href);
+  }, [router, tab.href]);
+
+  const selectItem = useCallback((index: number) => setActive(index), []);
+
 
   const onCarouselTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     const t = e.touches[0];
@@ -232,65 +226,121 @@ export default function HeroSection() {
                 </div>
                 <div style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255,255,255,0.82)', display: 'flex', alignItems: 'center', padding: '0 10px', gap: 6 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6b4545" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  <span style={{ fontSize: 10.5, color: '#7a5555' }}>subhsandesh.in/celebration</span>
+                  <span style={{ fontSize: 10.5, color: '#7a5555' }}>yourname.subhsandesh.in/templates</span>
                 </div>
                 <div style={{ marginLeft: 14, display: 'flex', gap: 8 }}>
                   {['←', '→', '↻'].map(a => <span key={a} style={{ fontSize: 11, color: '#9a7070', cursor: 'pointer' }}>{a}</span>)}
                 </div>
               </div>
 
-              {/* Page preview — CROSSFADE */}
-              <div style={{ position: 'relative', height: 420, overflow: 'hidden', background: '#2a0a0e' }}>
-                <AnimatePresence>
+              {/* Page preview — art + luxury type; pills switch slide; overlay opens template (pills sit above) */}
+              <div className="group/laptop relative h-[420px] w-full overflow-hidden bg-[#1a080a] text-left">
+                <AnimatePresence mode="wait">
                   <motion.div
                     key={tab.id}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.55, ease: 'easeInOut' }}
-                    style={{ position: 'absolute', inset: 0 }}>
-                    <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tab.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(145deg,rgba(42,10,14,0.82) 0%,rgba(61,12,17,0.28) 55%,rgba(20,8,10,0.72) 100%)' }} />
-                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%', background: 'linear-gradient(to top,rgba(20,5,8,0.95) 0%,transparent 100%)' }} />
-                    <div style={{ position: 'absolute', left: 24, right: 24, top: 54, height: 1, background: 'linear-gradient(90deg,transparent 0%,rgba(201,168,76,0.65) 30%,rgba(201,168,76,0.65) 70%,transparent 100%)' }} />
+                    initial={{ opacity: 0, scale: 1.02 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    className="absolute inset-0"
+                  >
+                    <Image
+                      src={tab.img}
+                      alt=""
+                      fill
+                      className="object-cover transition-transform duration-700 ease-out group-hover/laptop:scale-[1.02]"
+                      sizes="(max-width: 768px) 100vw, 560px"
+                      priority={active === 0}
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#2a0a0e]/55 via-[#3d0c11]/20 to-transparent"
+                      aria-hidden
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#140508]/95 via-[#1a080a]/55 to-transparent"
+                      aria-hidden
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10"
+                      aria-hidden
+                    />
 
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 26px', zIndex: 2 }}>
-                      <motion.div
-                        key={tab.id + '-tag'} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1, duration: 0.38 }}
-                        style={{
-                          fontSize: 9, letterSpacing: '3px', fontWeight: 700, color: '#c9a84c', marginBottom: 9,
-                          display: 'inline-flex', alignItems: 'center', gap: 7,
-                          border: '1px solid rgba(201,168,76,0.45)', padding: '4px 11px',
-                          background: 'rgba(201,168,76,0.12)', backdropFilter: 'blur(4px)'
-                        }}>
+                    <div
+                      className="pointer-events-none absolute left-0 right-0 top-[52px] px-5 md:px-6"
+                      style={{
+                        height: 1,
+                        background:
+                          "linear-gradient(90deg,transparent 0%,rgba(201,168,76,0.55) 28%,rgba(201,168,76,0.55) 72%,transparent 100%)",
+                      }}
+                      aria-hidden
+                    />
+
+                    <button
+                      type="button"
+                      onClick={openActiveTemplate}
+                      className="absolute inset-0 z-[3] cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-0"
+                      style={{
+                        clipPath: "inset(0 0 5.75rem 0)",
+                      }}
+                      aria-label={`Open ${tab.title} template`}
+                    />
+
+                    <div className="pointer-events-none absolute left-5 top-5 z-[4] md:left-6 md:top-6">
+                      <motion.span
+                        key={tab.id + "-tag"}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.08, duration: 0.35 }}
+                        className="inline-flex items-center gap-2 border border-[#c9a84c]/55 bg-[rgba(201,168,76,0.12)] px-2.5 py-1 text-[9px] font-bold tracking-[0.22em] text-[#c9a84c] backdrop-blur-[4px]"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
                         ✦ {tab.tag}
-                      </motion.div>
+                      </motion.span>
+                    </div>
+
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[5] px-5 pb-5 pt-3 md:px-6 md:pb-6">
                       <motion.h3
-                        key={tab.id + '-title'} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.18, duration: 0.42 }}
+                        key={tab.id + "-head"}
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.12, duration: 0.4 }}
+                        className="mb-1.5 text-[clamp(1.35rem,2.4vw,2rem)] font-semibold leading-tight text-[#f7eee5]"
                         style={{
-                          fontFamily: "'Playfair Display',serif",
-                          fontSize: 'clamp(22px,2.6vw,34px)', fontWeight: 600, color: '#f7eee5',
-                          lineHeight: 1.1, marginBottom: 6, textShadow: '0 2px 12px rgba(0,0,0,0.4)'
-                        }}>
-                        {tab.title}
+                          fontFamily: "'Playfair Display', serif",
+                          textShadow: "0 2px 14px rgba(0,0,0,0.45)",
+                        }}
+                      >
+                        {tab.headline}
                       </motion.h3>
                       <motion.p
-                        key={tab.id + '-sub'} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        transition={{ delay: 0.28, duration: 0.38 }}
-                        style={{ fontSize: 12.5, color: 'rgba(245,237,230,0.72)', marginBottom: 14, lineHeight: 1.5 }}>
+                        key={tab.id + "-sub"}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2, duration: 0.35 }}
+                        className="mb-3 max-w-[26rem] text-[12.5px] leading-relaxed text-[rgba(245,237,230,0.72)]"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
                         {tab.subtitle}
                       </motion.p>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+
+                      <div data-hero-pill className="pointer-events-auto flex flex-wrap gap-1.5">
                         {SHOWCASE_ITEMS.map((s, i) => (
-                          <button key={s.id} onClick={() => selectItem(i)}
+                          <button
+                            key={s.id}
+                            type="button"
+                            data-hero-pill
+                            onClick={() => selectItem(i)}
+                            className="rounded-full px-2.5 py-1 text-[8.5px] font-bold tracking-wide transition-colors duration-200"
                             style={{
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer', transition: 'all 0.22s',
-                              border: `1px solid ${active === i ? 'rgba(201,168,76,0.75)' : 'rgba(255,255,255,0.2)'}`,
-                              background: active === i ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.07)',
-                              color: active === i ? '#c9a84c' : 'rgba(255,255,255,0.58)',
-                              fontSize: 9.5, fontWeight: 700, letterSpacing: '1px'
-                            }}>
-                            {tagLabels[i]}
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              border: `1px solid ${active === i ? "rgba(201,168,76,0.8)" : "rgba(255,255,255,0.22)"}`,
+                              background:
+                                active === i ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.06)",
+                              color: active === i ? "#c9a84c" : "rgba(255,255,255,0.55)",
+                              letterSpacing: "0.06em",
+                            }}
+                          >
+                            {s.pillLabel}
                           </button>
                         ))}
                       </div>
@@ -372,41 +422,66 @@ export default function HeroSection() {
                     key={key}
                     animate={{ x: xPos, opacity: sz.op, y: sz.y, width: sz.w, height: sz.h }}
                     transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-                    onClick={() => selectOffsetItem(offset, item.id)}
+                    onClick={() => selectOffsetItem(offset, item.href)}
                     style={{
-                      position: 'absolute', left: '50%', top: isC ? 18 : 32,
-                      borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
-                      border: isC ? '2px solid rgba(201,168,76,0.88)' : '1px solid rgba(61,12,17,0.12)',
+                      position: 'absolute', left: '50%', top: isC ? 14 : 30,
+                      borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
+                      border: isC ? '2.5px solid rgba(201,168,76,0.95)' : '1px solid rgba(61,12,17,0.14)',
+                      boxShadow: isC
+                        ? '0 18px 40px rgba(61,12,17,0.22), 0 0 0 1px rgba(255,255,255,0.06) inset'
+                        : '0 8px 24px rgba(61,12,17,0.08)',
                     }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.img} alt={item.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: isC ? 'scale(1.05)' : 'scale(1)', transition: 'transform 0.55s ease' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(18,5,8,0.92) 0%,rgba(18,5,8,0.08) 58%,transparent 100%)' }} />
-                    <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10 }}>
-                      <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: '#c9a84c', marginBottom: 3 }}>{item.tag}</div>
-                      <div style={{
-                        fontFamily: "'Playfair Display',serif",
-                        fontSize: isC ? 14.5 : 12, color: '#f5ede6', lineHeight: 1.1, fontWeight: isC ? 600 : 400
-                      }}>
-                        {item.title.split(' ')[0]}
-                      </div>
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={item.img}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        style={{ transform: isC ? "scale(1.04)" : "scale(1)", transition: "transform 0.55s ease" }}
+                        sizes="(max-width: 768px) 28vw, 180px"
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0204]/92 via-[#0a0204]/25 to-transparent"
+                        style={{ opacity: isC ? 1 : 0.55 }}
+                        aria-hidden
+                      />
+                      {isC && (
+                        <>
+                          <div
+                            className="pointer-events-none absolute left-2 top-2 z-[1] rounded border border-[#c9a84c]/65 bg-[rgba(201,168,76,0.14)] px-1.5 py-0.5 text-[6.5px] font-extrabold tracking-[0.14em] text-[#c9a84c] backdrop-blur-[3px]"
+                            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                          >
+                            OPEN →
+                          </div>
+                          <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1] px-2.5 pb-2.5 pt-6 text-left">
+                            <div
+                              className="mb-0.5 text-[7.5px] font-bold uppercase tracking-[0.16em] text-[#c9a84c]"
+                              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                            >
+                              {item.deckKicker}
+                            </div>
+                            <div
+                              className="leading-tight text-[13px] font-semibold text-[#f5ede6]"
+                              style={{
+                                fontFamily: "'Playfair Display', serif",
+                                textShadow: "0 2px 10px rgba(0,0,0,0.65)",
+                              }}
+                            >
+                              {item.deckTitle}
+                            </div>
+                          </div>
+                          <div
+                            className="pointer-events-none absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#c9a84c]/80 to-transparent"
+                            aria-hidden
+                          />
+                        </>
+                      )}
                     </div>
                     {isC && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.18, duration: 0.3 }}
-                        style={{
-                          position: 'absolute', top: 9, right: 9, width: 9, height: 9, borderRadius: '50%',
-                          background: item.accent, boxShadow: `0 0 10px ${item.accent},0 0 22px ${item.accent}88`
-                        }} />
-                    )}
-                    {isC && (
-                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)' }} />
-                    )}
-                    {isC && (
-                      <div style={{ position: 'absolute', top: 9, left: 9, background: 'rgba(201,168,76,0.18)', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 4, padding: '2px 6px', fontSize: 7, fontWeight: 700, letterSpacing: '1.2px', color: '#c9a84c' }}>
-                        OPEN →
-                      </div>
+                      <div
+                        className="pointer-events-none absolute inset-0 rounded-[14px] ring-2 ring-[#c9a84c]/25"
+                        aria-hidden
+                      />
                     )}
                   </motion.div>
                 );

@@ -2,7 +2,10 @@
 
 import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, Sparkles } from "lucide-react";
+
+const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
+const WARM = "rgb(108, 74, 46)";
+const WARM_DIM = "rgba(108, 74, 46, 0.60)";
 
 interface LoveWelcomeOverlayProps {
   senderName: string;
@@ -10,20 +13,13 @@ interface LoveWelcomeOverlayProps {
   onEnter: (playMusic: boolean) => void;
 }
 
-const HEART_PARTICLES = [
-  { color: "#e11d48", x: "12%", y: "16%", size: 100 },
-  { color: "#ec4899", x: "82%", y: "10%", size: 90 },
-  { color: "#f43f5e", x: "6%", y: "72%", size: 85 },
-  { color: "#a855f7", x: "88%", y: "65%", size: 95 },
-  { color: "#fb7185", x: "50%", y: "6%", size: 70 },
-  { color: "#be185d", x: "42%", y: "85%", size: 65 },
-];
-
-const RING_COLORS = [
-  "rgba(225,29,72,0.2)",
-  "rgba(236,72,153,0.15)",
-  "rgba(168,85,247,0.1)",
-  "rgba(251,113,133,0.08)",
+const PETALS = [
+  { emoji: "🌸", x: "8%",  y: "12%", delay: 0,    dur: 4.5 },
+  { emoji: "🌹", x: "78%", y: "8%",  delay: 0.4,  dur: 5   },
+  { emoji: "✿",  x: "4%",  y: "68%", delay: 0.8,  dur: 4   },
+  { emoji: "🌸", x: "88%", y: "62%", delay: 0.2,  dur: 5.5 },
+  { emoji: "💮", x: "45%", y: "4%",  delay: 0.6,  dur: 4.2 },
+  { emoji: "✿",  x: "38%", y: "88%", delay: 1.0,  dur: 4.8 },
 ];
 
 const LoveWelcomeOverlay = memo(function LoveWelcomeOverlay({
@@ -44,250 +40,223 @@ const LoveWelcomeOverlay = memo(function LoveWelcomeOverlay({
     <AnimatePresence>
       {!exiting && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-background"
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
+          exit={{ opacity: 0, scale: 1.04 }}
+          transition={{ duration: 0.65, ease: "easeInOut" }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: `
+              radial-gradient(ellipse at 50% 50%, transparent 22%, rgba(28,15,6,0.45) 100%),
+              url(/love/image18.webp) center / cover no-repeat
+            `,
+            padding: "24px 20px",
+          }}
         >
-          {HEART_PARTICLES.map((p, i) => (
+          <style>{`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap');`}</style>
+
+          {/* Floating petal decorations */}
+          {PETALS.map((p, i) => (
             <motion.div
               key={i}
-              className="absolute rounded-full pointer-events-none"
               style={{
-                width: p.size,
-                height: p.size,
-                left: p.x,
-                top: p.y,
-                background: `radial-gradient(circle, ${p.color}30 0%, ${p.color}00 70%)`,
-                filter: "blur(25px)",
+                position: "absolute",
+                left: p.x, top: p.y,
+                fontSize: 18,
+                pointerEvents: "none",
+                opacity: 0.65,
               }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: [0.8, 1.3, 0.9, 1.15, 0.8],
-                opacity: [0.3, 0.6, 0.4, 0.55, 0.3],
-              }}
-              transition={{
-                scale: { duration: 6 + i, repeat: Infinity, ease: "easeInOut" },
-                opacity: { duration: 5 + i * 0.5, repeat: Infinity, ease: "easeInOut" },
-                delay: i * 0.15,
-              }}
-            />
+              animate={{ y: [0, -10, 0], rotate: [0, 12, -8, 0] }}
+              transition={{ duration: p.dur, repeat: Infinity, ease: "easeInOut", delay: p.delay }}
+            >
+              {p.emoji}
+            </motion.div>
           ))}
 
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {RING_COLORS.map((color, i) => (
-              <motion.div
-                key={i}
-                className="absolute rounded-full"
-                style={{ border: `1.5px solid ${color}` }}
-                initial={{ width: 0, height: 0, opacity: 0 }}
-                animate={{
-                  width: [0, 280 + i * 110],
-                  height: [0, 280 + i * 110],
-                  opacity: [0, 0.5, 0],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: 1 + i * 0.6,
-                  ease: "easeOut",
-                }}
-              />
-            ))}
-          </div>
+          {/* Card */}
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 18 }}
+            animate={{ scale: 1,    opacity: 1, y: 0  }}
+            transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.1 }}
+            style={{
+              width: "100%", maxWidth: 340,
+              borderRadius: 24,
+              background: "rgba(250, 246, 240, 0.97)",
+              boxShadow: "0 30px 80px rgba(28,15,6,0.50), 0 2px 0 rgba(255,255,255,0.6) inset",
+              padding: "36px 28px 32px",
+              textAlign: "center",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Top decorative bar */}
+            <div style={{
+              position: "absolute", top: 0, left: 0, right: 0, height: 4,
+              background: "linear-gradient(90deg, transparent, rgba(180,100,80,0.45), rgba(158,126,97,0.6), rgba(180,100,80,0.45), transparent)",
+              borderRadius: "24px 24px 0 0",
+            }} />
 
-          <div className="relative z-10 text-center px-6 max-w-md mx-auto flex flex-col items-center">
+            {/* Heart icon */}
             <motion.div
-              className="relative mb-6"
+              style={{ marginBottom: 16 }}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 160, damping: 12, delay: 0.15 }}
+              transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.25 }}
             >
               <motion.div
-                className="absolute -inset-5 rounded-full"
+                animate={{ scale: [1, 1.12, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                 style={{
-                  background:
-                    "conic-gradient(from 0deg, #e11d48, #ec4899, #a855f7, #fb7185, #e11d48)",
-                  filter: "blur(18px)",
-                  opacity: 0.2,
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              />
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center relative"
-                style={{
-                  background: "rgba(225,29,72,0.08)",
-                  backdropFilter: "blur(20px)",
-                  border: "2px solid rgba(225,29,72,0.15)",
-                  boxShadow:
-                    "0 0 40px rgba(225,29,72,0.15), 0 0 80px rgba(236,72,153,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",
+                  width: 68, height: 68, borderRadius: "50%",
+                  background: "rgba(158,126,97,0.10)",
+                  border: "1.5px solid rgba(158,126,97,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto",
+                  boxShadow: "0 0 28px rgba(158,126,97,0.20)",
                 }}
               >
-                <motion.span
-                  className="text-4xl"
-                  animate={{ scale: [1, 1.15, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ filter: "drop-shadow(0 2px 8px rgba(225,29,72,0.3))" }}
-                >
-                  💕
-                </motion.span>
-              </div>
+                <span style={{ fontSize: 34, lineHeight: 1 }}>💕</span>
+              </motion.div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
+            {/* "A love page for" tag */}
+            <motion.p
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-5"
               style={{
-                background: "rgba(225,29,72,0.06)",
-                border: "1px solid rgba(225,29,72,0.12)",
+                fontFamily: CURSIVE, fontSize: 12, color: WARM_DIM,
+                letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                margin: "0 0 8px",
               }}
             >
-              <Sparkles size={12} style={{ color: "#e11d48" }} />
-              <span
-                className="text-[10px] font-bold uppercase tracking-[0.25em]"
-                style={{
-                  color: "#e11d48",
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                A Love Letter
-              </span>
-              <Sparkles size={12} style={{ color: "#ec4899" }} />
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 25 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.7, ease: "easeOut" }}
-              className="text-4xl sm:text-5xl font-bold mb-3 leading-tight"
-              style={{
-                color: "transparent",
-                backgroundImage:
-                  "linear-gradient(135deg, #e11d48 0%, #ec4899 35%, #a855f7 65%, #e11d48 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                filter: "drop-shadow(0 3px 20px rgba(225,29,72,0.3))",
-              }}
-            >
-              I Love You
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="text-xl sm:text-2xl font-bold mb-1.5 text-foreground"
-            >
-              Hey, {displayName}! 💗
+              A love page for
             </motion.p>
 
+            {/* Recipient name */}
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              style={{
+                fontFamily: CURSIVE, fontSize: 34, fontWeight: 700, color: WARM,
+                margin: "0 0 6px", lineHeight: 1.1,
+                textShadow: "0 2px 8px rgba(108,74,46,0.14)",
+              }}
+            >
+              {displayName} ♡
+            </motion.h1>
+
+            {/* From line */}
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.85 }}
-              className="text-sm mb-5 text-muted-foreground"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              transition={{ delay: 0.65 }}
+              style={{
+                fontFamily: CURSIVE, fontSize: 14, color: WARM_DIM,
+                margin: "0 0 22px", lineHeight: 1.6,
+              }}
             >
-              A special surprise from{" "}
-              <span className="font-bold" style={{ color: "#e11d48" }}>{senderName}</span>
+              with love from{" "}
+              <span style={{ color: WARM, fontWeight: 700 }}>{senderName || "someone who cares"}</span>
             </motion.p>
 
+            {/* Divider */}
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ delay: 0.95, duration: 0.6, ease: "easeOut" }}
-              className="w-full max-w-[200px] h-[2px] rounded-full mx-auto mb-7"
+              transition={{ delay: 0.75, duration: 0.5 }}
               style={{
-                background:
-                  "linear-gradient(90deg, transparent, #e11d48, #ec4899, #a855f7, transparent)",
+                height: 1, margin: "0 auto 22px",
+                width: "80%",
+                background: "linear-gradient(90deg, transparent, rgba(158,126,97,0.35), transparent)",
+                borderRadius: 999,
               }}
             />
 
+            {/* Music card */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.05, type: "spring", stiffness: 200, damping: 22 }}
-              className="w-full max-w-xs rounded-3xl p-6 relative overflow-hidden"
+              transition={{ delay: 0.85, type: "spring", stiffness: 220, damping: 22 }}
               style={{
-                background: "rgba(225,29,72,0.04)",
-                backdropFilter: "blur(28px)",
-                border: "1px solid rgba(225,29,72,0.1)",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
+                borderRadius: 16,
+                border: "1px solid rgba(158,126,97,0.20)",
+                background: "rgba(158,126,97,0.06)",
+                padding: "14px 16px",
+                marginBottom: 18,
               }}
             >
-              <div
-                className="absolute inset-x-0 top-0 h-[2px] rounded-t-3xl"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #e11d48, #ec4899, #a855f7, #fb7185)",
-                }}
-              />
-
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
                 <motion.span
                   animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="text-lg"
+                  transition={{ duration: 1.6, repeat: Infinity }}
+                  style={{ fontSize: 18 }}
                 >
                   🎵
                 </motion.span>
-                <p
-                  className="text-[13px] font-semibold text-foreground/85"
-                  style={{ fontFamily: "'DM Sans', sans-serif" }}
-                >
-                  Romantic Background Music
-                </p>
+                <span style={{ fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: WARM }}>
+                  Romantic background music
+                </span>
               </div>
-
-              <p
-                className="text-[11px] mb-5 leading-relaxed text-muted-foreground"
-                style={{ fontFamily: "'DM Sans', sans-serif" }}
-              >
-                Enhance your experience with beautiful love melodies
+              <p style={{
+                fontFamily: CURSIVE, fontSize: 11, color: WARM_DIM,
+                margin: 0, lineHeight: 1.55,
+              }}>
+                Set the mood with love melodies playing softly in the background
               </p>
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => handleEnter(true)}
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[13px] font-bold transition-all text-white"
-                  style={{
-                    background: "linear-gradient(135deg, #e11d48, #ec4899)",
-                    boxShadow: "0 8px 28px rgba(225,29,72,0.25)",
-                  }}
-                >
-                  <Volume2 size={15} />
-                  Play & Enter
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => handleEnter(false)}
-                  className="flex-[0.65] inline-flex items-center justify-center gap-1.5 py-3.5 rounded-2xl text-[13px] font-semibold transition-all text-muted-foreground"
-                  style={{
-                    background: "rgba(225,29,72,0.04)",
-                    border: "1px solid rgba(225,29,72,0.1)",
-                  }}
-                >
-                  Skip
-                </motion.button>
-              </div>
             </motion.div>
 
+            {/* Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0 }}
+              style={{ display: "flex", gap: 10 }}
+            >
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                onClick={() => handleEnter(true)}
+                style={{
+                  flex: 1, padding: "13px 0", borderRadius: 999, border: "none",
+                  background: "linear-gradient(135deg, rgb(158,126,97), rgb(120,85,55))",
+                  fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "#fff",
+                  cursor: "pointer",
+                  boxShadow: "0 6px 20px rgba(108,74,46,0.32)",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                }}
+              >
+                ♫ Play &amp; Enter
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleEnter(false)}
+                style={{
+                  flex: "0 0 auto", padding: "13px 18px", borderRadius: 999,
+                  border: "1.5px solid rgba(158,126,97,0.28)",
+                  background: "rgba(250,246,240,0.5)",
+                  fontFamily: CURSIVE, fontSize: 14, fontWeight: 600, color: WARM_DIM,
+                  cursor: "pointer",
+                }}
+              >
+                Skip
+              </motion.button>
+            </motion.div>
+
+            {/* Footer note */}
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.4 }}
-              className="mt-6 text-[9px] tracking-wider uppercase text-muted-foreground/40"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              transition={{ delay: 1.25 }}
+              style={{
+                fontFamily: CURSIVE, fontSize: 10, color: "rgba(108,74,46,0.35)",
+                margin: "16px 0 0", letterSpacing: "0.05em",
+              }}
             >
-              Made with ❤️ just for you
+              made with love ♡
             </motion.p>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

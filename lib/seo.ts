@@ -155,6 +155,14 @@ export const TEMPLATE_SEO: Record<string, TemplateSeo> = {
     category: "Love",
     emoji: "💕",
   },
+  "darling": {
+    title: "Darling — A Velvet Night Love Page | Romantic Gift",
+    description:
+      "Create a stunning dark-themed love page for your darling with games, gallery, music & secret notes. A romantic gift to share anytime.",
+    keywords: ["darling love page", "romantic gift", "love page dark theme", "girlfriend gift", "love letter online"],
+    category: "Love",
+    emoji: "🌹",
+  },
   "wedding-shaadi": {
     title: "Royal Indian Wedding Invitation | Digital Shaadi Card",
     description:

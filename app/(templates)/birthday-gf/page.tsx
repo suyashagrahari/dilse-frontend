@@ -1,692 +1,418 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  X,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  PenLine,
-  Loader2,
-  Check,
-  Plus,
-  Trash2,
-  Copy,
-  ExternalLink,
-  Eye,
-  Send,
-  Lock,
-  ShieldCheck,
-  EyeOff,
-} from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
+import { Suspense, lazy, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
-import BirthdayContent from "./components/BirthdayContent";
-import BirthdayNav from "./components/BirthdayNav";
-import { type ContentData, type TabId, DEMO_CONTENT } from "./components/types";
 
-import { API_URL, IS_NGROK } from "@/lib/config";
+import { useBirthdayEditor } from "./hooks/useBirthdayEditor";
 
-interface Toast {
-  id: number;
-  type: "success" | "info" | "publish";
-  title: string;
-  message?: string;
-  shareUrl?: string;
+import HomeSection from "./components/HomeSection";
+import BottomNav from "./components/BottomNav";
+import DesktopSidebar from "./components/DesktopSidebar";
+import ToastStack from "./components/ToastStack";
+import EditSheet from "./components/EditSheet";
+import PublishSheet from "./components/PublishSheet";
+import PublishingOverlay from "./components/PublishingOverlay";
+import BirthdayBgMusic from "./components/BirthdayBgMusic";
+
+const GallerySection  = lazy(() => import("./components/GallerySection"));
+const SongsSection    = lazy(() => import("./components/SongsSection"));
+const GamesSection    = lazy(() => import("./components/GamesSection"));
+const SurpriseSection = lazy(() => import("./components/SurpriseSection"));
+
+const SCRIPT = "'Great Vibes', cursive";
+const SERIF = "'Cormorant Garamond', Georgia, serif";
+const DARK_BROWN = "#5D3F31";
+const COPPER = "#AD684A";
+
+function ScrapbookBg({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ height: "100%", width: "100%" }}>
+      {children}
+    </div>
+  );
 }
 
-function BirthdayGfPage() {
-  const router = useRouter();
-  const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
+function SectionLoader() {
+  return (
+    <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5EDE0" }}>
+      <p style={{ fontFamily: SCRIPT, fontSize: 20, color: "#5D3F31", opacity: 0.6 }}>loading...</p>
+    </div>
+  );
+}
 
-  const [tab, setTab] = useState<TabId>("cover");
-  const [content, setContent] = useState<ContentData>(DEMO_CONTENT);
-  const [isPersonalized, setIsPersonalized] = useState(false);
-  const [pageId, setPageId] = useState<string | null>(null);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [showAuth, setShowAuth] = useState(false);
+function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
 
-  const [editMode, setEditMode] = useState<null | "choose" | "ai" | "manual" | "preview" | "password">(null);
-  const [pendingContent, setPendingContent] = useState<ContentData | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [pagePassword, setPagePassword] = useState("");
-  const [showPwValue, setShowPwValue] = useState(false);
-  const [hasPasswordSet, setHasPasswordSet] = useState(false);
-
-  const [aiName, setAiName] = useState("");
-  const [aiSender, setAiSender] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [mf, setMf] = useState<ContentData>({ ...DEMO_CONTENT });
-  const [manualStep, setManualStep] = useState(0);
-  const [photoInput, setPhotoInput] = useState("");
-
-  const [publishing, setPublishing] = useState(false);
-
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
-
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
-  }, []);
-
-  const dismissToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const headers = useCallback(
-    () => ({
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
-    }),
-    [accessToken]
-  );
-
-  const searchParams = useSearchParams();
-
-  /* Load existing page when navigated from profile with ?edit=<id> */
-  useEffect(() => {
-    const editId = searchParams.get("edit");
-    if (!editId || !accessToken) return;
-    fetch(`${API_URL}/birthday-pages/${editId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
-      },
-    })
-      .then((r) => r.json())
-      .then((result) => {
-        if (result.success && result.data) {
-          const d = result.data;
-          const loaded: ContentData = {
-            recipientName: d.recipientName || DEMO_CONTENT.recipientName,
-            senderName: d.senderName || DEMO_CONTENT.senderName,
-            personalMessage: d.personalMessage || DEMO_CONTENT.personalMessage,
-            wishes: d.wishes?.length ? d.wishes : DEMO_CONTENT.wishes,
-            photos: d.photos || [],
-            theme: d.theme || "romantic",
-          };
-          setContent(loaded);
-          setMf(loaded);
-          setPageId(editId);
-          setIsPersonalized(true);
-        }
-      })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
-
-  const handleEditClick = () => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
-    setEditMode("choose");
+  const copy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleAiGenerate = async () => {
-    if (!aiName.trim() || !aiPrompt.trim()) return;
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({
-          prompt: `Birthday message for ${aiName}. ${aiPrompt}`,
-          templateId: "birthday-gf",
-          templateType: "birthday",
-        }),
-      });
-      const data = await res.json();
-      if (data.heading || data.body) {
-        const newContent: ContentData = {
-          recipientName: aiName.trim(),
-          senderName: aiSender.trim() || "With Love ❤️",
-          personalMessage: data.body || DEMO_CONTENT.personalMessage,
-          wishes: DEMO_CONTENT.wishes,
-          photos: [],
-          theme: "romantic",
-        };
-        setPendingContent(newContent);
-        setContent(newContent);
-        setEditMode("preview");
-      }
-    } catch {
-      pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
-    } finally { setAiLoading(false); }
+  const whatsapp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(`A birthday page just for you 🎂 ${url}`)}`, "_blank");
   };
 
-  const handleManualPreview = () => {
-    if (!mf.recipientName.trim()) return;
-    setPendingContent(mf);
-    setContent(mf);
-    setEditMode("preview");
-  };
-
-  const handleConfirmSave = () => {
-    if (!pendingContent) return;
-    setPagePassword("");
-    setShowPwValue(false);
-    setEditMode("password");
-  };
-
-  const handlePasswordDone = async (pw: string) => {
-    if (!pendingContent) return;
-    setSaving(true);
-    try {
-      await saveToServer({ ...pendingContent }, pw);
-      setIsPersonalized(true);
-      setShareUrl(null);
-      setEditMode(null);
-      setTab("cover");
-      setPendingContent(null);
-      setHasPasswordSet(!!pw);
-      const msg = pw ? "Saved with password protection!" : "Changes saved!";
-      pushToast({ type: "success", title: msg, message: pw ? "Share the password with your special someone" : "Your page is ready to publish" });
-    } catch {
-      pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-    } finally { setSaving(false); }
-  };
-
-  const handleDiscardPreview = () => {
-    if (!pendingContent) { setEditMode(null); return; }
-    setContent(isPersonalized ? content : DEMO_CONTENT);
-    setPendingContent(null);
-    setEditMode("choose");
-  };
-
-  const saveToServer = async (data: ContentData, password?: string) => {
-    if (!accessToken) return;
-    const body = { ...data, password: password || "" };
-    if (pageId) {
-      await fetch(`${API_URL}/birthday-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(body) });
-    } else {
-      const res = await fetch(`${API_URL}/birthday-pages`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
-      const result = await res.json();
-      if (result.success) setPageId(result.data._id);
+  const nativeShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: "A birthday page for you 🎂", url }).catch(() => {});
     }
   };
-
-  const handlePublish = async () => {
-    if (!pageId) return;
-    setPublishing(true);
-    try {
-      const res = await fetch(`${API_URL}/birthday-pages/${pageId}/publish`, { method: "POST", headers: headers() });
-      const result = await res.json();
-      if (result.success) {
-        const url = result.data.shareUrl;
-        setShareUrl(url);
-        setPageId(null);
-        setIsPersonalized(false);
-        setHasPasswordSet(false);
-        pushToast({
-          type: "publish",
-          title: "Published!",
-          message: hasPasswordSet ? "Surprise tab is password-protected" : "Your page is now live",
-          shareUrl: url,
-        });
-      }
-    } catch {
-      pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
-    } finally { setPublishing(false); }
-  };
-
-  const handleCopy = (url?: string) => {
-    const link = url || shareUrl;
-    if (link) {
-      navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      if (!url) pushToast({ type: "success", title: "Link copied!" });
-    }
-  };
-
-  const updateMf = (key: keyof ContentData, val: unknown) => setMf((p) => ({ ...p, [key]: val }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950 relative overflow-hidden">
-      <BirthdayContent data={content} tab={tab} onTabChange={setTab} />
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 500,
+        background: "rgba(45,25,15,0.55)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        style={{
+          width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0",
+          background: "rgba(250,245,238,0.98)",
+          padding: "28px 24px 44px",
+          boxShadow: "0 -12px 60px rgba(45,25,15,0.25)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <span style={{ fontFamily: SCRIPT, fontSize: 20, fontWeight: 700, color: DARK_BROWN }}>
+            Share your birthday page 🎂
+          </span>
+          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", color: DARK_BROWN, opacity: 0.5 }}>
+            ✕
+          </button>
+        </div>
 
-      <BirthdayNav
-        mode="editor"
-        tab={tab}
-        onTabChange={(t) => { setTab(t); if (editMode !== "preview" && editMode !== "password") setEditMode(null); }}
-        editActive={!!editMode}
-        onEdit={handleEditClick}
-        onPublish={handlePublish}
-        onShare={() => handleCopy()}
-        onBack={() => router.push("/templates")}
-        shareLabel={copied ? "Copied!" : "Share"}
-        showPublish={isPersonalized && !shareUrl && !publishing}
-        showShare={!!shareUrl}
-      />
+        {/* URL preview */}
+        <div style={{
+          background: "rgba(173,104,74,0.08)", borderRadius: 12,
+          padding: "10px 14px", marginBottom: 20,
+          fontFamily: SCRIPT, fontSize: 12, color: DARK_BROWN,
+          wordBreak: "break-all", lineHeight: 1.5,
+        }}>
+          {url}
+        </div>
 
-      {/* ─── TOAST STACK ─── */}
-      <div className="fixed top-4 left-0 right-0 z-[60] flex flex-col items-center gap-2 pointer-events-none px-4">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="pointer-events-auto w-full max-w-sm"
-            >
-              <div className={`relative rounded-2xl shadow-2xl border backdrop-blur-xl overflow-hidden ${
-                toast.type === "publish"
-                  ? "bg-gradient-to-r from-emerald-500/95 to-green-500/95 border-emerald-400/30 text-white"
-                  : toast.type === "success"
-                  ? "bg-white/95 dark:bg-slate-900/95 border-emerald-200/50 dark:border-emerald-800/30"
-                  : "bg-white/95 dark:bg-slate-900/95 border-border/50"
-              }`}>
-                <div className="px-4 py-3 flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    toast.type === "publish" ? "bg-white/20" :
-                    toast.type === "success" ? "bg-emerald-500/10" : "bg-blue-500/10"
-                  }`}>
-                    {toast.type === "publish" ? <Send size={14} className="text-white" /> :
-                     toast.type === "success" ? <Check size={14} className="text-emerald-500" /> :
-                     <Sparkles size={14} className="text-blue-500" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold ${toast.type === "publish" ? "text-white" : ""}`}>{toast.title}</p>
-                    {toast.message && (
-                      <p className={`text-xs mt-0.5 ${toast.type === "publish" ? "text-white/80" : "text-muted-foreground"}`}>{toast.message}</p>
-                    )}
-                    {toast.shareUrl && (
-                      <div className="flex gap-2 mt-2.5">
-                        <button
-                          onClick={() => { handleCopy(toast.shareUrl); dismissToast(toast.id); }}
-                          className="flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          <Copy size={12} /> Copy Link
-                        </button>
-                        <button
-                          onClick={() => { window.open(toast.shareUrl, "_blank"); dismissToast(toast.id); }}
-                          className="flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          <ExternalLink size={12} /> Open
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => dismissToast(toast.id)} className={`p-0.5 rounded-full shrink-0 ${toast.type === "publish" ? "text-white/60 hover:text-white" : "text-muted-foreground/40 hover:text-muted-foreground"}`}>
-                    <X size={14} />
-                  </button>
-                </div>
-                {toast.type !== "publish" && (
-                  <motion.div
-                    initial={{ scaleX: 1 }}
-                    animate={{ scaleX: 0 }}
-                    transition={{ duration: 3.5, ease: "linear" }}
-                    className="h-0.5 bg-emerald-500/30 origin-left"
-                  />
-                )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={copy} style={{
+            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+            borderRadius: 14, border: "1.5px solid rgba(173,104,74,0.25)",
+            background: copied ? "rgba(173,104,74,0.12)" : "rgba(255,252,246,0.9)",
+            cursor: "pointer", textAlign: "left",
+          }}>
+            <span style={{ fontSize: 22 }}>{copied ? "✓" : "🔗"}</span>
+            <div>
+              <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>
+                {copied ? "Copied!" : "Copy Link"}
+              </p>
+              <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
+                Copy the link to share anywhere
+              </p>
+            </div>
+          </button>
+
+          <button onClick={whatsapp} style={{
+            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+            borderRadius: 14, border: "1.5px solid rgba(37,211,102,0.25)",
+            background: "rgba(255,252,246,0.9)",
+            cursor: "pointer", textAlign: "left",
+          }}>
+            <span style={{ fontSize: 22 }}>💬</span>
+            <div>
+              <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>WhatsApp</p>
+              <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
+                Send via WhatsApp
+              </p>
+            </div>
+          </button>
+
+          {typeof navigator !== "undefined" && "share" in navigator && (
+            <button onClick={nativeShare} style={{
+              display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+              borderRadius: 14, border: "1.5px solid rgba(173,104,74,0.25)",
+              background: "rgba(255,252,246,0.9)",
+              cursor: "pointer", textAlign: "left",
+            }}>
+              <span style={{ fontSize: 22 }}>↗️</span>
+              <div>
+                <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>Share</p>
+                <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
+                  Share via other apps
+                </p>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function BirthdayGfPageInner() {
+  const editor = useBirthdayEditor();
+  const [songPlaying, setSongPlaying] = useState(false);
+  const handleSongPlayingChange = useCallback((v: boolean) => setSongPlaying(v), []);
+  const [recordingActive, setRecordingActive] = useState(false);
+  const handleRecordingChange = useCallback((v: boolean) => setRecordingActive(v), []);
+
+  const topAction = editor.showShare
+    ? { label: "Share", onClick: editor.handleShare }
+    : editor.showPublish
+      ? { label: "🎂 Publish", onClick: editor.handlePublish }
+      : { label: "✦ Create", onClick: editor.handleEditClick };
+
+  return (
+    <div
+      style={{
+        minHeight: "100dvh",
+        width: "100%",
+        overflow: "hidden",
+        position: "relative",
+        background: "#F5EDE0",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;1,400;1,500&display=swap');
+        body, html { margin: 0; padding: 0; background: #F5EDE0; }
+        * { box-sizing: border-box; }
+        @media (max-width: 1023px) {
+          body { overflow: hidden; }
+        }
+      `}</style>
+
+      {/* Mobile top bar: Back + Create/Publish/Share */}
+      <div
+        className="lg:hidden"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 101,
+          paddingTop: "max(12px, env(safe-area-inset-top, 12px))",
+          paddingLeft: 14,
+          paddingRight: 14,
+          paddingBottom: 8,
+          pointerEvents: "auto",
+          background: "linear-gradient(180deg, rgba(237,224,204,0.85) 0%, rgba(237,224,204,0) 100%)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+          }}
+        >
+          <button
+            onClick={editor.goBack}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px 7px 10px",
+              borderRadius: 999,
+              border: "1px solid rgba(173,104,74,0.15)",
+              background: "rgba(253,248,240,0.90)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              fontFamily: SERIF,
+              fontStyle: "italic",
+              fontSize: 14,
+              fontWeight: 400,
+              color: DARK_BROWN,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              boxShadow: "0 2px 10px rgba(93,63,49,0.08)",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={DARK_BROWN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Back
+          </button>
+
+          <button
+            onClick={topAction.onClick}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px 7px 12px",
+              borderRadius: 999,
+              border: editor.showShare ? `1px solid rgba(173,104,74,0.15)` : "none",
+              background: editor.showPublish
+                ? `linear-gradient(135deg, ${COPPER} 0%, ${DARK_BROWN} 100%)`
+                : editor.showShare
+                  ? "rgba(253,248,240,0.90)"
+                  : `linear-gradient(135deg, ${COPPER} 0%, ${DARK_BROWN} 100%)`,
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              color: editor.showShare ? DARK_BROWN : "#FFF8EE",
+              fontFamily: SCRIPT,
+              fontSize: 15,
+              fontWeight: 400,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              boxShadow: editor.showPublish
+                ? "0 4px 16px rgba(93,63,49,0.30)"
+                : editor.showShare
+                  ? "0 2px 10px rgba(93,63,49,0.08)"
+                  : "0 4px 16px rgba(173,104,74,0.25)",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg>
+            {topAction.label}
+          </button>
+        </div>
       </div>
 
-      {/* ─── EDIT SHEET ─── */}
-      <AnimatePresence>
-        {editMode && editMode !== "preview" && editMode !== "password" && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setEditMode(null)}
-              className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60"
-            />
+      <DesktopSidebar
+        tab={editor.tab}
+        onTabChange={editor.handleTabChange}
+        recipientName={editor.content.recipientName}
+        senderName={editor.content.senderName}
+        onBack={editor.goBack}
+        onEdit={editor.handleEditClick}
+        showPublish={editor.showPublish}
+        showShare={editor.showShare}
+        shareLabel={editor.shareLabel}
+        onPublish={editor.handlePublish}
+        onShare={editor.handleShare}
+      />
 
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-y-auto bg-background rounded-t-3xl shadow-2xl safe-bottom"
-            >
-              <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-10">
-                <div className="w-10 h-1 rounded-full bg-border" />
-              </div>
-
-              {editMode === "choose" && (
-                <div className="px-5 pb-8 pt-2">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold">Customize Your Page</h3>
-                    <button onClick={() => setEditMode(null)} className="p-1 text-muted-foreground"><X size={20} /></button>
-                  </div>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => {
-                        setAiName(isPersonalized ? content.recipientName : "");
-                        setAiSender(isPersonalized ? content.senderName : "");
-                        setAiPrompt("");
-                        setEditMode("ai");
-                      }}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200/50 dark:border-violet-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
-                    >
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shrink-0">
-                        <Sparkles size={20} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm">Generate with AI</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Describe what you want & AI creates it</p>
-                      </div>
-                      <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setMf(isPersonalized ? { ...content } : { ...DEMO_CONTENT });
-                        setManualStep(0);
-                        setEditMode("manual");
-                      }}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 to-pink-500/10 dark:from-rose-500/15 dark:to-pink-500/15 border border-rose-200/50 dark:border-rose-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
-                    >
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shrink-0">
-                        <PenLine size={20} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm">Write Manually</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Fill in each field yourself</p>
-                      </div>
-                      <ChevronRight size={16} className="text-muted-foreground ml-auto shrink-0" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {editMode === "ai" && (
-                <div className="px-5 pb-8 pt-2">
-                  <div className="flex items-center gap-3 mb-6">
-                    <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
-                    <h3 className="text-lg font-bold flex items-center gap-2"><Sparkles size={16} className="text-violet-500" />AI Magic</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Their Name *</label>
-                      <input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Sarah" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Your Name</label>
-                      <input value={aiSender} onChange={(e) => setAiSender(e.target.value)} placeholder="e.g. Alex" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Describe what you want *</label>
-                      <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="e.g. A romantic birthday message for my girlfriend who loves cooking and traveling..." rows={4} className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-violet-300 dark:focus:border-violet-700 focus:outline-none text-sm transition-all resize-none" />
-                    </div>
-                    <button onClick={handleAiGenerate} disabled={aiLoading || !aiName.trim() || !aiPrompt.trim()} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-transform">
-                      {aiLoading ? (<><Loader2 size={16} className="animate-spin" />Generating...</>) : (<><Sparkles size={16} />Generate Magic ✨</>)}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {editMode === "manual" && (
-                <div className="px-5 pb-8 pt-2">
-                  <div className="flex items-center gap-3 mb-4">
-                    <button onClick={() => setEditMode("choose")} className="p-1 text-muted-foreground"><ChevronLeft size={20} /></button>
-                    <h3 className="text-lg font-bold flex items-center gap-2"><PenLine size={16} className="text-rose-500" />Manual Edit</h3>
-                  </div>
-
-                  <div className="flex gap-1 mb-6">
-                    {["Names", "Letter", "Wishes", "Photos"].map((s, i) => (
-                      <button key={s} onClick={() => setManualStep(i)} className={`flex-1 h-1 rounded-full transition-all ${i <= manualStep ? "bg-rose-500" : "bg-border"}`} />
-                    ))}
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    {manualStep === 0 && (
-                      <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Their Name *</label>
-                          <input value={mf.recipientName} onChange={(e) => updateMf("recipientName", e.target.value)} placeholder="e.g. Sarah" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-rose-300 focus:outline-none text-sm" />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Your Name</label>
-                          <input value={mf.senderName} onChange={(e) => updateMf("senderName", e.target.value)} placeholder="e.g. Alex" className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-rose-300 focus:outline-none text-sm" />
-                        </div>
-                      </motion.div>
-                    )}
-                    {manualStep === 1 && (
-                      <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Personal Message</label>
-                        <textarea value={mf.personalMessage} onChange={(e) => updateMf("personalMessage", e.target.value)} rows={7} placeholder="Dear love, on your special day..." className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:border-rose-300 focus:outline-none text-sm resize-none" />
-                      </motion.div>
-                    )}
-                    {manualStep === 2 && (
-                      <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
-                        {mf.wishes.map((w, i) => (
-                          <div key={i} className="flex gap-2">
-                            <input value={w} onChange={(e) => updateMf("wishes", mf.wishes.map((x, j) => j === i ? e.target.value : x))} placeholder={`Wish #${i + 1}`} className="flex-1 px-4 py-2.5 rounded-xl bg-muted/50 border border-border/50 focus:border-rose-300 focus:outline-none text-sm" />
-                            {mf.wishes.length > 1 && (
-                              <button onClick={() => updateMf("wishes", mf.wishes.filter((_, j) => j !== i))} className="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0"><Trash2 size={14} /></button>
-                            )}
-                          </div>
-                        ))}
-                        {mf.wishes.length < 8 && (
-                          <button onClick={() => updateMf("wishes", [...mf.wishes, ""])} className="flex items-center gap-1.5 text-sm text-rose-500 font-semibold"><Plus size={14} /> Add wish</button>
-                        )}
-                      </motion.div>
-                    )}
-                    {manualStep === 3 && (
-                      <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                        <div className="flex gap-2">
-                          <input value={photoInput} onChange={(e) => setPhotoInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && photoInput.trim()) { updateMf("photos", [...mf.photos, photoInput.trim()]); setPhotoInput(""); }}} placeholder="Paste image URL..." className="flex-1 px-4 py-2.5 rounded-xl bg-muted/50 border border-border/50 focus:border-rose-300 focus:outline-none text-sm" />
-                          <button onClick={() => { if (photoInput.trim()) { updateMf("photos", [...mf.photos, photoInput.trim()]); setPhotoInput(""); }}} disabled={!photoInput.trim()} className="px-4 rounded-xl bg-rose-500 text-white disabled:opacity-30 shrink-0"><Plus size={16} /></button>
-                        </div>
-                        {mf.photos.length > 0 && (
-                          <div className="grid grid-cols-3 gap-2">
-                            {mf.photos.map((url, i) => (
-                              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border/50 group">
-                                <img src={url} alt="" className="w-full h-full object-cover" />
-                                <button onClick={() => updateMf("photos", mf.photos.filter((_, j) => j !== i))} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="flex gap-3 mt-6">
-                    {manualStep > 0 && (
-                      <button onClick={() => setManualStep((s) => s - 1)} className="w-11 h-11 rounded-xl border border-border/50 flex items-center justify-center text-muted-foreground"><ChevronLeft size={18} /></button>
-                    )}
-                    {manualStep < 3 ? (
-                      <button onClick={() => setManualStep((s) => s + 1)} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold text-sm flex items-center justify-center gap-1.5">Continue <ChevronRight size={16} /></button>
-                    ) : (
-                      <button onClick={handleManualPreview} disabled={!mf.recipientName.trim()} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"><Eye size={16} />Preview</button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </>
+      <main
+        className="lg:ml-56"
+        style={{ height: "100dvh", paddingBottom: 0, overflow: "hidden" }}
+      >
+        {editor.tab === "home" && (
+          <HomeSection
+            data={editor.content}
+            isPersonalized={editor.isPersonalized}
+          />
         )}
-      </AnimatePresence>
 
-      {/* ─── PASSWORD STEP ─── */}
-      <AnimatePresence>
-        {editMode === "password" && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl shadow-2xl safe-bottom"
-            >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-border" />
-              </div>
-              <div className="px-5 pb-8 pt-2">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                    <ShieldCheck size={20} className="text-rose-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Protect Your Surprise?</h3>
-                    <p className="text-xs text-muted-foreground">Add a password to the Surprise tab</p>
-                  </div>
-                </div>
-
-                <div className="mt-5 bg-muted/30 rounded-2xl p-4 border border-border/50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lock size={14} className="text-muted-foreground" />
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Password (optional)</label>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type={showPwValue ? "text" : "password"}
-                      value={pagePassword}
-                      onChange={(e) => setPagePassword(e.target.value)}
-                      placeholder="Enter a password..."
-                      className="w-full px-4 py-3 pr-10 rounded-xl bg-background border border-border/50 focus:border-rose-300 dark:focus:border-rose-700 focus:outline-none text-sm transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPwValue((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground"
-                    >
-                      {showPwValue ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                  {pagePassword && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="text-[11px] text-rose-500 mt-2 flex items-center gap-1"
-                    >
-                      <Lock size={10} /> Remember to share this password with your special someone!
-                    </motion.p>
-                  )}
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={() => handlePasswordDone("")}
-                    disabled={saving}
-                    className="flex-1 py-3 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    Skip
-                  </button>
-                  <button
-                    onClick={() => handlePasswordDone(pagePassword)}
-                    disabled={saving || !pagePassword.trim()}
-                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform disabled:opacity-50"
-                  >
-                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
-                    {saving ? "Saving..." : "Set Password"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
+        {editor.tab === "gallery" && (
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <GallerySection data={editor.content} />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
-      </AnimatePresence>
 
-      {/* ─── PREVIEW BAR ─── */}
-      <AnimatePresence>
-        {editMode === "preview" && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
-            className="fixed top-0 left-0 right-0 z-50 safe-top pointer-events-none"
-          >
-            <div className="mx-4 mt-4 md:mx-auto md:max-w-sm pointer-events-auto">
-              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-rose-200/40 dark:border-rose-900/30 overflow-hidden">
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-rose-400/30 to-transparent" />
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
-                      <Eye size={12} className="text-rose-500" />
-                    </div>
-                    <p className="text-xs font-bold text-rose-500 uppercase tracking-wider">Preview Mode</p>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mb-3">Browse through the tabs to see how it looks, then save or go back to edit.</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleDiscardPreview}
-                      className="flex-1 py-2.5 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <ChevronLeft size={14} /> Edit More
-                    </button>
-                    <button
-                      onClick={handleConfirmSave}
-                      disabled={saving}
-                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform disabled:opacity-60"
-                    >
-                      {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                      {saving ? "Saving..." : "Save & Continue"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+        {/* Songs & Games stay MOUNTED (display:none) to preserve play state and game history */}
+        <div style={{ display: editor.tab === "songs" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <SongsSection data={editor.content} onPlayingChange={handleSongPlayingChange} />
+            </Suspense>
+          </ScrapbookBg>
+        </div>
+
+        <div style={{ display: editor.tab === "games" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
+          <ScrapbookBg>
+            <Suspense fallback={<SectionLoader />}>
+              <GamesSection
+                data={editor.content}
+                shareId={editor.shareId}
+                quizAttempts={editor.quizAttemptsFromDB}
+                initialGameResponses={editor.gameResponsesFromDB as unknown as any}
+                onRecordingChange={handleRecordingChange}
+              />
+            </Suspense>
+          </ScrapbookBg>
+        </div>
+
+        {editor.tab === "surprise" && (
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <SurpriseSection data={editor.content} isPreview />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
-      </AnimatePresence>
+      </main>
 
-      {/* ─── PUBLISHING OVERLAY ─── */}
+      <BirthdayBgMusic paused={songPlaying || recordingActive} />
+
+      <BottomNav
+        mode="editor"
+        tab={editor.tab}
+        onTabChange={editor.handleTabChange}
+        onEdit={editor.handleEditClick}
+        showPublish={editor.showPublish}
+        showShare={editor.showShare}
+        shareLabel={editor.shareLabel}
+        onPublish={editor.handlePublish}
+        onShare={editor.handleShare}
+        onBack={editor.goBack}
+      />
+
+      <EditSheet
+        editMode={editor.editMode}
+        setEditMode={editor.setEditMode}
+        aiName={editor.aiName} setAiName={editor.setAiName}
+        aiSender={editor.aiSender} setAiSender={editor.setAiSender}
+        aiPrompt={editor.aiPrompt} setAiPrompt={editor.setAiPrompt}
+        aiLoading={editor.aiLoading}
+        mf={editor.mf}
+        manualStep={editor.manualStep}
+        setManualStep={editor.setManualStep}
+        updateMf={editor.updateMf}
+        onStartAi={editor.startAiMode}
+        onStartManual={editor.startManualMode}
+        onAiGenerate={editor.handleAiGenerate}
+        onSaveWithPassword={editor.handleManualSave}
+        saving={editor.saving}
+      />
+
+      <PublishSheet
+        open={editor.showPublishSheet}
+        recipientName={editor.content.recipientName}
+        hasPassword={!!editor.pagePassword}
+        publishing={editor.publishing}
+        onPublish={() => {
+          editor.handlePublish();
+          editor.setShowPublishSheet(false);
+        }}
+        onClose={() => editor.setShowPublishSheet(false)}
+      />
+
+      <PublishingOverlay visible={editor.publishing} />
+
+      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+
       <AnimatePresence>
-        {publishing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[55] bg-black/30 dark:bg-black/50 flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center border border-rose-200/40 dark:border-rose-900/30"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 mx-auto mb-4"
-              >
-                <Send size={28} className="text-rose-500 mx-auto" />
-              </motion.div>
-              <p className="font-bold text-sm">Publishing your page...</p>
-              <p className="text-xs text-muted-foreground mt-1">Making it live for the world</p>
-            </motion.div>
-          </motion.div>
+        {editor.showAuth && (
+          <AuthModal onClose={editor.closeAuth} onSuccess={editor.closeAuthSuccess} />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showAuth && (
-          <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => setShowAuth(false)} />
+        {editor.showShareSheet && editor.shareUrl && (
+          <EditorShareSheet
+            url={editor.shareUrl}
+            onClose={() => editor.setShowShareSheet(false)}
+          />
         )}
       </AnimatePresence>
     </div>
   );
 }
 
-export default function BirthdayGfPageWrapper() {
+export default function BirthdayGfPage() {
   return (
-    <Suspense>
-      <BirthdayGfPage />
+    <Suspense fallback={<SectionLoader />}>
+      <BirthdayGfPageInner />
     </Suspense>
   );
 }

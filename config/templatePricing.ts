@@ -64,6 +64,16 @@ export const CLIENT_TEMPLATE_PRICING: Record<string, ClientTemplatePricing> = {
     finalPrice:      0,
     pointsCost:      0,
   },
+  "christian-wedding": {
+    templateType:    "christian-wedding",
+    slug:            "christian-wedding",
+    name:            "Christian Wedding Invitation",
+    isFree:          true,
+    originalPrice:   0,
+    discountPercent: 0,
+    finalPrice:      0,
+    pointsCost:      0,
+  },
 };
 
 export function getClientPricing(slug: string): ClientTemplatePricing | null {

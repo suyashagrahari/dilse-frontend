@@ -1,48 +1,143 @@
-export interface ContentData {
-  recipientName: string;
-  senderName: string;
-  personalMessage: string;
-  wishes: string[];
-  photos: string[];
-  theme: "romantic" | "elegant" | "playful";
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
 }
 
-export const DEMO_CONTENT: ContentData = {
-  recipientName: "My Love",
-  senderName: "Your Forever ❤️",
-  personalMessage:
-    "Every moment with you is a gift. On your special day, I want you to know how much you mean to me. You make my world brighter, my heart fuller, and my life more beautiful than I ever imagined.\n\nThank you for being you — for your smile that lights up every room, for your laugh that fills my heart with joy, and for your love that makes everything worthwhile.\n\nHere's to another year of love, laughter, and beautiful memories together. I love you more than words could ever express.",
-  wishes: [
-    "May all your dreams come true! ✨",
-    "Wishing you endless happiness and joy 🌟",
-    "Here's to amazing adventures together 🎈",
-    "You deserve all the love in the world 💝",
-  ],
-  photos: [],
-  theme: "romantic",
+export interface TruthDareItem {
+  type: "truth" | "dare";
+  text: string;
+  photoUrl?: string;
+  audioUrl?: string;
+}
+
+export interface PhotoItem {
+  url: string;
+  caption: string;
+  cropX: number;
+  cropY: number;
+}
+
+export interface HomeCoverPhoto {
+  url: string;
+  cropX: number;
+  cropY: number;
+  scale: number;
+}
+
+export const EMPTY_HOME_COVER: HomeCoverPhoto = {
+  url: "",
+  cropX: 50,
+  cropY: 50,
+  scale: 100,
 };
 
-export const FLOAT_SEEDS = [
-  { id: 0, emoji: "🎈", left: 8, delay: 0, dur: 12, size: 18 },
-  { id: 1, emoji: "🎉", left: 22, delay: 3, dur: 14, size: 16 },
-  { id: 2, emoji: "✨", left: 38, delay: 7, dur: 10, size: 14 },
-  { id: 3, emoji: "🎊", left: 52, delay: 1, dur: 16, size: 20 },
-  { id: 4, emoji: "⭐", left: 66, delay: 5, dur: 11, size: 15 },
-  { id: 5, emoji: "💕", left: 80, delay: 9, dur: 13, size: 17 },
-  { id: 6, emoji: "🎀", left: 15, delay: 4, dur: 15, size: 16 },
-  { id: 7, emoji: "🌟", left: 45, delay: 8, dur: 12, size: 14 },
-  { id: 8, emoji: "💖", left: 58, delay: 2, dur: 14, size: 19 },
-  { id: 9, emoji: "🎂", left: 72, delay: 6, dur: 10, size: 22 },
-  { id: 10, emoji: "🧁", left: 30, delay: 11, dur: 16, size: 15 },
-  { id: 11, emoji: "🎁", left: 88, delay: 1, dur: 13, size: 18 },
-  { id: 12, emoji: "💐", left: 48, delay: 10, dur: 11, size: 16 },
-  { id: 13, emoji: "🦋", left: 92, delay: 7, dur: 15, size: 17 },
-];
+export function clampHomeCoverCrop(c: HomeCoverPhoto): HomeCoverPhoto {
+  return {
+    url: c.url,
+    cropX: Math.min(100, Math.max(0, Number.isFinite(c.cropX) ? c.cropX : 50)),
+    cropY: Math.min(100, Math.max(0, Number.isFinite(c.cropY) ? c.cropY : 50)),
+    scale: Math.min(200, Math.max(100, Number.isFinite(c.scale) ? c.scale : 100)),
+  };
+}
 
-export const TABS = [
-  { id: "cover", label: "Wish" },
-  { id: "letter", label: "Letter" },
-  { id: "final", label: "Surprise" },
-] as const;
+export interface MusicTrack {
+  title: string;
+  artist: string;
+  src?: string;
+}
 
-export type TabId = (typeof TABS)[number]["id"];
+export interface BirthdayData {
+  recipientName: string;
+  senderName: string;
+  birthdayDate: string;
+  birthdayWish: string;
+  personalMessage: string;
+  homeCoverPhoto: HomeCoverPhoto;
+  homePhoto1: string; // top-right polaroid
+  homePhoto2: string; // bottom-left polaroid
+  galleryPhotos: PhotoItem[];
+  musicTracks: MusicTrack[];
+  quizQuestions: QuizQuestion[];
+  truthDareQuestions: TruthDareItem[];
+  surprisePhoto: string;
+  surpriseAudioUrl: string;
+}
+
+export type EditMode =
+  | null
+  | "choose"
+  | "ai"
+  | "ai-review"
+  | "manual"
+  | "preview"
+  | "password";
+export type TabId = "home" | "gallery" | "songs" | "games" | "surprise";
+
+export interface Toast {
+  id: number;
+  message: string;
+  title?: string;
+  type?: "success" | "error" | "info" | "publish";
+  shareUrl?: string;
+}
+
+export const DEMO_DATA: BirthdayData = {
+  recipientName: "Samira Hadid",
+  senderName: "Your Friend",
+  birthdayDate: "",
+  birthdayWish:
+    "Wishing you a birthday filled with love, laughter, and cherished memories to last a lifetime.",
+  personalMessage:
+    "You bring so much joy and light into the world. May this special day be as wonderful as you are!",
+  homeCoverPhoto: { url: "", cropX: 50, cropY: 50, scale: 100 },
+  homePhoto1: "",
+  homePhoto2: "",
+  galleryPhotos: [],
+  musicTracks: [
+    { title: "Celebration", artist: "Kool & The Gang", src: "/assets/Birthday1/celebration.mp3" },
+    { title: "Best Day of My Life", artist: "American Authors", src: "/assets/Birthday1/bestdayofmylife.mp3" },
+    { title: "Dynamite", artist: "BTS", src: "/assets/Birthday1/dynamite.mp3" },
+    { title: "Firework", artist: "Katy Perry", src: "/assets/Birthday1/firework.mp3" },
+    { title: "Good Time", artist: "Owl City & Carly Rae Jepsen", src: "/assets/Birthday1/GoodTime.mp3" },
+  ],
+  quizQuestions: [
+    {
+      question: "What is the birthday person's favourite colour?",
+      options: ["Pink", "Blue", "Green", "Purple"],
+      correct: 0,
+    },
+    {
+      question: "What would the birthday person pick as a birthday dessert?",
+      options: ["Chocolate cake", "Ice cream", "Cheesecake", "Cupcakes"],
+      correct: 0,
+    },
+    {
+      question: "What superpower would the birthday person choose?",
+      options: ["Flying", "Teleportation", "Mind reading", "Time travel"],
+      correct: 3,
+    },
+  ],
+  truthDareQuestions: [
+    {
+      type: "truth",
+      text: "What is the most embarrassing thing that happened to you this year?",
+    },
+    {
+      type: "truth",
+      text: "What is your biggest dream for this coming year?",
+    },
+    { type: "dare", text: "Sing Happy Birthday to yourself right now!" },
+    {
+      type: "dare",
+      text: "Do your best birthday dance move for 10 seconds!",
+    },
+    { type: "truth", text: "Who is the last person you texted today?" },
+    {
+      type: "dare",
+      text: "Make a birthday wish out loud — share it with everyone!",
+    },
+  ],
+  surprisePhoto: "",
+  surpriseAudioUrl: "",
+};

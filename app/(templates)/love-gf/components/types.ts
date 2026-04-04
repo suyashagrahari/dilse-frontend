@@ -4,6 +4,43 @@ export interface QuizQuestion {
   correct: number;
 }
 
+export interface TruthDareItem {
+  type: "truth" | "dare";
+  text: string;
+  photoUrl?: string;
+  audioUrl?: string;
+}
+
+export interface PhotoItem {
+  url: string;    // base64 data URL
+  letter: string; // love letter / caption
+  cropX: number;  // 0-100 for CSS object-position-x
+  cropY: number;  // 0-100 for CSS object-position-y
+}
+
+export interface HomeCoverPhoto {
+  url: string;
+  cropX: number;
+  cropY: number;
+  scale: number;
+}
+
+export const EMPTY_HOME_COVER: HomeCoverPhoto = {
+  url: "",
+  cropX: 50,
+  cropY: 50,
+  scale: 100,
+};
+
+export function clampHomeCoverCrop(c: HomeCoverPhoto): HomeCoverPhoto {
+  return {
+    url: c.url,
+    cropX: Math.min(100, Math.max(0, Number.isFinite(c.cropX) ? c.cropX : 50)),
+    cropY: Math.min(100, Math.max(0, Number.isFinite(c.cropY) ? c.cropY : 50)),
+    scale: Math.min(200, Math.max(100, Number.isFinite(c.scale) ? c.scale : 100)),
+  };
+}
+
 export interface MusicTrack {
   title: string;
   artist: string;
@@ -15,16 +52,29 @@ export interface ContentData {
   recipientName: string;
   senderName: string;
   personalMessage: string;
+  wishMessage: string;
   loveDate: string;
+  homeCoverPhoto: HomeCoverPhoto;
+  homePhotos: string[];
+  galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
+  truthDareQuestions: TruthDareItem[];
   spinItems: string[];
-  galleryPhotos: string[];
   musicTracks: MusicTrack[];
 }
 
-export type EditMode = null | "choose" | "ai" | "manual" | "preview" | "password";
+export function loveGfUsesCircleOnly(data: Pick<ContentData, "homeCoverPhoto">): boolean {
+  return Boolean(data.homeCoverPhoto?.url?.trim());
+}
 
-export type TabId = "home" | "gallery" | "music" | "games" | "notes";
+export function getLoveGfCircleCover(data: ContentData): HomeCoverPhoto {
+  if (data.homeCoverPhoto?.url?.trim()) return clampHomeCoverCrop(data.homeCoverPhoto);
+  return EMPTY_HOME_COVER;
+}
+
+export type EditMode = null | "choose" | "ai" | "ai-review" | "manual" | "preview" | "password";
+
+export type TabId = "home" | "wish" | "gallery" | "music" | "games" | "notes";
 
 export interface Toast {
   id: number;
@@ -34,20 +84,27 @@ export interface Toast {
   shareUrl?: string;
 }
 
-export const TABS: { id: TabId; label: string; emoji: string }[] = [
-  { id: "home", label: "Home", emoji: "🏠" },
-  { id: "gallery", label: "Gallery", emoji: "📸" },
-  { id: "music", label: "Music", emoji: "🎵" },
-  { id: "games", label: "Games", emoji: "🎮" },
-  { id: "notes", label: "Notes", emoji: "💌" },
+export const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: "home",    label: "Home",   icon: "♡" },
+  { id: "wish",    label: "Wish",   icon: "✦" },
+  { id: "gallery", label: "Photos", icon: "📷" },
+  { id: "music",   label: "Music",  icon: "♫" },
+  { id: "games",   label: "Games",  icon: "✿" },
+  { id: "notes",   label: "Notes",  icon: "✉" },
 ];
 
 export const DEMO_CONTENT: ContentData = {
-  recipientName: "Jamie",
-  senderName: "Alex",
-  loveDate: "2022-08-14T00:00:00",
+  recipientName: "My Love",
+  senderName: "Always Yours",
   personalMessage:
-    "My dearest Jamie, every day with you feels like a beautiful dream. You are my sunshine on cloudy days, my laughter in silent rooms, and my home wherever we are. I love you more than words can say, and I'll keep showing you that every single day. You are my forever. 💕",
+    "Every moment with you is a treasure I hold close to my heart. You are my sunshine on cloudy days, my laughter in silent rooms, and my home wherever we are. I love you more than words can say, and I'll keep showing you that every single day.",
+  wishMessage:
+    "To the one who holds my heart — thank you for every laugh, every hug, every quiet moment that felt like the whole world. You are my favourite person. Love you to the moon and back ♡",
+  loveDate: "",
+  homeCoverPhoto: { ...EMPTY_HOME_COVER },
+  homePhotos: [],
+  galleryPhotos: [],
+  truthDareQuestions: [],
   quizQuestions: [
     {
       question: "What's their favorite thing about you?",
@@ -73,13 +130,12 @@ export const DEMO_CONTENT: ContentData = {
     "Stargazing 🌟",
     "Surprise Date ❤️",
   ],
-  galleryPhotos: [],
   musicTracks: [
-    { title: "Perfect", artist: "Ed Sheeran", duration: "4:23", src: "/assets/LoveGf/music/perfect.mp3" },
-    { title: "All of Me", artist: "John Legend", duration: "4:29", src: "/assets/LoveGf/music/allofme.mp3" },
-    { title: "A Thousand Years", artist: "Christina Perri", duration: "4:46", src: "/assets/LoveGf/music/a-thousand-years.mp3" },
-    { title: "Thinking Out Loud", artist: "Ed Sheeran", duration: "4:41", src: "/assets/LoveGf/music/thinkingoutloud.mp3" },
-    { title: "Lover", artist: "Taylor Swift", duration: "3:41", src: "/assets/LoveGf/music/lover.mp3" },
-    { title: "Until I Found Her", artist: "Stephen Sanchez", duration: "3:12", src: "/assets/LoveGf/music/untillifoundher.mp3" },
+    { title: "Perfect",           artist: "Ed Sheeran",      duration: "4:23", src: "/assets/LoveGf/music/perfect.mp3" },
+    { title: "All of Me",         artist: "John Legend",     duration: "4:29", src: "/assets/LoveGf/music/allofme.mp3" },
+    { title: "A Thousand Years",  artist: "Christina Perri", duration: "4:46", src: "/assets/LoveGf/music/a-thousand-years.mp3" },
+    { title: "Thinking Out Loud", artist: "Ed Sheeran",      duration: "4:41", src: "/assets/LoveGf/music/thinkingoutloud.mp3" },
+    { title: "Until I Found Her", artist: "Michael Bublé",   duration: "3:32", src: "/assets/LoveGf/music/untillifoundher.mp3" },
+    { title: "Lover",             artist: "Taylor Swift",    duration: "3:41", src: "/assets/LoveGf/music/lover.mp3" },
   ],
 };
