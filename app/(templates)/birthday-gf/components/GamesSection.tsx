@@ -216,7 +216,8 @@ function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: Hist
       </motion.div>
 
       {/* Filter pills */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 2 }}>
+      <style>{`.bgf-filter-scroll::-webkit-scrollbar{height:3px}.bgf-filter-scroll::-webkit-scrollbar-track{background:transparent}.bgf-filter-scroll::-webkit-scrollbar-thumb{background:rgba(173,104,74,0.28);border-radius:999px}.bgf-filter-scroll{scrollbar-width:thin;scrollbar-color:rgba(173,104,74,0.28) transparent}`}</style>
+      <div className="bgf-filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
         {FILTER_TABS.map(tab => (
           <motion.button key={tab.id} whileTap={{ scale: 0.93 }} onClick={() => setFilter(tab.id)}
             style={{
