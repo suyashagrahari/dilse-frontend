@@ -40,6 +40,15 @@ export interface ServerGameResponse {
   mediaUrl?: string;
 }
 
+export interface ServerQuizAnswer {
+  question: string;
+  options: string[];
+  selected: number;
+  correct: number;
+  isCorrect: boolean;
+  answeredAt?: string;
+}
+
 export interface HistoryEntry {
   id: number;
   type: "truth" | "dare";
@@ -1077,10 +1086,11 @@ interface Props {
   shareId?: string | null;
   quizAttempts?: QuizAttemptRecord[];
   initialGameResponses?: ServerGameResponse[];
+  initialQuizAnswers?: ServerQuizAnswer[];
   onRecordingChange?: (active: boolean) => void;
 }
 
-export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [], onRecordingChange }: Props) {
+export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [], initialQuizAnswers = [], onRecordingChange }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   const [history, setHistory] = useState<HistoryEntry[]>(() =>
@@ -1089,7 +1099,9 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
     }))
   );
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>(initialQA);
-  const [quizAnswers, setQuizAnswers] = useState<QuizAnswerRecord[]>([]);
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswerRecord[]>(() =>
+    initialQuizAnswers.map((a) => ({ ...a, answeredAt: a.answeredAt || new Date().toISOString() }))
+  );
 
   // Self-fetch on mount to guarantee fresh data
   useEffect(() => {
@@ -1100,8 +1112,10 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
         if (!result.success || !result.data) return;
         const responses: ServerGameResponse[] = Array.isArray(result.data.gameResponses) ? result.data.gameResponses : [];
         const attempts: QuizAttemptRecord[] = Array.isArray(result.data.quizAttempts) ? result.data.quizAttempts : [];
+        const answers: ServerQuizAnswer[] = Array.isArray(result.data.quizAnswers) ? result.data.quizAnswers : [];
         setHistory(responses.map((r, i) => ({ id: -(i + 1), type: r.type, prompt: r.prompt, answer: r.answer, mediaUrl: r.mediaUrl, savedAt: r.savedAt })));
         setQuizAttempts(attempts);
+        setQuizAnswers(answers.map((a) => ({ ...a, answeredAt: a.answeredAt || new Date().toISOString() })));
       })
       .catch(() => {});
   }, [shareId]);
@@ -1125,7 +1139,14 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
 
   const addQuizAnswer = useCallback((answer: QuizAnswerRecord) => {
     setQuizAnswers((prev) => [...prev, answer]);
-  }, []);
+    if (shareId) {
+      fetch(`${API_URL}/birthday-gf-pages/share/${shareId}/quiz-answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(answer),
+      }).catch(() => {});
+    }
+  }, [shareId]);
 
   return (
     <FlowerBackground>

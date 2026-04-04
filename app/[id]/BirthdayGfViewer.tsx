@@ -26,6 +26,7 @@ import {
 import type {
   QuizAttemptRecord,
   ServerGameResponse,
+  ServerQuizAnswer,
 } from "@/app/(templates)/birthday-gf/components/GamesSection";
 
 const GallerySection = lazy(
@@ -343,6 +344,8 @@ export default function BirthdayGfViewer({
     (rawData.quizAttempts as QuizAttemptRecord[] | undefined) ?? [];
   const gameResponses: ServerGameResponse[] =
     (rawData.gameResponses as ServerGameResponse[] | undefined) ?? [];
+  const initialQuizAnswers: ServerQuizAnswer[] =
+    (rawData.quizAnswers as ServerQuizAnswer[] | undefined) ?? [];
 
   const hasSurprise = !!(data.surprisePhoto || data.surpriseAudioUrl);
   const hiddenTabs: TabId[] = hasSurprise ? [] : ["surprise"];
@@ -471,6 +474,7 @@ export default function BirthdayGfViewer({
                 shareId={shareId}
                 quizAttempts={quizAttempts}
                 initialGameResponses={gameResponses}
+                initialQuizAnswers={initialQuizAnswers}
                 onRecordingChange={handleRecordingChange}
               />
             </Suspense>
