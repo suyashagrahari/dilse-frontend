@@ -23,6 +23,15 @@ export interface QuizAttemptRecord {
   playedAt: string;
 }
 
+export interface QuizAnswerRecord {
+  question: string;
+  options: string[];
+  selected: number;
+  correct: number;
+  isCorrect: boolean;
+  answeredAt: string;
+}
+
 export interface ServerGameResponse {
   type: "truth" | "dare";
   prompt: string;
@@ -118,7 +127,7 @@ const FILTER_TABS: { id: FilterType; label: string; emoji: string }[] = [
   { id: "quiz",  label: "Quiz",  emoji: "🏆" },
 ];
 
-function GameHistory({ entries, quizRecords }: { entries: HistoryEntry[]; quizRecords: QuizAttemptRecord[] }) {
+function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: HistoryEntry[]; quizRecords: QuizAttemptRecord[]; quizAnswers?: QuizAnswerRecord[] }) {
   const [filter, setFilter] = useState<FilterType>("all");
 
   const truthCount = useMemo(() => entries.filter(e => e.type === "truth").length, [entries]);
@@ -129,7 +138,7 @@ function GameHistory({ entries, quizRecords }: { entries: HistoryEntry[]; quizRe
     return `${best.score}/${best.total}`;
   }, [quizRecords]);
 
-  const total = entries.length + quizRecords.length;
+  const total = entries.length + quizRecords.length + quizAnswers.length;
 
   if (total === 0) {
     return (
@@ -148,18 +157,24 @@ function GameHistory({ entries, quizRecords }: { entries: HistoryEntry[]; quizRe
 
   type TodItem  = { kind: "tod";  entry: HistoryEntry };
   type QuizItem = { kind: "quiz"; attempt: QuizAttemptRecord; idx: number };
-  const timeline: (TodItem | QuizItem)[] = useMemo(() => {
-    const items: (TodItem | QuizItem)[] = [];
+  type QuizAnsItem = { kind: "quiz-ans"; answer: QuizAnswerRecord; idx: number };
+  const timeline: (TodItem | QuizItem | QuizAnsItem)[] = useMemo(() => {
+    const items: (TodItem | QuizItem | QuizAnsItem)[] = [];
     if (filter !== "quiz") {
       const filtered = filter === "all" ? entries : entries.filter(e => e.type === filter);
       filtered.forEach(entry => items.push({ kind: "tod", entry }));
     }
     if (filter !== "truth" && filter !== "dare") {
-      quizRecords.forEach((attempt, idx) => items.push({ kind: "quiz", attempt, idx }));
+      quizAnswers.forEach((answer, idx) => items.push({ kind: "quiz-ans", answer, idx }));
+      if (filter === "quiz") {
+        quizRecords.forEach((attempt, idx) => items.push({ kind: "quiz", attempt, idx }));
+      } else {
+        quizRecords.forEach((attempt, idx) => items.push({ kind: "quiz", attempt, idx }));
+      }
     }
     return items;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, quizRecords, filter]);
+  }, [entries, quizRecords, quizAnswers, filter]);
 
   return (
     <div>
@@ -258,6 +273,47 @@ function GameHistory({ entries, quizRecords }: { entries: HistoryEntry[]; quizRe
                     </div>
                   </motion.div>
                 );
+              } else if (item.kind === "quiz-ans") {
+                const isCorrect = item.answer.isCorrect;
+                const accent = isCorrect ? "rgb(55,125,75)" : TERRACOTTA;
+                const bg = isCorrect ? "rgba(55,160,95,0.06)" : "rgba(173,104,74,0.07)";
+                const border = isCorrect ? "rgba(55,125,75,0.20)" : "rgba(173,104,74,0.22)";
+                const bar = isCorrect ? "rgba(55,125,75,0.50)" : "rgba(173,104,74,0.55)";
+                return (
+                  <motion.div key={`qa-${item.idx}`} layout
+                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ delay: i * 0.03, type: "spring", stiffness: 320, damping: 26 }}
+                    style={{ borderRadius: 16, border: `1px solid ${border}`, background: bg, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, width: 3, bottom: 0, borderRadius: "16px 0 0 16px", background: bar }} />
+                    <div style={{ paddingLeft: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontFamily: SERIF, fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: accent, background: `${accent}18`, padding: "3px 10px", borderRadius: 999 }}>
+                          {isCorrect ? "✅ Correct" : "❌ Wrong"}
+                        </span>
+                        {item.answer.answeredAt && <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.40)" }}>{formatTime(item.answer.answeredAt)}</span>}
+                      </div>
+                      <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 700, color: WARM, margin: "0 0 8px", lineHeight: 1.5 }}>{item.answer.question}</p>
+                      <div style={{ height: 1, background: `${accent}14`, margin: "6px 0 8px" }} />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {item.answer.options.map((opt, oi) => {
+                          const isSelected = oi === item.answer.selected;
+                          const isRight = oi === item.answer.correct;
+                          let optBg = "transparent";
+                          let optColor = "rgba(90,60,35,0.45)";
+                          let optBorder = "transparent";
+                          if (isRight) { optBg = "rgba(55,125,75,0.10)"; optColor = "rgb(55,125,75)"; optBorder = "rgba(55,125,75,0.30)"; }
+                          else if (isSelected && !isRight) { optBg = "rgba(173,104,74,0.10)"; optColor = TERRACOTTA; optBorder = "rgba(173,104,74,0.30)"; }
+                          return (
+                            <div key={oi} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 8, background: optBg, border: `1px solid ${optBorder}` }}>
+                              <span style={{ fontSize: 11, flexShrink: 0 }}>{isRight ? "✓" : isSelected ? "✗" : "·"}</span>
+                              <span style={{ fontFamily: SERIF, fontSize: 12, color: optColor, lineHeight: 1.4 }}>{opt}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
               } else {
                 const pct = item.attempt.total > 0 ? item.attempt.score / item.attempt.total : 0;
                 const em = pct === 1 ? "👑" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "🎂" : "🎊";
@@ -303,9 +359,10 @@ interface BirthdayQuizProps {
   shareId: string | null;
   attempts: QuizAttemptRecord[];
   onAttemptAdded: (a: QuizAttemptRecord) => void;
+  onAnswerAdded: (a: QuizAnswerRecord) => void;
 }
 
-function BirthdayQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }: BirthdayQuizProps) {
+function BirthdayQuiz({ questions: customQs, shareId, attempts, onAttemptAdded, onAnswerAdded }: BirthdayQuizProps) {
   const [sessionQs, setSessionQs] = useState<QuizQuestion[]>([]);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -332,12 +389,13 @@ function BirthdayQuiz({ questions: customQs, shareId, attempts, onAttemptAdded }
     } else {
       setFeedback(WRONG_MSGS[Math.floor(Math.random() * WRONG_MSGS.length)]);
     }
+    onAnswerAdded({ question: q.question, options: q.options, selected: i, correct: q.correct, isCorrect, answeredAt: new Date().toISOString() });
     setTimeout(() => {
       setFeedback("");
       if (step + 1 < sessionQs.length) { setStep((s) => s + 1); setSelected(null); }
       else setDone(true);
     }, 1800);
-  }, [selected, q, step, sessionQs.length]);
+  }, [selected, q, step, sessionQs.length, onAnswerAdded]);
 
   const finishAndSave = useCallback(async (finalScore: number, total: number) => {
     const newAttempt: QuizAttemptRecord = { score: finalScore, total, playedAt: new Date().toISOString() };
@@ -1031,6 +1089,7 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
     }))
   );
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>(initialQA);
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswerRecord[]>([]);
 
   // Self-fetch on mount to guarantee fresh data
   useEffect(() => {
@@ -1064,6 +1123,10 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
     setQuizAttempts((prev) => [attempt, ...prev]);
   }, []);
 
+  const addQuizAnswer = useCallback((answer: QuizAnswerRecord) => {
+    setQuizAnswers((prev) => [...prev, answer]);
+  }, []);
+
   return (
     <FlowerBackground>
       <motion.div
@@ -1091,7 +1154,7 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
                     style={{
                       borderRadius: 16, border: isActive ? `1.5px solid rgba(173,104,74,0.42)` : `1px solid ${WARM_BORDER}`,
                       padding: "14px 18px", textAlign: "left",
-                      background: isActive ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.28)",
+                      background: isActive ? "rgba(253,248,240,0.95)" : "rgba(253,248,240,0.60)",
                       backdropFilter: "blur(10px)",
                       WebkitBackdropFilter: "blur(10px)",
                       boxShadow: isActive ? "0 6px 22px rgba(80,50,20,0.14), inset 0 1px 0 rgba(255,255,255,0.65)" : "none",
@@ -1122,16 +1185,16 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
             </div>
 
             <motion.div key={activeGame} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              style={{ borderRadius: 20, border: `1px solid ${WARM_BORDER}`, background: "rgba(255,255,255,0.52)", backdropFilter: "blur(12px)", padding: 16, boxShadow: "0 8px 32px rgba(80,50,20,0.12)" }}
+              style={{ borderRadius: 20, border: `1px solid ${WARM_BORDER}`, background: "rgba(253,248,240,0.92)", backdropFilter: "blur(12px)", padding: 16, boxShadow: "0 8px 32px rgba(80,50,20,0.12)" }}
               className="lg:p-8 lg:flex-1">
               {activeGame === "quiz" && (
-                <BirthdayQuiz questions={data.quizQuestions || []} shareId={shareId} attempts={quizAttempts} onAttemptAdded={addQuizAttempt} />
+                <BirthdayQuiz questions={data.quizQuestions || []} shareId={shareId} attempts={quizAttempts} onAttemptAdded={addQuizAttempt} onAnswerAdded={addQuizAnswer} />
               )}
               {activeGame === "tod" && (
                 <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} history={history} onAddToHistory={addToHistory} onUpdateMediaUrl={updateHistoryMediaUrl} onRecordingChange={onRecordingChange} />
               )}
               {activeGame === "history" && (
-                <GameHistory entries={history} quizRecords={quizAttempts} />
+                <GameHistory entries={history} quizRecords={quizAttempts} quizAnswers={quizAnswers} />
               )}
             </motion.div>
           </div>
