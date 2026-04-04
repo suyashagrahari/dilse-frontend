@@ -538,9 +538,10 @@ interface TruthOrDareProps {
   history: HistoryEntry[];
   onAddToHistory: (type: "truth" | "dare", prompt: string, ans: string, mediaUrl?: string, savedAt?: string) => void;
   onUpdateMediaUrl: (id: number, url: string) => void;
+  onRecordingChange?: (active: boolean) => void;
 }
 
-function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpdateMediaUrl }: TruthOrDareProps) {
+function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpdateMediaUrl, onRecordingChange }: TruthOrDareProps) {
   type ActiveCard = { text: string };
   const [mode, setMode] = useState<"truth" | "dare" | null>(null);
   const [card, setCard] = useState<ActiveCard | null>(null);
@@ -617,16 +618,18 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
     recorder.start(200);
     recorderRef.current = recorder;
     setRecording(true);
+    onRecordingChange?.(true);
     setRecordSeconds(0);
     recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
-  }, []);
+  }, [onRecordingChange]);
 
   const stopRecording = useCallback(() => {
     recorderRef.current?.stop();
     recorderRef.current = null;
     setRecording(false);
+    onRecordingChange?.(false);
     if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
-  }, []);
+  }, [onRecordingChange]);
 
   const pick = useCallback((m: "truth" | "dare") => {
     setMode(m);
@@ -835,25 +838,6 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
                     }}>📸</button>
                   )}
                 </div>
-                <input ref={audioFileInputRef} type="file" accept="audio/*" style={{ display: "none" }}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) loadAudioFile(f); e.target.value = ""; }} />
-                <input ref={responsePhotoInputRef} type="file" accept="image/*" style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    const canvas = document.createElement("canvas");
-                    const img = new window.Image();
-                    const url = URL.createObjectURL(f);
-                    img.onload = () => {
-                      const ratio = Math.min(600 / img.width, 600 / img.height, 1);
-                      canvas.width = img.width * ratio; canvas.height = img.height * ratio;
-                      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-                      setResponsePhotoUrl(canvas.toDataURL("image/jpeg", 0.80));
-                      URL.revokeObjectURL(url);
-                    };
-                    img.src = url;
-                    e.target.value = "";
-                  }} />
                 <div style={{ display: "flex", gap: 8 }}>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={handleSave} disabled={!answer.trim() || saving}
                     style={{
@@ -995,6 +979,27 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
           ↺ Reset all
         </button>
       )}
+
+      {/* Always-mounted hidden file inputs so refs work in both truth & dare modes */}
+      <input ref={audioFileInputRef} type="file" accept="audio/*" style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) loadAudioFile(f); e.target.value = ""; }} />
+      <input ref={responsePhotoInputRef} type="file" accept="image/*" style={{ display: "none" }}
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          if (!f) return;
+          const canvas = document.createElement("canvas");
+          const img = new window.Image();
+          const url = URL.createObjectURL(f);
+          img.onload = () => {
+            const ratio = Math.min(600 / img.width, 600 / img.height, 1);
+            canvas.width = img.width * ratio; canvas.height = img.height * ratio;
+            canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+            setResponsePhotoUrl(canvas.toDataURL("image/jpeg", 0.80));
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+          e.target.value = "";
+        }} />
     </div>
   );
 }
@@ -1014,9 +1019,10 @@ interface Props {
   shareId?: string | null;
   quizAttempts?: QuizAttemptRecord[];
   initialGameResponses?: ServerGameResponse[];
+  onRecordingChange?: (active: boolean) => void;
 }
 
-export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [] }: Props) {
+export default memo(function GamesSection({ data, shareId = null, quizAttempts: initialQA = [], initialGameResponses = [], onRecordingChange }: Props) {
   const [activeGame, setActiveGame] = useState("quiz");
 
   const [history, setHistory] = useState<HistoryEntry[]>(() =>
@@ -1075,37 +1081,54 @@ export default memo(function GamesSection({ data, shareId = null, quizAttempts: 
           </div>
 
           <div className="lg:flex lg:gap-8 lg:items-start">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}
-              className="lg:flex lg:flex-col lg:w-52 lg:shrink-0 lg:mb-0 lg:gap-3">
+            {/* Game selector — 1-col horizontal cards on mobile, vertical sidebar on desktop */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}
+              className="lg:w-56 lg:shrink-0 lg:mb-0 lg:gap-2 lg:sticky lg:top-8">
               {GAMES.map((g) => {
                 const isActive = activeGame === g.id;
                 return (
-                  <motion.button key={g.id} whileTap={{ scale: 0.97 }} onClick={() => setActiveGame(g.id)}
+                  <motion.button key={g.id} whileTap={{ scale: 0.98 }} onClick={() => setActiveGame(g.id)}
                     style={{
-                      borderRadius: 16, border: isActive ? `1.5px solid rgba(173,104,74,0.45)` : `1px solid ${WARM_BORDER}`,
-                      padding: "14px 16px", textAlign: "left",
-                      background: isActive ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.30)",
-                      backdropFilter: "blur(8px)",
-                      boxShadow: isActive ? "0 6px 20px rgba(80,50,20,0.16), inset 0 1px 0 rgba(255,255,255,0.5)" : "none",
+                      borderRadius: 16, border: isActive ? `1.5px solid rgba(173,104,74,0.42)` : `1px solid ${WARM_BORDER}`,
+                      padding: "14px 18px", textAlign: "left",
+                      background: isActive ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.28)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      boxShadow: isActive ? "0 6px 22px rgba(80,50,20,0.14), inset 0 1px 0 rgba(255,255,255,0.65)" : "none",
                       cursor: "pointer", transition: "all 0.2s",
+                      display: "flex", alignItems: "center", gap: 14,
+                      width: "100%",
                     }}>
-                    <div style={{ fontSize: 22, marginBottom: 4 }}>{g.emoji}</div>
-                    <p style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 600, color: isActive ? WARM : "rgba(108,74,46,0.70)", margin: 0 }}>{g.label}</p>
-                    <p style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 11, color: "rgba(108,74,46,0.50)", marginTop: 3 }}>{g.desc}</p>
-                    {isActive && <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${TERRACOTTA}, transparent)`, borderRadius: 999, marginTop: 8 }} />}
+                    {/* Emoji badge */}
+                    <div style={{
+                      width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: isActive ? `rgba(173,104,74,0.12)` : "rgba(173,104,74,0.06)",
+                      fontSize: 22,
+                      transition: "all 0.2s",
+                    }}>{g.emoji}</div>
+                    {/* Text */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: isActive ? WARM : "rgba(108,74,46,0.70)", margin: 0, lineHeight: 1.2 }}>{g.label}</p>
+                      <p style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 12, color: "rgba(108,74,46,0.45)", marginTop: 3, lineHeight: 1.4, margin: "3px 0 0" }}>{g.desc}</p>
+                    </div>
+                    {/* Active indicator */}
+                    {isActive && (
+                      <div style={{ width: 4, height: 32, borderRadius: 999, background: `linear-gradient(180deg, ${TERRACOTTA}, ${BROWN})`, flexShrink: 0 }} />
+                    )}
                   </motion.button>
                 );
               })}
             </div>
 
             <motion.div key={activeGame} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              style={{ borderRadius: 20, border: `1px solid ${WARM_BORDER}`, background: "rgba(255,255,255,0.50)", backdropFilter: "blur(12px)", padding: 16, boxShadow: "0 6px 24px rgba(80,50,20,0.12)" }}
-              className="lg:p-6 lg:flex-1">
+              style={{ borderRadius: 20, border: `1px solid ${WARM_BORDER}`, background: "rgba(255,255,255,0.52)", backdropFilter: "blur(12px)", padding: 16, boxShadow: "0 8px 32px rgba(80,50,20,0.12)" }}
+              className="lg:p-8 lg:flex-1">
               {activeGame === "quiz" && (
                 <BirthdayQuiz questions={data.quizQuestions || []} shareId={shareId} attempts={quizAttempts} onAttemptAdded={addQuizAttempt} />
               )}
               {activeGame === "tod" && (
-                <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} history={history} onAddToHistory={addToHistory} onUpdateMediaUrl={updateHistoryMediaUrl} />
+                <TruthOrDare shareId={shareId} customTruthDare={data.truthDareQuestions || []} history={history} onAddToHistory={addToHistory} onUpdateMediaUrl={updateHistoryMediaUrl} onRecordingChange={onRecordingChange} />
               )}
               {activeGame === "history" && (
                 <GameHistory entries={history} quizRecords={quizAttempts} />

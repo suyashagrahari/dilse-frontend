@@ -103,7 +103,7 @@ export default memo(function DesktopSidebar({
               }
             >
               <Icon size={17} strokeWidth={active ? 2.2 : 1.5} />
-              <span>{emoji} {label}</span>
+              <span>{label}</span>
               {active && (
                 <motion.div
                   layoutId="sc-sidebar-dot"

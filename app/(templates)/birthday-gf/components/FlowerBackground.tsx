@@ -37,7 +37,7 @@ export default function FlowerBackground({ children }: Props) {
       ref={wrapRef}
       style={{
         position: "relative",
-        height: "100%",
+        minHeight: "100%",
         width: "100%",
       }}
     >

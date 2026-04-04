@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 
 /** Soft enough to sit under copy; hymn/instrumental reads louder than light ambient pads. */
-const TARGET_VOLUME = 0.5;
+const TARGET_VOLUME = 0.8;
 const FADE_STEP = 0.0035;
 const FADE_INTERVAL = 45;
 

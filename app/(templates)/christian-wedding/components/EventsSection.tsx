@@ -355,43 +355,7 @@ export default memo(function EventsSection({ data }: Props) {
           ))}
         </div>
 
-        {/* Disabled / not-this-time events */}
-        {disabledEvents.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-8"
-          >
-            <p
-              className="text-[10px] font-bold uppercase tracking-wider mb-3"
-              style={{ fontFamily: F_CINZEL, color: C_MED }}
-            >
-              Not this time
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {disabledEvents.map((ev, i) => (
-                <div
-                  key={`${ev.name}-${i}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full opacity-45"
-                  style={{
-                    background: "rgba(255,252,250,0.72)",
-                    backdropFilter: "blur(8px)",
-                    border: `1px solid ${C_ACCENT}15`,
-                  }}
-                >
-                  <span>{ev.icon}</span>
-                  <span
-                    className="text-xs font-medium"
-                    style={{ fontFamily: F_LORA, color: C_DARK }}
-                  >
-                    {ev.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+       
       </motion.div>
 
       <AnimatePresence>

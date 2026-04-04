@@ -13,6 +13,7 @@ import BottomNav from "@/app/(templates)/birthday-gf/components/BottomNav";
 import DesktopSidebar from "@/app/(templates)/birthday-gf/components/DesktopSidebar";
 import ScrapbookBg from "@/app/(templates)/birthday-gf/components/ScrapbookBg";
 import BirthdayBgMusic from "@/app/(templates)/birthday-gf/components/BirthdayBgMusic";
+import BirthdayWelcomeOverlay from "@/app/(templates)/birthday-gf/components/BirthdayWelcomeOverlay";
 import {
   type BirthdayData,
   type TabId,
@@ -333,6 +334,8 @@ export default function BirthdayGfViewer({
 }: Props) {
   const router = useRouter();
   const [unlocked, setUnlocked] = useState(!hasPassword);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [tab, setTab] = useState<TabId>("home");
 
   const data = rawToBirthdayData(rawData);
@@ -346,6 +349,13 @@ export default function BirthdayGfViewer({
 
   const [songPlaying, setSongPlaying] = useState(false);
   const handleSongPlayingChange = useCallback((v: boolean) => setSongPlaying(v), []);
+  const [recordingActive, setRecordingActive] = useState(false);
+  const handleRecordingChange = useCallback((v: boolean) => setRecordingActive(v), []);
+
+  const handleWelcomeEnter = useCallback((playMusic: boolean) => {
+    setBgMusicEnabled(playMusic);
+    setShowWelcome(false);
+  }, []);
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const handleCreateYours = useCallback(() => {
@@ -360,7 +370,7 @@ export default function BirthdayGfViewer({
     return (
       <PasswordGate
         shareId={shareId}
-        onUnlock={() => setUnlocked(true)}
+        onUnlock={() => { setUnlocked(true); setShowWelcome(true); }}
         onVerifyPassword={onVerifyPassword}
       />
     );
@@ -436,22 +446,24 @@ export default function BirthdayGfViewer({
         )}
 
         {tab === "gallery" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <GallerySection data={data} />
-            </Suspense>
-          </ScrapbookBg>
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <GallerySection data={data} />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
 
         {/* Songs: keep mounted once visited to preserve playlist state */}
-        <div style={{ display: tab === "songs" ? "block" : "none" }}>
+        <div style={{ display: tab === "songs" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
           <ScrapbookBg>
             <SongsSection data={data} onPlayingChange={handleSongPlayingChange} />
           </ScrapbookBg>
         </div>
 
         {/* Games: keep mounted once visited to preserve game state */}
-        <div style={{ display: tab === "games" ? "block" : "none" }}>
+        <div style={{ display: tab === "games" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <GamesSection
@@ -459,21 +471,27 @@ export default function BirthdayGfViewer({
                 shareId={shareId}
                 quizAttempts={quizAttempts}
                 initialGameResponses={gameResponses}
+                onRecordingChange={handleRecordingChange}
               />
             </Suspense>
           </ScrapbookBg>
         </div>
 
         {tab === "surprise" && hasSurprise && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <SurpriseSection data={data} />
-            </Suspense>
-          </ScrapbookBg>
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <SurpriseSection data={data} />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
       </main>
 
-      <BirthdayBgMusic paused={songPlaying} />
+      {/* Background music — only mounts after welcome; paused if user skipped or song/recording active */}
+      {!showWelcome && (
+        <BirthdayBgMusic paused={!bgMusicEnabled || songPlaying || recordingActive} />
+      )}
 
       <BottomNav
         mode="viewer"
@@ -488,6 +506,15 @@ export default function BirthdayGfViewer({
         onCreateYours={handleCreateYours}
         hiddenTabs={hiddenTabs}
       />
+
+      {/* Welcome overlay — shown first on every share page visit */}
+      {showWelcome && (
+        <BirthdayWelcomeOverlay
+          recipientName={data.recipientName}
+          senderName={data.senderName}
+          onEnter={handleWelcomeEnter}
+        />
+      )}
     </div>
   );
 }

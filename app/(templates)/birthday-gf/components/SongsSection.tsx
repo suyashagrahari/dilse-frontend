@@ -27,6 +27,7 @@ interface Props {
   onPlayingChange?: (isPlaying: boolean) => void;
 }
 
+// ── Horizontal track card ──────────────────────────────────────────────────────
 const TrackRow = memo(function TrackRow({
   track, index, active, isPlaying, gradient, isLiked, onSelect, onToggleLike,
 }: {
@@ -42,59 +43,63 @@ const TrackRow = memo(function TrackRow({
     <button
       onClick={handleSelect}
       style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 12,
-        padding: "10px 12px", borderRadius: 14, textAlign: "left",
-        transition: "all 0.15s",
-        background: active ? "rgba(173,104,74,0.10)" : "transparent",
-        border: active ? "1px solid rgba(173,104,74,0.25)" : "1px solid transparent",
+        width: "100%", display: "flex", alignItems: "center", gap: 14,
+        padding: "13px 16px", textAlign: "left",
+        transition: "all 0.18s",
+        background: active
+          ? "rgba(173,104,74,0.09)"
+          : "transparent",
+        border: "none",
+        borderBottom: "1px solid rgba(173,104,74,0.08)",
         cursor: hasAudio ? "pointer" : "default",
-        opacity: hasAudio ? 1 : 0.6,
+        opacity: hasAudio ? 1 : 0.55,
       }}
     >
       {/* Disc / EQ indicator */}
       <div style={{
-        width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+        width: 42, height: 42, borderRadius: 12, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: active ? "0 3px 10px rgba(93,63,49,0.18)" : "0 2px 6px rgba(93,63,49,0.08)",
-        background: active ? gradient : "rgba(173,104,74,0.10)",
+        background: active ? gradient : "rgba(173,104,74,0.09)",
+        boxShadow: active ? `0 4px 14px rgba(93,63,49,0.20)` : "none",
+        transition: "all 0.18s",
       }}>
         {active && isPlaying ? (
           <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 14 }}>
-            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.9)", borderRadius: 4, animationDelay: "0s" }} />
-            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.9)", borderRadius: 4, animationDelay: "0.15s" }} />
-            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.9)", borderRadius: 4, animationDelay: "0.3s" }} />
+            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.92)", borderRadius: 4, animationDelay: "0s" }} />
+            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.92)", borderRadius: 4, animationDelay: "0.15s" }} />
+            <span className="bday-eq-bar" style={{ width: "2.5px", background: "rgba(255,252,246,0.92)", borderRadius: 4, animationDelay: "0.3s" }} />
           </div>
         ) : hasAudio ? (
-          <Music2 size={14} style={{ color: active ? "rgba(255,252,246,0.85)" : "rgba(173,104,74,0.50)" }} />
+          <Music2 size={15} style={{ color: active ? "rgba(255,252,246,0.85)" : "rgba(173,104,74,0.45)" }} />
         ) : (
-          <Music2 size={14} style={{ color: "rgba(173,104,74,0.30)" }} />
+          <Music2 size={15} style={{ color: "rgba(173,104,74,0.25)" }} />
         )}
       </div>
 
       {/* Track info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
-          fontFamily: SCRIPT, fontSize: 15,
+          fontFamily: SCRIPT, fontSize: 16,
           color: active ? WARM : "rgb(90,60,35)",
           margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          lineHeight: 1.3,
         }}>{track.title}</p>
         <p style={{
-          fontFamily: SERIF, fontStyle: "italic", fontSize: 11,
-          color: active ? COPPER : "rgba(108,74,46,0.50)",
-          margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          fontFamily: SERIF, fontStyle: "italic", fontSize: 12,
+          color: active ? COPPER : "rgba(108,74,46,0.48)",
+          margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>{track.artist}</p>
       </div>
 
       {/* Like */}
-      <div onClick={handleLike} role="button" tabIndex={-1} style={{ padding: 4, flexShrink: 0, cursor: "pointer" }}>
-        <Heart size={13} style={{ fill: isLiked ? COPPER : "none", color: isLiked ? COPPER : "rgba(108,74,46,0.20)", transition: "all 0.2s" }} />
+      <div onClick={handleLike} role="button" tabIndex={-1}
+        style={{ padding: "4px 6px", flexShrink: 0, cursor: "pointer" }}>
+        <Heart size={14} style={{
+          fill: isLiked ? COPPER : "none",
+          color: isLiked ? COPPER : "rgba(108,74,46,0.18)",
+          transition: "all 0.2s",
+        }} />
       </div>
-
-      {!hasAudio && (
-        <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 10, color: "rgba(108,74,46,0.30)", flexShrink: 0 }}>
-          No audio
-        </span>
-      )}
 
       <style jsx>{`
         .bday-eq-bar { animation: bday-eq 0.6s ease-in-out infinite alternate; }
@@ -104,6 +109,7 @@ const TrackRow = memo(function TrackRow({
   );
 });
 
+// ── Main SongsSection ──────────────────────────────────────────────────────────
 export default memo(function SongsSection({ data, onPlayingChange }: Props) {
   const tracks = data.musicTracks ?? [];
   const [current, setCurrent] = useState(0);
@@ -112,6 +118,7 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
   useEffect(() => {
     onPlayingChange?.(playing);
   }, [playing, onPlayingChange]);
+
   const [liked, setLiked] = useState<Set<number>>(new Set([0]));
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -153,11 +160,7 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
         next = (next + 1) % tracks.length;
         attempts++;
       }
-      if (tracks[next]?.src) {
-        setCurrent(next);
-      } else {
-        setPlaying(false);
-      }
+      if (tracks[next]?.src) { setCurrent(next); } else { setPlaying(false); }
     });
 
     if (playing) {
@@ -291,23 +294,14 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
         initial={{ opacity: 0, x: 60 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -60 }}
-        style={{
-          minHeight: "100%", display: "flex", flexDirection: "column",
-          position: "relative",
-        }}
+        style={{ minHeight: "100%", display: "flex", flexDirection: "column", position: "relative" }}
       >
-        {/* Title */}
-        <div style={{ textAlign: "center", padding: "24px 16px 12px", flexShrink: 0 }}>
+        {/* ── Page title ── */}
+        <div style={{ textAlign: "center", padding: "24px 16px 16px", flexShrink: 0 }}>
           <motion.h2
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              fontFamily: SCRIPT,
-              fontSize: "clamp(28px, 7vw, 42px)",
-              fontWeight: 400,
-              color: BROWN,
-              margin: 0,
-            }}
+            style={{ fontFamily: SCRIPT, fontSize: "clamp(28px, 7vw, 42px)", fontWeight: 400, color: BROWN, margin: 0 }}
           >
             Birthday Playlist
           </motion.h2>
@@ -315,139 +309,147 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            style={{
-              fontFamily: SERIF, fontStyle: "italic", fontSize: 14,
-              color: COPPER, marginTop: 4, opacity: 0.7,
-            }}
+            style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 14, color: COPPER, marginTop: 4, opacity: 0.7 }}
           >
             Songs that celebrate you
           </motion.p>
         </div>
 
+        {/* ── Main content — single-column full-width ── */}
         <div
-          style={{
-            flex: 1, display: "flex", flexDirection: "column", minHeight: 0,
-            padding: "0 14px 100px", gap: 12,
-          }}
-          className="lg:flex-row lg:gap-8 lg:max-w-5xl lg:mx-auto lg:w-full lg:pb-8 lg:px-8"
+          style={{ flex: 1, padding: "0 14px 100px", display: "flex", flexDirection: "column", gap: 14 }}
+          className="lg:max-w-2xl lg:mx-auto lg:w-full lg:px-8 lg:pb-12"
         >
-          {/* ── Player card ── */}
-          <div
+          {/* ── Full-width player card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
             style={{
-              flexShrink: 0, borderRadius: 22,
+              borderRadius: 24,
               border: `1px solid ${WARM_BORDER}`,
-              background: "rgba(255,255,255,0.50)",
-              backdropFilter: "blur(16px)",
-              boxShadow: "0 8px 32px rgba(93,63,49,0.12)",
-              padding: 16,
+              background: "rgba(255,255,255,0.58)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              boxShadow: "0 12px 40px rgba(93,63,49,0.14), inset 0 1px 0 rgba(255,255,255,0.7)",
+              padding: "28px 24px 22px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 0,
+              overflow: "hidden",
+              position: "relative",
             }}
-            className="lg:w-[320px] lg:p-6 lg:self-start"
           >
-            <div
-              style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}
-              className="lg:flex-col lg:items-stretch lg:gap-4"
-            >
-              {/* Vinyl disc */}
-              <motion.div
-                animate={playing ? { rotate: 360 } : {}}
-                transition={playing ? { duration: 6, repeat: Infinity, ease: "linear" } : {}}
-                style={{
-                  width: 72, height: 72, borderRadius: 18, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: gradient,
-                  boxShadow: "0 6px 24px rgba(93,63,49,0.22)",
-                  position: "relative", overflow: "hidden",
-                }}
-                className="lg:w-full lg:aspect-square lg:rounded-[22px]"
-              >
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(145deg, rgba(255,255,255,0.22), transparent 50%)",
-                  pointerEvents: "none",
-                }} />
-                <div
-                  style={{
-                    width: 44, height: 44, borderRadius: "50%",
-                    border: "3px solid rgba(255,252,246,0.20)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                  className="lg:w-20 lg:h-20"
-                >
-                  <div
-                    style={{
-                      width: 18, height: 18, borderRadius: "50%",
-                      background: "rgba(255,252,246,0.30)",
-                    }}
-                    className="lg:w-8 lg:h-8"
-                  />
-                </div>
-              </motion.div>
+            {/* Soft ambient glow behind disc */}
+            <div style={{
+              position: "absolute",
+              top: 0, left: "50%",
+              transform: "translateX(-50%)",
+              width: 220, height: 160,
+              background: "radial-gradient(ellipse at center, rgba(173,104,74,0.22) 0%, transparent 75%)",
+              filter: "blur(24px)",
+              pointerEvents: "none",
+              zIndex: 0,
+            }} />
 
-              {/* Song info */}
-              <div style={{ flex: 1, minWidth: 0 }} className="lg:text-center">
-                <p style={{
-                  fontFamily: SCRIPT, fontSize: 16, color: BROWN,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0,
-                }} className="lg:text-lg">
-                  {song?.title || "No track"}
-                </p>
-                <p style={{
-                  fontFamily: SERIF, fontStyle: "italic", fontSize: 12,
-                  color: "rgba(108,74,46,0.55)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "2px 0 0",
-                }}>
-                  {song?.artist || ""}
-                </p>
-                <p style={{
-                  fontFamily: SCRIPT, fontSize: 11, marginTop: 2, color: COPPER,
-                }}>
-                  {playing ? "♪ Now Playing" : "Paused"}
-                </p>
+            {/* Spinning disc */}
+            <motion.div
+              animate={playing ? { rotate: 360 } : {}}
+              transition={playing ? { duration: 8, repeat: Infinity, ease: "linear" } : {}}
+              style={{
+                width: 120, height: 120, borderRadius: 28, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: gradient,
+                boxShadow: playing
+                  ? `0 12px 40px rgba(93,63,49,0.30), 0 0 0 6px rgba(173,104,74,0.10)`
+                  : "0 8px 28px rgba(93,63,49,0.20)",
+                position: "relative", overflow: "hidden", zIndex: 1,
+                transition: "box-shadow 0.4s",
+                marginBottom: 18,
+              }}
+              className="lg:w-36 lg:h-36"
+            >
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(145deg, rgba(255,255,255,0.28), transparent 55%)",
+                pointerEvents: "none",
+              }} />
+              <div style={{
+                width: 52, height: 52, borderRadius: "50%",
+                border: "3px solid rgba(255,252,246,0.22)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,252,246,0.32)" }} />
               </div>
+            </motion.div>
+
+            {/* Song info — centered */}
+            <div style={{ textAlign: "center", zIndex: 1, width: "100%" }}>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={song?.title}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  style={{
+                    fontFamily: SCRIPT, fontSize: "clamp(20px, 5vw, 26px)", color: BROWN,
+                    margin: 0, lineHeight: 1.2,
+                  }}
+                >
+                  {song?.title || "No track"}
+                </motion.p>
+              </AnimatePresence>
+              <p style={{
+                fontFamily: SERIF, fontStyle: "italic", fontSize: 13,
+                color: "rgba(108,74,46,0.55)", margin: "5px 0 4px",
+              }}>
+                {song?.artist || ""}
+              </p>
+              <p style={{ fontFamily: SERIF, fontSize: 11, color: COPPER, margin: 0, letterSpacing: "0.06em" }}>
+                {playing ? "♪ Now Playing" : "Paused"}
+              </p>
             </div>
 
             {/* Progress bar */}
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ width: "100%", marginTop: 20, zIndex: 1 }}>
               <div
                 onClick={handleSeek}
                 style={{
-                  height: 5, background: "rgba(173,104,74,0.15)",
+                  height: 5, background: "rgba(173,104,74,0.13)",
                   borderRadius: 999, overflow: "hidden", cursor: "pointer",
-                  position: "relative",
                 }}
               >
-                <div style={{
-                  height: "100%", borderRadius: 999,
-                  background: gradient,
-                  width: duration > 0 ? `${(progress / duration) * 100}%` : "0%",
-                  transition: "width 0.2s",
-                }} />
+                <div
+                  style={{
+                    height: "100%", borderRadius: 999, background: gradient,
+                    width: duration > 0 ? `${(progress / duration) * 100}%` : "0%",
+                    transition: "width 0.2s linear",
+                  }}
+                />
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.45)" }}>{fmtTime(progress)}</span>
-                <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.45)" }}>{fmtTime(duration)}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
+                <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.42)" }}>{fmtTime(progress)}</span>
+                <span style={{ fontFamily: SERIF, fontSize: 10, color: "rgba(108,74,46,0.42)" }}>{fmtTime(duration)}</span>
               </div>
             </div>
 
             {/* Controls */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32, marginTop: 18, zIndex: 1 }}>
               <button
                 onClick={goPrev}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  color: "rgba(108,74,46,0.40)", transition: "color 0.15s",
-                }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(108,74,46,0.38)", transition: "color 0.15s", padding: 6 }}
               >
-                <SkipBack size={20} />
+                <SkipBack size={22} />
               </button>
               <button
                 onClick={togglePlay}
                 style={{
-                  width: 48, height: 48, borderRadius: "50%", border: "none",
+                  width: 56, height: 56, borderRadius: "50%", border: "none",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   background: gradient, cursor: "pointer",
-                  boxShadow: "0 4px 18px rgba(93,63,49,0.28)",
-                  transition: "transform 0.15s",
+                  boxShadow: "0 6px 22px rgba(93,63,49,0.30)",
+                  transition: "transform 0.15s, box-shadow 0.15s",
                 }}
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -460,46 +462,48 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
                     style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
                     {playing
-                      ? <Pause size={18} fill="rgba(255,252,246,0.95)" color="rgba(255,252,246,0.95)" />
-                      : <Play size={18} fill="rgba(255,252,246,0.95)" color="rgba(255,252,246,0.95)" style={{ marginLeft: 2 }} />
+                      ? <Pause size={20} fill="rgba(255,252,246,0.95)" color="rgba(255,252,246,0.95)" />
+                      : <Play size={20} fill="rgba(255,252,246,0.95)" color="rgba(255,252,246,0.95)" style={{ marginLeft: 2 }} />
                     }
                   </motion.span>
                 </AnimatePresence>
               </button>
               <button
                 onClick={goNext}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  color: "rgba(108,74,46,0.40)", transition: "color 0.15s",
-                }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(108,74,46,0.38)", transition: "color 0.15s", padding: 6 }}
               >
-                <SkipForward size={20} />
+                <SkipForward size={22} />
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* ── Playlist card ── */}
-          <div style={{
-            flex: 1, minHeight: 0, borderRadius: 22,
-            border: `1px solid ${WARM_BORDER}`,
-            background: "rgba(255,255,255,0.50)",
-            backdropFilter: "blur(16px)",
-            boxShadow: "0 4px 20px rgba(93,63,49,0.08)",
-            overflow: "hidden",
-            display: "flex", flexDirection: "column",
-          }}>
+          {/* ── Playlist card — full width, 1-column horizontal rows ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            style={{
+              borderRadius: 22,
+              border: `1px solid ${WARM_BORDER}`,
+              background: "rgba(255,255,255,0.50)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              boxShadow: "0 6px 24px rgba(93,63,49,0.09)",
+              overflow: "hidden",
+            }}
+          >
             {/* Playlist header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px 16px 10px", flexShrink: 0,
+              padding: "13px 18px 11px",
               borderBottom: "1px solid rgba(173,104,74,0.10)",
             }}>
               <p style={{
-                fontFamily: SERIF, fontSize: 11, fontWeight: 600,
-                color: "rgba(108,74,46,0.55)", letterSpacing: "0.08em",
+                fontFamily: SERIF, fontSize: 10, fontWeight: 700,
+                color: "rgba(108,74,46,0.50)", letterSpacing: "0.12em",
                 textTransform: "uppercase", margin: 0,
               }}>
-                Playlist · {tracks.length} songs
+                Playlist · {tracks.length} {tracks.length === 1 ? "song" : "songs"}
               </p>
               <div style={{
                 display: "flex", alignItems: "center", gap: 4,
@@ -509,33 +513,13 @@ export default memo(function SongsSection({ data, onPlayingChange }: Props) {
               </div>
             </div>
 
-            {/* Track list */}
-            <div
-              style={{ flex: 1, overflowY: "auto", padding: 6 }}
-              className="no-scrollbar"
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {trackList}
-              </div>
+            {/* Track rows — 1 column */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {trackList}
             </div>
-
-            {tracks.length > 4 && (
-              <p style={{
-                fontFamily: SERIF, fontStyle: "italic", fontSize: 10, textAlign: "center",
-                padding: "6px 0", color: "rgba(108,74,46,0.30)",
-                borderTop: "1px solid rgba(173,104,74,0.08)", flexShrink: 0,
-              }}>
-                Scroll for more
-              </p>
-            )}
-          </div>
+          </motion.div>
         </div>
       </motion.div>
-
-      <style jsx>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </FlowerBackground>
   );
 });

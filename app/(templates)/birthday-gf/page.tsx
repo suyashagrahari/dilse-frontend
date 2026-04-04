@@ -159,6 +159,8 @@ function BirthdayGfPageInner() {
   const editor = useBirthdayEditor();
   const [songPlaying, setSongPlaying] = useState(false);
   const handleSongPlayingChange = useCallback((v: boolean) => setSongPlaying(v), []);
+  const [recordingActive, setRecordingActive] = useState(false);
+  const handleRecordingChange = useCallback((v: boolean) => setRecordingActive(v), []);
 
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
@@ -297,15 +299,17 @@ function BirthdayGfPageInner() {
         )}
 
         {editor.tab === "gallery" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <GallerySection data={editor.content} />
-            </Suspense>
-          </ScrapbookBg>
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <GallerySection data={editor.content} />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
 
         {/* Songs & Games stay MOUNTED (display:none) to preserve play state and game history */}
-        <div style={{ display: editor.tab === "songs" ? "block" : "none", height: "100%" }}>
+        <div style={{ display: editor.tab === "songs" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <SongsSection data={editor.content} onPlayingChange={handleSongPlayingChange} />
@@ -313,7 +317,7 @@ function BirthdayGfPageInner() {
           </ScrapbookBg>
         </div>
 
-        <div style={{ display: editor.tab === "games" ? "block" : "none", height: "100%" }}>
+        <div style={{ display: editor.tab === "games" ? "block" : "none", height: "100dvh", overflowY: "auto" }}>
           <ScrapbookBg>
             <Suspense fallback={<SectionLoader />}>
               <GamesSection
@@ -321,21 +325,24 @@ function BirthdayGfPageInner() {
                 shareId={editor.shareId}
                 quizAttempts={editor.quizAttemptsFromDB}
                 initialGameResponses={editor.gameResponsesFromDB as unknown as any}
+                onRecordingChange={handleRecordingChange}
               />
             </Suspense>
           </ScrapbookBg>
         </div>
 
         {editor.tab === "surprise" && (
-          <ScrapbookBg>
-            <Suspense fallback={<SectionLoader />}>
-              <SurpriseSection data={editor.content} isPreview />
-            </Suspense>
-          </ScrapbookBg>
+          <div style={{ height: "100dvh", overflowY: "auto" }}>
+            <ScrapbookBg>
+              <Suspense fallback={<SectionLoader />}>
+                <SurpriseSection data={editor.content} isPreview />
+              </Suspense>
+            </ScrapbookBg>
+          </div>
         )}
       </main>
 
-      <BirthdayBgMusic paused={songPlaying} />
+      <BirthdayBgMusic paused={songPlaying || recordingActive} />
 
       <BottomNav
         mode="editor"
