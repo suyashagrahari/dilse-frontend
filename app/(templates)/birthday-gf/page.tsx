@@ -165,8 +165,8 @@ function BirthdayGfPageInner() {
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
     : editor.showPublish
-      ? { label: "🎂 Publish", onClick: editor.handlePublish }
-      : { label: "✦ Create", onClick: editor.handleEditClick };
+      ? { label: "Publish", onClick: editor.handlePublish }
+      : { label: "Create", onClick: editor.handleEditClick };
 
   return (
     <div

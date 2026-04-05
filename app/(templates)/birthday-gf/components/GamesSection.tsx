@@ -250,7 +250,7 @@ function GameHistory({ entries, quizRecords, quizAnswers = [] }: { entries: Hist
 
       {/* Filter pills */}
       <style>{`.bgf-filter-scroll::-webkit-scrollbar{height:3px}.bgf-filter-scroll::-webkit-scrollbar-track{background:transparent}.bgf-filter-scroll::-webkit-scrollbar-thumb{background:rgba(173,104,74,0.28);border-radius:999px}.bgf-filter-scroll{scrollbar-width:thin;scrollbar-color:rgba(173,104,74,0.28) transparent}`}</style>
-      <div className="bgf-filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 , marginTop: 16}}>
+      <div className="bgf-filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
         {FILTER_TABS.map(tab => (
           <motion.button key={tab.id} whileTap={{ scale: 0.93 }} onClick={() => setFilter(tab.id)}
             style={{ flexShrink: 0, padding: "6px 16px", borderRadius: 999, border: filter === tab.id ? `1.5px solid rgba(173,104,74,0.45)` : `1px solid ${WARM_BORDER}`, background: filter === tab.id ? "rgba(173,104,74,0.14)" : "transparent", fontFamily: SERIF, fontSize: 12, fontWeight: filter === tab.id ? 700 : 400, color: filter === tab.id ? WARM : "rgba(108,74,46,0.50)", cursor: "pointer", transition: "all 0.15s" }}>
