@@ -4,12 +4,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { user } = useAppSelector((s) => s.auth);
+  const isAdmin = user?.role === "admin";
 
   const activeColor = "#f2cf74";
   const mutedColor = "rgba(245,222,177,0.80)";
@@ -41,7 +44,8 @@ export default function BottomNav() {
       pathname.startsWith("/profile") ||
       pathname.startsWith("/about-us") ||
       pathname.startsWith("/contact-us") ||
-      pathname.startsWith("/help")
+      pathname.startsWith("/help") ||
+      pathname.startsWith("/admin")
     ) {
       return 4;
     }
@@ -152,6 +156,11 @@ export default function BottomNav() {
               {[
                 { label: "Profile", icon: <User size={15} />, href: "/profile" },
                 { label: "Refer & Earn", icon: <Gift size={15} />, href: "/profile#referral" },
+                ...(isAdmin ? [
+                  { label: "Analytics", icon: <BarChart3 size={15} />, href: "/admin/analytics" },
+                  { label: "User Dashboard", icon: <Users size={15} />, href: "/admin/users" },
+                  { label: "Contacts", icon: <MessageSquare size={15} />, href: "/admin/contacts" },
+                ] : []),
                 { label: "About Us", icon: <Info size={15} />, href: "/about-us" },
                 { label: "Contact Us", icon: <Mail size={15} />, href: "/contact-us" },
                 { label: "Help", icon: <HelpCircle size={15} />, href: "/help" },

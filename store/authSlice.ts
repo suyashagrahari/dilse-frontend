@@ -2,6 +2,8 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
+export type UserRole = "normal" | "member" | "admin";
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -9,6 +11,7 @@ export interface AuthUser {
   avatar?: string;
   provider: "local" | "google";
   theme?: "light" | "dark" | "system";
+  role?: UserRole;
   subdomain?: string;
   points?: number;
   referralCode?: string;

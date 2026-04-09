@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Search, X, SlidersHorizontal, User } from "lucide-react";
+import { Search, X, SlidersHorizontal, User, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
+import { useAppSelector } from "@/store/hooks";
 
 export default function DesktopNav() {
   const pathname = usePathname();
@@ -18,6 +19,9 @@ export default function DesktopNav() {
 
   const isTemplates = pathname.startsWith("/templates");
   const isProfile = pathname.startsWith("/profile");
+  const { user: authUser } = useAppSelector((s) => s.auth);
+  const isAdmin = authUser?.role === "admin";
+  const isAdminPage = pathname.startsWith("/admin");
 
   useEffect(() => {
     setMounted(true);
@@ -252,6 +256,33 @@ export default function DesktopNav() {
                 )}
               </div>
             </>
+          )}
+
+          {isAdmin && (
+            <Link
+              href="/admin/analytics"
+              aria-label="Admin Dashboard"
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: isAdminPage
+                  ? "linear-gradient(145deg,#7a4a00 0%,#5a3500 100%)"
+                  : "rgba(61,12,17,0.06)",
+                border: isAdminPage
+                  ? "1px solid rgba(242,207,116,0.6)"
+                  : "1px solid rgba(61,12,17,0.12)",
+                color: isAdminPage ? "#f2cf74" : "#2a0a0e",
+                cursor: "pointer",
+                transition: "all 0.25s",
+                textDecoration: "none",
+              }}
+            >
+              <BarChart3 size={17} />
+            </Link>
           )}
 
           <Link
