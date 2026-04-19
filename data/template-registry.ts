@@ -21,6 +21,7 @@ import { config as eidMubarak } from "@/app/(templates)/eid-mubarak/config";
 import { config as holi } from "@/app/(templates)/holi/config";
 import { config as shaadiCard } from "@/app/(templates)/shaadi-card/config";
 import { config as christianWedding } from "@/app/(templates)/christian-wedding/config";
+import { config as christianWedding2 } from "@/app/(templates)/christian-wedding-2/config";
 
 const allConfigs = [
   birthdayGf,
@@ -61,6 +62,10 @@ function toListItem(c: typeof allConfigs[number]): TemplateListItem {
 }
 
 export const templateList: TemplateListItem[] = allConfigs.map(toListItem);
+
+const webpageConfigs = [christianWedding2];
+
+export const webpageTemplateList: TemplateListItem[] = webpageConfigs.map(toListItem);
 
 export const templateTypes = [
   { id: "birthday", label: "Birthday", emoji: "🎂" },

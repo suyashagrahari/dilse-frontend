@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { templateList, categories, templateTypes } from "@/data/template-registry";
+import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard from "@/components/TemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -237,6 +237,7 @@ function TemplatesContent() {
     hasActiveFilters, clearFilters,
   } = useTemplateSearch();
   const [showSearch, setShowSearch] = useState(false);
+  const [uiMode, setUiMode] = useState<"app" | "webpage">("app");
 
   // Sync URL type param on mount
   useEffect(() => {
@@ -250,7 +251,8 @@ function TemplatesContent() {
     dispatch(toggleFavoriteAsync(slug));
   }, [dispatch]);
 
-  const filtered = templateList.filter((t) => {
+  const sourceList = uiMode === "webpage" ? webpageTemplateList : templateList;
+  const filtered = sourceList.filter((t) => {
     const matchCategory = selectedCategory === "all" || t.category === selectedCategory;
     const matchType = selectedType === "all" || t.type === selectedType;
     const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
@@ -458,6 +460,45 @@ function TemplatesContent() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: "brightness(0) saturate(100%) invert(67%) sepia(23%) saturate(859%) hue-rotate(8deg) brightness(95%) contrast(92%)" }} />
             <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
+          </div>
+
+          {/* UI mode toggle */}
+          <div className="mt-7 flex items-center justify-center">
+            <div
+              className="relative inline-flex items-center rounded-full p-1"
+              style={{
+                background: "rgba(61,12,17,0.06)",
+                border: `1px solid ${UI.border}`,
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              {(["app", "webpage"] as const).map((mode) => {
+                const active = uiMode === mode;
+                const label = mode === "app" ? "App UI" : "Webpage UI";
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setUiMode(mode)}
+                    className="relative z-10 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-[0.18em] transition-colors"
+                    style={{
+                      color: active ? UI.accentFg : UI.textMuted,
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                    aria-pressed={active}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="ui-mode-pill"
+                        className="absolute inset-0 rounded-full"
+                        style={{ background: UI.accent }}
+                        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      />
+                    )}
+                    <span className="relative">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </motion.div>
 

@@ -120,7 +120,11 @@ function dbToShaadiData(d: Record<string, unknown>): ShaadiData {
 }
 
 // ── Helper: ShaadiData → DB body ──────────────────────────────────────────────
-function shaadiDataToBody(data: ShaadiData, password?: string) {
+function shaadiDataToBody(
+  data: ShaadiData,
+  password?: string,
+  templateVariant?: "tabs" | "scroll",
+) {
   return {
     brideName: data.brideName,
     groomName: data.groomName,
@@ -140,10 +144,16 @@ function shaadiDataToBody(data: ShaadiData, password?: string) {
     events: sortWeddingEvents(data.events),
     galleryImages: data.galleryImages.map((g) => ({ src: g.src, alt: g.alt })),
     password: password || "",
+    ...(templateVariant ? { templateVariant } : {}),
   };
 }
 
-export function useChristianWeddingEditor() {
+export interface UseChristianWeddingEditorOptions {
+  variant?: "tabs" | "scroll";
+}
+
+export function useChristianWeddingEditor(options: UseChristianWeddingEditorOptions = {}) {
+  const templateVariant = options.variant ?? "tabs";
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
@@ -450,7 +460,7 @@ export function useChristianWeddingEditor() {
   const saveToServer = useCallback(
     async (data: ShaadiData, password?: string) => {
       if (!accessToken) return;
-      const body = shaadiDataToBody(data, password);
+      const body = shaadiDataToBody(data, password, templateVariant);
 
       if (pageId) {
         const res = await fetch(`${API_URL}/christian-wedding-pages/${pageId}`, {
@@ -473,7 +483,7 @@ export function useChristianWeddingEditor() {
         return result;
       }
     },
-    [accessToken, pageId, headers],
+    [accessToken, pageId, headers, templateVariant],
   );
 
   const handlePasswordDone = useCallback(

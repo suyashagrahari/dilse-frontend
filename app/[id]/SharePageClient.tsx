@@ -55,6 +55,10 @@ const ChristianWeddingViewer = dynamic(() => import("./ChristianWeddingViewer"),
   ssr: false,
   loading: ViewerSkeleton,
 });
+const ChristianWedding2Viewer = dynamic(() => import("./ChristianWedding2Viewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 const LoveGfViewer = dynamic(() => import("./LoveGfViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
@@ -161,6 +165,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   const [editorRoute, setEditorRoute] = useState("/");
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [templateType, setTemplateType] = useState<string>("");
+  const [templateVariant, setTemplateVariant] = useState<string>("");
   const [tab, setTab] = useState("cover");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -185,6 +190,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
         const result = await res.json();
         if (result.success && result.data && result.templateType) {
           setTemplateType(result.templateType);
+          setTemplateVariant(
+            (result.templateVariant as string) ||
+            ((result.data as Record<string, unknown>)?.templateVariant as string) ||
+            "",
+          );
           setHasPassword(!!result.hasPassword);
           setSenderUserId(result.senderUserId || null);
 
@@ -343,6 +353,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Shaadi Card has its own full-page viewer
   if (!loading && templateType === "shaadi" && data) {
     return <ShaadiCardViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Christian wedding — scroll edition (christian-wedding-2)
+  if (!loading && templateType === "christian-wedding" && templateVariant === "scroll" && data) {
+    return <ChristianWedding2Viewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   // Christian wedding (same API as Shaadi card, distinct theme)
