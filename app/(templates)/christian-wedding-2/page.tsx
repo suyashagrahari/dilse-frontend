@@ -67,7 +67,7 @@ function SectionAnchor({
   );
 }
 
-export default function ChristianWedding2Page() {
+function ChristianWedding2Page() {
   const router = useRouter();
   const editor = useChristianWeddingEditor({ variant: "scroll" });
 
@@ -218,5 +218,13 @@ export default function ChristianWedding2Page() {
 
       <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
     </div>
+  );
+}
+
+export default function ChristianWedding2PageWrapper() {
+  return (
+    <Suspense>
+      <ChristianWedding2Page />
+    </Suspense>
   );
 }
