@@ -69,6 +69,9 @@ export function useLoveEditor() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
+  // Tracks when user opens the form FROM preview — closing the form returns to preview
+  const fromPreviewRef = useRef(false);
+
   const preEditContentRef = useRef<ContentData>(DEMO_CONTENT);
 
   // Holds draft data when user tries to publish without being authenticated
@@ -336,15 +339,16 @@ export function useLoveEditor() {
     [accessToken, pageId, headers],
   );
 
-  // Step 7 (last): save locally as preview — no backend, no auth required
+  // Step 7 (last): save locally then enter preview mode so user can inspect + publish
   const handleManualSave = useCallback(
     (data: ContentData, pw: string) => {
+      fromPreviewRef.current = false;
       setContent(data);
       setMf(data);
       setIsPersonalized(true);
       setPagePassword(pw);
-      setEditMode(null);
       setPendingContent(null);
+      setEditMode("preview");
       try {
         sessionStorage.setItem(
           "love_gf_draft",
@@ -354,6 +358,26 @@ export function useLoveEditor() {
     },
     [],
   );
+
+  // Wrapped setEditMode for EditSheet: if user dismisses (null) while in fromPreview flow,
+  // return to "preview" instead of null so the Edit+Publish buttons remain visible.
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null && fromPreviewRef.current) {
+      fromPreviewRef.current = false;
+      setEditMode("preview");
+    } else {
+      if (mode === null || mode === "preview") fromPreviewRef.current = false;
+      setEditMode(mode);
+    }
+  }, []);
+
+  // From preview bar: go back into the manual form to edit
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    setMf({ ...content });
+    setManualStep(0);
+    setEditMode("manual");
+  }, [content]);
 
   const handleAiGenerate = useCallback(async () => {
     if (!aiName.trim() || !aiPrompt.trim()) return;
@@ -546,13 +570,14 @@ export function useLoveEditor() {
     mf, manualStep, pendingContent,
     showShareSheet, setShowShareSheet,
 
-    setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
+    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange, goToGallery, goToNotes,
 
     goBack, closeAuth, closeAuthSuccess,
     handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview, handleManualSave,
+    handleEditFromPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,

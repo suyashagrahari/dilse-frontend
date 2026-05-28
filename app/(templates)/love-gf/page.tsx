@@ -13,7 +13,6 @@ import DesktopSidebar from "./components/DesktopSidebar";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
-import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ScrapbookBg from "./components/ScrapbookBg";
 import LoveBackgroundMusic from "./components/LoveBackgroundMusic";
@@ -154,6 +153,8 @@ function LoveGfPageInner() {
   const editor = useLoveEditor();
   const [playlistActive, setPlaylistActive] = useState(false);
 
+  const isPreview = editor.editMode === "preview";
+
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
     : editor.showPublish
@@ -182,7 +183,7 @@ function LoveGfPageInner() {
         }
       `}</style>
 
-      {/* Mobile top bar: Back + Create/Publish/Share */}
+      {/* Mobile top bar: Back + action buttons */}
       <div
         className="lg:hidden"
         style={{
@@ -197,14 +198,7 @@ function LoveGfPageInner() {
           pointerEvents: "auto",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 10,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <button
             onClick={editor.goBack}
             style={{
@@ -225,28 +219,74 @@ function LoveGfPageInner() {
             ← Back
           </button>
 
-          <button
-            onClick={topAction.onClick}
-            style={{
-              padding: "8px 16px",
-              borderRadius: 999,
-              border: "none",
-              background: editor.showPublish
-                ? "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)"
-                : editor.showShare
-                  ? "rgba(108,74,46,0.10)"
-                  : "rgba(180, 60, 80, 0.92)",
-              color: editor.showShare ? WARM : "#fff",
-              fontFamily: CURSIVE,
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: "pointer",
-              letterSpacing: "0.02em",
-              boxShadow: editor.showPublish ? "0 6px 18px rgba(108,74,46,0.35)" : "none",
-            }}
-          >
-            {topAction.label}
-          </button>
+          {/* Preview mode: Edit + Publish side by side */}
+          {isPreview ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                onClick={editor.handleEditFromPreview}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  border: "1px solid rgba(158,126,97,0.35)",
+                  background: "rgba(250, 246, 240, 0.92)",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  fontFamily: CURSIVE,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: WARM,
+                  cursor: "pointer",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                ✦ Edit
+              </button>
+              <button
+                onClick={editor.handlePublish}
+                disabled={editor.publishing}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: editor.publishing
+                    ? "rgba(158,126,97,0.40)"
+                    : "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)",
+                  color: "#fff",
+                  fontFamily: CURSIVE,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: editor.publishing ? "not-allowed" : "pointer",
+                  letterSpacing: "0.02em",
+                  boxShadow: editor.publishing ? "none" : "0 6px 18px rgba(108,74,46,0.35)",
+                }}
+              >
+                {editor.publishing ? "Publishing..." : "♡ Publish"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={topAction.onClick}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 999,
+                border: "none",
+                background: editor.showPublish
+                  ? "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)"
+                  : editor.showShare
+                    ? "rgba(108,74,46,0.10)"
+                    : "rgba(180, 60, 80, 0.92)",
+                color: editor.showShare ? WARM : "#fff",
+                fontFamily: CURSIVE,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                letterSpacing: "0.02em",
+                boxShadow: editor.showPublish ? "0 6px 18px rgba(108,74,46,0.35)" : "none",
+              }}
+            >
+              {topAction.label}
+            </button>
+          )}
         </div>
       </div>
 
@@ -255,7 +295,7 @@ function LoveGfPageInner() {
         onTabChange={editor.handleTabChange}
         coupleNames={{ person1: editor.content.senderName, person2: editor.content.recipientName }}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -333,7 +373,7 @@ function LoveGfPageInner() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName} setAiName={editor.setAiName}
         aiSender={editor.aiSender} setAiSender={editor.setAiSender}
         aiPrompt={editor.aiPrompt} setAiPrompt={editor.setAiPrompt}
@@ -357,13 +397,6 @@ function LoveGfPageInner() {
         showValue={editor.showPwValue}
         setShowValue={editor.setShowPwValue}
         onDone={editor.handlePasswordDone}
-      />
-
-      <PreviewBar
-        visible={editor.editMode === "preview"}
-        saving={editor.saving}
-        onDiscard={editor.handleDiscardPreview}
-        onConfirm={editor.handleConfirmSave}
       />
 
       <PublishingOverlay visible={editor.publishing} />
