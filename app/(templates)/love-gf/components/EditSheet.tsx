@@ -152,7 +152,10 @@ export default function EditSheet({
   mf, manualStep, setManualStep, updateMf,
   onStartAi, onStartManual, onAiGenerate, onSaveWithPassword, saving,
 }: Props) {
-  const homeCoverFileRef = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef0 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef1 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef2 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef3 = useRef<HTMLInputElement | null>(null);
   const galleryFileRef = useRef<HTMLInputElement | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [showPw, setShowPw] = useState(false);
@@ -269,10 +272,22 @@ export default function EditSheet({
   };
 
   const hc: HomeCoverPhoto = mf.homeCoverPhoto ?? EMPTY_HOME_COVER;
+  void hc; // kept for backward compat, not used in new step 3 UI
 
-  const handleHomeCoverUpload = async (file: File) => {
-    const b64 = await compressToBase64(file);
-    updateMf("homeCoverPhoto", { ...hc, url: b64 });
+  const homePhotoRefs = [homePhotoRef0, homePhotoRef1, homePhotoRef2, homePhotoRef3];
+
+  const handleHomePhotoUpload = async (file: File, idx: number) => {
+    const b64 = await compressToBase64(file, 900);
+    const updated = [...(mf.homePhotos || ["", "", "", ""])];
+    while (updated.length <= idx) updated.push("");
+    updated[idx] = b64;
+    updateMf("homePhotos", updated);
+  };
+
+  const removeHomePhoto = (idx: number) => {
+    const updated = [...(mf.homePhotos || [])];
+    updated[idx] = "";
+    updateMf("homePhotos", updated);
   };
 
   // ── Quiz helpers ─────────────────────────────────────────────────────────
@@ -512,127 +527,111 @@ export default function EditSheet({
       </div>
     );
 
-    // Step 3: Home cover — one circular photo + framing (gallery-style)
-    if (manualStep === 3) return (
-      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
-        <div style={sheet}>
-          {hdr("Home Photo ♡")}
-          {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
-            Upload one photo — it shows in a circle on the home page. Use the sliders to position and zoom, same as Gallery photos.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") homeCoverFileRef.current?.click(); }}
-              onClick={() => homeCoverFileRef.current?.click()}
-              style={{
-                width: "min(220px, 70vw)",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                border: `2px dashed rgba(158,126,97,${hc.url ? "0.55" : "0.30"})`,
-                cursor: "pointer",
-                overflow: "hidden",
-                position: "relative",
-                background: hc.url ? "transparent" : "rgba(158,126,97,0.06)",
-                boxShadow: hc.url ? "0 8px 28px rgba(40,22,8,0.2)" : "none",
-              }}
-            >
-              {hc.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={hc.url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: `${hc.cropX}% ${hc.cropY}%`,
-                    transform: `scale(${hc.scale / 100})`,
-                    transformOrigin: `${hc.cropX}% ${hc.cropY}%`,
-                  }}
-                />
-              ) : (
-                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <div style={{ fontSize: 36, opacity: 0.35 }}>📷</div>
-                  <div style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM, opacity: 0.55 }}>Tap to upload</div>
-                </div>
-              )}
+    // Step 3: 4 home polaroid photos
+    if (manualStep === 3) {
+      const homePhotos = mf.homePhotos || [];
+      const filledCount = homePhotos.filter(Boolean).length;
+      return (
+        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+          <div style={sheet}>
+            {hdr("Home Photos ♡")}
+            {progressBar}
+            <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", marginBottom: 16, lineHeight: 1.6 }}>
+              Upload up to 4 photos — they appear as polaroid cards on the home page. Tap any slot to upload.
+            </p>
+
+            {/* Hidden file inputs */}
+            {homePhotoRefs.map((ref, idx) => (
               <input
-                ref={homeCoverFileRef}
+                key={idx}
+                ref={ref}
                 type="file"
                 accept="image/*"
                 style={{ display: "none" }}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHomeCoverUpload(f); }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHomePhotoUpload(f, idx); e.target.value = ""; }}
               />
+            ))}
+
+            {/* 2 × 2 polaroid grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              {[0, 1, 2, 3].map((idx) => {
+                const url = homePhotos[idx] || "";
+                return (
+                  <div key={idx} style={{ position: "relative" }}>
+                    {/* Polaroid card */}
+                    <div
+                      onClick={() => homePhotoRefs[idx].current?.click()}
+                      style={{
+                        background: "#faf8f2",
+                        borderRadius: 4,
+                        boxShadow: url
+                          ? "3px 5px 16px rgba(40,22,8,0.22), 0 1px 4px rgba(40,22,8,0.10)"
+                          : "none",
+                        border: url ? "none" : "2px dashed rgba(158,126,97,0.28)",
+                        cursor: "pointer",
+                        overflow: "hidden",
+                        position: "relative",
+                        aspectRatio: "3 / 4",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      {/* Photo area — 82% of height */}
+                      <div style={{ flex: "0 0 82%", overflow: "hidden", background: url ? "transparent" : "rgba(158,126,97,0.05)" }}>
+                        {url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={url}
+                            alt=""
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                            <span style={{ fontSize: 22, opacity: 0.35 }}>📷</span>
+                            <span style={{ fontFamily: CURSIVE, fontSize: 11, color: WARM, opacity: 0.50 }}>Photo {idx + 1}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Polaroid white footer strip */}
+                      <div style={{ flex: "0 0 18%", background: "#faf8f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {url && (
+                          <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "rgba(158,126,97,0.45)" }}>♡</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Remove button */}
+                    {url && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeHomePhoto(idx); }}
+                        style={{
+                          position: "absolute", top: 4, right: 4,
+                          width: 22, height: 22, borderRadius: "50%",
+                          background: "rgba(0,0,0,0.52)", border: "none",
+                          cursor: "pointer", color: "#fff", fontSize: 13,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          zIndex: 5, lineHeight: 1,
+                        }}
+                      >×</button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {hc.url && (
-              <button
-                type="button"
-                onClick={() => updateMf("homeCoverPhoto", { ...EMPTY_HOME_COVER })}
-                style={{
-                  padding: "4px 12px", border: "none", background: "transparent",
-                  fontFamily: CURSIVE, fontSize: 12, color: "rgba(180,60,50,0.75)", cursor: "pointer",
-                }}
-              >
-                ✕ Remove photo
-              </button>
-            )}
-            {hc.url && (
-              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Horizontal position</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropX}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={hc.cropX}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropX: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
-                </div>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Vertical position</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropY}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={hc.cropY}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropY: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
-                </div>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Zoom (fill frame)</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.scale}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={100}
-                    max={200}
-                    value={hc.scale}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, scale: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            {ghostBtn("← Back", () => setManualStep(2))}
-            {primaryBtn("Next →", () => setManualStep(4))}
+
+            <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.50)", marginBottom: 18, textAlign: "center" }}>
+              {filledCount} / 4 photos added
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              {ghostBtn("← Back", () => setManualStep(2))}
+              {primaryBtn("Next →", () => setManualStep(4))}
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
 
     // Step 4: Gallery Photos (up to 10, with crop + letter)
     if (manualStep === 4) {
@@ -1266,7 +1265,7 @@ export default function EditSheet({
           <div style={{ marginBottom: 20 }}>
             {label("Password (optional)")}
             <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", marginBottom: 10, lineHeight: 1.5 }}>
-              Add a password so only your special someone can view this page.
+              Add a password so only your special someone can view this page, then preview — you can publish from the main page.
             </p>
             <div style={{ position: "relative" }}>
               <input
@@ -1287,7 +1286,7 @@ export default function EditSheet({
           <div style={{ display: "flex", gap: 10 }}>
             {ghostBtn("← Back", () => setManualStep(6))}
             {primaryBtn(
-              saving ? "Saving..." : "Save ♡",
+              saving ? "Saving..." : "Save & Preview ♡",
               () => onSaveWithPassword({ ...mf }, pw),
               saving,
             )}

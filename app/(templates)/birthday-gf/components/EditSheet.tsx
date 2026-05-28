@@ -1247,7 +1247,7 @@ export default function EditSheet({
           {hdr("Save Your Page 🎂")}
           {progressBar}
           <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(93,63,49,0.70)", marginBottom: 16, lineHeight: 1.6 }}>
-            Add an optional password to protect this page, then save.
+            Add an optional password to protect this page, then preview — you can publish from the main page.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
@@ -1262,7 +1262,7 @@ export default function EditSheet({
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
               {ghostBtn("← Back", () => setManualStep(7))}
-              {primaryBtn(saving ? "Saving..." : "Save & Publish 🎂", () => onSaveWithPassword(mf, pw), saving)}
+              {primaryBtn(saving ? "Saving..." : "Save & Preview 🎂", () => onSaveWithPassword(mf, pw), saving)}
             </div>
           </div>
         </div>

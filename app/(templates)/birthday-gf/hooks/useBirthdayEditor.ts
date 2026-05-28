@@ -71,11 +71,14 @@ export function useBirthdayEditor() {
 
   const preEditContentRef = useRef<BirthdayData>(DEMO_DATA);
 
+  // Holds draft data when user tries to publish without being authenticated
+  const pendingPublishRef = useRef<{ data: BirthdayData; password: string } | null>(null);
+
   // Game data from DB (persisted across refreshes)
   const [gameResponsesFromDB, setGameResponsesFromDB] = useState<Record<string, unknown>[]>([]);
   const [quizAttemptsFromDB, setQuizAttemptsFromDB]   = useState<{ score: number; total: number; playedAt: string }[]>([]);
 
-  // Load existing page from searchParams or sessionStorage prefill
+  // Load existing page from searchParams or sessionStorage prefill/draft
   useEffect(() => {
     const id = searchParams.get("id");
     if (id && isAuthenticated && accessToken) {
@@ -113,12 +116,12 @@ export function useBirthdayEditor() {
             } else {
               setShareUrl(null);
             }
-            // Persist game data across refreshes
             if (Array.isArray(d.gameResponses)) setGameResponsesFromDB(d.gameResponses);
             if (Array.isArray(d.quizAttempts))  setQuizAttemptsFromDB(d.quizAttempts);
           }
         })
         .catch(() => {});
+      return; // skip sessionStorage when loading from backend
     }
 
     // sessionStorage prefill from viewer
@@ -131,8 +134,113 @@ export function useBirthdayEditor() {
         setMf((prev) => ({ ...prev, ...data }));
         if (isAuthenticated) setEditMode("manual");
       } catch {}
+      return;
     }
+
+    // Restore completed draft: user filled the form and saved preview but hasn't published yet
+    try {
+      const saved = sessionStorage.getItem("birthday_gf_draft");
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft?.completed && draft.data?.recipientName) {
+          setContent(draft.data);
+          setMf(draft.data);
+          setIsPersonalized(true);
+          if (draft.password) setPagePassword(draft.password);
+        }
+      }
+    } catch {}
   }, [isAuthenticated, accessToken, searchParams]);
+
+  // After successful auth: if there's a pending draft, save it + auto-publish
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+
+    const { data, password } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+
+    const authHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    };
+
+    const body = {
+      recipientName:      data.recipientName,
+      senderName:         data.senderName,
+      birthdayDate:       data.birthdayDate,
+      birthdayWish:       data.birthdayWish,
+      personalMessage:    data.personalMessage,
+      homeCoverPhoto:     data.homeCoverPhoto,
+      homePhoto1:         data.homePhoto1 || "",
+      homePhoto2:         data.homePhoto2 || "",
+      galleryPhotos:      data.galleryPhotos      || [],
+      musicTracks:        data.musicTracks        || [],
+      quizQuestions:      data.quizQuestions      || [],
+      truthDareQuestions: data.truthDareQuestions || [],
+      surprisePhoto:      data.surprisePhoto      || "",
+      surpriseAudioUrl:   data.surpriseAudioUrl   || "",
+      password:           password || "",
+    };
+
+    setSaving(true);
+    setPublishing(true);
+    setEditMode(null);
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/birthday-gf-pages`, {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+
+        const savedId = result.data._id as string;
+        setPageId(savedId);
+        setContent(data);
+        setIsPersonalized(true);
+        setShareUrl(null);
+
+        const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${savedId}/publish`, {
+          method: "POST",
+          headers: authHeaders,
+        });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          const url = pubResult.data.shareUrl as string;
+          setShareUrl(url);
+          try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
+          pushToast({
+            type: "publish",
+            title: "Published! 🎂",
+            message: "Your birthday page is now live",
+            shareUrl: url,
+          });
+        } else {
+          pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+      } finally {
+        setSaving(false);
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
+
+  // Auto-save WIP draft to sessionStorage while user is filling the form
+  useEffect(() => {
+    if (editMode !== "manual" && editMode !== "ai-review") return;
+    try {
+      sessionStorage.setItem(
+        "birthday_gf_draft",
+        JSON.stringify({ data: mf, step: manualStep, completed: false }),
+      );
+    } catch {}
+  }, [mf, manualStep, editMode]);
 
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
@@ -158,18 +266,24 @@ export function useBirthdayEditor() {
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goToGallery = useCallback(() => setTab("gallery"), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null; // discard draft if user dismisses auth
+  }, []);
 
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    setEditMode("choose");
+    // If no pending draft, open the edit sheet as normal
+    // If there IS a pending draft, the useEffect handles save+publish automatically
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
   }, []);
 
   const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
     preEditContentRef.current = content;
     setEditMode("choose");
-  }, [isAuthenticated, content]);
+  }, [content]);
 
   const startAiMode = useCallback(() => {
     setAiName(isPersonalized ? content.recipientName : "");
@@ -179,8 +293,21 @@ export function useBirthdayEditor() {
   }, [isPersonalized, content.recipientName, content.senderName]);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
-    setManualStep(0);
+    let initialData: BirthdayData = isPersonalized ? { ...content } : { ...DEMO_DATA };
+    let initialStep = 0;
+    // Restore WIP draft if one exists and isn't a completed preview
+    try {
+      const saved = sessionStorage.getItem("birthday_gf_draft");
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft?.data && !draft.completed) {
+          initialData = draft.data;
+          initialStep = typeof draft.step === "number" ? draft.step : 0;
+        }
+      }
+    } catch {}
+    setMf(initialData);
+    setManualStep(initialStep);
     setEditMode("manual");
   }, [isPersonalized, content]);
 
@@ -228,30 +355,23 @@ export function useBirthdayEditor() {
     [accessToken, pageId, headers],
   );
 
-  // Direct save — shows PublishSheet after success (called from EditSheet final step)
+  // Step 8: save locally as preview — no backend, no auth required
   const handleManualSave = useCallback(
-    async (data: BirthdayData, pw: string) => {
-      setSaving(true);
+    (data: BirthdayData, pw: string) => {
+      setContent(data);
+      setMf(data);
+      setIsPersonalized(true);
+      setPagePassword(pw);
+      setEditMode(null);
+      setPendingContent(null);
       try {
-        const savedId = await saveToServer(data, pw);
-        if (!savedId) {
-          pushToast({ type: "info", title: "Save failed", message: "Please log in and try again" });
-          return;
-        }
-        setContent(data);
-        setIsPersonalized(true);
-        setShareUrl(null);
-        setEditMode(null);
-        setPendingContent(null);
-        // Show the publish sheet so the user can publish (payment gate can be added here later)
-        setShowPublishSheet(true);
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setSaving(false);
-      }
+        sessionStorage.setItem(
+          "birthday_gf_draft",
+          JSON.stringify({ data, password: pw, completed: true }),
+        );
+      } catch {}
     },
-    [saveToServer, pushToast],
+    [],
   );
 
   const handleAiGenerate = useCallback(async () => {
@@ -347,30 +467,68 @@ export function useBirthdayEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    // Not authenticated: store draft and show auth modal
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/birthday-gf-pages/${pageId}/publish`, {
+      let id = pageId;
+      // If data not yet on backend (user filled form without being logged in), create it first
+      if (!id) {
+        const body = {
+          recipientName:      content.recipientName,
+          senderName:         content.senderName,
+          birthdayDate:       content.birthdayDate,
+          birthdayWish:       content.birthdayWish,
+          personalMessage:    content.personalMessage,
+          homeCoverPhoto:     content.homeCoverPhoto,
+          homePhoto1:         content.homePhoto1 || "",
+          homePhoto2:         content.homePhoto2 || "",
+          galleryPhotos:      content.galleryPhotos      || [],
+          musicTracks:        content.musicTracks        || [],
+          quizQuestions:      content.quizQuestions      || [],
+          truthDareQuestions: content.truthDareQuestions || [],
+          surprisePhoto:      content.surprisePhoto      || "",
+          surpriseAudioUrl:   content.surpriseAudioUrl   || "",
+          password:           pagePassword || "",
+        };
+        const res = await fetch(`${API_URL}/birthday-gf-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+        id = result.data._id as string;
+        setPageId(id);
+      }
+      const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${id}/publish`, {
         method: "POST",
         headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const url = result.data.shareUrl;
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
         pushToast({
           type: "publish",
           title: "Published! 🎂",
           message: "Your birthday page is now live",
           shareUrl: url,
         });
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
 
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showPublishSheet, setShowPublishSheet] = useState(false);
