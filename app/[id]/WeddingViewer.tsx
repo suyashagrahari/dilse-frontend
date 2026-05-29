@@ -1020,13 +1020,23 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
         </AnimatePresence>
       </main>
 
-      {/* Mobile share button — top right (shown on non-desktop) */}
-      <div className="fixed top-3 right-3 z-40 lg:hidden flex gap-2">
-        <button onClick={handleShare}
-          className="p-2.5 rounded-xl text-muted-foreground"
-          style={{ background: "hsl(var(--wed-card)/0.85)", backdropFilter: "blur(12px)", border: "1px solid hsl(var(--wed-border))" }}>
-          {copied ? <Check size={16} style={{ color: "#f59e0b" }} /> : <Copy size={16} />}
-        </button>
+      {/* SubhSandesh branding — top right, mobile (tap → go to home) */}
+      <div className="fixed top-3 right-3 z-40 lg:hidden">
+        <motion.button
+          onClick={() => router.push("/")}
+          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, type: "spring", stiffness: 260 }}
+          className="w-9 h-9 rounded-full flex items-center justify-center"
+          style={{
+            background: "#fdf6ee",
+            border: "1px solid rgba(180,130,60,0.25)",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.22)",
+          }}
+        >
+          <Image src="/logo.png" alt="SubhSandesh" width={22} height={22} style={{ objectFit: "contain" }} />
+        </motion.button>
       </div>
 
       {/* Auth modal */}

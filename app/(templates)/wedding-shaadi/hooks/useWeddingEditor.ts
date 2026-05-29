@@ -208,18 +208,80 @@ export function useWeddingEditor() {
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<WeddingData>(DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+  const fromPreviewRef = useRef(false);
+  const pendingPublishRef = useRef<{ data: WeddingData; password: string } | null>(null);
 
-  // Persist draft form data to sessionStorage so user doesn't lose progress
+  // Persist form WIP draft while filling
   useEffect(() => {
-    const isDemoData =
-      mf.brideName === DEMO_DATA.brideName &&
-      mf.groomName === DEMO_DATA.groomName &&
-      !mf.bride.photo &&
-      !mf.groom.photo;
-    if (!isDemoData) {
-      try { sessionStorage.setItem("wedding_mf_draft", JSON.stringify(mf)); } catch {}
-    }
-  }, [mf]);
+    if (editMode !== "manual" && editMode !== "ai-edit") return;
+    try {
+      sessionStorage.setItem("wedding_draft", JSON.stringify({ data: mf, step: manualStep, completed: false }));
+    } catch {}
+  }, [mf, manualStep, editMode]);
+
+  // After successful auth: auto-publish if pendingPublishRef has stored data
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+
+    const { data, password: pw } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+
+    const authHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    };
+
+    setPublishing(true);
+    setEditMode(null);
+
+    (async () => {
+      try {
+        const body = weddingDataToBody(data, pw);
+        const res = await fetch(`${API_URL}/wedding-pages`, {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+
+        const savedId = result.data._id as string;
+        setPageId(savedId);
+        setShareId(result.data.shareId || null);
+        setContent(data);
+        setIsPersonalized(true);
+
+        const pubRes = await fetch(`${API_URL}/wedding-pages/${savedId}/publish`, {
+          method: "POST",
+          headers: authHeaders,
+        });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          const publishedShareId = pubResult.data.shareId as string;
+          const normalizedShareUrl = publishedShareId
+            ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+            : (pubResult.data.shareUrl as string);
+          setShareUrl(normalizedShareUrl);
+          setShareId(publishedShareId);
+          try { sessionStorage.removeItem("wedding_draft"); } catch {}
+          pushToast({
+            type: "publish",
+            title: "Published! 🎊",
+            message: "Your wedding invitation is now live",
+            shareUrl: normalizedShareUrl,
+          });
+        } else {
+          pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+      } finally {
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -228,9 +290,8 @@ export function useWeddingEditor() {
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -270,18 +331,66 @@ export function useWeddingEditor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, themeReady]);
 
+  // Restore completed draft on fresh load (no ?edit= param)
+  useEffect(() => {
+    if (!themeReady) return;
+    const editId = searchParams.get("edit");
+    if (editId) return;
+    try {
+      const raw = sessionStorage.getItem("wedding_draft");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved?.data && (saved.data.brideName || saved.data.groomName)) {
+          setContent((prev) => ({ ...prev, ...saved.data }));
+          setMf((prev) => ({ ...prev, ...saved.data }));
+          setIsPersonalized(true);
+          if (saved.data.password) setPagePassword(saved.data.password);
+          if (saved.completed) setEditMode("preview");
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeReady]);
+
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
-  const closeAuthSuccess = useCallback(() => {
+  const closeAuth = useCallback(() => {
     setShowAuth(false);
-    setEditMode("choose");
+    pendingPublishRef.current = null;
   }, []);
 
+  const closeAuthSuccess = useCallback(() => {
+    setShowAuth(false);
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
+    // if pendingPublishRef.current exists, auto-publish useEffect fires
+  }, []);
+
+  // No auth check — anyone can open the form
   const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
+    preEditContentRef.current = content;
     setEditMode("choose");
-  }, [isAuthenticated]);
+  }, [content]);
+
+  // Wrapped setEditMode for EditSheet: returns to preview when editing from preview
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null && fromPreviewRef.current) {
+      fromPreviewRef.current = false;
+      setEditMode("preview");
+    } else {
+      if (mode === null || mode === "preview") fromPreviewRef.current = false;
+      setEditMode(mode);
+    }
+  }, []);
+
+  // From preview: go back into the manual form to edit
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    setMf({ ...content });
+    setManualStep(0);
+    setEditMode("manual");
+  }, [content]);
 
   const startAiMode = useCallback(() => {
     setAiName(isPersonalized ? content.brideName : "");
@@ -430,7 +539,7 @@ export function useWeddingEditor() {
     }
   }, [aiName, aiSender, aiPrompt, mf, headers, pushToast]);
 
-  // When user confirms ai-edit, go to preview (password already in manual step 6)
+  // When user confirms ai-edit, go to preview (local only — no server save yet)
   const handleAiEditPreview = useCallback(() => {
     setPendingContent(mf);
     setContent((prev) => {
@@ -438,8 +547,12 @@ export function useWeddingEditor() {
       return mf;
     });
     previewSourceRef.current = "ai-edit";
+    fromPreviewRef.current = false;
+    try {
+      sessionStorage.setItem("wedding_draft", JSON.stringify({ data: mf, password: pagePassword, completed: true }));
+    } catch {}
     setEditMode("preview");
-  }, [mf]);
+  }, [mf, pagePassword]);
 
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim() && !mf.groomName.trim()) return;
@@ -449,8 +562,12 @@ export function useWeddingEditor() {
       return mf;
     });
     previewSourceRef.current = "manual";
+    fromPreviewRef.current = false;
+    try {
+      sessionStorage.setItem("wedding_draft", JSON.stringify({ data: mf, password: pagePassword, completed: true }));
+    } catch {}
     setEditMode("preview");
-  }, [mf]);
+  }, [mf, pagePassword]);
 
   const updateMf = useCallback(
     (key: keyof WeddingData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
@@ -538,33 +655,58 @@ export function useWeddingEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    // Auth gate at publish time only
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/wedding-pages/${pageId}/publish`, {
+      let id = pageId;
+      if (!id) {
+        const body = weddingDataToBody(content, pagePassword);
+        const res = await fetch(`${API_URL}/wedding-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+        id = result.data._id as string;
+        setPageId(id);
+        setShareId(result.data.shareId || null);
+        setIsPersonalized(true);
+      }
+      const pubRes = await fetch(`${API_URL}/wedding-pages/${id}/publish`, {
         method: "POST",
         headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const publishedShareId = result.data.shareId as string;
-        const normalizedShareUrl = publishedShareId ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}` : (result.data.shareUrl as string);
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        const publishedShareId = pubResult.data.shareId as string;
+        const normalizedShareUrl = publishedShareId
+          ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+          : (pubResult.data.shareUrl as string);
         setShareUrl(normalizedShareUrl);
         setShareId(publishedShareId);
-        // Keep pageId so user can edit and republish
+        setEditMode(null);
+        try { sessionStorage.removeItem("wedding_draft"); } catch {}
         pushToast({
           type: "publish",
           title: "Published! 🎊",
-          message: hasPasswordSet ? "Invitation is password-protected" : "Your wedding invitation is now live",
+          message: "Your wedding invitation is now live",
           shareUrl: normalizedShareUrl,
         });
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -617,19 +759,19 @@ export function useWeddingEditor() {
     mf, manualStep, aiEditData,
     darkMode, themeReady, toggleDark,
 
-    setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
+    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
     goBack, closeAuth, closeAuthSuccess, closeShareSheet,
-    handleEditClick, startAiMode, startManualMode,
+    handleEditClick, handleEditFromPreview, startAiMode, startManualMode,
     handleCardExtract, handleAiGenerate, handleAiEditPreview,
     handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast, addBlessing,
 
-    showPublish: isPersonalized && !publishing,
+    showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

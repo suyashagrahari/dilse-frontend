@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Copy, Send, MessageCircle, Instagram, Facebook, Twitter } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface SocialShareSheetProps {
   open: boolean;
@@ -12,6 +14,7 @@ interface SocialShareSheetProps {
 }
 
 export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shareMessage }: SocialShareSheetProps) {
+  const router = useRouter();
   const url = shareUrl || "";
   const toPublicShareUrl = (rawUrl: string) => {
     if (!rawUrl) return rawUrl;
@@ -49,7 +52,14 @@ export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shar
     { key: "telegram", label: "Telegram", icon: <Send size={15} />, onClick: () => openShare("telegram") },
     { key: "twitter", label: "Twitter/X", icon: <Twitter size={15} />, onClick: () => openShare("twitter") },
     { key: "facebook", label: "Facebook", icon: <Facebook size={15} />, onClick: () => openShare("facebook") },
-    { key: "copy", label: "Copy", icon: <Copy size={15} />, onClick: () => onCopy(publicUrl) },
+    {
+      key: "copy",
+      label: "SubhSandesh",
+      icon: (
+        <Image src="/logo.png" alt="SubhSandesh" width={22} height={22} style={{ objectFit: "contain", borderRadius: 4 }} />
+      ),
+      onClick: () => { onClose(); router.push("/"); },
+    },
   ];
 
   const openShare = (target: "whatsapp" | "telegram" | "twitter" | "facebook" | "instagram") => {
@@ -127,6 +137,23 @@ export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shar
                 ))}
               </div>
             </div>
+
+            {/* URL copy bar */}
+            {publicUrl && (
+              <div
+                className="flex items-center gap-2 mt-3 px-3 py-2 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(201,168,76,0.35)" }}
+              >
+                <span className="flex-1 text-xs truncate" style={{ color: "#7a5555" }}>{publicUrl}</span>
+                <button
+                  onClick={() => onCopy(publicUrl)}
+                  className="shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                  style={{ background: "rgba(201,168,76,0.15)", color: "#a48230", border: "1px solid rgba(201,168,76,0.4)" }}
+                >
+                  <Copy size={12} /> Copy
+                </button>
+              </div>
+            )}
 
             <button
               onClick={onClose}

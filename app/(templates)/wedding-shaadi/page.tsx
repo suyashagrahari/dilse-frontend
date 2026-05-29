@@ -3,7 +3,7 @@
 import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
 import { useWeddingEditor } from "./hooks/useWeddingEditor";
@@ -14,7 +14,6 @@ import BottomNav from "./components/BottomNav";
 import CoverSection from "./components/CoverSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
-import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import WeddingWelcomeOverlay from "./components/WeddingWelcomeOverlay";
 import WeddingBackgroundMusic from "./components/WeddingBackgroundMusic";
@@ -43,6 +42,7 @@ function TabFallback() {
 
 function WeddingShadiPage() {
   const editor = useWeddingEditor();
+  const isPreview = editor.editMode === "preview";
   const [welcomed, setWelcomed] = useState(false);
   const [playMusic, setPlayMusic] = useState(false);
 
@@ -94,28 +94,54 @@ function WeddingShadiPage() {
         </div>
       )}
 
-      {/* Floating Save / Create / Publish / Share button — top-right, mobile only */}
+      {/* Floating Create / Edit+Publish / Share button — top-right, mobile only */}
       {welcomed && (
         <div className="fixed top-4 right-4 z-50 lg:hidden">
           <AnimatePresence mode="wait">
-            {editor.editMode === "preview" ? (
-              <motion.button
-                key="save"
+            {isPreview ? (
+              <motion.div
+                key="preview-actions"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handleConfirmSave as () => void}
-                disabled={editor.saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm text-white shadow-xl disabled:opacity-70"
-                style={{
-                  background: "var(--wed-gradient-gold)",
-                  boxShadow: "0 4px 18px var(--wed-gold-glow)",
-                }}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
               >
-                {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                {editor.saving ? "Saving…" : "Save"}
-              </motion.button>
+                <button
+                  onClick={editor.handleEditFromPreview}
+                  style={{
+                    background: "var(--wed-glass-strong)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    border: "1px solid var(--wed-glass-border)",
+                    color: "hsl(var(--wed-fg))",
+                    borderRadius: 20,
+                    padding: "7px 14px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  ✦ Edit
+                </button>
+                <button
+                  onClick={editor.handlePublish}
+                  disabled={editor.publishing}
+                  style={{
+                    background: "var(--wed-gradient-gold)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 20,
+                    padding: "7px 14px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 18px var(--wed-gold-glow)",
+                    opacity: editor.publishing ? 0.7 : 1,
+                  }}
+                >
+                  {editor.publishing ? "Publishing…" : "🎊 Publish"}
+                </button>
+              </motion.div>
             ) : !editor.isPersonalized ? (
               <motion.button
                 key="create"
@@ -207,7 +233,7 @@ function WeddingShadiPage() {
         darkMode={editor.darkMode}
         toggleDark={editor.toggleDark}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -277,7 +303,7 @@ function WeddingShadiPage() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName}
         setAiName={editor.setAiName}
         aiSender={editor.aiSender}
@@ -298,13 +324,6 @@ function WeddingShadiPage() {
         onAiGenerate={editor.handleAiGenerate}
         onAiEditPreview={editor.handleAiEditPreview}
         onManualPreview={editor.handleManualPreview}
-      />
-
-      <PreviewBar
-        visible={false}
-        saving={editor.saving}
-        onDiscard={editor.handleDiscardPreview}
-        onConfirm={editor.handleConfirmSave as () => void}
       />
 
       <PublishingOverlay visible={editor.publishing} />
