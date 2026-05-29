@@ -288,6 +288,8 @@ const UserPhotoCard = memo(function UserPhotoCard({
           style={{
             width: "100%", height: "100%", objectFit: "cover", display: "block",
             objectPosition: `${photo.cropX}% ${photo.cropY}%`,
+            transform: `scale(${(photo.scale ?? 100) / 100})`,
+            transformOrigin: `${photo.cropX}% ${photo.cropY}%`,
           }}
           loading="lazy"
         />

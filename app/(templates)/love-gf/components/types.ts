@@ -16,6 +16,7 @@ export interface PhotoItem {
   letter: string; // love letter / caption
   cropX: number;  // 0-100 for CSS object-position-x
   cropY: number;  // 0-100 for CSS object-position-y
+  scale: number;  // 100-200 zoom %
 }
 
 export interface HomeCoverPhoto {
@@ -23,6 +24,27 @@ export interface HomeCoverPhoto {
   cropX: number;
   cropY: number;
   scale: number;
+}
+
+export interface HomePhoto {
+  url: string;
+  cropX: number;  // 0–100 object-position-x
+  cropY: number;  // 0–100 object-position-y
+  scale: number;  // 100–200 zoom %
+}
+
+export const EMPTY_HOME_PHOTO: HomePhoto = { url: "", cropX: 50, cropY: 50, scale: 100 };
+
+export function normalizeHomePhoto(p: unknown): HomePhoto {
+  if (typeof p === "string") return { url: p, cropX: 50, cropY: 50, scale: 100 };
+  const o = p as Record<string, unknown>;
+  return {
+    url:   String(o.url   ?? ""),
+    cropX: Number.isFinite(Number(o.cropX)) ? Number(o.cropX) : 50,
+    cropY: Number.isFinite(Number(o.cropY)) ? Number(o.cropY) : 50,
+    scale: Number.isFinite(Number(o.scale))
+      ? Math.min(200, Math.max(100, Number(o.scale))) : 100,
+  };
 }
 
 export const EMPTY_HOME_COVER: HomeCoverPhoto = {
@@ -55,7 +77,7 @@ export interface ContentData {
   wishMessage: string;
   loveDate: string;
   homeCoverPhoto: HomeCoverPhoto;
-  homePhotos: string[];
+  homePhotos: HomePhoto[];
   galleryPhotos: PhotoItem[];  // up to 10 gallery photos with letter + crop
   quizQuestions: QuizQuestion[];
   truthDareQuestions: TruthDareItem[];
@@ -102,7 +124,7 @@ export const DEMO_CONTENT: ContentData = {
     "To the one who holds my heart — thank you for every laugh, every hug, every quiet moment that felt like the whole world. You are my favourite person. Love you to the moon and back ♡",
   loveDate: "",
   homeCoverPhoto: { ...EMPTY_HOME_COVER },
-  homePhotos: [],
+  homePhotos: [] as HomePhoto[],
   galleryPhotos: [],
   truthDareQuestions: [],
   quizQuestions: [

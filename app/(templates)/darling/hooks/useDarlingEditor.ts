@@ -69,13 +69,19 @@ export function useDarlingEditor() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
+  // Tracks when form is opened FROM preview — closing form returns to preview
+  const fromPreviewRef = useRef(false);
+
   const preEditContentRef = useRef<ContentData>(DEMO_CONTENT);
+
+  // Holds draft data when user tries to publish without being authenticated
+  const pendingPublishRef = useRef<{ data: ContentData; password: string } | null>(null);
 
   // Game data from DB (persisted across refreshes)
   const [gameResponsesFromDB, setGameResponsesFromDB] = useState<Record<string, unknown>[]>([]);
   const [quizAttemptsFromDB, setQuizAttemptsFromDB]   = useState<{ score: number; total: number; playedAt: string }[]>([]);
 
-  // Load existing page from searchParams or sessionStorage prefill
+  // Load existing page from searchParams or sessionStorage prefill/draft
   useEffect(() => {
     const id = searchParams.get("id");
     if (id && isAuthenticated && accessToken) {
@@ -109,12 +115,12 @@ export function useDarlingEditor() {
             } else {
               setShareUrl(null);
             }
-            // Persist game data across refreshes
             if (Array.isArray(d.gameResponses)) setGameResponsesFromDB(d.gameResponses);
             if (Array.isArray(d.quizAttempts))  setQuizAttemptsFromDB(d.quizAttempts);
           }
         })
         .catch(() => {});
+      return; // skip sessionStorage when loading from backend
     }
 
     // sessionStorage prefill from viewer
@@ -127,15 +133,111 @@ export function useDarlingEditor() {
         setMf((prev) => ({ ...prev, ...data }));
         if (isAuthenticated) setEditMode("manual");
       } catch {}
+      return;
     }
+
+    // Restore completed draft: user filled form + saved preview but hasn't published yet
+    try {
+      const saved = sessionStorage.getItem("darling_draft");
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft?.completed && draft.data?.recipientName) {
+          setContent(draft.data);
+          setMf(draft.data);
+          setIsPersonalized(true);
+          if (draft.password) setPagePassword(draft.password);
+        }
+      }
+    } catch {}
   }, [isAuthenticated, accessToken, searchParams]);
+
+  // After successful auth: if there's a pending publish, save to backend + publish automatically
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+
+    const { data, password } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+
+    const authHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    };
+
+    const body = {
+      recipientName:      data.recipientName,
+      senderName:         data.senderName,
+      personalMessage:    data.personalMessage,
+      wishMessage:        data.wishMessage,
+      loveDate:           data.loveDate,
+      homeCoverPhoto:     data.homeCoverPhoto,
+      homePhotos:         data.homeCoverPhoto?.url?.trim() ? [] : (data.homePhotos || []),
+      galleryPhotos:      data.galleryPhotos      || [],
+      quizQuestions:      data.quizQuestions      || [],
+      truthDareQuestions: data.truthDareQuestions || [],
+      password:           password || "",
+    };
+
+    setSaving(true);
+    setPublishing(true);
+    setEditMode(null);
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/darling-pages`, {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+
+        const savedId = result.data._id as string;
+        setPageId(savedId);
+        setContent(data);
+        setIsPersonalized(true);
+        setShareUrl(null);
+
+        const pubRes = await fetch(`${API_URL}/darling-pages/${savedId}/publish`, {
+          method: "POST",
+          headers: authHeaders,
+        });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          const url = pubResult.data.shareUrl as string;
+          setShareUrl(url);
+          setEditMode(null);
+          try { sessionStorage.removeItem("darling_draft"); } catch {}
+          pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
+        } else {
+          pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+      } finally {
+        setSaving(false);
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
+
+  // Auto-save WIP draft to sessionStorage while user is filling the form
+  useEffect(() => {
+    if (editMode !== "manual" && editMode !== "ai-review") return;
+    try {
+      sessionStorage.setItem(
+        "darling_draft",
+        JSON.stringify({ data: mf, step: manualStep, completed: false }),
+      );
+    } catch {}
+  }, [mf, manualStep, editMode]);
 
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -155,18 +257,45 @@ export function useDarlingEditor() {
   const goToGallery = useCallback(() => setTab("gallery"), []);
   const goToNotes = useCallback(() => setTab("notes"), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
+
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null; // discard pending publish if user dismisses auth
+  }, []);
 
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    setEditMode("choose");
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
+    // if pendingPublishRef.current exists, the auto-publish useEffect will fire
   }, []);
 
+  // No auth check — anyone can open the form and fill it
   const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
     preEditContentRef.current = content;
     setEditMode("choose");
-  }, [isAuthenticated, content]);
+  }, [content]);
+
+  // Wrapped setEditMode for EditSheet: if user dismisses while in fromPreview flow,
+  // return to "preview" instead of null so Edit+Publish buttons remain visible.
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null && fromPreviewRef.current) {
+      fromPreviewRef.current = false;
+      setEditMode("preview");
+    } else {
+      if (mode === null || mode === "preview") fromPreviewRef.current = false;
+      setEditMode(mode);
+    }
+  }, []);
+
+  // From preview: go back into the manual form to edit
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    setMf({ ...content });
+    setManualStep(0);
+    setEditMode("manual");
+  }, [content]);
 
   const startAiMode = useCallback(() => {
     setAiName(isPersonalized ? content.recipientName : "");
@@ -176,8 +305,20 @@ export function useDarlingEditor() {
   }, [isPersonalized, content.recipientName, content.senderName]);
 
   const startManualMode = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_CONTENT });
-    setManualStep(0);
+    let initialData: ContentData = isPersonalized ? { ...content } : { ...DEMO_CONTENT };
+    let initialStep = 0;
+    try {
+      const saved = sessionStorage.getItem("darling_draft");
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft?.data && !draft.completed) {
+          initialData = draft.data;
+          initialStep = typeof draft.step === "number" ? draft.step : 0;
+        }
+      }
+    } catch {}
+    setMf(initialData);
+    setManualStep(initialStep);
     setEditMode("manual");
   }, [isPersonalized, content]);
 
@@ -217,29 +358,24 @@ export function useDarlingEditor() {
     [accessToken, pageId, headers],
   );
 
-  // Direct save (called from EditSheet final step — no PreviewBar)
+  // Last step of manual form: save locally then enter preview so user can inspect + publish
   const handleManualSave = useCallback(
-    async (data: ContentData, pw: string) => {
-      setSaving(true);
+    (data: ContentData, pw: string) => {
+      fromPreviewRef.current = false;
+      setContent(data);
+      setMf(data);
+      setIsPersonalized(true);
+      setPagePassword(pw);
+      setPendingContent(null);
+      setEditMode("preview");
       try {
-        await saveToServer(data, pw);
-        setContent(data);
-        setIsPersonalized(true);
-        setShareUrl(null);
-        setEditMode(null);
-        setPendingContent(null);
-        pushToast({
-          type: "success",
-          title: pw ? "Saved with password!" : "Changes saved!",
-          message: pw ? "Share the password with your love" : "Ready to publish ♡",
-        });
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setSaving(false);
-      }
+        sessionStorage.setItem(
+          "darling_draft",
+          JSON.stringify({ data, password: pw, completed: true }),
+        );
+      } catch {}
     },
-    [saveToServer, pushToast],
+    [],
   );
 
   const handleAiGenerate = useCallback(async () => {
@@ -257,11 +393,10 @@ export function useDarlingEditor() {
       });
       const data = await res.json();
       if (data.personalMessage || data.body) {
-        // Merge AI photo letters into existing gallery photos (preserve uploaded URLs)
         const existing = (content.galleryPhotos || []).map(normalizePhoto);
         const photoLetters: string[] = data.photoLetters || [];
         const count = Math.max(existing.length, photoLetters.length);
-        const galleryWithLetters: PhotoItem[] = Array.from({ length: count }, (_, i) => ({
+        const galleryWithLetters = Array.from({ length: count }, (_, i) => ({
           url:    existing[i]?.url    ?? "",
           letter: photoLetters[i]    ?? existing[i]?.letter ?? "",
           cropX:  existing[i]?.cropX ?? 50,
@@ -300,7 +435,7 @@ export function useDarlingEditor() {
     [],
   );
 
-  // Legacy preview/password flow (kept for compatibility)
+  // Legacy preview/password flow (kept for ?id= re-edit compatibility)
   const handleManualPreview = useCallback(() => {
     if (!mf.recipientName.trim()) return;
     setPendingContent(mf);
@@ -347,30 +482,60 @@ export function useDarlingEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    // Not authenticated: stash data and show auth modal; auto-publish fires after login
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/darling-pages/${pageId}/publish`, {
+      let id = pageId;
+      // If no pageId yet, create the page first
+      if (!id) {
+        const body = {
+          recipientName:      content.recipientName,
+          senderName:         content.senderName,
+          personalMessage:    content.personalMessage,
+          wishMessage:        content.wishMessage,
+          loveDate:           content.loveDate,
+          homeCoverPhoto:     content.homeCoverPhoto,
+          homePhotos:         content.homeCoverPhoto?.url?.trim() ? [] : (content.homePhotos || []),
+          galleryPhotos:      content.galleryPhotos      || [],
+          quizQuestions:      content.quizQuestions      || [],
+          truthDareQuestions: content.truthDareQuestions || [],
+          password:           pagePassword || "",
+        };
+        const res = await fetch(`${API_URL}/darling-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+        id = result.data._id as string;
+        setPageId(id);
+      }
+      const pubRes = await fetch(`${API_URL}/darling-pages/${id}/publish`, {
         method: "POST",
         headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const url = result.data.shareUrl;
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
-        pushToast({
-          type: "publish",
-          title: "Published! ♡",
-          message: "Your darling page is now live",
-          shareUrl: url,
-        });
+        setEditMode(null);
+        try { sessionStorage.removeItem("darling_draft"); } catch {}
+        pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
 
   const [showShareSheet, setShowShareSheet] = useState(false);
 
@@ -401,13 +566,14 @@ export function useDarlingEditor() {
     mf, manualStep, pendingContent,
     showShareSheet, setShowShareSheet,
 
-    setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
+    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange, goToGallery, goToNotes,
 
     goBack, closeAuth, closeAuthSuccess,
     handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview, handleManualSave,
+    handleEditFromPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,

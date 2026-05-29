@@ -13,17 +13,20 @@ import {
   DEMO_CONTENT,
   EMPTY_HOME_COVER,
   clampHomeCoverCrop,
+  normalizeHomePhoto,
 } from "../components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 function normalizePhoto(p: unknown): PhotoItem {
-  if (typeof p === "string") return { url: p, letter: "", cropX: 50, cropY: 50 };
+  if (typeof p === "string") return { url: p, letter: "", cropX: 50, cropY: 50, scale: 100 };
   const obj = p as Record<string, unknown>;
   return {
     url:    String(obj.url    ?? ""),
     letter: String(obj.letter ?? ""),
     cropX:  Number(obj.cropX  ?? 50),
     cropY:  Number(obj.cropY  ?? 50),
+    scale:  Number.isFinite(Number(obj.scale))
+      ? Math.min(200, Math.max(100, Number(obj.scale))) : 100,
   };
 }
 
@@ -103,7 +106,7 @@ export function useLoveEditor() {
               wishMessage:        d.wishMessage        || prev.wishMessage,
               loveDate:           d.loveDate           || prev.loveDate,
               homeCoverPhoto:     normalizeHomeCoverFromApi(d.homeCoverPhoto),
-              homePhotos:         Array.isArray(d.homePhotos) ? d.homePhotos : [],
+              homePhotos:         Array.isArray(d.homePhotos) ? d.homePhotos.map(normalizeHomePhoto) : [],
               galleryPhotos:      (d.galleryPhotos  || []).map(normalizePhoto),
               quizQuestions:      d.quizQuestions      || [],
               truthDareQuestions: d.truthDareQuestions || [],
@@ -403,6 +406,7 @@ export function useLoveEditor() {
           letter: photoLetters[i]    ?? existing[i]?.letter ?? "",
           cropX:  existing[i]?.cropX ?? 50,
           cropY:  existing[i]?.cropY ?? 50,
+          scale:  existing[i]?.scale ?? 100,
         }));
 
         const newContent: ContentData = {

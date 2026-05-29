@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { type ContentData } from "./types";
+import { type ContentData, normalizeHomePhoto } from "./types";
 
 // Placeholder shown when user hasn't uploaded a photo
 function PhotoPlaceholder({ index }: { index: number }) {
@@ -45,9 +45,11 @@ const spring = (delay: number, stiffness = 160, damping = 22) => ({
  * Each polaroid and decoration flies in from a unique direction.
  */
 export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
-  const homePhotos = data.homePhotos || [];
+  const rawPhotos = data.homePhotos || [];
+  const homePhotos = rawPhotos.map(normalizeHomePhoto);
   const defaultCardPhotos = ["/love/image5.webp", "/love/image14.webp", "/love/imaghe12.webp", "/love/image13.webp"];
-  const p = (i: number) => homePhotos[i] || defaultCardPhotos[i] || "";
+  const photo = (i: number) => homePhotos[i] ?? null;
+  const photoUrl = (i: number) => photo(i)?.url || defaultCardPhotos[i] || "";
 
   return (
     <div
@@ -159,9 +161,16 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: 18, opacity: 1 }}
           transition={spring(0.5, 180, 20)}
         >
-          {p(1) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(1)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
+          {photoUrl(1) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(1)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(1)?.cropX ?? 50}% ${photo(1)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(1)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(1)?.cropX ?? 50}% ${photo(1)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={2} />
@@ -179,9 +188,16 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: 10, opacity: 1 }}
           transition={spring(0.65, 170, 22)}
         >
-          {p(3) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(3)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="47vw" />
+          {photoUrl(3) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(3)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(3)?.cropX ?? 50}% ${photo(3)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(3)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(3)?.cropX ?? 50}% ${photo(3)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={4} />
@@ -199,9 +215,16 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: -9, opacity: 1 }}
           transition={spring(0.58, 175, 21)}
         >
-          {p(2) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(2)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
+          {photoUrl(2) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(2)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(2)?.cropX ?? 50}% ${photo(2)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(2)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(2)?.cropX ?? 50}% ${photo(2)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={3} />
@@ -325,9 +348,16 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: -12, opacity: 1 }}
           transition={spring(0.3, 160, 22)}
         >
-          {p(0) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(0)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center 10%" }} sizes="44vw" />
+          {photoUrl(0) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(0)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(0)?.cropX ?? 50}% ${photo(0)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(0)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(0)?.cropX ?? 50}% ${photo(0)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={1} />
