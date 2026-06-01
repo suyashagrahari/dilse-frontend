@@ -111,7 +111,7 @@ const WeddingBackgroundMusic = memo(function WeddingBackgroundMusic({
       transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed top-4 right-4 lg:top-5 lg:right-5 z-40 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+      className="fixed bottom-[82px] right-4 lg:bottom-6 lg:right-6 z-40 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
       style={{
         background: "rgba(0,0,0,0.15)",
         backdropFilter: "blur(12px)",

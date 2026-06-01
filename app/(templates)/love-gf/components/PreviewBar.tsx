@@ -2,55 +2,97 @@
 
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Check, Eye, Loader2 } from "lucide-react";
-import { PINK_GRADIENT } from "./styles";
+import { ChevronLeft, Send, Eye, Loader2, Pencil } from "lucide-react";
+
+const WARM_GRADIENT = "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)";
+const CURSIVE = "'Dancing Script', 'Brush Script MT', cursive";
 
 interface Props {
   visible: boolean;
-  saving: boolean;
-  onDiscard: () => void;
-  onConfirm: () => void;
+  publishing: boolean;
+  onEdit: () => void;
+  onPublish: () => void;
 }
 
-export default memo(function PreviewBar({ visible, saving, onDiscard, onConfirm }: Props) {
+export default memo(function PreviewBar({ visible, publishing, onEdit, onPublish }: Props) {
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: -80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 28 }}
-          className="fixed top-0 left-0 right-0 z-50 safe-top pointer-events-none"
+          exit={{ y: -80, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 28 }}
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 150,
+            paddingTop: "max(env(safe-area-inset-top, 0px), 0px)",
+            pointerEvents: "none",
+          }}
         >
-          <div className="mx-4 mt-4 md:mx-auto md:max-w-sm lg:max-w-md pointer-events-auto">
-            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-pink-200/40 dark:border-pink-900/30 overflow-hidden">
-              <div className="h-[1px] bg-gradient-to-r from-transparent via-pink-400/30 to-transparent" />
-              <div className="px-4 py-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-full bg-pink-500/10 flex items-center justify-center">
-                    <Eye size={12} className="text-pink-500" />
+          <div style={{ margin: "12px 16px 0", maxWidth: 480, marginLeft: "auto", marginRight: "auto", pointerEvents: "auto" }}>
+            <div style={{
+              background: "rgba(250, 246, 240, 0.97)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderRadius: 20,
+              boxShadow: "0 8px 40px rgba(108,74,46,0.22), 0 2px 8px rgba(108,74,46,0.10)",
+              border: "1px solid rgba(158,126,97,0.22)",
+              overflow: "hidden",
+            }}>
+              {/* Warm top accent line */}
+              <div style={{ height: 2, background: "linear-gradient(90deg, transparent, rgba(158,126,97,0.5), transparent)" }} />
+              <div style={{ padding: "14px 18px 16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    background: "rgba(158,126,97,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Eye size={13} style={{ color: "rgb(108,74,46)" }} />
                   </div>
-                  <p className="text-xs font-bold text-pink-500 uppercase tracking-wider">Preview Mode</p>
+                  <span style={{ fontFamily: CURSIVE, fontSize: 13, fontWeight: 700, color: "rgb(108,74,46)", letterSpacing: "0.04em" }}>
+                    Preview Mode ♡
+                  </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  Browse through the tabs to see how it looks, then save or go back to edit.
+                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.60)", marginBottom: 14, lineHeight: 1.5 }}>
+                  Browse all tabs to see how it looks. Edit anything you want, then publish when ready.
                 </p>
-                <div className="flex gap-2">
+                <div style={{ display: "flex", gap: 10 }}>
+                  {/* Edit button */}
                   <button
-                    onClick={onDiscard}
-                    className="flex-1 py-2.5 rounded-xl border border-border/60 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition-colors flex items-center justify-center gap-1.5"
+                    onClick={onEdit}
+                    style={{
+                      flex: 1, padding: "11px 0", borderRadius: 50,
+                      border: "1.5px solid rgba(158,126,97,0.40)",
+                      background: "rgba(158,126,97,0.06)",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700,
+                      color: "rgb(108,74,46)", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "background 0.15s",
+                    }}
                   >
-                    <ChevronLeft size={14} /> Edit More
+                    <Pencil size={13} />
+                    Edit
                   </button>
+                  {/* Publish button */}
                   <button
-                    onClick={onConfirm}
-                    disabled={saving}
-                    className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform disabled:opacity-60"
-                    style={{ background: PINK_GRADIENT }}
+                    onClick={onPublish}
+                    disabled={publishing}
+                    style={{
+                      flex: 1.6, padding: "11px 0", borderRadius: 50,
+                      border: "none",
+                      background: publishing ? "rgba(158,126,97,0.35)" : WARM_GRADIENT,
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700,
+                      color: "#fff", cursor: publishing ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      boxShadow: publishing ? "none" : "0 4px 16px rgba(108,74,46,0.30)",
+                      transition: "all 0.15s",
+                    }}
                   >
-                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                    {saving ? "Saving..." : "Save & Continue"}
+                    {publishing
+                      ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Publishing...</>
+                      : <><Send size={13} /> Publish ♡</>
+                    }
                   </button>
                 </div>
               </div>

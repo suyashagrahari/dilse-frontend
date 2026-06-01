@@ -6,12 +6,13 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import {
   BarChart3, Users, MessageSquare, ChevronLeft, ChevronRight,
-  X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff,
+  X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff, Send,
 } from "lucide-react";
 
+interface IReply { body: string; sentAt: string; }
 interface ContactItem {
   _id: string; name: string; email: string; phone?: string; message: string;
-  isRead: boolean; adminNotes?: string; createdAt: string;
+  isRead: boolean; adminNotes?: string; createdAt: string; replies?: IReply[];
 }
 interface Pg { page: number; limit: number; total: number; totalPages: number }
 
@@ -34,6 +35,8 @@ export default function AdminContactsPage() {
   const [sel, setSel] = useState<ContactItem | null>(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [replyBody, setReplyBody] = useState("");
+  const [replying, setReplying] = useState(false);
 
   const hdr = useCallback(() => ({ Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }), [accessToken]);
 
@@ -92,9 +95,29 @@ export default function AdminContactsPage() {
     }
   };
 
+  const sendReply = async () => {
+    if (!sel || !replyBody.trim()) return;
+    setReplying(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/contacts/${sel._id}/reply`, {
+        method: "POST", headers: hdr(), body: JSON.stringify({ body: replyBody.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updated = { ...sel, isRead: true, replies: data.data.replies };
+        setSel(updated);
+        setItems((prev) => prev.map((i) => i._id === sel._id ? updated : i));
+        setReplyBody("");
+      } else {
+        alert(data.error || "Failed to send reply");
+      }
+    } finally { setReplying(false); }
+  };
+
   const openDetail = (item: ContactItem) => {
     setSel(item);
     setNotes(item.adminNotes || "");
+    setReplyBody("");
     if (!item.isRead) toggleRead(item);
   };
 
@@ -277,31 +300,87 @@ export default function AdminContactsPage() {
                 }}>{sel.isRead ? "READ" : "UNREAD"}</span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, fontSize: 11, color: t2 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Mail size={11} color={tM} /> {sel.email}</span>
-                {sel.phone && <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Phone size={11} color={tM} /> {sel.phone}</span>}
+                <a href={`mailto:${sel.email}`} style={{ display: "flex", alignItems: "center", gap: 3, color: t2, textDecoration: "none" }}><Mail size={11} color={tM} /> {sel.email}</a>
+                {sel.phone && <a href={`tel:${sel.phone}`} style={{ display: "flex", alignItems: "center", gap: 3, color: tM, textDecoration: "none" }}><Phone size={11} color={tM} /> {sel.phone}</a>}
                 <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} color={tM} /> {new Date(sel.createdAt).toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Message */}
-            <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.55)", border: `1px solid ${cB}`, marginBottom: 16 }}>
-              <p style={{ fontSize: 13, color: t1, lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{sel.message}</p>
+            {/* Conversation thread */}
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: tM, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Conversation</p>
+
+              {/* User message */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${g}20`, border: `1px solid ${g}40`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: gD }}>
+                  {sel.name[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>{sel.name} &bull; {new Date(sel.createdAt).toLocaleString()}</p>
+                  <div style={{ padding: "10px 12px", borderRadius: "4px 12px 12px 12px", background: "rgba(255,255,255,0.7)", border: `1px solid ${cB}` }}>
+                    <p style={{ fontSize: 13, color: t1, lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{sel.message}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin replies */}
+              {(sel.replies ?? []).map((r, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start", flexDirection: "row-reverse" }}>
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${bg}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: "#f5ede6" }}>
+                    S
+                  </div>
+                  <div style={{ flex: 1, textAlign: "right" }}>
+                    <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>Support &bull; {new Date(r.sentAt).toLocaleString()}</p>
+                    <div style={{ padding: "10px 12px", borderRadius: "12px 4px 12px 12px", background: `${bg}`, display: "inline-block", textAlign: "left", maxWidth: "85%" }}>
+                      <p style={{ fontSize: 13, color: "#f5ede6", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{r.body}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Reply composer */}
+            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.45)", border: `1px solid ${cB}` }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: t2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                <Send size={11} color={gD} /> Reply via Email (from support@subhsandesh.in)
+              </label>
+              <textarea
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                placeholder={`Write your reply to ${sel.name}...`}
+                rows={3}
+                style={{
+                  width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 12, lineHeight: 1.5,
+                  border: `1px solid ${cB}`, background: "rgba(255,255,255,0.7)", color: t1,
+                  outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
+                }}
+              />
+              <button
+                onClick={sendReply}
+                disabled={replying || !replyBody.trim()}
+                style={{
+                  marginTop: 8, padding: "8px 20px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: replying || !replyBody.trim() ? "not-allowed" : "pointer",
+                  border: "none", background: replying || !replyBody.trim() ? `${tM}30` : bg, color: replying || !replyBody.trim() ? tM : "#f5ede6",
+                  display: "flex", alignItems: "center", gap: 5, transition: "all 0.15s",
+                }}>
+                <Send size={11} /> {replying ? "Sending..." : "Send Reply"}
+              </button>
             </div>
 
             {/* Admin notes */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: t2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-                <StickyNote size={12} color={gD} /> Admin Notes
+              <label style={{ fontSize: 10, fontWeight: 700, color: tM, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                <StickyNote size={11} color={gD} /> Private Notes (not sent)
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add private notes about this inquiry..."
-                rows={3}
+                rows={2}
                 style={{
                   width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 12, lineHeight: 1.5,
                   border: `1px solid ${cB}`, background: "rgba(255,255,255,0.6)", color: t1,
-                  outline: "none", resize: "vertical", fontFamily: "inherit",
+                  outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
                 }}
               />
               <button onClick={saveNotes} disabled={saving}

@@ -941,43 +941,30 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
       {/* ── Main content (offset on desktop) ──────────────────── */}
       <div className="flex-1 min-w-0 lg:ml-56">
 
-        {/* Mobile floating header — Back (left) + Create (right) */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-50 pointer-events-none">
-          <div className="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2 pointer-events-auto">
-            <motion.button
-              onClick={() => router.back()}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-lg"
-              style={{
-                background: "rgba(255,252,250,0.90)",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-                border: `1px solid rgba(171,28,62,0.14)`,
-                color: C_DARK,
-                boxShadow: "0 4px 18px rgba(109,43,59,0.13)",
-              }}
-            >
-              <ArrowLeft size={14} strokeWidth={2} style={{ color: C_ACCENT }} />
-              <span style={{ fontFamily: F_CINZEL, fontSize: 11, letterSpacing: "0.06em" }}>Back</span>
-            </motion.button>
-
-            <motion.button
-              onClick={handleCreateStart}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`,
-                boxShadow: `0 4px 18px ${C_ACCENT}45`,
-              }}
-            >
-              <Sparkles size={13} strokeWidth={1.8} />
-              <span style={{ fontFamily: F_CINZEL, fontSize: 11, letterSpacing: "0.06em" }}>Create</span>
-            </motion.button>
-          </div>
+        {/* Mobile — SubhSandesh logo top-right, links to home */}
+        <div className="lg:hidden fixed top-3 right-3 z-50">
+          <motion.a
+            href="/"
+            aria-label="SubhSandesh home"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: "#FFFAF8",
+              border: "1px solid rgba(171,28,62,0.12)",
+              boxShadow: "0 2px 10px rgba(109,43,59,0.15)",
+              overflow: "hidden",
+              textDecoration: "none",
+            }}
+          >
+            <img src="/logo.png" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          </motion.a>
         </div>
 
         {/* Tab content */}
@@ -1029,7 +1016,7 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
 
       {/* Bottom navigation — mobile only */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-        <div className="mx-auto max-w-xs sm:max-w-sm md:max-w-lg mb-3 px-3 pointer-events-auto">
+        <div className="w-full mb-3 px-2 pointer-events-auto">
           <div className="relative rounded-2xl shadow-lg overflow-hidden"
             style={{
               background: "rgba(253,245,240,0.95)",
@@ -1038,7 +1025,7 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
               border: `1px solid ${C_MED}25`,
               boxShadow: `0 8px 32px rgba(171,28,62,0.12)`,
             }}>
-            <div className="flex items-stretch px-1.5 py-1">
+            <div className="flex items-stretch px-1 py-1">
               {allTabs.map(({ id, label }) => {
                 const active = tab === id;
                 const isCreate = id === "create";
@@ -1064,7 +1051,7 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
                         }}
                       />
                     )}
-                    <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-all duration-200">
+                    <div className="flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-xl transition-all duration-200">
                       {active && (
                         <motion.div
                           layoutId="sv-nav-bg"

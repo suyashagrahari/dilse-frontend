@@ -14,7 +14,6 @@ import DesktopSidebar from "./components/DesktopSidebar";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
-import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import DarlingBg from "./components/DarlingBg";
 import DarlingBackgroundMusic from "./components/BackgroundMusic";
@@ -159,6 +158,8 @@ function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }
 function DarlingPageInner() {
   const editor = useDarlingEditor();
   const [playlistActive, setPlaylistActive] = useState(false);
+
+  const isPreview = editor.editMode === "preview";
 
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
@@ -364,31 +365,72 @@ function DarlingPageInner() {
             ) : null}
           </div>
 
-          <button
-            onClick={topAction.onClick}
-            style={{
-              display: "flex", alignItems: "center", gap: 4,
-              padding: "5px 11px",
-              borderRadius: 50,
-              border: editor.showShare ? "1.5px solid rgba(255,61,107,0.35)" : "none",
-              background: editor.showPublish
-                ? GRAD
-                : editor.showShare
-                  ? "rgba(255,61,107,0.12)"
-                  : GRAD,
-              color: "#fff",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-              letterSpacing: "0.02em",
-              boxShadow: (editor.showPublish || (!editor.showShare && !editor.showPublish))
-                ? "0 4px 16px rgba(255,61,107,0.26)"
-                : "none",
-              flexShrink: 0,
-            }}
-          >
-            {topAction.label}
-          </button>
+          {isPreview ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <button
+                onClick={editor.handleEditFromPreview}
+                style={{
+                  padding: "5px 11px",
+                  borderRadius: 50,
+                  border: "1.5px solid rgba(255,61,107,0.35)",
+                  background: "rgba(255,61,107,0.10)",
+                  color: "#ff3d6b",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  letterSpacing: "0.02em",
+                  flexShrink: 0,
+                }}
+              >
+                ✦ Edit
+              </button>
+              <button
+                onClick={editor.handlePublish}
+                disabled={editor.publishing}
+                style={{
+                  padding: "5px 13px",
+                  borderRadius: 50,
+                  border: "none",
+                  background: editor.publishing ? "rgba(255,61,107,0.40)" : GRAD,
+                  color: "#fff",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: editor.publishing ? "not-allowed" : "pointer",
+                  letterSpacing: "0.02em",
+                  boxShadow: editor.publishing ? "none" : "0 4px 16px rgba(255,61,107,0.35)",
+                  flexShrink: 0,
+                }}
+              >
+                {editor.publishing ? "Publishing..." : "♡ Publish"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={topAction.onClick}
+              style={{
+                display: "flex", alignItems: "center", gap: 4,
+                padding: "5px 11px",
+                borderRadius: 50,
+                border: editor.showShare ? "1.5px solid rgba(255,61,107,0.35)" : "none",
+                background: editor.showPublish
+                  ? GRAD
+                  : editor.showShare
+                    ? "rgba(255,61,107,0.12)"
+                    : GRAD,
+                color: "#fff",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
+                letterSpacing: "0.02em",
+                boxShadow: (editor.showPublish || (!editor.showShare && !editor.showPublish))
+                  ? "0 4px 16px rgba(255,61,107,0.26)"
+                  : "none",
+                flexShrink: 0,
+              }}
+            >
+              {topAction.label}
+            </button>
+          )}
         </div>
       </div>
 
@@ -397,7 +439,7 @@ function DarlingPageInner() {
         onTabChange={editor.handleTabChange}
         coupleNames={{ person1: editor.content.senderName, person2: editor.content.recipientName }}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -477,7 +519,7 @@ function DarlingPageInner() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName} setAiName={editor.setAiName}
         aiSender={editor.aiSender} setAiSender={editor.setAiSender}
         aiPrompt={editor.aiPrompt} setAiPrompt={editor.setAiPrompt}
@@ -501,13 +543,6 @@ function DarlingPageInner() {
         showValue={editor.showPwValue}
         setShowValue={editor.setShowPwValue}
         onDone={editor.handlePasswordDone}
-      />
-
-      <PreviewBar
-        visible={editor.editMode === "preview"}
-        saving={editor.saving}
-        onDiscard={editor.handleDiscardPreview}
-        onConfirm={editor.handleConfirmSave}
       />
 
       <PublishingOverlay visible={editor.publishing} />

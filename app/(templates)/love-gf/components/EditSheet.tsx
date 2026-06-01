@@ -5,10 +5,13 @@ import {
   type ContentData,
   type EditMode,
   type HomeCoverPhoto,
+  type HomePhoto,
   type PhotoItem,
   type QuizQuestion,
   type TruthDareItem,
   EMPTY_HOME_COVER,
+  EMPTY_HOME_PHOTO,
+  normalizeHomePhoto,
 } from "./types";
 
 const WARM = "rgb(108, 74, 46)";
@@ -152,9 +155,14 @@ export default function EditSheet({
   mf, manualStep, setManualStep, updateMf,
   onStartAi, onStartManual, onAiGenerate, onSaveWithPassword, saving,
 }: Props) {
-  const homeCoverFileRef = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef0 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef1 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef2 = useRef<HTMLInputElement | null>(null);
+  const homePhotoRef3 = useRef<HTMLInputElement | null>(null);
   const galleryFileRef = useRef<HTMLInputElement | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
+  const [adjustModalIdx, setAdjustModalIdx] = useState<number | null>(null);
+  const [galleryAdjustOpen, setGalleryAdjustOpen] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [pw, setPw] = useState("");
 
@@ -248,11 +256,11 @@ export default function EditSheet({
   // ── Gallery photo helpers ───────────────────────────────────────────────
 
   const galleryPhotos: PhotoItem[] = mf.galleryPhotos || [];
-  const currentGalleryPhoto: PhotoItem = galleryPhotos[galleryIdx] ?? { url: "", letter: "", cropX: 50, cropY: 50 };
+  const currentGalleryPhoto: PhotoItem = galleryPhotos[galleryIdx] ?? { url: "", letter: "", cropX: 50, cropY: 50, scale: 100 };
 
   const updateGalleryPhoto = (update: Partial<PhotoItem>) => {
     const updated = [...galleryPhotos];
-    while (updated.length <= galleryIdx) updated.push({ url: "", letter: "", cropX: 50, cropY: 50 });
+    while (updated.length <= galleryIdx) updated.push({ url: "", letter: "", cropX: 50, cropY: 50, scale: 100 });
     updated[galleryIdx] = { ...updated[galleryIdx], ...update };
     updateMf("galleryPhotos", updated);
   };
@@ -269,10 +277,28 @@ export default function EditSheet({
   };
 
   const hc: HomeCoverPhoto = mf.homeCoverPhoto ?? EMPTY_HOME_COVER;
+  void hc; // kept for backward compat, not used in new step 3 UI
 
-  const handleHomeCoverUpload = async (file: File) => {
-    const b64 = await compressToBase64(file);
-    updateMf("homeCoverPhoto", { ...hc, url: b64 });
+  const homePhotoRefs = [homePhotoRef0, homePhotoRef1, homePhotoRef2, homePhotoRef3];
+
+  const homePhotoItems: HomePhoto[] = (mf.homePhotos || []).map(normalizeHomePhoto);
+
+  const getHomePhoto = (idx: number): HomePhoto =>
+    homePhotoItems[idx] ?? { ...EMPTY_HOME_PHOTO };
+
+  const updateHomePhoto = (idx: number, patch: Partial<HomePhoto>) => {
+    const updated = [0, 1, 2, 3].map((i) => ({ ...getHomePhoto(i) }));
+    updated[idx] = { ...updated[idx], ...patch };
+    updateMf("homePhotos", updated);
+  };
+
+  const handleHomePhotoUpload = async (file: File, idx: number) => {
+    const b64 = await compressToBase64(file, 900);
+    updateHomePhoto(idx, { url: b64 });
+  };
+
+  const removeHomePhoto = (idx: number) => {
+    updateHomePhoto(idx, { url: "", cropX: 50, cropY: 50, scale: 100 });
   };
 
   // ── Quiz helpers ─────────────────────────────────────────────────────────
@@ -512,332 +538,550 @@ export default function EditSheet({
       </div>
     );
 
-    // Step 3: Home cover — one circular photo + framing (gallery-style)
-    if (manualStep === 3) return (
-      <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
-        <div style={sheet}>
-          {hdr("Home Photo ♡")}
-          {progressBar}
-          <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
-            Upload one photo — it shows in a circle on the home page. Use the sliders to position and zoom, same as Gallery photos.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") homeCoverFileRef.current?.click(); }}
-              onClick={() => homeCoverFileRef.current?.click()}
-              style={{
-                width: "min(220px, 70vw)",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                border: `2px dashed rgba(158,126,97,${hc.url ? "0.55" : "0.30"})`,
-                cursor: "pointer",
-                overflow: "hidden",
-                position: "relative",
-                background: hc.url ? "transparent" : "rgba(158,126,97,0.06)",
-                boxShadow: hc.url ? "0 8px 28px rgba(40,22,8,0.2)" : "none",
-              }}
-            >
-              {hc.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={hc.url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: `${hc.cropX}% ${hc.cropY}%`,
-                    transform: `scale(${hc.scale / 100})`,
-                    transformOrigin: `${hc.cropX}% ${hc.cropY}%`,
+    // Step 3: 4 home polaroid photos
+    if (manualStep === 3) {
+      const filledCount = homePhotoItems.filter((p) => p.url).length;
+      const adjustPhoto = adjustModalIdx !== null ? getHomePhoto(adjustModalIdx) : null;
+
+      return (
+        <>
+          <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+            <div style={sheet}>
+              {hdr("Home Photos ♡")}
+              {progressBar}
+              <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.6 }}>
+                Upload up to 4 photos — they appear as polaroid cards on the home page.
+              </p>
+
+              {/* Hidden file inputs */}
+              {homePhotoRefs.map((ref, idx) => (
+                <input key={idx} ref={ref} type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) { handleHomePhotoUpload(f, idx); }
+                    e.target.value = "";
                   }}
                 />
-              ) : (
-                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <div style={{ fontSize: 36, opacity: 0.35 }}>📷</div>
-                  <div style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM, opacity: 0.55 }}>Tap to upload</div>
-                </div>
-              )}
-              <input
-                ref={homeCoverFileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHomeCoverUpload(f); }}
-              />
+              ))}
+
+              {/* 2 × 2 grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                {[0, 1, 2, 3].map((idx) => {
+                  const hp = getHomePhoto(idx);
+                  return (
+                    <div key={idx} style={{ position: "relative" }}>
+                      <div
+                        onClick={() => hp.url ? setAdjustModalIdx(idx) : homePhotoRefs[idx].current?.click()}
+                        style={{
+                          borderRadius: 10,
+                          boxShadow: hp.url ? "3px 5px 18px rgba(40,22,8,0.22)" : "none",
+                          border: hp.url ? "none" : "2px dashed rgba(158,126,97,0.28)",
+                          cursor: "pointer",
+                          overflow: "hidden",
+                          position: "relative",
+                          aspectRatio: "3 / 4",
+                          background: hp.url ? "transparent" : "rgba(158,126,97,0.04)",
+                        }}
+                      >
+                        {hp.url ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={hp.url} alt="" style={{
+                              width: "100%", height: "100%", objectFit: "cover", display: "block",
+                              objectPosition: `${hp.cropX}% ${hp.cropY}%`,
+                              transform: `scale(${hp.scale / 100})`,
+                              transformOrigin: `${hp.cropX}% ${hp.cropY}%`,
+                            }} />
+                            {/* Adjust badge — bottom right corner */}
+                            <div style={{
+                              position: "absolute", bottom: 7, right: 7,
+                              background: "rgba(20,10,4,0.55)", backdropFilter: "blur(6px)",
+                              borderRadius: 20, padding: "3px 8px",
+                              display: "flex", alignItems: "center", gap: 4,
+                            }}>
+                              <span style={{ fontSize: 9, color: "#fff", opacity: 0.9 }}>✦</span>
+                              <span style={{ fontFamily: CURSIVE, fontSize: 9, color: "#fff", opacity: 0.9, letterSpacing: "0.04em" }}>adjust</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                            <span style={{ fontSize: 22, opacity: 0.30 }}>📷</span>
+                            <span style={{ fontFamily: CURSIVE, fontSize: 11, color: WARM, opacity: 0.40 }}>Photo {idx + 1}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Remove */}
+                      {hp.url && (
+                        <button type="button"
+                          onClick={(e) => { e.stopPropagation(); removeHomePhoto(idx); }}
+                          style={{
+                            position: "absolute", top: 5, right: 5,
+                            width: 22, height: 22, borderRadius: "50%",
+                            background: "rgba(0,0,0,0.55)", border: "none",
+                            cursor: "pointer", color: "#fff", fontSize: 13,
+                            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
+                          }}>×</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.50)", marginBottom: 18, textAlign: "center" }}>
+                {filledCount} / 4 photos · tap any photo to crop &amp; zoom
+              </p>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                {ghostBtn("← Back", () => setManualStep(2))}
+                {primaryBtn("Next →", () => setManualStep(4))}
+              </div>
             </div>
-            {hc.url && (
-              <button
-                type="button"
-                onClick={() => updateMf("homeCoverPhoto", { ...EMPTY_HOME_COVER })}
-                style={{
-                  padding: "4px 12px", border: "none", background: "transparent",
-                  fontFamily: CURSIVE, fontSize: 12, color: "rgba(180,60,50,0.75)", cursor: "pointer",
-                }}
-              >
-                ✕ Remove photo
-              </button>
-            )}
-            {hc.url && (
-              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Horizontal position</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropX}%</span>
+          </div>
+
+          {/* ── Adjust modal ── */}
+          {adjustModalIdx !== null && adjustPhoto && (
+            <div
+              style={{
+                position: "fixed", inset: 0, zIndex: 300,
+                background: "rgba(20, 10, 4, 0.72)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0 20px",
+              }}
+              onClick={(e) => e.target === e.currentTarget && setAdjustModalIdx(null)}
+            >
+              <div style={{
+                width: "100%", maxWidth: 380,
+                background: "rgba(250, 246, 240, 0.99)",
+                borderRadius: 24,
+                boxShadow: "0 24px 80px rgba(20,10,4,0.40), 0 4px 16px rgba(20,10,4,0.20)",
+                overflow: "hidden",
+              }}>
+                {/* Modal header */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "18px 20px 14px",
+                  borderBottom: "1px solid rgba(158,126,97,0.14)",
+                }}>
+                  <div>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 18, fontWeight: 700, color: WARM, margin: 0, lineHeight: 1.2 }}>
+                      Adjust Photo {adjustModalIdx + 1} ♡
+                    </p>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.55)", margin: "2px 0 0" }}>
+                      Position &amp; zoom to perfect the crop
+                    </p>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={hc.cropX}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropX: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
+                  <button
+                    onClick={() => setAdjustModalIdx(null)}
+                    style={{
+                      width: 32, height: 32, borderRadius: "50%", border: "none",
+                      background: "rgba(158,126,97,0.12)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 16, color: WARM,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>✕</button>
                 </div>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Vertical position</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.cropY}%</span>
+
+                {/* Live preview */}
+                <div style={{ padding: "16px 20px 0" }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+                    <div style={{
+                      width: "62%",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                      boxShadow: "4px 8px 28px rgba(20,10,4,0.30), 0 2px 6px rgba(20,10,4,0.14)",
+                      aspectRatio: "3 / 4",
+                    }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={adjustPhoto.url}
+                        alt=""
+                        style={{
+                          width: "100%", height: "100%",
+                          objectFit: "cover", display: "block",
+                          objectPosition: `${adjustPhoto.cropX}% ${adjustPhoto.cropY}%`,
+                          transform: `scale(${adjustPhoto.scale / 100})`,
+                          transformOrigin: `${adjustPhoto.cropX}% ${adjustPhoto.cropY}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={hc.cropY}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, cropY: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
+
+                  {/* Sliders */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 4 }}>
+                    {/* Horizontal */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, fontWeight: 600 }}>← Horizontal →</span>
+                        <span style={{
+                          fontFamily: CURSIVE, fontSize: 12,
+                          color: "#fff", background: "rgba(108,74,46,0.70)",
+                          borderRadius: 6, padding: "1px 8px",
+                        }}>{adjustPhoto.cropX}%</span>
+                      </div>
+                      <input type="range" min={0} max={100} value={adjustPhoto.cropX}
+                        onChange={(e) => updateHomePhoto(adjustModalIdx, { cropX: Number(e.target.value) })}
+                        style={{ width: "100%", accentColor: "rgb(158,126,97)", height: 4 }} />
+                    </div>
+
+                    {/* Vertical */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, fontWeight: 600 }}>↑ Vertical ↓</span>
+                        <span style={{
+                          fontFamily: CURSIVE, fontSize: 12,
+                          color: "#fff", background: "rgba(108,74,46,0.70)",
+                          borderRadius: 6, padding: "1px 8px",
+                        }}>{adjustPhoto.cropY}%</span>
+                      </div>
+                      <input type="range" min={0} max={100} value={adjustPhoto.cropY}
+                        onChange={(e) => updateHomePhoto(adjustModalIdx, { cropY: Number(e.target.value) })}
+                        style={{ width: "100%", accentColor: "rgb(158,126,97)", height: 4 }} />
+                    </div>
+
+                    {/* Zoom */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, fontWeight: 600 }}>🔍 Zoom</span>
+                        <span style={{
+                          fontFamily: CURSIVE, fontSize: 12,
+                          color: "#fff", background: "rgba(108,74,46,0.70)",
+                          borderRadius: 6, padding: "1px 8px",
+                        }}>{adjustPhoto.scale}%</span>
+                      </div>
+                      <input type="range" min={100} max={200} step={5} value={adjustPhoto.scale}
+                        onChange={(e) => updateHomePhoto(adjustModalIdx, { scale: Number(e.target.value) })}
+                        style={{ width: "100%", accentColor: "rgb(158,126,97)", height: 4 }} />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Zoom (fill frame)</span>
-                    <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgb(130,95,65)" }}>{hc.scale}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={100}
-                    max={200}
-                    value={hc.scale}
-                    onChange={(e) => updateMf("homeCoverPhoto", { ...hc, scale: Number(e.target.value) })}
-                    style={{ width: "100%", accentColor: "rgb(158, 126, 97)" }}
-                  />
+
+                {/* Footer actions */}
+                <div style={{ padding: "20px 20px 24px", display: "flex", gap: 10 }}>
+                  <button
+                    onClick={() => homePhotoRefs[adjustModalIdx].current?.click()}
+                    style={{
+                      flex: 1, padding: "11px 0", borderRadius: 50,
+                      border: "1.5px solid rgba(158,126,97,0.40)",
+                      background: "transparent",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 600,
+                      color: WARM, cursor: "pointer",
+                    }}>📷 Change</button>
+                  <button
+                    onClick={() => setAdjustModalIdx(null)}
+                    style={{
+                      flex: 1.5, padding: "11px 0", borderRadius: 50,
+                      border: "none",
+                      background: "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700,
+                      color: "#fff", cursor: "pointer",
+                      boxShadow: "0 4px 16px rgba(108,74,46,0.28)",
+                    }}>Done ♡</button>
                 </div>
               </div>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            {ghostBtn("← Back", () => setManualStep(2))}
-            {primaryBtn("Next →", () => setManualStep(4))}
-          </div>
-        </div>
-      </div>
-    );
+            </div>
+          )}
+        </>
+      );
+    }
 
-    // Step 4: Gallery Photos (up to 10, with crop + letter)
+    // Step 4: Gallery Photos
     if (manualStep === 4) {
       const photoCount = galleryPhotos.length;
       const canAddMore = photoCount < 10;
 
       return (
-        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
-          <div style={sheet}>
-            {hdr("Gallery Photos 📷")}
-            {progressBar}
-            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.5 }}>
-              Upload up to 10 photos. Adjust crop position and add a love letter for each.
-            </p>
+        <>
+          <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+            <div style={sheet}>
+              {hdr("Gallery Photos 📷")}
+              {progressBar}
+              <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", marginBottom: 14, lineHeight: 1.5 }}>
+                Upload up to 10 photos. Tap a photo to crop, zoom &amp; add a love letter.
+              </p>
 
-            {/* Thumbnail strip */}
-            <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 14, paddingBottom: 4 }}>
-              {galleryPhotos.map((p, i) => (
-                <button
-                  key={i}
-                  onClick={() => setGalleryIdx(i)}
-                  style={{
-                    flexShrink: 0, width: 52, height: 52, borderRadius: 10,
-                    border: `2px solid ${i === galleryIdx ? "rgb(158,126,97)" : "rgba(158,126,97,0.3)"}`,
-                    overflow: "hidden", padding: 0, cursor: "pointer", background: "transparent",
-                    boxShadow: i === galleryIdx ? "0 2px 8px rgba(108,74,46,0.30)" : "none",
-                  }}>
-                  {p.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.url} alt="" style={{
-                      width: "100%", height: "100%", objectFit: "cover",
-                      objectPosition: `${p.cropX}% ${p.cropY}%`,
-                    }} />
-                  ) : (
-                    <div style={{
-                      width: "100%", height: "100%", display: "flex",
-                      alignItems: "center", justifyContent: "center",
-                      background: "rgba(158,126,97,0.06)",
-                      fontFamily: CURSIVE, fontSize: 10, color: WARM,
-                    }}>{i + 1}</div>
-                  )}
-                </button>
-              ))}
-              {canAddMore && (
-                <button
-                  onClick={() => {
-                    const updated = [...galleryPhotos, { url: "", letter: "", cropX: 50, cropY: 50 }];
-                    updateMf("galleryPhotos", updated);
-                    setGalleryIdx(updated.length - 1);
-                  }}
-                  style={{
-                    flexShrink: 0, width: 52, height: 52, borderRadius: 10,
-                    border: "2px dashed rgba(158,126,97,0.35)",
-                    background: "rgba(158,126,97,0.04)", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: CURSIVE, fontSize: 22, color: WARM, opacity: 0.6,
-                  }}>+</button>
-              )}
-            </div>
+              {/* Hidden file input */}
+              <input ref={galleryFileRef} type="file" accept="image/*" style={{ display: "none" }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGalleryUpload(f); e.target.value = ""; }}
+              />
 
-            {galleryPhotos.length === 0 ? (
-              <div style={{
-                padding: "32px 0", textAlign: "center",
-                fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.45)",
-                lineHeight: 1.6,
-              }}>
-                No photos yet.<br />
-                <button
-                  onClick={() => {
-                    updateMf("galleryPhotos", [{ url: "", letter: "", cropX: 50, cropY: 50 }]);
-                    setGalleryIdx(0);
-                  }}
-                  style={{
-                    marginTop: 10, padding: "8px 20px", borderRadius: 50,
-                    border: "1.5px solid rgba(158,126,97,0.4)",
-                    background: "transparent", fontFamily: CURSIVE, fontSize: 14,
-                    color: WARM, cursor: "pointer",
-                  }}>+ Add your first photo</button>
-              </div>
-            ) : (
-              <div>
-                <div style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.6)", marginBottom: 8, textAlign: "right" }}>
-                  Photo {galleryIdx + 1} of {galleryPhotos.length}
-                </div>
-
-                {/* Photo preview + upload */}
-                <div
-                  onClick={() => galleryFileRef.current?.click()}
-                  style={{
-                    width: "100%", aspectRatio: "4/3", borderRadius: 12,
-                    border: `2px dashed rgba(158,126,97,${currentGalleryPhoto.url ? "0.50" : "0.30"})`,
-                    overflow: "hidden", position: "relative", cursor: "pointer",
-                    background: currentGalleryPhoto.url ? "transparent" : "rgba(158,126,97,0.04)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    marginBottom: 12,
-                  }}>
-                  {currentGalleryPhoto.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={currentGalleryPhoto.url} alt=""
-                      style={{
-                        width: "100%", height: "100%", objectFit: "cover",
-                        objectPosition: `${currentGalleryPhoto.cropX}% ${currentGalleryPhoto.cropY}%`,
-                      }} />
-                  ) : (
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 32, opacity: 0.3, marginBottom: 8 }}>📷</div>
-                      <div style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, opacity: 0.55 }}>
-                        Tap to upload photo {galleryIdx + 1}
-                      </div>
-                    </div>
-                  )}
-                  {currentGalleryPhoto.url && (
-                    <div style={{
-                      position: "absolute", inset: 0,
-                      background: "rgba(0,0,0,0.0)",
-                      display: "flex", alignItems: "flex-end", justifyContent: "center",
-                      padding: "0 0 10px",
+              {/* Thumbnail strip */}
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 14, paddingBottom: 4 }}>
+                {galleryPhotos.map((p, i) => (
+                  <button key={i} onClick={() => { setGalleryIdx(i); setGalleryAdjustOpen(true); }}
+                    style={{
+                      flexShrink: 0, width: 54, height: 54, borderRadius: 10,
+                      border: `2px solid ${i === galleryIdx && galleryAdjustOpen ? "rgb(158,126,97)" : "rgba(158,126,97,0.3)"}`,
+                      overflow: "hidden", padding: 0, cursor: "pointer", background: "transparent",
+                      boxShadow: i === galleryIdx && galleryAdjustOpen ? "0 2px 8px rgba(108,74,46,0.30)" : "none",
+                      position: "relative",
                     }}>
-                      <span style={{
-                        fontFamily: CURSIVE, fontSize: 12, color: "#fff",
-                        background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)",
-                        borderRadius: 6, padding: "3px 12px",
-                      }}>tap to change</span>
-                    </div>
-                  )}
-                  <input
-                    ref={galleryFileRef}
-                    type="file" accept="image/*" style={{ display: "none" }}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGalleryUpload(f); }}
-                  />
-                </div>
+                    {p.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.url} alt="" style={{
+                        width: "100%", height: "100%", objectFit: "cover",
+                        objectPosition: `${p.cropX}% ${p.cropY}%`,
+                        transform: `scale(${(p.scale ?? 100) / 100})`,
+                        transformOrigin: `${p.cropX}% ${p.cropY}%`,
+                      }} />
+                    ) : (
+                      <div style={{
+                        width: "100%", height: "100%", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        background: "rgba(158,126,97,0.06)",
+                        fontFamily: CURSIVE, fontSize: 11, color: WARM,
+                      }}>{i + 1}</div>
+                    )}
+                  </button>
+                ))}
+                {canAddMore && (
+                  <button
+                    onClick={() => {
+                      const updated = [...galleryPhotos, { url: "", letter: "", cropX: 50, cropY: 50, scale: 100 }];
+                      updateMf("galleryPhotos", updated);
+                      setGalleryIdx(updated.length - 1);
+                      setGalleryAdjustOpen(true);
+                    }}
+                    style={{
+                      flexShrink: 0, width: 54, height: 54, borderRadius: 10,
+                      border: "2px dashed rgba(158,126,97,0.35)",
+                      background: "rgba(158,126,97,0.04)", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: CURSIVE, fontSize: 22, color: WARM, opacity: 0.6,
+                    }}>+</button>
+                )}
+              </div>
 
-                {/* Crop controls (only if photo uploaded) */}
-                {currentGalleryPhoto.url && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Horizontal position</span>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.6)" }}>{currentGalleryPhoto.cropX}%</span>
-                      </div>
-                      <input
-                        type="range" min={0} max={100} value={currentGalleryPhoto.cropX}
-                        onChange={(e) => updateGalleryPhoto({ cropX: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "rgb(158,126,97)" }}
-                      />
+              {galleryPhotos.length === 0 ? (
+                <div style={{ padding: "32px 0", textAlign: "center", fontFamily: CURSIVE, fontSize: 14, color: "rgba(108,74,46,0.45)", lineHeight: 1.6 }}>
+                  No photos yet.<br />
+                  <button
+                    onClick={() => {
+                      updateMf("galleryPhotos", [{ url: "", letter: "", cropX: 50, cropY: 50, scale: 100 }]);
+                      setGalleryIdx(0);
+                      setGalleryAdjustOpen(true);
+                    }}
+                    style={{
+                      marginTop: 10, padding: "8px 20px", borderRadius: 50,
+                      border: "1.5px solid rgba(158,126,97,0.4)",
+                      background: "transparent", fontFamily: CURSIVE, fontSize: 14, color: WARM, cursor: "pointer",
+                    }}>+ Add your first photo</button>
+                </div>
+              ) : (
+                <div>
+                  {/* Photo card preview — tap to open adjust modal */}
+                  <div style={{ position: "relative", cursor: "pointer", marginBottom: 14 }}
+                    onClick={() => setGalleryAdjustOpen(true)}>
+                    <div style={{
+                      width: "100%", aspectRatio: "4/3", borderRadius: 14,
+                      overflow: "hidden",
+                      background: currentGalleryPhoto.url ? "transparent" : "rgba(158,126,97,0.04)",
+                      border: currentGalleryPhoto.url ? "none" : "2px dashed rgba(158,126,97,0.30)",
+                      boxShadow: currentGalleryPhoto.url ? "0 4px 20px rgba(40,22,8,0.18)" : "none",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {currentGalleryPhoto.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={currentGalleryPhoto.url} alt="" style={{
+                          width: "100%", height: "100%", objectFit: "cover", display: "block",
+                          objectPosition: `${currentGalleryPhoto.cropX}% ${currentGalleryPhoto.cropY}%`,
+                          transform: `scale(${(currentGalleryPhoto.scale ?? 100) / 100})`,
+                          transformOrigin: `${currentGalleryPhoto.cropX}% ${currentGalleryPhoto.cropY}%`,
+                        }} />
+                      ) : (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 30, opacity: 0.28, marginBottom: 6 }}>📷</div>
+                          <div style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, opacity: 0.45 }}>
+                            Tap to upload photo {galleryIdx + 1}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 12, color: WARM }}>Vertical position</span>
-                        <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.6)" }}>{currentGalleryPhoto.cropY}%</span>
+                    {/* Adjust badge */}
+                    {currentGalleryPhoto.url && (
+                      <div style={{
+                        position: "absolute", bottom: 10, right: 10,
+                        background: "rgba(20,10,4,0.55)", backdropFilter: "blur(6px)",
+                        borderRadius: 20, padding: "4px 10px",
+                        display: "flex", alignItems: "center", gap: 4,
+                      }}>
+                        <span style={{ fontSize: 10, color: "#fff" }}>✦</span>
+                        <span style={{ fontFamily: CURSIVE, fontSize: 10, color: "#fff", letterSpacing: "0.04em" }}>adjust</span>
                       </div>
-                      <input
-                        type="range" min={0} max={100} value={currentGalleryPhoto.cropY}
-                        onChange={(e) => updateGalleryPhoto({ cropY: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "rgb(158,126,97)" }}
-                      />
+                    )}
+                    {/* Counter */}
+                    <div style={{
+                      position: "absolute", top: 10, left: 10,
+                      background: "rgba(20,10,4,0.45)", backdropFilter: "blur(4px)",
+                      borderRadius: 20, padding: "3px 10px",
+                    }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 11, color: "#fff" }}>
+                        {galleryIdx + 1} / {galleryPhotos.length}
+                      </span>
                     </div>
                   </div>
-                )}
 
-                {/* Letter for this photo */}
-                <div>
-                  {label("Letter for this photo (optional)")}
-                  <textarea
-                    value={currentGalleryPhoto.letter}
-                    onChange={(e) => updateGalleryPhoto({ letter: e.target.value })}
-                    placeholder="Write a caption or love letter for this photo..."
-                    style={{ ...TEXTAREA_STYLE, minHeight: 80 }}
-                  />
+                  {/* Letter */}
+                  <div style={{ marginBottom: 10 }}>
+                    {label("Love letter for this photo (optional)")}
+                    <textarea
+                      value={currentGalleryPhoto.letter}
+                      onChange={(e) => updateGalleryPhoto({ letter: e.target.value })}
+                      placeholder="Write a caption or sweet note for this photo..."
+                      style={{ ...TEXTAREA_STYLE, minHeight: 72 }}
+                    />
+                  </div>
+
+                  {/* Nav row */}
+                  <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
+                    <button onClick={() => setGalleryIdx((i) => Math.max(0, i - 1))} disabled={galleryIdx === 0}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(158,126,97,0.3)",
+                        background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                        cursor: galleryIdx === 0 ? "not-allowed" : "pointer", opacity: galleryIdx === 0 ? 0.35 : 1,
+                      }}>← Prev</button>
+                    <button onClick={removeGalleryPhoto}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, border: "none",
+                        background: "rgba(180,60,50,0.08)",
+                        fontFamily: CURSIVE, fontSize: 12, color: "rgba(180,60,50,0.8)", cursor: "pointer",
+                      }}>✕ Remove</button>
+                    <button onClick={() => setGalleryIdx((i) => Math.min(galleryPhotos.length - 1, i + 1))}
+                      disabled={galleryIdx === galleryPhotos.length - 1}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(158,126,97,0.3)",
+                        background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM,
+                        cursor: galleryIdx === galleryPhotos.length - 1 ? "not-allowed" : "pointer",
+                        opacity: galleryIdx === galleryPhotos.length - 1 ? 0.35 : 1,
+                      }}>Next →</button>
+                  </div>
                 </div>
+              )}
 
-                {/* Navigation between photos */}
-                <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "space-between", alignItems: "center" }}>
-                  <button onClick={() => setGalleryIdx((i) => Math.max(0, i - 1))} disabled={galleryIdx === 0}
-                    style={{
-                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(158,126,97,0.3)`,
-                      background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM,
-                      cursor: galleryIdx === 0 ? "not-allowed" : "pointer", opacity: galleryIdx === 0 ? 0.35 : 1,
-                    }}>← Prev</button>
-
-                  <button onClick={removeGalleryPhoto}
-                    style={{
-                      padding: "6px 14px", borderRadius: 8, border: "none",
-                      background: "rgba(180,60,50,0.08)",
-                      fontFamily: CURSIVE, fontSize: 12, color: "rgba(180,60,50,0.8)", cursor: "pointer",
-                    }}>✕ Remove</button>
-
-                  <button onClick={() => setGalleryIdx((i) => Math.min(galleryPhotos.length - 1, i + 1))}
-                    disabled={galleryIdx === galleryPhotos.length - 1}
-                    style={{
-                      padding: "6px 14px", borderRadius: 8, border: `1px solid rgba(158,126,97,0.3)`,
-                      background: "transparent", fontFamily: CURSIVE, fontSize: 13, color: WARM,
-                      cursor: galleryIdx === galleryPhotos.length - 1 ? "not-allowed" : "pointer",
-                      opacity: galleryIdx === galleryPhotos.length - 1 ? 0.35 : 1,
-                    }}>Next →</button>
-                </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                {ghostBtn("← Back", () => setManualStep(3))}
+                {primaryBtn("Next →", () => setManualStep(5))}
               </div>
-            )}
-
-            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              {ghostBtn("← Back", () => setManualStep(3))}
-              {primaryBtn("Next →", () => setManualStep(5))}
             </div>
           </div>
-        </div>
+
+          {/* ── Gallery Adjust Modal ── */}
+          {galleryAdjustOpen && (
+            <div
+              style={{
+                position: "fixed", inset: 0, zIndex: 300,
+                background: "rgba(20,10,4,0.72)",
+                backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0 20px",
+              }}
+              onClick={(e) => e.target === e.currentTarget && setGalleryAdjustOpen(false)}
+            >
+              <div style={{
+                width: "100%", maxWidth: 380,
+                background: "rgba(250,246,240,0.99)",
+                borderRadius: 24,
+                boxShadow: "0 24px 80px rgba(20,10,4,0.40), 0 4px 16px rgba(20,10,4,0.20)",
+                overflow: "hidden",
+              }}>
+                {/* Header */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "18px 20px 14px",
+                  borderBottom: "1px solid rgba(158,126,97,0.14)",
+                }}>
+                  <div>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 18, fontWeight: 700, color: WARM, margin: 0, lineHeight: 1.2 }}>
+                      Photo {galleryIdx + 1} ♡
+                    </p>
+                    <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.55)", margin: "2px 0 0" }}>
+                      Position &amp; zoom to perfect the crop
+                    </p>
+                  </div>
+                  <button onClick={() => setGalleryAdjustOpen(false)}
+                    style={{
+                      width: 32, height: 32, borderRadius: "50%", border: "none",
+                      background: "rgba(158,126,97,0.12)", cursor: "pointer",
+                      fontFamily: CURSIVE, fontSize: 16, color: WARM,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>✕</button>
+                </div>
+
+                <div style={{ padding: "16px 20px 0" }}>
+                  {/* Live 4:3 preview matching gallery card */}
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+                    <div style={{
+                      width: "100%", aspectRatio: "4/3", borderRadius: 14,
+                      overflow: "hidden",
+                      boxShadow: "0 4px 20px rgba(20,10,4,0.28)",
+                      background: "rgba(158,126,97,0.08)",
+                      cursor: currentGalleryPhoto.url ? "default" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                      onClick={() => !currentGalleryPhoto.url && galleryFileRef.current?.click()}
+                    >
+                      {currentGalleryPhoto.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={currentGalleryPhoto.url} alt="" style={{
+                          width: "100%", height: "100%", objectFit: "cover", display: "block",
+                          objectPosition: `${currentGalleryPhoto.cropX}% ${currentGalleryPhoto.cropY}%`,
+                          transform: `scale(${(currentGalleryPhoto.scale ?? 100) / 100})`,
+                          transformOrigin: `${currentGalleryPhoto.cropX}% ${currentGalleryPhoto.cropY}%`,
+                        }} />
+                      ) : (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 28, opacity: 0.3, marginBottom: 6 }}>📷</div>
+                          <div style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, opacity: 0.5 }}>Tap to upload</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sliders — only if photo uploaded */}
+                  {currentGalleryPhoto.url && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 4 }}>
+                      {[
+                        { label: "← Horizontal →", key: "cropX" as const, min: 0, max: 100, step: 1, val: currentGalleryPhoto.cropX },
+                        { label: "↑ Vertical ↓",   key: "cropY" as const, min: 0, max: 100, step: 1, val: currentGalleryPhoto.cropY },
+                        { label: "🔍 Zoom",         key: "scale" as const, min: 100, max: 200, step: 5, val: currentGalleryPhoto.scale ?? 100 },
+                      ].map(({ label: lbl, key, min, max, step, val }) => (
+                        <div key={key}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                            <span style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, fontWeight: 600 }}>{lbl}</span>
+                            <span style={{
+                              fontFamily: CURSIVE, fontSize: 12, color: "#fff",
+                              background: "rgba(108,74,46,0.70)", borderRadius: 6, padding: "1px 8px",
+                            }}>{val}%</span>
+                          </div>
+                          <input type="range" min={min} max={max} step={step} value={val}
+                            onChange={(e) => updateGalleryPhoto({ [key]: Number(e.target.value) })}
+                            style={{ width: "100%", accentColor: "rgb(158,126,97)", height: 4 }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div style={{ padding: "20px 20px 24px", display: "flex", gap: 10 }}>
+                  <button onClick={() => galleryFileRef.current?.click()}
+                    style={{
+                      flex: 1, padding: "11px 0", borderRadius: 50,
+                      border: "1.5px solid rgba(158,126,97,0.40)", background: "transparent",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 600, color: WARM, cursor: "pointer",
+                    }}>{currentGalleryPhoto.url ? "📷 Change" : "📷 Upload"}</button>
+                  <button onClick={() => setGalleryAdjustOpen(false)}
+                    style={{
+                      flex: 1.5, padding: "11px 0", borderRadius: 50, border: "none",
+                      background: "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)",
+                      fontFamily: CURSIVE, fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer",
+                      boxShadow: "0 4px 16px rgba(108,74,46,0.28)",
+                    }}>Done ♡</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       );
     }
 
@@ -1266,7 +1510,7 @@ export default function EditSheet({
           <div style={{ marginBottom: 20 }}>
             {label("Password (optional)")}
             <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", marginBottom: 10, lineHeight: 1.5 }}>
-              Add a password so only your special someone can view this page.
+              Add a password so only your special someone can view this page, then preview — you can publish from the main page.
             </p>
             <div style={{ position: "relative" }}>
               <input
@@ -1287,7 +1531,7 @@ export default function EditSheet({
           <div style={{ display: "flex", gap: 10 }}>
             {ghostBtn("← Back", () => setManualStep(6))}
             {primaryBtn(
-              saving ? "Saving..." : "Save ♡",
+              saving ? "Saving..." : "Save & Preview ♡",
               () => onSaveWithPassword({ ...mf }, pw),
               saving,
             )}

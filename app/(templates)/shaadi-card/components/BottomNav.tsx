@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
 import {
-  Home, Heart, CalendarDays, Image, Flower2, Pencil,
+  Home, Heart, CalendarDays, Image, Flower2,
 } from "lucide-react";
 import { TABS, type TabId } from "./types";
 
@@ -21,19 +21,9 @@ const TAB_ICONS: Record<TabId, typeof Home> = {
 interface Props {
   tab: TabId;
   onTabChange: (id: TabId) => void;
-  onEdit: () => void;
-  onBack: () => void;
-  isPersonalized: boolean;
-  isPreview?: boolean;
 }
 
-export default memo(function BottomNav({
-  tab,
-  onTabChange,
-  onEdit,
-  isPersonalized,
-  isPreview = false,
-}: Props) {
+export default memo(function BottomNav({ tab, onTabChange }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none lg:hidden">
       <div className="mx-auto max-w-xs sm:max-w-sm md:max-w-md mb-3 px-3 pointer-events-auto">
@@ -83,25 +73,6 @@ export default memo(function BottomNav({
               );
             })}
 
-            {/* Edit button — shown after save, hidden in preview */}
-            {!isPreview && isPersonalized && (
-              <button onClick={onEdit} className="flex-1 relative">
-                <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-all duration-200">
-                  <Pencil
-                    size={18}
-                    strokeWidth={1.5}
-                    className="relative z-10"
-                    style={{ color: C_ACCENT }}
-                  />
-                  <span
-                    className="text-[9px] font-semibold relative z-10"
-                    style={{ color: C_ACCENT }}
-                  >
-                    Edit
-                  </span>
-                </div>
-              </button>
-            )}
           </div>
         </div>
       </div>

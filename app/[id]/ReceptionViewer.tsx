@@ -971,13 +971,19 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
         </AnimatePresence>
       </main>
 
-      {/* Mobile share button */}
+      {/* SubhSandesh logo — top-right, links to home */}
       <div className="fixed top-3 right-3 z-40 lg:hidden">
-        <button onClick={handleShare}
-          className="p-2.5 rounded-xl text-muted-foreground bg-card/85 border border-border"
-          style={{ backdropFilter: "blur(12px)" }}>
-          {copied ? <Check size={16} style={{ color: "#C9A84C" }} /> : <Copy size={16} />}
-        </button>
+        <a href="/" aria-label="SubhSandesh home"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 40, height: 40, borderRadius: 10,
+            background: "#F5EDD6",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+            overflow: "hidden",
+            textDecoration: "none",
+          }}>
+          <img src="/logo.png" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
+        </a>
       </div>
 
       {/* Auth modal */}

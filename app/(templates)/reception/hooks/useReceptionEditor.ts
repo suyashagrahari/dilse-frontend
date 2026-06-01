@@ -79,14 +79,32 @@ export function useReceptionEditor() {
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<ReceptionData>(DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+  const pendingPublishRef = useRef<{ data: ReceptionData; password: string } | null>(null);
+  const fromPreviewRef = useRef(false);
 
-  // Persist draft to sessionStorage
+  // Persist WIP draft to sessionStorage while filling the form
   useEffect(() => {
-    const isDemoData = mf.brideName === DEMO_DATA.brideName && mf.groomName === DEMO_DATA.groomName && !mf.bride.photo && !mf.groom.photo;
-    if (!isDemoData) {
-      try { sessionStorage.setItem("reception_mf_draft", JSON.stringify(mf)); } catch {}
-    }
-  }, [mf]);
+    if (editMode !== "manual") return;
+    try { sessionStorage.setItem("reception_mf_draft", JSON.stringify(mf)); } catch {}
+  }, [mf, editMode]);
+
+  // Restore completed draft on mount (user filled form, saved preview, then refreshed)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("reception_draft");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setContent((prev) => ({ ...prev, ...saved }));
+        setMf((prev) => ({ ...prev, ...saved }));
+        if (saved.password) setPagePassword(saved.password);
+        if (saved.completed) {
+          setIsPersonalized(true);
+          setEditMode("preview");
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -95,9 +113,8 @@ export function useReceptionEditor() {
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -115,18 +132,49 @@ export function useReceptionEditor() {
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
 
-  // After successful auth, open edit sheet
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+  }, []);
+
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
+    // if pendingPublishRef.current exists, the auto-publish useEffect will fire
+  }, []);
+
+  // No auth check — anyone can open the form and fill it
+  const handleEditClick = useCallback(() => {
     setEditMode("choose");
   }, []);
 
-  const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
-    setEditMode("choose");
-  }, [isAuthenticated]);
+  // Wrapped setEditMode for EditSheet: if user dismisses while in fromPreview flow,
+  // return to "preview" instead of null so Edit+Publish buttons remain visible.
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null && fromPreviewRef.current) {
+      fromPreviewRef.current = false;
+      setEditMode("preview");
+    } else {
+      if (mode === null || mode === "preview") fromPreviewRef.current = false;
+      setEditMode(mode);
+    }
+  }, []);
+
+  // From preview: go back into the form to edit
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    setMf({ ...content });
+    const source = previewSourceRef.current;
+    if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setManualStep(0);
+      setEditMode("manual");
+    }
+  }, [content]);
 
   const startAiTextMode = useCallback(() => {
     setAiName(isPersonalized ? content.brideName : "");
@@ -266,16 +314,24 @@ export function useReceptionEditor() {
     setPendingContent(mf);
     setContent((prev) => { preEditContentRef.current = prev; return mf; });
     previewSourceRef.current = "ai-edit";
+    setIsPersonalized(true);
     setEditMode("preview");
-  }, [mf]);
+    try {
+      sessionStorage.setItem("reception_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true }));
+    } catch {}
+  }, [mf, pagePassword]);
 
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim()) return;
     setPendingContent(mf);
     setContent((prev) => { preEditContentRef.current = prev; return mf; });
     previewSourceRef.current = "manual";
+    setIsPersonalized(true);
     setEditMode("preview");
-  }, [mf]);
+    try {
+      sessionStorage.setItem("reception_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true, step: manualStep }));
+    } catch {}
+  }, [mf, pagePassword, manualStep]);
 
   const saveToServer = useCallback(
     async (data: ReceptionData, password?: string) => {
@@ -354,31 +410,104 @@ export function useReceptionEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/reception-pages/${pageId}/publish`, {
+      let id = pageId;
+      const body = {
+        brideName: content.brideName, groomName: content.groomName,
+        receptionDate: content.receptionDate, venue: content.venue,
+        venueAddress: content.venueAddress, venueMapQuery: content.venueMapQuery,
+        venueTimings: content.venueTimings, tagline: content.tagline,
+        heroImage: content.heroImage, bride: content.bride, groom: content.groom,
+        families: content.families, galleryImages: content.galleryImages,
+        password: pagePassword || "",
+      };
+      if (!id) {
+        const res = await fetch(`${API_URL}/reception-pages`, {
+          method: "POST", headers: headers(), body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Create failed");
+        id = result.data._id as string;
+        setPageId(id);
+      } else {
+        await fetch(`${API_URL}/reception-pages/${id}`, {
+          method: "PUT", headers: headers(), body: JSON.stringify(body),
+        });
+      }
+      const pubRes = await fetch(`${API_URL}/reception-pages/${id}/publish`, {
         method: "POST", headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const url = result.data.shareUrl;
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
-        // Keep pageId so user can edit + republish
-        setHasPasswordSet(false);
-        pushToast({
-          type: "publish",
-          title: "Published!",
-          message: hasPasswordSet ? "Invitation is password-protected" : "Your reception invitation is now live",
-          shareUrl: url,
-        });
+        setEditMode(null);
+        try { sessionStorage.removeItem("reception_draft"); } catch {}
+        pushToast({ type: "publish", title: "Published!", message: "Your reception invitation is now live", shareUrl: url });
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
+
+  // Auto-publish after login when pendingPublishRef is set
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+    const { data, password } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+    const authHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    };
+    (async () => {
+      setPublishing(true);
+      try {
+        const body = {
+          brideName: data.brideName, groomName: data.groomName,
+          receptionDate: data.receptionDate, venue: data.venue,
+          venueAddress: data.venueAddress, venueMapQuery: data.venueMapQuery,
+          venueTimings: data.venueTimings, tagline: data.tagline,
+          heroImage: data.heroImage, bride: data.bride, groom: data.groom,
+          families: data.families, galleryImages: data.galleryImages,
+          password: password || "",
+        };
+        const res = await fetch(`${API_URL}/reception-pages`, {
+          method: "POST", headers: authHeaders, body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Create failed");
+        const id = result.data._id as string;
+        setPageId(id);
+        const pubRes = await fetch(`${API_URL}/reception-pages/${id}/publish`, {
+          method: "POST", headers: authHeaders,
+        });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          const url = pubResult.data.shareUrl as string;
+          setShareUrl(url);
+          setEditMode(null);
+          try { sessionStorage.removeItem("reception_draft"); } catch {}
+          pushToast({ type: "publish", title: "Published!", message: "Your reception invitation is now live", shareUrl: url });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+      } finally {
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -407,18 +536,18 @@ export function useReceptionEditor() {
     mf, manualStep,
     darkMode, themeReady, toggleDark,
 
-    setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
+    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue, setMf,
     updateMf, bulkUpdateMf, handleTabChange,
 
     goBack, closeAuth, closeAuthSuccess, closeShareSheet,
-    handleEditClick, startAiTextMode, startAiCardMode, startManualMode,
+    handleEditClick, handleEditFromPreview, startAiTextMode, startAiCardMode, startManualMode,
     handleAiGenerate, handleCardExtract, handleAiEditPreview, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
 
-    showPublish: isPersonalized && !publishing,
+    showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

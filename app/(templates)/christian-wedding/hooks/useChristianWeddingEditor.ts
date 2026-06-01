@@ -195,6 +195,8 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<ShaadiData>(CHRISTIAN_DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+  const pendingPublishRef = useRef<{ data: ShaadiData; password: string } | null>(null);
+  const fromPreviewRef = useRef(false);
 
   // Persist draft form data to sessionStorage
   useEffect(() => {
@@ -215,9 +217,8 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -272,16 +273,20 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+  }, []);
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    setEditMode("choose");
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
   }, []);
 
   const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
     setEditMode("choose");
-  }, [isAuthenticated]);
+  }, []);
 
   const startAiMode = useCallback(() => {
     setAiName(isPersonalized ? content.brideName : "");
@@ -304,6 +309,27 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     setManualStep(0);
     setEditMode("manual");
   }, [isPersonalized, content]);
+
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null && fromPreviewRef.current) {
+      fromPreviewRef.current = false;
+      setEditMode("preview");
+      return;
+    }
+    fromPreviewRef.current = false;
+    setEditMode(mode);
+  }, []);
+
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    const source = previewSourceRef.current;
+    if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setManualStep(0);
+      setEditMode("manual");
+    }
+  }, []);
 
   // ── AI: extract from shaadi card ──────────────────────────────────────────
   const handleCardExtract = useCallback(
@@ -432,6 +458,9 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
 
   // When user confirms ai-edit, go to preview
   const handleAiEditPreview = useCallback(() => {
+    try {
+      sessionStorage.setItem("christian_wedding_draft", JSON.stringify({ ...mf, completed: true }));
+    } catch {}
     setPendingContent(mf);
     setContent((prev) => {
       preEditContentRef.current = prev;
@@ -443,6 +472,11 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
 
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim() && !mf.groomName.trim()) return;
+    try {
+      sessionStorage.setItem("christian_wedding_draft", JSON.stringify({
+        ...mf, password: pagePassword, step: manualStep, completed: true,
+      }));
+    } catch {}
     setPendingContent(mf);
     setContent((prev) => {
       preEditContentRef.current = prev;
@@ -450,7 +484,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     });
     previewSourceRef.current = "manual";
     setEditMode("preview");
-  }, [mf]);
+  }, [mf, pagePassword, manualStep]);
 
   const updateMf = useCallback(
     (key: keyof ShaadiData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
@@ -535,23 +569,52 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/christian-wedding-pages/${pageId}/publish`, {
+      let pid = pageId;
+      const body = shaadiDataToBody(content, pagePassword, templateVariant);
+      if (pid) {
+        await fetch(`${API_URL}/christian-wedding-pages/${pid}`, {
+          method: "PUT",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+      } else {
+        const res = await fetch(`${API_URL}/christian-wedding-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error("Create failed");
+        pid = json.data._id;
+        setPageId(pid);
+        setShareId(json.data.shareId);
+      }
+      const pub = await fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
         method: "POST",
         headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const publishedShareId = result.data.shareId as string;
-        const normalizedShareUrl = publishedShareId ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}` : (result.data.shareUrl as string);
+      const pj = await pub.json();
+      if (pj.success) {
+        const publishedShareId = pj.data.shareId as string;
+        const normalizedShareUrl = publishedShareId
+          ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+          : (pj.data.shareUrl as string);
         setShareUrl(normalizedShareUrl);
         setShareId(publishedShareId);
+        setIsPersonalized(true);
+        setEditMode(null);
+        try { sessionStorage.removeItem("christian_wedding_draft"); } catch {}
         pushToast({
           type: "publish",
           title: "Published! 🎊",
-          message: hasPasswordSet ? "Invitation is password-protected" : "Your wedding invitation is now live",
+          message: pagePassword ? "Invitation is password-protected" : "Your wedding invitation is now live",
           shareUrl: normalizedShareUrl,
         });
       }
@@ -560,7 +623,86 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  }, [isAuthenticated, accessToken, content, pagePassword, pageId, headers, templateVariant, pushToast]);
+
+  // Auto-publish after login when pendingPublishRef is set
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+    const { data, password: pw } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+    setShowAuth(false);
+    (async () => {
+      setPublishing(true);
+      try {
+        const body = shaadiDataToBody(data, pw, templateVariant);
+        const res = await fetch(`${API_URL}/christian-wedding-pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error("Create failed");
+        const pid = json.data._id;
+        setPageId(pid);
+        const pub = await fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
+          method: "POST",
+          headers: headers(),
+        });
+        const pj = await pub.json();
+        if (pj.success) {
+          const publishedShareId = pj.data.shareId as string;
+          const normalizedShareUrl = publishedShareId
+            ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+            : (pj.data.shareUrl as string);
+          setShareUrl(normalizedShareUrl);
+          setShareId(publishedShareId);
+          setIsPersonalized(true);
+          setEditMode(null);
+          try { sessionStorage.removeItem("christian_wedding_draft"); } catch {}
+          pushToast({
+            type: "publish",
+            title: "Published! 🎊",
+            message: pw ? "Invitation is password-protected" : "Your wedding invitation is now live",
+            shareUrl: normalizedShareUrl,
+          });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+      } finally {
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
+
+  // Persist draft to sessionStorage while in manual edit mode
+  useEffect(() => {
+    if (editMode !== "manual") return;
+    try {
+      sessionStorage.setItem("christian_wedding_draft", JSON.stringify({
+        ...mf, password: pagePassword, step: manualStep,
+      }));
+    } catch {}
+  }, [mf, editMode, manualStep, pagePassword]);
+
+  // Restore completed draft on mount (only if no ?edit=id param)
+  useEffect(() => {
+    if (!themeReady) return;
+    if (searchParams.get("edit")) return;
+    try {
+      const raw = sessionStorage.getItem("christian_wedding_draft");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setMf((prev) => ({ ...prev, ...saved }));
+        if (saved.password) setPagePassword(saved.password);
+        if (saved.completed) {
+          setContent((prev) => ({ ...prev, ...saved }));
+          setEditMode("preview");
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeReady]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -616,7 +758,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
 
   return {
     tab, content, editMode, isPersonalized, shareUrl, showShareSheet, shareId, copied, showAuth,
-    toasts, saving, publishing, pagePassword, showPwValue,
+    toasts, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading, extractLoading,
     mf, manualStep, aiEditData,
     themeReady,
@@ -629,11 +771,12 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     handleEditClick, startAiMode, startManualMode,
     handleCardExtract, handleAiGenerate, handleAiEditPreview,
     handleManualPreview,
-    handleConfirmSave, handlePasswordDone, handleDiscardPreview,
+    handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast, addBlessing,
+    setEditModeFromSheet, handleEditFromPreview,
 
-    showPublish: isPersonalized && !publishing,
+    showPublish: editMode === "preview" && !shareUrl,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

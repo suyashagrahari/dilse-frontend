@@ -3,7 +3,7 @@
 import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
@@ -15,7 +15,6 @@ import BottomNav from "./components/BottomNav";
 import SplashSection from "./components/SplashSection";
 import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
-import PreviewBar from "./components/PreviewBar";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ReceptionWelcomeOverlay from "./components/ReceptionWelcomeOverlay";
 import ReceptionBackgroundMusic from "./components/ReceptionBackgroundMusic";
@@ -51,6 +50,8 @@ export default function ReceptionPage() {
     setPlayMusic(withMusic);
     setWelcomed(true);
   }, []);
+
+  const isPreview = editor.editMode === "preview";
 
   const coupleNames = useMemo(
     () => ({ bride: editor.content.brideName, groom: editor.content.groomName }),
@@ -95,60 +96,53 @@ export default function ReceptionPage() {
         </div>
       )}
 
-      {/* Floating Save / Create / Publish / Share button — top-right, mobile only */}
+      {/* Floating action button(s) — top-right, mobile only */}
       {welcomed && (
         <div className="fixed top-4 right-4 z-50 lg:hidden">
           <AnimatePresence mode="wait">
-            {editor.editMode === "preview" ? (
-              <motion.button
-                key="save"
+            {isPreview ? (
+              <motion.div
+                key="preview-actions"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handleConfirmSave}
-                disabled={editor.saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl disabled:opacity-70"
-                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
               >
-                {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                {editor.saving ? "Saving…" : "Save"}
-              </motion.button>
-            ) : !editor.isPersonalized ? (
-              <motion.button
-                key="create"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handleEditClick}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
-                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
-              >
-                <Sparkles size={14} />
-                Create
-              </motion.button>
-            ) : !editor.shareUrl ? (
-              <motion.button
-                key="publish"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={editor.handlePublish}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
-                style={{
-                  background: "rgba(16,185,129,0.15)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  color: "#10b981",
-                  border: "1px solid rgba(16,185,129,0.35)",
-                }}
-              >
-                <Send size={14} />
-                Publish
-              </motion.button>
-            ) : (
+                <button
+                  onClick={editor.handleEditFromPreview}
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    color: "#fff",
+                    borderRadius: 20,
+                    padding: "6px 14px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    backdropFilter: "blur(12px)",
+                  }}
+                >
+                  ✦ Edit
+                </button>
+                <button
+                  onClick={editor.handlePublish}
+                  disabled={editor.publishing}
+                  style={{
+                    background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)",
+                    color: "#080808",
+                    border: "none",
+                    borderRadius: 20,
+                    padding: "6px 14px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: editor.publishing ? "not-allowed" : "pointer",
+                    opacity: editor.publishing ? 0.7 : 1,
+                  }}
+                >
+                  {editor.publishing ? "Publishing…" : "🥂 Publish"}
+                </button>
+              </motion.div>
+            ) : editor.showShare ? (
               <motion.button
                 key="share"
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -167,6 +161,20 @@ export default function ReceptionPage() {
               >
                 <Share2 size={14} />
                 Share
+              </motion.button>
+            ) : (
+              <motion.button
+                key="create"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={editor.handleEditClick}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C)", color: "#080808" }}
+              >
+                <Sparkles size={14} />
+                {editor.isPersonalized ? "Edit" : "Create"}
               </motion.button>
             )}
           </AnimatePresence>
@@ -202,7 +210,7 @@ export default function ReceptionPage() {
         darkMode={editor.darkMode}
         toggleDark={editor.toggleDark}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -277,7 +285,7 @@ export default function ReceptionPage() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName}
         setAiName={editor.setAiName}
         aiSender={editor.aiSender}
@@ -299,13 +307,6 @@ export default function ReceptionPage() {
         onAiGenerate={editor.handleAiGenerate}
         onAiEditPreview={editor.handleAiEditPreview}
         onManualPreview={editor.handleManualPreview}
-      />
-
-      <PreviewBar
-        visible={false}
-        saving={editor.saving}
-        onDiscard={editor.handleDiscardPreview}
-        onConfirm={editor.handleConfirmSave}
       />
 
       <PublishingOverlay visible={editor.publishing} />

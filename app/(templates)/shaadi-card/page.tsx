@@ -1,8 +1,8 @@
 "use client";
 
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useDeferredValue } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
 import { useShaadiCardEditor } from "./hooks/useShaadiCardEditor";
@@ -46,9 +46,18 @@ function TabFallback() {
 function ShaadiCardPage() {
   const editor = useShaadiCardEditor();
 
+  const isPreview = editor.editMode === "preview";
+
+  // While the edit sheet is open, show mf (live form state) so changes
+  // reflect instantly in the preview behind the sheet.
+  // useDeferredValue keeps keystrokes high-priority; section re-renders are deferred.
+  const isEditing = !!editor.editMode && !isPreview;
+  const liveData = isEditing ? editor.mf : editor.content;
+  const displayData = useDeferredValue(liveData);
+
   const coupleNames = useMemo(
-    () => ({ bride: editor.content.brideName, groom: editor.content.groomName }),
-    [editor.content.brideName, editor.content.groomName],
+    () => ({ bride: displayData.brideName, groom: displayData.groomName }),
+    [displayData.brideName, displayData.groomName],
   );
 
   if (!editor.themeReady) return null;
@@ -79,59 +88,52 @@ function ShaadiCardPage() {
         </motion.button>
       </div>
 
-      {/* Floating action button — top-right, mobile only */}
+      {/* Floating action button(s) — top-right, mobile only */}
       <div className="fixed top-4 right-4 z-50 lg:hidden">
         <AnimatePresence mode="wait">
-          {editor.editMode === "preview" ? (
-            <motion.button
-              key="save"
+          {isPreview ? (
+            <motion.div
+              key="preview-actions"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleConfirmSave as () => void}
-              disabled={editor.saving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm text-white shadow-xl disabled:opacity-70"
-              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
             >
-              {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              {editor.saving ? "Saving…" : "Save"}
-            </motion.button>
-          ) : !editor.isPersonalized ? (
-            <motion.button
-              key="create"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleEditClick}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm text-white shadow-xl"
-              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
-            >
-              <Sparkles size={14} />
-              Create
-            </motion.button>
-          ) : !editor.shareUrl ? (
-            <motion.button
-              key="publish"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handlePublish}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm shadow-xl"
-              style={{
-                background: "rgba(16,185,129,0.15)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                color: "#10b981",
-                border: "1px solid rgba(16,185,129,0.35)",
-              }}
-            >
-              <Send size={14} />
-              Publish
-            </motion.button>
-          ) : (
+              <button
+                onClick={editor.handleEditFromPreview}
+                style={{
+                  background: `${C_ACCENT}12`,
+                  border: `1px solid ${C_MED}40`,
+                  color: C_ACCENT,
+                  borderRadius: 20,
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                ✦ Edit
+              </button>
+              <button
+                onClick={editor.handlePublish}
+                disabled={editor.publishing}
+                style={{
+                  background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 20,
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: editor.publishing ? "not-allowed" : "pointer",
+                  opacity: editor.publishing ? 0.7 : 1,
+                }}
+              >
+                {editor.publishing ? "Publishing…" : "🌸 Publish"}
+              </button>
+            </motion.div>
+          ) : editor.showShare ? (
             <motion.button
               key="share"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -151,6 +153,20 @@ function ShaadiCardPage() {
               <Share2 size={14} />
               Share
             </motion.button>
+          ) : (
+            <motion.button
+              key="create"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={editor.handleEditClick}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-sm text-white shadow-xl"
+              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
+            >
+              <Sparkles size={14} />
+              {editor.isPersonalized ? "Edit" : "Create"}
+            </motion.button>
           )}
         </AnimatePresence>
       </div>
@@ -160,7 +176,7 @@ function ShaadiCardPage() {
         onTabChange={editor.handleTabChange}
         coupleNames={coupleNames}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -171,28 +187,23 @@ function ShaadiCardPage() {
       <BottomNav
         tab={editor.tab}
         onTabChange={editor.handleTabChange}
-        onEdit={editor.handleEditClick}
-        onBack={editor.goBack}
-        isPersonalized={editor.isPersonalized}
-        isPreview={editor.editMode === "preview"}
       />
 
       <PublishingOverlay visible={editor.publishing} />
-      <ShaadiBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
+      <ShaadiBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode && editor.editMode !== "preview"} />
 
       <div className="lg:ml-64 h-full overflow-y-auto no-scrollbar">
         <AnimatePresence mode="wait">
           {editor.tab === "home" && (
-            /* Home tab: no bottom padding — card fills to nav via its own height calc */
             <motion.div key="home" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
-              <HomeSection data={editor.content} />
+              <HomeSection data={displayData} />
             </motion.div>
           )}
 
           {editor.tab === "couple" && (
             <motion.div key="couple" className="pb-0 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
-                <CoupleSection data={editor.content} />
+                <CoupleSection data={displayData} />
               </Suspense>
             </motion.div>
           )}
@@ -200,7 +211,7 @@ function ShaadiCardPage() {
           {editor.tab === "events" && (
             <motion.div key="events" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
-                <EventsSection data={editor.content} />
+                <EventsSection data={displayData} />
               </Suspense>
             </motion.div>
           )}
@@ -208,7 +219,7 @@ function ShaadiCardPage() {
           {editor.tab === "gallery" && (
             <motion.div key="gallery" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
-                <GallerySection data={editor.content} />
+                <GallerySection data={displayData} />
               </Suspense>
             </motion.div>
           )}
@@ -216,7 +227,7 @@ function ShaadiCardPage() {
           {editor.tab === "blessings" && (
             <motion.div key="blessings" className="pb-20 lg:pb-0" variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
               <Suspense fallback={<TabFallback />}>
-                <WishesSection data={editor.content} />
+                <WishesSection data={displayData} />
               </Suspense>
             </motion.div>
           )}
@@ -234,7 +245,7 @@ function ShaadiCardPage() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName}
         setAiName={editor.setAiName}
         aiSender={editor.aiSender}

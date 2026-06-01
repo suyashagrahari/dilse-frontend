@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { type ContentData, loveGfUsesCircleOnly, getLoveGfCircleCover } from "./types";
+import { type ContentData, normalizeHomePhoto } from "./types";
 
 // Placeholder shown when user hasn't uploaded a photo
 function PhotoPlaceholder({ index }: { index: number }) {
@@ -45,11 +45,11 @@ const spring = (delay: number, stiffness = 160, damping = 22) => ({
  * Each polaroid and decoration flies in from a unique direction.
  */
 export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
-  const circleMode = loveGfUsesCircleOnly(data);
-  const circleCover = getLoveGfCircleCover(data);
-  const homePhotos = data.homePhotos || [];
+  const rawPhotos = data.homePhotos || [];
+  const homePhotos = rawPhotos.map(normalizeHomePhoto);
   const defaultCardPhotos = ["/love/image5.webp", "/love/image14.webp", "/love/imaghe12.webp", "/love/image13.webp"];
-  const p = (i: number) => homePhotos[i] || defaultCardPhotos[i] || "";
+  const photo = (i: number) => homePhotos[i] ?? null;
+  const photoUrl = (i: number) => photo(i)?.url || defaultCardPhotos[i] || "";
 
   return (
     <div
@@ -116,56 +116,6 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           <Image src="/love/image18.webp" alt="" fill priority style={{ objectFit: "cover", objectPosition: "center" }} />
         </div>
 
-        {circleMode && circleCover.url && (
-          <motion.div
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "40%",
-              transform: "translate(-50%, -50%)",
-              width: "min(48vw, 200px)",
-              maxWidth: "55%",
-              aspectRatio: "1",
-              zIndex: 40,
-            }}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={spring(0.35, 200, 20)}
-          >
-            <div style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "50%",
-              padding: "min(2.4vw, 8px)",
-              background: "linear-gradient(135deg, rgba(158,126,97,0.95), rgba(200,170,130,0.85))",
-              boxShadow: "0 12px 36px rgba(40,22,8,0.35)",
-            }}>
-              <div style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                overflow: "hidden",
-                background: "#faf8f2",
-                border: "2px solid rgba(158,126,97,0.35)",
-              }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={circleCover.url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: `${circleCover.cropX}% ${circleCover.cropY}%`,
-                    transform: `scale(${circleCover.scale / 100})`,
-                    transformOrigin: `${circleCover.cropX}% ${circleCover.cropY}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {/* ── Torn paper LEFT — slides in from left ── */}
         <motion.div
           style={{ position: "absolute", left: "-33.8%", top: "0", width: "87.6%", height: "21.0%", zIndex: 1, mixBlendMode: "multiply" }}
@@ -201,7 +151,6 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
         </motion.div>
 
         {/* ── Photo 2 (top-right polaroid) — drops from top-right ── */}
-        {!circleMode && (
         <motion.div
           style={{
             position: "absolute", left: "48%", top: "18%", width: "45.2%", height: "25.2%",
@@ -212,18 +161,23 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: 18, opacity: 1 }}
           transition={spring(0.5, 180, 20)}
         >
-          {p(1) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(1)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
+          {photoUrl(1) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(1)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(1)?.cropX ?? 50}% ${photo(1)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(1)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(1)?.cropX ?? 50}% ${photo(1)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={2} />
           )}
         </motion.div>
-        )}
 
         {/* ── Photo 4 (bottom-right tall polaroid) — slides from right ── */}
-        {!circleMode && (
         <motion.div
           style={{
             position: "absolute", left: "47%", top: "46%", width: "49.1%", height: "28.2%",
@@ -234,18 +188,23 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: 10, opacity: 1 }}
           transition={spring(0.65, 170, 22)}
         >
-          {p(3) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(3)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="47vw" />
+          {photoUrl(3) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(3)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(3)?.cropX ?? 50}% ${photo(3)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(3)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(3)?.cropX ?? 50}% ${photo(3)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={4} />
           )}
         </motion.div>
-        )}
 
         {/* ── Photo 3 (bottom-left polaroid) — slides from bottom-left ── */}
-        {!circleMode && (
         <motion.div
           style={{
             position: "absolute", left: "9.2%", top: "50%", width: "45.1%", height: "25.3%",
@@ -256,15 +215,21 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: -9, opacity: 1 }}
           transition={spring(0.58, 175, 21)}
         >
-          {p(2) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(2)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center" }} sizes="43vw" />
+          {photoUrl(2) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(2)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(2)?.cropX ?? 50}% ${photo(2)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(2)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(2)?.cropX ?? 50}% ${photo(2)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={3} />
           )}
         </motion.div>
-        )}
 
         {/* ── Right botanical — fades + slides from right ── */}
         <motion.div
@@ -373,7 +338,6 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
         </motion.div>
 
         {/* ── Photo 1 LARGE (main polaroid) — slides from left ── */}
-        {!circleMode && (
         <motion.div
           style={{
             position: "absolute", left: "9%", top: "18.6%", width: "45.6%", height: "30%",
@@ -384,15 +348,21 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ x: 0, y: 0, rotate: -12, opacity: 1 }}
           transition={spring(0.3, 160, 22)}
         >
-          {p(0) ? (
-            <div style={{ position: "absolute", inset: "5% 6% 8% 10%" }}>
-              <Image src={p(0)} fill alt="couple" style={{ objectFit: "cover", objectPosition: "center 10%" }} sizes="44vw" />
+          {photoUrl(0) ? (
+            <div style={{ position: "absolute", inset: "5% 6% 8% 10%", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl(0)} alt="couple" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                objectPosition: `${photo(0)?.cropX ?? 50}% ${photo(0)?.cropY ?? 50}%`,
+                transform: `scale(${(photo(0)?.scale ?? 100) / 100})`,
+                transformOrigin: `${photo(0)?.cropX ?? 50}% ${photo(0)?.cropY ?? 50}%`,
+                display: "block",
+              }} />
             </div>
           ) : (
             <PhotoPlaceholder index={1} />
           )}
         </motion.div>
-        )}
 
         {/* ── Top-left yarrow botanical — slides from top-left ── */}
         <motion.div
