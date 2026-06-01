@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -71,41 +71,26 @@ function ChristianWedding2Page() {
   const router = useRouter();
   const editor = useChristianWeddingEditor({ variant: "scroll" });
 
-  // Gate: only allow the auth modal to render after the user explicitly
-  // clicks Personalize/Create. Prevents any stale/auto flow from showing
-  // the login sheet on first page load.
-  const [authRequested, setAuthRequested] = useState(false);
-
-  // Defensive: if showAuth somehow becomes true before the user clicked,
-  // silently dismiss it so the public scroll experience isn't interrupted.
-  useEffect(() => {
-    if (editor.showAuth && !authRequested) editor.closeAuth();
-  }, [editor.showAuth, authRequested, editor]);
-
   const handleBack = useCallback(() => {
     if (window.history.length > 1) router.back();
     else router.push("/");
   }, [router]);
 
   const handleEdit = useCallback(() => {
-    setAuthRequested(true);
     editor.handleEditClick();
   }, [editor]);
 
   const handleAuthClose = useCallback(() => {
-    setAuthRequested(false);
     editor.closeAuth();
   }, [editor]);
 
   const handleAuthSuccess = useCallback(() => {
-    setAuthRequested(false);
     editor.closeAuthSuccess();
   }, [editor]);
 
   if (!editor.themeReady) return null;
 
   const isPreview = editor.editMode === "preview";
-  const showAuth = authRequested && editor.showAuth;
 
   return (
     <div className="relative min-h-[100dvh] w-full" style={{ background: "#fcfcfa" }}>
@@ -157,21 +142,20 @@ function ChristianWedding2Page() {
       <FloatingActions
         isPreview={isPreview}
         isPersonalized={editor.isPersonalized}
-        showPublish={editor.showPublish && !editor.shareUrl}
+        showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
-        saving={editor.saving}
         publishing={editor.publishing}
         onBack={handleBack}
         onEdit={handleEdit}
+        onEditFromPreview={editor.handleEditFromPreview}
         onPublish={editor.handlePublish}
         onShare={editor.handleShare}
-        onConfirmSave={editor.handleConfirmSave}
         onDiscardPreview={editor.handleDiscardPreview}
       />
 
       {/* ── Modal / overlay stack ───────────────────────────────────────── */}
-      {showAuth && (
+      {editor.showAuth && (
         <AuthModal onClose={handleAuthClose} onSuccess={handleAuthSuccess} />
       )}
 
@@ -185,7 +169,7 @@ function ChristianWedding2Page() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName}
         setAiName={editor.setAiName}
         aiSender={editor.aiSender}
@@ -216,7 +200,7 @@ function ChristianWedding2Page() {
 
       <PublishingOverlay visible={editor.publishing} />
 
-      <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
+      <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode && editor.editMode !== "preview"} />
     </div>
   );
 }

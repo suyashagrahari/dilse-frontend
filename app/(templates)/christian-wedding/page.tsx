@@ -2,7 +2,7 @@
 
 import { lazy, Suspense, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import SocialShareSheet from "@/components/SocialShareSheet";
 import { useChristianWeddingEditor } from "./hooks/useChristianWeddingEditor";
@@ -76,55 +76,38 @@ function ChristianWeddingPage() {
       <div className="fixed right-4 top-4 z-50 lg:hidden">
         <AnimatePresence mode="wait">
           {editor.editMode === "preview" ? (
-            <motion.button
-              key="save"
+            <motion.div
+              key="preview-actions"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleConfirmSave as () => void}
-              disabled={editor.saving}
-              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-xl disabled:opacity-70"
-              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
+              className="flex items-center gap-2"
             >
-              {editor.saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              {editor.saving ? "Saving…" : "Save"}
-            </motion.button>
-          ) : !editor.isPersonalized ? (
-            <motion.button
-              key="create"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handleEditClick}
-              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-xl"
-              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
-            >
-              <Sparkles size={14} />
-              Create
-            </motion.button>
-          ) : !editor.shareUrl ? (
-            <motion.button
-              key="publish"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={editor.handlePublish}
-              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold shadow-xl"
-              style={{
-                background: "rgba(16,185,129,0.15)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                color: "#10b981",
-                border: "1px solid rgba(16,185,129,0.35)",
-              }}
-            >
-              <Send size={14} />
-              Publish
-            </motion.button>
-          ) : (
+              <button
+                onClick={editor.handleEditFromPreview}
+                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-bold shadow-xl"
+                style={{
+                  background: "rgba(252,252,250,0.94)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: `1px solid ${C_MED}35`,
+                  color: C_MED,
+                }}
+              >
+                <Sparkles size={13} />
+                Edit
+              </button>
+              <button
+                onClick={editor.handlePublish}
+                disabled={editor.publishing}
+                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-bold text-white shadow-xl disabled:opacity-70"
+                style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
+              >
+                {editor.publishing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                {editor.publishing ? "Publishing…" : "Publish"}
+              </button>
+            </motion.div>
+          ) : editor.shareUrl ? (
             <motion.button
               key="share"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -144,6 +127,20 @@ function ChristianWeddingPage() {
               <Share2 size={14} />
               Share
             </motion.button>
+          ) : (
+            <motion.button
+              key="create"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={editor.handleEditClick}
+              className="flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-xl"
+              style={{ background: `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})` }}
+            >
+              <Sparkles size={14} />
+              {editor.isPersonalized ? "Edit" : "Create"}
+            </motion.button>
           )}
         </AnimatePresence>
       </div>
@@ -153,7 +150,7 @@ function ChristianWeddingPage() {
         onTabChange={editor.handleTabChange}
         coupleNames={coupleNames}
         onBack={editor.goBack}
-        onEdit={editor.handleEditClick}
+        onEdit={editor.editMode === "preview" ? editor.handleEditFromPreview : editor.handleEditClick}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -171,7 +168,7 @@ function ChristianWeddingPage() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
-      <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode} />
+      <ChristianBackgroundMusic shouldPlay={editor.themeReady} paused={!!editor.editMode && editor.editMode !== "preview"} />
 
       {/* Fixed page chrome (corners, stains, gradients) — all tabs including home on desktop */}
       <div className="pointer-events-none absolute inset-0 z-[1] lg:ml-64" aria-hidden>
@@ -240,7 +237,7 @@ function ChristianWeddingPage() {
 
       <EditSheet
         editMode={editor.editMode}
-        setEditMode={editor.setEditMode}
+        setEditMode={editor.setEditModeFromSheet}
         aiName={editor.aiName}
         setAiName={editor.setAiName}
         aiSender={editor.aiSender}

@@ -179,18 +179,32 @@ export function useShaadiCardEditor() {
   const [manualStep, setManualStep] = useState(0);
   const preEditContentRef = useRef<ShaadiData>(DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
+  const pendingPublishRef = useRef<{ data: ShaadiData; password: string } | null>(null);
+  const fromPreviewRef = useRef(false);
 
-  // Persist draft form data to sessionStorage
+  // Persist WIP draft while filling the form
   useEffect(() => {
-    const isDemoData =
-      mf.brideName === DEMO_DATA.brideName &&
-      mf.groomName === DEMO_DATA.groomName &&
-      !mf.bride.photo &&
-      !mf.groom.photo;
-    if (!isDemoData) {
-      try { sessionStorage.setItem("shaadi_card_mf_draft", JSON.stringify(mf)); } catch {}
-    }
-  }, [mf]);
+    if (editMode !== "manual") return;
+    try { sessionStorage.setItem("shaadi_card_mf_draft", JSON.stringify(mf)); } catch {}
+  }, [mf, editMode]);
+
+  // Restore completed draft on mount (filled form + previewed, then refreshed)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("shaadi_card_draft");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setContent((prev) => ({ ...prev, ...saved }));
+        setMf((prev) => ({ ...prev, ...saved }));
+        if (saved.password) setPagePassword(saved.password);
+        if (saved.completed) {
+          setIsPersonalized(true);
+          setEditMode("preview");
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -199,9 +213,8 @@ export function useShaadiCardEditor() {
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -256,16 +269,72 @@ export function useShaadiCardEditor() {
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const goBack = useCallback(() => router.push("/templates"), [router]);
-  const closeAuth = useCallback(() => setShowAuth(false), []);
+
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+  }, []);
+
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
+    if (!pendingPublishRef.current) {
+      setEditMode("choose");
+    }
+    // if pendingPublishRef.current exists, the auto-publish useEffect will fire
+  }, []);
+
+  // No auth check — anyone can open the form and fill it
+  const handleEditClick = useCallback(() => {
     setEditMode("choose");
   }, []);
 
-  const handleEditClick = useCallback(() => {
-    if (!isAuthenticated) { setShowAuth(true); return; }
-    setEditMode("choose");
-  }, [isAuthenticated]);
+  // Wrapped setEditMode for EditSheet.
+  // On close (mode === null): auto-commit mf → content so the display never resets.
+  // If closing while in fromPreview flow, return to "preview" so Edit+Publish stays visible.
+  const setEditModeFromSheet = useCallback((mode: EditMode) => {
+    if (mode === null) {
+      // Auto-commit any real edits the user made so content stays live after close
+      const hasUserData =
+        mf.brideName !== DEMO_DATA.brideName ||
+        mf.groomName !== DEMO_DATA.groomName ||
+        !!mf.bride.photo ||
+        !!mf.groom.photo;
+      if (hasUserData) {
+        setContent(mf);
+        setIsPersonalized(true);
+        // Keep draft so publish can find it after a refresh
+        try {
+          sessionStorage.setItem(
+            "shaadi_card_draft",
+            JSON.stringify({ ...mf, password: pagePassword, completed: false }),
+          );
+        } catch {}
+      }
+      if (fromPreviewRef.current) {
+        fromPreviewRef.current = false;
+        setEditMode("preview");
+        return;
+      }
+      fromPreviewRef.current = false;
+      setEditMode(null);
+      return;
+    }
+    if (mode === "preview") fromPreviewRef.current = false;
+    setEditMode(mode);
+  }, [mf, pagePassword]);
+
+  // From preview: go back into the form to edit
+  const handleEditFromPreview = useCallback(() => {
+    fromPreviewRef.current = true;
+    setMf({ ...content });
+    const source = previewSourceRef.current;
+    if (source === "ai-edit") {
+      setEditMode("ai-edit");
+    } else {
+      setManualStep(0);
+      setEditMode("manual");
+    }
+  }, [content]);
 
   const startAiMode = useCallback(() => {
     setAiName(isPersonalized ? content.brideName : "");
@@ -422,8 +491,12 @@ export function useShaadiCardEditor() {
       return mf;
     });
     previewSourceRef.current = "ai-edit";
+    setIsPersonalized(true);
     setEditMode("preview");
-  }, [mf]);
+    try {
+      sessionStorage.setItem("shaadi_card_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true }));
+    } catch {}
+  }, [mf, pagePassword]);
 
   const handleManualPreview = useCallback(() => {
     if (!mf.brideName.trim() && !mf.groomName.trim()) return;
@@ -433,8 +506,12 @@ export function useShaadiCardEditor() {
       return mf;
     });
     previewSourceRef.current = "manual";
+    setIsPersonalized(true);
     setEditMode("preview");
-  }, [mf]);
+    try {
+      sessionStorage.setItem("shaadi_card_draft", JSON.stringify({ ...mf, password: pagePassword, completed: true, step: manualStep }));
+    } catch {}
+  }, [mf, pagePassword, manualStep]);
 
   const updateMf = useCallback(
     (key: keyof ShaadiData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
@@ -519,32 +596,98 @@ export function useShaadiCardEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
-    if (!pageId) return;
+    if (!isAuthenticated || !accessToken) {
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/shaadi-card-pages/${pageId}/publish`, {
-        method: "POST",
-        headers: headers(),
+      let id = pageId;
+      const body = shaadiDataToBody(content, pagePassword);
+      if (!id) {
+        const res = await fetch(`${API_URL}/shaadi-card-pages`, {
+          method: "POST", headers: headers(), body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Create failed");
+        id = result.data._id as string;
+        setPageId(id);
+        if (result.data.shareId) setShareId(result.data.shareId as string);
+      } else {
+        await fetch(`${API_URL}/shaadi-card-pages/${id}`, {
+          method: "PUT", headers: headers(), body: JSON.stringify(body),
+        });
+      }
+      const pubRes = await fetch(`${API_URL}/shaadi-card-pages/${id}/publish`, {
+        method: "POST", headers: headers(),
       });
-      const result = await res.json();
-      if (result.success) {
-        const publishedShareId = result.data.shareId as string;
-        const normalizedShareUrl = publishedShareId ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}` : (result.data.shareUrl as string);
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        const publishedShareId = pubResult.data.shareId as string;
+        const normalizedShareUrl = publishedShareId
+          ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+          : (pubResult.data.shareUrl as string);
         setShareUrl(normalizedShareUrl);
         setShareId(publishedShareId);
-        pushToast({
-          type: "publish",
-          title: "Published! 🎊",
-          message: hasPasswordSet ? "Invitation is password-protected" : "Your wedding invitation is now live",
-          shareUrl: normalizedShareUrl,
-        });
+        setEditMode(null);
+        try { sessionStorage.removeItem("shaadi_card_draft"); } catch {}
+        pushToast({ type: "publish", title: "Published! 🎊", message: "Your wedding invitation is now live", shareUrl: normalizedShareUrl });
+      } else {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
+
+  // Auto-publish after login when pendingPublishRef is set
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+    const { data, password } = pendingPublishRef.current;
+    pendingPublishRef.current = null;
+    const authHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    };
+    (async () => {
+      setPublishing(true);
+      try {
+        const body = shaadiDataToBody(data, password);
+        const res = await fetch(`${API_URL}/shaadi-card-pages`, {
+          method: "POST", headers: authHeaders, body: JSON.stringify(body),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Create failed");
+        const id = result.data._id as string;
+        setPageId(id);
+        if (result.data.shareId) setShareId(result.data.shareId as string);
+        const pubRes = await fetch(`${API_URL}/shaadi-card-pages/${id}/publish`, {
+          method: "POST", headers: authHeaders,
+        });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          const publishedShareId = pubResult.data.shareId as string;
+          const normalizedShareUrl = publishedShareId
+            ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
+            : (pubResult.data.shareUrl as string);
+          setShareUrl(normalizedShareUrl);
+          setShareId(publishedShareId);
+          setEditMode(null);
+          try { sessionStorage.removeItem("shaadi_card_draft"); } catch {}
+          pushToast({ type: "publish", title: "Published! 🎊", message: "Your wedding invitation is now live", shareUrl: normalizedShareUrl });
+        }
+      } catch {
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+      } finally {
+        setPublishing(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -605,19 +748,19 @@ export function useShaadiCardEditor() {
     mf, manualStep, aiEditData,
     themeReady,
 
-    setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep,
+    setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
     goBack, closeAuth, closeAuthSuccess, closeShareSheet,
-    handleEditClick, startAiMode, startManualMode,
+    handleEditClick, handleEditFromPreview, startAiMode, startManualMode,
     handleCardExtract, handleAiGenerate, handleAiEditPreview,
     handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast, addBlessing,
 
-    showPublish: isPersonalized && !publishing,
+    showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };
