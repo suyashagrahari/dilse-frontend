@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { getTemplateMeta, SITE_URL, TEMPLATE_SEO } from "@/lib/seo";
-import { BreadcrumbJsonLd, TemplateJsonLd } from "@/components/JsonLd";
+import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
 const SLUG = "sorry-gf";
 const tpl = TEMPLATE_SEO[SLUG];
@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const faqs = getFAQs(SLUG);
+  const howTo = getHowTo(SLUG);
+  const rating = getAggregateRating(SLUG);
   return (
     <>
       <BreadcrumbJsonLd
@@ -21,6 +24,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         ]}
       />
       <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
+      {howTo && <HowToJsonLd howTo={howTo} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
       {children}
     </>
   );

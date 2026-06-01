@@ -1,17 +1,33 @@
 import type { Metadata } from "next";
+import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+
+const SLUG = "eid-mubarak";
+const tpl = TEMPLATE_SEO[SLUG];
 
 export const metadata: Metadata = {
-  title: "Eid Mubarak — Digital Greeting Card",
-  description:
-    "A beautiful Eid al-Fitr digital greeting with duas, greetings, playlist & blessings sharing.",
-  keywords: ["eid mubarak", "eid al-fitr", "islamic greeting", "eid card", "eid wishes"],
-  openGraph: {
-    title: "Eid Mubarak 🌙",
-    description: "Wishing you joy, peace, and countless blessings this Eid",
-    type: "website",
-  },
+  ...getTemplateMeta(SLUG),
+  alternates: { canonical: `${SITE_URL}/${SLUG}` },
 };
 
 export default function EidLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const faqs = getFAQs(SLUG);
+  const howTo = getHowTo(SLUG);
+  const rating = getAggregateRating(SLUG);
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: SITE_URL },
+          { name: "Templates", url: `${SITE_URL}/templates` },
+          { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
+        ]}
+      />
+      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
+      {howTo && <HowToJsonLd howTo={howTo} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {children}
+    </>
+  );
 }
