@@ -941,6 +941,36 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
       {/* ── Main content (offset on desktop) ──────────────────── */}
       <div className="flex-1 min-w-0 lg:ml-56">
 
+        {/* Mobile — floating Share button, above bottom nav */}
+        <motion.button
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
+          onClick={() => {
+            if (typeof navigator !== "undefined" && navigator.share) {
+              navigator.share({ title: `${data.brideName} & ${data.groomName}'s Wedding Invitation`, url: shareUrl }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(shareUrl);
+            }
+          }}
+          whileTap={{ scale: 0.95 }}
+          className="lg:hidden fixed z-[50] flex items-center gap-2"
+          style={{
+            bottom: "calc(5.2rem + env(safe-area-inset-bottom, 0px))",
+            left: 14,
+            padding: "10px 18px",
+            borderRadius: 20,
+            background: "rgba(255,255,255,0.96)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            border: "1px solid rgba(171,28,62,0.14)",
+            boxShadow: "0 4px 16px rgba(109,43,59,0.12)",
+          }}
+        >
+          <Share2 size={15} style={{ color: C_ACCENT }} />
+          <span className="text-sm font-bold" style={{ color: C_DARK }}>Share</span>
+        </motion.button>
+
         {/* Mobile — SubhSandesh logo top-right, links to home */}
         <div className="lg:hidden fixed top-3 right-3 z-50">
           <motion.a

@@ -111,28 +111,28 @@ const ShaadiBackgroundMusic = memo(function ShaadiBackgroundMusic({
       transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed z-[60] flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+      className="fixed z-[60] flex h-10 w-10 items-center justify-center rounded-2xl transition-colors"
       style={{
-        bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
-        right: 16,
-        background: "rgba(171,28,62,0.18)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: "1px solid rgba(171,28,62,0.28)",
-        boxShadow: "0 2px 12px rgba(171,28,62,0.15)",
+        bottom: "calc(5.2rem + env(safe-area-inset-bottom, 0px))",
+        right: 14,
+        background: "rgba(255,255,255,0.95)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        border: "1px solid rgba(171,28,62,0.14)",
+        boxShadow: "0 4px 16px rgba(109,43,59,0.12)",
       }}
       aria-label={muted ? "Unmute music" : "Mute music"}
     >
       {muted ? (
-        <VolumeX size={16} style={{ color: "rgba(171,28,62,0.7)" }} />
+        <VolumeX size={16} style={{ color: "rgba(171,28,62,0.55)" }} />
       ) : (
         <motion.div
-          animate={paused ? {} : { scale: [1, 1.18, 1] }}
+          animate={paused ? {} : { scale: [1, 1.15, 1] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         >
           <Volume2
             size={16}
-            style={{ color: paused ? "rgba(171,28,62,0.4)" : "rgba(171,28,62,0.85)" }}
+            style={{ color: paused ? "rgba(171,28,62,0.35)" : "rgba(171,28,62,0.80)" }}
           />
         </motion.div>
       )}
