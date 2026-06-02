@@ -243,9 +243,8 @@ export function useLoveEditor() {
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
+    const delay = toast.type === "publish" ? 8000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
   const dismissToast = useCallback((id: number) => {
@@ -528,6 +527,7 @@ export function useLoveEditor() {
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        setEditMode(null);
         try { sessionStorage.removeItem("love_gf_draft"); } catch {}
         pushToast({
           type: "publish",

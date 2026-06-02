@@ -2,16 +2,17 @@
 
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Sparkles, Send, Copy, ExternalLink } from "lucide-react";
+import { X, Check, Sparkles, Send, Copy, ExternalLink, Share2 } from "lucide-react";
 import type { Toast } from "./types";
 
 interface Props {
   toasts: Toast[];
   onDismiss: (id: number) => void;
   onCopy: (url?: string) => void;
+  onShare?: () => void;
 }
 
-export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
+export default memo(function ToastStack({ toasts, onDismiss, onCopy, onShare }: Props) {
   return (
     <div className="fixed top-4 left-0 right-0 z-[60] flex flex-col items-center gap-2 pointer-events-none px-4">
       <AnimatePresence>
@@ -61,18 +62,18 @@ export default memo(function ToastStack({ toasts, onDismiss, onCopy }: Props) {
                     </p>
                   )}
                   {toast.shareUrl && (
-                    <div className="flex gap-2 mt-2.5">
+                    <div className="flex gap-2 mt-2.5 flex-wrap">
+                      <button
+                        onClick={() => { onShare?.(); onDismiss(toast.id); }}
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-white/25 hover:bg-white/35 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Share2 size={12} /> Share ♡
+                      </button>
                       <button
                         onClick={() => { onCopy(toast.shareUrl); onDismiss(toast.id); }}
                         className="flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         <Copy size={12} /> Copy Link
-                      </button>
-                      <button
-                        onClick={() => { window.open(toast.shareUrl, "_blank"); onDismiss(toast.id); }}
-                        className="flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <ExternalLink size={12} /> Open
                       </button>
                     </div>
                   )}

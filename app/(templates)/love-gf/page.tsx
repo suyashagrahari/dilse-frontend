@@ -401,7 +401,7 @@ function LoveGfPageInner() {
 
       <PublishingOverlay visible={editor.publishing} />
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
+      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} onShare={editor.handleShare} />
 
       <AnimatePresence>
         {editor.showAuth && (
