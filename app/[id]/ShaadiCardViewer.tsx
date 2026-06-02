@@ -107,6 +107,7 @@ function mapData(d: Record<string, unknown>): ShaadiData {
       message: b.message || "",
       ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
     })),
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }
 
@@ -941,35 +942,64 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
       {/* ── Main content (offset on desktop) ──────────────────── */}
       <div className="flex-1 min-w-0 lg:ml-56">
 
-        {/* Mobile — floating Share button, above bottom nav */}
-        <motion.button
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
-          onClick={() => {
-            if (typeof navigator !== "undefined" && navigator.share) {
-              navigator.share({ title: `${data.brideName} & ${data.groomName}'s Wedding Invitation`, url: shareUrl }).catch(() => {});
-            } else {
-              navigator.clipboard.writeText(shareUrl);
-            }
-          }}
-          whileTap={{ scale: 0.95 }}
-          className="lg:hidden fixed z-[50] flex items-center gap-2"
+        {/* Mobile — centered Share pill, above bottom nav */}
+        <div
+          className="lg:hidden fixed z-[50]"
           style={{
-            bottom: "calc(5.2rem + env(safe-area-inset-bottom, 0px))",
-            left: 14,
-            padding: "10px 18px",
-            borderRadius: 20,
-            background: "rgba(255,255,255,0.96)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: "1px solid rgba(171,28,62,0.14)",
-            boxShadow: "0 4px 16px rgba(109,43,59,0.12)",
+            bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+            left: "50%",
+            transform: "translateX(-50%)",
+            whiteSpace: "nowrap",
           }}
         >
-          <Share2 size={15} style={{ color: C_ACCENT }} />
-          <span className="text-sm font-bold" style={{ color: C_DARK }}>Share</span>
-        </motion.button>
+          <motion.button
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 22 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={async () => {
+              const title = `${data.brideName} & ${data.groomName}'s Wedding Invitation 💍`;
+              const text = `You're invited! Open to view the full wedding invitation.`;
+              try {
+                if (data.sharePhoto && navigator.share) {
+                  const res = await fetch(data.sharePhoto);
+                  const blob = await res.blob();
+                  const ext = blob.type.includes("png") ? "png" : "jpg";
+                  const file = new File([blob], `invitation.${ext}`, { type: blob.type || "image/jpeg" });
+                  if (navigator.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file], title, text, url: shareUrl });
+                    return;
+                  }
+                }
+                if (navigator.share) {
+                  await navigator.share({ title, text, url: shareUrl });
+                } else {
+                  navigator.clipboard.writeText(shareUrl);
+                }
+              } catch {
+                navigator.clipboard?.writeText(shareUrl);
+              }
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "11px 22px",
+              borderRadius: 50,
+              background: "rgba(255,255,255,0.97)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: `1px solid rgba(171,28,62,0.18)`,
+              boxShadow: "0 6px 24px rgba(109,43,59,0.16), 0 2px 6px rgba(0,0,0,0.06)",
+              cursor: "pointer",
+            }}
+          >
+            <Share2 size={15} style={{ color: C_ACCENT }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: C_DARK, letterSpacing: "0.01em" }}>
+              Share Invitation
+            </span>
+          </motion.button>
+        </div>
 
         {/* Mobile — SubhSandesh logo top-right, links to home */}
         <div className="lg:hidden fixed top-3 right-3 z-50">

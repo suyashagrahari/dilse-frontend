@@ -111,15 +111,15 @@ const ShaadiBackgroundMusic = memo(function ShaadiBackgroundMusic({
       transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed z-[60] flex h-10 w-10 items-center justify-center rounded-2xl transition-colors"
+      className="fixed z-[65] flex h-10 w-10 items-center justify-center rounded-2xl transition-colors"
       style={{
-        bottom: "calc(5.2rem + env(safe-area-inset-bottom, 0px))",
+        bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
         right: 14,
-        background: "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        border: "1px solid rgba(171,28,62,0.14)",
-        boxShadow: "0 4px 16px rgba(109,43,59,0.12)",
+        background: "rgba(255,255,255,0.97)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(171,28,62,0.18)",
+        boxShadow: "0 6px 24px rgba(109,43,59,0.16), 0 2px 6px rgba(0,0,0,0.06)",
       }}
       aria-label={muted ? "Unmute music" : "Mute music"}
     >
