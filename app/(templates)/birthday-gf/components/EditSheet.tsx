@@ -1398,14 +1398,56 @@ export default function EditSheet({
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 10 }}>
-              {ghostBtn("← Back", () => setManualStep(7))}
-              <div style={{ flex: 1 }}>
-                {hasSharePhoto
-                  ? primaryBtn("Next →", () => setManualStep(9))
-                  : ghostBtn("Skip →", () => setManualStep(9))
-                }
-              </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <button
+                onClick={() => setManualStep(7)}
+                style={{
+                  flex: 1, padding: "13px 0", borderRadius: 50,
+                  border: "1.5px solid rgba(93,63,49,0.28)",
+                  background: "rgba(93,63,49,0.06)",
+                  fontFamily: CURSIVE, fontSize: 15, fontWeight: 600,
+                  color: "rgba(93,63,49,0.65)", cursor: "pointer",
+                  letterSpacing: "0.02em",
+                  boxShadow: "0 2px 8px rgba(93,63,49,0.07)",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+              >
+                ← Back
+              </button>
+
+              {hasSharePhoto
+                ? (
+                  <button
+                    onClick={() => setManualStep(9)}
+                    style={{
+                      flex: 1, padding: "13px 0", borderRadius: 50, border: "none",
+                      background: "linear-gradient(135deg, #AD684A 0%, #5D3F31 100%)",
+                      fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "#fff",
+                      cursor: "pointer", letterSpacing: "0.03em",
+                      boxShadow: "0 4px 16px rgba(93,63,49,0.30)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                  >
+                    Next →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setManualStep(9)}
+                    style={{
+                      flex: 1, padding: "13px 0", borderRadius: 50,
+                      border: "1.5px solid rgba(173,104,74,0.40)",
+                      background: "linear-gradient(135deg, rgba(173,104,74,0.10) 0%, rgba(93,63,49,0.06) 100%)",
+                      fontFamily: CURSIVE, fontSize: 15, fontWeight: 600,
+                      color: TERRACOTTA, cursor: "pointer",
+                      letterSpacing: "0.02em",
+                      boxShadow: "0 2px 10px rgba(173,104,74,0.12)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                  >
+                    Skip →
+                  </button>
+                )
+              }
             </div>
           </div>
         </div>
