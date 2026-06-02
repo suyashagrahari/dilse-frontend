@@ -15,7 +15,7 @@ const ROSE_GRADIENT = `linear-gradient(135deg, ${C_ACCENT}, ${C_MED})`;
 const VIOLET_GRADIENT = "linear-gradient(135deg, #8B5CF6, #7C3AED)";
 
 const GALLERY_SPANS = ["col-span-2 row-span-2", "", "", "col-span-2", "", ""];
-const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions", "Password"];
+const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions", "Share Photo", "Password"];
 
 const MONTH_MAP: Record<string, number> = {
   jan: 0, january: 0,
@@ -523,7 +523,7 @@ function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onP
   pagePassword: string; setPagePassword: (v: string) => void;
 }) {
   const canAdvance = manualStep === 0 ? !!(mf.brideName.trim() || mf.groomName.trim()) : true;
-  const isPasswordStep = manualStep === 5;
+  const isPasswordStep = manualStep === 6;
 
   return (
     <div className="px-5 pb-8 pt-2">
@@ -555,7 +555,8 @@ function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onP
         {manualStep === 2 && <EventsStep key="s2" mf={mf} updateMf={updateMf} />}
         {manualStep === 3 && <GalleryStep key="s3" mf={mf} updateMf={updateMf} />}
         {manualStep === 4 && <DescriptionsStep key="s4" mf={mf} updateMf={updateMf} />}
-        {manualStep === 5 && <ManualPasswordStep key="s5" password={pagePassword} setPassword={setPagePassword} />}
+        {manualStep === 5 && <SharePhotoStep key="s5" mf={mf} updateMf={updateMf} />}
+        {manualStep === 6 && <ManualPasswordStep key="s6" password={pagePassword} setPassword={setPagePassword} />}
       </AnimatePresence>
 
       <div className="flex gap-3 mt-6">
@@ -1170,11 +1171,81 @@ function DescriptionsStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyo
   );
 }
 
-// ── Step 5: Password ───────────────────────────────────────────────────────────
+// ── Step 5: Share Photo ────────────────────────────────────────────────────────
+function SharePhotoStep({ mf, updateMf }: { mf: ShaadiData; updateMf: (k: keyof ShaadiData, v: unknown) => void }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const hasPhoto = !!mf.sharePhoto;
+
+  return (
+    <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <div>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          Add a photo your guests will see the moment they open your invitation link — make it memorable ✨
+        </p>
+
+        <input ref={fileRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => updateMf("sharePhoto", ev.target?.result as string);
+            reader.readAsDataURL(f);
+            e.target.value = "";
+          }}
+        />
+
+        {!hasPhoto ? (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border-2 border-dashed cursor-pointer hover:bg-muted/10 transition-colors"
+            style={{ borderColor: "#546B5755", background: "#F0F4F130" }}
+          >
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ background: "#546B5715", border: "1px solid #546B5730" }}>📸</div>
+            <div className="text-center">
+              <p className="text-sm font-semibold" style={{ color: "#2D4A30" }}>Tap to add your photo</p>
+              <p className="text-xs mt-1" style={{ color: "#546B5780" }}>jpg, png, webp · max 20MB</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Preview — how it looks to guests</p>
+            <div className="rounded-2xl overflow-hidden shadow-md" style={{ border: "1px solid #546B5730", background: "#F5F8F5" }}>
+              <div className="h-1" style={{ background: "linear-gradient(90deg, #546B57, #2D4A30, #546B57)" }} />
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 shadow-sm" style={{ border: "2px solid #546B5740" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={mf.sharePhoto!} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: "#2D4A30" }}>💒 Wedding Invitation</p>
+                    <p className="text-xs mt-1" style={{ color: "#546B57" }}>{mf.brideName && mf.groomName ? `${mf.brideName} & ${mf.groomName}` : "A beautiful couple"} invite you to share in their joy</p>
+                  </div>
+                </div>
+                <div className="h-px mb-3" style={{ background: "#546B5720" }} />
+                <p className="text-xs mb-3 leading-relaxed" style={{ color: "#546B57" }}>We joyfully invite you to celebrate our marriage. Your presence and blessings would be our greatest gift. ✝️</p>
+                <div className="rounded-full px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #546B57, #2D4A30)" }}>
+                  <span className="text-xs" style={{ color: "rgba(240,248,240,0.90)" }}>🔗 subhsandesh.in/...</span>
+                  <span className="text-xs" style={{ color: "rgba(240,248,240,0.65)" }}>Tap to open ↗</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <button onClick={() => fileRef.current?.click()} className="text-xs border rounded-full px-4 py-1.5 hover:bg-muted/20 transition-colors" style={{ color: "#2D4A30", borderColor: "#546B5750" }}>Change photo</button>
+              <button onClick={() => updateMf("sharePhoto", "")} className="text-xs text-muted-foreground border border-border/50 rounded-full px-4 py-1.5 hover:bg-muted/30 transition-colors">Remove</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 6: Password ───────────────────────────────────────────────────────────
 function ManualPasswordStep({ password, setPassword }: { password: string; setPassword: (v: string) => void }) {
   const [showPw, setShowPw] = useState(false);
   return (
-    <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+    <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
       <div className="flex items-center gap-3 p-4 rounded-2xl border" style={{ background: `${C_ACCENT}06`, borderColor: `${C_ACCENT}20` }}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${C_ACCENT}15` }}>
           <ShieldCheck size={18} style={{ color: C_ACCENT }} />

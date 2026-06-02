@@ -31,7 +31,7 @@ const TEXTAREA_STYLE: React.CSSProperties = {
   ...INPUT_STYLE, resize: "vertical" as const, minHeight: 90, lineHeight: 1.6,
 };
 
-const STEP_LABELS = ["Names", "Message", "Wish", "Photos", "Gallery", "Quiz", "Games", "Finish"];
+const STEP_LABELS = ["Names", "Message", "Wish", "Photos", "Gallery", "Quiz", "Games", "Share", "Finish"];
 
 // ── Pre-made Truth/Dare libraries ────────────────────────────────────────────
 
@@ -176,6 +176,7 @@ export default function EditSheet({
   const [showQuizLibrary, setShowQuizLibrary] = useState(false);
   const darePhotoRef = useRef<HTMLInputElement | null>(null);
   const dareAudioRef = useRef<HTMLInputElement | null>(null);
+  const sharePhotoRef = useRef<HTMLInputElement | null>(null);
   const [dareMediaTarget, setDareMediaTarget] = useState<string | null>(null);
 
   if (!editMode || editMode === "preview" || editMode === "password") return null;
@@ -1481,8 +1482,152 @@ export default function EditSheet({
       );
     }
 
-    // Step 7: Password + Save
-    if (manualStep === 7) return (
+    // Step 7: Share Photo
+    if (manualStep === 7) {
+      const hasSharePhoto = !!mf.sharePhoto;
+      return (
+        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+          <div style={sheet}>
+            {hdr("Share Photo 📸")}
+            {progressBar}
+
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgb(130,95,65)", marginBottom: 20, lineHeight: 1.6 }}>
+              Add a photo that {mf.recipientName ? `${mf.recipientName} will see` : "they'll see"} the moment they open your link — make it unforgettable ✨
+            </p>
+
+            <input
+              ref={sharePhotoRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => updateMf("sharePhoto", ev.target?.result as string);
+                  reader.readAsDataURL(f);
+                }
+                e.target.value = "";
+              }}
+            />
+
+            {!hasSharePhoto ? (
+              <div
+                onClick={() => sharePhotoRef.current?.click()}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: "center", gap: 14, height: 186,
+                  borderRadius: 20, border: "2px dashed rgba(158,126,97,0.35)",
+                  background: "rgba(245,235,220,0.45)", cursor: "pointer",
+                  marginBottom: 24,
+                }}
+              >
+                <div style={{
+                  width: 68, height: 68, borderRadius: "50%",
+                  background: "rgba(158,126,97,0.10)",
+                  border: "1.5px solid rgba(158,126,97,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 30,
+                }}>📸</div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontFamily: CURSIVE, fontSize: 16, fontWeight: 700, color: WARM, margin: 0 }}>
+                    Tap to add your photo
+                  </p>
+                  <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(108,74,46,0.45)", margin: "5px 0 0" }}>
+                    jpg, png, webp · max 20MB
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontFamily: CURSIVE, fontSize: 11, color: "rgba(108,74,46,0.40)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>
+                  Preview — how it looks to them
+                </p>
+                <div style={{ borderRadius: 20, background: "rgba(252,245,238,0.98)", border: "1px solid rgba(158,126,97,0.22)", boxShadow: "0 8px 28px rgba(108,74,46,0.13)", overflow: "hidden" }}>
+                  <div style={{ height: 4, background: "linear-gradient(90deg, #C9956A, #8B5E3C, #C9956A)" }} />
+                  <div style={{ padding: "16px 18px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                      <div style={{ width: 76, height: 76, borderRadius: "50%", overflow: "hidden", border: "3px solid rgba(158,126,97,0.30)", flexShrink: 0, boxShadow: "0 4px 16px rgba(108,74,46,0.18)" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={mf.sharePhoto!} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: WARM, margin: 0, lineHeight: 1.2 }}>
+                          💕 A surprise for you!
+                        </p>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", margin: "5px 0 0", lineHeight: 1.5 }}>
+                          {mf.recipientName ? `${mf.recipientName}, ` : ""}someone made you something special ✨
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ height: 1, background: "rgba(158,126,97,0.14)", marginBottom: 12 }} />
+                    <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgb(130,95,65)", margin: "0 0 12px", lineHeight: 1.6 }}>
+                      {mf.senderName || "Someone special"} made you a love page full of memories & surprises. Open it now! 💌
+                    </p>
+                    <div style={{ borderRadius: 999, background: "linear-gradient(135deg, #C9956A, #8B5E3C)", padding: "9px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(255,248,240,0.88)" }}>🔗 subhsandesh.in/...</span>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,248,240,0.65)" }}>Tap to open ↗</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "center" }}>
+                  <button onClick={() => sharePhotoRef.current?.click()} style={{ fontFamily: CURSIVE, fontSize: 13, color: WARM, background: "none", border: "1px solid rgba(158,126,97,0.35)", borderRadius: 999, padding: "5px 16px", cursor: "pointer" }}>Change photo</button>
+                  <button onClick={() => updateMf("sharePhoto", "")} style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(108,74,46,0.42)", background: "none", border: "1px solid rgba(108,74,46,0.18)", borderRadius: 999, padding: "5px 16px", cursor: "pointer" }}>Remove</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setManualStep(6)}
+                style={{
+                  flex: 1, padding: "13px 0", borderRadius: 50,
+                  border: "1.5px solid rgba(158,126,97,0.28)",
+                  background: "rgba(158,126,97,0.06)",
+                  fontFamily: CURSIVE, fontSize: 15, fontWeight: 600,
+                  color: "rgba(108,74,46,0.65)", cursor: "pointer",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                ← Back
+              </button>
+              {hasSharePhoto ? (
+                <button
+                  onClick={() => setManualStep(8)}
+                  style={{
+                    flex: 1, padding: "13px 0", borderRadius: 50, border: "none",
+                    background: "linear-gradient(135deg, #C9956A 0%, #8B5E3C 100%)",
+                    fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: "#fff",
+                    cursor: "pointer", letterSpacing: "0.03em",
+                    boxShadow: "0 4px 16px rgba(108,74,46,0.30)",
+                  }}
+                >
+                  Next →
+                </button>
+              ) : (
+                <button
+                  onClick={() => setManualStep(8)}
+                  style={{
+                    flex: 1, padding: "13px 0", borderRadius: 50,
+                    border: "1.5px solid rgba(158,126,97,0.40)",
+                    background: "linear-gradient(135deg, rgba(158,126,97,0.10) 0%, rgba(108,74,46,0.06) 100%)",
+                    fontFamily: CURSIVE, fontSize: 15, fontWeight: 600,
+                    color: WARM, cursor: "pointer",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 2px 10px rgba(158,126,97,0.12)",
+                  }}
+                >
+                  Skip →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 8: Password + Save
+    if (manualStep === 8) return (
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
           {hdr("Save your page ♡")}
@@ -1529,7 +1674,7 @@ export default function EditSheet({
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            {ghostBtn("← Back", () => setManualStep(6))}
+            {ghostBtn("← Back", () => setManualStep(7))}
             {primaryBtn(
               saving ? "Saving..." : "Save & Preview ♡",
               () => onSaveWithPassword({ ...mf }, pw),

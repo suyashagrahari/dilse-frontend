@@ -70,6 +70,7 @@ export interface WeddingData {
   events: WeddingEvent[];
   galleryImages: { src: string; alt: string; span: string }[];
   wishes: Wish[];
+  sharePhoto?: string;
 }
 
 export const DEMO_DATA: WeddingData = {

@@ -11,7 +11,7 @@ import type { WeddingData, EditMode, WeddingEvent } from "./types";
 import { GOLD_GRADIENT, AMBER_GRADIENT } from "./styles";
 
 const GALLERY_SPANS = ["col-span-2 row-span-2", "", "", "col-span-2", "", ""];
-const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions", "Password"];
+const MANUAL_STEPS = ["Names & Photos", "Details", "Events", "Gallery", "Descriptions", "Share Photo", "Password"];
 
 const MONTH_MAP: Record<string, number> = {
   jan: 0, january: 0,
@@ -473,7 +473,7 @@ function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onP
   pagePassword: string; setPagePassword: (v: string) => void;
 }) {
   const canAdvance = manualStep === 0 ? !!(mf.brideName.trim() || mf.groomName.trim()) : true;
-  const isPasswordStep = manualStep === 5;
+  const isPasswordStep = manualStep === 6;
 
   return (
     <div className="px-5 pb-8 pt-2">
@@ -502,7 +502,8 @@ function ManualPanel({ setEditMode, mf, manualStep, setManualStep, updateMf, onP
         {manualStep === 2 && <EventsStep key="s2" mf={mf} updateMf={updateMf} />}
         {manualStep === 3 && <GalleryStep key="s3" mf={mf} updateMf={updateMf} />}
         {manualStep === 4 && <DescriptionsStep key="s4" mf={mf} updateMf={updateMf} />}
-        {manualStep === 5 && <ManualPasswordStep key="s5" password={pagePassword} setPassword={setPagePassword} />}
+        {manualStep === 5 && <SharePhotoStep key="s5" mf={mf} updateMf={updateMf} />}
+        {manualStep === 6 && <ManualPasswordStep key="s6" password={pagePassword} setPassword={setPagePassword} />}
       </AnimatePresence>
 
       <div className="flex gap-3 mt-6">
@@ -841,7 +842,76 @@ function DescriptionsStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: key
   );
 }
 
-// ── Step 5: Password (optional) ────────────────────────────────────────────────
+// ── Step 5: Share Photo ────────────────────────────────────────────────────────
+function SharePhotoStep({ mf, updateMf }: { mf: WeddingData; updateMf: (k: keyof WeddingData, v: unknown) => void }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const hasPhoto = !!mf.sharePhoto;
+
+  return (
+    <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+      <div>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          Add a photo that your guests will see the moment they open your invitation link — make it memorable ✨
+        </p>
+
+        <input ref={fileRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => updateMf("sharePhoto", ev.target?.result as string);
+            reader.readAsDataURL(f);
+            e.target.value = "";
+          }}
+        />
+
+        {!hasPhoto ? (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border-2 border-dashed border-amber-400/40 bg-amber-50/30 cursor-pointer hover:bg-amber-50/50 transition-colors"
+          >
+            <div className="w-16 h-16 rounded-full bg-amber-100/60 border border-amber-300/40 flex items-center justify-center text-3xl">📸</div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-amber-800">Tap to add your photo</p>
+              <p className="text-xs text-amber-600/60 mt-1">jpg, png, webp · max 20MB</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Preview — how it looks to guests</p>
+            <div className="rounded-2xl overflow-hidden border border-amber-300/30 shadow-md bg-amber-50/50">
+              <div className="h-1" style={{ background: "linear-gradient(90deg, #D4AF37, #8B7536, #D4AF37)" }} />
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-300/50 flex-shrink-0 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={mf.sharePhoto!} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">💍 Wedding Invitation</p>
+                    <p className="text-xs text-amber-700/70 mt-1">{mf.brideName && mf.groomName ? `${mf.brideName} & ${mf.groomName}` : "A beautiful couple"} request the honour of your presence</p>
+                  </div>
+                </div>
+                <div className="h-px bg-amber-300/20 mb-3" />
+                <p className="text-xs text-amber-700/60 mb-3 leading-relaxed">Join us to celebrate as we begin our journey together. Your presence would make our day complete. 🌸</p>
+                <div className="rounded-full px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #D4AF37, #8B7536)" }}>
+                  <span className="text-xs text-amber-100/90">🔗 subhsandesh.in/...</span>
+                  <span className="text-xs text-amber-100/60">Tap to open ↗</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <button onClick={() => fileRef.current?.click()} className="text-xs text-amber-700 border border-amber-300/50 rounded-full px-4 py-1.5 hover:bg-amber-50 transition-colors">Change photo</button>
+              <button onClick={() => updateMf("sharePhoto", "")} className="text-xs text-muted-foreground border border-border/50 rounded-full px-4 py-1.5 hover:bg-muted/30 transition-colors">Remove</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 6: Password (optional) ────────────────────────────────────────────────
 function ManualPasswordStep({ password, setPassword }: { password: string; setPassword: (v: string) => void }) {
   const [showPw, setShowPw] = useState(false);
   return (

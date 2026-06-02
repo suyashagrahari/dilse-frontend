@@ -74,6 +74,7 @@ export interface ShaadiData {
   events: WeddingEvent[];
   galleryImages: { src: string; alt: string; span: string }[];
   wishes: Wish[];
+  sharePhoto?: string;
 }
 
 // Re-export as WeddingData for hooks compatibility

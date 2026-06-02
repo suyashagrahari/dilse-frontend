@@ -83,6 +83,7 @@ export interface ContentData {
   truthDareQuestions: TruthDareItem[];
   spinItems: string[];
   musicTracks: MusicTrack[];
+  sharePhoto?: string;
 }
 
 export function loveGfUsesCircleOnly(data: Pick<ContentData, "homeCoverPhoto">): boolean {
@@ -160,4 +161,5 @@ export const DEMO_CONTENT: ContentData = {
     { title: "Until I Found Her", artist: "Michael Bublé",   duration: "3:32", src: "/assets/LoveGf/music/untillifoundher.mp3" },
     { title: "Lover",             artist: "Taylor Swift",    duration: "3:41", src: "/assets/LoveGf/music/lover.mp3" },
   ],
+  sharePhoto: "",
 };

@@ -45,6 +45,7 @@ export interface ReceptionData {
   families: { bride: string; groom: string };
   galleryImages: { src: string; alt: string; span: string; category: string }[];
   wishes: Wish[];
+  sharePhoto?: string;
 }
 
 export const DEMO_DATA: ReceptionData = {
