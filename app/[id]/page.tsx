@@ -11,6 +11,7 @@ interface SharePageData {
     recipientName?: string;
     senderName?: string;
     createdAt?: string;
+    sharePhoto?: string;
   };
 }
 
@@ -49,8 +50,14 @@ export async function generateMetadata({
     shareId,
   });
 
+  const sharePhoto = result.data.sharePhoto;
+  const ogOverride = sharePhoto && sharePhoto.startsWith("http")
+    ? { openGraph: { ...(meta.openGraph as object), images: [{ url: sharePhoto, width: 800, height: 800, alt: `Birthday surprise for ${result.data.recipientName || "You"}` }] }, twitter: { ...(meta.twitter as object), images: [sharePhoto] } }
+    : {};
+
   return {
     ...meta,
+    ...ogOverride,
     alternates: { canonical: `${SITE_URL}/${shareId}` },
   };
 }

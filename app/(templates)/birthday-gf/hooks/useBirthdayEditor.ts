@@ -108,6 +108,7 @@ export function useBirthdayEditor() {
               truthDareQuestions: d.truthDareQuestions || [],
               surprisePhoto:      d.surprisePhoto      || "",
               surpriseAudioUrl:   d.surpriseAudioUrl   || "",
+              sharePhoto:         d.sharePhoto         || "",
             }));
             setPageId(id);
             setIsPersonalized(true);
@@ -180,6 +181,7 @@ export function useBirthdayEditor() {
       truthDareQuestions: data.truthDareQuestions || [],
       surprisePhoto:      data.surprisePhoto      || "",
       surpriseAudioUrl:   data.surpriseAudioUrl   || "",
+      sharePhoto:         data.sharePhoto         || "",
       password:           password || "",
     };
 
@@ -329,6 +331,7 @@ export function useBirthdayEditor() {
         truthDareQuestions: data.truthDareQuestions || [],
         surprisePhoto:      data.surprisePhoto      || "",
         surpriseAudioUrl:   data.surpriseAudioUrl   || "",
+        sharePhoto:         data.sharePhoto         || "",
         password:           password || "",
       };
       if (pageId) {
@@ -493,6 +496,7 @@ export function useBirthdayEditor() {
           truthDareQuestions: content.truthDareQuestions || [],
           surprisePhoto:      content.surprisePhoto      || "",
           surpriseAudioUrl:   content.surpriseAudioUrl   || "",
+          sharePhoto:         content.sharePhoto         || "",
           password:           pagePassword || "",
         };
         const res = await fetch(`${API_URL}/birthday-gf-pages`, {

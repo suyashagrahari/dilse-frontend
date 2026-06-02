@@ -99,6 +99,7 @@ function rawToBirthdayData(raw: Record<string, unknown>): BirthdayData {
       [],
     surprisePhoto: String(raw.surprisePhoto ?? ""),
     surpriseAudioUrl: String(raw.surpriseAudioUrl ?? ""),
+    sharePhoto: String(raw.sharePhoto ?? ""),
   };
 }
 
@@ -516,6 +517,7 @@ export default function BirthdayGfViewer({
         <BirthdayWelcomeOverlay
           recipientName={data.recipientName}
           senderName={data.senderName}
+          sharePhoto={data.sharePhoto}
           onEnter={handleWelcomeEnter}
         />
       )}

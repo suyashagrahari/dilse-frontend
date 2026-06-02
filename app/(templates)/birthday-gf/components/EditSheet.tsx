@@ -29,7 +29,7 @@ const TEXTAREA_STYLE: React.CSSProperties = {
   ...INPUT_STYLE, resize: "vertical" as const, minHeight: 90, lineHeight: 1.6,
 };
 
-const STEP_LABELS = ["Names", "Messages", "Photos", "Gallery", "Music", "Quiz", "Truth & Dare", "Surprise", "Save"];
+const STEP_LABELS = ["Names", "Messages", "Photos", "Gallery", "Music", "Quiz", "Truth & Dare", "Surprise", "Share", "Save"];
 
 const DEFAULT_QUIZ: QuizQuestion[] = [
   { question: "What is the birthday person's favourite colour?", options: ["Pink", "Blue", "Green", "Purple"], correct: 0 },
@@ -295,6 +295,7 @@ export default function EditSheet({
   const homePhoto1Ref = useRef<HTMLInputElement | null>(null);
   const homePhoto2Ref = useRef<HTMLInputElement | null>(null);
   const galleryFileRef = useRef<HTMLInputElement | null>(null);
+  const sharePhotoRef = useRef<HTMLInputElement | null>(null);
 
   const [pw, setPw] = useState("");
   const [quizEditIdx, setQuizEditIdx] = useState<number | null>(null);
@@ -451,6 +452,17 @@ export default function EditSheet({
   // ── Photo upload helpers ────────────────────────────────────────────────────
   // (handlePhotoFile, handlePhotoModalConfirm, openPhotoEditModal, handleGalleryFile,
   //  handleGalleryModalConfirm are declared before the early return above)
+
+  // ── Share photo helper ──────────────────────────────────────────────────────
+
+  const handleSharePhotoFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      updateMf("sharePhoto", dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // ── Gallery helpers ─────────────────────────────────────────────────────────
 
@@ -1240,8 +1252,168 @@ export default function EditSheet({
       </div>
     );
 
-    // ── Step 8: Password + Save ───────────────────────────────────────────
-    if (manualStep === 8) return (
+    // ── Step 8: Share Photo ───────────────────────────────────────────────────
+    if (manualStep === 8) {
+      const hasSharePhoto = !!mf.sharePhoto;
+      return (
+        <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
+          <div style={sheet}>
+            {hdr("Share Photo 📸")}
+            {progressBar}
+
+            <p style={{ fontFamily: CURSIVE, fontSize: 14, color: "rgba(93,63,49,0.70)", marginBottom: 20, lineHeight: 1.6 }}>
+              Add a photo that {mf.recipientName ? `${mf.recipientName} will see` : "they'll see"} the moment they open your surprise link — make it unforgettable ✨
+            </p>
+
+            <input ref={sharePhotoRef} type="file" accept="image/*" style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleSharePhotoFile(f);
+                e.target.value = "";
+              }}
+            />
+
+            {!hasSharePhoto ? (
+              /* ── Empty upload slot ── */
+              <div
+                onClick={() => sharePhotoRef.current?.click()}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: "center", gap: 14, height: 186,
+                  borderRadius: 20, border: "2px dashed rgba(173,104,74,0.38)",
+                  background: "rgba(245,237,224,0.55)", cursor: "pointer",
+                  marginBottom: 20, transition: "background 0.2s",
+                }}
+              >
+                <div style={{
+                  width: 68, height: 68, borderRadius: "50%",
+                  background: "rgba(173,104,74,0.12)",
+                  border: "1.5px solid rgba(173,104,74,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 30,
+                }}>
+                  📸
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontFamily: CURSIVE, fontSize: 16, fontWeight: 700, color: BROWN, margin: 0 }}>
+                    Tap to add your photo
+                  </p>
+                  <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(93,63,49,0.45)", margin: "5px 0 0" }}>
+                    jpg, png, webp · max 20MB
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* ── Preview card ── */
+              <div style={{ marginBottom: 20 }}>
+                <p style={{
+                  fontFamily: CURSIVE, fontSize: 11, color: "rgba(93,63,49,0.40)",
+                  letterSpacing: "0.09em", textTransform: "uppercase" as const,
+                  marginBottom: 10, textAlign: "center" as const,
+                }}>
+                  Preview — how it looks to them
+                </p>
+
+                <div style={{
+                  borderRadius: 20,
+                  background: "rgba(252,248,242,0.98)",
+                  border: "1px solid rgba(173,104,74,0.20)",
+                  boxShadow: "0 8px 28px rgba(93,63,49,0.13)",
+                  overflow: "hidden",
+                }}>
+                  {/* Top accent bar */}
+                  <div style={{ height: 4, background: "linear-gradient(90deg, #AD684A, #5D3F31, #AD684A)" }} />
+
+                  <div style={{ padding: "16px 18px" }}>
+                    {/* Photo + heading row */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                      <div style={{
+                        width: 76, height: 76, borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "3px solid rgba(173,104,74,0.30)",
+                        flexShrink: 0,
+                        boxShadow: "0 4px 16px rgba(93,63,49,0.22)",
+                      }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={mf.sharePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 17, fontWeight: 700, color: BROWN, margin: 0, lineHeight: 1.2 }}>
+                          🎂 Birthday Surprise!
+                        </p>
+                        <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.60)", margin: "5px 0 0", lineHeight: 1.5 }}>
+                          {mf.recipientName ? `${mf.recipientName}, ` : ""}someone made you something special 🎉
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ height: 1, background: "rgba(173,104,74,0.14)", marginBottom: 12 }} />
+
+                    {/* Message */}
+                    <p style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.55)", margin: "0 0 12px", lineHeight: 1.6 }}>
+                      {mf.senderName || "Someone special"} made you a birthday page full of love, memories &amp; surprises. Open it now! 🎁
+                    </p>
+
+                    {/* Link pill */}
+                    <div style={{
+                      borderRadius: 999,
+                      background: "linear-gradient(135deg, #AD684A, #5D3F31)",
+                      padding: "9px 16px",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 13, color: "rgba(252,248,242,0.88)" }}>
+                        🔗 subhsandesh.in/...
+                      </span>
+                      <span style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(252,248,242,0.65)" }}>
+                        Tap to open ↗
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Change / Remove */}
+                <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "center" }}>
+                  <button
+                    onClick={() => sharePhotoRef.current?.click()}
+                    style={{
+                      fontFamily: CURSIVE, fontSize: 13, color: TERRACOTTA,
+                      background: "none", border: "1px solid rgba(173,104,74,0.35)",
+                      borderRadius: 999, padding: "5px 16px", cursor: "pointer",
+                    }}
+                  >
+                    Change photo
+                  </button>
+                  <button
+                    onClick={() => updateMf("sharePhoto", "")}
+                    style={{
+                      fontFamily: CURSIVE, fontSize: 13, color: "rgba(93,63,49,0.42)",
+                      background: "none", border: "1px solid rgba(93,63,49,0.18)",
+                      borderRadius: 999, padding: "5px 16px", cursor: "pointer",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              {ghostBtn("← Back", () => setManualStep(7))}
+              <div style={{ flex: 1 }}>
+                {hasSharePhoto
+                  ? primaryBtn("Next →", () => setManualStep(9))
+                  : ghostBtn("Skip →", () => setManualStep(9))
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Step 9: Password + Save ───────────────────────────────────────────
+    if (manualStep === 9) return (
       <div style={overlay} onClick={(e) => e.target === e.currentTarget && setEditMode(null)}>
         <div style={sheet}>
           {hdr("Save Your Page 🎂")}
@@ -1261,7 +1433,7 @@ export default function EditSheet({
               </p>
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-              {ghostBtn("← Back", () => setManualStep(7))}
+              {ghostBtn("← Back", () => setManualStep(8))}
               {primaryBtn(saving ? "Saving..." : "Save & Preview 🎂", () => onSaveWithPassword(mf, pw), saving)}
             </div>
           </div>

@@ -62,6 +62,7 @@ export interface BirthdayData {
   truthDareQuestions: TruthDareItem[];
   surprisePhoto: string;
   surpriseAudioUrl: string;
+  sharePhoto: string;
 }
 
 export type EditMode =
@@ -140,4 +141,5 @@ export const DEMO_DATA: BirthdayData = {
   ],
   surprisePhoto: "",
   surpriseAudioUrl: "",
+  sharePhoto: "",
 };

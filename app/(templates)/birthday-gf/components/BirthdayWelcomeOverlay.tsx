@@ -13,6 +13,7 @@ const SERIF = "'Cormorant Garamond', Georgia, serif";
 interface Props {
   senderName: string;
   recipientName: string;
+  sharePhoto?: string;
   onEnter: (playMusic: boolean) => void;
 }
 
@@ -30,6 +31,7 @@ const FLOATIES = [
 const BirthdayWelcomeOverlay = memo(function BirthdayWelcomeOverlay({
   senderName,
   recipientName,
+  sharePhoto,
   onEnter,
 }: Props) {
   const [exiting, setExiting] = useState(false);
@@ -114,27 +116,49 @@ const BirthdayWelcomeOverlay = memo(function BirthdayWelcomeOverlay({
               marginBottom: 28,
             }} />
 
-            {/* Cake icon */}
+            {/* Photo or cake icon */}
             <motion.div
               initial={{ scale: 0, rotate: -15 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.28 }}
               style={{ marginBottom: 18 }}
             >
-              <motion.div
-                animate={{ scale: [1, 1.10, 1] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  width: 72, height: 72, borderRadius: "50%",
-                  background: `rgba(173,104,74,0.10)`,
-                  border: `1.5px solid rgba(173,104,74,0.22)`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto",
-                  boxShadow: `0 0 32px rgba(173,104,74,0.22)`,
-                }}
-              >
-                <span style={{ fontSize: 36, lineHeight: 1 }}>🎂</span>
-              </motion.div>
+              {sharePhoto ? (
+                <motion.div
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ margin: "0 auto", width: 90, height: 90 }}
+                >
+                  <div style={{
+                    width: 90, height: 90, borderRadius: "50%",
+                    overflow: "hidden",
+                    border: `3px solid rgba(173,104,74,0.40)`,
+                    boxShadow: `0 0 0 5px rgba(173,104,74,0.12), 0 8px 32px rgba(93,63,49,0.28)`,
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={sharePhoto}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ scale: [1, 1.10, 1] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    width: 72, height: 72, borderRadius: "50%",
+                    background: `rgba(173,104,74,0.10)`,
+                    border: `1.5px solid rgba(173,104,74,0.22)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    margin: "0 auto",
+                    boxShadow: `0 0 32px rgba(173,104,74,0.22)`,
+                  }}
+                >
+                  <span style={{ fontSize: 36, lineHeight: 1 }}>🎂</span>
+                </motion.div>
+              )}
             </motion.div>
 
             {/* "A birthday surprise for" tag */}
