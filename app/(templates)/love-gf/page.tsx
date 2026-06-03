@@ -269,19 +269,27 @@ function LoveGfPageInner() {
               style={{
                 padding: "8px 16px",
                 borderRadius: 999,
-                border: "none",
+                border: editor.showShare
+                  ? "1px solid rgba(158,126,97,0.20)"
+                  : "none",
                 background: editor.showPublish
                   ? "linear-gradient(135deg, rgb(158,126,97) 0%, rgb(120,85,55) 100%)"
                   : editor.showShare
-                    ? "rgba(108,74,46,0.10)"
+                    ? "rgba(250, 246, 240, 0.92)"
                     : "rgba(180, 60, 80, 0.92)",
+                backdropFilter: editor.showShare ? "blur(10px)" : undefined,
+                WebkitBackdropFilter: editor.showShare ? "blur(10px)" : undefined,
                 color: editor.showShare ? WARM : "#fff",
                 fontFamily: CURSIVE,
                 fontSize: 14,
                 fontWeight: 700,
                 cursor: "pointer",
                 letterSpacing: "0.02em",
-                boxShadow: editor.showPublish ? "0 6px 18px rgba(108,74,46,0.35)" : "none",
+                boxShadow: editor.showPublish
+                  ? "0 6px 18px rgba(108,74,46,0.35)"
+                  : editor.showShare
+                    ? "0 4px 16px rgba(40,20,8,0.18)"
+                    : "none",
               }}
             >
               {topAction.label}
