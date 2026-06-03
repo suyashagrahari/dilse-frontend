@@ -10,6 +10,7 @@ const WARM_DIM = "rgba(108, 74, 46, 0.60)";
 interface LoveWelcomeOverlayProps {
   senderName: string;
   recipientName: string;
+  sharePhoto?: string;
   onEnter: (playMusic: boolean) => void;
 }
 
@@ -25,6 +26,7 @@ const PETALS = [
 const LoveWelcomeOverlay = memo(function LoveWelcomeOverlay({
   senderName,
   recipientName,
+  sharePhoto,
   onEnter,
 }: LoveWelcomeOverlayProps) {
   const [exiting, setExiting] = useState(false);
@@ -95,27 +97,49 @@ const LoveWelcomeOverlay = memo(function LoveWelcomeOverlay({
               borderRadius: "24px 24px 0 0",
             }} />
 
-            {/* Heart icon */}
+            {/* Share photo or fallback heart */}
             <motion.div
               style={{ marginBottom: 16 }}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.25 }}
             >
-              <motion.div
-                animate={{ scale: [1, 1.12, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  width: 68, height: 68, borderRadius: "50%",
-                  background: "rgba(158,126,97,0.10)",
-                  border: "1.5px solid rgba(158,126,97,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto",
-                  boxShadow: "0 0 28px rgba(158,126,97,0.20)",
-                }}
-              >
-                <span style={{ fontSize: 34, lineHeight: 1 }}>💕</span>
-              </motion.div>
+              {sharePhoto ? (
+                <motion.div
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ margin: "0 auto", width: 90, height: 90 }}
+                >
+                  <div style={{
+                    width: 90, height: 90, borderRadius: "50%",
+                    overflow: "hidden",
+                    border: "3px solid rgba(158,126,97,0.40)",
+                    boxShadow: "0 0 0 5px rgba(158,126,97,0.12), 0 8px 32px rgba(108,74,46,0.28)",
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={sharePhoto}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ scale: [1, 1.12, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    width: 68, height: 68, borderRadius: "50%",
+                    background: "rgba(158,126,97,0.10)",
+                    border: "1.5px solid rgba(158,126,97,0.22)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    margin: "0 auto",
+                    boxShadow: "0 0 28px rgba(158,126,97,0.20)",
+                  }}
+                >
+                  <span style={{ fontSize: 34, lineHeight: 1 }}>💕</span>
+                </motion.div>
+              )}
             </motion.div>
 
             {/* "A love page for" tag */}

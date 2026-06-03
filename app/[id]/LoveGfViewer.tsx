@@ -326,6 +326,7 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         <LoveWelcomeOverlay
           senderName={content.senderName}
           recipientName={content.recipientName}
+          sharePhoto={content.sharePhoto || undefined}
           onEnter={handleWelcomeEnter}
         />
       )}
