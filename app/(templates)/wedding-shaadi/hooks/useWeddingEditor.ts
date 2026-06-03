@@ -105,6 +105,7 @@ function dbToWeddingData(d: Record<string, unknown>): WeddingData {
       span: i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-2" : "",
     })),
     wishes: (d.blessings as { name: string; message: string }[]) || DEMO_DATA.wishes,
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }
 
@@ -128,6 +129,7 @@ function weddingDataToBody(data: WeddingData, password?: string) {
     groomFamilyGrandparents: data.groomFamily.grandparents,
     events: sortWeddingEvents(data.events),
     galleryImages: data.galleryImages.map((g) => ({ src: g.src, alt: g.alt })),
+    sharePhoto: data.sharePhoto || "",
     password: password || "",
   };
 }

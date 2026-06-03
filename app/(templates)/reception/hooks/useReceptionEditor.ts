@@ -350,6 +350,7 @@ export function useReceptionEditor() {
         groom: data.groom,
         families: data.families,
         galleryImages: data.galleryImages,
+        sharePhoto: data.sharePhoto || "",
         password: password || "",
       };
       if (pageId) {
@@ -425,6 +426,7 @@ export function useReceptionEditor() {
         venueTimings: content.venueTimings, tagline: content.tagline,
         heroImage: content.heroImage, bride: content.bride, groom: content.groom,
         families: content.families, galleryImages: content.galleryImages,
+        sharePhoto: content.sharePhoto || "",
         password: pagePassword || "",
       };
       if (!id) {
@@ -480,6 +482,7 @@ export function useReceptionEditor() {
           venueTimings: data.venueTimings, tagline: data.tagline,
           heroImage: data.heroImage, bride: data.bride, groom: data.groom,
           families: data.families, galleryImages: data.galleryImages,
+          sharePhoto: data.sharePhoto || "",
           password: password || "",
         };
         const res = await fetch(`${API_URL}/reception-pages`, {

@@ -1127,5 +1127,6 @@ function mapData(d: Record<string, unknown>): ReceptionData {
     },
     galleryImages: (d.galleryImages as { src: string; alt: string; span: string; category: string }[]) || DEMO_DATA.galleryImages,
     wishes: allWishes.map((b) => ({ name: b.name, message: b.message })),
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }

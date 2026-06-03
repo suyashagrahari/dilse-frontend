@@ -1187,5 +1187,6 @@ function mapData(d: Record<string, unknown>): WeddingData {
       name: b.name,
       message: b.message,
     })),
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }
