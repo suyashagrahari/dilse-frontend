@@ -178,6 +178,7 @@ export function useLoveEditor() {
       galleryPhotos:      data.galleryPhotos      || [],
       quizQuestions:      data.quizQuestions      || [],
       truthDareQuestions: data.truthDareQuestions || [],
+      sharePhoto:         data.sharePhoto         || "",
       password:           password || "",
     };
 
@@ -320,6 +321,7 @@ export function useLoveEditor() {
         galleryPhotos:      data.galleryPhotos      || [],
         quizQuestions:      data.quizQuestions      || [],
         truthDareQuestions: data.truthDareQuestions || [],
+        sharePhoto:         data.sharePhoto         || "",
         password:           password || "",
       };
       if (pageId) {
@@ -507,6 +509,7 @@ export function useLoveEditor() {
           galleryPhotos:      content.galleryPhotos      || [],
           quizQuestions:      content.quizQuestions      || [],
           truthDareQuestions: content.truthDareQuestions || [],
+          sharePhoto:         content.sharePhoto         || "",
           password:           pagePassword || "",
         };
         const res = await fetch(`${API_URL}/love-gf-pages`, {
