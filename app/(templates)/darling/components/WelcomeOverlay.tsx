@@ -11,6 +11,7 @@ const TEXT_DIM = "rgba(255,255,255,0.50)";
 interface DarlingWelcomeOverlayProps {
   senderName: string;
   recipientName: string;
+  sharePhoto?: string;
   onEnter: (playMusic: boolean) => void;
 }
 
@@ -26,6 +27,7 @@ const FLOATS = [
 const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
   senderName,
   recipientName,
+  sharePhoto,
   onEnter,
 }: DarlingWelcomeOverlayProps) {
   const [exiting, setExiting] = useState(false);
@@ -87,21 +89,44 @@ const DarlingWelcomeOverlay = memo(function DarlingWelcomeOverlay({
               gap: 0,
             }}
           >
-            {/* Glowing heart circle */}
-            <motion.div
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              style={{
-                width: 90, height: 90, borderRadius: "50%",
-                background: "rgba(255,61,107,0.10)",
-                border: "1.5px solid rgba(255,61,107,0.22)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 24,
-                boxShadow: "0 0 40px rgba(255,61,107,0.22), 0 0 80px rgba(168,85,247,0.12)",
-              }}
-            >
-              <span style={{ fontSize: 40, lineHeight: 1 }}>💗</span>
-            </motion.div>
+            {/* Share photo or fallback glowing heart */}
+            {sharePhoto ? (
+              <motion.div
+                initial={{ scale: 0, rotate: -10 }}
+                animate={{ scale: [1, 1.04, 1] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                style={{ marginBottom: 24, width: 90, height: 90 }}
+              >
+                <div style={{
+                  width: 90, height: 90, borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "3px solid rgba(255,61,107,0.45)",
+                  boxShadow: "0 0 0 5px rgba(255,61,107,0.12), 0 0 40px rgba(255,61,107,0.28), 0 0 80px rgba(168,85,247,0.15)",
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={sharePhoto}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  width: 90, height: 90, borderRadius: "50%",
+                  background: "rgba(255,61,107,0.10)",
+                  border: "1.5px solid rgba(255,61,107,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 24,
+                  boxShadow: "0 0 40px rgba(255,61,107,0.22), 0 0 80px rgba(168,85,247,0.12)",
+                }}
+              >
+                <span style={{ fontSize: 40, lineHeight: 1 }}>💗</span>
+              </motion.div>
+            )}
 
             {/* Badge */}
             <div style={{

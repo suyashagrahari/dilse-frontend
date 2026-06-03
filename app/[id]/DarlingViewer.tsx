@@ -72,6 +72,7 @@ function rawToContentData(raw: Record<string, unknown>): ContentData {
     galleryPhotos:      ((raw.galleryPhotos     as unknown[]        | undefined) ?? []).map(normalizePhoto),
     quizQuestions:      (raw.quizQuestions      as QuizQuestion[]   | undefined) ?? [],
     truthDareQuestions: (raw.truthDareQuestions as TruthDareItem[]  | undefined) ?? [],
+    sharePhoto:         String(raw.sharePhoto ?? ""),
   };
 }
 
@@ -235,6 +236,7 @@ export default function DarlingViewer({ rawData, hasPassword, shareId }: Props) 
         <DarlingWelcomeOverlay
           senderName={content.senderName}
           recipientName={content.recipientName}
+          sharePhoto={content.sharePhoto || undefined}
           onEnter={handleWelcomeEnter}
         />
       )}
