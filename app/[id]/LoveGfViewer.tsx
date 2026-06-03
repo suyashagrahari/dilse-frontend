@@ -73,6 +73,7 @@ function rawToContentData(raw: Record<string, unknown>): ContentData {
     galleryPhotos:      ((raw.galleryPhotos     as unknown[]        | undefined) ?? []).map(normalizePhoto),
     quizQuestions:      (raw.quizQuestions      as QuizQuestion[]   | undefined) ?? [],
     truthDareQuestions: (raw.truthDareQuestions as TruthDareItem[]  | undefined) ?? [],
+    sharePhoto:         String(raw.sharePhoto ?? ""),
   };
 }
 
@@ -231,6 +232,94 @@ export default function LoveGfViewer({ rawData, hasPassword, shareId }: Props) {
         * { box-sizing: border-box; }
         @media (max-width: 1023px) { body { overflow: hidden; } }
       `}</style>
+
+      {/* Mobile top bar — Back (left) + Share (right) — z-[9999] to sit above welcome overlay */}
+      <div
+        className="lg:hidden fixed left-0 right-0 flex items-center justify-between"
+        style={{
+          top: 0,
+          zIndex: 9999,
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
+          paddingLeft: 16,
+          paddingRight: 16,
+          paddingBottom: 8,
+        }}
+      >
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => router.back()}
+          style={{
+            padding: "9px 16px",
+            borderRadius: 14,
+            border: "1px solid rgba(158,126,97,0.28)",
+            background: "#FAF6F0",
+            boxShadow: "0 4px 16px rgba(40,20,8,0.18)",
+            fontFamily: CURSIVE,
+            fontSize: 15,
+            fontWeight: 600,
+            color: WARM,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            WebkitAppearance: "none",
+          } as React.CSSProperties}
+        >
+          ← Back
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={async () => {
+            const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+            const title = `A love page for ${content.recipientName || "you"} ♡`;
+            const text = `Someone made a special page just for you!`;
+            try {
+              if (content.sharePhoto && navigator.share) {
+                const res = await fetch(content.sharePhoto);
+                const blob = await res.blob();
+                const ext = blob.type.includes("png") ? "png" : "jpg";
+                const file = new File([blob], `love-preview.${ext}`, { type: blob.type || "image/jpeg" });
+                if (navigator.canShare?.({ files: [file] })) {
+                  await navigator.share({ files: [file], title, text, url: shareUrl });
+                  return;
+                }
+              }
+              if (navigator.share) {
+                await navigator.share({ title, text, url: shareUrl });
+              } else {
+                navigator.clipboard?.writeText(shareUrl);
+              }
+            } catch {
+              navigator.clipboard?.writeText(shareUrl);
+            }
+          }}
+          style={{
+            padding: "9px 16px",
+            borderRadius: 14,
+            border: "1px solid rgba(158,126,97,0.28)",
+            background: "#FAF6F0",
+            boxShadow: "0 4px 16px rgba(40,20,8,0.18)",
+            fontFamily: CURSIVE,
+            fontSize: 15,
+            fontWeight: 700,
+            color: WARM,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            WebkitAppearance: "none",
+          } as React.CSSProperties}
+        >
+          Share ♡
+        </motion.button>
+      </div>
 
       {/* Welcome overlay — shown until user taps enter */}
       {!welcomed && (

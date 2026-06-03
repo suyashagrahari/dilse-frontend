@@ -111,16 +111,19 @@ const LoveBackgroundMusic = memo(function LoveBackgroundMusic({
       transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
       onClick={toggle}
       whileTap={{ scale: 0.88 }}
-      className="fixed top-4 right-4 lg:top-5 lg:right-5 z-40 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+      className="fixed z-[45] w-10 h-10 rounded-2xl flex items-center justify-center transition-colors"
       style={{
-        background: "rgba(0,0,0,0.15)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+        right: 14,
+        background: "rgba(250,246,240,0.95)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        border: "1px solid rgba(158,126,97,0.22)",
+        boxShadow: "0 4px 16px rgba(108,74,46,0.14)",
       }}
     >
       {muted ? (
-        <VolumeX size={16} style={{ color: "rgba(255,255,255,0.5)" }} />
+        <VolumeX size={16} style={{ color: "rgba(108,74,46,0.50)" }} />
       ) : (
         <motion.div
           animate={paused ? {} : { scale: [1, 1.15, 1] }}
@@ -128,7 +131,7 @@ const LoveBackgroundMusic = memo(function LoveBackgroundMusic({
         >
           <Volume2
             size={16}
-            style={{ color: paused ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.7)" }}
+            style={{ color: paused ? "rgba(108,74,46,0.35)" : "rgba(108,74,46,0.80)" }}
           />
         </motion.div>
       )}
