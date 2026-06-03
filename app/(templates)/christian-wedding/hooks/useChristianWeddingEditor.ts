@@ -116,6 +116,7 @@ function dbToShaadiData(d: Record<string, unknown>): ShaadiData {
       message: b.message,
       ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
     })),
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }
 
@@ -143,6 +144,7 @@ function shaadiDataToBody(
     groomFamilyGrandparents: data.groomFamily.grandparents,
     events: sortWeddingEvents(data.events),
     galleryImages: data.galleryImages.map((g) => ({ src: g.src, alt: g.alt })),
+    sharePhoto: data.sharePhoto || "",
     password: password || "",
     ...(templateVariant ? { templateVariant } : {}),
   };

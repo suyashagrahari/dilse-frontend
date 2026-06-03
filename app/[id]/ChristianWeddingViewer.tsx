@@ -102,6 +102,7 @@ function mapData(d: Record<string, unknown>): ShaadiData {
       message: b.message || "",
       ...(b.voiceUrl ? { voiceUrl: b.voiceUrl } : {}),
     })),
+    sharePhoto: (d.sharePhoto as string) || "",
   };
 }
 
