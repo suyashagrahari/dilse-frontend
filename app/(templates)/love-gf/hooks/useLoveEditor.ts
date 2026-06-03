@@ -110,6 +110,7 @@ export function useLoveEditor() {
               galleryPhotos:      (d.galleryPhotos  || []).map(normalizePhoto),
               quizQuestions:      d.quizQuestions      || [],
               truthDareQuestions: d.truthDareQuestions || [],
+              sharePhoto:         d.sharePhoto         || "",
             }));
             setPageId(id);
             setIsPersonalized(true);
