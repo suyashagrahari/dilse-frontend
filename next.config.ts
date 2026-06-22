@@ -35,6 +35,17 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "gifts-media-prod-123.s3.ap-south-1.amazonaws.com",
       },
+      // Strapi blog CMS media — local dev
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "1337",
+      },
+      // Strapi blog CMS media — production
+      {
+        protocol: "https",
+        hostname: "strapi.subhsandesh.in",
+      },
     ],
   },
 

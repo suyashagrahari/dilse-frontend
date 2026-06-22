@@ -121,6 +121,9 @@ export default function DesktopNav() {
           >
             Favorite
           </button>
+          <button onClick={() => router.push("/blog")} style={tabTextStyle(pathname.startsWith("/blog"))}>
+            Blog
+          </button>
           <button onClick={() => router.push("/about-us")} style={tabTextStyle(pathname.startsWith("/about-us"))}>
             About Us
           </button>

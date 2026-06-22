@@ -279,6 +279,92 @@ export function ItemListJsonLd({
   );
 }
 
+// ─── BlogPosting (single blog article) ────────────────────────────────────────
+export function BlogPostingJsonLd({
+  title,
+  description,
+  url,
+  image,
+  datePublished,
+  dateModified,
+  authorName,
+  authorUrl,
+  keywords,
+  section,
+}: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string;
+  datePublished: string;
+  dateModified?: string;
+  authorName: string;
+  authorUrl?: string;
+  keywords?: string;
+  section?: string;
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: title,
+        description,
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        ...(image ? { image: [image] } : {}),
+        datePublished,
+        dateModified: dateModified || datePublished,
+        inLanguage: "en-IN",
+        ...(keywords ? { keywords } : {}),
+        ...(section ? { articleSection: section } : {}),
+        author: {
+          "@type": "Person",
+          name: authorName,
+          ...(authorUrl ? { url: authorUrl } : {}),
+        },
+        publisher: {
+          "@type": "Organization",
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+        },
+      }}
+    />
+  );
+}
+
+// ─── Blog index (Blog + ItemList of posts) ─────────────────────────────────────
+export function BlogIndexJsonLd({
+  url,
+  posts,
+}: {
+  url: string;
+  posts: { title: string; url: string; description?: string; datePublished?: string }[];
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        name: `${SITE_NAME} Blog`,
+        description:
+          "Guides, ideas and inspiration for celebrating birthdays, weddings, festivals and every special Indian occasion.",
+        url,
+        inLanguage: ["en-IN", "en"],
+        publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+        blogPost: posts.map((p) => ({
+          "@type": "BlogPosting",
+          headline: p.title,
+          url: p.url,
+          ...(p.description ? { description: p.description } : {}),
+          ...(p.datePublished ? { datePublished: p.datePublished } : {}),
+        })),
+      }}
+    />
+  );
+}
+
 // ─── Share page ───────────────────────────────────────────────────────────────
 export function SharePageJsonLd({
   title,

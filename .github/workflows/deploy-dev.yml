@@ -38,6 +38,7 @@ jobs:
           NEXT_PUBLIC_PROD_SITE_URL: ${{ secrets.NEXT_PUBLIC_DEV_SITE_URL }}
           NEXT_PUBLIC_PROD_ROOT_DOMAIN: ${{ secrets.NEXT_PUBLIC_DEV_ROOT_DOMAIN }}
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          NEXT_PUBLIC_PROD_STRAPI_URL: ${{ secrets.NEXT_PUBLIC_DEV_STRAPI_URL }}
           NEXT_TELEMETRY_DISABLED: 1
 
   # ── Job 2: Docker Build & Push ──────────────────────────────────────────────
@@ -86,6 +87,7 @@ jobs:
             NEXT_PUBLIC_PROD_SITE_URL=${{ secrets.NEXT_PUBLIC_DEV_SITE_URL }}
             NEXT_PUBLIC_PROD_ROOT_DOMAIN=${{ secrets.NEXT_PUBLIC_DEV_ROOT_DOMAIN }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_PROD_STRAPI_URL=${{ secrets.NEXT_PUBLIC_DEV_STRAPI_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
