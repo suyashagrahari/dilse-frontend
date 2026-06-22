@@ -14,9 +14,18 @@ export { headingId };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function plainText(children: any): string {
   if (typeof children === "string") return children;
+  if (typeof children === "number") return String(children);
   if (Array.isArray(children)) return children.map(plainText).join("");
   if (children?.props?.children) return plainText(children.props.children);
+  if (typeof children?.props?.text === "string") return children.props.text;
   return "";
+}
+
+/** Raw text of a Strapi block, read straight from its leaf nodes (reliable). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rawBlockText(block: any): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (block?.children || []).map((c: any) => c?.text || "").join("");
 }
 
 /** Drop empty paragraph blocks (blank lines from pasted content) that create huge gaps. */
@@ -122,13 +131,22 @@ export default function ArticleBody({
 
   if (!content || !Array.isArray(content)) return null;
 
+  const blocks = compactBlocks(content);
+  // Anchor ids computed from RAW block text (same source as TableOfContents) and
+  // assigned positionally — the renderer's `children` don't reliably stringify,
+  // which previously produced empty id="" and broke TOC links.
+  const headingIds = blocks
+    .filter((b) => b?.type === "heading")
+    .map((b) => headingId(rawBlockText(b)));
+  let headingIdx = 0;
+
   return (
     <div className="blog-prose" style={PROSE_STYLE}>
       <BlocksRenderer
-        content={compactBlocks(content)}
+        content={blocks}
         blocks={{
           heading: ({ children, level }) => {
-            const id = headingId(plainText(children));
+            const id = headingIds[headingIdx++] || headingId(plainText(children));
             const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
             return (
               <Tag id={id} style={headingStyle(level)}>
