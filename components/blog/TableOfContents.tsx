@@ -1,55 +1,122 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { BlocksContent } from "@/lib/strapi";
-import { headingId } from "./ArticleBody";
+import {
+  extractBlockHeadings,
+  extractMarkdownHeadings,
+  type TocHeading,
+} from "@/lib/blog-utils";
 
-interface Heading {
-  text: string;
-  level: number;
-  id: string;
+function getHeadings(content?: BlocksContent | null, markdown?: string | null): TocHeading[] {
+  if (markdown && markdown.trim()) return extractMarkdownHeadings(markdown);
+  if (Array.isArray(content)) return extractBlockHeadings(content);
+  return [];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractHeadings(content: BlocksContent): Heading[] {
-  if (!Array.isArray(content)) return [];
-  return content
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((b: any) => b.type === "heading" && b.level <= 3)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((b: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const text = (b.children || []).map((c: any) => c.text || "").join("");
-      return { text, level: b.level as number, id: headingId(text) };
-    })
-    .filter((h) => h.text);
+/** Smooth-scroll to a heading and update the URL hash without a jump. */
+function scrollToHeading(e: React.MouseEvent, id: string) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  history.replaceState(null, "", `#${id}`);
 }
 
-export default function TableOfContents({ content }: { content: BlocksContent }) {
-  const headings = extractHeadings(content);
-  if (headings.length < 3) return null; // not worth a TOC for tiny posts
+/** Track which heading is currently in view to highlight the active TOC item. */
+function useActiveHeading(ids: string[]): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    if (!ids.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((en) => en.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      { rootMargin: "-90px 0px -65% 0px", threshold: 0 }
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [ids.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  return active;
+}
 
+function TocLinks({ headings, active }: { headings: TocHeading[]; active: string | null }) {
   return (
-    <nav
-      aria-label="Table of contents"
-      className="rounded-2xl p-5"
-      style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(61,12,17,0.12)" }}
-    >
-      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "#c9a84c" }}>
-        On this page
-      </p>
-      <ul className="space-y-2">
-        {headings.map((h, i) => (
-          <li key={i} style={{ paddingLeft: h.level === 3 ? 14 : 0 }}>
+    <ul className="space-y-1">
+      {headings.map((h, i) => {
+        const isActive = active === h.id;
+        return (
+          <li key={i}>
             <a
               href={`#${h.id}`}
-              className="text-sm hover:underline"
-              style={{ color: h.level <= 2 ? "#2a0a0e" : "rgba(42,10,14,0.7)", fontWeight: h.level <= 2 ? 600 : 400 }}
+              onClick={(e) => scrollToHeading(e, h.id)}
+              className="block rounded-md py-1 text-sm transition-colors"
+              style={{
+                paddingLeft: h.level === 3 ? 18 : 8,
+                paddingRight: 8,
+                color: isActive ? "#9a3324" : h.level <= 2 ? "#2a0a0e" : "rgba(42,10,14,0.65)",
+                fontWeight: isActive ? 700 : h.level <= 2 ? 600 : 400,
+                borderLeft: `2px solid ${isActive ? "#9a3324" : "transparent"}`,
+                background: isActive ? "rgba(154,51,36,0.06)" : "transparent",
+              }}
             >
               {h.text}
             </a>
           </li>
-        ))}
-      </ul>
+        );
+      })}
+    </ul>
+  );
+}
+
+export default function TableOfContents({
+  content,
+  markdown,
+  variant = "sidebar",
+}: {
+  content?: BlocksContent | null;
+  markdown?: string | null;
+  variant?: "sidebar" | "inline";
+}) {
+  const headings = getHeadings(content, markdown);
+  const active = useActiveHeading(headings.map((h) => h.id));
+
+  if (headings.length < 3) return null; // not worth a TOC for tiny posts
+
+  const label = (
+    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "#c9a84c" }}>
+      On this page
+    </p>
+  );
+
+  // Mobile: collapsible card so it doesn't eat the top of the screen.
+  if (variant === "inline") {
+    return (
+      <details
+        className="rounded-2xl p-4 lg:hidden"
+        style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(61,12,17,0.12)" }}
+      >
+        <summary className="cursor-pointer list-none text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "#c9a84c" }}>
+          On this page
+        </summary>
+        <div className="mt-3">
+          <TocLinks headings={headings} active={active} />
+        </div>
+      </details>
+    );
+  }
+
+  // Desktop: sticky sidebar rail.
+  return (
+    <nav aria-label="Table of contents" className="text-[13px]">
+      {label}
+      <TocLinks headings={headings} active={active} />
     </nav>
   );
 }

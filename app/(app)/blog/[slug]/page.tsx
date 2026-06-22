@@ -69,6 +69,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const url = `${SITE_URL}/blog/${article.slug}`;
   const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
   const takeaways = Array.isArray(article.keyTakeaways) ? article.keyTakeaways : [];
+  // Raw markdown body (uploaded/pasted .md) wins over blocks; either renders.
+  const markdown = article.contentMarkdown?.trim() || null;
+  const hasBody = Boolean(markdown) || (Array.isArray(article.content) && article.content.length > 0);
 
   return (
     <main className="min-h-screen overflow-x-hidden" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
@@ -95,7 +98,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       />
       {article.faqs && article.faqs.length > 0 && <FAQJsonLd faqs={article.faqs} />}
 
-      <article className="relative mx-auto max-w-3xl px-5 pt-12 pb-24 md:pt-32">
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-5 pt-12 pb-24 md:pt-32 lg:flex-row lg:items-start lg:justify-center">
+      <article className="relative w-full lg:max-w-3xl">
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs" style={{ color: "rgba(42,10,14,0.55)" }} aria-label="Breadcrumb">
           <Link href="/blog" className="hover:underline">Blog</Link>
@@ -155,17 +159,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* TOC */}
-        {article.content && (
+        {/* TOC — mobile only (desktop uses the sticky sidebar) */}
+        {hasBody && (
           <div className="mt-8">
-            <TableOfContents content={article.content} />
+            <TableOfContents content={article.content} markdown={markdown} variant="inline" />
           </div>
         )}
 
         {/* Body */}
-        {article.content && (
+        {hasBody && (
           <div className="mt-8">
-            <ArticleBody content={article.content} />
+            <ArticleBody content={article.content} markdown={markdown} />
           </div>
         )}
 
@@ -198,6 +202,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Related */}
         <RelatedPosts articles={related} />
       </article>
+
+      {/* Sticky table-of-contents sidebar (desktop) */}
+      {hasBody && (
+        <aside className="hidden w-60 shrink-0 lg:block">
+          <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+            <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
+          </div>
+        </aside>
+      )}
+      </div>
     </main>
   );
 }

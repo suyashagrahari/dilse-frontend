@@ -71,6 +71,8 @@ export interface Article {
   slug: string;
   excerpt?: string | null;
   content?: BlocksContent | null;
+  /** Optional raw markdown body — takes precedence over `content` blocks when present. */
+  contentMarkdown?: string | null;
   coverImage?: StrapiMedia | null;
   author?: Author | null;
   category?: Category | null;
