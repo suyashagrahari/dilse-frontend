@@ -46,27 +46,51 @@ function useActiveHeading(ids: string[]): string | null {
   return active;
 }
 
-function TocLinks({ headings, active }: { headings: TocHeading[]; active: string | null }) {
+const ACCENT = "#9a3324";
+const GOLD = "#c9a84c";
+const INK = "#2a0a0e";
+
+function TocRows({ headings, active }: { headings: TocHeading[]; active: string | null }) {
   return (
-    <ul className="space-y-1">
+    <ul>
       {headings.map((h, i) => {
         const isActive = active === h.id;
+        const isSub = h.level === 3;
         return (
-          <li key={i}>
+          <li
+            key={i}
+            style={{ borderTop: i === 0 ? "none" : "1px solid rgba(61,12,17,0.06)" }}
+          >
             <a
               href={`#${h.id}`}
               onClick={(e) => scrollToHeading(e, h.id)}
-              className="block rounded-md py-1 text-sm transition-colors"
+              className="group flex items-start gap-2 leading-snug transition-colors"
               style={{
-                paddingLeft: h.level === 3 ? 18 : 8,
-                paddingRight: 8,
-                color: isActive ? "#9a3324" : h.level <= 2 ? "#2a0a0e" : "rgba(42,10,14,0.65)",
-                fontWeight: isActive ? 700 : h.level <= 2 ? 600 : 400,
-                borderLeft: `2px solid ${isActive ? "#9a3324" : "transparent"}`,
-                background: isActive ? "rgba(154,51,36,0.06)" : "transparent",
+                paddingTop: 10,
+                paddingBottom: 10,
+                paddingRight: 16,
+                paddingLeft: isSub ? 26 : 16,
+                borderLeft: `3px solid ${isActive ? ACCENT : "transparent"}`,
+                background: isActive ? "rgba(154,51,36,0.07)" : "transparent",
+                color: isActive ? ACCENT : isSub ? "rgba(42,10,14,0.6)" : INK,
+                fontWeight: isActive ? 700 : isSub ? 400 : 600,
+                fontSize: isSub ? 13.5 : 14.5,
               }}
             >
-              {h.text}
+              {isSub && (
+                <span
+                  aria-hidden
+                  style={{
+                    marginTop: 6,
+                    flexShrink: 0,
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: isActive ? ACCENT : "rgba(42,10,14,0.3)",
+                  }}
+                />
+              )}
+              <span>{h.text}</span>
             </a>
           </li>
         );
@@ -89,34 +113,41 @@ export default function TableOfContents({
 
   if (headings.length < 3) return null; // not worth a TOC for tiny posts
 
-  const label = (
-    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "#c9a84c" }}>
-      On this page
-    </p>
-  );
-
   // Mobile: collapsible card so it doesn't eat the top of the screen.
   if (variant === "inline") {
     return (
       <details
-        className="rounded-2xl p-4 lg:hidden"
-        style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(61,12,17,0.12)" }}
+        className="overflow-hidden rounded-2xl lg:hidden"
+        style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(61,12,17,0.12)" }}
       >
-        <summary className="cursor-pointer list-none text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "#c9a84c" }}>
+        <summary
+          className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em]"
+          style={{ color: GOLD }}
+        >
           On this page
+          <span aria-hidden style={{ color: "rgba(42,10,14,0.4)" }}>▾</span>
         </summary>
-        <div className="mt-3">
-          <TocLinks headings={headings} active={active} />
+        <div style={{ borderTop: "1px solid rgba(61,12,17,0.1)" }}>
+          <TocRows headings={headings} active={active} />
         </div>
       </details>
     );
   }
 
-  // Desktop: sticky sidebar rail.
+  // Desktop: sticky table-style card.
   return (
-    <nav aria-label="Table of contents" className="text-[13px]">
-      {label}
-      <TocLinks headings={headings} active={active} />
+    <nav
+      aria-label="Table of contents"
+      className="overflow-hidden rounded-2xl"
+      style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(61,12,17,0.12)" }}
+    >
+      <p
+        className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em]"
+        style={{ color: GOLD, borderBottom: "1px solid rgba(61,12,17,0.1)" }}
+      >
+        On this page
+      </p>
+      <TocRows headings={headings} active={active} />
     </nav>
   );
 }

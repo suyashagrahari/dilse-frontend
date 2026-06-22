@@ -21,13 +21,6 @@ function plainText(children: any): string {
   return "";
 }
 
-/** Raw text of a Strapi block, read straight from its leaf nodes (reliable). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rawBlockText(block: any): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (block?.children || []).map((c: any) => c?.text || "").join("");
-}
-
 /** Drop empty paragraph blocks (blank lines from pasted content) that create huge gaps. */
 function compactBlocks(content: BlocksContent): BlocksContent {
   if (!Array.isArray(content)) return content;
@@ -131,22 +124,16 @@ export default function ArticleBody({
 
   if (!content || !Array.isArray(content)) return null;
 
-  const blocks = compactBlocks(content);
-  // Anchor ids computed from RAW block text (same source as TableOfContents) and
-  // assigned positionally — the renderer's `children` don't reliably stringify,
-  // which previously produced empty id="" and broke TOC links.
-  const headingIds = blocks
-    .filter((b) => b?.type === "heading")
-    .map((b) => headingId(rawBlockText(b)));
-  let headingIdx = 0;
-
   return (
     <div className="blog-prose" style={PROSE_STYLE}>
       <BlocksRenderer
-        content={blocks}
+        content={compactBlocks(content)}
         blocks={{
           heading: ({ children, level }) => {
-            const id = headingIds[headingIdx++] || headingId(plainText(children));
+            // Strapi passes heading text as <Text> elements (text in props.text).
+            // plainText reads that, so the id is deterministic on server + client
+            // (no hydration mismatch) and matches the TableOfContents slugs.
+            const id = headingId(plainText(children));
             const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
             return (
               <Tag id={id} style={headingStyle(level)}>

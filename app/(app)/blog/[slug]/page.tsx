@@ -74,7 +74,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const hasBody = Boolean(markdown) || (Array.isArray(article.content) && article.content.length > 0);
 
   return (
-    <main className="min-h-screen overflow-x-hidden" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
+    <main className="min-h-screen overflow-x-clip" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
       {/* ── Structured data ── */}
       <BlogPostingJsonLd
         title={article.seo?.metaTitle || article.title}
@@ -98,8 +98,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       />
       {article.faqs && article.faqs.length > 0 && <FAQJsonLd faqs={article.faqs} />}
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-5 pt-12 pb-24 md:pt-32 lg:flex-row lg:items-start lg:justify-center">
-      <article className="relative w-full lg:max-w-3xl">
+      {/* lg: items-stretch (default) makes the aside as tall as the article so the
+          sticky TOC stays pinned through the whole left-content scroll. */}
+      <div className="mx-auto flex max-w-7xl flex-col gap-12 px-5 pt-12 pb-24 md:pt-32 lg:flex-row lg:justify-center lg:gap-16">
+      <article className="relative w-full lg:max-w-[52rem]">
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs" style={{ color: "rgba(42,10,14,0.55)" }} aria-label="Breadcrumb">
           <Link href="/blog" className="hover:underline">Blog</Link>
@@ -205,7 +207,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Sticky table-of-contents sidebar (desktop) */}
       {hasBody && (
-        <aside className="hidden w-60 shrink-0 lg:block">
+        <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
           <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
             <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
           </div>
