@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, ChevronRight, Sparkles } from "lucide-react";
 import { buildMeta, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, strapiMedia } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, getTemplates, strapiMedia } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 import ArticleBody from "@/components/blog/ArticleBody";
 import AuthorBox from "@/components/blog/AuthorBox";
@@ -12,6 +12,7 @@ import FAQAccordion from "@/components/blog/FAQAccordion";
 import ShareButtons from "@/components/blog/ShareButtons";
 import RelatedPosts from "@/components/blog/RelatedPosts";
 import TableOfContents from "@/components/blog/TableOfContents";
+import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
 import { BlogPostingJsonLd, BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 
 export const revalidate = 3600;
@@ -64,7 +65,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = await getRelatedArticles(article);
+  const [related, templates] = await Promise.all([getRelatedArticles(article), getTemplates()]);
   const cover = strapiMedia(article.coverImage?.url);
   const url = `${SITE_URL}/blog/${article.slug}`;
   const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
@@ -194,6 +195,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* FAQ */}
         {article.faqs && article.faqs.length > 0 && <FAQAccordion faqs={article.faqs} />}
 
+        {/* Create-a-surprise CTA — mobile/tablet only (desktop shows it in the sticky sidebar) */}
+        <div className="mt-12 lg:hidden">
+          <TemplatesPromoCard templates={templates} />
+        </div>
+
         {/* Author */}
         {article.author && (
           <div className="mt-12">
@@ -205,14 +211,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <RelatedPosts articles={related} />
       </article>
 
-      {/* Sticky table-of-contents sidebar (desktop) */}
-      {hasBody && (
-        <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
-          <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
-            <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
-          </div>
-        </aside>
-      )}
+      {/* Sticky sidebar (desktop): table of contents + create-a-surprise CTA */}
+      <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
+        <div className="sticky top-28 max-h-[calc(100vh-8rem)] space-y-6 overflow-y-auto pr-1">
+          {hasBody && <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />}
+          <TemplatesPromoCard templates={templates} />
+        </div>
+      </aside>
       </div>
     </main>
   );

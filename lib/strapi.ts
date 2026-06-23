@@ -87,6 +87,20 @@ export interface Article {
   publishedAt: string;
 }
 
+export interface Template {
+  id: number;
+  documentId: string;
+  title: string;
+  description?: string | null;
+  /** Path ("/birthday-gf") or absolute URL the card links to. */
+  url: string;
+  category?: string | null;
+  emoji?: string | null;
+  featured?: boolean | null;
+  order?: number | null;
+  coverImage?: StrapiMedia | null;
+}
+
 interface StrapiListResponse<T> {
   data: T[];
   meta: { pagination: { page: number; pageSize: number; pageCount: number; total: number } };
@@ -193,6 +207,18 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     `/categories?filters[slug][$eq]=${encodeURIComponent(slug)}&pagination[pageSize]=1`
   );
   return res?.data?.[0] ?? null;
+}
+
+/**
+ * Gift/occasion templates shown in the blog "Create a surprise" picker.
+ * Cached under the shared `articles` tag, so the existing Strapi publish webhook
+ * revalidates them on demand too. Sorted by `order` then title.
+ */
+export async function getTemplates(): Promise<Template[]> {
+  const res = await strapiFetch<StrapiListResponse<Template>>(
+    `/templates?populate[coverImage]=true&sort[0]=order:asc&sort[1]=title:asc&pagination[pageSize]=100`
+  );
+  return res?.data ?? [];
 }
 
 /** Lightweight list of every published article (slug + updatedAt) for sitemap + generateStaticParams. */
