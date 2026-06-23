@@ -233,10 +233,21 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
-  // When templates are linked → open the in-page picker. When none are
-  // configured (CMS empty/unreachable) → fall back to the full /templates page
-  // so the reader can still pick something.
-  const hasTemplates = Array.isArray(templates) && templates.length > 0;
+  const list = Array.isArray(templates) ? templates : [];
+  // CTA behaviour:
+  //  • exactly one linked template → redirect straight to its page
+  //  • several → open the in-page picker
+  //  • none → fall back to the full /templates catalog
+  const single = list.length === 1 ? list[0] : null;
+  const ctaHref = single ? single.url : list.length === 0 ? "/templates" : null;
+
+  const ctaClass =
+    "mt-4 block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105";
+  const ctaStyle = {
+    background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
+    color: MAROON,
+    boxShadow: "0 8px 24px rgba(216,180,240,0.25)",
+  } as const;
 
   return (
     <>
@@ -286,30 +297,20 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
           ))}
         </ul>
 
-        {hasTemplates ? (
-          <button
-            onClick={() => setOpen(true)}
-            className="mt-4 w-full rounded-full py-2.5 text-sm font-bold transition hover:brightness-105"
-            style={{
-              background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
-              color: MAROON,
-              boxShadow: "0 8px 24px rgba(216,180,240,0.25)",
-            }}
-          >
+        {ctaHref ? (
+          isInternal(ctaHref) ? (
+            <Link href={ctaHref} className={ctaClass} style={ctaStyle}>
+              Create now
+            </Link>
+          ) : (
+            <a href={ctaHref} className={ctaClass} style={ctaStyle}>
+              Create now
+            </a>
+          )
+        ) : (
+          <button onClick={() => setOpen(true)} className={ctaClass} style={ctaStyle}>
             Create now
           </button>
-        ) : (
-          <Link
-            href="/templates"
-            className="mt-4 block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105"
-            style={{
-              background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
-              color: MAROON,
-              boxShadow: "0 8px 24px rgba(216,180,240,0.25)",
-            }}
-          >
-            Create now
-          </Link>
         )}
 
         <Link
@@ -321,7 +322,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
         </Link>
       </div>
 
-      {open && hasTemplates && <TemplatesModal templates={templates} onClose={close} />}
+      {open && list.length > 1 && <TemplatesModal templates={list} onClose={close} />}
     </>
   );
 }

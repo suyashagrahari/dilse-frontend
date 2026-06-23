@@ -82,6 +82,8 @@ export interface Article {
   featured?: boolean | null;
   seo?: Seo | null;
   faqs?: FaqItem[] | null;
+  /** Templates linked to this post in Strapi — power the "Create a surprise" CTA. */
+  relatedTemplates?: Template[] | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
@@ -146,7 +148,8 @@ const LIST_POPULATE =
 const DETAIL_POPULATE =
   LIST_POPULATE +
   "&populate[seo][populate][metaImage]=true" +
-  "&populate[faqs]=true";
+  "&populate[faqs]=true" +
+  "&populate[relatedTemplates][populate][coverImage]=true";
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 

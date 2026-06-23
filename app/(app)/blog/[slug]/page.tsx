@@ -65,7 +65,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const [related, templates] = await Promise.all([getRelatedArticles(article), getTemplates()]);
+  // Prefer templates explicitly linked to this post in Strapi; fall back to the
+  // full catalog when none are linked so the CTA always has somewhere to go.
+  const linkedTemplates = article.relatedTemplates ?? [];
+  const [related, templates] = await Promise.all([
+    getRelatedArticles(article),
+    linkedTemplates.length > 0 ? Promise.resolve(linkedTemplates) : getTemplates(),
+  ]);
   const cover = strapiMedia(article.coverImage?.url);
   const url = `${SITE_URL}/blog/${article.slug}`;
   const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
