@@ -139,8 +139,12 @@ function TemplatesModal({
       aria-modal="true"
       aria-label="Choose a template"
     >
+      {/* Fixed-size dialog: a stable bottom sheet on mobile and a centered card
+          on laptops/desktops. Height is fixed per breakpoint (clamped to the
+          viewport) so the whole modal never changes size with the result count —
+          only the list area inside scrolls. */}
       <div
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:max-h-[85vh] sm:rounded-3xl"
+        className="flex h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:h-[600px] sm:max-h-[88vh] sm:rounded-3xl lg:h-[640px]"
         style={{ background: "#f5ede6" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -210,8 +214,8 @@ function TemplatesModal({
           })}
         </div>
 
-        {/* List */}
-        <div className="mt-4 grid gap-2.5 overflow-y-auto px-5 pb-6 sm:grid-cols-2 sm:px-7">
+        {/* List — the only scrollable region, filling the remaining height */}
+        <div className="mt-4 grid min-h-0 flex-1 auto-rows-min gap-2.5 overflow-y-auto px-5 pb-6 sm:grid-cols-2 sm:px-7">
           {filtered.length === 0 ? (
             <p className="col-span-full py-10 text-center text-sm" style={{ color: "rgba(42,10,14,0.5)" }}>
               No templates match “{query}”.
@@ -237,7 +241,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-3xl p-6 shadow-xl"
+        className="relative overflow-hidden rounded-3xl p-5 shadow-xl"
         style={{
           background:
             "radial-gradient(120% 120% at 0% 0%, #4a1118 0%, #2a0a0e 55%, #1a0608 100%)",
@@ -259,25 +263,24 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
         </span>
 
         <h3
-          className="mt-4 text-2xl leading-[1.12]"
+          className="mt-3 text-xl leading-[1.15]"
           style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
         >
           Turn this inspiration into an unforgettable surprise
         </h3>
 
-        <p className="mt-3 text-sm leading-relaxed" style={{ color: "rgba(245,237,230,0.7)" }}>
-          Build a page with photos, a heartfelt message, music and a ready-to-share link for
-          someone you love.
+        <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "rgba(245,237,230,0.7)" }}>
+          Build a page with photos, a heartfelt message, music and a ready-to-share link.
         </p>
 
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-3 space-y-1.5">
           {["Photos, message & music", "Ready-to-share link"].map((f) => (
             <li
               key={f}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium"
+              className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-medium"
               style={{ background: "rgba(245,237,230,0.06)" }}
             >
-              <span className="h-2 w-2 rounded-full" style={{ background: GOLD }} />
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: GOLD }} />
               {f}
             </li>
           ))}
@@ -286,7 +289,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
         {hasTemplates ? (
           <button
             onClick={() => setOpen(true)}
-            className="mt-5 w-full rounded-full py-3 text-sm font-bold transition hover:brightness-105"
+            className="mt-4 w-full rounded-full py-2.5 text-sm font-bold transition hover:brightness-105"
             style={{
               background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
               color: MAROON,
@@ -298,7 +301,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
         ) : (
           <Link
             href="/templates"
-            className="mt-5 block w-full rounded-full py-3 text-center text-sm font-bold transition hover:brightness-105"
+            className="mt-4 block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105"
             style={{
               background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
               color: MAROON,
@@ -311,7 +314,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
 
         <Link
           href="/templates"
-          className="mt-2.5 block w-full rounded-full py-2.5 text-center text-sm font-semibold transition hover:bg-white/5"
+          className="mt-2 block w-full rounded-full py-2 text-center text-[13px] font-semibold transition hover:bg-white/5"
           style={{ border: "1px solid rgba(245,237,230,0.18)", color: "#f5ede6" }}
         >
           See all occasions

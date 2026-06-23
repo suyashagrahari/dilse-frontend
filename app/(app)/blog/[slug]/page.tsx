@@ -211,11 +211,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <RelatedPosts articles={related} />
       </article>
 
-      {/* Sticky sidebar (desktop): table of contents + create-a-surprise CTA */}
+      {/* Sticky sidebar (desktop): table of contents + create-a-surprise CTA.
+          The aside fills the viewport height; only the TOC scrolls when long so
+          the promo card stays pinned and fully visible (never cut off). */}
       <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
-        <div className="sticky top-28 max-h-[calc(100vh-8rem)] space-y-6 overflow-y-auto pr-1">
-          {hasBody && <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />}
-          <TemplatesPromoCard templates={templates} />
+        <div className="sticky top-28 flex max-h-[calc(100vh-8rem)] flex-col gap-5">
+          {hasBody && (
+            <div className="min-h-0 overflow-y-auto pr-1">
+              <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
+            </div>
+          )}
+          <div className="shrink-0">
+            <TemplatesPromoCard templates={templates} />
+          </div>
         </div>
       </aside>
       </div>
