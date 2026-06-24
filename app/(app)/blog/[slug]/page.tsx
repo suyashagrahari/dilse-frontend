@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, ChevronRight, Sparkles } from "lucide-react";
 import { buildMeta, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, getTemplates, strapiMedia } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, strapiMedia } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 import ArticleBody from "@/components/blog/ArticleBody";
 import AuthorBox from "@/components/blog/AuthorBox";
@@ -65,13 +65,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  // Prefer templates explicitly linked to this post in Strapi; fall back to the
-  // full catalog when none are linked so the CTA always has somewhere to go.
+  // Templates explicitly linked to this post in Strapi drive the "Create now" CTA:
+  //  • one linked  → redirect straight to that template's page
+  //  • several     → open the picker showing just those linked templates
+  //  • none linked → redirect to the /templates listing page (no picker)
   const linkedTemplates = article.relatedTemplates ?? [];
-  const [related, templates] = await Promise.all([
-    getRelatedArticles(article),
-    linkedTemplates.length > 0 ? Promise.resolve(linkedTemplates) : getTemplates(),
-  ]);
+  const related = await getRelatedArticles(article);
   const cover = strapiMedia(article.coverImage?.url);
   const url = `${SITE_URL}/blog/${article.slug}`;
   const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
@@ -203,7 +202,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Create-a-surprise CTA — mobile/tablet only (desktop shows it in the sticky sidebar) */}
         <div className="mt-12 lg:hidden">
-          <TemplatesPromoCard templates={templates} />
+          <TemplatesPromoCard linked={linkedTemplates} />
         </div>
 
         {/* Author */}
@@ -221,14 +220,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           The aside fills the viewport height; only the TOC scrolls when long so
           the promo card stays pinned and fully visible (never cut off). */}
       <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
-        <div className="sticky top-28 flex max-h-[calc(100vh-8rem)] flex-col gap-5">
+        <div className="sticky top-28 flex h-[calc(100vh-8rem)] flex-col gap-5">
           {hasBody && (
-            <div className="min-h-0 overflow-y-auto pr-1">
+            <div className="flex min-h-0 flex-1 flex-col">
               <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
             </div>
           )}
           <div className="shrink-0">
-            <TemplatesPromoCard templates={templates} />
+            <TemplatesPromoCard linked={linkedTemplates} />
           </div>
         </div>
       </aside>

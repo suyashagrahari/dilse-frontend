@@ -229,17 +229,25 @@ function TemplatesModal({
   );
 }
 
-export default function TemplatesPromoCard({ templates }: { templates: Template[] }) {
+export default function TemplatesPromoCard({
+  linked = [],
+}: {
+  /** Templates explicitly linked to this post in Strapi (relatedTemplates). */
+  linked?: Template[];
+}) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
-  const list = Array.isArray(templates) ? templates : [];
-  // CTA behaviour:
-  //  • exactly one linked template → redirect straight to its page
-  //  • several → open the in-page picker
-  //  • none → fall back to the full /templates catalog
-  const single = list.length === 1 ? list[0] : null;
-  const ctaHref = single ? single.url : list.length === 0 ? "/templates" : null;
+  const linkedList = Array.isArray(linked) ? linked : [];
+
+  // CTA behaviour, in priority order:
+  //  • exactly one template linked to this post → redirect straight to its page
+  //  • several linked → open the picker showing just those linked templates
+  //  • no linked template → redirect to the /templates listing page (no picker)
+  let ctaHref: string | null = "/templates"; // default: nothing linked → catalog page
+  if (linkedList.length === 1) ctaHref = linkedList[0].url;
+  else if (linkedList.length > 1) ctaHref = null; // null = open the picker modal
+  const modalList = linkedList;
 
   const ctaClass =
     "mt-4 block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105";
@@ -322,7 +330,7 @@ export default function TemplatesPromoCard({ templates }: { templates: Template[
         </Link>
       </div>
 
-      {open && list.length > 1 && <TemplatesModal templates={list} onClose={close} />}
+      {open && modalList.length > 1 && <TemplatesModal templates={modalList} onClose={close} />}
     </>
   );
 }
