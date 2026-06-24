@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, ChevronRight, Sparkles } from "lucide-react";
 import { buildMeta, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, strapiMedia } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, articleCover, articleOgImage } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 import ArticleBody from "@/components/blog/ArticleBody";
 import AuthorBox from "@/components/blog/AuthorBox";
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = seo?.metaTitle || article.title;
   const description = seo?.metaDescription || article.excerpt || `Read ${article.title} on the ${SITE_NAME} blog.`;
   const canonical = seo?.canonicalURL || `${SITE_URL}/blog/${article.slug}`;
-  const ogImage = strapiMedia(seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
+  const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
 
   const meta = buildMeta({
     title: `${title} | ${SITE_NAME} Blog`,
@@ -71,9 +71,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   //  • none linked → redirect to the /templates listing page (no picker)
   const linkedTemplates = article.relatedTemplates ?? [];
   const related = await getRelatedArticles(article);
-  const cover = strapiMedia(article.coverImage?.url);
+  const cover = articleCover(article);
   const url = `${SITE_URL}/blog/${article.slug}`;
-  const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
+  const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
   const takeaways = Array.isArray(article.keyTakeaways) ? article.keyTakeaways : [];
   // Raw markdown body (uploaded/pasted .md) wins over blocks; either renders.
   const markdown = article.contentMarkdown?.trim() || null;

@@ -52,6 +52,8 @@ export interface Seo {
   structuredData?: Record<string, any> | null;
   noIndex?: boolean | null;
   metaImage?: StrapiMedia | null;
+  /** External OG image URL (e.g. S3/CDN). Wins over `metaImage` when set. */
+  metaImageUrl?: string | null;
 }
 
 export interface FaqItem {
@@ -74,6 +76,8 @@ export interface Article {
   /** Optional raw markdown body — takes precedence over `content` blocks when present. */
   contentMarkdown?: string | null;
   coverImage?: StrapiMedia | null;
+  /** External cover image URL (e.g. S3/CDN). Wins over `coverImage` when set. */
+  coverImageUrl?: string | null;
   author?: Author | null;
   category?: Category | null;
   tags?: string[] | null;
@@ -136,6 +140,36 @@ export function strapiMedia(url?: string | null): string {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   return `${STRAPI_URL}${url}`;
+}
+
+/**
+ * Resolve an article's cover image, preferring an external URL (S3/CDN set via
+ * `coverImageUrl` by the Blog Automation studio) over the uploaded Strapi media.
+ * Returns "" when neither is set.
+ */
+export function articleCover(article?: {
+  coverImageUrl?: string | null;
+  coverImage?: StrapiMedia | null;
+} | null): string {
+  if (!article) return "";
+  return strapiMedia(article.coverImageUrl) || strapiMedia(article.coverImage?.url);
+}
+
+/**
+ * Resolve an article's Open Graph image: explicit OG url → OG media → cover url →
+ * cover media. Returns "" when none is set (caller supplies the default).
+ */
+export function articleOgImage(article?: {
+  seo?: Seo | null;
+  coverImageUrl?: string | null;
+  coverImage?: StrapiMedia | null;
+} | null): string {
+  if (!article) return "";
+  return (
+    strapiMedia(article.seo?.metaImageUrl) ||
+    strapiMedia(article.seo?.metaImage?.url) ||
+    articleCover(article)
+  );
 }
 
 // ─── Populate strings ─────────────────────────────────────────────────────────

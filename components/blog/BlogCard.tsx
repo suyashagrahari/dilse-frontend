@@ -2,11 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import type { Article } from "@/lib/strapi";
-import { strapiMedia } from "@/lib/strapi";
+import { strapiMedia, articleCover } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 
 export default function BlogCard({ article, featured = false }: { article: Article; featured?: boolean }) {
-  const cover = strapiMedia(article.coverImage?.url);
+  const cover = articleCover(article);
   const authorAvatar = strapiMedia(article.author?.avatar?.url);
 
   return (
