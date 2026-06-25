@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { buildMeta, SITE_URL, SITE_NAME } from "@/lib/seo";
 import { getArticles, getCategories, getCategoryBySlug } from "@/lib/strapi";
-import BlogCard from "@/components/blog/BlogCard";
+import InfiniteBlogGrid from "@/components/blog/InfiniteBlogGrid";
 import CategoryChips from "@/components/blog/CategoryChips";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
+
+const PAGE_SIZE = 12;
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -30,8 +32,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const cat = await getCategoryBySlug(category);
   if (!cat) notFound();
 
-  const [{ articles }, categories] = await Promise.all([
-    getArticles({ category, pageSize: 30 }),
+  // SSR only the first page for instant paint; InfiniteBlogGrid streams the rest
+  // client-side as the user scrolls.
+  const [{ articles, pageCount }, categories] = await Promise.all([
+    getArticles({ category, page: 1, pageSize: PAGE_SIZE }),
     getCategories(),
   ]);
 
@@ -66,11 +70,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         {articles.length === 0 ? (
           <p className="py-20 text-center" style={{ color: "rgba(42,10,14,0.6)" }}>No posts in this category yet.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((a) => (
-              <BlogCard key={a.id} article={a} />
-            ))}
-          </div>
+          <InfiniteBlogGrid
+            initialArticles={articles}
+            initialPageCount={pageCount}
+            category={cat.slug}
+            pageSize={PAGE_SIZE}
+          />
         )}
       </section>
     </main>

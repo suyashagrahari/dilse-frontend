@@ -1198,3 +1198,13 @@ body {
   .sec-pad { padding-top: 72px !important; padding-bottom: 72px !important; }
   .sec-inner { padding-left: 20px !important; padding-right: 20px !important; }
 }
+
+/* Virtualized card painting: offscreen blog cards skip layout + paint, keeping
+   long, infinitely-scrolling grids smooth. `contain-intrinsic-size` is set
+   per-card inline (featured vs regular) so the scrollbar stays stable; the
+   `auto` keyword there makes the browser remember each card's real size once
+   it has been painted. Progressive enhancement — browsers without
+   content-visibility just render every card normally. */
+.cv-card {
+  content-visibility: auto;
+}
