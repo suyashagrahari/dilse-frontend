@@ -13,6 +13,7 @@ const ROOT_DOMAIN = (() => {
 // Subdomains that are NOT user handles — leave them alone
 const RESERVED_SUBDOMAINS = new Set([
   "www", "api", "admin", "mail", "ftp", "support", "static", "cdn", "dev",
+  "stag", "stag-api", "strapi", "dev-api",
 ]);
 
 // App pages that should work exactly the same on root domain and subdomains.
