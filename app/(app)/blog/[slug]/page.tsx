@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, ChevronRight, Sparkles } from "lucide-react";
 import { buildMeta, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, strapiMedia } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, articleCover, articleOgImage } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 import ArticleBody from "@/components/blog/ArticleBody";
 import AuthorBox from "@/components/blog/AuthorBox";
@@ -12,6 +12,7 @@ import FAQAccordion from "@/components/blog/FAQAccordion";
 import ShareButtons from "@/components/blog/ShareButtons";
 import RelatedPosts from "@/components/blog/RelatedPosts";
 import TableOfContents from "@/components/blog/TableOfContents";
+import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
 import { BlogPostingJsonLd, BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 
 export const revalidate = 3600;
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = seo?.metaTitle || article.title;
   const description = seo?.metaDescription || article.excerpt || `Read ${article.title} on the ${SITE_NAME} blog.`;
   const canonical = seo?.canonicalURL || `${SITE_URL}/blog/${article.slug}`;
-  const ogImage = strapiMedia(seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
+  const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
 
   const meta = buildMeta({
     title: `${title} | ${SITE_NAME} Blog`,
@@ -64,14 +65,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
+  // Templates explicitly linked to this post in Strapi drive the "Create now" CTA:
+  //  • one linked  → redirect straight to that template's page
+  //  • several     → open the picker showing just those linked templates
+  //  • none linked → redirect to the /templates listing page (no picker)
+  const linkedTemplates = article.relatedTemplates ?? [];
   const related = await getRelatedArticles(article);
-  const cover = strapiMedia(article.coverImage?.url);
+  const cover = articleCover(article);
   const url = `${SITE_URL}/blog/${article.slug}`;
-  const ogImage = strapiMedia(article.seo?.metaImage?.url || article.coverImage?.url) || DEFAULT_OG_IMAGE;
+  const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
   const takeaways = Array.isArray(article.keyTakeaways) ? article.keyTakeaways : [];
+  // Raw markdown body (uploaded/pasted .md) wins over blocks; either renders.
+  const markdown = article.contentMarkdown?.trim() || null;
+  const hasBody = Boolean(markdown) || (Array.isArray(article.content) && article.content.length > 0);
 
   return (
-    <main className="min-h-screen overflow-x-hidden" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
+    <main className="min-h-screen overflow-x-clip" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
       {/* ── Structured data ── */}
       <BlogPostingJsonLd
         title={article.seo?.metaTitle || article.title}
@@ -95,7 +104,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       />
       {article.faqs && article.faqs.length > 0 && <FAQJsonLd faqs={article.faqs} />}
 
-      <article className="relative mx-auto max-w-3xl px-5 pt-12 pb-24 md:pt-32">
+      {/* lg: items-stretch (default) makes the aside as tall as the article so the
+          sticky TOC stays pinned through the whole left-content scroll. */}
+      <div className="mx-auto flex max-w-7xl flex-col gap-12 px-5 pt-12 pb-24 md:pt-32 lg:flex-row lg:justify-center lg:gap-16">
+      <article className="relative w-full lg:max-w-[52rem]">
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs" style={{ color: "rgba(42,10,14,0.55)" }} aria-label="Breadcrumb">
           <Link href="/blog" className="hover:underline">Blog</Link>
@@ -155,17 +167,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* TOC */}
-        {article.content && (
+        {/* TOC — mobile only (desktop uses the sticky sidebar) */}
+        {hasBody && (
           <div className="mt-8">
-            <TableOfContents content={article.content} />
+            <TableOfContents content={article.content} markdown={markdown} variant="inline" />
           </div>
         )}
 
         {/* Body */}
-        {article.content && (
+        {hasBody && (
           <div className="mt-8">
-            <ArticleBody content={article.content} />
+            <ArticleBody content={article.content} markdown={markdown} />
           </div>
         )}
 
@@ -188,6 +200,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* FAQ */}
         {article.faqs && article.faqs.length > 0 && <FAQAccordion faqs={article.faqs} />}
 
+        {/* Create-a-surprise CTA — mobile/tablet only (desktop shows it in the sticky sidebar) */}
+        <div className="mt-12 lg:hidden">
+          <TemplatesPromoCard linked={linkedTemplates} />
+        </div>
+
         {/* Author */}
         {article.author && (
           <div className="mt-12">
@@ -198,6 +215,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Related */}
         <RelatedPosts articles={related} />
       </article>
+
+      {/* Sticky sidebar (desktop): table of contents + create-a-surprise CTA.
+          The aside fills the viewport height; only the TOC scrolls when long so
+          the promo card stays pinned and fully visible (never cut off). */}
+      <aside className="hidden shrink-0 lg:block lg:w-72 xl:w-80">
+        <div className="sticky top-28 flex h-[calc(100vh-8rem)] flex-col gap-5">
+          {hasBody && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <TableOfContents content={article.content} markdown={markdown} variant="sidebar" />
+            </div>
+          )}
+          <div className="shrink-0">
+            <TemplatesPromoCard linked={linkedTemplates} />
+          </div>
+        </div>
+      </aside>
+      </div>
     </main>
   );
 }

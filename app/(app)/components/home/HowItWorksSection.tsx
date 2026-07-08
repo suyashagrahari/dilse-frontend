@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 const stagger = {
@@ -13,20 +14,20 @@ const fadeUp = {
 };
 
 const steps = [
-  { num: '01', icon: 'calendar', title: 'Choose Your Occasion', desc: "Pick from birthdays, weddings, Holi, Eid, Valentine's Day and more festive occasions.", tag: 'STEP ONE', delay: 0, fromX: -60 },
-  { num: '02', icon: 'edit', title: 'Customize Your Page', desc: 'Add photos, music, heartfelt messages, and a live countdown timer to make it truly special.', tag: 'STEP TWO', delay: 0.14, fromX: 0 },
-  { num: '03', icon: 'share', title: 'Share the Surprise', desc: 'Publish your page and send the magical link to loved ones — ready in under 2 minutes.', tag: 'STEP THREE', delay: 0.28, fromX: 60 },
+  { num: '01', icon: 'calendar', title: 'Choose Your Occasion', desc: "Pick from birthdays, weddings, Holi, Eid, Valentine's Day and more festive occasions.", tag: 'STEP ONE' },
+  { num: '02', icon: 'edit', title: 'Customize Your Page', desc: 'Add photos, music, heartfelt messages, and a live countdown timer to make it truly special.', tag: 'STEP TWO' },
+  { num: '03', icon: 'share', title: 'Share the Surprise', desc: 'Publish your page and send the magical link to loved ones — ready in under 2 minutes.', tag: 'STEP THREE' },
 ];
 
-function StepIcon({ type }: { type: string }) {
-  const common = { width: 31, height: 31, viewBox: '0 0 24 24', fill: 'none', stroke: '#c9a84c', strokeWidth: 1.85, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+function StepIcon({ type, stroke = '#c9a84c' }: { type: string; stroke?: string }) {
+  const common = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke, strokeWidth: 1.85, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   if (type === 'calendar') return (
     <svg {...common}>
       <rect x="4" y="5" width="16" height="15" rx="2.2" />
       <path d="M8 3v4M16 3v4M4 10h16" />
-      <circle cx="9" cy="14.2" r="0.9" fill="#c9a84c" stroke="none" />
-      <circle cx="12.5" cy="14.2" r="0.9" fill="#c9a84c" stroke="none" />
-      <circle cx="16" cy="14.2" r="0.9" fill="#c9a84c" stroke="none" />
+      <circle cx="9" cy="14.2" r="0.9" fill={stroke} stroke="none" />
+      <circle cx="12.5" cy="14.2" r="0.9" fill={stroke} stroke="none" />
+      <circle cx="16" cy="14.2" r="0.9" fill={stroke} stroke="none" />
     </svg>
   );
   if (type === 'edit') return (
@@ -46,8 +47,152 @@ function StepIcon({ type }: { type: string }) {
   );
 }
 
+const OCC = [
+  { e: '🎂', l: 'Birthday', on: true }, { e: '💍', l: 'Wedding' },
+  { e: '🎨', l: 'Holi' }, { e: '🌙', l: 'Eid' },
+  { e: '💛', l: 'Valentine' }, { e: '🎉', l: 'Anniversary' },
+];
+const CUSTOM = [
+  { i: '📷', l: 'Photos', v: '6 added' },
+  { i: '🎵', l: 'Music', v: 'Perfect — Ed Sheeran' },
+  { i: '✍️', l: 'Message', v: 'Written with love' },
+  { i: '⏳', l: 'Countdown', v: '12d 04h 22m' },
+];
+
+const phoneHeaderStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg,#3d0c11,#5a1620)', padding: '32px 16px 14px', flexShrink: 0,
+};
+
+/* Screen 1 — Choose occasion */
+function OccasionScreen() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: '#faf3ee', display: 'flex', flexDirection: 'column' }}>
+      <div style={phoneHeaderStyle}>
+        <div style={{ fontSize: 9, letterSpacing: '2px', color: 'rgba(201,168,76,0.9)', fontWeight: 700 }}>NEW PAGE</div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#f7eee5', marginTop: 3 }}>Choose an occasion</div>
+      </div>
+      <div style={{ flex: 1, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignContent: 'start' }}>
+        {OCC.map((o, i) => (
+          <motion.div key={o.l}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.06, duration: 0.32 }}
+            style={{
+              background: o.on ? 'linear-gradient(135deg,#3d0c11,#5a1620)' : '#fff',
+              border: `1.5px solid ${o.on ? '#c9a84c' : 'rgba(61,12,17,0.1)'}`,
+              borderRadius: 12, padding: '14px 8px', textAlign: 'center', position: 'relative',
+              boxShadow: o.on ? '0 8px 20px rgba(61,12,17,0.25)' : '0 3px 10px rgba(61,12,17,0.06)'
+            }}>
+            {o.on && <div style={{ position: 'absolute', top: 6, right: 6, width: 15, height: 15, borderRadius: '50%', background: '#c9a84c', color: '#3d0c11', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</div>}
+            <div style={{ fontSize: 24, marginBottom: 5 }}>{o.e}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: o.on ? '#f7eee5' : '#4a2828' }}>{o.l}</div>
+          </motion.div>
+        ))}
+      </div>
+      <div style={{ padding: '0 14px 18px', flexShrink: 0 }}>
+        <div style={{ background: '#3d0c11', color: '#f5ede6', textAlign: 'center', padding: '12px', borderRadius: 10, fontSize: 12, fontWeight: 700, letterSpacing: '1px' }}>CONTINUE →</div>
+      </div>
+    </div>
+  );
+}
+
+/* Screen 2 — Customize */
+function CustomizeScreen() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: '#faf3ee', display: 'flex', flexDirection: 'column' }}>
+      <div style={phoneHeaderStyle}>
+        <div style={{ fontSize: 9, letterSpacing: '2px', color: 'rgba(201,168,76,0.9)', fontWeight: 700 }}>EDITOR</div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#f7eee5', marginTop: 3 }}>Customize your page</div>
+      </div>
+      {/* mini preview */}
+      <div style={{ margin: 14, borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(160deg,#3d0c11,#5a1620,#2a0a0e)', padding: '18px 12px', textAlign: 'center', flexShrink: 0, border: '1px solid rgba(201,168,76,0.3)' }}>
+        <div style={{ fontSize: 8, letterSpacing: '2px', color: 'rgba(201,168,76,0.9)', fontWeight: 700 }}>HAPPY BIRTHDAY</div>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#c9a84c,#a8823a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, margin: '8px auto 6px' }}>🎂</div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 15, fontWeight: 700, color: '#f7eee5' }}>Dearest Priya</div>
+      </div>
+      <div style={{ flex: 1, padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {CUSTOM.map((c, i) => (
+          <motion.div key={c.l}
+            initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.12 + i * 0.08, duration: 0.32 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(61,12,17,0.08)', borderRadius: 10, padding: '10px 12px', boxShadow: '0 3px 10px rgba(61,12,17,0.05)' }}>
+            <span style={{ fontSize: 16 }}>{c.i}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: '#4a2828' }}>{c.l}</div>
+              <div style={{ fontSize: 9.5, color: '#9a7070', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.v}</div>
+            </div>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#c9a84c', color: '#3d0c11', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</span>
+          </motion.div>
+        ))}
+      </div>
+      <div style={{ padding: 14, flexShrink: 0 }}>
+        <div style={{ background: '#3d0c11', color: '#f5ede6', textAlign: 'center', padding: '12px', borderRadius: 10, fontSize: 12, fontWeight: 700, letterSpacing: '1px' }}>PREVIEW & PUBLISH</div>
+      </div>
+    </div>
+  );
+}
+
+/* Screen 3 — Share */
+function ShareScreen() {
+  const shares = [
+    { l: 'WhatsApp', bg: '#25D366', e: '💬' },
+    { l: 'Instagram', bg: 'linear-gradient(135deg,#feda75,#d62976,#4f5bd5)', e: '📸' },
+    { l: 'Copy link', bg: '#3d0c11', e: '🔗' },
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(170deg,#faf3ee,#f0e0d0)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ ...phoneHeaderStyle, textAlign: 'center', paddingBottom: 18 }}>
+        <div style={{ fontSize: 30 }}>🎉</div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#f7eee5', marginTop: 4 }}>Your page is live!</div>
+      </div>
+      {/* preview thumb */}
+      <div style={{ margin: '16px 16px 8px', borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(160deg,#3d0c11,#5a1620)', padding: '20px 12px', textAlign: 'center', border: '2px solid #c9a84c', boxShadow: '0 12px 28px rgba(61,12,17,0.25)', flexShrink: 0 }}>
+        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#c9a84c,#a8823a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, margin: '0 auto 8px' }}>🎂</div>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 700, color: '#f7eee5' }}>Dearest Priya</div>
+        <div style={{ fontSize: 9, color: 'rgba(245,237,230,0.6)', marginTop: 3 }}>Wishing you a year as bright as you ✨</div>
+      </div>
+      {/* URL pill */}
+      <div style={{ margin: '4px 16px 12px', background: '#fff', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 999, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <span style={{ fontSize: 11 }}>🔒</span>
+        <span style={{ fontSize: 10.5, color: '#7a5555', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>subhsandesh.in/priya-bday</span>
+        <span style={{ fontSize: 9, fontWeight: 800, color: '#c9a84c' }}>COPY</span>
+      </div>
+      {/* share buttons */}
+      <div style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+        {shares.map((s, i) => (
+          <motion.div key={s.l}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 + i * 0.1, duration: 0.32 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(61,12,17,0.08)', borderRadius: 12, padding: '11px 13px', boxShadow: '0 3px 10px rgba(61,12,17,0.05)' }}>
+            <span style={{ width: 30, height: 30, borderRadius: '50%', background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{s.e}</span>
+            <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: '#4a2828' }}>{s.l}</span>
+            <span style={{ fontSize: 13, color: '#c9a84c' }}>→</span>
+          </motion.div>
+        ))}
+      </div>
+      <div style={{ padding: '10px 16px 18px', textAlign: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 10, color: '#9a7070', fontStyle: 'italic' }}>Already shared with 24 loved ones 💛</span>
+      </div>
+    </div>
+  );
+}
+
+const SCREENS = [OccasionScreen, CustomizeScreen, ShareScreen];
+
 export default function HowItWorksSection() {
   const router = useRouter();
+  const [active, setActive] = useState(0);
+  const [restart, setRestart] = useState(0);
+  const ActiveScreen = SCREENS[active];
+
+  useEffect(() => {
+    const id = setInterval(() => setActive((p) => (p + 1) % 3), 4200);
+    return () => clearInterval(id);
+  }, [restart]);
+
+  const pick = useCallback((i: number) => {
+    setActive(i);
+    setRestart((r) => r + 1);
+  }, []);
 
   return (
     <section className="hiw-section" style={{ background: '#f5ede6', padding: '120px 0 110px', position: 'relative', overflow: 'hidden' }}>
@@ -64,16 +209,12 @@ export default function HowItWorksSection() {
       <img src="akehan3.svg" aria-hidden="true" style={{ position: 'absolute', bottom: '10%', right: '4%', width: 54, opacity: 0.09, animation: 'spinSlow 30s linear infinite reverse' }} alt="" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="akehan3.svg" aria-hidden="true" style={{ position: 'absolute', top: '45%', right: '2%', width: 38, opacity: 0.07 }} alt="" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="akehan3.svg" aria-hidden="true" style={{ position: 'absolute', bottom: '35%', left: '2%', width: 42, opacity: 0.07 }} alt="" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="akehan3.svg" aria-hidden="true" style={{ position: 'absolute', top: '18%', left: '44%', width: 28, opacity: 0.06 }} alt="" />
 
       <div className="hiw-inner" style={{ maxWidth: 1120, margin: '0 auto', padding: '0 44px', position: 'relative', zIndex: 1 }}>
 
         {/* Header */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-          variants={stagger} style={{ textAlign: 'center', marginBottom: 80 }}>
+          variants={stagger} style={{ textAlign: 'center', marginBottom: 64 }}>
 
           <motion.div variants={fadeUp} style={{ marginBottom: 26 }}>
             <span style={{
@@ -93,7 +234,6 @@ export default function HowItWorksSection() {
             <em style={{ color: '#c9a84c', fontStyle: 'italic' }}>3 simple steps</em>
           </motion.h2>
 
-          {/* Ornamental divider */}
           <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 22 }}>
             <div style={{ width: 80, height: 1, background: 'linear-gradient(to right,transparent,rgba(61,12,17,0.3))' }} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -102,82 +242,100 @@ export default function HowItWorksSection() {
           </motion.div>
         </motion.div>
 
-        {/* Steps grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 32, position: 'relative' }}
-          className="hiw-grid">
+        {/* Body: cycling phone (left) + vertical step cards (right) */}
+        <motion.div className="hiw-body" initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger}>
 
-          {/* Connecting dotted path */}
-          <div className="hiw-path" style={{
-            position: 'absolute', top: 72, left: '19%', right: '19%', height: 2, zIndex: 0,
-            background: 'repeating-linear-gradient(90deg,rgba(201,168,76,0.55) 0,rgba(201,168,76,0.55) 6px,transparent 6px,transparent 14px)'
-          }} />
-          {/* Arrow chevrons */}
-          {[38, 62].map(pct => (
-            <div key={pct} className="hiw-arrow" style={{ position: 'absolute', top: 64, left: `${pct}%`, zIndex: 1, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </div>
-          ))}
-
-          {steps.map((s) => (
-            <motion.div key={s.num}
-              initial={{ opacity: 0, y: 56, x: s.fromX }}
-              whileInView={{ opacity: 1, y: 0, x: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.72, delay: s.delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              whileHover={{ y: -10, boxShadow: '0 32px 64px rgba(61,12,17,0.14),0 0 0 1.5px rgba(201,168,76,0.4)' } as any}
-              style={{
-                background: '#fff', border: '1.5px solid rgba(61,12,17,0.08)', borderRadius: 8,
-                padding: '0 0 34px', textAlign: 'center', position: 'relative', zIndex: 1,
-                boxShadow: '0 6px 28px rgba(61,12,17,0.07)',
-                transition: 'all 0.38s cubic-bezier(0.22,1,0.36,1)', overflow: 'hidden'
-              }}>
-
-              {/* Top accent band */}
-              <div style={{ height: 5, background: 'linear-gradient(90deg,#3d0c11,#c9a84c,#3d0c11)', marginBottom: 36 }} />
-
-              {/* Step tag */}
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', color: '#c9a84c', marginBottom: 18, opacity: 0.85 }}>{s.tag}</div>
-
-              {/* Icon circle */}
-              <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 22px' }}>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(201,168,76,0.2)', animation: 'pulseSlow 3s ease-in-out infinite' }} />
-                <div style={{
-                  position: 'absolute', inset: 6, borderRadius: '50%',
-                  background: '#3d0c11', border: '2px solid rgba(201,168,76,0.5)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(61,12,17,0.3),inset 0 1px 0 rgba(201,168,76,0.15)'
-                }}>
-                  <StepIcon type={s.icon} />
-                </div>
+          {/* Phone */}
+          <motion.div className="hiw-phone-col"
+            variants={{
+              hidden: { opacity: 0, y: 40 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }
+            }}>
+            <div style={{
+              width: 300, maxWidth: '100%', height: 600, borderRadius: 40, background: '#241014',
+              border: '9px solid #241014', boxShadow: '0 40px 80px rgba(61,12,17,0.32), 0 0 0 1px rgba(201,168,76,0.28)',
+              overflow: 'hidden', position: 'relative', margin: '0 auto'
+            }}>
+              <AnimatePresence mode="wait">
+                <motion.div key={active}
+                  initial={{ opacity: 0, x: 26 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -26 }}
+                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+                  style={{ position: 'absolute', inset: 0 }}>
+                  <ActiveScreen />
+                </motion.div>
+              </AnimatePresence>
+              {/* notch */}
+              <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', width: 92, height: 20, borderRadius: 12, background: '#241014', zIndex: 10 }} />
+              {/* dot indicator */}
+              <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 10 }}>
+                {steps.map((_, i) => (
+                  <span key={i} style={{ width: i === active ? 16 : 6, height: 6, borderRadius: 4, background: i === active ? '#c9a84c' : 'rgba(255,255,255,0.35)', transition: 'all 0.3s' }} />
+                ))}
               </div>
+            </div>
+          </motion.div>
 
-              {/* Large step number watermark */}
-              <div style={{
-                position: 'absolute', top: 44, right: 22,
-                fontFamily: "'Playfair Display',serif", fontSize: 72, fontWeight: 700,
-                color: 'rgba(61,12,17,0.04)', lineHeight: 1, userSelect: 'none', pointerEvents: 'none'
-              }}>{s.num}</div>
+          {/* Step cards */}
+          <div className="hiw-cards">
+            {steps.map((s, i) => {
+              const on = i === active;
+              return (
+                <motion.div key={s.num}
+                  onClick={() => pick(i)}
+                  variants={{
+                    hidden: { opacity: 0, x: 40 },
+                    visible: { opacity: 1, x: 0, transition: { duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }
+                  }}
+                  style={{
+                    background: '#fff',
+                    border: `1.5px solid ${on ? 'rgba(201,168,76,0.75)' : 'rgba(61,12,17,0.08)'}`,
+                    borderRadius: 16, padding: '26px 26px 26px 30px', position: 'relative',
+                    display: 'flex', alignItems: 'center', gap: 20, minHeight: 172,
+                    boxShadow: on ? '0 26px 54px rgba(61,12,17,0.16)' : '0 6px 22px rgba(61,12,17,0.06)',
+                    opacity: on ? 1 : 0.62, cursor: 'pointer',
+                    transform: on ? 'translateX(8px)' : 'translateX(0)',
+                    transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)', overflow: 'hidden'
+                  }}>
 
-              <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 21, fontWeight: 700, color: '#2a0a0e', marginBottom: 12, lineHeight: 1.2, padding: '0 28px' }}>{s.title}</h3>
-              <p style={{ fontSize: 13.5, color: '#7a5555', lineHeight: 1.76, padding: '0 28px', margin: 0 }}>{s.desc}</p>
+                  {/* top/left accent */}
+                  <div style={{ position: 'absolute', left: 0, top: on ? '16%' : '50%', bottom: on ? '16%' : '50%', width: 4, borderRadius: 4, background: 'linear-gradient(#c9a84c,#a8823a)', opacity: on ? 1 : 0, transition: 'all 0.4s' }} />
 
-              {/* Bottom gold shimmer */}
-              <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.6),transparent)', borderRadius: 2 }} />
+                  {/* number watermark */}
+                  <div style={{ position: 'absolute', top: 10, right: 18, fontFamily: "'Playfair Display',serif", fontSize: 64, fontWeight: 700, color: 'rgba(61,12,17,0.05)', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>{s.num}</div>
 
-              {/* Corner brackets */}
-              <div style={{ position: 'absolute', top: 12, left: 12, width: 14, height: 14, borderTop: '1.5px solid rgba(201,168,76,0.4)', borderLeft: '1.5px solid rgba(201,168,76,0.4)' }} />
-              <div style={{ position: 'absolute', top: 12, right: 12, width: 14, height: 14, borderTop: '1.5px solid rgba(201,168,76,0.4)', borderRight: '1.5px solid rgba(201,168,76,0.4)' }} />
-            </motion.div>
-          ))}
-        </div>
+                  {/* icon circle */}
+                  <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
+                    {on && <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(201,168,76,0.35)', animation: 'pulseSlow 3s ease-in-out infinite' }} />}
+                    <div style={{
+                      position: 'absolute', inset: 5, borderRadius: '50%', background: '#3d0c11',
+                      border: `2px solid ${on ? '#c9a84c' : 'rgba(201,168,76,0.4)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 8px 22px rgba(61,12,17,0.3)', transition: 'border-color 0.4s'
+                    }}>
+                      <StepIcon type={s.icon} />
+                    </div>
+                  </div>
+
+                  {/* text */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', color: '#c9a84c', marginBottom: 6 }}>
+                      {on ? '▶ SHOWN ON PHONE' : s.tag}
+                    </div>
+                    <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 700, color: '#2a0a0e', margin: '0 0 6px', lineHeight: 1.2 }}>{s.title}</h3>
+                    <p style={{ fontSize: 13, color: '#7a5555', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
 
         {/* CTA strip */}
         <motion.div
           initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ duration: 0.65, delay: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+          transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
           style={{ textAlign: 'center', marginTop: 64 }}>
           <motion.button className="hiw-cta-btn"
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -207,9 +365,17 @@ export default function HowItWorksSection() {
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,transparent,#c9a84c 25%,#3d0c11 50%,#c9a84c 75%,transparent)' }} />
 
       <style>{`
-        @media (max-width: 768px) {
-          .hiw-grid { grid-template-columns: 1fr !important; }
-          .hiw-path, .hiw-arrow { display: none !important; }
+        .hiw-body {
+          display: grid;
+          grid-template-columns: 300px 1fr;
+          gap: 56px;
+          align-items: center;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+        .hiw-cards { display: flex; flex-direction: column; gap: 18px; }
+        @media (max-width: 860px) {
+          .hiw-body { grid-template-columns: 1fr; gap: 40px; max-width: 380px; }
         }
       `}</style>
     </section>

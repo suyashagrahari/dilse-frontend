@@ -52,6 +52,8 @@ export interface Seo {
   structuredData?: Record<string, any> | null;
   noIndex?: boolean | null;
   metaImage?: StrapiMedia | null;
+  /** External OG image URL (e.g. S3/CDN). Wins over `metaImage` when set. */
+  metaImageUrl?: string | null;
 }
 
 export interface FaqItem {
@@ -71,7 +73,11 @@ export interface Article {
   slug: string;
   excerpt?: string | null;
   content?: BlocksContent | null;
+  /** Optional raw markdown body — takes precedence over `content` blocks when present. */
+  contentMarkdown?: string | null;
   coverImage?: StrapiMedia | null;
+  /** External cover image URL (e.g. S3/CDN). Wins over `coverImage` when set. */
+  coverImageUrl?: string | null;
   author?: Author | null;
   category?: Category | null;
   tags?: string[] | null;
@@ -80,9 +86,25 @@ export interface Article {
   featured?: boolean | null;
   seo?: Seo | null;
   faqs?: FaqItem[] | null;
+  /** Templates linked to this post in Strapi — power the "Create a surprise" CTA. */
+  relatedTemplates?: Template[] | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+}
+
+export interface Template {
+  id: number;
+  documentId: string;
+  title: string;
+  description?: string | null;
+  /** Path ("/birthday-gf") or absolute URL the card links to. */
+  url: string;
+  category?: string | null;
+  emoji?: string | null;
+  featured?: boolean | null;
+  order?: number | null;
+  coverImage?: StrapiMedia | null;
 }
 
 interface StrapiListResponse<T> {
@@ -120,6 +142,36 @@ export function strapiMedia(url?: string | null): string {
   return `${STRAPI_URL}${url}`;
 }
 
+/**
+ * Resolve an article's cover image, preferring an external URL (S3/CDN set via
+ * `coverImageUrl` by the Blog Automation studio) over the uploaded Strapi media.
+ * Returns "" when neither is set.
+ */
+export function articleCover(article?: {
+  coverImageUrl?: string | null;
+  coverImage?: StrapiMedia | null;
+} | null): string {
+  if (!article) return "";
+  return strapiMedia(article.coverImageUrl) || strapiMedia(article.coverImage?.url);
+}
+
+/**
+ * Resolve an article's Open Graph image: explicit OG url → OG media → cover url →
+ * cover media. Returns "" when none is set (caller supplies the default).
+ */
+export function articleOgImage(article?: {
+  seo?: Seo | null;
+  coverImageUrl?: string | null;
+  coverImage?: StrapiMedia | null;
+} | null): string {
+  if (!article) return "";
+  return (
+    strapiMedia(article.seo?.metaImageUrl) ||
+    strapiMedia(article.seo?.metaImage?.url) ||
+    articleCover(article)
+  );
+}
+
 // ─── Populate strings ─────────────────────────────────────────────────────────
 
 const LIST_POPULATE =
@@ -130,7 +182,8 @@ const LIST_POPULATE =
 const DETAIL_POPULATE =
   LIST_POPULATE +
   "&populate[seo][populate][metaImage]=true" +
-  "&populate[faqs]=true";
+  "&populate[faqs]=true" +
+  "&populate[relatedTemplates][populate][coverImage]=true";
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 
@@ -191,6 +244,18 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     `/categories?filters[slug][$eq]=${encodeURIComponent(slug)}&pagination[pageSize]=1`
   );
   return res?.data?.[0] ?? null;
+}
+
+/**
+ * Gift/occasion templates shown in the blog "Create a surprise" picker.
+ * Cached under the shared `articles` tag, so the existing Strapi publish webhook
+ * revalidates them on demand too. Sorted by `order` then title.
+ */
+export async function getTemplates(): Promise<Template[]> {
+  const res = await strapiFetch<StrapiListResponse<Template>>(
+    `/templates?populate[coverImage]=true&sort[0]=order:asc&sort[1]=title:asc&pagination[pageSize]=100`
+  );
+  return res?.data ?? [];
 }
 
 /** Lightweight list of every published article (slug + updatedAt) for sitemap + generateStaticParams. */
