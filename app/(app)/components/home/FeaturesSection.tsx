@@ -656,7 +656,7 @@ export default function FeaturesSection() {
           <motion.h2 variants={fadeUp}
             style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(30px,4.8vw,60px)', fontWeight: 700, color: '#f5ede6', letterSpacing: '-1.5px', lineHeight: 1.06, marginBottom: 10 }}>
             Everything you need to create<br />
-            <em style={{ color: '#c9a84c', fontStyle: 'italic', textShadow: '0 0 40px rgba(201,168,76,0.3)' }}>unforgettable wishes</em>
+            <em style={{ color: '#c9a84c', fontStyle: 'italic', textShadow: '0 0 40px rgba(201,168,76,0.3)' }}>wishes worth keeping</em>
           </motion.h2>
           <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 16 }}>
             <div style={{ width: 80, height: 1, background: 'linear-gradient(to right,transparent,rgba(201,168,76,0.5))' }} />

@@ -4,37 +4,29 @@ import CornerOrnaments from "./components/home/CornerOrnaments";
 import MobileTopBar from "./components/home/MobileTopBar";
 import HeroSection from "./components/home/HeroSection";
 import ProblemSection from "./components/home/ProblemSection";
-import SolutionSection from "./components/home/SolutionSection";
 import HowItWorksSection from "./components/home/HowItWorksSection";
 import FeaturesSection from "./components/home/FeaturesSection";
-import PhoneDemoSection from "./components/home/PhoneDemoSection";
-import OccasionsSection from "./components/home/OccasionsSection";
 import TestimonialsSection from "./components/home/TestimonialsSection";
-import SecuritySection from "./components/home/SecuritySection";
-import WhyLoveSection from "./components/home/WhyLoveSection";
 import CTASection from "./components/home/CTASection";
-import FooterSection from "./components/home/FooterSection";
+import SubhSandeshFooter from "./components/home/SubhSandeshFooter";
 
 export default function HomePage() {
   return (
     <>
       <CornerOrnaments />
       <MobileTopBar />
+      {/* Lean, alternating light/dark old-design landing:
+          Hero (L) → Problem (D) → How It Works (L) → Features (D) → Testimonials (L) → CTA (D) → Footer (L) */}
       <main className="app-main-shell">
         <HeroSection />
         <ProblemSection />
-        <SolutionSection />
         <HowItWorksSection />
         <FeaturesSection />
-        <PhoneDemoSection />
-        <OccasionsSection />
         <TestimonialsSection />
-        <SecuritySection />
-        <WhyLoveSection />
         <CTASection />
       </main>
       <div className="app-footer-shell">
-        <FooterSection />
+        <SubhSandeshFooter />
       </div>
       <style>{`
         @media (max-width: 768px) {

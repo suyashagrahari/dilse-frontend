@@ -69,17 +69,16 @@ function RevCard({ r }: { r: typeof REVIEWS_ROW1[0] }) {
 }
 
 export default function TestimonialsSection() {
-  const row1 = [...REVIEWS_ROW1, ...REVIEWS_ROW1];
-  const row2 = [...REVIEWS_ROW2, ...REVIEWS_ROW2];
+  const all = [...REVIEWS_ROW1, ...REVIEWS_ROW2];
+  const row = [...all, ...all];
 
   return (
-    <section style={{ background: '#f5ede6', padding: '110px 0 120px', position: 'relative', overflow: 'hidden' }}>
+    <section style={{ background: '#f5ede6', padding: '110px 0 48px', position: 'relative', overflow: 'hidden' }}>
       {/* Radial glows */}
       {[{ top: '5%', left: '3%' }, { bottom: '10%', left: '40%' }].map((pos, i) => (
         <div key={i} style={{ position: 'absolute', ...pos as object, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.06),transparent 70%)', pointerEvents: 'none' }} />
       ))}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,transparent,#c9a84c 25%,#c9a84c 75%,transparent)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,#c9a84c,#a8823a 50%,#c9a84c)' }} />
 
       {/* Header */}
       <div className="test-header" style={{ maxWidth: 900, margin: '0 auto', padding: '0 44px', textAlign: 'center', marginBottom: 56, position: 'relative', zIndex: 1 }}>
@@ -120,21 +119,16 @@ export default function TestimonialsSection() {
         <div className="test-fade-l" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 120, background: 'linear-gradient(90deg,#f5ede6,transparent)', zIndex: 10, pointerEvents: 'none' }} />
         <div className="test-fade-r" style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 120, background: 'linear-gradient(270deg,#f5ede6,transparent)', zIndex: 10, pointerEvents: 'none' }} />
 
-        <div style={{ overflowX: 'hidden', overflowY: 'visible', marginBottom: 16, padding: '8px 0' }}>
-          <div style={{ display: 'flex', animation: 'marquee 38s linear infinite', width: 'max-content' }}>
-            {row1.map((r, i) => <RevCard key={i} r={r} />)}
-          </div>
-        </div>
-        <div style={{ overflowX: 'hidden', overflowY: 'visible', padding: '8px 0' }}>
-          <div style={{ display: 'flex', animation: 'marquee 44s linear infinite reverse', width: 'max-content' }}>
-            {row2.map((r, i) => <RevCard key={i} r={r} />)}
+        <div style={{ overflowX: 'hidden', overflowY: 'visible', padding: '10px 0' }}>
+          <div className="test-marquee" style={{ display: 'flex', animation: 'marquee 64s linear infinite', width: 'max-content' }}>
+            {row.map((r, i) => <RevCard key={i} r={r} />)}
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ width: 28, height: 1, background: 'rgba(61,12,17,0.15)' }} />
-          <span className="test-hint-desktop" style={{ fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>HOVER TO PAUSE · 12+ LANGUAGES · 28 STATES</span>
-          <span className="test-hint-mobile" style={{ display: 'none', fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>12+ LANGUAGES · 28 STATES</span>
+          <span className="test-hint-desktop" style={{ fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>HOVER TO PAUSE · REAL STORIES FROM REAL FAMILIES</span>
+          <span className="test-hint-mobile" style={{ display: 'none', fontSize: 10.5, color: 'rgba(61,12,17,0.35)', letterSpacing: '0.12em', fontWeight: 600 }}>REAL STORIES · REAL FAMILIES</span>
           <div style={{ width: 28, height: 1, background: 'rgba(61,12,17,0.15)' }} />
         </div>
       </motion.div>
@@ -149,6 +143,10 @@ export default function TestimonialsSection() {
           </div>
         ))}
       </motion.div>
+
+      <style>{`
+        .test-marquee:hover { animation-play-state: paused; }
+      `}</style>
     </section>
   );
 }
