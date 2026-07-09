@@ -14,10 +14,11 @@ const SPLASH_CSS = `
   opacity:1;transition:opacity .6s ease,transform .6s ease;will-change:opacity,transform;overflow:hidden}
 #ss-splash.ss-hide{opacity:0;transform:scale(1.03);pointer-events:none}
 #ss-splash .ss-stack{position:relative;text-align:center;padding:24px;width:100%;max-width:760px}
-#ss-splash .ss-logo{width:112px;height:112px;margin:0 auto 30px;border-radius:28%;overflow:hidden;
-  background:#fff;display:grid;place-items:center;border:1px solid rgba(201,168,76,.4);
-  animation:ssPop .7s cubic-bezier(.22,1,.36,1) both}
-#ss-splash .ss-logo img{width:82%;height:82%;object-fit:contain}
+/* circular + static (no pop) so it is visually identical to Android's PWA splash
+   icon — the OS splash then hands off to this loader with no seam */
+#ss-splash .ss-logo{width:128px;height:128px;margin:0 auto 30px;border-radius:50%;overflow:hidden;
+  background:#fff;display:grid;place-items:center}
+#ss-splash .ss-logo img{width:78%;height:78%;object-fit:contain}
 /* footer wordmark, recoloured for the cream ground: maroon outline writes on,
    then the maroon fill glows in with a gold shine sweeping across it */
 #ss-splash .ss-wm{display:block;width:min(90vw,680px);height:auto;margin:0 auto;overflow:visible;user-select:none}
