@@ -169,7 +169,7 @@ export default function HomeSection({ data, isPersonalized }: Props) {
               pointerEvents: "none",
             }}
           >
-            <Image src={`${ASSETS}/bottomflower2.png`} alt="" fill
+            <Image src={`${ASSETS}/bottomflower2.webp`} alt="" fill
               style={{ objectFit: "contain" }} />
           </div>
 
@@ -185,7 +185,7 @@ export default function HomeSection({ data, isPersonalized }: Props) {
               pointerEvents: "none",
             }}
           >
-            <Image src={`${ASSETS}/bottomflower1.png`} alt="" fill
+            <Image src={`${ASSETS}/bottomflower1.webp`} alt="" fill
               style={{ objectFit: "contain" }} />
           </div>
 
@@ -264,7 +264,7 @@ export default function HomeSection({ data, isPersonalized }: Props) {
               pointerEvents: "none",
             }}
           >
-            <Image src={`${ASSETS}/stickermiddletop.png`} alt="" fill
+            <Image src={`${ASSETS}/stickermiddletop.webp`} alt="" fill
               style={{ objectFit: "fill" }} />
           </div>
 

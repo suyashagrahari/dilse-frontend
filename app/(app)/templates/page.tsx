@@ -17,19 +17,19 @@ const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
 
 const COMING_SOON_IMAGES: Record<string, string> = {
   // Temporarily coming soon (have real cover images)
-  "anniversary-gf": "/assets/Aniversary/aniversary.png",
+  "anniversary-gf": "/assets/Aniversary/aniversary.webp",
   // Already coming soon
-  "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.png",
-  "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.png",
-  "birthday-parents": "/assets/TemplateComingSoon/happybirthdaymomanddad.png",
-  "birthday-bestfriend": "/assets/TemplateComingSoon/happybirhtday2.png",
-  "valentine-gf": "/assets/TemplateComingSoon/valentine.png",
-  "valentine-bestfriend": "/assets/TemplateComingSoon/galentine.png",
-  "sorry-gf": "/assets/TemplateComingSoon/sorry1.png",
-  "sorry-friend": "/assets/TemplateComingSoon/sorry2.png",
-  "missyou-gf": "/assets/TemplateComingSoon/missyou1.png",
-  "missyou-bestfriend": "/assets/TemplateComingSoon/missyou1.png",
-  "anniversary-parents": "/assets/TemplateComingSoon/wddinganiversary.png",
+  "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.webp",
+  "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.webp",
+  "birthday-parents": "/assets/TemplateComingSoon/happybirthdaymomanddad.webp",
+  "birthday-bestfriend": "/assets/TemplateComingSoon/happybirhtday2.webp",
+  "valentine-gf": "/assets/TemplateComingSoon/valentine.webp",
+  "valentine-bestfriend": "/assets/TemplateComingSoon/galentine.webp",
+  "sorry-gf": "/assets/TemplateComingSoon/sorry1.webp",
+  "sorry-friend": "/assets/TemplateComingSoon/sorry2.webp",
+  "missyou-gf": "/assets/TemplateComingSoon/missyou1.webp",
+  "missyou-bestfriend": "/assets/TemplateComingSoon/missyou1.webp",
+  "anniversary-parents": "/assets/TemplateComingSoon/wddinganiversary.webp",
 };
 
 const allTypes = [{ id: "all", label: "All", emoji: "✨" }, ...templateTypes];
@@ -369,7 +369,7 @@ function TemplatesContent() {
             aria-label="Go to home hero"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
+            <img src="/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",

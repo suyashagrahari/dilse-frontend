@@ -19,7 +19,7 @@ interface BeforeInstallPromptEvent extends Event {
 const HERO_CARDS = [
   {
     id: 1,
-    img: "/assets/hero-bg.jpeg",
+    img: "/assets/hero-bg.webp",
     icon: "💕",
     phIcon: "ph-bold ph-heart",
     label: "Love",
@@ -29,7 +29,7 @@ const HERO_CARDS = [
   },
   {
     id: 2,
-    img: "/assets/Aniversary/aniversary.png",
+    img: "/assets/Aniversary/aniversary.webp",
     icon: "💍",
     phIcon: "ph-bold ph-rings",
     label: "Anniversary",
@@ -39,7 +39,7 @@ const HERO_CARDS = [
   },
   {
     id: 3,
-    img: "/assets/marriage/weeding.png",
+    img: "/assets/marriage/weeding.webp",
     icon: "👰",
     phIcon: "ph-bold ph-church",
     label: "Wedding",
@@ -58,7 +58,7 @@ const HERO_DESCS = [
 
 const GALLERY_CARDS = [
   {
-    img: "/assets/Aniversary/aniversary.png",
+    img: "/assets/Aniversary/aniversary.webp",
     iconEl: <span className="text-lg">💍</span>,
     label: "Anniversary",
     labelClass: "bg-accent1\\/20 text-accent1 border border-accent1\\/30",
@@ -68,7 +68,7 @@ const GALLERY_CARDS = [
     alt: "Anniversary",
   },
   {
-    img: "/assets/hero-bg.jpeg",
+    img: "/assets/hero-bg.webp",
     iconEl: <span className="text-lg">💕</span>,
     label: "Love",
     labelClass: "bg-pink-500\\/20 text-pink-300 border border-pink-400\\/30",
@@ -78,7 +78,7 @@ const GALLERY_CARDS = [
     alt: "Love",
   },
   {
-    img: "/assets/marriage/weeding.png",
+    img: "/assets/marriage/weeding.webp",
     iconEl: <span className="text-lg">👰</span>,
     label: "Wedding",
     labelClass: "bg-amber-500\\/20 text-amber-300 border border-amber-400\\/30",
@@ -88,7 +88,7 @@ const GALLERY_CARDS = [
     alt: "Wedding",
   },
   {
-    img: "/assets/Eid/hero_eid.jpeg",
+    img: "/assets/Eid/hero_eid.webp",
     iconEl: <span className="text-lg">🌙</span>,
     label: "Festival",
     labelClass: "bg-yellow-500\\/20 text-yellow-300 border border-yellow-400\\/30",
@@ -98,7 +98,7 @@ const GALLERY_CARDS = [
     alt: "Eid",
   },
   {
-    img: "/assets/Holi/hero_holi.png",
+    img: "/assets/Holi/hero_holi.webp",
     iconEl: <span className="text-lg">🎨</span>,
     label: "Festival",
     labelClass: "bg-pink-500\\/20 text-pink-300 border border-pink-400\\/30",
@@ -108,7 +108,7 @@ const GALLERY_CARDS = [
     alt: "Holi",
   },
   {
-    img: "/assets/Reception/reception.png",
+    img: "/assets/Reception/reception.webp",
     iconEl: <span className="text-lg">🥂</span>,
     label: "Wedding",
     labelClass: "bg-amber-500\\/20 text-amber-300 border border-amber-400\\/30",

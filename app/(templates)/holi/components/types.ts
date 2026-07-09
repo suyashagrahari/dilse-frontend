@@ -79,7 +79,7 @@ export const DEMO_DATA: HoliData = {
   congratsMessage:
     "Wishing you and your family a very colorful and joyful Holi! May this festival bring happiness, love, and prosperity to your life. Happy Holi from our family to yours!",
   holiDate: "2026-03-14T00:00:00",
-  heroImage: "/assets/Holi/hero_holi.png",
+  heroImage: "/assets/Holi/hero_holi.webp",
   hindiTitle: "होली है!",
   hindiSubtitle: "आपको और आपके परिवार को होली की हार्दिक शुभकामनाएं",
   englishSubtitle: "Wishing you joy, colors, and countless blessings this Holi",

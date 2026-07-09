@@ -56,7 +56,7 @@ export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shar
       key: "copy",
       label: "SubhSandesh",
       icon: (
-        <Image src="/logo.png" alt="SubhSandesh" width={22} height={22} style={{ objectFit: "contain", borderRadius: 4 }} />
+        <Image src="/logo.webp" alt="SubhSandesh" width={22} height={22} style={{ objectFit: "contain", borderRadius: 4 }} />
       ),
       onClick: () => { onClose(); router.push("/"); },
     },

@@ -147,7 +147,7 @@ export default function FlowerBackground({ children }: Props) {
               height: 153,
             }}
           >
-            <Image src={`${ASSETS}/bottomflower2.png`} alt="" fill
+            <Image src={`${ASSETS}/bottomflower2.webp`} alt="" fill
               style={{ objectFit: "contain" }} />
           </div>
 
@@ -161,7 +161,7 @@ export default function FlowerBackground({ children }: Props) {
               height: 305,
             }}
           >
-            <Image src={`${ASSETS}/bottomflower1.png`} alt="" fill
+            <Image src={`${ASSETS}/bottomflower1.webp`} alt="" fill
               style={{ objectFit: "contain" }} />
           </div>
         </div>

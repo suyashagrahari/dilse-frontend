@@ -44,7 +44,7 @@ const DuaModal = memo(function DuaModal({
         {/* Image header */}
         <div className="relative overflow-hidden" style={{ height: 140 }}>
           <Image
-            src="/assets/Eid/eid-dua.png"
+            src="/assets/Eid/eid-dua.webp"
             alt="Eid Dua"
             fill
             className="object-cover object-center"
@@ -186,7 +186,7 @@ const DuaSection = memo(function DuaSection({ data }: { data: EidData }) {
                 {/* Image header */}
                 <div className="relative h-28 sm:h-32 overflow-hidden">
                   <Image
-                    src="/assets/Eid/eid-dua.png"
+                    src="/assets/Eid/eid-dua.webp"
                     alt=""
                     fill
                     className="object-cover object-center"

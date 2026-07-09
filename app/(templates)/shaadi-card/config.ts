@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Two hearts, one beautiful beginning. Join us as we celebrate our union.",
   bgGradient: "from-rose-50 via-pink-50 to-white",
-  coverImage: "/shaadi-card/shaadi-card-template-img.png",
+  coverImage: "/shaadi-card/shaadi-card-template-img.webp",
   tabs: [
     { id: "home",      icon: Home,        label: "Card"      },
     { id: "couple",    icon: Heart,       label: "Us"        },

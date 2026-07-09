@@ -259,11 +259,11 @@ export default function ChristianInvitationCard({
           {/* Watercolor stains */}
           <div style={{ position: "absolute", zIndex: 1, left: 287, top: -55, width: 268, height: 260, transform: "rotate(-18.3deg)", opacity: 0.73 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${ASSET}/watercolor-stain.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src={`${ASSET}/watercolor-stain.webp`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
           <div style={{ position: "absolute", zIndex: 1, left: -122, bottom: -55, width: 243, height: 236, transform: "rotate(-18.3deg)", opacity: 0.73 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${ASSET}/watercolor-stain.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src={`${ASSET}/watercolor-stain.webp`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
 
           {/* Corner floral — top-left (3-piece composite) */}
@@ -272,16 +272,16 @@ export default function ChristianInvitationCard({
               <div style={{ position: "absolute", overflow: "hidden", width: 232.545, height: 96.295, transform: "translate(143.372px,68.125px) rotate(90deg)" }}>
                 <div style={{ transform: "scaleY(-1)", width: 232.545, height: 96.295, overflow: "hidden" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${ASSET}/topleftcorner2.png`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
+                  <img src={`${ASSET}/topleftcorner2.webp`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
                 </div>
               </div>
               <div style={{ position: "absolute", overflow: "hidden", width: 232.545, height: 96.295, transform: "translate(0px,216.397px)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`${ASSET}/topleftcorner3.png`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
+                <img src={`${ASSET}/topleftcorner3.webp`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
               </div>
               <div style={{ position: "absolute", overflow: "hidden", width: 283.519, height: 281.972, transform: "translate(98.932px,69.297px)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`${ASSET}/topleftcorner1.png`} alt="" draggable={false} style={{ display: "block", width: 283.519, height: 281.972 }} />
+                <img src={`${ASSET}/topleftcorner1.webp`} alt="" draggable={false} style={{ display: "block", width: 283.519, height: 281.972 }} />
               </div>
             </div>
           </div>
@@ -292,16 +292,16 @@ export default function ChristianInvitationCard({
               <div style={{ position: "absolute", overflow: "hidden", width: 232.545, height: 96.295, transform: "translate(143.372px,68.125px) rotate(90deg)" }}>
                 <div style={{ transform: "scaleY(-1)", width: 232.545, height: 96.295, overflow: "hidden" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${ASSET}/bottomcorner3.png`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
+                  <img src={`${ASSET}/bottomcorner3.webp`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
                 </div>
               </div>
               <div style={{ position: "absolute", overflow: "hidden", width: 232.545, height: 96.295, transform: "translate(0px,216.397px)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`${ASSET}/bottomcorner-3.png`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
+                <img src={`${ASSET}/bottomcorner-3.webp`} alt="" draggable={false} style={{ display: "block", width: 232.545, height: 235.11, transform: "translateY(-138.815px)" }} />
               </div>
               <div style={{ position: "absolute", overflow: "hidden", width: 283.519, height: 281.972, transform: "translate(98.932px,69.297px)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`${ASSET}/bottomrightcorner1.png`} alt="" draggable={false} style={{ display: "block", width: 283.519, height: 281.972 }} />
+                <img src={`${ASSET}/bottomrightcorner1.webp`} alt="" draggable={false} style={{ display: "block", width: 283.519, height: 281.972 }} />
               </div>
             </div>
           </div>
@@ -310,26 +310,26 @@ export default function ChristianInvitationCard({
           <div data-el="accent-l" style={{ position: "absolute", zIndex: 4, overflow: "hidden", mixBlendMode: "multiply", left: 40, top: ORIG.accentL, width: 185, height: 103, transform: "rotate(63.84deg)", opacity: 0.82 }}>
             <div style={{ position: "relative", width: 185, height: 187, transform: "translateY(-84px)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/bottomcorner3.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <img src={`${ASSET}/bottomcorner3.webp`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
           </div>
           <div data-el="accent-r" style={{ position: "absolute", zIndex: 4, overflow: "hidden", mixBlendMode: "multiply", left: 172, top: ORIG.accentR, width: 185, height: 103, transform: "rotate(117.66deg) scaleY(-1)", opacity: 1 }}>
             <div style={{ position: "relative", width: 185, height: 187, transform: "translateY(-84px)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${ASSET}/bottomcorner3.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <img src={`${ASSET}/bottomcorner3.webp`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
           </div>
 
           {/* Couple */}
           <div data-el="couple" style={{ position: "absolute", zIndex: 0, left: 103, top: ORIG.couple, width: 191, height: 174, overflow: "hidden" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${ASSET}/couple.png`} alt="" draggable={false} style={{ display: "block", width: 191, height: 226, objectFit: "contain", objectPosition: "top center", opacity: 0.9 }} />
+            <img src={`${ASSET}/couple.webp`} alt="" draggable={false} style={{ display: "block", width: 191, height: 226, objectFit: "contain", objectPosition: "top center", opacity: 0.9 }} />
           </div>
 
           {/* Rings */}
           <div data-el="rings" style={{ position: "absolute", zIndex: 11, left: 189, top: ORIG.rings, width: 20, height: 21 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${ASSET}/rings.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src={`${ASSET}/rings.webp`} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
 
           {/* Join Us */}

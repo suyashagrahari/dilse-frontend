@@ -12,7 +12,7 @@ const TERRACOTTA = "#AD684A";
 const CURSIVE = "'Great Vibes', cursive";
 const SERIF = "'Cormorant Garamond', Georgia, serif";
 
-const DEMO_PHOTO = "/assets/couple1.jpeg";
+const DEMO_PHOTO = "/assets/couple1.webp";
 const DEMO_AUDIO = "";
 
 const BAR_HEIGHTS = [0.45, 0.75, 0.55, 1, 0.65, 0.85, 0.4, 0.7, 0.5, 0.9];

@@ -1023,7 +1023,7 @@ export default function ShaadiCardViewer({ rawData, shareId, hasPassword }: Shaa
               textDecoration: "none",
             }}
           >
-            <img src="/logo.png" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
+            <img src="/logo.webp" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
           </motion.a>
         </div>
 

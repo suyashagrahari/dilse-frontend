@@ -24,13 +24,13 @@ type Preview = {
 };
 
 const PREVIEWS: Preview[] = [
-  { id: "holi", pill: "Holi", slug: "holi", img: "/homePage/holi.png", href: "/holi", footer: "RANG BARSE" },
-  { id: "eid", pill: "Eid", slug: "eid-mubarak", img: "/homePage/eid.png", href: "/eid-mubarak", footer: "EID CELEBRATION" },
-  { id: "wedding", pill: "Wedding", slug: "wedding", img: "/homePage/wedding.png", href: "/wedding-shaadi", footer: "SHAADI CELEBRATION" },
-  { id: "anniversary", pill: "Anniversary", slug: "anniversary", img: "/homePage/anniversary.png", href: "/anniversary-gf", footer: "SILVER JUBILEE" },
-  { id: "birthday", pill: "Birthday", slug: "birthday", img: "/homePage/happyBirthday.png", href: "/birthday-gf", footer: "BIRTHDAY BASH" },
-  { id: "valentine", pill: "Valentine", slug: "valentine", img: "/homePage/valentine.png", href: "/valentine-gf", footer: "VALENTINE'S DAY" },
-  { id: "love", pill: "Love", slug: "love", img: "/homePage/loveyou.png", href: "/love-gf", footer: "DIL SE" },
+  { id: "holi", pill: "Holi", slug: "holi", img: "/homePage/holi.webp", href: "/holi", footer: "RANG BARSE" },
+  { id: "eid", pill: "Eid", slug: "eid-mubarak", img: "/homePage/eid.webp", href: "/eid-mubarak", footer: "EID CELEBRATION" },
+  { id: "wedding", pill: "Wedding", slug: "wedding", img: "/homePage/wedding.webp", href: "/wedding-shaadi", footer: "SHAADI CELEBRATION" },
+  { id: "anniversary", pill: "Anniversary", slug: "anniversary", img: "/homePage/anniversary.webp", href: "/anniversary-gf", footer: "SILVER JUBILEE" },
+  { id: "birthday", pill: "Birthday", slug: "birthday", img: "/homePage/happyBirthday.webp", href: "/birthday-gf", footer: "BIRTHDAY BASH" },
+  { id: "valentine", pill: "Valentine", slug: "valentine", img: "/homePage/valentine.webp", href: "/valentine-gf", footer: "VALENTINE'S DAY" },
+  { id: "love", pill: "Love", slug: "love", img: "/homePage/loveyou.webp", href: "/love-gf", footer: "DIL SE" },
 ];
 
 const TOT = PREVIEWS.length;

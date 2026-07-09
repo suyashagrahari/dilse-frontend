@@ -69,7 +69,7 @@ export interface ContentData {
 
 /** Template / preview: circular home when the creator has not uploaded yet (matches hero art) */
 export const DARLING_HOME_DEFAULT_COVER: HomeCoverPhoto = {
-  url: "/assets/hero-bg.jpeg",
+  url: "/assets/hero-bg.webp",
   cropX: 50,
   cropY: 32,
   scale: 118,

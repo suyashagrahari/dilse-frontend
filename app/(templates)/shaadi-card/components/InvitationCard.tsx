@@ -280,7 +280,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
             <Image
-              src="/shaadi-card/image9.png"
+              src="/shaadi-card/image9.webp"
               alt="mandap"
               fill
               sizes="540px"
@@ -304,7 +304,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
             <Image
-              src="/shaadi-card/image8.png"
+              src="/shaadi-card/image8.webp"
               alt="couple"
               fill
               sizes="400px"

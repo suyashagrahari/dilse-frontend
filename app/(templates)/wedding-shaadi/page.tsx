@@ -207,7 +207,7 @@ function WeddingShadiPage() {
       {/* Background image on all tabs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src="/assets/marriage/weeding.png"
+          src="/assets/marriage/weeding.webp"
           alt=""
           fill
           className="object-cover object-center"

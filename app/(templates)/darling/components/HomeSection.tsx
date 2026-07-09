@@ -15,7 +15,7 @@ const PURPLE    = "#a855f7";
 const GRAD      = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
 const TEXT_DIM  = "rgba(255,255,255,0.50)";
 const TEXT_SOFT = "rgba(255,255,255,0.75)";
-const HERO_BG   = "/assets/hero-bg.jpeg";
+const HERO_BG   = "/assets/hero-bg.webp";
 
 /** Fixed anchor so the home template always shows a live-looking countdown before a real date is set */
 const PREVIEW_LOVE_DATE = "2022-02-14T15:30:00";

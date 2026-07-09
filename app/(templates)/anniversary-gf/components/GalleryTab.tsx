@@ -45,10 +45,10 @@ const rightCards: PlaceholderCard[] = [
 ];
 
 const DEFAULT_PHOTOS = [
-  "/assets/couple1.jpeg",
-  "/assets/couple2.jpeg",
-  "/assets/couple3.jpeg",
-  "/assets/couple4.jpeg",
+  "/assets/couple1.webp",
+  "/assets/couple2.webp",
+  "/assets/couple3.webp",
+  "/assets/couple4.webp",
 ];
 
 function getPhotoForIndex(photos: string[], index: number): string {

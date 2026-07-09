@@ -12,8 +12,8 @@ interface Props {
   data: WeddingData;
 }
 
-const BRIDE_FALLBACK_PHOTO = "/assets/couple1.jpeg";
-const GROOM_FALLBACK_PHOTO = "/assets/couple2.jpeg";
+const BRIDE_FALLBACK_PHOTO = "/assets/couple1.webp";
+const GROOM_FALLBACK_PHOTO = "/assets/couple2.webp";
 
 const SHLOKAS = [
   "सप्तपदी — सात फेरों का बंधन, सात जन्मों का वचन",

@@ -31,6 +31,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      // Current media bucket (new AWS account) — user-uploaded template images
+      {
+        protocol: "https",
+        hostname: "subhsandesh-prod.s3.ap-south-1.amazonaws.com",
+      },
+      // Media CDN (CloudFront) — used once static/media is fronted by cdn.subhsandesh.in
+      {
+        protocol: "https",
+        hostname: "cdn.subhsandesh.in",
+      },
+      // Legacy bucket (old AWS account) — kept so already-published pages that
+      // still reference old URLs keep rendering until fully migrated/retired.
       {
         protocol: "https",
         hostname: "gifts-media-prod-123.s3.ap-south-1.amazonaws.com",

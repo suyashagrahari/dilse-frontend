@@ -722,7 +722,7 @@ function ViewerSidebar({ tab, onTabChange, darkMode, toggleDark, data }: Sidebar
 
       {/* Hero header with image */}
       <div className="relative h-36 overflow-hidden shrink-0">
-        <Image src="/assets/Holi/hero_holi.png" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity:0.18 }}/>
+        <Image src="/assets/Holi/hero_holi.webp" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity:0.18 }}/>
         <div className="absolute inset-0" style={{ background:"var(--holi-gradient-primary)", opacity:0.75 }}/>
         {/* Rainbow strip at very top */}
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background:"linear-gradient(90deg,#FF6B9D,#FF8C42,#FFD700,#4CAF50,#38BDF8,#A855F7)" }}/>
@@ -1054,7 +1054,7 @@ export default function HoliViewer({ rawData, hasPassword, shareId }: HoliViewer
 
       {tab !== "home" && tab !== "create" && (
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <Image src="/assets/Holi/hero_holi.png" alt="" fill className="object-cover object-center" sizes="100vw" priority style={{ opacity:0.08 }}/>
+          <Image src="/assets/Holi/hero_holi.webp" alt="" fill className="object-cover object-center" sizes="100vw" priority style={{ opacity:0.08 }}/>
           <div className="absolute inset-0" style={{ background:"linear-gradient(180deg,hsl(var(--holi-bg)/0.4) 0%,hsl(var(--holi-bg)/0.65) 40%,hsl(var(--holi-bg)/0.5) 70%,hsl(var(--holi-bg)/0.4) 100%)" }}/>
         </div>
       )}

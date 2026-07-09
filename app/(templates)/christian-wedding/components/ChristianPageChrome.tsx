@@ -6,8 +6,8 @@ const C_BG = "#fcfcfa";
 
 function CornerComposite({ flip }: { flip?: boolean }) {
   const imgs = flip
-    ? [`${ASSET}/topleftcorner2.png`, `${ASSET}/topleftcorner3.png`, `${ASSET}/topleftcorner1.png`]
-    : [`${ASSET}/bottomcorner3.png`, `${ASSET}/bottomcorner-3.png`, `${ASSET}/bottomrightcorner1.png`];
+    ? [`${ASSET}/topleftcorner2.webp`, `${ASSET}/topleftcorner3.webp`, `${ASSET}/topleftcorner1.webp`]
+    : [`${ASSET}/bottomcorner3.webp`, `${ASSET}/bottomcorner-3.webp`, `${ASSET}/bottomrightcorner1.webp`];
 
   return (
     <div
@@ -64,7 +64,7 @@ export function ChristianPageChrome() {
         aria-hidden
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`${ASSET}/watercolor-stain.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <img src={`${ASSET}/watercolor-stain.webp`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       </div>
 
       {/* Watercolor stain — bottom left */}
@@ -74,7 +74,7 @@ export function ChristianPageChrome() {
         aria-hidden
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`${ASSET}/watercolor-stain.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <img src={`${ASSET}/watercolor-stain.webp`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       </div>
 
       <CornerComposite flip />

@@ -51,7 +51,7 @@ const GreetingModal = memo(function GreetingModal({
         {/* Header with eid_mubarak image */}
         <div className="relative overflow-hidden" style={{ height: 180 }}>
           <Image
-            src="/assets/Eid/eid_mubarak.jpeg"
+            src="/assets/Eid/eid_mubarak.webp"
             alt={card.title}
             fill
             className="object-cover object-center"

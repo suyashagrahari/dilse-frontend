@@ -717,7 +717,7 @@ function ViewerSidebar({ tab, onTabChange, darkMode, toggleDark, data, onStart }
 
       {/* Hero header */}
       <div className="relative h-32 overflow-hidden shrink-0">
-        <Image src="/assets/Eid/eid_mubarak.jpeg" alt="" fill
+        <Image src="/assets/Eid/eid_mubarak.webp" alt="" fill
           className="object-cover object-center" sizes="224px" style={{ opacity: 0.2 }} />
         <div className="absolute inset-0"
           style={{ background: "linear-gradient(180deg, rgba(58,143,125,0.6) 0%, rgba(197,160,63,0.4) 100%)" }} />

@@ -356,7 +356,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
           <div className="mb-4 flex justify-center">
             <div className="inline-flex items-center px-4 py-1 rounded-full" style={{ border: "1px solid rgba(201,168,76,0.42)", background: "rgba(201,168,76,0.08)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/indianFestival/logo.png" alt="SubhSandesh" style={{ width: 40, height: 40, objectFit: "contain" }} />
+              <img src="/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: 40, height: 40, objectFit: "contain" }} />
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: "#7a5555", textTransform: "uppercase" }}>SubhSandesh</span>
             </div>
           </div>

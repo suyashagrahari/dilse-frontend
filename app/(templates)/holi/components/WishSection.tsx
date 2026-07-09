@@ -40,7 +40,7 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
       {/* Full background image with low opacity */}
       <div className="absolute inset-0 pointer-events-none">
         <Image
-          src="/assets/Holi/holi_wish.png"
+          src="/assets/Holi/holi_wish.webp"
           alt=""
           fill
           className="object-cover object-center"

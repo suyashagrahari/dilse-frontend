@@ -65,12 +65,12 @@ export const CHRISTIAN_DEMO_DATA: ShaadiData = {
     { name: "Placeholder", hindi: "", icon: "📌", date: "", time: "", venue: "", details: "", accent: "from-slate-500/15 to-slate-600/5 border-slate-500/20", disabled: true },
   ],
   galleryImages: [
-    { src: "/assets/marriage/weeding.png", alt: "Wedding Celebration", span: "col-span-2 row-span-2" },
-    { src: "/assets/couple1.jpeg", alt: "The Bride", span: "" },
-    { src: "/assets/couple2.jpeg", alt: "The Groom", span: "" },
-    { src: "/assets/couple3.jpeg", alt: "Ceremony Decor", span: "col-span-2" },
-    { src: "/assets/couple4.jpeg", alt: "Pre-Wedding Shoot", span: "" },
-    { src: "/assets/couple1.jpeg", alt: "Engagement Day", span: "" },
+    { src: "/assets/marriage/weeding.webp", alt: "Wedding Celebration", span: "col-span-2 row-span-2" },
+    { src: "/assets/couple1.webp", alt: "The Bride", span: "" },
+    { src: "/assets/couple2.webp", alt: "The Groom", span: "" },
+    { src: "/assets/couple3.webp", alt: "Ceremony Decor", span: "col-span-2" },
+    { src: "/assets/couple4.webp", alt: "Pre-Wedding Shoot", span: "" },
+    { src: "/assets/couple1.webp", alt: "Engagement Day", span: "" },
   ],
   wishes: [
     { name: "Sarah Mitchell", message: "May God bless your union with endless love, patience, and joy. You two are truly made for each other!" },

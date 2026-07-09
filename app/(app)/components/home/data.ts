@@ -5,7 +5,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "holi",
     title: "Holi",
-    img: "/homePage/holi.png",
+    img: "/homePage/holi.webp",
     href: "/holi",
     accent: "#d95f76",
     icon: "palette" as const,
@@ -19,7 +19,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "eid",
     title: "Eid Mubarak",
-    img: "/homePage/eid.png",
+    img: "/homePage/eid.webp",
     href: "/eid-mubarak",
     accent: "#4d8f6f",
     icon: "moon" as const,
@@ -33,7 +33,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "wedding",
     title: "Wedding",
-    img: "/homePage/wedding.png",
+    img: "/homePage/wedding.webp",
     href: "/wedding-shaadi",
     accent: "#c98b4a",
     icon: "ring" as const,
@@ -47,7 +47,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "anniversary",
     title: "Anniversary",
-    img: "/homePage/anniversary.png",
+    img: "/homePage/anniversary.webp",
     href: "/anniversary-gf",
     accent: "#b56a75",
     icon: "ring" as const,
@@ -61,7 +61,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "birthday",
     title: "Birthday",
-    img: "/homePage/happyBirthday.png",
+    img: "/homePage/happyBirthday.webp",
     href: "/birthday-gf",
     accent: "#7e5cc7",
     icon: "cake" as const,
@@ -75,7 +75,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "valentine",
     title: "Valentine",
-    img: "/homePage/valentine.png",
+    img: "/homePage/valentine.webp",
     href: "/valentine-gf",
     accent: "#e91e8c",
     icon: "heart" as const,
@@ -89,7 +89,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "love",
     title: "Love",
-    img: "/homePage/loveyou.png",
+    img: "/homePage/loveyou.webp",
     href: "/love-gf",
     accent: "#e27d60",
     icon: "heart" as const,
@@ -103,7 +103,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "sorry",
     title: "Sorry",
-    img: "/homePage/sorry.png",
+    img: "/homePage/sorry.webp",
     href: "/sorry-gf",
     accent: "#9b7b9d",
     icon: "spark" as const,
@@ -117,7 +117,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "missyou",
     title: "Miss you",
-    img: "/homePage/missyou.png",
+    img: "/homePage/missyou.webp",
     href: "/missyou-gf",
     accent: "#6b8cce",
     icon: "spark" as const,

@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   previewText: "Scroll Through Our Story ✝️",
   bodyText: "One long page, many beautiful moments. Scroll to meet the couple, RSVP, and leave a blessing.",
   bgGradient: "from-emerald-50 via-stone-50 to-white",
-  coverImage: "/christan-wedding/christian-bg.png",
+  coverImage: "/christan-wedding/christian-bg.webp",
   tabs: [
     { id: "home", icon: Home, label: "Card" },
     { id: "couple", icon: Heart, label: "Us" },

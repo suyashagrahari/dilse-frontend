@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Every night I think of you, every morning I wake up grateful. You are the melody of my life, my darling.",
   bgGradient: "from-rose-950 via-pink-950 to-slate-950",
-  coverImage: "/assets/hero-bg.jpeg",
+  coverImage: "/assets/hero-bg.webp",
   tabs: [
     { id: "home", icon: Heart, label: "Home" },
     { id: "games", icon: Gamepad2, label: "Games" },

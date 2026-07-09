@@ -83,7 +83,7 @@ function HoliPage() {
       {editor.tab !== "home" && (
         <div className="absolute inset-0 z-0 pointer-events-none">
           <Image
-            src="/assets/Holi/hero_holi.png"
+            src="/assets/Holi/hero_holi.webp"
             alt=""
             fill
             className="object-cover object-center"

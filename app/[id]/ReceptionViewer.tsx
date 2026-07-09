@@ -772,7 +772,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
 
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <Image src="/assets/Reception/reception.png" alt="" fill priority
+        <Image src="/assets/Reception/reception.webp" alt="" fill priority
           className="object-cover object-center" sizes="100vw" style={{ opacity: 0.04 }} />
         <div className="absolute inset-0 bg-background/60" />
       </div>
@@ -781,7 +781,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
       <aside className="hidden lg:flex fixed left-0 top-0 h-full w-60 flex-col z-50 bg-card border-r border-border">
         {/* Hero header */}
         <div className="relative h-28 overflow-hidden shrink-0">
-          <Image src="/assets/Reception/reception.png" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity: 0.1 }} />
+          <Image src="/assets/Reception/reception.webp" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity: 0.1 }} />
           <div className="absolute inset-0" style={{ background: AMBER_GRADIENT, opacity: 0.75 }} />
           <div className="absolute top-0 left-0 right-0 h-1" style={{ background: AMBER_CTA }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -982,7 +982,7 @@ export default function ReceptionViewer({ rawData, shareId, hasPassword }: Recep
             overflow: "hidden",
             textDecoration: "none",
           }}>
-          <img src="/logo.png" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <img src="/logo.webp" alt="SubhSandesh" style={{ width: 28, height: 28, objectFit: "contain" }} />
         </a>
       </div>
 

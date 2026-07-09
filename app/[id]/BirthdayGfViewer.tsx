@@ -414,7 +414,7 @@ export default function BirthdayGfViewer({
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 2px 12px rgba(40,20,10,0.15)",
         }}>
-          <NextImage src="/logo.png" alt="SubhSandesh" width={28} height={28} style={{ objectFit: "contain" }} />
+          <NextImage src="/logo.webp" alt="SubhSandesh" width={28} height={28} style={{ objectFit: "contain" }} />
         </div>
         <span style={{
           fontFamily: CURSIVE, fontSize: 7, fontWeight: 700,

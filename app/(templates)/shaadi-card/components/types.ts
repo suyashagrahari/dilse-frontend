@@ -131,12 +131,12 @@ export const DEMO_DATA: ShaadiData = {
     { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Apr", time: "7 PM", venue: "Grand Haveli Hall", details: "Dinner, speeches, and dancing. Formal or cocktail ethnic wear.", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30", disabled: false },
   ],
   galleryImages: [
-    { src: "/assets/marriage/weeding.png", alt: "Couple", span: "col-span-2 row-span-2" },
-    { src: "/assets/couple1.jpeg", alt: "Bride", span: "" },
-    { src: "/assets/couple2.jpeg", alt: "Groom", span: "" },
-    { src: "/assets/couple3.jpeg", alt: "Decoration", span: "col-span-2" },
-    { src: "/assets/couple4.jpeg", alt: "Pre-Wedding", span: "" },
-    { src: "/assets/couple1.jpeg", alt: "Engagement", span: "" },
+    { src: "/assets/marriage/weeding.webp", alt: "Couple", span: "col-span-2 row-span-2" },
+    { src: "/assets/couple1.webp", alt: "Bride", span: "" },
+    { src: "/assets/couple2.webp", alt: "Groom", span: "" },
+    { src: "/assets/couple3.webp", alt: "Decoration", span: "col-span-2" },
+    { src: "/assets/couple4.webp", alt: "Pre-Wedding", span: "" },
+    { src: "/assets/couple1.webp", alt: "Engagement", span: "" },
   ],
   wishes: [
     { name: "Rohit & Priya", message: "Bahut bahut badhai ho! Dono ko bohot saari khushiyan mile. 💕" },

@@ -49,7 +49,7 @@ const ReceptionWelcomeOverlay = memo(function ReceptionWelcomeOverlay({
         >
           <div className="absolute inset-0 pointer-events-none">
             <Image
-              src="/assets/Reception/reception.png"
+              src="/assets/Reception/reception.webp"
               alt=""
               fill
               className="object-cover object-center"

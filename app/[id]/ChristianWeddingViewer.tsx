@@ -482,7 +482,7 @@ export default function ChristianWeddingViewer({ rawData, shareId, hasPassword }
             }}
           >
             <NextImage
-              src="/logo.png"
+              src="/logo.webp"
               alt="SubhSandesh"
               width={28}
               height={28}

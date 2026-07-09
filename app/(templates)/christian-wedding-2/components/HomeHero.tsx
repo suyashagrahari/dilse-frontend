@@ -95,7 +95,7 @@ export default memo(function HomeHero({ data }: Props) {
         aria-hidden
         className="relative my-4 h-[30px] w-[30px]"
         style={{
-          backgroundImage: `url(${ASSET}/rings.png)`,
+          backgroundImage: `url(${ASSET}/rings.webp)`,
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
@@ -107,7 +107,7 @@ export default memo(function HomeHero({ data }: Props) {
         aria-hidden
         className="relative mt-1 h-[130px] w-[150px] opacity-90 sm:h-[150px] sm:w-[170px]"
         style={{
-          backgroundImage: `url(${ASSET}/couple.png)`,
+          backgroundImage: `url(${ASSET}/couple.webp)`,
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "top center",

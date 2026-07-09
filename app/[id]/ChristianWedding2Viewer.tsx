@@ -440,7 +440,7 @@ export default function ChristianWedding2Viewer({ rawData, shareId, hasPassword 
               justifyContent: "center",
             }}
           >
-            <NextImage src="/logo.png" alt="SubhSandesh" width={28} height={28} style={{ objectFit: "contain" }} />
+            <NextImage src="/logo.webp" alt="SubhSandesh" width={28} height={28} style={{ objectFit: "contain" }} />
           </div>
           <span
             style={{

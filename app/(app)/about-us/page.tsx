@@ -52,7 +52,7 @@ export default function AboutUsPage() {
           <div className="rounded-3xl border p-3" style={{ borderColor: "rgba(61,12,17,0.14)", background: "rgba(255,255,255,0.74)" }}>
             <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
               <Image
-                src="/aboutUs/144600880.jpeg"
+                src="/aboutUs/144600880.webp"
                 alt="Suyash Agrahari"
                 fill
                 sizes="(max-width: 768px) 100vw, 320px"

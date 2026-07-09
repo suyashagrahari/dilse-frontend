@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Wishing you joy, peace, and countless blessings this Eid.",
   bgGradient: "from-slate-950 via-slate-900 to-slate-950",
-  coverImage: "/assets/Eid/hero_eid.jpeg",
+  coverImage: "/assets/Eid/hero_eid.webp",
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "wish", icon: Gift, label: "Wish" },

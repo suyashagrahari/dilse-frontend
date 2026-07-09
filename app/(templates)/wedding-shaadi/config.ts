@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Two souls, one beautiful journey. Join us as we begin our forever together.",
   bgGradient: "from-amber-50 via-yellow-50 to-white",
-  coverImage: "/assets/marriage/weeding.png",
+  coverImage: "/assets/marriage/weeding.webp",
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "couple", icon: Heart, label: "Us" },
