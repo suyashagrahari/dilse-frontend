@@ -20,6 +20,11 @@ const SPLASH_CSS = `
 #ss-splash.ss-hide{opacity:0;transform:scale(1.03);pointer-events:none}
 #ss-splash.ss-gone{display:none}
 html.ss-splash-seen #ss-splash{display:none}
+/* Installed PWA (standalone): Android already shows its own OS splash, which
+   can't be removed. Showing our loader too would be a second loader, so in
+   standalone mode we suppress ours entirely — the OS splash is the one loader.
+   In a normal browser tab / desktop there is no OS splash, so ours plays. */
+html.ss-standalone #ss-splash{display:none}
 #ss-splash .ss-stack{position:relative;text-align:center;padding:24px;width:100%;max-width:760px}
 /* semi-rounded square (app-icon shape) with a cream ground so it sits flush on
    the cream splash — static (no pop) so it hands off cleanly from the OS splash */
@@ -52,7 +57,9 @@ html.ss-splash-seen #ss-splash{display:none}
 // hide it from the very first frame (via an <html> class + CSS) so a refresh never
 // flashes or replays it. Only touches <html> — never the splash node — so React
 // hydration is untouched.
-const SKIP_JS = `try{if(sessionStorage.getItem('ss_splash_shown')==='1')document.documentElement.classList.add('ss-splash-seen');}catch(e){}`;
+const SKIP_JS = `try{var d=document.documentElement;
+if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)d.classList.add('ss-standalone');
+if(sessionStorage.getItem('ss_splash_shown')==='1')d.classList.add('ss-splash-seen');}catch(e){}`;
 
 // First-time show only. Marks the session "seen" immediately (so rapid refreshes
 // skip), then hides after the write-on animation + window load. Never removeChild.
@@ -60,6 +67,7 @@ const HIDE_JS = `
 (function(){
   var el=document.getElementById('ss-splash');
   if(!el)return;
+  try{if((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true)return;}catch(e){} // PWA: OS splash is the only loader
   var KEY='ss_splash_shown',seen=false;
   try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
   if(seen)return; // already hidden by CSS on this refresh
