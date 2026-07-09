@@ -1,10 +1,15 @@
 // Server component — rendered into the INITIAL HTML so it paints on first paint,
-// seamlessly continuing from the OS/PWA splash (same cream background). Uses the
-// SAME "SubhSandesh" wordmark + write-on animation as the landing footer
-// (SubhSandeshFooter): every letter's outline traces itself on (pathLength=1 →
-// stroke-dashoffset), then the fill glows in and a gold shine sweeps through the
-// dark-maroon letters. Pure CSS/SVG + a tiny inline removal script — shows ONCE
-// per app launch (sessionStorage guard).
+// seamlessly continuing from the OS/PWA splash (same cream background, same
+// circular logo). The "SubhSandesh" wordmark writes itself on (shared footer
+// glyphs) then a gold shine sweeps the dark-maroon fill.
+//
+// IMPORTANT (fixes the refresh bug): we NEVER removeChild the splash node — doing
+// that before React hydrates causes a hydration mismatch that breaks the home
+// page. Instead:
+//   • a pre-paint script adds `ss-splash-seen` to <html> if this session already
+//     saw the splash → CSS hides it from the first frame (no flash on refresh),
+//   • first-time removal is done by toggling classes (opacity → display:none),
+//   • the session is marked "seen" immediately so rapid refreshes never replay it.
 
 import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
 
@@ -13,6 +18,8 @@ const SPLASH_CSS = `
   background:radial-gradient(130% 130% at 50% 30%,#fdf9f4 0%,#f7efe7 55%,#efe3d3 100%);
   opacity:1;transition:opacity .6s ease,transform .6s ease;will-change:opacity,transform;overflow:hidden}
 #ss-splash.ss-hide{opacity:0;transform:scale(1.03);pointer-events:none}
+#ss-splash.ss-gone{display:none}
+html.ss-splash-seen #ss-splash{display:none}
 #ss-splash .ss-stack{position:relative;text-align:center;padding:24px;width:100%;max-width:760px}
 /* circular + static (no pop) so it is visually identical to Android's PWA splash
    icon — the OS splash then hands off to this loader with no seam */
@@ -29,7 +36,6 @@ const SPLASH_CSS = `
   background:rgba(61,12,17,.1);overflow:hidden;opacity:0;animation:ssRise .7s 2.4s cubic-bezier(.22,1,.36,1) both}
 #ss-splash .ss-bar::after{content:"";position:absolute;top:0;left:-40%;height:100%;width:40%;border-radius:999px;
   background:linear-gradient(90deg,transparent,#c9a84c,#e6c66a,#c9a84c,transparent);animation:ssSlide 1.3s ease-in-out infinite}
-@keyframes ssPop{0%{opacity:0;transform:scale(.72) translateY(6px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes ssDraw{to{stroke-dashoffset:0}}
 @keyframes ssFillIn{to{fill-opacity:1}}
 @keyframes ssRise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
@@ -42,82 +48,93 @@ const SPLASH_CSS = `
 }
 `;
 
-const SPLASH_JS = `
+// Runs BEFORE the splash paints. If this browser session already saw the splash,
+// hide it from the very first frame (via an <html> class + CSS) so a refresh never
+// flashes or replays it. Only touches <html> — never the splash node — so React
+// hydration is untouched.
+const SKIP_JS = `try{if(sessionStorage.getItem('ss_splash_shown')==='1')document.documentElement.classList.add('ss-splash-seen');}catch(e){}`;
+
+// First-time show only. Marks the session "seen" immediately (so rapid refreshes
+// skip), then hides after the write-on animation + window load. Never removeChild.
+const HIDE_JS = `
 (function(){
-  var KEY='ss_splash_shown';
   var el=document.getElementById('ss-splash');
   if(!el)return;
-  try{ if(sessionStorage.getItem(KEY)==='1'){ el.parentNode&&el.parentNode.removeChild(el); return; } }catch(e){}
-  var start=Date.now(),MIN=2900,done=false; // hold until the write-on + fill finish
-  function finish(){
+  var KEY='ss_splash_shown',seen=false;
+  try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
+  if(seen)return; // already hidden by CSS on this refresh
+  try{sessionStorage.setItem(KEY,'1');}catch(e){}
+  var start=Date.now(),MIN=2900,done=false;
+  function hide(){
     if(done)return;done=true;
     var wait=Math.max(0,MIN-(Date.now()-start));
     setTimeout(function(){
       el.classList.add('ss-hide');
-      try{sessionStorage.setItem(KEY,'1');}catch(e){}
-      setTimeout(function(){el&&el.parentNode&&el.parentNode.removeChild(el);},650);
+      setTimeout(function(){el.classList.add('ss-gone');},650);
     },wait);
   }
-  if(document.readyState==='complete')finish();
-  else window.addEventListener('load',finish,{once:true});
-  setTimeout(finish,8500); // safety cap so it can never hang
+  if(document.readyState==='complete')hide();
+  else window.addEventListener('load',hide,{once:true});
+  setTimeout(hide,8500); // safety cap so it can never hang
 })();
 `;
 
 export default function AppSplash() {
   return (
-    <div id="ss-splash" aria-hidden="true">
+    <>
+      <script dangerouslySetInnerHTML={{ __html: SKIP_JS }} />
       <style dangerouslySetInnerHTML={{ __html: SPLASH_CSS }} />
+      <div id="ss-splash" aria-hidden="true">
+        <div className="ss-stack">
+          <div className="ss-logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/indianFestival/logo.webp" alt="" fetchPriority="high" />
+          </div>
+          <svg
+            className="ss-wm"
+            viewBox={`0 0 ${WM_VB.w} ${WM_VB.h}`}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="SubhSandesh"
+          >
+            <defs>
+              {/* dark-maroon fill with a moving gold shine band (the shimmer) */}
+              <linearGradient id="ss-shine" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0.30" stopColor="#3d0c11" />
+                <stop offset="0.44" stopColor="#6e2418" />
+                <stop offset="0.50" stopColor="#d9b25a" />
+                <stop offset="0.56" stopColor="#6e2418" />
+                <stop offset="0.70" stopColor="#3d0c11" />
+                <animateTransform
+                  attributeName="gradientTransform"
+                  type="translate"
+                  from="-1 0"
+                  to="1 0"
+                  dur="2.8s"
+                  begin="2.6s"
+                  repeatCount="indefinite"
+                />
+              </linearGradient>
+            </defs>
+            <g transform={`translate(${WM_VB.pad}, ${WM_VB.baseline}) scale(1,-1)`}>
+              <g className="ss-wm-fill">
+                {WORDMARK_GLYPHS.map((g, i) => (
+                  <path key={i} d={g.d} transform={`translate(${g.x},0)`} />
+                ))}
+              </g>
+              <g className="ss-wm-stroke">
+                {WORDMARK_GLYPHS.map((g, i) => (
+                  <path key={i} d={g.d} pathLength={1} transform={`translate(${g.x},0)`} />
+                ))}
+              </g>
+            </g>
+          </svg>
 
-      <div className="ss-stack">
-        <div className="ss-logo">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/indianFestival/logo.webp" alt="" fetchPriority="high" />
+          <div className="ss-bar" />
         </div>
-        <svg
-          className="ss-wm"
-          viewBox={`0 0 ${WM_VB.w} ${WM_VB.h}`}
-          preserveAspectRatio="xMidYMid meet"
-          role="img"
-          aria-label="SubhSandesh"
-        >
-          <defs>
-            {/* dark-maroon fill with a moving gold shine band (the shimmer) */}
-            <linearGradient id="ss-shine" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0.30" stopColor="#3d0c11" />
-              <stop offset="0.44" stopColor="#6e2418" />
-              <stop offset="0.50" stopColor="#d9b25a" />
-              <stop offset="0.56" stopColor="#6e2418" />
-              <stop offset="0.70" stopColor="#3d0c11" />
-              <animateTransform
-                attributeName="gradientTransform"
-                type="translate"
-                from="-1 0"
-                to="1 0"
-                dur="2.8s"
-                begin="2.6s"
-                repeatCount="indefinite"
-              />
-            </linearGradient>
-          </defs>
-          <g transform={`translate(${WM_VB.pad}, ${WM_VB.baseline}) scale(1,-1)`}>
-            <g className="ss-wm-fill">
-              {WORDMARK_GLYPHS.map((g, i) => (
-                <path key={i} d={g.d} transform={`translate(${g.x},0)`} />
-              ))}
-            </g>
-            <g className="ss-wm-stroke">
-              {WORDMARK_GLYPHS.map((g, i) => (
-                <path key={i} d={g.d} pathLength={1} transform={`translate(${g.x},0)`} />
-              ))}
-            </g>
-          </g>
-        </svg>
 
-        <div className="ss-bar" />
+        <script dangerouslySetInnerHTML={{ __html: HIDE_JS }} />
       </div>
-
-      <script dangerouslySetInnerHTML={{ __html: SPLASH_JS }} />
-    </div>
+    </>
   );
 }
