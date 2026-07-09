@@ -1,4 +1,4 @@
-const CACHE_NAME = "gifts-v8";
+const CACHE_NAME = "gifts-v9";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
