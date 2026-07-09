@@ -6,6 +6,7 @@ import { TemplateSearchProvider } from "@/components/TemplateSearchProvider";
 import GlobalEffects from "@/components/GlobalEffects";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayoutShell from "./AppLayoutShell";
+import AppSplash from "@/components/AppSplash";
 
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
@@ -20,6 +21,7 @@ export default function AppLayout({
 }) {
   return (
     <TemplateSearchProvider>
+      <AppSplash />
       <AppLayoutShell>
         <WebsiteJsonLd />
         <GlobalEffects />
