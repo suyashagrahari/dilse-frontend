@@ -21,10 +21,10 @@ const SPLASH_CSS = `
 #ss-splash.ss-gone{display:none}
 html.ss-splash-seen #ss-splash{display:none}
 #ss-splash .ss-stack{position:relative;text-align:center;padding:24px;width:100%;max-width:760px}
-/* circular + static (no pop) so it is visually identical to Android's PWA splash
-   icon — the OS splash then hands off to this loader with no seam */
-#ss-splash .ss-logo{width:128px;height:128px;margin:0 auto 30px;border-radius:50%;overflow:hidden;
-  background:#fff;display:grid;place-items:center}
+/* semi-rounded square (app-icon shape) with a cream ground so it sits flush on
+   the cream splash — static (no pop) so it hands off cleanly from the OS splash */
+#ss-splash .ss-logo{width:128px;height:128px;margin:0 auto 30px;border-radius:28px;overflow:hidden;
+  background:#fdf9f4;display:grid;place-items:center}
 #ss-splash .ss-logo img{width:78%;height:78%;object-fit:contain}
 /* footer wordmark, recoloured for the cream ground: maroon outline writes on,
    then the maroon fill glows in with a gold shine sweeping across it */
