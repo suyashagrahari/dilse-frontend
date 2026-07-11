@@ -260,8 +260,23 @@ export async function getTemplates(): Promise<Template[]> {
 
 /** Lightweight list of every published article (slug + updatedAt) for sitemap + generateStaticParams. */
 export async function getAllArticleSlugs(): Promise<{ slug: string; updatedAt: string }[]> {
-  const res = await strapiFetch<StrapiListResponse<Pick<Article, "slug" | "updatedAt">>>(
-    `/articles?fields[0]=slug&fields[1]=updatedAt&pagination[pageSize]=1000&sort[0]=publishedAt:desc`
-  );
-  return res?.data ?? [];
+  // Strapi caps page size at `rest.maxLimit` (100), so a single big request only
+  // ever returns the first 100 articles. Page through until every article is fetched.
+  const PAGE_SIZE = 100;
+  const all: { slug: string; updatedAt: string }[] = [];
+  let page = 1;
+  let pageCount = 1;
+
+  do {
+    const res = await strapiFetch<StrapiListResponse<Pick<Article, "slug" | "updatedAt">>>(
+      `/articles?fields[0]=slug&fields[1]=updatedAt` +
+        `&pagination[page]=${page}&pagination[pageSize]=${PAGE_SIZE}&sort[0]=publishedAt:desc`
+    );
+    if (!res) break; // CMS unreachable → return whatever we have so far
+    all.push(...res.data);
+    pageCount = res.meta.pagination.pageCount;
+    page += 1;
+  } while (page <= pageCount);
+
+  return all;
 }
