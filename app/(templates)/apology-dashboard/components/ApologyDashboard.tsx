@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import confetti from "canvas-confetti";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Music, Heart, Sparkles, Flame, Trophy, RotateCw, Lock, Star, Smile,
@@ -129,18 +130,6 @@ function Mascot({ anger }: { anger: number }) {
     </svg>
   );
 }
-
-// ordered step keys + friendly labels for the progress rail
-const STEP_LABELS: Record<string, string> = {
-  hero: "Hello",
-  anger: "My mood",
-  scratch: "A secret",
-  whack: "Let it out",
-  bribery: "My promises",
-  letter: "My letter",
-  timeline: "Memory lane",
-  final: "Forgive me?",
-};
 
 export default function ApologyDashboard({ data, mode, shareId }: Props) {
   const [anger, setAnger] = useState(100);
@@ -263,7 +252,22 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
         <Header />
       </div>
 
-      {/* floating music button (bottom-right) */}
+      {/* SubhSandesh brand — top-right on the shared page (birthday-gf style) */}
+      {mode === "live" && (
+        <Link
+          href="/templates"
+          aria-label="SubhSandesh"
+          style={{ position: "fixed", top: 12, right: 12, zIndex: 46, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none" }}
+        >
+          <span style={{ width: 38, height: 38, borderRadius: 11, overflow: "hidden", background: "rgba(255,245,245,.9)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid #ffd6e2", display: "grid", placeItems: "center", boxShadow: "0 6px 18px -6px rgba(230,64,114,.45)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="SubhSandesh" width={30} height={30} style={{ objectFit: "contain" }} />
+          </span>
+          <span style={{ fontFamily: DISPLAY, fontSize: 8, fontWeight: 700, color: ROSE_DEEP, letterSpacing: ".04em", opacity: .85, lineHeight: 1 }}>SubhSandesh</span>
+        </Link>
+      )}
+
+      {/* floating music button (bottom-right, extreme corner) */}
       <MusicFab url={data.backgroundMusic} toast={toast} />
 
       {/* desktop side arrows — only after the journey has begun */}
@@ -310,63 +314,6 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
           </motion.div>
         </section>
       ))}
-
-      {/* ─── bottom navigation (floating pill) — appears once the journey begins ─── */}
-      {begun && (
-      <div
-        className="fixed left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3"
-        style={{ bottom: 20, zIndex: 55, background: "rgba(255,255,255,.9)", backdropFilter: "blur(12px)", borderRadius: 9999, border: "1px solid #ffe4ea", boxShadow: "0 18px 44px -16px rgba(230,64,114,.45)", padding: 8 }}
-      >
-        <button
-          onClick={() => go(-1)}
-          disabled={atStart}
-          aria-label="Back"
-          className="grid place-items-center w-10 h-10 rounded-full transition-all hover:scale-105 disabled:opacity-35 disabled:hover:scale-100"
-          style={{ background: "#fff0f4", color: ROSE_DEEP, border: "1px solid #ffd6e2" }}
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        {/* progress dots */}
-        <div className="flex items-center gap-1.5 px-1">
-          {stepKeys.map((k, i) => (
-            <button
-              key={k}
-              onClick={() => scrollToIndex(i)}
-              aria-label={STEP_LABELS[k]}
-              title={STEP_LABELS[k]}
-              className="shrink-0 grid place-items-center"
-              style={{ height: 18 }}
-            >
-              <span
-                style={{
-                  display: "block",
-                  height: 7,
-                  width: i === step ? 24 : 7,
-                  borderRadius: 9999,
-                  background: i === step ? "linear-gradient(90deg,#ff7aa8,#e64072)" : i < step ? "#ffb3c8" : "#ffe0e9",
-                  transition: "all .3s ease",
-                }}
-              />
-            </button>
-          ))}
-        </div>
-
-        {!atEnd ? (
-          <button
-            onClick={() => go(1)}
-            className="inline-flex items-center gap-1 pl-4 pr-3.5 h-10 rounded-full text-sm font-semibold text-white transition-transform hover:scale-105"
-            style={{ background: "linear-gradient(135deg,#ff7aa8,#e64072)", boxShadow: "0 10px 26px -12px rgba(230,64,114,.6)" }}
-          >
-            <span>{step === 0 ? "Begin" : "Next"}</span> <ChevronRight size={16} />
-          </button>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-4 h-10 rounded-full text-sm font-semibold" style={{ background: "#fff0f4", color: ROSE_DEEP }}>
-            <Heart size={14} fill={ROSE_DEEP} /> The end
-          </span>
-        )}
-      </div>
-      )}
 
       {/* toasts (top-center, newest at bottom of the stack) */}
       <div className="fixed left-1/2 -translate-x-1/2 flex flex-col gap-2 items-center pointer-events-none px-4 w-full max-w-md" style={{ zIndex: 60, top: 84 }}>
@@ -475,7 +422,7 @@ function MusicFab({ url, toast }: { url: string; toast: (m: string, e?: string) 
       onClick={toggle}
       aria-label={playing ? "Pause music" : "Play music"}
       className="fixed grid place-items-center rounded-full transition-transform hover:scale-105 active:scale-95"
-      style={{ right: 14, bottom: 82, width: 46, height: 46, zIndex: 58, background: playing ? "linear-gradient(135deg,#ff7aa8,#e64072)" : "#fff", color: playing ? "#fff" : ROSE_DEEP, border: "1px solid #ffd6e2", boxShadow: "0 12px 28px -10px rgba(230,64,114,.55)" }}
+      style={{ right: 14, bottom: "max(14px, env(safe-area-inset-bottom))", width: 46, height: 46, zIndex: 48, background: playing ? "linear-gradient(135deg,#ff7aa8,#e64072)" : "#fff", color: playing ? "#fff" : ROSE_DEEP, border: "1px solid #ffd6e2", boxShadow: "0 12px 28px -10px rgba(230,64,114,.55)" }}
     >
       {playing ? <Pause size={18} /> : <Music size={18} />}
     </button>
@@ -1105,7 +1052,7 @@ function BriberyAgreementModal({ data, promises, onClose }: { data: ApologyData;
   return (
     <motion.div
       className="fixed flex items-center justify-center p-3 sm:p-5"
-      style={{ top: 66, bottom: 78, left: 0, right: 0, background: "rgba(70,16,32,.62)", zIndex: 50 }}
+      style={{ top: 58, bottom: 12, left: 0, right: 0, background: "rgba(70,16,32,.62)", zIndex: 60 }}
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={onClose}
     >
@@ -1128,20 +1075,24 @@ function BriberyAgreementModal({ data, promises, onClose }: { data: ApologyData;
           color: "#4a2b1c",
         }}
       >
-        {/* ornate stamp-paper border */}
-        <div style={{ position: "absolute", inset: 8, border: "2px solid #9c7b4a", borderRadius: 6, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", inset: 13, border: "1px solid #b89a63", borderRadius: 4, pointerEvents: "none" }} />
+        {/* sticky close — stays reachable while the tall deed scrolls on phone */}
+        {!capturing && (
+          <div style={{ position: "sticky", top: 0, height: 0, zIndex: 20 }}>
+            <button onClick={onClose} className="absolute w-8 h-8 rounded-full grid place-items-center" style={{ top: 12, right: 12, color: "#9c7b4a", background: "rgba(156,123,74,.16)", backdropFilter: "blur(4px)" }}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* ornate stamp-paper border — normal flow so it wraps the FULL content
+            (fixes the bottom border overflow on phones) */}
+        <div style={{ position: "relative", margin: 8, border: "2px solid #9c7b4a", borderRadius: 6 }}>
+        <div style={{ position: "relative", margin: 5, border: "1px solid #b89a63", borderRadius: 4, overflow: "hidden" }}>
 
         {/* watermark heart */}
         <div aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", fontSize: 220, opacity: 0.05 }}>❤</div>
 
-        {!capturing && (
-          <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full grid place-items-center z-10" style={{ color: "#9c7b4a", background: "rgba(156,123,74,.12)" }}>
-            <X size={16} />
-          </button>
-        )}
-
-        <div className="relative px-6 sm:px-9 py-7">
+        <div className="relative px-5 sm:px-8 py-7">
           {/* header */}
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1243,6 +1194,8 @@ function BriberyAgreementModal({ data, promises, onClose }: { data: ApologyData;
               </button>
             </div>
           )}
+        </div>
+        </div>
         </div>
       </motion.div>
     </motion.div>
@@ -1645,7 +1598,7 @@ function AgreementModal({ data, mode, shareId, onClose, onSigned, toast, accepte
   const thumbCss: CSSProperties = { width: 48, height: 60, borderRadius: "46% 46% 48% 48%", margin: "0 auto", background: "repeating-radial-gradient(circle at 50% 45%, #b83a5e 0 1.1px, transparent 1.1px 3px)", opacity: 0.6 };
 
   return (
-    <div className="fixed flex items-center justify-center p-3 sm:p-5" style={{ top: 66, bottom: 78, left: 0, right: 0, background: "rgba(70,16,32,.62)", zIndex: 50 }} onClick={onClose}>
+    <div className="fixed flex items-center justify-center p-3 sm:p-5" style={{ top: 58, bottom: 12, left: 0, right: 0, background: "rgba(70,16,32,.62)", zIndex: 60 }} onClick={onClose}>
       <motion.div
         ref={paperRef}
         onClick={(e) => e.stopPropagation()}
@@ -1661,17 +1614,22 @@ function AgreementModal({ data, mode, shareId, onClose, onSigned, toast, accepte
           fontFamily: "Georgia, 'Times New Roman', serif", color: "#4a2b1c",
         }}
       >
-        <div style={{ position: "absolute", inset: 8, border: "2px solid #9c7b4a", borderRadius: 6, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", inset: 13, border: "1px solid #b89a63", borderRadius: 4, pointerEvents: "none" }} />
-        <div aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", fontSize: 220, opacity: 0.05 }}>❤</div>
-
+        {/* sticky close — stays reachable while the tall deed scrolls on phone */}
         {!capturing && (
-          <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full grid place-items-center z-10" style={{ color: "#9c7b4a", background: "rgba(156,123,74,.12)" }}>
-            <X size={16} />
-          </button>
+          <div style={{ position: "sticky", top: 0, height: 0, zIndex: 20 }}>
+            <button onClick={onClose} className="absolute w-8 h-8 rounded-full grid place-items-center" style={{ top: 12, right: 12, color: "#9c7b4a", background: "rgba(156,123,74,.16)", backdropFilter: "blur(4px)" }}>
+              <X size={16} />
+            </button>
+          </div>
         )}
 
-        <div className="relative px-6 sm:px-9 py-7">
+        {/* ornate stamp-paper border — normal flow so it wraps the FULL content
+            (fixes the bottom border overflow on phones) */}
+        <div style={{ position: "relative", margin: 8, border: "2px solid #9c7b4a", borderRadius: 6 }}>
+        <div style={{ position: "relative", margin: 5, border: "1px solid #b89a63", borderRadius: 4, overflow: "hidden" }}>
+        <div aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none", fontSize: 220, opacity: 0.05 }}>❤</div>
+
+        <div className="relative px-5 sm:px-8 py-7">
           {/* header */}
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1777,6 +1735,8 @@ function AgreementModal({ data, mode, shareId, onClose, onSigned, toast, accepte
               </>
             )
           )}
+        </div>
+        </div>
         </div>
       </motion.div>
 

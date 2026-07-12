@@ -7,18 +7,33 @@ import { toPng } from "html-to-image";
 import { Document, Page, Image, pdf } from "@react-pdf/renderer";
 
 export async function downloadAgreementPdf(node: HTMLElement, token: string): Promise<void> {
-  const rect = node.getBoundingClientRect();
+  // Use layout size (transform-independent) and full scroll height so nothing is
+  // cut off. scrollWidth/Height cover the entire content even if the box scrolls.
+  const width = Math.ceil(node.scrollWidth || node.offsetWidth || node.getBoundingClientRect().width);
+  const height = Math.ceil(node.scrollHeight || node.offsetHeight || node.getBoundingClientRect().height);
+
   const dataUrl = await toPng(node, {
     pixelRatio: 2.5,
     cacheBust: true,
     backgroundColor: "#fbf7ec",
-    width: rect.width,
-    height: rect.height,
+    width,
+    height,
+    // Neutralise framer-motion's residual transform (scale/rotate) on the cloned
+    // node — otherwise html-to-image renders the content shifted / misaligned —
+    // and force the box fully open so every line is captured in place.
+    style: {
+      transform: "none",
+      transformOrigin: "top left",
+      maxHeight: "none",
+      height: `${height}px`,
+      overflow: "visible",
+      margin: "0",
+    },
   });
 
   // page sized to the snapshot's aspect ratio (px → pt) → one full page, no blank space
-  const wPt = (rect.width * 72) / 96;
-  const hPt = (rect.height * 72) / 96;
+  const wPt = (width * 72) / 96;
+  const hPt = (height * 72) / 96;
 
   const doc = (
     <Document title="Certificate of Forgiveness">
