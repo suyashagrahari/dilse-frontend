@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard from "@/components/TemplateCard";
+import ApologyTemplateCard from "@/components/ApologyTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
@@ -506,15 +507,25 @@ function TemplatesContent() {
         {readyTemplates.length > 0 && (
           <AnimatePresence mode="popLayout">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-              {readyTemplates.map((template, i) => (
-                <TemplateCard
-                  key={template.slug}
-                  template={template}
-                  isFav={favSlugs.includes(template.slug)}
-                  index={i}
-                  onFavorite={handleFavorite}
-                />
-              ))}
+              {readyTemplates.map((template, i) =>
+                template.slug === "apology-dashboard" ? (
+                  <ApologyTemplateCard
+                    key={template.slug}
+                    template={template}
+                    isFav={favSlugs.includes(template.slug)}
+                    index={i}
+                    onFavorite={handleFavorite}
+                  />
+                ) : (
+                  <TemplateCard
+                    key={template.slug}
+                    template={template}
+                    isFav={favSlugs.includes(template.slug)}
+                    index={i}
+                    onFavorite={handleFavorite}
+                  />
+                )
+              )}
             </div>
           </AnimatePresence>
         )}

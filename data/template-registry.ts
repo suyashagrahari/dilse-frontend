@@ -9,6 +9,7 @@ import { config as birthdayParents } from "@/app/(templates)/birthday-parents/co
 import { config as birthdayBestfriend } from "@/app/(templates)/birthday-bestfriend/config";
 import { config as sorryGf } from "@/app/(templates)/sorry-gf/config";
 import { config as sorryFriend } from "@/app/(templates)/sorry-friend/config";
+import { config as apologyDashboard } from "@/app/(templates)/apology-dashboard/config";
 import { config as missyouGf } from "@/app/(templates)/missyou-gf/config";
 import { config as missyouBestfriend } from "@/app/(templates)/missyou-bestfriend/config";
 import { config as anniversaryGf } from "@/app/(templates)/anniversary-gf/config";
@@ -30,6 +31,7 @@ const allConfigs = [
   birthdayBestfriend,
   valentineGf,
   valentineBestfriend,
+  apologyDashboard,
   sorryGf,
   sorryFriend,
   missyouGf,

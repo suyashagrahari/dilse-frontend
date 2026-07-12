@@ -16,6 +16,25 @@ import {
 const DRAFT_KEY = "apology_draft";
 const BASE = `${API_URL}/apology-dashboard-pages`;
 
+// Draft is persisted to localStorage so a page refresh (or accidental tab close)
+// keeps everything the user filled in. Falls back to sessionStorage if unavailable.
+const draftStore = (): Storage | null => {
+  try { return window.localStorage; } catch { try { return window.sessionStorage; } catch { return null; } }
+};
+const saveDraft = (payload: unknown) => {
+  try { draftStore()?.setItem(DRAFT_KEY, JSON.stringify(payload)); } catch {}
+};
+const clearDraft = () => {
+  try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
+  try { window.sessionStorage.removeItem(DRAFT_KEY); } catch {}
+};
+const readDraft = (): { data?: ApologyData; password?: string; completed?: boolean } | null => {
+  try {
+    const raw = draftStore()?.getItem(DRAFT_KEY) ?? window.sessionStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
 export function useApologyEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,6 +47,11 @@ export function useApologyEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+  // bumped whenever a *new* preview should be shown → forces the live dashboard to
+  // remount so every interaction (scratch, whack, anger, music) starts fresh with the
+  // latest form data + selected song.
+  const [previewVersion, setPreviewVersion] = useState(0);
+  const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
 
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
@@ -71,6 +95,7 @@ export function useApologyEditor() {
             setPageId(id);
             setIsPersonalized(true);
             setEditMode("preview");
+            bumpPreview();
             if (result.data.isPublished && result.data.shareUrl) setShareUrl(String(result.data.shareUrl));
           }
         })
@@ -78,19 +103,19 @@ export function useApologyEditor() {
       return;
     }
 
-    try {
-      const saved = sessionStorage.getItem(DRAFT_KEY);
-      if (saved) {
-        const draft = JSON.parse(saved);
-        if (draft?.completed && draft.data) {
-          setContent(draft.data);
-          setMf(draft.data);
-          setIsPersonalized(true);
-          setEditMode("preview");
-          if (draft.password) setPagePassword(draft.password);
-        }
+    // Restore a locally-saved draft on refresh. The typed form data (mf) always comes
+    // back; if it was saved from the preview ("completed"), we also reopen the preview.
+    const draft = readDraft();
+    if (draft?.data) {
+      setMf(draft.data);
+      if (draft.password) setPagePassword(draft.password);
+      if (draft.completed) {
+        setContent(draft.data);
+        setIsPersonalized(true);
+        setEditMode("preview");
+        bumpPreview();
       }
-    } catch {}
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken, searchParams]);
 
@@ -102,6 +127,7 @@ export function useApologyEditor() {
 
     setPublishing(true);
     setEditMode("preview");
+    bumpPreview();
     (async () => {
       try {
         const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(apologyDataToBody(data, password)) });
@@ -116,7 +142,7 @@ export function useApologyEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
-          try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+          clearDraft();
           pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
@@ -133,9 +159,7 @@ export function useApologyEditor() {
   // ── Auto-save WIP draft while editing ───────────────────────────────────────
   useEffect(() => {
     if (editMode !== "manual" && editMode !== "choose") return;
-    try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ data: mf, password: pagePassword, completed: false }));
-    } catch {}
+    saveDraft({ data: mf, password: pagePassword, completed: false });
   }, [mf, pagePassword, editMode]);
 
   const displayData = editMode === "manual" || editMode === "choose" ? mf : content;
@@ -158,9 +182,10 @@ export function useApologyEditor() {
     setContent(mf);
     setIsPersonalized(true);
     setEditMode("preview");
-    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ data: mf, password: pagePassword, completed: true })); } catch {}
+    bumpPreview(); // fresh preview: re-cover scratch, reset whack/anger, use the chosen song
+    saveDraft({ data: mf, password: pagePassword, completed: true });
     pushToast({ type: "success", title: "Saved!", message: "Preview it, then publish 💗" });
-  }, [mf, pagePassword, pushToast]);
+  }, [mf, pagePassword, pushToast, bumpPreview]);
 
   const create = useCallback(async (): Promise<string | null> => {
     const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(apologyDataToBody(content, pagePassword)) });
@@ -197,7 +222,7 @@ export function useApologyEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
-        try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+        clearDraft();
         pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
       } else {
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
@@ -237,7 +262,7 @@ export function useApologyEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts,
+    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

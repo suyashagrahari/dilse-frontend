@@ -66,8 +66,9 @@ function ApologyPageInner() {
         </button>
       </div>
 
-      {/* Live preview */}
-      <ApologyDashboard data={e.displayData} mode="preview" />
+      {/* Live preview — keyed so each save/publish restarts the experience fresh
+          (scratch re-covered, whack + anger reset, newly-selected song playing). */}
+      <ApologyDashboard key={e.previewVersion} data={e.displayData} mode="preview" />
 
       {/* Edit sheet */}
       <EditSheet
