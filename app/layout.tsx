@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Dancing_Script, Cinzel, Lora } from "next/font/google";
+import { Dancing_Script, Cinzel, Lora, Fredoka, Inter } from "next/font/google";
 import Providers from "@/components/Providers";
 import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
 import { buildMeta, SITE_URL } from "@/lib/seo";
@@ -29,6 +29,20 @@ const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-lora",
+  display: "swap",
+});
+
+// Apology Dashboard template fonts (display + body)
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-fredoka",
+  display: "swap",
+});
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -79,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable} ${fredoka.variable} ${inter.variable}`}>
       <head suppressHydrationWarning>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

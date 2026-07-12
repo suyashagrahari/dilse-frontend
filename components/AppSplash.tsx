@@ -12,6 +12,7 @@
 //   • the session is marked "seen" immediately so rapid refreshes never replay it.
 
 import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
+import SplashGuard from "@/components/SplashGuard";
 
 const SPLASH_CSS = `
 #ss-splash{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;
@@ -68,16 +69,19 @@ const HIDE_JS = `
 (function(){
   var el=document.getElementById('ss-splash');
   if(!el)return;
-  try{if((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true)return;}catch(e){} // PWA: OS splash is the only loader
+  el.setAttribute('data-inline','1'); // marks that this node's lifecycle is owned by the inline script (a real document load). The client SplashGuard defers to this and only acts on client-nav / bfcache inserts.
+  function markSeen(){try{document.documentElement.classList.add('ss-splash-seen');}catch(e){}}
+  try{if((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true){markSeen();return;}}catch(e){} // PWA: OS splash is the only loader
   var KEY='ss_splash_shown',seen=false;
   try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
-  if(seen)return; // already hidden by CSS on this refresh
+  if(seen){markSeen();return;} // already hidden by CSS on this refresh
   try{sessionStorage.setItem(KEY,'1');}catch(e){}
   var start=Date.now(),MIN=2900,done=false;
   function hide(){
     if(done)return;done=true;
     var wait=Math.max(0,MIN-(Date.now()-start));
     setTimeout(function(){
+      markSeen(); // persist on <html> so any later client-side re-insert is hidden by CSS (no flash, no stuck loader)
       el.classList.add('ss-hide');
       setTimeout(function(){el.classList.add('ss-gone');},650);
     },wait);
@@ -144,6 +148,7 @@ export default function AppSplash() {
 
         <script dangerouslySetInnerHTML={{ __html: HIDE_JS }} />
       </div>
+      <SplashGuard />
     </>
   );
 }
