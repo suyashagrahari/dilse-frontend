@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Mail, Loader2, Heart, Sparkles, Info,
+  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Mail, Loader2, Heart, Sparkles, Info, Play, Pause,
 } from "lucide-react";
 import type { ApologyData, EditMode, BriberyItem, TimelineNode } from "./types";
-import { RELATIONSHIPS, MUSIC_PRESETS } from "./types";
+import { RELATIONSHIPS, MUSIC_PRESETS, MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
 import VoiceRecorder from "./VoiceRecorder";
 
 const ROSE = "#e64072";
@@ -78,6 +78,64 @@ function SinglePhoto({ photo, onUpload, onRemove }: { photo: string; onUpload: (
 export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving }: Props) {
   const visible = editMode !== null && editMode !== "preview";
   const facesRef = useRef<HTMLInputElement>(null);
+
+  // ── Song preview in the music picker ──────────────────────────────────────
+  // Lets the user listen to a song before choosing it. Ducks the preview's own
+  // background song (via the shared events) so only one thing plays at a time,
+  // and stops if a voice recording/playback starts.
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const selfPauseRef = useRef(false); // marks pause events we fire ourselves
+
+  // duck the live-preview background song without stopping our own preview
+  const duckLivePreview = () => {
+    selfPauseRef.current = true;
+    try { window.dispatchEvent(new Event(MUSIC_PAUSE_EVENT)); } catch {}
+    selfPauseRef.current = false; // dispatch is synchronous, so this is safe
+  };
+
+  const stopPreview = () => {
+    previewAudioRef.current?.pause();
+    setPreviewId(null);
+    try { window.dispatchEvent(new Event(MUSIC_RESUME_EVENT)); } catch {}
+  };
+
+  const togglePreview = (m: { id: string; url: string }) => {
+    if (previewId === m.id) { stopPreview(); return; }
+    if (!m.url) return; // built-in lofi has no file to preview
+    let a = previewAudioRef.current;
+    if (!a) {
+      a = new Audio();
+      a.onended = () => setPreviewId(null);
+      previewAudioRef.current = a;
+    }
+    duckLivePreview();
+    a.src = m.url;
+    a.currentTime = 0;
+    a.volume = 0.8;
+    a.play().catch(() => {});
+    setPreviewId(m.id);
+  };
+
+  // stop the preview if a recording (an *external* pause) starts; clean up on unmount
+  useEffect(() => {
+    const onExternalPause = () => {
+      if (selfPauseRef.current) return; // ignore the event we just fired ourselves
+      const a = previewAudioRef.current;
+      if (a && !a.paused) { a.pause(); setPreviewId(null); }
+    };
+    window.addEventListener(MUSIC_PAUSE_EVENT, onExternalPause);
+    return () => {
+      window.removeEventListener(MUSIC_PAUSE_EVENT, onExternalPause);
+      previewAudioRef.current?.pause();
+    };
+  }, []);
+
+  // stop any running song preview when the sheet is closed (Save / X)
+  useEffect(() => {
+    if (!visible && previewAudioRef.current) { previewAudioRef.current.pause(); setPreviewId(null); }
+  }, [visible]);
+
 
   const addFaces = (files: FileList | null) => {
     if (!files) return;
@@ -215,27 +273,44 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                 </div>
 
                 {/* Background music */}
-                <Field label="Background music" hint="The song that plays on the shared page (default: Sorry).">
+                <Field label="Background music" hint="The song that plays on the shared page (default: Sorry). Tap ▶ to listen before choosing.">
                   <div className="space-y-2">
                     {MUSIC_PRESETS.map((m) => {
                       const on = mf.backgroundMusic === m.url;
+                      const previewing = previewId === m.id;
                       return (
-                        <button
+                        <div
                           key={m.id}
-                          type="button"
                           onClick={() => updateMf("backgroundMusic", m.url)}
-                          className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors"
+                          className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors cursor-pointer"
                           style={{ border: `1.5px solid ${on ? ROSE : "#fce7f0"}`, background: on ? "#fff0f4" : "#fff" }}
                         >
                           <span className="w-5 h-5 rounded-full grid place-items-center shrink-0" style={{ border: `2px solid ${on ? ROSE : "#d9c3cc"}` }}>
                             {on && <span className="w-2.5 h-2.5 rounded-full" style={{ background: ROSE }} />}
                           </span>
-                          <span className="text-lg">🎵</span>
                           <span className="flex-1 text-sm font-medium">{m.label}</span>
-                        </button>
+                          {m.url ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); togglePreview(m); }}
+                              aria-label={previewing ? "Stop preview" : "Listen"}
+                              className="w-9 h-9 rounded-full grid place-items-center shrink-0 transition-transform hover:scale-105"
+                              style={{ background: previewing ? ROSE_GRADIENT : "#fff0f4", color: previewing ? "#fff" : ROSE, border: `1px solid ${previewing ? "transparent" : "#ffd6e2"}` }}
+                            >
+                              {previewing ? <Pause size={15} /> : <Play size={15} fill="currentColor" />}
+                            </button>
+                          ) : (
+                            <span className="text-lg shrink-0">🎵</span>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
+                  {previewId && (
+                    <p className="text-[10px] mt-1.5 flex items-center gap-1" style={{ color: ROSE }}>
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ROSE }} /> Playing preview…
+                    </p>
+                  )}
                 </Field>
 
                 {/* Bribery items */}

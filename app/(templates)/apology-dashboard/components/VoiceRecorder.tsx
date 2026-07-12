@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Square, Play, Pause, Upload, Trash2 } from "lucide-react";
+import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
+
+const pauseMusic = () => { try { window.dispatchEvent(new Event(MUSIC_PAUSE_EVENT)); } catch {} };
+const resumeMusic = () => { try { window.dispatchEvent(new Event(MUSIC_RESUME_EVENT)); } catch {} };
 
 interface Props {
   /** Existing recording (base64 data URL or S3 URL). */
@@ -52,6 +56,8 @@ export default function VoiceRecorder({ value, onChange }: Props) {
       setError("Recording isn't supported here — upload a file instead.");
       return;
     }
+    // hush the background song so it isn't captured / doesn't clash with the recording
+    pauseMusic();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -64,6 +70,7 @@ export default function VoiceRecorder({ value, onChange }: Props) {
       rec.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         stopStream();
+        resumeMusic(); // bring the background song back once recording ends
         try {
           const dataUrl = await blobToDataUrl(blob);
           onChange(dataUrl);
@@ -77,6 +84,7 @@ export default function VoiceRecorder({ value, onChange }: Props) {
       setElapsed(0);
       timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
     } catch {
+      resumeMusic(); // permission denied / failed → un-duck the music
       setError("Microphone permission denied. You can upload a file instead.");
     }
   }, [onChange, stopStream]);
@@ -110,6 +118,7 @@ export default function VoiceRecorder({ value, onChange }: Props) {
     if (playing) {
       el.pause();
     } else {
+      pauseMusic(); // don't let the song play over the voice note
       el.play().catch(() => {});
     }
   };
@@ -148,8 +157,8 @@ export default function VoiceRecorder({ value, onChange }: Props) {
             ref={audioRef}
             src={value}
             onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
+            onPause={() => { setPlaying(false); resumeMusic(); }}
+            onEnded={() => { setPlaying(false); resumeMusic(); }}
             className="hidden"
           />
         </div>

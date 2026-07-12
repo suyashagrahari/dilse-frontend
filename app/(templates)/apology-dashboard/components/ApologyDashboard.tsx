@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import type { ApologyData, SignAgreementBody } from "./types";
+import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
 
 // ─── design tokens (from the mockup) ─────────────────────────────────────────
 const ROSE = "#ff5f8a";
@@ -442,8 +443,22 @@ function MusicFab({ url, toast }: { url: string; toast: (m: string, e?: string) 
     setPlaying(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
-  const stop = () => { if (url) audioRef.current?.pause(); else stopLofi(); setPlaying(false); };
+  const stop = useCallback(() => { if (url) audioRef.current?.pause(); else stopLofi(); setPlaying(false); }, [url]);
   const toggle = () => { if (playing) stop(); else { start(); toast("Music on 🎶", "🎵"); } };
+
+  // Duck the background song while a voice note is being recorded / played, or a
+  // song is being previewed in the editor — resume only what we auto-paused.
+  const duckedRef = useRef(false);
+  useEffect(() => {
+    const onPause = () => { if (playing) { duckedRef.current = true; stop(); } };
+    const onResume = () => { if (duckedRef.current) { duckedRef.current = false; start(); } };
+    window.addEventListener(MUSIC_PAUSE_EVENT, onPause);
+    window.addEventListener(MUSIC_RESUME_EVENT, onResume);
+    return () => {
+      window.removeEventListener(MUSIC_PAUSE_EVENT, onPause);
+      window.removeEventListener(MUSIC_RESUME_EVENT, onResume);
+    };
+  }, [playing, start, stop]);
 
   // kick off on the first user gesture (browsers block silent autoplay) — both the
   // editor preview and the shared page, so the default song plays right away.

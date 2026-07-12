@@ -13,6 +13,11 @@ export const RELATIONSHIPS: { id: Relationship; label: string }[] = [
   { id: "partner", label: "Partner" },
 ];
 
+// Window events used to duck the background music (e.g. while recording a voice
+// note, or when previewing a song in the editor) so only one audio plays at a time.
+export const MUSIC_PAUSE_EVENT = "apology:music-pause";
+export const MUSIC_RESUME_EVENT = "apology:music-resume";
+
 export interface MusicPreset { id: string; label: string; url: string }
 /** Selectable background songs. url "" = the built-in gentle lofi tune. */
 export const MUSIC_PRESETS: MusicPreset[] = [
