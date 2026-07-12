@@ -27,13 +27,58 @@ interface Props {
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLSpanElement>(null);
+
+  // close the tooltip when tapping anywhere else (so it works on phones)
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: PointerEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
+  }, [open]);
+
   return (
     <div>
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
         <span>{label}</span>
         {hint && (
-          <span title={hint} aria-label={hint} className="inline-grid place-items-center w-4 h-4 rounded-full cursor-help shrink-0" style={{ background: "rgba(230,64,114,.12)", color: ROSE }}>
-            <Info size={11} />
+          <span ref={boxRef} className="relative inline-flex items-center">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+              onMouseEnter={() => setOpen(true)}
+              onMouseLeave={() => setOpen(false)}
+              aria-label={hint}
+              aria-expanded={open}
+              className="inline-grid place-items-center w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
+              style={{ background: open ? ROSE : "rgba(230,64,114,.12)", color: open ? "#fff" : ROSE }}
+            >
+              <Info size={12} />
+            </button>
+            <AnimatePresence>
+              {open && (
+                <motion.span
+                  role="tooltip"
+                  initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute z-[60] normal-case tracking-normal font-medium"
+                  style={{
+                    top: "calc(100% + 8px)", left: 0,
+                    width: "min(240px, 72vw)",
+                    background: "#3a2233", color: "#fff",
+                    fontSize: 11, lineHeight: 1.5, letterSpacing: 0,
+                    padding: "8px 11px", borderRadius: 10,
+                    boxShadow: "0 12px 30px -8px rgba(58,34,51,.5)",
+                  }}
+                >
+                  <span aria-hidden style={{ position: "absolute", top: -5, left: 6, width: 10, height: 10, background: "#3a2233", transform: "rotate(45deg)", borderRadius: 2 }} />
+                  {hint}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </span>
         )}
       </label>
@@ -345,11 +390,12 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                 </Field>
 
                 {/* Delivery email */}
-                <Field label="Delivery email *" hint="Where the signed agreement PDF is emailed once they forgive you.">
+                <Field label="Your GF / BF's email *" hint="Enter your girlfriend/boyfriend's email — the one you want the signed agreement sent to once they forgive you. A copy also comes to your own account email.">
                   <div className="relative">
                     <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="email" value={mf.deliveryEmail} onChange={(e) => updateMf("deliveryEmail", e.target.value)} placeholder="you@email.com" className={INPUT_CLS + " pl-10"} />
+                    <input type="email" value={mf.deliveryEmail} onChange={(e) => updateMf("deliveryEmail", e.target.value)} placeholder="your gf/bf's email — e.g. love@email.com" className={INPUT_CLS + " pl-10"} />
                   </div>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">The signed “Deed of Forgiveness” PDF is emailed here (and cc’d to you) 💌</p>
                 </Field>
 
                 {/* Password */}
