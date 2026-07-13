@@ -12,7 +12,8 @@ export async function GET(req: Request) {
   const pageSize = Math.min(48, Math.max(1, parseInt(searchParams.get("pageSize") || "12", 10) || 12));
   const category = searchParams.get("category") || undefined;
   const featured = searchParams.get("featured") === "true" ? true : undefined;
+  const search = (searchParams.get("q") || searchParams.get("search") || "").trim() || undefined;
 
-  const { articles, pageCount, total } = await getArticles({ page, pageSize, category, featured });
+  const { articles, pageCount, total } = await getArticles({ page, pageSize, category, featured, search });
   return NextResponse.json({ articles, pageCount, total, page });
 }

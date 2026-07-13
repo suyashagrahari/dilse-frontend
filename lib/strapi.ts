@@ -192,8 +192,10 @@ export async function getArticles(opts: {
   pageSize?: number;
   category?: string;
   featured?: boolean;
+  /** Free-text query — case-insensitive match across title, excerpt & tags. */
+  search?: string;
 } = {}): Promise<{ articles: Article[]; pageCount: number; total: number }> {
-  const { page = 1, pageSize = 12, category, featured } = opts;
+  const { page = 1, pageSize = 12, category, featured, search } = opts;
   const params = [
     LIST_POPULATE,
     "sort[0]=publishedAt:desc",
@@ -202,6 +204,17 @@ export async function getArticles(opts: {
   ];
   if (category) params.push(`filters[category][slug][$eq]=${encodeURIComponent(category)}`);
   if (featured) params.push("filters[featured][$eq]=true");
+  const q = search?.trim();
+  if (q) {
+    // Case-insensitive OR across the fields a reader is likely searching by.
+    const enc = encodeURIComponent(q);
+    params.push(
+      `filters[$or][0][title][$containsi]=${enc}`,
+      `filters[$or][1][excerpt][$containsi]=${enc}`,
+      `filters[$or][2][tags][$containsi]=${enc}`,
+      `filters[$or][3][category][name][$containsi]=${enc}`,
+    );
+  }
 
   const res = await strapiFetch<StrapiListResponse<Article>>(`/articles?${params.join("&")}`);
   return {
