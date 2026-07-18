@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
-  Eye, EyeOff, Loader2, ChevronRight, Shield,
+  Eye, EyeOff, Loader2, ChevronRight, ChevronDown, Shield,
   ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
   AtSign, Link2, Share2, Star, TrendingUp, ArrowUpRight, ArrowDownRight,
+  Trash2, AlertTriangle,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
@@ -24,6 +25,23 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 }
 
 const SUBDOMAIN_RESERVED = new Set(["www","admin","api","mail","support","help","docs","blog","app","auth","login","signup","register","dashboard","static","assets","cdn","dev","test","staging","prod","u","user","users","share","gift","gifts","dilse"]);
+
+// Maps a creation's templateType to its server DELETE route base path.
+// Deleting a page removes it entirely, so its shared link stops resolving for everyone.
+const DELETE_ENDPOINTS: Record<string, string> = {
+  birthday: "birthday-pages",
+  valentine: "valentine-pages",
+  holi: "holi-pages",
+  eid: "eid-pages",
+  wedding: "wedding-pages",
+  reception: "reception-pages",
+  shaadi: "shaadi-card-pages",
+  "christian-wedding": "christian-wedding-pages",
+  "love-gf": "love-gf-pages",
+  darling: "darling-pages",
+  "birthday-gf": "birthday-gf-pages",
+  "apology-dashboard": "apology-dashboard-pages",
+};
 
 const UI = {
   bg: "#f5ede6",
@@ -165,6 +183,8 @@ export default function ProfilePage() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [copiedPw, setCopiedPw] = useState<string | null>(null);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
   const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
   const [activePanel, setActivePanel] = useState<ProfilePanel>("personal-link");
@@ -319,6 +339,32 @@ export default function ProfilePage() {
     setShareTargetUrl(url);
     setShareMessage(message?.trim() || "Celebrate with me on SubhSandesh! ✨");
     setShareSheetOpen(true);
+  };
+
+  const handleDeleteCreation = async (page: MyCreation) => {
+    const base = DELETE_ENDPOINTS[page.templateType];
+    if (!base || !accessToken) return;
+    setDeletingId(page._id);
+    try {
+      const res = await fetch(`${API_URL}/${base}/${page._id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        // Remove locally so the card + its share link vanish immediately.
+        // On the server the page is gone, so the shared URL now 404s for everyone.
+        setMyCreations((prev) => prev.filter((p) => p._id !== page._id));
+        setDeleteConfirmId(null);
+        if (expandedCard === page._id) setExpandedCard(null);
+      } else {
+        alert(data.error || "Failed to delete. Please try again.");
+      }
+    } catch {
+      alert("Failed to delete. Please check your connection and try again.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : type === "eid" ? "🌙" : "🎁";
@@ -684,84 +730,148 @@ export default function ProfilePage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
       {sectionLabel("My Creations")}
       <div className="overflow-hidden rounded-2xl" style={cardStyle}>
-        <div className="max-h-[68vh] overflow-y-auto">
-          {myCreations.map((page) => {
-            const shareLink = getShareLink(page.shareId);
-            const isExpanded = expandedCard === page._id;
-            return (
-              <div key={page._id} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-                <button onClick={() => setExpandedCard(isExpanded ? null : page._id)}
-                  className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
-                    {page.templateType === "valentine" ? <Gift size={16} style={{ color: "#f43f5e" }} /> :
-                     page.templateType === "holi" ? <Sparkles size={16} style={{ color: "#a78bfa" }} /> :
-                     page.templateType === "eid" ? <span className="text-base">🌙</span> :
-                     <Cake size={16} style={{ color: "var(--app-accent)" }} />}
+        <div className="max-h-[72vh] overflow-y-auto">
+        {myCreations.map((page) => {
+          const shareLink = getShareLink(page.shareId);
+          const isExpanded = expandedCard === page._id;
+          return (
+            <div key={page._id} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
+              {/* ── Header row (click to expand) ── */}
+              <div onClick={() => { setExpandedCard(isExpanded ? null : page._id); setDeleteConfirmId(null); }}
+                className="app-row-hover cursor-pointer flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 transition-colors">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-border-faint)" }}>
+                    {page.templateType === "valentine" ? <Gift size={18} style={{ color: "#f43f5e" }} /> :
+                     page.templateType === "holi" ? <Sparkles size={18} style={{ color: "#a78bfa" }} /> :
+                     page.templateType === "eid" ? <span className="text-lg">🌙</span> :
+                     <Cake size={18} style={{ color: "var(--app-accent)" }} />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</p>
-                    <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[14px] sm:text-[16px] font-bold truncate tracking-tight" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</h3>
+                    <p className="text-[11px] sm:text-[12.5px] font-medium truncate mt-0.5" style={{ color: "var(--app-text-faint)" }}>
                       {templateLabel(page.templateType)} · {page.isPublished ? "Published" : "Draft"} · {formatShortDate(page.updatedAt)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {page.isPublished && (
-                      <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg" style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                        <Eye size={10} /> {page.viewCount}
-                      </div>
-                    )}
-                    <ChevronRight size={14} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
+                </div>
+
+                {/* Always-visible Edit | Delete pill + chevron */}
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center rounded-full" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
+                    <button title="Edit" onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
+                      className="pl-3 pr-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-l-full flex items-center gap-1.5 transition-colors hover:bg-[var(--app-accent-a08)]"
+                      style={{ color: "var(--app-text)" }}>
+                      <Edit3 size={14} style={{ color: "var(--app-text-muted)" }} /> <span className="hidden sm:inline">Edit</span>
+                    </button>
+                    <div className="w-px h-4 sm:h-5" style={{ background: "var(--app-border-faint)" }} />
+                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setExpandedCard(page._id); setDeleteConfirmId(page._id); }}
+                      className="pl-2.5 pr-3 sm:px-3.5 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-r-full flex items-center gap-1.5 transition-colors hover:bg-[rgba(220,38,38,0.07)]"
+                      style={{ color: "#dc2626" }}>
+                      <Trash2 size={14} /> <span className="hidden sm:inline">Delete</span>
+                    </button>
                   </div>
-                </button>
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                      <div className="px-4 pb-5 md:px-5 md:pb-6 space-y-3 md:space-y-4">
-                        <button onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
-                          className="w-full flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-sm md:text-[15px] font-bold transition-all hover:opacity-90 hover:scale-[1.01]"
-                          style={{ background: "#3d0c11", color: "#f5ede6" }}>
-                          <Edit3 size={15} /> Edit This Card
-                        </button>
-                        <div className="grid grid-cols-3 gap-2 md:gap-3">
-                          {[{ icon: <Eye size={14} style={{ color: "#60a5fa" }} />, val: page.viewCount, label: "Views" },
-                            { icon: <Users size={14} style={{ color: "var(--app-accent)" }} />, val: page.installCount, label: "Installs" },
-                            { icon: <BarChart3 size={14} style={{ color: "#a78bfa" }} />, val: page.isPublished ? "Live" : "Draft", label: "Status" }
-                          ].map(({ icon, val, label }) => (
-                            <div key={label} className="rounded-xl md:rounded-2xl p-3 md:p-4 text-center flex flex-col items-center" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
-                              <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: "var(--app-bg)" }}>{icon}</div>
-                              <p className="text-sm md:text-lg font-black leading-tight" style={{ color: "var(--app-text)" }}>{val}</p>
-                              <p className="text-[9px] md:text-[10px] uppercase tracking-wider mt-1 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
+                  <ChevronDown size={18} className={`transition-transform duration-300 shrink-0 ${isExpanded ? "rotate-180" : ""}`} style={{ color: "var(--app-text-faint)" }} />
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+                    <div className="px-3.5 pb-4 sm:px-6 sm:pb-6 pt-1 space-y-3 sm:space-y-4" style={{ borderTop: "1px solid var(--app-border-faint)" }}>
+                      {/* Delete confirmation banner (triggered from header Delete) */}
+                      {deleteConfirmId === page._id && (
+                        <div className="mt-3 sm:mt-4 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}>
+                          <div className="flex items-start gap-2 sm:gap-2.5">
+                            <AlertTriangle size={15} style={{ color: "#dc2626" }} className="shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="text-[12px] sm:text-sm font-bold" style={{ color: "#dc2626" }}>Permanently delete this card?</p>
+                              <p className="text-[10.5px] sm:text-xs mt-0.5 leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
+                                This is <span style={{ color: "#dc2626", fontWeight: 700 }}>permanent and cannot be undone</span>. The card and all its content, photos and settings will be erased. The shared link will stop working for you and everyone you sent it to, and <span style={{ color: "#dc2626", fontWeight: 700 }}>it can never be recovered or published again</span> — you would have to build a brand-new card from scratch.
+                              </p>
                             </div>
-                          ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }} disabled={deletingId === page._id}
+                              className="flex-1 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[12px] sm:text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                              style={{ background: "var(--app-surface)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)" }}>
+                              Cancel
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteCreation(page); }} disabled={deletingId === page._id}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[12px] sm:text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
+                              style={{ background: "#dc2626" }}>
+                              {deletingId === page._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                              {deletingId === page._id ? "Deleting…" : "Delete forever"}
+                            </button>
+                          </div>
                         </div>
-                        {page.isPublished && (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2.5 rounded-xl md:rounded-2xl px-3.5 md:px-4 py-3 md:py-3.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
-                              <Globe size={13} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
-                              <p className="text-[11px] md:text-xs truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{shareLink}</p>
-                              <button onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
-                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                                style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                                {copiedLink === page._id ? <Check size={13} /> : <Copy size={13} />}
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 pt-3 sm:pt-4">
+                        {/* Installs */}
+                        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 md:p-5 flex items-center gap-2.5 md:gap-4 transition-colors" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
+                          <div className="w-9 h-9 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 relative z-10" style={{ background: "var(--app-accent-a10)", border: "1px solid var(--app-border-faint)" }}>
+                            <Users size={16} className="md:hidden" style={{ color: "var(--app-accent)" }} /><Users size={22} className="hidden md:block" style={{ color: "var(--app-accent)" }} />
+                          </div>
+                          <div className="relative z-10 min-w-0">
+                            <p className="text-[8.5px] md:text-[11px] font-extrabold uppercase tracking-[0.14em] md:tracking-[0.18em] mb-0.5 md:mb-1" style={{ color: "var(--app-text-faint)" }}>Installs</p>
+                            <p className="text-xl md:text-[32px] font-black leading-none" style={{ color: "var(--app-text)" }}>{page.installCount}</p>
+                          </div>
+                          <TrendingUp className="absolute right-2 bottom-1.5 md:right-3 md:bottom-2 z-0 pointer-events-none w-9 h-9 md:w-[54px] md:h-[54px]" style={{ color: "var(--app-accent)", opacity: 0.09 }} />
+                        </div>
+                        {/* Status */}
+                        <div className="rounded-xl sm:rounded-2xl p-3 md:p-5 flex items-center gap-2.5 md:gap-4 transition-colors" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
+                          <div className="w-9 h-9 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: page.isPublished ? "rgba(34,197,94,0.1)" : "var(--app-accent-a08)", border: `1px solid ${page.isPublished ? "rgba(34,197,94,0.18)" : "var(--app-border-faint)"}` }}>
+                            {page.isPublished ? (
+                              <span className="relative flex items-center justify-center">
+                                <span className="absolute w-5 h-5 md:w-6 md:h-6 rounded-full animate-ping" style={{ background: "rgba(34,197,94,0.25)" }} />
+                                <span className="relative w-2.5 h-2.5 md:w-3 md:h-3 rounded-full" style={{ background: "#22c55e" }} />
+                              </span>
+                            ) : (<><BarChart3 size={16} className="md:hidden" style={{ color: "var(--app-text-faint)" }} /><BarChart3 size={22} className="hidden md:block" style={{ color: "var(--app-text-faint)" }} /></>)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[8.5px] md:text-[11px] font-extrabold uppercase tracking-[0.14em] md:tracking-[0.18em] mb-0.5 md:mb-1" style={{ color: "var(--app-text-faint)" }}>Status</p>
+                            <p className="text-lg md:text-[32px] font-black leading-none" style={{ color: page.isPublished ? "#16a34a" : "var(--app-text)" }}>{page.isPublished ? "Live" : "Draft"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      {page.isPublished && (
+                        <div className="space-y-2">
+                          <div className="rounded-xl sm:rounded-2xl p-3 md:p-4 flex items-center justify-between gap-2.5" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
+                            <div className="flex items-center gap-2 md:gap-3.5 min-w-0 flex-1">
+                              <div className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
+                                <Link2 size={15} className="md:hidden" style={{ color: "var(--app-accent)" }} /><Link2 size={19} className="hidden md:block" style={{ color: "var(--app-accent)" }} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[8.5px] md:text-[10px] uppercase tracking-[0.12em] md:tracking-[0.2em] font-extrabold mb-0.5 md:mb-1 whitespace-nowrap" style={{ color: "var(--app-text-faint)" }}>Shareable Link</p>
+                                <p className="text-[12px] md:text-sm font-semibold flex items-center gap-1.5 md:gap-2 whitespace-nowrap" style={{ color: "var(--app-text-muted)" }}>
+                                  Ready to share <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: "#22c55e" }} />
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                              <button title="Copy link" onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
+                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
+                                style={{ background: "rgba(255,255,255,0.9)", color: copiedLink === page._id ? "#16a34a" : "var(--app-accent)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
+                                {copiedLink === page._id ? <Check size={15} /> : <Copy size={15} />}
                               </button>
-                              <button onClick={(e) => {
+                              <button title="Share" onClick={(e) => {
                                 e.stopPropagation();
                                 openSocialShare(
                                   shareLink,
                                   `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`
                                 );
                               }}
-                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                                style={{ background: "var(--app-accent-a10)", color: "var(--app-accent)" }}>
-                                <Share2 size={13} />
+                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
+                                style={{ background: "rgba(255,255,255,0.9)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
+                                <Share2 size={15} />
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
-                                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                                style={{ background: "var(--app-border)", color: "var(--app-text-muted)" }}>
-                                <ExternalLink size={13} />
+                              <button title="Open in new tab" onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
+                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
+                                style={{ background: "rgba(255,255,255,0.9)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
+                                <ExternalLink size={15} />
                               </button>
                             </div>
-                            {page.hasPassword && (
+                          </div>
+                          {page.hasPassword && (
                               <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
                                 <KeyRound size={12} style={{ color: "#f59e0b" }} className="shrink-0" />
                                 <div className="flex-1 min-w-0">
@@ -796,13 +906,13 @@ export default function ProfilePage() {
                             )}
                           </div>
                         )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
         </div>
       </div>
     </motion.div>
