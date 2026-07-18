@@ -7,7 +7,7 @@ import { API_URL } from "@/lib/config";
 import {
   Search, Users, Crown, UserCheck, User as UserIcon, MessageSquare,
   ChevronLeft, ChevronRight, Eye, FileText, Calendar, Mail,
-  X, ExternalLink, BarChart3,
+  X, ExternalLink, BarChart3, Trash2, Loader2,
 } from "lucide-react";
 
 interface UserItem {
@@ -41,6 +41,8 @@ export default function AdminUsersPage(){
   const [sel,setSel]=useState<UserDetailData|null>(null);
   const [dLoading,setDLoading]=useState(false);
   const [rc,setRc]=useState<string|null>(null);
+  const [pageConfirm,setPageConfirm]=useState<string|null>(null);
+  const [pageDeleting,setPageDeleting]=useState<string|null>(null);
 
   const hdr=useCallback(()=>({Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"}),[accessToken]);
 
@@ -77,6 +79,26 @@ export default function AdminUsersPage(){
         if(sel?.user._id===id)setSel(prev=>prev?{...prev,user:{...prev.user,role}}:null);
       }else alert(data.error||"Failed");
     }finally{setRc(null);}
+  };
+
+  const deletePage=async(pageId:string,templateType:string)=>{
+    setPageDeleting(pageId);
+    try{
+      const res=await fetch(`${API_URL}/admin/pages/${pageId}?templateType=${encodeURIComponent(templateType)}`,{method:"DELETE",headers:hdr()});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data.success!==false){
+        // Page is gone on the server, so its shared link now 404s for everyone.
+        setSel(prev=>{
+          if(!prev)return prev;
+          const pages=prev.pages.filter(p=>p._id!==pageId);
+          return {...prev,pages,stats:{...prev.stats,
+            totalPagesCreated:Math.max(0,prev.stats.totalPagesCreated-1),
+            totalPagesPublished:pages.filter(p=>p.isPublished).length}};
+        });
+        setPageConfirm(null);
+      }else alert(data.error||"Failed to delete page");
+    }catch{alert("Failed to delete page. Please try again.");}
+    finally{setPageDeleting(null);}
   };
 
   const Badge=({role}:{role:string})=>{
@@ -246,7 +268,7 @@ export default function AdminUsersPage(){
       {/* ── Centered Detail Modal ── */}
       {(sel||dLoading)&&(
         <>
-          <div onClick={()=>{if(!dLoading)setSel(null);}} style={{position:"fixed",inset:0,background:"rgba(42,10,14,0.22)",zIndex:100,backdropFilter:"blur(4px)"}}/>
+          <div onClick={()=>{if(!dLoading){setSel(null);setPageConfirm(null);}}} style={{position:"fixed",inset:0,background:"rgba(42,10,14,0.22)",zIndex:100,backdropFilter:"blur(4px)"}}/>
           <div style={{
             position:"fixed",zIndex:101,
             top:"50%",left:"50%",transform:"translate(-50%,-50%)",
@@ -261,7 +283,7 @@ export default function AdminUsersPage(){
               </div>
             ):sel?(
               <>
-                <button onClick={()=>setSel(null)} style={{position:"absolute",top:14,right:14,width:30,height:30,borderRadius:8,border:`1px solid ${cB}`,background:"rgba(255,255,255,0.6)",color:t1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><X size={15}/></button>
+                <button onClick={()=>{setSel(null);setPageConfirm(null);}} style={{position:"absolute",top:14,right:14,width:30,height:30,borderRadius:8,border:`1px solid ${cB}`,background:"rgba(255,255,255,0.6)",color:t1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><X size={15}/></button>
 
                 {/* User header */}
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
@@ -319,6 +341,23 @@ export default function AdminUsersPage(){
                         {p.shareId&&<a href={`/${p.shareId}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{color:tM}}><ExternalLink size={11}/></a>}
                         <span style={{marginLeft:"auto",fontSize:9,color:tM}}>{p.viewCount??0} views</span>
                         <span style={{fontSize:9,color:tM}}>{new Date(p.createdAt).toLocaleDateString()}</span>
+                        {pageConfirm===p._id?(
+                          <div style={{display:"flex",alignItems:"center",gap:6,width:"100%",marginTop:6,paddingTop:6,borderTop:`1px solid ${cB}`}}>
+                            <span style={{flex:1,fontSize:9.5,color:"#b91c1c",fontWeight:600}}>Delete permanently? The shared link stops working for everyone and can&apos;t be recovered.</span>
+                            <button onClick={()=>setPageConfirm(null)} disabled={pageDeleting===p._id}
+                              style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",background:"rgba(255,255,255,0.8)",color:t2,border:`1px solid ${cB}`}}>Cancel</button>
+                            <button onClick={()=>deletePage(p._id,p.templateType)} disabled={pageDeleting===p._id}
+                              style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",background:"#dc2626",color:"#fff",border:"none",opacity:pageDeleting===p._id?0.6:1}}>
+                              {pageDeleting===p._id?<Loader2 size={11} style={{animation:"spin .8s linear infinite"}}/>:<Trash2 size={11}/>}
+                              {pageDeleting===p._id?"Deleting…":"Delete"}
+                            </button>
+                          </div>
+                        ):(
+                          <button onClick={()=>setPageConfirm(p._id)} title="Delete this page"
+                            style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:6,cursor:"pointer",background:"rgba(220,38,38,0.08)",color:"#dc2626",border:"1px solid rgba(220,38,38,0.2)"}}>
+                            <Trash2 size={12}/>
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
