@@ -11,6 +11,23 @@ export const dynamicParams = true;
 
 const PAGE_SIZE = 12;
 
+// Every post in a category, as {slug,title}. The visible grid streams pages
+// client-side (which crawlers don't execute), so we also emit a complete crawlable
+// link index below — this makes every deep post reachable in one hop from the
+// category page, strengthening topical clustering and fixing "discovered, not indexed".
+async function getAllCategoryLinks(category: string): Promise<{ slug: string; title: string }[]> {
+  const out: { slug: string; title: string }[] = [];
+  let page = 1;
+  let pageCount = 1;
+  do {
+    const { articles, pageCount: pc } = await getArticles({ category, page, pageSize: 100 });
+    out.push(...articles.map((a) => ({ slug: a.slug, title: a.title })));
+    pageCount = pc;
+    page += 1;
+  } while (page <= pageCount);
+  return out;
+}
+
 export async function generateStaticParams() {
   const categories = await getCategories();
   return categories.map((c) => ({ category: c.slug }));
@@ -34,9 +51,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   // SSR only the first page for instant paint; InfiniteBlogGrid streams the rest
   // client-side as the user scrolls.
-  const [{ articles, pageCount }, categories] = await Promise.all([
+  const [{ articles, pageCount }, categories, allLinks] = await Promise.all([
     getArticles({ category, page: 1, pageSize: PAGE_SIZE }),
     getCategories(),
+    getAllCategoryLinks(category),
   ]);
 
   return (
@@ -76,6 +94,20 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             category={cat.slug}
             pageSize={PAGE_SIZE}
           />
+        )}
+
+        {/* Complete crawlable index of every post in this category (visually hidden,
+            available to assistive tech + search/answer-engine crawlers). */}
+        {allLinks.length > 0 && (
+          <nav aria-label={`All ${cat.name} articles`} className="sr-only">
+            <ul>
+              {allLinks.map((a) => (
+                <li key={a.slug}>
+                  <a href={`/blog/${a.slug}`}>{a.title}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         )}
       </section>
     </main>

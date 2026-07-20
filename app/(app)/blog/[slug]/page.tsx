@@ -13,7 +13,7 @@ import ShareButtons from "@/components/blog/ShareButtons";
 import RelatedPosts from "@/components/blog/RelatedPosts";
 import TableOfContents from "@/components/blog/TableOfContents";
 import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
-import { BlogPostingJsonLd, BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
+import { ArticleGraphJsonLd } from "@/components/JsonLd";
 
 export const revalidate = 3600;
 // Allow on-demand pages not built at deploy time to be generated + cached on first hit.
@@ -79,30 +79,52 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const markdown = article.contentMarkdown?.trim() || null;
   const hasBody = Boolean(markdown) || (Array.isArray(article.content) && article.content.length > 0);
 
+  // ── Unified JSON-LD @graph inputs ──
+  const wordCount = markdown
+    ? markdown.split(/\s+/).filter(Boolean).length
+    : article.readingTime
+    ? article.readingTime * 200
+    : undefined;
+  const authorSameAs = [article.author?.twitter, article.author?.linkedin].filter(
+    (v): v is string => typeof v === "string" && /^https?:\/\//.test(v)
+  );
+  const authorForLd = article.author
+    ? {
+        name: article.author.name,
+        url: `${SITE_URL}/blog`,
+        jobTitle: article.author.jobTitle,
+        sameAs: authorSameAs,
+      }
+    : null;
+  const breadcrumb = [
+    { name: "Home", url: SITE_URL },
+    { name: "Blog", url: `${SITE_URL}/blog` },
+    ...(article.category
+      ? [{ name: article.category.name, url: `${SITE_URL}/blog/category/${article.category.slug}` }]
+      : []),
+    { name: article.title, url },
+  ];
+
   return (
     <main className="min-h-screen overflow-x-clip" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
-      {/* ── Structured data ── */}
-      <BlogPostingJsonLd
-        title={article.seo?.metaTitle || article.title}
-        description={article.seo?.metaDescription || article.excerpt || article.title}
+      {/* ── Structured data: ONE unified @graph (Organization ↔ WebSite ↔ Person
+          ↔ BlogPosting ↔ Breadcrumb ↔ FAQ + any studio HowTo/rich types) ── */}
+      <ArticleGraphJsonLd
         url={url}
+        headline={article.seo?.metaTitle || article.title}
+        description={article.seo?.metaDescription || article.excerpt || article.title}
         image={ogImage}
         datePublished={article.publishedAt}
         dateModified={article.updatedAt}
-        authorName={article.author?.name || SITE_NAME}
-        authorUrl={article.author ? `${SITE_URL}/blog` : undefined}
         keywords={article.seo?.keywords || (article.tags || []).join(", ") || undefined}
         section={article.category?.name}
+        wordCount={wordCount}
+        author={authorForLd}
+        breadcrumb={breadcrumb}
+        faqs={article.faqs ?? undefined}
+        extra={article.seo?.structuredData}
+        speakableSelectors={[".article-summary", ".key-takeaways"]}
       />
-      <BreadcrumbJsonLd
-        items={[
-          { name: "Home", url: SITE_URL },
-          { name: "Blog", url: `${SITE_URL}/blog` },
-          ...(article.category ? [{ name: article.category.name, url: `${SITE_URL}/blog/category/${article.category.slug}` }] : []),
-          { name: article.title, url },
-        ]}
-      />
-      {article.faqs && article.faqs.length > 0 && <FAQJsonLd faqs={article.faqs} />}
 
       {/* lg: items-stretch (default) makes the aside as tall as the article so the
           sticky TOC stays pinned through the whole left-content scroll. */}
@@ -130,7 +152,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {article.title}
           </h1>
           {article.excerpt && (
-            <p className="mt-4 text-lg leading-relaxed" style={{ color: "rgba(42,10,14,0.72)" }}>
+            <p className="article-summary mt-4 text-lg leading-relaxed" style={{ color: "rgba(42,10,14,0.72)" }}>
               {article.excerpt}
             </p>
           )}
@@ -153,7 +175,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Key takeaways (GEO/AEO TL;DR) */}
         {takeaways.length > 0 && (
-          <div className="mt-8 rounded-2xl p-5" style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.35)" }}>
+          <div className="key-takeaways mt-8 rounded-2xl p-5" style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.35)" }}>
             <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "#9a7415" }}>
               <Sparkles size={14} /> Key takeaways
             </p>

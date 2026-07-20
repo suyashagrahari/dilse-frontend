@@ -81,7 +81,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f43f5e",
+  // Match the manifest theme_color and brand palette (dark maroon) so the browser
+  // chrome / PWA title bar is on-brand instead of the old rose (#f43f5e).
+  themeColor: "#3d0c11",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
