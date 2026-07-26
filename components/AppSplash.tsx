@@ -82,24 +82,14 @@ const HIDE_JS = `
       setTimeout(function(){el.classList.add('ss-gone');},600);
     },wait);
   }
-  // Reveal the real page once the hero's web fonts are READY — not on window
-  // 'load'. Two things this solves:
-  //  1) 'load' fires many seconds into a slow mobile connection (after every
-  //     image), which used to keep this overlay covering the hero and pushed
-  //     mobile LCP to ~6.6s.
-  //  2) Revealing before the large Playfair headline's font has loaded made it
-  //     paint in a fallback, then swap + RE-WRAP to a different line count once
-  //     Playfair arrived — shifting all hero content down (~84px = CLS 0.125).
-  //     Waiting for document.fonts.ready means the hero appears already in its
-  //     final font: no swap, no reflow, no layout shift.
-  // MIN keeps the splash animation from flashing by too fast; the hard cap makes
-  // sure a slow/failed font load can never leave the splash stuck.
-  if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
-    document.fonts.ready.then(hide);
-  } else {
-    setTimeout(hide,MIN);
-  }
-  setTimeout(hide,2600); // hard cap: reveal even if fonts are slow to load
+  // Reveal the real page on a fixed ~1.2s timer — NOT on window 'load'. On a slow
+  // mobile connection 'load' fires many seconds in (after every image), which kept
+  // this overlay covering the hero and pushed mobile LCP to ~6.6s. A fixed short
+  // reveal makes the largest content paint ~1.2s instead.
+  // (Font-swap layout shift is handled separately via display:"optional" on the
+  // hero fonts — see app/layout.tsx — so there is no need to wait for fonts here.)
+  setTimeout(hide,MIN);
+  setTimeout(hide,5000); // hard safety cap so it can never hang
 })();
 `;
 

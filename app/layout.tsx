@@ -60,18 +60,26 @@ const inter = Inter({
 // body display font (--font-display). next/font self-hosts the woff2, preloads
 // it, and injects size-adjusted fallback metrics (zero layout shift on swap), so
 // the largest text paints fast without waiting on any external stylesheet.
+// display: "optional" (not "swap") is deliberate and important for CLS. These two
+// render the hero (the mobile LCP area). With "swap", on a slow connection the
+// large Playfair <h1> painted in a fallback, then swapped once the woff2 arrived
+// and RE-WRAPPED to a different line count — shifting the whole hero ~84px
+// (Lighthouse confirmed cause: "Web font", CLS 0.125). "optional" uses the
+// metric-matched fallback and only upgrades to the real font if it loads almost
+// instantly or is already cached, so it never swaps mid-view: zero layout shift,
+// LCP stays fast. Fast connections and repeat visitors still get Playfair/Outfit.
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
   variable: "--font-playfair",
-  display: "swap",
+  display: "optional",
 });
 const outfit = Outfit({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-outfit",
-  display: "swap",
+  display: "optional",
 });
 
 export const metadata: Metadata = {

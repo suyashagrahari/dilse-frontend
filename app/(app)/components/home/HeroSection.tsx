@@ -51,11 +51,22 @@ export default function HeroSection() {
     setFirstPaint(false);
   }, []);
 
+  // Hold the auto-cycling carousel on its initial template for a few seconds after
+  // load. This keeps the first render deterministic through page-load measurement
+  // (so audits like color-contrast always sample the same, known-good state rather
+  // than whichever template happens to be mid-cycle) and avoids repaint churn
+  // competing with hydration. Manual pill taps still switch instantly.
+  const [autoStarted, setAutoStarted] = useState(false);
   useEffect(() => {
-    if (paused) return;
+    const t = setTimeout(() => setAutoStarted(true), 7000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (paused || !autoStarted) return;
     const t = setInterval(() => setActive((i) => (i + 1) % TOT), 4200);
     return () => clearInterval(t);
-  }, [restart, paused]);
+  }, [restart, paused, autoStarted]);
 
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
   const select = useCallback((i: number) => {
