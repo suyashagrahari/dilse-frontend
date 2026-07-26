@@ -1,14 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import CornerOrnaments from "./components/home/CornerOrnaments";
 import MobileTopBar from "./components/home/MobileTopBar";
 import HeroSection from "./components/home/HeroSection";
-import ProblemSection from "./components/home/ProblemSection";
-import HowItWorksSection from "./components/home/HowItWorksSection";
-import FeaturesSection from "./components/home/FeaturesSection";
-import TestimonialsSection from "./components/home/TestimonialsSection";
-import CTASection from "./components/home/CTASection";
-import SubhSandeshFooter from "./components/home/SubhSandeshFooter";
+
+// Below-the-fold sections are code-split out of the initial JS bundle. ssr is
+// left ON (the default) so their HTML is still server-rendered — SEO content and
+// layout are unchanged — but the framer-motion-heavy JS for each loads as its own
+// async chunk instead of bloating the landing's first load.
+const ProblemSection = dynamic(() => import("./components/home/ProblemSection"));
+const HowItWorksSection = dynamic(() => import("./components/home/HowItWorksSection"));
+const FeaturesSection = dynamic(() => import("./components/home/FeaturesSection"));
+const TestimonialsSection = dynamic(() => import("./components/home/TestimonialsSection"));
+const CTASection = dynamic(() => import("./components/home/CTASection"));
+const SubhSandeshFooter = dynamic(() => import("./components/home/SubhSandeshFooter"));
 
 export default function HomePage() {
   return (

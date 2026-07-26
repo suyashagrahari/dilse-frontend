@@ -77,7 +77,7 @@ export default function HeroSection() {
 
           {/* LEFT: Text Panel */}
           <div className="hero-copy-pane">
-            <motion.div className="hero-kicker" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.1 }} style={{ marginBottom: 22 }}>
+            <motion.div className="hero-kicker" initial={false} style={{ marginBottom: 22 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 border: '1.5px solid rgba(61,12,17,0.18)', padding: '7px 18px', borderRadius: 999,
@@ -103,8 +103,7 @@ export default function HeroSection() {
               <span style={{ position: 'relative', display: 'inline-block' }}>
                 Memory
                 <motion.div
-                  initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
-                  transition={{ delay: 1.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+                  initial={false}
                   style={{
                     position: 'absolute', bottom: -4, left: 0, right: 0, height: 3,
                     background: 'linear-gradient(90deg,#c9a84c,rgba(201,168,76,0.2))',
@@ -114,16 +113,14 @@ export default function HeroSection() {
             </h1>
 
             <motion.p className="hero-desc"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.5 }}
+              initial={false}
               style={{ fontSize: 15, color: '#6b4545', maxWidth: 430, lineHeight: 1.68, marginBottom: 22 }}>
               Design a stunning celebration page in minutes — photos, music, heartfelt messages &amp; a live countdown, all on one link you share with everyone you love.
             </motion.p>
 
             {/* Stats strip */}
             <motion.div
-              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.65 }}
+              initial={false}
               className="hero-stats"
               style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 26 }}>
               {STATS.map((s, i) => (
@@ -141,8 +138,7 @@ export default function HeroSection() {
 
             {/* CTAs */}
             <motion.div
-              initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.8 }}
+              initial={false}
               className="hero-btns"
               style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 18 }}>
               <motion.button
@@ -162,8 +158,7 @@ export default function HeroSection() {
             </motion.div>
 
             <motion.p className="hero-note"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              transition={{ delay: 1.1, duration: 0.5 }}
+              initial={false}
               style={{ fontSize: 12, color: '#b09090', letterSpacing: '0.3px' }}>
               No design skills needed &nbsp;•&nbsp; Ready in under 2 minutes
             </motion.p>
@@ -171,8 +166,7 @@ export default function HeroSection() {
 
           {/* RIGHT: single desktop mockup with a live, cycling template preview */}
           <motion.div className="hero-laptop-wrap"
-            initial={{ opacity: 0, y: 44 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+            initial={false}
             style={{ position: 'relative', width: '100%', minWidth: 0 }}
             onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
 

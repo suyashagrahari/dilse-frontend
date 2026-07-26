@@ -35,10 +35,10 @@ html.ss-splash-seen #ss-splash{display:none}
    then the maroon fill glows in with a gold shine sweeping across it */
 #ss-splash .ss-wm{display:block;width:min(90vw,680px);height:auto;margin:0 auto;overflow:visible;user-select:none}
 #ss-splash .ss-wm-stroke path{fill:none;stroke:#3d0c11;stroke-width:7;stroke-linejoin:round;stroke-linecap:round;
-  stroke-dasharray:1;stroke-dashoffset:1;animation:ssDraw 2.1s cubic-bezier(.5,0,.3,1) forwards}
-#ss-splash .ss-wm-fill path{fill:url(#ss-shine);fill-opacity:0;animation:ssFillIn .9s ease 1.95s forwards}
+  stroke-dasharray:1;stroke-dashoffset:1;animation:ssDraw .95s cubic-bezier(.5,0,.3,1) forwards}
+#ss-splash .ss-wm-fill path{fill:url(#ss-shine);fill-opacity:0;animation:ssFillIn .45s ease .72s forwards}
 #ss-splash .ss-bar{position:relative;width:min(46vw,180px);height:2px;margin:34px auto 0;border-radius:999px;
-  background:rgba(61,12,17,.1);overflow:hidden;opacity:0;animation:ssRise .7s 2.4s cubic-bezier(.22,1,.36,1) both}
+  background:rgba(61,12,17,.1);overflow:hidden;opacity:0;animation:ssRise .5s .9s cubic-bezier(.22,1,.36,1) both}
 #ss-splash .ss-bar::after{content:"";position:absolute;top:0;left:-40%;height:100%;width:40%;border-radius:999px;
   background:linear-gradient(90deg,transparent,#c9a84c,#e6c66a,#c9a84c,transparent);animation:ssSlide 1.3s ease-in-out infinite}
 @keyframes ssDraw{to{stroke-dashoffset:0}}
@@ -72,19 +72,22 @@ const HIDE_JS = `
   try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
   if(seen){markSeen();return;} // already hidden by CSS on this refresh
   try{sessionStorage.setItem(KEY,'1');}catch(e){}
-  var start=Date.now(),MIN=2900,done=false;
+  var start=Date.now(),MIN=1200,done=false;
   function hide(){
     if(done)return;done=true;
     var wait=Math.max(0,MIN-(Date.now()-start));
     setTimeout(function(){
       markSeen(); // persist on <html> so any later client-side re-insert is hidden by CSS (no flash, no stuck loader)
       el.classList.add('ss-hide');
-      setTimeout(function(){el.classList.add('ss-gone');},650);
+      setTimeout(function(){el.classList.add('ss-gone');},600);
     },wait);
   }
-  if(document.readyState==='complete')hide();
-  else window.addEventListener('load',hide,{once:true});
-  setTimeout(hide,8500); // safety cap so it can never hang
+  // Reveal the real page on a fixed ~1.2s timer — NOT on window 'load'. On a slow
+  // mobile connection the 'load' event fires many seconds in (after every image),
+  // which kept this full-screen overlay covering the hero and pushed mobile LCP to
+  // ~6.6s. A fixed short reveal makes the largest content paint ~1.2s instead.
+  setTimeout(hide,MIN);
+  setTimeout(hide,5000); // hard safety cap so it can never hang
 })();
 `;
 
@@ -126,7 +129,7 @@ export default function AppSplash() {
                   from="-1 0"
                   to="1 0"
                   dur="2.8s"
-                  begin="2.6s"
+                  begin="0.7s"
                   repeatCount="indefinite"
                 />
               </linearGradient>
