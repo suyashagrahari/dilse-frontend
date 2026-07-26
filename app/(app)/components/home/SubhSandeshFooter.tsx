@@ -92,15 +92,15 @@ export default function SubhSandeshFooter() {
           </div>
 
           <div className="ssfoot-col">
-            <h4>Occasions</h4>
+            <h3>Occasions</h3>
             <ul>{OCCASIONS.map((o) => <li key={o}><a href="#">{o}</a></li>)}</ul>
           </div>
           <div className="ssfoot-col">
-            <h4>Platform</h4>
+            <h3>Platform</h3>
             <ul>{PLATFORM.map((p) => <li key={p.label}><a href={p.href}>{p.label}</a></li>)}</ul>
           </div>
           <div className="ssfoot-col">
-            <h4>Company</h4>
+            <h3>Company</h3>
             <ul>{COMPANY.map((c) => <li key={c}><a href="#">{c}</a></li>)}</ul>
           </div>
         </div>
@@ -166,8 +166,8 @@ const STYLES = `
 .ssfoot-sub button:hover{background:#d8ba62;}
 .ssfoot-sub-done{display:inline-flex;align-items:center;gap:8px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px;font-weight:600;color:#c9a84c;border:1px solid rgba(201,168,76,.3);padding:11px 18px;border-radius:999px;}
 
-.ssfoot-col h4{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#c9a84c;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:9px;}
-.ssfoot-col h4::before{content:'';width:16px;height:1.5px;background:#c9a84c;flex-shrink:0;}
+.ssfoot-col h3{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#c9a84c;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:9px;}
+.ssfoot-col h3::before{content:'';width:16px;height:1.5px;background:#c9a84c;flex-shrink:0;}
 .ssfoot-col ul{list-style:none;display:flex;flex-direction:column;gap:13px;margin:0;padding:0;}
 .ssfoot-col a{font-family:ui-sans-serif,system-ui,sans-serif;color:#d8c1b3;font-size:14px;text-decoration:none;transition:color .16s ease,padding-left .16s ease;}
 .ssfoot-col a:hover{color:#c9a84c;padding-left:6px;}

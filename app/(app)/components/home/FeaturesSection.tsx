@@ -705,11 +705,11 @@ export default function FeaturesSection() {
                   }}>{tag}</span>
                 ))}
               </div>
-              <h2 style={{
+              <h3 style={{
                 fontFamily: "'Playfair Display',serif",
                 fontSize: 'clamp(28px,3.2vw,48px)', fontWeight: 700, color: '#f5ede6',
                 letterSpacing: '-1px', lineHeight: 1.1, margin: 0
-              }}>{feat.title}</h2>
+              }}>{feat.title}</h3>
               <p style={{ fontSize: 16, color: 'rgba(245,237,230,0.42)', lineHeight: 1.78, fontWeight: 300, margin: 0, maxWidth: 400 }}>{feat.desc}</p>
               <div className="feat-metric-row" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                 <div className="feat-metric-block">
@@ -732,26 +732,32 @@ export default function FeaturesSection() {
       {/* Dot Navigator */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, paddingBottom: 16, marginTop: -16, position: 'relative', zIndex: 1 }}>
         <motion.button
+          type="button" aria-label="Previous feature"
           whileHover={{ scale: 1.12, background: 'rgba(201,168,76,0.18)' }} whileTap={{ scale: 0.94 }}
           onClick={() => setActive((active - 1 + TOT) % TOT)}
           style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(201,168,76,0.32)', background: 'rgba(201,168,76,0.07)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
         </motion.button>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           {FEATURES.map((f, i) => (
-            <motion.button key={i} onClick={() => setActive(i)}
-              animate={{ width: i === active ? 26 : 7, background: i === active ? FEATURES[i].accent : 'rgba(201,168,76,0.2)', opacity: i === active ? 1 : 0.55 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-              style={{ height: 7, borderRadius: 4, border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }} />
+            // 24px hit target (a11y) wraps the animated visual bar; label + aria-current for SR
+            <button key={i} type="button" aria-label={`Feature ${i + 1}`} aria-current={i === active} onClick={() => setActive(i)}
+              style={{ minWidth: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
+              <motion.span aria-hidden
+                animate={{ width: i === active ? 26 : 7, background: i === active ? FEATURES[i].accent : 'rgba(201,168,76,0.2)', opacity: i === active ? 1 : 0.55 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+                style={{ height: 7, borderRadius: 4, display: 'block' }} />
+            </button>
           ))}
         </div>
 
         <motion.button
+          type="button" aria-label="Next feature"
           whileHover={{ scale: 1.12, background: 'rgba(201,168,76,0.18)' }} whileTap={{ scale: 0.94 }}
           onClick={() => setActive((active + 1) % TOT)}
           style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(201,168,76,0.32)', background: 'rgba(201,168,76,0.07)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
         </motion.button>
       </div>
 

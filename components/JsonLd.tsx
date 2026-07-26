@@ -1,6 +1,18 @@
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import type { HowToData, AggregateRatingData } from "@/lib/seo-data";
 
+// Official profiles for the brand + its founder. Used as schema.org `sameAs` so
+// search & answer engines can confirm "SubhSandesh" is a single, real entity
+// across the web (strengthens Knowledge Graph / entity recognition → better GEO/AEO).
+const FOUNDER_NAME = "Suyash Agrahari";
+const FOUNDER_SAME_AS = [
+  "https://www.linkedin.com/in/suyash-agrahari-717260228/",
+  "https://x.com/SuyashAgrahari",
+  "https://www.instagram.com/suyash_agrahari_",
+  "https://github.com/suyashagrahari",
+  "https://portfolio-website-mu-fawn-27.vercel.app/",
+];
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function JsonLd({ data }: { data: Record<string, any> }) {
   return (
@@ -18,11 +30,13 @@ export function WebsiteJsonLd() {
       data={{
         "@context": "https://schema.org",
         "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
         name: SITE_NAME,
         alternateName: `${SITE_NAME} - ${SITE_TAGLINE}`,
         url: SITE_URL,
         description: SITE_DESCRIPTION,
         inLanguage: ["en-IN", "en"],
+        publisher: { "@id": `${SITE_URL}/#organization` },
         potentialAction: {
           "@type": "SearchAction",
           target: `${SITE_URL}/templates?search={search_term_string}`,
@@ -40,6 +54,7 @@ export function OrganizationJsonLd() {
       data={{
         "@context": "https://schema.org",
         "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
         name: SITE_NAME,
         url: SITE_URL,
         logo: {
@@ -61,7 +76,14 @@ export function OrganizationJsonLd() {
           availableLanguage: ["English", "Hindi"],
           areaServed: "IN",
         },
-        sameAs: [],
+        founder: {
+          "@type": "Person",
+          name: FOUNDER_NAME,
+          url: `${SITE_URL}/about-us`,
+          jobTitle: "Founder",
+          sameAs: FOUNDER_SAME_AS,
+        },
+        sameAs: FOUNDER_SAME_AS,
       }}
     />
   );
@@ -363,6 +385,192 @@ export function BlogIndexJsonLd({
       }}
     />
   );
+}
+
+// ─── Extra JSON-LD authored by the Blog Automation studio ─────────────────────
+// Blog posts carry a `seo.structuredData` array (Article + FAQPage + often a rich
+// HowTo, etc.) generated per-article. We render the blog's Article, FAQPage and
+// BreadcrumbList from dedicated, always-valid builders above, so here we emit ONLY
+// the *extra* types the studio produced (e.g. HowTo) — skipping anything already
+// covered so the page never ships duplicate/conflicting schema for the same type.
+const COVERED_LD_TYPES = new Set([
+  "article",
+  "blogposting",
+  "faqpage",
+  "breadcrumblist",
+  "website",
+  "organization",
+  "webapplication",
+  "webpage",
+]);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeLdArray(data: unknown): Record<string, any>[] {
+  let value = data;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  const list = Array.isArray(value) ? value : value && typeof value === "object" ? [value] : [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return list.filter((b): b is Record<string, any> => Boolean(b) && typeof b === "object");
+}
+
+export function ExtraStructuredData({ data }: { data: unknown }) {
+  const blocks = normalizeLdArray(data).filter((b) => {
+    const type = String(b["@type"] || "").toLowerCase();
+    return type.length > 0 && !COVERED_LD_TYPES.has(type);
+  });
+  if (!blocks.length) return null;
+  return (
+    <>
+      {blocks.map((b, i) => (
+        <JsonLd key={i} data={b["@context"] ? b : { "@context": "https://schema.org", ...b }} />
+      ))}
+    </>
+  );
+}
+
+// ─── Blog post — ONE unified @graph (best-practice for GEO/AEO) ────────────────
+// A single JSON-LD script whose nodes cross-reference each other by @id
+// (Organization ↔ WebSite ↔ Person author ↔ BlogPosting ↔ BreadcrumbList ↔
+// FAQPage), plus any extra rich types the Blog Automation studio produced (HowTo,
+// etc.) merged in. Answer engines parse this as one connected entity graph, which
+// they cite far more reliably than disconnected, separate schema blocks.
+export function ArticleGraphJsonLd({
+  url,
+  headline,
+  description,
+  image,
+  datePublished,
+  dateModified,
+  keywords,
+  section,
+  wordCount,
+  author,
+  breadcrumb,
+  faqs,
+  extra,
+  speakableSelectors,
+}: {
+  url: string;
+  headline: string;
+  description: string;
+  image?: string;
+  datePublished: string;
+  dateModified?: string;
+  keywords?: string | null;
+  section?: string;
+  wordCount?: number;
+  author?: { name: string; url?: string; jobTitle?: string | null; sameAs?: string[] } | null;
+  breadcrumb: { name: string; url: string }[];
+  faqs?: { question: string; answer: string }[];
+  extra?: unknown;
+  speakableSelectors?: string[];
+}) {
+  const orgId = `${SITE_URL}/#organization`;
+  const siteId = `${SITE_URL}/#website`;
+  const postId = `${url}#post`;
+  const authorId = `${url}#author`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graph: Record<string, any>[] = [];
+
+  graph.push({
+    "@type": "Organization",
+    "@id": orgId,
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE, width: 1370, height: 784 },
+    sameAs: FOUNDER_SAME_AS,
+  });
+
+  graph.push({
+    "@type": "WebSite",
+    "@id": siteId,
+    url: SITE_URL,
+    name: SITE_NAME,
+    publisher: { "@id": orgId },
+    inLanguage: ["en-IN", "en"],
+  });
+
+  const hasAuthor = Boolean(author?.name);
+  if (hasAuthor && author) {
+    graph.push({
+      "@type": "Person",
+      "@id": authorId,
+      name: author.name,
+      ...(author.url ? { url: author.url } : {}),
+      ...(author.jobTitle ? { jobTitle: author.jobTitle } : {}),
+      worksFor: { "@id": orgId },
+      ...(author.sameAs && author.sameAs.length ? { sameAs: author.sameAs } : {}),
+    });
+  }
+
+  const kw = (keywords || "")
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  graph.push({
+    "@type": "BlogPosting",
+    "@id": postId,
+    mainEntityOfPage: url,
+    isPartOf: { "@id": siteId },
+    headline,
+    description,
+    datePublished,
+    dateModified: dateModified || datePublished,
+    author: hasAuthor ? { "@id": authorId } : { "@id": orgId },
+    publisher: { "@id": orgId },
+    ...(image ? { image: { "@type": "ImageObject", url: image, width: 1200, height: 630 } } : {}),
+    ...(typeof wordCount === "number" && wordCount > 0 ? { wordCount } : {}),
+    ...(kw.length ? { keywords: kw } : {}),
+    ...(section ? { articleSection: section } : {}),
+    inLanguage: "en-IN",
+    ...(speakableSelectors && speakableSelectors.length
+      ? { speakable: { "@type": "SpeakableSpecification", cssSelector: speakableSelectors } }
+      : {}),
+  });
+
+  if (breadcrumb.length) {
+    graph.push({
+      "@type": "BreadcrumbList",
+      "@id": `${url}#breadcrumb`,
+      itemListElement: breadcrumb.map((b, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: b.name,
+        item: b.url,
+      })),
+    });
+  }
+
+  if (faqs && faqs.length) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${url}#faq`,
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: { "@type": "Answer", text: f.answer },
+      })),
+    });
+  }
+
+  // Merge extra studio-authored types (HowTo, etc.) — strip their own @context
+  // (the graph root carries it) and skip anything already built above.
+  for (const b of normalizeLdArray(extra)) {
+    const type = String(b["@type"] || "").toLowerCase();
+    if (!type || COVERED_LD_TYPES.has(type) || type === "person") continue;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    const { ["@context"]: _ctx, ...rest } = b as Record<string, any>;
+    graph.push(rest);
+  }
+
+  return <JsonLd data={{ "@context": "https://schema.org", "@graph": graph }} />;
 }
 
 // ─── Share page ───────────────────────────────────────────────────────────────

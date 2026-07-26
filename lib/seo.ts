@@ -105,12 +105,16 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   gift:          { emoji: "🎁", label: "Gift" },
 };
 
-const TEMPLATE_COVER_IMAGES: Record<string, string> = {
-  "birthday-gf": "/assets/Birthday1/birthdaytemplate1.png",
-  wedding:       "/assets/marriage/weeding.png",
-  reception:     "/assets/Reception/reception.png",
-  eid:           "/assets/Eid/hero_eid.jpeg",
-  holi:          "/assets/Holi/hero_holi.png",
+// Real template cover art used as the social-share (OG) image. Paths point to the
+// actual on-disk .webp assets and carry their true pixel dimensions so the OG
+// width/height tags match the image (no awkward crop). All current covers are
+// portrait — declaring correct dims lets WhatsApp/iMessage render them cleanly.
+const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; height: number }> = {
+  "birthday-gf": { path: "/assets/Birthday1/birthdaytemplate1.webp", width: 630, height: 1122 },
+  wedding:       { path: "/assets/marriage/weeding.webp", width: 1024, height: 1536 },
+  reception:     { path: "/assets/Reception/reception.webp", width: 1024, height: 1536 },
+  eid:           { path: "/assets/Eid/hero_eid.webp", width: 768, height: 1344 },
+  holi:          { path: "/assets/Holi/hero_holi.webp", width: 1024, height: 1536 },
 };
 
 interface SharePageSeo {
@@ -126,16 +130,13 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
   const title = `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
   const description = `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
-  const coverPath = TEMPLATE_COVER_IMAGES[templateType];
-  const ogImageUrl = coverPath
-    ? `${SITE_URL}${coverPath}`
+  const cover = TEMPLATE_COVER_IMAGES[templateType];
+  const ogImageUrl = cover
+    ? `${SITE_URL}${cover.path}`
     : `${SITE_URL}/api/og?type=${encodeURIComponent(templateType)}&recipient=${encodeURIComponent(recipientName)}&sender=${encodeURIComponent(senderName)}`;
 
-  const PORTRAIT_TEMPLATES = new Set(["birthday-gf"]);
-  const ogImageMeta = coverPath
-    ? PORTRAIT_TEMPLATES.has(templateType)
-      ? { url: ogImageUrl, width: 630, height: 1122, alt: title }
-      : { url: ogImageUrl, width: 1280, height: 853, alt: title }
+  const ogImageMeta = cover
+    ? { url: ogImageUrl, width: cover.width, height: cover.height, alt: title }
     : { url: ogImageUrl, width: 1200, height: 630, alt: title };
 
   return buildMeta({

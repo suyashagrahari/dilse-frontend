@@ -20,12 +20,33 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
 
+  // ── Tree-shake heavy barrel-import libraries ───────────────────────────
+  // Rewrites `import { X } from "lib"` to deep imports so only the used
+  // symbols land in the bundle. Works under Turbopack (unlike the webpack
+  // splitChunks block below, which only applies to webpack builds). Trims
+  // the client JS that blocks FCP/TBT on every route.
+  experimental: {
+    optimizePackageImports: [
+      "framer-motion",
+      "lucide-react",
+      "recharts",
+      "react-markdown",
+      "@reduxjs/toolkit",
+      "react-redux",
+      "@radix-ui/react-toast",
+      "@radix-ui/react-tooltip",
+      "date-fns",
+    ],
+  },
+
   // ── Image optimisation ─────────────────────────────────────────────────
   images: {
     // Serve modern formats: AVIF is ~50% smaller than WebP, WebP ~30% smaller than JPEG
     formats: ["image/avif", "image/webp"],
-    // Cache optimised images for 60 seconds minimum before recheck
-    minimumCacheTTL: 60,
+    // Cache optimised images for 1 year. Filenames are content-addressed by
+    // the optimizer, so a long TTL is safe and avoids re-optimising on every
+    // request (huge win for repeat visits + CDN offload).
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: "https",
@@ -61,41 +82,17 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // ── Webpack bundle optimisation ─────────────────────────────────────────
-  webpack(config, { isServer }) {
-    if (!isServer) {
-      // Split vendor chunks so users don't re-download unchanged libs
-      config.optimization.splitChunks = {
-        chunks: "all",
-        maxInitialRequests: 25,
-        minSize: 20_000,
-        cacheGroups: {
-          // Separate heavyweight animation lib into its own chunk
-          framerMotion: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: "framer-motion",
-            chunks: "all",
-            priority: 30,
-          },
-          // Separate Redux into its own chunk
-          redux: {
-            test: /[\\/]node_modules[\\/](@reduxjs|react-redux)[\\/]/,
-            name: "redux",
-            chunks: "all",
-            priority: 25,
-          },
-          // All other node_modules together
-          vendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendors",
-            chunks: "all",
-            priority: 10,
-          },
-        },
-      };
-    }
-    return config;
-  },
+  // ── Bundle chunking: use Next.js defaults (deliberately NO custom splitChunks) ──
+  // The previous custom override forced EVERY node_module into one shared
+  // `vendors.js` chunk loaded on every route — so the landing page downloaded
+  // heavy route-only libraries it never uses (@react-pdf/renderer ~400KB used
+  // only in apology-dashboard, recharts only in admin analytics, canvas-confetti,
+  // html-to-image, etc.). That single monolith was the main cause of high TBT /
+  // slow LCP. Next.js's built-in chunking already splits each large library into
+  // its OWN chunk that loads only where imported, keeps a stable `framework`
+  // chunk (react/react-dom) for long-term caching, and shares a `commons` chunk —
+  // which is strictly better here. Combined with `optimizePackageImports` above,
+  // route-specific weight now stays off the landing's first load.
 
   // ── HTTP caching headers ────────────────────────────────────────────────
   async headers() {
@@ -121,6 +118,18 @@ const nextConfig: NextConfig = {
             value: "public, max-age=604800, stale-while-revalidate=86400",
             // 7 days + 1 day grace period (stale-while-revalidate serves stale
             // while fetching fresh in the background — no loading spinner)
+          },
+        ],
+      },
+
+      // ── Brand/logo assets (public/indianFestival) ─────────────────────────
+      // Rarely change; long cache so the header logo isn't refetched every visit.
+      {
+        source: "/indianFestival/:file*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=2592000, stale-while-revalidate=86400",
           },
         ],
       },

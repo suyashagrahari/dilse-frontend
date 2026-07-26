@@ -35,11 +35,20 @@ export default function FAQAccordion({ faqs }: { faqs: FaqItem[] }) {
                   style={{ color: "#9a3324", transition: "transform 0.25s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}
                 />
               </button>
-              {isOpen && (
-                <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: "rgba(42,10,14,0.8)" }}>
-                  {faq.answer}
+              {/* Answer stays in the DOM even when collapsed (CSS grid 0fr→1fr
+                  collapse) so the page HTML always contains every Q&A — matching
+                  the FAQPage schema exactly and letting crawlers / AI answer
+                  engines read all answers without expanding the accordion. */}
+              <div
+                className="grid transition-all duration-300 ease-out"
+                style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+              >
+                <div className="overflow-hidden">
+                  <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: "rgba(42,10,14,0.8)" }}>
+                    {faq.answer}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}

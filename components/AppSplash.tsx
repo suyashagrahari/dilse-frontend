@@ -21,12 +21,10 @@ const SPLASH_CSS = `
 #ss-splash.ss-hide{opacity:0;transform:scale(1.03);pointer-events:none}
 #ss-splash.ss-gone{display:none}
 html.ss-splash-seen #ss-splash{display:none}
-/* Installed PWA (standalone): Android shows its OWN splash (cream tile + gift
-   icon + "SubhSandesh"), which is styled to look like this loader and cannot be
-   removed. Showing our loader too would be a redundant second loader, so in the
-   PWA we suppress ours — the OS splash is the single loader. In a normal browser
-   tab / desktop there is no OS splash, so our animated loader plays. */
-html.ss-standalone #ss-splash{display:none}
+/* Installed PWA (standalone): the OS shows a brief static splash (cream tile +
+   gift icon) that cannot be removed. Our animated "SubhSandesh" loader now plays
+   right after it — same cream background, so it hands off seamlessly and the user
+   gets the animated wordmark instead of a static icon sitting there. */
 #ss-splash .ss-stack{position:relative;text-align:center;padding:24px;width:100%;max-width:760px}
 /* semi-rounded square (app-icon shape) with a cream ground so it sits flush on
    the cream splash — static (no pop) so it hands off cleanly from the OS splash */
@@ -60,7 +58,6 @@ html.ss-standalone #ss-splash{display:none}
 // flashes or replays it. Only touches <html> — never the splash node — so React
 // hydration is untouched.
 const SKIP_JS = `try{var d=document.documentElement;
-if((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true)d.classList.add('ss-standalone');
 if(sessionStorage.getItem('ss_splash_shown')==='1')d.classList.add('ss-splash-seen');}catch(e){}`;
 
 // First-time show only. Marks the session "seen" immediately (so rapid refreshes
@@ -71,7 +68,6 @@ const HIDE_JS = `
   if(!el)return;
   el.setAttribute('data-inline','1'); // marks that this node's lifecycle is owned by the inline script (a real document load). The client SplashGuard defers to this and only acts on client-nav / bfcache inserts.
   function markSeen(){try{document.documentElement.classList.add('ss-splash-seen');}catch(e){}}
-  try{if((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true){markSeen();return;}}catch(e){} // PWA: OS splash is the only loader
   var KEY='ss_splash_shown',seen=false;
   try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
   if(seen){markSeen();return;} // already hidden by CSS on this refresh
@@ -97,11 +93,17 @@ export default function AppSplash() {
     <>
       <script dangerouslySetInnerHTML={{ __html: SKIP_JS }} />
       <style dangerouslySetInnerHTML={{ __html: SPLASH_CSS }} />
-      <div id="ss-splash" aria-hidden="true">
+      {/* The inline HIDE_JS below sets data-inline="1" on this node BEFORE React
+          hydrates (to mark a real document load for SplashGuard). That deliberate
+          pre-hydration mutation is exactly what suppressHydrationWarning is for —
+          without it React warns "attributes didn't match" on this div. It must NOT
+          be hardcoded in JSX: SplashGuard relies on the attribute being ABSENT on
+          client-nav/bfcache re-inserts (where the inline script never runs). */}
+      <div id="ss-splash" aria-hidden="true" suppressHydrationWarning>
         <div className="ss-stack">
           <div className="ss-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.webp" alt="" fetchPriority="high" />
+            <img src="/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" />
           </div>
           <svg
             className="ss-wm"

@@ -103,7 +103,7 @@ export default function DesktopNav() {
         <div style={{ width: "clamp(220px, 30vw, 340px)", display: "flex", alignItems: "center", justifyContent: "flex-start", minWidth: 0 }}>
           <Link href="/" className="flex items-center  shrink-0" style={{ textDecoration: "none" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: 56, height: 56, objectFit: "contain", flexShrink: 0 }} />
+            <img src="/indianFestival/logo-sm.webp" alt="SubhSandesh" width={56} height={56} style={{ width: 56, height: 56, objectFit: "contain", flexShrink: 0 }} />
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 1.35vw, 22px)", fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.2px", userSelect: "none", lineHeight: 1 }}>
               SubhSandesh
             </span>
@@ -180,6 +180,8 @@ export default function DesktopNav() {
                       {search && (
                         <button
                           onClick={() => setSearch("")}
+                          type="button"
+                          aria-label="Clear search"
                           style={{
                             position: "absolute",
                             right: 8,

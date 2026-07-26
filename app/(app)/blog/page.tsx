@@ -4,6 +4,7 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { getArticles, getCategories } from "@/lib/strapi";
 import BlogCard from "@/components/blog/BlogCard";
 import CategoryChips from "@/components/blog/CategoryChips";
+import BlogSearch from "@/components/blog/BlogSearch";
 import { BlogIndexJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 
 // Time-based ISR fallback; the Strapi webhook revalidates instantly on publish.
@@ -74,45 +75,48 @@ export default async function BlogPage({
           </p>
         </header>
 
-        {/* Categories */}
-        <div className="mb-10">
-          <CategoryChips categories={categories} />
-        </div>
-
-        {/* Posts */}
-        {articles.length === 0 ? (
-          <div className="rounded-2xl py-20 text-center" style={{ background: "rgba(255,255,255,0.6)", border: "1px dashed rgba(61,12,17,0.2)" }}>
-            <p className="text-lg" style={{ fontFamily: "'Playfair Display', serif", color: "#2a0a0e" }}>
-              No posts yet — check back soon ✨
-            </p>
+        {/* Search — while a query is active it replaces the default grid below */}
+        <BlogSearch>
+          {/* Categories */}
+          <div className="mb-10">
+            <CategoryChips categories={categories} />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured && <BlogCard article={featured} featured />}
-            {rest.map((a) => (
-              <BlogCard key={a.id} article={a} />
-            ))}
-          </div>
-        )}
 
-        {/* Pagination */}
-        {pageCount > 1 && (
-          <nav className="mt-12 flex items-center justify-center gap-3" aria-label="Blog pagination">
-            {page > 1 && (
-              <Link href={`/blog?page=${page - 1}`} className="rounded-full px-5 py-2 text-sm font-bold" style={{ background: "rgba(61,12,17,0.06)", color: "#3d0c11", border: "1px solid rgba(61,12,17,0.12)" }}>
-                ← Previous
-              </Link>
-            )}
-            <span className="text-sm" style={{ color: "rgba(42,10,14,0.6)" }}>
-              Page {page} of {pageCount}
-            </span>
-            {page < pageCount && (
-              <Link href={`/blog?page=${page + 1}`} className="rounded-full px-5 py-2 text-sm font-bold" style={{ background: "#3d0c11", color: "#f5ede6" }}>
-                Next →
-              </Link>
-            )}
-          </nav>
-        )}
+          {/* Posts */}
+          {articles.length === 0 ? (
+            <div className="rounded-2xl py-20 text-center" style={{ background: "rgba(255,255,255,0.6)", border: "1px dashed rgba(61,12,17,0.2)" }}>
+              <p className="text-lg" style={{ fontFamily: "'Playfair Display', serif", color: "#2a0a0e" }}>
+                No posts yet — check back soon ✨
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featured && <BlogCard article={featured} featured />}
+              {rest.map((a) => (
+                <BlogCard key={a.id} article={a} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pageCount > 1 && (
+            <nav className="mt-12 flex items-center justify-center gap-3" aria-label="Blog pagination">
+              {page > 1 && (
+                <Link href={`/blog?page=${page - 1}`} className="rounded-full px-5 py-2 text-sm font-bold" style={{ background: "rgba(61,12,17,0.06)", color: "#3d0c11", border: "1px solid rgba(61,12,17,0.12)" }}>
+                  ← Previous
+                </Link>
+              )}
+              <span className="text-sm" style={{ color: "rgba(42,10,14,0.6)" }}>
+                Page {page} of {pageCount}
+              </span>
+              {page < pageCount && (
+                <Link href={`/blog?page=${page + 1}`} className="rounded-full px-5 py-2 text-sm font-bold" style={{ background: "#3d0c11", color: "#f5ede6" }}>
+                  Next →
+                </Link>
+              )}
+            </nav>
+          )}
+        </BlogSearch>
       </section>
     </main>
   );

@@ -39,8 +39,17 @@ export default function HeroSection() {
   const [active, setActive] = useState(2); // start on Wedding (matches reference)
   const [restart, setRestart] = useState(0);
   const [paused, setPaused] = useState(false);
+  // LCP fix: on the very first paint (SSR + pre-hydration) the hero image must
+  // render at full opacity, NOT framer-motion's initial opacity:0 — otherwise
+  // the LCP element stays invisible until the JS bundle hydrates. We skip the
+  // enter animation for the first mount only, then enable fades for slide changes.
+  const [firstPaint, setFirstPaint] = useState(true);
   const router = useRouter();
   const p = PREVIEWS[active];
+
+  useEffect(() => {
+    setFirstPaint(false);
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -196,7 +205,7 @@ export default function HeroSection() {
                 {/* template image */}
                 <AnimatePresence mode="wait">
                   <motion.div key={p.id}
-                    initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }}
+                    initial={firstPaint ? false : { opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }}
                     transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
                     style={{ position: 'absolute', inset: 0 }}>
                     <Image src={p.img} alt={p.pill + " celebration template"} fill className="object-cover" sizes="(max-width:768px) 100vw, 620px" priority={active === 2} />
@@ -243,10 +252,13 @@ export default function HeroSection() {
             </div>
 
             {/* dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 12 }}>
               {PREVIEWS.map((_, i) => (
-                <button key={i} type="button" aria-label={`Template ${i + 1}`} onClick={() => select(i)}
-                  style={{ width: i === active ? 22 : 7, height: 7, borderRadius: 4, border: 'none', padding: 0, cursor: 'pointer', background: i === active ? '#3d0c11' : 'rgba(61,12,17,0.2)', transition: 'all 0.35s' }} />
+                // 24×24 hit area (a11y touch-target min) wrapping a small visual dot
+                <button key={i} type="button" aria-label={`Template ${i + 1}`} aria-current={i === active} onClick={() => select(i)}
+                  style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: 0, background: 'transparent', cursor: 'pointer' }}>
+                  <span aria-hidden style={{ width: i === active ? 22 : 7, height: 7, borderRadius: 4, display: 'block', background: i === active ? '#3d0c11' : 'rgba(61,12,17,0.2)', transition: 'all 0.35s' }} />
+                </button>
               ))}
             </div>
           </motion.div>

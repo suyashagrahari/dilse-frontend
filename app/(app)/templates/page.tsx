@@ -370,7 +370,7 @@ function TemplatesContent() {
             aria-label="Go to home hero"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
+            <img src="/indianFestival/logo-sm.webp" alt="SubhSandesh" width={48} height={48} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",

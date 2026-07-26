@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Github, Globe, Instagram, Linkedin, Twitter } from "lucide-react";
-import { buildMeta } from "@/lib/seo";
+import { buildMeta, SITE_URL } from "@/lib/seo";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 
 export const metadata: Metadata = buildMeta({
   title: "About Us | SubhSandesh",
   description:
     "Learn about SubhSandesh and how we craft heartfelt Indian celebration pages with premium design and emotion-first storytelling.",
+  alternates: { canonical: `${SITE_URL}/about-us` },
 });
 
 const CORNER_FILTER =
