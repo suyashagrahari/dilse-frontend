@@ -19,8 +19,10 @@ export default function LuxuryMobileTopBrand({ onBrandClick, topOffsetPx = 0 }: 
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/indianFestival/logo.webp"
+        src="/indianFestival/logo-sm.webp"
         alt="SubhSandesh"
+        width={48}
+        height={48}
         style={{
           width: 48,
           height: 48,

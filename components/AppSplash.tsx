@@ -93,11 +93,17 @@ export default function AppSplash() {
     <>
       <script dangerouslySetInnerHTML={{ __html: SKIP_JS }} />
       <style dangerouslySetInnerHTML={{ __html: SPLASH_CSS }} />
-      <div id="ss-splash" aria-hidden="true">
+      {/* The inline HIDE_JS below sets data-inline="1" on this node BEFORE React
+          hydrates (to mark a real document load for SplashGuard). That deliberate
+          pre-hydration mutation is exactly what suppressHydrationWarning is for —
+          without it React warns "attributes didn't match" on this div. It must NOT
+          be hardcoded in JSX: SplashGuard relies on the attribute being ABSENT on
+          client-nav/bfcache re-inserts (where the inline script never runs). */}
+      <div id="ss-splash" aria-hidden="true" suppressHydrationWarning>
         <div className="ss-stack">
           <div className="ss-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo.webp" alt="" fetchPriority="high" />
+            <img src="/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" />
           </div>
           <svg
             className="ss-wm"
