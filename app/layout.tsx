@@ -14,11 +14,18 @@ import "./globals.css";
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Dancing+Script:wght@400;500;600;700&display=swap";
 
+// display: "optional" on every font that renders on the LANDING (Dancing Script,
+// Lora, Inter below, plus Playfair/Outfit) — so none of them can swap after first
+// paint and re-wrap text, which was the residual cause of the hero's ~0.12 CLS
+// (Lighthouse cause: "Web font"). "optional" uses the metric-matched fallback and
+// only upgrades if the font is cached / loads near-instantly, so there is never a
+// mid-view swap. Template-only fonts (Cinzel, Fredoka) stay "swap" so invitation
+// pages still get their exact display faces.
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-script",
-  display: "swap",
+  display: "optional",
 });
 
 // Shaadi-card template fonts (also needed in share viewer page)
@@ -26,7 +33,7 @@ const dancingScriptAlt = Dancing_Script({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-dancing",
-  display: "swap",
+  display: "optional",
 });
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -38,7 +45,7 @@ const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-lora",
-  display: "swap",
+  display: "optional",
 });
 
 // Apology Dashboard template fonts (display + body)
@@ -48,11 +55,15 @@ const fredoka = Fredoka({
   variable: "--font-fredoka",
   display: "swap",
 });
+// Inter is the app BODY font (globals.css: body { font-family: 'Inter' }), so it
+// renders the hero description and most landing text. "optional" here is what
+// stops the hero body text from re-wrapping when Inter swaps in. Inter's metric
+// fallback is near-identical (system sans), so there is effectively no visual cost.
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   variable: "--font-inter",
-  display: "swap",
+  display: "optional",
 });
 
 // ── Critical above-the-fold fonts — SELF-HOSTED + preloaded via next/font ──────
