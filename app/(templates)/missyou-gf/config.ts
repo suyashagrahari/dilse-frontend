@@ -1,50 +1,56 @@
-import { Heart, Mail, Gift } from "lucide-react";
+import { Mail, Clock, Heart, Sparkles, MoreHorizontal } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
 
+// Consumed by data/template-registry.ts (gallery card) and the BottomNav.
+// The night-layer visual tokens live in components/theme.ts.
 export const config: TemplatePageConfig = {
   slug: "missyou-gf",
-  type: "missyou",
+  type: "missyou-gf",
   category: "gf",
-  title: "Missing You",
-  description: "Let them know you're thinking of them",
-  emoji: "💫",
-  color: "from-primary to-accent",
-  previewText: "I Miss You So Much 💫",
+  title: "Miss You",
+  description:
+    "A cozy, starry 'I miss you' web-gift for your partner when you're apart — a sealed letter, a reunion countdown, memories, a scratch-off secret and 'Open When…' notes.",
+  emoji: "🤍",
+  color: "from-indigo-500 to-pink-500",
+  previewText: "A letter for you 💌",
   bodyText:
-    "Distance means nothing when someone means everything. Every second without you feels like an eternity. Can't wait to hold you close again.",
-  bgGradient: "from-rose-50 via-purple-50 to-indigo-50",
+    "Tap open the sealed envelope and fall into a little night-time world — my letter, our countdown, and secret notes waiting for your hard moments.",
+  bgGradient: "from-indigo-950 via-slate-900 to-slate-950",
+  coverImage: "/assets/TemplateComingSoon/missyou1.webp",
+  // Mobile BottomNav — 5 slots (Cover · Letter · Distance · Memories · More).
   tabs: [
-    { id: "cover", icon: Heart, label: "Missing" },
-    { id: "letter", icon: Mail, label: "Letter" },
-    { id: "final", icon: Gift, label: "More" },
+    { id: "cover", icon: Mail, label: "Cover" },
+    { id: "letter", icon: Heart, label: "Letter" },
+    { id: "distance", icon: Clock, label: "Distance" },
+    { id: "memories", icon: Sparkles, label: "Memories" },
+    { id: "more", icon: MoreHorizontal, label: "More" },
   ],
-  navActiveColor: "text-purple-500",
-  navActiveBg: "bg-purple-500/10",
+  navActiveColor: "text-indigo-300",
+  navActiveBg: "bg-indigo-500/20",
   floatStyle: "stars",
   pages: {
     cover: {
-      subtitle: "Counting the moments until we meet again",
-      ctaText: "Read More",
-      floatingEmojis: ["💫", "✨", "🌙", "⭐", "💜"],
+      subtitle: "A little letter for the one I miss tonight.",
+      ctaText: "Tap to open",
+      floatingEmojis: ["✨", "🤍", "💫", "🌙", "💗"],
     },
     letter: {
       headerEmoji: "💌",
-      title: "Words From My Heart",
-      greeting: "My Darling,",
-      decorEmojis: ["💫", "💜", "💫"],
+      title: "I Miss You",
+      greeting: "Hey you,",
+      decorEmojis: ["🌙", "✨", "🤍"],
     },
     final: {
-      headerEmoji: "🌙",
-      title: "Until We Meet Again",
-      subtitle: "Distance is just a test",
+      headerEmoji: "🤍",
+      title: "Send it back",
+      subtitle: "one day closer",
       wishes: [
-        "Every sunset reminds me of you 🌅",
-        "You're always in my thoughts 💭",
-        "Can't wait to see your smile again ✨",
-        "My arms are empty without you 💫",
+        "Every day is one day closer to holding you again 🤍",
+        "Distance is just a number — you're always with me ✨",
+        "Reply and tell me you felt this 💗",
       ],
-      closingEmoji: "💜",
-      closingSubtext: "Missing you always",
+      closingEmoji: "💫",
+      closingSubtext: "made for you, from a quiet night",
     },
   },
 };

@@ -1,135 +1,83 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Home, Edit3, Heart, Share2, Check, Wand2 } from "lucide-react";
-import { config } from "../config";
+import { Mail, Heart, Clock, Sparkles, MoreHorizontal, Lock, Gift } from "lucide-react";
+import { NIGHT, FONT_BODY } from "./theme";
 
-const ACTION_ITEMS = [
-  { id: "home", icon: Home, bg: "bg-gradient-to-br from-blue-500 to-cyan-400" },
-  {
-    id: "favorite",
-    icon: Heart,
-    bg: "bg-gradient-to-br from-pink-500 to-rose-400",
-    activeBg: "bg-gradient-to-br from-red-500 to-pink-500",
-  },
-  { id: "share", icon: Share2, bg: "bg-gradient-to-br from-violet-500 to-purple-400" },
-  { id: "edit", icon: Edit3, bg: "bg-gradient-to-br from-amber-500 to-orange-400" },
+export type SectionId = "cover" | "letter" | "distance" | "memories" | "secret" | "openwhen" | "finale";
+
+const SLOTS: { id: SectionId; icon: typeof Mail; label: string }[] = [
+  { id: "cover", icon: Mail, label: "Cover" },
+  { id: "letter", icon: Heart, label: "Letter" },
+  { id: "distance", icon: Clock, label: "Distance" },
+  { id: "memories", icon: Sparkles, label: "Memories" },
 ];
 
-const ITEM_GAP = 60;
+const MORE: { id: SectionId; icon: typeof Lock; label: string }[] = [
+  { id: "secret", icon: Lock, label: "A secret" },
+  { id: "openwhen", icon: Mail, label: "Open when…" },
+  { id: "finale", icon: Gift, label: "Send it back" },
+];
 
-interface Props {
-  activeTab: string;
-  onTabChange: (tabId: string) => void;
-  menuOpen: boolean;
-  onMenuToggle: () => void;
-  onAction: (actionId: string) => void;
-  isFavorited: boolean;
-  copied: boolean;
-}
+/** Mobile section nav (5 slots) + desktop dot-rail. Hidden until the envelope opens. */
+export default function BottomNav({ active, onGo, accent }: { active: SectionId; onGo: (id: SectionId) => void; accent: string }) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = active === "secret" || active === "openwhen" || active === "finale";
 
-export default function BottomNav({
-  activeTab,
-  onTabChange,
-  menuOpen,
-  onMenuToggle,
-  onAction,
-  isFavorited,
-  copied,
-}: Props) {
+  const go = (id: SectionId) => { setMoreOpen(false); onGo(id); };
+
   return (
-    <nav className="bg-card/95 backdrop-blur-xl border-t border-border safe-bottom z-50 relative">
-      <div className="flex items-center justify-around max-w-md mx-auto py-2 px-4">
-        {config.tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
-                isActive
-                  ? `${config.navActiveColor} ${config.navActiveBg}`
-                  : "text-muted-foreground"
-              }`}
+    <>
+      <AnimatePresence>
+        {moreOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMoreOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 47, background: "rgba(10,8,20,.5)" }} />
+            <motion.div
+              initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+              style={{ position: "fixed", left: 12, right: 12, bottom: 84, zIndex: 48, background: NIGHT.base2, border: `1px solid ${NIGHT.hairline}`, borderRadius: 20, padding: 8, boxShadow: "0 30px 60px -20px rgba(0,0,0,.7)" }}
             >
-              <Icon size={21} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[10px] ${isActive ? "font-semibold" : "font-medium"}`}>
-                {tab.label}
+              {MORE.map((m) => (
+                <button key={m.id} type="button" onClick={() => go(m.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", background: "transparent", border: "none", cursor: "pointer", color: NIGHT.onNight, fontFamily: FONT_BODY, fontSize: 15, fontWeight: 600, borderRadius: 12 }}>
+                  <m.icon size={18} color={accent} /> {m.label}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <nav
+        aria-label="Sections"
+        style={{
+          position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 49,
+          display: "flex", justifyContent: "space-around", alignItems: "center",
+          background: "rgba(18,16,31,.82)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+          borderTop: `1px solid ${NIGHT.borderNight}`,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)", height: 64,
+        }}
+      >
+        {SLOTS.map((s) => {
+          const on = active === s.id;
+          return (
+            <button key={s.id} type="button" onClick={() => go(s.id)} aria-label={s.label} aria-current={on ? "true" : undefined}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer", minWidth: 48, minHeight: 48, justifyContent: "center", color: on ? accent : NIGHT.mutedNight }}>
+              <span style={{ display: "grid", placeItems: "center", width: 34, height: 26, borderRadius: 10, background: on ? "rgba(108,92,231,.18)" : "transparent" }}>
+                <s.icon size={19} />
               </span>
+              <span style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 600 }}>{s.label}</span>
             </button>
           );
         })}
-
-        <button
-          onClick={onMenuToggle}
-          className={`relative z-10 flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
-            menuOpen
-              ? `${config.navActiveColor} ${config.navActiveBg}`
-              : "text-muted-foreground"
-          }`}
-        >
-          <AnimatePresence>
-            {menuOpen &&
-              ACTION_ITEMS.map((item, i) => {
-                const Icon = item.icon;
-                const isShareCopied = item.id === "share" && copied;
-                const isActive = item.id === "favorite" && isFavorited;
-
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 420,
-                      damping: 22,
-                      delay: i * 0.05,
-                    }}
-                    className="absolute left-1/2"
-                    style={{
-                      bottom: ITEM_GAP * (i + 1) + 8,
-                      transform: "translateX(-50%)",
-                    }}
-                  >
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAction(item.id);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.stopPropagation(); onAction(item.id); }
-                      }}
-                      className={`w-11 h-11 rounded-full shadow-elevated flex items-center justify-center text-white cursor-pointer ${
-                        isShareCopied
-                          ? "bg-gradient-to-br from-green-500 to-emerald-400"
-                          : isActive
-                          ? item.activeBg || item.bg
-                          : item.bg
-                      }`}
-                    >
-                      {isShareCopied ? <Check size={18} /> : <Icon size={18} />}
-                    </div>
-                  </motion.div>
-                );
-              })}
-          </AnimatePresence>
-
-          <motion.div
-            animate={{ rotate: menuOpen ? 90 : 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            {menuOpen ? <X size={21} /> : <Wand2 size={21} />}
-          </motion.div>
-          <span className={`text-[10px] ${menuOpen ? "font-semibold" : "font-medium"}`}>
-            More
+        <button type="button" onClick={() => setMoreOpen((o) => !o)} aria-label="More sections" aria-expanded={moreOpen} aria-current={moreActive ? "true" : undefined}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer", minWidth: 48, minHeight: 48, justifyContent: "center", color: moreActive || moreOpen ? accent : NIGHT.mutedNight }}>
+          <span style={{ display: "grid", placeItems: "center", width: 34, height: 26, borderRadius: 10, background: moreActive ? "rgba(108,92,231,.18)" : "transparent" }}>
+            <MoreHorizontal size={19} />
           </span>
+          <span style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 600 }}>More</span>
         </button>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }

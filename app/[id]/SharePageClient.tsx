@@ -75,6 +75,10 @@ const ApologyDashboardViewer = dynamic(() => import("./ApologyDashboardViewer"),
   ssr: false,
   loading: ViewerSkeleton,
 });
+const MissYouGfViewer = dynamic(() => import("./MissYouGfViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -203,7 +207,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf") {
             setData(result.data);
             setLoading(false);
             return;
@@ -387,6 +391,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Apology Dashboard has its own full-page viewer
   if (!loading && templateType === "apology-dashboard" && data) {
     return <ApologyDashboardViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Miss You (gf) has its own full-page viewer
+  if (!loading && templateType === "missyou-gf" && data) {
+    return <MissYouGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {
