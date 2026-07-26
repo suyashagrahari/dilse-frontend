@@ -89,16 +89,17 @@ export default function HeroSection() {
               </span>
             </motion.div>
 
-            <motion.h1 className="hero-title"
-              initial={{ opacity: 0, y: 36 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.88, delay: 0.25, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+            {/* Static (no entrance animation) — this is the mobile LCP element, so
+                it paints immediately at full opacity instead of fading in after a
+                delay. Font is the self-hosted, preloaded next/font Playfair. */}
+            <h1 className="hero-title"
               style={{
-                fontFamily: "'Playfair Display',serif",
+                fontFamily: "var(--font-playfair),'Playfair Display',serif",
                 fontSize: 'clamp(34px,4.2vw,60px)', fontWeight: 600,
                 color: '#2a0a0e', lineHeight: 1.08, letterSpacing: '-1.6px', marginBottom: 14, textWrap: 'balance'
               }}>
               Every Wish Becomes a<br />
-              <em style={{ color: '#c9a84c', fontStyle: 'italic' }}>Beautiful</em>{' '}
+              <em style={{ color: '#8a6a1c', fontStyle: 'italic' }}>Beautiful</em>{' '}
               <span style={{ position: 'relative', display: 'inline-block' }}>
                 Memory
                 <motion.div
@@ -110,7 +111,7 @@ export default function HeroSection() {
                     transformOrigin: 'left'
                   }} />
               </span>
-            </motion.h1>
+            </h1>
 
             <motion.p className="hero-desc"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -128,7 +129,7 @@ export default function HeroSection() {
               {STATS.map((s, i) => (
                 <div key={s.n} style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                   <div>
-                    <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#2a0a0e', lineHeight: 1 }}>{s.n}</div>
+                    <div style={{ fontFamily: "var(--font-playfair),'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#2a0a0e', lineHeight: 1 }}>{s.n}</div>
                     <div style={{ fontSize: 10.5, color: '#9a7070', letterSpacing: '0.5px', marginTop: 3 }}>{s.l}</div>
                   </div>
                   {i < STATS.length - 1 && (
