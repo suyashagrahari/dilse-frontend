@@ -3,7 +3,11 @@ import { Fredoka, Inter } from "next/font/google";
 import { SITE_URL } from "@/lib/seo";
 
 const fredoka = Fredoka({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-fredoka", display: "swap" });
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-inter", display: "swap" });
+// display "optional" (not "swap") to match the root layout's Inter — otherwise
+// this duplicate Inter @font-face re-introduces font-display:swap for the shared
+// "Inter" family and reintroduces the landing hero's font-swap CLS. Inter is a
+// plain UI sans-serif so there is no visual cost to optional.
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-inter", display: "optional" });
 
 const SLUG = "apology-dashboard";
 const TITLE = "Apology Dashboard — A Cute Interactive Sorry";
