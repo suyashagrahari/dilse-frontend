@@ -88,13 +88,20 @@ subagent prompt, along with the idea and prior artifacts.
 - **Role:** Senior product researcher. Figure out what makes this specific
   celebration template *viral, shareable, and genuinely useful* — not generic.
 - **Inputs:** the user's idea; the list of existing templates.
-- **Do:** WebSearch real examples (competitor greeting/celebration pages, trends for
-  the occasion, what makes people share); identify the emotional hook, the "wow"
-  moment, the share mechanic, and the must-have sections; define target audience,
-  tone, cultural specifics, and 5–8 concrete sections with their purpose.
+- **Do:** WebSearch + actually visit real examples (competitor greeting/celebration
+  pages, interactive love letters, gift micro-experiences, Awwwards/CodePen/itch.io);
+  identify the emotional hook, the "wow" moment, the share mechanic, and the must-have
+  sections; define target audience, tone, cultural specifics, and 5–8 concrete
+  sections with their purpose. **For romantic/relationship themes** (I'm Sorry, Miss
+  You, Virtual Hug, anniversary, birthday, "why I love you", etc.) run the **Master
+  research prompt** in the playbook — extract atmosphere, tactile micro-interactions,
+  mini-games, and memory/letter modules from real sites so the recipient feels loved,
+  surprised, and connected. You research and *extract ideas*, you do not build.
 - **DoD:** brief names the viral hook + share mechanic explicitly, lists concrete
-  sections (not "hero/about"), cites ≥3 real references, and states what makes it
-  different from the closest existing SubhSandesh template.
+  sections (not "hero/about"), cites ≥3 real references (with what to steal from each),
+  and states what makes it different from the closest existing SubhSandesh template.
+  For romantic themes it also specifies the emotional journey, atmosphere/particles,
+  2–3 tactile interactions, and 1–2 mini-games — each tied to a source.
 - Playbook: `references/product-research-playbook.md`
 
 ### Stage 2 — UI/UX Designer  → `01-design.md`
