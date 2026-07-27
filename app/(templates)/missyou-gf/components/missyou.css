@@ -1,0 +1,212 @@
+/* ─── Miss You — scoped romantic "paper letter" design system ─────────────────
+   Warm rose / sepia paper aesthetic. Everything is scoped under `.mu-root` so it
+   never leaks into the app shell (editor chrome stays on-brand). Fonts arrive as
+   CSS vars from this template's layout.tsx (next/font, display:"optional") — a late
+   swap can't reflow because the fallbacks are metric-ish and above-the-fold copy
+   is text, not an image. */
+
+.mu-root {
+  /* palette */
+  --mu-bg: #fbf6ef;
+  --mu-bg-2: #f6ece1;
+  --mu-paper: #fffdfa;
+  --mu-paper-2: #fbf4ea;
+  --mu-paper-edge: #ead9c8;
+  --mu-ink: #3a2c27;
+  --mu-muted: #8a7568;
+  --mu-rose: #dd7f96;
+  --mu-rose-deep: #b23a5b;
+  --mu-rose-strong: #9c2f4d;
+  --mu-sepia: #9a7457;
+  --mu-blush: #f7e6e9;
+  --mu-blush-2: #fbeef0;
+  --mu-gold: #c9a06a;
+
+  /* shadows */
+  --mu-shadow-soft: 0 14px 34px -16px rgba(120, 60, 72, 0.32);
+  --mu-shadow-glow: 0 0 46px rgba(221, 127, 150, 0.55);
+  --mu-shadow-paper: 0 22px 60px -24px rgba(90, 48, 56, 0.4);
+
+  /* fonts */
+  --mu-serif: var(--font-serif-display), "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --mu-script: var(--font-script), "Dancing Script", "Segoe Script", cursive;
+  --mu-sans: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+
+  color: var(--mu-ink);
+  font-family: var(--mu-sans);
+  background: var(--mu-bg);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: clip;
+}
+
+/* One-section-per-screen scroll snapping, scoped to pages that mount the template
+   so it never affects the app shell. `proximity` (not mandatory) keeps tall
+   sections escapable on small screens. */
+html:has(.mu-root) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+.mu-screen {
+  min-height: 100svh;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.mu-root) { scroll-behavior: auto; scroll-snap-type: none; }
+}
+
+/* ── typography helpers ── */
+.mu-serif { font-family: var(--mu-serif); font-style: italic; font-weight: 500; }
+.mu-script { font-family: var(--mu-script); font-weight: 600; }
+.mu-sans { font-family: var(--mu-sans); }
+
+.mu-ink { color: var(--mu-ink); }
+.mu-muted { color: var(--mu-muted); }
+.mu-rose { color: var(--mu-rose); }
+.mu-rose-deep { color: var(--mu-rose-deep); }
+.mu-sepia { color: var(--mu-sepia); }
+
+.mu-gt {
+  background: linear-gradient(120deg, var(--mu-rose-deep), #cf5f78 55%, var(--mu-rose-strong));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── surfaces ── */
+.mu-paper {
+  position: relative;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--mu-paper), var(--mu-paper-2));
+  border: 1px solid var(--mu-paper-edge);
+  box-shadow: var(--mu-shadow-paper);
+}
+.mu-glass {
+  border-radius: 999px;
+  background: rgba(255, 251, 246, 0.92);
+  border: 1px solid var(--mu-paper-edge);
+  box-shadow: var(--mu-shadow-soft);
+}
+.mu-blush { background: var(--mu-blush); }
+
+.mu-hair {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--mu-rose) 50%, transparent);
+  opacity: 0.7;
+}
+
+.mu-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mu-paper-edge);
+  background: rgba(255, 253, 250, 0.6);
+  padding: 5px 13px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--mu-muted);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* ── buttons ── */
+.mu-btn {
+  border: 0;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--mu-rose), var(--mu-rose-deep));
+  box-shadow: var(--mu-shadow-soft);
+  transition: transform 0.2s ease;
+}
+.mu-btn:hover { transform: scale(1.05); }
+.mu-btn:active { transform: scale(0.96); }
+
+.mu-btn-ghost {
+  cursor: pointer;
+  border-radius: 999px;
+  border: 1px solid var(--mu-paper-edge);
+  background: var(--mu-paper);
+  color: var(--mu-muted);
+  transition: transform 0.2s ease;
+}
+
+/* ── wax seal ── */
+.mu-seal {
+  background: radial-gradient(circle at 35% 30%, #d8607e, var(--mu-rose-deep) 60%, #8e2a46);
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.35), inset 0 -6px 14px rgba(0, 0, 0, 0.35),
+    0 8px 22px -6px rgba(158, 47, 77, 0.6);
+  color: #fff;
+}
+
+/* ── ambience — a single STATIC painted layer (no animation, no blur filter, no
+   blend modes). Soft rose/gold washes come from stacked radial-gradients that the
+   compositor paints exactly once, so scrolling stays buttery. ── */
+.mu-ambience {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(46vw 46vw at 6% 2%, rgba(221, 127, 150, 0.5), transparent 60%),
+    radial-gradient(42vw 42vw at 96% 100%, rgba(201, 160, 106, 0.42), transparent 62%),
+    radial-gradient(38vw 38vw at 62% 46%, rgba(247, 214, 220, 0.5), transparent 60%),
+    radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(90, 48, 56, 0.12) 100%),
+    var(--mu-bg);
+}
+
+/* ── scroll reveal ── */
+.mu-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.mu-reveal.is-visible { opacity: 1; transform: none; }
+
+/* ── keyframes (transform/opacity only — GPU-composited, no repaint) ── */
+@keyframes mu-float-up { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.5); } }
+@keyframes mu-letter-slide { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes mu-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+@keyframes mu-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes mu-heartbeat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+
+@keyframes mu-confetti {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)); }
+}
+.mu-confetti-piece {
+  position: fixed;
+  top: var(--y);
+  left: var(--x);
+  animation: mu-confetti var(--dur) cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+@keyframes mu-bob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-9px) rotate(1.5deg); } }
+
+.mu-anim-shake { animation: mu-shake 0.5s ease; }
+.mu-anim-fade-up { animation: mu-fade-up 0.5s ease both; }
+.mu-anim-glow { animation: mu-heartbeat 2.6s ease-in-out infinite; }
+.mu-bob { animation: mu-bob 3.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-confetti-piece { display: none; }
+  .mu-anim-glow, .mu-bob { animation: none !important; }
+  .mu-reveal { transition: opacity 0.4s ease; transform: none; }
+  .mu-eq i { animation: none !important; height: 7px; }
+}
+
+/* Tiny "now playing" equalizer for the floating music control. */
+@keyframes mu-eq { 0%, 100% { height: 4px; } 50% { height: 12px; } }
+.mu-eq i {
+  display: inline-block;
+  width: 3px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--mu-rose-deep);
+  animation: mu-eq 0.9s ease-in-out infinite;
+}
+.mu-eq i:nth-child(2) { animation-delay: 0.18s; }
+.mu-eq i:nth-child(3) { animation-delay: 0.36s; }
