@@ -90,6 +90,20 @@ html:has(.mu-root) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
 }
 .mu-blush { background: var(--mu-blush); }
 
+/* Dotted "letter paper" texture (matches the reference envelope note). */
+.mu-paper-dots {
+  background-color: #faf7f2;
+  background-image: radial-gradient(#e5dccf 0.7px, transparent 0.7px);
+  background-size: 12px 12px;
+}
+
+/* Envelope flap geometry — four triangular flaps meeting at the centre. */
+.mu-env-top { clip-path: polygon(0 0, 100% 0, 50% 50.5%); }
+.mu-env-bottom { clip-path: polygon(0 100%, 100% 100%, 50% 49.5%); }
+.mu-env-left { clip-path: polygon(0 0, 50.5% 50%, 0 100%); }
+.mu-env-right { clip-path: polygon(100% 0, 49.5% 50%, 100% 100%); }
+@media (prefers-reduced-motion: reduce) { .mu-env-anim { transition: none !important; } }
+
 /* Ruled "letter paper" — soft horizontal rules + a rose margin line, so the note
    reads like it was handwritten on a sheet of lined paper. */
 .mu-lined {

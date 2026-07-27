@@ -89,7 +89,7 @@ export default function ScratchCard({ reveal }: { reveal: string }) {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-md">
+    <div className="relative mx-auto w-full max-w-lg">
       {confetti && <Confetti originX={50} originY={50} count={26} />}
       <div
         className="relative w-full rounded-3xl p-[3px]"

@@ -7,9 +7,12 @@ import type { MissYouData, EditMode, Memory, OpenWhenNote, QuizCard } from "./ty
 import { CITY_PRESETS } from "./types";
 import VoiceRecorder from "./VoiceRecorder";
 import SongPicker from "./SongPicker";
-import { LIGHT, BRAND_GRADIENT } from "./theme";
 
-const INDIGO = LIGHT.indigoStrong;
+// Warm rose/sepia editor accents — match the recipient template, not the indigo shell.
+const INDIGO = "#b23a5b"; // primary accent (rose-deep)
+const ROSE_GRAD = "linear-gradient(135deg,#dd7f96,#b23a5b)";
+const LIGHT = { surfaceAlt: "#faf1ea", muted: "#8a7568", border: "#ead9c8", surface: "#fffdfa", pinkDark: "#9c2f4d", indigoStrong: "#b23a5b" };
+const BRAND_GRADIENT = ROSE_GRAD;
 const INPUT_CLS = "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none text-sm transition-all";
 const INPUT_SM = "w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:outline-none text-sm";
 
@@ -41,15 +44,15 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
           <span ref={boxRef} className="relative inline-flex items-center">
             <button type="button" onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} aria-label={hint} aria-expanded={open}
               className="inline-grid place-items-center w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
-              style={{ background: open ? INDIGO : "rgba(86,70,201,.12)", color: open ? "#fff" : INDIGO }}>
+              style={{ background: open ? INDIGO : "rgba(178,58,91,.12)", color: open ? "#fff" : INDIGO }}>
               <Info size={12} />
             </button>
             <AnimatePresence>
               {open && (
                 <motion.span role="tooltip" initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.96 }} transition={{ duration: 0.15 }}
                   className="absolute z-[60] normal-case tracking-normal font-medium"
-                  style={{ top: "calc(100% + 8px)", left: 0, width: "min(240px, 72vw)", background: "#241F3D", color: "#fff", fontSize: 11, lineHeight: 1.5, letterSpacing: 0, padding: "8px 11px", borderRadius: 10, boxShadow: "0 12px 30px -8px rgba(20,16,40,.5)" }}>
-                  <span aria-hidden style={{ position: "absolute", top: -5, left: 6, width: 10, height: 10, background: "#241F3D", transform: "rotate(45deg)", borderRadius: 2 }} />
+                  style={{ top: "calc(100% + 8px)", left: 0, width: "min(240px, 72vw)", background: "#3a2c27", color: "#fff", fontSize: 11, lineHeight: 1.5, letterSpacing: 0, padding: "8px 11px", borderRadius: 10, boxShadow: "0 12px 30px -8px rgba(58,44,39,.45)" }}>
+                  <span aria-hidden style={{ position: "absolute", top: -5, left: 6, width: 10, height: 10, background: "#3a2c27", transform: "rotate(45deg)", borderRadius: 2 }} />
                   {hint}
                 </motion.span>
               )}
@@ -254,13 +257,13 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                 </Field>
 
                 {/* Accent tint */}
-                <Field label="Accent tint" hint="A small on-theme accent for the night layer.">
+                <Field label="Accent tint" hint="A small on-theme rose accent.">
                   <div className="flex gap-2">
                     {(["indigo", "pink"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => updateMf("accentTint", t)}
-                        className="flex-1 py-3 rounded-xl text-sm font-semibold capitalize"
+                        className="flex-1 py-3 rounded-xl text-sm font-semibold"
                         style={{ background: mf.accentTint === t ? (t === "pink" ? LIGHT.pinkDark : INDIGO) : "#fff", color: mf.accentTint === t ? "#fff" : LIGHT.muted, border: `1.5px solid ${mf.accentTint === t ? (t === "pink" ? LIGHT.pinkDark : INDIGO) : LIGHT.border}` }}>
-                        {t}
+                        {t === "pink" ? "Blush" : "Rose"}
                       </button>
                     ))}
                   </div>

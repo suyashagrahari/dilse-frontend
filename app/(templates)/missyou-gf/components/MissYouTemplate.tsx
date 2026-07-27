@@ -164,7 +164,7 @@ export default function MissYouTemplate({ data, mode, shareId, initialHugCount, 
       </Section>
 
       <Section id="hug" index="02" eyebrow="a squeeze" title="whenever you need one" note="press it as many times as you like — i'll know.">
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto max-w-lg">
           <HugButton mode={mode} shareId={shareId} initialCount={initialHugCount} />
         </div>
       </Section>

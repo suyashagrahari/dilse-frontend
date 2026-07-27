@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Check, Upload, Link2, VolumeX, Music, Trash2 } from "lucide-react";
 import { MU_SONGS, findSong } from "./assets";
-import { LIGHT } from "./theme";
 
-const INDIGO = LIGHT.indigoStrong;
+// Warm rose/sepia accents — match the recipient template, not the indigo shell.
+const INDIGO = "#b23a5b";
+const LIGHT = { surfaceAlt: "#faf1ea", muted: "#8a7568", border: "#ead9c8", surface: "#fffdfa", pinkDark: "#9c2f4d" };
 
 interface Props {
   /** Current selection: a preset src, a custom data:audio URL, or "" for silent. */
@@ -72,7 +73,7 @@ export default function SongPicker({ value, onChange }: Props) {
         type="button"
         onClick={() => select("")}
         className={rowBase}
-        style={{ background: !value ? "rgba(86,70,201,.08)" : "#fff", borderColor: !value ? INDIGO : LIGHT.border }}
+        style={{ background: !value ? "rgba(178,58,91,.08)" : "#fff", borderColor: !value ? INDIGO : LIGHT.border }}
       >
         <span className="grid h-8 w-8 place-items-center rounded-full shrink-0" style={{ background: LIGHT.surfaceAlt, color: LIGHT.muted }}>
           <VolumeX size={15} />
@@ -89,7 +90,7 @@ export default function SongPicker({ value, onChange }: Props) {
           <div
             key={s.id}
             className={rowBase}
-            style={{ background: selected ? "rgba(86,70,201,.08)" : "#fff", borderColor: selected ? INDIGO : LIGHT.border, cursor: "default" }}
+            style={{ background: selected ? "rgba(178,58,91,.08)" : "#fff", borderColor: selected ? INDIGO : LIGHT.border, cursor: "default" }}
           >
             <button
               type="button"
@@ -101,7 +102,7 @@ export default function SongPicker({ value, onChange }: Props) {
               {playing ? <Pause size={14} /> : <Play size={14} className="translate-x-[1px]" />}
             </button>
             <button type="button" onClick={() => select(s.src)} className="flex-1 min-w-0 text-left">
-              <span className="block text-sm font-semibold truncate" style={{ color: selected ? INDIGO : "#2b2440" }}>{s.title}</span>
+              <span className="block text-sm font-semibold truncate" style={{ color: selected ? INDIGO : "#3a2c27" }}>{s.title}</span>
               <span className="block text-[11px] truncate" style={{ color: LIGHT.muted }}>{s.artist}</span>
             </button>
             {selected ? (
@@ -117,7 +118,7 @@ export default function SongPicker({ value, onChange }: Props) {
 
       {/* Custom upload chip (shown when the current song isn't a preset) */}
       {isCustom && (
-        <div className={rowBase} style={{ background: "rgba(247,37,133,.06)", borderColor: LIGHT.pinkDark }}>
+        <div className={rowBase} style={{ background: "rgba(178,58,91,.06)", borderColor: LIGHT.pinkDark }}>
           <button
             type="button"
             onClick={() => togglePreview("custom", value)}
