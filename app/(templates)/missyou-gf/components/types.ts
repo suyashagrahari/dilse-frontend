@@ -175,6 +175,8 @@ export interface MissYouData {
   theirCity: string;
   /** Reunion date/time ISO string ("" hides the countdown). */
   reunionDate: string;
+  /** ISO of the moment the missing began (last goodbye) — powers the count-up timer. */
+  sinceDate: string;
   distanceUnit: DistanceUnit;
   /** 3–6 memory photos + Caveat captions. */
   memories: Memory[];
@@ -205,11 +207,16 @@ export const DEMO_DATA: MissYouData = {
   yourCity: "Mumbai",
   theirCity: "London",
   reunionDate: "",
+  // A recent placeholder so the demo shows the live count-up timer; senders set their own.
+  sinceDate: "2026-07-20T21:00:00.000Z",
   distanceUnit: "km",
   memories: [
     { image: "", caption: "our first rainy walk 🌧️" },
-    { image: "", caption: "the rooftop, 2am" },
+    { image: "", caption: "the rooftop, 2am ✨" },
     { image: "", caption: "you, laughing at nothing" },
+    { image: "", caption: "that tiny cafe we love ☕" },
+    { image: "", caption: "dancing in the kitchen 🎶" },
+    { image: "", caption: "just us, doing nothing 🤍" },
   ],
   secret:
     "I didn't say it out loud, but I've already picked the song for our first dance when I'm home. 💍",
@@ -241,6 +248,7 @@ export const MISSYOU_CONTENT_KEYS: (keyof MissYouData)[] = [
   "yourCity",
   "theirCity",
   "reunionDate",
+  "sinceDate",
   "distanceUnit",
   "memories",
   "secret",
@@ -272,6 +280,71 @@ export function safeMediaUrl(raw: unknown): string {
   }
 }
 
+/**
+ * Return a user-provided image URL only if it is a safe http(s) URL or an inline
+ * `data:image/...` (the editor produces base64 data-images for the live preview,
+ * before they're uploaded to S3). Anything else (javascript:, data:text, file:…)
+ * collapses to "" so `<img src>` can never carry an unexpected scheme.
+ */
+export function safeImageUrl(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const v = raw.trim();
+  if (!v) return "";
+  if (/^data:image\//i.test(v)) return v;
+  try {
+    const u = new URL(v, typeof window !== "undefined" ? window.location.origin : "https://subhsandesh.in");
+    return u.protocol === "http:" || u.protocol === "https:" ? u.href : "";
+  } catch {
+    return "";
+  }
+}
+
+// ─── Recipient engagement (server-managed; NOT part of the create payload) ───────
+
+/** The recipient's "love map" answers, saved back from the shared page. */
+export interface LoveMapData {
+  foods: string;
+  stress: string;
+  dreams: string;
+  dates: string;
+}
+
+export const EMPTY_LOVEMAP: LoveMapData = { foods: "", stress: "", dreams: "", dates: "" };
+
+export const LOVEMAP_FIELDS: { key: keyof LoveMapData; label: string; placeholder: string }[] = [
+  { key: "foods", label: "your favourite foods", placeholder: "the little dumpling place, cinnamon anything…" },
+  { key: "stress", label: "what's weighing on you lately", placeholder: "so i know how to help" },
+  { key: "dreams", label: "dreams to chase together", placeholder: "kyoto in spring, a tiny house, a big dog…" },
+  { key: "dates", label: "dates that matter", placeholder: "sept 4, march 12, every friday" },
+];
+
+/** Normalize a db love-map object → LoveMapData (fills missing keys). */
+export function dbToLoveMap(db: unknown): LoveMapData {
+  const src = (db && typeof db === "object" ? db : {}) as Record<string, unknown>;
+  const s = (k: keyof LoveMapData) => (typeof src[k] === "string" ? (src[k] as string) : "");
+  return { foods: s("foods"), stress: s("stress"), dreams: s("dreams"), dates: s("dates") };
+}
+
+/** Owner-facing engagement snapshot shown in the History panel. */
+export interface EngagementData {
+  hugCount: number;
+  loveMap: LoveMapData;
+  viewCount: number;
+  lastHugAt?: string;
+  loveMapUpdatedAt?: string;
+}
+
+export function dbToEngagement(db: Record<string, unknown> | null | undefined): EngagementData {
+  const src = db ?? {};
+  return {
+    hugCount: Number(src.hugCount) || 0,
+    loveMap: dbToLoveMap(src.loveMap),
+    viewCount: Number(src.viewCount) || 0,
+    lastHugAt: typeof src.lastHugAt === "string" ? src.lastHugAt : undefined,
+    loveMapUpdatedAt: typeof src.loveMapUpdatedAt === "string" ? src.loveMapUpdatedAt : undefined,
+  };
+}
+
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */
 export function missYouDataToBody(data: MissYouData, password?: string): Record<string, unknown> {
   const body: Record<string, unknown> = {};
@@ -299,6 +372,7 @@ export function dbToMissYouData(db: Record<string, unknown> | null | undefined):
     yourCity: pick("yourCity"),
     theirCity: pick("theirCity"),
     reunionDate: pick("reunionDate"),
+    sinceDate: pick("sinceDate"),
     distanceUnit: unit,
     memories: arr<Memory>("memories", DEMO_DATA.memories),
     secret: pick("secret"),

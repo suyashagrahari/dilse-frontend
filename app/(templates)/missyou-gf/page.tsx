@@ -2,13 +2,20 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Heart, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Heart, Share2, Loader2, X, Copy, History } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import { useMissYouEditor } from "./hooks/useMissYouEditor";
 import MissYouTemplate from "./components/MissYouTemplate";
 import EditSheet from "./components/EditSheet";
-import { NIGHT, LIGHT, BRAND_GRADIENT } from "./components/theme";
+import HistorySheet from "./components/HistorySheet";
+import { LIGHT } from "./components/theme";
 import type { Toast } from "./components/types";
+
+// Warm "paper" chrome tokens (match the recipient-facing theme in missyou.css).
+const MU_CREAM = "#fffdfa";
+const MU_EDGE = "#ead9c8";
+const MU_ROSE_STRONG = "#9c2f4d";
+const MU_ROSE_GRAD = "linear-gradient(135deg,#dd7f96,#b23a5b)";
 
 function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
   return (
@@ -18,11 +25,11 @@ function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss:
           <motion.div key={t.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className="pointer-events-auto w-full rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3" style={{ background: "#fff", border: `1px solid ${LIGHT.border}` }}>
             <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: LIGHT.indigoStrong }}>{t.title}</p>
+              <p className="text-sm font-bold" style={{ color: MU_ROSE_STRONG }}>{t.title}</p>
               {t.message && <p className="text-xs text-muted-foreground mt-0.5">{t.message}</p>}
             </div>
             {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} aria-label="Copy link" className="p-1.5 rounded-lg" style={{ color: LIGHT.indigoStrong, background: LIGHT.surfaceAlt }}><Copy size={14} /></button>
+              <button onClick={() => onCopy(t.shareUrl)} aria-label="Copy link" className="p-1.5 rounded-lg" style={{ color: MU_ROSE_STRONG, background: "#f7e6e9" }}><Copy size={14} /></button>
             )}
             <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1 text-muted-foreground"><X size={14} /></button>
           </motion.div>
@@ -41,7 +48,7 @@ function MissYouPageInner() {
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Heart size={14} fill="#fff" /> }
       : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
 
-  const barBtn: React.CSSProperties = { background: "rgba(27,24,48,.85)", color: NIGHT.onNight, border: `1px solid ${NIGHT.hairline}`, backdropFilter: "blur(8px)" };
+  const barBtn: React.CSSProperties = { background: MU_CREAM, color: MU_ROSE_STRONG, border: `1px solid ${MU_EDGE}`, boxShadow: "0 8px 22px -12px rgba(120,60,72,.5)" };
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative" }}>
@@ -55,7 +62,12 @@ function MissYouPageInner() {
             <PenLine size={14} /> Edit
           </button>
         )}
-        <button onClick={topAction.onClick} disabled={e.publishing} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-60" style={{ background: BRAND_GRADIENT }}>
+        {e.canViewHistory && (
+          <button onClick={e.openHistory} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-sm" style={barBtn}>
+            <History size={14} /> History
+          </button>
+        )}
+        <button onClick={topAction.onClick} disabled={e.publishing} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-60" style={{ background: MU_ROSE_GRAD }}>
           {topAction.icon} {topAction.label}
         </button>
       </div>
@@ -77,10 +89,10 @@ function MissYouPageInner() {
       {/* PublishingOverlay — branded conic ring */}
       <AnimatePresence>
         {e.publishing && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] grid place-items-center" style={{ background: "rgba(18,16,31,.7)", backdropFilter: "blur(6px)" }}>
-            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: NIGHT.base2, border: `1px solid ${NIGHT.hairline}` }}>
-              <div aria-hidden style={{ width: 44, height: 44, borderRadius: 999, background: `conic-gradient(#6C5CE7,#F72585,#C6FF3D,#6C5CE7)`, WebkitMask: "radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0)", mask: "radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0)", animation: "myspin 1s linear infinite" }} />
-              <p className="font-semibold" style={{ color: NIGHT.onNight }} aria-live="polite">Publishing your letter…</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] grid place-items-center" style={{ background: "rgba(58,44,39,.55)", backdropFilter: "blur(4px)" }}>
+            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: MU_CREAM, border: `1px solid ${MU_EDGE}` }}>
+              <div aria-hidden style={{ width: 44, height: 44, borderRadius: 999, background: `conic-gradient(#dd7f96,#b23a5b,#c9a06a,#dd7f96)`, WebkitMask: "radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0)", mask: "radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0)", animation: "myspin 1s linear infinite" }} />
+              <p className="font-semibold" style={{ color: MU_ROSE_STRONG }} aria-live="polite">Publishing your letter…</p>
               <style>{`@keyframes myspin{to{transform:rotate(360deg)}}`}</style>
             </div>
           </motion.div>
@@ -88,6 +100,8 @@ function MissYouPageInner() {
       </AnimatePresence>
 
       <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
+
+      <HistorySheet open={e.showHistory} onClose={e.closeHistory} loading={e.historyLoading} engagement={e.engagement} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
@@ -98,7 +112,7 @@ function MissYouPageInner() {
 
 export default function MissYouGfPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: NIGHT.base }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#fbf6ef" }} />}>
       <MissYouPageInner />
     </Suspense>
   );

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import MissYouTemplate from "@/app/(templates)/missyou-gf/components/MissYouTemplate";
-import { dbToMissYouData } from "@/app/(templates)/missyou-gf/components/types";
+import { dbToMissYouData, dbToLoveMap } from "@/app/(templates)/missyou-gf/components/types";
 import { NIGHT } from "@/app/(templates)/missyou-gf/components/theme";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
@@ -95,5 +95,16 @@ export default function MissYouGfViewer({ rawData, hasPassword, shareId }: {
   }
 
   const data = dbToMissYouData(rawData);
-  return <MissYouTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;
+  const initialHugCount = Number(rawData.hugCount) || 0;
+  const initialLoveMap = dbToLoveMap(rawData.loveMap);
+  return (
+    <MissYouTemplate
+      data={data}
+      mode="live"
+      shareId={shareId}
+      hasPassword={hasPassword}
+      initialHugCount={initialHugCount}
+      initialLoveMap={initialLoveMap}
+    />
+  );
 }

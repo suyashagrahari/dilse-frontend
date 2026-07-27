@@ -3,13 +3,14 @@
 // --site-* tokens. Fonts come from the CSS vars set in this template's layout.tsx
 // (Space Grotesk / Caveat / Inter, all display:"optional").
 
-/** Font stacks — metric-matched fallbacks so a late swap never reflows the cover. */
+/** Font stacks for the editor/publish CHROME only (the recipient-facing gift uses
+ *  components/missyou.css tokens). Kept on a clean sans + script fallback. */
 export const FONT_HEADING =
-  "var(--font-space-grotesk), 'Space Grotesk', 'Segoe UI', system-ui, sans-serif";
+  "var(--font-inter), 'Inter', 'Segoe UI', system-ui, sans-serif";
 export const FONT_BODY =
   "var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif";
 export const FONT_SCRIPT =
-  "var(--font-caveat), 'Caveat', 'Segoe UI', cursive";
+  "var(--font-script), 'Dancing Script', 'Segoe Script', cursive";
 
 /** Night-layer palette (immersive viewer). All pairs contrast-verified in 01-design §1.3. */
 export const NIGHT = {

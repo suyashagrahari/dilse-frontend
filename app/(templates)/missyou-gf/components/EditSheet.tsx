@@ -2,10 +2,11 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Heart, Info, Music } from "lucide-react";
+import { X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Heart, Info } from "lucide-react";
 import type { MissYouData, EditMode, Memory, OpenWhenNote, QuizCard } from "./types";
 import { CITY_PRESETS } from "./types";
 import VoiceRecorder from "./VoiceRecorder";
+import SongPicker from "./SongPicker";
 import { LIGHT, BRAND_GRADIENT } from "./theme";
 
 const INDIGO = LIGHT.indigoStrong;
@@ -83,8 +84,11 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
 
   const addMemory = (files: FileList | null) => {
     if (!files) return;
-    Array.from(files).slice(0, 6 - mf.memories.length).forEach((f) =>
-      fileToDataUrl(f, (src) => updateMf("memories", [...mf.memories, { image: src, caption: "" }]), 6),
+    const room = 12 - mf.memories.length;
+    let acc = [...mf.memories];
+    Array.from(files).slice(0, room).forEach((f) =>
+      // accumulate onto `acc` so selecting several photos at once adds them all
+      fileToDataUrl(f, (src) => { acc = [...acc, { image: src, caption: "" }]; updateMf("memories", acc); }, 6),
     );
   };
   const updateMemory = (i: number, patch: Partial<Memory>) => updateMf("memories", mf.memories.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
@@ -145,9 +149,12 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                   <VoiceRecorder value={mf.voiceUrl} onChange={(url) => updateMf("voiceUrl", url)} />
                 </Field>
 
-                {/* Distance */}
+                {/* Time apart & distance */}
                 <div className="rounded-2xl border border-border/50 p-3.5 space-y-3" style={{ background: LIGHT.surfaceAlt }}>
-                  <div className="text-sm font-bold" style={{ color: INDIGO }}>The distance</div>
+                  <div className="text-sm font-bold" style={{ color: INDIGO }}>Time apart &amp; distance</div>
+                  <Field label="Missing you since" hint="When you last said goodbye — powers the live 'i've been missing you for…' timer on the cover. Leave empty to hide it.">
+                    <input type="datetime-local" value={toLocalInput(mf.sinceDate)} onChange={(e) => updateMf("sinceDate", e.target.value ? new Date(e.target.value).toISOString() : "")} className={INPUT_CLS} />
+                  </Field>
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Your city" hint="Sets your clock + the distance.">
                       <select value={mf.yourCity} onChange={(e) => updateMf("yourCity", e.target.value)} className={INPUT_CLS}>
@@ -179,7 +186,7 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                 </div>
 
                 {/* Memories */}
-                <Field label="Our memories (up to 6)" hint="Photos + handwritten captions.">
+                <Field label="Our memory lane" hint="Add about 6 photos with handwritten captions — the more you add, the richer the memory lane feels.">
                   <div className="space-y-2">
                     {mf.memories.map((m, i) => (
                       <div key={i} className="flex items-center gap-2">
@@ -189,12 +196,15 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                             <img src={m.image} alt="" className="w-full h-full object-cover" />
                           ) : <Camera size={16} className="text-muted-foreground" />}
                         </div>
-                        <input value={m.caption} onChange={(e) => updateMemory(i, { caption: e.target.value })} placeholder="caption…" className={INPUT_SM + " flex-1"} />
+                        <input value={m.caption} onChange={(e) => updateMemory(i, { caption: e.target.value })} placeholder="e.g. our first rainy walk 🌧️" className={INPUT_SM + " flex-1"} />
                         <button onClick={() => removeMemory(i)} aria-label="Remove memory" className="w-9 h-9 rounded-lg border border-border/50 grid place-items-center text-muted-foreground"><Trash2 size={14} /></button>
                       </div>
                     ))}
-                    {mf.memories.length < 6 && (
+                    {mf.memories.length < 12 && (
                       <button onClick={() => memImgRef.current?.click()} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: INDIGO }}><Plus size={14} /> Add photo</button>
+                    )}
+                    {mf.memories.length < 6 && (
+                      <p className="text-[11px] text-muted-foreground">💡 Aim for at least 6 — a fuller lane feels more special.</p>
                     )}
                     <input ref={memImgRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addMemory(e.target.files); e.target.value = ""; }} />
                   </div>
@@ -239,11 +249,8 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                 </Field>
 
                 {/* Music */}
-                <Field label="Song link (optional)" hint="A direct audio URL (mp3) that loops softly, muted by default.">
-                  <div className="relative">
-                    <Music size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input value={mf.backgroundMusic} onChange={(e) => updateMf("backgroundMusic", e.target.value)} placeholder="https://…/song.mp3" className={INPUT_CLS + " pl-10"} />
-                  </div>
+                <Field label="Background song (optional)" hint="Pick a song to loop softly under the letter — tap ▶ to listen right here. Or upload your own / paste a link. It fades in on their first tap.">
+                  <SongPicker value={mf.backgroundMusic} onChange={(v) => updateMf("backgroundMusic", v)} />
                 </Field>
 
                 {/* Accent tint */}

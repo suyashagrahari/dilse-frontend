@@ -11,11 +11,11 @@ export const config: TemplatePageConfig = {
   description:
     "A cozy, starry 'I miss you' web-gift for your partner when you're apart — a sealed letter, a reunion countdown, memories, a scratch-off secret and 'Open When…' notes.",
   emoji: "🤍",
-  color: "from-indigo-500 to-pink-500",
+  color: "from-rose-400 to-rose-700",
   previewText: "A letter for you 💌",
   bodyText:
-    "Tap open the sealed envelope and fall into a little night-time world — my letter, our countdown, and secret notes waiting for your hard moments.",
-  bgGradient: "from-indigo-950 via-slate-900 to-slate-950",
+    "A handmade little corner — break the wax seal on my letter, count down to when I hold you again, scratch a secret, and open the notes I left for your hard days.",
+  bgGradient: "from-rose-100 via-orange-50 to-rose-50",
   coverImage: "/assets/TemplateComingSoon/missyou1.webp",
   // Mobile BottomNav — 5 slots (Cover · Letter · Distance · Memories · More).
   tabs: [

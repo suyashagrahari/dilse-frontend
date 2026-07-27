@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Caveat, Inter } from "next/font/google";
+import { Cormorant_Garamond, Dancing_Script, Inter } from "next/font/google";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
 // Self-hosted via next/font (no raw <link>/@import). display:"optional" so a font
-// swap never blocks the above-the-fold wax-seal reveal — the metric-matched
-// fallback holds layout and the real face only upgrades if it loads near-instantly.
-const spaceGrotesk = Space_Grotesk({
+// swap never blocks the above-the-fold hero copy — the metric-ish fallback holds
+// layout and the real face only upgrades if it loads near-instantly. This warm
+// "paper letter" pairing (elegant serif display + handwritten script) is what the
+// recipient sees; consumed as CSS vars by components/missyou.css.
+const serifDisplay = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-serif-display",
   display: "optional",
 });
-const caveat = Caveat({
+const script = Dancing_Script({
   subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-caveat",
+  weight: ["500", "600", "700"],
+  variable: "--font-script",
   display: "optional",
 });
 // Inter is also the app body font — keep "optional" to match the root layout and
@@ -63,7 +66,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const howTo = getHowTo(SLUG);
   const rating = getAggregateRating(SLUG);
   return (
-    <div className={`${spaceGrotesk.variable} ${caveat.variable} ${inter.variable}`}>
+    <div className={`${serifDisplay.variable} ${script.variable} ${inter.variable}`}>
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: SITE_URL },

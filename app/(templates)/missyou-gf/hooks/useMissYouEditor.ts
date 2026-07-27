@@ -8,9 +8,11 @@ import {
   type MissYouData,
   type EditMode,
   type Toast,
+  type EngagementData,
   DEMO_DATA,
   missYouDataToBody,
   dbToMissYouData,
+  dbToEngagement,
 } from "../components/types";
 
 const DRAFT_KEY = "missyou_draft";
@@ -53,6 +55,9 @@ export function useMissYouEditor() {
   const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
 
   const [showAuth, setShowAuth] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -234,6 +239,23 @@ export function useMissYouEditor() {
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
 
+  // ── History: the sender's view of recipient engagement (hugs + love-map) ────
+  const openHistory = useCallback(async () => {
+    setShowHistory(true);
+    if (!pageId || !accessToken) return;
+    setHistoryLoading(true);
+    try {
+      const r = await fetch(`${BASE}/${pageId}`, { headers: headers() });
+      const j = await r.json();
+      if (j.success && j.data) setEngagement(dbToEngagement(j.data));
+    } catch {
+      /* keep whatever we had; the sheet shows an empty state */
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [pageId, accessToken, headers]);
+  const closeHistory = useCallback(() => setShowHistory(false), []);
+
   const handleCopy = useCallback((url?: string) => {
     const link = url || shareUrl;
     if (link) {
@@ -267,6 +289,10 @@ export function useMissYouEditor() {
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
     pushToast, dismissToast,
+
+    // history
+    showHistory, historyLoading, engagement, openHistory, closeHistory,
+    canViewHistory: !!pageId && !!shareUrl,
 
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
