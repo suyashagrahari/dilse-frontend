@@ -92,7 +92,7 @@ export default function MissYouTemplate({ data, mode, shareId, initialHugCount, 
 
       {/* Hero — text on the left, a cute long-distance chibi on the right */}
       <header className="mu-screen relative mx-auto w-full max-w-6xl px-5 py-20">
-        <div className="grid w-full items-center gap-8 lg:grid-cols-2 lg:gap-14">
+        <div className="grid w-full items-center gap-8 lg:grid-cols-2 lg:gap-8">
           {/* left: text (below the gif on mobile, left on desktop) */}
           <div className="order-2 text-center lg:order-1 lg:text-left">
             <Reveal>
@@ -136,8 +136,8 @@ export default function MissYouTemplate({ data, mode, shareId, initialHugCount, 
           </div>
 
           {/* right on desktop, top on mobile: the chibi long-distance gif (fixed, not floating) */}
-          <Reveal delay={140} className="order-1 flex justify-center lg:order-2 lg:justify-end">
-            <div className="w-[min(62vw,340px)]">
+          <Reveal delay={140} className="order-1 flex justify-center lg:order-2 lg:justify-center">
+            <div className="w-[min(64vw,340px)] lg:w-[min(46vw,560px)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={muMedia("chibi-phones.gif")}

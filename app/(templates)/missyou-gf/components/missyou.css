@@ -90,6 +90,19 @@ html:has(.mu-root) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
 }
 .mu-blush { background: var(--mu-blush); }
 
+/* Ruled "letter paper" — soft horizontal rules + a rose margin line, so the note
+   reads like it was handwritten on a sheet of lined paper. */
+.mu-lined {
+  background-color: #fffdf6;
+  background-image:
+    linear-gradient(to right, transparent 0 44px, rgba(178, 58, 91, 0.2) 44px 45px, transparent 45px),
+    repeating-linear-gradient(to bottom, transparent 0 33px, rgba(122, 90, 108, 0.16) 33px 34px);
+  border: 1px solid var(--mu-paper-edge);
+  border-radius: 16px;
+  box-shadow: var(--mu-shadow-paper);
+}
+.mu-lined-body p { line-height: 34px; }
+
 .mu-hair {
   height: 1px;
   border: 0;

@@ -123,14 +123,15 @@ export default function HugButton({
                   style={{ width: "min(80vw,460px)", maxHeight: "46vh", objectFit: "contain" }}
                 />
                 <motion.p
-                  className="mu-script mt-3 text-3xl mu-rose-deep sm:text-5xl"
+                  className="mu-script mt-3 text-3xl sm:text-5xl"
+                  style={{ color: "#b23a5b" }}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.4 }}
                 >
                   sending you the biggest hug 🤍
                 </motion.p>
-                <p className="mu-sans mt-4 text-[11px] uppercase tracking-[0.3em] mu-muted">tap to close</p>
+                <p className="mu-sans mt-4 text-[11px] uppercase tracking-[0.3em]" style={{ color: "#9a7457" }}>tap to close</p>
               </motion.div>
             )}
           </AnimatePresence>,

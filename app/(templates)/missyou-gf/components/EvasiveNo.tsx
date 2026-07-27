@@ -116,7 +116,7 @@ export default function EvasiveNo({ question }: { question: string }) {
                   onClick={(e) => { e.stopPropagation(); closeYes(); }}
                   aria-label="Close"
                   className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full"
-                  style={{ background: "rgba(255,253,250,.92)", color: "var(--mu-rose-deep)", border: "1px solid var(--mu-paper-edge)", boxShadow: "var(--mu-shadow-soft)" }}
+                  style={{ background: "rgba(255,253,250,.92)", color: "#b23a5b", border: "1px solid #ead9c8", boxShadow: "0 14px 34px -16px rgba(120,60,72,0.32)" }}
                 >
                   <X size={20} />
                 </button>
@@ -131,14 +131,15 @@ export default function EvasiveNo({ question }: { question: string }) {
                   style={{ width: "min(78vw,420px)", maxHeight: "46vh", objectFit: "contain" }}
                 />
                 <motion.p
-                  className="mu-script mt-3 text-3xl mu-rose-deep sm:text-5xl"
+                  className="mu-script mt-3 text-3xl sm:text-5xl"
+                  style={{ color: "#b23a5b" }}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.4 }}
                 >
                   i knew you missed me too 🤍
                 </motion.p>
-                <p className="mu-serif mt-2 text-base mu-muted sm:text-lg">us — always, no matter the distance.</p>
+                <p className="mu-serif mt-2 text-base sm:text-lg" style={{ color: "#8a7568" }}>us — always, no matter the distance.</p>
               </motion.div>
             )}
           </AnimatePresence>,
