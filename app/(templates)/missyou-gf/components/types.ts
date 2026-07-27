@@ -3,6 +3,8 @@
 // viewer, and the server payload. Field names here === server model field names
 // === wire-format keys (flat payload). Keep them in sync with the Stage-4 model.
 
+import { muMedia } from "./assets";
+
 export type EditMode = null | "choose" | "manual" | "preview";
 export type AccentTint = "indigo" | "pink";
 export type DistanceUnit = "km" | "mi";
@@ -232,7 +234,8 @@ export const DEMO_DATA: MissYouData = {
     { question: "what do I love most about you?", answer: "your laugh", memory: "it's the sound I chase on my worst days." },
   ],
   voiceUrl: "",
-  backgroundMusic: "",
+  // A default so the preview demonstrates music straight away (senders can change it).
+  backgroundMusic: muMedia("music/the-night-we-met.mp3"),
   accentTint: "indigo",
   sharePhoto: "",
 };

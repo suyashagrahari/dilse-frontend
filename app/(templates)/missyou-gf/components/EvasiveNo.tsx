@@ -29,8 +29,12 @@ const BTN =
 export default function EvasiveNo({ question }: { question: string }) {
   const [accepted, setAccepted] = useState(false);
   const [noCount, setNoCount] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // Portal into .mu-root (not document.body) so scoped fonts/colours apply while
+  // still escaping the transformed section wrappers.
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalEl((document.querySelector(".mu-root") as HTMLElement) || document.body);
+  }, []);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
 
@@ -92,8 +96,8 @@ export default function EvasiveNo({ question }: { question: string }) {
         <button onClick={sayNo} className={`mu-btn-ghost ${BTN}`}>No</button>
       </div>
 
-      {/* Yes → full-screen two-penguin hug, portalled to <body> */}
-      {mounted &&
+      {/* Yes → full-screen two-penguin hug, portalled to .mu-root */}
+      {portalEl &&
         createPortal(
           <AnimatePresence>
             {accepted && (
@@ -120,21 +124,21 @@ export default function EvasiveNo({ question }: { question: string }) {
                 <motion.img
                   src={muMedia("hug-after-yes.gif")}
                   alt="two penguins holding each other"
-                  initial={{ scale: 0.6, opacity: 0, y: 24 }}
+                  initial={{ scale: 0.6, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.85, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 17 }}
-                  style={{ width: "min(84vw,460px)", filter: "drop-shadow(0 26px 44px rgba(120,60,72,.25))" }}
+                  transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                  style={{ width: "min(78vw,420px)", maxHeight: "46vh", objectFit: "contain" }}
                 />
                 <motion.p
-                  className="mu-script mt-2 text-4xl mu-rose-deep sm:text-5xl"
+                  className="mu-script mt-3 text-3xl mu-rose-deep sm:text-5xl"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.4 }}
                 >
                   i knew you missed me too 🤍
                 </motion.p>
-                <p className="mu-serif mt-2 text-lg mu-muted">us — always, no matter the distance.</p>
+                <p className="mu-serif mt-2 text-base mu-muted sm:text-lg">us — always, no matter the distance.</p>
               </motion.div>
             )}
           </AnimatePresence>,

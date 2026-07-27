@@ -81,7 +81,7 @@ export default function ScratchCard({ reveal }: { reveal: string }) {
     let cleared = 0;
     const total = data.length / 40;
     for (let i = 3; i < data.length; i += 40) if (data[i] === 0) cleared++;
-    if (cleared / total > 0.45 && !done) {
+    if (cleared / total > 0.65 && !done) {
       setDone(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 2200);

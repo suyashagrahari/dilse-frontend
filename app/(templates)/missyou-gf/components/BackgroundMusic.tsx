@@ -39,11 +39,8 @@ export default function BackgroundMusic({ src }: { src: string }) {
     el.loop = true;
     el.preload = "auto";
     el.volume = 0;
-    el.muted = true; // start muted so autoplay is allowed; unmute on first gesture
     audioRef.current = el;
-    el.play().catch(() => {});
 
-    // Enable audible sound on the visitor's first interaction, then stop listening.
     const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "keydown", "wheel"];
     const removeListeners = () => events.forEach((e) => window.removeEventListener(e, enable));
     const enable = () => {
@@ -55,7 +52,21 @@ export default function BackgroundMusic({ src }: { src: string }) {
         .catch(() => {});
       removeListeners();
     };
-    events.forEach((e) => window.addEventListener(e, enable, { passive: true }));
+
+    // Try to play audibly right away — this succeeds when the page already has a
+    // user gesture (e.g. the editor preview, where the sender just tapped Save), so
+    // the song "rings" immediately. On a cold live load it's blocked, so we fall
+    // back to muted playback and unmute on the visitor's first interaction.
+    el.muted = false;
+    el.play()
+      .then(() => { wasPlayingRef.current = true; setOn(true); fadeTo(TARGET_VOLUME); })
+      .catch(() => {
+        const a = audioRef.current;
+        if (!a) return;
+        a.muted = true;
+        a.play().catch(() => {});
+        events.forEach((e) => window.addEventListener(e, enable, { passive: true }));
+      });
 
     // Duck under a playing voice note; resume afterwards if it was audible.
     const onPause = () => { const a = audioRef.current; if (a && !a.paused) { wasPlayingRef.current = true; clearFade(); a.pause(); } };

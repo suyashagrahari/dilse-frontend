@@ -42,7 +42,7 @@ export default function MemoryLane({ memories }: { memories: Memory[] }) {
               onClick={() => setOpenIdx(i)}
               whileHover={{ y: -4 }}
               whileTap={{ scale: 0.99 }}
-              className="mu-paper ml-11 flex w-full items-center gap-3 p-3 text-left sm:ml-0 sm:w-1/2"
+              className="mu-paper ml-11 flex min-w-0 flex-1 items-center gap-3 p-3 text-left sm:ml-0 sm:w-1/2 sm:flex-none"
             >
               <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl" style={{ background: "var(--mu-blush)", border: "1px solid var(--mu-paper-edge)" }}>
                 {m.img ? (

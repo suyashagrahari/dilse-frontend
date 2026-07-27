@@ -22,8 +22,13 @@ export default function HugButton({
   const live = mode === "live" && !!shareId;
   const [count, setCount] = useState(initialCount);
   const [hugging, setHugging] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // Portal the takeover into the template's .mu-root (not document.body) so the
+  // scoped fonts + colour vars still apply — while still escaping the transformed
+  // section wrappers, since .mu-root is not a fixed-positioning containing block.
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalEl((document.querySelector(".mu-root") as HTMLElement) || document.body);
+  }, []);
 
   const pending = useRef(0);
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,9 +95,9 @@ export default function HugButton({
         </div>
       </div>
 
-      {/* full-screen hug takeover — portalled to <body> so it truly fills the
-          viewport regardless of any transformed ancestor (framer-motion sections) */}
-      {mounted &&
+      {/* full-screen hug takeover — portalled to .mu-root so it fills the viewport
+          (escaping transformed section wrappers) while keeping the scoped theme */}
+      {portalEl &&
         createPortal(
           <AnimatePresence>
             {hugging && (
@@ -111,14 +116,14 @@ export default function HugButton({
                 <motion.img
                   src={muMedia("hug-penguin.gif")}
                   alt="a big warm hug just for you"
-                  initial={{ scale: 0.55, opacity: 0, y: 24 }}
+                  initial={{ scale: 0.6, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.82, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 17 }}
-                  style={{ width: "min(86vw,520px)", filter: "drop-shadow(0 26px 44px rgba(120,60,72,.25))" }}
+                  exit={{ scale: 0.85, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                  style={{ width: "min(80vw,460px)", maxHeight: "46vh", objectFit: "contain" }}
                 />
                 <motion.p
-                  className="mu-script mt-3 text-4xl mu-rose-deep sm:text-5xl"
+                  className="mu-script mt-3 text-3xl mu-rose-deep sm:text-5xl"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.4 }}
