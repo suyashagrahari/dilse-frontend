@@ -1,0 +1,196 @@
+/* ─── Bouquet — scoped Y2K pastel-pop design system ───────────────────────────
+   Chunky rounded cards, sticker drop-shadows, bubblegum + lilac + butter on
+   warm cream. Everything is scoped under `.bq-root` so it never leaks into the
+   app shell. Fonts arrive as CSS vars from layout.tsx (next/font, display:optional)
+   so a late swap can't reflow above-the-fold copy. */
+
+.bq-root {
+  /* palette */
+  --bq-cream: #fdf6ee;
+  --bq-cream-2: #f7ecdd;
+  --bq-paper: #fffdf9;
+  --bq-ink: #2b2440;
+  --bq-muted: #7a7191;
+  --bq-border: #ece3d4;
+  --bq-lilac: #b8a4f0;
+  --bq-lilac-deep: #8b6fd4;
+  --bq-butter: #ffe08a;
+  --bq-butter-deep: #f5c74b;
+  --bq-bubblegum: #ff8fb1;
+  --bq-bubblegum-deep: #ff5f96;
+  --bq-mint: #a8e6cf;
+
+  /* shadows — offset "sticker" look + soft ambient */
+  --bq-sticker: 4px 5px 0 rgba(43, 36, 64, 0.14);
+  --bq-sticker-lilac: 4px 5px 0 rgba(139, 111, 212, 0.28);
+  --bq-soft: 0 16px 34px -18px rgba(80, 60, 120, 0.4);
+
+  /* fonts */
+  --bq-display: var(--font-bq-display), "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --bq-script: var(--font-bq-script), "Caveat", "Segoe Script", cursive;
+  --bq-sans: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+
+  color: var(--bq-ink);
+  font-family: var(--bq-sans);
+  background: var(--bq-cream);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: clip;
+}
+
+/* One-section-per-screen scroll snapping, scoped so it never touches the app
+   shell. `proximity` keeps tall sections (e.g. the Deed) escapable. */
+html:has(.bq-root) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+.bq-screen {
+  min-height: 100svh;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.bq-root) { scroll-behavior: auto; scroll-snap-type: none; }
+}
+
+/* ── typography ── */
+.bq-display { font-family: var(--bq-display); font-weight: 800; letter-spacing: -0.01em; line-height: 1.02; }
+.bq-script { font-family: var(--bq-script); font-weight: 600; }
+.bq-sans { font-family: var(--bq-sans); }
+.bq-ink { color: var(--bq-ink); }
+.bq-muted { color: var(--bq-muted); }
+
+.bq-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 2px solid var(--bq-ink);
+  background: var(--bq-butter);
+  padding: 5px 14px;
+  font-family: var(--bq-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--bq-ink);
+  box-shadow: var(--bq-sticker);
+}
+
+.bq-gt {
+  background: linear-gradient(100deg, var(--bq-bubblegum-deep), var(--bq-lilac-deep) 60%, var(--bq-lilac));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── surfaces ── */
+.bq-card {
+  position: relative;
+  border-radius: 26px;
+  background: var(--bq-paper);
+  border: 2px solid var(--bq-ink);
+  box-shadow: var(--bq-sticker);
+}
+.bq-card-soft {
+  border-radius: 24px;
+  background: var(--bq-paper);
+  border: 1px solid var(--bq-border);
+  box-shadow: var(--bq-soft);
+}
+
+/* ── buttons ── */
+.bq-btn {
+  border: 2px solid var(--bq-ink);
+  cursor: pointer;
+  color: var(--bq-ink);
+  font-family: var(--bq-display);
+  font-weight: 700;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--bq-bubblegum), var(--bq-lilac));
+  box-shadow: var(--bq-sticker);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.bq-btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 6px 0 rgba(43, 36, 64, 0.16); }
+.bq-btn:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 rgba(43, 36, 64, 0.14); }
+.bq-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
+
+.bq-btn-ghost {
+  cursor: pointer;
+  border-radius: 999px;
+  border: 2px solid var(--bq-ink);
+  background: var(--bq-paper);
+  color: var(--bq-ink);
+  font-family: var(--bq-display);
+  font-weight: 700;
+  box-shadow: var(--bq-sticker);
+  transition: transform 0.15s ease;
+}
+.bq-btn-ghost:hover { transform: translate(-1px, -1px); }
+.bq-btn-ghost:active { transform: translate(2px, 3px); }
+
+.bq-chip {
+  border: 2px solid var(--bq-ink);
+  border-radius: 14px;
+  background: var(--bq-paper);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+/* ── ambience — single static painted layer, no filters, no animation ── */
+.bq-ambience {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(44vw 44vw at 8% 2%, rgba(184, 164, 240, 0.5), transparent 60%),
+    radial-gradient(40vw 40vw at 94% 98%, rgba(255, 143, 177, 0.42), transparent 62%),
+    radial-gradient(36vw 36vw at 62% 44%, rgba(255, 224, 138, 0.42), transparent 60%),
+    var(--bq-cream);
+}
+/* Playful dotted paper for cards. */
+.bq-dots {
+  background-color: var(--bq-paper);
+  background-image: radial-gradient(rgba(139, 111, 212, 0.16) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+/* ── the bouquet composition ── */
+.bq-stage { position: relative; width: 100%; }
+.bq-bush-back,
+.bq-bush-front {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 100%;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.bq-bush-back { bottom: 0; z-index: 1; }
+.bq-bush-front { bottom: 0; z-index: 3; }
+.bq-blooms { position: relative; z-index: 2; }
+.bq-bloom { display: inline-block; will-change: transform; }
+
+/* ── keyframes (transform/opacity only — GPU-composited) ── */
+@keyframes bq-bloom-in { from { opacity: 0; transform: translateY(14px) scale(0.6) rotate(var(--rot, 0deg)); } to { opacity: 1; transform: translateY(0) scale(1) rotate(var(--rot, 0deg)); } }
+@keyframes bq-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes bq-bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+@keyframes bq-wiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes bq-pop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+
+.bq-anim-fade-up { animation: bq-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.bq-bob { animation: bq-bob 4s ease-in-out infinite; }
+.bq-pop { animation: bq-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── reveal on scroll ── */
+.bq-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.bq-reveal.is-visible { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bq-bob, .bq-pop, .bq-anim-fade-up { animation: none !important; }
+  .bq-bloom { animation: none !important; opacity: 1 !important; }
+  .bq-reveal { transition: opacity 0.4s ease; transform: none; }
+}

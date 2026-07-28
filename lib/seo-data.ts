@@ -786,6 +786,49 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // BUILD A BOUQUET — GIRLFRIEND
+  // ═══════════════════════════════════════════════════════════════════════════
+  "bouquet-gf": {
+    title: "Build a Bouquet for Your Girlfriend — Send a Digital Flower Bouquet",
+    description:
+      "Hand-tie a digital flower bouquet for your girlfriend: pick from 12 blooms in colour or black-&-white, write a card, add a playful Deed of Devotion, and send a link that blooms open. Free, in 2 minutes.",
+    category: "Love",
+    emoji: "💐",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 612 },
+
+    keywords: [
+      "build a bouquet online", "digital flower bouquet for girlfriend", "send flowers digitally",
+      "virtual bouquet for girlfriend", "digital bouquet online free", "make a bouquet online for gf",
+      "send a digital bouquet whatsapp", "online flower bouquet gift for girlfriend", "digibouquet alternative",
+      "cute bouquet builder online", "send virtual flowers to girlfriend", "digital flowers gift india",
+      "build your own bouquet online free", "flower bouquet link for girlfriend", "gen z gift for girlfriend online",
+      "just because flowers online", "romantic bouquet page for gf", "digital bouquet with note online",
+    ],
+
+    faqs: [
+      { question: "How do I build a digital bouquet for my girlfriend?", answer: "Pick the Build a Bouquet template on SubhSandesh, tap 6–10 blooms into your bouquet, reshuffle the arrangement and greenery, write a card, optionally add a Deed of Devotion, then share the private link — it takes about two minutes and is free." },
+      { question: "Can I choose the flowers in the bouquet?", answer: "Yes — choose from 12 blooms (rose, peony, tulip, ranunculus, sunflower, lily and more), each with its own flower-language meaning, in full colour or a black-and-white sketch style." },
+      { question: "How do I send the bouquet to my girlfriend?", answer: "Publishing gives you a unique private link (with an optional password) you can send over WhatsApp, Instagram or iMessage. She opens it on any phone or laptop and the bouquet blooms open when she taps — no app or account needed." },
+      { question: "Is the digital bouquet free?", answer: "Yes — building, personalizing and sharing your digital bouquet is completely free on SubhSandesh." },
+      { question: "What is the Deed of Devotion?", answer: "It's a playful mock-legal certificate you can attach — a 'Government of Love' deed with your own loving clauses and both your names, sealed with love. She can save it as a keepsake image." },
+      { question: "Can I edit the bouquet after I send it?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Build a Digital Bouquet for Your Girlfriend",
+      description: "Create and send a hand-tied digital flower bouquet — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Sign Up", text: "Create a free account on SubhSandesh.in." },
+        { name: "Choose the Build a Bouquet Template", text: "Select the Build a Bouquet page for your girlfriend." },
+        { name: "Pick Your Blooms", text: "Tap 6–10 flowers into your bouquet, then reshuffle the arrangement and greenery." },
+        { name: "Write the Card & Deed", text: "Write a heartfelt card and add a playful Deed of Devotion." },
+        { name: "Send the Link", text: "Publish and share the private link via WhatsApp so it blooms open for her." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // MISS YOU — BEST FRIEND
   // ═══════════════════════════════════════════════════════════════════════════
   "missyou-bestfriend": {
