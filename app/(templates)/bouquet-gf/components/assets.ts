@@ -5,7 +5,14 @@
 // local /public/assets/bouquet-gf folder, which always works in dev + as a
 // fallback. Two parallel asset sets: `color/` and `mono/` (black-and-white).
 
-export const BQ_MEDIA_BASE = "/assets/bouquet-gf";
+// Served from S3 (bucket gifts-media-prod-123, ap-south-1) with 1-year immutable
+// cache — uploaded via `npm run upload:bouquet-media` in /server. The same files
+// also live in /public/assets/bouquet-gf as the source-of-truth / local fallback:
+// re-run the uploader after editing any of them, then keep this base in sync.
+export const BQ_MEDIA_BASE = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/bouquet-gf";
+
+/** The composed gallery/OG cover, served from the same S3 origin. */
+export const BQ_COVER_URL = `${BQ_MEDIA_BASE}/cover.webp`;
 
 export type BouquetMode = "color" | "mono";
 

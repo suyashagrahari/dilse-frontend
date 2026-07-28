@@ -16,7 +16,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A gen-z digital florist: choose from 12 blooms in colour or black-&-white, reshuffle the arrangement, add a note and a Deed of Devotion, then send a link that blooms open when she taps it.",
   bgGradient: "from-pink-100 via-amber-50 to-violet-100",
-  coverImage: "/assets/bouquet-gf/cover.webp",
+  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/bouquet-gf/cover.webp",
   tabs: [
     { id: "bouquet", icon: Flower2, label: "Bouquet" },
     { id: "style", icon: Palette, label: "Style" },

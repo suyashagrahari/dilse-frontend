@@ -30,7 +30,7 @@ const SLUG = "bouquet-gf";
 const tpl = TEMPLATE_SEO[SLUG];
 
 const OG_IMAGE = {
-  url: `${SITE_URL}/assets/bouquet-gf/cover.webp`,
+  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/bouquet-gf/cover.webp",
   width: 1000,
   height: 1000,
   alt: "A hand-tied digital flower bouquet — SubhSandesh",
