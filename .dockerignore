@@ -10,3 +10,9 @@ coverage
 .nyc_output
 Dockerfile
 .dockerignore
+
+# Bouquet media is served from S3 (see components/assets.ts BQ_MEDIA_BASE); the copy
+# under public/ is kept in the repo as the re-upload source of truth but does NOT need
+# to ship inside the runtime image. Excluding it trims ~2.4 MB. Migrate other template
+# asset folders here the same way as they move to S3.
+public/assets/bouquet-gf

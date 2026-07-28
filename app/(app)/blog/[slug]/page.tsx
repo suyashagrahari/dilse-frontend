@@ -19,9 +19,17 @@ export const revalidate = 3600;
 // Allow on-demand pages not built at deploy time to be generated + cached on first hit.
 export const dynamicParams = true;
 
+// Prerendering ALL articles at build time exploded the image (668 pages ≈ 500 MB of
+// static HTML/RSC) and dominated build time. Since `dynamicParams = true`, any slug
+// NOT returned here is still rendered on first request and cached for `revalidate`
+// seconds (ISR) — fully indexable, listed in the sitemap. So we only pre-build the
+// newest N (the hot pages); the long tail generates lazily on demand. Tune via
+// BLOG_SSG_COUNT (set to a huge number to restore full prerender if ever needed).
+const BLOG_SSG_COUNT = Number(process.env.BLOG_SSG_COUNT ?? 30);
+
 export async function generateStaticParams() {
-  const slugs = await getAllArticleSlugs();
-  return slugs.map(({ slug }) => ({ slug }));
+  const slugs = await getAllArticleSlugs(); // already sorted publishedAt:desc
+  return slugs.slice(0, BLOG_SSG_COUNT).map(({ slug }) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

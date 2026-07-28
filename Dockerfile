@@ -1,9 +1,13 @@
+# syntax=docker/dockerfile:1
+# ↑ Enables BuildKit `--mount=type=cache` below (persistent npm + Next.js caches).
+
 # ── Stage 1: deps — Install all dependencies ─────────────────────────────────
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --frozen-lockfile
+# Cache the npm download store so a lockfile change re-fetches only what changed.
+RUN --mount=type=cache,target=/root/.npm npm ci --frozen-lockfile
 
 # ── Stage 2: builder — Build Next.js ─────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -27,7 +31,10 @@ ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_PROD_STRAPI_URL=$NEXT_PUBLIC_PROD_STRAPI_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# Persist the Next.js compilation cache (.next/cache) across builds → incremental
+# recompiles instead of a cold build every time. In CI this mount is hydrated by the
+# buildkit-cache-dance step in the workflow; locally it persists in the BuildKit store.
+RUN --mount=type=cache,target=/app/.next/cache npm run build
 
 # ── Stage 3: runner — Minimal production image ───────────────────────────────
 FROM node:20-alpine AS runner

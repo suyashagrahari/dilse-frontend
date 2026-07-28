@@ -31,16 +31,10 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-      - name: Build Next.js
-        run: npm run build
-        env:
-          NEXT_PUBLIC_APP_ENV: production
-          NEXT_PUBLIC_PROD_API_URL: ${{ secrets.NEXT_PUBLIC_PROD_API_URL }}
-          NEXT_PUBLIC_PROD_SITE_URL: ${{ secrets.NEXT_PUBLIC_PROD_SITE_URL }}
-          NEXT_PUBLIC_PROD_ROOT_DOMAIN: ${{ secrets.NEXT_PUBLIC_PROD_ROOT_DOMAIN }}
-          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
-          NEXT_PUBLIC_PROD_STRAPI_URL: ${{ secrets.NEXT_PUBLIC_PROD_STRAPI_URL }}
-          NEXT_TELEMETRY_DISABLED: 1
+      # NOTE: the full `next build` is NOT run here — the Docker stage below builds
+      # the app once (and fails the pipeline on any build error). Running it here too
+      # meant compiling the whole app twice, back-to-back. This job is now a fast
+      # type-check gate only.
 
   # ── Job 2: Docker Build & Push ──────────────────────────────────────────────
   docker:
@@ -71,6 +65,19 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
+
+      # Persist the Dockerfile's `--mount=type=cache` dirs (npm store + .next/cache)
+      # across CI runs so `next build` recompiles incrementally instead of cold.
+      # (BuildKit cache mounts are otherwise lost on ephemeral runners.)
+      - name: Restore & save build cache mounts
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+        with:
+          cache-map: |
+            {
+              "npm-cache": "/root/.npm",
+              "next-cache": "/app/.next/cache"
+            }
+          skip-extraction: false
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
