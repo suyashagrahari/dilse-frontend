@@ -26,22 +26,32 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 
 const SUBDOMAIN_RESERVED = new Set(["www","admin","api","mail","support","help","docs","blog","app","auth","login","signup","register","dashboard","static","assets","cdn","dev","test","staging","prod","u","user","users","share","gift","gifts","dilse"]);
 
-// Maps a creation's templateType to its server DELETE route base path.
-// Deleting a page removes it entirely, so its shared link stops resolving for everyone.
-const DELETE_ENDPOINTS: Record<string, string> = {
-  birthday: "birthday-pages",
-  valentine: "valentine-pages",
-  holi: "holi-pages",
-  eid: "eid-pages",
-  wedding: "wedding-pages",
-  reception: "reception-pages",
-  shaadi: "shaadi-card-pages",
-  "christian-wedding": "christian-wedding-pages",
-  "love-gf": "love-gf-pages",
-  darling: "darling-pages",
-  "birthday-gf": "birthday-gf-pages",
-  "apology-dashboard": "apology-dashboard-pages",
+// Single source of truth for rendering a creation: its label, icon, editor route and
+// server DELETE route base. Must cover every templateType in TEMPLATE_LOOKUPS
+// (server/src/controllers/share.controller.ts) — a missing entry makes the card read
+// "🎁 Gift", sends Edit to /templates instead of the editor, and disables Delete.
+// `endpoint` deletes the page entirely, so its shared link stops resolving for everyone.
+interface TemplateMeta { label: string; emoji: string; editor: string; endpoint: string }
+
+const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
+  birthday:            { label: "Birthday",          emoji: "🎂", editor: "/birthday-gf",       endpoint: "birthday-pages" },
+  valentine:           { label: "Valentine",         emoji: "💝", editor: "/valentine-gf",      endpoint: "valentine-pages" },
+  holi:                { label: "Holi",              emoji: "🎨", editor: "/holi",              endpoint: "holi-pages" },
+  eid:                 { label: "Eid",               emoji: "🌙", editor: "/eid-mubarak",       endpoint: "eid-pages" },
+  wedding:             { label: "Wedding",           emoji: "💍", editor: "/wedding-shaadi",    endpoint: "wedding-pages" },
+  reception:           { label: "Reception",         emoji: "🥂", editor: "/reception",         endpoint: "reception-pages" },
+  shaadi:              { label: "Shaadi Card",       emoji: "💌", editor: "/shaadi-card",       endpoint: "shaadi-card-pages" },
+  "christian-wedding": { label: "Christian Wedding", emoji: "⛪", editor: "/christian-wedding", endpoint: "christian-wedding-pages" },
+  "love-gf":           { label: "Love GF",           emoji: "❤️", editor: "/love-gf",           endpoint: "love-gf-pages" },
+  darling:             { label: "Darling",           emoji: "💖", editor: "/darling",           endpoint: "darling-pages" },
+  "birthday-gf":       { label: "Birthday GF",       emoji: "🎂", editor: "/birthday-gf",       endpoint: "birthday-gf-pages" },
+  "apology-dashboard": { label: "Apology Dashboard", emoji: "🙏", editor: "/apology-dashboard", endpoint: "apology-dashboard-pages" },
+  "missyou-gf":        { label: "Miss You GF",       emoji: "🥺", editor: "/missyou-gf",        endpoint: "missyou-gf-pages" },
+  "bouquet-gf":        { label: "Bouquet GF",        emoji: "💐", editor: "/bouquet-gf",        endpoint: "bouquet-gf-pages" },
 };
+
+const FALLBACK_TEMPLATE: TemplateMeta = { label: "Gift", emoji: "🎁", editor: "/templates", endpoint: "" };
+const templateMeta = (type: string): TemplateMeta => TEMPLATE_REGISTRY[type] || FALLBACK_TEMPLATE;
 
 const UI = {
   bg: "#f5ede6",
@@ -342,7 +352,7 @@ export default function ProfilePage() {
   };
 
   const handleDeleteCreation = async (page: MyCreation) => {
-    const base = DELETE_ENDPOINTS[page.templateType];
+    const base = templateMeta(page.templateType).endpoint;
     if (!base || !accessToken) return;
     setDeletingId(page._id);
     try {
@@ -367,9 +377,9 @@ export default function ProfilePage() {
     }
   };
 
-  const templateEmoji = (type: string) => type === "birthday" ? "🎂" : type === "valentine" ? "💝" : type === "holi" ? "🎨" : type === "eid" ? "🌙" : "🎁";
-  const templateLabel = (type: string) => type === "birthday" ? "Birthday" : type === "valentine" ? "Valentine" : type === "holi" ? "Holi" : type === "eid" ? "Eid" : "Gift";
-  const editorRoute = (type: string) => type === "birthday" ? "/birthday-gf" : type === "valentine" ? "/valentine-gf" : type === "holi" ? "/holi" : type === "eid" ? "/eid-mubarak" : "/templates";
+  const templateEmoji = (type: string) => templateMeta(type).emoji;
+  const templateLabel = (type: string) => templateMeta(type).label;
+  const editorRoute = (type: string) => templateMeta(type).editor;
 
   const cardStyle = { background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)", borderRadius: "1rem" };
   const sectionLabel = (text: string) => (
@@ -743,8 +753,8 @@ export default function ProfilePage() {
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-border-faint)" }}>
                     {page.templateType === "valentine" ? <Gift size={18} style={{ color: "#f43f5e" }} /> :
                      page.templateType === "holi" ? <Sparkles size={18} style={{ color: "#a78bfa" }} /> :
-                     page.templateType === "eid" ? <span className="text-lg">🌙</span> :
-                     <Cake size={18} style={{ color: "var(--app-accent)" }} />}
+                     page.templateType === "birthday" || page.templateType === "birthday-gf" ? <Cake size={18} style={{ color: "var(--app-accent)" }} /> :
+                     <span className="text-lg">{templateEmoji(page.templateType)}</span>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[14px] sm:text-[16px] font-bold truncate tracking-tight" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</h3>
