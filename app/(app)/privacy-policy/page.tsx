@@ -73,12 +73,12 @@ export default function PrivacyPolicyPage() {
             {
               title: "5. Cookies and Similar Technologies",
               body:
-                "We may use cookies or similar technologies for login persistence, preferences, analytics, and security monitoring. These tools help us understand platform performance and improve user experience. You can manage cookie behavior through your browser settings, though disabling some cookies may affect essential app functionality.",
+                "We may use cookies or similar technologies for login persistence, preferences, analytics, and security monitoring. Specifically, we use Google Analytics 4 to understand which features are used and where people encounter difficulty, and Microsoft Clarity to measure interaction patterns such as clicks and scrolling. Clarity may record how a page is used during a visit; text masking is enabled so the contents of your messages and form fields are hidden, and this recording is not active on shared celebration pages that recipients open. We do not use advertising or cross-site tracking cookies. You can manage cookie behavior through your browser settings, though disabling some cookies may affect essential app functionality.",
             },
             {
               title: "6. Third-Party Services",
               body:
-                "SubhSandesh may rely on trusted third-party services for hosting, analytics, authentication, storage, and infrastructure support. These partners process data only to provide platform operations and are expected to maintain confidentiality and security standards consistent with their role.",
+                "SubhSandesh may rely on trusted third-party services for hosting, analytics, authentication, storage, and infrastructure support. These currently include Google (analytics and sign-in), Microsoft (Clarity product analytics), Amazon Web Services (hosting and media storage), and Razorpay (payments). These partners process data only to provide platform operations and are expected to maintain confidentiality and security standards consistent with their role.",
             },
             {
               title: "7. Data Retention",

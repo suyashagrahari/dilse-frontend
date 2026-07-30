@@ -11,6 +11,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PwaProvider from "@/components/PwaProvider";
+import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
@@ -26,6 +29,11 @@ function StoreHydrator() {
         localStorage.setItem("gifts_refresh_token", refreshToken);
         // Remove auth tokens from URL bar
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
+
+        // This redirect flow never dispatches googleLogin, so the redux
+        // analytics middleware cannot see it. Without this call, every login
+        // that happens on a subdomain would be missing from the funnel.
+        track(EVENTS.LOGIN, { method: "google_bridge" });
       }
     }
 
@@ -48,6 +56,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <StoreHydrator />
+          <AnalyticsProvider />
           <PwaProvider>
             <TooltipProvider>
               <Toaster />

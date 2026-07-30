@@ -6,6 +6,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Crown } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 
 interface TemplateCardProps {
@@ -31,7 +33,21 @@ const TemplateCard = memo(function TemplateCard({
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ delay: index * 0.03, type: "spring", stiffness: 300, damping: 25 }}
     >
-      <Link href={`/${template.slug}`} className="block group">
+      {/* onClick only records the click; navigation is still handled entirely by
+          Link. The favourite button's handler calls stopPropagation (see
+          handleFavorite in app/(app)/templates/page.tsx), so favouriting a card
+          does not reach this and is not miscounted as an open. */}
+      <Link
+        href={`/${template.slug}`}
+        className="block group"
+        onClick={() =>
+          track(EVENTS.TEMPLATE_CARD_CLICKED, {
+            template: template.slug,
+            position: index,
+            is_premium: Boolean(template.isPremium),
+          })
+        }
+      >
         <motion.div
           className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
           style={{ border: "1px solid rgba(61,12,17,0.15)" }}

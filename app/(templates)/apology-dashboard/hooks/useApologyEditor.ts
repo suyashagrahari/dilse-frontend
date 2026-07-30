@@ -4,6 +4,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import {
   type ApologyData,
   type EditMode,
@@ -15,6 +17,9 @@ import {
 
 const DRAFT_KEY = "apology_draft";
 const BASE = `${API_URL}/apology-dashboard-pages`;
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "apology-dashboard";
 
 // Draft is persisted to localStorage so a page refresh (or accidental tab close)
 // keeps everything the user filled in. Falls back to sessionStorage if unavailable.
@@ -143,11 +148,21 @@ export function useApologyEditor() {
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
           clearDraft();
+          // The auth-deferred path: user hit Publish while logged out, logged in,
+          // and this resumed automatically. Tracked separately from the direct
+          // path so the login detour's completion rate is visible.
+          track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
         } else {
+          track(EVENTS.PUBLISH_FAILED, {
+            template: TEMPLATE,
+            source: "auth_deferred",
+            reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+          });
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
       } catch {
+        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "save_error" });
         pushToast({ type: "info", title: "Save failed", message: "Please try again" });
       } finally {
         setPublishing(false);
@@ -184,6 +199,8 @@ export function useApologyEditor() {
     setEditMode("preview");
     bumpPreview(); // fresh preview: re-cover scratch, reset whack/anger, use the chosen song
     saveDraft({ data: mf, password: pagePassword, completed: true });
+    // The form was completed and the preview reached — the step before Publish.
+    track(EVENTS.PAGE_SAVED, { template: TEMPLATE, has_password: Boolean(pagePassword) });
     pushToast({ type: "success", title: "Saved!", message: "Preview it, then publish 💗" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
 
@@ -200,13 +217,22 @@ export function useApologyEditor() {
   }, [content, pagePassword, headers]);
 
   const publish = useCallback(async () => {
+    // Recorded before any validation or auth check so this measures *intent*.
+    // The gap between this and PUBLISH_SUCCESS is the entire publish drop-off.
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
+
     if (!content.deliveryEmail.trim()) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_delivery_email" });
       pushToast({ type: "info", title: "Delivery email required", message: "Add it in Edit so signed cards reach you" });
       setEditMode("manual");
       setMf({ ...content });
       return;
     }
     if (!isAuthenticated || !accessToken) {
+      // The auth wall. Note the pending intent lives in a ref, so it does not
+      // survive the Google subdomain-bridge redirect — see FINDINGS.md P3. This
+      // event is what makes that loss measurable.
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -223,11 +249,20 @@ export function useApologyEditor() {
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
         clearDraft();
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
       } else {
+        // `reason` is what surfaces a server-side gate such as PAYMENT_REQUIRED
+        // appearing on a template whose editor cannot handle it (FINDINGS.md P2).
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          source: "direct",
+          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+        });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);

@@ -92,6 +92,12 @@ jobs:
             NEXT_PUBLIC_PROD_ROOT_DOMAIN=${{ secrets.NEXT_PUBLIC_DEV_ROOT_DOMAIN }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             NEXT_PUBLIC_PROD_STRAPI_URL=${{ secrets.NEXT_PUBLIC_DEV_STRAPI_URL }}
+            # Analytics. Separate DEV_ secrets on purpose so dev traffic can go to
+            # its own GA4 property — or nowhere at all if left unset, which is the
+            # default. An unset secret resolves to an empty string, and an empty ID
+            # disables that tool, so this is safe to ship before the IDs exist.
+            NEXT_PUBLIC_PROD_GA_ID=${{ secrets.NEXT_PUBLIC_DEV_GA_ID }}
+            NEXT_PUBLIC_PROD_CLARITY_ID=${{ secrets.NEXT_PUBLIC_DEV_CLARITY_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

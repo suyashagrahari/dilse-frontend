@@ -16,6 +16,8 @@ import {
   Sprout, Check, Pause, Play, X, HandHeart, Mic, ChevronLeft, ChevronRight, Download, Fingerprint,
 } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import type { ApologyData, SignAgreementBody } from "./types";
 import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
 
@@ -257,6 +259,15 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
         <Link
           href="/templates"
           aria-label="SubhSandesh"
+          // The growth loop: a recipient clicking through to make their own.
+          // Attributing this to the eventual signup depends on the GA4
+          // cross-subdomain config — see docs/analytics/SOLUTIONS.md N1.
+          onClick={() =>
+            track(EVENTS.CREATE_CTA_CLICKED, {
+              template: "apology-dashboard",
+              source: "viewer_logo",
+            })
+          }
           style={{ position: "fixed", top: 12, right: 12, zIndex: 46, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none" }}
         >
           <span style={{ width: 38, height: 38, borderRadius: 11, overflow: "hidden", background: "rgba(255,245,245,.9)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid #ffd6e2", display: "grid", placeItems: "center", boxShadow: "0 6px 18px -6px rgba(230,64,114,.45)" }}>

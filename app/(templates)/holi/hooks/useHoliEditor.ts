@@ -8,6 +8,11 @@ import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from 
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { useTemplatePayment } from "@/hooks/useTemplatePayment";
 import { getClientPricing } from "@/config/templatePricing";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "holi";
 
 export function useHoliEditor() {
   const router = useRouter();
@@ -314,6 +319,7 @@ export function useHoliEditor() {
       setPendingContent(null);
       setHasPasswordSet(!!pagePassword);
       try { sessionStorage.removeItem("holi_mf_draft"); } catch {}
+      track(EVENTS.PAGE_SAVED, { template: TEMPLATE, has_password: Boolean(pagePassword) });
       pushToast({
         type: "success",
         title: pagePassword ? "Saved with password!" : "Card saved!",
@@ -347,6 +353,9 @@ export function useHoliEditor() {
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
+    // Also re-fired by the post-payment retry effect below, so a paid publish
+    // shows two publish_clicked events — the paywall attempt and the retry.
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
       const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, {
@@ -358,6 +367,7 @@ export function useHoliEditor() {
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         // Keep pageId so user can edit and republish to the same URL
         pushToast({
           type: "publish",
@@ -366,6 +376,10 @@ export function useHoliEditor() {
           shareUrl: url,
         });
       } else if (result.error === "PAYMENT_REQUIRED") {
+        // The paywall. begin_checkout comes from openPaymentModal (shared hook);
+        // this records that publish was blocked, which is what makes the paywall
+        // visible as a funnel step rather than an invisible detour.
+        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "PAYMENT_REQUIRED" });
         // Server says payment needed — open payment modal
         const pricing = getClientPricing("holi");
         if (pricing) {
@@ -374,9 +388,14 @@ export function useHoliEditor() {
           pushToast({ type: "info", title: "Payment required", message: "Please complete payment to publish" });
         }
       } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof result?.error === "string" ? result.error : "publish_rejected",
+        });
         pushToast({ type: "info", title: "Publish failed", message: result.error || "Please try again" });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);

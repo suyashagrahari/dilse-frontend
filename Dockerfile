@@ -22,6 +22,11 @@ ARG NEXT_PUBLIC_PROD_SITE_URL
 ARG NEXT_PUBLIC_PROD_ROOT_DOMAIN
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_PROD_STRAPI_URL
+# Analytics. Both are optional: an empty value disables that tool entirely, which
+# is also the production kill switch — blank the secret and redeploy to turn
+# analytics off with no code change.
+ARG NEXT_PUBLIC_PROD_GA_ID
+ARG NEXT_PUBLIC_PROD_CLARITY_ID
 
 ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
 ENV NEXT_PUBLIC_PROD_API_URL=$NEXT_PUBLIC_PROD_API_URL
@@ -29,6 +34,11 @@ ENV NEXT_PUBLIC_PROD_SITE_URL=$NEXT_PUBLIC_PROD_SITE_URL
 ENV NEXT_PUBLIC_PROD_ROOT_DOMAIN=$NEXT_PUBLIC_PROD_ROOT_DOMAIN
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_PROD_STRAPI_URL=$NEXT_PUBLIC_PROD_STRAPI_URL
+# The matching ENV lines are mandatory, not decorative: an ARG alone is not
+# visible to `npm run build` below, so NEXT_PUBLIC_* would never be inlined into
+# the client bundle and analytics would silently never load in production.
+ENV NEXT_PUBLIC_PROD_GA_ID=$NEXT_PUBLIC_PROD_GA_ID
+ENV NEXT_PUBLIC_PROD_CLARITY_ID=$NEXT_PUBLIC_PROD_CLARITY_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Persist the Next.js compilation cache (.next/cache) across builds → incremental

@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Copy, Send, MessageCircle, Instagram, Facebook, Twitter } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 
 interface SocialShareSheetProps {
   open: boolean;
@@ -64,6 +66,11 @@ export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shar
 
   const openShare = (target: "whatsapp" | "telegram" | "twitter" | "facebook" | "instagram") => {
     if (!publicUrl) return;
+
+    // Tracked after the guard so only real shares count. Which template this
+    // share belongs to is recoverable from the page_path already attached to
+    // every event, so no extra prop is threaded through the 8 call sites.
+    track(EVENTS.SHARE, { method: target });
 
     if (target === "instagram") {
       onCopy(publicUrl);
@@ -146,7 +153,14 @@ export default function SocialShareSheet({ open, onClose, shareUrl, onCopy, shar
               >
                 <span className="flex-1 text-xs truncate" style={{ color: "#7a5555" }}>{publicUrl}</span>
                 <button
-                  onClick={() => onCopy(publicUrl)}
+                  onClick={() => {
+                    // The real "copy link" action. Note the sixth tile in the
+                    // grid above has key "copy" but navigates home instead of
+                    // copying, so tracking by key would misreport it — this is
+                    // tracked by behaviour. See docs/analytics/FINDINGS.md P4.
+                    track(EVENTS.SHARE, { method: "copy_link" });
+                    onCopy(publicUrl);
+                  }}
                   className="shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
                   style={{ background: "rgba(201,168,76,0.15)", color: "#a48230", border: "1px solid rgba(201,168,76,0.4)" }}
                 >

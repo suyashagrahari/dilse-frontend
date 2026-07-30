@@ -4,6 +4,8 @@ import React, { memo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import FavoriteButton from "@/components/FavoriteButton";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 
 interface Props {
@@ -58,7 +60,19 @@ const ApologyTemplateCard = memo(function ApologyTemplateCard({ template, isFav,
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ delay: index * 0.03, type: "spring", stiffness: 300, damping: 25 }}
     >
-      <Link href={`/${template.slug}`} className="block group">
+      {/* Records the click only — Link still owns navigation. The favourite
+          button stops propagation, so it is not counted as a card open. */}
+      <Link
+        href={`/${template.slug}`}
+        className="block group"
+        onClick={() =>
+          track(EVENTS.TEMPLATE_CARD_CLICKED, {
+            template: template.slug,
+            position: index,
+            is_premium: Boolean(template.isPremium),
+          })
+        }
+      >
         <motion.div
           className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
           style={{ border: "1px solid rgba(230,64,114,0.28)" }}

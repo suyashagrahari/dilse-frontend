@@ -4,6 +4,11 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "missyou-gf";
 import {
   type MissYouData,
   type EditMode,
@@ -202,13 +207,16 @@ export function useMissYouEditor() {
   }, [content, pagePassword, headers]);
 
   const publish = useCallback(async () => {
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     if (!content.senderName.trim()) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_sender_name" });
       pushToast({ type: "info", title: "Add your name first", message: "Open Edit and fill in your name" });
       setEditMode("manual");
       setMf({ ...content });
       return;
     }
     if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -225,11 +233,17 @@ export function useMissYouEditor() {
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
         clearDraft();
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 🤍", message: "Your letter is now live" });
       } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+        });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);

@@ -13,6 +13,8 @@ import { Cinzel, Great_Vibes, DM_Sans, Lora, Playfair_Display } from "next/font/
 import { type ShaadiData, type TabId, TABS, CHRISTIAN_DEMO_DATA } from "@/app/(templates)/christian-wedding/components/types";
 import { ChristianPageChrome } from "@/app/(templates)/christian-wedding/components/ChristianPageChrome";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 
 const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-cinzel" });
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: ["400"], variable: "--font-great-vibes" });
@@ -453,6 +455,12 @@ export default function ChristianWeddingViewer({ rawData, shareId, hasPassword }
         {/* Company branding — top right */}
         <Link
           href="/templates"
+          onClick={() =>
+            track(EVENTS.CREATE_CTA_CLICKED, {
+              template: "christian-wedding",
+              source: "viewer_logo",
+            })
+          }
           style={{
             position: "fixed",
             top: 14,

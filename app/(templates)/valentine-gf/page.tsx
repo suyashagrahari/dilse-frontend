@@ -25,6 +25,11 @@ import ValentineNav from "./components/ValentineNav";
 import { type ValentineData, type TabId, DEMO_CONTENT } from "./components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "valentine-gf";
 
 interface Toast {
   id: number;
@@ -199,6 +204,7 @@ function ValentineGfPage() {
 
   const handlePublish = async () => {
     if (!pageId) return;
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
       const res = await fetch(`${API_URL}/valentine-pages/${pageId}/publish`, { method: "POST", headers: headers() });
@@ -208,9 +214,16 @@ function ValentineGfPage() {
         setShareUrl(url);
         setPageId(null);
         setIsPersonalized(false);
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published!", message: "Your valentine page is now live", shareUrl: url });
+      } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof result?.error === "string" ? result.error : "publish_rejected",
+        });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally { setPublishing(false); }
   };

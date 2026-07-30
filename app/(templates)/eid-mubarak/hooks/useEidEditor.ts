@@ -6,6 +6,11 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type EidData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "eid-mubarak";
 
 export function useEidEditor() {
   const router = useRouter();
@@ -336,6 +341,7 @@ export function useEidEditor() {
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
       const res = await fetch(`${API_URL}/eid-pages/${pageId}/publish`, {
@@ -346,6 +352,7 @@ export function useEidEditor() {
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         // Keep pageId so user can edit and republish to the same URL
         pushToast({
           type: "publish",
@@ -353,8 +360,17 @@ export function useEidEditor() {
           message: hasPasswordSet ? "Card is password-protected" : "Your Eid card is now live",
           shareUrl: url,
         });
+      } else {
+        // This editor previously showed no feedback at all on a rejected publish —
+        // the click just silently did nothing. Recording it is how that becomes
+        // visible; the (missing) user-facing toast is left alone deliberately.
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof result?.error === "string" ? result.error : "publish_rejected",
+        });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);

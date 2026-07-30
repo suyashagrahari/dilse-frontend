@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, ComponentType, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, ComponentType, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,8 @@ import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import { usePwa } from "@/components/PwaProvider";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -232,6 +234,26 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
     }
     if (shareId) load();
   }, [shareId]);
+
+  // A published page was successfully opened. Instrumented here rather than in
+  // each viewer because every template — including the ones with their own
+  // full-page viewers below — resolves templateType through this component, so
+  // this single effect covers all of them and new ones automatically.
+  //
+  // page_path cannot carry this: all share URLs normalise to /share/:shareId to
+  // keep cardinality bounded, so `template` has to come from the loaded payload.
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (!templateType || viewTracked.current) return;
+    viewTracked.current = true;
+    track(EVENTS.RECIPIENT_VIEWED, {
+      template: templateType,
+      has_password: hasPassword,
+      // Anonymous viewers are true recipients; a signed-in viewer is usually the
+      // creator checking their own page. Needed to keep the two populations apart.
+      is_authenticated: isAuthenticated,
+    });
+  }, [templateType, hasPassword, isAuthenticated]);
 
   useEffect(() => {
     if (showAuth && isAuthenticated && accessToken) {

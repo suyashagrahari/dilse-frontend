@@ -93,6 +93,11 @@ jobs:
             NEXT_PUBLIC_PROD_ROOT_DOMAIN=${{ secrets.NEXT_PUBLIC_PROD_ROOT_DOMAIN }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             NEXT_PUBLIC_PROD_STRAPI_URL=${{ secrets.NEXT_PUBLIC_PROD_STRAPI_URL }}
+            # Analytics. An unset secret resolves to an empty string, and an empty
+            # ID disables that tool — so this is safe to ship before the IDs exist,
+            # and blanking a secret is the kill switch.
+            NEXT_PUBLIC_PROD_GA_ID=${{ secrets.NEXT_PUBLIC_PROD_GA_ID }}
+            NEXT_PUBLIC_PROD_CLARITY_ID=${{ secrets.NEXT_PUBLIC_PROD_CLARITY_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

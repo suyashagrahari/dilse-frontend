@@ -6,6 +6,11 @@ import { useAppSelector } from "@/store/hooks";
 import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "anniversary-gf";
 
 export function useAnniversaryEditor() {
   const router = useRouter();
@@ -203,6 +208,7 @@ export function useAnniversaryEditor() {
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
       const res = await fetch(`${API_URL}/anniversary-pages/${pageId}/publish`, { method: "POST", headers: headers() });
@@ -213,14 +219,23 @@ export function useAnniversaryEditor() {
         setPageId(null);
         setIsPersonalized(false);
         setHasPasswordSet(false);
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({
           type: "publish",
           title: "Published!",
           message: hasPasswordSet ? "Surprise tab is password-protected" : "Your page is now live",
           shareUrl: url,
         });
+      } else {
+        // No user-facing feedback existed on this path; the click silently did
+        // nothing. Recorded so the failure stops being invisible.
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof result?.error === "string" ? result.error : "publish_rejected",
+        });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);

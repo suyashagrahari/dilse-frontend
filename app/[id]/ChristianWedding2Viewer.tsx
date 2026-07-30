@@ -13,6 +13,8 @@ import { type ShaadiData, CHRISTIAN_DEMO_DATA } from "@/app/(templates)/christia
 import { ChristianPageChrome } from "@/app/(templates)/christian-wedding/components/ChristianPageChrome";
 import HomeHero from "@/app/(templates)/christian-wedding-2/components/HomeHero";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 
 const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-cinzel" });
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: ["400"], variable: "--font-great-vibes" });
@@ -412,6 +414,12 @@ export default function ChristianWedding2Viewer({ rawData, shareId, hasPassword 
         {/* SubhSandesh branding — top right */}
         <Link
           href="/templates"
+          onClick={() =>
+            track(EVENTS.CREATE_CTA_CLICKED, {
+              template: "christian-wedding-2",
+              source: "viewer_logo",
+            })
+          }
           style={{
             position: "fixed",
             top: 14,

@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import NextImage from "next/image";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import HomeSection from "@/app/(templates)/birthday-gf/components/HomeSection";
 import SongsSection from "@/app/(templates)/birthday-gf/components/SongsSection";
 import BottomNav from "@/app/(templates)/birthday-gf/components/BottomNav";
@@ -363,6 +365,8 @@ export default function BirthdayGfViewer({
 
   const handleTabChange = useCallback((id: TabId) => setTab(id), []);
   const handleCreateYours = useCallback(() => {
+    // Recorded before the branch so both paths are counted identically.
+    track(EVENTS.CREATE_CTA_CLICKED, { template: "birthday-gf", source: "create_yours" });
     if (onCreateYours) {
       onCreateYours();
     } else {
@@ -400,6 +404,9 @@ export default function BirthdayGfViewer({
       {/* Brand icon top-right */}
       <Link
         href="/templates"
+        onClick={() =>
+          track(EVENTS.CREATE_CTA_CLICKED, { template: "birthday-gf", source: "viewer_logo" })
+        }
         style={{
           position: "fixed", top: 14, right: 14, zIndex: 200,
           display: "flex", flexDirection: "column", alignItems: "center",

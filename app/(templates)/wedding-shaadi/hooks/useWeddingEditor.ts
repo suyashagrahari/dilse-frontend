@@ -6,6 +6,11 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type WeddingData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "wedding-shaadi";
 
 const MONTH_MAP: Record<string, number> = {
   jan: 0, january: 0,
@@ -657,8 +662,10 @@ export function useWeddingEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     // Auth gate at publish time only
     if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -694,6 +701,7 @@ export function useWeddingEditor() {
         setShareId(publishedShareId);
         setEditMode(null);
         try { sessionStorage.removeItem("wedding_draft"); } catch {}
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({
           type: "publish",
           title: "Published! 🎊",
@@ -701,6 +709,10 @@ export function useWeddingEditor() {
           shareUrl: normalizedShareUrl,
         });
       } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+        });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {

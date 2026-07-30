@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setPoints } from "@/store/authSlice";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
 import type { ClientTemplatePricing } from "@/config/templatePricing";
 
 export type PaymentStatus = "idle" | "loading" | "success" | "error";
@@ -45,6 +47,14 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
   );
 
   const openPaymentModal = useCallback((state: PaymentModalState) => {
+    // The paywall was shown. This hook is shared, so instrumenting it here covers
+    // every paid template — including ones priced in future — with no further work.
+    track(EVENTS.BEGIN_CHECKOUT, {
+      template: state.templateType,
+      value: state.pricing.finalPrice,
+      currency: "INR",
+      points_cost: state.pricing.pointsCost,
+    });
     setPaymentStatus("idle");
     setPaymentError(null);
     setPaymentJustCompleted(false);
@@ -91,10 +101,19 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
         dispatch(setPoints(data.data.remainingPoints));
       }
 
+      // A real conversion worth zero rupees. Deliberately NOT `purchase`: sending
+      // a purchase with value 0 would drag average order value and revenue
+      // reports toward zero and make both meaningless.
+      track(EVENTS.SPEND_POINTS, {
+        template: templateType,
+        points_cost: paymentModal.pricing.pointsCost,
+      });
+
       setPaymentStatus("success");
       setPaymentModal(null);
       setPaymentJustCompleted(true);
     } catch (err) {
+      track(EVENTS.PAYMENT_FAILED, { template: templateType, method: "points" });
       setPaymentStatus("error");
       setPaymentError(err instanceof Error ? err.message : "Failed to spend points");
     }
@@ -179,6 +198,17 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
         rzp.open();
       });
 
+      // Fired only after server-side signature verification resolved, so this
+      // counts money actually taken. `amount` from create-order is in paise;
+      // GA4 revenue must be in major units.
+      track(EVENTS.PURCHASE, {
+        template: templateType,
+        value: typeof amount === "number" ? amount / 100 : pricing.finalPrice,
+        currency: typeof currency === "string" ? currency : "INR",
+        transaction_id: typeof orderId === "string" ? orderId : undefined,
+        method: "razorpay",
+      });
+
       setPaymentStatus("success");
       setPaymentModal(null);
       setPaymentJustCompleted(true);
@@ -187,9 +217,15 @@ export function useTemplatePayment(): UseTemplatePaymentReturn {
 
       if (msg === "PAYMENT_CANCELLED") {
         // User closed the Razorpay modal — reset to idle (not an error)
+        track(EVENTS.CHECKOUT_CANCELLED, {
+          template: templateType,
+          value: pricing.finalPrice,
+          currency: "INR",
+        });
         setPaymentStatus("idle");
         setPaymentError(null);
       } else {
+        track(EVENTS.PAYMENT_FAILED, { template: templateType, method: "razorpay" });
         setPaymentStatus("error");
         setPaymentError(msg);
       }

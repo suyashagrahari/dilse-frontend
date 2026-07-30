@@ -12,6 +12,11 @@ import {
 } from "../components/types";
 
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "christian-wedding";
 
 const MONTH_MAP: Record<string, number> = {
   jan: 0, january: 0,
@@ -571,7 +576,9 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -613,6 +620,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
         setIsPersonalized(true);
         setEditMode(null);
         try { sessionStorage.removeItem("christian_wedding_draft"); } catch {}
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({
           type: "publish",
           title: "Published! 🎊",

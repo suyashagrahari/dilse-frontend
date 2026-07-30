@@ -15,6 +15,11 @@ import {
   clampHomeCoverCrop,
 } from "../components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "darling";
 
 function normalizePhoto(p: unknown): PhotoItem {
   if (typeof p === "string") return { url: p, letter: "", cropX: 50, cropY: 50 };
@@ -484,8 +489,10 @@ export function useDarlingEditor() {
   }, [pendingContent]);
 
   const handlePublish = useCallback(async () => {
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     // Not authenticated: stash data and show auth modal; auto-publish fires after login
     if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -529,11 +536,17 @@ export function useDarlingEditor() {
         setShareUrl(url);
         setEditMode(null);
         try { sessionStorage.removeItem("darling_draft"); } catch {}
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
       } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+        });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
     } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "network_error" });
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
