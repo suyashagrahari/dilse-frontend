@@ -106,7 +106,12 @@ export function middleware(req: NextRequest) {
   // Admin-only areas belong on the root domain. Preserves path, query and
   // protocol; only the host changes.
   if (isRootDomainOnly(pathname)) {
-    url.host = ROOT_DOMAIN;
+    // hostname + explicit port reset, NOT `url.host = ROOT_DOMAIN`. Assigning to
+    // `host` keeps any existing port (WHATWG URL: a host value without a port
+    // leaves the current one in place), and behind nginx `nextUrl` carries Next's
+    // internal port — which leaked a redirect to `https://subhsandesh.in:3000/...`.
+    url.hostname = ROOT_DOMAIN;
+    url.port = "";
     return NextResponse.redirect(url);
   }
 
