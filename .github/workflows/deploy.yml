@@ -3,6 +3,10 @@ name: Frontend CI/CD
 on:
   push:
     branches: [main]
+  # Manual trigger — see deploy-dev.yml. Needed to rebuild after a secret change,
+  # since NEXT_PUBLIC_* is baked in at build time and secret edits do not start a
+  # workflow run.
+  workflow_dispatch:
 
 # Prevent concurrent deployments — queue them instead
 concurrency:

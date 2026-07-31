@@ -3,6 +3,11 @@ name: Frontend CI/CD (Dev)
 on:
   push:
     branches: [dev]
+  # Manual trigger. NEXT_PUBLIC_* values are inlined at BUILD time, so changing a
+  # secret has no effect until an image is rebuilt — and updating a secret does
+  # not start a workflow. Without this, rotating a key would mean pushing an empty
+  # commit just to redeploy.
+  workflow_dispatch:
 
 concurrency:
   group: frontend-dev-deploy
