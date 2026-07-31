@@ -86,23 +86,32 @@ behaviour was a rewrite to `/{username}/<non-uuid>` was already broken — that
 lookup cannot match, because no shareId is a non-UUID — so no working route
 changed.
 
-**One residual assumption worth checking before deploy.** If any page's shareId
-was ever set by hand or by a seed/import script to a non-UUID value, its link
-would now pass through and 404 instead of resolving. Nothing in the code does
-this, but the data can confirm it:
+**A non-UUID shareId would still resolve — the fallback is structural.**
 
-```js
-// mongo shell — expect 0 across every *pages collection
-db.getCollectionNames()
-  .filter(c => /pages$/i.test(c))
-  .forEach(c => {
-    const n = db[c].countDocuments({
-      shareId: { $exists: true, $ne: null,
-        $not: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i }
-    });
-    if (n) print(`${c}: ${n} non-UUID shareId(s)`);
-  });
+An earlier draft of this note warned that a hand-set or seed-imported non-UUID
+shareId would pass through and 404. That turned out to be wrong, and the reason is
+worth recording because it is what makes this change safe without a data audit.
+
+If a first segment is not a UUID, middleware passes it through. Next.js then
+resolves it by its own routing rules: static segments win over dynamic ones, so
+`/holi` hits the template page, while an unrecognised segment falls to the
+root-level catch-all `app/[id]/page.tsx`. That page renders `SharePageClient`,
+which resolves its id with a fallback chain (`SharePageClient.tsx:172`):
+
+```ts
+const shareId = shareIdOverride || (params.shareId as string) || (params.id as string);
 ```
+
+`params.id` is populated on the one-segment route, and the server exposes a
+username-independent lookup — `router.get("/:shareId", getSharedPage)`
+(`server/src/routes/share.routes.ts:24`) — which works because `shareId` is
+`unique: true` in every schema.
+
+So a legacy non-UUID share link resolves through the path-based route instead of
+the username-scoped one. Different endpoint, same page. And since every shareId in
+practice IS a UUID, the rewrite branch handles all real traffic exactly as before.
+
+No pre-deploy data audit is required.
 
 ---
 
