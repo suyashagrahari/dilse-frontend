@@ -1406,4 +1406,51 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE COURT OF LOVE — ROMANTIC TRIVIA QUIZ
+  // ═══════════════════════════════════════════════════════════════════════════
+  "court-of-love": {
+    title: "Court of Love — Romantic Trivia Quiz for Your Partner (Free)",
+    description:
+      "Put your partner on trial in the cutest way: 5 funny hearings, a gavel-banging penguin judge, GIF reactions after every answer, a secret letter, and a signed ₹100 stamp paper certifying they won the case. Free and mobile-first.",
+    category: "Love",
+    emoji: "⚖️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 438 },
+
+    keywords: [
+      "court of love", "love quiz for girlfriend", "love quiz for boyfriend",
+      "how much do you know me quiz for couples", "romantic trivia quiz online",
+      "couple quiz game online free", "make a quiz for my girlfriend",
+      "funny love certificate online", "certified best partner certificate",
+      "best partner award certificate maker", "relationship quiz link to send",
+      "valentine quiz for couples online", "anniversary quiz for boyfriend",
+      "cute quiz game for long distance couples", "pyar ka quiz online",
+      "girlfriend test questions with answers", "shareable love game india",
+      "stamp paper love certificate funny", "quiz gift for boyfriend whatsapp",
+    ],
+
+    faqs: [
+      { question: "How do I make a love quiz for my girlfriend or boyfriend?", answer: "Open the Court of Love template on SubhSandesh and tap Create. Add your name and your partner's name — five romantic courtroom questions are already written for you. Edit any question, its four options and the correct answer, then publish to get a private link you can send on WhatsApp or Instagram. It takes about two minutes." },
+      { question: "Is the Court of Love quiz free?", answer: "Yes — creating, publishing and sharing your Court of Love page is completely free, and your partner can download their certificate as a PNG image or a PDF at no cost." },
+      { question: "What happens if my partner answers wrong?", answer: "Nothing harsh. Every wrong answer shows a gentle, funny GIF reaction such as 'koi baat nahi' or 'don't be sad'. If they score under 80% the Court grants a retrial and they can appeal as many times as they like, so they are never locked out of your letter." },
+      { question: "What does my partner get if they win the case?", answer: "Scoring 80% or higher plays the verdict animation, then reveals your secret letter typed out one character at a time, then hands them a signed ₹100 stamp paper naming them your Certified Best Partner — with their name, case number, score and the date. They can share it as an image or download it as a PNG or PDF." },
+      { question: "Can I password-protect the quiz?", answer: "Yes — set an optional password when you create the page. Anyone who opens the link must enter it before the case file unlocks. Passwords are stored hashed and are never displayed on the page." },
+      { question: "Can I write my own questions instead of the default ones?", answer: "Yes — all five hearings are fully editable. Change the exhibit label, the question, all four options, which option is correct, and the little messages shown after a right or wrong answer. You can also mark a question so every answer counts as correct." },
+      { question: "Can I edit the quiz after sending it?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Make a Court of Love Quiz for Your Partner",
+      description: "Create a romantic courtroom trivia quiz with a signed certificate — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Court of Love Template", text: "Go to the Court of Love page on SubhSandesh and tap Create." },
+        { name: "Name the Plaintiff and the Accused", text: "Add your name and your partner's name — you file the case, they stand trial." },
+        { name: "Edit the Five Hearings", text: "Five funny questions come pre-written. Tap any hearing to change the question, its four options and the correct answer." },
+        { name: "Write the Sealed Letter", text: "Write the secret letter that types out for them after a winning verdict, and sign the stamp paper." },
+        { name: "Publish and Share the Link", text: "Publish to get a private link (with an optional password) and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
 };

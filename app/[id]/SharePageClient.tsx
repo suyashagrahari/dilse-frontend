@@ -85,6 +85,10 @@ const BouquetGfViewer = dynamic(() => import("./BouquetGfViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const CourtOfLoveViewer = dynamic(() => import("./CourtOfLoveViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -213,7 +217,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love") {
             setData(result.data);
             setLoading(false);
             return;
@@ -427,6 +431,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Build a Bouquet (gf) has its own full-page viewer
   if (!loading && templateType === "bouquet-gf" && data) {
     return <BouquetGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Court of Love has its own full-page viewer
+  if (!loading && templateType === "court-of-love" && data) {
+    return <CourtOfLoveViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {
