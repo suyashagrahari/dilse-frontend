@@ -8,7 +8,14 @@ import { Gavel, Share2, Download, FileText, RotateCcw, Loader2, Check } from "lu
 
 import CourtGif, { preloadAsset } from "./CourtGif";
 import StampPaperCertificate from "./StampPaperCertificate";
-import { ASSETS, reactionFor } from "./assets";
+import {
+  ASSETS,
+  WRONG_REACTIONS,
+  REACTION_SIZE,
+  type Reaction,
+  reactionFor,
+  encouragementFor,
+} from "./assets";
 import { caseNumber, isCorrect, PASS_RATIO, type CourtOfLoveData } from "./types";
 
 /* ── SubhSandesh theme tokens (see the subhsandesh-theme skill) ────────────── */
@@ -28,7 +35,16 @@ const SCRIPT = "var(--font-caveat), ui-rounded, cursive";
 
 const CARD_SHADOW = "0 8px 24px rgba(14,14,18,.06)";
 
-type Phase = "summons" | "session" | "hearing" | "reaction" | "verdict" | "letter" | "certificate";
+type Phase =
+  | "summons"
+  | "session"
+  | "hearing"
+  | "reaction"
+  /** A cheer-them-on beat before the final cross-examination. */
+  | "recess"
+  | "verdict"
+  | "letter"
+  | "certificate";
 
 /* ── Small shared pieces ───────────────────────────────────────────────────── */
 
@@ -119,15 +135,18 @@ function StickerCard({
   tilt = -1.2,
   className = "",
   style,
+  onClick,
 }: {
   children: React.ReactNode;
   tilt?: number;
   className?: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }) {
   return (
     <div
       className={className}
+      onClick={onClick}
       style={{
         background: SURFACE,
         border: `1px solid ${BORDER}`,
@@ -186,11 +205,12 @@ function LimeButton({
 
 /* ── Typewriter ────────────────────────────────────────────────────────────── */
 
-function useTypewriter(text: string, active: boolean, speed = 26) {
+function useTypewriter(text: string, active: boolean, speed = 26, forceComplete = false) {
   const reduce = useReducedMotion();
   // Anyone who asked for less motion gets the whole letter at once — a
-  // character-by-character reveal is exactly what they opted out of.
-  const instant = reduce || !active;
+  // character-by-character reveal is exactly what they opted out of. Same for
+  // anyone who taps to skip ahead.
+  const instant = reduce || !active || forceComplete;
 
   // Text and progress live in one state object so switching text resets the
   // count in the same update, with no synchronous setState inside the effect.
@@ -634,32 +654,80 @@ function HearingScreen({
   );
 }
 
-/** The GIF reaction between hearings. */
+/**
+ * A thin ring that drains over the dwell time. Without it, a 3.4 s hold on a
+ * GIF reads as "the app froze"; with it, the pause reads as deliberate and
+ * obviously skippable.
+ */
+function DwellRing({ ms, label }: { ms: number; label: string }) {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+      <svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true" style={{ flexShrink: 0 }}>
+        <circle cx="10" cy="10" r="8.5" fill="none" stroke="#E2DFF6" strokeWidth="2.4" />
+        <motion.circle
+          cx="10"
+          cy="10"
+          r="8.5"
+          fill="none"
+          stroke={INDIGO}
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          initial={{ pathLength: 1 }}
+          animate={{ pathLength: 0 }}
+          transition={{ duration: ms / 1000, ease: "linear" }}
+          style={{ rotate: -90, transformOrigin: "center" }}
+        />
+      </svg>
+      <span style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, opacity: 0.85 }}>{label}</span>
+    </div>
+  );
+}
+
+/**
+ * The reaction between hearings — a GIF plus a handwritten line.
+ *
+ * `kind` distinguishes the three roles the art plays: celebrating a right
+ * answer, comforting a wrong one, and cheering the accused on at the recess.
+ * Each reaction carries its own dwell time because most of these GIFs have
+ * words drawn into them and loop in well under a second.
+ */
 function ReactionScreen({
-  correct,
+  reaction,
+  kind,
   note,
-  index,
+  slot,
   onContinue,
-  isLast,
+  continueLabel,
 }: {
-  correct: boolean;
+  reaction: Reaction;
+  kind: "correct" | "wrong" | "recess";
   note: string;
-  index: number;
+  /** Stable per-appearance key so the ring restarts and React remounts cleanly. */
+  slot: string;
   onContinue: () => void;
-  isLast: boolean;
+  continueLabel: string;
 }) {
   const reduce = useReducedMotion();
-  const reaction = reactionFor(correct, index);
+  const dwell = reduce ? 1100 : reaction.dwell;
 
-  // Auto-advance, but the whole screen is also a tap target so nobody has to wait.
+  const badge =
+    kind === "correct"
+      ? { text: "✓ Sustained", fg: GREEN, bg: "rgba(58,167,109,.13)", bd: "rgba(58,167,109,.3)" }
+      : kind === "wrong"
+        ? { text: "✗ Overruled", fg: PINK, bg: "rgba(247,37,133,.11)", bd: "rgba(247,37,133,.26)" }
+        : { text: "⏸ Brief recess", fg: INDIGO, bg: "rgba(108,92,231,.1)", bd: "rgba(108,92,231,.24)" };
+
+  // Auto-advance, but the whole screen is a tap target so nobody has to wait.
   useEffect(() => {
-    const t = window.setTimeout(onContinue, reduce ? 1100 : 2300);
+    const t = window.setTimeout(onContinue, dwell);
     return () => window.clearTimeout(t);
-  }, [onContinue, reduce]);
+  }, [onContinue, dwell]);
 
   return (
     <motion.div
-      key={`reaction-${index}`}
+      key={`reaction-${slot}`}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
@@ -668,7 +736,7 @@ function ReactionScreen({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onContinue(); }}
-      aria-label={`${correct ? "Correct" : "Not quite"}. ${note} Tap to continue.`}
+      aria-label={`${badge.text}. ${note} Activate to continue.`}
       style={{ width: "100%", maxWidth: 400, textAlign: "center", cursor: "pointer" }}
     >
       <div
@@ -679,21 +747,34 @@ function ReactionScreen({
           gap: 7,
           padding: "6px 15px",
           borderRadius: 999,
-          background: correct ? "rgba(58,167,109,.13)" : "rgba(247,37,133,.11)",
-          border: `1px solid ${correct ? "rgba(58,167,109,.3)" : "rgba(247,37,133,.26)"}`,
+          background: badge.bg,
+          border: `1px solid ${badge.bd}`,
           fontFamily: HEAD,
           fontSize: 12.5,
           fontWeight: 700,
-          color: correct ? GREEN : PINK,
+          color: badge.fg,
           marginBottom: 12,
           letterSpacing: 0.2,
         }}
       >
-        {correct ? "✓ Sustained" : "✗ Overruled"}
+        {badge.text}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <CourtGif src={reaction.src} alt={reaction.alt} size={230} priority />
+      {/* Framed so the GIFs with opaque backdrops read as a deliberate card
+          rather than a stray rectangle floating on the cream canvas. */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          background: SURFACE,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 28,
+          boxShadow: CARD_SHADOW,
+          padding: 10,
+          overflow: "hidden",
+        }}
+      >
+        <CourtGif src={reaction.src} alt={reaction.alt} size={reaction.size ?? REACTION_SIZE} priority />
       </div>
 
       <p
@@ -701,17 +782,17 @@ function ReactionScreen({
           fontFamily: SCRIPT,
           fontSize: 24,
           lineHeight: 1.3,
-          color: correct ? GREEN : INDIGO,
-          margin: "14px auto 0",
+          color: kind === "correct" ? GREEN : INDIGO,
+          margin: "16px auto 0",
           maxWidth: 330,
         }}
       >
         {note}
       </p>
 
-      <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, marginTop: 14, opacity: 0.8 }}>
-        tap to {isLast ? "hear the verdict" : "continue"} →
-      </p>
+      <div style={{ marginTop: 14 }}>
+        <DwellRing ms={dwell} label={`tap to ${continueLabel} →`} />
+      </div>
     </motion.div>
   );
 }
@@ -730,6 +811,19 @@ function VerdictScreen({
   onNext: () => void;
   onRetry: () => void;
 }) {
+  const reduce = useReducedMotion();
+  // The verdict clip spends its first seconds drawing out "THE COURT HAS DECIDED
+  // I LOVE YOU MORE / THERE WILL BE NO APPEALS". Showing the CTA immediately
+  // invites a tap straight past the line the whole trial was building to, so it
+  // fades in once the message has landed. The clip keeps looping either way, so
+  // this delays the button — it never traps anyone.
+  const [ctaReady, setCtaReady] = useState(!passed || reduce);
+  useEffect(() => {
+    if (ctaReady) return;
+    const t = window.setTimeout(() => setCtaReady(true), 6000);
+    return () => window.clearTimeout(t);
+  }, [ctaReady]);
+
   return (
     <motion.div
       key={`verdict-${passed}`}
@@ -795,14 +889,37 @@ function VerdictScreen({
           <p style={{ fontFamily: BODY, fontSize: 14, lineHeight: 1.6, color: MUTED, margin: "0 0 20px" }}>
             The Court finds you guilty of being loved beyond all reasonable doubt.
           </p>
-          <LimeButton onClick={onNext}>Read the sealed letter 💌</LimeButton>
+          <div style={{ minHeight: 48 }}>
+            <AnimatePresence mode="wait">
+              {ctaReady ? (
+                <motion.div
+                  key="cta"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <LimeButton onClick={onNext}>Read the sealed letter 💌</LimeButton>
+                </motion.div>
+              ) : (
+                <motion.p
+                  key="hint"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{ fontFamily: SCRIPT, fontSize: 21, color: PINK, margin: 0 }}
+                >
+                  the Court is still speaking…
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         </>
       ) : (
         <>
           <CourtGif
-            src={reactionFor(false, 0).src}
-            alt="A sad cartoon lion cub saying koi baat nahi, meaning no problem"
-            size={230}
+            src={WRONG_REACTIONS[0].src}
+            alt={WRONG_REACTIONS[0].alt}
+            size={WRONG_REACTIONS[0].size ?? REACTION_SIZE}
             priority
           />
           <h2
@@ -835,7 +952,8 @@ function VerdictScreen({
 /** The typewriter love letter. */
 function LetterScreen({ data, onNext }: { data: CourtOfLoveData; onNext: () => void }) {
   const letter = data.secretLetter?.trim() || "The Court rests. I love you — no further evidence required.";
-  const { shown, done } = useTypewriter(letter, true);
+  const [skipped, setSkipped] = useState(false);
+  const { shown, done } = useTypewriter(letter, true, 26, skipped);
 
   return (
     <motion.div
@@ -846,7 +964,13 @@ function LetterScreen({ data, onNext }: { data: CourtOfLoveData; onNext: () => v
       transition={{ duration: 0.45 }}
       style={{ width: "100%", maxWidth: 440 }}
     >
-      <StickerCard tilt={1}>
+      {/* Tapping the letter finishes it instantly — a long note should never hold
+          an impatient reader hostage to the animation. */}
+      <StickerCard
+        tilt={1}
+        onClick={() => setSkipped(true)}
+        style={{ cursor: done ? "default" : "pointer" }}
+      >
         <div style={{ textAlign: "center", marginBottom: 10 }}>
           <div
             style={{
@@ -886,13 +1010,39 @@ function LetterScreen({ data, onNext }: { data: CourtOfLoveData; onNext: () => v
           )}
         </p>
 
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-          <CourtGif
-            src={ASSETS.loveThisMuch}
-            alt="A cartoon dinosaur stretching its arms wide beside the words I love you this much"
-            size={210}
-          />
-        </div>
+        {/* Held back until the letter has finished typing, so "I LOVE YOU THIS
+            MUCH" lands as the closing beat instead of competing with the words
+            still appearing above it. */}
+        <AnimatePresence>
+          {done && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.25 }}
+              style={{ display: "flex", justifyContent: "center", marginTop: 12 }}
+            >
+              {/* This GIF's backdrop is off-white, which shows as a grey block on
+                  the card's pure white. Framing it makes that edge deliberate. */}
+              <div
+                style={{
+                  borderRadius: 20,
+                  overflow: "hidden",
+                  border: `1px solid ${BORDER}`,
+                  background: "#FCFCFA",
+                  padding: 6,
+                  lineHeight: 0,
+                }}
+              >
+                <CourtGif
+                  src={ASSETS.loveThisMuch}
+                  alt="A cartoon dinosaur stretching its arms wide beside the words “I love you this much”"
+                  size={230}
+                  priority
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <p
           style={{
@@ -900,15 +1050,43 @@ function LetterScreen({ data, onNext }: { data: CourtOfLoveData; onNext: () => v
             fontSize: 23,
             color: PINK,
             textAlign: "center",
-            margin: "4px 0 0",
+            margin: "6px 0 0",
           }}
         >
           — {data.signatureName?.trim() || data.plaintiffName?.trim() || "yours, always"}
         </p>
       </StickerCard>
 
-      <div style={{ marginTop: 20 }}>
-        <LimeButton onClick={onNext}>Collect your stamp paper 📜</LimeButton>
+      <div style={{ marginTop: 20, minHeight: 48 }}>
+        <AnimatePresence mode="wait">
+          {done ? (
+            <motion.div
+              key="collect"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.55 }}
+            >
+              <LimeButton onClick={onNext}>Collect your stamp paper 📜</LimeButton>
+            </motion.div>
+          ) : (
+            <motion.p
+              key="typing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                fontFamily: BODY,
+                fontSize: 11.5,
+                color: MUTED,
+                textAlign: "center",
+                margin: 0,
+                opacity: 0.8,
+              }}
+            >
+              tap the letter to read it all at once
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
@@ -952,14 +1130,22 @@ export default function CourtOfLove({
   // Warm the next screen's animation one step ahead, so a transition never waits
   // on a network fetch. Nothing is fetched that the trial won't reach.
   useEffect(() => {
-    if (phase === "summons") preloadAsset(ASSETS.gavel);
-    else if (phase === "session") preloadAsset(ASSETS.clerk);
-    else if (phase === "hearing" && index === total - 1) preloadAsset(ASSETS.verdict);
-    else if (phase === "verdict" && passed) {
+    if (phase === "summons") {
+      preloadAsset(ASSETS.gavel);
+    } else if (phase === "session") {
+      preloadAsset(ASSETS.clerk);
+    } else if (phase === "hearing") {
+      // Either reaction could be next and both are small, so warm both — the
+      // reaction screen must never open on a half-loaded GIF.
+      preloadAsset(reactionFor(true, index).src);
+      preloadAsset(reactionFor(false, index).src);
+      if (index + 2 === total && total >= 3) preloadAsset(encouragementFor(score, index + 1).src);
+      if (index === total - 1) preloadAsset(ASSETS.verdict);
+    } else if (phase === "verdict" && passed) {
       preloadAsset(ASSETS.win);
       preloadAsset(ASSETS.loveThisMuch);
     }
-  }, [phase, index, total, passed]);
+  }, [phase, index, total, passed, score]);
 
   const answer = useCallback(
     (chosen: number) => {
@@ -975,13 +1161,18 @@ export default function CourtOfLove({
   );
 
   const afterReaction = useCallback(() => {
-    if (index + 1 < total) {
-      setIndex((i) => i + 1);
-      setPhase("hearing");
-    } else {
-      setPhase("verdict");
-    }
+    if (index + 1 >= total) { setPhase("verdict"); return; }
+    // One hearing left → take a recess and cheer them on. Only worth it in a
+    // trial long enough to have a middle (3+ hearings).
+    if (index + 2 === total && total >= 3) { setPhase("recess"); return; }
+    setIndex((i) => i + 1);
+    setPhase("hearing");
   }, [index, total]);
+
+  const afterRecess = useCallback(() => {
+    setIndex((i) => i + 1);
+    setPhase("hearing");
+  }, []);
 
   const retry = useCallback(() => {
     setIndex(0);
@@ -1127,11 +1318,23 @@ export default function CourtOfLove({
 
           {phase === "reaction" && (
             <ReactionScreen
-              correct={lastCorrect}
+              reaction={reactionFor(lastCorrect, index)}
+              kind={lastCorrect ? "correct" : "wrong"}
               note={lastNote}
-              index={index}
-              isLast={index + 1 >= total}
+              slot={`h${index}-${lastCorrect ? "y" : "n"}`}
               onContinue={afterReaction}
+              continueLabel={index + 1 >= total ? "hear the verdict" : "continue"}
+            />
+          )}
+
+          {phase === "recess" && (
+            <ReactionScreen
+              reaction={encouragementFor(score, index + 1)}
+              kind="recess"
+              note="One hearing left. The Court believes in you."
+              slot="recess"
+              onContinue={afterRecess}
+              continueLabel="face the final question"
             />
           )}
 

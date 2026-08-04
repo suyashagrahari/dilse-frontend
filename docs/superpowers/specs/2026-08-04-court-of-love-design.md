@@ -28,8 +28,9 @@ Tone: cute, funny, a little formal-legal, Hinglish-flavoured. Never harsh.
 | 1 | **Summons** | Case file slides in, wax seal cracks. "Before this Court, all lovers are equal." Oath question with **Yes, I swear** / **No** buttons. | `scales-equal.gif` |
 | 2 | **Session opens** | Gavel bang + screen shake, "Court is now in session". | `judge-gavel.gif` |
 | 3 | **Hearing 1–5** | Tilted sticker card, question, 4 thumb-height option pills, 5 gavel pips as progress. | `clerk-pengu.gif` |
-| 4 | **Reaction** | Full-bleed GIF + one-line Caveat verdict, ~1.8 s, tap-to-skip. | correct: `love-heart` / `you-are-amazing` / `hearts` / `keep-going` (rotating)<br>wrong: `koi-baat-nahi` / `wipe-tears` / `dont-be-sad` (rotating) |
-| 5a | **Verdict — pass (≥4/5)** | `verdict-love-more.mp4` plays → confetti + `win-medal.gif` → typewriter secret letter → `love-this-much.gif`. | 3 assets, staged |
+| 4 | **Reaction** | Framed GIF + one-line Caveat verdict, per-asset dwell with a countdown ring, tap-to-skip. | correct: `love-heart` / `you-are-amazing` / `hearts` (rotating)<br>wrong: `koi-baat-nahi` / `wipe-tears` / `dont-be-sad` (rotating) |
+| 4b | **Recess** (before the final hearing) | "Brief recess — one hearing left. The Court believes in you." | `you-can-do-it` (struggling) / `keep-going` (perfect) / `you-can` |
+| 5a | **Verdict — pass (≥4/5)** | `verdict-love-more.mp4` plays, CTA held back 6 s behind "the Court is still speaking…" → confetti + `win-medal.gif` → typewriter letter → `love-this-much.gif`. | 3 assets, staged |
 | 5b | **Verdict — fail (≤3/5)** | "RETRIAL GRANTED", consolation GIF, **Appeal the Verdict** button → unlimited retry (answers reshuffled). | `koi-baat-nahi.gif` |
 | 6 | **Certificate** | ₹100 stamp paper: parchment, `CERTIFIED BEST PARTNER`, case number, accused name, score, date, Caveat signature, red wax seal, gold rings. | — |
 | 7 | **Actions** | **Share** (PNG → `navigator.share`) · **Download PNG** · **Download PDF** | — |
@@ -39,6 +40,40 @@ Dodges (teleports + shrinks) on hover/touch for **3 attempts**, then becomes
 tappable and answers with a joke ("Objection overruled 😏") before continuing to
 the quiz. Deliberately *not* permanently un-tappable — that is hostile on touch
 devices and traps users with no escape.
+
+### Reading time is a first-class constraint
+
+Most of this art has **words drawn into it** — "you can do it", "you are amazing",
+"koi baat nahi", "don't be sad", "I love you this much", and the verdict clip's
+"THE COURT HAS DECIDED I LOVE YOU MORE / THERE WILL BE NO APPEALS". Their loops
+are short (0.3–3.2 s), so a flat dwell cut the text off mid-sentence.
+
+Three rules follow:
+
+1. **Every reaction carries its own `dwell`** (3.0–3.8 s) — roughly three passes of
+   a short loop, or one full pass of a long one. A `DwellRing` drains alongside it
+   so the hold reads as deliberate rather than frozen, and every reaction is
+   tap-to-skip, making the dwell a floor on comprehension, not a forced wait.
+2. **The verdict CTA is held back 6 s** behind a "the Court is still speaking…"
+   line, so nobody taps past the line the whole trial was building to. The clip
+   keeps looping, so this delays a button — it never traps anyone.
+3. **The letter's closing GIF and CTA appear only when the typewriter finishes**,
+   so "I LOVE YOU THIS MUCH" lands as punctuation instead of competing with text
+   still appearing above it. Tapping the letter completes it instantly.
+
+### GIFs play three distinct roles
+
+The words on each GIF decide where it belongs — an encouragement GIF used as a
+correct-answer reaction would read as a non-sequitur:
+
+| Role | When | Art |
+|---|---|---|
+| **Celebrate** | correct answer | `love-heart`, `you-are-amazing`, `hearts` |
+| **Comfort** | wrong answer | `koi-baat-nahi`, `wipe-tears`, `dont-be-sad` |
+| **Encourage** | the recess, one hearing left | `you-can-do-it`, `keep-going`, `you-can` |
+
+The recess cheer adapts to the score: below 50% gets the emphatic "you can do
+it!!", a clean sheet gets "keep going".
 
 ### Case number
 Deterministic from `shareId` so it is stable across reloads and matches the
