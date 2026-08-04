@@ -41,6 +41,34 @@ export interface CourtOfLoveData {
   secretLetter: string;
   signatureName: string;
   certificateTitle: string;
+  /**
+   * BCP-47 tag for the language the content is written in — "en", "hi",
+   * "hi-Latn" (Hinglish), "ur", "ta"… Set when the case was generated from the
+   * sender's story. Drives the `lang` attribute and RTL layout.
+   */
+  language: string;
+}
+
+/** Scripts that read right-to-left, by BCP-47 primary subtag. */
+const RTL_LANGS = new Set(["ar", "ur", "fa", "he", "iw", "ps", "sd", "ug", "yi", "dv", "ku", "ckb"]);
+
+/**
+ * True when the content needs a right-to-left layout.
+ *
+ * Keyed off the primary subtag so "ur" and "ur-PK" both match — but note that a
+ * romanised tag like "ur-Latn" is Latin script and must stay LTR, so an explicit
+ * Latn script subtag always wins.
+ */
+export function isRtl(language: string | undefined | null): boolean {
+  if (!language) return false;
+  const parts = language.toLowerCase().split("-");
+  if (parts.includes("latn")) return false;
+  return RTL_LANGS.has(parts[0]);
+}
+
+/** `dir` attribute value for this content. */
+export function dirFor(language: string | undefined | null): "rtl" | "ltr" {
+  return isRtl(language) ? "rtl" : "ltr";
 }
 
 /** The score needed to win the case. */
@@ -128,6 +156,7 @@ export const DEMO_DATA: CourtOfLoveData = {
     "You didn't actually have to prove anything. I built this entire courtroom just to have an excuse to tell you something silly and true at the same time: on my worst days you are the argument I never want to win, and on my best days you are the reason. The Court rests. I love you — no further evidence required.",
   signatureName: "Aarav",
   certificateTitle: "Certified Best Partner",
+  language: "en",
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the server model content fields). */
@@ -140,6 +169,7 @@ export const COURT_OF_LOVE_CONTENT_KEYS: (keyof CourtOfLoveData)[] = [
   "secretLetter",
   "signatureName",
   "certificateTitle",
+  "language",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` is optional (empty = no gate). */
@@ -197,6 +227,7 @@ export function dbToCourtOfLoveData(db: Record<string, unknown> | null | undefin
     secretLetter: pick("secretLetter"),
     signatureName: pick("signatureName"),
     certificateTitle: pick("certificateTitle"),
+    language: pick("language"),
   };
 }
 

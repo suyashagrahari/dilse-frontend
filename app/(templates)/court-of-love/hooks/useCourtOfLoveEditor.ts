@@ -33,12 +33,21 @@ const clearDraft = () => {
   try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
   try { window.sessionStorage.removeItem(DRAFT_KEY); } catch {}
 };
-const readDraft = (): { data?: CourtOfLoveData; password?: string; completed?: boolean } | null => {
+const readDraft = (): {
+  data?: CourtOfLoveData;
+  password?: string;
+  completed?: boolean;
+  story?: string;
+} | null => {
   try {
     const raw = draftStore()?.getItem(DRAFT_KEY) ?? window.sessionStorage.getItem(DRAFT_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 };
+
+/** Matches MIN_STORY_CHARS on the server; keeps the button honest before we call. */
+const MIN_STORY_CHARS = 20;
+export const MAX_STORY_CHARS = 4000;
 
 export function useCourtOfLoveEditor() {
   const router = useRouter();
@@ -66,6 +75,17 @@ export function useCourtOfLoveEditor() {
 
   // Holds draft when user tries to publish while unauthenticated → auto-resume after login.
   const pendingPublishRef = useRef<{ data: CourtOfLoveData; password: string } | null>(null);
+
+  // ── AI: the sender's story → a whole case file ─────────────────────────────
+  const [story, setStory] = useState("");
+  const [generating, setGenerating] = useState(false);
+  /** Language the last generation came back in, echoed to the sender. */
+  const [generatedLanguage, setGeneratedLanguage] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  // Same deferred-auth trick as publish: AI generation needs a login, but we
+  // don't want a wall in front of the form, so the intent waits here and the
+  // effect below resumes it once the user is authenticated.
+  const pendingGenerateRef = useRef<string | null>(null);
 
   const headers = useCallback(
     () => ({
@@ -110,6 +130,7 @@ export function useCourtOfLoveEditor() {
     // Restore a locally-saved draft on refresh. The typed form data (mf) always comes
     // back; if it was saved from the preview ("completed"), we also reopen the preview.
     const draft = readDraft();
+    if (draft?.story) setStory(draft.story);
     if (draft?.data) {
       setMf(draft.data);
       if (draft.password) setPagePassword(draft.password);
@@ -177,8 +198,10 @@ export function useCourtOfLoveEditor() {
   // ── Auto-save WIP draft while editing ───────────────────────────────────────
   useEffect(() => {
     if (editMode !== "manual" && editMode !== "choose") return;
-    saveDraft({ data: mf, password: pagePassword, completed: false });
-  }, [mf, pagePassword, editMode]);
+    // The story rides along so a refresh mid-edit doesn't lose what they wrote
+    // and they can regenerate without retyping it.
+    saveDraft({ data: mf, password: pagePassword, completed: false, story });
+  }, [mf, pagePassword, editMode, story]);
 
   const displayData = editMode === "manual" || editMode === "choose" ? mf : content;
 
@@ -204,6 +227,108 @@ export function useCourtOfLoveEditor() {
       ),
     }));
   }, []);
+
+  /**
+   * Ask the server to turn `text` into a case file and drop it into the form.
+   *
+   * Everything it returns is written into `mf`, not `content`, so it lands in the
+   * editable form exactly as if the sender had typed it — they can then change
+   * any hearing before saving. The story itself is never sent to the page.
+   */
+  const runGenerate = useCallback(
+    async (text: string) => {
+      setGenerating(true);
+      try {
+        const res = await fetch(`${BASE}/generate`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({
+            story: text,
+            plaintiffName: mf.plaintiffName,
+            accusedName: mf.accusedName,
+          }),
+        });
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          // Deliberately NOT tracked as PUBLISH_FAILED: that event measures the
+          // publish drop-off funnel, and a failed AI draft is not a failed
+          // publish. Mixing them would quietly corrupt that metric.
+          console.warn("Court of Love AI generation failed:", res.status, result?.error);
+          pushToast({
+            type: "info",
+            title: "Couldn't write the hearings",
+            message: typeof result?.error === "string" ? result.error : "Please try again.",
+          });
+          return;
+        }
+
+        const d = result.data as {
+          language?: string;
+          languageName?: string;
+          headline?: string;
+          oathText?: string;
+          secretLetter?: string;
+          certificateTitle?: string;
+          questions?: CourtOfLoveData["questions"];
+        };
+
+        setMf((prev) => ({
+          ...prev,
+          // Only overwrite what the model actually returned, so a sender who
+          // already tweaked a field doesn't silently lose it to a blank.
+          headline: d.headline?.trim() || prev.headline,
+          oathText: d.oathText?.trim() || prev.oathText,
+          secretLetter: d.secretLetter?.trim() || prev.secretLetter,
+          certificateTitle: d.certificateTitle?.trim() || prev.certificateTitle,
+          questions: Array.isArray(d.questions) && d.questions.length ? d.questions : prev.questions,
+          language: d.language?.trim() || prev.language,
+        }));
+
+        setGeneratedLanguage(d.languageName?.trim() || d.language?.trim() || null);
+        setHasGenerated(true);
+        pushToast({
+          type: "success",
+          title: "Your case file is ready ✨",
+          message: d.languageName ? `Written in ${d.languageName}` : "Edit anything you like",
+        });
+      } catch {
+        pushToast({ type: "info", title: "Network error", message: "Couldn't reach the AI. Try again." });
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [mf.plaintiffName, mf.accusedName, headers, pushToast],
+  );
+
+  /** Generate from the story box. Defers to login when needed, then resumes. */
+  const generateFromStory = useCallback(() => {
+    const text = story.trim();
+    if (text.length < MIN_STORY_CHARS) {
+      pushToast({
+        type: "info",
+        title: "Tell us a bit more",
+        message: `A sentence or two is enough (${MIN_STORY_CHARS}+ characters).`,
+      });
+      return;
+    }
+    if (!isAuthenticated || !accessToken) {
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE, source: "ai_generate" });
+      pendingGenerateRef.current = text;
+      setShowAuth(true);
+      return;
+    }
+    void runGenerate(text);
+  }, [story, isAuthenticated, accessToken, runGenerate, pushToast]);
+
+  // Resume a deferred generation once the user logs in.
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingGenerateRef.current) return;
+    const text = pendingGenerateRef.current;
+    pendingGenerateRef.current = null;
+    void runGenerate(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
 
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
@@ -263,7 +388,9 @@ export function useCourtOfLoveEditor() {
     if (!isAuthenticated || !accessToken) {
       // The auth wall. The pending intent lives in a ref, so it does not survive
       // the Google subdomain-bridge redirect — this event makes that loss visible.
-      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      // `source` discriminates this from the AI-generate auth wall, so the
+      // publish funnel stays countable on its own.
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE, source: "publish" });
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -298,7 +425,13 @@ export function useCourtOfLoveEditor() {
     }
   }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
 
-  const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
+  // Cancelling the login modal must drop BOTH pending intents, or closing it
+  // after an AI prompt would fire a generation the next time they log in.
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+    pendingGenerateRef.current = null;
+  }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
 
   const handleCopy = useCallback((url?: string) => {
@@ -329,6 +462,9 @@ export function useCourtOfLoveEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    // AI story → case file
+    story, setStory, generating, generatedLanguage, hasGenerated, generateFromStory,
 
     setEditMode, setPagePassword, updateMf, updateQuestion, updateOption,
     handleEditClick, handleEditFromPreview, handleSave,

@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import type { CourtOfLoveData } from "./types";
+import { dirFor, type CourtOfLoveData } from "./types";
 
 /**
  * The keepsake the winner takes away: a mock ₹100 non-judicial stamp paper.
@@ -43,6 +43,11 @@ const StampPaperCertificate = forwardRef<
   return (
     <div
       ref={ref}
+      // Mirrors the case's language so a certificate generated from an Urdu or
+      // Arabic story reads correctly — including in the PNG and PDF exports,
+      // which snapshot this exact node.
+      lang={data.language || "en"}
+      dir={dirFor(data.language)}
       style={{
         width: "100%",
         maxWidth: 460,

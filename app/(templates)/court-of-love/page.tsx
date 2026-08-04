@@ -161,6 +161,12 @@ function CourtOfLovePageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
         saving={e.saving}
+        story={e.story}
+        setStory={e.setStory}
+        generating={e.generating}
+        generatedLanguage={e.generatedLanguage}
+        hasGenerated={e.hasGenerated}
+        onGenerate={e.generateFromStory}
       />
 
       {/* Publishing overlay */}

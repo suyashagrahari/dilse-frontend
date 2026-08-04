@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ChevronDown, Check, Lock, Gavel, Loader2 } from "lucide-react";
+import { X, ChevronDown, Check, Lock, Gavel, Loader2, Sparkles, RotateCcw, Languages } from "lucide-react";
 import type { CourtOfLoveData, EditMode, QuizQuestion } from "./types";
 
 const SURFACE = "#FFFFFF";
@@ -65,6 +65,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
+        dir="auto"
         style={field}
       />
       {hint && (
@@ -100,6 +101,7 @@ function TextArea({
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
+        dir="auto"
         style={{ ...field, resize: "vertical", lineHeight: 1.6 }}
       />
       {hint && (
@@ -265,6 +267,7 @@ function QuestionAccordion({
                         onChange={(e) => onOption(j, e.target.value)}
                         placeholder={`Option ${String.fromCharCode(65 + j)}`}
                         maxLength={200}
+                        dir="auto"
                         style={{ ...field, minHeight: 42 }}
                       />
                     </div>
@@ -323,6 +326,170 @@ function QuestionAccordion({
   );
 }
 
+const MIN_STORY_CHARS = 20;
+const MAX_STORY_CHARS = 4000;
+
+/**
+ * "Tell the Court your story" — the AI entry point.
+ *
+ * The sender writes freely in whatever language they think in; the server reads
+ * the language and script off the story itself and writes the whole case file to
+ * match. Everything it produces lands in the form below as ordinary editable
+ * text, so this is a head start, never a black box.
+ */
+function StoryBox({
+  story,
+  setStory,
+  generating,
+  generatedLanguage,
+  hasGenerated,
+  onGenerate,
+}: {
+  story: string;
+  setStory: (v: string) => void;
+  generating: boolean;
+  generatedLanguage: string | null;
+  hasGenerated: boolean;
+  onGenerate: () => void;
+}) {
+  const tooShort = story.trim().length < MIN_STORY_CHARS;
+
+  return (
+    <div
+      style={{
+        borderRadius: 22,
+        border: `1px solid rgba(108,92,231,.22)`,
+        background: "linear-gradient(160deg, rgba(108,92,231,.06), rgba(247,37,133,.05))",
+        padding: "15px 14px",
+        marginBottom: 20,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 9,
+            background: "linear-gradient(135deg,#6C5CE7,#F72585)",
+            color: "#fff",
+            display: "grid",
+            placeItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Sparkles size={14} />
+        </span>
+        <h3 style={{ fontFamily: HEAD, fontSize: 14.5, fontWeight: 700, color: TEXT, margin: 0 }}>
+          Tell the Court your story
+        </h3>
+      </div>
+      <p style={{ fontFamily: BODY, fontSize: 12, lineHeight: 1.55, color: MUTED, margin: "0 0 11px" }}>
+        Write in <strong style={{ color: TEXT }}>any language</strong> — Hindi, Hinglish, Tamil, Urdu,
+        anything. The hearings come back in the same language you write in.
+      </p>
+
+      <textarea
+        value={story}
+        onChange={(e) => setStory(e.target.value.slice(0, MAX_STORY_CHARS))}
+        placeholder={"How did you two meet? What does she always order? What's the excuse he always gives?\n\nhum pehli baar college fest mein mile the…"}
+        rows={5}
+        maxLength={MAX_STORY_CHARS}
+        // Mirrors what they are typing, so an Urdu or Arabic story reads correctly
+        // as it is written rather than after a reload.
+        dir="auto"
+        style={{
+          width: "100%",
+          padding: "12px 13px",
+          borderRadius: 16,
+          background: SURFACE,
+          border: `1px solid ${BORDER}`,
+          fontFamily: BODY,
+          fontSize: 14.5,
+          lineHeight: 1.6,
+          color: TEXT,
+          outline: "none",
+          resize: "vertical",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          margin: "6px 2px 12px",
+        }}
+      >
+        <span style={{ fontFamily: BODY, fontSize: 11, color: MUTED }}>
+          {tooShort ? `A sentence or two is enough` : `${story.trim().length} characters`}
+        </span>
+        {generatedLanguage && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              fontFamily: BODY,
+              fontSize: 11,
+              fontWeight: 600,
+              color: INDIGO,
+            }}
+          >
+            <Languages size={12} /> {generatedLanguage}
+          </span>
+        )}
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={onGenerate}
+        disabled={generating || tooShort}
+        style={{
+          width: "100%",
+          padding: "13px 18px",
+          borderRadius: 999,
+          background: generating || tooShort ? "#E7E4F7" : "linear-gradient(135deg,#6C5CE7,#F72585)",
+          color: generating || tooShort ? MUTED : "#fff",
+          fontFamily: HEAD,
+          fontWeight: 700,
+          fontSize: 14.5,
+          border: "none",
+          cursor: generating || tooShort ? "default" : "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          minHeight: 48,
+          boxShadow: generating || tooShort ? "none" : "0 8px 20px rgba(108,92,231,.32)",
+        }}
+      >
+        {generating ? (
+          <><Loader2 size={15} className="animate-spin" /> Writing your case file…</>
+        ) : hasGenerated ? (
+          <><RotateCcw size={15} /> Regenerate the hearings</>
+        ) : (
+          <><Sparkles size={15} /> Generate 5 hearings with AI</>
+        )}
+      </motion.button>
+
+      <p
+        style={{
+          fontFamily: BODY,
+          fontSize: 10.5,
+          lineHeight: 1.5,
+          color: MUTED,
+          textAlign: "center",
+          margin: "9px 0 0",
+        }}
+      >
+        Everything it writes stays editable below. Prefer to do it yourself? Just skip this and fill in
+        the hearings by hand.
+      </p>
+    </div>
+  );
+}
+
 export default function EditSheet({
   editMode,
   setEditMode,
@@ -334,6 +501,12 @@ export default function EditSheet({
   setPagePassword,
   onSave,
   saving,
+  story,
+  setStory,
+  generating,
+  generatedLanguage,
+  hasGenerated,
+  onGenerate,
 }: {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
@@ -345,6 +518,12 @@ export default function EditSheet({
   setPagePassword: (v: string) => void;
   onSave: () => void;
   saving: boolean;
+  story: string;
+  setStory: (v: string) => void;
+  generating: boolean;
+  generatedLanguage: string | null;
+  hasGenerated: boolean;
+  onGenerate: () => void;
 }) {
   const [openQ, setOpenQ] = useState<number | null>(null);
   const open = editMode === "manual" || editMode === "choose";
@@ -452,6 +631,15 @@ export default function EditSheet({
 
             {/* body */}
             <div style={{ overflowY: "auto", padding: "16px 18px 8px", WebkitOverflowScrolling: "touch" }}>
+              <StoryBox
+                story={story}
+                setStory={setStory}
+                generating={generating}
+                generatedLanguage={generatedLanguage}
+                hasGenerated={hasGenerated}
+                onGenerate={onGenerate}
+              />
+
               <Field
                 labelText="Your name (the plaintiff)"
                 value={mf.plaintiffName}

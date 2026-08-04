@@ -103,6 +103,63 @@ document artifact, not a UI surface, and must read as a real stamp paper.
 
 ---
 
+## 3b. AI: the sender's story → a case file, in their own language
+
+The sender can write their story into a box at the top of the form, in **any
+language**, and the server writes the whole case file from it. This is additive:
+the hand-written defaults and full manual editing remain, and everything the AI
+produces lands in the ordinary form fields as editable text.
+
+### Language fidelity is the point
+The system prompt's primary rule is to detect the language **and the script** of
+the story and write every string in that same language and script. Two nuances
+that matter for Indian users specifically:
+
+- **Hinglish stays Hinglish.** A story written as "hum pehli baar mile the" comes
+  back in Latin-script Hinglish, *not* converted to Devanagari — transliterating it
+  would feel foreign to the person who wrote it.
+- **The whole card matches, not just the questions.** The hearings, the reaction
+  lines, the oath, the summons headline and the sealed letter are all generated in
+  one call. A Hindi story that produced Hindi questions but an English letter
+  would read as broken.
+
+The model reports the language it used as a BCP-47 tag (`hi`, `hi-Latn`, `ur`, …),
+which is persisted on the page and drives `lang` and `dir` on the viewer and the
+certificate. `isRtl()` keys off the primary subtag so `ur` and `ur-PK` flip to RTL
+while `ur-Latn` correctly stays LTR. Form inputs use `dir="auto"` so they follow
+whatever is typed without threading language through the component tree.
+
+### Reliability
+Uses OpenAI **Structured Outputs** (`json_schema`, `strict: true`) rather than the
+looser JSON mode the older `/api/generate` endpoint uses, because the client
+renders exactly five hearings with four options each. Strict mode does *not*
+support `minItems`/`maxItems`, so counts are requested in the prompt and then
+enforced in `normalize()`: options are padded/trimmed to four, `correctIndex` is
+clamped to 0–3, and `allCorrect` is forced false on every hearing except the last
+(an all-correct factual question mid-trial would look like a bug).
+
+### Cost, auth and safety
+- **Login required**, matching the existing `/api/generate` gate — but the editor
+  defers the prompt: clicking *Generate* while logged out stashes the intent in
+  `pendingGenerateRef`, opens `AuthModal`, and resumes automatically after login,
+  the same pattern Publish uses. Cancelling the modal clears *both* pending
+  intents, or a cancelled AI prompt would fire on the next login.
+- **Rate limited** to the same 10/min `generateLimiter` as `/api/generate`.
+- **The story is never persisted.** It is the most personal thing the sender
+  types, the recipient has no use for it, and the page doesn't need it once the
+  questions exist. It lives only in the local draft so a refresh doesn't lose it.
+- **Prompt injection** is treated as a content risk, not a code risk: the story is
+  delimited and the prompt states it is data, never instructions. Because the
+  output is a strict schema that is re-sanitised server-side, the worst case is
+  odd question text — never code execution. Input is length-capped and stripped of
+  C0 control characters.
+- **Degrades honestly.** A missing/invalid key returns 503 with "you can still
+  write the hearings yourself" rather than blaming the user; 429 asks them to wait.
+
+### Model
+`gpt-4o-mini` by default, overridable with `OPENAI_MODEL` so the model can change
+without a code deploy. Key comes from the existing `OPENAI_API_KEY`.
+
 ## 4. The 5 default questions
 
 All five are prefilled and fully editable (text, 4 options, correct index).

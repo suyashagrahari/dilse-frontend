@@ -17,7 +17,7 @@ import {
   reactionFor,
   encouragementFor,
 } from "./assets";
-import { caseNumber, isCorrect, PASS_RATIO, type CourtOfLoveData } from "./types";
+import { caseNumber, dirFor, isCorrect, PASS_RATIO, type CourtOfLoveData } from "./types";
 
 /* ── SubhSandesh theme tokens (see the subhsandesh-theme skill) ────────────── */
 const BG = "#FAFAF7";
@@ -1332,6 +1332,11 @@ export default function CourtOfLove({
 
   return (
     <div
+      // The case may have been written in any language the sender types in.
+      // `lang` lets the browser pick correct fonts, hyphenation and screen-reader
+      // pronunciation; `dir` flips the layout for Urdu, Arabic and Hebrew.
+      lang={data.language || "en"}
+      dir={dirFor(data.language)}
       style={{
         minHeight: "100dvh",
         background: BG,
