@@ -28,7 +28,7 @@ Tone: cute, funny, a little formal-legal, Hinglish-flavoured. Never harsh.
 | 1 | **Summons** | Case file slides in, wax seal cracks. "Before this Court, all lovers are equal." Oath question with **Yes, I swear** / **No** buttons. | `scales-equal.gif` |
 | 2 | **Session opens** | Gavel bang + screen shake, "Court is now in session". | `judge-gavel.gif` |
 | 3 | **Hearing 1–5** | Tilted sticker card, question, 4 thumb-height option pills, 5 gavel pips as progress. | `clerk-pengu.gif` |
-| 4 | **Reaction** | Framed GIF + one-line Caveat verdict, per-asset dwell with a countdown ring, tap-to-skip. | correct: `love-heart` / `you-are-amazing` / `hearts` (rotating)<br>wrong: `koi-baat-nahi` / `wipe-tears` / `dont-be-sad` (rotating) |
+| 4 | **Reaction** | Framed GIF + one-line Caveat verdict. Holds 10 s with a countdown ring; **× close** top-right of the art, or tap anywhere. | correct: `love-heart` / `you-are-amazing` / `hearts` (rotating)<br>wrong: `koi-baat-nahi` / `wipe-tears` / `dont-be-sad` (rotating) |
 | 4b | **Recess** (before the final hearing) | "Brief recess — one hearing left. The Court believes in you." | `you-can-do-it` (struggling) / `keep-going` (perfect) / `you-can` |
 | 5a | **Verdict — pass (≥4/5)** | `verdict-love-more.mp4` plays, CTA held back 6 s behind "the Court is still speaking…" → confetti + `win-medal.gif` → typewriter letter → `love-this-much.gif`. | 3 assets, staged |
 | 5b | **Verdict — fail (≤3/5)** | "RETRIAL GRANTED", consolation GIF, **Appeal the Verdict** button → unlimited retry (answers reshuffled). | `koi-baat-nahi.gif` |
@@ -50,13 +50,18 @@ are short (0.3–3.2 s), so a flat dwell cut the text off mid-sentence.
 
 Three rules follow:
 
-1. **Every reaction carries its own `dwell`** (3.0–3.8 s) — roughly three passes of
-   a short loop, or one full pass of a long one. A `DwellRing` drains alongside it
-   so the hold reads as deliberate rather than frozen, and every reaction is
-   tap-to-skip, making the dwell a floor on comprehension, not a forced wait.
-2. **The verdict CTA is held back 6 s** behind a "the Court is still speaking…"
-   line, so nobody taps past the line the whole trial was building to. The clip
-   keeps looping, so this delays a button — it never traps anyone.
+1. **Reactions hold for 10 s** (`REACTION_DWELL`) — long enough for a short GIF to
+   cycle several times or a long one to finish, with room to read the line
+   underneath rather than racing it. Three things keep that from feeling like a
+   wait: a **× close button on the art itself** (top-right), tap-anywhere to
+   advance, and a `DwellCountdown` ring showing the seconds remaining, so the
+   hold always looks finite and intentional. Reduced-motion users get the same
+   10 s — reduced motion means less animation, not less reading time — just
+   without the ring's sweep.
+2. **The verdict CTA is held back the same 10 s** behind a "the Court is still
+   speaking…" line, so nobody taps past the line the whole trial was building to.
+   This clip's message is the longest of the lot. It keeps looping, so this delays
+   a button — it never traps anyone.
 3. **The letter's closing GIF and CTA appear only when the typewriter finishes**,
    so "I LOVE YOU THIS MUCH" lands as punctuation instead of competing with text
    still appearing above it. Tapping the letter completes it instantly.

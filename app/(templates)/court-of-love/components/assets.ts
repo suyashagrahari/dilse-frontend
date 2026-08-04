@@ -27,15 +27,10 @@ export interface Reaction {
   src: string;
   alt: string;
   /**
-   * How long the screen holds before auto-advancing, in ms.
-   *
-   * Most of these GIFs have words drawn into them, and their loops are short
-   * (0.3-3.2 s). A flat 2 s dwell cut the text off mid-sentence, so each one is
-   * timed to give roughly three passes of a short loop, or one full pass of a
-   * long one — long enough to actually read. Every reaction is also tap-to-skip,
-   * so this is a floor on comprehension, not a forced wait.
+   * How long the screen holds before auto-advancing, in ms. Defaults to
+   * REACTION_DWELL; set it only to override that for one piece of art.
    */
-  dwell: number;
+  dwell?: number;
   /** Whether the art itself contains words. Drives the "let it finish" hint. */
   hasText: boolean;
   /**
@@ -50,25 +45,34 @@ export interface Reaction {
 export const REACTION_SIZE = 250;
 
 /**
+ * How long a reaction holds before advancing on its own: a full ten seconds.
+ *
+ * Nearly all of this art has words drawn into it, and the loops are short
+ * (0.3-3.2 s), so ten seconds lets a short GIF cycle several times and a long
+ * one finish comfortably — with room to actually read the line underneath
+ * rather than racing it. Nobody is trapped for ten seconds: there is an explicit
+ * close button on the art, tapping anywhere advances, and a ring counts the
+ * time down so the hold always looks intentional.
+ */
+export const REACTION_DWELL = 10_000;
+
+/**
  * After a correct answer — celebration. Rotated so five hearings never repeat.
  */
 export const CORRECT_REACTIONS: Reaction[] = [
   {
     src: `${BASE}/love-heart.gif`,
     alt: "A big beating heart celebrating a correct answer",
-    dwell: 3400,
     hasText: false,
   },
   {
     src: `${BASE}/you-are-amazing.gif`,
     alt: "A penguin cheering under the words “you are amazing”",
-    dwell: 3200,
     hasText: true,
   },
   {
     src: `${BASE}/hearts.gif`,
     alt: "Floating hearts sent as a reward",
-    dwell: 3400,
     hasText: false,
   },
 ];
@@ -81,20 +85,17 @@ export const WRONG_REACTIONS: Reaction[] = [
   {
     src: `${BASE}/koi-baat-nahi.gif`,
     alt: "A sad cartoon lion cub under the Hindi words “koi baat nahi”, meaning it's okay",
-    dwell: 3400,
     hasText: true,
     size: 200, // 140px at source — anything larger softens the Devanagari text
   },
   {
     src: `${BASE}/wipe-tears.gif`,
     alt: "One cartoon character gently wiping another's tears — don't worry",
-    dwell: 3800,
     hasText: true,
   },
   {
     src: `${BASE}/dont-be-sad.gif`,
     alt: "Two penguins hugging under the words “don't be sad”",
-    dwell: 3400,
     hasText: true,
   },
 ];
@@ -109,19 +110,16 @@ export const ENCOURAGEMENTS: Reaction[] = [
   {
     src: `${BASE}/you-can-do-it.gif`,
     alt: "A penguin raising a flipper under the words “you can do it!!”",
-    dwell: 3400,
     hasText: true,
   },
   {
     src: `${BASE}/keep-going.gif`,
     alt: "A cheerful penguin under the words “keep going”",
-    dwell: 3000,
     hasText: true,
   },
   {
     src: `${BASE}/you-can.gif`,
     alt: "A smiling penguin on an iceberg under the words “you can”",
-    dwell: 3000,
     hasText: true,
   },
 ];

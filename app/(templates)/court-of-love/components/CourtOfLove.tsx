@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Gavel, Share2, Download, FileText, RotateCcw, Loader2, Check } from "lucide-react";
+import { Gavel, Share2, Download, FileText, RotateCcw, Loader2, Check, X } from "lucide-react";
 
 import CourtGif, { preloadAsset } from "./CourtGif";
 import StampPaperCertificate from "./StampPaperCertificate";
@@ -12,6 +12,7 @@ import {
   ASSETS,
   WRONG_REACTIONS,
   REACTION_SIZE,
+  REACTION_DWELL,
   type Reaction,
   reactionFor,
   encouragementFor,
@@ -655,31 +656,60 @@ function HearingScreen({
 }
 
 /**
- * A thin ring that drains over the dwell time. Without it, a 3.4 s hold on a
- * GIF reads as "the app froze"; with it, the pause reads as deliberate and
- * obviously skippable.
+ * A ring that drains over the dwell time with the seconds remaining inside it.
+ * Across a ten-second hold a bare pause would read as "the app froze"; a visible
+ * count makes it obviously deliberate, finite, and skippable.
+ *
+ * Remounted per reaction (its parent is keyed by slot), so the initial state is
+ * always correct without resetting anything from an effect.
  */
-function DwellRing({ ms, label }: { ms: number; label: string }) {
+function DwellCountdown({ ms, label }: { ms: number; label: string }) {
   const reduce = useReducedMotion();
-  if (reduce) return null;
+  const [left, setLeft] = useState(() => Math.ceil(ms / 1000));
+
+  useEffect(() => {
+    const t = window.setInterval(() => setLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
-      <svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true" style={{ flexShrink: 0 }}>
-        <circle cx="10" cy="10" r="8.5" fill="none" stroke="#E2DFF6" strokeWidth="2.4" />
-        <motion.circle
-          cx="10"
-          cy="10"
-          r="8.5"
-          fill="none"
-          stroke={INDIGO}
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          initial={{ pathLength: 1 }}
-          animate={{ pathLength: 0 }}
-          transition={{ duration: ms / 1000, ease: "linear" }}
-          style={{ rotate: -90, transformOrigin: "center" }}
-        />
-      </svg>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <span style={{ position: "relative", width: 26, height: 26, flexShrink: 0 }}>
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+          <circle cx="13" cy="13" r="11.4" fill="none" stroke="#E2DFF6" strokeWidth="2.2" />
+          {!reduce && (
+            <motion.circle
+              cx="13"
+              cy="13"
+              r="11.4"
+              fill="none"
+              stroke={INDIGO}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              initial={{ pathLength: 1 }}
+              animate={{ pathLength: 0 }}
+              transition={{ duration: ms / 1000, ease: "linear" }}
+              style={{ rotate: -90, transformOrigin: "center" }}
+            />
+          )}
+        </svg>
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            fontFamily: HEAD,
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: INDIGO,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {left}
+        </span>
+      </span>
       <span style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, opacity: 0.85 }}>{label}</span>
     </div>
   );
@@ -709,8 +739,9 @@ function ReactionScreen({
   onContinue: () => void;
   continueLabel: string;
 }) {
-  const reduce = useReducedMotion();
-  const dwell = reduce ? 1100 : reaction.dwell;
+  // Reduced motion means less animation, not less reading time — the words drawn
+  // into this art take just as long to read either way, so the dwell is the same.
+  const dwell = reaction.dwell ?? REACTION_DWELL;
 
   const badge =
     kind === "correct"
@@ -764,6 +795,7 @@ function ReactionScreen({
           rather than a stray rectangle floating on the cream canvas. */}
       <div
         style={{
+          position: "relative",
           display: "flex",
           justifyContent: "center",
           background: SURFACE,
@@ -774,6 +806,33 @@ function ReactionScreen({
           overflow: "hidden",
         }}
       >
+        {/* Explicit dismiss. The whole screen also advances on tap, but over a
+            ten-second hold people look for a real close button — so give them one
+            instead of making them guess that tapping the art works. */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onContinue(); }}
+          aria-label="Close and continue"
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 2,
+            width: 32,
+            height: 32,
+            borderRadius: 999,
+            display: "grid",
+            placeItems: "center",
+            background: "rgba(255,255,255,.86)",
+            border: `1px solid ${BORDER}`,
+            color: MUTED,
+            cursor: "pointer",
+            backdropFilter: "blur(6px)",
+            boxShadow: "0 2px 8px rgba(14,14,18,.10)",
+          }}
+        >
+          <X size={16} />
+        </button>
+
         <CourtGif src={reaction.src} alt={reaction.alt} size={reaction.size ?? REACTION_SIZE} priority />
       </div>
 
@@ -791,7 +850,7 @@ function ReactionScreen({
       </p>
 
       <div style={{ marginTop: 14 }}>
-        <DwellRing ms={dwell} label={`tap to ${continueLabel} →`} />
+        <DwellCountdown ms={dwell} label={`tap to ${continueLabel} →`} />
       </div>
     </motion.div>
   );
@@ -811,16 +870,16 @@ function VerdictScreen({
   onNext: () => void;
   onRetry: () => void;
 }) {
-  const reduce = useReducedMotion();
   // The verdict clip spends its first seconds drawing out "THE COURT HAS DECIDED
   // I LOVE YOU MORE / THERE WILL BE NO APPEALS". Showing the CTA immediately
   // invites a tap straight past the line the whole trial was building to, so it
   // fades in once the message has landed. The clip keeps looping either way, so
   // this delays the button — it never traps anyone.
-  const [ctaReady, setCtaReady] = useState(!passed || reduce);
+  // Matches the reaction dwell: this clip's message is the longest of the lot.
+  const [ctaReady, setCtaReady] = useState(!passed);
   useEffect(() => {
     if (ctaReady) return;
-    const t = window.setTimeout(() => setCtaReady(true), 6000);
+    const t = window.setTimeout(() => setCtaReady(true), REACTION_DWELL);
     return () => window.clearTimeout(t);
   }, [ctaReady]);
 
