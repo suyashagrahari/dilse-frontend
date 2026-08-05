@@ -1,0 +1,448 @@
+"use client";
+
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAppSelector } from "@/store/hooks";
+import { API_URL, IS_NGROK } from "@/lib/config";
+import { EVENTS } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+import {
+  type ProposalData,
+  type Memory,
+  type EditMode,
+  type Toast,
+  DEMO_DATA,
+  MIN_MEMORIES,
+  MAX_MEMORIES,
+  proposalDataToBody,
+  dbToProposalData,
+} from "../components/types";
+
+const DRAFT_KEY = "proposal_draft";
+const BASE = `${API_URL}/proposal-pages`;
+
+/** Slug reported on every analytics event from this editor. */
+const TEMPLATE = "proposal";
+
+// Draft is persisted to localStorage so a page refresh (or accidental tab close)
+// keeps everything the user filled in. Falls back to sessionStorage if unavailable.
+const draftStore = (): Storage | null => {
+  try { return window.localStorage; } catch { try { return window.sessionStorage; } catch { return null; } }
+};
+const saveDraft = (payload: unknown) => {
+  try { draftStore()?.setItem(DRAFT_KEY, JSON.stringify(payload)); } catch {}
+};
+const clearDraft = () => {
+  try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
+  try { window.sessionStorage.removeItem(DRAFT_KEY); } catch {}
+};
+const readDraft = (): { data?: ProposalData; password?: string; completed?: boolean } | null => {
+  try {
+    const raw = draftStore()?.getItem(DRAFT_KEY) ?? window.sessionStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
+/**
+ * Ceiling for the combined weight of the uploaded polaroids.
+ *
+ * The API runs `express.json({ limit: "15mb" })`. Base64 inflates a file by ~33%,
+ * so six unprocessed 2MB photos would arrive as ~16MB of JSON and the publish
+ * request would 413 — at the worst possible moment, right after the sender logs
+ * in. 10MB keeps a comfortable margin for the rest of the body, and the canvas
+ * downscale in EditSheet means almost nobody reaches this backstop.
+ */
+export const MAX_MEMORY_PAYLOAD_BYTES = 10 * 1024 * 1024;
+
+/** Data URLs are ASCII, so their character length *is* their cost in the JSON body. */
+export function memoryPayloadBytes(memories: Memory[]): number {
+  return memories.reduce((sum, m) => sum + (m.imageUrl.startsWith("data:") ? m.imageUrl.length : 0), 0);
+}
+
+const mb = (bytes: number) => (bytes / (1024 * 1024)).toFixed(1);
+
+/** Which fields block Save/Publish. Optional fields never appear here. */
+export interface ProposalErrors {
+  recipientName?: string;
+  memories?: string;
+  payload?: string;
+}
+
+function validate(d: ProposalData): ProposalErrors {
+  const errs: ProposalErrors = {};
+  if (!d.recipientName.trim()) errs.recipientName = "Who are you asking? Add their name.";
+  const usable = d.memories.filter((m) => m.imageUrl.trim().length > 0).length;
+  if (usable < MIN_MEMORIES) {
+    errs.memories =
+      MIN_MEMORIES === 1
+        ? "Add at least one photo for the scrapbook."
+        : `Add at least ${MIN_MEMORIES} photos for the scrapbook.`;
+  }
+  const bytes = memoryPayloadBytes(d.memories);
+  if (bytes > MAX_MEMORY_PAYLOAD_BYTES) {
+    errs.payload =
+      `These photos add up to ${mb(bytes)} MB — a bit too heavy to send. ` +
+      `Try removing one or picking smaller pictures.`;
+  }
+  return errs;
+}
+
+/** First blocking problem, in the order a sender would naturally fix them. */
+const firstError = (e: ProposalErrors) => e.recipientName ?? e.memories ?? e.payload;
+
+export function useProposalEditor() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
+
+  const [content, setContent] = useState<ProposalData>(DEMO_DATA);
+  const [mf, setMf] = useState<ProposalData>({ ...DEMO_DATA });
+  const [editMode, setEditMode] = useState<EditMode>(null);
+  const [pagePassword, setPagePassword] = useState("");
+  const [pageId, setPageId] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isPersonalized, setIsPersonalized] = useState(false);
+  // Bumped whenever a *new* preview should be shown → remounts the template so it
+  // replays from the audio gate with the latest content.
+  const [previewVersion, setPreviewVersion] = useState(0);
+  const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
+
+  const [showAuth, setShowAuth] = useState(false);
+  const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
+  const [publishing, setPublishing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastIdRef = useRef(0);
+
+  // Inline errors stay quiet until the sender first tries to leave the form.
+  const [showErrors, setShowErrors] = useState(false);
+  const errors = useMemo(() => validate(mf), [mf]);
+
+  // Holds draft when user tries to publish while unauthenticated → auto-resume after login.
+  const pendingPublishRef = useRef<{ data: ProposalData; password: string } | null>(null);
+
+  const headers = useCallback(
+    () => ({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    }),
+    [accessToken],
+  );
+
+  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+    const delay = toast.type === "publish" ? 1000 : 3500;
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
+  }, []);
+
+  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
+
+  // ── Load existing page (?edit=<id>) or restore a completed local draft ──────
+  useEffect(() => {
+    const id = searchParams.get("edit") || searchParams.get("id");
+    if (id && isAuthenticated && accessToken) {
+      fetch(`${BASE}/${id}`, { headers: headers() })
+        .then((r) => r.json())
+        .then((result) => {
+          if (result.success && result.data) {
+            const d = dbToProposalData(result.data);
+            setContent(d);
+            setMf(d);
+            setPageId(id);
+            setIsPersonalized(true);
+            setEditMode("preview");
+            bumpPreview();
+            if (result.data.isPublished && result.data.shareUrl) setShareUrl(String(result.data.shareUrl));
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // Restore a locally-saved draft on refresh. The typed form data (mf) always comes
+    // back; if it was saved from the preview ("completed"), we also reopen the preview.
+    const draft = readDraft();
+    if (draft?.data) {
+      const d = dbToProposalData(draft.data as unknown as Record<string, unknown>);
+      setMf(d);
+      if (draft.password) setPagePassword(draft.password);
+      if (draft.completed) {
+        setContent(d);
+        setIsPersonalized(true);
+        setEditMode("preview");
+        bumpPreview();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken, searchParams]);
+
+  // ── Auto-resume publish after successful auth ───────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+    const { data, password } = pendingPublishRef.current;
+    // Cleared BEFORE any await: this effect re-runs on every auth change, and a
+    // ref that is still populated when it does would publish the page twice.
+    pendingPublishRef.current = null;
+
+    setPublishing(true);
+    setEditMode("preview");
+    bumpPreview();
+    (async () => {
+      try {
+        const res = await fetch(BASE, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(proposalDataToBody(data, password)),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error("Save failed");
+        const savedId = result.data._id as string;
+        setPageId(savedId);
+        setContent(data);
+        setIsPersonalized(true);
+
+        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubResult = await pubRes.json();
+        if (pubResult.success) {
+          // The share URL is always the server's — never rebuilt on the client.
+          setShareUrl(String(pubResult.data.shareUrl));
+          clearDraft();
+          // The auth-deferred path: user hit Publish while logged out, logged in,
+          // and this resumed automatically. Tracked separately from the direct
+          // path so the login detour's completion rate is visible.
+          track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
+          pushToast({ type: "publish", title: "It's live! 💍", message: "Send it to them", shareUrl: String(pubResult.data.shareUrl) });
+        } else {
+          track(EVENTS.PUBLISH_FAILED, {
+            template: TEMPLATE,
+            source: "auth_deferred",
+            reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+          });
+          pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
+        }
+      } catch {
+        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "save_error" });
+        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+      } finally {
+        setPublishing(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken]);
+
+  // ── Auto-save WIP draft while editing ───────────────────────────────────────
+  useEffect(() => {
+    if (editMode !== "manual") return;
+    saveDraft({ data: mf, password: pagePassword, completed: false });
+  }, [mf, pagePassword, editMode]);
+
+  const displayData = useMemo<ProposalData>(() => {
+    const d = editMode === "manual" ? mf : content;
+    // While a sender is mid-edit the scrapbook can legitimately be empty. The
+    // preview keeps showing the demo polaroids rather than an empty section —
+    // the EditSheet is where the "add a photo" error lives.
+    return d.memories.length ? d : { ...d, memories: DEMO_DATA.memories };
+  }, [editMode, mf, content]);
+
+  const updateMf = useCallback(
+    (key: keyof ProposalData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
+    [],
+  );
+
+  // ── Memory lane (repeatable list) ───────────────────────────────────────────
+  const updateMemory = useCallback((index: number, patch: Partial<Memory>) => {
+    setMf((p) => ({
+      ...p,
+      memories: p.memories.map((m, i) => (i === index ? { ...m, ...patch } : m)),
+    }));
+  }, []);
+
+  const addMemory = useCallback(() => {
+    setMf((p) =>
+      p.memories.length >= MAX_MEMORIES
+        ? p
+        : { ...p, memories: [...p.memories, { imageUrl: "", caption: "" }] },
+    );
+  }, []);
+
+  const removeMemory = useCallback((index: number) => {
+    setMf((p) => ({ ...p, memories: p.memories.filter((_, i) => i !== index) }));
+  }, []);
+
+  /** Nudge a polaroid up or down the scrapbook. No-ops at the ends. */
+  const moveMemory = useCallback((index: number, dir: -1 | 1) => {
+    setMf((p) => {
+      const to = index + dir;
+      if (to < 0 || to >= p.memories.length) return p;
+      const next = [...p.memories];
+      [next[index], next[to]] = [next[to], next[index]];
+      return { ...p, memories: next };
+    });
+  }, []);
+
+  const handleEditClick = useCallback(() => {
+    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    setShowErrors(false);
+    setEditMode("manual");
+    track(EVENTS.EDIT_STARTED, { template: TEMPLATE });
+  }, [isPersonalized, content]);
+
+  const handleEditFromPreview = useCallback(() => {
+    setMf({ ...content });
+    setEditMode("manual");
+  }, [content]);
+
+  // Save (locally) & jump to preview
+  const handleSave = useCallback(() => {
+    const errs = validate(mf);
+    const problem = firstError(errs);
+    if (problem) {
+      setShowErrors(true);
+      pushToast({ type: "info", title: "Almost there", message: problem });
+      return;
+    }
+    setContent(mf);
+    setIsPersonalized(true);
+    setEditMode("preview");
+    bumpPreview(); // fresh preview: the proposal replays from the audio gate
+    saveDraft({ data: mf, password: pagePassword, completed: true });
+    track(EVENTS.PAGE_SAVED, { template: TEMPLATE, has_password: Boolean(pagePassword) });
+    pushToast({ type: "success", title: "Saved!", message: "Play it through, then publish 💍" });
+  }, [mf, pagePassword, pushToast, bumpPreview]);
+
+  const create = useCallback(async (): Promise<string | null> => {
+    const res = await fetch(BASE, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(proposalDataToBody(content, pagePassword)),
+    });
+    const result = await res.json();
+    if (!result.success) return null;
+    setPageId(result.data._id);
+    return result.data._id as string;
+  }, [content, pagePassword, headers]);
+
+  const update = useCallback(async (id: string) => {
+    await fetch(`${BASE}/${id}`, {
+      method: "PUT",
+      headers: headers(),
+      body: JSON.stringify(proposalDataToBody(content, pagePassword)),
+    });
+  }, [content, pagePassword, headers]);
+
+  const publish = useCallback(async () => {
+    // Recorded before any validation or auth check so this measures *intent*.
+    // The gap between this and PUBLISH_SUCCESS is the entire publish drop-off.
+    track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
+
+    const errs = validate(content);
+    const problem = firstError(errs);
+    if (problem) {
+      track(EVENTS.PUBLISH_FAILED, {
+        template: TEMPLATE,
+        reason: errs.recipientName
+          ? "missing_recipient_name"
+          : errs.memories
+            ? "missing_memories"
+            : "payload_too_large",
+      });
+      pushToast({ type: "info", title: "Almost there", message: problem });
+      setMf({ ...content });
+      setShowErrors(true);
+      setEditMode("manual");
+      return;
+    }
+    if (!isAuthenticated || !accessToken) {
+      // The auth wall. The pending intent lives in a ref, so it does not survive
+      // the Google subdomain-bridge redirect — this event makes that loss visible.
+      track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE, source: "publish" });
+      pendingPublishRef.current = { data: content, password: pagePassword };
+      setShowAuth(true);
+      return;
+    }
+    setPublishing(true);
+    try {
+      let id = pageId;
+      if (!id) id = await create();
+      else await update(id);
+      if (!id) throw new Error("Save failed");
+
+      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubResult = await pubRes.json();
+      if (pubResult.success) {
+        setShareUrl(String(pubResult.data.shareUrl));
+        clearDraft();
+        track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
+        pushToast({ type: "publish", title: "It's live! 💍", message: "Send it to them", shareUrl: String(pubResult.data.shareUrl) });
+      } else {
+        track(EVENTS.PUBLISH_FAILED, {
+          template: TEMPLATE,
+          source: "direct",
+          reason: typeof pubResult?.error === "string" ? pubResult.error : "publish_rejected",
+        });
+        pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+      }
+    } catch {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "network_error" });
+      pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+    } finally {
+      setPublishing(false);
+    }
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+
+  /** Cancelling the login modal drops the pending intent, so nothing fires later. */
+  const closeAuth = useCallback(() => {
+    setShowAuth(false);
+    pendingPublishRef.current = null;
+  }, []);
+  const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
+
+  const handleCopy = useCallback((url?: string) => {
+    const link = url || shareUrl;
+    if (link) {
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (!url) pushToast({ type: "success", title: "Link copied!" });
+    }
+  }, [shareUrl, pushToast]);
+
+  const handleShare = useCallback(() => {
+    if (!shareUrl) return;
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      track(EVENTS.SHARE, { template: TEMPLATE, method: "native" });
+      navigator
+        .share({ title: "I have something to ask you 💍", url: shareUrl })
+        .catch(() => {});
+    } else {
+      track(EVENTS.SHARE, { template: TEMPLATE, method: "copy" });
+      handleCopy();
+    }
+  }, [shareUrl, handleCopy]);
+
+  const goBack = useCallback(() => router.push("/templates"), [router]);
+
+  const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
+
+  return {
+    content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
+    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    errors, showErrors,
+    /** Live weight of the uploaded polaroids, so the form can warn before Save. */
+    memoryBytes: memoryPayloadBytes(mf.memories),
+    maxMemoryBytes: MAX_MEMORY_PAYLOAD_BYTES,
+
+    setEditMode, setPagePassword, updateMf,
+    updateMemory, addMemory, removeMemory, moveMemory,
+    handleEditClick, handleEditFromPreview, handleSave,
+    create, update, publish,
+    closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
+    pushToast, dismissToast,
+
+    showPublish: isPersonalized && !shareUrl && !publishing,
+    showShare: !!shareUrl,
+    shareLabel: copied ? "Copied!" : "Share",
+  };
+}

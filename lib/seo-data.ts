@@ -1453,4 +1453,56 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROPOSAL — WILL YOU MARRY ME PAGE
+  // ═══════════════════════════════════════════════════════════════════════════
+  proposal: {
+    title: "Will You Marry Me? — Make an Online Proposal Page (Free)",
+    description:
+      "Pop the question on a page made only for them: your song playing softly, a scrapbook of the photos that got you here, then the ring, the question, and a Yes button. Add a private password, send the link, and watch them say yes. Free and mobile-first.",
+    category: "Love",
+    emoji: "💍",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 512 },
+
+    keywords: [
+      "online marriage proposal", "will you marry me page", "digital proposal page",
+      "interactive marriage proposal online", "virtual proposal for girlfriend",
+      "long distance marriage proposal ideas", "propose online link",
+      "will you marry me website maker", "proposal page with photos and music",
+      "cute way to propose over whatsapp", "propose to my girlfriend online free",
+      "marriage proposal card online india", "shaadi proposal message page",
+      "romantic proposal ideas for long distance couples",
+      "will you be my wife page", "will you be my husband page",
+      "engagement proposal page online", "digital ring proposal animation",
+      "surprise proposal link for her", "propose with a photo timeline",
+      "proposal page with password protection", "kaise propose karein online",
+    ],
+
+    faqs: [
+      { question: "How do I make an online marriage proposal page?", answer: "Open the Proposal template on SubhSandesh and tap Create. Add your name and theirs, upload the photos you want in the memory scrapbook with a line under each, write the question you want on screen and the secret note they read after saying yes. Publish to get a private link you can send on WhatsApp, iMessage or Instagram. It takes about three minutes." },
+      { question: "Is it free to create and share a proposal page?", answer: "Yes — creating, publishing and sharing your proposal page is completely free, and the link keeps working after you send it." },
+      { question: "Can I add our song to the page?", answer: "Yes. Paste a link to the track you want and it loops softly in the background. The page opens on a gentle tap-to-begin screen first, because browsers will not autoplay audio — so they hear the song from the very first second instead of halfway through." },
+      { question: "What actually happens when they tap Yes?", answer: "The page bursts into a celebration — confetti, the title you wrote, and then your secret note, signed with your name. If you added the date you met, they also see exactly how many days you have been together." },
+      { question: "Can I use this to propose from far away?", answer: "That is exactly what it is for. Send the link at the moment you want them to open it, get on a call, and watch their face while they scroll through your memories and reach the question." },
+      { question: "Can I password-protect the proposal so nobody else sees it first?", answer: "Yes — set an optional password when you create the page. Anyone opening the link sees a gentle lock screen and must enter it before the proposal unlocks. Passwords are stored hashed and are never shown on the page." },
+      { question: "How many photos can I add to the memory scrapbook?", answer: "Add several photos, each with its own short caption, laid out as polaroids they scroll through on the way to the question. Use your own uploads or the illustrations that come bundled with the template." },
+      { question: "Can I edit the page after I have already sent the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, so you can fix a typo without sending a new one." },
+      { question: "Does it work properly on a phone?", answer: "Yes. The whole page is designed phone-first, since almost everyone will open your link on their phone." },
+    ],
+
+    howTo: {
+      name: "How to Make an Online Marriage Proposal Page",
+      description: "Create a private 'Will you marry me?' page with your photos, your song and a Yes button — free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open the Proposal Template", text: "Go to the Proposal page on SubhSandesh and tap Create." },
+        { name: "Add Both Your Names", text: "Enter your name and the name of the person you are asking — every line on the page is written to them." },
+        { name: "Build the Memory Scrapbook", text: "Upload the photos that tell your story and write a short caption under each polaroid." },
+        { name: "Write the Question", text: "Choose the ring, rose or bouquet animation, then write the headline you want on screen and the label on the Yes button." },
+        { name: "Write the Secret Note", text: "Write the note they read after they say yes, and add the date you met to show your day count." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it the moment you want them to open it." },
+      ],
+    },
+  },
 };

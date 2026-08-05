@@ -13,6 +13,7 @@ import { config as apologyDashboard } from "@/app/(templates)/apology-dashboard/
 import { config as missyouGf } from "@/app/(templates)/missyou-gf/config";
 import { config as bouquetGf } from "@/app/(templates)/bouquet-gf/config";
 import { config as courtOfLove } from "@/app/(templates)/court-of-love/config";
+import { config as proposal } from "@/app/(templates)/proposal/config";
 import { config as missyouBestfriend } from "@/app/(templates)/missyou-bestfriend/config";
 import { config as anniversaryGf } from "@/app/(templates)/anniversary-gf/config";
 import { config as anniversaryParents } from "@/app/(templates)/anniversary-parents/config";
@@ -39,6 +40,7 @@ const allConfigs = [
   missyouGf,
   bouquetGf,
   courtOfLove,
+  proposal,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
