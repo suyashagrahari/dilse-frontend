@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit } from "next/font/google";
+import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit, Tinos, Courier_Prime, Tiro_Devanagari_Hindi } from "next/font/google";
 import Providers from "@/components/Providers";
 import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
 import { buildMeta, SITE_URL } from "@/lib/seo";
@@ -101,6 +101,41 @@ const outfit = Outfit({
   display: "optional",
 });
 
+// ── Document-artifact fonts (court-marriage / train-ticket / legal-notice) ────
+// These templates imitate printed paperwork, where realism depends on a
+// two-font split: a Times-metric serif for the PRE-PRINTED form text, and a
+// typewriter face for the values TYPED into it. One font reads instantly fake.
+// display: "swap" (not "optional") is deliberate and load-bearing here: these
+// pages export themselves to PNG via html-to-image after `document.fonts.ready`,
+// and "optional" can decline to load the face at all — the export would then
+// silently fall back and look nothing like the screen. They render inside a
+// template route, never the landing hero, so no LCP/CLS cost is incurred.
+const tinos = Tinos({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-tinos",
+  display: "swap",
+});
+const courierPrime = Courier_Prime({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-courier-prime",
+  display: "swap",
+});
+// Devanagari sub-heading on the marriage certificate (विवाह प्रमाण पत्र).
+// Self-hosted rather than reusing the async Noto Serif Devanagari in FONTS_HREF,
+// because that stylesheet is injected at runtime and is not guaranteed to be
+// resolved by the time html-to-image captures.
+const tiroDevanagari = Tiro_Devanagari_Hindi({
+  subsets: ["devanagari", "latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-tiro-devanagari",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   ...buildMeta(),
   manifest: "/manifest.json",
@@ -150,7 +185,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable} ${fredoka.variable} ${inter.variable} ${playfair.variable} ${outfit.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable} ${fredoka.variable} ${inter.variable} ${playfair.variable} ${outfit.variable} ${tinos.variable} ${courierPrime.variable} ${tiroDevanagari.variable}`}>
       <head suppressHydrationWarning>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

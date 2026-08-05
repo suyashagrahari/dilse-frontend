@@ -26,6 +26,10 @@ import { config as holi } from "@/app/(templates)/holi/config";
 import { config as shaadiCard } from "@/app/(templates)/shaadi-card/config";
 import { config as christianWedding } from "@/app/(templates)/christian-wedding/config";
 import { config as christianWedding2 } from "@/app/(templates)/christian-wedding-2/config";
+import { config as courtMarriage } from "@/app/(templates)/court-marriage/config";
+import { config as holdMyHand } from "@/app/(templates)/hold-my-hand/config";
+import { config as trainTicket } from "@/app/(templates)/train-ticket/config";
+import { config as legalNotice } from "@/app/(templates)/legal-notice/config";
 
 const allConfigs = [
   birthdayGf,
@@ -41,6 +45,10 @@ const allConfigs = [
   bouquetGf,
   courtOfLove,
   proposal,
+  courtMarriage,
+  holdMyHand,
+  trainTicket,
+  legalNotice,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,

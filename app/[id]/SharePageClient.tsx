@@ -93,6 +93,22 @@ const ProposalViewer = dynamic(() => import("./ProposalViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const CourtMarriageViewer = dynamic(() => import("./CourtMarriageViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const HoldMyHandViewer = dynamic(() => import("./HoldMyHandViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const TrainTicketViewer = dynamic(() => import("./TrainTicketViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const LegalNoticeViewer = dynamic(() => import("./LegalNoticeViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -221,7 +237,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice") {
             setData(result.data);
             setLoading(false);
             return;
@@ -415,6 +431,26 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Darling has its own full-page viewer
   if (!loading && templateType === "darling" && data) {
     return <DarlingViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Court Marriage Certificate has its own full-page viewer
+  if (!loading && templateType === "court-marriage" && data) {
+    return <CourtMarriageViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Hold My Hand has its own full-page viewer
+  if (!loading && templateType === "hold-my-hand" && data) {
+    return <HoldMyHandViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Train Ticket has its own full-page viewer
+  if (!loading && templateType === "train-ticket" && data) {
+    return <TrainTicketViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Legal Notice has its own full-page viewer
+  if (!loading && templateType === "legal-notice" && data) {
+    return <LegalNoticeViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   // Birthday GF has its own full-page viewer
