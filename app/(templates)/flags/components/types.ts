@@ -103,7 +103,13 @@ export const REVEAL = {
   flipStartMs: 520,
   flipMs: 480,
   flipEasing: "cubic-bezier(0.4, 0, 0.2, 1)",
-  nextAffordanceMs: 800,
+  /**
+   * Must not be lower than `lockMs`. "tap to continue" appearing while input is
+   * still locked shows an affordance that silently does nothing — the user taps,
+   * gets no response, and reads it as a broken card rather than a deliberate
+   * pause.
+   */
+  nextAffordanceMs: 1000,
   /** Input is locked for the whole sequence so mashing cannot skip a card. */
   lockMs: 1000,
 } as const;
@@ -185,13 +191,29 @@ export function computeScorecard(deck: FlagCard[], results: SwipeResult[]): Scor
   const floored = Math.max(0.6, raw);
   const compatibility = Math.round((90 + ((floored - 0.6) / 0.4) * 9.9) * 10) / 10;
 
+  // The verdict is the line that gets screenshotted, so it has to actually
+  // respond to how she swiped. Ordered most-specific first: the absolutes read
+  // as a real reaction, the ratio bands catch the broad shapes, and accuracy is
+  // checked before the neutral fallback so "you saw straight through me" beats
+  // a shrug. Every branch stays warm — see the note on `Scorecard`.
+  const pct = (n: number) => n / total;
   let verdict: string;
   if (total === 0) {
     verdict = "no verdict. you didn't play. also fair.";
-  } else if (greenCalled / total >= 0.6) {
+  } else if (greenCalled === total) {
+    verdict = `${total} for ${total}, all green. you have never once held anything against me and it's starting to worry me.`;
+  } else if (redCalled === total) {
+    verdict = `${total} for ${total}, all red. no notes. genuinely.`;
+  } else if (pct(complicatedCalled) >= 0.45) {
+    verdict = "you called most of me complicated. that's the most honest read anyone's given.";
+  } else if (pct(greenCalled) >= 0.6) {
     verdict = `you called ${greenCalled} of my worst habits green flags. concerning.`;
-  } else if (redCalled / total >= 0.6) {
+  } else if (pct(redCalled) >= 0.6) {
     verdict = "brutal. accurate. still here though.";
+  } else if (raw >= 0.8) {
+    verdict = `you got ${matches} of ${total} right. you've been paying attention. unsettling.`;
+  } else if (raw <= 0.3) {
+    verdict = "you and I disagree about almost everything here. explains a lot, actually.";
   } else {
     verdict = "fair. that's the scary part.";
   }
