@@ -34,6 +34,10 @@ import { config as kundliMilan } from "@/app/(templates)/kundli-milan/config";
 import { config as vendingMachine } from "@/app/(templates)/vending-machine/config";
 import { config as catchGame } from "@/app/(templates)/catch/config";
 import { config as flags } from "@/app/(templates)/flags/config";
+import { config as dateInvitation } from "@/app/(templates)/date-invitation/config";
+import { config as photoPuzzle } from "@/app/(templates)/photo-puzzle/config";
+import { config as loveflix } from "@/app/(templates)/loveflix/config";
+import { config as rewind } from "@/app/(templates)/rewind/config";
 
 const allConfigs = [
   birthdayGf,
@@ -57,6 +61,10 @@ const allConfigs = [
   vendingMachine,
   catchGame,
   flags,
+  dateInvitation,
+  photoPuzzle,
+  loveflix,
+  rewind,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,

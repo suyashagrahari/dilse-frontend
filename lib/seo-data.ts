@@ -1505,4 +1505,208 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE INVITATION — DATE PLAN THAT UNLOCKS ONE STOP AT A TIME
+  // ═══════════════════════════════════════════════════════════════════════════
+  "date-invitation": {
+    title: "The Invitation — Plan a Date They Unlock Stop by Stop (Free)",
+    description:
+      "Send a date invitation they have to answer. Say yes and it becomes a live countdown — then, on the night, the plan unlocks one stop at a time while you are actually out. Time, dress code and how much walking are shared upfront; the places are not. Free and mobile-first.",
+    category: "Love",
+    emoji: "💌",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 216 },
+
+    keywords: [
+      "online date invitation", "surprise date invitation for girlfriend",
+      "date night invitation card online", "digital date invite link",
+      "mystery date ideas", "surprise date plan for girlfriend",
+      "date itinerary planner for couples", "romantic date invitation maker",
+      "will you go out with me page", "ask her out online free",
+      "date invite with rsvp online", "surprise date night ideas india",
+      "plan a date for my girlfriend", "date invitation whatsapp link",
+      "hidden location date idea", "mystery date invitation template",
+      "date invite with countdown", "romantic itinerary for a day out",
+      "date plan reveal one stop at a time", "date invitation card for boyfriend",
+    ],
+
+    faqs: [
+      { question: "How do I make an online date invitation?", answer: "Open The Invitation template on SubhSandesh and tap Create. Add both names, the date and time, the dress code and how much walking there will be, then add each stop with its address and a line about why you chose it. Publish to get a private link you can send on WhatsApp or Instagram. It takes about three minutes." },
+      { question: "Is the date invitation free?", answer: "Yes — creating, publishing and sharing your invitation is completely free, and the link keeps working through the date itself." },
+      { question: "Do they see where we are going?", answer: "No, and that is the whole point. Before the date they see the time, how long it will run, the dress code and how much walking to expect — never the places. Once they accept, the meeting point is revealed. Each stop unlocks only when you get there." },
+      { question: "What happens when they say yes?", answer: "The invitation turns into a live countdown to the start time and reveals the meeting point. On the day it becomes the running itinerary, one stop at a time, with directions for whichever stop you are at." },
+      { question: "Can they say no, or ask for a different day?", answer: "Yes. Alongside accept there is a gentle decline and a reschedule option where they can propose another date. A decline ends on a warm note rather than an error screen." },
+      { question: "How do stops unlock during the date?", answer: "Tap 'we're here' when you arrive and the next stop opens. If you forget, the page advances on its own about twenty minutes after the next stop's scheduled time, so a missed tap never strands you mid-date." },
+      { question: "Can I mark some stops as a surprise and others not?", answer: "Yes — each stop has a surprise toggle. A surprise stop shows only a placeholder until it unlocks; a non-surprise stop shows its name in the itinerary while still locked." },
+      { question: "Can I password-protect the invitation?", answer: "Yes — set an optional password when you create the page. Anyone who opens the link must enter it before the invitation opens. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I add photos afterwards?", answer: "Yes. Once the last stop has passed the page becomes a memory of the night, and you can add the photos you took along the route." },
+      { question: "Can I edit the plan after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, so you can fix a time or swap a stop without sending a new one." },
+    ],
+
+    howTo: {
+      name: "How to Make an Online Date Invitation That Unlocks Stop by Stop",
+      description: "Create a private date invitation with an RSVP, a countdown and an itinerary that reveals itself on the night — free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open The Invitation Template", text: "Go to The Invitation page on SubhSandesh and tap Create." },
+        { name: "Set the Time and the Terms", text: "Add both names, the date and time, how long it runs, the dress code and how much walking to expect." },
+        { name: "Choose the Meeting Point", text: "Add where you will meet. This is the only place revealed before the date starts." },
+        { name: "Add the Stops", text: "Add each stop with its address, arrival time, how long you will stay, and a line about why you chose it." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it for them to answer." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE LAST PIECE — PHOTO JIGSAW WITH A LETTER
+  // ═══════════════════════════════════════════════════════════════════════════
+  "photo-puzzle": {
+    title: "The Last Piece — Photo Jigsaw Letter for Someone You Love (Free)",
+    description:
+      "A photo jigsaw where every piece they place reveals a line of your letter and plays a note. Nothing can be placed wrong, there is no timer and no score — and the final piece is not in the box. You have it, and you release it while they watch. Free and mobile-first.",
+    category: "Love",
+    emoji: "🧩",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 187 },
+
+    keywords: [
+      "online photo puzzle for girlfriend", "photo jigsaw puzzle maker free",
+      "make a puzzle out of a photo online", "romantic puzzle gift online",
+      "digital jigsaw puzzle with message", "puzzle love letter online",
+      "photo puzzle game for boyfriend", "cute online game for couples",
+      "long distance relationship gift online", "photo puzzle link to send",
+      "personalised jigsaw puzzle online india", "puzzle proposal idea",
+      "anniversary photo puzzle gift", "puzzle with hidden message maker",
+      "interactive love letter online", "photo puzzle whatsapp gift",
+      "jigsaw puzzle for valentine online", "puzzle gift for long distance boyfriend",
+    ],
+
+    faqs: [
+      { question: "How do I make a photo puzzle for someone?", answer: "Open The Last Piece template on SubhSandesh and tap Create. Upload the photo you want them to assemble, choose the grid size, write one line of your letter for each piece, then publish to get a private link. It takes about two minutes." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your photo puzzle is completely free." },
+      { question: "Can they lose or get it wrong?", answer: "No. There is no score, no timer and no failure state. A piece released in the wrong place simply slides back to the tray, quietly. The puzzle is a pace, not a test." },
+      { question: "What is the last piece about?", answer: "One interior piece is held back so the hole sits in the middle of the photo where it cannot be ignored. They finish everything else and then have to ask you for it — you release it live, from your side, and it drops into place while they watch." },
+      { question: "What if I am asleep when they finish?", answer: "Nobody is left holding an incomplete gift. If you have not released the last piece after about ten minutes, a quiet self-serve link appears so they can finish it themselves." },
+      { question: "How many pieces can the puzzle have?", answer: "Up to sixteen. That ceiling is deliberate — a twenty-four piece jigsaw on a phone screen stops being a gift and starts being data entry, and most people quit part way." },
+      { question: "What do the notes do?", answer: "Each placement plays one note of a short melody you choose, so assembling the photo plays a phrase. If the melody is shorter than the number of pieces it simply repeats." },
+      { question: "Can I add a different photo for the reveal?", answer: "Yes — add an optional reveal image and it cross-dissolves in once the puzzle is complete. Leave it blank to skip the reveal entirely." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Make a Photo Jigsaw Letter Online",
+      description: "Turn a photo into a jigsaw where every piece reveals a line of your letter — and you hold the last piece. Free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open The Last Piece Template", text: "Go to The Last Piece page on SubhSandesh and tap Create." },
+        { name: "Upload the Photo", text: "Choose the photo they will assemble, and optionally a second one to cross-dissolve in at the end." },
+        { name: "Choose the Grid", text: "Pick how many pieces — up to sixteen, so it still fits comfortably on a phone." },
+        { name: "Write the Letter", text: "Write one line per piece. Each placement pays them a line and plays a note." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and be ready to release the last piece when they ask." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOVEFLIX — A STREAMING SERVICE WITH ONE SHOW ON IT
+  // ═══════════════════════════════════════════════════════════════════════════
+  loveflix: {
+    title: "LoveFlix — Turn Your Relationship Into a Streaming Show (Free)",
+    description:
+      "A streaming service with exactly one show on it, and they are the lead. Browse the catalogue of your relationship — Continue Watching, a Top 10 of reasons, Trending In My World — then press play on a branching episode where every choice changes the path and none of them are wrong. Free and mobile-first.",
+    category: "Love",
+    emoji: "🎬",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 274 },
+
+    keywords: [
+      "streaming style page for girlfriend", "our love story as a tv show",
+      "interactive love story online", "choose your own adventure love story maker",
+      "relationship show page online", "top 10 reasons i love you page",
+      "romantic interactive story for boyfriend", "make a tv show about us",
+      "anniversary gift online interactive", "branching story love letter",
+      "watch our story online page", "episode about us romantic page",
+      "cute long distance gift ideas online", "personalised streaming profile gift",
+      "our story episode maker free", "romantic web page gift india",
+      "interactive anniversary page", "share a love story link whatsapp",
+    ],
+
+    faqs: [
+      { question: "What is LoveFlix?", answer: "A page built like a streaming service where the only show is the two of you. There is a profile screen, a dark browse grid with rows like Continue Watching Us and a Top 10 of reasons, a hero banner with a match percentage — and then an episode you press play on." },
+      { question: "How do I make one?", answer: "Open the LoveFlix template on SubhSandesh and tap Create. Add both names, name the show, write the rows and the Top 10, then write the episode as a set of scenes with two choices each. Publish to get a private link." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your LoveFlix page is completely free." },
+      { question: "How does the branching episode work?", answer: "Each scene shows narration line by line, then offers two choices with a countdown. Whichever they pick, the paths converge on the same finale — so no choice is ever wrong and nobody gets a worse ending than anybody else." },
+      { question: "What happens if they do not choose in time?", answer: "The default choice fires and the page tells them, cheerfully, that it chose for them. Timing out is a joke in this template, never a failure." },
+      { question: "Is this affiliated with any streaming service?", answer: "No. LoveFlix borrows the layout conventions of the genre — profile selection, browse rows, a Top 10 rail, skip intro — and nothing else. It uses its own name, its own amber accent and its own artwork, and it is not connected to or endorsed by any streaming company." },
+      { question: "How long should the episode be?", answer: "Five to eight scenes on the longest path is the sweet spot. The editor warns you if one branch ends up much longer than another, or if a choice points at a scene that does not exist." },
+      { question: "Can I add photos?", answer: "Yes — add a profile photo for each of you, a hero banner image, and artwork for every card in the rows and every scene in the episode." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Turn Your Relationship Into a Streaming Show",
+      description: "Build a private streaming page with one show on it — a browse grid, a Top 10 and a branching episode. Free.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the LoveFlix Template", text: "Go to the LoveFlix page on SubhSandesh and tap Create." },
+        { name: "Name the Show", text: "Add both names, the show title, the tagline, the match percentage and the year you met." },
+        { name: "Build the Catalogue", text: "Write the browse rows — Continue Watching, a Top 10 of reasons, Trending In My World — with a caption on every card." },
+        { name: "Write the Episode", text: "Write each scene's narration and its two choices. Every path converges on the finale, so no choice is wrong." },
+        { name: "Write the Finale and Credits", text: "Write the closing text, an optional question, and the credits — director, starring, catering." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REWIND — YOUR YEAR TOGETHER, AS A TAP-THROUGH STORY
+  // ═══════════════════════════════════════════════════════════════════════════
+  rewind: {
+    title: "Rewind — Your Year Together as a Tap-Through Story (Free)",
+    description:
+      "A full-screen story you tap through, one huge number per slide. Every time-based figure is worked out from a single date — days, hours, winters, Diwalis — so nothing is typed in. It ends on the verdict: which couple you actually are. Free and mobile-first.",
+    category: "Love",
+    emoji: "⏮️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 341 },
+
+    keywords: [
+      "relationship year in review", "our year together page online",
+      "couple year in review maker", "days together counter page",
+      "relationship stats page online", "anniversary recap page for girlfriend",
+      "how long have we been together counter", "relationship archetype quiz",
+      "couple personality result page", "year in review story for couples",
+      "tap through story gift online", "top 5 reasons i love you page",
+      "anniversary slideshow alternative online", "relationship recap link whatsapp",
+      "days together calculator romantic page", "our year in numbers page",
+      "couple stats story india", "anniversary gift page free online",
+    ],
+
+    faqs: [
+      { question: "What is Rewind?", answer: "A vertical, full-screen story your partner taps through — one big number or one big line per slide, with hard colour cuts between them. It covers your year in numbers, a ranked Top 5, and ends on a relationship archetype." },
+      { question: "How do I make one?", answer: "Open the Rewind template on SubhSandesh and tap Create. Enter the date you got together, write your Top 5 reasons and a few joke stats, answer six short questions about the two of you, then publish to get a private link. It takes about three minutes." },
+      { question: "Do I have to work out the numbers myself?", answer: "No, and that is the point. You enter one date. Days, hours, weeks, months, winters crossed, monsoons, Diwalis and Holis are all derived from it. A year-in-review where the sender types in '847 days' is just a slideshow with big fonts." },
+      { question: "What is the archetype at the end?", answer: "Six short questions about how you argue, how fast you reply and what happens to your plans produce one of ten affectionate verdicts — The 3 AM Overthinkers, The Feeders, The Slow Burn and so on. Every outcome is warm; there is no bad result." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Rewind is completely free." },
+      { question: "What if we only got together recently?", answer: "It handles that. Under thirty days the copy changes and the page says 'it's early — that's the good part' instead of printing a table of zeroes." },
+      { question: "Can I add our song?", answer: "Yes — add a song title, the artist and an audio file, and it gets its own slide. Leave the audio blank and the song slide is skipped rather than shown empty." },
+      { question: "Can they screenshot it?", answer: "Yes, and it is built for that. The ranked Top 5 and the archetype reveal both hold on screen longer than the other slides because they are the ones people share." },
+      { question: "Is this affiliated with any music service?", answer: "No. Rewind uses the layout conventions of the year-in-review genre — vertical slides, progress segments, kinetic type — and nothing else. It has its own name, its own palette and its own copy, and it is not connected to or endorsed by any music company." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, and the numbers recalculate on every open." },
+    ],
+
+    howTo: {
+      name: "How to Make a Relationship Year in Review",
+      description: "Turn one date into a full-screen tap-through story of your year, ending on which couple you actually are. Free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open the Rewind Template", text: "Go to the Rewind page on SubhSandesh and tap Create." },
+        { name: "Enter the One Date", text: "Add the date you got together. Every time-based number in the deck is worked out from it." },
+        { name: "Write the Top 5", text: "Write the five reasons, ranked. This is the slide people screenshot, so make them specific." },
+        { name: "Add Your Own Stats", text: "Add a few joke stats of your own — cups of chai abandoned, longest voice note, times they said they were fine." },
+        { name: "Answer the Six Questions", text: "Answer six short questions about the two of you. They decide which archetype the story ends on." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
 };
