@@ -37,6 +37,12 @@ export const FORBIDDEN_TOKENS: readonly string[] = [
   ["Me", "ta"].join(""),
   ["Thre", "ads"].join(""),
   ["Face", "book"].join(""),
+  // The short-video product. This list originally omitted it, and the omission
+  // was not theoretical: the tab in this very file was named after it and the
+  // empty-state copy rendered it on screen, and the check passed anyway. A
+  // deny-list is only worth what is actually on it.
+  ["Re", "els"].join(""),
+  ["Boom", "erang"].join(""),
 ];
 
 /**
@@ -203,13 +209,28 @@ const trim1 = (n: number): string => {
   return s.endsWith(".0") ? s.slice(0, -2) : s;
 };
 
-/** "Followed by mom and 2 others" — the handles come back semibold. */
-export function followedByLine(handles: string[]): { named: string[]; suffix: string } {
-  if (handles.length === 0) return { named: [], suffix: "" };
-  if (handles.length === 1) return { named: handles, suffix: "" };
-  if (handles.length === 2) return { named: handles, suffix: "" };
-  const named = handles.slice(0, 2);
-  return { named, suffix: ` and ${handles.length - 2} others` };
+/**
+ * "Followed by mom, her_mom and 2 others" — the named handles render semibold.
+ *
+ * `joiner` sits between the named handles and is the reason this returns a
+ * shape rather than a string: two handles read "mom and her_mom", three or
+ * more read "mom, her_mom and N others". An earlier version returned no joiner
+ * at all, so the two-handle case rendered "mom, her_mom", which is stiff and is
+ * not what the convention does.
+ */
+export function followedByLine(handles: string[]): {
+  named: string[];
+  joiner: string;
+  suffix: string;
+} {
+  if (handles.length === 0) return { named: [], joiner: "", suffix: "" };
+  if (handles.length === 1) return { named: handles, joiner: "", suffix: "" };
+  if (handles.length === 2) return { named: handles, joiner: " and ", suffix: "" };
+  return {
+    named: handles.slice(0, 2),
+    joiner: ", ",
+    suffix: ` and ${handles.length - 2} others`,
+  };
 }
 
 /** Pinned first, then the rest in their given order. Never reorders otherwise. */
@@ -250,7 +271,9 @@ export const STORY_BACK_ZONE = 0.3;
 export type ProfileTab = "grid" | "clips" | "tagged";
 
 export const TAB_EMPTY_COPY: Record<Exclude<ProfileTab, "grid">, string> = {
-  clips: "no videos. we're not that kind of couple.",
+  // Not "no videos" — the grid carries posts flagged as video, so that line
+  // made the fiction contradict itself on the same screen.
+  clips: "nothing here. they're all on the grid.",
   tagged: "nobody tagged us. we were busy.",
 };
 
