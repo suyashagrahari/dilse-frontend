@@ -44,10 +44,11 @@ export default function SignOffActions({ show, shareId, mode }: SignOffActionsPr
   }, [show.station.name, show.station.frequency]);
 
   const handleReply = useCallback((rec: Recording) => {
-    // TODO(delivery): upload `rec.blob` (mime `rec.mimeType`) to media storage
-    // and POST the resulting URL to /dedication-pages/share/<shareId>/reply so
-    // the sender is notified. Neither the upload helper nor the reply route
-    // exists yet — both live outside this template directory.
+    // TODO(delivery): POST `rec.dataUrl` to
+    // /dedication-pages/share/<shareId>/reply. The recording is already in the
+    // shape the server wants — `resolveAudioUrl` would push it to S3 exactly as
+    // it does for the sender's own segments — but that reply route does not
+    // exist yet, and it lives outside this template directory.
     if (process.env.NODE_ENV !== "production") {
       console.info(
         `[dedication] call-back recorded: ${rec.blob.size} bytes, ${rec.mimeType}, ${Math.round(rec.durationMs / 1000)}s. Delivery is stubbed.`,

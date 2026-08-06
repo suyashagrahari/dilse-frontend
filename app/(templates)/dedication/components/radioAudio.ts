@@ -48,6 +48,32 @@ const getCtor = (): Ctor | null => {
 /** Smoothing constant for `setTargetAtTime`. Small = snappy, large = syrupy. */
 const GLIDE = 0.045;
 
+/**
+ * Origins already known to serve media without CORS headers.
+ *
+ * MEASURED, not assumed: the media bucket currently answers a cross-origin
+ * request with no `Access-Control-Allow-Origin` at all, so an
+ * `<audio crossOrigin="anonymous">` pointed at it fails with a format error and
+ * the unrouted fallback has to run. Without this cache EVERY voice segment pays
+ * for that twice — a failed round-trip, then the real one — which on a metered
+ * connection is exactly the waste the show is supposed to avoid.
+ *
+ * Deliberately per-origin and learned at runtime rather than hard-coded: the
+ * day the bucket gets a CORS rule, the first segment succeeds on the routed
+ * pass and the VU meters become genuine again with no code change.
+ */
+const corsHostileOrigins = new Set<string>();
+
+const originOf = (url: string): string | null => {
+  if (!url.startsWith("http")) return null;
+  try {
+    const u = new URL(url);
+    return u.origin === window.location.origin ? null : u.origin;
+  } catch {
+    return null;
+  }
+};
+
 /** The carrier that rises as the target station comes in. */
 const CARRIER_HZ = 440;
 const CARRIER_GAIN = 0.07;
@@ -513,14 +539,16 @@ export class RadioAudio {
       });
     };
 
-    const startPlain = () => {
+    const origin = originOf(url);
+
+    const startPlain = (reason: string) => {
       const plain = this.ensurePlainEl();
       if (!plain) {
         finish(() => onFailed("no fallback audio element"));
         return;
       }
       usedFallback = true;
-      this.log("warn", "voice failed the CORS-routed load — replaying unrouted, VU meters go simulated");
+      this.log("warn", `${reason} — replaying unrouted, VU meters go simulated`);
       attach(plain, false, () => finish(() => onFailed("voice failed on both routed and unrouted elements")));
       plain.preload = "auto";
       plain.src = url;
@@ -531,9 +559,19 @@ export class RadioAudio {
       });
     };
 
+    // This origin already failed the routed pass once this session. Skip
+    // straight to the element that works instead of buying the same failed
+    // round-trip for every remaining segment.
+    if (origin && corsHostileOrigins.has(origin)) {
+      this.pump();
+      startPlain(`${origin} is known to serve media without CORS headers`);
+      return () => finish(() => {});
+    }
+
     attach(el, this.routedOk, () => {
       if (usedFallback) return;
-      startPlain();
+      if (origin) corsHostileOrigins.add(origin);
+      startPlain("voice failed the CORS-routed load");
     });
 
     // The graph is only useful if the context is actually running.
@@ -548,9 +586,11 @@ export class RadioAudio {
     armWatchdog();
     void el.play().catch((e: unknown) => {
       // A rejected play() on the routed element is usually autoplay policy, not
-      // CORS — but the unrouted twin is worth one attempt either way.
+      // CORS — but the unrouted twin is worth one attempt either way. NOT
+      // recorded as a CORS failure: an autoplay refusal says nothing about the
+      // origin's headers, and caching it would give up the analyser for good.
       this.log("warn", `routed voice play() rejected: ${String(e)}`);
-      if (!usedFallback) startPlain();
+      if (!usedFallback) startPlain("routed play() rejected");
     });
 
     return () => finish(() => {});
@@ -559,6 +599,10 @@ export class RadioAudio {
   /** Warm the next voice file during the current segment. Metered-friendly. */
   prefetchVoice(url: string): void {
     if (!url || typeof document === "undefined") return;
+    // A data URL is already in memory. Handing it to a second element just
+    // decodes several megabytes of base64 twice for no benefit — this is the
+    // editor-preview path, before the server has swapped it for an S3 URL.
+    if (url.startsWith("data:")) return;
     const probe = document.createElement("audio");
     probe.preload = "auto";
     probe.crossOrigin = "anonymous";

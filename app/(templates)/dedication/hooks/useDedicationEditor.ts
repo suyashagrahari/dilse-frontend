@@ -6,12 +6,17 @@
 // auth-deferred Publish → Share.
 //
 // ONE DELIBERATE DIFFERENCE. The sibling editors autosave the draft to
-// localStorage. This one keeps it in component state ONLY, because the draft
-// holds `blob:` object URLs for the booth recordings and those are scoped to
-// the document that created them. Persisting them would restore a draft whose
-// voice segments point at URLs that no longer resolve — a show that looks
-// complete, publishes cleanly and then plays nothing. A lost draft is a bad
-// afternoon; a silently broken published show is worse.
+// localStorage; this one keeps it in component state ONLY.
+//
+// The brief forbids both web storages outright, and independently the data
+// would not fit: a draft carries the booth recordings as `data:` URLs, which
+// are megabytes each and would blow the ~5MB quota on the second take. Failing
+// that write is silent, so the sender would be told their work was saved by a
+// UI that had quietly dropped it.
+//
+// (The recordings are data URLs rather than `blob:` object URLs on purpose —
+// see `Recording` in Booth.tsx. A blob URL dies with the document that minted
+// it, so a draft holding one publishes cleanly and then plays nothing.)
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
