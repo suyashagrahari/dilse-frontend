@@ -296,7 +296,15 @@ export default function LegalNotice({ data, mode, shareId }: LegalNoticeProps) {
           "Content-Type": "application/json",
           ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
         },
-        body: JSON.stringify({ demandId, ...patch }),
+        body: JSON.stringify({
+          demandId,
+          ...patch,
+          // Empty when the notice has no password — the server only demands a
+          // token for gated notices.
+          unlockToken:
+            (typeof sessionStorage !== "undefined" &&
+              sessionStorage.getItem(`legal-notice_unlock_token_${shareId}`)) || "",
+        }),
       }).catch(() => { /* optimistic — the local mark stands, the next load reconciles */ });
     }
   }, [live, shareId, reduced]);

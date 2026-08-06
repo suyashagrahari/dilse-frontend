@@ -76,6 +76,15 @@ export default function ResultCard({
         backgroundColor: HMH.void,
         width: CARD_W,
         height: CARD_H,
+        style: {
+          // The captured node is ALSO the node carrying the fit-to-viewport
+          // `scale()`. html-to-image clones computed style, so without this the
+          // clone stays scaled and the card renders shrunk into the top-left of
+          // a CARD_W x CARD_H canvas with dead space around it. Capture at true
+          // layout size instead — the on-screen scale is presentation only.
+          transform: "none",
+          transformOrigin: "top left",
+        },
       });
       const a = document.createElement("a");
       a.href = url;

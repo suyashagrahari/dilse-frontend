@@ -37,6 +37,10 @@ function NoticePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
       const result = await res.json();
       if (result.success && result.verified) {
         sessionStorage.setItem(`legal-notice_unlocked_${shareId}`, "true");
+        // Proof-of-unlock for POST /respond. The endpoint is public by design
+        // (the addressee never signs in), so this token is what stops someone
+        // who only has the link from ticking demands on a locked notice.
+        sessionStorage.setItem(`legal-notice_unlock_token_${shareId}`, result.unlockToken || "");
         onUnlocked();
       } else { setError("Incorrect. The seal remains unbroken."); setPw(""); }
     } catch { setError("Something went wrong. Try again."); }
