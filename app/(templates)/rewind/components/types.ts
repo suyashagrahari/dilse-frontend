@@ -14,9 +14,10 @@
 // BRAND SAFETY, not a preference: this reproduces the LAYOUT CONVENTIONS of a
 // year-in-review story — vertical slides, tap to advance, progress segments,
 // one huge stat per slide, kinetic type, hard colour cuts. Those are a genre.
-// It reproduces no one's identity: no three-arc mark, no #1DB954, and neither
-// "Spotify" nor "Wrapped" appears anywhere in this template, including the
-// product name, because that mark is held for exactly this context.
+// It reproduces no one's identity: not the three-arc mark, not the green, and
+// neither the incumbent's name nor its year-in-review wordmark appears anywhere
+// in this template — including the product name, because that second mark is
+// held for exactly this context. This one is called Rewind.
 
 import { bodyFromKeys, str, strList, strOr, type Raw } from "@/lib/wire";
 import { hash32 } from "@/lib/seededRandom";

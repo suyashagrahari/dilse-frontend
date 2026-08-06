@@ -11,9 +11,12 @@
 // binary choices. Those are a genre and are not protectable.
 //
 // It reproduces NO ONE'S IDENTITY. There is no "N" mark, no #E50914, and the
-// word "Netflix" appears nowhere in this template — not in copy, file names,
+// incumbent's name appears nowhere in this template — not in copy, file names,
 // class names, alt text, or comments. `assertBrandSafe()` at the bottom is run
-// by the template at mount in development and will throw if that ever slips.
+// by the template at mount in development and will report it if that ever slips.
+//
+// (The one place the literal token does appear is inside that guard's own
+// pattern list, because a screen has to name what it screens for.)
 //
 // THE VALIDATOR IS THE OTHER LOAD-BEARING PIECE. A branch that dead-ends
 // renders a blank screen with no error and is miserable to debug, so the graph
