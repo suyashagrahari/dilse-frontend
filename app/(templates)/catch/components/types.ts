@@ -121,14 +121,11 @@ export const DIFFICULTY = {
   maxSpeedMultiplier: 1.3,
 } as const;
 
-/** Result of one run. No score, by design. */
-export interface RunStats {
-  caught: number;
-  totalGood: number;
-  dodged: number;
-  /** Ids of good items whose line never arrived — the replay hook. */
-  missedIds: string[];
-}
+// A `RunStats` shape used to live here. It was dropped: the engine's
+// round-scoped result and the screen's cumulative across-rounds view genuinely
+// differ (a replay only respawns the missed items, so "caught this round" and
+// "lines revealed so far" are not the same number), and one shared interface
+// forced them together. The engine owns its own result type instead.
 
 // ─── Component contract ──────────────────────────────────────────────────────
 

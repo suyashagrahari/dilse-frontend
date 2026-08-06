@@ -13,7 +13,17 @@ import { KOOTA_TOTAL, type KundliReport } from "./types";
 import { INK, MAROON, MONO, SERIF, DEVA, WARM_INK } from "./ui";
 
 /** Sums to 384 — the content width inside the document's border band. */
-const COLS = "76px 66px 66px 28px 38px 110px";
+/**
+ * The five fixed tracks carry numerals and short attributes and must not move;
+ * REMARKS absorbs whatever width is left.
+ *
+ * These previously summed to 384px inside a 365px table, so every row rendered
+ * 19px wider than its own border — fixed grid tracks overflow a narrower
+ * container rather than shrinking into it. `minmax(0, 1fr)` on the last column
+ * makes the row exactly fill the box at any paper width, and the `0` floor lets
+ * it wrap instead of pushing.
+ */
+const COLS = "76px 66px 66px 28px 38px minmax(0, 1fr)";
 
 const cellBase: React.CSSProperties = {
   padding: "3px 4px",

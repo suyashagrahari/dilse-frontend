@@ -633,6 +633,97 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
       }}
       onPointerDownCapture={ensureAudio}
     >
+      {/*
+        The thunk is the product. It is also muted by default, because autoplay
+        policy forbids sound before a gesture and because a gift link opened on
+        a bus should not blare.
+        Left to a toggle on the service rail, almost nobody flips it, and the
+        best moment in the template never happens. So ask once, in the machine's
+        own voice, with both answers equally available — an explicit choice
+        rather than either a silent default or an ambush.
+        Session state only; no storage, per the two-key rule.
+      */}
+      {!touchedSound && (
+        <div
+          role="group"
+          aria-label="Sound"
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 95,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            flexWrap: "wrap",
+            padding: "10px 12px calc(10px + env(safe-area-inset-bottom, 0px))",
+            background: C.bodyDarker,
+            borderTop: `1px solid ${C.amber}`,
+            fontFamily: OSWALD,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: C.inkDim,
+            }}
+          >
+            This machine makes noise
+          </span>
+          <span style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => {
+                ensureAudio();
+                setMuted(false);
+                setMutedUI(false);
+                setTouchedSound(true);
+                sfxCoin();
+              }}
+              style={{
+                minHeight: 44,
+                padding: "0 18px",
+                background: C.amber,
+                color: C.edge,
+                border: "none",
+                borderRadius: 2,
+                fontFamily: OSWALD,
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: "0.12em",
+                cursor: "pointer",
+              }}
+            >
+              SOUND ON
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTouchedSound(true);
+              }}
+              style={{
+                minHeight: 44,
+                padding: "0 14px",
+                background: "transparent",
+                color: C.inkDim,
+                border: `1px solid ${C.bodyLight}`,
+                borderRadius: 2,
+                fontFamily: OSWALD,
+                fontSize: 12,
+                letterSpacing: "0.1em",
+                cursor: "pointer",
+              }}
+            >
+              STAY QUIET
+            </button>
+          </span>
+        </div>
+      )}
+
       {live && (
         <Link
           href="/templates"

@@ -122,7 +122,20 @@ function CornerMotif({ corner, size = 26 }: { corner: 0 | 1 | 2 | 3; size?: numb
   );
 }
 
-const PARTICULAR_COLS = "84px 150px 150px";
+/**
+ * `minmax(0, 1fr)` on the value columns, not a fixed width.
+ *
+ * A grid item defaults to `min-width: auto`, so a fixed `150px` track does NOT
+ * clip an over-long value — the cell simply renders wider than its track and
+ * spills past the table's right border. A long place of birth ("Chennai, Tamil
+ * Nadu" set in Courier) did exactly that, printing 22px outside the ruled box.
+ * On a document whose entire premise is that it looks printed, text escaping
+ * the rule is the one thing that gives it away.
+ *
+ * The `0` floor is what actually does the work: it lets the track shrink below
+ * its content and hand the overflow to `overflowWrap` on the cell instead.
+ */
+const PARTICULAR_COLS = "84px minmax(0, 1fr) minmax(0, 1fr)";
 
 function ParticularRow({
   label,
