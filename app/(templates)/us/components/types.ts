@@ -37,16 +37,31 @@ export const FORBIDDEN_TOKENS: readonly string[] = [
   ["Me", "ta"].join(""),
   ["Thre", "ads"].join(""),
   ["Face", "book"].join(""),
+  // The short-video product. This list originally omitted it, and the omission
+  // was not theoretical: the tab in this very file was named after it and the
+  // empty-state copy rendered it on screen, and the check passed anyway. A
+  // deny-list is only worth what is actually on it.
+  ["Re", "els"].join(""),
+  ["Boom", "erang"].join(""),
 ];
 
-/** The gradient stops. No gradient appears anywhere in this template at all. */
+/**
+ * The gradient stops. No gradient appears anywhere in this template at all.
+ *
+ * Assembled from fragments for the same reason FORBIDDEN_TOKENS is: a deny-list
+ * that spells out its own entries makes "grep this directory for banned values
+ * and find nothing" untrue, and the one honest way to run that check is for it
+ * to pass over every file including this one.
+ */
+const hex = (...parts: string[]): string => parts.join("");
+
 export const FORBIDDEN_COLORS: readonly string[] = [
-  "#833AB4",
-  "#C13584",
-  "#E1306C",
-  "#FD1D1D",
-  "#F77737",
-  "#FCAF45",
+  hex("#83", "3AB4"),
+  hex("#C1", "3584"),
+  hex("#E1", "306C"),
+  hex("#FD", "1D1D"),
+  hex("#F7", "7737"),
+  hex("#FC", "AF45"),
 ];
 
 export function assertBrandSafe(source: string): string[] {
@@ -194,13 +209,28 @@ const trim1 = (n: number): string => {
   return s.endsWith(".0") ? s.slice(0, -2) : s;
 };
 
-/** "Followed by mom and 2 others" — the handles come back semibold. */
-export function followedByLine(handles: string[]): { named: string[]; suffix: string } {
-  if (handles.length === 0) return { named: [], suffix: "" };
-  if (handles.length === 1) return { named: handles, suffix: "" };
-  if (handles.length === 2) return { named: handles, suffix: "" };
-  const named = handles.slice(0, 2);
-  return { named, suffix: ` and ${handles.length - 2} others` };
+/**
+ * "Followed by mom, her_mom and 2 others" — the named handles render semibold.
+ *
+ * `joiner` sits between the named handles and is the reason this returns a
+ * shape rather than a string: two handles read "mom and her_mom", three or
+ * more read "mom, her_mom and N others". An earlier version returned no joiner
+ * at all, so the two-handle case rendered "mom, her_mom", which is stiff and is
+ * not what the convention does.
+ */
+export function followedByLine(handles: string[]): {
+  named: string[];
+  joiner: string;
+  suffix: string;
+} {
+  if (handles.length === 0) return { named: [], joiner: "", suffix: "" };
+  if (handles.length === 1) return { named: handles, joiner: "", suffix: "" };
+  if (handles.length === 2) return { named: handles, joiner: " and ", suffix: "" };
+  return {
+    named: handles.slice(0, 2),
+    joiner: ", ",
+    suffix: ` and ${handles.length - 2} others`,
+  };
 }
 
 /** Pinned first, then the rest in their given order. Never reorders otherwise. */
@@ -232,10 +262,18 @@ export const TIMING = {
 /** Tap zones in the story viewer: right 70% advances, left 30% goes back. */
 export const STORY_BACK_ZONE = 0.3;
 
-export type ProfileTab = "grid" | "reels" | "tagged";
+/**
+ * "clips", not the name the app you're thinking of uses — that word is one of
+ * the forbidden tokens, and it would have shipped in user-visible copy. The
+ * icon (a play glyph in a rectangle) carries the meaning; the word never
+ * appears on screen in the real thing either, because the tabs are icon-only.
+ */
+export type ProfileTab = "grid" | "clips" | "tagged";
 
 export const TAB_EMPTY_COPY: Record<Exclude<ProfileTab, "grid">, string> = {
-  reels: "no reels. we're not that kind of couple.",
+  // Not "no videos" — the grid carries posts flagged as video, so that line
+  // made the fiction contradict itself on the same screen.
+  clips: "nothing here. they're all on the grid.",
   tagged: "nobody tagged us. we were busy.",
 };
 
