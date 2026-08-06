@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Chart prepared. Seats confirmed. Adjacent. Running late by 4 months — reason: circumstances beyond our control.",
   bgGradient: "from-slate-50 via-stone-50 to-white",
-  coverImage: "/templates/train-ticket/dancing.gif",
+  coverImage: "/templates/train-ticket/cover.jpg",
   tabs: [
     { id: "pnr", icon: TrainFront, label: "PNR" },
     { id: "ticket", icon: TicketCheck, label: "Ticket" },
