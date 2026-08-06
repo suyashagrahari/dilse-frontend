@@ -311,8 +311,16 @@ export interface StreakView {
   totalDays: number;
   /** The day that got away, if we are inside the repair window. */
   missedDay?: string;
-  /** Hours left in the 48h window. Never displayed as a countdown. */
-  repairHoursLeft?: number;
+  // DELIBERATELY ABSENT: how long is left in the repair window.
+  //
+  // An earlier version carried `repairHoursLeft`. Nothing rendered it, but its
+  // existence meant there was a clock, and a clock on a relationship is the
+  // exact anxiety this template is built to avoid — the moment it reaches a
+  // screen, someone is watching a number run down on whether their partner
+  // shows up. The window still exists in `deriveStreak` because it decides
+  // when `repairable` becomes `dormant`, and both of those states are gentle.
+  // What is gone is any way to display the remaining time, which is the only
+  // part that could hurt. Do not add it back.
 }
 
 /**
@@ -372,15 +380,7 @@ export function deriveStreak(data: StreakData, today: string): StreakView {
   if (now < windowEnds) {
     // One full day missed, still inside the window. The count is PRESERVED and
     // shown greyed — it is not lost, and nothing here says it might be.
-    return {
-      status: "repairable",
-      count: last.len,
-      record,
-      restarted: 0,
-      totalDays,
-      missedDay,
-      repairHoursLeft: Math.max(0, Math.ceil((windowEnds - now) / 3_600_000)),
-    };
+    return { status: "repairable", count: last.len, record, restarted: 0, totalDays, missedDay };
   }
 
   // Dormant. PAUSED at the high water mark — never reset. A new count runs
