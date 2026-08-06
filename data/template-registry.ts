@@ -38,6 +38,11 @@ import { config as dateInvitation } from "@/app/(templates)/date-invitation/conf
 import { config as photoPuzzle } from "@/app/(templates)/photo-puzzle/config";
 import { config as loveflix } from "@/app/(templates)/loveflix/config";
 import { config as rewind } from "@/app/(templates)/rewind/config";
+import { config as streak } from "@/app/(templates)/streak/config";
+import { config as dedication } from "@/app/(templates)/dedication/config";
+import { config as searched } from "@/app/(templates)/searched/config";
+import { config as capsule } from "@/app/(templates)/capsule/config";
+import { config as us } from "@/app/(templates)/us/config";
 
 const allConfigs = [
   birthdayGf,
@@ -65,6 +70,11 @@ const allConfigs = [
   photoPuzzle,
   loveflix,
   rewind,
+  streak,
+  dedication,
+  searched,
+  capsule,
+  us,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
