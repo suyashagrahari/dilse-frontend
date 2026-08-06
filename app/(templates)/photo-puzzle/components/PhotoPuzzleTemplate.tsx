@@ -33,6 +33,7 @@ import CompletionOverlay from "./CompletionOverlay";
 import FinalPiecePanel from "./FinalPiecePanel";
 import LetterPanel from "./LetterPanel";
 import PieceTray from "./PieceTray";
+import { useDragController } from "./useDragController";
 import PuzzleBoard from "./PuzzleBoard";
 import ShareCard, { SHARE_H, SHARE_W } from "./ShareCard";
 import { usePuzzleEngine } from "./usePuzzleEngine";
@@ -93,10 +94,18 @@ export default function PhotoPuzzleTemplate({ data, mode, shareId }: PhotoPuzzle
     () => lineSchedule(data.lines.length, pieceCount),
     [data.lines.length, pieceCount],
   );
+  // Mirrored into refs so `handlePlaced` — which the engine holds for the life
+  // of the rAF loop — never closes over a stale schedule or melody. Synced in
+  // effects rather than during render; effects run in declaration order, so
+  // these land before anything can fire a placement.
   const scheduleRef = useRef(schedule);
-  scheduleRef.current = schedule;
   const melodyRef = useRef(data.melody);
-  melodyRef.current = data.melody;
+  useEffect(() => {
+    scheduleRef.current = schedule;
+  }, [schedule]);
+  useEffect(() => {
+    melodyRef.current = data.melody;
+  }, [data.melody]);
 
   // ── The reward, in the order the spec gives: click + note, then the line ────
   const handlePlaced = useCallback((_index: number, ordinal: number) => {
@@ -135,13 +144,30 @@ export default function PhotoPuzzleTemplate({ data, mode, shareId }: PhotoPuzzle
     callbacks,
   });
 
+  // The pointer story. Owned here rather than inside the tray because the tray
+  // renders the floater but the drag itself is a page-level gesture — it
+  // continues over the board, and past the edge of both.
+  const drag = useDragController(engine, {
+    reducedMotion: reduced,
+    onGesture: () => unlockAudio(),
+  });
+
   // The completed photograph, inlined once, so the exported card is never a
-  // tainted-canvas failure.
+  // tainted-canvas failure. Grabbed one frame after `complete` — the engine has
+  // to paint the finished board before there is anything worth reading, and a
+  // rAF also keeps this off the commit path.
+  const snapshotRef = useRef("");
   useEffect(() => {
-    if (!complete || snapshot) return;
-    const url = engine.getSnapshotDataUrl();
-    if (url) setSnapshot(url);
-  }, [complete, snapshot, engine]);
+    if (!complete || snapshotRef.current) return;
+    const id = requestAnimationFrame(() => {
+      const url = engine.getSnapshotDataUrl();
+      if (url) {
+        snapshotRef.current = url;
+        setSnapshot(url);
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [complete, engine]);
 
   // ── Sound ──────────────────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
@@ -288,6 +314,7 @@ export default function PhotoPuzzleTemplate({ data, mode, shareId }: PhotoPuzzle
 
           <PieceTray
             engine={engine}
+            drag={drag}
             reducedMotion={reduced}
             seed={seed}
             onGesture={handleGesture}

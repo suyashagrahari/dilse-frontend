@@ -410,7 +410,7 @@ export default memo(function EditSheet({
                     </div>
 
                     <div>
-                      <Label optional>The photo they'll assemble</Label>
+                      <Label optional>The photo they&rsquo;ll assemble</Label>
                       <div className="flex items-start gap-3">
                         <Thumb url={mf.imageUrl} />
                         <div className="flex-1 min-w-0 space-y-2">
@@ -425,7 +425,7 @@ export default memo(function EditSheet({
                           />
                           {mf.imageUrl.trim() && !looksLikeUrl(mf.imageUrl) && (
                             <p style={{ color: ROSE, fontSize: 11 }}>
-                              That doesn't look like a link yet — it should start with https://
+                              That doesn&rsquo;t look like a link yet — it should start with https://
                             </p>
                           )}
                         </div>
@@ -477,7 +477,7 @@ export default memo(function EditSheet({
                 {tab === "letter" && (
                   <>
                     <Note>
-                      Each piece she places hands over the next line. Write it the way you'd say it —
+                      Each piece she places hands over the next line. Write it the way you&rsquo;d say it —
                       short lines land better than paragraphs.
                     </Note>
 
@@ -525,7 +525,7 @@ export default memo(function EditSheet({
 
                     {written < 2 && (
                       <p className="text-center" style={{ color: INK_SOFT, fontSize: 11.5 }}>
-                        {2 - written === 1 ? "One more line" : "Two lines"} and it's a letter.
+                        {2 - written === 1 ? "One more line" : "Two lines"} and it&rsquo;s a letter.
                       </p>
                     )}
                   </>
@@ -675,7 +675,7 @@ export default memo(function EditSheet({
                         <div className="mt-1.5">
                           <Note>
                             Leave it blank and she gets “I have the last piece. Ask me for it.” — which is already
-                            the right thing to say. If she's still waiting after ten minutes she can finish it
+                            the right thing to say. If she&rsquo;s still waiting after ten minutes she can finish it
                             herself, so nobody is ever left holding an unfinished gift.
                           </Note>
                         </div>
@@ -708,7 +708,7 @@ export default memo(function EditSheet({
                           />
                           {mf.revealImageUrl.trim() && !looksLikeUrl(mf.revealImageUrl) && (
                             <p style={{ color: ROSE, fontSize: 11 }}>
-                              That doesn't look like a link yet — it should start with https://
+                              That doesn&rsquo;t look like a link yet — it should start with https://
                             </p>
                           )}
                           {mf.revealImageUrl.trim() && (

@@ -24,7 +24,6 @@
 // scrollable strip of rotated, overlapping pieces in canvas is a week of work
 // that CSS does for free.
 
-import type { RefObject } from "react";
 import type { Piece } from "./types";
 
 /** Measured board geometry, in CSS pixels. Recomputed on resize/rotation. */
@@ -134,10 +133,21 @@ export interface PuzzleEngineApi {
    *  once the puzzle reaches `waiting-final`. */
   trayIndices: number[];
 
-  /** Attach to the board's positioning wrapper — the engine measures it. */
-  boardWrapRef: RefObject<HTMLDivElement | null>;
+  /**
+   * Attach to the board's positioning wrapper — the engine measures it.
+   *
+   * CALLBACK REFS, not `RefObject`s, and this is not a style preference:
+   * handing a ref out of a hook taints the ENTIRE returned object for the
+   * `react-hooks/refs` rule, which then refuses to let `phase`, `layout` or
+   * anything else on this API be read during render. The repo hit this once
+   * already — see the note in `proposal/components/useProposalAudio.ts`.
+   *
+   * (Amended after the contract was frozen. The original shape could not be
+   * consumed without lint errors in every component that touched it.)
+   */
+  attachBoardWrap: (el: HTMLDivElement | null) => void;
   /** Attach to the `<canvas>`. */
-  canvasRef: RefObject<HTMLCanvasElement | null>;
+  attachCanvas: (el: HTMLCanvasElement | null) => void;
   /** Live board rect in *viewport* coordinates. Read during a drag; never stale
    *  across a scroll because the engine refreshes it on scroll and resize. */
   getBoardRect: () => DOMRect | null;
