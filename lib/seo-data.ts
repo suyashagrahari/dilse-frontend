@@ -1709,4 +1709,271 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAK — ONE TAP A DAY, AND IT NEVER GOES BACK TO ZERO
+  // ═══════════════════════════════════════════════════════════════════════════
+  streak: {
+    title: "Streak — A Daily Check-In For Two (Free)",
+    description:
+      "Two people, one tap a day. The streak grows, every check-in keeps a word and an optional photo, and the grid becomes a diary neither of you meant to write. Miss a day and it pauses at its high water mark — it never resets to zero. Free and mobile-first.",
+    category: "Love",
+    emoji: "🕯️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 412 },
+
+    keywords: [
+      "daily check in page for couples", "couple streak page online",
+      "streak that never resets to zero", "shared daily ritual for couples",
+      "long distance daily check in page", "one tap a day couple page",
+      "relationship habit page free", "daily word diary for couples",
+      "sealed note for partner online", "100 days together page online",
+      "milestone letters for girlfriend", "couple check in grid india",
+      "gentle streak tracker for couples", "daily love note page for boyfriend",
+      "long distance couple timezone check in", "shared streak link whatsapp",
+      "day counter page for couples", "anniversary ritual page online",
+      "no guilt streak page for couples", "couple diary page free online",
+    ],
+
+    faqs: [
+      { question: "What is Streak?", answer: "A page the two of you open once a day. You hold to check in, leave one word, and the day lights up only when both of you have shown up. Over months the words become a poem and the grid becomes a diary neither of you sat down to write." },
+      { question: "How do I make one?", answer: "Open the Streak template on SubhSandesh and tap Create. Add both names and photos, pick the date you are starting from and the one timezone you will share, write the milestone letters you want waiting further down the road, then publish to get a private link." },
+      { question: "What happens if one of us misses a day?", answer: "Nothing punishing. The count pauses at its high water mark — it is never reset to zero and it is never taken away. For the first forty-eight hours the day is still repairable and the number simply sits greyed; after that the streak goes dormant, the record stays on screen, and a fresh run starts building alongside it." },
+      { question: "We live in different cities — whose day is 'today'?", answer: "One timezone per pair, chosen when the page is created. Every day boundary in the template is measured in that zone, so a couple in Bengaluru and Toronto always agree on what today is. Nothing reads the phone's own timezone." },
+      { question: "What is the sealed note?", answer: "Whoever checks in first can leave one line, up to sixty characters, for the other. It stays sealed until the other person checks in — not until a timer runs out, not until they tap something. Until then the note is not even sent to their device, so there is nothing to peek at." },
+      { question: "What are covers?", answer: "A cover lets one of you complete a day on behalf of the other. Each partner earns one per thirty completed days and can hold at most three. They are a kindness for the day someone was on a flight, not a currency to grind." },
+      { question: "What is the poem?", answer: "Every check-in keeps its one word. The Poem tab lays them out as two chronological columns, unpunctuated — yours and theirs, side by side. You can read it down or across, and after a hundred days it reads like something you wrote on purpose." },
+      { question: "When do the letters unlock?", answer: "Milestone letters unlock on your all-time record, not on the current count — someone who reached a hundred days and then went quiet has still reached a hundred days. An unlocked letter is never taken back. Shorter one-line notes unlock one per seven completed days." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and checking in every day is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, and the streak recomputes from the full check-in log on every open rather than from a stored counter." },
+    ],
+
+    howTo: {
+      name: "How to Start a Daily Check-In Streak With Your Partner",
+      description: "A shared page you both tap once a day. Every check-in keeps a word, and a missed day pauses the streak instead of breaking it. Free.",
+      totalTime: "PT4M",
+      steps: [
+        { name: "Open the Streak Template", text: "Go to the Streak page on SubhSandesh and tap Create." },
+        { name: "Add the Two of You", text: "Add both names and photos, and the date the streak starts from." },
+        { name: "Pick One Timezone", text: "Choose the single timezone you will both share. It decides what 'today' means for the pair, wherever either of you is." },
+        { name: "Write the Milestone Letters", text: "Write the letters that unlock further down — day 7, day 30, day 100. They unlock on your record and are never revoked." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp." },
+        { name: "Check In Together", text: "Hold to check in, leave one word, and optionally seal a line for whoever gets there second." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEDICATION — A RADIO SHOW MADE FOR ONE PERSON
+  // ═══════════════════════════════════════════════════════════════════════════
+  dedication: {
+    title: "Dedication — A Radio Show For One Person (Free)",
+    description:
+      "Drag the needle through generated static, land on your own station, and hear your recorded voice introduce the song before it plays. Record the intros yourself in the booth. Free and mobile-first.",
+    category: "Love",
+    emoji: "📻",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 268 },
+
+    keywords: [
+      "song dedication page online", "radio show gift for girlfriend",
+      "dedicate a song to someone online", "voice message gift page",
+      "record your voice gift for boyfriend", "retro radio page for couples",
+      "personalised radio station gift", "rj style dedication page",
+      "song with a voice note gift india", "fm station gift page online",
+      "long distance song dedication page", "romantic playlist page with voice",
+      "vintage transistor radio gift page", "dedication with my own voice",
+      "birthday song dedication link whatsapp", "anniversary radio show page",
+      "voice recorded love letter online", "tune the dial gift page",
+      "share a song dedication link", "audio gift page free online",
+    ],
+
+    faqs: [
+      { question: "What is Dedication?", answer: "A radio show with exactly one listener. They drag a needle across a dial, push past static and a few decoy stations, and lock onto your frequency — where your recorded voice introduces each song before it plays." },
+      { question: "How do I make one?", answer: "Open the Dedication template on SubhSandesh and tap Create. Name the station and pick its frequency, add the songs, record a voice intro for each one in the booth, write the sign-off, then publish to get a private link." },
+      { question: "Is the static real?", answer: "It is generated live in the browser — a looping noise buffer through a bandpass filter whose cutoff and gain follow the needle. No static file ships with the template, because a recorded loop is audibly a loop within about four seconds." },
+      { question: "How do the songs play?", answer: "Through the official embedded player, which stays visible on screen the whole time, set into the face of the radio behind a bezel. Nothing is extracted, proxied, hidden or re-hosted — you paste a YouTube link and it plays on YouTube's own player, as its terms require." },
+      { question: "Do I have to record my own voice?", answer: "That is the gift. The booth records straight in the browser, up to ninety seconds per intro, with a prompt script on screen so you do not freeze and a limit of three retakes because the stumbles are the emotional content. If you deny microphone access, your dedication is shown as a card instead — it works, but your voice is better." },
+      { question: "What if they cannot listen with sound right now?", answer: "Add a caption to any voice segment and it is shown as subtitle text, so the show still reads properly on mute." },
+      { question: "What if one of the songs stops working?", answer: "Private, deleted, geo-blocked and embedding-disabled all look the same to a listener, so they all get the same warm card and the show moves on. It is skipped, never stalled, and no raw error code is ever shown." },
+      { question: "Why are there other stations on the dial?", answer: "A clean dial feels fake. Decoys are planted along the scale and bleed a faint tone as you pass them, which is what sells the tuning far more than the real station does. Land within a small tolerance of your frequency and the needle snaps and locks." },
+      { question: "Is it free?", answer: "Yes — creating, recording, publishing and sharing your Dedication is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — swap songs, re-record an intro or rewrite the sign-off and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Dedicate a Song With Your Own Voice",
+      description: "Build a private radio station where your recorded voice introduces every song. Free.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Dedication Template", text: "Go to the Dedication page on SubhSandesh and tap Create." },
+        { name: "Name the Station", text: "Pick a station name and a frequency — 98.3, or the date you met read as a number." },
+        { name: "Add the Songs", text: "Paste a link for each song. Bad links are caught while you are still on the form, never mid-show." },
+        { name: "Record the Intros", text: "Record a voice intro for each song in the booth. Up to ninety seconds each, with a script on screen if you freeze." },
+        { name: "Write the Sign-Off", text: "Write the last thing they hear, shown over a dimming radio face." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and tell them to use headphones." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SEARCHED — THEY TYPE THEIR OWN NAME AND THE RESULTS ARE ALL ABOUT THEM
+  // ═══════════════════════════════════════════════════════════════════════════
+  searched: {
+    title: "Searched — A Parody Search Page About Someone You Love (Free)",
+    description:
+      "They type their own name and every result is about them. Joke autocomplete, expandable answers, a knowledge panel with a fact table, and clickable pages — the last of which is the actual letter. Free and mobile-first.",
+    category: "Love",
+    emoji: "🔍",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 319 },
+
+    keywords: [
+      "parody search results page for girlfriend", "fake search results gift page",
+      "type your name results page", "autocomplete joke page for boyfriend",
+      "search results page love letter", "knowledge panel parody gift",
+      "people also ask parody page", "funny search page gift india",
+      "hidden love letter in the last result", "search themed gift page online",
+      "parody results page for wife", "search box surprise page for husband",
+      "personalised search page gift", "romantic joke website for girlfriend",
+      "search your own name gift page", "fake results page maker free",
+      "birthday joke page for best friend", "share a joke search link whatsapp",
+      "results all about you page", "search parody anniversary page",
+    ],
+
+    faqs: [
+      { question: "What is Searched?", answer: "A page built to look like a plain, boring results page — except every result on it is about the person reading. The comedy is entirely in the copy, so the design stays greyscale and utilitarian on purpose." },
+      { question: "How do I make one?", answer: "Open the Searched template on SubhSandesh and tap Create. Add their name and photo, write the autocomplete suggestions, the results and their snippets, the questions and answers, the knowledge panel facts, and the letter that sits behind the last result. Publish to get a private link." },
+      { question: "Do they have to type their own name?", answer: "Yes, and it is the whole hook. The box is empty when the page loads. The moment they start typing their own name the autocomplete drops down and lands the joke before they have even pressed Search." },
+      { question: "What is actually on the results page?", answer: "A results-count line in lakh grouping, results with a breadcrumb, a title and a snippet, a 'people also ask' block whose answers expand, a knowledge panel down the side with a fact table and a quote, an images tab, and a row of related searches at the bottom." },
+      { question: "Do the results open?", answer: "The ones you give a page to. Tapping them slides in a full page written by you — deliberately plain, like a personal blog from 2011. The last result is the real letter, which nobody ever clicks first." },
+      { question: "What if they type it wrong, or type someone else's name?", answer: "Both are handled as jokes. A sloppy match still shows the suggestions rather than an empty dropdown, a 'did you mean' line appears with a refusal underneath it, and typing the wrong name gets results for the right one anyway." },
+      { question: "Do the answers keep going?", answer: "Yes. Expanding a question quietly appends two more you had held back, and nothing you have opened ever collapses again. People open all of them, and the block feeling alive is why the page reads as authentic." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Searched page is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+      { question: "Is this affiliated with any search company?", answer: "No. Searched uses the layout conventions of the search-results genre — a centred box, an autocomplete dropdown, a results-count line, a title-and-snippet hierarchy, an expandable questions block, a panel down the side — and nothing else. It has its own name, its own wordmark colours, its own palette and its own copy, and it is not connected to or endorsed by any search company." },
+    ],
+
+    howTo: {
+      name: "How to Make a Parody Search Page About Someone",
+      description: "A results page where every result is about them, and the last one is the real letter. Free.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Searched Template", text: "Go to the Searched page on SubhSandesh and tap Create." },
+        { name: "Add Their Name", text: "Add the name they will type and a photo for the panel. The box stays empty until they fill it in themselves." },
+        { name: "Write the Autocomplete", text: "Five or six suggestions, funniest first. This is the best moment in the template — spend your time here." },
+        { name: "Write the Results", text: "Write each result's breadcrumb, title and snippet, and give the ones worth opening a full page." },
+        { name: "Fill the Panel and the Questions", text: "Write the fact table, the quote, the expandable answers and the related searches at the bottom." },
+        { name: "Write the Last Result", text: "The final result is the actual letter. Nobody clicks the last one, which is exactly why it goes there." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it with no explanation at all." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CAPSULE — SEALED PREDICTIONS YOU OPEN IN A YEAR
+  // ═══════════════════════════════════════════════════════════════════════════
+  capsule: {
+    title: "Capsule — Sealed Predictions You Open In A Year (Free)",
+    description:
+      "Both of you write predictions about the next year, blind to each other. It seals with a wax stamp. A year later you crack it open together, judge each one, and disagreeing counts as its own result. Free and mobile-first.",
+    category: "Love",
+    emoji: "🕰️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 236 },
+
+    keywords: [
+      "digital time capsule for couples", "sealed letter to open in a year",
+      "predictions for the next year couples", "time capsule page online free",
+      "letter to my future self and partner", "anniversary time capsule gift",
+      "open in one year page online", "couple bet page online",
+      "write predictions together online", "sealed message with a date lock",
+      "new year predictions for couples", "time capsule gift for girlfriend",
+      "future letter page india", "locked until date page online",
+      "couple predictions game online", "wedding anniversary capsule page",
+      "long distance time capsule for couples", "share a sealed capsule link whatsapp",
+      "what will we be doing in a year page", "time capsule wedding gift online",
+    ],
+
+    faqs: [
+      { question: "What is Capsule?", answer: "The two of you each write four to eight predictions about the next year, blind to each other. The capsule seals with a wax stamp and a date. On that date you open it together, read every prediction out, judge each one, and find out who owes who." },
+      { question: "How do I make one?", answer: "Open the Capsule template on SubhSandesh and tap Create. Add both names and photos, pick the opening date and the one timezone you share, agree on the stake, write your predictions with a confidence word on each, and seal it." },
+      { question: "Can either of us read it early?", answer: "No — and not by any route. Before the opening date the page a browser holds has no prediction text on it at all; there is no hidden field to inspect. The server refuses to send the contents until its own clock passes the date, so moving your phone's clock forward gets you a countdown that ends and nothing else." },
+      { question: "What if I want to change something after sealing?", answer: "There is a twenty-four hour amend window after sealing, and then the predictions and the stake are permanently locked as one unit. There is no admin path and no just-this-once. If the opening date is less than a day away, the window is skipped entirely rather than allowed to run past it." },
+      { question: "What happens if we disagree about whether something came true?", answer: "It is recorded as DISPUTED, and that is a normal outcome — arguably the funniest one the whole thing can produce. It is not an error, it is not a tie to be broken, and nothing in the page treats it as a failure." },
+      { question: "How many predictions do we each write?", answer: "At least four each and no more than eight, ninety characters apiece. Each carries a confidence word — hunch, likely, confident, certain, betting on it — which is what it is worth when you settle up. One deliberately absurd wildcard each scores zero either way." },
+      { question: "What is the stake?", answer: "One line, up to a hundred and twenty characters, that you both have to agree on before the capsule will seal. Dinner, a tattoo, bragging rights for a decade — the capsule does not care, it just holds you to it. It locks along with the predictions when the amend window closes, so neither of you can rewrite what the loser owes once the year has run." },
+      { question: "Is there anything to look at while we wait?", answer: "Yes. The waiting screen shows the countdown, the stake and how many predictions each of you wrote — enough to reward a visit without giving anything away — and the capsule itself gets visibly more worn as the date approaches, cracking a month out, glowing a week out and trembling on the last day." },
+      { question: "What if we are not together when it opens?", answer: "Every line of copy in this template was written on the assumption that a capsule may be opened alone, or by people who have since separated. Nothing in it assumes a happy couple is reading." },
+      { question: "Is it free?", answer: "Yes — writing, sealing, waiting and opening your Capsule is completely free." },
+      { question: "Can I edit it after sending the link?", answer: "The link never changes. Names and photos stay correctable indefinitely — fixing a typo in a name in 2027 should not be an integrity question. The predictions and the stake are a different matter: both lock together when the twenty-four hour amend window closes and neither can be touched again. The stake is a shared agreement you both consented to before sealing, so letting one person quietly change what the loser owes — a year later, with the scorecard already computed — would defeat it just as much as editing a prediction would." },
+    ],
+
+    howTo: {
+      name: "How to Make a Time Capsule of Predictions With Your Partner",
+      description: "Write predictions blind to each other, seal them, and open them together a year later. Nothing is readable before the date. Free.",
+      totalTime: "PT8M",
+      steps: [
+        { name: "Open the Capsule Template", text: "Go to the Capsule page on SubhSandesh and tap Create." },
+        { name: "Set the Date", text: "Pick the opening date and the one timezone you share. Server time decides when it opens, never the device." },
+        { name: "Agree the Stake", text: "Write the one line you are both playing for. The capsule will not seal until you both agree on it." },
+        { name: "Write Your Predictions", text: "Four to eight each, ninety characters apiece, with a confidence word on every one and a wildcard that scores zero." },
+        { name: "Seal It", text: "Press the wax stamp. You have twenty-four hours to amend the predictions and the stake, and after that both are locked until the date." },
+        { name: "Open It Together", text: "On the day, crack it open and judge each prediction. Agree and it resolves; disagree and it is recorded as disputed." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // US — YOUR RELATIONSHIP GETS ITS OWN PROFILE
+  // ═══════════════════════════════════════════════════════════════════════════
+  us: {
+    title: "Us — Your Relationship Gets Its Own Profile (Free)",
+    description:
+      "Bio, stats, story highlights, a photo grid and tappable posts with captions and comments from friends. Double-tap to like. Tapping Following will not let you unfollow. Free and mobile-first.",
+    category: "Love",
+    emoji: "📱",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 385 },
+
+    keywords: [
+      "fake profile page gift for couples", "relationship profile page online",
+      "our relationship has its own account", "photo grid gift page for girlfriend",
+      "parody social profile page for couples", "story highlights gift page",
+      "double tap to like gift page", "couple profile page maker free",
+      "photo dump page for girlfriend", "anniversary photo grid page online",
+      "captions and comments gift page", "profile page gift for boyfriend",
+      "relationship bio and stats page", "shareable couple photo page link",
+      "personalised profile page gift india", "photo grid love letter online",
+      "couple account page gift idea", "our story in posts page",
+      "long distance photo gift page", "profile parody page free online",
+    ],
+
+    faqs: [
+      { question: "What is Us?", answer: "Your relationship gets its own account. There is a bio, three stats, a row of story highlights, a photo grid and a set of posts with captions and comments from friends who are enjoying this far too much. The layout is plain and correct on purpose — all the humour is in the copy." },
+      { question: "How do I make one?", answer: "Open the Us template on SubhSandesh and tap Create. Pick a handle, write the bio lines and the stats, upload the grid photos with a caption on each, build the story highlights, write the comments, then publish to get a private link." },
+      { question: "What is on the profile?", answer: "A top bar with the handle, the avatar with posts, followers and following spread beside it, the bio, a 'followed by' line, the highlight bubbles, and a three-column grid underneath. Up to three posts can be pinned to the top with a pin glyph." },
+      { question: "Does the double-tap heart work?", answer: "Yes, and it is the first thing everyone tests. Double-tapping a photo pops a large heart over it and fills the one in the action row. Rapid taps are debounced so the count cannot be double-counted." },
+      { question: "Can they unfollow?", answer: "No. Tapping Following opens the sheet exactly as you would expect, and tapping Unfollow answers with a single word — no. — and closes. It never actually unfollows, which is the joke." },
+      { question: "Do the story highlights play?", answer: "Yes. Tapping a highlight bubble opens a full-screen story viewer with segment bars along the top. Slides advance on their own, tapping the right side moves forward and the left third goes back." },
+      { question: "Who writes the comments?", answer: "You do. Every comment is written by you, under whichever handles you choose — the friend who has commented on everything, the sibling who is over it, the one who just replies with hearts. That is where most of the laughs land." },
+      { question: "Will it look right on a laptop?", answer: "Yes. On wide screens the profile is letterboxed to a phone-width column rather than stretched, because the format only reads correctly at that width." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Us profile is completely free." },
+      { question: "Can I password-protect it and edit it later?", answer: "Yes to both. Set an optional password when you create the page — passwords are stored hashed and never shown — and edit and republish anytime. The same link always shows the latest version." },
+      { question: "Is this affiliated with any social network?", answer: "No. Us uses the layout conventions of the profile genre — a stats row, highlight bubbles, a tight photo grid, a post detail with a double-tap heart — and nothing else. It has its own wordmark, its own black-and-white palette with no gradient anywhere in it, and its own copy, and it is not connected to or endorsed by any social network or app company." },
+    ],
+
+    howTo: {
+      name: "How to Give Your Relationship Its Own Profile Page",
+      description: "A private profile page for the two of you — bio, stats, highlights, a photo grid and posts with comments. Free.",
+      totalTime: "PT7M",
+      steps: [
+        { name: "Open the Us Template", text: "Go to the Us page on SubhSandesh and tap Create." },
+        { name: "Pick the Handle", text: "Choose the handle and display name, and set the three stats — posts, followers, following." },
+        { name: "Write the Bio", text: "A few short lines and an optional link. Keep it in the voice the two of you actually text in." },
+        { name: "Build the Grid", text: "Upload the photos with a caption on each, and pin up to three to the top." },
+        { name: "Add the Highlights", text: "Group photos into story highlights with short titles — the trip, the first month, the bad haircut." },
+        { name: "Write the Comments", text: "Write the comments under each post as your friends and family. This is where the laughs are." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it to them in chat." },
+      ],
+    },
+  },
 };

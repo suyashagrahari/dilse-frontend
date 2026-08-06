@@ -232,10 +232,16 @@ export const TIMING = {
 /** Tap zones in the story viewer: right 70% advances, left 30% goes back. */
 export const STORY_BACK_ZONE = 0.3;
 
-export type ProfileTab = "grid" | "reels" | "tagged";
+/**
+ * "clips", not the name the app you're thinking of uses — that word is one of
+ * the forbidden tokens, and it would have shipped in user-visible copy. The
+ * icon (a play glyph in a rectangle) carries the meaning; the word never
+ * appears on screen in the real thing either, because the tabs are icon-only.
+ */
+export type ProfileTab = "grid" | "clips" | "tagged";
 
 export const TAB_EMPTY_COPY: Record<Exclude<ProfileTab, "grid">, string> = {
-  reels: "no reels. we're not that kind of couple.",
+  clips: "no videos. we're not that kind of couple.",
   tagged: "nobody tagged us. we were busy.",
 };
 
