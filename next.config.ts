@@ -47,6 +47,26 @@ const nextConfig: NextConfig = {
     // the optimizer, so a long TTL is safe and avoids re-optimising on every
     // request (huge win for repeat visits + CDN offload).
     minimumCacheTTL: 31536000,
+
+    // ── NAT64 networks break the optimizer's SSRF guard ────────────────────
+    //
+    // Next refuses to fetch an upstream image whose hostname resolves to a
+    // non-unicast address. On an IPv6-only network with DNS64, S3's public
+    // IPv4s come back synthesised into the NAT64 prefix — 3.5.213.81 arrives
+    // as 64:ff9b::305:d551 — and `ipaddr.js` classifies 64:ff9b::/96 as
+    // `rfc6052` rather than `unicast`. Every cover image then fails with
+    // "resolved to private ip", even though the real destination is public
+    // S3. It is a false positive, and it takes out the whole gallery.
+    //
+    // Relaxed in development ONLY. In production the guard stays on, because
+    // there it is doing real work: `remotePatterns` below allows
+    // http://localhost:1337 for the dev Strapi, and with the guard off that
+    // entry would let anyone use /_next/image as a proxy into the production
+    // box's own localhost.
+    //
+    // Evaluated at build time, so the production image is built with it off.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
+
     remotePatterns: [
       {
         protocol: "https",

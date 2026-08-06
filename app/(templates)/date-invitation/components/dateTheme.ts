@@ -82,10 +82,22 @@ export const CARD_RADIUS = 4; // Paper has corners, not pills.
 
 const invalid = (iso: string) => Number.isNaN(Date.parse(iso));
 
-/** "6:30 PM" */
+/**
+ * "6:30 PM"
+ *
+ * `hour12` is forced rather than left to the locale. Without it a viewer on a
+ * 24-hour locale gets a bare "4:07" with no meridiem — which on an INVITATION
+ * is genuinely ambiguous: 4:07 in the morning and 4:07 in the afternoon are
+ * very different evenings, and she has to decide whether to say yes based on
+ * it. A meridiem is unambiguous in every locale; a bare hour is not.
+ */
 export function fmtTime(iso: string): string {
   if (!iso || invalid(iso)) return "";
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 /** "Saturday, 16 August" */
