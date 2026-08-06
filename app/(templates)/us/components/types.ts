@@ -226,10 +226,13 @@ export function followedByLine(handles: string[]): {
   if (handles.length === 0) return { named: [], joiner: "", suffix: "" };
   if (handles.length === 1) return { named: handles, joiner: "", suffix: "" };
   if (handles.length === 2) return { named: handles, joiner: " and ", suffix: "" };
+  const rest = handles.length - 2;
   return {
     named: handles.slice(0, 2),
     joiner: ", ",
-    suffix: ` and ${handles.length - 2} others`,
+    // "and 1 others" is the kind of thing that reads as a template rather than
+    // a real page, which is the one impression this whole file exists to avoid.
+    suffix: ` and ${rest} ${rest === 1 ? "other" : "others"}`,
   };
 }
 
