@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Five hearings. One penguin judge. Win the case and take home a signed ₹100 stamp paper certifying you're the best partner.",
   bgGradient: "from-violet-50 via-pink-50 to-white",
-  coverImage: "/assets/court-of-love/scales-equal.gif",
+  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/court-of-love/cover.jpg",
   tabs: [
     { id: "summons", icon: Scale, label: "Summons" },
     { id: "session", icon: Gavel, label: "Session" },

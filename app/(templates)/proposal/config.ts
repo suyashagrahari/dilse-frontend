@@ -16,7 +16,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Your memories as polaroids, one big question, and a “No” button that keeps running away. Ends with a secret note only they can read.",
   bgGradient: "from-pink-50 via-rose-50 to-white",
-  coverImage: "/assets/proposal/ask-ring.gif",
+  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/proposal/cover.jpg",
   tabs: [
     { id: "gate", icon: Sparkles, label: "Surprise" },
     { id: "memories", icon: Images, label: "Memories" },
