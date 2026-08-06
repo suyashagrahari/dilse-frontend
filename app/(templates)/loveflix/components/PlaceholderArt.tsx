@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ACCENT,
   FONT_BODY,
@@ -72,11 +72,12 @@ export default function PlaceholderArt({
   style,
   children,
 }: PlaceholderArtProps) {
-  const [failed, setFailed] = useState(false);
-
-  // A changed URL deserves a fresh attempt; without this a single failure would
-  // stick to the slot even after the sender fixes the link in the editor.
-  useEffect(() => setFailed(false), [src]);
+  // Remember WHICH url failed rather than that "a" failure happened, so a
+  // changed url gets a fresh attempt for free. Storing a bare boolean meant
+  // clearing it from an effect on every src change — a cascading render, and
+  // one frame of a broken image before it cleared.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc !== null && failedSrc === src;
 
   const showImage = Boolean(src) && !failed;
   const seed = `${title}|${variant}|${seedSalt}`;
@@ -99,7 +100,7 @@ export default function PlaceholderArt({
         <img
           src={src}
           alt={alt ?? ""}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src)}
           loading="lazy"
           decoding="async"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}

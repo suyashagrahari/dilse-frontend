@@ -205,24 +205,40 @@ export default function EpisodePlayer({
   }, [skip]);
 
   // ── Scene lifecycle: reveal the narration, then bring the choices in ────────
+  //
+  // The per-scene reset happens DURING RENDER, not in the effect below.
+  //
+  // Resetting it in the effect meant the new scene rendered once carrying the
+  // previous scene's beat and revealed-line count before the effect corrected
+  // it — a real flash of the wrong scene's choices, not just a cascading
+  // render. Adjusting state during render when a prop changes is React's
+  // documented pattern for exactly this, and it lands before anything paints.
+  //
+  // The refs stay in the effect: they cannot be written during render.
+
+  const currentSceneId = scene && !scene.isFinale ? scene.id : null;
+  const [sceneKey, setSceneKey] = useState<string | null>(currentSceneId);
+  if (sceneKey !== currentSceneId) {
+    setSceneKey(currentSceneId);
+    setCommittedIndex(null);
+    setTimedOut(false);
+    setBeat("reveal");
+    // Reduced motion shows the whole scene at once; otherwise the first line is
+    // already up and the effect staggers the rest in.
+    setRevealed(currentSceneId === null ? 0 : reducedMotion ? lines.length : lines.length > 0 ? 1 : 0);
+  }
 
   useEffect(() => {
     if (!scene || scene.isFinale) return;
 
     committedRef.current = false;
     lastTickRef.current = null;
-    setCommittedIndex(null);
-    setTimedOut(false);
-    setBeat("reveal");
 
     const timers: number[] = [];
 
     if (reducedMotion) {
-      // All lines at once, immediately: no fade, no translate, no stagger.
-      setRevealed(lines.length);
       timers.push(window.setTimeout(() => setBeat("choosing"), PLAYER.choiceBeatMs));
     } else {
-      setRevealed(lines.length > 0 ? 1 : 0);
       for (let i = 1; i < lines.length; i += 1) {
         timers.push(window.setTimeout(() => setRevealed(i + 1), i * PLAYER.lineRevealMs));
       }

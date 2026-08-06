@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // The countdown behind the timed binary choice.
 //
@@ -46,7 +46,7 @@ export interface ChoiceTimer {
 
 interface Reading {
   /** Identity of the activation this reading belongs to. */
-  arm: object;
+  arm: string;
   leftMs: number;
   paused: boolean;
 }
@@ -60,8 +60,10 @@ export function useChoiceTimer(
 ): ChoiceTimer {
   const totalMs = Math.max(0, Number.isFinite(seconds) ? seconds : 0) * 1000;
 
-  // Identity changes exactly when the timer is armed or disarmed.
-  const arm = useMemo(() => ({}), [active, totalMs]);
+  // Changes exactly when the timer is armed or disarmed. A derived string
+  // rather than a memoised object identity: the value IS the two inputs, so
+  // there is nothing to memoise and no dependency array to get wrong.
+  const arm = `${active}|${totalMs}`;
 
   const [reading, setReading] = useState<Reading | null>(null);
 
