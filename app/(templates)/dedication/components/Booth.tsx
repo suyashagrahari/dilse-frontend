@@ -21,18 +21,57 @@
 // after which the booth stops offering. The stumbles are the emotional content
 // and a sender given unlimited takes will sand them all off.
 
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Mic, Square, RotateCcw, Check, Play, Pause, TriangleAlert } from "lucide-react";
 import { BOOTH, BODY_FACE, DISPLAY_FACE, PALETTE, TAP_TARGET_PX } from "./types";
 import { pickRecorderMime } from "./types";
 import { lampStyle } from "./radioStyles";
 
 export interface Recording {
-  /** An object URL. NOT yet uploaded — see the TODO in `onKeep` callers. */
-  url: string;
+  /**
+   * The value that gets STORED. A `data:audio/...;base64,` URL, which the
+   * server's `resolveAudioUrl` swaps for an S3 https URL on the way in — the
+   * same mechanism every other template in this repo uses for photos.
+   *
+   * It is deliberately not a `blob:` URL. Object URLs are scoped to the
+   * document that minted them, so a draft carrying one publishes cleanly and
+   * then plays nothing: the show looks whole and is silent, which is the exact
+   * failure this template spends most of its effort avoiding.
+   */
+  dataUrl: string;
+  /**
+   * A `blob:` URL for LOCAL playback only. Seeking a multi-megabyte data URL in
+   * an <audio> element is noticeably sluggish in the review step. Never stored,
+   * and revoked when the booth unmounts.
+   */
+  previewUrl: string;
   blob: Blob;
   durationMs: number;
   mimeType: string;
+}
+
+/**
+ * The server's `MAX_AUDIO_BYTES` is 20MB, measured on the DECODED buffer. Held
+ * a little under it here so the sender is told plainly in the booth rather than
+ * meeting a server error after they have already written everything else.
+ *
+ * 90 seconds of opus is well under a megabyte, so this only ever fires for a
+ * browser recording something uncompressed. It exists because when it does
+ * fire, the alternative is `resolveAudioUrl` returning "" and the segment being
+ * dropped without a word.
+ */
+const MAX_AUDIO_BYTES = 18 * 1024 * 1024;
+/** base64 inflates by ~4/3; this bounds what actually goes over the wire. */
+const MAX_ENCODED_CHARS = 25 * 1024 * 1024;
+
+/** Read a recorded blob into the `data:` URL the server expects. */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 export interface BoothProps {
@@ -125,7 +164,19 @@ export default function Booth({ onKeep, onUseText, heading = "Recording booth", 
     ctx: null as AudioContext | null,
     chunks: [] as Blob[],
     preview: null as HTMLAudioElement | null,
+    /** Every object URL minted here, so none of them leaks past unmount. */
+    objectUrls: [] as string[],
   });
+
+  // Revoke on unmount. Cleanup-only, so `react-hooks/set-state-in-effect` has
+  // nothing to object to.
+  useEffect(() => {
+    const rig = rigRef.current;
+    return () => {
+      for (const u of rig.objectUrls) URL.revokeObjectURL(u);
+      rig.objectUrls = [];
+    };
+  }, []);
 
   const limitMs = BOOTH.maxSeconds * 1000;
   const remaining = limitMs - elapsed;
@@ -303,9 +354,38 @@ export default function Booth({ onKeep, onUseText, heading = "Recording booth", 
         setStage("idle");
         return;
       }
-      setReview({ url: URL.createObjectURL(blob), blob, durationMs, mimeType: mime });
-      setTakes((t) => t + 1);
-      setStage("review");
+      if (blob.size > MAX_AUDIO_BYTES) {
+        setProblem("that take is too big to send — try a shorter one");
+        setStage("idle");
+        return;
+      }
+
+      // The blob becomes a data URL BEFORE it reaches the draft. Everything
+      // downstream — the preview show, Save, the server — sees a portable
+      // string rather than a handle that dies with this document.
+      void blobToDataUrl(blob).then(
+        (dataUrl) => {
+          if (!dataUrl.startsWith("data:")) {
+            setProblem("couldn't package that take — try once more");
+            setStage("idle");
+            return;
+          }
+          if (dataUrl.length > MAX_ENCODED_CHARS) {
+            setProblem("that take is too big to send — try a shorter one");
+            setStage("idle");
+            return;
+          }
+          const previewUrl = URL.createObjectURL(blob);
+          rigRef.current.objectUrls.push(previewUrl);
+          setReview({ dataUrl, previewUrl, blob, durationMs, mimeType: mime });
+          setTakes((t) => t + 1);
+          setStage("review");
+        },
+        () => {
+          setProblem("couldn't package that take — try once more");
+          setStage("idle");
+        },
+      );
     };
 
     rigRef.current.recorder = rec;
@@ -335,7 +415,8 @@ export default function Booth({ onKeep, onUseText, heading = "Recording booth", 
       setPreviewing(false);
       return;
     }
-    el.src = review.url;
+    // The blob URL, not the data URL: this is playback, not storage.
+    el.src = review.previewUrl;
     void el.play().then(
       () => setPreviewing(true),
       () => setProblem("couldn't play that back — it should still send fine"),

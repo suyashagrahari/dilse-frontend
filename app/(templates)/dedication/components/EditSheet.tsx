@@ -220,12 +220,11 @@ function VoiceRow({ seg, onChange }: { seg: VoiceSegment; onChange: (next: Voice
 
   const keep = useCallback(
     (rec: Recording) => {
-      // TODO(upload): `rec.url` is an object URL scoped to this tab. Before the
-      // show can be published for real, the blob needs uploading to media
-      // storage and this field replacing with the returned https URL. There is
-      // no client upload helper in the repo yet, so it stays local — which is
-      // also why the draft is never persisted (see useDedicationEditor).
-      onChange({ ...seg, audioUrl: rec.url, durationMs: rec.durationMs });
+      // The DATA url, never the blob url. `resolveAudioUrl` on the server sees
+      // the `data:` prefix, pushes the bytes to S3 and stores the https URL it
+      // gets back; a non-data value is passed through untouched, so re-saving
+      // an already-published show does not re-upload anything.
+      onChange({ ...seg, audioUrl: rec.dataUrl, durationMs: rec.durationMs });
       setShowBooth(false);
     },
     [seg, onChange],
