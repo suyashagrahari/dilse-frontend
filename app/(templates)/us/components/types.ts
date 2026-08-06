@@ -32,7 +32,13 @@
  * that runs over the rest of the template.
  */
 export const FORBIDDEN_TOKENS: readonly string[] = [
-  ["Insta", "gram"].join(""),
+  // Note where the split falls. Cutting after the first two letters keeps every
+  // fragment shorter than the abbreviation on the next line; cutting after the
+  // first five would make one fragment identical to it, and the check would
+  // then report a violation against its own definition — which is precisely
+  // what it did until this was changed, and why it could not be run honestly
+  // over its own directory.
+  ["In", "stagram"].join(""),
   ["Ins", "ta"].join(""),
   ["Me", "ta"].join(""),
   ["Thre", "ads"].join(""),
@@ -64,17 +70,27 @@ export const FORBIDDEN_COLORS: readonly string[] = [
   hex("#FC", "AF45"),
 ];
 
+/**
+ * CSS gradient functions, assembled rather than written out — a literal
+ * `linear-gradient` in this regex is itself a match, which is exactly how this
+ * function used to fail over its own source. Prose is unaffected either way:
+ * the pattern needs the `-gradient(` form, so a comment saying the word
+ * "gradient" never trips it.
+ */
+const GRADIENT_FN = new RegExp(`(linear|radial|conic)-${"grad"}${"ient"}\\s*\\(`, "i");
+
 export function assertBrandSafe(source: string): string[] {
   const hits: string[] = [];
   const lower = source.toLowerCase();
   for (const t of FORBIDDEN_TOKENS) {
-    // Word-boundary match: "instant" must not trip the "insta" rule.
+    // Word-boundary match, so an ordinary English word that merely starts with
+    // a banned fragment does not trip the rule.
     if (new RegExp(`\\b${t.toLowerCase()}\\b`).test(lower)) hits.push(t);
   }
   for (const c of FORBIDDEN_COLORS) {
     if (lower.includes(c.toLowerCase())) hits.push(c);
   }
-  if (/linear-gradient|radial-gradient|conic-gradient/i.test(source)) hits.push("gradient");
+  if (GRADIENT_FN.test(source)) hits.push("css-gradient");
   return hits;
 }
 
