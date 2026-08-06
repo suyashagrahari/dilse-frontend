@@ -12,6 +12,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("train-ticket");
 import {
   type TicketData,
   type ChartGate,
@@ -294,7 +298,7 @@ export default function PnrStatusScreen({
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
-            <Loop src="/templates/train-ticket/waiting.webm" width={78} />
+            <Loop src={`${ASSET}/waiting.webm`} width={78} />
             <button
               type="button"
               onClick={run}
@@ -352,7 +356,7 @@ export default function PnrStatusScreen({
             )}
 
             {/* pure relief — fired only AFTER the box lands, beside it, never on it */}
-            {confirmed && <Loop src="/templates/train-ticket/dancing.webm" width={88} />}
+            {confirmed && <Loop src={`${ASSET}/dancing.webm`} width={88} />}
           </div>
 
           {/* THE PAYLOAD. What makes CNF land is not the word CNF. */}

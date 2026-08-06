@@ -10,8 +10,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Download, Loader2 } from "lucide-react";
 import { HMH } from "./types";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("hold-my-hand");
 
 /** 9:16. Fixed — the card is scaled, never reflowed. */
 export const CARD_W = 330;
@@ -127,10 +132,16 @@ export default function ResultCard({
           <span aria-hidden style={{ position: "absolute", top: -70, left: -60, width: 220, height: 220, borderRadius: "50%", background: HMH.indigo, opacity: 0.3, filter: "blur(52px)" }} />
           <span aria-hidden style={{ position: "absolute", bottom: -60, right: -50, width: 210, height: 210, borderRadius: "50%", background: HMH.pink, opacity: 0.24, filter: "blur(52px)" }} />
 
-          {/* static sticker — animated .webm stays outside this node */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/templates/hold-my-hand/virtual-hug-3.webp"
+          {/* Static sticker — the animated .webm stays outside this node.
+              This is the ONLY remote asset inside the captured node, so it must
+              go through next/image rather than a raw <img> pointed at S3. The
+              optimizer re-serves it from /_next/image, which is same-origin, so
+              html-to-image can read the pixels and inline them. A direct S3 URL
+              would taint the canvas — the bucket has no CORS rule and the
+              uploader credentials are not allowed to add one — and the whole
+              export would throw. */}
+          <Image
+            src={`${ASSET}/virtual-hug-3.webp`}
             alt=""
             width={104}
             height={93}
@@ -174,7 +185,7 @@ export default function ResultCard({
       {/* Animated payoff lives OUTSIDE the captured node. */}
       {!reduced && (
         <video
-          src="/templates/hold-my-hand/virtual-hug.webm"
+          src={`${ASSET}/virtual-hug.webm`}
           autoPlay
           loop
           muted

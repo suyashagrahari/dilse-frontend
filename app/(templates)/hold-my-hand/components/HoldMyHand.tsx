@@ -18,6 +18,10 @@ import ParticleBurst from "./ParticleBurst";
 import ResultCard, { type ResultStats } from "./ResultCard";
 import { useHoldEngine, type FrameState, type WinSummary } from "./useHoldEngine";
 import { HMH, effectiveHoldLines, fmtSecs, fmtWhole, type HoldData } from "./types";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("hold-my-hand");
 
 // ─── Ring geometry ───────────────────────────────────────────────────────────
 const RING_VB = 200;
@@ -341,7 +345,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       {!reduced && (
         <video
           ref={handsRef}
-          src="/templates/hold-my-hand/holding-hands.webm"
+          src={`${ASSET}/holding-hands.webm`}
           autoPlay loop muted playsInline aria-hidden
           className="absolute left-1/2 top-1/2 pointer-events-none transition-opacity duration-300"
           style={{
@@ -499,7 +503,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
           >
             {data.hands === 2 && !reduced && (
               <video
-                src="/templates/hold-my-hand/holding-hands.webm"
+                src={`${ASSET}/holding-hands.webm`}
                 autoPlay loop muted playsInline aria-hidden
                 className="w-20 h-auto opacity-80"
               />
@@ -526,7 +530,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
             animate={{ opacity: 0.95, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.22 }}
-            src="/templates/hold-my-hand/reachingoutsad.webp"
+            src={`${ASSET}/reachingoutsad.webp`}
             alt=""
             aria-hidden
             className="absolute pointer-events-none"
@@ -543,7 +547,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 0.95, scale: 1 }}
             exit={{ opacity: 0 }}
-            src="/templates/hold-my-hand/cute-bear-evil-laugh.webm"
+            src={`${ASSET}/cute-bear-evil-laugh.webm`}
             autoPlay loop muted playsInline aria-hidden
             className="absolute pointer-events-none"
             style={{ top: "12%", left: "50%", translate: "-50% 0", width: 104 }}

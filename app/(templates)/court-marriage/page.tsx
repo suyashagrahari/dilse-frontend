@@ -8,6 +8,10 @@ import { useCourtMarriageEditor } from "./hooks/useCourtMarriageEditor";
 import CourtMarriageTemplate, { usePrefersReducedMotion } from "./components/CourtMarriageTemplate";
 import EditSheet from "./components/EditSheet";
 import type { Toast } from "./components/types";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("court-marriage");
 
 const SEAL = "#3f4c8f";
 const SEAL_GRADIENT = "linear-gradient(135deg,#5566b8,#2f3a70)";
@@ -111,7 +115,7 @@ function CourtMarriagePageInner() {
                 <Loader2 size={28} className="animate-spin" style={{ color: SEAL }} />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src="/templates/court-marriage/typing.webp" alt="" width={96} height={96} />
+                <img src={`${ASSET}/typing.webp`} alt="" width={96} height={96} />
               )}
               <p className="font-semibold" style={{ color: SEAL }}>Entering it in the register…</p>
             </div>
@@ -131,7 +135,7 @@ function CourtMarriagePageInner() {
               {reduced ? (
                 <div className="text-6xl" aria-hidden>🎉</div>
               ) : (
-                <video src="/templates/court-marriage/hug.webm" autoPlay loop muted playsInline width={220} height={220} aria-hidden />
+                <video src={`${ASSET}/hug.webm`} autoPlay loop muted playsInline width={220} height={220} aria-hidden />
               )}
               <p className="text-lg font-extrabold" style={{ color: SEAL }}>Duly registered 📜</p>
             </div>

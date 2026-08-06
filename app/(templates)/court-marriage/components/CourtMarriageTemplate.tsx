@@ -6,6 +6,10 @@ import Image from "next/image";
 import { Download, Loader2, Check } from "lucide-react";
 import Certificate, { DOC_H, DOC_W } from "./Certificate";
 import { type CertificateData, fileSlug } from "./types";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("court-marriage");
 
 /** Honour the OS setting — every looping asset on this template is decorative. */
 export function usePrefersReducedMotion() {
@@ -219,7 +223,7 @@ export default function CourtMarriageTemplate({
             </span>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src="/templates/court-marriage/waiting.webp" alt="" width={28} height={28} style={{ borderRadius: 999 }} />
+            <img src={`${ASSET}/waiting.webp`} alt="" width={28} height={28} style={{ borderRadius: 999 }} />
           )}
           <span className="text-xs font-semibold" style={{ color: "#5B5B66", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
             Waiting on witness signatures

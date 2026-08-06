@@ -1,3 +1,7 @@
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("hold-my-hand");
 // ─── Hold My Hand — shared type contract ─────────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer and the server payload. Field names here === server model field names
@@ -88,7 +92,7 @@ export const DURATION_PRESETS: { label: string; ms: number }[] = [
 
 export const DEMO_DATA: HoldData = {
   recipientName: "",
-  photoUrl: "/templates/hold-my-hand/demo-portrait.svg",
+  photoUrl: `${ASSET}/demo-portrait.svg`,
   durationMs: 60000,
   mode: "kind",
   hands: 1,

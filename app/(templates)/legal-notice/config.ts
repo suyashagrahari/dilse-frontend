@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "That the addressee has, on 27 (twenty-seven) occasions, responded to a direct question with the words \"whatever you want\".",
   bgGradient: "from-blue-50 via-slate-50 to-white",
-  coverImage: "/templates/legal-notice/cover.jpg",
+  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/legal-notice/cover.jpg",
   tabs: [
     { id: "notice", icon: Scale, label: "Notice" },
     { id: "recitals", icon: FileText, label: "Recitals" },

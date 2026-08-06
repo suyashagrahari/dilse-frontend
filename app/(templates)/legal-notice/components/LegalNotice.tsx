@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import NoticePaper, { DOC_W, type RespondFn } from "./NoticePaper";
+import { templateMediaBase } from "@/lib/templateMedia";
 import {
   type Demand,
   type NoticeData,
@@ -24,7 +25,7 @@ const RED = "#b02020";
 const PAPER = "#fdfcf8";
 const DESK = "#e6e3da";
 
-const ASSET = "/templates/legal-notice";
+const ASSET = templateMediaBase("legal-notice");
 
 /**
  * Base rules are the FINAL state of each mark; the animation only runs while the

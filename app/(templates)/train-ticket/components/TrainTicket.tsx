@@ -9,6 +9,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("train-ticket");
 import {
   type ChartGate,
   type Screen,
@@ -320,7 +324,7 @@ export default function TrainTicket({
         {screen === "route" && (
           <>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
-              <Loop src="/templates/train-ticket/bunnyonatrain.webm" width={140} />
+              <Loop src={`${ASSET}/bunnyonatrain.webm`} width={140} />
             </div>
 
             <Scaler>
@@ -328,7 +332,7 @@ export default function TrainTicket({
             </Scaler>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-              <Loop src="/templates/train-ticket/cryingpuddle.webm" width={76} />
+              <Loop src={`${ASSET}/cryingpuddle.webm`} width={76} />
               <p style={{ flex: 1, fontSize: 10.5, lineHeight: 1.5, color: "#444", margin: 0 }}>
                 Delay compensation is not admissible. We looked into it.
               </p>
@@ -373,7 +377,7 @@ export default function TrainTicket({
           >
             <div style={{ textAlign: "center", padding: 24 }}>
               <div style={{ border: "1px solid #111", background: "#fff", padding: 6, display: "inline-block" }}>
-                <Loop src="/templates/train-ticket/hug.webm" width={190} style={{ margin: "0 auto" }} />
+                <Loop src={`${ASSET}/hug.webm`} width={190} style={{ margin: "0 auto" }} />
               </div>
               <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: "0.08em", color: "#111", marginTop: 12 }}>
                 NO ETA. NO RUSH.

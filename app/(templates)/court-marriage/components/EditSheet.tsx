@@ -6,6 +6,10 @@ import { X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, ScrollText 
 import type { CertificateData, CertField, EditMode, Party, Witness } from "./types";
 import { padWitnesses, witnessHand } from "./types";
 import { usePrefersReducedMotion } from "./CourtMarriageTemplate";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("court-marriage");
 
 const INK = "#4a4436";
 const SEAL = "#3f4c8f";
@@ -188,7 +192,7 @@ export default memo(function EditSheet({
                     </div>
                     {!reduced && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/templates/court-marriage/photographer.webp" alt="" width={54} height={54} className="shrink-0 rounded-xl" />
+                      <img src={`${ASSET}/photographer.webp`} alt="" width={54} height={54} className="shrink-0 rounded-xl" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] leading-relaxed text-muted-foreground">

@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Registered at the Office of the Registrar of Hearts. Get your witnesses to sign and it's official.",
   bgGradient: "from-amber-50 via-stone-50 to-white",
-  coverImage: "/templates/court-marriage/cover.jpg",
+  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/court-marriage/cover.jpg",
   tabs: [
     { id: "certificate", icon: ScrollText, label: "Certificate" },
     { id: "seal", icon: Stamp, label: "Seal" },
