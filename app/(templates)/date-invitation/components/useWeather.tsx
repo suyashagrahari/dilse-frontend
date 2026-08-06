@@ -237,41 +237,53 @@ export function useWeather(
   const lat = point?.lat;
   const lng = point?.lng;
 
-  const [view, setView] = useState<WeatherView | null>(null);
+  // No point, no fetch. This is the live/after phases, and it is the whole
+  // reason the itinerary keeps working with the network switched off.
+  const targetMs = Date.parse(whenIso);
+  const requestKey =
+    typeof lat === "number" && typeof lng === "number" && !Number.isNaN(targetMs)
+      ? keyFor(lat, lng, hourKey(targetMs))
+      : null;
+
+  /**
+   * The result is stored WITH the key it was fetched for, and the hook returns
+   * it only when that key still matches what the caller is asking for now.
+   *
+   * That is what makes every "nothing to show" case a plain `return` from the
+   * effect instead of a `setView(null)`: a stale entry simply stops matching.
+   * Clearing derived state from inside an effect is both a cascading render and
+   * a frame of the wrong forecast on screen.
+   */
+  const [entry, setEntry] = useState<{ key: string; view: WeatherView | null } | null>(null);
+
+  /**
+   * A still-warm cache entry, read during render rather than copied into state
+   * by an effect. Navigating back to a screen whose forecast is already cached
+   * therefore paints it on the first render, with no extra commit and no frame
+   * of a missing weather row.
+   */
+  const cachedHit = requestKey !== null ? cache.get(requestKey) : undefined;
+  const cached =
+    cachedHit && getServerTime() - cachedHit.at < (cachedHit.view ? TTL_OK : TTL_FAIL)
+      ? cachedHit
+      : null;
 
   useEffect(() => {
-    // No point, no fetch. This is the live/after phases, and it is the whole
-    // reason the itinerary keeps working with the network switched off.
-    if (typeof lat !== "number" || typeof lng !== "number") {
-      setView(null);
-      return;
-    }
-
-    const targetMs = Date.parse(whenIso);
-    if (Number.isNaN(targetMs)) {
-      setView(null);
-      return;
-    }
+    if (requestKey === null || typeof lat !== "number" || typeof lng !== "number") return;
 
     // How many days of forecast we need. `getServerTime()` rather than
     // `Date.now()` so that everything in this template reads one clock.
     const spanDays = Math.round((utcMidnight(targetMs) - utcMidnight(getServerTime())) / 86_400_000);
     // Already been and gone, or past the forecast horizon (a date three weeks
     // out has no forecast to show). Nothing to ask for; the row stays hidden.
-    if (spanDays < 0 || spanDays + 1 > MAX_FORECAST_DAYS) {
-      setView(null);
-      return;
-    }
+    if (spanDays < 0 || spanDays + 1 > MAX_FORECAST_DAYS) return;
     const days = Math.min(MAX_FORECAST_DAYS, Math.max(1, spanDays + 1));
 
-    const key = keyFor(lat, lng, hourKey(targetMs));
-    const now = getServerTime();
+    const key = requestKey;
 
-    const hit = cache.get(key);
-    if (hit && now - hit.at < (hit.view ? TTL_OK : TTL_FAIL)) {
-      setView(hit.view);
-      return;
-    }
+    // A live cache entry is served straight out of render below, so there is
+    // nothing to do here and nothing to set.
+    if (cached !== null) return;
 
     let alive = true;
 
@@ -299,7 +311,7 @@ export function useWeather(
     const mine = job;
 
     void mine.promise.then((v) => {
-      if (alive) setView(v);
+      if (alive) setEntry({ key, view: v });
     });
 
     return () => {
@@ -311,9 +323,10 @@ export function useWeather(
         mine.ctrl.abort();
       }
     };
-  }, [lat, lng, whenIso]);
+  }, [lat, lng, targetMs, requestKey, cached]);
 
-  return view;
+  if (cached !== null) return cached.view;
+  return entry && entry.key === requestKey ? entry.view : null;
 }
 
 // ─── The icon ────────────────────────────────────────────────────────────────

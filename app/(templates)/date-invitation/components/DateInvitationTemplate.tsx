@@ -50,7 +50,7 @@
 // Auto-advance does the same thing with an empty timestamp, because `""` is the
 // frozen contract's marker for "nobody tapped".
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 
 import {
@@ -79,6 +79,52 @@ import { DeclinedScreen, ExpiredScreen, RescheduleScreen } from "./ClosingScreen
 import DevPhaseControl from "./DevPhaseControl";
 
 const DAY = 86_400_000;
+
+// ─── The clock, as an external store ─────────────────────────────────────────
+//
+// One interval for the whole module, started on the first subscriber and torn
+// down after the last. `readClock` must return a value that is stable between
+// ticks — returning `getServerTime()` directly would give React a new number on
+// every call and re-render forever — so the reading is latched into `tick` and
+// only moved by the interval.
+
+let tick = 0;
+const clockListeners = new Set<() => void>();
+let clockTimer: number | null = null;
+
+function subscribeToClock(onChange: () => void): () => void {
+  clockListeners.add(onChange);
+  if (clockTimer === null) {
+    tick = getServerTime();
+    clockTimer = window.setInterval(() => {
+      tick = getServerTime();
+      clockListeners.forEach((l) => l());
+    }, TIMING.tickMs);
+  }
+  return () => {
+    clockListeners.delete(onChange);
+    if (clockListeners.size === 0 && clockTimer !== null) {
+      window.clearInterval(clockTimer);
+      clockTimer = null;
+    }
+  };
+}
+
+/** Latched, so repeated calls within a tick are `Object.is`-equal. */
+function readClock(): number {
+  if (tick === 0) tick = getServerTime();
+  return tick;
+}
+
+/**
+ * Pull the latch forward immediately. Only the demo phase-jump needs this: it
+ * computes its offset against the true clock, so leaving the latch up to a
+ * second stale would land the jump up to a second off.
+ */
+function resyncClock(): void {
+  tick = getServerTime();
+  clockListeners.forEach((l) => l());
+}
 
 /**
  * Demo-only. Produces the clock offset and the recipient-state overlay that put
@@ -132,14 +178,15 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
     return Number.isNaN(t) ? 0 : t;
   }, [data.startsAt]);
 
-  const [clockMs, setClockMs] = useState(() => (startMs ? startMs - 1000 : 0));
+  // A ticking clock is an external store, so it is subscribed to as one. The
+  // previous shape — seed from data, then overwrite from a mount effect — meant
+  // a synchronous setState during commit on every mount. `useSyncExternalStore`
+  // gets the same hydration safety for free: React renders the server snapshot
+  // (seeded from the data, so server and client agree) and swaps to the live
+  // reading once hydration is done, without a cascading render.
+  const serverSnapshot = useCallback(() => (startMs ? startMs - 1000 : 0), [startMs]);
+  const clockMs = useSyncExternalStore(subscribeToClock, readClock, serverSnapshot);
   const [devOffset, setDevOffset] = useState(0);
-
-  useEffect(() => {
-    setClockMs(getServerTime());
-    const id = window.setInterval(() => setClockMs(getServerTime()), TIMING.tickMs);
-    return () => window.clearInterval(id);
-  }, []);
 
   // Every gating decision in this template reads this value, and only this one.
   const nowMs = clockMs + devOffset;
@@ -216,8 +263,14 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
   // Auto-advance: twenty minutes past the NEXT stop's arrival time, a forgotten
   // tap stops costing them the rest of the itinerary. Stamped `""`, which the
   // frozen contract reads as "nobody tapped".
+  // The ref exists so the auto-advance effect below does not re-fire every time
+  // `advance` gets a new identity. Synced in its own effect rather than during
+  // render — effects run in declaration order, so this lands before the one
+  // that reads it on the same commit.
   const autoRef = useRef(advance);
-  autoRef.current = advance;
+  useEffect(() => {
+    autoRef.current = advance;
+  }, [advance]);
   useEffect(() => {
     if (phase !== "live") return;
     if (!shouldAutoAdvance(liveData, nowMs)) return;
@@ -256,7 +309,7 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
           : data.stops.map(() => ""),
       );
       if (target !== "after") setPhotos([]);
-      setClockMs(getServerTime());
+      resyncClock();
       window.scrollTo({ top: 0, behavior: "auto" });
     },
     [isDemo, startMs, stopCount, data.stops],

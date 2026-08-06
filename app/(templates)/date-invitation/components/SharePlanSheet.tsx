@@ -69,11 +69,7 @@ export default function SharePlanSheet({ view, open, onClose }: SharePlanSheetPr
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setShown(false);
-      setCopied(false);
-      return;
-    }
+    if (!open) return;
     const raf = requestAnimationFrame(() => setShown(true));
     panelRef.current?.focus();
 
@@ -91,6 +87,11 @@ export default function SharePlanSheet({ view, open, onClose }: SharePlanSheetPr
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      // Reset on the way out rather than in the effect body: closing has to
+      // leave `shown` false so the next open has a frame to transition from,
+      // and the slide-out still plays because the sheet stays mounted.
+      setShown(false);
+      setCopied(false);
     };
   }, [open, onClose]);
 
