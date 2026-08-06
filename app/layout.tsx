@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit, Tinos, Courier_Prime, Tiro_Devanagari_Hindi } from "next/font/google";
+import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit, Tinos, Courier_Prime, Tiro_Devanagari_Hindi, Oswald } from "next/font/google";
 import Providers from "@/components/Providers";
 import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
 import { buildMeta, SITE_URL } from "@/lib/seo";
@@ -135,6 +135,17 @@ const tiroDevanagari = Tiro_Devanagari_Hindi({
   variable: "--font-tiro-devanagari",
   display: "swap",
 });
+// Condensed caps for machine-stencilled chrome (the vending machine's body
+// plates, shelf tags and keypad). A normal-width grotesque letter-spaced down
+// reads as a web app; a genuinely condensed face reads as something stamped
+// onto sheet metal. Same "swap" reasoning as the faces above — it appears in
+// the exported coupon.
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-oswald",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   ...buildMeta(),
@@ -185,7 +196,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable} ${fredoka.variable} ${inter.variable} ${playfair.variable} ${outfit.variable} ${tinos.variable} ${courierPrime.variable} ${tiroDevanagari.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${dancingScript.variable} ${dancingScriptAlt.variable} ${cinzel.variable} ${lora.variable} ${fredoka.variable} ${inter.variable} ${playfair.variable} ${outfit.variable} ${tinos.variable} ${courierPrime.variable} ${tiroDevanagari.variable} ${oswald.variable}`}>
       <head suppressHydrationWarning>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

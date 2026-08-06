@@ -30,6 +30,10 @@ import { config as courtMarriage } from "@/app/(templates)/court-marriage/config
 import { config as holdMyHand } from "@/app/(templates)/hold-my-hand/config";
 import { config as trainTicket } from "@/app/(templates)/train-ticket/config";
 import { config as legalNotice } from "@/app/(templates)/legal-notice/config";
+import { config as kundliMilan } from "@/app/(templates)/kundli-milan/config";
+import { config as vendingMachine } from "@/app/(templates)/vending-machine/config";
+import { config as catchGame } from "@/app/(templates)/catch/config";
+import { config as flags } from "@/app/(templates)/flags/config";
 
 const allConfigs = [
   birthdayGf,
@@ -49,6 +53,10 @@ const allConfigs = [
   holdMyHand,
   trainTicket,
   legalNotice,
+  kundliMilan,
+  vendingMachine,
+  catchGame,
+  flags,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
