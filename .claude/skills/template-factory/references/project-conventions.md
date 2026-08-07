@@ -25,6 +25,15 @@ app/(templates)/<slug>/
     EditSheet.tsx           # inline edit UX for personalizing
     <Name>WelcomeOverlay.tsx / PublishingOverlay.tsx / PasswordSheet.tsx
     BackgroundMusic.tsx, Particles/decorations, ToastStack.tsx, PreviewBar.tsx
+  hooks/
+    use<Name>Editor.tsx     # all editor state, incl. useStoryFill + persistStory
+```
+
+Plus, on the server, the two files that give the template its AI fill:
+```
+server/src/config/aiFill/
+  <slug>.ts               # the field schema: slug, audience, premise, fields[]
+  registry.generated.ts   # + one import line and one SCHEMAS entry
 ```
 
 ## Conventions
@@ -39,6 +48,12 @@ app/(templates)/<slug>/
   allow-listed in `next.config.ts` (`images.remotePatterns`).
 - **Personalization/share:** follow the existing edit-sheet + publish-overlay +
   password-sheet pattern; share links use the app's slug-based routing.
+- **AI story fill:** every template has it. **Create** opens `StoryStarter`, not
+  the blank form. Wire `useStoryFill` in the editor hook, author the schema in
+  `server/src/config/aiFill/<slug>.ts`, register it, and call `persistStory()` in
+  both publish paths. It fails soft, so a missing schema shows up as "this one
+  template can't write itself" and nothing else. Full detail: the
+  `subhsandesh-template` skill, `reference/ai-story-fill.md`.
 - **Types:** everything typed; `npx tsc --noEmit` must stay at 0 errors.
 - **A11y:** buttons have accessible names, touch targets ≥24px, sequential headings
   (no h2→h4 skips), `aria-hidden` on decorative SVGs, respect `prefers-reduced-motion`.
@@ -48,6 +63,12 @@ app/(templates)/<slug>/
   input with zod. Never expose secrets to the client (`NEXT_PUBLIC_*` only for public
   values). Media uploads go through the existing S3/CDN flow. Handle errors + return
   typed responses.
+- **The AI fill schema is a Stage 4 deliverable.** Text leaves only — `FieldKind`
+  has no media member and boot validation rejects photo/audio/url paths, because
+  the model must never invent a URL. After adding it, boot the server and confirm
+  no `[aiFill] schema "<slug>" has N problem(s)` line: validation is non-fatal by
+  design (one bad schema must not take the API down), so nothing else will tell
+  you it is broken.
 
 ## Build / verify
 - `npx tsc --noEmit` → 0 errors.

@@ -10,7 +10,8 @@ description: >
   page"), or asks to edit the editor flow, publish flow, share flow, share
   links, password gate, or shared/recipient page for any template. When active,
   reproduce the apology-dashboard flow exactly: gallery/preview → Back+Create top
-  bar → form saved to sessionStorage → Save shows preview → Publish (login if
+  bar → AI story fill panel (schema + useStoryFill + persistStory — every template
+  gets it) → form saved to sessionStorage → Save shows preview → Publish (login if
   logged-out, then auto-publish) → Share option → shared page with SubhSandesh
   logo top-right + small Create CTA + password logic.
 ---
@@ -37,10 +38,12 @@ Read the reference files for exact code before writing anything:
 - `reference/client-editor.md` — the editor hook state machine, sessionStorage draft, deferred publish, top bar, EditSheet form.
 - `reference/shared-viewer.md` — `[id]` SSR, `SharePageClient` registration, `XxxViewer`, password gate, brand logo / Create CTA.
 - `reference/new-template-checklist.md` — the copy-paste file checklist for a brand-new template.
+- `reference/ai-story-fill.md` — **AI story fill**: the schema file, the registry
+  line, the `useStoryFill` wiring, and `persistStory()`. Every template gets this.
 
 ---
 
-## The 9 files a new template touches
+## The 11 files a new template touches
 
 Reference template = **apology-dashboard**, type string `"apology-dashboard"`, route `/apology-dashboard`, API namespace `/api/apology-dashboard-pages`. For a new template `xxx`:
 
@@ -50,12 +53,14 @@ Reference template = **apology-dashboard**, type string `"apology-dashboard"`, r
 3. `routes/xxxPage.routes.ts` — public `GET /share/:shareId` + `POST /share/:shareId/verify` **before** `router.use(protect)`, then owner CRUD.
 4. `routes/index.ts` — `router.use("/xxx-pages", xxxPageRoutes)`.
 5. `controllers/share.controller.ts` — add a `TEMPLATE_LOOKUPS` entry `{ model, templateType: "xxx", editorRoute: "/xxx" }`.
+6. `config/aiFill/xxx.ts` — **the AI fill schema.** `slug`, `audience`, `premise`, and one `fields[]` entry per text leaf the model may write. See `reference/ai-story-fill.md`.
+7. `config/aiFill/registry.generated.ts` — two alphabetical lines: the import and the `SCHEMAS` entry. That is the whole registration.
 
 **Client (`client/`)**
-6. `app/(templates)/xxx/page.tsx` + `app/(templates)/xxx/hooks/useXxxEditor.ts` + `components/` + `components/types.ts` (with `xxxDataToBody` / `dbToXxxData`).
-7. `app/[id]/XxxViewer.tsx` — dedicated full-page recipient viewer with password gate + brand logo.
-8. `app/[id]/SharePageClient.tsx` — add `"xxx"` to the early-return list and add a dispatch guard returning `<XxxViewer rawData hasPassword shareId />`.
-9. (SSR `app/[id]/page.tsx` needs **no change** — it is generic via `/share/:shareId` + `getSharePageMeta`.)
+8. `app/(templates)/xxx/page.tsx` + `app/(templates)/xxx/hooks/useXxxEditor.ts` + `components/` + `components/types.ts` (with `xxxDataToBody` / `dbToXxxData`). The hook calls `useStoryFill({ slug: "xxx", demo: DEMO_DATA, current: mf, onFilled: setMf })`; the page mounts `<StoryStarter>` and points **Create** at `handleStartCreate`.
+9. `app/[id]/XxxViewer.tsx` — dedicated full-page recipient viewer with password gate + brand logo.
+10. `app/[id]/SharePageClient.tsx` — add `"xxx"` to the early-return list and add a dispatch guard returning `<XxxViewer rawData hasPassword shareId />`.
+11. (SSR `app/[id]/page.tsx` needs **no change** — it is generic via `/share/:shareId` + `getSharePageMeta`.)
 
 ---
 
@@ -93,6 +98,40 @@ useEffect(() => {
 // onClose = closeAuth  (clears pendingPublishRef → cancel)
 // onSuccess = closeAuthSuccess  (just closes; the effect auto-resumes)
 ```
+
+### AI story fill (every template — read `reference/ai-story-fill.md`)
+
+**Create** opens the AI panel, not the blank form. The panel offers "Use my
+story" to a signed-in sender who has one, or a composer with a highlighted
+sample paragraph to everyone else; **Generate** fills every declared field; the
+review screen lets them edit each one; anything unfilled is a normal form field.
+
+```ts
+// useXxxEditor.ts — inert when the server has no schema for this slug
+const storyFill = useStoryFill<XxxData>({ slug: "xxx", demo: DEMO_DATA, current: mf, onFilled: setMf });
+const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+const [storyStarted, setStoryStarted] = useState(false);
+
+const handleStartCreate = useCallback(() => {
+  if (!storySchema) { handleEditClick(); return; }   // no schema → today's form
+  seedManualForm();                                   // seed `mf` first
+  setStoryMode("idle");
+  setStoryStarted(true);
+}, [storySchema, handleEditClick, seedManualForm, setStoryMode]);
+
+const handleStoryManual = useCallback(() => setEditMode("manual"), []);
+```
+
+```tsx
+// page.tsx — Create points at handleStartCreate; StoryStarter mounts AFTER EditSheet
+: { label: "Create", onClick: e.handleStartCreate }
+…
+{e.storyStarted && <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />}
+```
+
+`await persistStory()` goes in **both** publish paths — the direct one and the
+auto-resume-after-login effect — right after the publish succeeds and before
+`clearDraft()`. That is what makes the sender's *next* template pre-fill itself.
 
 ### sessionStorage draft
 - One key: **`"xxx_draft"`** (apology uses `"apology_draft"`).
@@ -140,7 +179,16 @@ Headers: `Content-Type: application/json`, `Authorization: Bearer <accessToken>`
 3. **Password = bcrypt** hashed in pre-save (cost 10) with plaintext mirrored in `passwordRaw` (`select:false`); `comparePassword` returns `true` when no password is set. Never ship `password`/`passwordRaw` to the client — the shared GET returns only `hasPassword`.
 4. **Publish is auth-deferred**, never auth-gated at edit time. Anyone can open the editor and fill the form; login is required only at the Publish click, and it auto-resumes.
 5. **Draft key + unlock key are namespaced** per template: `xxx_draft`, `xxx_unlocked_${shareId}`.
-6. **Register everywhere**: model → controller → routes → `routes/index.ts` mount (`/xxx-pages`, plural) → `share.controller.ts` `TEMPLATE_LOOKUPS` → `SharePageClient` early-return list + dispatch guard. Missing any one breaks the shared page.
+6. **Register everywhere**: model → controller → routes → `routes/index.ts` mount (`/xxx-pages`, plural) → `share.controller.ts` `TEMPLATE_LOOKUPS` → `config/aiFill/xxx.ts` + `registry.generated.ts` → `SharePageClient` early-return list + dispatch guard. Missing any one breaks the shared page or the fill button, silently.
+6a. **AI fill ships in the same commit as the template**, never "later". It fails
+   soft by design — no schema means the hook goes inert and Create falls back to
+   the plain form — so a missing schema is invisible in review and glaring to the
+   sender, who gets a blank form on your template and an AI writer on every other
+   one. The schema declares **text leaves only**: `FieldKind` has no media member
+   and `assertNoMediaPaths` rejects photo/audio/url paths, because the model must
+   never invent a URL. Boot the server and confirm there is no
+   `[aiFill] schema "xxx" has N problem(s)` line — validation is non-fatal, so
+   nothing else will tell you.
 7. **Share URL comes from the server** (`buildShareUrl` in `server/src/utils/shareUrl.ts`, returned in the publish response as `data.shareUrl`) — do not construct it on the client. `shareId = shareUrl.split("/").pop()`.
 8. **Brand logo top-right on `mode==="live"`** in every dedicated viewer, wrapped in `<Link href="/templates">` (the recipient's create path).
 9. If the template belongs to the **new SubhSandesh look**, also load the `subhsandesh-theme` skill for fonts/colors. This skill governs *flow*; that one governs *visual design*.
