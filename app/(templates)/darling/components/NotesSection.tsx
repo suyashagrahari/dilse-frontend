@@ -246,26 +246,53 @@ export default memo(function NotesSection({ shareId, titleInTopBar = false }: No
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   // ── Load notes from server on mount ──────────────────────────────────────
+  //
+  // Two things were wrong here beyond the lint error.
+  //
+  // `setLoading(true)` sat directly in the effect body, which React 19 rejects
+  // because a synchronous setState in an effect cascades an extra render. It
+  // was also redundant on mount — `loading` is initialised to `!!shareId`
+  // above — and only does anything when the page acquires a shareId later,
+  // after publishing. So it moves into the continuation, past the first await.
+  //
+  // And there was no guard against a stale response. Two overlapping loads
+  // resolve in whatever order the network decides, so the older one could land
+  // last and overwrite the newer notes. `alive` closes that.
   useEffect(() => {
     if (!shareId) return;
-    setLoading(true);
-    fetch(`${API_URL}/darling-pages/share/${shareId}`)
-      .then((r) => r.json())
-      .then((result) => {
-        if (!result.success || !result.data) return;
-        const raw: ServerNote[] = Array.isArray(result.data.notes) ? result.data.notes : [];
-        setNotes(raw.map((n, i) => ({
-          id: -(i + 1),
-          from: n.from,
-          message: n.message,
-          mood: n.mood,
-          mediaUrl: n.mediaUrl || undefined,
-          mediaType: (n.mediaType as Note["mediaType"]) || undefined,
-          savedAt: n.savedAt,
-        })));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    let alive = true;
+
+    void (async () => {
+      await Promise.resolve();
+      if (!alive) return;
+      setLoading(true);
+
+      try {
+        const res = await fetch(`${API_URL}/darling-pages/share/${shareId}`);
+        const result = await res.json();
+        if (!alive) return;
+
+        if (result.success && result.data) {
+          const raw: ServerNote[] = Array.isArray(result.data.notes) ? result.data.notes : [];
+          setNotes(raw.map((n, i) => ({
+            id: -(i + 1),
+            from: n.from,
+            message: n.message,
+            mood: n.mood,
+            mediaUrl: n.mediaUrl || undefined,
+            mediaType: (n.mediaType as Note["mediaType"]) || undefined,
+            savedAt: n.savedAt,
+          })));
+        }
+      } catch {
+        // A failed load leaves the notes empty, which the panel already renders
+        // as "no notes yet" — the same thing a genuinely empty page shows.
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => { alive = false; };
   }, [shareId]);
 
   // ── Voice recording ───────────────────────────────────────────────────────
