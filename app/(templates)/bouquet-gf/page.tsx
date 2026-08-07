@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useBouquetEditor } from "./hooks/useBouquetEditor";
 import BouquetTemplate from "./components/BouquetTemplate";
 import EditSheet from "./components/EditSheet";
@@ -39,7 +40,7 @@ function BouquetPageInner() {
     ? { label: "Share", onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "Sending…" : "Send it", onClick: e.publish, icon: <Sparkles size={14} /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
 
   const barBtn: React.CSSProperties = { background: LIGHT.surface, color: LIGHT.ink, border: `2px solid ${LIGHT.ink}`, boxShadow: "2px 3px 0 rgba(43,36,64,0.14)" };
 
@@ -73,6 +74,11 @@ function BouquetPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Mounted after EditSheet so the sheet sits over the form it seeds. */}
+      {e.storyStarted && (
+        <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

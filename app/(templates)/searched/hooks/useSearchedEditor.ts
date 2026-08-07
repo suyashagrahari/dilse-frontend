@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -114,6 +115,28 @@ export function useSearchedEditor() {
 
   const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
 
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  //
+  // Inert when the server has no schema for this slug: `schema` stays null,
+  // StoryStarter renders nothing and the entry points below fall straight back
+  // to the sheet this editor has always shown. Only the sender-authored copy is
+  // declared — the result urls and the wordmark are the template's own and
+  // stay under the deny-list checks in `components/types.ts`.
+  /** Anything a fill writes is work in progress — a re-seed must never eat it. */
+  const applyStoryFill = useCallback((next: SearchData) => {
+    hasWipRef.current = true;
+    setMf(next);
+  }, []);
+
+  const storyFill = useStoryFill<SearchData>({
+    slug: "searched",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -183,6 +206,8 @@ export function useSearchedEditor() {
         const pubResult = await pubRes.json();
         if (pubResult?.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          // Never throws, never blocks — the page is already live either way.
+          await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published 🔍", message: "Send it. Let them type their own name.", shareUrl: String(pubResult.data.shareUrl) });
         } else {
@@ -196,7 +221,7 @@ export function useSearchedEditor() {
         setPublishing(false);
       }
     })();
-  }, [isAuthenticated, accessToken, headers, pushToast]);
+  }, [isAuthenticated, accessToken, headers, pushToast, persistStory]);
 
   const displayData = editMode === "manual" ? mf : content;
 
@@ -224,6 +249,30 @@ export function useSearchedEditor() {
     setMf((cur) => (hasWipRef.current ? cur : isPersonalized ? { ...content } : { ...DEMO_DATA }));
     setEditMode("manual");
   }, [isPersonalized, content]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The manual form is opened and seeded FIRST, then StoryStarter is laid over
+  // it. "I'll fill it in myself" therefore reveals exactly the sheet this
+  // editor has always shown, and a generated draft lands in an `mf` that was
+  // seeded from the right place. Nothing ever becomes read-only.
+  const openStoryStarter = useCallback(() => {
+    openSheet();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [openSheet, setStoryMode]);
+
+  /** Create tap. With no schema this is the old Create, unchanged. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) {
+      openSheet();
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, openSheet, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still editable. */
+  const handleStoryManual = useCallback(() => setEditMode("manual"), []);
 
   const handleSave = useCallback(() => {
     const problem = validate(mf);
@@ -298,6 +347,8 @@ export function useSearchedEditor() {
       const pubResult = await pubRes.json();
       if (pubResult?.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        // Never throws, never blocks — the page is already live either way.
+        await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published 🔍", message: "Send it. Let them type their own name.", shareUrl: String(pubResult.data.shareUrl) });
       } else {
@@ -310,7 +361,7 @@ export function useSearchedEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);
@@ -344,9 +395,10 @@ export function useSearchedEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl,
     isPersonalized, showAuth, publishing, copied, toasts, previewVersion,
+    storyFill, storyStarted,
 
     setEditMode, setPagePassword: updatePassword, updateMf, setRecipientName,
-    openSheet, handleSave, publish, closeAuth, closeAuthSuccess,
+    openSheet, handleStartCreate, handleStoryManual, handleSave, publish, closeAuth, closeAuthSuccess,
     handleCopy, handleShare, goBack, pushToast, dismissToast,
 
     showPublish: isPersonalized && !shareUrl && !publishing,

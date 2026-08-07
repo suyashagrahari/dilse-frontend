@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -228,6 +229,79 @@ export function useCapsuleEditor() {
     return { ...draft, predictions: draft.predictions.map((p) => ({ ...p, text: "" })) };
   }, [draft, capsule, amendable]);
 
+  // ── AI story fill — THE OUTSIDE OF THE CAPSULE ONLY ────────────────────────
+  //
+  // The schema declares four fields and no more: `nameA`, `nameB`,
+  // `opensOnDate`, `stake`. All four are on `SealedCapsuleView`, i.e. all four
+  // are already visible on the waiting screen while the capsule is sealed.
+  // Everything else — every `predictions[].text`, every `context` line — is
+  // absent from that type, is therefore sealed, and belongs to the person who
+  // wrote it. Nothing here may write into it.
+  //
+  // Two things enforce that, and they are independent of the server:
+  //
+  //   1. `current` is `exposedDraft`, the REDACTED view. The fill machinery
+  //      never even holds the sealed text, so it cannot be read, diffed or
+  //      round-tripped by anything in this flow. (The form is not transmitted
+  //      either — `useStoryFill` posts only the sender's story prose and the
+  //      names, never the draft.)
+  //
+  //   2. `applyStoryFill` below NEVER hands the merged object back wholesale.
+  //      `applyPatch` returns a clone of `current`, and merging that clone into
+  //      state would write the redacted (blanked) predictions over the real
+  //      ones. So exactly four keys are lifted out by name and passed to
+  //      `updateDraft`, which merges them into the REAL draft and leaves
+  //      `predictions`, `context`, `sealedOn` and `status` untouched.
+  //
+  // If the schema ever grows a fifth field, this drops it. That is the correct
+  // direction to fail in.
+  const [fillDemo] = useState<CapsuleDraft>(() => blankDraft(deviceTimezone(), new Date().toISOString()));
+
+  const applyStoryFill = useCallback(
+    (next: CapsuleDraft) => {
+      updateDraft({
+        nameA: next.nameA,
+        nameB: next.nameB,
+        opensOnDate: next.opensOnDate,
+        stake: next.stake,
+      });
+    },
+    [updateDraft],
+  );
+
+  const storyFill = useStoryFill<CapsuleDraft>({
+    slug: "capsule",
+    demo: fillDemo,
+    current: exposedDraft,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The writing sheet is opened FIRST, then StoryStarter is laid over it, so
+  // "I'll fill it in myself" reveals exactly the sheet this editor has always
+  // shown. Never offered once a capsule exists: after the seal there is nothing
+  // an AI is allowed to touch.
+  const openStoryStarter = useCallback(() => {
+    setSheetOpen(true);
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [setStoryMode]);
+
+  /** Create tap. With no schema — or once sealed — this is the old Create. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema || capsule) {
+      setSheetOpen(true);
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, capsule, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal sheet, every field still editable. */
+  const handleStoryManual = useCallback(() => setSheetOpen(true), []);
+
   // ── Publish (auth-deferred, never auth-gated) ──────────────────────────────
 
   const doPublish = useCallback(
@@ -249,6 +323,10 @@ export function useCapsuleEditor() {
         const pubResult = await pubRes.json();
         if (pubResult?.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          // Never throws, never blocks — the capsule is already sealed and live
+          // either way. Only the sender's own story prose is saved; nothing
+          // from inside the capsule is reachable from here.
+          await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source });
           pushToast({ type: "publish", title: "sealed and shared 🕰️", message: "nothing inside is readable yet", shareUrl: String(pubResult.data.shareUrl) });
         } else {
@@ -262,7 +340,7 @@ export function useCapsuleEditor() {
         setPublishing(false);
       }
     },
-    [pageId, headers, pushToast],
+    [pageId, headers, pushToast, persistStory],
   );
 
   // Resumes the publish the moment the user comes back logged in. Every state
@@ -329,6 +407,10 @@ export function useCapsuleEditor() {
     setSheetOpen,
     openWriteSheet,
     openAmendSheet,
+    storyFill,
+    storyStarted,
+    handleStartCreate,
+    handleStoryManual,
     seal,
     saveAmend,
     saveNames,

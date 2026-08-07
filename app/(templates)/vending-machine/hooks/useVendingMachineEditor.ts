@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -64,6 +65,22 @@ export function useVendingMachineEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // The labels and payloads on eight of the eighteen slots, plus the machine
+  // name, the two names and the credit prompts. Slot A1 — the reserved
+  // never-vends joke — and prices, codes and stock are not on the schema.
+  const fill = useStoryFill<VendingData>({
+    slug: "vending-machine",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a *new* preview should be shown → remounts the machine so
   // credit, the tray, sold-out state and the display all restart from zero with
   // the freshly-saved slots.
@@ -161,6 +178,7 @@ export function useVendingMachineEditor() {
         if (pubResult.success) {
           // The share URL is authored by the server. Never build it here.
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           // The auth-deferred path: user hit Publish while logged out, logged in,
           // and this resumed automatically. Tracked separately from the direct
@@ -202,8 +220,18 @@ export function useVendingMachineEditor() {
     setMf(isPersonalized
       ? { ...content, slots: content.slots.map((s) => ({ ...s })) }
       : { ...DEMO_DATA, slots: DEMO_DATA.slots.map((s) => ({ ...s })) });
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Everything else opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, [isPersonalized, content]);
+  }, [isPersonalized, content, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content, slots: content.slots.map((s) => ({ ...s })) });
@@ -267,6 +295,7 @@ export function useVendingMachineEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Machine stocked 🎰", message: "Your link is ready" });
@@ -284,7 +313,7 @@ export function useVendingMachineEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -315,6 +344,8 @@ export function useVendingMachineEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf, setMf,
     handleEditClick, handleEditFromPreview, handleSave,

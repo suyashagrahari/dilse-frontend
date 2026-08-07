@@ -8,7 +8,7 @@ import {
   Eye, EyeOff, Loader2, ChevronRight, ChevronDown, Shield,
   ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
   AtSign, Link2, Share2, Star, TrendingUp, ArrowUpRight, ArrowDownRight,
-  Trash2, AlertTriangle,
+  Trash2, AlertTriangle, BookHeart,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
@@ -17,6 +17,7 @@ import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import SocialShareSheet from "@/components/SocialShareSheet";
+import MyStorySection from "@/components/profile/MyStorySection";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -149,7 +150,7 @@ interface ReceivedPage {
   senderAvatar: string | null; hasPassword: boolean; passwordVerified: boolean;
   passwordRaw?: string; viewCount: number; createdAt: string;
 }
-type ProfilePanel = "personal-link" | "account" | "creations" | "received" | "referral";
+type ProfilePanel = "personal-link" | "account" | "my-story" | "creations" | "received" | "referral";
 interface ReferralInfo { points: number; totalPointsEarned: number; referralCode: string; referralCount: number; }
 interface PointTx { _id: string; type: string; delta: number; balance: number; meta: Record<string, string>; createdAt: string; }
 
@@ -1228,6 +1229,7 @@ export default function ProfilePage() {
   const activePanelContent =
     activePanel === "personal-link" ? SubdomainBlock :
     activePanel === "account" ? AccountBlock :
+    activePanel === "my-story" ? <MyStorySection /> :
     activePanel === "creations" ? (CreationsBlock ?? EmptyCreationsBlock) :
     activePanel === "referral" ? ReferralBlock :
     (ReceivedBlock ?? EmptyReceivedBlock);
@@ -1248,6 +1250,7 @@ export default function ProfilePage() {
               {([
                 { id: "personal-link" as ProfilePanel, icon: <AtSign size={15} />, label: "Personal Link", hint: "Handle and share URL" },
                 { id: "account" as ProfilePanel, icon: <Shield size={15} />, label: "Account Settings", hint: "Email and password" },
+                { id: "my-story" as ProfilePanel, icon: <BookHeart size={15} />, label: "My Story", hint: "Private notes we fill your forms from" },
                 { id: "creations" as ProfilePanel, icon: <Sparkles size={15} />, label: "My Creations", hint: `${myCreations.length} item${myCreations.length === 1 ? "" : "s"}` },
                 { id: "received" as ProfilePanel, icon: <Users size={15} />, label: "Shared With You", hint: `${receivedPages.length} item${receivedPages.length === 1 ? "" : "s"}` },
                 { id: "referral" as ProfilePanel, icon: <Gift size={15} />, label: "Refer & Earn", hint: `${referralInfo?.points ?? user?.points ?? 0} pts · ${referralInfo?.referralCount ?? 0} friends` },
@@ -1318,6 +1321,7 @@ export default function ProfilePage() {
           <div className="px-5 pb-5">{SubdomainBlock}</div>
           <div id="referral" className="px-5 pb-5">{ReferralBlock}</div>
           <div className="px-5 pb-5">{AccountBlock}</div>
+          <div className="px-5 pb-5"><MyStorySection /></div>
           <div className="px-5 pb-5">{CreationsBlock ?? EmptyCreationsBlock}</div>
           <div className="px-5 pb-5">{ReceivedBlock ?? EmptyReceivedBlock}</div>
           <div className="px-5 pb-5">{LogoutBlock}</div>

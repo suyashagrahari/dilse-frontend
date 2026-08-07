@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Copy, Loader2, PenLine, Send, Share2, X } from "lucide-react";
 
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import EditSheet from "./components/EditSheet";
 import LoveflixTemplate from "./components/LoveflixTemplate";
 import {
@@ -217,6 +218,13 @@ function LoveflixPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out lands in the EditSheet above,
+          fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your show" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

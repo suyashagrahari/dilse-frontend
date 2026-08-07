@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Stamp, Share2, Loader2, X, Copy } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useCourtMarriageEditor } from "./hooks/useCourtMarriageEditor";
 import CourtMarriageTemplate, { usePrefersReducedMotion } from "./components/CourtMarriageTemplate";
 import EditSheet from "./components/EditSheet";
@@ -101,6 +102,13 @@ function CourtMarriagePageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out of it lands in the EditSheet
+          above, populated and fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's fill in the certificate" />
+      )}
 
       {/* Registering overlay — the typewriter belongs here, never on the paper. */}
       <AnimatePresence>

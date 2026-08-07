@@ -8,6 +8,7 @@ import AuthModal from "@/components/AuthModal";
 import { useVendingMachineEditor } from "./hooks/useVendingMachineEditor";
 import VendingMachineTemplate from "./components/VendingMachineTemplate";
 import EditSheet from "./components/EditSheet";
+import StoryStarter from "@/components/story/StoryStarter";
 import type { Toast } from "./components/types";
 
 /* Chrome sits over a dark, worn machine, so the pills are dark glass and the
@@ -121,6 +122,13 @@ function VendingMachinePageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out lands in the EditSheet above,
+          fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's stock the machine" />
+      )}
 
       {/* Publishing overlay */}
       <AnimatePresence>

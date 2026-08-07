@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { clampNum } from "@/lib/wire";
 import { EVENTS } from "@/lib/analytics/events";
@@ -106,6 +107,26 @@ export function useDateInvitationEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // The written half of the invitation: the note, the dress code, the reason
+  // behind each of the four stops and the closing line. Times, coordinates and
+  // the map are not on the schema, so the itinerary itself is untouched.
+  //
+  // `demo` is the per-mount object above, not the module-level `DEMO_DATA`:
+  // that is what `mf` was seeded from, and it is the baseline the "did the
+  // sender type here?" diff has to be taken against.
+  const fill = useStoryFill<DateInviteData>({
+    slug: "date-invitation",
+    demo,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a *new* preview should be shown → remounts the template so
   // the phase router re-derives from the freshly-written invitation.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -231,6 +252,7 @@ export function useDateInvitationEditor() {
         if (pubResult.success) {
           // The share URL is authored by the server — never assembled here.
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Sent 💌", message: "Now she has to answer it" });
@@ -273,8 +295,18 @@ export function useDateInvitationEditor() {
     } else if (!dirtyRef.current && !draftRestoredRef.current) {
       setMf({ ...demo });
     }
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Everything else opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, [isPersonalized, content, demo]);
+  }, [isPersonalized, content, demo, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
@@ -426,6 +458,7 @@ export function useDateInvitationEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Sent 💌", message: "Now she has to answer it" });
@@ -443,7 +476,7 @@ export function useDateInvitationEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -476,6 +509,8 @@ export function useDateInvitationEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf, bumpPreview,
     handleEditClick, handleEditFromPreview, handleSave,

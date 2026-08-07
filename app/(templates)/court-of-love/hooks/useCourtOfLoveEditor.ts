@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -77,7 +78,45 @@ export function useCourtOfLoveEditor() {
   const pendingPublishRef = useRef<{ data: CourtOfLoveData; password: string } | null>(null);
 
   // ── AI: the sender's story → a whole case file ─────────────────────────────
-  const [story, setStory] = useState("");
+  //
+  // ── WHY THIS TEMPLATE KEEPS ITS OWN GENERATOR AND HAS NO StoryStarter ──────
+  //
+  // Court of Love shipped a complete AI flow before the shared one existed: a
+  // story box at the top of the EditSheet, backed by `courtOfLoveAi.service`,
+  // which writes the whole case file *including the five quiz hearings*. The
+  // shared schema for this slug can only declare `questions[0..3]` — four of
+  // the five — and does not carry `language`, which is what makes a Hindi or
+  // Urdu case file render in the right script. Putting the generic path in
+  // front would therefore leave the fifth hearing on demo copy and lose the
+  // language: a regression on a working, shipped feature. So the bespoke flow
+  // stays exactly as it is, and `useStoryFill` is mounted here for one reason
+  // only — `persistStory`, so the paragraph the sender already wrote reaches
+  // their profile on publish like it does everywhere else.
+  //
+  // The story itself lives in `fill`, not in a second `useState`. One box, one
+  // piece of state: a sender must never be shown two "tell us your story"
+  // fields, and two copies of the text is how that starts.
+  const fill = useStoryFill<CourtOfLoveData>({
+    slug: "court-of-love",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+    // OFF, and this is the whole reason the comment above exists.
+    //
+    // Leaving it on would have quietly reintroduced the generic path that this
+    // template deliberately does not use. Auto-apply does not need the sender
+    // to press anything, so a signed-in sender with a saved story would get the
+    // shared 20-field schema written into `mf` without asking — and that schema
+    // declares four hearings where this template runs five, and carries no
+    // `language`, so a Hindi case file would render with an English fifth
+    // hearing and the wrong script. Deciding not to mount StoryStarter was not
+    // enough on its own; the hook runs regardless of what is rendered.
+    //
+    // `generateFromStory` remains the only thing that writes this form.
+    autoApply: false,
+  });
+  const { story, setStory } = fill;
+
   const [generating, setGenerating] = useState(false);
   /** Language the last generation came back in, echoed to the sender. */
   const [generatedLanguage, setGeneratedLanguage] = useState<string | null>(null);
@@ -171,6 +210,7 @@ export function useCourtOfLoveEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           // The auth-deferred path: user hit Publish while logged out, logged in,
           // and this resumed automatically. Tracked separately from the direct
@@ -406,6 +446,7 @@ export function useCourtOfLoveEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Case filed! ⚖️", message: "Your Court of Love is live" });
@@ -423,7 +464,7 @@ export function useCourtOfLoveEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   // Cancelling the login modal must drop BOTH pending intents, or closing it
   // after an AI prompt would fire a generation the next time they log in.

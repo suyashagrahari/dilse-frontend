@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 
 import { useAnniversaryEditor } from "./hooks/useAnniversaryEditor";
 import CoverTab from "./components/CoverTab";
@@ -115,7 +116,7 @@ export default function AnniversaryGfPage() {
         tab={editor.tab}
         onTabChange={editor.handleTabChange}
         editActive={!!editor.editMode}
-        onEdit={editor.handleEditClick}
+        onEdit={editor.handleStartCreate}
         onPublish={editor.handlePublish}
         onShare={editor.handleShare}
         onBack={editor.goBack}
@@ -142,11 +143,16 @@ export default function AnniversaryGfPage() {
         photoInput={editor.photoInput}
         setPhotoInput={editor.setPhotoInput}
         updateMf={editor.updateMf}
-        onStartAi={editor.startAiMode}
+        onStartAi={editor.handleStartAi}
         onStartManual={editor.startManualMode}
         onAiGenerate={editor.handleAiGenerate}
         onManualPreview={editor.handleManualPreview}
       />
+
+      {/* Mounted after EditSheet so the sheet sits over the seeded manual form. */}
+      {editor.storyStarted && (
+        <StoryStarter fill={editor.storyFill} onManual={editor.handleStoryManual} />
+      )}
 
       <PasswordSheet
         visible={editor.editMode === "password"}

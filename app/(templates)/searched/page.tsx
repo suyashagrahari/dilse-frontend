@@ -4,6 +4,7 @@ import React, { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Copy, Loader2, PenLine, Send, Share2, X } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useSearchedEditor, type Toast } from "./hooks/useSearchedEditor";
 import SearchedTemplate from "./components/SearchedTemplate";
 import EditSheet from "./components/EditSheet";
@@ -65,7 +66,7 @@ function SearchedPageInner() {
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.openSheet, icon: <PenLine size={14} /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative", background: PALETTE.bg }}>
@@ -114,6 +115,17 @@ function SearchedPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
       />
+
+      {/* Sits over the sheet above, so the first thing a sender sees after
+          Create is the offer to have it written — with the form they get today
+          one tap behind it. The wrapper makes a stacking context: this sheet is
+          z-250 and StoryStarter is z-200, so without it the starter would open
+          underneath. Renders nothing without a schema. */}
+      {e.storyStarted && (
+        <div style={{ position: "relative", zIndex: 260 }}>
+          <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />
+        </div>
+      )}
 
       <AnimatePresence>
         {e.publishing && (

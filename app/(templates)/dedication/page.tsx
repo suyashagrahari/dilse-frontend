@@ -12,6 +12,7 @@ import { Suspense, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useDedicationEditor } from "./hooks/useDedicationEditor";
 import DedicationTemplate from "./components/DedicationTemplate";
 import EditSheet from "./components/EditSheet";
@@ -73,7 +74,7 @@ function DedicationPageInner() {
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative", background: "#070302" }}>
@@ -123,6 +124,11 @@ function DedicationPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Sits over the sheet above, so the first thing a sender sees after
+          Create is the offer to have it written — with the form they get
+          today one tap behind it. Renders nothing without a schema. */}
+      {e.storyStarted && <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />}
 
       <AnimatePresence>
         {e.publishing && (

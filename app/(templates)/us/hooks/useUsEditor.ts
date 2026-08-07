@@ -21,6 +21,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -73,6 +74,26 @@ export function useUsEditor() {
   const hasWip = useRef(false);
   /** Holds the intent when Publish is pressed logged-out; the effect below resumes it. */
   const pendingPublish = useRef<{ data: ProfileData; password: string } | null>(null);
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  //
+  // Inert when the server has no schema for this slug: `schema` stays null,
+  // StoryStarter renders nothing and every entry point below falls straight
+  // back to the sheet this editor has always shown.
+  /** Anything a fill writes is work in progress — a re-seed must never eat it. */
+  const applyStoryFill = useCallback((next: ProfileData) => {
+    hasWip.current = true;
+    setMf(next);
+  }, []);
+
+  const storyFill = useStoryFill<ProfileData>({
+    slug: "us",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const headers = useCallback(
     () => ({
@@ -154,6 +175,8 @@ export function useUsEditor() {
         const pub = await pubRes.json();
         if (pub?.success) {
           setShareUrl(String(pub.data.shareUrl));
+          // Never throws, never blocks — the page is already live either way.
+          await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published 📱", message: "The profile is live" });
         } else {
@@ -169,7 +192,7 @@ export function useUsEditor() {
     })();
     // The ref is consumed and nulled on entry, so a re-run for any other reason
     // is a no-op. `pushToast` is stable; `headers` tracks `accessToken`.
-  }, [isAuthenticated, accessToken, headers, pushToast]);
+  }, [isAuthenticated, accessToken, headers, pushToast, persistStory]);
 
   const displayData = editMode === "manual" ? mf : content;
 
@@ -193,6 +216,30 @@ export function useUsEditor() {
     setMf((cur) => (hasWip.current ? cur : { ...content }));
     setEditMode("manual");
   }, [content]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The manual form is opened and seeded FIRST, then StoryStarter is laid over
+  // it. "I'll fill it in myself" therefore reveals exactly the sheet this
+  // editor has always shown, and a generated draft lands in an `mf` that was
+  // seeded from the right place. Nothing ever becomes read-only.
+  const openStoryStarter = useCallback(() => {
+    handleEditClick();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [handleEditClick, setStoryMode]);
+
+  /** Create tap. With no schema this is the old Create, unchanged. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) {
+      handleEditClick();
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, handleEditClick, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still editable. */
+  const handleStoryManual = useCallback(() => setEditMode("manual"), []);
 
   const handleSave = useCallback(() => {
     const problem = validate(mf);
@@ -269,6 +316,8 @@ export function useUsEditor() {
       const pub = await pubRes.json();
       if (pub?.success) {
         setShareUrl(String(pub.data.shareUrl));
+        // Never throws, never blocks — the page is already live either way.
+        await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published 📱", message: "The profile is live" });
       } else {
@@ -281,7 +330,7 @@ export function useUsEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);
@@ -328,10 +377,15 @@ export function useUsEditor() {
     toasts,
     previewVersion,
 
+    storyFill,
+    storyStarted,
+
     setEditMode,
     setPagePassword: updatePassword,
     updateMf,
     handleEditClick,
+    handleStartCreate,
+    handleStoryManual,
     handleEditFromPreview,
     handleSave,
     publish,

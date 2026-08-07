@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -129,6 +130,28 @@ export function useDedicationEditor() {
   const hasWipRef = useRef(false);
   const pendingPublishRef = useRef<{ data: DedicationData; password: string } | null>(null);
 
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  //
+  // Inert when the server has no schema for this slug: `schema` stays null,
+  // StoryStarter renders nothing and the entry points below fall straight back
+  // to the sheet this editor has always shown. The schema declares captions,
+  // titles and dedications only — never the booth recordings or the YouTube
+  // ids, which are not text and cannot be guessed.
+  /** Anything a fill writes is work in progress — a re-seed must never eat it. */
+  const applyStoryFill = useCallback((next: DedicationData) => {
+    hasWipRef.current = true;
+    setMf(next);
+  }, []);
+
+  const storyFill = useStoryFill<DedicationData>({
+    slug: "dedication",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -201,6 +224,8 @@ export function useDedicationEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          // Never throws, never blocks — the page is already live either way.
+          await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "On air! 📻", message: "Their station is live" });
         } else {
@@ -244,6 +269,30 @@ export function useDedicationEditor() {
 
   const handleEditClick = useCallback(() => seedForm(isPersonalized), [seedForm, isPersonalized]);
   const handleEditFromPreview = useCallback(() => seedForm(true), [seedForm]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The manual form is opened and seeded FIRST, then StoryStarter is laid over
+  // it. "I'll fill it in myself" therefore reveals exactly the sheet this
+  // editor has always shown, and a generated draft lands in an `mf` that was
+  // seeded from the right place. Nothing ever becomes read-only.
+  const openStoryStarter = useCallback(() => {
+    handleEditClick();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [handleEditClick, setStoryMode]);
+
+  /** Create tap. With no schema this is the old Create, unchanged. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) {
+      handleEditClick();
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, handleEditClick, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still editable. */
+  const handleStoryManual = useCallback(() => setEditMode("manual"), []);
 
   const handleSave = useCallback(() => {
     const problem = validateShow(mf);
@@ -318,6 +367,8 @@ export function useDedicationEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        // Never throws, never blocks — the page is already live either way.
+        await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "On air! 📻", message: "Their station is live" });
       } else {
@@ -334,7 +385,7 @@ export function useDedicationEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);
@@ -381,10 +432,15 @@ export function useDedicationEditor() {
     toasts,
     previewVersion,
 
+    storyFill,
+    storyStarted,
+
     setEditMode,
     setPagePassword: updatePassword,
     updateMf,
     handleEditClick,
+    handleStartCreate,
+    handleStoryManual,
     handleEditFromPreview,
     handleSave,
     create,

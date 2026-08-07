@@ -8,6 +8,7 @@ import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT }
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { useStoryFill } from "@/hooks/useStoryFill";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "anniversary-gf";
@@ -39,6 +40,19 @@ export function useAnniversaryEditor() {
   const [mf, setMf] = useState<ContentData>({ ...DEMO_CONTENT });
   const [manualStep, setManualStep] = useState(0);
   const [photoInput, setPhotoInput] = useState("");
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  // Completely inert when the server has no schema for this slug: `schema`
+  // stays null, StoryStarter renders nothing, and the entry points below fall
+  // straight back to the sheet this editor has always shown.
+  const storyFill = useStoryFill<ContentData>({
+    slug: "anniversary-gf",
+    demo: DEMO_CONTENT,
+    current: mf,
+    onFilled: setMf,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -95,11 +109,46 @@ export function useAnniversaryEditor() {
     setEditMode("ai");
   }, [isPersonalized, content.recipientName, content.senderName]);
 
-  const startManualMode = useCallback(() => {
+  /** Seeds the manual form exactly as opening it does, without opening it. */
+  const seedManualForm = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_CONTENT });
     setManualStep(0);
-    setEditMode("manual");
   }, [isPersonalized, content]);
+
+  const startManualMode = useCallback(() => {
+    seedManualForm();
+    setEditMode("manual");
+  }, [seedManualForm]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  // `mf` is seeded up front — from the loaded page or the demo, whichever the
+  // manual form would have used — so a generated draft lands on the right base
+  // and `onManual` can open the untouched form without re-seeding over it.
+  const openStoryStarter = useCallback(() => {
+    seedManualForm();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [seedManualForm, setStoryMode]);
+
+  /**
+   * Create / Personalise. With no schema — or before sign-in, which this editor
+   * has always required first — it defers to the untouched original handler.
+   */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema || !isAuthenticated) { handleEditClick(); return; }
+    openStoryStarter();
+  }, [storySchema, isAuthenticated, handleEditClick, openStoryStarter]);
+
+  /** The chooser's "AI" button. Falls back to the old prompt sheet with no schema. */
+  const handleStartAi = useCallback(() => {
+    if (!storySchema) { startAiMode(); return; }
+    openStoryStarter();
+  }, [storySchema, startAiMode, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still hand-editable. */
+  const handleStoryManual = useCallback(() => {
+    setEditMode("manual");
+  }, []);
 
   const handleAiGenerate = useCallback(async () => {
     if (!aiName.trim() || !aiPrompt.trim()) return;
@@ -216,6 +265,7 @@ export function useAnniversaryEditor() {
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
+        await persistStory();
         setPageId(null);
         setIsPersonalized(false);
         setHasPasswordSet(false);
@@ -240,7 +290,7 @@ export function useAnniversaryEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [pageId, headers, hasPasswordSet, pushToast]);
+  }, [pageId, headers, hasPasswordSet, pushToast, persistStory]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -261,7 +311,9 @@ export function useAnniversaryEditor() {
     tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
-    mf, manualStep, photoInput,
+    mf, setMf, manualStep, photoInput,
+
+    storyFill, storyStarted, handleStartCreate, handleStartAi, handleStoryManual,
 
     setEditMode, setAiName, setAiSender, setAiPrompt, setManualStep, setPhotoInput,
     setPagePassword, setShowPwValue,

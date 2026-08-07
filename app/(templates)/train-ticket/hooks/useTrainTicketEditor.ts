@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -52,6 +53,22 @@ export function useTrainTicketEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // The printed matter only: PNR, train and station names, the delay note, the
+  // fine print and the letter. The clock, the WL→CNF reveal and the running
+  // status timings are not on the schema and stay exactly as they are.
+  const fill = useStoryFill<TicketData>({
+    slug: "train-ticket",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a new preview should be shown, so the PNR reveal remounts and
   // replays from WL rather than sitting on a stale CNF from the previous save.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -144,6 +161,7 @@ export function useTrainTicketEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published! 🎫", message: "Your PNR is live" });
@@ -177,8 +195,18 @@ export function useTrainTicketEditor() {
 
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Everything else opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, [isPersonalized, content]);
+  }, [isPersonalized, content, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
@@ -239,6 +267,7 @@ export function useTrainTicketEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 🎫", message: "Your PNR is live" });
@@ -256,7 +285,7 @@ export function useTrainTicketEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -287,6 +316,8 @@ export function useTrainTicketEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

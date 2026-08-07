@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useRewindEditor } from "./hooks/useRewindEditor";
 import RewindTemplate from "./components/RewindTemplate";
 import EditSheet from "./components/EditSheet";
@@ -61,7 +62,7 @@ function RewindPageInner() {
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
 
   // The story underneath owns the whole viewport for tap-to-advance. Chrome taps
   // must reach the button and stop dead there — otherwise every Back press also
@@ -125,6 +126,11 @@ function RewindPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Sits over the sheet above, so the first thing a sender sees after
+          Create is the offer to have it written — with the form they get
+          today one tap behind it. Renders nothing without a schema. */}
+      {e.storyStarted && <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />}
 
       <AnimatePresence>
         {e.publishing && (

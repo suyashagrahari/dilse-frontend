@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -54,6 +55,21 @@ export function useFlagsEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // Writes the copy around the mechanic only — card statements and the three
+  // responses. `truth`, `kind` and the drag-locked sincere card are not on the
+  // schema, so nothing here can change how the deck plays.
+  const fill = useStoryFill<FlagsData>({
+    slug: "flags",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter itself renders nothing
+  // when this template has no schema, so this is only ever an extra boolean.
+  const [storyStarter, setStoryStarter] = useState(false);
 
   // Bumped whenever a *new* preview should be shown → remounts the template so
   // the deck restarts from the profile screen with the latest data rather than
@@ -164,6 +180,7 @@ export function useFlagsEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           // The auth-deferred path: Publish was clicked logged out, login happened,
           // and this resumed automatically. Tracked apart from the direct path so
@@ -205,8 +222,18 @@ export function useFlagsEditor() {
     if (isPersonalized) setMf(structuredCloneish(content));
     else if (!restoredDraftRef.current) setMf(structuredCloneish(DEMO_DATA));
     // else: an in-progress draft is already in `mf` — reopen it untouched.
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Every other path opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, [isPersonalized, content]);
+  }, [isPersonalized, content, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf(structuredCloneish(content));
@@ -287,6 +314,7 @@ export function useFlagsEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published 🚩", message: "Your profile is live" });
@@ -304,7 +332,7 @@ export function useFlagsEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -336,6 +364,8 @@ export function useFlagsEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion, draftSavedAt,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

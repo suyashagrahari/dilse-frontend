@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -102,6 +103,22 @@ export function useProposalEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // The words around the proposal: the gate, the scrapbook captions, the ask,
+  // the celebration and the secret note. The photos themselves are not on the
+  // schema, so the sender still brings those.
+  const fill = useStoryFill<ProposalData>({
+    slug: "proposal",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a *new* preview should be shown → remounts the template so it
   // replays from the audio gate with the latest content.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -208,6 +225,7 @@ export function useProposalEditor() {
         if (pubResult.success) {
           // The share URL is always the server's — never rebuilt on the client.
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           // The auth-deferred path: user hit Publish while logged out, logged in,
           // and this resumed automatically. Tracked separately from the direct
@@ -285,9 +303,19 @@ export function useProposalEditor() {
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
     setShowErrors(false);
-    setEditMode("manual");
     track(EVENTS.EDIT_STARTED, { template: TEMPLATE });
-  }, [isPersonalized, content]);
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Everything else opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
+    setEditMode("manual");
+  }, [isPersonalized, content, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
@@ -373,6 +401,7 @@ export function useProposalEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "It's live! 💍", message: "Send it to them", shareUrl: String(pubResult.data.shareUrl) });
@@ -390,7 +419,7 @@ export function useProposalEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   /** Cancelling the login modal drops the pending intent, so nothing fires later. */
   const closeAuth = useCallback(() => {
@@ -433,6 +462,8 @@ export function useProposalEditor() {
     /** Live weight of the uploaded polaroids, so the form can warn before Save. */
     memoryBytes: memoryPayloadBytes(mf.memories),
     maxMemoryBytes: MAX_MEMORY_PAYLOAD_BYTES,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     updateMemory, addMemory, removeMemory, moveMemory,

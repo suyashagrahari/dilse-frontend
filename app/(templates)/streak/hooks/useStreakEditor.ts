@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -82,6 +83,33 @@ export function useStreakEditor() {
   const hasWipRef = useRef(false);
 
   const pendingPublishRef = useRef<{ data: StreakData; password: string } | null>(null);
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  //
+  // THE FORM, NOT THE DATA. Every path in the `streak` schema addresses
+  // `StreakForm` — `nameA`, `letters[n].letter`, `microLines[n]` — so the demo
+  // baseline is `emptyForm()`, the same thing `mf` is seeded from, and NOT the
+  // `StreakData` demo above. Handing it `demo` would make every path miss.
+  //
+  // NO STORAGE. `useStoryFill` and `StoryStarter` hold everything in React
+  // state; nothing added here reads or writes local/sessionStorage, and the
+  // template's no-storage rule is unchanged.
+  const [fillDemo] = useState<StreakForm>(emptyForm);
+
+  /** Anything a fill writes is work in progress — a re-seed must never eat it. */
+  const applyStoryFill = useCallback((next: StreakForm) => {
+    hasWipRef.current = true;
+    setMf(next);
+  }, []);
+
+  const storyFill = useStoryFill<StreakForm>({
+    slug: "streak",
+    demo: fillDemo,
+    current: mf,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const headers = useCallback(
     () => ({
@@ -160,6 +188,8 @@ export function useStreakEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          // Never throws, never blocks — the page is already live either way.
+          await persistStory();
           setDrafts({});
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published 🕯️", message: "Send it to them" });
@@ -218,6 +248,30 @@ export function useStreakEditor() {
     if (!hasWipRef.current) setMf(dataToForm(content));
     setEditMode("manual");
   }, [content]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The manual form is opened and seeded FIRST, then StoryStarter is laid over
+  // it. "I'll fill it in myself" therefore reveals exactly the sheet this
+  // editor has always shown, and a generated draft lands in an `mf` that was
+  // seeded from the right place. Nothing ever becomes read-only.
+  const openStoryStarter = useCallback(() => {
+    handleEditClick();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [handleEditClick, setStoryMode]);
+
+  /** Create tap. With no schema this is the old Create, unchanged. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) {
+      handleEditClick();
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, handleEditClick, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still editable. */
+  const handleStoryManual = useCallback(() => setEditMode("manual"), []);
 
   const handleSave = useCallback(() => {
     const problem = validateForm(mf);
@@ -294,6 +348,8 @@ export function useStreakEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        // Never throws, never blocks — the page is already live either way.
+        await persistStory();
         setDrafts({});
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published 🕯️", message: "Send it to them" });
@@ -311,7 +367,7 @@ export function useStreakEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, isPersonalized, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, isPersonalized, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);
@@ -360,10 +416,15 @@ export function useStreakEditor() {
     previewVersion,
     restoredDraft: Boolean(drafts[DRAFT_KEY]) && !isPersonalized,
 
+    storyFill,
+    storyStarted,
+
     setEditMode,
     setPagePassword: updatePassword,
     updateMf,
     handleEditClick,
+    handleStartCreate,
+    handleStoryManual,
     handleEditFromPreview,
     handleSave,
     publish,

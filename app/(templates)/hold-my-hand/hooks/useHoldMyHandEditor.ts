@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -52,6 +53,22 @@ export function useHoldMyHandEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // Everything that is words: the twelve lines that surface during the hold,
+  // the lines shown on a release, the ghost fragments and the letter. The hold
+  // duration, the photo and the engine's timings are not on the schema.
+  const fill = useStoryFill<HoldData>({
+    slug: "hold-my-hand",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a *new* preview should be shown, so the hold experience
   // remounts from zero progress with the latest lines, photo and duration.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -144,6 +161,7 @@ export function useHoldMyHandEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published 🫀", message: "Now make them hold on" });
@@ -177,8 +195,18 @@ export function useHoldMyHandEditor() {
 
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. Everything else opens the form
+    // exactly as it did before.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, [isPersonalized, content]);
+  }, [isPersonalized, content, fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same form Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
@@ -236,6 +264,7 @@ export function useHoldMyHandEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published 🫀", message: "Now make them hold on" });
@@ -253,7 +282,7 @@ export function useHoldMyHandEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -284,6 +313,8 @@ export function useHoldMyHandEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

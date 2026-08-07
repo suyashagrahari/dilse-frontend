@@ -7,6 +7,7 @@ import AuthModal from "@/components/AuthModal";
 import { useCatchEditor } from "./hooks/useCatchEditor";
 import CatchTemplate from "./components/CatchTemplate";
 import EditSheet from "./components/EditSheet";
+import StoryStarter from "@/components/story/StoryStarter";
 import type { Toast } from "./components/types";
 
 const AMBER = "#B9722A";
@@ -104,6 +105,13 @@ function CatchPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out lands in the EditSheet above,
+          fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write their letter" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

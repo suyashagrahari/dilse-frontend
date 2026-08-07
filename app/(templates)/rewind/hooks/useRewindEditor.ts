@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -123,6 +124,26 @@ export function useRewindEditor() {
   // Holds the draft when the user hits Publish while logged out → auto-resumes after login.
   const pendingPublishRef = useRef<{ data: RewindData; password: string } | null>(null);
 
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  //
+  // Inert when the server has no schema for this slug: `schema` stays null,
+  // StoryStarter renders nothing and the entry points below fall straight back
+  // to the sheet this editor has always shown.
+  /** Anything a fill writes is work in progress — `nextFormSeed` must not eat it. */
+  const applyStoryFill = useCallback((next: RewindData) => {
+    hasWipRef.current = true;
+    setMf(next);
+  }, []);
+
+  const storyFill = useStoryFill<RewindData>({
+    slug: "rewind",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: applyStoryFill,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
+
   const headers = useCallback(
     () => ({
       "Content-Type": "application/json",
@@ -221,6 +242,8 @@ export function useRewindEditor() {
         if (pubResult.success) {
           // The share URL is authored by the server — never assembled here.
           setShareUrl(String(pubResult.data.shareUrl));
+          // Never throws, never blocks — the page is already live either way.
+          await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published! ⏮️", message: "Their year is ready to play" });
@@ -272,6 +295,30 @@ export function useRewindEditor() {
     setMf((cur) => nextFormSeed(cur, hasWipRef.current, true, content, DEMO_DATA));
     setEditMode("manual");
   }, [content]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  //
+  // The manual form is opened and seeded FIRST, then StoryStarter is laid over
+  // it. "I'll fill it in myself" therefore reveals exactly the sheet this
+  // editor has always shown, and a generated draft lands in an `mf` that was
+  // seeded from the right place. Nothing ever becomes read-only.
+  const openStoryStarter = useCallback(() => {
+    handleEditClick();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [handleEditClick, setStoryMode]);
+
+  /** Create tap. With no schema this is the old Create, unchanged. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) {
+      handleEditClick();
+      return;
+    }
+    openStoryStarter();
+  }, [storySchema, handleEditClick, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still editable. */
+  const handleStoryManual = useCallback(() => setEditMode("manual"), []);
 
   // Save (locally) & jump to the preview
   const handleSave = useCallback(() => {
@@ -379,6 +426,8 @@ export function useRewindEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        // Never throws, never blocks — the page is already live either way.
+        await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! ⏮️", message: "Their year is ready to play" });
@@ -396,7 +445,7 @@ export function useRewindEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -427,10 +476,10 @@ export function useRewindEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
-    restoredDraft,
+    restoredDraft, storyFill, storyStarted,
 
     setEditMode, setPagePassword: updatePassword, updateMf,
-    handleEditClick, handleEditFromPreview, handleSave,
+    handleEditClick, handleStartCreate, handleStoryManual, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
     pushToast, dismissToast,

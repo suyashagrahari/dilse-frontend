@@ -14,6 +14,7 @@ import { Suspense, useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy, Lock } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useCapsuleEditor, type Toast } from "./hooks/useCapsuleEditor";
 import CapsuleTemplate from "./components/CapsuleTemplate";
 import EditSheet from "./components/EditSheet";
@@ -116,7 +117,7 @@ function CapsulePageInner() {
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "publishing…" : "publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: e.capsule ? "publish" : "create", onClick: e.capsule ? e.publish : e.openWriteSheet, icon: <PenLine size={14} /> };
+      : { label: e.capsule ? "publish" : "create", onClick: e.capsule ? e.publish : e.handleStartCreate, icon: <PenLine size={14} /> };
 
   const amendLeftLabel = useMemo(() => {
     if (!e.amendUntil || now === 0) return undefined;
@@ -224,6 +225,18 @@ function CapsulePageInner() {
         sheetMode={sheetMode}
         amendLeftLabel={amendLeftLabel}
       />
+
+      {/* Sits over the sheet above, so the first thing a sender sees after
+          "create" is the offer to have the OUTSIDE of the capsule written —
+          the two names, the date and the stake. It never opens once a capsule
+          exists, and it cannot reach anything behind the seal. The wrapper
+          makes a stacking context: the sheet is z-220 and StoryStarter is
+          z-200, so without it the starter would open underneath. */}
+      {e.storyStarted && (
+        <div style={{ position: "relative", zIndex: 230 }}>
+          <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />
+        </div>
+      )}
 
       <AnimatePresence>
         {e.publishing && (

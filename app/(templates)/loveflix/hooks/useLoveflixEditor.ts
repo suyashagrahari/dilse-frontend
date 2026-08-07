@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -169,6 +170,23 @@ export function useLoveflixEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // ── AI story fill ───────────────────────────────────────────────────────────
+  // The billing copy and `rows[0]` only. `scenes[]` is a branching graph that
+  // `validateSceneGraph` checks at load — exactly two choices per non-finale,
+  // every nextSceneId resolving, no cycles — and it is deliberately NOT on the
+  // schema, so no patch from here can reach it.
+  const fill = useStoryFill<LoveflixData>({
+    slug: "loveflix",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. The starter renders nothing at all
+  // when this template has no schema.
+  const [storyStarter, setStoryStarter] = useState(false);
+
   // Bumped whenever a *new* preview should be shown → remounts the template so
   // the run restarts from the intro with the freshly-written show.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -267,6 +285,7 @@ export function useLoveflixEditor() {
         if (pubResult.success) {
           // The share URL is authored by the server — never assembled here.
           setShareUrl(String(pubResult.data.shareUrl));
+          await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published! 🍿", message: "Their episode is live" });
@@ -321,8 +340,18 @@ export function useLoveflixEditor() {
    * So opening the sheet only opens the sheet. It never writes to `mf`.
    */
   const handleEditClick = useCallback(() => {
+    // The starter goes first, but only while there is a schema to fill from and
+    // only until the sender has said no once. It writes into `mf` through the
+    // same setter the sheet uses, so the "never re-seed" rule above still holds.
+    if (fill.schema && fill.mode !== "manual") {
+      setStoryStarter(true);
+      return;
+    }
     setEditMode("manual");
-  }, []);
+  }, [fill.schema, fill.mode]);
+
+  /** The starter's only exit — into the same sheet Create would have opened. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
 
   /**
    * Same reasoning as above. The reference re-seeds `mf` from `content` here,
@@ -424,6 +453,7 @@ export function useLoveflixEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 🍿", message: "Their episode is live" });
@@ -441,7 +471,7 @@ export function useLoveflixEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, fill]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -472,6 +502,8 @@ export function useLoveflixEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

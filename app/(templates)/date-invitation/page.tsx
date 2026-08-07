@@ -20,6 +20,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Copy, Loader2, PenLine, Send, Share2, X } from "lucide-react";
 
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useDateInvitationEditor } from "./hooks/useDateInvitationEditor";
 import DateInvitationTemplate from "./components/DateInvitationTemplate";
 import EditSheet from "./components/EditSheet";
@@ -150,6 +151,13 @@ function DateInvitationPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out of it lands in the EditSheet
+          above, populated and fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write the invitation" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

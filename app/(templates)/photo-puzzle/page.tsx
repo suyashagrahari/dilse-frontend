@@ -7,6 +7,7 @@ import AuthModal from "@/components/AuthModal";
 import { usePhotoPuzzleEditor } from "./hooks/usePhotoPuzzleEditor";
 import PhotoPuzzleTemplate from "./components/PhotoPuzzleTemplate";
 import EditSheet from "./components/EditSheet";
+import StoryStarter from "@/components/story/StoryStarter";
 import type { Toast } from "./components/types";
 import { INDIGO, GRAD, CHROME, CHROME_BORDER, INK_SOFT } from "./components/puzzleTheme";
 
@@ -112,6 +113,13 @@ function PhotoPuzzlePageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out lands in the EditSheet above,
+          fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write the letter" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Hand } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useHoldMyHandEditor } from "./hooks/useHoldMyHandEditor";
 import HoldMyHand from "./components/HoldMyHand";
 import EditSheet from "./components/EditSheet";
@@ -106,6 +107,13 @@ function HoldMyHandPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out of it lands in the EditSheet
+          above, populated and fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write what they'll hold" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

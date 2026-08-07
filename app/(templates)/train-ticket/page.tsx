@@ -7,6 +7,7 @@ import AuthModal from "@/components/AuthModal";
 import { useTrainTicketEditor } from "./hooks/useTrainTicketEditor";
 import TrainTicket from "./components/TrainTicket";
 import EditSheet from "./components/EditSheet";
+import StoryStarter from "@/components/story/StoryStarter";
 import type { Toast } from "./components/types";
 
 const INK = "#1c1c1c";
@@ -98,6 +99,13 @@ function TrainTicketPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out lands in the EditSheet above,
+          fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's print your ticket" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

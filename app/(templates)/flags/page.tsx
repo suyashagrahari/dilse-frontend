@@ -7,6 +7,7 @@ import AuthModal from "@/components/AuthModal";
 import { useFlagsEditor } from "./hooks/useFlagsEditor";
 import FlagsTemplate from "./components/FlagsTemplate";
 import EditSheet from "./components/EditSheet";
+import StoryStarter from "@/components/story/StoryStarter";
 import type { Toast } from "./components/types";
 
 const ACCENT = "#6C5CE7";
@@ -97,6 +98,13 @@ function FlagsPageInner() {
         saving={e.saving}
         draftSavedAt={e.draftSavedAt}
       />
+
+      {/* Shown over the gallery the first time Create is tapped, and only when
+          the server has a schema for this deck. Every way out of it lands in
+          the EditSheet above, fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your deck" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (

@@ -14,6 +14,7 @@
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import UsTemplate from "./components/UsTemplate";
 import EditSheet from "./components/EditSheet";
 import { useUsEditor, type Toast } from "./hooks/useUsEditor";
@@ -82,7 +83,7 @@ function UsPageInner() {
           onClick: e.publish,
           icon: <SendIcon size={14} color="#fff" />,
         }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenIcon size={14} color="#fff" /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenIcon size={14} color="#fff" /> };
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative" }}>
@@ -131,6 +132,11 @@ function UsPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
       />
+
+      {/* Sits over the sheet above, so the first thing a sender sees after
+          Create is the offer to have it written — with the form they get
+          today one tap behind it. Renders nothing without a schema. */}
+      {e.storyStarted ? <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
 
       <AnimatePresence>
         {e.publishing ? (

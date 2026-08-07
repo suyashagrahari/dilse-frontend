@@ -3,6 +3,7 @@
 import { Suspense, lazy, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 
 import { useLoveEditor } from "./hooks/useLoveEditor";
 
@@ -159,7 +160,7 @@ function LoveGfPageInner() {
     ? { label: "Share", onClick: editor.handleShare }
     : editor.showPublish
       ? { label: "♡ Publish", onClick: editor.handlePublish }
-      : { label: "✦ Create", onClick: editor.handleEditClick };
+      : { label: "✦ Create", onClick: editor.handleStartCreate };
 
   return (
     <div
@@ -303,7 +304,7 @@ function LoveGfPageInner() {
         onTabChange={editor.handleTabChange}
         coupleNames={{ person1: editor.content.senderName, person2: editor.content.recipientName }}
         onBack={editor.goBack}
-        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleEditClick}
+        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleStartCreate}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -322,7 +323,7 @@ function LoveGfPageInner() {
           <HomeSection
             data={editor.content}
             isPersonalized={editor.isPersonalized}
-            onEditClick={editor.handleEditClick}
+            onEditClick={editor.handleStartCreate}
           />
         )}
         {editor.tab === "wish" && (
@@ -370,7 +371,7 @@ function LoveGfPageInner() {
         mode="editor"
         tab={editor.tab}
         onTabChange={editor.handleTabChange}
-        onEdit={editor.handleEditClick}
+        onEdit={editor.handleStartCreate}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -390,12 +391,17 @@ function LoveGfPageInner() {
         manualStep={editor.manualStep}
         setManualStep={editor.setManualStep}
         updateMf={editor.updateMf}
-        onStartAi={editor.startAiMode}
+        onStartAi={editor.handleStartAi}
         onStartManual={editor.startManualMode}
         onAiGenerate={editor.handleAiGenerate}
         onSaveWithPassword={editor.handleManualSave}
         saving={editor.saving}
       />
+
+      {/* Mounted after EditSheet so the sheet sits over the seeded manual form. */}
+      {editor.storyStarted && (
+        <StoryStarter fill={editor.storyFill} onManual={editor.handleStoryManual} />
+      )}
 
       <PasswordSheet
         visible={editor.editMode === "password"}

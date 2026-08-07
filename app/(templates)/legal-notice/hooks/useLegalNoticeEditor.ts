@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -16,6 +17,13 @@ import {
   isoDay,
   legalNoticeDataToBody,
 } from "../components/types";
+
+/**
+ * `persistStory` is being added to `useStoryFill` separately. Typed optional
+ * here so this editor compiles on either side of that landing — the call below
+ * is simply a no-op until the method exists, and needs no change when it does.
+ */
+type WithPersistStory = { persistStory?: () => Promise<unknown> };
 
 const DRAFT_KEY = "legal-notice_draft";
 const BASE = `${API_URL}/legal-notice-pages`;
@@ -63,6 +71,26 @@ export function useLegalNoticeEditor() {
   const [content, setContent] = useState<NoticeData>(DEMO_DATA);
   const [mf, setMf] = useState<NoticeData>({ ...DEMO_DATA });
   const [editMode, setEditMode] = useState<EditMode>(null);
+
+  // ── AI story-fill ──────────────────────────────────────────────────────────
+  //
+  // `mf` in, `mf` out — the merge is `applyPatch`'s job and anything already
+  // differing from DEMO_DATA is left alone. Until the server has a config for
+  // this slug `fill.schema` stays null and every consumer renders nothing, so
+  // the editor is unchanged.
+  const fill = useStoryFill<NoticeData>({
+    slug: TEMPLATE,
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+  // Called on the success path of both publishes. Never allowed to affect the
+  // result: a story that failed to save is not a page that failed to publish.
+  const persistStory = useCallback(async () => {
+    try {
+      await (fill as unknown as WithPersistStory).persistStory?.();
+    } catch {}
+  }, [fill]);
   const [pagePassword, setPagePassword] = useState("");
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -165,6 +193,7 @@ export function useLegalNoticeEditor() {
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Notice served ⚖️", message: "Send them the link" });
+          await persistStory();
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -263,6 +292,7 @@ export function useLegalNoticeEditor() {
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Notice served ⚖️", message: "Send them the link" });
+        await persistStory();
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -277,7 +307,7 @@ export function useLegalNoticeEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -308,6 +338,7 @@ export function useLegalNoticeEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    fill,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

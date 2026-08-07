@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Heart, Share2, Loader2, X, Copy, History } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useMissYouEditor } from "./hooks/useMissYouEditor";
 import MissYouTemplate from "./components/MissYouTemplate";
 import EditSheet from "./components/EditSheet";
@@ -46,7 +47,7 @@ function MissYouPageInner() {
     ? { label: "Share", onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Heart size={14} fill="#fff" /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
 
   const barBtn: React.CSSProperties = { background: MU_CREAM, color: MU_ROSE_STRONG, border: `1px solid ${MU_EDGE}`, boxShadow: "0 8px 22px -12px rgba(120,60,72,.5)" };
 
@@ -85,6 +86,11 @@ function MissYouPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Mounted after EditSheet so the sheet sits over the form it seeds. */}
+      {e.storyStarted && (
+        <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />
+      )}
 
       {/* PublishingOverlay — branded conic ring */}
       <AnimatePresence>
