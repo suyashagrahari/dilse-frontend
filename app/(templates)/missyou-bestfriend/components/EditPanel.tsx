@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Wand2, PenTool, ArrowRight, ArrowLeft, Sparkles,
@@ -121,6 +121,26 @@ export default function EditPanel({ onClose }: Props) {
     onFilled: handleFilled,
     enabled: starterEnabled,
   });
+
+  // ── Saving the story, without a publish to hang it on ──────────────────────
+  //
+  // Everywhere else `persistStory()` fires on publish. These four templates have
+  // no publish: no backend page, no share URL, the share button just copies the
+  // current address. So there is no later moment to catch, and leaving it out
+  // meant a sender whose FIRST page was one of these lost their story entirely —
+  // and with it the auto-fill on every template they made afterwards, which is
+  // the whole point of writing it down.
+  //
+  // A successful fill is the closest thing to a commit these templates have, so
+  // that is the moment used. `persistStory` is itself idempotent and no-ops when
+  // logged out or when the text is unchanged, so the ref guard here is only to
+  // avoid a pointless call on every re-render.
+  const storySaved = useRef(false);
+  useEffect(() => {
+    if (storySaved.current || fill.filled.length === 0) return;
+    storySaved.current = true;
+    void fill.persistStory();
+  }, [fill]);
 
   // Both "I'll fill it in myself" and the report screen's button land here: the
   // same three-step form as always, holding whatever the AI wrote.
