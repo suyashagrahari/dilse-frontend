@@ -43,6 +43,10 @@ import { config as dedication } from "@/app/(templates)/dedication/config";
 import { config as searched } from "@/app/(templates)/searched/config";
 import { config as capsule } from "@/app/(templates)/capsule/config";
 import { config as us } from "@/app/(templates)/us/config";
+import { config as product } from "@/app/(templates)/product/config";
+import { config as watch } from "@/app/(templates)/watch/config";
+import { config as call } from "@/app/(templates)/call/config";
+import { config as recharge } from "@/app/(templates)/recharge/config";
 
 const allConfigs = [
   birthdayGf,
@@ -75,6 +79,10 @@ const allConfigs = [
   searched,
   capsule,
   us,
+  product,
+  watch,
+  call,
+  recharge,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
