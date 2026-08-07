@@ -19,41 +19,14 @@
 "use client";
 
 import { useCallback, useMemo, useRef } from "react";
-import { Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, WandSparkles } from "lucide-react";
 import { resolveStorySlots } from "@/hooks/useStoryFill";
+import { STORY_UI, TAP, inputStyle } from "./ui";
 import { STORY_LIMITS, STORY_SLOTS, type StoryPeople, type StorySlotKey } from "@/lib/ai-fill/types";
 
-// ── Tokens ───────────────────────────────────────────────────────────────────
-//
-// The same cream-and-ink language as the streak and capsule sheets. Kept local
-// rather than imported from a template, because this component is shared by all
-// of them and must not depend on any one.
-export const STORY_UI = {
-  paper: "#faf7f0",
-  paperDeep: "#f3eee2",
-  edge: "#e4dcc9",
-  ink: "#2b2620",
-  inkSoft: "#6b6357",
-  inkFaint: "#a89e8c",
-  accent: "#c9822f",
-  accentWash: "#f6e7d2",
-  danger: "#a4432c",
-  font: "var(--font-outfit), system-ui, sans-serif",
-  serif: "var(--font-tinos), Georgia, 'Times New Roman', serif",
-} as const;
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  borderRadius: 11,
-  padding: "0 12px",
-  fontFamily: STORY_UI.font,
-  fontSize: 15,
-  color: STORY_UI.ink,
-  background: STORY_UI.paper,
-  border: `1px solid ${STORY_UI.edge}`,
-  outline: "none",
-};
+// The tokens moved to `./ui` when four files started needing them. Re-exported
+// here because that is where every existing import points.
+export { STORY_UI };
 
 /**
  * The sample. Deliberately concrete — a generic one ("we have been together a
@@ -114,6 +87,14 @@ export interface StoryComposerProps {
   generating: boolean;
   error: string | null;
   onGenerate: () => void;
+  /**
+   * Back to the choice screen. Optional only so the composer stays usable
+   * standalone; the starter always passes it, because a screen you can only
+   * leave by generating is a trap.
+   */
+  onBack?: () => void;
+  /** Straight into the form. The escape hatch that has to exist on every screen. */
+  onSkip?: () => void;
 }
 
 export default function StoryComposer({
@@ -124,6 +105,8 @@ export default function StoryComposer({
   generating,
   error,
   onGenerate,
+  onBack,
+  onSkip,
 }: StoryComposerProps) {
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
   const nameRefs = useRef<Partial<Record<StorySlotKey, HTMLInputElement | null>>>({});
@@ -183,6 +166,32 @@ export default function StoryComposer({
 
   return (
     <div className="flex flex-col" style={{ gap: 18 }}>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            alignSelf: "flex-start",
+            minHeight: TAP,
+            marginTop: -8,
+            marginBottom: -8,
+            paddingRight: 10,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "transparent",
+            border: "none",
+            fontFamily: STORY_UI.font,
+            fontSize: 13,
+            color: STORY_UI.inkSoft,
+            cursor: "pointer",
+          }}
+        >
+          <ArrowLeft size={15} aria-hidden="true" />
+          Back
+        </button>
+      )}
+
       {/* ── Who's in it ── */}
       <div className="flex flex-col" style={{ gap: 10 }}>
         <p
@@ -289,24 +298,46 @@ export default function StoryComposer({
           )}
         </p>
 
+        {/* IMPOSSIBLE TO MISS ON PURPOSE. This one button is the difference
+            between a sender who writes something and a sender who closes the
+            tab, so it is the only accent-filled control on the screen and it
+            sits directly under the words it copies. */}
         <button
           type="button"
           onClick={useSample}
           style={{
-            minHeight: 44,
+            minHeight: 48,
             width: "100%",
-            marginTop: 11,
-            borderRadius: 11,
+            marginTop: 12,
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
             fontFamily: STORY_UI.font,
-            fontSize: 13.5,
-            color: STORY_UI.ink,
-            background: STORY_UI.paperDeep,
-            border: `1px solid ${STORY_UI.edge}`,
+            fontSize: 14.5,
+            color: STORY_UI.accent,
+            background: STORY_UI.accentWash,
+            border: `1px solid ${STORY_UI.accent}55`,
             cursor: "pointer",
           }}
         >
+          <WandSparkles size={16} aria-hidden="true" />
           Use this as a starting point
         </button>
+        <p
+          style={{
+            fontFamily: STORY_UI.font,
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            color: STORY_UI.inkFaint,
+            marginTop: 7,
+            textAlign: "center",
+          }}
+        >
+          It drops the whole thing in the box below, with your names in it. Then just
+          correct the bits that aren&apos;t true.
+        </p>
       </div>
 
       {/* ── The box ── */}
@@ -371,6 +402,9 @@ export default function StoryComposer({
         {!generating && error && (
           <p style={{ fontFamily: STORY_UI.font, fontSize: 13, lineHeight: 1.5, color: STORY_UI.danger }}>
             {error}
+            {/* Every failure ends by pointing somewhere. The hook's messages
+                mostly do this themselves; this catches the ones that don't. */}
+            {onSkip && !/yourself/i.test(error) && " You can also fill it in yourself."}
           </p>
         )}
       </div>
@@ -395,9 +429,34 @@ export default function StoryComposer({
           cursor: generating ? "default" : "pointer",
         }}
       >
-        <Sparkles size={16} aria-hidden="true" />
-        {generating ? "Writing…" : "Generate"}
+        <Sparkles
+          size={16}
+          aria-hidden="true"
+          className={generating ? "animate-pulse" : undefined}
+        />
+        {generating ? "Writing…" : "Write my page"}
       </button>
+
+      {onSkip && (
+        <button
+          type="button"
+          onClick={onSkip}
+          style={{
+            minHeight: TAP,
+            marginTop: -6,
+            background: "transparent",
+            border: "none",
+            fontFamily: STORY_UI.font,
+            fontSize: 13,
+            color: STORY_UI.inkSoft,
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            cursor: "pointer",
+          }}
+        >
+          I&apos;ll fill it in myself
+        </button>
+      )}
     </div>
   );
 }

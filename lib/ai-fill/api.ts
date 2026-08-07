@@ -78,6 +78,45 @@ export async function fetchStorySchema(
   }
 }
 
+/**
+ * Schemas fetched this session, keyed by slug. `null` is a real entry meaning
+ * "the server says this template has no AI schema", so the miss is remembered
+ * too and a schema-less editor stops re-asking on every open.
+ *
+ * Unbounded on purpose: there are thirty slugs and each schema is a short list
+ * of field declarations. An eviction policy here would be more code than the
+ * thing it manages. Lives for the tab's lifetime — a schema change ships with a
+ * deploy, and a deploy is a reload.
+ */
+const schemaCache = new Map<string, WireSchema | null>();
+
+/**
+ * The schema for a slug, from cache when we already have it.
+ *
+ * Collapses `ApiResult` down to what the caller can actually act on: a schema,
+ * or nothing. Every failure is "no schema", which is the same thing the editor
+ * does for a template that genuinely has none.
+ *
+ * ONLY DEFINITIVE ANSWERS ARE CACHED. A 500 or a dropped connection is not the
+ * server telling us this template has no fields; caching it would leave the
+ * editor inert for the rest of the session over one bad request.
+ */
+export async function loadStorySchema(
+  slug: string,
+  signal?: AbortSignal
+): Promise<WireSchema | null> {
+  const hit = schemaCache.get(slug);
+  if (hit !== undefined) return hit;
+
+  const res = await fetchStorySchema(slug, signal);
+  if (res.ok) {
+    schemaCache.set(slug, res.data);
+    return res.data;
+  }
+  if (res.status === 404) schemaCache.set(slug, null);
+  return null;
+}
+
 export interface FillRequest {
   slug: string;
   story?: string;

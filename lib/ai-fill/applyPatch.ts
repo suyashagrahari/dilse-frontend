@@ -335,6 +335,58 @@ export function applyPatch<T extends object>(
 }
 
 /**
+ * Write ONE declared field, as an explicit human edit.
+ *
+ * Distinct from `applyPatch` in exactly one way, and it is the reason this
+ * exists: an empty value is honoured as a CLEAR rather than read as "the model
+ * had nothing". `coerceValue` maps `""` and `[]` to `undefined` — correct when
+ * sifting model output, wrong when a person selects the text in a review field
+ * and deletes it. Routing that through `applyPatch` made the edit a no-op and
+ * the input snapped back, with no way to empty a field the AI had filled.
+ *
+ * Everything else still applies: the path must be declared, and a non-empty
+ * value is coerced and clamped exactly as the model's would be, so a hand edit
+ * cannot smuggle past the limits the renderer relies on.
+ *
+ * Returns null when the write is rejected, so the caller can leave state alone.
+ */
+export function writeField<T extends object>(
+  data: T,
+  schema: WireSchema,
+  path: string,
+  value: unknown
+): T | null {
+  const field = schema.fields.find((f) => f.path === path);
+  if (!field) return null;
+
+  const segs = parsePath(path);
+  if (!segs) return null;
+
+  const isClear =
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "") ||
+    (Array.isArray(value) && value.length === 0);
+
+  const next = (typeof structuredClone === "function"
+    ? structuredClone(data)
+    : JSON.parse(JSON.stringify(data))) as T;
+
+  const toWrite = isClear
+    ? field.kind === "list"
+      ? []
+      : field.kind === "number"
+        ? undefined
+        : ""
+    : coerceValue(field, value);
+
+  // A non-empty value that will not coerce is a rejected edit, not a clear.
+  if (!isClear && toWrite === undefined) return null;
+
+  return writeAt(next as unknown as Record<string, unknown>, segs, toWrite) ? next : null;
+}
+
+/**
  * Which declared paths differ from the template's demo defaults.
  *
  * This is how "the sender typed here" is established without threading change

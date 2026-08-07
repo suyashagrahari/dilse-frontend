@@ -24,10 +24,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { store } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { applyPatch, diffTouched } from "@/lib/ai-fill/applyPatch";
+import {
+  applyPatch,
+  diffTouched,
+  isFilled,
+  parsePath,
+  readAt,
+  writeField,
+} from "@/lib/ai-fill/applyPatch";
 import {
   fetchStoryProfile,
-  fetchStorySchema,
+  loadStorySchema,
   postStoryFill,
   saveStoryToProfile,
 } from "@/lib/ai-fill/api";
@@ -36,6 +43,7 @@ import {
   STORY_SLOTS,
   type StoryPeople,
   type StoryProfile,
+  type WireField,
   type WireSchema,
 } from "@/lib/ai-fill/types";
 
@@ -139,6 +147,20 @@ function deriveStoryTitle(text: string): string {
 }
 
 /**
+ * "3 Aug" — how a saved story is named when the sender never titled it.
+ *
+ * Only ever runs on `profile`, which is null until an effect has fetched it, so
+ * this never renders on the server and the locale/timezone reading cannot
+ * mismatch on hydration.
+ */
+function shortDate(iso: string | undefined): string | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  return new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/**
  * A detached copy of the form state, for the undo snapshot.
  *
  * `applyPatch` is pure and the editors replace their state object rather than
@@ -189,9 +211,17 @@ export interface UseStoryFillOptions<T extends object> {
   enabled?: boolean;
   /**
    * Fill the form from the sender's saved story on mount, without being asked.
-   * Defaults to TRUE — see the effect below for the five preconditions and for
-   * why silence is the only acceptable failure mode. Set false for an editor
-   * where landing on pre-written content would be wrong.
+   *
+   * DEFAULTS TO FALSE. It used to default true, and the result was that opening
+   * any editor while signed in spent a model call and rewrote the form before
+   * the sender had done anything — an invisible edit they never asked for, on a
+   * page they are about to publish under their own name, plus a paid request on
+   * every single editor open including the thirty where they were never going
+   * to use it. `canUseMyStory` / `useMyStory` are the replacement: same fill,
+   * same guards, but they press the button and they can see that it happened.
+   *
+   * The implementation below is untouched and still honoured, for a caller that
+   * genuinely wants the old behaviour and opts into it by name.
    */
   autoApply?: boolean;
 }
@@ -216,6 +246,13 @@ export interface UseStoryFillResult {
   filled: string[];
   /** Declared paths still empty after the merge. Drives the "still needs you" list. */
   missing: string[];
+  /**
+   * The same two lists as whole fields, so a UI can print `label` instead of
+   * `mf.hero.subtitle`. Nobody wants to read a path; every caller that had only
+   * the strings was rebuilding the same path→field lookup to get back to them.
+   */
+  filledFields: WireField[];
+  missingFields: WireField[];
   lastLanguage: string | null;
 
   generate: () => void;
@@ -223,8 +260,55 @@ export interface UseStoryFillResult {
 
   /** True only when signed in AND the profile has a built context to reuse. */
   hasProfileContext: boolean;
-  /** e.g. "from 'How we met'" — what the saved context was built out of. */
+  /**
+   * What to call the saved story on the button — the story's own title where it
+   * has one ("How we met"), a date where it does not ("your story from 3 Aug").
+   * Never a bare "your saved story" when there is anything better to say: the
+   * sender has to recognise which story they are about to spend on.
+   */
   contextLabel: string | null;
+
+  /**
+   * Whether to offer the "Use my story" button at all.
+   *
+   * True when: a schema loaded, the hook is `enabled`, the sender is signed in
+   * with a story we can reuse, they have not switched the feature off — AND THE
+   * FORM IS STILL PRISTINE.
+   *
+   * That last one is the one that matters. The fill lands across the whole
+   * form at once, and although `applyPatch` will not overwrite a word they
+   * typed, a button that rewrites eleven fields is not a thing to offer someone
+   * who is already halfway down the form: they cannot tell in advance what it
+   * will touch, and the thing it might touch is the sentence they are in the
+   * middle of. On a blank form there is nothing to lose and the offer is pure
+   * upside. Once they start writing, the composer (`mode: "composer"`) is the
+   * right door — it is explicit about what it is about to write.
+   */
+  canUseMyStory: boolean;
+  /**
+   * Fill the form from the saved story, because the sender asked. Same request
+   * and same merge as the auto-fill; unlike it, this one reports its failures,
+   * because someone is standing there waiting for it.
+   */
+  useMyStory: () => void;
+  usingStory: boolean;
+
+  /**
+   * Write one declared field, for a review screen where the sender edits what
+   * the AI produced before publishing.
+   *
+   * Goes through `applyPatch` rather than writing the object directly, so a
+   * value typed here is coerced and clamped by exactly the same rules as a
+   * value the model sent — one path that skipped them is one path where a date
+   * field can end up holding "next summer".
+   *
+   * A path the schema does not declare is ignored, as is a value that coerces
+   * to nothing (an empty string, a malformed date). `onFilled` is called only
+   * when something actually changed.
+   */
+  setFieldValue: (path: string, value: unknown) => void;
+  /** What `current` holds at that path right now — the review screen's input value. */
+  valueAt: (path: string) => unknown;
 
   /**
    * True when a fill from the saved story landed on its own, without the
@@ -261,7 +345,9 @@ export interface UseStoryFillResult {
 export function useStoryFill<T extends object>(
   opts: UseStoryFillOptions<T>
 ): UseStoryFillResult {
-  const { slug, demo, current, onFilled, enabled = true, autoApply = true } = opts;
+  // `autoApply` defaults FALSE — nothing fires on its own any more. See the
+  // option's doc comment for why that flipped.
+  const { slug, demo, current, onFilled, enabled = true, autoApply = false } = opts;
 
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
@@ -275,9 +361,12 @@ export function useStoryFill<T extends object>(
   const [people, setPeople] = useState<StoryPeople>(EMPTY_PEOPLE);
 
   const [generating, setGenerating] = useState(false);
+  const [usingStory, setUsingStory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filled, setFilled] = useState<string[]>([]);
   const [missing, setMissing] = useState<string[]>([]);
+  const [filledFields, setFilledFields] = useState<WireField[]>([]);
+  const [missingFields, setMissingFields] = useState<WireField[]>([]);
   const [lastLanguage, setLastLanguage] = useState<string | null>(null);
   const [autoApplied, setAutoApplied] = useState(false);
 
@@ -298,6 +387,15 @@ export function useStoryFill<T extends object>(
   const preAutoFill = useRef<T | null>(null);
   /** The story text last written to the profile, so a double publish saves once. */
   const persistedStory = useRef<string | null>(null);
+  /**
+   * One fill call at a time, across both entry points.
+   *
+   * The `generating` / `usingStory` flags are for the UI and only take effect
+   * on the next render, which is one paint too late to stop a second press —
+   * two taps on a slow phone are two model calls and two merges racing onto the
+   * same form. Claimed synchronously here instead. Never read during render.
+   */
+  const inFlight = useRef(false);
 
   useEffect(() => {
     autoAlive.current = true;
@@ -306,7 +404,12 @@ export function useStoryFill<T extends object>(
     };
   }, []);
 
-  // ── The schema, once ───────────────────────────────────────────────────────
+  // ── The schema, once per slug per session ──────────────────────────────────
+  //
+  // `loadStorySchema` answers from a module-level cache on every open after the
+  // first, so hopping between editors — or back to one — costs nothing. The
+  // cache is read inside the async continuation and never during render, which
+  // is what keeps `react-hooks/purity` satisfied about a mutable module value.
   //
   // No state is set synchronously in this effect body: `react-hooks/
   // set-state-in-effect` forbids it, and every write below sits behind an
@@ -319,11 +422,12 @@ export function useStoryFill<T extends object>(
     const controller = new AbortController();
 
     const run = async () => {
-      const res = await fetchStorySchema(slug, controller.signal);
+      // A miss of any kind arrives as null and is treated identically: no
+      // schema, no UI, editor unchanged. There is nothing useful to say to a
+      // sender about it.
+      const next = await loadStorySchema(slug, controller.signal);
       if (!alive) return;
-      // A miss of any kind is treated identically: no schema, no UI, editor
-      // unchanged. There is nothing useful to say to a sender about it.
-      setSchema(res.ok ? res.data : null);
+      setSchema(next);
       setLoadingSchema(false);
     };
 
@@ -336,6 +440,10 @@ export function useStoryFill<T extends object>(
   }, [slug, enabled]);
 
   // ── The profile, once, only when signed in ─────────────────────────────────
+  //
+  // The token check is the early return, not a header we send and let the
+  // server reject: a logged-out visitor has no profile to fetch and this costs
+  // them nothing.
   //
   // Names already known are merged into the empty slots only, so a sender who
   // started typing before this landed keeps what they typed.
@@ -373,17 +481,32 @@ export function useStoryFill<T extends object>(
     enabled && isAuthenticated && profile?.context && profile.context.summary
   );
 
+  /**
+   * What the saved story is called, said the way the sender would say it.
+   *
+   * Returned as a bare name rather than a phrase ("How we met", not "from
+   * 'How we met'") because it is read out inside a caller's own sentence —
+   * "Use my story — How we met". A prefix baked in here is a preposition the
+   * caller cannot get rid of.
+   */
   const contextLabel = useMemo(() => {
     const ctx = profile?.context;
     if (!ctx) return null;
+
     const ids = new Set(ctx.sourceStoryIds ?? []);
     const titles = (profile?.stories ?? [])
       .filter((s) => ids.has(s.storyId))
-      .map((s) => s.title)
-      .filter(Boolean);
-    if (titles.length === 0) return "from your saved story";
-    if (titles.length === 1) return `from “${titles[0]}”`;
-    return `from “${titles[0]}” and ${titles.length - 1} more`;
+      .map((s) => s.title?.trim())
+      .filter((t): t is string => Boolean(t));
+
+    if (titles.length === 1) return titles[0];
+    if (titles.length > 1) return `${titles[0]} and ${titles.length - 1} more`;
+
+    // Untitled, or built from stories since deleted. The date is the only other
+    // thing about it the sender would recognise, and a naked "your saved story"
+    // on a button tells them nothing about what they are about to spend.
+    const when = shortDate(ctx.generatedAt);
+    return when ? `your story from ${when}` : "your saved story";
   }, [profile]);
 
   // ── Auto-fill from the saved story ─────────────────────────────────────────
@@ -460,6 +583,8 @@ export function useStoryFill<T extends object>(
       apply(result.next);
       setFilled(result.filled);
       setMissing(result.missing);
+      setFilledFields(result.filledFields);
+      setMissingFields(result.missingFields);
       setLastLanguage(res.data.languageName || res.data.language || null);
       setAutoApplied(true);
       // The starter would otherwise open over a form that is already written
@@ -481,7 +606,8 @@ export function useStoryFill<T extends object>(
    */
   const run = useCallback(
     async (body: { story?: string; useContext?: boolean }) => {
-      if (!schema || generating) return;
+      if (!schema || generating || inFlight.current) return;
+      inFlight.current = true;
 
       setGenerating(true);
       setError(null);
@@ -490,6 +616,7 @@ export function useStoryFill<T extends object>(
       setAutoApplied(false);
 
       const res = await postStoryFill({ slug, ...body, people }, accessToken);
+      inFlight.current = false;
 
       if (!res.ok) {
         setGenerating(false);
@@ -504,6 +631,8 @@ export function useStoryFill<T extends object>(
       setGenerating(false);
       setFilled(result.filled);
       setMissing(result.missing);
+      setFilledFields(result.filledFields);
+      setMissingFields(result.missingFields);
       setLastLanguage(res.data.languageName || res.data.language || null);
 
       if (result.noop) {
@@ -536,6 +665,140 @@ export function useStoryFill<T extends object>(
     void run({ useContext: true });
   }, [hasProfileContext, run]);
 
+  // ── "Use my story" ─────────────────────────────────────────────────────────
+
+  /**
+   * Nothing in this form differs from the template's demo yet.
+   *
+   * Recomputed per render because it has to answer for the form as it is on
+   * screen right now — the button must stop being offered the moment the sender
+   * types. `diffTouched` walks the declared fields only (a couple of dozen
+   * `readAt`s and a `JSON.stringify` each), which is well inside what a
+   * keystroke can afford.
+   */
+  const pristine = useMemo(
+    () => (schema ? diffTouched(current, demo, schema).size === 0 : false),
+    [schema, current, demo]
+  );
+
+  const canUseMyStory = Boolean(
+    schema && enabled && hasProfileContext && profile?.autoFillEnabled !== false && pristine
+  );
+
+  /**
+   * The explicit version of what the auto-fill used to do behind their back.
+   *
+   * Same request, same `touched` guard, same `applyPatch` call. Two differences,
+   * both because a person is standing there waiting for it:
+   *
+   *   - IT SPEAKS WHEN IT FAILS, through the same `messageFor` copy as
+   *     `generate`. Silence was right for something nobody asked for; it is
+   *     just a dead button for something somebody pressed.
+   *   - It does not re-check pristine on the way back. The auto-fill had to,
+   *     because it was about to write onto a form the sender never offered up.
+   *     This one was offered up. If they typed a line while the model was
+   *     working, `touched` is recomputed at merge time and keeps it — which is
+   *     the protection that actually matters — and the rest of the answer they
+   *     asked for still lands.
+   */
+  const useMyStory = useCallback(() => {
+    if (!schema || inFlight.current || generating || usingStory) return;
+    if (!isAuthenticated || !accessToken) return;
+    inFlight.current = true;
+
+    setUsingStory(true);
+    setError(null);
+    setAutoApplied(false);
+
+    const go = async () => {
+      const res = await postStoryFill({ slug, useContext: true, people }, accessToken);
+      inFlight.current = false;
+      setUsingStory(false);
+
+      if (!res.ok) {
+        setError(messageFor(res.status, res.error));
+        return;
+      }
+
+      // Read at merge time, not at press time: the sender had the whole round
+      // trip to keep typing, and their current words are the ones to protect.
+      const { form, demo: defaults, onFilled: apply } = live.current;
+      const result = applyPatch(form, schema, res.data.patch, {
+        touched: diffTouched(form, defaults, schema),
+      });
+
+      setFilled(result.filled);
+      setMissing(result.missing);
+      setFilledFields(result.filledFields);
+      setMissingFields(result.missingFields);
+      setLastLanguage(res.data.languageName || res.data.language || null);
+
+      if (result.noop) {
+        setError("Nothing new to add — everything it could write, you'd already written.");
+        setMode("done");
+        return;
+      }
+
+      // Snapshot first, so undo hands back the exact page they pressed from.
+      preAutoFill.current = snapshotOf(form);
+
+      apply(result.next);
+      setMode("done");
+    };
+
+    void go();
+  }, [schema, generating, usingStory, isAuthenticated, accessToken, slug, people]);
+
+  /**
+   * Edit one field of the result, for the review screen.
+   *
+   * Routed through `applyPatch` with `overwriteExisting` for this one path so
+   * the value gets the same coercion and clamping the model's would — a date
+   * that is not `YYYY-MM-DD`, a list item past `itemMax`, a string past `max`
+   * are all handled once, here, instead of once per editor. Every other
+   * declared field is absent from the patch and so is left exactly as it is.
+   */
+  const setFieldValue = useCallback(
+    (path: string, value: unknown) => {
+      if (!schema) return;
+      // Not ours to write. Silently ignored: the caller is a form, not a user.
+      if (!schema.fields.some((f) => f.path === path)) return;
+
+      // `writeField`, not `applyPatch`, and the difference matters here: a
+      // person deleting the text in a review field means "empty this", while
+      // `applyPatch` reads an empty value as "the model had nothing" and does
+      // nothing at all — so the field could never be cleared and the input
+      // snapped back under them.
+      const next = writeField(current, schema, path, value);
+      if (!next) return;
+
+      // Recompute what is still empty against the form as it now stands, so
+      // clearing a field puts it straight back on the "still needs you" list.
+      const stillMissing = schema.fields.filter((f) => {
+        const segs = parsePath(f.path);
+        return !segs || !isFilled(readAt(next, segs));
+      });
+      setMissing(stillMissing.map((f) => f.path));
+      setMissingFields(stillMissing);
+
+      // It is theirs now, not the AI's, so the little "AI wrote this" marker on
+      // that field has to go.
+      setFilled((prev) => prev.filter((p) => p !== path));
+      setFilledFields((prev) => prev.filter((f) => f.path !== path));
+
+      onFilled(next);
+    },
+    [schema, current, onFilled]
+  );
+
+  const valueAt = useCallback(
+    (path: string): unknown => {
+      const segs = parsePath(path);
+      return segs ? readAt(current, segs) : undefined;
+    },
+    [current]
+  );
+
   /**
    * Undo an auto-fill. Exact restore from the snapshot, then back to `"idle"`
    * so the ordinary starter is there to offer them the choice properly.
@@ -546,6 +809,8 @@ export function useStoryFill<T extends object>(
     setAutoApplied(false);
     setFilled([]);
     setMissing([]);
+    setFilledFields([]);
+    setMissingFields([]);
     setLastLanguage(null);
     if (before) live.current.onFilled(before);
     setMode("idle");
@@ -622,6 +887,8 @@ export function useStoryFill<T extends object>(
     setError(null);
     setFilled([]);
     setMissing([]);
+    setFilledFields([]);
+    setMissingFields([]);
     setLastLanguage(null);
     setAutoApplied(false);
     setMode("idle");
@@ -640,11 +907,18 @@ export function useStoryFill<T extends object>(
     error,
     filled,
     missing,
+    filledFields,
+    missingFields,
     lastLanguage,
     generate,
     applyFromContext,
     hasProfileContext,
     contextLabel,
+    canUseMyStory,
+    useMyStory,
+    usingStory,
+    setFieldValue,
+    valueAt,
     autoApplied,
     undoAutoApply,
     dismissAutoApplied,
