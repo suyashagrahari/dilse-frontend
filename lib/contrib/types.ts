@@ -28,7 +28,21 @@
  * (a rating and a plain note) without them mixing. Templates pick the kind that
  * matches the surface they are imitating; nothing here knows which is which.
  */
-export const CONTRIBUTION_KINDS = ["review", "comment", "message", "note"] as const;
+export const CONTRIBUTION_KINDS = [
+  "review",
+  "comment",
+  "message",
+  "note",
+  /**
+   * One tap, one name, no body. The only kind whose `body` is routinely empty —
+   * the skill ids it applies to live in the template's own data, not here,
+   * because widening this type to hold them is exactly the drift the header
+   * warns about.
+   */
+  "endorsement",
+  /** A written reference. Carries `title` (the author's headline) and a long `body`. */
+  "recommendation",
+] as const;
 export type ContributionKind = (typeof CONTRIBUTION_KINDS)[number];
 
 /**
