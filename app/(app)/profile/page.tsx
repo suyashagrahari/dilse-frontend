@@ -16,7 +16,7 @@ import { API_URL, IS_NGROK, SITE_URL, ROOT_DOMAIN } from "@/lib/config";
 import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { openShareSheet } from "@/lib/share/shareBus";
 import MyStorySection from "@/components/profile/MyStorySection";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
@@ -199,9 +199,8 @@ export default function ProfilePage() {
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
   const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
   const [activePanel, setActivePanel] = useState<ProfilePanel>("personal-link");
-  const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [shareTargetUrl, setShareTargetUrl] = useState<string | null>(null);
-  const [shareMessage, setShareMessage] = useState<string>("Celebrate with me on SubhSandesh! ✨");
+  // No share state here: the sheet is raised through the bus and mounted once
+  // by the app layout. See `lib/share/shareBus`.
 
   // Referral state
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
@@ -346,10 +345,28 @@ export default function ProfilePage() {
     if (type === "link") { setCopiedLink(id); setTimeout(() => setCopiedLink(null), 2000); }
     else { setCopiedPw(id); setTimeout(() => setCopiedPw(null), 2000); }
   };
-  const openSocialShare = (url: string, message?: string) => {
-    setShareTargetUrl(url);
-    setShareMessage(message?.trim() || "Celebrate with me on SubhSandesh! ✨");
-    setShareSheetOpen(true);
+  // Raises the same sheet the template editors raise, so a page can be sent as
+  // a link, a QR, a photo QR or a printable card from here too — the profile is
+  // where people come back to a creation days after they made it, and it would
+  // be strange for it to offer less than the editor did.
+  const openSocialShare = (payload: {
+    url: string;
+    message?: string;
+    title?: string;
+    /** Template slug, which picks the sheet's colour. */
+    slug?: string;
+    recipientName?: string;
+    senderName?: string;
+  }) => {
+    if (!payload.url) return;
+    openShareSheet({
+      url: payload.url,
+      title: payload.title,
+      text: payload.message?.trim() || "Celebrate with me on SubhSandesh! ✨",
+      slug: payload.slug,
+      recipientName: payload.recipientName,
+      senderName: payload.senderName,
+    });
   };
 
   const handleDeleteCreation = async (page: MyCreation) => {
@@ -380,6 +397,10 @@ export default function ProfilePage() {
 
   const templateEmoji = (type: string) => templateMeta(type).emoji;
   const templateLabel = (type: string) => templateMeta(type).label;
+  // The editor route IS the template's slug, so there is no second table to
+  // keep in step. An unmapped type resolves to the fallback's "/templates",
+  // which no accent is registered under — the sheet falls back to house pink.
+  const templateSlug = (type: string) => templateMeta(type).editor.replace(/^\//, "");
   const editorRoute = (type: string) => templateMeta(type).editor;
 
   const cardStyle = { background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)", borderRadius: "1rem" };
@@ -866,10 +887,14 @@ export default function ProfilePage() {
                               </button>
                               <button title="Share" onClick={(e) => {
                                 e.stopPropagation();
-                                openSocialShare(
-                                  shareLink,
-                                  `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`
-                                );
+                                openSocialShare({
+                                  url: shareLink,
+                                  title: `${templateLabel(page.templateType)} page`,
+                                  message: `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
+                                  slug: templateSlug(page.templateType),
+                                  recipientName: page.recipientName,
+                                  senderName: page.senderName,
+                                });
                               }}
                                 className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
                                 style={{ background: "rgba(255,255,255,0.9)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
@@ -978,10 +1003,14 @@ export default function ProfilePage() {
                         </button>
                               <button onClick={(e) => {
                                 e.stopPropagation();
-                                openSocialShare(
-                                  link,
-                                  `${page.senderName || "Someone"} sent a ${templateLabel(page.templateType)} greeting${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`
-                                );
+                                openSocialShare({
+                                  url: link,
+                                  title: `${templateLabel(page.templateType)} greeting`,
+                                  message: `${page.senderName || "Someone"} sent a ${templateLabel(page.templateType)} greeting${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
+                                  slug: templateSlug(page.templateType),
+                                  recipientName: page.recipientName,
+                                  senderName: page.senderName,
+                                });
                               }}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                                 style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
@@ -1167,7 +1196,13 @@ export default function ProfilePage() {
 
           {/* Share button */}
           <button
-            onClick={() => openSocialShare(myReferralLink, `🎁 Join SubhSandesh and get 100 bonus points! Use my referral link to sign up and create beautiful celebration pages.`)}
+            onClick={() =>
+              openSocialShare({
+                url: myReferralLink,
+                title: "Join me on SubhSandesh",
+                message: `🎁 Join SubhSandesh and get 100 bonus points! Use my referral link to sign up and create beautiful celebration pages.`,
+              })
+            }
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
             style={{ background: "#3d0c11", color: "#f5ede6", boxShadow: "0 6px 18px rgba(61,12,17,0.25)" }}
           >
@@ -1327,16 +1362,6 @@ export default function ProfilePage() {
           <div className="px-5 pb-5">{LogoutBlock}</div>
         </div>
       </div>
-      <SocialShareSheet
-        open={shareSheetOpen}
-        onClose={() => setShareSheetOpen(false)}
-        shareUrl={shareTargetUrl}
-        shareMessage={shareMessage}
-        onCopy={(url) => {
-          if (!url) return;
-          copyToClipboard(url, "profile-share-sheet", "link");
-        }}
-      />
     </ProfileShell>
   );
 }

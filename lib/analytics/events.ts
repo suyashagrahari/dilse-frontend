@@ -84,14 +84,28 @@ export type VisitorType = "creator" | "recipient";
 /** How the user authenticated. `google_bridge` is the subdomain redirect flow. */
 export type LoginMethod = "password" | "otp" | "google" | "google_bridge";
 
-/** Share destinations offered by SocialShareSheet. */
+/**
+ * Ways a page can leave the app, as reported by `components/share/ShareSheet`.
+ *
+ * The first group is a destination the link was sent to; the rest are the
+ * artefacts the sheet can produce, which say nothing about where the thing
+ * ended up. Keep them distinguishable in reports — a QR download is intent to
+ * share, not a share.
+ */
 export type ShareMethod =
   | "whatsapp"
   | "instagram"
   | "telegram"
   | "twitter"
   | "facebook"
-  | "copy_link";
+  | "copy_link"
+  | "native"
+  | "qr_image"
+  | "qr_download"
+  | "print_card"
+  | "photo_qr_upload"
+  | "photo_qr_download"
+  | "photo_qr_share";
 
 /**
  * Custom dimensions that must be registered in the GA4 UI before they render in
