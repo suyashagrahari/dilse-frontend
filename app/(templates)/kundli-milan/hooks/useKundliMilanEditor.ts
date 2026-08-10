@@ -26,6 +26,7 @@ import {
   dbToKundliMilanData,
   kundliMilanDataToBody,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "kundli-milan_draft";
 const BASE = `${API_URL}/kundli-milan-pages`;
@@ -398,13 +399,13 @@ export function useKundliMilanEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      // Deliberately does not name the score — the reveal belongs to the report.
-      navigator.share({ title: "Your kundlis have been matched 🔮", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Your kundlis have been matched 🔮",
+      accent: "#b45309",
+      slug: "kundli-milan",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

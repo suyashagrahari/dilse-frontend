@@ -23,6 +23,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { DEMO_DATA, dbToWatchData, watchDataToBody, type WatchData } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "watch";
@@ -390,14 +391,14 @@ export function useWatchEditor() {
     if (!shareUrl) return;
     track(EVENTS.SHARE, { template: TEMPLATE });
     const text = "I made you a video. There is a whole page around it.";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: content.video.title, text, url: shareUrl }).catch(() => {
-        /* the sheet was dismissed; nothing to recover */
-      });
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy, content.video.title]);
+    openShareSheet({
+      url: shareUrl,
+      title: content.video.title,
+      text,
+      accent: "#0284c7",
+      slug: "watch",
+    });
+  }, [shareUrl, content.video.title]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

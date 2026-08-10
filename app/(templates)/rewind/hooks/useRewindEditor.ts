@@ -16,6 +16,7 @@ import {
   rewindDataToBody,
   dbToRewindData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "rewind_draft";
 const BASE = `${API_URL}/rewind-pages`;
@@ -462,12 +463,14 @@ export function useRewindEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "I ran the numbers on us. ⏮️", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "I ran the numbers on us. ⏮️",
+      accent: "#c026d3",
+      recipientName: content.recipientName,
+      slug: "rewind",
+    });
+  }, [shareUrl, content.recipientName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

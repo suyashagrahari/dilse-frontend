@@ -36,6 +36,7 @@ import type {
   ProfileSkill,
   ProfileCertification,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "profile-pro";
@@ -424,12 +425,14 @@ export function useProfileEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = `${content.person.name || "She"} has been endorsed.`;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Endorsements", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, content.person.name, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Endorsements",
+      text,
+      accent: "#0f766e",
+      slug: "profile-pro",
+    });
+  }, [shareUrl, content.person.name]);
 
   /**
    * The friends' link — a DIFFERENT secret from `shareUrl`.

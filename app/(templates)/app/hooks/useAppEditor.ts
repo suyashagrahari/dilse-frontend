@@ -37,6 +37,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 
 import { DEMO_APP, appDataToBody, dbToAppData } from "../components/demo";
 import type { AppData } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "app";
@@ -394,12 +395,14 @@ export function useAppEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "You have been listed. Version 4.0, and still my favourite. ✨";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Your listing", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Your listing",
+      text,
+      accent: "#4f46e5",
+      slug: "app",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

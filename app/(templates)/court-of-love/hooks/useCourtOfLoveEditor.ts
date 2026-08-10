@@ -15,6 +15,7 @@ import {
   courtOfLoveDataToBody,
   dbToCourtOfLoveData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "court_of_love_draft";
 const BASE = `${API_URL}/court-of-love-pages`;
@@ -487,14 +488,13 @@ export function useCourtOfLoveEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator
-        .share({ title: "You've been summoned to The Court of Love ⚖️", url: shareUrl })
-        .catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "You've been summoned to The Court of Love ⚖️",
+      accent: "#7c3aed",
+      slug: "court-of-love",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

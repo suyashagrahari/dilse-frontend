@@ -9,6 +9,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "anniversary-gf";
@@ -305,7 +306,16 @@ export function useAnniversaryEditor() {
     [shareUrl, pushToast],
   );
 
-  const handleShare = useCallback(() => handleCopy(), [handleCopy]);
+  const handleShare = useCallback(() => {
+    if (!shareUrl) return;
+    openShareSheet({
+      url: shareUrl,
+      accent: "#f43f5e",
+      recipientName: content.recipientName,
+      senderName: content.senderName,
+      slug: "anniversary-gf",
+    });
+  }, [shareUrl, content.recipientName, content.senderName]);
 
   return {
     tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,

@@ -20,6 +20,7 @@ import {
   dbToMissYouData,
   dbToEngagement,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "missyou_draft";
 const BASE = `${API_URL}/missyou-gf-pages`;
@@ -321,12 +322,15 @@ export function useMissYouEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "I made you something. Don't open it till you're alone tonight 🤍";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "A letter for you 💌", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "A letter for you 💌",
+      text,
+      accent: "#4f46e5",
+      senderName: content.senderName,
+      slug: "missyou-gf",
+    });
+  }, [shareUrl, content.senderName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

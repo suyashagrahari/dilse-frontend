@@ -18,6 +18,7 @@ import { track } from "@/lib/analytics/track";
 import { DEMO_DATA, dbToRechargeData, rechargeDataToBody, type RechargeData } from "../components/types";
 import { normalizeData } from "../components/ui";
 import type { EditMode } from "../components/EditSheet";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "recharge";
@@ -394,12 +395,13 @@ export function useRechargeEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Your plan is about to expire.", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Your plan is about to expire.",
+      accent: "#c026d3",
+      slug: "recharge",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

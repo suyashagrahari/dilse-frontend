@@ -33,6 +33,7 @@ import {
   type Toast,
 } from "../components/demo";
 import type { NutritionData } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "nutrition";
@@ -307,12 +308,14 @@ export function useNutritionEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "Nutrition Facts. Serving size: 1.";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Nutrition Facts", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Nutrition Facts",
+      text,
+      accent: "#44403c",
+      slug: "nutrition",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

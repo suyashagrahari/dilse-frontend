@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, lazy, useMemo, useState, type CSSProperties } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Camera, Mail, Music2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
@@ -18,6 +18,7 @@ import PasswordSheet from "./components/PasswordSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import DarlingBg from "./components/DarlingBg";
 import DarlingBackgroundMusic from "./components/BackgroundMusic";
+import { ShareSheet } from "@/components/share/ShareSheet";
 
 const GallerySection = lazy(() => import("./components/GallerySection"));
 const MusicSection = lazy(() => import("./components/MusicSection"));
@@ -35,124 +36,6 @@ function SectionLoader() {
         <p style={{ fontFamily: CURSIVE, fontSize: 20, color: ROSE, opacity: 0.6 }}>loading...</p>
       </div>
     </DarlingBg>
-  );
-}
-
-function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const whatsapp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`A love page just for you ♡ ${url}`)}`, "_blank");
-  };
-
-  const nativeShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: "A darling page for you ♡", url }).catch(() => {});
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 500,
-        background: "rgba(4, 2, 10, 0.70)", backdropFilter: "blur(8px)",
-        display: "flex", alignItems: "flex-end", justifyContent: "center",
-      }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        style={{
-          width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0",
-          background: "rgba(14, 7, 24, 0.98)",
-          border: "1px solid rgba(255,61,107,0.18)",
-          borderBottom: "none",
-          padding: "28px 24px 44px",
-          boxShadow: "0 -12px 60px rgba(0,0,0,0.55)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <span style={{ fontFamily: CURSIVE, fontSize: 20, fontWeight: 700, color: ROSE }}>
-            Share your darling page ♡
-          </span>
-          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", color: ROSE, opacity: 0.5, fontSize: 16 }}>
-            ✕
-          </button>
-        </div>
-
-        {/* URL preview */}
-        <div style={{
-          background: "rgba(255,61,107,0.07)", borderRadius: 12,
-          padding: "10px 14px", marginBottom: 20,
-          fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.70)",
-          wordBreak: "break-all", lineHeight: 1.5,
-          border: "1px solid rgba(255,61,107,0.15)",
-        }}>
-          {url}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={copy} style={{
-            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-            borderRadius: 14,
-            border: copied ? "1.5px solid rgba(255,61,107,0.40)" : "1.5px solid rgba(255,61,107,0.20)",
-            background: copied ? "rgba(255,61,107,0.10)" : "rgba(255,61,107,0.04)",
-            cursor: "pointer", textAlign: "left",
-          }}>
-            <span style={{ fontSize: 22 }}>{copied ? "✓" : "🔗"}</span>
-            <div>
-              <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>
-                {copied ? "Copied!" : "Copy Link"}
-              </p>
-              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
-                Copy the link to share anywhere
-              </p>
-            </div>
-          </button>
-
-          <button onClick={whatsapp} style={{
-            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-            borderRadius: 14, border: "1.5px solid rgba(37,211,102,0.20)",
-            background: "rgba(255,61,107,0.04)",
-            cursor: "pointer", textAlign: "left",
-          }}>
-            <span style={{ fontSize: 22 }}>💬</span>
-            <div>
-              <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>WhatsApp</p>
-              <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
-                Send via WhatsApp
-              </p>
-            </div>
-          </button>
-
-          {typeof navigator !== "undefined" && "share" in navigator && (
-            <button onClick={nativeShare} style={{
-              display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-              borderRadius: 14, border: "1.5px solid rgba(255,61,107,0.20)",
-              background: "rgba(255,61,107,0.04)",
-              cursor: "pointer", textAlign: "left",
-            }}>
-              <span style={{ fontSize: 22 }}>↗️</span>
-              <div>
-                <p style={{ fontFamily: CURSIVE, fontSize: 15, fontWeight: 700, color: ROSE, margin: 0 }}>Share</p>
-                <p style={{ fontFamily: CURSIVE, fontSize: 12, color: "rgba(255,61,107,0.55)", margin: 0 }}>
-                  Share via other apps
-                </p>
-              </div>
-            </button>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 
@@ -561,14 +444,16 @@ function DarlingPageInner() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {editor.showShareSheet && editor.shareUrl && (
-          <EditorShareSheet
-            url={editor.shareUrl}
-            onClose={() => editor.setShowShareSheet(false)}
-          />
-        )}
-      </AnimatePresence>
+      <ShareSheet
+        open={editor.showShareSheet}
+        onClose={() => editor.setShowShareSheet(false)}
+        shareUrl={editor.shareUrl}
+        title="A darling page for you"
+        cardTitle="There is a page waiting for you"
+        cardNote="Scan it and the whole page opens — no app, nothing to install."
+        accent="#e11d48"
+        slug="darling"
+      />
     </div>
   );
 }

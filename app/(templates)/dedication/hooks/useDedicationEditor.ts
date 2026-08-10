@@ -34,6 +34,7 @@ import {
   type Toast,
 } from "../components/showData";
 import { parseYouTubeId, type Segment } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const BASE = `${API_URL}/dedication-pages`;
 const TEMPLATE = "dedication";
@@ -407,12 +408,13 @@ export function useDedicationEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Tune in. This one's for you. 📻", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Tune in. This one's for you. 📻",
+      accent: "#9a3412",
+      slug: "dedication",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

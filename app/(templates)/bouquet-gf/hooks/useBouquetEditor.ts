@@ -18,6 +18,7 @@ import {
   bouquetDataToBody,
   dbToBouquetData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "bouquet_draft";
 const BASE = `${API_URL}/bouquet-gf-pages`;
@@ -289,12 +290,15 @@ export function useBouquetEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "I made you a bouquet 💐";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "A bouquet for you 💐", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "A bouquet for you 💐",
+      text,
+      accent: "#ec4899",
+      senderName: content.senderName,
+      slug: "bouquet-gf",
+    });
+  }, [shareUrl, content.senderName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

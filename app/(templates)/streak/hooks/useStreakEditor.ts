@@ -32,6 +32,7 @@ import {
   type StreakForm,
   type Toast,
 } from "../components/editorTypes";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const BASE = `${API_URL}/streak-pages`;
 const TEMPLATE = "streak";
@@ -389,12 +390,13 @@ export function useStreakEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "one tap a day, the two of us 🕯️", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "one tap a day, the two of us 🕯️",
+      accent: "#b45309",
+      slug: "streak",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

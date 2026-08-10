@@ -41,6 +41,7 @@ import {
 } from "../components/types";
 import { normalizeProductData } from "../components/tokens";
 import { useReviewModeration } from "../components/contribApi";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "product";
@@ -411,12 +412,14 @@ export function useProductEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "I listed you. Original, 1 Count. 🛒";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "You are listed", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "You are listed",
+      text,
+      accent: "#f97316",
+      slug: "product",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

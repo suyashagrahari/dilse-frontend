@@ -17,6 +17,7 @@ import {
   isoDay,
   legalNoticeDataToBody,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /**
  * `persistStory` is being added to `useStoryFill` separately. Typed optional
@@ -324,12 +325,13 @@ export function useLegalNoticeEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "You've been served ⚖️", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "You've been served ⚖️",
+      accent: "#4338ca",
+      slug: "legal-notice",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

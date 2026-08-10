@@ -44,6 +44,7 @@ import {
   type Seat,
 } from "../components/capsuleData";
 import { capsuleToBody, projectSealed } from "../components/coerce";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const BASE = `${API_URL}/capsule-pages`;
 const TEMPLATE = "capsule";
@@ -389,12 +390,13 @@ export function useCapsuleEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "sealed until next year 🕰️", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "sealed until next year 🕰️",
+      accent: "#991b1b",
+      slug: "capsule",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

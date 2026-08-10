@@ -15,6 +15,7 @@ import {
   flagsDataToBody,
   dbToFlagsData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "flags_draft";
 const BASE = `${API_URL}/flags-pages`;
@@ -349,12 +350,13 @@ export function useFlagsEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "1 profile near you.", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "1 profile near you.",
+      accent: "#be123c",
+      slug: "flags",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

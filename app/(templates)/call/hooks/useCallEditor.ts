@@ -36,6 +36,7 @@ import {
   type CallKind,
   type CallLogEntry,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "call";
@@ -460,12 +461,14 @@ export function useCallEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "Incoming call. Pick up.";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Incoming call", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Incoming call",
+      text,
+      accent: "#059669",
+      slug: "call",
+    });
+  }, [shareUrl]);
 
   const shareId = shareUrl ? (shareUrl.split("/").pop() ?? null) : null;
 

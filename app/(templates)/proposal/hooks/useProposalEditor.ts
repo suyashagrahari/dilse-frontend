@@ -18,6 +18,7 @@ import {
   proposalDataToBody,
   dbToProposalData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "proposal_draft";
 const BASE = `${API_URL}/proposal-pages`;
@@ -440,16 +441,13 @@ export function useProposalEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      track(EVENTS.SHARE, { template: TEMPLATE, method: "native" });
-      navigator
-        .share({ title: "I have something to ask you 💍", url: shareUrl })
-        .catch(() => {});
-    } else {
-      track(EVENTS.SHARE, { template: TEMPLATE, method: "copy" });
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "I have something to ask you 💍",
+      accent: "#db2777",
+      slug: "proposal",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

@@ -35,6 +35,7 @@ import {
   type Toast,
 } from "../components/demo";
 import type { ChallanData } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "challan";
@@ -305,12 +306,14 @@ export function useChallanEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = `E-Challan ${content.challanNo}. Pay or contest.`;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "E-Challan", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, content.challanNo, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "E-Challan",
+      text,
+      accent: "#b91c1c",
+      slug: "challan",
+    });
+  }, [shareUrl, content.challanNo]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

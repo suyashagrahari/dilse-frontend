@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, lazy, useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 
 import { useBirthdayEditor } from "./hooks/useBirthdayEditor";
@@ -14,6 +14,7 @@ import EditSheet from "./components/EditSheet";
 import PublishSheet from "./components/PublishSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import BirthdayBgMusic from "./components/BirthdayBgMusic";
+import { ShareSheet } from "@/components/share/ShareSheet";
 
 const GallerySection  = lazy(() => import("./components/GallerySection"));
 const SongsSection    = lazy(() => import("./components/SongsSection"));
@@ -38,120 +39,6 @@ function SectionLoader() {
     <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5EDE0" }}>
       <p style={{ fontFamily: SCRIPT, fontSize: 20, color: "#5D3F31", opacity: 0.6 }}>loading...</p>
     </div>
-  );
-}
-
-function EditorShareSheet({ url, onClose }: { url: string; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const whatsapp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`A birthday page just for you 🎂 ${url}`)}`, "_blank");
-  };
-
-  const nativeShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: "A birthday page for you 🎂", url }).catch(() => {});
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 500,
-        background: "rgba(45,25,15,0.55)", backdropFilter: "blur(6px)",
-        display: "flex", alignItems: "flex-end", justifyContent: "center",
-      }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        style={{
-          width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0",
-          background: "rgba(250,245,238,0.98)",
-          padding: "28px 24px 44px",
-          boxShadow: "0 -12px 60px rgba(45,25,15,0.25)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <span style={{ fontFamily: SCRIPT, fontSize: 20, fontWeight: 700, color: DARK_BROWN }}>
-            Share your birthday page 🎂
-          </span>
-          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", color: DARK_BROWN, opacity: 0.5 }}>
-            ✕
-          </button>
-        </div>
-
-        {/* URL preview */}
-        <div style={{
-          background: "rgba(173,104,74,0.08)", borderRadius: 12,
-          padding: "10px 14px", marginBottom: 20,
-          fontFamily: SCRIPT, fontSize: 12, color: DARK_BROWN,
-          wordBreak: "break-all", lineHeight: 1.5,
-        }}>
-          {url}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={copy} style={{
-            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-            borderRadius: 14, border: "1.5px solid rgba(173,104,74,0.25)",
-            background: copied ? "rgba(173,104,74,0.12)" : "rgba(255,252,246,0.9)",
-            cursor: "pointer", textAlign: "left",
-          }}>
-            <span style={{ fontSize: 22 }}>{copied ? "✓" : "🔗"}</span>
-            <div>
-              <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>
-                {copied ? "Copied!" : "Copy Link"}
-              </p>
-              <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
-                Copy the link to share anywhere
-              </p>
-            </div>
-          </button>
-
-          <button onClick={whatsapp} style={{
-            display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-            borderRadius: 14, border: "1.5px solid rgba(37,211,102,0.25)",
-            background: "rgba(255,252,246,0.9)",
-            cursor: "pointer", textAlign: "left",
-          }}>
-            <span style={{ fontSize: 22 }}>💬</span>
-            <div>
-              <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>WhatsApp</p>
-              <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
-                Send via WhatsApp
-              </p>
-            </div>
-          </button>
-
-          {typeof navigator !== "undefined" && "share" in navigator && (
-            <button onClick={nativeShare} style={{
-              display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-              borderRadius: 14, border: "1.5px solid rgba(173,104,74,0.25)",
-              background: "rgba(255,252,246,0.9)",
-              cursor: "pointer", textAlign: "left",
-            }}>
-              <span style={{ fontSize: 22 }}>↗️</span>
-              <div>
-                <p style={{ fontFamily: SCRIPT, fontSize: 15, fontWeight: 700, color: DARK_BROWN, margin: 0 }}>Share</p>
-                <p style={{ fontFamily: SCRIPT, fontSize: 12, color: "rgba(93,63,49,0.55)", margin: 0 }}>
-                  Share via other apps
-                </p>
-              </div>
-            </button>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 
@@ -397,14 +284,16 @@ function BirthdayGfPageInner() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {editor.showShareSheet && editor.shareUrl && (
-          <EditorShareSheet
-            url={editor.shareUrl}
-            onClose={() => editor.setShowShareSheet(false)}
-          />
-        )}
-      </AnimatePresence>
+      <ShareSheet
+        open={editor.showShareSheet}
+        onClose={() => editor.setShowShareSheet(false)}
+        shareUrl={editor.shareUrl}
+        title="A birthday page for you"
+        cardTitle="Happy birthday"
+        cardNote="Scan it and the whole page opens — no app, nothing to install."
+        accent="#f43f5e"
+        slug="birthday-gf"
+      />
     </div>
   );
 }

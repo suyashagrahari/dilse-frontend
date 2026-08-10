@@ -15,6 +15,7 @@ import {
   vendingDataToBody,
   dbToVendingData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "vending-machine_draft";
 const BASE = `${API_URL}/vending-machine-pages`;
@@ -330,12 +331,14 @@ export function useVendingMachineEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "There's a machine here. Punch a code. 🎰", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "There's a machine here. Punch a code. 🎰",
+      accent: "#0f766e",
+      senderName: content.senderName,
+      slug: "vending-machine",
+    });
+  }, [shareUrl, content.senderName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

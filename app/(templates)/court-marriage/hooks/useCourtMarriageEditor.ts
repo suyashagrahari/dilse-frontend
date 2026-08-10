@@ -15,6 +15,7 @@ import {
   courtMarriageDataToBody,
   dbToCourtMarriageData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "court-marriage_draft";
 const BASE = `${API_URL}/court-marriage-pages`;
@@ -300,12 +301,13 @@ export function useCourtMarriageEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "We got registered 📜", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "We got registered 📜",
+      accent: "#b45309",
+      slug: "court-marriage",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

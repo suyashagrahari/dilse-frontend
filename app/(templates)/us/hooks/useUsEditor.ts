@@ -28,6 +28,7 @@ import { track } from "@/lib/analytics/track";
 import { DEMO_DATA, usDataToBody } from "../components/data";
 import { dbToProfileData } from "../components/coerce";
 import type { ProfileData } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const BASE = `${API_URL}/us-pages`;
 const TEMPLATE = "us";
@@ -353,12 +354,13 @@ export function useUsEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     track(EVENTS.SHARE, { template: TEMPLATE });
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "we got an account. 📱", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "we got an account. 📱",
+      accent: "#171717",
+      slug: "us",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

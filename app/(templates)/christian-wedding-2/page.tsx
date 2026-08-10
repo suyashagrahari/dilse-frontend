@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import AuthModal from "@/components/AuthModal";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { ShareSheet } from "@/components/share/ShareSheet";
 
 import { useChristianWeddingEditor } from "@/app/(templates)/christian-wedding/hooks/useChristianWeddingEditor";
 import { ChristianPageChrome } from "@/app/(templates)/christian-wedding/components/ChristianPageChrome";
@@ -159,12 +159,17 @@ function ChristianWedding2Page() {
         <AuthModal onClose={handleAuthClose} onSuccess={handleAuthSuccess} />
       )}
 
-      <SocialShareSheet
+      <ShareSheet
         open={editor.showShareSheet}
         onClose={editor.closeShareSheet}
         shareUrl={editor.shareUrl}
-        onCopy={editor.handleCopy}
-        shareMessage={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
+        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
+        title="Wedding Invitation"
+        cardTitle="You are invited to our wedding"
+        cardNote="Scan for the venue, the timings and the whole day's programme."
+        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
+        accent="#065f46"
+        slug="christian-wedding-2"
       />
 
       <EditSheet

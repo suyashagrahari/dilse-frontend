@@ -15,6 +15,7 @@ import {
   catchDataToBody,
   dbToCatchData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "catch_draft";
 const BASE = `${API_URL}/catch-pages`;
@@ -343,12 +344,14 @@ export function useCatchEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "I wrote you something. It's in pieces. 💛", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "I wrote you something. It's in pieces. 💛",
+      accent: "#0369a1",
+      senderName: content.senderName,
+      slug: "catch",
+    });
+  }, [shareUrl, content.senderName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

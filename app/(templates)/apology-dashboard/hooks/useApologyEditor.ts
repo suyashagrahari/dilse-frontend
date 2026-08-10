@@ -15,6 +15,7 @@ import {
   apologyDataToBody,
   dbToApologyData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /**
  * `persistStory` is being added to `useStoryFill` separately. Typed optional
@@ -315,12 +316,13 @@ export function useApologyEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "A little apology, just for you 💗", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "A little apology, just for you 💗",
+      accent: "#f43f5e",
+      slug: "apology-dashboard",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

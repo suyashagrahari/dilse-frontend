@@ -15,6 +15,7 @@ import {
   trainTicketDataToBody,
   dbToTrainTicketData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "train-ticket_draft";
 const BASE = `${API_URL}/train-ticket-pages`;
@@ -302,12 +303,13 @@ export function useTrainTicketEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Check your PNR status 🎫", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Check your PNR status 🎫",
+      accent: "#334155",
+      slug: "train-ticket",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

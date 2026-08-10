@@ -25,6 +25,7 @@ import {
   type Stop,
   type Toast,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /**
  * The ONE draft key for this template. Together with
@@ -493,14 +494,15 @@ export function useDateInvitationEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator
-        .share({ title: "You're invited. Location: you'll find out. 💌", url: shareUrl })
-        .catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "You're invited. Location: you'll find out. 💌",
+      accent: "#be123c",
+      recipientName: content.recipientName,
+      senderName: content.senderName,
+      slug: "date-invitation",
+    });
+  }, [shareUrl, content.senderName, content.recipientName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

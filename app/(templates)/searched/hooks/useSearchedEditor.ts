@@ -10,6 +10,7 @@ import { track } from "@/lib/analytics/track";
 import type { SearchData } from "../components/types";
 import { DEMO_DATA, retargetToRecipient, searchedDataToBody } from "../components/demoData";
 import { dbToSearchData } from "../components/coerce";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const BASE = `${API_URL}/searched-pages`;
 const TEMPLATE = "searched";
@@ -383,12 +384,13 @@ export function useSearchedEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "Go on. Type your name. 🔍", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "Go on. Type your name. 🔍",
+      accent: "#6d28d9",
+      slug: "searched",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

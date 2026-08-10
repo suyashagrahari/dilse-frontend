@@ -17,6 +17,7 @@ import {
   puzzleDataToBody,
   dbToPuzzleData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "photo-puzzle_draft";
 const BASE = `${API_URL}/photo-puzzle-pages`;
@@ -387,12 +388,15 @@ export function usePhotoPuzzleEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "I made you something. The last piece is with me. 🧩", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "I made you something. The last piece is with me. 🧩",
+      accent: "#4f46e5",
+      recipientName: content.recipientName,
+      senderName: content.senderName,
+      slug: "photo-puzzle",
+    });
+  }, [shareUrl, content.senderName, content.recipientName]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

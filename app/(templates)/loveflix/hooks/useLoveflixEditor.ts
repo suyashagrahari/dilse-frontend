@@ -21,6 +21,7 @@ import {
   type Scene,
   type Toast,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "loveflix_draft";
 const BASE = `${API_URL}/loveflix-pages`;
@@ -488,12 +489,13 @@ export function useLoveflixEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "I made you something to watch 🍿", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "I made you something to watch 🍿",
+      accent: "#f59e0b",
+      slug: "loveflix",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

@@ -15,6 +15,7 @@ import {
   holdMyHandDataToBody,
   dbToHoldMyHandData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "hold-my-hand_draft";
 const BASE = `${API_URL}/hold-my-hand-pages`;
@@ -299,12 +300,13 @@ export function useHoldMyHandEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "hold my hand for 60 seconds 🫀", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      title: "hold my hand for 60 seconds 🫀",
+      accent: "#7c3aed",
+      slug: "hold-my-hand",
+    });
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
