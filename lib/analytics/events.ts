@@ -102,10 +102,7 @@ export type ShareMethod =
   | "native"
   | "qr_image"
   | "qr_download"
-  | "print_card"
-  | "photo_qr_upload"
-  | "photo_qr_download"
-  | "photo_qr_share";
+  | "print_card";
 
 /**
  * Custom dimensions that must be registered in the GA4 UI before they render in

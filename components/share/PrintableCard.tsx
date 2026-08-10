@@ -2,10 +2,16 @@
 
 // ─── PrintableCard — the thing you print and hand over ───────────────────────
 //
-// A 640×908 poster at A5 proportions, exported at pixelRatio 3, which lands at
-// 1920×2724 — a true 300dpi A5. It exists because a gift link that only travels
-// through WhatsApp cannot be put inside a card, taped to a box, or left on a
-// pillow, and that is the moment most of these templates are actually for.
+// A 620×877 poster at exact A4 proportions, exported at pixelRatio 4, which
+// lands at 2480×3508 — a true 300dpi A4, the size a home printer actually
+// takes. It exists because a gift link that only travels through WhatsApp
+// cannot be put inside a card, taped to a box, or left on a pillow, and that is
+// the moment most of these templates are actually for.
+//
+// The design size is 620×877 rather than a rounder number because A4 is
+// 1:√2 and the export has to be a whole-number multiple: 620×4 = 2480 and
+// 877×4 = 3508, exactly. Pick a friendlier width and the export either
+// letterboxes or stretches, and a stretched QR is a QR that does not scan.
 //
 // ── FONTS: ONLY "swap" FACES ARE SAFE HERE ───────────────────────────────────
 //
@@ -16,15 +22,16 @@
 // know, because the screen they were looking at was fine.
 //
 // So this file uses only the faces registered with `display: "swap"`, which are
-// guaranteed to arrive: Cinzel for display, Fredoka for body, Courier Prime for
-// the URL. Do not "upgrade" any of these to Playfair or Outfit.
+// guaranteed to arrive: Cinzel for display and Fredoka for body. Do not
+// "upgrade" either of these to Playfair or Outfit.
 //
-// ── THE URL IS PRINTED AS TEXT, UNDER THE CODE ───────────────────────────────
+// ── THE LINE UNDER THE CODE IS WRITTEN, NOT PRINTED ──────────────────────────
 //
-// Not decoration. A printed QR can be creased, photocopied, or handed to someone
-// whose camera app does not scan codes, and at that point the typed address is
-// the only way in. It is set in a monospace face so 1/l and 0/O are separable,
-// which is the entire reason it is not in the body font.
+// The share address used to sit there, in a monospace face, as a fallback for a
+// creased or photocopied code. It was the wrong trade. Nobody has ever typed a
+// 36-character UUID off a piece of paper, and a raw URL is machine text on an
+// object someone hands to a person they love. The space now carries a written
+// line chosen per template — see `lib/share/cardCopy.ts`.
 //
 // ── THE QR ARRIVES AS A BITMAP ───────────────────────────────────────────────
 //
@@ -36,17 +43,11 @@
 import { forwardRef } from "react";
 import { alpha, shade, tint, readableInk, isMuted, DEFAULT_ACCENT } from "./qrTheme";
 
-export const CARD_W = 640;
-export const CARD_H = 908;
+export const CARD_W = 620;
+export const CARD_H = 877;
 
 const DISPLAY = "'Cinzel', Georgia, serif";
 const BODY = "'Fredoka', 'Trebuchet MS', sans-serif";
-const MONO = "'Courier Prime', 'Courier New', monospace";
-
-/** Strips the scheme so the printed address is shorter and easier to type. */
-function typableUrl(url: string): string {
-  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
-}
 
 function Heart({
   size,
@@ -88,9 +89,12 @@ function Heart({
 export interface PrintableCardProps {
   /** The QR as a PNG data URL, already rasterised. Null renders the frame only. */
   qrDataUrl: string | null;
-  url: string;
+  /** Small line above the headline. */
+  kicker: string;
   title: string;
   note: string;
+  /** The written line under the code, where the address used to be. */
+  line: string;
   recipientName?: string;
   senderName?: string;
   accent: string;
@@ -109,7 +113,7 @@ export interface PrintableCardProps {
  */
 export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
   function PrintableCard(
-    { qrDataUrl, url, title, note, recipientName, senderName, accent, logoSrc },
+    { qrDataUrl, kicker, title, note, line, recipientName, senderName, accent, logoSrc },
     ref,
   ) {
     const deep = shade(accent, 0.45);
@@ -200,7 +204,7 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
                 color: alpha(deep, 0.72),
               }}
             >
-              A gift for you
+              {kicker}
             </span>
             <span style={{ flex: 1 }} />
             <span
@@ -324,20 +328,24 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
             )}
 
             {/* The way in when the code will not scan. See the header note. */}
+            {/* Where the share address used to be printed.
+                A raw URL is machine text on an object a person hands to
+                someone they love, and nobody has ever typed a 36-character
+                UUID off a piece of paper. The written line earns the space;
+                the address does not. */}
             <p
               style={{
                 margin: "12px 0 0",
                 maxWidth: 330,
-                fontFamily: MONO,
-                fontSize: 12,
-                lineHeight: "16px",
-                letterSpacing: "0.01em",
-                color: "#5D5666",
+                fontFamily: DISPLAY,
+                fontSize: 15,
+                lineHeight: "20px",
+                letterSpacing: "0.06em",
+                color: alpha(deep, 0.82),
                 textAlign: "center",
-                overflowWrap: "anywhere",
               }}
             >
-              {typableUrl(url)}
+              {line}
             </p>
           </div>
 

@@ -2,12 +2,11 @@
 
 // ─── ShareSheet — one share surface for every template ───────────────────────
 //
-// Four tabs, in the order a sender actually needs them:
+// Three tabs, in the order a sender actually needs them:
 //
 //   LINK   — the chat apps, plus the address with a copy button.
 //   QR     — the code on screen, to hold up or send as an image.
-//   PHOTO  — the same code, coloured from a photo they pick. Downloads as PNG.
-//   PRINT  — a colourful A5 card carrying the code, to print and hand over.
+//   PRINT  — a colourful A4 card carrying the code, to print and hand over.
 //
 // ── WHY THE PRINT TAB EXISTS ─────────────────────────────────────────────────
 //
@@ -17,13 +16,20 @@
 // do that is to screenshot a QR and hope it prints large enough, which is how
 // you end up with a code nobody can scan.
 //
-// ── THE QR IS RASTERISED ONCE, AND EVERYTHING REUSES IT ──────────────────────
+// ── NOTHING EXPENSIVE HAPPENS UNTIL IT IS ASKED FOR ──────────────────────────
 //
-// `qrDataUrl` is generated on demand the first time a tab that needs it opens,
-// then reused by the preview, the card, the PNG download, and the file share.
-// It is regenerated only when the URL or accent actually changes. Encoding is
-// a few milliseconds, but the canvas round-trip is not free and doing it per
-// render made the tab switch visibly stutter.
+// Opening the sheet used to do two costly things before the sender had touched
+// anything, and both landed on the Link tab where neither is wanted:
+//
+//   * the QR was encoded and rasterised through a canvas round-trip, and
+//   * a full-size PrintableCard — gradients, blooms, two dozen hearts — was
+//     mounted offscreen so the capture node would be ready.
+//
+// The card in particular is a large subtree to lay out and paint, and it was
+// being built every single time the sheet opened. Both are now gated on the tab
+// that needs them, so Link opens with nothing to compute. `needsQr` also stays
+// true once a heavy tab has been visited, so flipping back and forth does not
+// re-rasterise; the bitmap is regenerated only when the URL or accent changes.
 //
 // ── ONE EXPORT AT A TIME ─────────────────────────────────────────────────────
 //
@@ -43,7 +49,6 @@ import {
   Check,
   Download,
   Facebook,
-  ImagePlus,
   Instagram,
   Link2,
   MessageCircle,
@@ -56,10 +61,10 @@ import {
 
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { cardCopy } from "@/lib/share/cardCopy";
 import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
 import { dataUrlToFile, downloadDataUrl, qrToPngDataUrl } from "@/lib/share/qrPng";
 
-import { PhotoQrPanel } from "./PhotoQrPanel";
 import { PrintableCard, CARD_W, CARD_H } from "./PrintableCard";
 import { QrBlock } from "./QrBlock";
 import { DEFAULT_ACCENT, alpha, readableInk, shade, tint, qrInk } from "./qrTheme";
@@ -67,19 +72,18 @@ import { DEFAULT_ACCENT, alpha, readableInk, shade, tint, qrInk } from "./qrThem
 /** Same-origin, so it can sit inside both the canvas and the captured card. */
 const LOGO_SRC = "/logo.webp";
 
-/** Scale of the print-tab preview. 640 × 0.42 = 269px, which fits the sheet. */
+/** Scale of the print-tab preview. 620 × 0.42 = 260px, which fits the sheet. */
 const PREVIEW_SCALE = 0.42;
 
-type TabKey = "link" | "qr" | "photo" | "print";
+type TabKey = "link" | "qr" | "print";
 
 /**
- * Labels are short because there are four of them across a 354px row; the full
- * name lives in `title`, which is what a screen reader announces.
+ * Labels are short; the full name lives in `title`, which is what a screen
+ * reader announces.
  */
 const TABS: Array<{ key: TabKey; label: string; title: string; icon: React.ReactNode }> = [
   { key: "link", label: "Link", title: "Share a link", icon: <Link2 size={14} /> },
   { key: "qr", label: "QR", title: "QR code", icon: <QrCode size={14} /> },
-  { key: "photo", label: "Photo", title: "Photo QR code", icon: <ImagePlus size={14} /> },
   { key: "print", label: "Print", title: "Printable card", icon: <Printer size={14} /> },
 ];
 
@@ -164,7 +168,12 @@ export function ShareSheet({
   const deep = shade(accent, 0.45);
   const codeInk = useMemo(() => qrInk(accent), [accent]);
 
-  const headline = (cardTitle || title || "Something is waiting for you").trim();
+  // Written copy per template, so the card never reads as generated. An
+  // explicit `cardTitle` from a caller still wins; what must NOT win is the
+  // native-share `title`, which is a route label ("Bouquet GF page") and was
+  // ending up as the headline on something people print and hand over.
+  const copy = useMemo(() => cardCopy(slug), [slug]);
+  const headline = (cardTitle || copy.headline).trim();
   const note = (
     cardNote || "Point your phone camera at the code and it opens right up. No app needed."
   ).trim();
@@ -177,14 +186,22 @@ export function ShareSheet({
     if (open) {
       setTab("link");
       setCopied(false);
+      setNeedsQr(false);
     }
   }, [open]);
+
+  // Latched: true from the first moment a tab needing the bitmap is shown, and
+  // stays true for the life of the open sheet so tab-flipping is free.
+  const [needsQr, setNeedsQr] = useState(false);
+  useEffect(() => {
+    if (tab === "qr" || tab === "print") setNeedsQr(true);
+  }, [tab]);
 
   // Rasterise once per (url, accent). The QR tab, the card preview, both
   // downloads and the file share all read this one bitmap.
   useEffect(() => {
     let cancelled = false;
-    if (!open || !url) {
+    if (!open || !url || !needsQr) {
       setQrDataUrl(null);
       return;
     }
@@ -200,7 +217,7 @@ export function ShareSheet({
     return () => {
       cancelled = true;
     };
-  }, [open, url, codeInk]);
+  }, [open, url, codeInk, needsQr]);
 
   // Escape closes, matching every other dismissible layer in the app.
   useEffect(() => {
@@ -311,9 +328,10 @@ export function ShareSheet({
         height: CARD_H,
         filename: `${stem}-card`,
         backgroundColor: "#FFF8F3",
-        pixelRatio: 3,
+        // 620x877 at 4x is exactly 2480x3508: a true 300dpi A4.
+        pixelRatio: 4,
       });
-      say(result.ok ? "Card saved — print it at A5 or bigger." : result.message);
+      say(result.ok ? "Card saved as A4 — print it at 100%, no scaling." : result.message);
     } finally {
       setBusy(false);
     }
@@ -333,7 +351,8 @@ export function ShareSheet({
 
   const cardProps = {
     qrDataUrl,
-    url,
+    kicker: copy.kicker,
+    line: copy.line,
     title: headline,
     note,
     recipientName,
@@ -413,7 +432,7 @@ export function ShareSheet({
                       color: alpha(deep, 0.7),
                     }}
                   >
-                    A link, a code, your own photo, or a card to print.
+                    A link, a code, or a card to print and hand over.
                   </p>
                 </div>
 
@@ -695,18 +714,6 @@ export function ShareSheet({
                 </div>
               ) : null}
 
-              {tab === "photo" ? (
-                <PhotoQrPanel
-                  url={url}
-                  accent={accent}
-                  stem={stem}
-                  say={say}
-                  title={cardTitle || title}
-                  recipientName={recipientName}
-                  senderName={senderName}
-                />
-              ) : null}
-
               {tab === "print" ? (
                 <div style={{ textAlign: "center" }}>
                   {/* The preview and the captured node are the same component
@@ -742,9 +749,9 @@ export function ShareSheet({
                       color: alpha(deep, 0.78),
                     }}
                   >
-                    Print it at A5 or bigger, cut along the dashed line, and leave it somewhere
-                    they&apos;ll find it. The address is printed under the code in case the scan
-                    ever fails.
+                    Downloads as a full A4 page at 300dpi. Print it at 100% — no
+                    &ldquo;fit to page&rdquo; — then cut along the dashed line and leave it
+                    somewhere they&apos;ll find it.
                   </p>
 
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -842,10 +849,14 @@ export function ShareSheet({
           </motion.div>
 
           {/* The capture node: true size, offscreen, never scaled. Trap 2 in
-              lib/exportPng.ts is about exactly this. */}
-          <div style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }}>
-            <PrintableCard ref={cardRef} {...cardProps} />
-          </div>
+              lib/exportPng.ts is about exactly this. Mounted only on the Print
+              tab — it is a large subtree, and building it on every open was
+              most of the cost of opening the sheet at all. */}
+          {tab === "print" ? (
+            <div style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }}>
+              <PrintableCard ref={cardRef} {...cardProps} />
+            </div>
+          ) : null}
 
           <style>{`
             .ss-spin { animation: ssSpin 900ms linear infinite; }
