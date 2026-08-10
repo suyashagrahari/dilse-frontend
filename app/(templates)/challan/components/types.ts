@@ -7,15 +7,17 @@
 // ── THE LINE THIS FILE EXISTS TO HOLD ────────────────────────────────────────
 //
 // This is a NOTICE, never an identity document. A parody traffic notice and a
-// convincing fake driving licence are different legal categories, and only one
-// of them is a joke. Nothing in this contract carries a photo of a person beside
+// convincing fake government ID are different legal categories, and only one of
+// them is a joke. Nothing in this contract carries a photo of a person beside
 // their name and a number in a card layout, because that is what an ID is. The
 // evidence photo is a road-camera frame — degraded, timestamped, of a vehicle.
 //
 // The issuing authority is INVENTED end to end: "Department of Heart Traffic,
-// Republic of Us". No State Emblem, no Ashoka Lions, no "Satyameva Jayate", no
-// real state police or RTO seal, no Parivahan/mParivahan mark — not in the data,
-// not in the components, not in file names, alt text, or comments.
+// Republic of Us". No national emblem, no state insignia, no official motto, no
+// real police or transport-authority seal, no government portal wordmark — not
+// in the data, not in the components, not in file names, alt text, or comments.
+// Those terms are deliberately absent from this file too, so that a grep for any
+// of them across the template returns nothing at all.
 
 /** The invented issuing body. Every field here is fiction and must read as such. */
 export interface ChallanAuthority {
@@ -25,7 +27,7 @@ export interface ChallanAuthority {
   department: string;
   /** "Republic of Us" — a place that does not exist. */
   state: string;
-  /** Devanagari-styled invented motto. NEVER "सत्यमेव जयते". */
+  /** Devanagari-styled INVENTED motto. Never a real national or state motto. */
   motto: string;
 }
 
