@@ -2,8 +2,10 @@
 
 // ─── PhotoQrPanel — "make the code look like us" ─────────────────────────────
 //
-// Pick a photo, and the QR is coloured from it. The whole render happens on the
-// device — the picture is never uploaded, never sent to the server, and is
+// Pick a photo, and the QR is built out of it — dots over the picture, and a
+// clear panel in the middle showing the subject untouched, so the person who
+// receives it can see who it is from across a room. The whole render happens on
+// the device: the picture is never uploaded, never sent to the server, and is
 // dropped the moment the sheet closes. That is worth saying on screen, because
 // the natural assumption about "upload a photo" is the opposite, and the people
 // using this are choosing pictures of themselves.
@@ -14,7 +16,7 @@
 // but the useful range is narrow and bounded by whether the thing still scans,
 // and a slider invites people to the end of the range, which is exactly where
 // it stops working. Three verified stops are the honest version of that
-// control. See `lib/share/photoQr.ts` for how the bands were fixed.
+// control. See `lib/share/photoQr.ts` for how each one was fixed.
 //
 // ── WHY THE PREVIEW IS BIG ───────────────────────────────────────────────────
 //
@@ -80,7 +82,7 @@ export function PhotoQrPanel({
 
     const run = async () => {
       setWorking(true);
-      const png = await photoQrToPngDataUrl(url, photo, { strength, size: 1024 });
+      const png = await photoQrToPngDataUrl(url, photo, { strength });
       if (cancelled) return;
       setRendered(png);
       setWorking(false);
@@ -201,7 +203,8 @@ export function PhotoQrPanel({
               fontWeight: 400,
             }}
           >
-            The code gets coloured from your picture — the two of you, inside the QR.
+            Your picture becomes the code, and shows through the middle — so they can see
+            it&rsquo;s you before they even scan it.
           </span>
 
           {/* The whole panel is the button, but a dashed box does not read as
@@ -243,16 +246,16 @@ export function PhotoQrPanel({
               <img
                 src={rendered}
                 alt="Your photo rendered as a QR code"
-                width={218}
-                height={218}
-                style={{ display: "block", width: 218, height: 218, borderRadius: 10 }}
+                width={264}
+                height={264}
+                style={{ display: "block", width: 264, height: 264, borderRadius: 12 }}
               />
             ) : (
               <div
                 style={{
-                  width: 218,
-                  height: 218,
-                  borderRadius: 10,
+                  width: 264,
+                  height: 264,
+                  borderRadius: 12,
                   background: alpha(accent, 0.07),
                   display: "flex",
                   alignItems: "center",
