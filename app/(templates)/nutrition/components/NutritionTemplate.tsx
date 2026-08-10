@@ -111,39 +111,10 @@ export function NutritionTemplate({
     [capture, data, openRows],
   );
 
-  // ── Fit-to-viewport ───────────────────────────────────────────────────────
-  // `offsetWidth`/`offsetHeight` report LAYOUT size and ignore transforms, so
-  // measuring the scaled node cannot feed back into its own scale.
-  const packRef = useRef<HTMLDivElement>(null);
-  const [natural, setNatural] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    if (capture) return;
-    const el = packRef.current;
-    if (!el) return;
-
-    const measure = () => {
-      const w = el.offsetWidth;
-      const h = el.offsetHeight;
-      if (w > 0) {
-        setNatural({ w, h });
-        const avail = Math.max(200, window.innerWidth - GUTTER * 2);
-        // Only ever shrinks. Blowing a 300px panel up to 500px on a desktop
-        // makes an 8px face into a 13px face and it stops reading as fine print.
-        setScale(Math.min(1, avail / w));
-      }
-    };
-
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [capture]);
+  // ── Fit-to-viewport lives in PackageFrame, not here ───────────────────────
+  // See the note at the render site below: a second scale layer at this level
+  // fed back into PackageFrame's own measurement and shrank the panel to
+  // nothing. PackageFrame measures the width it is given and scales once.
 
   // ── PNG export ────────────────────────────────────────────────────────────
   const [cardNode, setCardNode] = useState<HTMLDivElement | null>(null);
@@ -246,26 +217,20 @@ export function NutritionTemplate({
           </p>
         ) : null}
 
-        {/* Fixed-size block inside a box the exact size it ends up occupying,
-            so scaling never leaves a gap or clips the content below. */}
-        <div
-          style={{
-            width: natural.w ? natural.w * scale : "auto",
-            height: natural.h ? natural.h * scale : "auto",
-          }}
-        >
-          <div
-            ref={packRef}
-            style={{
-              width: "max-content",
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
-          >
-            <PackageFrame data={data}>
-              <NutritionLabel data={data} openRows={effectiveOpenRows} onToggleRow={onToggleRow} />
-            </PackageFrame>
-          </div>
+        {/* ── ONE SCALE LAYER, AND IT LIVES IN PackageFrame ──────────────────
+            There used to be a second `transform: scale()` here as well. It
+            compounded catastrophically: this wrapper set its LAYOUT width to
+            `natural.w * scale`, PackageFrame then measured that already-shrunk
+            `host.clientWidth` and scaled itself again, and because each side
+            had its own ResizeObserver watching the other's box, every pass
+            ratcheted the product down — the 300px panel ended up rendering at
+            roughly 7x12 CSS pixels, i.e. invisible.
+            PackageFrame fits itself to whatever width it is handed, so the
+            correct number of scale layers here is zero. Do not add one back. */}
+        <div style={{ width: "100%" }}>
+          <PackageFrame data={data} capture={capture}>
+            <NutritionLabel data={data} openRows={effectiveOpenRows} onToggleRow={onToggleRow} />
+          </PackageFrame>
         </div>
 
         {/* ── THE MESSAGE ──────────────────────────────────────────────────

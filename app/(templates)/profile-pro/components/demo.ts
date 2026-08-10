@@ -31,7 +31,9 @@ export const DEMO_PROFILE: ProfileProData = {
     photoUrl: "",
     connections: "1 connection",
     degreeNote: "· 1st",
-    openTo: "Open to: being right",
+    // Just the value. `ProfileCard` already prints the "Open to" label above it,
+    // so a value that repeats the prefix renders as "Open to / Open to: …".
+    openTo: "being right",
   },
 
   about: [
