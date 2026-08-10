@@ -696,7 +696,15 @@ export function ShareSheet({
               ) : null}
 
               {tab === "photo" ? (
-                <PhotoQrPanel url={url} accent={accent} stem={stem} say={say} title={title} />
+                <PhotoQrPanel
+                  url={url}
+                  accent={accent}
+                  stem={stem}
+                  say={say}
+                  title={cardTitle || title}
+                  recipientName={recipientName}
+                  senderName={senderName}
+                />
               ) : null}
 
               {tab === "print" ? (

@@ -30,13 +30,35 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { dataUrlToFile, downloadDataUrl } from "@/lib/share/qrPng";
 import { fileToScaledDataUrl, photoQrToPngDataUrl, type PhotoStrength } from "@/lib/share/photoQr";
+import { photoCardToPngDataUrl } from "@/lib/share/photoCard";
 import { alpha, readableInk, shade } from "./qrTheme";
+
+/**
+ * Two ways to send a photo with a link, and they are not variations of each
+ * other — they are a real trade.
+ *
+ * `card` keeps the photograph perfect and the code plain. `code` fuses them,
+ * which is the striking one, but a QR dictates the mean brightness of every
+ * module it occupies, so a picture inside a symbol can never be more than
+ * suggested. Card is the default because "can they see who it is" is the
+ * question people are actually asking.
+ */
+type OutputMode = "card" | "code";
 
 /** Rejected before it is read. A phone burst photo is ~5MB; this is generous. */
 const MAX_BYTES = 15 * 1024 * 1024;
 
 /** Same-origin, so it can be drawn into the canvas without tainting it. */
 const LOGO_SRC = "/logo.webp";
+
+const MODES: Array<{ key: OutputMode; label: string; hint: string }> = [
+  { key: "card", label: "Photo + code", hint: "Picture stays perfect" },
+  { key: "code", label: "Code from photo", hint: "One fused square" },
+];
+
+/** Preview width. The card is portrait 1080×1500; the code is square. */
+const PREVIEW_W = 264;
+const CARD_PREVIEW_H = Math.round((PREVIEW_W * 1500) / 1080);
 
 const STRENGTHS: Array<{ key: PhotoStrength; label: string; hint: string }> = [
   { key: "soft", label: "Photo", hint: "Most like your picture" },
@@ -50,6 +72,8 @@ export function PhotoQrPanel({
   stem,
   say,
   title,
+  recipientName,
+  senderName,
 }: {
   url: string;
   accent: string;
@@ -57,8 +81,11 @@ export function PhotoQrPanel({
   stem: string;
   say: (message: string) => void;
   title?: string;
+  recipientName?: string;
+  senderName?: string;
 }) {
   const [photo, setPhoto] = useState<string | null>(null);
+  const [mode, setMode] = useState<OutputMode>("card");
   const [strength, setStrength] = useState<PhotoStrength>("balanced");
   const [rendered, setRendered] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -67,6 +94,7 @@ export function PhotoQrPanel({
 
   const ink = readableInk(accent);
   const deep = shade(accent, 0.45);
+  const previewH = mode === "card" ? CARD_PREVIEW_H : PREVIEW_W;
 
   // Re-render whenever the photo, the strength or the link changes.
   //
@@ -85,7 +113,16 @@ export function PhotoQrPanel({
 
     const run = async () => {
       setWorking(true);
-      const png = await photoQrToPngDataUrl(url, photo, { strength, logoSrc: LOGO_SRC });
+      const png =
+        mode === "card"
+          ? await photoCardToPngDataUrl(url, photo, {
+              accent,
+              logoSrc: LOGO_SRC,
+              recipientName,
+              senderName,
+              title,
+            })
+          : await photoQrToPngDataUrl(url, photo, { strength, logoSrc: LOGO_SRC });
       if (cancelled) return;
       setRendered(png);
       setWorking(false);
@@ -96,7 +133,7 @@ export function PhotoQrPanel({
     return () => {
       cancelled = true;
     };
-  }, [photo, url, strength, say]);
+  }, [photo, url, mode, strength, accent, recipientName, senderName, title, say]);
 
   const pick = useCallback(() => fileRef.current?.click(), []);
 
@@ -128,13 +165,13 @@ export function PhotoQrPanel({
   const download = useCallback(() => {
     if (!rendered) return;
     track(EVENTS.SHARE, { method: "photo_qr_download" });
-    downloadDataUrl(rendered, `${stem}-photo-qr.png`);
-    say("Photo code saved to your downloads.");
-  }, [rendered, stem, say]);
+    downloadDataUrl(rendered, `${stem}-${mode === "card" ? "photo-card" : "photo-qr"}.png`);
+    say(mode === "card" ? "Photo card saved to your downloads." : "Photo code saved to your downloads.");
+  }, [rendered, stem, mode, say]);
 
   const share = useCallback(async () => {
     if (!rendered) return;
-    const file = dataUrlToFile(rendered, `${stem}-photo-qr.png`);
+    const file = dataUrlToFile(rendered, `${stem}-${mode === "card" ? "photo-card" : "photo-qr"}.png`);
     const nav = typeof navigator !== "undefined" ? window.navigator : null;
 
     // Checked before the File is built: iOS Safari advertises `share` but
@@ -149,7 +186,7 @@ export function PhotoQrPanel({
       }
     }
     download();
-  }, [rendered, stem, title, url, download]);
+  }, [rendered, stem, mode, title, url, download]);
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -233,6 +270,55 @@ export function PhotoQrPanel({
         </button>
       ) : (
         <>
+          {/* The two outputs are a genuine trade, not a style toggle, so they
+              sit above the preview and are labelled by what you get. */}
+          <div
+            role="group"
+            aria-label="What to make from your photo"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 6,
+              marginBottom: 12,
+            }}
+          >
+            {MODES.map((m) => {
+              const active = mode === m.key;
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMode(m.key)}
+                  aria-pressed={active}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    textAlign: "center",
+                    background: active ? accent : "#FFFFFF",
+                    color: active ? ink : alpha(deep, 0.82),
+                    border: `1px solid ${active ? accent : alpha(accent, 0.28)}`,
+                  }}
+                >
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 700 }}>
+                    {m.label}
+                  </span>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: 10.5,
+                      fontWeight: 400,
+                      marginTop: 1,
+                      opacity: active ? 0.85 : 0.7,
+                    }}
+                  >
+                    {m.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <div
             style={{
               display: "inline-block",
@@ -248,16 +334,20 @@ export function PhotoQrPanel({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={rendered}
-                alt="Your photo rendered as a QR code"
-                width={264}
-                height={264}
-                style={{ display: "block", width: 264, height: 264, borderRadius: 12 }}
+                alt={
+                  mode === "card"
+                    ? "Your photo above a scannable code"
+                    : "Your photo rendered as a QR code"
+                }
+                width={PREVIEW_W}
+                height={previewH}
+                style={{ display: "block", width: PREVIEW_W, height: previewH, borderRadius: 12 }}
               />
             ) : (
               <div
                 style={{
-                  width: 264,
-                  height: 264,
+                  width: PREVIEW_W,
+                  height: previewH,
                   borderRadius: 12,
                   background: alpha(accent, 0.07),
                   display: "flex",
@@ -288,6 +378,7 @@ export function PhotoQrPanel({
             ) : null}
           </div>
 
+          {mode === "code" ? (
           <div
             role="group"
             aria-label="How much the photo shows through"
@@ -323,6 +414,7 @@ export function PhotoQrPanel({
               );
             })}
           </div>
+          ) : null}
 
           <button
             type="button"
