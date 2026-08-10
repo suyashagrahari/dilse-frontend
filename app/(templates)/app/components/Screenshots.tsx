@@ -126,7 +126,7 @@ function Shot({ shot, first }: { shot: AppScreenshot; first: boolean }) {
       <figcaption
         style={{
           marginTop: 8,
-          fontSize: 13,
+          fontSize: 12,
           lineHeight: "17px",
           color: AP.inkSoft,
         }}

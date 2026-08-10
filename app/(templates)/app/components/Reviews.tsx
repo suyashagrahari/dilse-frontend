@@ -439,7 +439,7 @@ export function Reviews({
           id="reviews-heading"
           style={{
             margin: 0,
-            fontSize: 22,
+            fontSize: 19,
             fontWeight: 700,
             lineHeight: 1.2,
             color: AP.ink,

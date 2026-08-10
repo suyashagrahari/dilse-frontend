@@ -41,7 +41,7 @@ export function InfoTable({ rows }: { rows: AppInfoRow[] }) {
         id="info-heading"
         style={{
           margin: "0 16px",
-          fontSize: 22,
+          fontSize: 19,
           fontWeight: 700,
           lineHeight: 1.2,
           color: AP.ink,

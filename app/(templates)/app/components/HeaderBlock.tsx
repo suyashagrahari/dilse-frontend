@@ -38,7 +38,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { AP, AP_GUTTER, AP_TAP } from "./theme";
 import type { AppMeta, InstallState } from "./types";
 
-const ICON_SIZE = 110;
+const ICON_SIZE = 96;
 const PILL_HEIGHT = 28;
 const RING_SIZE = 28;
 const RING_STROKE = 2.5;
@@ -86,7 +86,7 @@ function AppIcon({ name, iconUrl }: { name: string; iconUrl: string }) {
           alignItems: "center",
           justifyContent: "center",
           color: AP.accent,
-          fontSize: 46,
+          fontSize: 40,
           fontWeight: 700,
           letterSpacing: "-0.02em",
           lineHeight: 1,
@@ -208,9 +208,12 @@ export function HeaderBlock({
     <section
       style={{
         display: "flex",
-        gap: 16,
+        gap: 14,
         alignItems: "flex-start",
-        padding: `0 ${AP_GUTTER}px`,
+        // The top gap matters: the sticky bar above is translucent, so content
+        // flush against it reads as one stuck-together block rather than as a
+        // bar with a page under it.
+        padding: `14px ${AP_GUTTER}px 0`,
         fontFamily: AP.font,
       }}
     >
@@ -220,8 +223,8 @@ export function HeaderBlock({
         <h1
           style={{
             margin: 0,
-            fontSize: 22,
-            lineHeight: "26px",
+            fontSize: 19,
+            lineHeight: "23px",
             fontWeight: 700,
             letterSpacing: "-0.02em",
             color: AP.ink,
@@ -240,8 +243,8 @@ export function HeaderBlock({
         <p
           style={{
             margin: "2px 0 0",
-            fontSize: 15,
-            lineHeight: "20px",
+            fontSize: 13,
+            lineHeight: "17px",
             color: AP.inkSoft,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -255,8 +258,8 @@ export function HeaderBlock({
         <p
           style={{
             margin: "2px 0 0",
-            fontSize: 15,
-            lineHeight: "20px",
+            fontSize: 13,
+            lineHeight: "17px",
             color: AP.inkSoft,
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -312,7 +315,7 @@ export function HeaderBlock({
                     borderRadius: 14,
                     background: AP.accent,
                     color: AP.accentInk,
-                    fontSize: 15,
+                    fontSize: 13,
                     fontWeight: 700,
                     letterSpacing: "0.02em",
                     lineHeight: 1,
@@ -326,7 +329,7 @@ export function HeaderBlock({
             <span
               style={{
                 marginTop: -4,
-                fontSize: 11,
+                fontSize: 10,
                 lineHeight: "13px",
                 color: AP.inkSoft,
                 textAlign: "center",

@@ -114,7 +114,7 @@ function Cell({
           height: ROW_LABEL,
           display: "flex",
           alignItems: "center",
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: 600,
           letterSpacing: "0.04em",
           textTransform: "uppercase",
@@ -142,7 +142,7 @@ function Cell({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 11,
+          fontSize: 10,
           lineHeight: "13px",
           color: AP.inkSoft,
           whiteSpace: "nowrap",
@@ -159,7 +159,7 @@ function Figure({ children }: { children: React.ReactNode }) {
   return (
     <span
       style={{
-        fontSize: 20,
+        fontSize: 17,
         fontWeight: 600,
         letterSpacing: "-0.01em",
         lineHeight: 1,
@@ -199,7 +199,7 @@ export function StatsStrip({ app, rating }: { app: AppMeta; rating: AppRating })
         hasRatings ? (
           <Figure>{rating.average.toFixed(1)}</Figure>
         ) : (
-          <span style={{ fontSize: 15, fontWeight: 600, color: AP.inkSoft, lineHeight: 1 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: AP.inkSoft, lineHeight: 1 }}>
             No Ratings Yet
           </span>
         )
@@ -230,7 +230,7 @@ export function StatsStrip({ app, rating }: { app: AppMeta; rating: AppRating })
             padding: "0 5px",
             borderRadius: 6,
             border: `1.5px solid ${AP.inkSoft}`,
-            fontSize: 15,
+            fontSize: 13,
             fontWeight: 700,
             lineHeight: 1,
             color: AP.inkSoft,

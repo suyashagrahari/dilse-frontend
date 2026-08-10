@@ -243,14 +243,26 @@ const DEMO_RATING: AppRating = {
  * which is also the honest thing to hand a sender who has not uploaded anything
  * yet.
  */
-// Each caption describes the screen in its image, so the two must be edited
-// together — a battery shot reading 6% under a caption claiming 4% is the kind
-// of mismatch that makes the whole listing read as assembled rather than real.
+/**
+ * The shot rail is where the couple's own photographs go.
+ *
+ * These four are placeholders, not artwork to keep: each is a warm gradient
+ * with a two-figure silhouette and an "Add your photo" pill, so the slot reads
+ * as an invitation rather than as a finished screen. The sender replaces every
+ * one of them from the edit sheet, which already has an upload row per shot.
+ *
+ * They are DELIBERATELY not mock phone screens. A rail of invented app UI looks
+ * complete, and a sender who thinks it is complete never puts a photo of the
+ * two of them into the one part of this page that is meant to hold one.
+ *
+ * Captions stay in the flat listing register — the joke is the mismatch between
+ * that voice and a photograph of somebody's girlfriend.
+ */
 const DEMO_SCREENSHOTS: AppScreenshot[] = [
-  { imageUrl: templateMedia("app", "shot-home.webp"), caption: "Home screen — 6:40am, already awake, already talking" },
-  { imageUrl: templateMedia("app", "shot-notifs.webp"), caption: "Notifications — 41 unread, all from her, all worth it" },
-  { imageUrl: templateMedia("app", "shot-storage.webp"), caption: "Storage — 90% occupied by photographs of the dog" },
-  { imageUrl: templateMedia("app", "shot-battery.webp"), caption: "Battery — 6% remaining, going out anyway" },
+  { imageUrl: templateMedia("app", "photo-1.webp"), caption: "First launch — 6:40am, already awake, already talking" },
+  { imageUrl: templateMedia("app", "photo-2.webp"), caption: "Daily active use — every day since, no exceptions" },
+  { imageUrl: templateMedia("app", "photo-3.webp"), caption: "Background activity — runs continuously, never sleeps" },
+  { imageUrl: templateMedia("app", "photo-4.webp"), caption: "Storage — 90% occupied, and I am not deleting any of it" },
 ];
 
 const DEMO_DESCRIPTION: AppDescription = {
