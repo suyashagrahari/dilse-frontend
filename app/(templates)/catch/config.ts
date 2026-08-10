@@ -1,5 +1,6 @@
 import { Gamepad2, Heart, Mail, Trophy, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "catch",
@@ -8,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Catch",
   description:
     "A letter that falls out of the sky one line at a time. They catch it with their own face. Nothing is ever locked — every catch just adds another line.",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/catch/cover.jpg",
+  coverImage: templateMedia("catch", "cover.jpg"),
   emoji: "🎮",
   color: "from-sky-500 to-amber-600",
   previewText: "it's in pieces. catch it 🎮",

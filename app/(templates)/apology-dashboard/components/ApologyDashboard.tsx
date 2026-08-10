@@ -20,6 +20,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { ApologyData, SignAgreementBody } from "./types";
 import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
+import { media } from "@/lib/templateMedia";
 
 // ─── design tokens (from the mockup) ─────────────────────────────────────────
 const ROSE = "#ff5f8a";
@@ -59,7 +60,7 @@ const HIT_MSGS = [
 ];
 const HIT_EMOJI = ["💥", "💗", "🥺", "🙏", "💔", "💞"];
 const EMOJI_FACES = ["🥺", "😜", "🤦‍♂️", "😅", "🙈", "🤡", "😇", "🫠", "😬"];
-const DISHOOM_SFX = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/apology-dashboard/sfx/dishoom.mp3";
+const DISHOOM_SFX = media("apology-dashboard/sfx/dishoom.mp3");
 
 // staggered entrance (re-triggers each time a step scrolls into view — works on mobile too)
 const STAGGER_PARENT = { hidden: {}, show: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } } };

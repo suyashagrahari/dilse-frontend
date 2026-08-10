@@ -1,5 +1,6 @@
 import { UserRound, Grid3x3, Bookmark, MessageCircle, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "us",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "Your relationship gets its own account. Bio, stats, story highlights, a photo grid, and posts with captions and comments from friends who are enjoying this far too much.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/us/cover.jpg",
+    templateMedia("us", "cover.jpg"),
   emoji: "📱",
   color: "from-neutral-700 to-neutral-900",
   previewText: "@us_since_2023 · 847 followers 📱",

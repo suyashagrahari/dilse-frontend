@@ -1,5 +1,6 @@
 import { Puzzle, Mail, Music, Hand, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "photo-puzzle",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "A photo jigsaw where every piece you place reveals a line of a letter and plays a note — and the final piece isn't in the box. You have it.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/photo-puzzle/cover.jpg",
+    templateMedia("photo-puzzle", "cover.jpg"),
   emoji: "🧩",
   color: "from-indigo-500 to-rose-400",
   previewText: "I have the last piece. ask me for it 🧩",

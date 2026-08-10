@@ -1,5 +1,6 @@
 import { Package, CreditCard, Hand, Ticket, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "vending-machine",
@@ -8,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Affection Dispenser",
   description:
     "A vending machine loaded with eighteen things you'd never say out loud. They pay with a confession, punch a code, and watch it drop. One slot jams on purpose.",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/vending-machine/cover.jpg",
+  coverImage: templateMedia("vending-machine", "cover.jpg"),
   emoji: "🎰",
   color: "from-teal-600 to-emerald-800",
   previewText: "CREDIT ₹0.00 · INSERT ONE THING YOU LOVE 🎰",

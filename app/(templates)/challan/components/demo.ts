@@ -11,6 +11,7 @@
 // resembles any government identity document. This is a NOTICE.
 
 import type { ChallanData } from "./types";
+import { templateMedia } from "@/lib/templateMedia";
 
 export type EditMode = null | "choose" | "manual" | "preview";
 
@@ -47,7 +48,7 @@ export const DEMO_CHALLAN: ChallanData = {
   location: "Near her house, 11:40 PM",
   evidence: {
     imageUrl:
-      "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/challan/evidence.webp",
+      templateMedia("challan", "evidence.webp"),
     plateText: "KA 01 LUV 2023",
     // Burned into the frame by the camera. A string, never a Date.
     timestamp: "06/08/2026 23:41:07",

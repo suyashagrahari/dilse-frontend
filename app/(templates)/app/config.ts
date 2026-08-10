@@ -1,5 +1,6 @@
 import { Download, Images, Star, History, Info } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts. Nothing here may name a software
@@ -20,7 +21,7 @@ export const config: TemplatePageConfig = {
     "A full software listing for a person: the header block, the ratings histogram, five screenshots, the version history — and a review section that opens for her friends and stays closed until you approve what they wrote.",
   bgGradient: "from-indigo-50 via-white to-violet-50",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/app/cover.webp",
+    templateMedia("app", "cover.webp"),
   tabs: [
     { id: "listing", icon: Download, label: "Listing" },
     { id: "shots", icon: Images, label: "Screens" },

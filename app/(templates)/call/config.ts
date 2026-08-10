@@ -1,5 +1,6 @@
 import { PhoneIncoming, BadgeCheck, Tags, History, MessageSquare } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/. The caller-ID app this borrows its shape
@@ -17,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Swipe to answer and the message plays out line by line. Underneath: the identification card with its tags and spam meter, and a call log that reads like a relationship.",
   bgGradient: "from-emerald-50 via-white to-teal-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/call/cover.webp",
+  coverImage: templateMedia("call", "cover.webp"),
   tabs: [
     { id: "call", icon: PhoneIncoming, label: "The Call" },
     { id: "caller", icon: BadgeCheck, label: "Caller" },

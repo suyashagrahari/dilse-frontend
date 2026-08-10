@@ -1,5 +1,6 @@
 import { PenLine, Lock, Hourglass, Stamp, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "capsule",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "You both write predictions about the next year, blind to each other. It seals. A year later you crack it open together, judge every one, and find out who owes who.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/capsule/cover.jpg",
+    templateMedia("capsule", "cover.jpg"),
   emoji: "🕰️",
   color: "from-red-800 to-amber-900",
   previewText: "sealed until 14 March 2027 🕰️",

@@ -1,3 +1,5 @@
+import { media } from "@/lib/templateMedia";
+
 // ─── Bouquet — central media registry + flower catalog ───────────────────────
 // Every flower + greenery image is addressed through BQ_MEDIA_BASE, so the whole
 // set can move to an S3/CDN origin by editing one line (after the files are
@@ -9,7 +11,7 @@
 // cache — uploaded via `npm run upload:bouquet-media` in /server. The same files
 // also live in /public/assets/bouquet-gf as the source-of-truth / local fallback:
 // re-run the uploader after editing any of them, then keep this base in sync.
-export const BQ_MEDIA_BASE = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/bouquet-gf";
+export const BQ_MEDIA_BASE = media("bouquet-gf");
 
 /** The composed gallery/OG cover, served from the same S3 origin. */
 export const BQ_COVER_URL = `${BQ_MEDIA_BASE}/cover.webp`;

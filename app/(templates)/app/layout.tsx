@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "app";
 
@@ -18,7 +19,7 @@ const SOCIAL_TITLE = "Meera Sharma — Version 4.0.2, 1 human, free";
 const SOCIAL_DESCRIPTION = "★★★★★ 4.9 out of 5. Updates are automatic and non-negotiable.";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/app/cover.webp",
+  url: templateMedia("app", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "A person published as a software listing — SubhSandesh",

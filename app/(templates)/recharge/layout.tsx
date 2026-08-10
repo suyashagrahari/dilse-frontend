@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "recharge";
 
@@ -18,7 +19,7 @@ const SOCIAL_TITLE = "Recharge successful · No expiry";
 const SOCIAL_DESCRIPTION = "Unlimited calls, unlimited data, validity: no expiry. Amount debited: everything.";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/recharge/cover.webp",
+  url: templateMedia("recharge", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "A prepaid recharge plan made for someone you love — SubhSandesh",

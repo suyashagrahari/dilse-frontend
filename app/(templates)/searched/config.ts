@@ -1,5 +1,6 @@
 import { Search, ListTree, IdCard, FileText, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "searched",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "They type their own name into a search box and the internet has opinions. Joke autocomplete, a full results page about them, expandable answers, and a knowledge panel that is entirely too accurate.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/searched/cover.jpg",
+    templateMedia("searched", "cover.jpg"),
   emoji: "🔍",
   color: "from-violet-600 to-indigo-700",
   previewText: "About 8,47,000 results (0.42 seconds) 🔍",

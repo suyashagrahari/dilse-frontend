@@ -1,5 +1,6 @@
 import { UserRound, Briefcase, Award, ThumbsUp, MessageSquareQuote } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts. No real professional network is
@@ -17,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Corporate-bland on purpose: hairline borders, no shadows, a headline that reads like a job title. The joke is that Punctuality (2) sits in exactly the same row as Being Right (47).",
   bgGradient: "from-teal-50 via-white to-emerald-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/profile-pro/cover.webp",
+  coverImage: templateMedia("profile-pro", "cover.webp"),
   tabs: [
     { id: "profile", icon: UserRound, label: "Profile" },
     { id: "experience", icon: Briefcase, label: "Experience" },

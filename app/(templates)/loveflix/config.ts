@@ -1,5 +1,6 @@
 import { Tv, Users, LayoutGrid, Play, Clapperboard } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "loveflix",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "A streaming service with exactly one show on it, and they're the lead. Browse the catalogue of your relationship, then press play on a branching episode.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/loveflix/cover.jpg",
+    templateMedia("loveflix", "cover.jpg"),
   emoji: "🎬",
   color: "from-amber-500 to-neutral-800",
   previewText: "new episode. one profile. it's yours 🎬",

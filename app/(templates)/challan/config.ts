@@ -1,5 +1,6 @@
 import { FileSearch, Camera, Scale, Wallet, Gavel } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts. The issuing authority is invented
@@ -18,7 +19,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A grainy camera photo, a cropped number plate, an offence table with a total that reads 'one date'. Pay it and you get a receipt. Contest it and the objection is always upheld.",
   bgGradient: "from-amber-50 via-white to-red-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/challan/cover.webp",
+  coverImage: templateMedia("challan", "cover.webp"),
   tabs: [
     { id: "lookup", icon: FileSearch, label: "Lookup" },
     { id: "evidence", icon: Camera, label: "Evidence" },

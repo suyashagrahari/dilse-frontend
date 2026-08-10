@@ -1,5 +1,6 @@
 import { TrainFront, TicketCheck, MapPin, Clock, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "train-ticket",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Chart prepared. Seats confirmed. Adjacent. Running late by 4 months — reason: circumstances beyond our control.",
   bgGradient: "from-slate-50 via-stone-50 to-white",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/train-ticket/cover.jpg",
+  coverImage: templateMedia("train-ticket", "cover.jpg"),
   tabs: [
     { id: "pnr", icon: TrainFront, label: "PNR" },
     { id: "ticket", icon: TicketCheck, label: "Ticket" },

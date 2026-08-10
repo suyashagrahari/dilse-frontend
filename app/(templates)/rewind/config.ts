@@ -1,5 +1,6 @@
 import { Rewind, Hash, ListOrdered, Sparkles, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "rewind",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "Your year, as a story you tap through. Every number is worked out from one date — and it ends on the verdict: which couple you actually are.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/rewind/cover.jpg",
+    templateMedia("rewind", "cover.jpg"),
   emoji: "⏮️",
   color: "from-fuchsia-500 to-indigo-600",
   previewText: "847 days. we ran the numbers ⏮️",

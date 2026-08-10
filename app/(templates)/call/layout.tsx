@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "call";
 
@@ -18,7 +19,7 @@ const SOCIAL_TITLE = "Incoming call · Meera Sharma";
 const SOCIAL_DESCRIPTION = "0% spam · verified · Pick Up. Now. (2,481 people agree)";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/call/cover.webp",
+  url: templateMedia("call", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "An incoming call screen made for someone you love — SubhSandesh",

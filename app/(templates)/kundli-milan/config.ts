@@ -1,5 +1,6 @@
 import { Sparkles, ScrollText, Users, Stars, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "kundli-milan",
@@ -8,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Kundli Milan Report",
   description:
     "A full 36-guna Ashtakoota compatibility report for the two of you. Eight kootas, real nakshatras, actual yoni animals. Astrologically meaningless. Statistically hilarious.",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/kundli-milan/cover.jpg",
+  coverImage: templateMedia("kundli-milan", "cover.jpg"),
   emoji: "🔮",
   color: "from-orange-500 to-amber-700",
   previewText: "36 gunas matched. The stars have signed off 🔮",

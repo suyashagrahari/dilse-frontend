@@ -1,3 +1,5 @@
+import { media } from "@/lib/templateMedia";
+
 // ─── Apology Dashboard — shared type contract ────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer, and the server payload. Field names here === server model field names
@@ -22,8 +24,8 @@ export interface MusicPreset { id: string; label: string; url: string }
 /** Selectable background songs. url "" = the built-in gentle lofi tune. */
 export const MUSIC_PRESETS: MusicPreset[] = [
   { id: "lofi", label: "Gentle lofi (built-in)", url: "" },
-  { id: "chalo", label: "Chalo Jaane Do 🎵", url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/apology-dashboard/music/chalo-jaane-do.mp3" },
-  { id: "sorry", label: "Sorry — Justin Bieber 💔", url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/apology-dashboard/music/sorry-justin-bieber.mp3" },
+  { id: "chalo", label: "Chalo Jaane Do 🎵", url: media("apology-dashboard/music/chalo-jaane-do.mp3") },
+  { id: "sorry", label: "Sorry — Justin Bieber 💔", url: media("apology-dashboard/music/sorry-justin-bieber.mp3") },
 ];
 
 export interface Toast {
@@ -115,7 +117,7 @@ export const DEMO_DATA: ApologyData = {
   deliveryEmail: "",
   sharePhoto: "",
   // default: "Sorry" (Justin Bieber) — plays by default in preview & on unset pages
-  backgroundMusic: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/apology-dashboard/music/sorry-justin-bieber.mp3",
+  backgroundMusic: media("apology-dashboard/music/sorry-justin-bieber.mp3"),
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the server model content fields). */

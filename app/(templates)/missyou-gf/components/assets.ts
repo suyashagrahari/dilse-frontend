@@ -1,3 +1,5 @@
+import { media } from "@/lib/templateMedia";
+
 // ─── Miss You — central media registry ───────────────────────────────────────
 // Every gif + song the template loads is addressed through MU_MEDIA_BASE, so the
 // whole set can be moved to an S3/CDN origin by editing a single line (after the
@@ -9,7 +11,7 @@
 // `npm run upload:missyou-media` in /server. The matching files also live in
 // /public/assets/missyou-gf as a source-of-truth / local fallback: re-run the
 // uploader after changing any of them, then keep this base in sync.
-export const MU_MEDIA_BASE = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/missyou-gf";
+export const MU_MEDIA_BASE = media("missyou-gf");
 
 /** Resolve a media file (gif/mp3) that lives under the missyou-gf media folder. */
 export const muMedia = (file: string): string =>

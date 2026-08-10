@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "product";
 
@@ -17,7 +18,7 @@ const SOCIAL_TITLE = "Meera Sharma — Girlfriend, Original, 1 Count";
 const SOCIAL_DESCRIPTION = "In stock. Only 1 left — there was only ever 1. ★★★★★ (2,140 ratings)";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/product/cover.webp",
+  url: templateMedia("product", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "A person listed as a product — SubhSandesh",

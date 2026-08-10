@@ -1,5 +1,6 @@
 import { Smartphone, Zap, Wallet, Receipt, Signal } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/. No real network operator and no real
@@ -17,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Unlimited calls, unlimited data, no expiry, ₹∞. The plan cards read like plan cards right up to the benefits list, and the receipt is where it stops pretending.",
   bgGradient: "from-fuchsia-50 via-white to-rose-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/recharge/cover.webp",
+  coverImage: templateMedia("recharge", "cover.webp"),
   tabs: [
     { id: "number", icon: Smartphone, label: "Number" },
     { id: "plans", icon: Signal, label: "Plans" },

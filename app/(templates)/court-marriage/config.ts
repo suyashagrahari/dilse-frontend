@@ -1,5 +1,6 @@
 import { ScrollText, Stamp, PenLine, Users, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "court-marriage",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Registered at the Office of the Registrar of Hearts. Get your witnesses to sign and it's official.",
   bgGradient: "from-amber-50 via-stone-50 to-white",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/court-marriage/cover.jpg",
+  coverImage: templateMedia("court-marriage", "cover.jpg"),
   tabs: [
     { id: "certificate", icon: ScrollText, label: "Certificate" },
     { id: "seal", icon: Stamp, label: "Seal" },

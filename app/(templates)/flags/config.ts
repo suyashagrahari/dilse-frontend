@@ -1,5 +1,6 @@
 import { Flag, Layers, Scale, BarChart3, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "flags",
@@ -8,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Red Flag, Green Flag",
   description:
     "One profile near you. They swipe on your worst habits — left, right, or 'it's complicated' — and each direction reveals a different answer you wrote. Ends with a verdict about them.",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/flags/cover.jpg",
+  coverImage: templateMedia("flags", "cover.jpg"),
   emoji: "🚩",
   color: "from-rose-600 to-emerald-700",
   previewText: "1 profile near you. swipe up to begin 🚩",

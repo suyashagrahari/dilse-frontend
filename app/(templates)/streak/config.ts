@@ -1,5 +1,6 @@
 import { Flame, Grid3x3, BookOpen, Mail, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "streak",
@@ -9,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "Two people, one tap a day. The streak grows, every check-in keeps a word, and after a hundred days you have a diary neither of you meant to write. Miss a day and it pauses — it never breaks.",
   coverImage:
-    "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/streak/cover.jpg",
+    templateMedia("streak", "cover.jpg"),
   emoji: "🕯️",
   color: "from-amber-500 to-orange-700",
   previewText: "day 84. both of us 🕯️",

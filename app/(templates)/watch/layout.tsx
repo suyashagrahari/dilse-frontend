@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "watch";
 
@@ -19,7 +20,7 @@ const SOCIAL_TITLE = "3 Years With Meera Sharma (Full Video, No Skips)";
 const SOCIAL_DESCRIPTION = "2,481 views · Premiered 14 Feb 2026 · the timestamps are load-bearing";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/watch/cover.webp",
+  url: templateMedia("watch", "cover.webp"),
   width: 1280,
   height: 720,
   alt: "A video watch page made for someone you love — SubhSandesh",

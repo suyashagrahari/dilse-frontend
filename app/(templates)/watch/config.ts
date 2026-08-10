@@ -1,5 +1,6 @@
 import { PlayCircle, ListVideo, AlignLeft, MessageCircle, Share2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/. Nothing here may name the video platform,
@@ -17,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Paste one video link. You get the full watch page around it — chapters that actually seek, a pinned comment, and a comment thread that stays hidden until you approve it.",
   bgGradient: "from-slate-50 via-white to-sky-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/watch/cover.webp",
+  coverImage: templateMedia("watch", "cover.webp"),
   tabs: [
     { id: "video", icon: PlayCircle, label: "Video" },
     { id: "chapters", icon: ListVideo, label: "Chapters" },

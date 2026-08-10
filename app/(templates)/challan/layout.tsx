@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "challan";
 
@@ -20,7 +21,7 @@ const SOCIAL_TITLE = "1 challan found · KA 01 LUV 2023";
 const SOCIAL_DESCRIPTION = "Total payable: one date. Pay before the due date, or contest it and win.";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/challan/cover.webp",
+  url: templateMedia("challan", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "A parody traffic notice made for someone you love — SubhSandesh",

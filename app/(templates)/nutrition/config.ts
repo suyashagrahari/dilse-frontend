@@ -1,5 +1,6 @@
 import { Package, ListOrdered, Percent, FlaskConical, Heart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/. No real food brand and no regulator is
@@ -17,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "8px regulatory type, hard black rules, an ingredients paragraph nobody can read. Then, underneath the package, the same person says the sincere thing in a completely different voice.",
   bgGradient: "from-stone-50 via-white to-neutral-50",
-  coverImage: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/nutrition/cover.webp",
+  coverImage: templateMedia("nutrition", "cover.webp"),
   tabs: [
     { id: "product", icon: Package, label: "Product" },
     { id: "serving", icon: ListOrdered, label: "Serving" },

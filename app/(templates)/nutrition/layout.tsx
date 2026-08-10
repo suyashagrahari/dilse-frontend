@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTemplateMeta, getFAQs, getHowTo, getAggregateRating, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { templateMedia } from "@/lib/templateMedia";
 
 const SLUG = "nutrition";
 
@@ -18,7 +19,7 @@ const SOCIAL_TITLE = "Nutrition Facts · Servings per container: 1";
 const SOCIAL_DESCRIPTION = "Calories: ∞, worth every one. Not a significant source of patience.";
 
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/templates/nutrition/cover.webp",
+  url: templateMedia("nutrition", "cover.webp"),
   width: 1200,
   height: 630,
   alt: "A nutrition label made for someone you love — SubhSandesh",
