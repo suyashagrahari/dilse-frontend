@@ -2,11 +2,11 @@
 
 // ─── PhotoQrPanel — "make the code look like us" ─────────────────────────────
 //
-// Pick a photo, and the QR is built out of it — dots over the picture, and a
-// clear panel in the middle showing the subject untouched, so the person who
-// receives it can see who it is from across a room. The whole render happens on
-// the device: the picture is never uploaded, never sent to the server, and is
-// dropped the moment the sheet closes. That is worth saying on screen, because
+// Pick a photo, and the QR is built out of it — the picture visible across the
+// whole symbol, with the SubhSandesh mark on a white plate in the middle. The
+// whole render happens on the device: the picture is never uploaded, never sent
+// to the server, and is dropped the moment the sheet closes. That is worth
+// saying on screen, because
 // the natural assumption about "upload a photo" is the opposite, and the people
 // using this are choosing pictures of themselves.
 //
@@ -34,6 +34,9 @@ import { alpha, readableInk, shade } from "./qrTheme";
 
 /** Rejected before it is read. A phone burst photo is ~5MB; this is generous. */
 const MAX_BYTES = 15 * 1024 * 1024;
+
+/** Same-origin, so it can be drawn into the canvas without tainting it. */
+const LOGO_SRC = "/logo.webp";
 
 const STRENGTHS: Array<{ key: PhotoStrength; label: string; hint: string }> = [
   { key: "soft", label: "Photo", hint: "Most like your picture" },
@@ -82,7 +85,7 @@ export function PhotoQrPanel({
 
     const run = async () => {
       setWorking(true);
-      const png = await photoQrToPngDataUrl(url, photo, { strength });
+      const png = await photoQrToPngDataUrl(url, photo, { strength, logoSrc: LOGO_SRC });
       if (cancelled) return;
       setRendered(png);
       setWorking(false);
@@ -203,8 +206,8 @@ export function PhotoQrPanel({
               fontWeight: 400,
             }}
           >
-            Your picture becomes the code, and shows through the middle — so they can see
-            it&rsquo;s you before they even scan it.
+            Your picture becomes the code itself — so they can see it&rsquo;s from you before
+            they even scan it.
           </span>
 
           {/* The whole panel is the button, but a dashed box does not read as
