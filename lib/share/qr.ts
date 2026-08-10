@@ -471,6 +471,19 @@ export interface QrMatrix {
   size: number;
   /** Row-major; `modules[y][x]` is true for a dark module. */
   modules: boolean[][];
+  /**
+   * True where the module belongs to a function pattern — the three finders and
+   * their separators, the timing lines, the alignment patterns, and the
+   * format/version fields.
+   *
+   * Exposed because the photo renderer has to leave these alone. A scanner
+   * locates and orients a symbol from the finders and the timing lines BEFORE
+   * it reads a single data module, so those are the one part that can never be
+   * tinted towards a photograph: soften them and the code stops being found at
+   * all, which fails differently and much worse than a code that is found and
+   * misread.
+   */
+  functionModules: boolean[][];
   version: number;
   ecLevel: EcLevel;
 }
@@ -520,7 +533,13 @@ export function encodeQr(text: string, ecLevel: EcLevel = "high"): QrMatrix | nu
     if (!best) return null;
     void bestMask;
 
-    return { size: best.size, modules: best.modules, version, ecLevel };
+    return {
+      size: best.size,
+      modules: best.modules,
+      functionModules: best.reserved,
+      version,
+      ecLevel,
+    };
   } catch {
     return null;
   }

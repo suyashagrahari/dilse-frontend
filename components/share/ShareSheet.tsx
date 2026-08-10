@@ -2,10 +2,11 @@
 
 // ─── ShareSheet — one share surface for every template ───────────────────────
 //
-// Three tabs, in the order a sender actually needs them:
+// Four tabs, in the order a sender actually needs them:
 //
 //   LINK   — the chat apps, plus the address with a copy button.
 //   QR     — the code on screen, to hold up or send as an image.
+//   PHOTO  — the same code, coloured from a photo they pick. Downloads as PNG.
 //   PRINT  — a colourful A5 card carrying the code, to print and hand over.
 //
 // ── WHY THE PRINT TAB EXISTS ─────────────────────────────────────────────────
@@ -42,6 +43,7 @@ import {
   Check,
   Download,
   Facebook,
+  ImagePlus,
   Instagram,
   Link2,
   MessageCircle,
@@ -57,6 +59,7 @@ import { track } from "@/lib/analytics/track";
 import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
 import { dataUrlToFile, downloadDataUrl, qrToPngDataUrl } from "@/lib/share/qrPng";
 
+import { PhotoQrPanel } from "./PhotoQrPanel";
 import { PrintableCard, CARD_W, CARD_H } from "./PrintableCard";
 import { QrBlock } from "./QrBlock";
 import { DEFAULT_ACCENT, alpha, readableInk, shade, tint, qrInk } from "./qrTheme";
@@ -67,12 +70,17 @@ const LOGO_SRC = "/logo.webp";
 /** Scale of the print-tab preview. 640 × 0.42 = 269px, which fits the sheet. */
 const PREVIEW_SCALE = 0.42;
 
-type TabKey = "link" | "qr" | "print";
+type TabKey = "link" | "qr" | "photo" | "print";
 
-const TABS: Array<{ key: TabKey; label: string; icon: React.ReactNode }> = [
-  { key: "link", label: "Link", icon: <Link2 size={14} /> },
-  { key: "qr", label: "QR code", icon: <QrCode size={14} /> },
-  { key: "print", label: "Print card", icon: <Printer size={14} /> },
+/**
+ * Labels are short because there are four of them across a 354px row; the full
+ * name lives in `title`, which is what a screen reader announces.
+ */
+const TABS: Array<{ key: TabKey; label: string; title: string; icon: React.ReactNode }> = [
+  { key: "link", label: "Link", title: "Share a link", icon: <Link2 size={14} /> },
+  { key: "qr", label: "QR", title: "QR code", icon: <QrCode size={14} /> },
+  { key: "photo", label: "Photo", title: "Photo QR code", icon: <ImagePlus size={14} /> },
+  { key: "print", label: "Print", title: "Printable card", icon: <Printer size={14} /> },
 ];
 
 export interface ShareSheetProps {
@@ -405,7 +413,7 @@ export function ShareSheet({
                       color: alpha(deep, 0.7),
                     }}
                   >
-                    Send the link, show the code, or print a card.
+                    A link, a code, your own photo, or a card to print.
                   </p>
                 </div>
 
@@ -449,8 +457,8 @@ export function ShareSheet({
                 aria-label="How to share"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 5,
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 4,
                   marginTop: 14,
                   padding: 4,
                   borderRadius: 14,
@@ -465,12 +473,14 @@ export function ShareSheet({
                       type="button"
                       role="tab"
                       aria-selected={active}
+                      aria-label={t.title}
+                      title={t.title}
                       onClick={() => setTab(t.key)}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 6,
+                        gap: 5,
                         height: 38,
                         borderRadius: 11,
                         border: "none",
@@ -685,6 +695,10 @@ export function ShareSheet({
                 </div>
               ) : null}
 
+              {tab === "photo" ? (
+                <PhotoQrPanel url={url} accent={accent} stem={stem} say={say} title={title} />
+              ) : null}
+
               {tab === "print" ? (
                 <div style={{ textAlign: "center" }}>
                   {/* The preview and the captured node are the same component
@@ -824,6 +838,17 @@ export function ShareSheet({
           <div style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }}>
             <PrintableCard ref={cardRef} {...cardProps} />
           </div>
+
+          <style>{`
+            .ss-spin { animation: ssSpin 900ms linear infinite; }
+            @keyframes ssSpin { to { transform: rotate(360deg); } }
+            @media (prefers-reduced-motion: reduce) {
+              /* Still moving, just not spinning — a frozen spinner reads as a
+                 hang, which is worse than the motion it is avoiding. */
+              .ss-spin { animation: ssPulse 1.4s ease-in-out infinite; }
+              @keyframes ssPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+            }
+          `}</style>
         </motion.div>
       ) : null}
     </AnimatePresence>
