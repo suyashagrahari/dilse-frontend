@@ -78,12 +78,20 @@ export function AppTemplate({
   data,
   shareId,
   capture = false,
+  chromeTop = 0,
 }: {
   data: AppData;
   /** Present only on the sender's own view. Gates the moderation queue. */
   shareId?: string;
   /** True while a PNG is being taken: no animation, no chrome, no panels. */
   capture?: boolean;
+  /**
+   * Vertical space reserved above the listing for chrome this component does
+   * not own. The editor floats a Back/Create bar over the template, and without
+   * this the bar sits on top of the icon and the app name. Zero on the
+   * recipient's page, which has no chrome of its own.
+   */
+  chromeTop?: number;
 }) {
   const [installState, setInstallState] = useState<InstallState>("idle");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -193,7 +201,14 @@ export function AppTemplate({
           overflowX: "hidden",
         }}
       >
-        <TopBar storeName={storeNameFrom(data)} onShare={handleShare} />
+        {/* A real spacer, not padding on the column. This element has
+            `overflow-x: hidden`, which makes it a scroll container, and a
+            padding-top on a scroll container throws off where a sticky child
+            comes to rest — the bar ended up floating over the app icon instead
+            of above it. A sibling of known height has no such interaction. */}
+        {chromeTop > 0 ? <div style={{ height: chromeTop }} aria-hidden="true" /> : null}
+
+        <TopBar storeName={storeNameFrom(data)} onShare={handleShare} stickyTop={chromeTop} />
 
         <main
           style={{

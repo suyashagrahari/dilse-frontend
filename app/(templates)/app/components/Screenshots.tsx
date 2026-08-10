@@ -46,11 +46,17 @@ const SHOT_GAP = 12;
 /**
  * The fallback face of a card whose image did not load.
  *
- * It is the caption again, centred in a card-grey fill. Repeating the caption
- * is deliberate: the line underneath is small and secondary, and on a failed
- * card it is the only thing left that says what the reader is missing.
+ * A muted phone outline, NOT the caption. An earlier version repeated the
+ * caption here on the theory that it was "the only thing left that says what
+ * the reader is missing" — but the `figcaption` directly beneath the card is
+ * already saying exactly that, so the card printed the same sentence twice, in
+ * two sizes, an inch apart. With every image failing at once that was the most
+ * obviously wrong thing on the page.
+ *
+ * A silhouette keeps the rail's rhythm, reads as "a screen goes here", and does
+ * not compete with the real caption underneath it.
  */
-function ShotFallback({ caption }: { caption: string }) {
+function ShotFallback() {
   return (
     <div
       style={{
@@ -59,15 +65,17 @@ function ShotFallback({ caption }: { caption: string }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 18px",
         background: AP.card,
-        color: AP.inkSoft,
-        fontSize: 14,
-        lineHeight: "19px",
-        textAlign: "center",
       }}
+      aria-hidden="true"
     >
-      {caption}
+      <svg width="56" height="92" viewBox="0 0 56 92" fill="none">
+        <rect x="1.1" y="1.1" width="53.8" height="89.8" rx="9" stroke={AP.edge} strokeWidth="2.2" />
+        <rect x="21" y="6.5" width="14" height="3" rx="1.5" fill={AP.edge} />
+        <rect x="9" y="20" width="38" height="3.4" rx="1.7" fill={AP.edge} opacity="0.75" />
+        <rect x="9" y="29" width="26" height="3.4" rx="1.7" fill={AP.edge} opacity="0.55" />
+        <rect x="9" y="42" width="38" height="26" rx="4" fill={AP.edge} opacity="0.4" />
+      </svg>
     </div>
   );
 }
@@ -96,7 +104,7 @@ function Shot({ shot, first }: { shot: AppScreenshot; first: boolean }) {
         }}
       >
         {failed || !shot.imageUrl ? (
-          <ShotFallback caption={shot.caption} />
+          <ShotFallback />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img

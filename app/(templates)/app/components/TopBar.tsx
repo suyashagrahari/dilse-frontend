@@ -104,12 +104,28 @@ function StorefrontMark() {
   );
 }
 
-export function TopBar({ storeName, onShare }: { storeName: string; onShare: () => void }) {
+export function TopBar({
+  storeName,
+  onShare,
+  /**
+   * Where this bar comes to rest when the page scrolls.
+   *
+   * Zero on the recipient's page, which is the whole viewport. In the editor a
+   * floating Back/Create bar is fixed above the template, so this bar has to
+   * stop underneath it — sticking at 0 there would slide the store name behind
+   * the editor chrome the moment the reader scrolls.
+   */
+  stickyTop = 0,
+}: {
+  storeName: string;
+  onShare: () => void;
+  stickyTop?: number;
+}) {
   return (
     <header
       style={{
         position: "sticky",
-        top: 0,
+        top: stickyTop,
         zIndex: 30,
         height: AP_TAP,
         display: "flex",

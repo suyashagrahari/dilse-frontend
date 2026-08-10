@@ -22,6 +22,7 @@
 // wire. "1 human", "Free (emotionally expensive)" and "8,472". Nothing here
 // parses them.
 
+import { templateMedia } from "@/lib/templateMedia";
 import {
   APP_REVIEW_LIMITS,
   type AppData,
@@ -49,10 +50,12 @@ const CURRENT = { version: "3.2", date: "12 August 2026" } as const;
 const DEMO_META: AppMeta = {
   name: "Meera",
   subtitle: "Girlfriend · Utilities",
-  // Empty on purpose. This template ships no artwork of its own and the header
-  // draws its initials disc instead; a placeholder URL would be a broken image
-  // on the most-looked-at line of the page.
-  iconUrl: "",
+  // The template now ships its own artwork, so the demo shows a real icon
+  // rather than the initials disc. The disc is still the fallback and still
+  // fires on a broken or missing URL — it is just no longer what the demo
+  // leads with, because an initials tile on the most-looked-at line of a
+  // listing reads as unfinished rather than as a design choice.
+  iconUrl: templateMedia("app", "icon.webp"),
   developer: "Sharma Family Enterprises",
   ageRating: "4+",
   category: "Utilities",
@@ -240,12 +243,14 @@ const DEMO_RATING: AppRating = {
  * which is also the honest thing to hand a sender who has not uploaded anything
  * yet.
  */
+// Each caption describes the screen in its image, so the two must be edited
+// together — a battery shot reading 6% under a caption claiming 4% is the kind
+// of mismatch that makes the whole listing read as assembled rather than real.
 const DEMO_SCREENSHOTS: AppScreenshot[] = [
-  { imageUrl: "", caption: "Home screen — 6:40am, already awake, already talking" },
-  { imageUrl: "", caption: "Notifications — 41 unread, all from her, all worth it" },
-  { imageUrl: "", caption: "Settings — every toggle reads “ask her first”" },
-  { imageUrl: "", caption: "Battery — 4% remaining, going out anyway" },
-  { imageUrl: "", caption: "Storage — 90% occupied by photographs of the dog" },
+  { imageUrl: templateMedia("app", "shot-home.webp"), caption: "Home screen — 6:40am, already awake, already talking" },
+  { imageUrl: templateMedia("app", "shot-notifs.webp"), caption: "Notifications — 41 unread, all from her, all worth it" },
+  { imageUrl: templateMedia("app", "shot-storage.webp"), caption: "Storage — 90% occupied by photographs of the dog" },
+  { imageUrl: templateMedia("app", "shot-battery.webp"), caption: "Battery — 6% remaining, going out anyway" },
 ];
 
 const DEMO_DESCRIPTION: AppDescription = {

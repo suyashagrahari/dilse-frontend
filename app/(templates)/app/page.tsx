@@ -215,7 +215,16 @@ function AppPageInner() {
 
       {/* Live preview. `shareId` only exists once published — it is what turns on
           the sender-only moderation queue inside the listing. */}
-      <AppTemplate key={e.previewVersion} data={e.displayData} shareId={e.shareId ?? undefined} />
+      {/* chromeTop clears the floating bar above: it is fixed at top:12 and is
+          one 44px tap target tall, so the listing starts at 12 + 44 + 8 of
+          breathing room. Without it the Back and Create pills sit directly on
+          top of the app icon and the app name. */}
+      <AppTemplate
+        key={e.previewVersion}
+        data={e.displayData}
+        shareId={e.shareId ?? undefined}
+        chromeTop={64}
+      />
 
       <EditSheet
         editMode={e.editMode}
