@@ -47,6 +47,10 @@ import { config as product } from "@/app/(templates)/product/config";
 import { config as watch } from "@/app/(templates)/watch/config";
 import { config as call } from "@/app/(templates)/call/config";
 import { config as recharge } from "@/app/(templates)/recharge/config";
+import { config as challan } from "@/app/(templates)/challan/config";
+import { config as nutrition } from "@/app/(templates)/nutrition/config";
+import { config as appListing } from "@/app/(templates)/app/config";
+import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 
 const allConfigs = [
   birthdayGf,
@@ -83,6 +87,10 @@ const allConfigs = [
   watch,
   call,
   recharge,
+  challan,
+  nutrition,
+  appListing,
+  profilePro,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,

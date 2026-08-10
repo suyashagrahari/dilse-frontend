@@ -101,6 +101,22 @@ const RechargeViewer = dynamic(() => import("./RechargeViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const ChallanViewer = dynamic(() => import("./ChallanViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const NutritionViewer = dynamic(() => import("./NutritionViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const AppViewer = dynamic(() => import("./AppViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ProfileProViewer = dynamic(() => import("./ProfileProViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 const CourtOfLoveViewer = dynamic(() => import("./CourtOfLoveViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
@@ -305,7 +321,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro") {
             setData(result.data);
             setLoading(false);
             return;
@@ -624,6 +640,26 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Recharge has its own full-page viewer
   if (!loading && templateType === "recharge" && data) {
     return <RechargeViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Challan has its own full-page viewer
+  if (!loading && templateType === "challan" && data) {
+    return <ChallanViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Nutrition label has its own full-page viewer
+  if (!loading && templateType === "nutrition" && data) {
+    return <NutritionViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The App listing has its own full-page viewer
+  if (!loading && templateType === "app" && data) {
+    return <AppViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Endorsements has its own full-page viewer
+  if (!loading && templateType === "profile-pro" && data) {
+    return <ProfileProViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   // The Court of Love has its own full-page viewer
