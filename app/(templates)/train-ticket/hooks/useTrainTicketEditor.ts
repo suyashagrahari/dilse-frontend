@@ -305,11 +305,12 @@ export function useTrainTicketEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Check your PNR status 🎫",
       accent: "#334155",
       slug: "train-ticket",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

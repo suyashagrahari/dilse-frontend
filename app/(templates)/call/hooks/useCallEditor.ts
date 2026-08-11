@@ -463,12 +463,13 @@ export function useCallEditor() {
     const text = "Incoming call. Pick up.";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Incoming call",
       text,
       accent: "#059669",
       slug: "call",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const shareId = shareUrl ? (shareUrl.split("/").pop() ?? null) : null;
 

@@ -390,13 +390,14 @@ export function usePhotoPuzzleEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "I made you something. The last piece is with me. 🧩",
       accent: "#4f46e5",
       recipientName: content.recipientName,
       senderName: content.senderName,
       slug: "photo-puzzle",
     });
-  }, [shareUrl, content.senderName, content.recipientName]);
+  }, [shareUrl, content.senderName, content.recipientName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

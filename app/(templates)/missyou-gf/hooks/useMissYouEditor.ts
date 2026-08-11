@@ -324,13 +324,14 @@ export function useMissYouEditor() {
     const text = "I made you something. Don't open it till you're alone tonight 🤍";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "A letter for you 💌",
       text,
       accent: "#4f46e5",
       senderName: content.senderName,
       slug: "missyou-gf",
     });
-  }, [shareUrl, content.senderName]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

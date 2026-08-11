@@ -99,6 +99,8 @@ export interface ShareSheetProps {
   cardNote?: string;
   recipientName?: string;
   senderName?: string;
+  /** The page's unlock word, when it has one. Drives the two surfaces below. */
+  password?: string;
   accent?: string;
   slug?: string;
 }
@@ -137,14 +139,25 @@ export function ShareSheet({
   cardNote,
   recipientName,
   senderName,
+  password,
   accent = DEFAULT_ACCENT,
   slug,
 }: ShareSheetProps) {
   const [tab, setTab] = useState<TabKey>("link");
   const [copied, setCopied] = useState(false);
+  const [copiedPw, setCopiedPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  // Defaults ON, and that is the whole argument for the feature: a printed card
+  // whose code leads to a password box the reader cannot answer is a dead end,
+  // and the sender — who is not standing there when it is opened — is the last
+  // person who would notice. Somebody handing over a card that is meant to stay
+  // sealed can still turn it off; they have to think about it, which is the
+  // right way round.
+  const [includePassword, setIncludePassword] = useState(true);
+  const pass = (password || "").trim();
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const timers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
@@ -186,7 +199,9 @@ export function ShareSheet({
     if (open) {
       setTab("link");
       setCopied(false);
+      setCopiedPw(false);
       setNeedsQr(false);
+      setIncludePassword(true);
     }
   }, [open]);
 
@@ -241,6 +256,18 @@ export function ShareSheet({
       })
       .catch(() => say("Copy failed — select the address above instead."));
   }, [url, say]);
+
+  const copyPassword = useCallback(() => {
+    if (!pass) return;
+    window.navigator.clipboard
+      ?.writeText(pass)
+      .then(() => {
+        setCopiedPw(true);
+        say("Password copied.");
+        timers.current.push(setTimeout(() => setCopiedPw(false), 2000));
+      })
+      .catch(() => say("Copy failed — read it off the code above instead."));
+  }, [pass, say]);
 
   const openChatApp = useCallback(
     (target: "whatsapp" | "instagram" | "telegram" | "twitter" | "facebook") => {
@@ -355,6 +382,9 @@ export function ShareSheet({
     line: copy.line,
     title: headline,
     note,
+    // The preview and the exported file read the same flag, so what the sender
+    // is looking at is always what lands in their downloads.
+    password: includePassword ? pass : undefined,
     recipientName,
     senderName,
     accent,
@@ -476,7 +506,11 @@ export function ShareSheet({
                 aria-label="How to share"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
+                  // One column per tab, computed from the list rather than
+                  // typed as a literal — this said `repeat(4, 1fr)` after the
+                  // photo tab was removed, leaving an empty fourth column that
+                  // read as a gap after Print.
+                  gridTemplateColumns: `repeat(${TABS.length}, 1fr)`,
                   gap: 4,
                   marginTop: 14,
                   padding: 4,
@@ -665,6 +699,77 @@ export function ShareSheet({
                     picture.
                   </p>
 
+                  {/* The image carries the code but cannot carry the word that
+                      opens it, and a QR sent on its own to a locked page is the
+                      commonest way one of these gifts dies on arrival. So the
+                      password is here to copy into the same message. */}
+                  {pass ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginTop: 12,
+                        padding: "8px 8px 8px 13px",
+                        borderRadius: 14,
+                        background: "#FFFFFF",
+                        border: `1px dashed ${alpha(accent, 0.44)}`,
+                        textAlign: "left",
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: "none",
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          letterSpacing: "0.16em",
+                          textTransform: "uppercase",
+                          color: alpha(deep, 0.6),
+                        }}
+                      >
+                        Password
+                      </span>
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                          fontSize: 13.5,
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          color: deep,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {pass}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyPassword}
+                        style={{
+                          flex: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          height: 30,
+                          padding: "0 11px",
+                          borderRadius: 9,
+                          border: "none",
+                          cursor: "pointer",
+                          background: alpha(accent, 0.16),
+                          color: deep,
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {copiedPw ? <Check size={12} /> : <Copy size={12} />}
+                        {copiedPw ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  ) : null}
+
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button
                       type="button"
@@ -739,6 +844,83 @@ export function ShareSheet({
                       <PrintableCard {...cardProps} />
                     </div>
                   </div>
+
+                  {/* A switch, not a checkbox: it changes the preview directly
+                      above it, so the sender sees the answer rather than having
+                      to imagine it. */}
+                  {pass ? (
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={includePassword}
+                      onClick={() => setIncludePassword((v) => !v)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        marginTop: 12,
+                        padding: "9px 12px",
+                        borderRadius: 14,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        background: includePassword ? alpha(accent, 0.12) : "#FFFFFF",
+                        border: `1px solid ${alpha(accent, includePassword ? 0.36 : 0.22)}`,
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          flex: "none",
+                          width: 38,
+                          height: 22,
+                          borderRadius: 999,
+                          padding: 2,
+                          boxSizing: "border-box",
+                          background: includePassword ? accent : alpha(deep, 0.18),
+                          transition: "background 140ms ease",
+                          display: "flex",
+                          justifyContent: includePassword ? "flex-end" : "flex-start",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            background: "#FFFFFF",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.24)",
+                          }}
+                        />
+                      </span>
+
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            color: deep,
+                          }}
+                        >
+                          Print the password on the card
+                        </span>
+                        <span
+                          style={{
+                            display: "block",
+                            marginTop: 1,
+                            fontSize: 11,
+                            lineHeight: "15px",
+                            color: alpha(deep, 0.7),
+                          }}
+                        >
+                          {includePassword
+                            ? `“${pass}” is printed under the code.`
+                            : "They'll need you to tell them the password."}
+                        </span>
+                      </span>
+                    </button>
+                  ) : null}
 
                   <p
                     style={{

@@ -292,13 +292,14 @@ export function useBouquetEditor() {
     const text = "I made you a bouquet 💐";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "A bouquet for you 💐",
       text,
       accent: "#ec4899",
       senderName: content.senderName,
       slug: "bouquet-gf",
     });
-  }, [shareUrl, content.senderName]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

@@ -397,12 +397,13 @@ export function useAppEditor() {
     const text = "You have been listed. Version 4.0, and still my favourite. ✨";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Your listing",
       text,
       accent: "#4f46e5",
       slug: "app",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

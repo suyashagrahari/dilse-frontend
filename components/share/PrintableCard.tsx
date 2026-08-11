@@ -33,6 +33,37 @@
 // object someone hands to a person they love. The space now carries a written
 // line chosen per template — see `lib/share/cardCopy.ts`.
 //
+// ── WHY EVERY BLOCK IS flexShrink: 0 ─────────────────────────────────────────
+//
+// The card is a fixed 620×877 column, so its children have a finite budget. In a
+// column flex container every item defaults to `flex-shrink: 1`, which means an
+// overflow is not reported as an overflow — the browser quietly compresses each
+// block's HEIGHT to make the sum fit, and `overflow: hidden` on the frame crops
+// whatever no longer has room.
+//
+// That failure is invisible in the worst possible way. Adding the password block
+// pushed the stack ~76px over budget, and instead of spilling, the headline was
+// sliced through the middle of its letterforms, "For <name>" vanished outright,
+// and the sender's name became a two-pixel sliver. All of it still looked like a
+// deliberate design until you read it.
+//
+// So every real block is `flexShrink: 0` and only the two spacers flex. The
+// layout can now only fail by overflowing, which is loud and obvious, and
+// `QR_PX` below is the knob that keeps it inside the budget.
+//
+// ── THE PASSWORD, WHEN IT IS PRINTED ─────────────────────────────────────────
+//
+// A card carrying a code to a locked page, with no way in, is worse than no card
+// at all — the recipient scans it, hits a password box, and the gift is a dead
+// end. So when the page has one, the sender is offered the option of printing it
+// and it defaults to on.
+//
+// It is set in a system monospace, which is the one exception to the font rule
+// above: `ui-monospace` and `Courier New` are already on the machine, so there
+// is no webfont to decline. Every other line on this card is prose, where a
+// substituted face is a cosmetic difference; a password is the one string where
+// l/1 and 0/O have to be told apart or the card does not work.
+//
 // ── THE QR ARRIVES AS A BITMAP ───────────────────────────────────────────────
 //
 // `qrDataUrl` is drawn on a canvas at an exact integer module scale by
@@ -48,6 +79,8 @@ export const CARD_H = 877;
 
 const DISPLAY = "'Cinzel', Georgia, serif";
 const BODY = "'Fredoka', 'Trebuchet MS', sans-serif";
+/** System faces only — nothing to download, so nothing that can be declined. */
+const MONO = "ui-monospace, SFMono-Regular, Menlo, 'Courier New', monospace";
 
 function Heart({
   size,
@@ -95,6 +128,8 @@ export interface PrintableCardProps {
   note: string;
   /** The written line under the code, where the address used to be. */
   line: string;
+  /** The unlock word, printed under the code. Omitted entirely when absent. */
+  password?: string;
   recipientName?: string;
   senderName?: string;
   accent: string;
@@ -113,9 +148,37 @@ export interface PrintableCardProps {
  */
 export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
   function PrintableCard(
-    { qrDataUrl, kicker, title, note, line, recipientName, senderName, accent, logoSrc },
+    { qrDataUrl, kicker, title, note, line, password, recipientName, senderName, accent, logoSrc },
     ref,
   ) {
+    const pass = (password || "").trim();
+
+    // ── Keeping the stack inside 773px of usable height ──────────────────────
+    //
+    // Four things vary with content and every one of them costs vertical space:
+    // the headline can wrap to two lines, the recipient and sender lines may or
+    // may not exist, the note runs to three, and a long password wraps. Sized
+    // for the friendly case they overflow together on the awkward one, which is
+    // exactly the card someone with a long name and a strong password gets.
+    //
+    // So the three that can be absorbed are, and the measurements live in the
+    // harness these numbers were tuned against — do not nudge them by eye.
+
+    // The QR gives up the most, and misses it least: 262 CSS px exports at 4× to
+    // 1048 device px, which is 8.9cm of printed code. Enormous for something
+    // scanned from arm's length.
+    const QR_PX = pass ? 262 : 330;
+
+    // A long headline takes the smaller face rather than a second line at full
+    // size. Reads as a deliberate choice; a clipped 32px headline does not.
+    const titleLong = title.length > 26;
+    const titleSize = titleLong ? 26 : 32;
+    const titleLine = titleLong ? 33 : 40;
+
+    // Same bargain for the password: it must stay on ONE line, because the
+    // second one is 26px this layout has not got. Shrinking the glyphs is the
+    // cheaper loss — it stays legible well below the point where it stops fitting.
+    const passSize = pass.length > 16 ? 15 : pass.length > 11 ? 17 : 20;
     const deep = shade(accent, 0.45);
     const ink = readableInk(accent);
 
@@ -193,7 +256,7 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
           }}
         >
           {/* ── Header. The logo sits top-right on every share surface. ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <span
               style={{
                 fontFamily: DISPLAY,
@@ -243,10 +306,11 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
           {/* ── Headline ── */}
           <h2
             style={{
-              margin: "22px 0 0",
+              margin: "20px 0 0",
+              flexShrink: 0,
               fontFamily: DISPLAY,
-              fontSize: 32,
-              lineHeight: "40px",
+              fontSize: titleSize,
+              lineHeight: `${titleLine}px`,
               fontWeight: 700,
               letterSpacing: "-0.005em",
               color: deep,
@@ -264,6 +328,7 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
             <p
               style={{
                 margin: "8px 0 0",
+                flexShrink: 0,
                 fontFamily: BODY,
                 fontSize: 16,
                 lineHeight: "22px",
@@ -280,11 +345,12 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
           {/* ── The QR panel. Flat white, no gradient, no texture. ── */}
           <div
             style={{
-              marginTop: 20,
+              marginTop: 18,
+              flexShrink: 0,
               alignSelf: "center",
               background: "#FFFFFF",
               borderRadius: 24,
-              padding: 20,
+              padding: 18,
               boxShadow: `0 14px 34px ${alpha(deep, 0.16)}`,
               display: "flex",
               flexDirection: "column",
@@ -303,15 +369,15 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
               <img
                 src={qrDataUrl}
                 alt=""
-                width={330}
-                height={330}
-                style={{ display: "block", width: 330, height: 330 }}
+                width={QR_PX}
+                height={QR_PX}
+                style={{ display: "block", width: QR_PX, height: QR_PX }}
               />
             ) : (
               <div
                 style={{
-                  width: 330,
-                  height: 330,
+                  width: QR_PX,
+                  height: QR_PX,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -336,7 +402,7 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
             <p
               style={{
                 margin: "12px 0 0",
-                maxWidth: 330,
+                maxWidth: QR_PX,
                 fontFamily: DISPLAY,
                 fontSize: 15,
                 lineHeight: "20px",
@@ -347,10 +413,64 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
             >
               {line}
             </p>
+
+            {/* The way in. Sits inside the QR panel rather than below it,
+                because the code and the word that opens it are one instruction
+                — split across the fold of a layout they read as two. */}
+            {pass ? (
+              <div
+                style={{
+                  marginTop: 12,
+                  width: QR_PX,
+                  boxSizing: "border-box",
+                  padding: "9px 14px",
+                  borderRadius: 14,
+                  border: `1.5px dashed ${alpha(decor, 0.5)}`,
+                  background: alpha(decor, 0.07),
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: BODY,
+                    fontSize: 9.5,
+                    fontWeight: 600,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: alpha(deep, 0.65),
+                  }}
+                >
+                  Password
+                </span>
+                <span
+                  style={{
+                    maxWidth: "100%",
+                    fontFamily: MONO,
+                    fontSize: passSize,
+                    lineHeight: "26px",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: deep,
+                    // One line, always. A password that will not fit even at the
+                    // smallest size is truncated rather than allowed to wrap and
+                    // silently push the sender's name off the bottom of the card.
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    textAlign: "center",
+                  }}
+                >
+                  {pass}
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* ── Instruction ── */}
-          <div style={{ marginTop: 18, textAlign: "center" }}>
+          <div style={{ marginTop: 16, flexShrink: 0, textAlign: "center" }}>
             <span
               style={{
                 display: "inline-flex",
@@ -401,11 +521,11 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
               slack around an ornament keeps a short card from reading as a
               layout that ran out of things to say, and lets a long one close up
               to nothing without any of it overlapping. */}
-          <div style={{ flex: 1, minHeight: 10 }} />
+          <div style={{ flex: 1, minHeight: 6 }} />
 
           <div
             aria-hidden="true"
-            style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}
+            style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85, flexShrink: 0 }}
           >
             <span style={{ flex: 1, height: 1, background: alpha(decor, 0.28) }} />
             <svg width="13" height="13" viewBox="0 0 24 24">
@@ -417,15 +537,17 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
             <span style={{ flex: 1, height: 1, background: alpha(decor, 0.28) }} />
           </div>
 
-          <div style={{ flex: 1, minHeight: 10 }} />
+          <div style={{ flex: 1, minHeight: 6 }} />
 
           {senderName ? (
             <p
               style={{
                 margin: 0,
+                flexShrink: 0,
                 textAlign: "center",
                 fontFamily: DISPLAY,
                 fontSize: 15,
+                lineHeight: "22px",
                 fontWeight: 600,
                 letterSpacing: "0.02em",
                 color: deep,
@@ -440,8 +562,9 @@ export const PrintableCard = forwardRef<HTMLDivElement, PrintableCardProps>(
 
           <div
             style={{
-              marginTop: 14,
-              paddingTop: 12,
+              marginTop: 12,
+              paddingTop: 11,
+              flexShrink: 0,
               borderTop: `1px dashed ${alpha(decor, 0.38)}`,
               display: "flex",
               alignItems: "center",

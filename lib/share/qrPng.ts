@@ -14,18 +14,10 @@
 // dropped in as a bitmap, so the code itself never gets resampled either.
 
 import { encodeQr, type EcLevel } from "./qr";
+import { loadLogoMetrics, qrLogoBox } from "./qrLogo";
 
 /** Modules of white margin around the symbol. The spec's minimum is 4. */
 const QUIET_ZONE = 4;
-
-/**
- * Fraction of the symbol's width the centre logo may cover.
- *
- * 0.22 is 4.8% of the area. Error correction "high" recovers 30%, so this is
- * comfortably inside tolerance even stacked on top of print damage. Do not
- * raise it — the failures it causes do not show up on a screen, only on paper.
- */
-const LOGO_FRACTION = 0.22;
 
 export interface QrPngOptions {
   /** Target width/height in pixels. Rounded down to a whole module multiple. */
@@ -35,16 +27,6 @@ export interface QrPngOptions {
   light?: string;
   /** Same-origin image drawn in the centre. Cross-origin would taint the canvas. */
   logoSrc?: string;
-}
-
-/** Load an image, or resolve null. Never rejects — a missing logo is not fatal. */
-function loadImage(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
 }
 
 /**
@@ -83,22 +65,45 @@ export async function qrToPngDataUrl(
     }
 
     if (opts.logoSrc) {
-      const logo = await loadImage(opts.logoSrc);
-      if (logo) {
-        const box = Math.round(matrix.size * scale * LOGO_FRACTION);
-        const pad = Math.round(box * 0.14);
-        const left = Math.round((dim - box) / 2);
+      const metrics = await loadLogoMetrics(opts.logoSrc);
+      if (metrics) {
+        // The ARTWORK's proportions, measured rather than assumed, and its
+        // margins trimmed off. Forcing the raw file into a square box was
+        // squeezing it to 57% of its width, which is what made the mark on a
+        // saved PNG and a printed card look tall and thin. See `qrLogo.ts`.
+        const { image: logo, content } = metrics;
+        const box = qrLogoBox(matrix.size, extent, metrics.aspect);
+        const px = (v: number) => Math.round(v * scale);
 
-        // A light pad behind the logo. Without it the logo sits on live modules
-        // and the scanner has to recover them AND read through the artwork.
+        // A light plate behind the logo. Without it the logo sits on live
+        // modules and the scanner has to recover them AND read through artwork.
         ctx.fillStyle = opts.light ?? "#FFFFFF";
-        roundRect(ctx, left - pad, left - pad, box + pad * 2, box + pad * 2, Math.round(box * 0.24));
+        roundRect(
+          ctx,
+          px(box.plate.x),
+          px(box.plate.y),
+          px(box.plate.w),
+          px(box.plate.h),
+          px(box.plate.r),
+        );
         ctx.fill();
 
         ctx.save();
-        roundRect(ctx, left, left, box, box, Math.round(box * 0.2));
+        roundRect(ctx, px(box.x), px(box.y), px(box.w), px(box.h), px(box.r));
         ctx.clip();
-        ctx.drawImage(logo, left, left, box, box);
+        // Source rect = the artwork only, so the file's empty margin is not
+        // paid for out of the occlusion budget.
+        ctx.drawImage(
+          logo,
+          content.x,
+          content.y,
+          content.w,
+          content.h,
+          px(box.x),
+          px(box.y),
+          px(box.w),
+          px(box.h),
+        );
         ctx.restore();
       }
     }

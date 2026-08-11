@@ -346,12 +346,13 @@ export function useCatchEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "I wrote you something. It's in pieces. 💛",
       accent: "#0369a1",
       senderName: content.senderName,
       slug: "catch",
     });
-  }, [shareUrl, content.senderName]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

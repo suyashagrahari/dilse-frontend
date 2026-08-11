@@ -496,13 +496,14 @@ export function useDateInvitationEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "You're invited. Location: you'll find out. 💌",
       accent: "#be123c",
       recipientName: content.recipientName,
       senderName: content.senderName,
       slug: "date-invitation",
     });
-  }, [shareUrl, content.senderName, content.recipientName]);
+  }, [shareUrl, content.senderName, content.recipientName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

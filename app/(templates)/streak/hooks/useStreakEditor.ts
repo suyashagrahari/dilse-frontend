@@ -392,11 +392,12 @@ export function useStreakEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "one tap a day, the two of us 🕯️",
       accent: "#b45309",
       slug: "streak",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

@@ -491,11 +491,12 @@ export function useLoveflixEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "I made you something to watch 🍿",
       accent: "#f59e0b",
       slug: "loveflix",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

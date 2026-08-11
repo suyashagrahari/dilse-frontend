@@ -327,11 +327,12 @@ export function useLegalNoticeEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "You've been served ⚖️",
       accent: "#4338ca",
       slug: "legal-notice",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

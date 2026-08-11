@@ -310,12 +310,13 @@ export function useAnniversaryEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       accent: "#f43f5e",
       recipientName: content.recipientName,
       senderName: content.senderName,
       slug: "anniversary-gf",
     });
-  }, [shareUrl, content.recipientName, content.senderName]);
+  }, [shareUrl, content.recipientName, content.senderName, pagePassword]);
 
   return {
     tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,

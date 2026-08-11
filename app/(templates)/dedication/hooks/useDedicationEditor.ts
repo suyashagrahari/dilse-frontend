@@ -410,11 +410,12 @@ export function useDedicationEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Tune in. This one's for you. 📻",
       accent: "#9a3412",
       slug: "dedication",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

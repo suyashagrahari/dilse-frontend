@@ -310,12 +310,13 @@ export function useNutritionEditor() {
     const text = "Nutrition Facts. Serving size: 1.";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Nutrition Facts",
       text,
       accent: "#44403c",
       slug: "nutrition",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

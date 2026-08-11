@@ -465,12 +465,13 @@ export function useRewindEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "I ran the numbers on us. ⏮️",
       accent: "#c026d3",
       recipientName: content.recipientName,
       slug: "rewind",
     });
-  }, [shareUrl, content.recipientName]);
+  }, [shareUrl, content.recipientName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

@@ -386,11 +386,12 @@ export function useSearchedEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Go on. Type your name. 🔍",
       accent: "#6d28d9",
       slug: "searched",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

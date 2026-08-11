@@ -303,11 +303,12 @@ export function useCourtMarriageEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "We got registered 📜",
       accent: "#b45309",
       slug: "court-marriage",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

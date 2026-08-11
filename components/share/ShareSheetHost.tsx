@@ -33,6 +33,7 @@ export function ShareSheetHost() {
       cardNote={payload?.cardNote}
       recipientName={payload?.recipientName}
       senderName={payload?.senderName}
+      password={payload?.password}
       accent={payload?.accent ?? shareAccent(payload?.slug)}
       slug={payload?.slug}
     />

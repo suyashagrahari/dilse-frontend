@@ -333,12 +333,13 @@ export function useVendingMachineEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "There's a machine here. Punch a code. 🎰",
       accent: "#0f766e",
       senderName: content.senderName,
       slug: "vending-machine",
     });
-  }, [shareUrl, content.senderName]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

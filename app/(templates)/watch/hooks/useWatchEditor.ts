@@ -393,12 +393,13 @@ export function useWatchEditor() {
     const text = "I made you a video. There is a whole page around it.";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: content.video.title,
       text,
       accent: "#0284c7",
       slug: "watch",
     });
-  }, [shareUrl, content.video.title]);
+  }, [shareUrl, content.video.title, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

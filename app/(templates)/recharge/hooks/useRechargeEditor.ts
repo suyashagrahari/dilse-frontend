@@ -397,11 +397,12 @@ export function useRechargeEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Your plan is about to expire.",
       accent: "#c026d3",
       slug: "recharge",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

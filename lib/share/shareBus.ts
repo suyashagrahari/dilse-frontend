@@ -48,6 +48,17 @@ export interface SharePayload {
   /** Printed below the QR, as "From <name>". Omitted entirely when absent. */
   senderName?: string;
   /**
+   * The page's own unlock word, if it has one.
+   *
+   * This is the thing the sender is most likely to forget to pass on, and a
+   * printed card carrying a code to a page nobody can open is worse than no
+   * card at all. The sheet offers to print it and lets the sender decline —
+   * see the note on `includePassword` in `ShareSheet`.
+   *
+   * Callers pass what they already hold; nothing here fetches it.
+   */
+  password?: string;
+  /**
    * The template's own accent, so the sheet and the card wear its palette
    * rather than a house colour that belongs to no template.
    */

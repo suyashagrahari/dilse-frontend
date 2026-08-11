@@ -490,11 +490,12 @@ export function useCourtOfLoveEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "You've been summoned to The Court of Love ⚖️",
       accent: "#7c3aed",
       slug: "court-of-love",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

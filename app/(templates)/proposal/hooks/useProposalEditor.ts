@@ -443,11 +443,12 @@ export function useProposalEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "I have something to ask you 💍",
       accent: "#db2777",
       slug: "proposal",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

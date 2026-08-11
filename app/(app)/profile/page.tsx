@@ -357,6 +357,8 @@ export default function ProfilePage() {
     slug?: string;
     recipientName?: string;
     senderName?: string;
+    /** The unlock word, so the sheet can offer to print it on the card. */
+    password?: string;
   }) => {
     if (!payload.url) return;
     openShareSheet({
@@ -366,6 +368,7 @@ export default function ProfilePage() {
       slug: payload.slug,
       recipientName: payload.recipientName,
       senderName: payload.senderName,
+      password: payload.password,
     });
   };
 
@@ -894,6 +897,7 @@ export default function ProfilePage() {
                                   slug: templateSlug(page.templateType),
                                   recipientName: page.recipientName,
                                   senderName: page.senderName,
+                                  password: page.passwordRaw,
                                 });
                               }}
                                 className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
@@ -1010,6 +1014,10 @@ export default function ProfilePage() {
                                   slug: templateSlug(page.templateType),
                                   recipientName: page.recipientName,
                                   senderName: page.senderName,
+                                  // Only ever populated once this reader has
+                                  // unlocked the page themselves, so forwarding
+                                  // it passes on nothing they were not given.
+                                  password: page.passwordRaw,
                                 });
                               }}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"

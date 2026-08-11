@@ -401,11 +401,12 @@ export function useKundliMilanEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Your kundlis have been matched 🔮",
       accent: "#b45309",
       slug: "kundli-milan",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

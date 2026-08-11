@@ -302,11 +302,12 @@ export function useHoldMyHandEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "hold my hand for 60 seconds 🫀",
       accent: "#7c3aed",
       slug: "hold-my-hand",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

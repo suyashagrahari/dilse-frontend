@@ -318,11 +318,12 @@ export function useApologyEditor() {
     if (!shareUrl) return;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "A little apology, just for you 💗",
       accent: "#f43f5e",
       slug: "apology-dashboard",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

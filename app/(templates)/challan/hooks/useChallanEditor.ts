@@ -308,12 +308,13 @@ export function useChallanEditor() {
     const text = `E-Challan ${content.challanNo}. Pay or contest.`;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "E-Challan",
       text,
       accent: "#b91c1c",
       slug: "challan",
     });
-  }, [shareUrl, content.challanNo]);
+  }, [shareUrl, content.challanNo, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

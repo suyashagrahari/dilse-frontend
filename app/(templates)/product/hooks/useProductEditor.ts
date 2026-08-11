@@ -414,12 +414,13 @@ export function useProductEditor() {
     const text = "I listed you. Original, 1 Count. 🛒";
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "You are listed",
       text,
       accent: "#f97316",
       slug: "product",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

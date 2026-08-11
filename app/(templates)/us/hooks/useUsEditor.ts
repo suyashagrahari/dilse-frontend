@@ -356,11 +356,12 @@ export function useUsEditor() {
     track(EVENTS.SHARE, { template: TEMPLATE });
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "we got an account. 📱",
       accent: "#171717",
       slug: "us",
     });
-  }, [shareUrl]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

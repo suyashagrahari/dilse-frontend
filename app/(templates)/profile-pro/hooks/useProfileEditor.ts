@@ -427,12 +427,13 @@ export function useProfileEditor() {
     const text = `${content.person.name || "She"} has been endorsed.`;
     openShareSheet({
       url: shareUrl,
+      password: pagePassword,
       title: "Endorsements",
       text,
       accent: "#0f766e",
       slug: "profile-pro",
     });
-  }, [shareUrl, content.person.name]);
+  }, [shareUrl, content.person.name, pagePassword]);
 
   /**
    * The friends' link — a DIFFERENT secret from `shareUrl`.
