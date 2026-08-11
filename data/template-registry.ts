@@ -52,18 +52,31 @@ import { config as nutrition } from "@/app/(templates)/nutrition/config";
 import { config as appListing } from "@/app/(templates)/app/config";
 import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 
+// The gallery renders in this order, so the first row is the shop window: it is
+// what someone sees before they have decided whether this site is for them.
+//
+// The six below lead deliberately — the strongest, most-wanted pages, and a
+// spread rather than four birthday cards in a row. Love You Forever and My
+// Darling were sitting at positions 42 and 43, several scrolls down, which is
+// effectively unpublished.
+//
+// Everything after them keeps the order it already had.
 const allConfigs = [
   birthdayGf,
+  loveGf,
+  darling,
+  missyouGf,
+  bouquetGf,
+  apologyDashboard,
+
+  // ── everything below is unchanged, in its existing order ──────────────────
   birthdayFriend,
   birthdayParents,
   birthdayBestfriend,
   valentineGf,
   valentineBestfriend,
-  apologyDashboard,
   sorryGf,
   sorryFriend,
-  missyouGf,
-  bouquetGf,
   courtOfLove,
   proposal,
   courtMarriage,
@@ -94,8 +107,6 @@ const allConfigs = [
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
-  loveGf,
-  darling,
   weddingShaadi,
   reception,
   eidMubarak,
