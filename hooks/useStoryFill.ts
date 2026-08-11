@@ -261,6 +261,12 @@ export interface UseStoryFillResult {
   /** True only when signed in AND the profile has a built context to reuse. */
   hasProfileContext: boolean;
   /**
+   * The saved story's own text, or null. For a template with its own generator
+   * that wants the sender's words rather than the shared fill — see the note
+   * where this is computed.
+   */
+  contextSummary: string | null;
+  /**
    * What to call the saved story on the button — the story's own title where it
    * has one ("How we met"), a date where it does not ("your story from 3 Aug").
    * Never a bare "your saved story" when there is anything better to say: the
@@ -480,6 +486,19 @@ export function useStoryFill<T extends object>(
   const hasProfileContext = Boolean(
     enabled && isAuthenticated && profile?.context && profile.context.summary
   );
+
+  /**
+   * The saved story itself, for a caller that wants the TEXT rather than the
+   * fill.
+   *
+   * `useMyStory()` runs the shared schema and writes the form. A template with
+   * its own generator — Court of Love reads the language off the story and
+   * writes ten questions the shared schema cannot describe — needs the opposite:
+   * the sender's own words, dropped into its story box, so its generator runs on
+   * them exactly as if they had been typed. Without this such a template has to
+   * offer "use my saved story" or its own generator, never both.
+   */
+  const contextSummary = hasProfileContext ? (profile?.context?.summary ?? null) : null;
 
   /**
    * What the saved story is called, said the way the sender would say it.
@@ -913,6 +932,7 @@ export function useStoryFill<T extends object>(
     generate,
     applyFromContext,
     hasProfileContext,
+    contextSummary,
     contextLabel,
     canUseMyStory,
     useMyStory,

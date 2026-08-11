@@ -100,7 +100,7 @@ function BrandBadge() {
   );
 }
 
-/** Five gavels — one per hearing, filled as the trial proceeds. */
+/** One pip per question, filled in as the quiz proceeds. Count comes from the data. */
 function ProgressPips({ total, done }: { total: number; done: number }) {
   return (
     <div
@@ -108,7 +108,7 @@ function ProgressPips({ total, done }: { total: number; done: number }) {
       aria-valuemin={0}
       aria-valuemax={total}
       aria-valuenow={done}
-      aria-label={`Hearing ${Math.min(done + 1, total)} of ${total}`}
+      aria-label={`Question ${Math.min(done + 1, total)} of ${total}`}
       style={{ display: "flex", gap: 7, justifyContent: "center", alignItems: "center" }}
     >
       {Array.from({ length: total }).map((_, i) => (
@@ -282,6 +282,9 @@ function SummonsScreen({
   }, [caught, reduce]);
 
   const accused = data.accusedName?.trim() || "You";
+  // Counted, not written out. This line said "Five hearings" while the quiz was
+  // ten questions long, because the number lived in prose instead of in the data.
+  const questionCount = data.questions.length;
 
   return (
     <motion.div
@@ -362,7 +365,8 @@ function SummonsScreen({
           }}
         >
           <strong style={{ color: TEXT }}>{accused}</strong>, you stand accused of being
-          loved a great deal. Five hearings. Answer honestly.
+          loved a great deal. {questionCount} question{questionCount === 1 ? "" : "s"}. Answer
+          honestly.
         </p>
 
         <div
@@ -516,7 +520,7 @@ function SessionScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-/** One hearing: the charge and four pleas. */
+/** One question and its four answers. */
 function HearingScreen({
   index,
   total,
@@ -580,10 +584,10 @@ function HearingScreen({
                 textTransform: "uppercase",
               }}
             >
-              {exhibit || `Hearing ${index + 1}`}
+              {exhibit || `Question ${index + 1}`}
             </div>
             <div style={{ fontFamily: BODY, fontSize: 11, color: MUTED }}>
-              Hearing {index + 1} of {total}
+              Question {index + 1} of {total}
             </div>
           </div>
         </div>
@@ -716,7 +720,7 @@ function DwellCountdown({ ms, label }: { ms: number; label: string }) {
 }
 
 /**
- * The reaction between hearings — a GIF plus a handwritten line.
+ * The reaction between questions — a GIF plus a handwritten line.
  *
  * `kind` distinguishes the three roles the art plays: celebrating a right
  * answer, comforting a wrong one, and cheering the accused on at the recess.
@@ -745,10 +749,14 @@ function ReactionScreen({
 
   const badge =
     kind === "correct"
-      ? { text: "✓ Sustained", fg: GREEN, bg: "rgba(58,167,109,.13)", bd: "rgba(58,167,109,.3)" }
+      // Plain words, for the same reason the questions are: "Sustained" and
+      // "Overruled" are the two terms in the whole courtroom vocabulary that
+      // actually carry information here — right or wrong — and they were the
+      // two least likely to be understood.
+      ? { text: "✓ Correct", fg: GREEN, bg: "rgba(58,167,109,.13)", bd: "rgba(58,167,109,.3)" }
       : kind === "wrong"
-        ? { text: "✗ Overruled", fg: PINK, bg: "rgba(247,37,133,.11)", bd: "rgba(247,37,133,.26)" }
-        : { text: "⏸ Brief recess", fg: INDIGO, bg: "rgba(108,92,231,.1)", bd: "rgba(108,92,231,.24)" };
+        ? { text: "✗ Not quite", fg: PINK, bg: "rgba(247,37,133,.11)", bd: "rgba(247,37,133,.26)" }
+        : { text: "⏸ Quick break", fg: INDIGO, bg: "rgba(108,92,231,.1)", bd: "rgba(108,92,231,.24)" };
 
   // Auto-advance, but the whole screen is a tap target so nobody has to wait.
   useEffect(() => {
@@ -791,31 +799,36 @@ function ReactionScreen({
         {badge.text}
       </div>
 
-      {/* Framed so the GIFs with opaque backdrops read as a deliberate card
-          rather than a stray rectangle floating on the cream canvas. */}
+      {/* No card. The art sits straight on the page like a sticker dropped into
+          a chat, which is the register this whole screen is going for — a white
+          panel around a silhouetted character just boxes in something that was
+          already the right shape.
+
+          This only works because every asset in the reaction pools is
+          silhouetted; the three that were solid rectangles were replaced rather
+          than framed around. See the note at the top of `assets.ts` before
+          adding any new art here. */}
       <div
         style={{
           position: "relative",
           display: "flex",
           justifyContent: "center",
-          background: SURFACE,
-          border: `1px solid ${BORDER}`,
-          borderRadius: 28,
-          boxShadow: CARD_SHADOW,
-          padding: 10,
-          overflow: "hidden",
+          padding: 4,
         }}
       >
         {/* Explicit dismiss. The whole screen also advances on tap, but over a
             ten-second hold people look for a real close button — so give them one
-            instead of making them guess that tapping the art works. */}
+            instead of making them guess that tapping the art works.
+
+            It keeps its own chip background: without the card behind it, the
+            bare icon would sit on whatever the art happens to be. */}
         <button
           onClick={(e) => { e.stopPropagation(); onContinue(); }}
           aria-label="Close and continue"
           style={{
             position: "absolute",
-            top: 8,
-            right: 8,
+            top: 0,
+            right: 0,
             zIndex: 2,
             width: 32,
             height: 32,
@@ -1324,7 +1337,7 @@ export default function CourtOfLove({
     return (
       <div style={{ minHeight: "100dvh", background: BG, display: "grid", placeItems: "center", padding: 24 }}>
         <p style={{ fontFamily: BODY, color: MUTED, textAlign: "center" }}>
-          This case file has no hearings yet.
+          This case file has no questions yet.
         </p>
       </div>
     );
@@ -1395,7 +1408,7 @@ export default function CourtOfLove({
             <ReactionScreen
               reaction={encouragementFor(score, index + 1)}
               kind="recess"
-              note="One hearing left. The Court believes in you."
+              note="One question left. You've got this."
               slot="recess"
               onContinue={afterRecess}
               continueLabel="face the final question"

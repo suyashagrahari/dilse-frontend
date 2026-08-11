@@ -13,7 +13,7 @@ export const ASSETS = {
   scales: `${BASE}/scales-equal.gif`,
   /** Judge at the podium, gavel in hand. */
   gavel: `${BASE}/judge-gavel.gif`,
-  /** The clerk who reads out each hearing. */
+  /** The clerk who reads out each question. */
   clerk: `${BASE}/clerk-pengu.gif`,
   /** "THE COURT HAS DECIDED I LOVE YOU MORE / THERE WILL BE NO APPEALS" (video). */
   verdict: `${BASE}/verdict-love-more.mp4`,
@@ -22,6 +22,27 @@ export const ASSETS = {
   /** "I LOVE YOU THIS MUCH" — punctuates the letter. */
   loveThisMuch: `${BASE}/love-this-much.gif`,
 } as const;
+
+// ── EVERY REACTION MUST BE SILHOUETTED, NOT A RECTANGLE ──────────────────────
+//
+// The reaction art used to sit inside a white card, which meant nobody could
+// tell the difference between a GIF with a transparent background and one with
+// an opaque white block behind it. Now the art sits directly on the page, so
+// that difference is the whole design: a silhouetted character reads as a
+// sticker, and an opaque one reads as a screenshot someone pasted in.
+//
+// Three assets failed that test and were dropped rather than framed around:
+//
+//   wipe-tears    100% opaque, AND it has two strangers' names ("You" /
+//                 "Jiniret") drawn into the art plus an artist's watermark
+//   keep-going    100% opaque white block, also watermarked
+//   koi-baat-nahi 140px at source — the smallest art here by a wide margin, so
+//                 it had to be under-sized to stay sharp while everything
+//                 around it ran at 250px
+//
+// Before adding art here, check the WORST frame, not the first: a GIF can start
+// transparent and flash an opaque panel mid-loop. Anything above ~90% opaque on
+// any frame will read as a stray rectangle on the cream page.
 
 export interface Reaction {
   src: string;
@@ -33,11 +54,7 @@ export interface Reaction {
   dwell?: number;
   /** Whether the art itself contains words. Drives the "let it finish" hint. */
   hasText: boolean;
-  /**
-   * Rendered width in px. Defaults to REACTION_SIZE. Set it lower for art with a
-   * small native resolution — `koi-baat-nahi` is only 140px wide at source, so
-   * stretching it to the standard size visibly softens its Hindi lettering.
-   */
+  /** Rendered width in px. Defaults to REACTION_SIZE. */
   size?: number;
 }
 
@@ -57,7 +74,7 @@ export const REACTION_SIZE = 250;
 export const REACTION_DWELL = 10_000;
 
 /**
- * After a correct answer — celebration. Rotated so five hearings never repeat.
+ * After a correct answer — celebration. Rotated so consecutive answers never repeat.
  */
 export const CORRECT_REACTIONS: Reaction[] = [
   {
@@ -78,43 +95,42 @@ export const CORRECT_REACTIONS: Reaction[] = [
 ];
 
 /**
- * After a wrong answer — comfort, never punishment. All three of these say some
- * version of "it's okay": "koi baat nahi", "don't worry", "don't be sad".
+ * After a wrong answer — comfort, never punishment.
+ *
+ * Softer and more romantic than it was. The hug leads, because a wrong answer in
+ * a game about your own relationship should feel like being pulled closer, not
+ * marked down.
  */
 export const WRONG_REACTIONS: Reaction[] = [
   {
-    src: `${BASE}/koi-baat-nahi.gif`,
-    alt: "A sad cartoon lion cub under the Hindi words “koi baat nahi”, meaning it's okay",
-    hasText: true,
-    size: 200, // 140px at source — anything larger softens the Devanagari text
-  },
-  {
-    src: `${BASE}/wipe-tears.gif`,
-    alt: "One cartoon character gently wiping another's tears — don't worry",
-    hasText: true,
+    src: `${BASE}/penguin-hug.gif`,
+    alt: "A blue penguin and a pink penguin reaching for each other and hugging",
+    hasText: false,
   },
   {
     src: `${BASE}/dont-be-sad.gif`,
     alt: "Two penguins hugging under the words “don't be sad”",
     hasText: true,
   },
+  {
+    src: `${BASE}/aww-bear.gif`,
+    alt: "A small round cartoon bear bursting into cartoon tears",
+    hasText: false,
+  },
 ];
 
 /**
- * Shown at the recess before the final cross-examination. These three GIFs
- * literally say "you can do it" / "you can" / "keep going", so they belong here
- * — cheering the accused on with one hearing left — rather than in the
- * correct-answer pool, where the words would make no sense.
+ * Shown at the recess before the last question. Both of these literally say "you
+ * can do it", so they belong here — cheering the player on with one to go —
+ * rather than in the right-answer pool, where the words would make no sense.
+ *
+ * Two, not three: the third was `keep-going`, a solid white watermarked block
+ * that only worked because a card used to hide its edges.
  */
 export const ENCOURAGEMENTS: Reaction[] = [
   {
     src: `${BASE}/you-can-do-it.gif`,
     alt: "A penguin raising a flipper under the words “you can do it!!”",
-    hasText: true,
-  },
-  {
-    src: `${BASE}/keep-going.gif`,
-    alt: "A cheerful penguin under the words “keep going”",
     hasText: true,
   },
   {
@@ -125,7 +141,7 @@ export const ENCOURAGEMENTS: Reaction[] = [
 ];
 
 /**
- * Pick a reaction for hearing `index`. Deterministic, so replaying a hearing
+ * Pick a reaction for question `index`. Deterministic, so replaying a question
  * shows the same art instead of shuffling under the user.
  */
 export function reactionFor(correct: boolean, index: number): Reaction {
@@ -135,10 +151,9 @@ export function reactionFor(correct: boolean, index: number): Reaction {
 
 /**
  * Pick the recess cheer. Someone who has missed a few gets the emphatic
- * "you can do it!!"; someone cruising gets "keep going".
+ * "you can do it!!"; anyone else gets the calmer "you can".
  */
 export function encouragementFor(score: number, answered: number): Reaction {
-  if (answered > 0 && score / answered < 0.5) return ENCOURAGEMENTS[0]; // struggling
-  if (score === answered) return ENCOURAGEMENTS[1]; // perfect so far
-  return ENCOURAGEMENTS[2];
+  const struggling = answered > 0 && score / answered < 0.5;
+  return struggling ? ENCOURAGEMENTS[0] : ENCOURAGEMENTS[1];
 }

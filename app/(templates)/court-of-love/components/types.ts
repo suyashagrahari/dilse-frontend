@@ -13,9 +13,29 @@ export interface Toast {
   shareUrl?: string;
 }
 
-/** One hearing in the trial. */
+/**
+ * One question in the quiz.
+ *
+ * ── WHY THE WORDING IS PLAIN ───────────────────────────────────────────────
+ *
+ * These used to be written in courtroom English — "Where did the accused first
+ * steal the plaintiff's heart?", "The Court presents the accused's most-used
+ * excuse. Identify it." The joke reads well if you already know what a plaintiff
+ * is, and most of the people being sent one of these do not. A quiz about your
+ * own relationship that you have to decode first is not a fun quiz.
+ *
+ * So the questions are now the plainest thing they can be: "I" and "you",
+ * short words, the way the sender would actually ask out loud. The courtroom
+ * survives where it is decoration — the title, the verdict, the certificate —
+ * and is gone from everything the player has to read to answer.
+ */
 export interface QuizQuestion {
-  /** Short label above the question, e.g. "Exhibit A". */
+  /**
+   * Short topic label above the question — "How we met", "Your excuses".
+   *
+   * Was "Exhibit A", which told the player nothing. A topic gives them a beat to
+   * get their bearings before the question lands.
+   */
   exhibit: string;
   question: string;
   /** Always four. */
@@ -74,6 +94,16 @@ export function dirFor(language: string | undefined | null): "rtl" | "ltr" {
 /** The score needed to win the case. */
 export const PASS_RATIO = 0.8;
 
+/**
+ * How many questions a case may hold.
+ *
+ * This was hard-coded as `.slice(0, 5)` inside the DB reader, which meant the
+ * demo could be given ten questions and a published page would silently serve
+ * the first five — the kind of bug that looks like the data failed to save.
+ * One constant now, used by the reader and the editor both.
+ */
+export const MAX_QUESTIONS = 10;
+
 export const DEMO_DATA: CourtOfLoveData = {
   plaintiffName: "Aarav",
   accusedName: "",
@@ -82,22 +112,22 @@ export const DEMO_DATA: CourtOfLoveData = {
     "Do you swear to answer every question with your whole heart, holding back nothing — not even the embarrassing bits?",
   questions: [
     {
-      exhibit: "Exhibit A",
-      question: "Where did the accused first steal the plaintiff's heart?",
+      exhibit: "How we met",
+      question: "Where did we first meet?",
       options: [
         "Over a very long, very cold coffee",
-        "In a group chat neither of us was supposed to be in",
+        "In a group chat neither of us belonged in",
         "At someone else's boring party",
         "On a call that was meant to last 10 minutes",
       ],
       correctIndex: 3,
-      correctNote: "Guilty as charged. Ten minutes turned into every night since.",
-      wrongNote: "The Court will allow it — the memory is a little blurry for both of us.",
+      correctNote: "Ten minutes. That call is still going, honestly.",
+      wrongNote: "Close enough — neither of us tells that story the same way.",
       allCorrect: false,
     },
     {
-      exhibit: "Exhibit B",
-      question: "The Court presents the accused's most-used excuse. Identify it.",
+      exhibit: "Your excuses",
+      question: "What do you always say when you're running late?",
       options: [
         "\"5 minute mein aa raha hoon\"",
         "\"Bas nikal gaya\"",
@@ -105,41 +135,111 @@ export const DEMO_DATA: CourtOfLoveData = {
         "\"Main busy tha yaar\"",
       ],
       correctIndex: 0,
-      correctNote: "The whole courtroom said it out loud with you.",
-      wrongNote: "Close! But the record shows a very confident \"5 minute\".",
+      correctNote: "I said it out loud with you. Every single time.",
+      wrongNote: "Nice try. It's always a very confident \"5 minute\".",
       allCorrect: false,
     },
     {
-      exhibit: "Exhibit C",
-      question: "Without fail, what does the plaintiff order every single time?",
+      exhibit: "Food",
+      question: "What do I order every single time?",
       options: [
-        "The exact thing they said they wouldn't",
+        "The exact thing I said I wouldn't",
         "Whatever you ordered, then half of yours",
         "Something spicy, then a lassi to survive it",
         "\"I'm not hungry\" — then your fries",
       ],
       correctIndex: 3,
-      correctNote: "Objection overruled. The fries were always shared property.",
-      wrongNote: "Not quite — but honestly, all four are on the record.",
+      correctNote: "The fries were always ours. I don't make the rules.",
+      wrongNote: "Not quite — but honestly, I've done all four.",
       allCorrect: false,
     },
     {
-      exhibit: "Exhibit D",
-      question: "Which habit of the plaintiff does the accused secretly adore?",
+      exhibit: "Little habits",
+      question: "Which of my habits do you secretly like?",
       options: [
-        "Narrating every movie two seconds before it happens",
-        "Singing the wrong lyrics with total confidence",
+        "Telling you the movie two seconds before it happens",
+        "Singing the wrong lyrics like I wrote the song",
         "Falling asleep mid-sentence on call",
         "Sending 14 voice notes instead of one text",
       ],
       correctIndex: 1,
-      correctNote: "Wrong lyrics, right person. The Court finds this adorable.",
-      wrongNote: "The Court accepts that all of these are, in fact, adorable.",
+      correctNote: "Wrong lyrics, right person. You like it. Admit it.",
+      wrongNote: "Fine — you like all of them. I'll take it.",
       allCorrect: false,
     },
     {
-      exhibit: "Final Cross-Examination",
-      question: "Under oath — how much does the plaintiff love you?",
+      exhibit: "Texting",
+      question: "How do you know I'm missing you?",
+      options: [
+        "I send a photo with no caption",
+        "I text \"busy?\" and nothing else",
+        "I send a reel you've already seen twice",
+        "I just call, no warning",
+      ],
+      correctIndex: 2,
+      correctNote: "You've seen it. I sent it anyway. That's the whole message.",
+      wrongNote: "Any of these, really. They all mean the same thing.",
+      allCorrect: false,
+    },
+    {
+      exhibit: "Arguments",
+      question: "What do we argue about the most?",
+      options: [
+        "Where to eat",
+        "Who texted first",
+        "Whose turn it is to pick the movie",
+        "Nothing. We just like the sound of it.",
+      ],
+      correctIndex: 0,
+      correctNote: "Forty minutes. Then the same place as always.",
+      wrongNote: "It's always food. It has always been food.",
+      allCorrect: false,
+    },
+    {
+      exhibit: "Small things",
+      question: "What makes me smile the fastest?",
+      options: [
+        "Saying my name in that one voice",
+        "Sending food photos without asking",
+        "Remembering something tiny I said weeks ago",
+        "Showing up when you said you couldn't",
+      ],
+      correctIndex: 2,
+      correctNote: "You remember the small things. That's the whole trick.",
+      wrongNote: "All of them work. You're very good at this.",
+      allCorrect: false,
+    },
+    {
+      exhibit: "Our song",
+      question: "Which song makes you think of me?",
+      options: [
+        "The one we played on repeat that whole week",
+        "The one I sing wrong on purpose",
+        "The one from that long drive",
+        "The one you sent at 2am with no explanation",
+      ],
+      correctIndex: 3,
+      correctNote: "2am, no context, no reply needed. Still my favourite.",
+      wrongNote: "They all count. Our playlist is a mess and I love it.",
+      allCorrect: false,
+    },
+    {
+      exhibit: "Someday",
+      question: "Where do we always say we'll go one day?",
+      options: [
+        "The mountains, with no signal",
+        "A beach where nobody knows us",
+        "That one street food place, again",
+        "Anywhere, as long as it's a long drive",
+      ],
+      correctIndex: 0,
+      correctNote: "No signal, no plans, just us. We're going. Eventually.",
+      wrongNote: "We'll get to all of them. I've got a list.",
+      allCorrect: false,
+    },
+    {
+      exhibit: "Last one",
+      question: "How much do I love you?",
       options: [
         "A normal, reasonable amount",
         "More than yesterday",
@@ -147,8 +247,8 @@ export const DEMO_DATA: CourtOfLoveData = {
         "There is no number that big",
       ],
       correctIndex: 3,
-      correctNote: "Every answer was correct. That was the whole point.",
-      wrongNote: "Every answer was correct. That was the whole point.",
+      correctNote: "Every answer was right. That was the whole point.",
+      wrongNote: "Every answer was right. That was the whole point.",
       allCorrect: true,
     },
   ],
@@ -212,7 +312,7 @@ export function dbToCourtOfLoveData(db: Record<string, unknown> | null | undefin
   const rawQuestions = Array.isArray(src.questions) ? (src.questions as unknown[]) : [];
   const questions = rawQuestions.length
     ? rawQuestions
-        .slice(0, 5)
+        .slice(0, MAX_QUESTIONS)
         .map((q, i) => normalizeQuestion(q, DEMO_DATA.questions[i] ?? DEMO_DATA.questions[0]))
         // A question with no text would render an empty card — drop it.
         .filter((q) => q.question.trim().length > 0)

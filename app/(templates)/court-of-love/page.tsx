@@ -167,6 +167,8 @@ function CourtOfLovePageInner() {
         generatedLanguage={e.generatedLanguage}
         hasGenerated={e.hasGenerated}
         onGenerate={e.generateFromStory}
+        savedStory={e.savedStory}
+        savedStoryLabel={e.savedStoryLabel}
       />
 
       {/* Publishing overlay */}

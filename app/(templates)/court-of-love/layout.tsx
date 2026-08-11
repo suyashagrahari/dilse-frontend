@@ -28,7 +28,7 @@ const inter = Inter({
 const SLUG = "court-of-love";
 const TITLE = "Court of Love — A Romantic Trivia Quiz for Your Partner";
 const DESCRIPTION =
-  "Put your partner on trial in the cutest way: 5 funny hearings, a gavel-banging penguin judge, GIF reactions after every answer, a secret letter, and a signed ₹100 stamp paper certifying they won the case. Free, mobile-first, shareable on WhatsApp & Instagram.";
+  "Put your partner on trial in the cutest way: 10 funny questions, a gavel-banging penguin judge, GIF reactions after every answer, a secret letter, and a signed ₹100 stamp paper certifying they won the case. Free, mobile-first, shareable on WhatsApp & Instagram.";
 const OG_TITLE = "⚖️ The Court of Love";
 
 export const metadata: Metadata = {
@@ -80,7 +80,7 @@ const jsonLd = {
       offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
       publisher: { "@type": "Organization", name: "SubhSandesh", url: SITE_URL },
       featureList: [
-        "5 editable multiple-choice hearings",
+        "10 editable multiple-choice questions",
         "Animated GIF reaction after every answer",
         "Typewriter secret letter on a winning verdict",
         "Signed ₹100 stamp paper certificate",

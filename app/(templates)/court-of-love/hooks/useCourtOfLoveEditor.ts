@@ -298,7 +298,7 @@ export function useCourtOfLoveEditor() {
           console.warn("Court of Love AI generation failed:", res.status, result?.error);
           pushToast({
             type: "info",
-            title: "Couldn't write the hearings",
+            title: "Couldn't write the questions",
             message: typeof result?.error === "string" ? result.error : "Please try again.",
           });
           return;
@@ -507,6 +507,11 @@ export function useCourtOfLoveEditor() {
 
     // AI story → case file
     story, setStory, generating, generatedLanguage, hasGenerated, generateFromStory,
+    // The story they already wrote on another template, offered as a shortcut
+    // past the blank box. Null when signed out, so the button never appears to
+    // someone who would only be told to sign in after pressing it.
+    savedStory: fill.contextSummary,
+    savedStoryLabel: fill.contextLabel,
 
     setEditMode, setPagePassword, updateMf, updateQuestion, updateOption,
     handleEditClick, handleEditFromPreview, handleSave,
