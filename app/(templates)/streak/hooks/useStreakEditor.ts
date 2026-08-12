@@ -391,13 +391,15 @@ export function useStreakEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "streak", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "one tap a day, the two of us 🕯️",
       accent: "#b45309",
       slug: "streak",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

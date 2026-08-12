@@ -68,6 +68,7 @@ import { dataUrlToFile, downloadDataUrl, qrToPngDataUrl } from "@/lib/share/qrPn
 import { PrintableCard, CARD_W, CARD_H } from "./PrintableCard";
 import { QrBlock } from "./QrBlock";
 import { DEFAULT_ACCENT, alpha, readableInk, shade, tint, qrInk } from "./qrTheme";
+import WallConsent from "./WallConsent";
 
 /** Same-origin, so it can sit inside both the canvas and the captured card. */
 const LOGO_SRC = "/logo.webp";
@@ -103,6 +104,8 @@ export interface ShareSheetProps {
   password?: string;
   accent?: string;
   slug?: string;
+  /** Present only for Wall-eligible templates — see SharePayload.wall. */
+  wall?: { templateType: string; pageId: string };
 }
 
 /**
@@ -142,6 +145,7 @@ export function ShareSheet({
   password,
   accent = DEFAULT_ACCENT,
   slug,
+  wall,
 }: ShareSheetProps) {
   const [tab, setTab] = useState<TabKey>("link");
   const [copied, setCopied] = useState(false);
@@ -662,6 +666,18 @@ export function ShareSheet({
                       {copied ? "Copied" : "Copy"}
                     </button>
                   </div>
+
+                  {/* Offered on the Link tab, under the link the sender is
+                      about to send: the moment they are already thinking about
+                      who gets to see this page. Rendered only for Wall-eligible
+                      templates, and only to the signed-in owner. */}
+                  {wall && (
+                    <WallConsent
+                      templateType={wall.templateType}
+                      pageId={wall.pageId}
+                      accent={accent}
+                    />
+                  )}
                 </div>
               ) : null}
 

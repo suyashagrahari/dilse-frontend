@@ -389,6 +389,8 @@ export function usePhotoPuzzleEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "photo-puzzle", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "I made you something. The last piece is with me. 🧩",
@@ -397,7 +399,7 @@ export function usePhotoPuzzleEditor() {
       senderName: content.senderName,
       slug: "photo-puzzle",
     });
-  }, [shareUrl, content.senderName, content.recipientName, pagePassword]);
+  }, [shareUrl, content.senderName, content.recipientName, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

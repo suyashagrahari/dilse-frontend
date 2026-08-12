@@ -351,13 +351,15 @@ export function useFlagsEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "flags", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "1 profile near you.",
       accent: "#be123c",
       slug: "flags",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

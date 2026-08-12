@@ -317,13 +317,15 @@ export function useApologyEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "apology-dashboard", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "A little apology, just for you 💗",
       accent: "#f43f5e",
       slug: "apology-dashboard",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

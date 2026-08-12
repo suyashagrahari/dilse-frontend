@@ -409,13 +409,15 @@ export function useDedicationEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "dedication", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "Tune in. This one's for you. 📻",
       accent: "#9a3412",
       slug: "dedication",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

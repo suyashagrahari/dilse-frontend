@@ -326,13 +326,15 @@ export function useLegalNoticeEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "legal-notice", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "You've been served ⚖️",
       accent: "#4338ca",
       slug: "legal-notice",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
