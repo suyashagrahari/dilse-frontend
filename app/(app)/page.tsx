@@ -9,12 +9,16 @@ import FeaturesSection from "./components/home/FeaturesSection";
 import TestimonialsSection from "./components/home/TestimonialsSection";
 import CTASection from "./components/home/CTASection";
 import SubhSandeshFooter from "./components/home/SubhSandeshFooter";
+import ActivityToast from "@/components/home/ActivityToast";
 
 export default function HomePage() {
   return (
     <>
       <CornerOrnaments />
       <MobileTopBar />
+      {/* Real creation counts, top-right. Shows nothing invented — when there
+          is no activity to report it promotes a template instead. */}
+      <ActivityToast />
       {/* Lean, alternating light/dark old-design landing:
           Hero (L) → Problem (D) → How It Works (L) → Features (D) → Testimonials (L) → CTA (D) → Footer (L) */}
       <main className="app-main-shell">
