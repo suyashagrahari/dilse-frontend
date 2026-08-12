@@ -385,13 +385,15 @@ export function useSearchedEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "searched", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "Go on. Type your name. 🔍",
       accent: "#6d28d9",
       slug: "searched",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

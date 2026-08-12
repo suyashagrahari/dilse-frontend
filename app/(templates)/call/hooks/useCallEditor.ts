@@ -462,6 +462,8 @@ export function useCallEditor() {
     if (!shareUrl) return;
     const text = "Incoming call. Pick up.";
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "call", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "Incoming call",
@@ -469,7 +471,7 @@ export function useCallEditor() {
       accent: "#059669",
       slug: "call",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, pageId]);
 
   const shareId = shareUrl ? (shareUrl.split("/").pop() ?? null) : null;
 

@@ -332,6 +332,8 @@ export function useVendingMachineEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "vending-machine", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "There's a machine here. Punch a code. 🎰",
@@ -339,7 +341,7 @@ export function useVendingMachineEditor() {
       senderName: content.senderName,
       slug: "vending-machine",
     });
-  }, [shareUrl, content.senderName, pagePassword]);
+  }, [shareUrl, content.senderName, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

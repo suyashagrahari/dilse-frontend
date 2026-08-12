@@ -36,6 +36,7 @@ export function ShareSheetHost() {
       password={payload?.password}
       accent={payload?.accent ?? shareAccent(payload?.slug)}
       slug={payload?.slug}
+      wall={payload?.wall}
     />
   );
 }

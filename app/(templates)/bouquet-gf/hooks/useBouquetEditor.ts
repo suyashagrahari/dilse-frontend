@@ -291,6 +291,8 @@ export function useBouquetEditor() {
     if (!shareUrl) return;
     const text = "I made you a bouquet 💐";
     openShareSheet({
+      // Only a saved page can be consented to, and only by its owner.
+      wall: pageId ? { templateType: "bouquet-gf", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "A bouquet for you 💐",
@@ -299,7 +301,7 @@ export function useBouquetEditor() {
       senderName: content.senderName,
       slug: "bouquet-gf",
     });
-  }, [shareUrl, content.senderName, pagePassword]);
+  }, [shareUrl, content.senderName, pagePassword, pageId]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
