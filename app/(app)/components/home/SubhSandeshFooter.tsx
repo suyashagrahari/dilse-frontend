@@ -15,7 +15,10 @@ const PLATFORM = [
   { label: "How It Works", href: "#how" },
   { label: "Templates", href: "/templates" },
   { label: "AI Generator", href: "#demo" },
-  { label: "Blessings Wall", href: "#" },
+  // Was a dead "#" placeholder. Now the real page — and, because NavMount
+  // renders nothing until it has mounted on the client, this is the only
+  // crawlable internal link to /wall in the server-rendered HTML.
+  { label: "The Wall", href: "/wall" },
   { label: "Sharing", href: "#" },
 ];
 const COMPANY = ["About Us", "Contact Us", "Help", "Privacy Policy", "Terms of Service"];
