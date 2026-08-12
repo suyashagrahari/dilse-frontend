@@ -1,17 +1,15 @@
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import type { HowToData, AggregateRatingData } from "@/lib/seo-data";
+import { FOUNDER_NAME, FOUNDER_PROFILES } from "@/lib/strapi";
 
-// Official profiles for the brand + its founder. Used as schema.org `sameAs` so
-// search & answer engines can confirm "SubhSandesh" is a single, real entity
-// across the web (strengthens Knowledge Graph / entity recognition → better GEO/AEO).
-const FOUNDER_NAME = "Suyash Agrahari";
-const FOUNDER_SAME_AS = [
-  "https://www.linkedin.com/in/suyash-agrahari-717260228/",
-  "https://x.com/SuyashAgrahari",
-  "https://www.instagram.com/suyash_agrahari_",
-  "https://github.com/suyashagrahari",
-  "https://portfolio-website-mu-fawn-27.vercel.app/",
-];
+// The founder's own profiles — X, LinkedIn, Instagram, GitHub, portfolio — used as
+// schema.org `sameAs` on the Person so search and answer engines can confirm this
+// is one real, identifiable author across the web.
+//
+// These belong to the PERSON, not the Organization. Claiming a founder's personal
+// profiles as the company's sameAs invites the two entities to be conflated; the
+// `founder` relation is the correct way to connect them, and it is already set.
+const FOUNDER_SAME_AS = Object.values(FOUNDER_PROFILES);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function JsonLd({ data }: { data: Record<string, any> }) {
@@ -78,12 +76,12 @@ export function OrganizationJsonLd() {
         },
         founder: {
           "@type": "Person",
+          "@id": `${SITE_URL}/#person-author`,
           name: FOUNDER_NAME,
           url: `${SITE_URL}/about-us`,
           jobTitle: "Founder",
           sameAs: FOUNDER_SAME_AS,
         },
-        sameAs: FOUNDER_SAME_AS,
       }}
     />
   );
@@ -505,7 +503,6 @@ export function ArticleGraphJsonLd({
     name: SITE_NAME,
     url: SITE_URL,
     logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE, width: 1370, height: 784 },
-    sameAs: FOUNDER_SAME_AS,
   });
 
   graph.push({
@@ -520,9 +517,10 @@ export function ArticleGraphJsonLd({
   const hasAuthor = Boolean(author?.name);
   if (hasAuthor && author) {
     const jobTitle = (author.jobTitle || "").trim();
-    // Strapi carries two profiles; FOUNDER_SAME_AS carries five. Union them so the
-    // Person node claims every profile we can actually prove.
-    const sameAs = [...new Set([...(author.sameAs || []), ...FOUNDER_SAME_AS])].filter(Boolean);
+    // Already complete: the caller builds this with authorProfiles(), which applies
+    // the founder fallback only to the founder. Do NOT union FOUNDER_SAME_AS here —
+    // that would claim their personal profiles for any future author.
+    const sameAs = [...new Set(author.sameAs || [])].filter(Boolean);
     graph.push({
       "@type": "Person",
       "@id": authorId,
