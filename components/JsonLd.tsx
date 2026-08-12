@@ -560,13 +560,32 @@ export function ArticleGraphJsonLd({
     });
   }
 
-  // Merge extra studio-authored types (HowTo, etc.) — strip their own @context
-  // (the graph root carries it) and skip anything already built above.
+  // Merge extra studio-authored blocks. Their own @context is stripped — the graph
+  // root carries it.
+  //
+  // A block whose @id matches a node already built above ENRICHES that node rather
+  // than being dropped. That is the only way the studio can attach citation /
+  // about / mentions to the BlogPosting, since those are properties of it and a
+  // second BlogPosting node would conflict with the first. Renderer-built values
+  // always win, so an enrichment block can fill gaps but never rewrite the graph.
+  //
+  // Blocks without a matching @id are appended, unless their type is already
+  // built above (see COVERED_LD_TYPES) — a duplicate FAQPage or BlogPosting is
+  // worse than none.
   for (const b of normalizeLdArray(extra)) {
-    const type = String(b["@type"] || "").toLowerCase();
-    if (!type || COVERED_LD_TYPES.has(type) || type === "person") continue;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const { ["@context"]: _ctx, ...rest } = b as Record<string, any>;
+    const id = typeof rest["@id"] === "string" ? rest["@id"] : "";
+    const target = id ? graph.find((n) => n["@id"] === id) : undefined;
+    if (target) {
+      for (const [k, v] of Object.entries(rest)) {
+        if (k === "@id" || k === "@type") continue;
+        if (target[k] === undefined) target[k] = v;
+      }
+      continue;
+    }
+    const type = String(rest["@type"] || "").toLowerCase();
+    if (!type || COVERED_LD_TYPES.has(type) || type === "person") continue;
     graph.push(rest);
   }
 
