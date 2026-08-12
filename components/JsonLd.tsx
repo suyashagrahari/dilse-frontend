@@ -450,6 +450,7 @@ export function ArticleGraphJsonLd({
   keywords,
   section,
   wordCount,
+  readingTimeMinutes,
   author,
   breadcrumb,
   faqs,
@@ -465,7 +466,22 @@ export function ArticleGraphJsonLd({
   keywords?: string | null;
   section?: string;
   wordCount?: number;
-  author?: { name: string; url?: string; jobTitle?: string | null; sameAs?: string[] } | null;
+  /** Strapi readingTime, in minutes → BlogPosting.timeRequired as an ISO 8601 duration. */
+  readingTimeMinutes?: number | null;
+  author?: {
+    name: string;
+    /** Strapi author slug — gives the Person a stable @id shared by every post. */
+    slug?: string | null;
+    url?: string;
+    jobTitle?: string | null;
+    /** Strapi bio → Person.description. */
+    bio?: string | null;
+    /** Absolute avatar URL (run Strapi paths through strapiMedia first). */
+    image?: string | null;
+    imageWidth?: number | null;
+    imageHeight?: number | null;
+    sameAs?: string[];
+  } | null;
   breadcrumb: { name: string; url: string }[];
   faqs?: { question: string; answer: string }[];
   extra?: unknown;
@@ -474,7 +490,12 @@ export function ArticleGraphJsonLd({
   const orgId = `${SITE_URL}/#organization`;
   const siteId = `${SITE_URL}/#website`;
   const postId = `${url}#post`;
-  const authorId = `${url}#author`;
+  // Site-wide, not per-article: every post by the same author must reference ONE
+  // Person entity, or the graph asserts 800+ unrelated people with the same name
+  // and no author authority accumulates anywhere.
+  const authorId = author?.slug
+    ? `${SITE_URL}/#person-${author.slug}`
+    : `${SITE_URL}/#person`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graph: Record<string, any>[] = [];
 
@@ -498,15 +519,36 @@ export function ArticleGraphJsonLd({
 
   const hasAuthor = Boolean(author?.name);
   if (hasAuthor && author) {
+    const jobTitle = (author.jobTitle || "").trim();
+    // Strapi carries two profiles; FOUNDER_SAME_AS carries five. Union them so the
+    // Person node claims every profile we can actually prove.
+    const sameAs = [...new Set([...(author.sameAs || []), ...FOUNDER_SAME_AS])].filter(Boolean);
     graph.push({
       "@type": "Person",
       "@id": authorId,
       name: author.name,
       ...(author.url ? { url: author.url } : {}),
-      ...(author.jobTitle ? { jobTitle: author.jobTitle } : {}),
+      ...(jobTitle ? { jobTitle } : {}),
+      ...(author.bio ? { description: author.bio } : {}),
+      ...(author.image
+        ? {
+            image: {
+              "@type": "ImageObject",
+              url: author.image,
+              ...(author.imageWidth ? { width: author.imageWidth } : {}),
+              ...(author.imageHeight ? { height: author.imageHeight } : {}),
+            },
+          }
+        : {}),
       worksFor: { "@id": orgId },
-      ...(author.sameAs && author.sameAs.length ? { sameAs: author.sameAs } : {}),
+      ...(sameAs.length ? { sameAs } : {}),
     });
+    // The bio and jobTitle both say founder, so assert it — a named founder is one
+    // of the stronger organisation-credibility signals available.
+    if (/founder/i.test(jobTitle)) {
+      const org = graph.find((n) => n["@id"] === orgId);
+      if (org && org.founder === undefined) org.founder = { "@id": authorId };
+    }
   }
 
   const kw = (keywords || "")
@@ -525,11 +567,18 @@ export function ArticleGraphJsonLd({
     dateModified: dateModified || datePublished,
     author: hasAuthor ? { "@id": authorId } : { "@id": orgId },
     publisher: { "@id": orgId },
-    ...(image ? { image: { "@type": "ImageObject", url: image, width: 1200, height: 630 } } : {}),
+    ...(image
+      ? { image: { "@type": "ImageObject", url: image, width: 1200, height: 630 }, thumbnailUrl: image }
+      : {}),
     ...(typeof wordCount === "number" && wordCount > 0 ? { wordCount } : {}),
     ...(kw.length ? { keywords: kw } : {}),
     ...(section ? { articleSection: section } : {}),
     inLanguage: "en-IN",
+    // True of every post on this blog — nothing is gated.
+    isAccessibleForFree: true,
+    ...(typeof readingTimeMinutes === "number" && readingTimeMinutes > 0
+      ? { timeRequired: `PT${Math.round(readingTimeMinutes)}M` }
+      : {}),
     ...(speakableSelectors && speakableSelectors.length
       ? { speakable: { "@type": "SpeakableSpecification", cssSelector: speakableSelectors } }
       : {}),
