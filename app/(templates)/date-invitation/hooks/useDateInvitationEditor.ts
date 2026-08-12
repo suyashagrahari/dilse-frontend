@@ -495,8 +495,6 @@ export function useDateInvitationEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "date-invitation", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "You're invited. Location: you'll find out. 💌",
@@ -505,7 +503,7 @@ export function useDateInvitationEditor() {
       senderName: content.senderName,
       slug: "date-invitation",
     });
-  }, [shareUrl, content.senderName, content.recipientName, pagePassword, pageId]);
+  }, [shareUrl, content.senderName, content.recipientName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

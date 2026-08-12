@@ -115,12 +115,6 @@ export default function DesktopNav() {
           <button onClick={() => router.push("/templates")} style={tabTextStyle(pathname.startsWith("/templates"))}>
             Templates
           </button>
-          {/* A real <Link>, unlike its neighbours: the Wall exists to be
-              crawled, and a router.push button is invisible to a crawler.
-              Styled identically so the row still reads as one set of tabs. */}
-          <Link href="/wall" style={{ ...tabTextStyle(pathname.startsWith("/wall")), textDecoration: "none" }}>
-            The Wall
-          </Link>
           <button
             onClick={() => router.push("/favorites")}
             style={tabTextStyle(pathname.startsWith("/favorites") || pathname.startsWith("/saves"))}

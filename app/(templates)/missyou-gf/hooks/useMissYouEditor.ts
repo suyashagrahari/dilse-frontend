@@ -323,8 +323,6 @@ export function useMissYouEditor() {
     if (!shareUrl) return;
     const text = "I made you something. Don't open it till you're alone tonight 🤍";
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "missyou-gf", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "A letter for you 💌",
@@ -333,7 +331,7 @@ export function useMissYouEditor() {
       senderName: content.senderName,
       slug: "missyou-gf",
     });
-  }, [shareUrl, content.senderName, pagePassword, pageId]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

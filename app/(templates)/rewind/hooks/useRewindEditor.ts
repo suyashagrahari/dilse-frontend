@@ -464,8 +464,6 @@ export function useRewindEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "rewind", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "I ran the numbers on us. ⏮️",
@@ -473,7 +471,7 @@ export function useRewindEditor() {
       recipientName: content.recipientName,
       slug: "rewind",
     });
-  }, [shareUrl, content.recipientName, pagePassword, pageId]);
+  }, [shareUrl, content.recipientName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

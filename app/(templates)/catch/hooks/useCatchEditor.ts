@@ -345,8 +345,6 @@ export function useCatchEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "catch", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "I wrote you something. It's in pieces. 💛",
@@ -354,7 +352,7 @@ export function useCatchEditor() {
       senderName: content.senderName,
       slug: "catch",
     });
-  }, [shareUrl, content.senderName, pagePassword, pageId]);
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

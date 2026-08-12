@@ -489,15 +489,13 @@ export function useCourtOfLoveEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "court-of-love", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "You've been summoned to The Court of Love ⚖️",
       accent: "#7c3aed",
       slug: "court-of-love",
     });
-  }, [shareUrl, pagePassword, pageId]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

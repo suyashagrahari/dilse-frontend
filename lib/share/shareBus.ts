@@ -65,19 +65,6 @@ export interface SharePayload {
   accent?: string;
   /** Filename stem for the two downloads. Defaults to "subhsandesh". */
   slug?: string;
-  /**
-   * Identifies the saved page, so the sheet can offer to show it on the public
-   * Wall.
-   *
-   * Optional on purpose, and absent for most templates: a template only belongs
-   * on the Wall if it holds two people's names, and roughly a dozen do not (see
-   * `server/src/config/wallTemplates.ts`). Omitting this is how a template opts
-   * out — no checkbox is rendered and nothing about it can ever reach the Wall.
-   *
-   * `pageId` is the page's own id, not its shareId: consent is the owner's to
-   * give, and it is verified against `userId` server-side.
-   */
-  wall?: { templateType: string; pageId: string };
 }
 
 let current: SharePayload | null = null;

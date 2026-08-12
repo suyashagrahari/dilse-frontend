@@ -391,14 +391,12 @@ export function useCapsuleEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "capsule", pageId } : undefined,
       url: shareUrl,
       title: "sealed until next year 🕰️",
       accent: "#991b1b",
       slug: "capsule",
     });
-  }, [shareUrl, pageId]);
+  }, [shareUrl]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

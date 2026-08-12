@@ -301,15 +301,13 @@ export function useHoldMyHandEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "hold-my-hand", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "hold my hand for 60 seconds 🫀",
       accent: "#7c3aed",
       slug: "hold-my-hand",
     });
-  }, [shareUrl, pagePassword, pageId]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

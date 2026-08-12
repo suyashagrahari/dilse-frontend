@@ -355,15 +355,13 @@ export function useUsEditor() {
     if (!shareUrl) return;
     track(EVENTS.SHARE, { template: TEMPLATE });
     openShareSheet({
-      // Only a saved page can be consented to, and only by its owner.
-      wall: pageId ? { templateType: "us", pageId } : undefined,
       url: shareUrl,
       password: pagePassword,
       title: "we got an account. 📱",
       accent: "#171717",
       slug: "us",
     });
-  }, [shareUrl, pagePassword, pageId]);
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 

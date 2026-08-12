@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL, TEMPLATE_SEO } from "@/lib/seo";
 import { getAllArticleSlugs, getCategories } from "@/lib/strapi";
-import { WALL_SLUGS } from "@/lib/wall/slugs";
 
 // Revalidated on demand by the Strapi webhook (tag `articles`) + hourly fallback.
 export const revalidate = 3600;
@@ -15,19 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE_URL}/about-us`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/contact-us`, lastModified: now, changeFrequency: "yearly", priority: 0.4 },
-    { url: `${SITE_URL}/wall`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
   ];
-
-  // One Wall page per template. These are the only URLs on the site whose
-  // content grows on its own, which is the whole reason the Wall is worth
-  // building — so they are listed even while a filter is still empty, because
-  // an empty filter renders the template catalogue rather than a blank page.
-  const wallPages: MetadataRoute.Sitemap = WALL_SLUGS.map((slug) => ({
-    url: `${SITE_URL}/wall/${slug}`,
-    lastModified: now,
-    changeFrequency: "daily" as const,
-    priority: 0.6,
-  }));
 
   const templatePages: MetadataRoute.Sitemap = Object.keys(TEMPLATE_SEO).map((slug) => ({
     url: `${SITE_URL}/${slug}`,
@@ -53,5 +40,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...templatePages, ...wallPages, ...blogPosts, ...blogCategories];
+  return [...staticPages, ...templatePages, ...blogPosts, ...blogCategories];
 }
