@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Tiro_Devanagari_Hindi, Kalam, Inter } from "next/font/google";
+import { RAKHI_FONT_VARS } from "./fonts";
 import {
   getTemplateMeta,
   SITE_URL,
@@ -17,52 +17,15 @@ import {
 } from "@/components/JsonLd";
 import { RAKHI_ASSETS } from "./assets";
 
-// Self-hosted via next/font (no raw <link>/@import), consumed as CSS vars by
-// components/rakhi.css.
-//
-// display:"swap" and NOT "optional" here — "optional" permits the browser to
-// decline the face outright, and a declined Devanagari face silently falls back
-// to whatever the system has, which for the shloka means either a mismatched
-// face or tofu. The shloka is the one line on the page that must render in the
-// right script, so we accept the swap.
-const display = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-rb-display",
-  display: "swap",
-});
-
-// Weight 400 is the only weight this family ships.
-const devanagari = Tiro_Devanagari_Hindi({
-  subsets: ["devanagari", "latin"],
-  weight: "400",
-  variable: "--font-rb-deva",
-  display: "swap",
-});
-
-// Polaroid captions. Covers both scripts, so a Hindi caption on a memory does
-// not fall out of the handwriting into a system face mid-sentence.
-const hand = Kalam({
-  subsets: ["devanagari", "latin"],
-  weight: ["400", "700"],
-  variable: "--font-rb-hand",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "optional",
-});
-
 const SLUG = "happy-rakshabandhan-to-brother";
 const tpl = TEMPLATE_SEO[SLUG];
 
 const OG_IMAGE = {
-  url: RAKHI_ASSETS.cover,
-  width: 1200,
-  height: 1200,
+  url: RAKHI_ASSETS.cover.src,
+  // The asset's real dimensions — a lying og:image size makes some scrapers
+  // letterbox or refuse the preview.
+  width: RAKHI_ASSETS.cover.width,
+  height: RAKHI_ASSETS.cover.height,
   alt: "Happy Raksha Bandhan — tie a rakhi to your brother online, SubhSandesh",
 };
 
@@ -91,9 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const rating = getAggregateRating(SLUG);
 
   return (
-    <div
-      className={`${display.variable} ${devanagari.variable} ${hand.variable} ${inter.variable}`}
-    >
+    <div className={RAKHI_FONT_VARS}>
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: SITE_URL },

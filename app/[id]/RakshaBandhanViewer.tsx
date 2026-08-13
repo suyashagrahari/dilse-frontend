@@ -13,6 +13,7 @@ import {
   CARD_BORDER,
 } from "@/app/(templates)/happy-rakshabandhan-to-brother/components/theme";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { RAKHI_FONT_VARS } from "@/app/(templates)/happy-rakshabandhan-to-brother/fonts";
 import "@/app/(templates)/happy-rakshabandhan-to-brother/components/rakhi.css";
 
 function PasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
@@ -239,9 +240,18 @@ export default function RakshaBandhanViewer({
   // constraint on this template, so the cost is that a reload asks again.
   const [unlocked, setUnlocked] = useState(!hasPassword);
 
-  if (hasPassword && !unlocked) {
-    return <PasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
-  }
-
-  return <RakhiTemplate data={dbToRakhiData(rawData)} mode="share" shareId={shareId} />;
+  // The font variables MUST be applied here as well as in the builder's
+  // layout.tsx. This route is a different tree — without this wrapper every
+  // var(--font-rb-*) resolves to nothing and the whole ritual, including the
+  // Devanagari shloka, falls back to a system face. This is the side her
+  // brother actually sees.
+  return (
+    <div className={RAKHI_FONT_VARS}>
+      {hasPassword && !unlocked ? (
+        <PasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />
+      ) : (
+        <RakhiTemplate data={dbToRakhiData(rawData)} mode="share" shareId={shareId} />
+      )}
+    </div>
+  );
 }

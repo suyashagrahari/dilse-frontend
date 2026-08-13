@@ -3,14 +3,16 @@
 import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Instagram } from "lucide-react";
 import { RAKHI_ASSETS } from "../assets";
-import { RB, CARD_BORDER, CARD_SHADOW, BRAND_GRADIENT } from "./theme";
+import { RB, CARD_BORDER, CARD_SHADOW, BRAND_GRADIENT, charmGlyph } from "./theme";
 import type { RakhiData, Memory } from "./types";
+import { AssetImage, fitAsset } from "./AssetImage";
+import { Rangoli, ThreadDivider, RakhiCharm, Toran } from "./Ornaments";
 
 /**
- * Deterministic tilt per card. `Math.random()` would re-roll on every render and
- * the polaroids would twitch each time React re-paints the list.
+ * Deterministic tilt per card. `Math.random()` would re-roll on every render
+ * and the polaroids would twitch each time React repaints the list.
  */
 function tilt(i: number): number {
   const seq = [-2.6, 1.9, -1.4, 2.8, -3, 1.2, -2.1, 2.4];
@@ -25,21 +27,22 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
 
   return (
     <motion.figure
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 26, rotate: 0 }}
+      whileInView={{ opacity: 1, y: 0, rotate: tilt(i) }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 1.03, rotate: 0, zIndex: 4 }}
       style={{
-        transform: `rotate(${tilt(i)}deg)`,
         background: RB.surface,
         border: CARD_BORDER,
         boxShadow: CARD_SHADOW,
-        borderRadius: 6,
-        padding: "11px 11px 0",
+        borderRadius: 7,
+        padding: "12px 12px 0",
         margin: 0,
         width: "100%",
-        maxWidth: 268,
+        maxWidth: 270,
         position: "relative",
+        cursor: "pointer",
       }}
     >
       <div
@@ -55,7 +58,7 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
           src={m.imageUrl}
           alt={m.caption || "A memory"}
           fill
-          sizes="268px"
+          sizes="270px"
           onError={() => setBroken(true)}
           style={{ objectFit: "cover" }}
         />
@@ -65,14 +68,15 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
         <span
           style={{
             position: "absolute",
-            top: 16,
-            right: 16,
-            padding: "2px 7px",
-            borderRadius: 4,
-            background: "rgba(255,253,248,0.9)",
+            top: 18,
+            right: 18,
+            padding: "3px 8px",
+            borderRadius: 5,
+            background: "rgba(255,253,248,0.92)",
             fontSize: 10.5,
             color: RB.muted,
-            fontWeight: 600,
+            fontWeight: 700,
+            letterSpacing: 0.5,
           }}
         >
           {m.year}
@@ -82,12 +86,12 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
       <figcaption
         className="rb-hand"
         style={{
-          fontSize: 17,
+          fontSize: 18,
           lineHeight: 1.35,
           color: RB.ink,
           textAlign: "center",
-          padding: "10px 4px 14px",
-          minHeight: 44,
+          padding: "11px 6px 15px",
+          minHeight: 46,
         }}
       >
         {m.caption}
@@ -99,14 +103,17 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
 export default function MemoriesScreen({
   data,
   onSaveCard,
+  onDownload,
   saving,
 }: {
   data: RakhiData;
   onSaveCard: () => void;
+  onDownload: () => void;
   saving: boolean;
 }) {
   const hasMemories = data.memories.length > 0;
   const hasLedger = data.ledger.length > 0;
+  const fallback = fitAsset(RAKHI_ASSETS.bhaiBest, 210);
 
   return (
     <div
@@ -116,134 +123,206 @@ export default function MemoriesScreen({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "34px 22px 40px",
-        gap: 22,
+        padding: "100px 22px 40px",
+        gap: 20,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ textAlign: "center" }}>
-        <h2
-          className="rb-display"
-          style={{ fontSize: 26, fontWeight: 700, color: RB.red, margin: 0 }}
-        >
-          {hasMemories ? "Us, over the years" : "Happy Raksha Bandhan"}
-        </h2>
-        {data.vachan && (
-          <p
-            className="rb-hand"
-            style={{ fontSize: 17, color: RB.ink, marginTop: 10, maxWidth: 300 }}
-          >
-            “{data.vachan}”
-          </p>
-        )}
+      <Toran count={9} />
+      <div style={{ position: "absolute", top: 260, left: "50%", transform: "translateX(-50%)", zIndex: 0 }}>
+        <Rangoli size={380} opacity={0.05} />
       </div>
 
-      {hasMemories && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 26,
-            width: "100%",
-          }}
-        >
-          {data.memories.map((m, i) => (
-            <Polaroid key={`${m.imageUrl}-${i}`} m={m} i={i} />
-          ))}
-        </div>
-      )}
-
-      {/* The running joke ledger. Dot leaders, because it should look like a
-          bill she has been keeping for twenty years. */}
-      {hasLedger && (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 300,
-            padding: "18px 18px 16px",
-            borderRadius: 16,
-            background: RB.surface,
-            border: CARD_BORDER,
-            boxShadow: CARD_SHADOW,
-          }}
-        >
-          <p
-            className="rb-display"
-            style={{ fontSize: 14, fontWeight: 700, color: RB.brass, margin: "0 0 12px", letterSpacing: 0.4 }}
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 18, width: "100%" }}>
+        {/* ── Completion ── */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 10 }}>
+            <RakhiCharm
+              size={62}
+              colorA={data.rakhi.threadColorA}
+              colorB={data.rakhi.threadColorB}
+              bead={data.rakhi.beadColor}
+              glyph={charmGlyph[data.rakhi.charm] ?? "ॐ"}
+              spin
+            />
+          </div>
+          <h2
+            className="rb-display rb-name"
+            style={{ fontSize: 27, fontWeight: 700, color: RB.red, margin: 0 }}
           >
-            THE LEDGER
+            {hasMemories ? "Us, over the years" : "Rakhi tied"}
+          </h2>
+          <p className="rb-deva" style={{ fontSize: 13.5, color: RB.brass, margin: "5px 0 0" }}>
+            राखी बंध गई
           </p>
-          {data.ledger.map((row, i) => (
-            <div
-              key={i}
+        </div>
+
+        {data.vachan && (
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 310,
+              padding: "16px 18px",
+              borderRadius: 17,
+              background: RB.surface,
+              border: CARD_BORDER,
+              boxShadow: CARD_SHADOW,
+              textAlign: "center",
+            }}
+          >
+            <p style={{ fontSize: 11, color: RB.brass, margin: "0 0 6px", letterSpacing: 1.4, fontWeight: 700 }}>
+              HIS PROMISE
+            </p>
+            <p className="rb-hand" style={{ fontSize: 19, color: RB.ink, margin: 0, lineHeight: 1.45 }}>
+              “{data.vachan}”
+            </p>
+          </div>
+        )}
+
+        <ThreadDivider colorA={data.rakhi.threadColorA} colorB={data.rakhi.threadColorB} width={180} />
+
+        {hasMemories && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 28,
+              width: "100%",
+            }}
+          >
+            {data.memories.map((m, i) => (
+              <Polaroid key={`${m.imageUrl}-${i}`} m={m} i={i} />
+            ))}
+          </div>
+        )}
+
+        {/* The running-joke ledger. Dot leaders, because it should look like a
+            bill she has been keeping for twenty years. */}
+        {hasLedger && (
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 305,
+              padding: "19px 19px 16px",
+              borderRadius: 17,
+              background: RB.surface,
+              border: CARD_BORDER,
+              boxShadow: CARD_SHADOW,
+            }}
+          >
+            <p
+              className="rb-display"
               style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: 6,
-                fontSize: 13.5,
-                color: RB.ink,
-                padding: "5px 0",
+                fontSize: 13,
+                fontWeight: 700,
+                color: RB.brass,
+                margin: "0 0 13px",
+                letterSpacing: 1.8,
               }}
             >
-              <span style={{ flexShrink: 0 }}>{row.label}</span>
-              <span
-                aria-hidden
+              THE LEDGER
+            </p>
+            {data.ledger.map((row, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07, duration: 0.4 }}
                 style={{
-                  flex: 1,
-                  minWidth: 12,
-                  borderBottom: `1.5px dotted ${RB.hairline}`,
-                  transform: "translateY(-3px)",
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 6,
+                  fontSize: 13.5,
+                  color: RB.ink,
+                  padding: "6px 0",
                 }}
-              />
-              <span style={{ flexShrink: 0, fontWeight: 700, color: RB.red }}>{row.value}</span>
-            </div>
-          ))}
+              >
+                <span style={{ flexShrink: 0 }}>{row.label}</span>
+                <span
+                  aria-hidden
+                  style={{
+                    flex: 1,
+                    minWidth: 12,
+                    borderBottom: `1.5px dotted ${RB.brassSoft}`,
+                    transform: "translateY(-3px)",
+                  }}
+                />
+                <span style={{ flexShrink: 0, fontWeight: 700, color: RB.red }}>{row.value}</span>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {!hasMemories && !hasLedger && (
+          <div style={{ padding: 10, borderRadius: 18, background: RB.surface, border: CARD_BORDER, boxShadow: CARD_SHADOW }}>
+            <AssetImage
+              asset={RAKHI_ASSETS.bhaiBest}
+              alt="Mera bhai sabse best"
+              maxWidth={fallback.width}
+            />
+          </div>
+        )}
+
+        {/* ── Share ── */}
+        <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+          <motion.button
+            onClick={onSaveCard}
+            whileTap={{ scale: 0.97 }}
+            disabled={saving}
+            className={`rb-display ${saving ? "" : "rb-sheen"}`}
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              minHeight: 56,
+              padding: "16px 26px",
+              borderRadius: 999,
+              background: BRAND_GRADIENT,
+              color: "#fffdf8",
+              border: CARD_BORDER,
+              boxShadow: CARD_SHADOW,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: saving ? "default" : "pointer",
+              opacity: saving ? 0.6 : 1,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 9,
+            }}
+          >
+            {saving ? <Loader2 size={17} className="animate-spin" /> : <Instagram size={17} />}
+            {saving ? "Making the card…" : "Share to your story"}
+          </motion.button>
+
+          <button
+            onClick={onDownload}
+            disabled={saving}
+            style={{
+              minHeight: 46,
+              padding: "12px 22px",
+              borderRadius: 999,
+              background: "transparent",
+              border: `1px solid ${RB.hairline}`,
+              color: RB.muted,
+              fontSize: 13.5,
+              cursor: saving ? "default" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 7,
+            }}
+          >
+            <Download size={14} /> Just download the PNG
+          </button>
         </div>
-      )}
 
-      {!hasMemories && !hasLedger && (
-        <Image
-          src={RAKHI_ASSETS.bhaiBest}
-          alt="Mera bhai sabse best"
-          width={200}
-          height={200}
-          unoptimized
-          style={{ width: 190, height: "auto", borderRadius: 16 }}
-        />
-      )}
-
-      <button
-        onClick={onSaveCard}
-        disabled={saving}
-        className="rb-display"
-        style={{
-          marginTop: 6,
-          minHeight: 52,
-          width: "100%",
-          maxWidth: 320,
-          padding: "15px 26px",
-          borderRadius: 999,
-          background: BRAND_GRADIENT,
-          color: "#fffdf8",
-          border: CARD_BORDER,
-          boxShadow: CARD_SHADOW,
-          fontSize: 16,
-          fontWeight: 700,
-          cursor: saving ? "default" : "pointer",
-          opacity: saving ? 0.6 : 1,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-        }}
-      >
-        {saving ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-        {saving ? "Making it…" : "Save the card"}
-      </button>
-
-      <p style={{ fontSize: 11.5, color: RB.muted, textAlign: "center", margin: 0 }}>
-        subhsandesh.in
-      </p>
+        <p style={{ fontSize: 11.5, color: RB.muted, textAlign: "center", margin: 0, letterSpacing: 0.6 }}>
+          subhsandesh.in
+        </p>
+      </div>
     </div>
   );
 }

@@ -73,13 +73,21 @@ export default function RakhiTemplate({
     [mode, shareId]
   );
 
+  const flash = useCallback((msg: string) => {
+    if (!msg) return;
+    setNote(msg);
+    setTimeout(() => setNote(null), 4000);
+  }, []);
+
+  /** Native share sheet — Instagram is in it on a phone. Falls back to download. */
   const saveCard = useCallback(async () => {
-    const result = await card.share();
-    if (result.message) {
-      setNote(result.message);
-      setTimeout(() => setNote(null), 4000);
-    }
-  }, [card]);
+    flash((await card.share()).message);
+  }, [card, flash]);
+
+  /** Straight download, for anyone who does not want the OS sheet. */
+  const downloadCard = useCallback(async () => {
+    flash((await card.download()).message);
+  }, [card, flash]);
 
   return (
     <div style={{ background: PAPER_GRADIENT, minHeight: "100dvh" }}>
@@ -113,6 +121,7 @@ export default function RakhiTemplate({
               <MemoriesScreen
                 data={{ ...data, vachan }}
                 onSaveCard={saveCard}
+                onDownload={downloadCard}
                 saving={card.busy || !card.ready}
               />
             )}

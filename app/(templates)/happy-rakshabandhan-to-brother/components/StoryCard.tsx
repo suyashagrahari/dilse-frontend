@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, forwardRef } from "react";
 import { toDataUrl, fileSlug } from "@/lib/exportPng";
 import { RB, charmGlyph } from "./theme";
 import { distanceLine, type RakhiData } from "./types";
+import { RakhiCharm, Rangoli, ThreadDivider } from "./Ornaments";
 
 // ─── The shareable card ──────────────────────────────────────────────────────
 //
@@ -107,8 +108,13 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }
         />
       ))}
 
+      {/* Rangoli texture. `still` — nothing in an export node may animate. */}
+      <div style={{ position: "absolute", top: 520, left: "50%", transform: "translateX(-50%)" }}>
+        <Rangoli size={900} opacity={0.05} petals={20} still />
+      </div>
+
       {/* ── Head ── */}
-      <div style={{ textAlign: "center", width: "100%" }}>
+      <div style={{ textAlign: "center", width: "100%", position: "relative" }}>
         <p
           className="rb-deva"
           style={{ fontSize: 40, color: RB.brass, margin: "0 0 14px", letterSpacing: 1 }}
@@ -130,6 +136,13 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }
           <br />
           Bandhan
         </h1>
+        <div style={{ display: "grid", placeItems: "center", marginTop: 22 }}>
+          <ThreadDivider
+            colorA={data.rakhi.threadColorA}
+            colorB={data.rakhi.threadColorB}
+            width={420}
+          />
+        </div>
       </div>
 
       {/* ── Photo ── */}
@@ -171,30 +184,23 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }
 
       {/* ── Names + the rakhi she designed ── */}
       <div style={{ textAlign: "center", width: "100%" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 22,
-            marginBottom: 20,
-          }}
-        >
-          <span
-            style={{
-              width: 74,
-              height: 74,
-              borderRadius: 999,
-              display: "grid",
-              placeItems: "center",
-              fontSize: 34,
-              color: "#fffdf8",
-              background: `linear-gradient(135deg, ${data.rakhi.threadColorA}, ${data.rakhi.threadColorB})`,
-              border: `6px solid ${data.rakhi.beadColor}`,
-              flexShrink: 0,
-            }}
-          >
-            {charmGlyph[data.rakhi.charm] ?? "ॐ"}
-          </span>
+        {/* Her actual rakhi, drawn as SVG so it is crisp at 1080px. */}
+        <div style={{ display: "grid", placeItems: "center", marginBottom: 18 }}>
+          <RakhiCharm
+            size={104}
+            colorA={data.rakhi.threadColorA}
+            colorB={data.rakhi.threadColorB}
+            bead={data.rakhi.beadColor}
+            glyph={charmGlyph[data.rakhi.charm] ?? "ॐ"}
+          />
+          {data.rakhi.pendantText && (
+            <p
+              className="rb-hand"
+              style={{ fontSize: 34, color: RB.brass, margin: "8px 0 0" }}
+            >
+              {data.rakhi.pendantText}
+            </p>
+          )}
         </div>
 
         <p
