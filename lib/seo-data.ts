@@ -49,8 +49,19 @@ export interface TemplateData {
   faqs: { question: string; answer: string }[];
   /** Shown in HowTo rich result in Google */
   howTo: HowToData;
-  /** Shown as star rating in Google search results */
-  aggregateRating: AggregateRatingData;
+  /**
+   * Shown as a star rating in Google search results.
+   *
+   * OPTIONAL, and it should stay optional. Google treats AggregateRating markup
+   * as a claim of fact and has both demoted and manually penalised sites for
+   * ratings with nothing behind them, so a template that has genuinely never
+   * been rated omits this rather than shipping a plausible-looking number.
+   *
+   * `getAggregateRating()` already returns null when absent and every template
+   * layout guards with `{rating && …}`, so leaving it out renders no markup at
+   * all — which is the honest result, not a degraded one.
+   */
+  aggregateRating?: AggregateRatingData;
 }
 
 export const TEMPLATE_DATA: Record<string, TemplateData> = {
@@ -1973,6 +1984,130 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Add the Highlights", text: "Group photos into story highlights with short titles — the trip, the first month, the bad haircut." },
         { name: "Write the Comments", text: "Write the comments under each post as your friends and family. This is where the laughs are." },
         { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it to them in chat." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAPPY RAKSHA BANDHAN — SISTER TO BROTHER
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // The URL slug spells it "rakshabandhan" as one word. Everything a search
+  // engine actually weights — the title, the description, the FAQ text — uses
+  // the correct two-word "Raksha Bandhan", which is how it is written and how
+  // it is searched. That is the mitigation for the slug, and it is why the
+  // spelling below is not a typo waiting to be "fixed" to match the URL.
+  //
+  // No `aggregateRating`: this template launches with zero real uses.
+  "happy-rakshabandhan-to-brother": {
+    title: "Happy Raksha Bandhan for Brother — Tie a Rakhi Online, Free",
+    description:
+      "Send your brother a Raksha Bandhan page he can actually take part in. He does the tilak, the mithai, the aarti and the rakhi on his phone, then writes his promise back to you. Add your photo and your UPI for shagun. Free, in 2 minutes.",
+    category: "Festival",
+    emoji: "🪢",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy raksha bandhan brother",
+      "raksha bandhan wishes for brother",
+      "rakhi for brother online",
+      "tie rakhi online",
+      "online rakhi for brother",
+      "raksha bandhan card for brother",
+      "happy rakshabandhan to brother",
+      "virtual rakhi for brother",
+      // ── DISTANCE / NRI ──
+      "send rakhi to brother abroad",
+      "rakhi for brother far away",
+      "raksha bandhan for brother in another city",
+      "digital rakhi for brother abroad",
+      "long distance raksha bandhan",
+      "rakhi online for nri brother",
+      // ── INTENT ──
+      "raksha bandhan message for brother",
+      "rakhi wishes from sister",
+      "raksha bandhan 2026",
+      "raksha bandhan 2026 date",
+      "rakhi muhurat 2026",
+      "shubh muhurat raksha bandhan",
+      "raksha bandhan gift for brother online",
+      "funny rakhi message for brother",
+      "emotional raksha bandhan message brother",
+      // ── LONG TAIL ──
+      "rakhi page for brother with photo",
+      "raksha bandhan photo card for instagram story",
+      "raksha bandhan instagram story template",
+      "make rakhi card online free",
+      "personalised rakhi card for brother",
+      "raksha bandhan page with upi shagun",
+      "brother sister bond page online",
+      "rakhi ritual online tilak aarti",
+    ],
+
+    faqs: [
+      {
+        question: "When is Raksha Bandhan in 2026?",
+        answer:
+          "Raksha Bandhan 2026 falls on Friday, 28 August. The auspicious window that morning runs roughly from 5:57 AM to 9:48 AM IST — Bhadra ends before sunrise that year, so the whole morning is clear. The page shows a live countdown to it, but it never blocks anything: you can open the page and tie the rakhi at any hour, on any date.",
+      },
+      {
+        question: "How do I tie a rakhi to my brother online?",
+        answer:
+          "Open the Happy Raksha Bandhan template on SubhSandesh, add his name, a photo of the two of you, and a short message. Publish it and send him the private link. When he opens it he performs the ritual himself on his phone — tilak, mithai, aarti and then the rakhi — and writes a promise back to you at the end.",
+      },
+      {
+        question: "What does my brother actually do when he opens it?",
+        answer:
+          "He taps through the whole puja in order. He applies the tilak, feeds the mithai, circles the aarti, and ties the rakhi — each step with a short line explaining what it means and why it is done. Then he asks for his gift, sees your UPI QR if you added one, and types his promise, which comes back to you.",
+      },
+      {
+        question: "Can I ask for shagun through the page?",
+        answer:
+          "Yes, and it is entirely optional. If you add your UPI ID or QR code it appears after the rakhi is tied, with a UPI deep link so he can pay in one tap. There is no confirmation step, no reminder and no follow-up — the page never asks him whether he sent anything and never tracks it, because a rakhi is a gift and not an invoice.",
+      },
+      {
+        question: "Does he need an account to open it or reply?",
+        answer:
+          "No. He opens the link and the whole ritual works straight away, and he can write his promise back to you without signing up for anything. Only you need an account, to build and edit the page.",
+      },
+      {
+        question: "Can I download it for my Instagram story?",
+        answer:
+          "Yes. The main card — your photo, both names, the date and the distance if you added it — downloads as a 1080×1920 PNG, the exact Story size. On a phone you can send it straight to Instagram through the share sheet; on a laptop it saves to your downloads and you can upload it from there.",
+      },
+      {
+        question: "What if my brother lives in another country?",
+        answer:
+          "That is what this is for. Add the distance and the page says 'tied from 7,400 km away' under his name. The ritual works identically wherever he opens it, and the muhurat countdown is calculated in IST so it means the same thing to both of you.",
+      },
+      {
+        question: "Can I add photos and a funny list?",
+        answer:
+          "Yes. Add as many memories as you like — each becomes a polaroid with your caption and the year. There is also an optional ledger for the running jokes: chocolates owed, times he tore your homework, times he covered for you. Affectionate, never a real grievance.",
+      },
+      {
+        question: "Is it free?",
+        answer: "Yes — creating, publishing and sharing your Raksha Bandhan page is completely free.",
+      },
+      {
+        question: "Can I password-protect it and edit it later?",
+        answer:
+          "Yes to both. Set an optional password when you create the page — passwords are stored hashed and never shown — and edit and republish anytime. The same link always shows the latest version. His promise is the one thing you cannot edit; it is written once, by him.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Tie a Rakhi to Your Brother Online",
+      description:
+        "Make a Raksha Bandhan page your brother can take part in — tilak, mithai, aarti and the rakhi itself — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Raksha Bandhan page on SubhSandesh and tap Create." },
+        { name: "Add Your Bhai", text: "Enter his name and yours, and upload a photo of the two of you for the card." },
+        { name: "Design the Rakhi", text: "Pick the thread colours, the bead and the charm, and put your name on the pendant." },
+        { name: "Write Your Message", text: "Add a few lines for him, your memories with captions, and the funny ledger if you want it." },
+        { name: "Add Shagun (Optional)", text: "Add your UPI ID or QR code so he can send shagun after the rakhi is tied." },
+        { name: "Send the Link", text: "Publish and send him the private link on WhatsApp so he can tie it on the day." },
       ],
     },
   },

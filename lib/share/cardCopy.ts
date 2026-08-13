@@ -41,6 +41,7 @@ const COPY: Record<string, CardCopy> = {
   "date-invitation": { kicker: "You're invited", headline: "Dinner? Just Us.", line: "Say when" },
   "court-of-love": { kicker: "You are hereby summoned", headline: "The Court of Love", line: "Attendance is mandatory" },
   us: { kicker: "The story so far", headline: "Us", line: "Chapter one of many" },
+  "happy-rakshabandhan-to-brother": { kicker: "Raksha Bandhan", headline: "Your Sister Tied You a Rakhi", line: "Scan to tie it" },
   capsule: { kicker: "Sealed for later", headline: "A Time Capsule", line: "Open when you're ready" },
   rewind: { kicker: "Press play", headline: "Our Year, Rewound", line: "All of it, again" },
   loveflix: { kicker: "Now streaming", headline: "Tonight's Feature: Us", line: "No skipping the good parts" },
