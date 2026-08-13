@@ -85,6 +85,10 @@ const BouquetGfViewer = dynamic(() => import("./BouquetGfViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const RakshaBandhanViewer = dynamic(() => import("./RakshaBandhanViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 const ProductViewer = dynamic(() => import("./ProductViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
@@ -321,7 +325,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro" || result.templateType === "raksha-bandhan") {
             setData(result.data);
             setLoading(false);
             return;
@@ -620,6 +624,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Build a Bouquet (gf) has its own full-page viewer
   if (!loading && templateType === "bouquet-gf" && data) {
     return <BouquetGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Raksha Bandhan has its own full-page viewer
+  if (!loading && templateType === "raksha-bandhan" && data) {
+    return <RakshaBandhanViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   // The Product listing has its own full-page viewer

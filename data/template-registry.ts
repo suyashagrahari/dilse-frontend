@@ -51,6 +51,7 @@ import { config as challan } from "@/app/(templates)/challan/config";
 import { config as nutrition } from "@/app/(templates)/nutrition/config";
 import { config as appListing } from "@/app/(templates)/app/config";
 import { config as profilePro } from "@/app/(templates)/profile-pro/config";
+import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -62,6 +63,13 @@ import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 //
 // Everything after them keeps the order it already had.
 const allConfigs = [
+  // ── SEASONAL, leading deliberately ────────────────────────────────────────
+  // Raksha Bandhan is 28 Aug 2026. A dated festival template is worth the top
+  // slot only while the date is ahead of it — after the 28th this is a page
+  // nobody is shopping for, and it should drop back down among the others.
+  // Move it below `apologyDashboard` once the festival has passed.
+  rakshaBandhan,
+
   birthdayGf,
   loveGf,
   darling,

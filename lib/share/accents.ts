@@ -56,6 +56,7 @@ const ACCENTS: Record<string, string> = {
   "shaadi-card": "#f43f5e",
   streak: "#b45309",
   "train-ticket": "#334155",
+  "happy-rakshabandhan-to-brother": "#9B2226",
   us: "#171717",
   "valentine-gf": "#ef4444",
   "vending-machine": "#0f766e",
