@@ -13,7 +13,6 @@ import {
   CARD_BORDER,
 } from "@/app/(templates)/happy-rakshabandhan-to-brother/components/theme";
 import { API_URL, IS_NGROK } from "@/lib/config";
-import { RAKHI_FONT_VARS } from "@/app/(templates)/happy-rakshabandhan-to-brother/fonts";
 import "@/app/(templates)/happy-rakshabandhan-to-brother/components/rakhi.css";
 
 function PasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
@@ -240,18 +239,14 @@ export default function RakshaBandhanViewer({
   // constraint on this template, so the cost is that a reload asks again.
   const [unlocked, setUnlocked] = useState(!hasPassword);
 
-  // The font variables MUST be applied here as well as in the builder's
-  // layout.tsx. This route is a different tree — without this wrapper every
-  // var(--font-rb-*) resolves to nothing and the whole ritual, including the
-  // Devanagari shloka, falls back to a system face. This is the side her
-  // brother actually sees.
-  return (
-    <div className={RAKHI_FONT_VARS}>
-      {hasPassword && !unlocked ? (
-        <PasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />
-      ) : (
-        <RakhiTemplate data={dbToRakhiData(rawData)} mode="share" shareId={shareId} />
-      )}
-    </div>
-  );
+  // The font variables this component's CSS depends on are applied by
+  // `app/[id]/page.tsx`, which wraps this route in RAKHI_FONT_VARS when the
+  // template matches. They are deliberately NOT imported here — see the note
+  // in that file for why a next/font call inside one of these client viewers
+  // breaks the Turbopack build for a different viewer's fonts.
+  if (hasPassword && !unlocked) {
+    return <PasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
+  }
+
+  return <RakhiTemplate data={dbToRakhiData(rawData)} mode="share" shareId={shareId} />;
 }
