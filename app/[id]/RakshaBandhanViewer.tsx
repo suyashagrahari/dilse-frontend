@@ -239,11 +239,10 @@ export default function RakshaBandhanViewer({
   // constraint on this template, so the cost is that a reload asks again.
   const [unlocked, setUnlocked] = useState(!hasPassword);
 
-  // The font variables this component's CSS depends on are applied by
-  // `app/[id]/page.tsx`, which wraps this route in RAKHI_FONT_VARS when the
-  // template matches. They are deliberately NOT imported here — see the note
-  // in that file for why a next/font call inside one of these client viewers
-  // breaks the Turbopack build for a different viewer's fonts.
+  // No font wiring here, and none needed: the faces this component's CSS uses
+  // are declared in the ROOT layout, which wraps every route including this
+  // one. See the note at the top of rakhi.css for why the template registering
+  // its own fonts broke the Docker build.
   if (hasPassword && !unlocked) {
     return <PasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
   }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { RAKHI_FONT_VARS } from "./fonts";
 import {
   getTemplateMeta,
   SITE_URL,
@@ -54,7 +53,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const rating = getAggregateRating(SLUG);
 
   return (
-    <div className={RAKHI_FONT_VARS}>
+    // No font wrapper: this template uses the faces the root layout already
+    // declares (see the note at the top of components/rakhi.css). Registering
+    // its own would add build-time font downloads the CI builder cannot make.
+    <div>
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: SITE_URL },

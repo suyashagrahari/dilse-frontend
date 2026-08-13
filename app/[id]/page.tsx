@@ -3,7 +3,6 @@ import { getSharePageMeta, buildMeta, SITE_URL } from "@/lib/seo";
 import { SharePageJsonLd } from "@/components/JsonLd";
 import SharePageWrapper from "./SharePageWrapper";
 import { API_URL } from "@/lib/config";
-import { RAKHI_FONT_VARS } from "@/app/(templates)/happy-rakshabandhan-to-brother/fonts";
 
 interface SharePageData {
   success: boolean;
@@ -79,27 +78,6 @@ export default async function SharePage({
   const title = `${templateType.charAt(0).toUpperCase() + templateType.slice(1)} for ${recipientName}`;
   const description = `${senderName} created a special ${templateType} surprise for ${recipientName}`;
 
-  // ── Template-scoped font variables ────────────────────────────────────────
-  //
-  // Raksha Bandhan needs its four faces on THIS route — it is the page the
-  // recipient opens, and without them the whole ritual, including the
-  // Devanagari shloka, falls back to a system face.
-  //
-  // Applied here, in a Server Component, rather than inside the client viewer.
-  // Four `/[id]` viewers already call next/font from a client component, and
-  // adding a fifth reproducibly broke the Turbopack build — it failed resolving
-  // `@vercel/turbopack-next/internal/font/google/font` for dm_sans, a font in a
-  // *different* viewer that nothing had touched. All these viewers are lazily
-  // imported into one chunk group, so a new font module there reshuffles the
-  // chunk graph and stale cached font-CSS modules stop resolving. A cold build
-  // passed; the CI build, which restores `.next/cache`, did not.
-  //
-  // A Server Component does not participate in that client chunk group, so the
-  // fonts load without touching it. `templateType` is already known here from
-  // the server fetch, so the class is applied ONLY for this template and every
-  // other share page is unaffected.
-  const fontVars = templateType === "raksha-bandhan" ? RAKHI_FONT_VARS : undefined;
-
   return (
     <>
       <SharePageJsonLd
@@ -109,9 +87,7 @@ export default async function SharePage({
         datePublished={createdAt}
         authorName={senderName}
       />
-      <div className={fontVars}>
-        <SharePageWrapper />
-      </div>
+      <SharePageWrapper />
     </>
   );
 }

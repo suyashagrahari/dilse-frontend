@@ -14,22 +14,54 @@
  * the page just feels busy.
  */
 
+/* ── Typefaces ───────────────────────────────────────────────────────────────
+ *
+ * All four variables come from the ROOT layout (app/layout.tsx). This template
+ * registers no font of its own, and that is load-bearing rather than tidiness.
+ *
+ * It rendered on two route trees — the builder at /happy-rakshabandhan-to-
+ * brother and the shared page at /[id] — so its faces had to reach both. Two
+ * attempts at that broke the Turbopack build in CI:
+ *
+ *   fonts declared inline in the template layout, one route tree      GREEN
+ *   same fonts in a shared module, imported by the layout AND the
+ *     /[id] client viewer                                            RED
+ *   same shared module, imported by the layout AND /[id]/page.tsx     RED
+ *
+ * Both failures reported `Module not found: Can't resolve
+ * '@vercel/turbopack-next/internal/font/google/font'` — and named fonts nobody
+ * had touched (dm_sans, playfair_display) in files this template never edited,
+ * which is what made it so hard to attribute. Server vs client component made
+ * no difference. The common factor is a next/font declaration pulled into more
+ * than one route entry point.
+ *
+ * Local builds passed throughout, so this is only reproducible in CI.
+ *
+ * The root layout already declares a display serif, a script face, Inter and
+ * Tiro Devanagari Hindi — the exact Devanagari face this template chose. Using
+ * those means one declaration site, three fewer families on the wire, and,
+ * because the root layout wraps every route, no per-route font wiring at all.
+ *
+ * Before adding a font here, check app/layout.tsx first. If you genuinely need
+ * a new one, declare it in the root layout, not in this template.
+ */
+
 .rb-root {
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
 .rb-display {
-  font-family: var(--font-rb-display), Georgia, serif;
+  font-family: var(--font-playfair), Georgia, serif;
   font-optical-sizing: auto;
 }
 
 .rb-deva {
-  font-family: var(--font-rb-deva), "Noto Serif Devanagari", serif;
+  font-family: var(--font-tiro-devanagari), "Noto Serif Devanagari", serif;
 }
 
 .rb-hand {
-  font-family: var(--font-rb-hand), var(--font-rb-display), cursive;
+  font-family: var(--font-dancing), var(--font-playfair), cursive;
 }
 
 /* ── Phone-first stage ──────────────────────────────────────────────────────
