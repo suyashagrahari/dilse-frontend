@@ -19,7 +19,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { ApologyData, SignAgreementBody } from "./types";
-import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT } from "./types";
+import { MUSIC_PAUSE_EVENT, MUSIC_RESUME_EVENT, playableMusicUrl } from "./types";
 
 // ─── design tokens (from the mockup) ─────────────────────────────────────────
 const ROSE = "#ff5f8a";
@@ -59,7 +59,12 @@ const HIT_MSGS = [
 ];
 const HIT_EMOJI = ["💥", "💗", "🥺", "🙏", "💔", "💞"];
 const EMOJI_FACES = ["🥺", "😜", "🤦‍♂️", "😅", "🙈", "🤡", "😇", "🫠", "😬"];
-const DISHOOM_SFX = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/apology-dashboard/sfx/dishoom.mp3";
+// Was served from the gifts-media-prod-123 S3 bucket, which AWS disabled along
+// with the old account (every key 403s `AllAccessDisabled`). The file was never
+// kept in the repo or media-src, so there is nothing to fall back to locally —
+// empty disables the whack sound instead of firing a request that always fails.
+// Put a URL back here once the clip is re-sourced into a live bucket.
+const DISHOOM_SFX = "";
 
 // staggered entrance (re-triggers each time a step scrolls into view — works on mobile too)
 const STAGGER_PARENT = { hidden: {}, show: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } } };
@@ -279,7 +284,7 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
       )}
 
       {/* floating music button (bottom-right, extreme corner) */}
-      <MusicFab url={data.backgroundMusic} toast={toast} />
+      <MusicFab url={playableMusicUrl(data.backgroundMusic)} toast={toast} />
 
       {/* desktop side arrows — only after the journey has begun */}
       {begun && (
@@ -855,8 +860,10 @@ function WhackGame({ data, setMood, anger, toast }: { data: ApologyData; setMood
 
   const commitMoles = (next: Mole[]) => { molesRef.current = next; setMoles(next); };
 
-  // preload the "dishoom" sound once
+  // preload the "dishoom" sound once (skipped while DISHOOM_SFX is unset —
+  // playDishoom already no-ops on a null ref, so the game just runs silently)
   useEffect(() => {
+    if (!DISHOOM_SFX) return;
     const a = new Audio(DISHOOM_SFX);
     a.preload = "auto";
     a.volume = 0.75;
