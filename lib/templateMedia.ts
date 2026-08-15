@@ -26,21 +26,32 @@
 //
 //     NEXT_PUBLIC_MEDIA_ORIGIN=https://cdn.subhsandesh.in
 //
-// It is deliberately NOT set by default. As of this writing the distribution at
-// cdn.subhsandesh.in answers AccessDenied on every path — including keys that
-// are public and return 200 straight from the bucket — which means its origin is
-// not this bucket. Setting the variable before that is fixed would break every
-// image on the site rather than speed one up. Verify a real key end to end
-// through the CDN first, then set it.
+// That verification has now been done, and the CDN is the default below.
+// cdn.subhsandesh.in is a CloudFront distribution in front of the
+// s3://subhsandesh-prod bucket and returns 200 with the right content-type on
+// real keys; the earlier AccessDenied readings were probes for keys that simply
+// did not exist in that bucket yet, not a broken origin.
 //
 // Whatever host is used must also be listed in `next.config.ts` `remotePatterns`
 // or `next/image` will refuse to optimise it. Both the bucket and
 // cdn.subhsandesh.in are already listed.
 
-/** Scheme + host only. Override to move every asset behind a CDN at once. */
+/**
+ * Scheme + host only. Override to move every asset to another origin at once.
+ *
+ * The default was `gifts-media-prod-123.s3.ap-south-1.amazonaws.com`, a bucket
+ * in the OLD AWS account. That account is gone: every key answers 403
+ * `AllAccessDisabled` and its IAM key answers `InvalidAccessKeyId`. The account
+ * migration carried user uploads over — the prod box already runs
+ * S3_BUCKET_NAME=subhsandesh-prod with S3_PUBLIC_BASE_URL=https://cdn.subhsandesh.in
+ * — but the static template assets were never copied across, so every cover,
+ * bloom, gif and clip resolved through here was broken. They have since been
+ * re-uploaded into the new bucket under the same `gifts-media/` prefix, so the
+ * key paths below are unchanged and only the origin moves.
+ */
 export const MEDIA_ORIGIN =
   process.env.NEXT_PUBLIC_MEDIA_ORIGIN?.replace(/\/+$/, "") ||
-  "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com";
+  "https://cdn.subhsandesh.in";
 
 /**
  * The key prefix every object shares. Mirrors `S3_UPLOAD_PREFIX` on the server
