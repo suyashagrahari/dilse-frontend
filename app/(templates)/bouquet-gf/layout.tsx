@@ -29,8 +29,10 @@ const inter = Inter({
 const SLUG = "bouquet-gf";
 const tpl = TEMPLATE_SEO[SLUG];
 
+// Crawlers need an absolute URL, so this one keeps the origin — but it is now
+// our own, not the disabled S3 bucket (see components/assets.ts).
 const OG_IMAGE = {
-  url: "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/bouquet-gf/cover.webp",
+  url: `${SITE_URL}/assets/bouquet-gf/cover.webp`,
   width: 1000,
   height: 1000,
   alt: "A hand-tied digital flower bouquet — SubhSandesh",
