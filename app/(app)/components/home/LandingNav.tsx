@@ -43,7 +43,7 @@ export default function LandingNav() {
         {/* Logo */}
         <Link href="/#hero" aria-label="Go to home hero section" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, whiteSpace: 'nowrap', padding: '2px 2px 2px 0', textDecoration: "none" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/indianFestival/logo.webp" alt="SubhSandesh logo" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />
+          <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo.webp" alt="SubhSandesh logo" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />
           <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: '#2a0a0e', letterSpacing: '-0.2px', userSelect: 'none' }}>SubhSandesh</span>
         </Link>
 

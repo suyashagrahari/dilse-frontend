@@ -1,5 +1,3 @@
-import { media } from "@/lib/templateMedia";
-
 // ─── Apology Dashboard — shared type contract ────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer, and the server payload. Field names here === server model field names
@@ -21,12 +19,28 @@ export const MUSIC_PAUSE_EVENT = "apology:music-pause";
 export const MUSIC_RESUME_EVENT = "apology:music-resume";
 
 export interface MusicPreset { id: string; label: string; url: string }
-/** Selectable background songs. url "" = the built-in gentle lofi tune. */
+/**
+ * Selectable background songs. url "" = the built-in gentle lofi tune, which is
+ * synthesised in-browser via WebAudio and so never depends on an origin.
+ *
+ * "Chalo Jaane Do" and "Sorry — Justin Bieber" are gone. They lived only in the
+ * old AWS account's bucket and, unlike the covers and blooms, were never kept in
+ * the repo or media-src — so there was no copy to re-upload into the new bucket.
+ * They are removed rather than left as choices that play nothing. Re-add them
+ * once the audio is re-sourced.
+ */
 export const MUSIC_PRESETS: MusicPreset[] = [
   { id: "lofi", label: "Gentle lofi (built-in)", url: "" },
-  { id: "chalo", label: "Chalo Jaane Do 🎵", url: media("apology-dashboard/music/chalo-jaane-do.mp3") },
-  { id: "sorry", label: "Sorry — Justin Bieber 💔", url: media("apology-dashboard/music/sorry-justin-bieber.mp3") },
 ];
+
+/**
+ * Cards published before the old account died still carry a
+ * gifts-media-prod-123 URL in Mongo, and those rows cannot be edited from here.
+ * Treat any such URL as unset so an already-shared card falls back to the lofi
+ * tune instead of sitting silent on a request that 403s.
+ */
+export const playableMusicUrl = (url: string | undefined | null): string =>
+  !url || url.includes("gifts-media-prod-123") ? "" : url;
 
 export interface Toast {
   id: number;
@@ -116,8 +130,10 @@ export const DEMO_DATA: ApologyData = {
   ],
   deliveryEmail: "",
   sharePhoto: "",
-  // default: "Sorry" (Justin Bieber) — plays by default in preview & on unset pages
-  backgroundMusic: media("apology-dashboard/music/sorry-justin-bieber.mp3"),
+  // default: the built-in lofi tune — plays in preview & on unset pages. Used to
+  // default to "Sorry" (Justin Bieber), which meant the default experience had no
+  // audio at all once that bucket died. "" needs no origin.
+  backgroundMusic: "",
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the server model content fields). */

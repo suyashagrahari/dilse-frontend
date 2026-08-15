@@ -114,7 +114,7 @@ export default function FooterSection() {
             <div className="footer-brand-head" style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
               <div style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', border: '1.5px solid rgba(201,168,76,0.4)', boxShadow: '0 0 18px rgba(201,168,76,0.15)', flexShrink: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo.webp" alt="SubhSandesh" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div className="footer-brand-text">
                 <div className="footer-brand-title" style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: '#1a0507', letterSpacing: '-0.3px', lineHeight: 1 }}>SubhSandesh</div>

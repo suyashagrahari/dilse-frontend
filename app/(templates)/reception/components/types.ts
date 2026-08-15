@@ -57,12 +57,12 @@ export const DEMO_DATA: ReceptionData = {
   venueMapQuery: "Royal+Palace+Hotel+Jaipur+Rajasthan",
   venueTimings: "7:00 PM — 11:30 PM",
   tagline: "Request the pleasure of your company",
-  heroImage: "/assets/Reception/reception.webp",
+  heroImage: "https://cdn.subhsandesh.in/gifts-media/assets/Reception/reception.webp",
   bride: {
     name: "Priya Sharma",
     role: "The Bride",
     description: "A soul who paints the world with kindness, grace, and an infectious love for life.",
-    photo: "/assets/couple1.webp",
+    photo: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp",
     tags: [
       { emoji: "🎓", label: "MBA" },
       { emoji: "💼", label: "Designer" },
@@ -73,7 +73,7 @@ export const DEMO_DATA: ReceptionData = {
     name: "Arjun Verma",
     role: "The Groom",
     description: "A gentleman with a golden heart, endless ambition, and a love for creating memories.",
-    photo: "/assets/couple2.webp",
+    photo: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp",
     tags: [
       { emoji: "🎓", label: "B.Tech" },
       { emoji: "💼", label: "Engineer" },
@@ -85,12 +85,12 @@ export const DEMO_DATA: ReceptionData = {
     groom: "Shri Vikram Verma & Smt. Meena Verma",
   },
   galleryImages: [
-    { src: "/assets/hero-bg.webp", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
-    { src: "/assets/couple1.webp", alt: "Bride", span: "", category: "candid" },
-    { src: "/assets/couple2.webp", alt: "Groom", span: "", category: "candid" },
-    { src: "/assets/couple3.webp", alt: "Pre-Wedding", span: "col-span-2", category: "pre-wedding" },
-    { src: "/assets/couple4.webp", alt: "Together", span: "", category: "couple" },
-    { src: "/assets/couple1.webp", alt: "Engagement", span: "", category: "engagement" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/hero-bg.webp", alt: "Couple", span: "col-span-2 row-span-2", category: "couple" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", alt: "Bride", span: "", category: "candid" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp", alt: "Groom", span: "", category: "candid" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp", alt: "Pre-Wedding", span: "col-span-2", category: "pre-wedding" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp", alt: "Together", span: "", category: "couple" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", alt: "Engagement", span: "", category: "engagement" },
   ],
   wishes: [
     { name: "Amit & Neha", message: "Bahut bahut badhai ho! Dono ko bohot saari khushiyan mile. 💕" },

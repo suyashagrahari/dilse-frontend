@@ -44,7 +44,7 @@ const GreetingModal = memo(function GreetingModal({
         {/* Modal header with card_image.png */}
         <div className="relative overflow-hidden" style={{ height: 180 }}>
           <Image
-            src="/assets/Holi/card_image.webp"
+            src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/card_image.webp"
             alt={card.title}
             fill
             className="object-cover object-center"
@@ -210,7 +210,7 @@ const GreetingCardItem = memo(function GreetingCardItem({
       {/* Card header with card_image.png */}
       <div className="relative h-36 lg:h-44 overflow-hidden">
         <Image
-          src="/assets/Holi/card_image.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/card_image.webp"
           alt={card.title}
           fill
           className="object-cover object-center"
@@ -308,7 +308,7 @@ const GreetingsSection = memo(function GreetingsSection({ data }: { data: HoliDa
       {/* Full background image with low opacity */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Image
-          src="/assets/Holi/card_image.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/card_image.webp"
           alt=""
           fill
           className="object-cover object-center"

@@ -5,7 +5,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "holi",
     title: "Holi",
-    img: "/homePage/holi.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/holi.webp",
     href: "/holi",
     accent: "#d95f76",
     icon: "palette" as const,
@@ -19,7 +19,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "eid",
     title: "Eid Mubarak",
-    img: "/homePage/eid.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/eid.webp",
     href: "/eid-mubarak",
     accent: "#4d8f6f",
     icon: "moon" as const,
@@ -33,7 +33,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "wedding",
     title: "Wedding",
-    img: "/homePage/wedding.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/wedding.webp",
     href: "/wedding-shaadi",
     accent: "#c98b4a",
     icon: "ring" as const,
@@ -47,7 +47,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "anniversary",
     title: "Anniversary",
-    img: "/homePage/anniversary.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/anniversary.webp",
     href: "/anniversary-gf",
     accent: "#b56a75",
     icon: "ring" as const,
@@ -61,7 +61,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "birthday",
     title: "Birthday",
-    img: "/homePage/happyBirthday.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/happyBirthday.webp",
     href: "/birthday-gf",
     accent: "#7e5cc7",
     icon: "cake" as const,
@@ -75,7 +75,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "valentine",
     title: "Valentine",
-    img: "/homePage/valentine.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/valentine.webp",
     href: "/valentine-gf",
     accent: "#e91e8c",
     icon: "heart" as const,
@@ -89,7 +89,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "love",
     title: "Love",
-    img: "/homePage/loveyou.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/loveyou.webp",
     href: "/love-gf",
     accent: "#e27d60",
     icon: "heart" as const,
@@ -103,7 +103,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "sorry",
     title: "Sorry",
-    img: "/homePage/sorry.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/sorry.webp",
     href: "/sorry-gf",
     accent: "#9b7b9d",
     icon: "spark" as const,
@@ -117,7 +117,7 @@ export const SHOWCASE_ITEMS = [
   {
     id: "missyou",
     title: "Miss you",
-    img: "/homePage/missyou.webp",
+    img: "https://cdn.subhsandesh.in/gifts-media/homePage/missyou.webp",
     href: "/missyou-gf",
     accent: "#6b8cce",
     icon: "spark" as const,

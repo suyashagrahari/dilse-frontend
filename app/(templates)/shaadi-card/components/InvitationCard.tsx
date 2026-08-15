@@ -239,7 +239,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         <motion.div style={{ position: "absolute", inset: 0 }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ duration: 1.4, ease: "easeOut" }}>
-          <Image src="/shaadi-card/image10.webp" alt="" fill style={{ objectFit: "cover" }} priority />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image10.webp" alt="" fill style={{ objectFit: "cover" }} priority />
         </motion.div>
         <div
           style={{
@@ -280,7 +280,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
             <Image
-              src="/shaadi-card/image9.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image9.webp"
               alt="mandap"
               fill
               sizes="540px"
@@ -304,7 +304,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.02) contrast(0.98)" }}>
             <Image
-              src="/shaadi-card/image8.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image8.webp"
               alt="couple"
               fill
               sizes="400px"
@@ -331,7 +331,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
           <div style={{ transform: "scaleX(-1)", width: "100%", height: "100%" }}>
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
               <Image
-                src="/shaadi-card/image7.webp"
+                src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image7.webp"
                 alt=""
                 fill
                 sizes="735px"
@@ -358,7 +358,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%" }}>
             <Image
-              src="/shaadi-card/image6.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image6.webp"
               alt=""
               fill
               sizes="735px"
@@ -384,7 +384,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%" }}>
             <Image
-              src="/shaadi-card/image4.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image4.webp"
               alt=""
               fill
               priority
@@ -412,7 +412,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
           <div style={{ transform: "scaleX(-1)", width: "100%", height: "100%" }}>
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
               <Image
-                src="/shaadi-card/image5.webp"
+                src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image5.webp"
                 alt=""
                 fill
                 priority
@@ -570,7 +570,7 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
         >
           <div style={{ position: "relative", width: "100%", height: "100%", filter: "saturate(1.06) contrast(0.98)" }}>
             <Image
-              src="/shaadi-card/image1.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image1.webp"
               alt=""
               fill
               sizes={phone ? "(max-width: 1024px) 60vw, 472px" : "560px"}
@@ -994,22 +994,22 @@ export default function InvitationCard({ brideName, groomName, weddingDate, venu
       {/* Corner florals */}
       <div style={{ position: "absolute", top: 0, left: 0, zIndex: 3, width: 260, height: 240, opacity: 0.9, mixBlendMode: "multiply", pointerEvents: "none" }}>
         <div style={{ position: "relative", width: "100%", height: "100%", transform: "scaleX(-1)" }}>
-          <Image src="/shaadi-card/image5.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left top" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image5.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left top" }} />
         </div>
       </div>
       <div style={{ position: "absolute", top: 0, right: 0, zIndex: 3, width: 260, height: 240, opacity: 0.9, mixBlendMode: "multiply", pointerEvents: "none" }}>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
-          <Image src="/shaadi-card/image4.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right top" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image4.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right top" }} />
         </div>
       </div>
       <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 3, width: 280, height: 240, opacity: 0.85, mixBlendMode: "multiply", pointerEvents: "none" }}>
         <div style={{ position: "relative", width: "100%", height: "100%", transform: "scaleX(-1)" }}>
-          <Image src="/shaadi-card/image7.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left bottom" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image7.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "left bottom" }} />
         </div>
       </div>
       <div style={{ position: "absolute", bottom: 0, right: 0, zIndex: 3, width: 280, height: 240, opacity: 0.85, mixBlendMode: "multiply", pointerEvents: "none" }}>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
-          <Image src="/shaadi-card/image6.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right bottom" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image6.webp" alt="" fill style={{ objectFit: "contain", objectPosition: "right bottom" }} />
         </div>
       </div>
 

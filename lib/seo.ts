@@ -110,11 +110,11 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
 // width/height tags match the image (no awkward crop). All current covers are
 // portrait — declaring correct dims lets WhatsApp/iMessage render them cleanly.
 const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; height: number }> = {
-  "birthday-gf": { path: "/assets/Birthday1/birthdaytemplate1.webp", width: 630, height: 1122 },
-  wedding:       { path: "/assets/marriage/weeding.webp", width: 1024, height: 1536 },
-  reception:     { path: "/assets/Reception/reception.webp", width: 1024, height: 1536 },
-  eid:           { path: "/assets/Eid/hero_eid.webp", width: 768, height: 1344 },
-  holi:          { path: "/assets/Holi/hero_holi.webp", width: 1024, height: 1536 },
+  "birthday-gf": { path: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/birthdaytemplate1.webp", width: 630, height: 1122 },
+  wedding:       { path: "https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp", width: 1024, height: 1536 },
+  reception:     { path: "https://cdn.subhsandesh.in/gifts-media/assets/Reception/reception.webp", width: 1024, height: 1536 },
+  eid:           { path: "https://cdn.subhsandesh.in/gifts-media/assets/Eid/hero_eid.webp", width: 768, height: 1344 },
+  holi:          { path: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp", width: 1024, height: 1536 },
 };
 
 interface SharePageSeo {
