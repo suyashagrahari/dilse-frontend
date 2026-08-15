@@ -63,7 +63,7 @@ const ReceptionBackgroundMusic = memo(function ReceptionBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/Reception/music/reception.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/Reception/music/reception.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;

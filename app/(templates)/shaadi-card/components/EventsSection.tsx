@@ -31,7 +31,7 @@ function HomeMatchBackground() {
     <>
       <div className="pointer-events-none absolute inset-0 z-0 min-h-full" style={{ background: C_BG }}>
         <Image
-          src="/shaadi-card/image10.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image10.webp"
           alt=""
           fill
           className="object-cover"
@@ -69,7 +69,7 @@ function InvitationStyleCorners() {
       >
         <div className="relative h-full w-full scale-x-[-1]">
           <Image
-            src="/shaadi-card/image5.webp"
+            src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image5.webp"
             alt=""
             fill
             sizes="240px"
@@ -87,7 +87,7 @@ function InvitationStyleCorners() {
       >
         <div className="relative h-full w-full">
           <Image
-            src="/shaadi-card/image4.webp"
+            src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image4.webp"
             alt=""
             fill
             sizes="240px"
@@ -105,7 +105,7 @@ function InvitationStyleCorners() {
       >
         <div className="relative h-full w-full scale-x-[-1]">
           <Image
-            src="/shaadi-card/image7.webp"
+            src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image7.webp"
             alt=""
             fill
             sizes="380px"
@@ -123,7 +123,7 @@ function InvitationStyleCorners() {
       >
         <div className="relative h-full w-full">
           <Image
-            src="/shaadi-card/image6.webp"
+            src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image6.webp"
             alt=""
             fill
             sizes="380px"

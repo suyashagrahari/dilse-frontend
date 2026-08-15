@@ -328,13 +328,13 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
         >
         {/* Ornamental corners */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, width: 84, height: 84, opacity: 0.3, transform: "scaleY(-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, width: 84, height: 84, opacity: 0.3, transform: "scaleY(-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", top: 0, right: 0, width: 84, height: 84, opacity: 0.3, transform: "scale(-1,-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", top: 0, right: 0, width: 84, height: 84, opacity: 0.3, transform: "scale(-1,-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, width: 74, height: 74, opacity: 0.22, filter: CORNER_FILTER, pointerEvents: "none" }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, width: 74, height: 74, opacity: 0.22, filter: CORNER_FILTER, pointerEvents: "none" }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", bottom: 0, right: 0, width: 74, height: 74, opacity: 0.22, transform: "scaleX(-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "absolute", bottom: 0, right: 0, width: 74, height: 74, opacity: 0.22, transform: "scaleX(-1)", filter: CORNER_FILTER, pointerEvents: "none" }} />
 
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-2">
@@ -356,7 +356,7 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
           <div className="mb-4 flex justify-center">
             <div className="inline-flex items-center px-4 py-1 rounded-full" style={{ border: "1px solid rgba(201,168,76,0.42)", background: "rgba(201,168,76,0.08)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/indianFestival/logo-sm.webp" alt="SubhSandesh" width={40} height={40} style={{ width: 40, height: 40, objectFit: "contain" }} />
+              <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="SubhSandesh" width={40} height={40} style={{ width: 40, height: 40, objectFit: "contain" }} />
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: "#7a5555", textTransform: "uppercase" }}>SubhSandesh</span>
             </div>
           </div>

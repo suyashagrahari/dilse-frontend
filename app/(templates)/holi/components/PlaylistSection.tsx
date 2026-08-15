@@ -285,7 +285,7 @@ const PlaylistSection = memo(function PlaylistSection({ data, onPlayStateChange 
       {/* Full background image with low opacity */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <Image
-          src="/assets/Holi/hero_holi.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp"
           alt=""
           fill
           className="object-cover object-center"

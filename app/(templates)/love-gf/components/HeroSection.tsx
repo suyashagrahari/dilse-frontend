@@ -77,7 +77,7 @@ export default memo(function HeroSection({ data, onGoGallery, onGoNotes }: Props
   const stopProp = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
   const hasPhoto = data.galleryPhotos.length > 0 && !!data.galleryPhotos[0]?.url;
-  const avatarPhoto = hasPhoto ? data.galleryPhotos[0].url : "/assets/couple1.webp";
+  const avatarPhoto = hasPhoto ? data.galleryPhotos[0].url : "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp";
 
   if (!mounted) return null;
 
@@ -90,7 +90,7 @@ export default memo(function HeroSection({ data, onGoGallery, onGoNotes }: Props
     >
       {/* Background layers */}
       <div className="absolute inset-0">
-        <Image src="/assets/hero-bg.webp" alt="" fill className="object-cover" priority />
+        <Image src="https://cdn.subhsandesh.in/gifts-media/assets/hero-bg.webp" alt="" fill className="object-cover" priority />
       </div>
       <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90 dark:from-slate-950/85 dark:via-slate-950/70 dark:to-slate-950/90 backdrop-blur-[6px]" />
 

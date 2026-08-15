@@ -79,7 +79,7 @@ export const DEMO_DATA: HoliData = {
   congratsMessage:
     "Wishing you and your family a very colorful and joyful Holi! May this festival bring happiness, love, and prosperity to your life. Happy Holi from our family to yours!",
   holiDate: "2026-03-14T00:00:00",
-  heroImage: "/assets/Holi/hero_holi.webp",
+  heroImage: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp",
   hindiTitle: "होली है!",
   hindiSubtitle: "आपको और आपके परिवार को होली की हार्दिक शुभकामनाएं",
   englishSubtitle: "Wishing you joy, colors, and countless blessings this Holi",
@@ -182,12 +182,12 @@ export const DEMO_DATA: HoliData = {
     },
   ],
   playlist: [
-    { title: "Rang Barse", artist: "Amitabh Bachchan", duration: "4:32", color: "#E91E63", src: "/assets/Holi/music/rangbarse.mp3" },
-    { title: "Balam Pichkari", artist: "Vishal Dadlani", duration: "4:45", color: "#03A9F4", src: "/assets/Holi/music/balampichkari.mp3" },
-    { title: "Holi Ke Din", artist: "Kishore Kumar", duration: "5:10", color: "#FFEB3B", src: "/assets/Holi/music/holikedin2.mp3" },
-    { title: "Jai Jai Shiv Shankar", artist: "Kishore Kumar", duration: "6:02", color: "#9C27B0", src: "/assets/Holi/music/jaijaishivshankar.mp3" },
-    { title: "Holi Khele Raghuveera", artist: "Amitabh Bachchan", duration: "5:48", color: "#FF5252", src: "/assets/Holi/music/holikheleraghuvira2.mp3" },
-    { title: "Aaj Na Chhodenge", artist: "R.D. Burman", duration: "5:35", color: "#E91E63", src: "/assets/Holi/music/aajnachhodengye.mp3" },
+    { title: "Rang Barse", artist: "Amitabh Bachchan", duration: "4:32", color: "#E91E63", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/rangbarse.mp3" },
+    { title: "Balam Pichkari", artist: "Vishal Dadlani", duration: "4:45", color: "#03A9F4", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/balampichkari.mp3" },
+    { title: "Holi Ke Din", artist: "Kishore Kumar", duration: "5:10", color: "#FFEB3B", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/holikedin2.mp3" },
+    { title: "Jai Jai Shiv Shankar", artist: "Kishore Kumar", duration: "6:02", color: "#9C27B0", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/jaijaishivshankar.mp3" },
+    { title: "Holi Khele Raghuveera", artist: "Amitabh Bachchan", duration: "5:48", color: "#FF5252", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/holikheleraghuvira2.mp3" },
+    { title: "Aaj Na Chhodenge", artist: "R.D. Burman", duration: "5:35", color: "#E91E63", src: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/aajnachhodengye.mp3" },
   ],
   colorMeanings: [
     { color: "#FF5252", emoji: "🔴", name: "Red", hindi: "लाल", meaning: "Love & Fertility" },

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
 import type { BirthdayData } from "./types";
 
-const ASSETS = "/assets/Birthday1";
+const ASSETS = "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1";
 
 const CW = 1080;
 const CH = 1920;

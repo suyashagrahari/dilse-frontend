@@ -63,7 +63,10 @@ const DarlingBackgroundMusic = memo(function DarlingBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/christan-wedding/BeThouMyVision.mp3");
+    // NB: this pointed at /assets/christan-wedding/... which has always 404'd —
+    // the file lives at /christan-wedding/, one level up from assets. So this
+    // track was silently silent in production; the path is corrected here.
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/christan-wedding/BeThouMyVision.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;

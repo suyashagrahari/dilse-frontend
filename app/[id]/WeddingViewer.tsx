@@ -805,7 +805,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
 
       {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <Image src="/assets/marriage/weeding.webp" alt="" fill priority
+        <Image src="https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp" alt="" fill priority
           className="object-cover object-center" sizes="100vw" style={{ opacity: 0.05 }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--wed-bg)/0.5) 0%, hsl(var(--wed-bg)/0.7) 40%, hsl(var(--wed-bg)/0.5) 100%)" }} />
       </div>
@@ -816,7 +816,7 @@ export default function WeddingViewer({ rawData, shareId, hasPassword }: Wedding
 
         {/* Hero header */}
         <div className="relative h-32 overflow-hidden shrink-0">
-          <Image src="/assets/marriage/weeding.webp" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity: 0.12 }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp" alt="" fill className="object-cover object-center" sizes="240px" style={{ opacity: 0.12 }} />
           <div className="absolute inset-0" style={{ background: GOLD_GRADIENT, opacity: 0.7 }} />
           <div className="absolute top-0 left-0 right-0 h-1" style={{ background: GOLD_CTA }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">

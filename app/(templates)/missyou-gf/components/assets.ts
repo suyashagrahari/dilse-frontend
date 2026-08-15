@@ -5,11 +5,12 @@
 // The default is the local /public/assets/missyou-gf folder, which always works
 // in dev and doubles as a fallback.
 
-// Served from S3 (bucket gifts-media-prod-123, ap-south-1) — uploaded via
-// `npm run upload:missyou-media` in /server. The matching files also live in
-// /public/assets/missyou-gf as a source-of-truth / local fallback: re-run the
-// uploader after changing any of them, then keep this base in sync.
-export const MU_MEDIA_BASE = "https://gifts-media-prod-123.s3.ap-south-1.amazonaws.com/gifts-media/missyou-gf";
+// Served from CloudFront (cdn.subhsandesh.in) in front of s3://subhsandesh-prod
+// in the CURRENT AWS account. This used to point at bucket gifts-media-prod-123
+// in the OLD account, which is gone (403 `AllAccessDisabled` on every key), so
+// every gif and song here was broken. The 14 files were re-uploaded from the
+// repo copy under /public/assets/missyou-gf, which remains the source of truth.
+export const MU_MEDIA_BASE = "https://cdn.subhsandesh.in/gifts-media/missyou-gf";
 
 /** Resolve a media file (gif/mp3) that lives under the missyou-gf media folder. */
 export const muMedia = (file: string): string =>

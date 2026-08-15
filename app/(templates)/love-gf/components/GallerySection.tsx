@@ -35,10 +35,10 @@ const demoCards: StoryCard[] = [
 ];
 
 const DEFAULT_PHOTOS = [
-  "/assets/couple1.webp",
-  "/assets/couple2.webp",
-  "/assets/couple3.webp",
-  "/assets/couple4.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp",
 ];
 
 const marqueeItems = [

@@ -48,7 +48,7 @@ const EidWelcomeOverlay = memo(function EidWelcomeOverlay({
           {/* Background image - subtle */}
           <div className="absolute inset-0 pointer-events-none">
             <Image
-              src="/assets/Eid/hero_eid.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/assets/Eid/hero_eid.webp"
               alt=""
               fill
               className="object-cover object-center"

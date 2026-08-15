@@ -47,7 +47,7 @@ const spring = (delay: number, stiffness = 160, damping = 22) => ({
 export default function HomeSection({ data, isPersonalized, onEditClick }: Props) {
   const rawPhotos = data.homePhotos || [];
   const homePhotos = rawPhotos.map(normalizeHomePhoto);
-  const defaultCardPhotos = ["/love/image5.webp", "/love/image14.webp", "/love/imaghe12.webp", "/love/image13.webp"];
+  const defaultCardPhotos = ["https://cdn.subhsandesh.in/gifts-media/love/image5.webp", "https://cdn.subhsandesh.in/gifts-media/love/image14.webp", "https://cdn.subhsandesh.in/gifts-media/love/imaghe12.webp", "https://cdn.subhsandesh.in/gifts-media/love/image13.webp"];
   const photo = (i: number) => homePhotos[i] ?? null;
   const photoUrl = (i: number) => photo(i)?.url || defaultCardPhotos[i] || "";
 
@@ -113,7 +113,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
 
         {/* Canvas paper background (desktop only) */}
         <div className="hidden sm:block" style={{ position: "absolute", inset: 0 }} aria-hidden="true">
-          <Image src="/love/image18.webp" alt="" fill priority style={{ objectFit: "cover", objectPosition: "center" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image18.webp" alt="" fill priority style={{ objectFit: "cover", objectPosition: "center" }} />
         </div>
 
         {/* ── Torn paper LEFT — slides in from left ── */}
@@ -124,7 +124,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.08, 200, 28)}
         >
           <div style={{ transform: "rotate(92.09deg)", width: "100%", height: "100%" }}>
-            <Image src="/love/image17.webp" alt="" width={1600} height={577} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image17.webp" alt="" width={1600} height={577} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
           </div>
         </motion.div>
 
@@ -135,7 +135,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ y: 0, rotate: 8, opacity: 1 }}
           transition={spring(0.45, 220, 18)}
         >
-          <Image src="/love/image16.webp" alt="note" width={780} height={605} style={{ width: "100%", height: "auto", display: "block" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image16.webp" alt="note" width={780} height={605} style={{ width: "100%", height: "auto", display: "block" }} />
         </motion.div>
 
         {/* ── Torn paper RIGHT — slides in from right ── */}
@@ -146,7 +146,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.1, 200, 28)}
         >
           <div style={{ transform: "rotate(-83.58deg)", width: "100%", height: "100%" }}>
-            <Image src="/love/image15.webp" alt="" width={1600} height={400} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image15.webp" alt="" width={1600} height={400} style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
           </div>
         </motion.div>
 
@@ -239,7 +239,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.72, 200, 26)}
         >
           <div style={{ transform: "rotate(8deg)" }}>
-            <Image src="/love/image11.webp" alt="" width={312} height={508} style={{ width: "100%", height: "32%", display: "block" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image11.webp" alt="" width={312} height={508} style={{ width: "100%", height: "32%", display: "block" }} />
           </div>
         </motion.div>
 
@@ -285,7 +285,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.78, 190, 24)}
         >
           <div style={{ transform: "rotate(12deg)" }}>
-            <Image src="/love/image8.webp" alt="" width={240} height={360} style={{ width: "100%", height: "auto", display: "block" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360} style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         </motion.div>
 
@@ -297,7 +297,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.75, 185, 24)}
         >
           <div style={{ transform: "rotate(-30deg)" }}>
-            <Image src="/love/image7.webp" alt="" width={174} height={459} style={{ width: "100%", height: "auto", display: "block" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459} style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         </motion.div>
 
@@ -309,7 +309,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.2, 190, 24)}
         >
           <div style={{ transform: "rotate(26.17deg)" }}>
-            <Image src="/love/image6.webp" alt="" width={210} height={228} style={{ width: "100%", height: "auto", display: "block" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228} style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         </motion.div>
 
@@ -372,7 +372,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           transition={spring(0.18, 185, 24)}
         >
           <div style={{ transform: "rotate(18.83deg)" }}>
-            <Image src="/love/image4.webp" alt="" width={215} height={355} style={{ width: "100%", height: "auto", display: "block" }} />
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355} style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         </motion.div>
 
@@ -383,7 +383,7 @@ export default function HomeSection({ data, isPersonalized, onEditClick }: Props
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={spring(0.7, 280, 18)}
         >
-          <Image src="/love/image3.webp" alt="" width={122} height={121} style={{ width: "100%", height: "auto", display: "block" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image3.webp" alt="" width={122} height={121} style={{ width: "100%", height: "auto", display: "block" }} />
         </motion.div>
       </div>
 

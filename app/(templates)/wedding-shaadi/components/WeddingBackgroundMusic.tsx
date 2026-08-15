@@ -63,7 +63,7 @@ const WeddingBackgroundMusic = memo(function WeddingBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/marriage/music/wedding-song.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/marriage/music/wedding-song.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;
