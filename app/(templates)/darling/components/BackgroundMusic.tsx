@@ -63,10 +63,18 @@ const DarlingBackgroundMusic = memo(function DarlingBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    // NB: this pointed at /assets/christan-wedding/... which has always 404'd —
-    // the file lives at /christan-wedding/, one level up from assets. So this
-    // track was silently silent in production; the path is corrected here.
-    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/christan-wedding/BeThouMyVision.mp3");
+    // Was "/assets/christan-wedding/BeThouMyVision.mp3", which is wrong twice
+    // over. The path 404s — that file lives at /christan-wedding/… with no
+    // /assets prefix — so this template has never actually played anything.
+    // And the track itself is a Christian wedding hymn, copy-pasted from that
+    // template along with the component; merely correcting the path would have
+    // started playing a hymn over a late-night love page, which is worse than
+    // the silence it replaced.
+    //
+    // `love-bg.mp3` is the ambient bed love-gf and anniversary-gf already use,
+    // and it is deliberately NOT one of the six tracks in this template's own
+    // playlist, so the two never double up.
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/love-bg.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;
