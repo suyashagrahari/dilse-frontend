@@ -51,7 +51,7 @@ const AnniversaryWelcomeOverlay = memo(function AnniversaryWelcomeOverlay({
         >
           <div className="absolute inset-0 pointer-events-none">
             <Image
-              src="/assets/Aniversary/aniversary.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/assets/Aniversary/aniversary.webp"
               alt=""
               fill
               className="object-cover object-center"

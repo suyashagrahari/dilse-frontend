@@ -3,7 +3,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { motion } from "framer-motion";
 
-const BG_SRC = "/assets/Birthday1/happybirthdaybg.mp3";
+const BG_SRC = "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/happybirthdaybg.mp3";
 const TERRACOTTA = "#AD684A";
 
 interface Props {

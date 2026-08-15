@@ -124,12 +124,12 @@ export const DEMO_DATA: WeddingData = {
     { name: "Reception", hindi: "स्वागत", icon: "💃", date: "15 Mar", time: "7 PM", venue: "Grand Hall", accent: "from-blue-500/20 to-blue-500/5 border-blue-500/30", disabled: false },
   ],
   galleryImages: [
-    { src: "/assets/marriage/weeding.webp", alt: "Couple", span: "col-span-2 row-span-2" },
-    { src: "/assets/couple1.webp", alt: "Bride", span: "" },
-    { src: "/assets/couple2.webp", alt: "Groom", span: "" },
-    { src: "/assets/couple3.webp", alt: "Decoration", span: "col-span-2" },
-    { src: "/assets/couple4.webp", alt: "Pre-Wedding", span: "" },
-    { src: "/assets/couple1.webp", alt: "Engagement", span: "" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp", alt: "Couple", span: "col-span-2 row-span-2" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", alt: "Bride", span: "" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp", alt: "Groom", span: "" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp", alt: "Decoration", span: "col-span-2" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp", alt: "Pre-Wedding", span: "" },
+    { src: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", alt: "Engagement", span: "" },
   ],
   wishes: [
     { name: "Amit & Neha", message: "Bahut bahut badhai ho! Dono ko bohot saari khushiyan mile. 💕" },

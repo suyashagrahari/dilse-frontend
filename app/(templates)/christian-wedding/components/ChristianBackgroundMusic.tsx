@@ -10,7 +10,7 @@ const FADE_STEP = 0.0035;
 const FADE_INTERVAL = 45;
 
 /** Christian wedding template — /public/christan-wedding/BeThouMyVision.mp3 */
-const AUDIO_SRC = "/christan-wedding/BeThouMyVision.mp3";
+const AUDIO_SRC = "https://cdn.subhsandesh.in/gifts-media/christan-wedding/BeThouMyVision.mp3";
 
 interface Props {
   shouldPlay: boolean;

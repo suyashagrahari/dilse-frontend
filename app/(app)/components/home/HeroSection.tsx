@@ -24,13 +24,13 @@ type Preview = {
 };
 
 const PREVIEWS: Preview[] = [
-  { id: "holi", pill: "Holi", slug: "holi", img: "/homePage/holi.webp", href: "/holi", footer: "RANG BARSE" },
-  { id: "eid", pill: "Eid", slug: "eid-mubarak", img: "/homePage/eid.webp", href: "/eid-mubarak", footer: "EID CELEBRATION" },
-  { id: "wedding", pill: "Wedding", slug: "wedding", img: "/homePage/wedding.webp", href: "/wedding-shaadi", footer: "SHAADI CELEBRATION" },
-  { id: "anniversary", pill: "Anniversary", slug: "anniversary", img: "/homePage/anniversary.webp", href: "/anniversary-gf", footer: "SILVER JUBILEE" },
-  { id: "birthday", pill: "Birthday", slug: "birthday", img: "/homePage/happyBirthday.webp", href: "/birthday-gf", footer: "BIRTHDAY BASH" },
-  { id: "valentine", pill: "Valentine", slug: "valentine", img: "/homePage/valentine.webp", href: "/valentine-gf", footer: "VALENTINE'S DAY" },
-  { id: "love", pill: "Love", slug: "love", img: "/homePage/loveyou.webp", href: "/love-gf", footer: "DIL SE" },
+  { id: "holi", pill: "Holi", slug: "holi", img: "https://cdn.subhsandesh.in/gifts-media/homePage/holi.webp", href: "/holi", footer: "RANG BARSE" },
+  { id: "eid", pill: "Eid", slug: "eid-mubarak", img: "https://cdn.subhsandesh.in/gifts-media/homePage/eid.webp", href: "/eid-mubarak", footer: "EID CELEBRATION" },
+  { id: "wedding", pill: "Wedding", slug: "wedding", img: "https://cdn.subhsandesh.in/gifts-media/homePage/wedding.webp", href: "/wedding-shaadi", footer: "SHAADI CELEBRATION" },
+  { id: "anniversary", pill: "Anniversary", slug: "anniversary", img: "https://cdn.subhsandesh.in/gifts-media/homePage/anniversary.webp", href: "/anniversary-gf", footer: "SILVER JUBILEE" },
+  { id: "birthday", pill: "Birthday", slug: "birthday", img: "https://cdn.subhsandesh.in/gifts-media/homePage/happyBirthday.webp", href: "/birthday-gf", footer: "BIRTHDAY BASH" },
+  { id: "valentine", pill: "Valentine", slug: "valentine", img: "https://cdn.subhsandesh.in/gifts-media/homePage/valentine.webp", href: "/valentine-gf", footer: "VALENTINE'S DAY" },
+  { id: "love", pill: "Love", slug: "love", img: "https://cdn.subhsandesh.in/gifts-media/homePage/loveyou.webp", href: "/love-gf", footer: "DIL SE" },
 ];
 
 const TOT = PREVIEWS.length;

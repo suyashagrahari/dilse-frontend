@@ -108,7 +108,7 @@ export default function AppSplash() {
         <div className="ss-stack">
           <div className="ss-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" />
+            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" />
           </div>
           <svg
             className="ss-wm"

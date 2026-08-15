@@ -23,7 +23,7 @@ function HomeMatchBackground() {
   return (
     <>
       <div className="pointer-events-none absolute inset-0 z-0 min-h-full" style={{ background: C_BG }}>
-        <Image src="/shaadi-card/image10.webp" alt="" fill className="object-cover" sizes="100vw" priority />
+        <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image10.webp" alt="" fill className="object-cover" sizes="100vw" priority />
       </div>
       <div className="pointer-events-none absolute inset-0 z-[1]"
         style={{ background: "rgba(255,255,255,0.38)", mixBlendMode: "soft-light" }} aria-hidden />
@@ -41,25 +41,25 @@ function InvitationStyleCorners() {
       <div className="pointer-events-none absolute left-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px,40vw,240px)", height: "clamp(110px,22vh,260px)", opacity: 0.88 }} aria-hidden>
         <div className="relative h-full w-full scale-x-[-1]">
-          <Image src="/shaadi-card/image5.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "left top" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image5.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "left top" }} />
         </div>
       </div>
       <div className="pointer-events-none absolute right-[-20px] top-0 z-[3] mix-blend-multiply"
         style={{ width: "clamp(120px,40vw,240px)", height: "clamp(110px,22vh,260px)", opacity: 0.88 }} aria-hidden>
         <div className="relative h-full w-full">
-          <Image src="/shaadi-card/image4.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "right top" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image4.webp" alt="" fill sizes="240px" className="object-contain" style={{ objectPosition: "right top" }} />
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-[-20px] left-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px,50vw,380px)", height: "clamp(140px,28vh,300px)", opacity: 0.95 }} aria-hidden>
         <div className="relative h-full w-full scale-x-[-1]">
-          <Image src="/shaadi-card/image7.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "left bottom" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image7.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "left bottom" }} />
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-[-20px] right-[-30px] z-[3] mix-blend-multiply"
         style={{ width: "clamp(180px,50vw,380px)", height: "clamp(140px,28vh,300px)", opacity: 0.95 }} aria-hidden>
         <div className="relative h-full w-full">
-          <Image src="/shaadi-card/image6.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "right bottom" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/shaadi-card/image6.webp" alt="" fill sizes="380px" className="object-contain" style={{ objectPosition: "right bottom" }} />
         </div>
       </div>
     </>

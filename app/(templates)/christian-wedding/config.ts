@@ -13,7 +13,7 @@ export const config: TemplatePageConfig = {
   previewText: "Join Us — We’re Getting Married! ✝️",
   bodyText: "Two hearts, one covenant. Join us as we celebrate before God, family, and friends.",
   bgGradient: "from-emerald-50 via-stone-50 to-white",
-  coverImage: "/christan-wedding/christian-bg.webp",
+  coverImage: "https://cdn.subhsandesh.in/gifts-media/christan-wedding/christian-bg.webp",
   tabs: [
     { id: "home", icon: Home, label: "Card" },
     { id: "couple", icon: Heart, label: "Us" },

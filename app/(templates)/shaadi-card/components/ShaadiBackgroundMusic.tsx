@@ -63,7 +63,7 @@ const ShaadiBackgroundMusic = memo(function ShaadiBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/shaadi-card/music/ratein.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/shaadi-card/music/ratein.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;

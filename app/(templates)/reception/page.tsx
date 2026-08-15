@@ -184,7 +184,7 @@ export default function ReceptionPage() {
       {/* Background image */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src="/assets/Reception/reception.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Reception/reception.webp"
           alt=""
           fill
           className="object-cover object-center"

@@ -27,7 +27,7 @@ export default function ScrapbookBg({ children, className = "" }: { children: Re
           transform: "rotate(18deg)", zIndex: 1, mixBlendMode: "multiply", opacity: 0.75,
         }}
       >
-        <Image src="/love/image4.webp" alt="" width={215} height={355}
+        <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355}
           style={{ width: "100%", height: "auto", display: "block" }} />
       </div>
 
@@ -40,7 +40,7 @@ export default function ScrapbookBg({ children, className = "" }: { children: Re
           transform: "rotate(-20deg) scaleX(-1)", zIndex: 1, mixBlendMode: "multiply", opacity: 0.70,
         }}
       >
-        <Image src="/love/image6.webp" alt="" width={210} height={228}
+        <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228}
           style={{ width: "100%", height: "auto", display: "block" }} />
       </div>
 
@@ -53,7 +53,7 @@ export default function ScrapbookBg({ children, className = "" }: { children: Re
           transform: "rotate(-25deg)", zIndex: 1, mixBlendMode: "multiply", opacity: 0.68,
         }}
       >
-        <Image src="/love/image7.webp" alt="" width={174} height={459}
+        <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459}
           style={{ width: "100%", height: "auto", display: "block" }} />
       </div>
 
@@ -66,7 +66,7 @@ export default function ScrapbookBg({ children, className = "" }: { children: Re
           transform: "rotate(15deg) scaleX(-1)", zIndex: 1, mixBlendMode: "multiply", opacity: 0.68,
         }}
       >
-        <Image src="/love/image8.webp" alt="" width={240} height={360}
+        <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360}
           style={{ width: "100%", height: "auto", display: "block" }} />
       </div>
 

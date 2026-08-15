@@ -13,12 +13,12 @@ const SCRIPT = "'Great Vibes', cursive";
 const SERIF = "'Cormorant Garamond', Georgia, serif";
 
 const DEMO_PHOTOS: PhotoItem[] = [
-  { url: "/assets/marriage/weeding.webp", caption: "Celebration Time", cropX: 50, cropY: 50 },
-  { url: "/assets/couple1.webp", caption: "Beautiful Moments", cropX: 50, cropY: 30 },
-  { url: "/assets/couple2.webp", caption: "Together Forever", cropX: 50, cropY: 40 },
-  { url: "/assets/couple3.webp", caption: "Cherished Memories", cropX: 50, cropY: 50 },
-  { url: "/assets/couple4.webp", caption: "Joy & Laughter", cropX: 50, cropY: 40 },
-  { url: "/assets/couple1.webp", caption: "Love & Happiness", cropX: 50, cropY: 50 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp", caption: "Celebration Time", cropX: 50, cropY: 50 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", caption: "Beautiful Moments", cropX: 50, cropY: 30 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp", caption: "Together Forever", cropX: 50, cropY: 40 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp", caption: "Cherished Memories", cropX: 50, cropY: 50 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp", caption: "Joy & Laughter", cropX: 50, cropY: 40 },
+  { url: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp", caption: "Love & Happiness", cropX: 50, cropY: 50 },
 ];
 
 function cellClass(i: number, total: number): string {

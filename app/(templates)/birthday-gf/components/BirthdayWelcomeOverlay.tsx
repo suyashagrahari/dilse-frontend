@@ -62,7 +62,7 @@ const BirthdayWelcomeOverlay = memo(function BirthdayWelcomeOverlay({
           <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/assets/Birthday1/backgorundImage.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/backgorundImage.webp"
               alt=""
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />

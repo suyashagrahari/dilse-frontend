@@ -186,7 +186,7 @@ const MoreSection = memo(function MoreSection({ data }: { data: HoliData }) {
       {/* Full background image with low opacity */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Image
-          src="/assets/Holi/hero_holi.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp"
           alt=""
           fill
           className="object-cover object-center"

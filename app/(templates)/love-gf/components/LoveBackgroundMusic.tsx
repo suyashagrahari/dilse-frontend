@@ -63,7 +63,7 @@ const LoveBackgroundMusic = memo(function LoveBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/LoveGf/music/love-bg.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/love-bg.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;
