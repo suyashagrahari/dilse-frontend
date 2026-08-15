@@ -60,7 +60,7 @@ const EidBackgroundMusic = memo(function EidBackgroundMusic({ shouldPlay, paused
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/Eid/music/eid-background.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/Eid/music/eid-background.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;

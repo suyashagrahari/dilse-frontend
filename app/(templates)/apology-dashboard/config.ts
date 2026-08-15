@@ -14,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "I built this whole little world just to say it. Play, scratch, whack, forgive — take your time.",
   bgGradient: "from-rose-50 via-pink-50 to-white",
-  coverImage: "/assets/hero-bg.webp",
+  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/hero-bg.webp",
   tabs: [
     { id: "home", icon: Heart, label: "Sorry" },
     { id: "meter", icon: Sparkles, label: "Meter" },

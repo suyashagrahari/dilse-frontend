@@ -6,7 +6,7 @@
 // As H.264 it is 53 KB — a 31x saving — and its background is opaque white, so
 // flattening the alpha channel costs nothing visually.
 
-const BASE = "/assets/court-of-love";
+const BASE = "https://cdn.subhsandesh.in/gifts-media/assets/court-of-love";
 
 export const ASSETS = {
   /** Two penguins balanced on the scales — nobody is above the Court. */

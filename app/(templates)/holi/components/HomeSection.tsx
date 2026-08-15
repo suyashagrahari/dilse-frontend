@@ -131,7 +131,7 @@ const HomeSection = memo(function HomeSection({ data }: { data: HoliData }) {
       {/* Hero Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/assets/Holi/hero_holi.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp"
           alt="Happy Holi"
           fill
           className="object-cover lg:object-[center_20%]"

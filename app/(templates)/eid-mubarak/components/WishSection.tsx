@@ -49,7 +49,7 @@ const WishSection = memo(function WishSection({ data, onGoGreetings }: WishProps
       {/* Full background with eid-family-wish */}
       <div className="absolute inset-0">
         <Image
-          src="/assets/Eid/eid-family-wish.webp"
+          src="https://cdn.subhsandesh.in/gifts-media/assets/Eid/eid-family-wish.webp"
           alt="Eid Mubarak"
           fill
           className="object-cover object-top"

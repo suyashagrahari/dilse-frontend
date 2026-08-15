@@ -96,11 +96,11 @@ export const DEMO_DATA: BirthdayData = {
   homePhoto2: "",
   galleryPhotos: [],
   musicTracks: [
-    { title: "Celebration", artist: "Kool & The Gang", src: "/assets/Birthday1/celebration.mp3" },
-    { title: "Best Day of My Life", artist: "American Authors", src: "/assets/Birthday1/bestdayofmylife.mp3" },
-    { title: "Dynamite", artist: "BTS", src: "/assets/Birthday1/dynamite.mp3" },
-    { title: "Firework", artist: "Katy Perry", src: "/assets/Birthday1/firework.mp3" },
-    { title: "Good Time", artist: "Owl City & Carly Rae Jepsen", src: "/assets/Birthday1/GoodTime.mp3" },
+    { title: "Celebration", artist: "Kool & The Gang", src: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/celebration.mp3" },
+    { title: "Best Day of My Life", artist: "American Authors", src: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/bestdayofmylife.mp3" },
+    { title: "Dynamite", artist: "BTS", src: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/dynamite.mp3" },
+    { title: "Firework", artist: "Katy Perry", src: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/firework.mp3" },
+    { title: "Good Time", artist: "Owl City & Carly Rae Jepsen", src: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/GoodTime.mp3" },
   ],
   quizQuestions: [
     {

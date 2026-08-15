@@ -49,7 +49,7 @@ const WeddingWelcomeOverlay = memo(function WeddingWelcomeOverlay({
         >
           <div className="absolute inset-0 pointer-events-none">
             <Image
-              src="/assets/marriage/weeding.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp"
               alt=""
               fill
               className="object-cover object-center"

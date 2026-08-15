@@ -154,12 +154,12 @@ export const DEMO_CONTENT: ContentData = {
     "Surprise Date ❤️",
   ],
   musicTracks: [
-    { title: "Perfect",           artist: "Ed Sheeran",      duration: "4:23", src: "/assets/LoveGf/music/perfect.mp3" },
-    { title: "All of Me",         artist: "John Legend",     duration: "4:29", src: "/assets/LoveGf/music/allofme.mp3" },
-    { title: "A Thousand Years",  artist: "Christina Perri", duration: "4:46", src: "/assets/LoveGf/music/a-thousand-years.mp3" },
-    { title: "Thinking Out Loud", artist: "Ed Sheeran",      duration: "4:41", src: "/assets/LoveGf/music/thinkingoutloud.mp3" },
-    { title: "Until I Found Her", artist: "Michael Bublé",   duration: "3:32", src: "/assets/LoveGf/music/untillifoundher.mp3" },
-    { title: "Lover",             artist: "Taylor Swift",    duration: "3:41", src: "/assets/LoveGf/music/lover.mp3" },
+    { title: "Perfect",           artist: "Ed Sheeran",      duration: "4:23", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/perfect.mp3" },
+    { title: "All of Me",         artist: "John Legend",     duration: "4:29", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/allofme.mp3" },
+    { title: "A Thousand Years",  artist: "Christina Perri", duration: "4:46", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/a-thousand-years.mp3" },
+    { title: "Thinking Out Loud", artist: "Ed Sheeran",      duration: "4:41", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/thinkingoutloud.mp3" },
+    { title: "Until I Found Her", artist: "Michael Bublé",   duration: "3:32", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/untillifoundher.mp3" },
+    { title: "Lover",             artist: "Taylor Swift",    duration: "3:41", src: "https://cdn.subhsandesh.in/gifts-media/assets/LoveGf/music/lover.mp3" },
   ],
   sharePhoto: "",
 };

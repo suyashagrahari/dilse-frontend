@@ -16,7 +16,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A handmade little corner — break the wax seal on my letter, count down to when I hold you again, scratch a secret, and open the notes I left for your hard days.",
   bgGradient: "from-rose-100 via-orange-50 to-rose-50",
-  coverImage: "/assets/TemplateComingSoon/missyou1.webp",
+  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/missyou1.webp",
   // Mobile BottomNav — 5 slots (Cover · Letter · Distance · Memories · More).
   tabs: [
     { id: "cover", icon: Mail, label: "Cover" },

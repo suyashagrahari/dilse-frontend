@@ -60,7 +60,7 @@ const BackgroundMusic = memo(function BackgroundMusic({ shouldPlay, paused }: Ba
   }, [clearFade]);
 
   useEffect(() => {
-    const audio = new Audio("/assets/Holi/music/holi-backgorund-2.mp3");
+    const audio = new Audio("https://cdn.subhsandesh.in/gifts-media/assets/Holi/music/holi-backgorund-2.mp3");
     audio.loop = true;
     audio.preload = "auto";
     audio.volume = 0;

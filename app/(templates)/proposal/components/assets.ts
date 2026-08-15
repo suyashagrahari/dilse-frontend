@@ -13,7 +13,7 @@
 
 import type { HeroArt, ReactionKey } from "./types";
 
-const BASE = "/assets/proposal";
+const BASE = "https://cdn.subhsandesh.in/gifts-media/assets/proposal";
 
 export const ASSETS = {
   /** Mochi cat waving with floating hearts — greets the recipient at the audio gate. */

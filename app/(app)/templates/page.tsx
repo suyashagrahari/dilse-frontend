@@ -18,19 +18,19 @@ const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
 
 const COMING_SOON_IMAGES: Record<string, string> = {
   // Temporarily coming soon (have real cover images)
-  "anniversary-gf": "/assets/Aniversary/aniversary.webp",
+  "anniversary-gf": "https://cdn.subhsandesh.in/gifts-media/assets/Aniversary/aniversary.webp",
   // Already coming soon
-  "birthday-gf": "/assets/TemplateComingSoon/happybirthday1.webp",
-  "birthday-friend": "/assets/TemplateComingSoon/happybirhtday2.webp",
-  "birthday-parents": "/assets/TemplateComingSoon/happybirthdaymomanddad.webp",
-  "birthday-bestfriend": "/assets/TemplateComingSoon/happybirhtday2.webp",
-  "valentine-gf": "/assets/TemplateComingSoon/valentine.webp",
-  "valentine-bestfriend": "/assets/TemplateComingSoon/galentine.webp",
-  "sorry-gf": "/assets/TemplateComingSoon/sorry1.webp",
-  "sorry-friend": "/assets/TemplateComingSoon/sorry2.webp",
-  "missyou-gf": "/assets/TemplateComingSoon/missyou1.webp",
-  "missyou-bestfriend": "/assets/TemplateComingSoon/missyou1.webp",
-  "anniversary-parents": "/assets/TemplateComingSoon/wddinganiversary.webp",
+  "birthday-gf": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/happybirthday1.webp",
+  "birthday-friend": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/happybirhtday2.webp",
+  "birthday-parents": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/happybirthdaymomanddad.webp",
+  "birthday-bestfriend": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/happybirhtday2.webp",
+  "valentine-gf": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/valentine.webp",
+  "valentine-bestfriend": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/galentine.webp",
+  "sorry-gf": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/sorry1.webp",
+  "sorry-friend": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/sorry2.webp",
+  "missyou-gf": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/missyou1.webp",
+  "missyou-bestfriend": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/missyou1.webp",
+  "anniversary-parents": "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/wddinganiversary.webp",
 };
 
 const allTypes = [{ id: "all", label: "All", emoji: "✨" }, ...templateTypes];
@@ -297,28 +297,28 @@ function TemplatesContent() {
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/indianFestival/alekhancorner2.svg"
+          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
           style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/indianFestival/alekhancorner2.svg"
+          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
           style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/indianFestival/alekhancorner2.svg"
+          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
           style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/indianFestival/alekhancorner2.svg"
+          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
           style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER }}
@@ -370,7 +370,7 @@ function TemplatesContent() {
             aria-label="Go to home hero"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/logo-sm.webp" alt="SubhSandesh" width={48} height={48} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
+            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="SubhSandesh" width={48} height={48} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0 }} />
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -459,7 +459,7 @@ function TemplatesContent() {
           <div className="flex items-center justify-center gap-4 mt-4">
             <div style={{ width: 80, height: 1, background: "linear-gradient(to right,transparent,rgba(201,168,76,0.6))" }} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: "brightness(0) saturate(100%) invert(67%) sepia(23%) saturate(859%) hue-rotate(8deg) brightness(95%) contrast(92%)" }} />
+            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: "brightness(0) saturate(100%) invert(67%) sepia(23%) saturate(859%) hue-rotate(8deg) brightness(95%) contrast(92%)" }} />
             <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
           </div>
 

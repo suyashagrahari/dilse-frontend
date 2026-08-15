@@ -21,7 +21,7 @@ export const config: TemplatePageConfig = {
   ],
   navActiveColor: "text-rose-500",
   navActiveBg: "bg-rose-500/10",
-  coverImage: "/assets/Aniversary/aniversary.webp",
+  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/Aniversary/aniversary.webp",
   floatStyle: "hearts",
   pages: {
     cover: {

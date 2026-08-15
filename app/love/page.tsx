@@ -285,7 +285,7 @@ export default function LovePage() {
           ═══════════════════════════════════════════ */}
           <div className="lc-bg" aria-hidden="true" style={{ position: "absolute", inset: 0 }}>
             <Image
-              src="/love/image18.webp"
+              src="https://cdn.subhsandesh.in/gifts-media/love/image18.webp"
               alt="" fill priority
               style={{ objectFit: "cover", objectPosition: "center" }}
             />
@@ -305,7 +305,7 @@ export default function LovePage() {
             zIndex: 1,
             opacity: 0.9,
           }}>
-            <Image src="/love/image17.webp" alt="" width={1600} height={577}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image17.webp" alt="" width={1600} height={577}
               style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
           </div>
 
@@ -321,7 +321,7 @@ export default function LovePage() {
             transform: "rotate(8deg)",
             zIndex: 2,
           }}>
-            <Image src="/love/image16.webp" alt="notepad" width={780} height={605}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image16.webp" alt="notepad" width={780} height={605}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -339,7 +339,7 @@ export default function LovePage() {
             zIndex: 3,
             opacity: 0.9,
           }}>
-            <Image src="/love/image15.webp" alt="" width={1600} height={577}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image15.webp" alt="" width={1600} height={577}
               style={{ width: "100%", height: "100%", display: "block", objectFit: "fill" }} />
           </div>
 
@@ -355,7 +355,7 @@ export default function LovePage() {
             zIndex: 4,
           }}>
             <div style={{ position: "absolute", inset: "5% 6% 21% 10%" }}>
-              <Image src="/love/image14.webp" fill alt="couple"
+              <Image src="https://cdn.subhsandesh.in/gifts-media/love/image14.webp" fill alt="couple"
                 style={{ objectFit: "cover", objectPosition: "center 20%" }}
                 sizes="(max-width:640px) 40vw, 169px" />
             </div>
@@ -373,7 +373,7 @@ export default function LovePage() {
             zIndex: 5,
           }}>
             <div style={{ position: "absolute", inset: "5% 6% 21% 10%" }}>
-              <Image src="/love/image13.webp" fill alt="couple reading"
+              <Image src="https://cdn.subhsandesh.in/gifts-media/love/image13.webp" fill alt="couple reading"
                 style={{ objectFit: "cover", objectPosition: "center 25%" }}
                 sizes="(max-width:640px) 44vw, 184px" />
             </div>
@@ -391,7 +391,7 @@ export default function LovePage() {
             zIndex: 6,
           }}>
             <div style={{ position: "absolute", inset: "5% 6% 21% 10%" }}>
-              <Image src="/love/imaghe12.webp" fill alt="couple couch"
+              <Image src="https://cdn.subhsandesh.in/gifts-media/love/imaghe12.webp" fill alt="couple couch"
                 style={{ objectFit: "cover", objectPosition: "center" }}
                 sizes="(max-width:640px) 40vw, 169px" />
             </div>
@@ -409,7 +409,7 @@ export default function LovePage() {
             transform: "rotate(8deg)",
             zIndex: 7,
           }}>
-            <Image src="/love/image11.webp" alt="" width={312} height={508}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image11.webp" alt="" width={312} height={508}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -425,7 +425,7 @@ export default function LovePage() {
             transform: "rotate(15deg)",
             zIndex: 8,
           }}>
-            <Image src="/love/image9.webp" alt="" width={200} height={200}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image9.webp" alt="" width={200} height={200}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -441,7 +441,7 @@ export default function LovePage() {
             transform: "rotate(-9deg)",
             zIndex: 9,
           }}>
-            <Image src="/love/image10.webp" alt="" width={200} height={200}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image10.webp" alt="" width={200} height={200}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -457,7 +457,7 @@ export default function LovePage() {
             transform: "rotate(12deg)",
             zIndex: 10,
           }}>
-            <Image src="/love/image8.webp" alt="" width={240} height={360}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -473,7 +473,7 @@ export default function LovePage() {
             transform: "rotate(-30deg)",
             zIndex: 11,
           }}>
-            <Image src="/love/image7.webp" alt="" width={174} height={459}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -489,7 +489,7 @@ export default function LovePage() {
             transform: "rotate(26.17deg)",
             zIndex: 12,
           }}>
-            <Image src="/love/image6.webp" alt="" width={210} height={228}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -534,7 +534,7 @@ export default function LovePage() {
             zIndex: 14,
           }}>
             <div style={{ position: "absolute", inset: "5% 6% 21% 10%" }}>
-              <Image src="/love/image5.webp" fill alt="couple hugging"
+              <Image src="https://cdn.subhsandesh.in/gifts-media/love/image5.webp" fill alt="couple hugging"
                 style={{ objectFit: "cover", objectPosition: "center 10%" }}
                 sizes="(max-width:640px) 44vw, 184px" />
             </div>
@@ -552,7 +552,7 @@ export default function LovePage() {
             transform: "rotate(18.83deg)",
             zIndex: 15,
           }}>
-            <Image src="/love/image4.webp" alt="" width={215} height={355}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -567,7 +567,7 @@ export default function LovePage() {
             width: "16.1%",
             zIndex: 16,
           }}>
-            <Image src="/love/image3.webp" alt="" width={122} height={121}
+            <Image src="https://cdn.subhsandesh.in/gifts-media/love/image3.webp" alt="" width={122} height={121}
               style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
 
@@ -580,10 +580,10 @@ export default function LovePage() {
       {/* ── MESSAGE TAB ── */}
       {tab === "message" && (
         <div className="lsec">
-          <Image src="/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
-          <Image src="/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
-          <Image src="/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
-          <Image src="/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
           <div className="lmsg">
             <p style={{ fontFamily:"'Dancing Script','Brush Script MT',cursive", fontSize:"clamp(11px,3vw,14px)", color:"rgb(108,74,46)", opacity:0.6, letterSpacing:"0.14em", textAlign:"center", marginBottom:20, textTransform:"uppercase" }}>
               a letter to you
@@ -613,15 +613,15 @@ export default function LovePage() {
       {/* ── PHOTOS TAB ── */}
       {tab === "photos" && (
         <div className="lsec">
-          <Image src="/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
-          <Image src="/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
-          <Image src="/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
-          <Image src="/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
           <p style={{ position:"relative",zIndex:2, fontFamily:"'Dancing Script','Brush Script MT',cursive", fontSize:"clamp(18px,5vw,26px)", fontWeight:700, color:"rgb(108,74,46)", opacity:0.88, marginBottom:20 }}>
             our moments ♡
           </p>
           <div className="lphgrid">
-            {["/love/image5.webp","/love/image14.webp","/love/imaghe12.webp","/love/image13.webp"].map((src,i) => (
+            {["https://cdn.subhsandesh.in/gifts-media/love/image5.webp","https://cdn.subhsandesh.in/gifts-media/love/image14.webp","https://cdn.subhsandesh.in/gifts-media/love/imaghe12.webp","https://cdn.subhsandesh.in/gifts-media/love/image13.webp"].map((src,i) => (
               <div key={i} className="lpol">
                 <Image src={src} alt="couple" width={400} height={530} className="lpol-inner"
                   style={{ objectFit:"cover", width:"100%", height:"100%" }} />
@@ -642,10 +642,10 @@ export default function LovePage() {
       {/* ── WISH TAB ── */}
       {tab === "wish" && (
         <div className="lsec">
-          <Image src="/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
-          <Image src="/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
-          <Image src="/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
-          <Image src="/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image4.webp" alt="" width={215} height={355} className="lsec-tl" style={{ width: "clamp(70px,18vw,150px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image6.webp" alt="" width={210} height={228} className="lsec-tr" style={{ width: "clamp(60px,15vw,130px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image7.webp" alt="" width={174} height={459} className="lsec-bl" style={{ width: "clamp(60px,14vw,120px)", height: "auto" }} />
+          <Image src="https://cdn.subhsandesh.in/gifts-media/love/image8.webp" alt="" width={240} height={360} className="lsec-br" style={{ width: "clamp(55px,12vw,100px)", height: "auto" }} />
           <div className="lwc">
             <div className="lwc-border-t" />
             <div className="lwc-border-b" />
