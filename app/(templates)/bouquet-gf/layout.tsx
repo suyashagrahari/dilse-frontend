@@ -29,10 +29,10 @@ const inter = Inter({
 const SLUG = "bouquet-gf";
 const tpl = TEMPLATE_SEO[SLUG];
 
-// Crawlers need an absolute URL, so this one keeps the origin — but it is now
-// our own, not the disabled S3 bucket (see components/assets.ts).
+// Crawlers need an absolute URL. Now the live CDN, not the dead bucket in the
+// old AWS account (see components/assets.ts).
 const OG_IMAGE = {
-  url: `${SITE_URL}/assets/bouquet-gf/cover.webp`,
+  url: "https://cdn.subhsandesh.in/gifts-media/bouquet-gf/cover.webp",
   width: 1000,
   height: 1000,
   alt: "A hand-tied digital flower bouquet — SubhSandesh",

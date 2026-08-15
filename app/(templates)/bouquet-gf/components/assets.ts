@@ -5,16 +5,17 @@
 // local /public/assets/bouquet-gf folder, which always works in dev + as a
 // fallback. Two parallel asset sets: `color/` and `mono/` (black-and-white).
 
-// Served from /public/assets/bouquet-gf — the local fallback this module was
-// always designed around. It used to point at S3 (bucket gifts-media-prod-123,
-// ap-south-1, uploaded via `npm run upload:bouquet-media` in /server), but AWS
-// disabled that bucket: every key now answers 403 `AllAccessDisabled`, anonymous
-// and authenticated alike, so every bloom on this template rendered broken.
-// All 33 files are tracked in git and copied into the image (Dockerfile copies
-// /app/public), so this origin costs nothing extra and cannot be cut off.
-// To move back to object storage, upload the same folder layout to the new
-// bucket and set this to that base.
-export const BQ_MEDIA_BASE = "/assets/bouquet-gf";
+// Served from CloudFront (cdn.subhsandesh.in) in front of the s3://subhsandesh-prod
+// bucket in the CURRENT AWS account, under the same `gifts-media/` prefix the
+// backend already uploads user media to (S3_PUBLIC_BASE_URL on the prod box).
+//
+// This used to point at bucket gifts-media-prod-123 in the OLD AWS account. That
+// account is gone — every key answers 403 `AllAccessDisabled` and its IAM key is
+// `InvalidAccessKeyId` — which broke every bloom on this template. The migration
+// carried user uploads across but never these static assets, so all 33 files were
+// re-uploaded from the repo copy under /public/assets/bouquet-gf, which stays the
+// source of truth (and is why .dockerignore can keep excluding it from the image).
+export const BQ_MEDIA_BASE = "https://cdn.subhsandesh.in/gifts-media/bouquet-gf";
 
 /** The composed gallery/OG cover, served from the same S3 origin. */
 export const BQ_COVER_URL = `${BQ_MEDIA_BASE}/cover.webp`;
