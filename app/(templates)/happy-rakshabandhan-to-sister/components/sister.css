@@ -1,0 +1,843 @@
+/* ─── Raksha Bandhan (to sister) ─────────────────────────────────────────────
+ *
+ * Keyframes, media queries and anything else an inline style cannot express.
+ * Ported from the brother template's `rakhi.css`; every class and keyframe is
+ * prefixed `rs-` because both stylesheets are loaded on the same site and an
+ * `rb-` selector here would silently inherit the other festival's colours.
+ *
+ * MOTION BUDGET — read before adding to this file.
+ *
+ * The brother template could hide behind its GIFs: they were the loudest thing on
+ * the page, so everything in its stylesheet had to stay quieter than them. This
+ * template ships NO raster artwork at all — the ornaments in `Ornaments.tsx` are
+ * the entire visual identity — so there is nothing here to defer to and the
+ * temptation runs the other way: to let the drawing move because it can.
+ *
+ * The budget is unchanged anyway. Every looping animation is SLOW (2.4s+) and LOW
+ * AMPLITUDE (a few degrees, a few pixels) — ambience you notice only if you look
+ * for it. Fast, high-amplitude motion is all one-shot and tied to something the
+ * reader just did: she tied the rakhi, she tore the lifafa, the seal came down.
+ *
+ * The other half of the budget is the phone this runs on. Everything below
+ * animates `transform` and `opacity` only, so the compositor can carry it without
+ * a layout or paint pass, and there is no `filter: blur()` on anything larger
+ * than a few pixels — a full-screen blur costs a mid-range Android its frame rate
+ * on its own.
+ */
+
+/* ── Typefaces ───────────────────────────────────────────────────────────────
+ *
+ * All four variables come from the ROOT layout (app/layout.tsx). This template
+ * registers no font of its own, and that is load-bearing rather than tidiness.
+ *
+ * It renders on two route trees — the builder at /happy-rakshabandhan-to-sister
+ * and the shared page at /[id] — so its faces have to reach both. Two attempts at
+ * that broke the Turbopack build in CI on the brother template:
+ *
+ *   fonts declared inline in the template layout, one route tree      GREEN
+ *   same fonts in a shared module, imported by the layout AND the
+ *     /[id] client viewer                                            RED
+ *   same shared module, imported by the layout AND /[id]/page.tsx     RED
+ *
+ * Both failures reported `Module not found: Can't resolve
+ * '@vercel/turbopack-next/internal/font/google/font'` — and named fonts nobody
+ * had touched (dm_sans, playfair_display) in files that template never edited,
+ * which is what made it so hard to attribute. Server vs client component made no
+ * difference. The common factor is a next/font declaration pulled into more than
+ * one route entry point.
+ *
+ * Local builds passed throughout, so this is only reproducible in CI. It is also
+ * why nobody should "just try it once more" here: the experiment is a red CI run
+ * that blames an unrelated file.
+ *
+ * The root layout already declares a display serif, a script face, Inter and Tiro
+ * Devanagari Hindi — the exact Devanagari face this template needs for the rakhi
+ * names and the muhurat. Using those means one declaration site, three fewer
+ * families on the wire and no per-route font wiring at all.
+ *
+ * Before adding a font here, check app/layout.tsx first. If you genuinely need a
+ * new one, declare it in the root layout, not in this template.
+ */
+
+/* ── Palette tokens ──────────────────────────────────────────────────────────
+ *
+ * The same values as `RS` in theme.ts, restated as custom properties because CSS
+ * cannot import a TypeScript module. Every colour below this block is either a
+ * var() or an rgba() built from one of these triplets — no loose hex values — so
+ * a palette change is a change to this block and nothing else.
+ *
+ * On `:root` rather than `.rs-root` on purpose: `.rs-editor` and `.rs-topbar` are
+ * fixed-position siblings of the stage rather than descendants of it, so tokens
+ * scoped to the stage would not reach them. The `--rs-` prefix keeps them from
+ * colliding with the app's own variables or the brother template's.
+ */
+:root {
+  --rs-paper: #fffaf2;
+  --rs-paper-deep: #f9edda;
+  --rs-surface: #fffdf8;
+  --rs-rani: #A62A5C;
+  --rs-rani-soft: #c25a83;
+  --rs-rani-deep: #6D1F45;
+  --rs-haldi: #E8A33A;
+  --rs-haldi-soft: #f4c684;
+  --rs-brass: #B08D57;
+  --rs-brass-soft: #dcc7a1;
+  --rs-mehendi: #17564F;
+  --rs-ink: #33202B;
+  --rs-muted: #8a6478;
+}
+
+.rs-root {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rs-display {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* ── Devanagari, and why it must never be tracked ────────────────────────────
+ *
+ * NEVER put `letter-spacing` on this class, in the stylesheet or inline.
+ *
+ * Latin small-caps kickers all over this template carry 3px of tracking, which
+ * looks right and is the reason this keeps getting copied onto the Devanagari
+ * kicker sitting next to them. Devanagari is not built that way: its characters
+ * join along a headline (शिरोरेखा) and its conjuncts are single shaped glyphs, so
+ * tracking does not "space the letters" — it breaks the word apart at seams that
+ * are not letter boundaries.
+ *
+ * It shipped in four places on the first build. `राखी` rendered as `रा खी`, which
+ * to a Hindi reader is not a styled word, it is a typo.
+ *
+ * The rule below cannot defend against an inline style, since inline always wins.
+ * It is here to make the intent explicit and to catch the class-based case.
+ */
+.rs-deva {
+  font-family: var(--font-tiro-devanagari), "Noto Serif Devanagari", serif;
+  letter-spacing: normal;
+}
+
+.rs-hand {
+  font-family: var(--font-dancing), var(--font-playfair), cursive;
+}
+
+/* ── The stage ──────────────────────────────────────────────────────────────
+ *
+ * The brother template started as `max-width: 420px` at every width, which
+ * letterboxed the whole page into a phone column with two empty gutters on a
+ * laptop. The reasoning was that a full-bleed ritual "reads as a website" — what
+ * it actually produced was a 1440px screen that is 70% empty ivory, which reads
+ * as broken. That lesson is imported here rather than re-learned.
+ *
+ * So the column is the PHONE layout only. From 1024px up the stage opens to the
+ * full width and `.rs-screen-grid` takes over with a real two-column composition.
+ * The tablet band in between keeps the column, because a 900px two-column split
+ * gives the artwork too little room to be worth the move.
+ */
+.rs-stage {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: clip;
+  isolation: isolate;
+}
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .rs-stage {
+    box-shadow: 0 0 0 1px rgba(51, 32, 43, 0.1), 0 30px 70px rgba(51, 32, 43, 0.2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .rs-stage {
+    max-width: none;
+    box-shadow: none;
+  }
+
+  /* ── The desktop ground ───────────────────────────────────────────────────
+   *
+   * Opening the column to 1440px exposes a lot of flat ivory, and flat ivory at
+   * that size reads as an unfinished page rather than as paper. Three cheap
+   * layers fix it without another asset:
+   *
+   *   a warm vignette, so the middle sits forward of the edges
+   *   haldi and rani bled off opposite corners at under 10% — colour in the
+   *     gutters, and the two colours that identify this template rather than the
+   *     brother's red
+   *   a hairline brass border inset from the viewport, which is what makes the
+   *     whole thing read as a printed sheet rather than a browser window
+   *
+   * All three are painted, not composited from images, so they cost nothing and
+   * scale to any window. They are `position: fixed` so they do not repeat per
+   * screen and never enter the scroll's paint work.
+   */
+  .rs-stage::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(60rem 40rem at 12% 8%, rgba(232, 163, 58, 0.1), transparent 62%),
+      radial-gradient(52rem 38rem at 92% 92%, rgba(166, 42, 92, 0.08), transparent 60%),
+      radial-gradient(90rem 60rem at 50% 42%, transparent 44%, rgba(51, 32, 43, 0.07) 100%);
+  }
+
+  .rs-stage::after {
+    content: "";
+    position: fixed;
+    inset: 18px;
+    pointer-events: none;
+    z-index: 0;
+    border: 1px solid rgba(176, 141, 87, 0.28);
+    border-radius: 10px;
+  }
+}
+
+/* ── The screen grid ────────────────────────────────────────────────────────
+ *
+ * See Stage.tsx for why this is grid-template-areas and not two components.
+ *
+ *   phone     head / art / body, one column, centred
+ *   desktop   art on the left spanning both rows, head + body on the right
+ *
+ * `min-height: 100dvh` lives here rather than on each screen so that every screen
+ * is exactly one viewport and the ritual never scrolls on a laptop. `dvh`, not
+ * `vh`: on mobile Safari `100vh` is the height the viewport has when the address
+ * bar is hidden, so a `100vh` screen puts its CTA underneath the browser chrome
+ * until you scroll — on a page whose whole point is one tap per screen.
+ */
+.rs-screen {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Top padding reserves the toran's 92px — Stage hangs one on every screen, so
+     no screen may lay content out underneath it. */
+  padding: 100px 22px 26px;
+}
+
+/* ── Why the stack is CENTRED and the CTA is not pushed to the floor ─────────
+ *
+ * This was `align-content: start` with a `1fr` last row and `margin-top: auto` on
+ * the button, which pinned the CTA to the bottom edge and let the 1fr row absorb
+ * everything left over. On a step with two lines of copy that opened a dead
+ * ~400px hole between the paragraph and the button — on a phone, the one size
+ * where vertical space is scarce.
+ *
+ * Centring the whole group instead means it grows and shrinks around the middle
+ * of the screen and reads as one composition at any height, from a 667px SE to a
+ * 932px Pro Max, with no rule about where the button "should" sit. The gap is
+ * vh-based so tall phones breathe and short ones tighten instead of scrolling.
+ */
+.rs-screen-grid {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-areas: "head" "art" "body";
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: clamp(10px, 2.2vh, 18px);
+  width: 100%;
+}
+
+/* ── Screens that genuinely do not fit one viewport ──────────────────────────
+ *
+ * Memories is three polaroids plus a caption block; the complaint register is a
+ * table of rows plus a stamp. Both can exceed a phone viewport, and centring a
+ * column taller than the screen clips it at BOTH ends — the top of the heading
+ * disappears above the fold with nothing to scroll to.
+ *
+ * Add `rs-tall` to Stage's `className` on any such screen and it stacks from the
+ * top and scrolls normally. `.rs-memories` is kept as an alias so the screen that
+ * already names itself for the ledger keeps working either way.
+ */
+.rs-tall .rs-screen-grid,
+.rs-memories .rs-screen-grid {
+  align-content: start;
+}
+
+@media (min-width: 1024px) {
+  /* Polaroids stack tall; the column scrolls rather than the artwork shrinking to
+     nothing beside a short ledger. */
+  .rs-tall .rs-art,
+  .rs-memories .rs-art {
+    align-self: start;
+  }
+}
+
+.rs-head { grid-area: head; text-align: center; }
+.rs-art  { grid-area: art; position: relative; display: grid; place-items: center; }
+
+.rs-body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.8vh, 15px);
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .rs-screen {
+    /* 104px clears the toran, which Stage hangs on every screen. */
+    padding: 104px clamp(40px, 6vw, 104px) 56px;
+    justify-content: center;
+  }
+
+  /* ── Column widths, and why the art column is CAPPED in px ─────────────────
+   *
+   * This was `1.02fr / 1fr` inside a 1240px grid, and on a 2000px monitor it fell
+   * apart: the fr units handed the artwork a 620px column while the artwork
+   * itself is a fixed ~400px, so half of the left side was empty — and the text
+   * beside it stayed pinned at 520px, so the page managed to look sparse and
+   * cramped at the same time.
+   *
+   * An fr column cannot fit a fixed-size child. So the art column is sized in px
+   * to what the artwork actually is, and the text column takes everything that
+   * remains. The grid caps below the point where the two halves stop reading as
+   * one composition.
+   */
+  .rs-screen-grid {
+    flex: none;
+    grid-template-areas:
+      "art head"
+      "art body";
+    grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(40px, 4vw, 72px);
+    row-gap: 18px;
+    align-content: center;
+    justify-items: stretch;
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  /* Artwork is centred against the full height of the text column beside it. */
+  .rs-art { align-self: center; }
+
+  .rs-head { text-align: left; align-self: end; }
+
+  /* No head — the text column takes the whole height beside the artwork rather
+     than starting halfway down it. */
+  .rs-screen-grid--nohead .rs-body {
+    grid-row: 1 / -1;
+    justify-content: center;
+  }
+
+  /* ── No artwork → one centred column ──────────────────────────────────────
+   *
+   * Some screens are a document and nothing else — the vow certificate, the
+   * complaint register — and there is no left-hand image to pair the text with.
+   * Forcing them into the two-column grid would leave half the screen empty next
+   * to a card, so the grid collapses to a single centred column and the document
+   * gets to be the whole composition. */
+  .rs-screen-grid--noart {
+    grid-template-areas: "head" "body";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    justify-items: center;
+    max-width: 660px;
+  }
+  .rs-screen-grid--noart .rs-head {
+    text-align: center;
+    align-self: auto;
+  }
+  .rs-screen-grid--noart .rs-body {
+    align-items: center;
+    text-align: center;
+    grid-row: auto;
+  }
+
+  /* No max-width here — the grid column above already bounds it, and a second cap
+     only reintroduced the gap it was meant to close. */
+  .rs-body {
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+}
+
+/* Long names wrap instead of punching out of a card. Her name is set huge on the
+   cover and "Priyadarshini" at 44px is wider than a 360px phone. */
+.rs-name {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* ── The quiet back link ────────────────────────────────────────────────────
+ *
+ * Its box lives in `BackLink`'s inline styles; what lives here is the part an
+ * inline style cannot express. `:focus-visible` matters more than usual on this
+ * one: it is a borderless transparent button, so a keyboard reader landing on it
+ * with no ring has genuinely no way to tell where they are. `:hover` is a hint
+ * only — a back link that lights up competes with the CTA directly above it.
+ */
+.rs-back {
+  /* The colour is HERE and not in the component's inline style on purpose: an
+     inline `color` outranks any class selector, so the hover and focus rules below
+     would parse, match, and do nothing at all. */
+  color: var(--rs-muted);
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.rs-back:hover {
+  color: var(--rs-rani);
+  background-color: rgba(166, 42, 92, 0.06);
+}
+
+.rs-back:focus-visible {
+  outline: 2px solid var(--rs-rani);
+  outline-offset: 2px;
+}
+
+/* ── Draggable surfaces ─────────────────────────────────────────────────────
+ *
+ * The signature interaction is a thread dragged around a wrist, and on a phone a
+ * pointer drag on an undeclared surface is also a scroll gesture: the browser
+ * takes the vertical component, the page moves, and the drag dies mid-way with no
+ * way for JS to recover it. `touch-action: none` hands the gesture to us.
+ *
+ * It is a class rather than an inline style so it can sit on the drag target and
+ * NOTHING else — applied to a whole screen it would kill scrolling on the one
+ * screen that might need it, and applied to the page it would kill pinch-zoom,
+ * which is an accessibility regression, not a styling choice.
+ */
+.rs-drag {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Ambient loops (slow, quiet) ────────────────────────────────────────────*/
+
+/* The toran sways as if a door just opened. Under 3 degrees, 5 seconds. Rotating
+   a <g> around its own hanging point, so it costs a transform and nothing else. */
+@keyframes rs-sway {
+  0%, 100% { transform: rotate(-2.4deg); }
+  50%      { transform: rotate(2.4deg); }
+}
+.rs-toran-item {
+  animation: rs-sway 5s ease-in-out infinite;
+}
+
+/* The rangoli turns once every two minutes. Deliberately almost imperceptible —
+   at this rate you cannot catch it moving, you only notice the page is not
+   static. */
+@keyframes rs-turn {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.rs-rangoli {
+  animation: rs-turn 120s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes rs-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.rs-spin {
+  animation: rs-spin 18s linear infinite;
+}
+
+/* Five keyframes at uneven intervals; a symmetrical flicker reads as a pulse and
+   stops looking like fire. Kept from the brother template because the diya on the
+   muhurat line is drawn, not a GIF, and a still flame reads as a dead one. */
+@keyframes rs-flame {
+  0%   { transform: scale(1) rotate(-1deg) translateY(0);      opacity: 1; }
+  23%  { transform: scale(1.07) rotate(1.5deg) translateY(-0.4px); opacity: 0.93; }
+  41%  { transform: scale(0.96) rotate(-0.5deg) translateY(0.3px); opacity: 1; }
+  68%  { transform: scale(1.05) rotate(2deg) translateY(-0.6px); opacity: 0.89; }
+  100% { transform: scale(1) rotate(-1deg) translateY(0);      opacity: 1; }
+}
+.rs-flame {
+  transform-origin: 50% 88%;
+  animation: rs-flame 2.4s ease-in-out infinite;
+}
+
+/* Brass sheen on the primary button. One pass every 4.5s. The sweep is a
+   pseudo-element translating across the button, so it never touches layout; the
+   button needs `position: relative` and `overflow: hidden` for it to be clipped
+   to its own radius. */
+@keyframes rs-sheen {
+  0%   { transform: translateX(-130%); }
+  55%  { transform: translateX(130%); }
+  100% { transform: translateX(130%); }
+}
+.rs-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 253, 248, 0.42) 50%,
+    transparent 70%
+  );
+  animation: rs-sheen 4.5s ease-in-out infinite;
+}
+
+/* Attention nudge on the primary CTA — 4px, once every 3.4s. Small enough to
+   register as "this is the thing to press" without reading as an error state. */
+@keyframes rs-nudge {
+  0%, 82%, 100% { transform: translateY(0); }
+  88%           { transform: translateY(-4px); }
+  94%           { transform: translateY(-1px); }
+}
+.rs-nudge {
+  animation: rs-nudge 3.4s ease-in-out infinite;
+}
+
+/* ── One-shots ──────────────────────────────────────────────────────────────*/
+
+@keyframes rs-bloom {
+  from { transform: scale(0.2); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.rs-bloom { animation: rs-bloom 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes rs-rise {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.rs-rise { animation: rs-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Lighting a diya is a state change, not ambience. The one place a `filter` is
+   allowed, on a ~40px element. */
+@keyframes rs-light {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  45%  { transform: scale(1.3);  filter: brightness(1.45); }
+  100% { transform: scale(1);    filter: brightness(1); }
+}
+.rs-light { animation: rs-light 560ms ease-out both; }
+
+/* A stamp coming down. Used by the vow's "signed" seal and the register's CLOSED.
+   Overshoots past 1 and settles at a slight angle, because a stamp applied by a
+   hand is never square to the page. */
+@keyframes rs-stamp {
+  0%   { transform: scale(1.7) rotate(-9deg); opacity: 0; }
+  55%  { transform: scale(0.94) rotate(-3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-4deg);   opacity: 1; }
+}
+.rs-stamp { animation: rs-stamp 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* The knot cinching when she finishes the tie. Shorter and tighter than the
+   stamp: a thread pulled taut does not bounce. */
+@keyframes rs-cinch {
+  0%   { transform: scale(1.22); }
+  70%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.rs-cinch { animation: rs-cinch 340ms cubic-bezier(0.3, 1.4, 0.6, 1) both; }
+
+/* Marigold petals, falling once. `top: 0` plus a translate from above the fold,
+   so the petals never extend the document and cannot create a scrollbar. */
+@keyframes rs-petal-fall {
+  0%   { transform: translateY(-14vh) rotate(0deg);    opacity: 0; }
+  12%  { opacity: 1; }
+  100% { transform: translateY(104vh) rotate(520deg);  opacity: 0; }
+}
+.rs-petal {
+  position: absolute;
+  top: 0;
+  border-radius: 60% 40% 55% 45%;
+  animation: rs-petal-fall 2.6s cubic-bezier(0.35, 0.1, 0.6, 1) forwards;
+}
+
+/* Tap ripple, for the taps that stand in for a drag. */
+@keyframes rs-ripple {
+  from { transform: scale(0.6); opacity: 0.5; }
+  to   { transform: scale(2.4); opacity: 0; }
+}
+.rs-ripple { animation: rs-ripple 620ms ease-out forwards; }
+
+/* ── The page turn ──────────────────────────────────────────────────────────
+ *
+ * What tells the reader she moved is the movement itself, not a 1-2-3-4 step
+ * counter. A counter is honest but it turns a ceremony into a form: you stop
+ * looking at the thread and start watching how many screens are left.
+ *
+ * The outgoing page lifts and slides off, the incoming one arrives and settles —
+ * both driven by framer-motion in the screen. The keyframes below are only for
+ * the paper edge that sweeps across during the turn, which is the part that sells
+ * it as a page rather than a slide.
+ *
+ * 520ms total. Long enough to read as a turn, short enough that six of them do
+ * not feel like waiting.
+ */
+@keyframes rs-page-edge {
+  0%   { transform: translateX(-8%) skewX(-7deg); opacity: 0; }
+  22%  { opacity: 0.9; }
+  100% { transform: translateX(112%) skewX(-7deg); opacity: 0; }
+}
+.rs-page-edge {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 46%;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 253, 248, 0) 0%,
+    rgba(255, 253, 248, 0.72) 46%,
+    rgba(176, 141, 87, 0.22) 62%,
+    rgba(255, 253, 248, 0) 100%
+  );
+  animation: rs-page-edge 520ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+ *
+ * Everything WE add on top of the page goes: the sway, the sheen, the nudge, the
+ * turning rangoli, the petals, the ripple, the sweep. What does NOT go is the
+ * ability to finish — the tie, the tear and every step complete on taps and key
+ * presses, so a reader with a vestibular condition still gets the whole ritual,
+ * just without the theatre.
+ *
+ * The one-shots are pinned to their END state rather than switched off, because
+ * `animation: none` on a `both`-filled animation would leave the certificate at
+ * `opacity: 0` and the seal at `scale(1.7)` — an invisible screen is a worse
+ * outcome than a moving one.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rs-toran-item,
+  .rs-rangoli,
+  .rs-spin,
+  .rs-flame,
+  .rs-sheen::after,
+  .rs-nudge,
+  .rs-bloom,
+  .rs-rise,
+  .rs-light,
+  .rs-stamp,
+  .rs-cinch,
+  .rs-petal,
+  .rs-ripple,
+  .rs-page-edge {
+    animation: none !important;
+  }
+
+  /* A petal shower with no fall is a scatter of coloured dots pinned to the top
+     of the screen. There is nothing to keep. */
+  .rs-petal { display: none !important; }
+  /* The sweep has no meaning without its motion — it would sit as a static pale
+     smear over the incoming page. */
+  .rs-page-edge { display: none !important; }
+
+  .rs-bloom,
+  .rs-rise,
+  .rs-stamp,
+  .rs-cinch {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Story card ─────────────────────────────────────────────────────────────
+ * Fixed 1080×1920, scaled only for preview. The capture neutralises the
+ * transform, so this is presentation only. Nothing inside an export node may
+ * animate: html-to-image serialises the COMPUTED transform of whatever it paints,
+ * so an element caught mid-rotation bakes a crooked ornament into the PNG.
+ */
+.rs-storycard {
+  width: 1080px;
+  height: 1920px;
+  transform-origin: top left;
+  flex-shrink: 0;
+}
+
+/* ── The builder top bar ────────────────────────────────────────────────────
+ *
+ * Back-to-templates and Create, fixed above the preview. Its position lives here
+ * rather than in Tailwind utilities on the element because the railed rule below
+ * has to override its `left`, and a `.rs-railed .rs-topbar` selector only reliably
+ * beats a single-class Tailwind utility on specificity — not on source order,
+ * which depends on which stylesheet the bundler emits last. Keep the geometry in
+ * this file and the two rules cannot get into a fight.
+ */
+.rs-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+}
+
+/* ── The builder: one component, two geometries ─────────────────────────────
+ *
+ * PHONE — a bottom sheet, capped at 88dvh so the page stays visible above it.
+ * DESKTOP (≥1024px) — a docked rail down the left, with the live preview beside
+ * it, so he watches the page change as he types instead of closing a sheet to
+ * check. `.rs-railed` on the root then shifts the stage and the top bar out from
+ * under the rail.
+ *
+ * The switch lives here rather than in the component because it is pure geometry:
+ * doing it in JS would mean the first paint after hydration is the wrong shape,
+ * and doing it in a second component would mean two copies of every field.
+ */
+.rs-editor {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--rs-paper);
+  border-top: 1.5px solid rgba(51, 32, 43, 0.16);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+}
+
+.rs-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px 10px;
+  flex-shrink: 0;
+}
+
+.rs-editor-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 18px 12px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rs-editor-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.rs-editor-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 18px 18px;
+  flex: 1;
+}
+
+.rs-editor-foot {
+  padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(51, 32, 43, 0.12);
+  background: var(--rs-paper);
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .rs-editor {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: 420px;
+    max-width: none;
+    margin: 0;
+    max-height: none;
+    border-top: 0;
+    border-radius: 0;
+    border-right: 1.5px solid rgba(51, 32, 43, 0.16);
+    box-shadow: 18px 0 50px rgba(51, 32, 43, 0.14);
+  }
+
+  .rs-editor-head {
+    padding: 18px 20px 12px;
+  }
+
+  /* The jump-nav stays put while the sections scroll under it. */
+  .rs-editor-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0 20px 12px;
+    background: var(--rs-paper);
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .rs-editor-body {
+    padding: 4px 20px 24px;
+  }
+
+  .rs-editor-foot {
+    padding: 12px 20px 16px;
+  }
+
+  /* Make room for the rail. Without this the stage stays centred in the whole
+   * viewport and the rail sits on top of the left half of the preview. */
+  .rs-railed {
+    padding-left: 420px;
+  }
+
+  /* Two classes beat a single-class utility on the bar. */
+  .rs-railed .rs-topbar {
+    left: 420px;
+  }
+}
+
+/* ── The preview, while the rail is open ────────────────────────────────────
+ *
+ * DO NOT DELETE THIS QUERY. It looks like a cosmetic refinement and it is not.
+ *
+ * The stage's two-column composition is sized off the VIEWPORT, but with the rail
+ * open the space it actually gets is the viewport minus 420px. At 1024px that is
+ * 604px, and the measured result on the brother template was
+ * `grid-template-columns: 435px 0px` — the art column took its fixed width, the
+ * text column collapsed to ZERO, and the entire right-hand side of the preview
+ * (headline, his lines, the CTA) rendered a few pixels wide or not at all. It
+ * presents as "the preview is broken", not as "a media query is missing", which
+ * is why it cost real debugging time the first time.
+ *
+ * So: while railed, the preview stays single-column until the window is wide
+ * enough for a 420px rail AND the full 1060px stage. Below that it is a narrow
+ * centred column, which is honest — the preview genuinely is narrow while half
+ * the window is a form — and it is the same composition the phone gets, which is
+ * already known to work at this width.
+ */
+@media (min-width: 1024px) and (max-width: 1479.98px) {
+  .rs-railed .rs-screen {
+    padding-left: clamp(20px, 3vw, 48px);
+    padding-right: clamp(20px, 3vw, 48px);
+  }
+
+  .rs-railed .rs-screen-grid {
+    grid-template-areas: "head" "art" "body";
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    justify-items: center;
+    text-align: center;
+    max-width: 520px;
+  }
+
+  .rs-railed .rs-screen-grid--noart {
+    grid-template-areas: "head" "body";
+  }
+
+  /* The body's desktop rules left-align it beside artwork that is no longer
+     there; in one column it has to come back to centre with everything else. */
+  .rs-railed .rs-body {
+    align-items: center;
+    text-align: center;
+  }
+
+  .rs-railed .rs-head {
+    text-align: center;
+    align-self: auto;
+  }
+}

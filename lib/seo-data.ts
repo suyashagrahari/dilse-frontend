@@ -2111,4 +2111,131 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAPPY RAKSHA BANDHAN — BROTHER TO SISTER
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // The pair to the block above, and the same slug mitigation applies: the URL
+  // spells it "rakshabandhan" as one word, everything indexable below spells it
+  // the correct two-word way, because that is how it is written and how it is
+  // searched. Do not "fix" the copy into agreement with the URL.
+  //
+  // ── WHY THE TWO ENTRIES MUST NOT SHARE PHRASING ────────────────────────────
+  //
+  // These two pages sit one slug apart, on one festival, with nearly the same
+  // title. Reused sentences between them would be two near-duplicate documents
+  // competing for the same queries, and Google resolves that by picking one and
+  // suppressing the other. So the queries are split on the only axis that
+  // actually separates them: the brother entry owns "rakhi FOR brother / tie
+  // rakhi online", this one owns "wishes FOR sister / rakhi GIFT for sister" —
+  // the searcher here is a brother shopping for a gift, not a sister shopping
+  // for a ritual — and no keyword appears in both lists.
+  //
+  // No `aggregateRating`: this template launches with zero real uses, and a
+  // fabricated star rating in structured data is the kind of thing that costs a
+  // whole domain its rich results.
+  "happy-rakshabandhan-to-sister": {
+    title: "Happy Raksha Bandhan for Sister — Rakhi Gift Page, Free",
+    description:
+      "Send your sister a Raksha Bandhan page where she picks a rakhi and ties it herself on your wrist. Sign the vow, put the shagun in the lifafa, add your photos and the statement of account. She writes back. Free, in 2 minutes.",
+    category: "Festival",
+    emoji: "🧿",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy raksha bandhan sister",
+      "raksha bandhan wishes for sister",
+      "rakhi gift for sister online",
+      "raksha bandhan gift for sister",
+      "raksha bandhan card for sister",
+      "happy rakshabandhan to sister",
+      "rakhi message for sister",
+      "raksha bandhan page for sister",
+      // ── DISTANCE / NRI ──
+      "raksha bandhan gift for sister abroad",
+      "rakhi gift for sister far away",
+      "raksha bandhan for sister in another city",
+      "online rakhi gift for nri sister",
+      "long distance rakhi gift for sister",
+      "raksha bandhan shagun message for sister",
+      // ── INTENT ──
+      "raksha bandhan quotes for sister",
+      "emotional message for sister on rakhi",
+      "funny raksha bandhan message for sister",
+      "raksha bandhan promise to sister",
+      "bhai ka vachan rakhi",
+      "shagun for sister raksha bandhan",
+      "lifafa for sister online",
+      "rakhi gift ideas for sister last minute",
+      // ── DATE / MUHURAT ──
+      "raksha bandhan 2026 sister",
+      "rakhi 2026 date for sister",
+      // ── LONG TAIL ──
+      "personalised raksha bandhan card for sister free",
+      "raksha bandhan photo card for sister instagram story",
+      "digital rakhi gift for didi",
+      "raksha bandhan gift page with photos and shagun",
+      "brother sister page online free",
+    ],
+
+    faqs: [
+      {
+        question: "When is Raksha Bandhan in 2026?",
+        answer:
+          "Raksha Bandhan 2026 falls on Friday, 28 August. The shubh muhurat that morning runs roughly from 5:57 AM to 9:48 AM IST — Bhadra ends before sunrise that year, so the whole morning is clear. The page shows your sister a live countdown to it, but it never blocks her: she can open it and tie the rakhi at any hour, on any date, which matters if she is in a timezone where that window falls at 3 AM.",
+      },
+      {
+        question: "What does my sister actually do when she opens it?",
+        answer:
+          "She does the part that is hers. She is shown five rakhis — marigold, sandalwood, nazar, pearl, plain kalava — picks the one she wants, and then ties the thread around your wrist on the screen until the knot cinches. After that she reads the vow you signed, turns over the statement of account, tears open her lifafa, looks at the photos, and writes you one reply.",
+      },
+      {
+        question: "Why does she tie the rakhi instead of me?",
+        answer:
+          "Because that is whose job it is. On Raksha Bandhan the sister ties the thread and the brother gives the vow and the shagun — so a page built by a brother hands her the tying and keeps the promise and the envelope for him. Our other template, Happy Raksha Bandhan for Brother, is the same festival from her side, where he performs the puja.",
+      },
+      {
+        question: "Can I put shagun in the lifafa, and does the page handle the money?",
+        answer:
+          "You put the shagun in the page and you send the money yourself. Write an amount and a line to go with it, and she tears the lifafa open to find them — the figure and what you wanted to say about it. The page deliberately carries no payment QR and no payment link: a QR encodes whoever is being PAID, so on a page where the brother is the one giving, yours would ask her to pay you, and hers would publish her bank details on something built to be forwarded. Raksha Bandhan is also peak UPI-scam season, and a forwarded page showing a payment code is exactly the shape of that fraud. So the transfer happens in your own banking app, where it was always going to. Both fields are optional — leave them empty and the lifafa still opens as a sweets-and-blessing beat. Nothing is confirmed, reminded or tracked, because shagun is a gift and not an invoice.",
+      },
+      {
+        question: "Will it call her Didi or Behna?",
+        answer:
+          "Whichever is correct, and you tell it which. There is one switch in the form for whether she is your elder sister; the whole page then addresses her as Didi or as Behna throughout. It is the one thing we never guess or auto-fill, because calling an elder sister behna is a slight and calling a younger sister didi is a joke.",
+      },
+      {
+        question: "What is the statement of account?",
+        answer:
+          "The funny half, and the reason the page does not read like a greeting card. It is a mock ledger with two columns. Hers is petty and itemised — hoodies never returned: nine, times you told Mummy: too many — and yours, written just as flatly, is what she actually did for you: the times she covered, the nights she waited up. The second column does not fit on the same scale as the first, and that reversal is the point. Write your own rows. It sits between the vow and the lifafa, so the envelope after it reads as part payment against a balance nobody is pretending to clear.",
+      },
+      {
+        question: "Can she reply, and can I edit the page after she has?",
+        answer:
+          "She gets exactly one reply and it is hers — written once from the link, never editable by you, and it comes back with which rakhi she chose. You can edit and republish everything else anytime and the same link always shows the latest version; her answer is the one thing your edits cannot touch or blank.",
+      },
+      {
+        question: "Is it free, and can I lock it?",
+        answer:
+          "Yes to both. Creating, publishing and sharing the page is completely free, and you can set an optional password when you publish — passwords are stored hashed and never shown. There is also a 1080×1920 card, the exact Instagram Story size, that either of you can download.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send Your Sister a Raksha Bandhan Page",
+      description:
+        "Make a Raksha Bandhan page your sister ties the rakhi on herself — the vow, the statement of account and the shagun lifafa — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Raksha Bandhan for Sister page on SubhSandesh and tap Create." },
+        { name: "Add Your Behna", text: "Enter her name and yours, say whether she is your elder sister so the page calls her Didi or Behna, and upload a photo of the two of you." },
+        { name: "Write the Vow", text: "Four short promises and a since — 'since 2001', 'since the day they brought you home'. This is what gets signed on the certificate." },
+        { name: "Fill In the Statement of Account", text: "Two columns: the running grievances with a count against each in hers, and what she actually did for you in yours. Keep hers short and yours longer." },
+        { name: "Put Shagun in the Lifafa", text: "Add an amount and a line to go with it. Both optional. The page states the figure and you send the money from your own banking app — there is no payment code on the page." },
+        { name: "Add the Photos", text: "Upload a few memories with a caption and a year on each — they become polaroids — and write her the letter at the end." },
+        { name: "Send the Link", text: "Publish and send her the private link on WhatsApp so she can pick a rakhi and tie it on the day." },
+      ],
+    },
+  },
 };
