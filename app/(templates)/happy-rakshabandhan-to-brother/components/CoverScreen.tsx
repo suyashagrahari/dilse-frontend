@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { RAKHI_ASSETS, PRELOAD } from "../assets";
 import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW, charmGlyph } from "./theme";
 import { muhuratState, distanceLine, type RakhiData } from "./types";
 import { useNow } from "./useNow";
 import { AssetImage, fitAsset } from "./AssetImage";
-import { Toran, Rangoli, Diya, ThreadDivider, RakhiCharm, PetalBurst } from "./Ornaments";
+import { Rangoli, Diya, ThreadDivider, RakhiCharm, PetalBurst } from "./Ornaments";
+import Stage, { useIsDesktop } from "./Stage";
 
 /**
  * Screen 1.
@@ -28,8 +30,11 @@ export default function CoverScreen({
   const muhurat = useMemo(() => (now === 0 ? null : muhuratState(now)), [now]);
   const distance = distanceLine(data.distanceKm);
   const [petals, setPetals] = useState(true);
+  const isDesktop = useIsDesktop();
 
-  const cover = fitAsset(RAKHI_ASSETS.cover, 210);
+  // The portrait is the whole left column on a laptop, so it stops being a
+  // 210px badge and becomes the thing you look at first.
+  const cover = fitAsset(RAKHI_ASSETS.cover, isDesktop ? 396 : 210);
 
   // Petals fall once on arrival, then the node is removed entirely.
   useEffect(() => {
@@ -58,42 +63,109 @@ export default function CoverScreen({
   const line = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div
-      className="rb-root"
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "104px 22px 34px",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <Toran />
-      {petals && <PetalBurst count={16} />}
-
-      <div style={{ position: "absolute", top: 150, left: "50%", transform: "translateX(-50%)", zIndex: 0 }}>
-        <Rangoli size={360} opacity={0.06} />
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%" }}>
-        {/* ── The artwork, in a brass ring ── */}
+    <Stage
+      className="rb-cover"
+      behind={
+        <>
+          {/* Toran now comes from Stage — every screen gets one. */}
+          {petals && <PetalBurst count={16} />}
+          <div
+            style={{
+              position: "absolute",
+              top: "18%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 0,
+            }}
+          >
+            <Rangoli size={isDesktop ? 620 : 360} opacity={0.06} />
+          </div>
+        </>
+      }
+      art={
+        /* ── The portrait, in a brass frame ──
+         *
+         * Her uploaded photograph when there is one, the illustration when there
+         * is not. This used to always be the illustration, which meant the photo
+         * she picked appeared for the first time on the story card at the very
+         * end — the one screen her brother sees last.
+         *
+         * SQUARE, not a circle. A circular mask crops the corners off a
+         * photograph nobody framed for it — on the demo shot it cut the thali
+         * and the gift box out of the bottom, and a real family photo loses
+         * whoever is standing at the edges. A framed square is also just how a
+         * photograph is hung.
+         *
+         * The rounding is 22 rather than 0: a hard corner against a brass rule
+         * reads as a placeholder box rather than a frame. */
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          style={{ position: "relative", padding: 9, borderRadius: "50%", background: `conic-gradient(from 210deg, ${RB.brassSoft}, ${RB.brass}, ${RB.marigold}, ${RB.brassSoft})`, boxShadow: "0 16px 40px rgba(61,35,23,0.22)" }}
+          style={{
+            position: "relative",
+            padding: 10,
+            borderRadius: 30,
+            background: `linear-gradient(145deg, ${RB.brassSoft} 0%, ${RB.brass} 42%, ${RB.marigold} 72%, ${RB.brassSoft} 100%)`,
+            boxShadow: "0 16px 40px rgba(61,35,23,0.22)",
+          }}
         >
-          <div style={{ borderRadius: "50%", overflow: "hidden", background: RB.surface, display: "grid", placeItems: "center", width: cover.width, height: cover.width }}>
-            <AssetImage asset={RAKHI_ASSETS.cover} alt="Happy Raksha Bandhan" maxWidth={cover.width} priority animated={false} />
+          {/* hairline inset rule, the same double-rule move as OrnateCard */}
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 4,
+              borderRadius: 26,
+              border: "1px solid rgba(255,253,248,0.55)",
+              pointerEvents: "none",
+              zIndex: 2,
+            }}
+          />
+          <div
+            style={{
+              position: "relative",
+              borderRadius: 22,
+              overflow: "hidden",
+              background: RB.surface,
+              display: "grid",
+              placeItems: "center",
+              width: cover.width,
+              height: cover.width,
+            }}
+          >
+            {data.photoUrl ? (
+              <Image
+                src={data.photoUrl}
+                alt={`${data.sisterName || "She"} and ${data.brotherName}`}
+                fill
+                priority
+                sizes={`${cover.width}px`}
+                style={{ objectFit: "cover" }}
+              />
+            ) : (
+              <AssetImage
+                asset={RAKHI_ASSETS.cover}
+                alt="Happy Raksha Bandhan"
+                maxWidth={cover.width}
+                priority
+                animated={false}
+              />
+            )}
           </div>
 
-          {/* her rakhi, hung on the ring */}
-          <div style={{ position: "absolute", right: -8, bottom: 6, filter: "drop-shadow(0 4px 8px rgba(61,35,23,0.28))" }}>
+          {/* her rakhi, hung on the corner of the frame */}
+          <div
+            style={{
+              position: "absolute",
+              right: -14,
+              bottom: -14,
+              zIndex: 3,
+              filter: "drop-shadow(0 4px 8px rgba(61,35,23,0.28))",
+            }}
+          >
             <RakhiCharm
-              size={54}
+              size={isDesktop ? 76 : 54}
               colorA={data.rakhi.threadColorA}
               colorB={data.rakhi.threadColorB}
               bead={data.rakhi.beadColor}
@@ -102,7 +174,9 @@ export default function CoverScreen({
             />
           </div>
         </motion.div>
-
+      }
+      body={
+        <>
         {/* ── Titles ── */}
         <motion.p
           className="rb-deva"
@@ -120,8 +194,12 @@ export default function CoverScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            fontSize: "clamp(27px, 8.4vw, 36px)",
-            lineHeight: 1.1,
+            // vw-based on a phone, where the column IS the viewport. On desktop
+            // the text sits in a ~520px column inside a 1440px window, so the
+            // same clamp would size the headline off the window width and blow
+            // it out of its own column.
+            fontSize: isDesktop ? 54 : "clamp(27px, 8.4vw, 36px)",
+            lineHeight: 1.08,
             fontWeight: 700,
             color: RB.red,
             margin: 0,
@@ -138,7 +216,11 @@ export default function CoverScreen({
           animate={{ opacity: 1, scaleX: 1 }}
           transition={{ delay: 0.55, duration: 0.6 }}
         >
-          <ThreadDivider colorA={data.rakhi.threadColorA} colorB={data.rakhi.threadColorB} width={190} />
+          <ThreadDivider
+            colorA={data.rakhi.threadColorA}
+            colorB={data.rakhi.threadColorB}
+            width={isDesktop ? 300 : 190}
+          />
         </motion.div>
 
         {/* ── Her lines, on paper ── */}
@@ -149,8 +231,11 @@ export default function CoverScreen({
             transition={{ staggerChildren: 0.55, delayChildren: 0.7 }}
             style={{
               width: "100%",
-              maxWidth: 320,
-              padding: "17px 19px",
+              // The 320 cap made sense when this lived in a 420px phone column.
+              // Beside a 520px desktop column it left her lines wrapping every
+              // six words in a narrow box floating in open space.
+              maxWidth: isDesktop ? "100%" : 320,
+              padding: isDesktop ? "20px 24px" : "17px 19px",
               borderRadius: 16,
               background: "rgba(255,253,248,0.78)",
               border: `1px solid ${RB.hairline}`,
@@ -165,7 +250,12 @@ export default function CoverScreen({
                 key={i}
                 variants={line}
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                style={{ fontSize: 15.5, lineHeight: 1.58, color: RB.ink, margin: 0 }}
+                style={{
+                  fontSize: isDesktop ? 17.5 : 15.5,
+                  lineHeight: 1.58,
+                  color: RB.ink,
+                  margin: 0,
+                }}
               >
                 {l}
               </motion.p>
@@ -186,7 +276,14 @@ export default function CoverScreen({
 
         {/* ── Muhurat. Information, never a gate. Height reserved so the CTA
               below does not jump when the clock resolves on the client. ── */}
-        <div style={{ minHeight: 46, display: "grid", placeItems: "center", width: "100%" }}>
+        <div
+          style={{
+            minHeight: 46,
+            display: "grid",
+            placeItems: isDesktop ? "center start" : "center",
+            width: "100%",
+          }}
+        >
           {muhurat && (
             <div
               className="rb-rise"
@@ -217,7 +314,7 @@ export default function CoverScreen({
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.5 }}
-          className="rb-display rb-sheen rb-nudge"
+          className="rb-display rb-sheen rb-nudge rb-cta"
           style={{
             position: "relative",
             overflow: "hidden",
@@ -244,7 +341,8 @@ export default function CoverScreen({
             {data.city ? `, ${data.city}` : ""}
           </p>
         )}
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

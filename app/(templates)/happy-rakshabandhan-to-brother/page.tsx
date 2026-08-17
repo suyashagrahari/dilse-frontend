@@ -93,7 +93,10 @@ function RakhiPageInner() {
 
   return (
     <div className="rb-root" style={{ minHeight: "100dvh", position: "relative", background: PAPER_GRADIENT }}>
-      <div className="fixed top-3 left-0 right-0 z-[200] flex items-center justify-between px-3 max-w-[520px] mx-auto">
+      {/* The bar tracked the 420px phone column at every width, which left both
+          controls huddled in the middle of a 1440px screen. It now follows the
+          same breakpoint as the stage. */}
+      <div className="fixed top-3 left-0 right-0 z-[200] flex items-center justify-between px-3 lg:px-8 max-w-[520px] lg:max-w-none mx-auto">
         <button
           onClick={e.goBack}
           aria-label="Back to templates"
@@ -128,6 +131,43 @@ function RakhiPageInner() {
           </button>
         </div>
       </div>
+
+      {/* ── Sample marker ────────────────────────────────────────────────────
+       *
+       * The preview now renders `DEMO` — a real family's photograph, a real
+       * ledger, a scannable QR. That is the point: you cannot evaluate a
+       * template whose every slot is empty. But filled demo content is also
+       * indistinguishable from a finished page, and someone has to be told that
+       * Meher and Aarav are not theirs before they hit Create and wonder where
+       * their own names went.
+       *
+       * Disappears the moment she has anything of her own — see `isPersonalized`.
+       */}
+      {!e.isPersonalized && e.editMode === null && (
+        // Under the top bar, not at the bottom. Pinned to the bottom edge it
+        // sat on top of whatever CTA the current screen ends with — on a 390px
+        // phone it covered "Tie the Rakhi" outright. Up here the only thing
+        // behind it is the toran, which is decoration.
+        <div
+          className="px-3.5 py-1.5 rounded-full text-[11px] font-bold pointer-events-none whitespace-nowrap"
+          style={{
+            // Inline rather than Tailwind utilities: the offset has to clear the
+            // top bar exactly (it sits at top:12 and is ~38px tall) and an
+            // arbitrary-value class is one purge away from silently not
+            // applying, which drops this straight onto the Create button.
+            position: "fixed",
+            top: 58,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 150,
+            background: "rgba(61,35,23,0.86)",
+            color: "#fdf8ee",
+            letterSpacing: 0.4,
+          }}
+        >
+          Sample — yours will use your photos
+        </div>
+      )}
 
       {/* Live preview. Keyed so each save restarts the ritual from the cover —
           otherwise she saves a change and is left staring at step 3. */}

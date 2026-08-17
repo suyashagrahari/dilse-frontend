@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { API_URL } from "@/lib/config";
 import { PAPER_GRADIENT } from "./theme";
@@ -31,6 +31,28 @@ export type RakhiMode = "share" | "preview";
 
 type Screen = "cover" | "ritual" | "gift" | "promise" | "memories";
 
+/** The origin never changes without a navigation, so there is nothing to watch. */
+const NO_SUBSCRIBE = () => () => {};
+
+const ORDER: Screen[] = ["cover", "ritual", "gift", "promise", "memories"];
+
+/**
+ * Which end of a screen you arrive at.
+ *
+ * Two screens have internal steps — the ritual has four, the gift has three —
+ * and walking back into one of them from the screen after it must not dump you
+ * at its beginning. Going back from the gift lands on the tied rakhi, not on the
+ * tilak you did four taps ago; otherwise "back" costs you the whole ritual and
+ * nobody uses it twice.
+ *
+ * This is passed as a mount-time hint rather than lifted state on purpose. The
+ * alternative is hoisting the ritual index and the gift beat into this
+ * component, which would put four pieces of another screen's private state here
+ * so that one button can work. The screens key off it on mount and own their
+ * position from then on.
+ */
+export type Entry = "first" | "last";
+
 export default function RakhiTemplate({
   data,
   mode = "share",
@@ -41,11 +63,48 @@ export default function RakhiTemplate({
   shareId?: string;
 }) {
   const [screen, setScreen] = useState<Screen>("cover");
+  const [entry, setEntry] = useState<Entry>("first");
   const [vachan, setVachan] = useState(data.vachan);
   const [note, setNote] = useState<string | null>(null);
 
-  // Everything the card renders, including the promise he just typed.
-  const card = useStoryCard({ ...data, vachan });
+  /** Forward: always to the top of the next screen. */
+  const go = useCallback((next: Screen) => {
+    setEntry("first");
+    setScreen(next);
+  }, []);
+
+  /** Back: to the END of the previous screen, so nothing has to be redone. */
+  const goBack = useCallback(() => {
+    setScreen((s) => {
+      const i = ORDER.indexOf(s);
+      return i <= 0 ? s : ORDER[i - 1];
+    });
+    setEntry("last");
+  }, []);
+
+  // ── The public URL of this page ──────────────────────────────────────────
+  //
+  // Read off `window` rather than an env var so it is right on localhost, on
+  // stag.subhsandesh.in and in production without three code paths — but
+  // `window` does not exist during the server render, so it cannot simply be
+  // read in the body.
+  //
+  // `useSyncExternalStore` with a null server snapshot is the sanctioned way to
+  // say "this value only exists on the client": React renders null on the
+  // server and through hydration, then swaps in the real one without calling it
+  // a mismatch. The subscribe is a no-op because the origin cannot change
+  // without a navigation, which unmounts this anyway.
+  //
+  // Null in the builder preview: nothing is published yet, so there is no link
+  // to print, and a QR pointing at a 404 is worse than no QR at all.
+  const shareUrl = useSyncExternalStore(
+    NO_SUBSCRIBE,
+    () => (shareId && mode !== "preview" ? `${window.location.origin}/${shareId}` : null),
+    () => null
+  );
+
+  // Everything the card renders.
+  const card = useStoryCard({ ...data, vachan }, shareUrl);
 
   const submitVachan = useCallback(
     async (text: string): Promise<string | null> => {
@@ -101,20 +160,29 @@ export default function RakhiTemplate({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28 }}
           >
-            {screen === "cover" && (
-              <CoverScreen data={data} onBegin={() => setScreen("ritual")} />
-            )}
+            {screen === "cover" && <CoverScreen data={data} onBegin={() => go("ritual")} />}
             {screen === "ritual" && (
-              <RitualScreen data={data} onComplete={() => setScreen("gift")} />
+              <RitualScreen
+                data={data}
+                entry={entry}
+                onComplete={() => go("gift")}
+                onBack={goBack}
+              />
             )}
             {screen === "gift" && (
-              <GiftScreen data={data} onContinue={() => setScreen("promise")} />
+              <GiftScreen
+                data={data}
+                entry={entry}
+                onContinue={() => go("promise")}
+                onBack={goBack}
+              />
             )}
             {screen === "promise" && (
               <PromiseScreen
                 data={{ ...data, vachan }}
                 onSubmit={submitVachan}
-                onContinue={() => setScreen("memories")}
+                onContinue={() => go("memories")}
+                onBack={goBack}
               />
             )}
             {screen === "memories" && (
@@ -123,6 +191,7 @@ export default function RakhiTemplate({
                 onSaveCard={saveCard}
                 onDownload={downloadCard}
                 saving={card.busy || !card.ready}
+                onBack={goBack}
               />
             )}
           </motion.div>

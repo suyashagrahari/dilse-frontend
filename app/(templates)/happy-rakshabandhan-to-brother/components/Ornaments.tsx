@@ -22,6 +22,21 @@ function wobble(i: number, spread: number): number {
   return seq[i % seq.length] * spread;
 }
 
+/**
+ * Round any trig result before it reaches an SVG attribute.
+ *
+ * `Math.sin` and `Math.cos` are implementation-defined in the last bit, and the
+ * server's Node is not running the same V8 as the visitor's browser. Left raw,
+ * a petal serialised as cx="16.246711095625894" on the server and
+ * 16.24671109562589 on the client; React reads that as a hydration mismatch and
+ * discards the server-rendered HTML for the whole subtree.
+ *
+ * Three decimals is well under a tenth of a pixel at every size these are drawn
+ * at, so nothing visibly moves. EVERY trig value that becomes an attribute in
+ * this file must go through here.
+ */
+const round3 = (n: number): number => Math.round(n * 1000) / 1000;
+
 // ── Toran ────────────────────────────────────────────────────────────────────
 //
 // The marigold-and-mango-leaf garland hung across a doorway. Here it hangs
@@ -32,7 +47,7 @@ export const Toran = memo(function Toran({ count = 11 }: { count?: number }) {
   const W = 420;
   const step = W / (count - 1);
   // Catenary-ish: the rope sags in the middle.
-  const sag = (x: number) => 14 + 26 * Math.sin((x / W) * Math.PI);
+  const sag = (x: number) => round3(14 + 26 * Math.sin((x / W) * Math.PI));
 
   return (
     <svg
@@ -95,8 +110,8 @@ export const Toran = memo(function Toran({ count = 11 }: { count?: number }) {
                   return (
                     <circle
                       key={p}
-                      cx={x + Math.cos(ang) * r * 0.55}
-                      cy={y + drop + 8 + Math.sin(ang) * r * 0.55}
+                      cx={round3(x + Math.cos(ang) * r * 0.55)}
+                      cy={round3(y + drop + 8 + Math.sin(ang) * r * 0.55)}
                       r={r * 0.46}
                       fill={i % 4 === 0 ? "url(#rb-marigold-red)" : "url(#rb-marigold)"}
                     />
@@ -241,18 +256,32 @@ export const RakhiCharm = memo(function RakhiCharm({
           <stop offset="100%" stopColor={colorB} />
         </linearGradient>
       </defs>
-      {/* petal ring */}
+      {/* ── petal ring ──
+       *
+       * The coordinates are ROUNDED, and that is a correctness fix rather than
+       * tidiness. `Math.sin`/`Math.cos` are implementation-defined to the last
+       * bit, and the server's Node and the visitor's Chrome do not run the same
+       * V8. Unrounded, petal 6 serialised as cx="16.246711095625894" on the
+       * server and 16.24671109562589 on the client — React saw the attributes
+       * disagree, called it a hydration mismatch, and threw away the server HTML
+       * for the entire subtree.
+       *
+       * Three decimals is ~0.005px at the largest size this is ever drawn (104px
+       * from a 60-unit viewBox), so nothing moves; it just stops the last bit of
+       * a float deciding whether SSR survives. */}
       {Array.from({ length: 10 }).map((_, i) => {
         const ang = (i / 10) * Math.PI * 2;
+        const cx = round3(30 + Math.cos(ang) * 17);
+        const cy = round3(30 + Math.sin(ang) * 17);
         return (
           <ellipse
             key={i}
-            cx={30 + Math.cos(ang) * 17}
-            cy={30 + Math.sin(ang) * 17}
+            cx={cx}
+            cy={cy}
             rx={7.5}
             ry={5.5}
             fill={`url(#rb-tw-${id})`}
-            transform={`rotate(${(i / 10) * 360} ${30 + Math.cos(ang) * 17} ${30 + Math.sin(ang) * 17})`}
+            transform={`rotate(${(i / 10) * 360} ${cx} ${cy})`}
             opacity={0.92}
           />
         );
@@ -285,7 +314,13 @@ export const ThreadDivider = memo(function ThreadDivider({
   width?: number;
 }) {
   // Two sine paths in antiphase read as a two-ply thread twisted together.
-  const cycles = Math.max(1, Math.floor(width / 14));
+  //
+  // `ceil`, not `floor`. One full cycle is 14 units, and flooring drew only the
+  // whole cycles that fit — at width 180 that is 12 cycles, 168 units, leaving
+  // the thread visibly stopping short of the end of its own box and reading as
+  // a half-drawn rule. Rounding up overshoots instead, and the SVG viewBox
+  // clips the overhang, so the weave now always runs edge to edge at any width.
+  const cycles = Math.max(1, Math.ceil(width / 14));
   const over = `M0 7 ${"q 3.5 -5 7 0 q 3.5 5 7 0 ".repeat(cycles)}`;
   const under = `M0 7 ${"q 3.5 5 7 0 q 3.5 -5 7 0 ".repeat(cycles)}`;
 
@@ -294,6 +329,142 @@ export const ThreadDivider = memo(function ThreadDivider({
       <path d={over} fill="none" stroke={colorA} strokeWidth="2.2" strokeLinecap="round" />
       <path d={under} fill="none" stroke={colorB} strokeWidth="2.2" strokeLinecap="round" opacity={0.95} />
     </svg>
+  );
+});
+
+// ── Corner floret ────────────────────────────────────────────────────────────
+//
+// The quarter-lotus that sits in each corner of an OrnateCard. Drawn once and
+// rotated four times rather than drawn four ways, so the four corners cannot
+// drift apart when someone edits one of them.
+
+const CornerFloret = memo(function CornerFloret({
+  size = 26,
+  color = RB.brass,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <svg aria-hidden width={size} height={size} viewBox="0 0 26 26" fill="none">
+      <path d="M0 1h9" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+      <path d="M1 0v9" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+      {/* the petal fan, opening into the card */}
+      <path
+        d="M2 2c7 0 13 5 13 12"
+        stroke={color}
+        strokeWidth={1}
+        strokeLinecap="round"
+        opacity={0.75}
+      />
+      <path
+        d="M2 2c11 0 19 8 19 19"
+        stroke={color}
+        strokeWidth={0.8}
+        strokeLinecap="round"
+        opacity={0.45}
+      />
+      <circle cx={4.5} cy={4.5} r={1.7} fill={color} opacity={0.85} />
+    </svg>
+  );
+});
+
+// ── Ornate card ──────────────────────────────────────────────────────────────
+//
+// The ritual's whole visual weight now sits here, because the ritual no longer
+// shows artwork until the reader taps — see RitualScreen. So this cannot be a
+// plain rounded rectangle with a border; it has to carry the page on its own.
+//
+// Four cheap layers do it, all drawn rather than loaded:
+//
+//   a warm paper fill with a soft inner highlight, so it reads as card stock
+//   a brass double rule — heavy outer, hairline inset — which is the single
+//     most recognisable move in Indian print ornament
+//   a quarter-lotus in each corner
+//   a very faint mandala centred behind the text
+//
+// Nothing here animates. It is a frame, and a frame that moves is a distraction
+// from the words inside it.
+
+export const OrnateCard = memo(function OrnateCard({
+  children,
+  accent = RB.brass,
+  className,
+}: {
+  children: React.ReactNode;
+  accent?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={className}
+      style={{
+        position: "relative",
+        width: "100%",
+        padding: "26px 24px 24px",
+        borderRadius: 20,
+        background: `linear-gradient(168deg, ${RB.surface} 0%, #fffaf0 55%, ${RB.paperDeep} 100%)`,
+        border: `2px solid ${accent}`,
+        boxShadow: "0 14px 34px rgba(61,35,23,0.13), inset 0 1px 0 rgba(255,255,255,0.85)",
+        overflow: "hidden",
+      }}
+    >
+      {/* hairline inset rule */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 7,
+          borderRadius: 14,
+          border: `1px solid ${accent}`,
+          opacity: 0.42,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* mandala watermark, behind everything */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%,-50%)",
+          pointerEvents: "none",
+        }}
+      >
+        <Rangoli size={260} opacity={0.05} petals={18} still />
+      </span>
+
+      {/* four corners, one drawing */}
+      {(
+        [
+          { top: 10, left: 10, deg: 0 },
+          { top: 10, right: 10, deg: 90 },
+          { bottom: 10, right: 10, deg: 180 },
+          { bottom: 10, left: 10, deg: 270 },
+        ] as const
+      ).map((pos, i) => {
+        const { deg, ...offset } = pos;
+        return (
+          <span
+            key={i}
+            aria-hidden
+            style={{
+              position: "absolute",
+              ...offset,
+              lineHeight: 0,
+              transform: `rotate(${deg}deg)`,
+              pointerEvents: "none",
+            }}
+          >
+            <CornerFloret color={accent} />
+          </span>
+        );
+      })}
+
+      <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+    </div>
   );
 });
 

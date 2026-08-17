@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW } from "./theme";
 import type { RakhiData } from "./types";
 import { Rangoli, ThreadDivider, PetalBurst, Diya } from "./Ornaments";
+import Stage, { BackLink, useIsDesktop } from "./Stage";
 
 const MAX = 120;
 
@@ -22,11 +23,13 @@ export default function PromiseScreen({
   data,
   onSubmit,
   onContinue,
+  onBack,
 }: {
   data: RakhiData;
   /** Resolves to the stored promise, or null if it could not be saved. */
   onSubmit: (vachan: string) => Promise<string | null>;
   onContinue: () => void;
+  onBack: () => void;
 }) {
   const existing = data.vachan.trim();
   const [text, setText] = useState("");
@@ -34,6 +37,7 @@ export default function PromiseScreen({
   const [saved, setSaved] = useState<string | null>(existing || null);
   const [failed, setFailed] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+  const isDesktop = useIsDesktop();
 
   const submit = async () => {
     const v = text.trim();
@@ -55,46 +59,66 @@ export default function PromiseScreen({
   const sister = data.sisterName || "she";
 
   return (
-    <div
-      className="rb-root"
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "34px 22px",
-        textAlign: "center",
-        gap: 17,
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 0 }}>
-        <Rangoli size={400} opacity={0.055} />
-      </div>
-      {celebrate && <PetalBurst count={22} />}
+    <Stage
+      behind={
+        <>
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%,-50%)",
+              zIndex: 0,
+            }}
+          >
+            <Rangoli size={isDesktop ? 640 : 400} opacity={0.055} />
+          </div>
+          {celebrate && <PetalBurst count={22} />}
+        </>
+      }
+      art={
+        /* No GIF on this screen — the ceremony IS the verse. On desktop it
+           becomes the left panel, which is the one place in the flow where the
+           Sanskrit gets to be the size it deserves. */
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+            textAlign: "center",
+          }}
+        >
+          <Diya size={isDesktop ? 62 : 40} lit />
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%" }}>
-        <Diya size={40} lit />
-
-        <div>
           <motion.p
             className="rb-deva"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
-            style={{ fontSize: 18, lineHeight: 1.75, color: RB.red, margin: 0, maxWidth: 320 }}
+            style={{
+              fontSize: isDesktop ? 30 : 18,
+              lineHeight: 1.75,
+              color: RB.red,
+              margin: 0,
+              maxWidth: isDesktop ? 460 : 320,
+            }}
           >
             येन बद्धो बली राजा
             <br />
             दानवेन्द्रो महाबलः
           </motion.p>
+
+          <ThreadDivider
+            colorA={data.rakhi.threadColorA}
+            colorB={data.rakhi.threadColorB}
+            width={isDesktop ? 250 : 160}
+          />
         </div>
-
-        <ThreadDivider colorA={data.rakhi.threadColorA} colorB={data.rakhi.threadColorB} width={160} />
-
-        <p style={{ fontSize: 13.5, color: RB.muted, margin: 0, maxWidth: 300, lineHeight: 1.6 }}>
+      }
+      body={
+        <>
+        <p style={{ fontSize: 13.5, color: RB.muted, margin: 0, maxWidth: 340, lineHeight: 1.6 }}>
           The verse tied to King Bali, the mighty. It ends with a promise — and
           this is the part where you make yours.
         </p>
@@ -219,7 +243,13 @@ export default function PromiseScreen({
         >
           {saved ? "See her photos →" : "Skip for now"}
         </button>
-      </div>
-    </div>
+
+        {/* Back is safe here even after the vachan is saved: the promise is
+            already on the server and this screen renders it read-only, so
+            returning to the gift and coming forward again cannot rewrite it. */}
+        <BackLink onClick={onBack} />
+        </>
+      }
+    />
   );
 }

@@ -1,3 +1,5 @@
+import { DEMO_MEDIA } from "../assets";
+
 export type RakhiCharm = "om" | "swastik" | "evil-eye" | "heart" | "star";
 
 export interface RakhiDesign {
@@ -103,6 +105,62 @@ export const SAMPLE: RakhiData = {
   shagun: { upiId: "", qrImageUrl: "", note: "" },
   vachan: "",
   distanceKm: 0,
+  festivalDate: "2026-08-28",
+};
+
+/**
+ * What the GALLERY PREVIEW renders — not what the builder starts from.
+ *
+ * These two must not be the same object, and the distinction is the whole point
+ * of this constant. `SAMPLE` above is deliberately empty so that a sister who
+ * opens the form and publishes without finishing cannot ship a page carrying
+ * someone else's face. But feeding that same emptiness to the preview meant
+ * every visitor evaluating the template saw a shell: no photo, no memories, no
+ * shagun QR, an unnamed sister. Three of the four things this template does
+ * were invisible until you had already committed to building one.
+ *
+ * So: the preview seeds from `DEMO`, the builder seeds from `SAMPLE`, and
+ * `useRakhiEditor` keeps them apart. Anything added here must also be a field a
+ * real sister can fill, or the preview starts advertising a feature that does
+ * not exist.
+ *
+ * The photographs are one image cropped four ways — see `DEMO_MEDIA`.
+ */
+export const DEMO: RakhiData = {
+  brotherName: "Aarav",
+  sisterName: "Meher",
+  city: "Jaipur",
+  photoUrl: DEMO_MEDIA.hero,
+  greeting: [
+    "You ate my share of the gulab jamun in 2009.",
+    "I have not forgotten. I am still tying this.",
+    "That is the entire deal, bhai.",
+  ],
+  rakhi: {
+    threadColorA: "#9B2226",
+    threadColorB: "#E8913A",
+    beadColor: "#B08D57",
+    charm: "evil-eye",
+    pendantText: "nazar utaari",
+  },
+  memories: [
+    { imageUrl: DEMO_MEDIA.memories[0], caption: "the knot, as always too tight", year: "2025" },
+    { imageUrl: DEMO_MEDIA.memories[1], caption: "pretending he doesn't like this", year: "2024" },
+    { imageUrl: DEMO_MEDIA.memories[2], caption: "the bribe, pre-negotiated", year: "2023" },
+  ],
+  ledger: [
+    { label: "chocolates owed", value: "47" },
+    { label: "times you tore my homework", value: "12" },
+    { label: "times you took the blame anyway", value: "every time" },
+    { label: "outstanding balance", value: "unpayable" },
+  ],
+  shagun: {
+    upiId: "meher@upi",
+    qrImageUrl: DEMO_MEDIA.qr,
+    note: "No rush. Next year is also fine. I will remember though.",
+  },
+  vachan: "Ghar aaunga. Har baar. Even if it's the 11pm flight.",
+  distanceKm: 1180,
   festivalDate: "2026-08-28",
 };
 

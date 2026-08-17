@@ -8,7 +8,8 @@ import { RAKHI_ASSETS } from "../assets";
 import { RB, CARD_BORDER, CARD_SHADOW, BRAND_GRADIENT, charmGlyph } from "./theme";
 import type { RakhiData, Memory } from "./types";
 import { AssetImage, fitAsset } from "./AssetImage";
-import { Rangoli, ThreadDivider, RakhiCharm, Toran } from "./Ornaments";
+import { Rangoli, ThreadDivider, RakhiCharm } from "./Ornaments";
+import Stage, { BackLink, useIsDesktop } from "./Stage";
 
 /**
  * Deterministic tilt per card. `Math.random()` would re-roll on every render
@@ -105,39 +106,49 @@ export default function MemoriesScreen({
   onSaveCard,
   onDownload,
   saving,
+  onBack,
 }: {
   data: RakhiData;
   onSaveCard: () => void;
   onDownload: () => void;
   saving: boolean;
+  onBack: () => void;
 }) {
   const hasMemories = data.memories.length > 0;
   const hasLedger = data.ledger.length > 0;
   const fallback = fitAsset(RAKHI_ASSETS.bhaiBest, 210);
+  const isDesktop = useIsDesktop();
 
   return (
-    <div
-      className="rb-root"
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "100px 22px 40px",
-        gap: 20,
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <Toran count={9} />
-      <div style={{ position: "absolute", top: 260, left: "50%", transform: "translateX(-50%)", zIndex: 0 }}>
-        <Rangoli size={380} opacity={0.05} />
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 18, width: "100%" }}>
+    <Stage
+      className="rb-memories"
+      behind={
+        <>
+          {/* Toran now comes from Stage — every screen gets one. */}
+          <div
+            style={{
+              position: "absolute",
+              top: "28%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 0,
+            }}
+          >
+            <Rangoli size={isDesktop ? 600 : 380} opacity={0.05} />
+          </div>
+        </>
+      }
+      head={
+        <>
         {/* ── Completion ── */}
-        <div style={{ textAlign: "center" }}>
-          <div style={{ display: "grid", placeItems: "center", marginBottom: 10 }}>
+        <div style={{ textAlign: "inherit" }}>
+          <div
+            style={{
+              display: "grid",
+              placeItems: isDesktop ? "center start" : "center",
+              marginBottom: 10,
+            }}
+          >
             <RakhiCharm
               size={62}
               colorA={data.rakhi.threadColorA}
@@ -149,7 +160,7 @@ export default function MemoriesScreen({
           </div>
           <h2
             className="rb-display rb-name"
-            style={{ fontSize: 27, fontWeight: 700, color: RB.red, margin: 0 }}
+            style={{ fontSize: isDesktop ? 40 : 27, fontWeight: 700, color: RB.red, margin: 0 }}
           >
             {hasMemories ? "Us, over the years" : "Rakhi tied"}
           </h2>
@@ -169,6 +180,7 @@ export default function MemoriesScreen({
               border: CARD_BORDER,
               boxShadow: CARD_SHADOW,
               textAlign: "center",
+              marginTop: 14,
             }}
           >
             <p style={{ fontSize: 11, color: RB.brass, margin: "0 0 6px", letterSpacing: 1.4, fontWeight: 700 }}>
@@ -180,9 +192,27 @@ export default function MemoriesScreen({
           </div>
         )}
 
-        <ThreadDivider colorA={data.rakhi.threadColorA} colorB={data.rakhi.threadColorB} width={180} />
-
-        {hasMemories && (
+        {/* Grid rather than relying on the inherited text-align — ThreadDivider
+            renders a block-level <svg>, which text-align cannot move. */}
+        <div
+          style={{
+            marginTop: 14,
+            display: "grid",
+            placeItems: isDesktop ? "center start" : "center",
+          }}
+        >
+          {/* Matches the cards above and below it (305–310px). At 180 it read as
+              a half-drawn rule floating in the middle of the column. */}
+          <ThreadDivider
+            colorA={data.rakhi.threadColorA}
+            colorB={data.rakhi.threadColorB}
+            width={300}
+          />
+        </div>
+        </>
+      }
+      art={
+        hasMemories ? (
           <div
             style={{
               display: "flex",
@@ -196,8 +226,26 @@ export default function MemoriesScreen({
               <Polaroid key={`${m.imageUrl}-${i}`} m={m} i={i} />
             ))}
           </div>
-        )}
-
+        ) : (
+          <div
+            style={{
+              padding: 10,
+              borderRadius: 18,
+              background: RB.surface,
+              border: CARD_BORDER,
+              boxShadow: CARD_SHADOW,
+            }}
+          >
+            <AssetImage
+              asset={RAKHI_ASSETS.bhaiBest}
+              alt="Mera bhai sabse best"
+              maxWidth={fallback.width}
+            />
+          </div>
+        )
+      }
+      body={
+        <>
         {/* The running-joke ledger. Dot leaders, because it should look like a
             bill she has been keeping for twenty years. */}
         {hasLedger && (
@@ -240,11 +288,23 @@ export default function MemoriesScreen({
                   padding: "6px 0",
                 }}
               >
-                <span style={{ flexShrink: 0 }}>{row.label}</span>
+                {/* The label is the ONLY part allowed to give way.
+                 *
+                 * Both label and value used to be `flex-shrink: 0`, so a long
+                 * pair — "times you took the blame anyway" against "every time"
+                 * — could not fit, refused to shrink, and pushed the value out
+                 * through the right edge of the card. The value is the punchline
+                 * and must never be clipped, so it stays rigid; the label wraps
+                 * instead. `minWidth: 0` is required for that: a flex item's
+                 * default `min-width: auto` refuses to shrink below its longest
+                 * word, which is what defeats `flex-shrink` on its own. */}
+                <span style={{ flexShrink: 1, minWidth: 0, overflowWrap: "anywhere" }}>
+                  {row.label}
+                </span>
                 <span
                   aria-hidden
                   style={{
-                    flex: 1,
+                    flex: "1 1 auto",
                     minWidth: 12,
                     borderBottom: `1.5px dotted ${RB.brassSoft}`,
                     transform: "translateY(-3px)",
@@ -256,18 +316,8 @@ export default function MemoriesScreen({
           </div>
         )}
 
-        {!hasMemories && !hasLedger && (
-          <div style={{ padding: 10, borderRadius: 18, background: RB.surface, border: CARD_BORDER, boxShadow: CARD_SHADOW }}>
-            <AssetImage
-              asset={RAKHI_ASSETS.bhaiBest}
-              alt="Mera bhai sabse best"
-              maxWidth={fallback.width}
-            />
-          </div>
-        )}
-
         {/* ── Share ── */}
-        <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
           <motion.button
             onClick={onSaveCard}
             whileTap={{ scale: 0.97 }}
@@ -319,10 +369,26 @@ export default function MemoriesScreen({
           </button>
         </div>
 
-        <p style={{ fontSize: 11.5, color: RB.muted, textAlign: "center", margin: 0, letterSpacing: 0.6 }}>
+        {/* ── No on-screen link block ────────────────────────────────────────
+         *
+         * There was a "PUT THIS ON THE STORY" card here with the URL and Link-
+         * sticker instructions. Removed on request — it turned the last screen
+         * into a how-to guide, on the one page that should end on the photos.
+         *
+         * The link still travels, in the three places that do not cost a card:
+         * printed on the story card next to a scannable QR (StoryCard.tsx), sent
+         * as `text` alongside the file to any share target that accepts it, and
+         * copied to the clipboard when "Share to your story" is tapped — the
+         * toast says so. Do not re-add a block here to solve a "people don't
+         * know about the link" problem; put it in the toast.
+         */}
+        <BackLink onClick={onBack} label="Phir se dekho" />
+
+        <p style={{ fontSize: 11.5, color: RB.muted, margin: 0, letterSpacing: 0.6 }}>
           subhsandesh.in
         </p>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

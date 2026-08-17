@@ -9,6 +9,8 @@ import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW } from "./theme";
 import type { RakhiData } from "./types";
 import { AssetImage, fitAsset } from "./AssetImage";
 import { Rangoli, PetalBurst } from "./Ornaments";
+import Stage, { BackLink, useIsDesktop } from "./Stage";
+import type { Entry } from "./RakhiTemplate";
 
 // ─── The gift bit ────────────────────────────────────────────────────────────
 //
@@ -99,14 +101,22 @@ function Bubble({
 
 export default function GiftScreen({
   data,
+  entry = "first",
   onContinue,
+  onBack,
 }: {
   data: RakhiData;
+  /** "last" when arriving backwards from the promise — see Entry in RakhiTemplate. */
+  entry?: Entry;
   onContinue: () => void;
+  onBack: () => void;
 }) {
-  const [beat, setBeat] = useState<Beat>("demand");
+  // Backwards from the promise lands on the reveal — the shagun she left him —
+  // not on the demand joke he already sat through.
+  const [beat, setBeat] = useState<Beat>(entry === "last" ? "reveal" : "demand");
   const [copied, setCopied] = useState(false);
   const reduce = useReducedMotion();
+  const isDesktop = useIsDesktop();
 
   const sister = data.sisterName || "Behen";
   const hasUpi = data.shagun.upiId.trim().length > 0;
@@ -158,7 +168,7 @@ export default function GiftScreen({
   };
 
   const b = BEATS[beat];
-  const art = fitAsset(b.asset, 250, 230);
+  const art = fitAsset(b.asset, isDesktop ? 400 : 250, isDesktop ? 368 : 230);
 
   const next = () => {
     if (beat === "demand") setBeat("caving");
@@ -166,25 +176,63 @@ export default function GiftScreen({
     else onContinue();
   };
 
-  return (
-    <div
-      className="rb-root"
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "30px 22px 30px",
-        gap: 14,
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ position: "absolute", top: 130, left: "50%", transform: "translateX(-50%)", zIndex: 0 }}>
-        <Rangoli size={320} opacity={0.05} />
-      </div>
+  /** Rewinds the three beats, then hands back to the ritual. */
+  const back = () => {
+    if (beat === "reveal") setBeat("caving");
+    else if (beat === "caving") setBeat("demand");
+    else onBack();
+  };
 
-      <AnimatePresence mode="wait">
+  return (
+    <Stage
+      behind={
+        <div
+          style={{
+            position: "absolute",
+            top: "16%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 0,
+          }}
+        >
+          <Rangoli size={isDesktop ? 560 : 320} opacity={0.05} />
+        </div>
+      }
+      art={
+        <AnimatePresence mode="wait">
+          {/* Artwork at its true proportions — never cropped.
+              The sway is framer-motion, so the CSS prefers-reduced-motion block
+              cannot reach it; `useReducedMotion` is what switches it off. Any
+              JS-driven loop added here needs the same guard. */}
+          <motion.div
+            key={beat}
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.34, 1.4, 0.64, 1] }}
+            style={{ position: "relative" }}
+          >
+            <motion.div
+              animate={reduce ? undefined : { rotate: [-1.2, 1.2, -1.2] }}
+              transition={reduce ? undefined : { duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "relative",
+                padding: 10,
+                borderRadius: 22,
+                background: RB.surface,
+                border: CARD_BORDER,
+                boxShadow: CARD_SHADOW,
+              }}
+            >
+              <AssetImage asset={b.asset} alt={b.alt} maxWidth={art.width} maxHeight={art.height} />
+              {beat === "reveal" && <PetalBurst count={14} />}
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      }
+      body={
+        <>
+        <AnimatePresence mode="wait">
         <motion.div
           key={beat}
           initial={{ opacity: 0, y: 18, scale: 0.96 }}
@@ -196,32 +244,12 @@ export default function GiftScreen({
             zIndex: 1,
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: "inherit",
             gap: 15,
             width: "100%",
           }}
         >
-          {/* Artwork at its true proportions — never cropped.
-              The sway is framer-motion, so the CSS prefers-reduced-motion block
-              cannot reach it; `useReducedMotion` is what switches it off. Any
-              JS-driven loop added here needs the same guard. */}
-          <motion.div
-            animate={reduce ? undefined : { rotate: [-1.2, 1.2, -1.2] }}
-            transition={reduce ? undefined : { duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              position: "relative",
-              padding: 10,
-              borderRadius: 22,
-              background: RB.surface,
-              border: CARD_BORDER,
-              boxShadow: CARD_SHADOW,
-            }}
-          >
-            <AssetImage asset={b.asset} alt={b.alt} maxWidth={art.width} maxHeight={art.height} />
-            {beat === "reveal" && <PetalBurst count={14} />}
-          </motion.div>
-
-          <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 9 }}>
+          <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 9 }}>
             <Bubble from={b.from} accent={RB.red}>
               <p className="rb-display" style={{ fontSize: 19, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>
                 {b.line}
@@ -346,11 +374,11 @@ export default function GiftScreen({
       <motion.button
         onClick={next}
         whileTap={{ scale: 0.97 }}
-        className={`rb-display ${beat === "reveal" ? "" : "rb-sheen"}`}
+        className={`rb-display rb-cta ${beat === "reveal" ? "" : "rb-sheen"}`}
         style={{
           position: "relative",
           overflow: "hidden",
-          marginTop: "auto",
+          marginTop: 4,
           zIndex: 1,
           width: "100%",
           maxWidth: 320,
@@ -368,6 +396,10 @@ export default function GiftScreen({
       >
         {b.cta}
       </motion.button>
-    </div>
+
+      <BackLink onClick={back} />
+        </>
+      }
+    />
   );
 }

@@ -1,15 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState, forwardRef } from "react";
+import { useEffect, useMemo, useRef, useState, forwardRef } from "react";
 import { toDataUrl, fileSlug } from "@/lib/exportPng";
+import { encodeQr, qrPath, qrExtent } from "@/lib/share/qr";
 import { RB, charmGlyph } from "./theme";
-import { distanceLine, type RakhiData } from "./types";
+import type { RakhiData } from "./types";
 import { RakhiCharm, Rangoli, ThreadDivider } from "./Ornaments";
 
 // ─── The shareable card ──────────────────────────────────────────────────────
 //
 // 1080×1920 — the true Instagram Story size, so it uploads without Instagram
 // re-cropping it and softening every edge.
+//
+// ── WHAT GOES ON IT: THE COVER, AND THE WAY BACK ────────────────────────────
+//
+// This card is the front door, not a summary. It carries what screen 1 carries —
+// their photograph, "Happy Raksha Bandhan, <name>", her rakhi, one line of hers
+// — plus a QR and the printed URL, and nothing else.
+//
+// It used to also print his vachan, the distance line and the ledger. That is
+// the entire page flattened onto one image, and it has two problems. It spoils
+// the thing the link is for: a viewer who has already read his promise off a
+// story has no reason to open the page and watch him make it. And the vachan is
+// something he wrote to HER, which lands differently pasted across a public
+// story than it does at the end of a page only he opened.
+//
+// So: the cover, and a route to the rest. Anything you are tempted to add here
+// is something you are taking off the page.
 //
 // ── FOUR TRAPS, ALL OF THEM LIVE HERE ───────────────────────────────────────
 //
@@ -55,6 +72,10 @@ interface CardProps {
   data: RakhiData;
   /** Already inlined to a data URL, or null if there is no photo / it failed. */
   photo: string | null;
+  /** QR for the published page, as an SVG path in module units. Null in preview. */
+  qr: { path: string; extent: number } | null;
+  /** Printed under the QR. Host + path, no scheme. */
+  linkLabel: string | null;
 }
 
 /**
@@ -62,9 +83,12 @@ interface CardProps {
  * Split out so the export node is unambiguous — the ref points at exactly the
  * 1080×1920 box and nothing else.
  */
-const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }, ref) {
-  const distance = distanceLine(data.distanceKm);
+const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { data, photo, qr, linkLabel },
+  ref
+) {
   const date = fmtDate(data.festivalDate);
+  const greeting = data.greeting.find((l) => l.trim());
 
   return (
     <div
@@ -219,7 +243,9 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }
           {data.brotherName}
         </p>
 
-        {data.vachan && (
+        {/* ONE line of hers, not the vachan and not the ledger. See the note at
+            the top of the file about what this card is and is not. */}
+        {greeting && (
           <p
             className="rb-hand"
             style={{
@@ -230,49 +256,92 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ data, photo }
               maxWidth: 780,
             }}
           >
-            “{data.vachan}”
-          </p>
-        )}
-
-        {distance && (
-          <p style={{ fontSize: 30, color: RB.muted, margin: "24px 0 0", fontStyle: "italic" }}>
-            {distance}
+            “{greeting}”
           </p>
         )}
       </div>
 
-      {/* ── Foot ── */}
-      <div style={{ textAlign: "center", width: "100%" }}>
-        {date && (
-          <p style={{ fontSize: 30, color: RB.brass, margin: "0 0 20px", letterSpacing: 2 }}>
-            {date.toUpperCase()}
-          </p>
-        )}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "14px 28px",
-            borderRadius: 999,
-            background: "rgba(255,253,248,0.8)",
-            border: `2px solid ${RB.hairline}`,
-          }}
-        >
-          <span style={{ fontSize: 26 }} aria-hidden>
-            🪔
-          </span>
-          <span
-            className="rb-display"
-            style={{ fontSize: 26, fontWeight: 700, color: RB.ink, letterSpacing: 0.6 }}
+      {/* ── Foot: the way back to the page ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 30,
+          padding: "22px 30px",
+          borderRadius: 30,
+          background: "rgba(255,253,248,0.9)",
+          border: `2px solid ${RB.hairline}`,
+          maxWidth: "100%",
+        }}
+      >
+        {qr && (
+          <div
+            style={{
+              width: 168,
+              height: 168,
+              flexShrink: 0,
+              background: "#fff",
+              borderRadius: 16,
+              padding: 10,
+              boxSizing: "border-box",
+            }}
           >
-            subhsandesh.in
-          </span>
+            {/* Drawn inline rather than loaded — an <img> inside the export node
+                is one more thing html-to-image has to resolve before the capture,
+                and this symbol is two dozen path commands. */}
+            <svg
+              width="148"
+              height="148"
+              viewBox={`0 0 ${qr.extent} ${qr.extent}`}
+              shapeRendering="crispEdges"
+              aria-hidden
+            >
+              <rect width={qr.extent} height={qr.extent} fill="#ffffff" />
+              <path d={qr.path} fill={RB.ink} />
+            </svg>
+          </div>
+        )}
+
+        <div style={{ textAlign: "left", minWidth: 0 }}>
+          {date && (
+            <p style={{ fontSize: 26, color: RB.brass, margin: "0 0 10px", letterSpacing: 2 }}>
+              {date.toUpperCase()}
+            </p>
+          )}
+          <p
+            className="rb-display"
+            style={{
+              fontSize: 34,
+              fontWeight: 700,
+              color: RB.ink,
+              margin: 0,
+              lineHeight: 1.25,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {linkLabel || "subhsandesh.in"}
+          </p>
+          <p style={{ fontSize: 24, color: RB.muted, margin: "8px 0 0" }}>
+            {qr ? "scan or tap the link to open it" : "make yours in a minute"}
+          </p>
         </div>
       </div>
     </div>
   );
 });
+
+/** Never throws, and reports whether it actually landed. */
+async function copyToClipboard(text: string | null | undefined): Promise<boolean> {
+  if (!text) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Insecure origin, a denied permission, or a browser that requires the write
+    // to happen inside a user gesture it no longer considers active.
+    return false;
+  }
+}
 
 export interface StoryCardHandle {
   /** Download the PNG. Never throws. */
@@ -287,11 +356,29 @@ export interface StoryCardHandle {
  * Off-screen host. Kept mounted (not `display:none`) because html-to-image
  * cannot capture a node with no layout — it would produce a 0×0 canvas.
  */
-export function useStoryCard(data: RakhiData) {
+export function useStoryCard(data: RakhiData, shareUrl?: string | null) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // The route back to the page, printed and encoded on the card. `useMemo`
+  // because encodeQr walks the full Reed–Solomon path and the card re-renders on
+  // every keystroke in the builder.
+  const qr = useMemo(() => {
+    if (!shareUrl) return null;
+    // "medium" rather than "high": nothing is drawn over this symbol, and the
+    // lower level keeps the version — and therefore the module count — small
+    // enough that each module is still ~6px at 148px on the exported PNG.
+    const matrix = encodeQr(shareUrl, "medium");
+    if (!matrix) return null;
+    return { path: qrPath(matrix, 2), extent: qrExtent(matrix, 2) };
+  }, [shareUrl]);
+
+  const linkLabel = useMemo(
+    () => (shareUrl ? shareUrl.replace(/^https?:\/\//, "").replace(/\/$/, "") : null),
+    [shareUrl]
+  );
 
   useEffect(() => {
     let live = true;
@@ -364,6 +451,17 @@ export function useStoryCard(data: RakhiData) {
 
     const file = new File([blob], `${filename}.png`, { type: "image/png" });
 
+    // ── The link goes to the clipboard BEFORE the share sheet opens ─────────
+    //
+    // Instagram will not let this image carry a tappable destination — the Link
+    // sticker is added by the poster, inside the app, and no API can attach one
+    // for them. What we can do is make it a paste instead of a retype.
+    //
+    // The order matters and is not cosmetic. `navigator.share` moves focus to
+    // the OS sheet, and Safari refuses a clipboard write once the document has
+    // lost focus. Copying first means it lands while the page is still active.
+    const copiedLink = await copyToClipboard(shareUrl);
+
     // canShare({files}) is the only reliable check — plenty of browsers expose
     // navigator.share and then reject a file payload outright.
     if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
@@ -371,9 +469,16 @@ export function useStoryCard(data: RakhiData) {
         await navigator.share({
           files: [file],
           title: "Happy Raksha Bandhan",
+          // Some targets (WhatsApp, Telegram, Messages) DO accept text beside a
+          // file and will send the link with the picture. Instagram ignores it,
+          // which costs nothing.
+          ...(shareUrl ? { text: shareUrl } : {}),
         });
         setBusy(false);
-        return { ok: true, message: "" };
+        return {
+          ok: true,
+          message: copiedLink ? "Link copied — add it as a Link sticker" : "",
+        };
       } catch {
         // Almost always the user dismissing the sheet. Not an error, and it
         // must not be reported as one.
@@ -389,7 +494,12 @@ export function useStoryCard(data: RakhiData) {
     a.download = `${filename}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    return { ok: true, message: "Saved — open Instagram and add it to your story" };
+    return {
+      ok: true,
+      message: copiedLink
+        ? "Saved, and the link is copied — post it and add a Link sticker"
+        : "Saved — open Instagram and add it to your story",
+    };
   };
 
   /**
@@ -402,7 +512,7 @@ export function useStoryCard(data: RakhiData) {
       aria-hidden
       style={{ position: "fixed", left: -99999, top: 0, pointerEvents: "none", opacity: 0 }}
     >
-      <Card ref={nodeRef} data={data} photo={photo} />
+      <Card ref={nodeRef} data={data} photo={photo} qr={qr} linkLabel={linkLabel} />
     </div>
   );
 

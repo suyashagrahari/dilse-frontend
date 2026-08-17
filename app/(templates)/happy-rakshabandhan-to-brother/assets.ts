@@ -57,6 +57,10 @@ export const RAKHI_ASSETS = {
   cover: asset("cover.webp", 480, 480),
 
   // ── The ritual, in order ──────────────────────────────────────────────────
+  //
+  // These are never shown on the step itself any more — the step is a card of
+  // words. Each one plays full screen when the reader taps the action, in
+  // `RitualTakeover`, and that is the only place they appear.
   tilak: asset("tilak.gif", 498, 498),
   mithai: asset("mithai.gif", 217, 197),
   aarti: asset("aarti.gif", 200, 198),
@@ -71,6 +75,73 @@ export const RAKHI_ASSETS = {
   // ── Decorative ────────────────────────────────────────────────────────────
   bhaiBest: asset("bhai-best.webp", 200, 157),
   hug: asset("hug.webp", 200, 198),
+} as const;
+
+// ─── Demo media ──────────────────────────────────────────────────────────────
+//
+// The gallery preview used to render `SAMPLE`, which ships every photo slot
+// empty on purpose. The result was that anyone browsing the template saw the
+// shell — no photo, no memories, no shagun QR — and had no way to tell that
+// those features exist at all. These five files fill it in.
+//
+// They are ONE photograph, cropped four ways. Four unrelated stock photos would
+// have been easier and would have looked it: the demo is meant to read as one
+// family's afternoon, which is what the real thing is.
+//
+// ── WHY THESE FIVE LIVE IN /public AND THE OTHER TEN DO NOT ─────────────────
+//
+// Everything above is served from object storage, for the reasons at the top of
+// this file. These five are checked into `client/public/rakhi-demo/` instead,
+// and the exception is deliberate.
+//
+// The rule exists because the ritual GIFs are 4.9 MB of binary that would enter
+// git history, the Docker image and every deploy forever. These five total
+// 136 KB — three orders of magnitude below the thing the rule is protecting
+// against — and unlike the GIFs they are load-bearing for the FIRST render a
+// stranger ever sees. An object-storage miss on `tilak.gif` costs one animation
+// on a page someone already chose to open; a miss on `demo-hero.webp` means the
+// gallery preview shows an empty ring and a broken memories grid, which is the
+// exact failure this demo content was added to fix.
+//
+// So they ship with the app and cannot 404 independently of it.
+//
+// They are NOT in `media-src/templates/`, because everything in that folder is
+// mirrored to object storage by the uploader and these would land there as five
+// objects nothing reads. The photograph they were cut from lives at
+// `media-src/_sources/rakhi-demo-source.png` — outside the folder the uploader
+// scans — so a re-crop is still possible without putting dead files in a bucket.
+//
+// ── WHY THESE ARE PLAIN URLs AND NOT `Asset`s ───────────────────────────────
+//
+// They stand in for fields a sister uploads herself — `photoUrl`,
+// `memories[].imageUrl`, `shagun.qrImageUrl` — which are `string` on the wire
+// and rendered by the same components that render hers. Giving them the `Asset`
+// treatment would mean a second, demo-only code path through those components,
+// and the whole value of the demo is that it exercises the real one.
+//
+// ── THE QR ──────────────────────────────────────────────────────────────────
+//
+// `demo-qr.png` is a real, scannable version-3 symbol at EC level "high",
+// generated from `lib/share/qr.ts`. It resolves to https://subhsandesh.in — so
+// in GiftScreen's payment-card frame it reads exactly like the UPI QR a sister
+// would upload, and anyone who actually scans it lands on the site rather than
+// on a dead intent URL.
+//
+// PNG, not SVG, and that is not a preference. This URL lands in
+// `shagun.qrImageUrl`, which GiftScreen renders through `next/image`, and
+// `next.config.ts` leaves `dangerouslyAllowSVG` at its default of false — the
+// optimiser rejects an SVG source outright. That default is right and must not
+// be flipped to suit this file: the same field also holds a QR that a stranger
+// uploaded, and allowing SVG there would push arbitrary user-supplied markup
+// through /_next/image.
+const demo = (file: string) => `/rakhi-demo/${file}`;
+
+export const DEMO_MEDIA = {
+  /** 900×900. The cover portrait and the story card. */
+  hero: demo("demo-hero.webp"),
+  /** 560×560 each. The memories grid. */
+  memories: [demo("demo-mem-1.webp"), demo("demo-mem-2.webp"), demo("demo-mem-3.webp")] as const,
+  qr: demo("demo-qr.png"),
 } as const;
 
 /**

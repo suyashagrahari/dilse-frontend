@@ -12,6 +12,7 @@ import {
   type EditMode,
   type Toast,
   SAMPLE,
+  DEMO,
   rakhiDataToBody,
   dbToRakhiData,
 } from "../components/types";
@@ -36,7 +37,17 @@ export function useRakhiEditor() {
   const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
-  const [content, setContent] = useState<RakhiData>(SAMPLE);
+  // ── DEMO for the preview, SAMPLE for the form ────────────────────────────
+  //
+  // `content` is what the preview renders, so it starts as the filled demo —
+  // otherwise a visitor evaluating this template sees an empty shell and never
+  // learns that photos, memories and the shagun QR exist.
+  //
+  // `mf` is the form, so it starts as `SAMPLE`, which is empty by design. If
+  // these were seeded from the same object she would open the builder holding
+  // another family's photograph and their UPI ID, one Publish away from sending
+  // it to her brother. They must never be merged.
+  const [content, setContent] = useState<RakhiData>(DEMO);
   const [mf, setMf] = useState<RakhiData>({ ...SAMPLE });
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [pagePassword, setPagePassword] = useState("");

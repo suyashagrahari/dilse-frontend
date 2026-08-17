@@ -64,11 +64,17 @@
   font-family: var(--font-dancing), var(--font-playfair), cursive;
 }
 
-/* ── Phone-first stage ──────────────────────────────────────────────────────
+/* ── The stage ──────────────────────────────────────────────────────────────
  *
- * Portrait only. On a laptop the page is letterboxed to a phone column rather
- * than stretched: a full-bleed 1440px ritual reads as a website, and the whole
- * premise is that this is happening in his hand.
+ * This used to be `max-width: 420px` at every width, which letterboxed the whole
+ * page into a phone column with two empty gutters on a laptop. The reasoning was
+ * that a full-bleed ritual "reads as a website" — but what it actually produced
+ * was a 1440px screen that is 70% empty cream, which reads as broken.
+ *
+ * Now the column is the PHONE layout only. From 1024px up the stage opens to the
+ * full width and `.rb-screen-grid` takes over with a real two-column composition.
+ * The tablet band in between keeps the column, because a 900px two-column split
+ * gives the artwork too little room to be worth the move.
  */
 .rb-stage {
   width: 100%;
@@ -80,9 +86,203 @@
   isolation: isolate;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 1023.98px) {
   .rb-stage {
     box-shadow: 0 0 0 1px rgba(61, 35, 23, 0.1), 0 30px 70px rgba(61, 35, 23, 0.2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .rb-stage {
+    max-width: none;
+    box-shadow: none;
+  }
+
+  /* ── The desktop ground ───────────────────────────────────────────────────
+   *
+   * Opening the column to 1440px exposes a lot of flat cream, and flat cream at
+   * that size reads as an unfinished page rather than as paper. Three cheap
+   * layers fix it without another asset:
+   *
+   *   a warm vignette, so the middle sits forward of the edges
+   *   two marigold blooms bled off the corners, at 6% — colour in the gutters
+   *   a hairline border inset from the viewport, which is what makes the whole
+   *     thing read as a printed sheet rather than a browser window
+   *
+   * All three are painted, not composited from images, so they cost nothing and
+   * scale to any window.
+   */
+  .rb-stage::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(60rem 40rem at 12% 8%, rgba(232, 145, 58, 0.09), transparent 62%),
+      radial-gradient(52rem 38rem at 92% 92%, rgba(155, 34, 38, 0.07), transparent 60%),
+      radial-gradient(90rem 60rem at 50% 42%, transparent 44%, rgba(61, 35, 23, 0.07) 100%);
+  }
+
+  .rb-stage::after {
+    content: "";
+    position: fixed;
+    inset: 18px;
+    pointer-events: none;
+    z-index: 0;
+    border: 1px solid rgba(176, 141, 87, 0.28);
+    border-radius: 10px;
+  }
+}
+
+/* ── The screen grid ────────────────────────────────────────────────────────
+ *
+ * See Stage.tsx for why this is grid-template-areas and not two components.
+ *
+ *   phone     head / art / body, one column, centred
+ *   desktop   art on the left spanning both rows, head + body on the right
+ *
+ * `min-height: 100dvh` lives here rather than on each screen so that every
+ * screen is exactly one viewport and the ritual never scrolls on a laptop.
+ */
+.rb-screen {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Top padding reserves the toran's 92px — Stage now hangs one on every
+     screen, so no screen may lay content out underneath it. */
+  padding: 100px 22px 26px;
+}
+
+/* ── Why the stack is CENTRED and the CTA is not pushed to the floor ─────────
+ *
+ * This was `align-content: start` with a `1fr` last row and `margin-top: auto`
+ * on the button, which pinned the CTA to the bottom edge and let the 1fr row
+ * absorb everything left over. On a step with two lines of copy that opened a
+ * dead ~400px hole between the paragraph and the button — on a phone, the one
+ * size where vertical space is scarce.
+ *
+ * Centring the whole group instead means it grows and shrinks around the middle
+ * of the screen and reads as one composition at any height, from a 667px SE to
+ * a 932px Pro Max, with no rule about where the button "should" sit. The gap is
+ * vh-based so tall phones breathe and short ones tighten instead of scrolling.
+ */
+.rb-screen-grid {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-areas: "head" "art" "body";
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: clamp(10px, 2.2vh, 18px);
+  width: 100%;
+}
+
+/* Memories genuinely does not fit a viewport — three polaroids, a ledger and
+   the share block — so it stacks from the top and scrolls rather than trying to
+   centre a column taller than the screen. */
+.rb-memories .rb-screen-grid { align-content: start; }
+
+@media (min-width: 1024px) {
+  /* Polaroids stack tall; the column scrolls rather than the artwork shrinking
+     to nothing beside a short ledger. */
+  .rb-memories .rb-art { align-self: start; }
+}
+
+.rb-head { grid-area: head; text-align: center; }
+.rb-art  { grid-area: art; position: relative; display: grid; place-items: center; }
+
+.rb-body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.8vh, 15px);
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .rb-screen {
+    /* 104px clears the toran, which Stage now hangs on every screen. */
+    padding: 104px clamp(40px, 6vw, 104px) 56px;
+    justify-content: center;
+  }
+
+  /* ── Column widths, and why the art column is CAPPED in px ─────────────────
+   *
+   * This was `1.02fr / 1fr` inside a 1240px grid, and on a 2000px monitor it
+   * fell apart: the fr units handed the artwork a 620px column while the artwork
+   * itself is a fixed ~400px, so half of the left side was empty — and the text
+   * beside it stayed pinned at 520px, so the page managed to look sparse and
+   * cramped at the same time.
+   *
+   * An fr column cannot fit a fixed-size child. So the art column is now sized in
+   * px to what the artwork actually is, and the text column takes everything
+   * that remains. The grid caps below the point where the two halves stop
+   * reading as one composition.
+   */
+  .rb-screen-grid {
+    flex: none;
+    grid-template-areas:
+      "art head"
+      "art body";
+    grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(40px, 4vw, 72px);
+    row-gap: 18px;
+    align-content: center;
+    justify-items: stretch;
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  /* Artwork is centred against the full height of the text column beside it. */
+  .rb-art { align-self: center; }
+
+  .rb-head { text-align: left; align-self: end; }
+
+  /* No head — the text column takes the whole height beside the artwork rather
+     than starting halfway down it. */
+  .rb-screen-grid--nohead .rb-body {
+    grid-row: 1 / -1;
+    justify-content: center;
+  }
+
+  /* ── No artwork → one centred column ──────────────────────────────────────
+   *
+   * The ritual shows a card and nothing else until the reader taps; there is no
+   * left-hand image to pair the text with. Forcing it into the two-column grid
+   * would leave half the screen empty next to a card, so it collapses to a
+   * single centred column and the card gets to be the whole composition. */
+  .rb-screen-grid--noart {
+    grid-template-areas: "head" "body";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    justify-items: center;
+    max-width: 660px;
+  }
+  .rb-screen-grid--noart .rb-head {
+    text-align: center;
+    align-self: auto;
+  }
+  .rb-screen-grid--noart .rb-body {
+    align-items: center;
+    text-align: center;
+    grid-row: auto;
+  }
+
+  /* No max-width here any more — the grid column above already bounds it, and a
+     second cap only reintroduced the gap it was meant to close. */
+  .rb-body {
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-start;
+    gap: 18px;
   }
 }
 
@@ -217,10 +417,40 @@
 }
 .rb-ripple { animation: rb-ripple 620ms ease-out forwards; }
 
-/* The progress thread drawing itself between charms. */
-.rb-thread-track { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.rb-thread-fill {
-  transition: stroke-dashoffset 620ms cubic-bezier(0.22, 1, 0.36, 1);
+/* ── The page turn ──────────────────────────────────────────────────────────
+ *
+ * This replaces the numbered 1-2-3-4 progress rail that used to sit above the
+ * ritual. A step counter is honest but it turns a ceremony into a form: you
+ * stop looking at the tilak and start watching how many screens are left.
+ *
+ * What tells you that you moved is now the movement itself. The outgoing page
+ * lifts, tips a degree and slides off; the incoming one arrives from the other
+ * side and settles. Both are driven by framer-motion in RitualScreen — the two
+ * keyframes below are only for the paper edge that sweeps across during the
+ * turn, which is the part that sells it as a page rather than a slide.
+ *
+ * 520ms total. Long enough to read as a turn, short enough that four of them do
+ * not feel like waiting.
+ */
+@keyframes rb-page-edge {
+  0%   { transform: translateX(-8%) skewX(-7deg); opacity: 0; }
+  22%  { opacity: 0.9; }
+  100% { transform: translateX(112%) skewX(-7deg); opacity: 0; }
+}
+.rb-page-edge {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 46%;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 253, 248, 0) 0%,
+    rgba(255, 253, 248, 0.72) 46%,
+    rgba(176, 141, 87, 0.22) 62%,
+    rgba(255, 253, 248, 0) 100%
+  );
+  animation: rb-page-edge 520ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────────
@@ -243,11 +473,15 @@
   .rb-light,
   .rb-stamp,
   .rb-petal,
-  .rb-ripple {
+  .rb-ripple,
+  .rb-page-edge {
     animation: none !important;
   }
 
   .rb-petal { display: none !important; }
+  /* The sweep has no meaning without its motion — it would sit as a static
+     white smear over the incoming page. */
+  .rb-page-edge { display: none !important; }
 
   .rb-bloom,
   .rb-rise,
@@ -255,8 +489,6 @@
     opacity: 1 !important;
     transform: none !important;
   }
-
-  .rb-thread-fill { transition: none !important; }
 }
 
 /* ── Story card ─────────────────────────────────────────────────────────────

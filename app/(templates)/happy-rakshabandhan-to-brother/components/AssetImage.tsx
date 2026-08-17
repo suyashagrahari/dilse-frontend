@@ -24,6 +24,11 @@ import type { Asset } from "../assets";
 // `unoptimized` is REQUIRED on the GIFs. Without it Next's optimiser re-encodes
 // them to static WebP and each one becomes a single frozen frame — the ritual
 // still "works", it just stops moving, and nothing errors.
+//
+// A GIF starts playing the instant it decodes; there is no `paused` attribute
+// and no way to hold frame 1 from CSS. That is why the ritual does not show its
+// GIFs on the step at all — they play full screen on the tap, in
+// `RitualTakeover`, where "starts immediately" is exactly what is wanted.
 
 export const AssetImage = memo(function AssetImage({
   asset,
@@ -40,7 +45,7 @@ export const AssetImage = memo(function AssetImage({
   /** Optional cap for tall assets, so a portrait one cannot push the CTA away. */
   maxHeight?: number;
   priority?: boolean;
-  /** GIF/animated WebP → must bypass the optimiser. */
+  /** GIF/animated WebP → must bypass the optimiser or it freezes. */
   animated?: boolean;
   className?: string;
 }) {
