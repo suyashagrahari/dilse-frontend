@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { RAKHI_ASSETS, PRELOAD } from "../assets";
 import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW, charmGlyph } from "./theme";
@@ -10,6 +9,7 @@ import { useNow } from "./useNow";
 import { AssetImage, fitAsset } from "./AssetImage";
 import { Rangoli, Diya, ThreadDivider, RakhiCharm, PetalBurst } from "./Ornaments";
 import Stage, { useIsDesktop } from "./Stage";
+import UserImage from "./UserImage";
 
 /**
  * Screen 1.
@@ -135,10 +135,9 @@ export default function CoverScreen({
             }}
           >
             {data.photoUrl ? (
-              <Image
+              <UserImage
                 src={data.photoUrl}
                 alt={`${data.sisterName || "She"} and ${data.brotherName}`}
-                fill
                 priority
                 sizes={`${cover.width}px`}
                 style={{ objectFit: "cover" }}

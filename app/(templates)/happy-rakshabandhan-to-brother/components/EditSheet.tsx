@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Camera, Check, ImagePlus, Loader2, Lock, Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
-import { useAppSelector } from "@/store/hooks";
 import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW, charmGlyph } from "./theme";
 import type { EditMode, RakhiData, RakhiCharm } from "./types";
-import { uploadImage } from "./upload";
 import { decodeUpright } from "./photoCrop";
+import { displayUrl, dropLocal, isLocalRef, putLocal } from "./mediaStore";
 import PhotoAdjuster from "./PhotoAdjuster";
 import { useIsDesktop } from "./Stage";
 
@@ -232,7 +231,6 @@ export default function EditSheet({
   setPagePassword,
   onSave,
   saving,
-  onNeedAuth,
 }: {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
@@ -242,20 +240,15 @@ export default function EditSheet({
   setPagePassword: (v: string) => void;
   onSave: () => void;
   saving: boolean;
-  /** Opens the sign-in modal. The pending upload resumes on its own after. */
-  onNeedAuth: () => void;
 }) {
   const visible = editMode === "manual" || editMode === "choose";
   const [tab, setTab] = useState<TabId>("bhai");
   const [busy, setBusy] = useState<Slot | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const { accessToken } = useAppSelector((s) => s.auth);
   const isDesktop = useIsDesktop();
 
-  // The photo being adjusted, before it is baked and uploaded.
+  // The photo being adjusted, before it is baked and held.
   const [adjusting, setAdjusting] = useState<{ bitmap: ImageBitmap; slot: Slot } | null>(null);
-  /** Held across a sign-in so she never picks the same file twice. */
-  const pendingRef = useRef<{ file: File; slot: Slot } | null>(null);
 
   const heroRef = useRef<HTMLInputElement>(null);
   const memoryRef = useRef<HTMLInputElement>(null);
@@ -264,71 +257,50 @@ export default function EditSheet({
   const setRakhi = (patch: Partial<RakhiData["rakhi"]>) => updateMf("rakhi", { ...mf.rakhi, ...patch });
   const setShagun = (patch: Partial<RakhiData["shagun"]>) => updateMf("shagun", { ...mf.shagun, ...patch });
 
-  // ── Upload ────────────────────────────────────────────────────────────────
+  // ── Holding a photo ───────────────────────────────────────────────────────
+  //
+  // Nothing is uploaded here any more. The baked square goes into IndexedDB and
+  // the form carries an `idb:<id>` ref; `useRakhiEditor` uploads every held blob
+  // in one pass when she publishes.
+  //
+  // That is what removes the auth problem rather than working around it. This
+  // component used to need a token to accept a photo at all, so picking one
+  // while signed out failed — and the version before this one answered that by
+  // holding the file and raising the sign-in modal, which was still asking her
+  // to open an account before she could see her own face on the page. Now she
+  // builds the whole thing signed out and signs in once, at publish, where it
+  // was always required.
   const land = useCallback(
-    (slot: Slot, url: string) => {
-      if (slot === "hero") updateMf("photoUrl", url);
-      else if (slot === "qr") updateMf("shagun", { ...mf.shagun, qrImageUrl: url });
-      else updateMf("memories", [...mf.memories, { imageUrl: url, caption: "", year: "" }]);
+    (slot: Slot, ref: string) => {
+      if (slot === "hero") updateMf("photoUrl", ref);
+      else if (slot === "qr") updateMf("shagun", { ...mf.shagun, qrImageUrl: ref });
+      else updateMf("memories", [...mf.memories, { imageUrl: ref, caption: "", year: "" }]);
     },
     [mf.shagun, mf.memories, updateMf]
   );
 
-  const send = useCallback(
-    async (file: File, slot: Slot, token: string | null | undefined) => {
+  const hold = useCallback(
+    async (file: File, slot: Slot) => {
       setBusy(slot);
       setErr(null);
-      const r = await uploadImage(file, token);
+      const r = await putLocal(file, slot);
       setBusy(null);
-      if (r.ok && r.url) {
-        land(slot, r.url);
-        // Release the decoded bitmap — it is the full-resolution photograph and
-        // holding a dozen of them across a memories session is real memory.
-        setAdjusting((a) => {
-          a?.bitmap.close();
-          return null;
-        });
+      if (!r.ok || !r.ref) {
+        setErr(r.error ?? "Could not add that photo");
         return;
       }
-      setErr(r.error ?? "Upload failed");
+      land(slot, r.ref);
+      // Release the decoded bitmap — it is the full-resolution photograph, and
+      // holding a dozen across a memories session is real memory.
+      setAdjusting((a) => {
+        a?.bitmap.close();
+        return null;
+      });
     },
     [land]
   );
 
-  /**
-   * Upload now if we can; otherwise hold the file and ask her to sign in.
-   *
-   * Deliberately does NOT start a spinner in the signed-out case. A spinner
-   * would be a promise that something is happening, and what is actually
-   * happening is that she is being asked to sign in — if she dismisses the
-   * modal, that spinner has nothing left to resolve it. Instead the adjuster
-   * stays open with her crop intact and the button live, so pressing it again
-   * simply asks again.
-   */
-  const upload = useCallback(
-    (file: File, slot: Slot) => {
-      if (!accessToken) {
-        pendingRef.current = { file, slot };
-        setErr(null);
-        onNeedAuth();
-        return;
-      }
-      void send(file, slot, accessToken);
-    },
-    [accessToken, onNeedAuth, send]
-  );
-
-  // Resume the held upload the moment a token exists. Watching the token rather
-  // than the modal's close event is deliberate: the modal reports success
-  // before Redux has the token, and an upload fired then goes out unauthorised.
-  useEffect(() => {
-    if (!accessToken || !pendingRef.current) return;
-    const p = pendingRef.current;
-    pendingRef.current = null;
-    void send(p.file, p.slot, accessToken);
-  }, [accessToken, send]);
-
-  /** A file was chosen → decode it, then open the adjuster (or upload a QR). */
+  /** A file was chosen → decode it, then open the adjuster (or hold a QR). */
   const choose = useCallback(
     async (file: File, slot: Slot) => {
       setErr(null);
@@ -336,7 +308,7 @@ export default function EditSheet({
       // A QR is not cropped: the code needs its quiet border, and zooming into
       // one is how you make it unscannable.
       if (slot === "qr") {
-        upload(file, slot);
+        void hold(file, slot);
         return;
       }
 
@@ -347,17 +319,19 @@ export default function EditSheet({
       }
       setAdjusting({ bitmap, slot });
     },
-    [upload]
+    [hold]
   );
 
   const closeAdjuster = useCallback(() => {
-    // Drop any held file too. Without this, abandoning a photo here and signing
-    // in later for some unrelated reason would upload the abandoned one.
-    pendingRef.current = null;
     setAdjusting((a) => {
       a?.bitmap.close();
       return null;
     });
+  }, []);
+
+  /** Removing a photo forgets the held blob too, rather than orphaning it. */
+  const forget = useCallback((ref: string) => {
+    if (isLocalRef(ref)) void dropLocal(ref);
   }, []);
 
   const railed = isDesktop && visible;
@@ -428,12 +402,15 @@ export default function EditSheet({
             hint="This is the picture on the opening screen and on the card you can post to your story. You choose what the square keeps."
           >
             <PhotoSlot
-              url={mf.photoUrl}
+              url={displayUrl(mf.photoUrl)}
               busy={busy === "hero"}
               size={168}
               emptyLabel="Add photo"
               onPick={() => heroRef.current?.click()}
-              onRemove={() => updateMf("photoUrl", "")}
+              onRemove={() => {
+                forget(mf.photoUrl);
+                updateMf("photoUrl", "");
+              }}
             />
             <input
               ref={heroRef}
@@ -649,7 +626,7 @@ export default function EditSheet({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={m.imageUrl}
+                src={displayUrl(m.imageUrl)}
                 alt=""
                 style={{ width: 66, height: 66, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
               />
@@ -681,7 +658,10 @@ export default function EditSheet({
               </div>
               <button
                 type="button"
-                onClick={() => updateMf("memories", mf.memories.filter((_, j) => j !== i))}
+                onClick={() => {
+                  forget(m.imageUrl);
+                  updateMf("memories", mf.memories.filter((_, j) => j !== i));
+                }}
                 aria-label={`Remove photo ${i + 1}`}
                 style={{ ...iconButton, width: 40, background: "transparent" }}
               >
@@ -755,13 +735,16 @@ export default function EditSheet({
 
             <Field label="QR code" hint="Optional. Not cropped — a cropped QR stops scanning.">
               <PhotoSlot
-                url={mf.shagun.qrImageUrl}
+                url={displayUrl(mf.shagun.qrImageUrl)}
                 busy={busy === "qr"}
                 size={132}
                 fit="contain"
                 emptyLabel="Add QR"
                 onPick={() => qrRef.current?.click()}
-                onRemove={() => setShagun({ qrImageUrl: "" })}
+                onRemove={() => {
+                  forget(mf.shagun.qrImageUrl);
+                  setShagun({ qrImageUrl: "" });
+                }}
               />
               <input
                 ref={qrRef}
@@ -988,7 +971,7 @@ export default function EditSheet({
             out={adjusting.slot === "hero" ? OUT_HERO : OUT_MEMORY}
             title={adjusting.slot === "hero" ? "Your photo together" : "This memory"}
             busy={busy === adjusting.slot}
-            onConfirm={(file) => upload(file, adjusting.slot)}
+            onConfirm={(file) => void hold(file, adjusting.slot)}
             onCancel={closeAdjuster}
           />
         )}

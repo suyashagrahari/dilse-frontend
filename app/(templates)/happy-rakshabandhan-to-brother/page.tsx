@@ -191,7 +191,6 @@ function RakhiPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
         saving={e.saving}
-        onNeedAuth={e.requestAuth}
       />
 
       {/* Shown the first time Create is tapped, and only once the server has a
@@ -216,9 +215,17 @@ function RakhiPageInner() {
               style={{ background: RB.surface, border: CARD_BORDER }}
             >
               <Loader2 size={30} className="animate-spin" style={{ color: RB.red }} />
+              {/* One live region, not two: `publishStage` replaces the line
+                  rather than appearing under it, so a screen reader announces
+                  "Uploading photos… 2 of 4" instead of both at once. */}
               <p className="font-bold" style={{ color: RB.ink }} aria-live="polite">
-                Tying your rakhi…
+                {e.publishStage ?? "Tying your rakhi…"}
               </p>
+              {e.publishStage && (
+                <p className="text-xs" style={{ color: RB.muted }}>
+                  Your photos are going up now — keep this open.
+                </p>
+              )}
             </div>
           </motion.div>
         )}

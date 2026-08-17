@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { useStoryFill } from "@/hooks/useStoryFill";
@@ -17,6 +17,16 @@ import {
   rakhiDataToBody,
   dbToRakhiData,
 } from "../components/types";
+import {
+  applyUploaded,
+  blobToFile,
+  dropLocal,
+  getLocal,
+  localRefs,
+  purgeLocal,
+  resolveMedia,
+} from "../components/mediaStore";
+import { uploadImage } from "../components/upload";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "happy-rakshabandhan-to-brother";
@@ -85,6 +95,15 @@ export function useRakhiEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  /**
+   * What the publish is doing right now, e.g. "Uploading photos… 2 of 4".
+   *
+   * Photos are uploaded at publish rather than at pick, so pressing Send can now
+   * mean several megabytes over a phone connection. A spinner with no counter
+   * behind it reads as a hang, and the natural response to a hang is to press
+   * the button again.
+   */
+  const [publishStage, setPublishStage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
@@ -148,17 +167,27 @@ export function useRakhiEditor() {
 
     (async () => {
       try {
+        // She signed in BECAUSE she pressed Send, so her photos are still held
+        // locally and have to go up before this write — otherwise the resumed
+        // publish saves `idb:` refs and her page has no pictures in it.
+        const up = await uploadHeld(data, accessToken);
+        if (!up.ok) {
+          pushToast({ type: "info", title: "Photos didn't upload", message: up.error });
+          return;
+        }
+        const uploaded = up.data;
+
         const res = await fetch(BASE, {
           method: "POST",
           headers: headers(),
-          body: JSON.stringify(rakhiDataToBody(data, password)),
+          body: JSON.stringify(rakhiDataToBody(uploaded, password)),
         });
         const result = await res.json();
         if (!result.success) throw new Error("Save failed");
 
         const savedId = result.data._id as string;
         setPageId(savedId);
-        setContent(data);
+        setContent(uploaded);
         setIsPersonalized(true);
 
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, {
@@ -181,7 +210,24 @@ export function useRakhiEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
-  const displayData = editMode === "manual" || editMode === "choose" ? mf : content;
+  // ── Held photos are resolved HERE and nowhere else ────────────────────────
+  //
+  // A photo she has picked but not published lives in IndexedDB and is carried
+  // in the data as `idb:<id>`. Swapping those for object URLs at this single
+  // seam is what lets every screen below keep rendering a plain string: the
+  // ritual, the polaroid grid and the story card never learn that local media
+  // exists. `resolveMedia` returns the same object untouched when there is
+  // nothing local, so the published path costs nothing.
+  const displayData = useMemo(() => {
+    const source = editMode === "manual" || editMode === "choose" ? mf : content;
+    return resolveMedia(source);
+  }, [editMode, mf, content]);
+
+  // Anything still held belongs to a session whose form state is gone — this
+  // template persists no draft, so nothing can reference it. See mediaStore.
+  useEffect(() => {
+    void purgeLocal();
+  }, []);
 
   const updateMf = useCallback(
     (key: keyof RakhiData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
@@ -206,15 +252,9 @@ export function useRakhiEditor() {
   /** "I'll write it myself" from the starter — the form is already behind it. */
   const openManualForm = useCallback(() => setEditMode("manual"), []);
 
-  /**
-   * A photo upload needs a token and there isn't one.
-   *
-   * The sheet keeps the file she picked and retries by itself once the token
-   * lands, so this only has to raise the modal. It does NOT set
-   * `pendingPublishRef` — signing in to add a photo must not then publish her
-   * half-finished page.
-   */
-  const requestAuth = useCallback(() => setShowAuth(true), []);
+  // There is deliberately no "sign in to add a photo" path any more. Photos are
+  // held in IndexedDB until publish, so the whole page can be built signed out
+  // and the only thing that needs an account is sending it.
 
   const handleSave = useCallback(() => {
     if (!mf.brotherName.trim()) {
@@ -230,27 +270,83 @@ export function useRakhiEditor() {
     pushToast({ type: "success", title: "Saved!", message: "Preview it, then send 🪢" });
   }, [mf, pushToast, bumpPreview]);
 
-  const create = useCallback(async (): Promise<string | null> => {
-    const res = await fetch(BASE, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify(rakhiDataToBody(content, pagePassword)),
-    });
-    const result = await res.json();
-    if (!result.success) return null;
-    setPageId(result.data._id);
-    return result.data._id as string;
-  }, [content, pagePassword, headers]);
+  // `create` and `update` take the data explicitly rather than reading `content`
+  // off the closure, because at publish time the thing that must be written is
+  // the UPLOADED copy — the one whose `idb:` refs have become CDN URLs — and
+  // that copy exists as a local value some milliseconds before React has it in
+  // state. Reading `content` here would persist the refs instead.
+  const create = useCallback(
+    async (data: RakhiData): Promise<string | null> => {
+      const res = await fetch(BASE, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(rakhiDataToBody(data, pagePassword)),
+      });
+      const result = await res.json();
+      if (!result.success) return null;
+      setPageId(result.data._id);
+      return result.data._id as string;
+    },
+    [pagePassword, headers]
+  );
 
   const update = useCallback(
-    async (id: string) => {
+    async (id: string, data: RakhiData) => {
       await fetch(`${BASE}/${id}`, {
         method: "PUT",
         headers: headers(),
-        body: JSON.stringify(rakhiDataToBody(content, pagePassword)),
+        body: JSON.stringify(rakhiDataToBody(data, pagePassword)),
       });
     },
-    [content, pagePassword, headers]
+    [pagePassword, headers]
+  );
+
+  /**
+   * Send every held photo to S3, then hand back the data with CDN URLs.
+   *
+   * ── ALL OR NOTHING ────────────────────────────────────────────────────────
+   *
+   * A failure anywhere aborts the publish. The alternative — press on and save
+   * what uploaded — writes a document containing a `blob:` URL from this tab,
+   * which resolves for her, for a few minutes, and is a permanently broken
+   * image for her brother. There is no way for him to tell that apart from a
+   * page she made badly, so a failed upload has to stop the publish and say so.
+   */
+  const uploadHeld = useCallback(
+    async (
+      data: RakhiData,
+      token: string
+    ): Promise<{ ok: true; data: RakhiData } | { ok: false; error: string }> => {
+      const refs = localRefs(data);
+      if (refs.length === 0) return { ok: true, data };
+
+      const map = new Map<string, string>();
+      for (let i = 0; i < refs.length; i++) {
+        const ref = refs[i];
+        setPublishStage(
+          refs.length === 1 ? "Uploading your photo…" : `Uploading photos… ${i + 1} of ${refs.length}`
+        );
+
+        const blob = await getLocal(ref);
+        if (!blob) {
+          // The record is gone: a purge, a cleared site, a second tab. Nothing
+          // to send and nothing to recover, so say which step failed.
+          return { ok: false, error: "One of your photos went missing — add it again" };
+        }
+
+        const kind = ref === data.shagun.qrImageUrl ? "qr" : ref === data.photoUrl ? "hero" : "memory";
+        const r = await uploadImage(blobToFile(blob, kind), token);
+        if (!r.ok || !r.url) return { ok: false, error: r.error ?? "A photo failed to upload" };
+        map.set(ref, r.url);
+      }
+
+      setPublishStage(null);
+      // Only now that every one is up: rewrite, then forget the local copies.
+      const next = applyUploaded(data, map);
+      for (const ref of refs) void dropLocal(ref);
+      return { ok: true, data: next };
+    },
+    []
   );
 
   const publish = useCallback(async () => {
@@ -273,9 +369,19 @@ export function useRakhiEditor() {
 
     setPublishing(true);
     try {
+      // The photos go up first. Everything after this point deals only in URLs.
+      const up = await uploadHeld(content, accessToken);
+      if (!up.ok) {
+        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "media_upload_failed" });
+        pushToast({ type: "info", title: "Photos didn't upload", message: up.error });
+        return;
+      }
+      const data = up.data;
+      setContent(data);
+
       let id = pageId;
-      if (!id) id = await create();
-      else await update(id);
+      if (!id) id = await create(data);
+      else await update(id, data);
       if (!id) throw new Error("Save failed");
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
@@ -296,8 +402,22 @@ export function useRakhiEditor() {
       pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
     } finally {
       setPublishing(false);
+      setPublishStage(null);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [
+    content,
+    // Still read directly, for `pendingPublishRef` when the auth modal
+    // interrupts — `create`/`update` take their own copy via their closures.
+    pagePassword,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    create,
+    update,
+    uploadHeld,
+    headers,
+    pushToast,
+  ]);
 
   const closeAuth = useCallback(() => {
     setShowAuth(false);
@@ -341,7 +461,7 @@ export function useRakhiEditor() {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
 
-    fill, storyStarter, openManualForm, requestAuth,
+    fill, storyStarter, openManualForm, publishStage,
 
     setEditMode, setPagePassword, updateMf, setMf,
     handleStartCreate, handleEditClick, handleEditFromPreview, handleSave,

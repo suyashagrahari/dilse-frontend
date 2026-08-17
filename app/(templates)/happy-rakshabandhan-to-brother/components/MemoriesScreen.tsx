@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, Loader2, Instagram } from "lucide-react";
@@ -10,6 +9,7 @@ import type { RakhiData, Memory } from "./types";
 import { AssetImage, fitAsset } from "./AssetImage";
 import { Rangoli, ThreadDivider, RakhiCharm } from "./Ornaments";
 import Stage, { BackLink, useIsDesktop } from "./Stage";
+import UserImage from "./UserImage";
 
 /**
  * Deterministic tilt per card. `Math.random()` would re-roll on every render
@@ -55,10 +55,9 @@ function Polaroid({ m, i }: { m: Memory; i: number }) {
           overflow: "hidden",
         }}
       >
-        <Image
+        <UserImage
           src={m.imageUrl}
           alt={m.caption || "A memory"}
-          fill
           sizes="270px"
           onError={() => setBroken(true)}
           style={{ objectFit: "cover" }}

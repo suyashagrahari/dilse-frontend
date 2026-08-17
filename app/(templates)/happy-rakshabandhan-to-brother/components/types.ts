@@ -52,18 +52,38 @@ export interface Toast {
 
 export type EditMode = null | "manual" | "choose" | "preview";
 
-/** Editor state → request body. The server re-validates all of this. */
+/**
+ * Editor state → request body. The server re-validates all of this.
+ *
+ * ── THE `idb:` STRIP ────────────────────────────────────────────────────────
+ *
+ * A photo she has not published yet is held in IndexedDB and carried here as
+ * `idb:<id>`. `useRakhiEditor` uploads every one of those before it calls this,
+ * and aborts the publish if any fails, so in the normal path there is nothing
+ * to strip.
+ *
+ * This is the backstop for the abnormal one. A ref that reached the database
+ * would be saved as a permanent, unfixable broken image on her brother's page —
+ * the id means nothing outside the browser that minted it. Dropping it to an
+ * empty string instead means the page renders its illustrated fallback, which is
+ * a page missing a photo rather than a page with a hole in it.
+ */
+const stripLocal = (v: string): string => (v.startsWith("idb:") ? "" : v);
+
 export function rakhiDataToBody(d: RakhiData, password: string) {
   return {
     brotherName: d.brotherName,
     sisterName: d.sisterName,
     city: d.city,
-    photoUrl: d.photoUrl,
+    photoUrl: stripLocal(d.photoUrl),
     greeting: d.greeting,
     rakhi: d.rakhi,
-    memories: d.memories,
+    memories: d.memories
+      .map((m) => ({ ...m, imageUrl: stripLocal(m.imageUrl) }))
+      // A memory IS its photograph; a caption with no image renders an empty frame.
+      .filter((m) => m.imageUrl),
     ledger: d.ledger,
-    shagun: d.shagun,
+    shagun: { ...d.shagun, qrImageUrl: stripLocal(d.shagun.qrImageUrl) },
     distanceKm: d.distanceKm,
     festivalDate: d.festivalDate,
     password,

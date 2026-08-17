@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
@@ -10,6 +9,7 @@ import type { RakhiData } from "./types";
 import { AssetImage, fitAsset } from "./AssetImage";
 import { Rangoli, PetalBurst } from "./Ornaments";
 import Stage, { BackLink, useIsDesktop } from "./Stage";
+import UserImage from "./UserImage";
 import type { Entry } from "./RakhiTemplate";
 
 // ─── The gift bit ────────────────────────────────────────────────────────────
@@ -307,10 +307,9 @@ export default function GiftScreen({
                     position: "relative",
                   }}
                 >
-                  <Image
+                  <UserImage
                     src={data.shagun.qrImageUrl}
                     alt={`UPI QR code for ${sister}`}
-                    fill
                     sizes="172px"
                     style={{ objectFit: "contain", padding: 7 }}
                   />
