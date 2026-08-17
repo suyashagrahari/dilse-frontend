@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -56,6 +57,30 @@ export function useRakhiEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
   const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
+
+  // ── AI story fill ─────────────────────────────────────────────────────────
+  //
+  // The same hook thirty other editors call. Everything template-specific is
+  // right here: the slug the server turns into a field list, and the baseline
+  // that decides what counts as HER words.
+  //
+  // `demo: SAMPLE`, not `DEMO`, and the distinction matters. `diffTouched`
+  // treats "differs from the baseline and is non-empty" as "the sender typed
+  // this", and protects it from being overwritten. `SAMPLE` is what the form
+  // actually opens holding, so that comparison is meaningful. Passing the
+  // filled gallery `DEMO` instead would make Meher's greeting the baseline and
+  // quietly mark a sister's own identical-length lines as untouched.
+  const fill = useStoryFill<RakhiData>({
+    slug: TEMPLATE,
+    demo: SAMPLE,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Mounted the first time Create is tapped. `StoryStarter` renders nothing at
+  // all until the server has a schema for this slug, so this is safe to ship
+  // ahead of the server config.
+  const [storyStarter, setStoryStarter] = useState(false);
 
   const [showAuth, setShowAuth] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -175,7 +200,21 @@ export function useRakhiEditor() {
 
   const handleStartCreate = useCallback(() => {
     handleEditClick();
+    setStoryStarter(true);
   }, [handleEditClick]);
+
+  /** "I'll write it myself" from the starter — the form is already behind it. */
+  const openManualForm = useCallback(() => setEditMode("manual"), []);
+
+  /**
+   * A photo upload needs a token and there isn't one.
+   *
+   * The sheet keeps the file she picked and retries by itself once the token
+   * lands, so this only has to raise the modal. It does NOT set
+   * `pendingPublishRef` — signing in to add a photo must not then publish her
+   * half-finished page.
+   */
+  const requestAuth = useCallback(() => setShowAuth(true), []);
 
   const handleSave = useCallback(() => {
     if (!mf.brotherName.trim()) {
@@ -301,6 +340,8 @@ export function useRakhiEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+
+    fill, storyStarter, openManualForm, requestAuth,
 
     setEditMode, setPagePassword, updateMf, setMf,
     handleStartCreate, handleEditClick, handleEditFromPreview, handleSave,

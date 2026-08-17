@@ -501,3 +501,154 @@
   transform-origin: top left;
   flex-shrink: 0;
 }
+
+/* ── The builder: one component, two geometries ─────────────────────────────
+ *
+ * PHONE — a bottom sheet, capped at 88dvh so the page stays visible above it.
+ * DESKTOP (≥1024px) — a docked rail down the left, with the live preview beside
+ * it, so she watches the page change as she types instead of closing a sheet to
+ * check. `.rb-railed` on the root then shifts the stage and the top bar out from
+ * under the rail.
+ *
+ * The switch lives here rather than in the component because it is pure
+ * geometry: doing it in JS would mean the first paint after hydration is the
+ * wrong shape, and doing it in a second component would mean two copies of every
+ * field.
+ */
+.rb-editor {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: #fdf8ee;
+  border-top: 1.5px solid rgba(61, 35, 23, 0.16);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+}
+
+.rb-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px 10px;
+  flex-shrink: 0;
+}
+
+.rb-editor-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 18px 12px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rb-editor-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.rb-editor-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 18px 18px;
+  flex: 1;
+}
+
+.rb-editor-foot {
+  padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(61, 35, 23, 0.12);
+  background: #fdf8ee;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .rb-editor {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: 420px;
+    max-width: none;
+    margin: 0;
+    max-height: none;
+    border-top: 0;
+    border-radius: 0;
+    border-right: 1.5px solid rgba(61, 35, 23, 0.16);
+    box-shadow: 18px 0 50px rgba(61, 35, 23, 0.14);
+  }
+
+  .rb-editor-head {
+    padding: 18px 20px 12px;
+  }
+
+  /* The jump-nav stays put while the sections scroll under it. */
+  .rb-editor-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0 20px 12px;
+    background: #fdf8ee;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .rb-editor-body {
+    padding: 4px 20px 24px;
+  }
+
+  .rb-editor-foot {
+    padding: 12px 20px 16px;
+  }
+
+  /* Make room for the rail. Without this the stage stays centred in the whole
+   * viewport and the rail sits on top of the left half of the preview. */
+  .rb-railed {
+    padding-left: 420px;
+  }
+
+  /* Two classes beat Tailwind's single-class `left-0` on the bar. */
+  .rb-railed .rb-topbar {
+    left: 420px;
+  }
+}
+
+/* ── The preview, while the rail is open ────────────────────────────────────
+ *
+ * The stage's two-column composition is sized off the VIEWPORT, but with the
+ * rail open the space it actually gets is the viewport minus 420px. At 1024px
+ * that is 599px, and the measured result was `grid-template-columns:
+ * 435px 0px` — the art column took its fixed width, the text column collapsed
+ * to ZERO, and the entire right-hand side of the preview (headline, her lines,
+ * the CTA) rendered at 43px wide or not at all.
+ *
+ * So: while railed, the preview stays single-column until the window is wide
+ * enough for a 420px rail AND the full 1060px stage. Below that it is a narrow
+ * centred column, which is honest — the preview genuinely is narrow while half
+ * the window is a form — and it is the same composition the phone gets, which
+ * is already known to work at this width.
+ */
+@media (min-width: 1024px) and (max-width: 1479.98px) {
+  .rb-railed .rb-screen {
+    padding-left: clamp(20px, 3vw, 48px);
+    padding-right: clamp(20px, 3vw, 48px);
+  }
+
+  .rb-railed .rb-screen-grid {
+    grid-template-areas: "head" "art" "body";
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    justify-items: center;
+    text-align: center;
+    max-width: 520px;
+  }
+
+  .rb-railed .rb-screen-grid--noart {
+    grid-template-areas: "head" "body";
+  }
+}

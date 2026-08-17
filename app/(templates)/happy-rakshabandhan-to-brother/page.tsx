@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useRakhiEditor } from "./hooks/useRakhiEditor";
 import RakhiTemplate from "./components/RakhiTemplate";
 import EditSheet from "./components/EditSheet";
@@ -91,12 +92,20 @@ function RakhiPageInner() {
     boxShadow: "2px 3px 0 rgba(61,35,23,0.14)",
   };
 
+  // On a laptop the builder is a docked rail, so the stage and the top bar have
+  // to move out from under it. `rb-railed` does both, in CSS, under the same
+  // 1024px breakpoint the rail itself uses — see rakhi.css.
+  const railed = e.editMode === "manual" || e.editMode === "choose";
+
   return (
-    <div className="rb-root" style={{ minHeight: "100dvh", position: "relative", background: PAPER_GRADIENT }}>
+    <div
+      className={`rb-root${railed ? " rb-railed" : ""}`}
+      style={{ minHeight: "100dvh", position: "relative", background: PAPER_GRADIENT }}
+    >
       {/* The bar tracked the 420px phone column at every width, which left both
           controls huddled in the middle of a 1440px screen. It now follows the
           same breakpoint as the stage. */}
-      <div className="fixed top-3 left-0 right-0 z-[200] flex items-center justify-between px-3 lg:px-8 max-w-[520px] lg:max-w-none mx-auto">
+      <div className="rb-topbar fixed top-3 left-0 right-0 z-[200] flex items-center justify-between px-3 lg:px-8 max-w-[520px] lg:max-w-none mx-auto">
         <button
           onClick={e.goBack}
           aria-label="Back to templates"
@@ -182,7 +191,16 @@ function RakhiPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
         saving={e.saving}
+        onNeedAuth={e.requestAuth}
       />
+
+      {/* Shown the first time Create is tapped, and only once the server has a
+          schema for this slug — otherwise it renders nothing and the form
+          behaves exactly as it did. Every way out of it lands in the EditSheet
+          above, with every field editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your rakhi page" />
+      )}
 
       <AnimatePresence>
         {e.publishing && (
