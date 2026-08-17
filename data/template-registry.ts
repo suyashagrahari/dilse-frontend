@@ -52,6 +52,7 @@ import { config as nutrition } from "@/app/(templates)/nutrition/config";
 import { config as appListing } from "@/app/(templates)/app/config";
 import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
+import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshabandhan-to-sister/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -69,6 +70,13 @@ const allConfigs = [
   // nobody is shopping for, and it should drop back down among the others.
   // Move it below `apologyDashboard` once the festival has passed.
   rakshaBandhan,
+  // Its pair, adjacent on purpose. The two halves of one festival, and someone
+  // arriving for "rakhi" wants to be shown both in one glance rather than
+  // discovering the second one four scrolls later and wondering which they were
+  // meant to use. Sister-side second because the brother-side page has the
+  // search history and is the one people arrive looking for; this one moves with
+  // it when the pair drops down after the 28th.
+  rakshaBandhanSister,
 
   birthdayGf,
   loveGf,

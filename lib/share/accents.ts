@@ -57,6 +57,10 @@ const ACCENTS: Record<string, string> = {
   streak: "#b45309",
   "train-ticket": "#334155",
   "happy-rakshabandhan-to-brother": "#9B2226",
+  // Rani pink, not the brother's festival red — kept in step with `ACCENT` in
+  // that template's components/theme.ts, which explains why the two halves of
+  // the same festival must not look like each other's reload.
+  "happy-rakshabandhan-to-sister": "#A62A5C",
   us: "#171717",
   "valentine-gf": "#ef4444",
   "vending-machine": "#0f766e",

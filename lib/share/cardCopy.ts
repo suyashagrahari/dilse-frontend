@@ -42,6 +42,11 @@ const COPY: Record<string, CardCopy> = {
   "court-of-love": { kicker: "You are hereby summoned", headline: "The Court of Love", line: "Attendance is mandatory" },
   us: { kicker: "The story so far", headline: "Us", line: "Chapter one of many" },
   "happy-rakshabandhan-to-brother": { kicker: "Raksha Bandhan", headline: "Your Sister Tied You a Rakhi", line: "Scan to tie it" },
+  // The pair to the line above, and written from HER side, because the card is
+  // the thing she ends up holding. The headline is what she is being told when
+  // the link arrives — she has not tied anything yet, and the whole point of the
+  // page is that the tying is left for her to do.
+  "happy-rakshabandhan-to-sister": { kicker: "Raksha Bandhan", headline: "Your Brother Sent a Rakhi to Tie", line: "Scan to tie it" },
   capsule: { kicker: "Sealed for later", headline: "A Time Capsule", line: "Open when you're ready" },
   rewind: { kicker: "Press play", headline: "Our Year, Rewound", line: "All of it, again" },
   loveflix: { kicker: "Now streaming", headline: "Tonight's Feature: Us", line: "No skipping the good parts" },
