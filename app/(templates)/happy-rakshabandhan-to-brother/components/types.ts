@@ -99,11 +99,25 @@ export const DEFAULT_RAKHI: RakhiDesign = {
 };
 
 /**
- * Shown in the builder before she has typed anything.
+ * What the builder opens holding — a complete first draft, not an empty form.
  *
- * Deliberately obviously-a-placeholder: a name in angle brackets and a ledger
- * row that is plainly a joke. A default that looks like real content is the
- * reason people publish pages still carrying it.
+ * Every value here is a real, sendable line she can keep, and every one is
+ * editable. That is deliberate: a form of empty boxes asks someone to be a
+ * writer before they have decided whether to bother, and the drop-off is at the
+ * first empty box. A draft asks them to correct something instead, which is a
+ * much smaller thing to be asked.
+ *
+ * ── WHAT IS NOT PREFILLED, AND WHY ──────────────────────────────────────────
+ *
+ * `sisterName` is hers to state and cannot be guessed. `photoUrl`, `memories`
+ * and the whole of `shagun` involve her own photographs and her own bank
+ * details — a default there would be another family's face or somebody's UPI ID
+ * (see `DEMO` below, which is exactly that and must never be merged with this).
+ * `distanceKm` is a fact about them that no default can know.
+ *
+ * `brotherName` DOES carry "Bhai", because it is a real word a sister uses and
+ * a page addressed to "Bhai" is a page, not a placeholder. The form marks it as
+ * still-untouched so it cannot be published by accident without her seeing that.
  */
 export const SAMPLE: RakhiData = {
   brotherName: "Bhai",
@@ -115,7 +129,10 @@ export const SAMPLE: RakhiData = {
     "Every year it means the same thing.",
     "You are stuck with me. Forever.",
   ],
-  rakhi: DEFAULT_RAKHI,
+  // The pendant is the one visible part of the rakhi itself. Left empty it
+  // rendered as a blank brass disc in the middle of the thread, which reads as
+  // a missing asset rather than as a choice she has not made yet.
+  rakhi: { ...DEFAULT_RAKHI, pendantText: "didi" },
   memories: [],
   ledger: [
     { label: "chocolates owed", value: "47" },

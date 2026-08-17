@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Camera, Check, ImagePlus, Loader2, Lock, Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { RB, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW, charmGlyph } from "./theme";
-import type { EditMode, RakhiData, RakhiCharm } from "./types";
+import { SAMPLE, type EditMode, type RakhiData, type RakhiCharm } from "./types";
 import { decodeUpright } from "./photoCrop";
 import { displayUrl, dropLocal, isLocalRef, putLocal } from "./mediaStore";
 import PhotoAdjuster from "./PhotoAdjuster";
@@ -345,10 +345,23 @@ export default function EditSheet({
         <>
           <Group title="Who is it for?">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
-              <Field label="Your bhai's name" htmlFor="rb-bro">
+              {/* The form opens as a finished draft, so the one field that could
+                  be published untouched without her noticing says so. A hint,
+                  not a block: "Bhai" is a real thing to call him and some people
+                  will mean it. */}
+              <Field
+                label="Your bhai's name"
+                htmlFor="rb-bro"
+                hint={mf.brotherName === SAMPLE.brotherName ? "Still the default — make it his." : undefined}
+              >
                 <input
                   id="rb-bro"
-                  style={field}
+                  style={{
+                    ...field,
+                    ...(mf.brotherName === SAMPLE.brotherName
+                      ? { borderColor: RB.brass, borderStyle: "dashed" }
+                      : null),
+                  }}
                   value={mf.brotherName}
                   onChange={(e) => updateMf("brotherName", e.target.value)}
                   placeholder="Arjun"

@@ -108,7 +108,17 @@ export function useRakhiEditor() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
-  const pendingPublishRef = useRef<{ data: RakhiData; password: string } | null>(null);
+  /**
+   * She pressed Send without an account. Set on the way into the auth modal and
+   * consumed by the resume effect below `publish`.
+   *
+   * A bare flag, not a copy of her data: `publish` reads `content` and
+   * `pagePassword` from state, and those are exactly what she was looking at
+   * when she pressed the button. Stashing a snapshot here as well meant two
+   * sources of truth for the same page, and the snapshot was the one that
+   * silently went stale.
+   */
+  const resumePublishRef = useRef(false);
 
   const headers = useCallback(
     () => ({
@@ -155,60 +165,28 @@ export function useRakhiEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken, searchParams]);
 
-  // ── Resume a publish that was interrupted by the auth modal ──
-  useEffect(() => {
-    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
-    const { data, password } = pendingPublishRef.current;
-    pendingPublishRef.current = null;
-
-    setPublishing(true);
-    setEditMode("preview");
-    bumpPreview();
-
-    (async () => {
-      try {
-        // She signed in BECAUSE she pressed Send, so her photos are still held
-        // locally and have to go up before this write — otherwise the resumed
-        // publish saves `idb:` refs and her page has no pictures in it.
-        const up = await uploadHeld(data, accessToken);
-        if (!up.ok) {
-          pushToast({ type: "info", title: "Photos didn't upload", message: up.error });
-          return;
-        }
-        const uploaded = up.data;
-
-        const res = await fetch(BASE, {
-          method: "POST",
-          headers: headers(),
-          body: JSON.stringify(rakhiDataToBody(uploaded, password)),
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error("Save failed");
-
-        const savedId = result.data._id as string;
-        setPageId(savedId);
-        setContent(uploaded);
-        setIsPersonalized(true);
-
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, {
-          method: "POST",
-          headers: headers(),
-        });
-        const pubResult = await pubRes.json();
-        if (pubResult.success) {
-          setShareUrl(String(pubResult.data.shareUrl));
-          pushToast({ type: "publish", title: "Sent! 🪢", message: "Your rakhi is live" });
-        } else {
-          pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Send to go live" });
-        }
-      } catch {
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
-      } finally {
-        setPublishing(false);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, accessToken]);
+  // ── Resume a publish that the auth modal interrupted ──────────────────────
+  //
+  // She pressed Send, had no account, signed in. This runs the moment the token
+  // lands and finishes what she asked for.
+  //
+  // ── WHY THIS CALLS `publish()` INSTEAD OF DOING THE WORK ──────────────────
+  //
+  // It used to contain its own copy of the create-then-publish sequence, and the
+  // two copies had already drifted in a way that costs a real page: this one
+  // always POSTed a NEW document, ignoring `pageId`, so resuming after sign-in
+  // on a page that had already been saved created a SECOND page and published
+  // that one — leaving the first orphaned and the share link pointing at a
+  // different document than the editor was holding.
+  //
+  // Re-entering `publish()` also means the resumed path automatically gets
+  // everything the direct path gains later. The media upload, the progress
+  // counter, the analytics events and the pricing-gate handling are already
+  // there; a second implementation would have to remember to copy each one.
+  //
+  // The resume effect lives further down, immediately after `publish` — it has
+  // to depend on `publish`, and a dependency array cannot name a `const`
+  // declared below it.
 
   // ── Held photos are resolved HERE and nowhere else ────────────────────────
   //
@@ -362,7 +340,7 @@ export function useRakhiEditor() {
 
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
-      pendingPublishRef.current = { data: content, password: pagePassword };
+      resumePublishRef.current = true;
       setShowAuth(true);
       return;
     }
@@ -406,9 +384,6 @@ export function useRakhiEditor() {
     }
   }, [
     content,
-    // Still read directly, for `pendingPublishRef` when the auth modal
-    // interrupts — `create`/`update` take their own copy via their closures.
-    pagePassword,
     isAuthenticated,
     accessToken,
     pageId,
@@ -419,10 +394,54 @@ export function useRakhiEditor() {
     pushToast,
   ]);
 
+  // ── Resume the publish the auth modal interrupted ─────────────────────────
+  //
+  // THIS IS THE FIX FOR "I sign in and nothing happens".
+  //
+  // The old version watched only `[isAuthenticated, accessToken]` and called the
+  // `publish` it had captured. But `publish` closes over `accessToken`, so on
+  // the commit where the token arrives the captured copy is the PREVIOUS one,
+  // built while `accessToken` was still null. The resumed publish therefore hit
+  // its own first guard — `if (!isAuthenticated || !accessToken)` — concluded she
+  // was not signed in, and returned. No request, no page, no share link, no
+  // error: measured as exactly one `/auth/login` call and nothing else.
+  //
+  // Depending on `publish` is what fixes it. The token landing rebuilds
+  // `publish`, which re-runs this effect with a version that can see the token.
+  // The ref is a one-shot latch, so re-running whenever `publish` is rebuilt
+  // costs nothing.
+  useEffect(() => {
+    if (!resumePublishRef.current || !isAuthenticated || !accessToken) return;
+    resumePublishRef.current = false;
+    setEditMode("preview");
+    bumpPreview();
+    void publish();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken, publish]);
+
+  /**
+   * She closed the sign-in modal. If she did NOT sign in, the publish she asked
+   * for is not going to happen, and saying nothing is the worst version of that:
+   * the page still shows "Send it", so it looks like it worked and quietly did
+   * not. Drop the intent and tell her what to do next.
+   *
+   * Guarded on the token rather than on the modal, because `AuthModal` calls
+   * `onSuccess` on success and `onClose` only for the backdrop and the X — but
+   * a future version calling both must not produce a toast contradicting a
+   * publish that is already running.
+   */
   const closeAuth = useCallback(() => {
     setShowAuth(false);
-    pendingPublishRef.current = null;
-  }, []);
+    if (resumePublishRef.current && !accessToken) {
+      resumePublishRef.current = false;
+      pushToast({
+        type: "info",
+        title: "Not sent yet",
+        message: "Sign in and tap Send it again",
+      });
+    }
+  }, [accessToken, pushToast]);
+
   const closeAuthSuccess = useCallback(() => setShowAuth(false), []);
 
   const handleCopy = useCallback(
