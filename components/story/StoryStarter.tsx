@@ -30,6 +30,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, PenLine, Sparkles, Undo2, X } from "lucide-react";
 import StoryComposer from "./StoryComposer";
+import type { StoryCast } from "./casts";
 import StoryReview from "./StoryReview";
 import { STORY_UI, TAP } from "./ui";
 import type { StoryFill } from "./storyFillContract";
@@ -180,9 +181,14 @@ export interface StoryStarterProps {
   onManual: () => void;
   /** Overrides the default heading, e.g. "Let's write her page". */
   title?: string;
+  /**
+   * Who this page is about — which name boxes the composer shows and which
+   * sample story it offers. Omit for the couples default; see `./casts`.
+   */
+  cast?: StoryCast;
 }
 
-export default function StoryStarter({ fill, onManual, title }: StoryStarterProps) {
+export default function StoryStarter({ fill, onManual, title, cast }: StoryStarterProps) {
   const {
     schema,
     schemaLoading,
@@ -352,6 +358,7 @@ export default function StoryStarter({ fill, onManual, title }: StoryStarterProp
                   onGenerate={generate}
                   onBack={() => setMode("idle")}
                   onSkip={close}
+                  cast={cast}
                 />
               )}
 

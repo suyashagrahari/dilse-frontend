@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
+import { BROTHER_CAST } from "@/components/story/casts";
 import { useRakhiEditor } from "./hooks/useRakhiEditor";
 import RakhiTemplate from "./components/RakhiTemplate";
 import EditSheet from "./components/EditSheet";
@@ -198,7 +199,7 @@ function RakhiPageInner() {
           behaves exactly as it did. Every way out of it lands in the EditSheet
           above, with every field editable. */}
       {e.storyStarter && (
-        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your rakhi page" />
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your rakhi page" cast={BROTHER_CAST} />
       )}
 
       <AnimatePresence>

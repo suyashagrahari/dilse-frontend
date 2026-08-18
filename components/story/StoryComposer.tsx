@@ -22,6 +22,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { ArrowLeft, Sparkles, WandSparkles } from "lucide-react";
 import { resolveStorySlots } from "@/hooks/useStoryFill";
 import { STORY_UI, TAP, inputStyle } from "./ui";
+import { DEFAULT_CAST, type StoryCast } from "./casts";
 import { STORY_LIMITS, STORY_SLOTS, type StoryPeople, type StorySlotKey } from "@/lib/ai-fill/types";
 
 // The tokens moved to `./ui` when four files started needing them. Re-exported
@@ -29,30 +30,19 @@ import { STORY_LIMITS, STORY_SLOTS, type StoryPeople, type StorySlotKey } from "
 export { STORY_UI };
 
 /**
- * The sample. Deliberately concrete — a generic one ("we have been together a
- * while and we are very happy") teaches the sender nothing about what to write,
- * and the model gets the same nothing back.
+ * The couples sample, kept as a named export because other code imports it.
+ *
+ * The cast — which name boxes appear, what they are labelled, and which sample
+ * is shown — now comes from `./casts`, so a template whose page is not about a
+ * partner can ask for the right people. See the header of that file for why the
+ * config is client-side and why the wire keys do not move.
  */
-export const SAMPLE_STORY =
-  `${STORY_SLOTS.you} and ${STORY_SLOTS.partner} met in second year, at a birthday party ` +
-  `neither of us wanted to be at. Three years later she still calls me by the ` +
-  `nickname she made up that night. She hates coriander, she cries at every ` +
-  `film, and she is the only person who can get me to shut up and eat. Last ` +
-  `winter we took the overnight bus to Manali and got stuck in the snow for two ` +
-  `days — still the best trip we've had. ${STORY_SLOTS.bestFriend} was the one who ` +
-  `told me to text her first.`;
+export const SAMPLE_STORY = DEFAULT_CAST.sample;
 
 const SLOT_BY_TOKEN: Record<string, StorySlotKey> = {
   [STORY_SLOTS.you]: "you",
   [STORY_SLOTS.partner]: "partner",
   [STORY_SLOTS.bestFriend]: "bestFriend",
-};
-
-/** What the chip reads when that name has not been given yet. */
-const SLOT_PROMPT: Record<StorySlotKey, string> = {
-  you: "your name",
-  partner: "her name",
-  bestFriend: "best friend",
 };
 
 const PEOPLE_KEY: Record<StorySlotKey, keyof StoryPeople> = {
@@ -95,6 +85,14 @@ export interface StoryComposerProps {
   onBack?: () => void;
   /** Straight into the form. The escape hatch that has to exist on every screen. */
   onSkip?: () => void;
+  /**
+   * Who this page is about. Omit for the couples default — see `./casts`.
+   *
+   * A template passes this when its recipient is not a partner or a friend: the
+   * rakhi pages pass a sibling cast so a brother is asked for his sister's name
+   * instead of his best friend's.
+   */
+  cast?: StoryCast;
 }
 
 export default function StoryComposer({
@@ -107,11 +105,27 @@ export default function StoryComposer({
   onGenerate,
   onBack,
   onSkip,
+  cast = DEFAULT_CAST,
 }: StoryComposerProps) {
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
   const nameRefs = useRef<Partial<Record<StorySlotKey, HTMLInputElement | null>>>({});
 
-  const segments = useMemo(() => splitSlots(SAMPLE_STORY), []);
+  const segments = useMemo(() => splitSlots(cast.sample), [cast.sample]);
+
+  /**
+   * Chip labels, from the cast. A slot the cast does not show still needs a
+   * fallback: a sample could name a person the cast has no box for, and rendering
+   * `undefined` into the sentence is worse than a generic word.
+   */
+  const slotPrompt = useMemo(() => {
+    const m: Record<StorySlotKey, string> = {
+      you: "your name",
+      partner: "their name",
+      bestFriend: "their name",
+    };
+    for (const s of cast.slots) m[s.slot] = s.prompt;
+    return m;
+  }, [cast.slots]);
 
   const setName = useCallback(
     (key: keyof StoryPeople, value: string) => {
@@ -157,9 +171,9 @@ export default function StoryComposer({
   );
 
   const useSample = useCallback(() => {
-    setStory(resolveStorySlots(SAMPLE_STORY, people).slice(0, STORY_LIMITS.story));
+    setStory(resolveStorySlots(cast.sample, people).slice(0, STORY_LIMITS.story));
     requestAnimationFrame(() => areaRef.current?.focus());
-  }, [people, setStory]);
+  }, [people, setStory, cast.sample]);
 
   const count = story.length;
   const tooShort = story.trim().length < STORY_LIMITS.minStory;
@@ -206,13 +220,7 @@ export default function StoryComposer({
           Who&apos;s in it
         </p>
 
-        {(
-          [
-            { slot: "you", label: "Your name", placeholder: "Rohan" },
-            { slot: "partner", label: "Her name", placeholder: "Meera" },
-            { slot: "bestFriend", label: "Your best friend", placeholder: "Ananya" },
-          ] as const
-        ).map(({ slot, label, placeholder }) => (
+        {cast.slots.map(({ slot, label, placeholder }) => (
           <div key={slot}>
             <label
               htmlFor={`story-name-${slot}`}
@@ -276,7 +284,7 @@ export default function StoryComposer({
                 aria-label={
                   people[PEOPLE_KEY[seg.slot]].trim()
                     ? `Insert ${people[PEOPLE_KEY[seg.slot]].trim()} into your story`
-                    : `Add ${SLOT_PROMPT[seg.slot]}`
+                    : `Add ${slotPrompt[seg.slot]}`
                 }
                 style={{
                   display: "inline",
@@ -292,7 +300,7 @@ export default function StoryComposer({
                   cursor: "pointer",
                 }}
               >
-                {people[PEOPLE_KEY[seg.slot]].trim() || SLOT_PROMPT[seg.slot]}
+                {people[PEOPLE_KEY[seg.slot]].trim() || slotPrompt[seg.slot]}
               </button>
             )
           )}

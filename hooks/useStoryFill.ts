@@ -196,6 +196,41 @@ interface LiveValues<T extends object> {
   people: StoryPeople;
   story: string;
   onFilled: (next: T) => void;
+  namePaths: UseStoryFillOptions<T>["namePaths"];
+}
+
+/**
+ * Fold the names the sender typed into the composer into the model's patch, for
+ * the declared paths the model left empty.
+ *
+ * Runs BEFORE `applyPatch`, so everything downstream is unchanged: a value the
+ * model returned wins over the typed name (it is the one written in the sender's
+ * own register), and anything the sender had already typed into the form itself
+ * still wins over both, because `applyPatch` protects touched fields.
+ *
+ * See `namePaths` on the options for what this is defending against.
+ */
+function withTypedNames(
+  patch: Record<string, unknown>,
+  people: StoryPeople,
+  audience: WireSchema["audience"],
+  namePaths: { sender?: string; recipient?: string } | undefined
+): Record<string, unknown> {
+  if (!namePaths) return patch;
+
+  const has = (path: string | undefined): path is string =>
+    Boolean(path) && !String(patch[path as string] ?? "").trim();
+
+  const recipientTyped =
+    audience === "partner" ? people.partnerName.trim() : people.bestFriendName.trim();
+  const senderTyped = people.userName.trim();
+
+  let next = patch;
+  if (senderTyped && has(namePaths.sender)) next = { ...next, [namePaths.sender]: senderTyped };
+  if (recipientTyped && has(namePaths.recipient)) {
+    next = { ...next, [namePaths.recipient]: recipientTyped };
+  }
+  return next;
 }
 
 export interface UseStoryFillOptions<T extends object> {
@@ -209,6 +244,29 @@ export interface UseStoryFillOptions<T extends object> {
   onFilled: (next: T) => void;
   /** Set false to keep the hook completely inert — no fetches, no UI. */
   enabled?: boolean;
+  /**
+   * Where the names typed into the composer belong on this template's form.
+   *
+   * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
+   *
+   * The composer asks for two names and sends them to the model, which is then
+   * asked to write them back into the form's own name fields. That is one hop
+   * more than it needs, and the hop can fail: the model occasionally omits a
+   * name it was handed, and the result is a form with an empty recipient name
+   * that the sender typed thirty seconds earlier. On templates whose save is
+   * gated on that field — the rakhi pages both are — it is a dead end reached
+   * through the happy path.
+   *
+   * Declaring the paths here closes it. A typed name is written straight to the
+   * form for any of these paths the model left empty; a name the model DID
+   * return is left alone, and so is anything the sender had already typed into
+   * the form itself, because the merge still runs through `applyPatch`.
+   *
+   * `recipient` reads whichever people slot this template's audience uses —
+   * `partnerName` for a partner page, `bestFriendName` otherwise — so a caller
+   * never has to know which wire key its audience maps to.
+   */
+  namePaths?: { sender?: string; recipient?: string };
   /**
    * Fill the form from the sender's saved story on mount, without being asked.
    *
@@ -353,7 +411,7 @@ export function useStoryFill<T extends object>(
 ): UseStoryFillResult {
   // `autoApply` defaults FALSE — nothing fires on its own any more. See the
   // option's doc comment for why that flipped.
-  const { slug, demo, current, onFilled, enabled = true, autoApply = false } = opts;
+  const { slug, demo, current, onFilled, enabled = true, autoApply = false, namePaths } = opts;
 
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
@@ -380,9 +438,9 @@ export function useStoryFill<T extends object>(
   //
   // Written after every commit and never read during render, which is what
   // `react-hooks/refs` requires. See `LiveValues` for why they exist at all.
-  const live = useRef<LiveValues<T>>({ form: current, demo, people, story, onFilled });
+  const live = useRef<LiveValues<T>>({ form: current, demo, people, story, onFilled, namePaths });
   useEffect(() => {
-    live.current = { form: current, demo, people, story, onFilled };
+    live.current = { form: current, demo, people, story, onFilled, namePaths };
   });
 
   /** One auto-fill attempt per mount, StrictMode's second pass included. */
@@ -592,7 +650,13 @@ export function useStoryFill<T extends object>(
       const touched = diffTouched(form, defaults, schema);
       if (touched.size !== 0) return;
 
-      const result = applyPatch(form, schema, res.data.patch, { touched });
+      const patch = withTypedNames(
+        res.data.patch,
+        live.current.people,
+        schema.audience,
+        live.current.namePaths
+      );
+      const result = applyPatch(form, schema, patch, { touched });
       if (result.noop) return;
 
       // Snapshot first. Undo has to hand back the exact page they had, and the
@@ -643,9 +707,15 @@ export function useStoryFill<T extends object>(
         return;
       }
 
-      const result = applyPatch(current, schema, res.data.patch, {
-        touched: diffTouched(current, demo, schema),
-      });
+      const result = applyPatch(
+        current,
+        schema,
+        // `live.current` rather than the destructured option: callers pass an
+        // object literal, so a fresh identity every render would either rebuild
+        // this callback on every keystroke or fail the exhaustive-deps rule.
+        withTypedNames(res.data.patch, people, schema.audience, live.current.namePaths),
+        { touched: diffTouched(current, demo, schema) }
+      );
 
       setGenerating(false);
       setFilled(result.filled);

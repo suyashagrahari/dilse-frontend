@@ -85,6 +85,11 @@ export function useSisterEditor() {
     demo: SAMPLE,
     current: mf,
     onFilled: setMf,
+    // The composer asks for his name and hers; this says where they land if the
+    // model does not write them back itself. `sisterName` gates Save, so without
+    // this a fill that dropped it would strand him on a validation error for a
+    // name he typed thirty seconds earlier.
+    namePaths: { sender: "brotherName", recipient: "sisterName" },
   });
 
   // Mounted the first time Create is tapped. `StoryStarter` renders nothing at
