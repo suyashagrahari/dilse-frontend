@@ -7,10 +7,16 @@ import { media } from "@/lib/templateMedia";
 // local /public/assets/bouquet-gf folder, which always works in dev + as a
 // fallback. Two parallel asset sets: `color/` and `mono/` (black-and-white).
 
-// Served from S3 (bucket gifts-media-prod-123, ap-south-1) with 1-year immutable
-// cache — uploaded via `npm run upload:bouquet-media` in /server. The same files
-// also live in /public/assets/bouquet-gf as the source-of-truth / local fallback:
-// re-run the uploader after editing any of them, then keep this base in sync.
+// Served from CloudFront (cdn.subhsandesh.in) in front of the s3://subhsandesh-prod
+// bucket in the CURRENT AWS account, under the same `gifts-media/` prefix the
+// backend already uploads user media to (S3_PUBLIC_BASE_URL on the prod box).
+//
+// This used to point at bucket gifts-media-prod-123 in the OLD AWS account. That
+// account is gone — every key answers 403 `AllAccessDisabled` and its IAM key is
+// `InvalidAccessKeyId` — which broke every bloom on this template. The migration
+// carried user uploads across but never these static assets, so all 33 files were
+// re-uploaded from the repo copy under /public/assets/bouquet-gf, which stays the
+// source of truth (and is why .dockerignore can keep excluding it from the image).
 export const BQ_MEDIA_BASE = media("bouquet-gf");
 
 /** The composed gallery/OG cover, served from the same S3 origin. */
