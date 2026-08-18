@@ -103,6 +103,11 @@ jobs:
             # disables that tool, so this is safe to ship before the IDs exist.
             NEXT_PUBLIC_PROD_GA_ID=${{ secrets.NEXT_PUBLIC_DEV_GA_ID }}
             NEXT_PUBLIC_PROD_CLARITY_ID=${{ secrets.NEXT_PUBLIC_DEV_CLARITY_ID }}
+            # Media origin. Unset secret => empty => lib/templateMedia.ts falls
+            # back to the bucket, which is the current working default. Set it
+            # ONLY once a real key has been verified end to end through the CDN;
+            # today cdn.subhsandesh.in answers AccessDenied on every path.
+            NEXT_PUBLIC_MEDIA_ORIGIN=${{ secrets.NEXT_PUBLIC_DEV_MEDIA_ORIGIN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

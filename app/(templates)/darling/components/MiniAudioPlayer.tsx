@@ -28,16 +28,31 @@ export default function MiniAudioPlayer({
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+
+  // ── Reset when the track changes ───────────────────────────────────────────
+  //
+  // These four resets used to sit at the top of the effect below, where React
+  // 19 rejects them: a synchronous setState inside an effect commits a render
+  // and then immediately schedules another.
+  //
+  // Adjusting state during render is React's documented answer for "a prop
+  // changed and this state is derived from it", and it is genuinely better
+  // here, not merely lint-quieter — React re-renders with the new values
+  // BEFORE painting, so switching tracks can no longer flash the previous
+  // track's progress bar and duration for a frame.
+  const [loadedSrc, setLoadedSrc] = useState(src);
+  if (src !== loadedSrc) {
+    setLoadedSrc(src);
+    setLoading(true);
+    setCurrent(0);
+    setDuration(0);
+    setPlaying(false);
+  }
 
   useEffect(() => {
     const a = new Audio();
     a.preload = "metadata";
     audioRef.current = a;
-    setLoading(true);
-    setCurrent(0);
-    setDuration(0);
-    setPlaying(false);
 
     const onMeta = () => { setDuration(a.duration || 0); setLoading(false); };
     const onEnded = () => { setPlaying(false); setCurrent(0); };
@@ -54,16 +69,34 @@ export default function MiniAudioPlayer({
       a.removeEventListener("error", onError);
       a.pause();
       a.src = "";
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [src]);
 
-  const tick = useCallback(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    setCurrent(a.currentTime);
-    rafRef.current = requestAnimationFrame(tick);
-  }, []);
+  // ── The progress loop ──────────────────────────────────────────────────────
+  //
+  // This used to be a self-recursive `useCallback`:
+  //
+  //   const tick = useCallback(() => { …; rafRef.current = requestAnimationFrame(tick); }, []);
+  //
+  // which React 19's compiler rejects — `tick` is referenced inside its own
+  // initialiser, so the reference can never see a later version of itself. It
+  // happened to work only because the callback had no dependencies.
+  //
+  // An effect is where this belongs anyway: a plain function declaration can
+  // legally call itself, the loop starts and stops purely from `playing`, and
+  // the cleanup is owned by the same scope that created the frame rather than
+  // by a ref that three other places also wrote to.
+  useEffect(() => {
+    if (!playing) return;
+    let raf = 0;
+    const loop = () => {
+      const a = audioRef.current;
+      if (a) setCurrent(a.currentTime);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [playing]);
 
   const toggle = useCallback(() => {
     const a = audioRef.current;
@@ -71,13 +104,13 @@ export default function MiniAudioPlayer({
     if (playing) {
       a.pause();
       setPlaying(false);
-      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     } else {
       a.play().catch(() => {});
       setPlaying(true);
-      rafRef.current = requestAnimationFrame(tick);
     }
-  }, [playing, tick]);
+    // Starting and stopping the rAF loop is the effect's job now, keyed on
+    // `playing`. Changing `src` sets `playing` false, which tears it down too.
+  }, [playing]);
 
   const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const a = audioRef.current;

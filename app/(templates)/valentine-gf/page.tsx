@@ -20,6 +20,8 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import ValentineContent from "./components/ValentineContent";
 import ValentineNav from "./components/ValentineNav";
 import { type ValentineData, type TabId, DEMO_CONTENT } from "./components/types";
@@ -63,6 +65,19 @@ function ValentineGfPage() {
   const [mf, setMf] = useState<ValentineData>({ ...DEMO_CONTENT });
   const [manualStep, setManualStep] = useState(0);
   const [photoInput, setPhotoInput] = useState("");
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  // Completely inert when the server has no schema for this slug: `schema`
+  // stays null, StoryStarter renders nothing, and the entry points below fall
+  // straight back to the sheet this editor has always shown.
+  const storyFill = useStoryFill<ValentineData>({
+    slug: "valentine-gf",
+    demo: DEMO_CONTENT,
+    current: mf,
+    onFilled: setMf,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
 
@@ -128,6 +143,33 @@ function ValentineGfPage() {
     if (!isAuthenticated) { setShowAuth(true); return; }
     setEditMode("choose");
   };
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  // `mf` is seeded up front — from the loaded page or the demo, whichever the
+  // manual form would have used — so a generated draft lands on the right base
+  // and `onManual` can open the untouched form without re-seeding over it.
+  const seedManualForm = () => {
+    setMf(isPersonalized ? { ...content } : { ...DEMO_CONTENT });
+    setManualStep(0);
+  };
+
+  const openStoryStarter = () => {
+    seedManualForm();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  };
+
+  /**
+   * Create / Personalise. With no schema — or before sign-in, which this editor
+   * has always required first — it defers to the untouched original handler.
+   */
+  const handleStartCreate = () => {
+    if (!storySchema || !isAuthenticated) { handleEditClick(); return; }
+    openStoryStarter();
+  };
+
+  /** StoryStarter's way out — the normal form, every field still hand-editable. */
+  const handleStoryManual = () => setEditMode("manual");
 
   const handleAiGenerate = async () => {
     if (!aiName.trim() || !aiPrompt.trim()) return;
@@ -212,6 +254,7 @@ function ValentineGfPage() {
       if (result.success) {
         const url = result.data.shareUrl;
         setShareUrl(url);
+        await persistStory();
         setPageId(null);
         setIsPersonalized(false);
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -248,7 +291,7 @@ function ValentineGfPage() {
         mode="editor"
         tab={tab}
         onTabChange={(t) => { setTab(t); if (editMode !== "preview") setEditMode(null); }}
-        onEdit={handleEditClick}
+        onEdit={handleStartCreate}
         onPublish={handlePublish}
         onShare={() => handleCopy()}
         onBack={() => router.push("/templates")}
@@ -357,6 +400,7 @@ function ValentineGfPage() {
                   <div className="space-y-3">
                     <button
                       onClick={() => {
+                        if (storySchema) { openStoryStarter(); return; }
                         setAiName(isPersonalized ? content.recipientName : "");
                         setAiSender(isPersonalized ? content.senderName : "");
                         setAiPrompt("");
@@ -376,8 +420,7 @@ function ValentineGfPage() {
 
                     <button
                       onClick={() => {
-                        setMf(isPersonalized ? { ...content } : { ...DEMO_CONTENT });
-                        setManualStep(0);
+                        seedManualForm();
                         setEditMode("manual");
                       }}
                       className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-red-500/10 to-pink-500/10 dark:from-red-500/15 dark:to-pink-500/15 border border-red-200/50 dark:border-red-800/30 text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
@@ -577,6 +620,11 @@ function ValentineGfPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mounted after the edit sheet so it sits over the form it seeds. */}
+      {storyStarted && (
+        <StoryStarter fill={storyFill} onManual={handleStoryManual} />
+      )}
 
       <AnimatePresence>
         {showAuth && (

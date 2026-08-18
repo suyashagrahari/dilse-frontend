@@ -1,5 +1,6 @@
 import { Flower2, Palette, ScrollText, Heart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { media } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts + components/bouquet.css.
@@ -16,7 +17,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A gen-z digital florist: choose from 12 blooms in colour or black-&-white, reshuffle the arrangement, add a note and a Deed of Devotion, then send a link that blooms open when she taps it.",
   bgGradient: "from-pink-100 via-amber-50 to-violet-100",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/bouquet-gf/cover.webp",
+  coverImage: media("bouquet-gf/cover.webp"),
   tabs: [
     { id: "bouquet", icon: Flower2, label: "Bouquet" },
     { id: "style", icon: Palette, label: "Style" },

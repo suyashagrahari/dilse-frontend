@@ -1,3 +1,5 @@
+import { media } from "@/lib/templateMedia";
+
 // ─── Miss You — central media registry ───────────────────────────────────────
 // Every gif + song the template loads is addressed through MU_MEDIA_BASE, so the
 // whole set can be moved to an S3/CDN origin by editing a single line (after the
@@ -10,7 +12,7 @@
 // in the OLD account, which is gone (403 `AllAccessDisabled` on every key), so
 // every gif and song here was broken. The 14 files were re-uploaded from the
 // repo copy under /public/assets/missyou-gf, which remains the source of truth.
-export const MU_MEDIA_BASE = "https://cdn.subhsandesh.in/gifts-media/missyou-gf";
+export const MU_MEDIA_BASE = media("missyou-gf");
 
 /** Resolve a media file (gif/mp3) that lives under the missyou-gf media folder. */
 export const muMedia = (file: string): string =>

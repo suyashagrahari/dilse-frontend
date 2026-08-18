@@ -2,9 +2,9 @@
 
 import { lazy, Suspense, useMemo, useDeferredValue } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { ShareSheet } from "@/components/share/ShareSheet";
 import { useShaadiCardEditor } from "./hooks/useShaadiCardEditor";
 
 import DesktopSidebar from "./components/DesktopSidebar";
@@ -235,12 +235,17 @@ function ShaadiCardPage() {
       </div>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <SocialShareSheet
+      <ShareSheet
         open={editor.showShareSheet}
         onClose={editor.closeShareSheet}
         shareUrl={editor.shareUrl}
-        onCopy={editor.handleCopy}
-        shareMessage={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
+        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
+        title="Wedding Invitation"
+        cardTitle="You are invited to our wedding"
+        cardNote="Scan for the venue, the timings and the whole day's programme."
+        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
+        accent="#f43f5e"
+        slug="shaadi-card"
       />
 
       <EditSheet

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Wand2, PenTool, ArrowRight, ArrowLeft, Sparkles,
@@ -12,6 +12,8 @@ import {
   updateTemplateField, setAiPrompt, prefillFromAI,
   setAiLoading, type TemplateData,
 } from "@/store/templateEditSlice";
+import { useStoryFill } from "@/hooks/useStoryFill";
+import StoryStarter from "@/components/story/StoryStarter";
 import { config } from "../config";
 
 interface Props {
@@ -30,16 +32,33 @@ const MANUAL_STEPS = [
   { field: "senderName" as keyof TemplateData, label: "Signed By", placeholder: "e.g. With Love ❤️", icon: User, type: "input" as const },
 ];
 
+/**
+ * What this panel shows before anyone has typed a word.
+ *
+ * This file is shared verbatim by four templates, and every one of them imports
+ * its OWN `../config` — so `config.slug`, the copy below and everything derived
+ * from them are that template's, never a hard-coded one. Do not inline a slug
+ * anywhere in this file.
+ */
+const DEMO_DATA: TemplateData = {
+  heading: config.previewText,
+  body: config.bodyText,
+  senderName: "With Love ❤️",
+};
+
+/** True while the saved entry is still exactly the demo — nobody has typed yet. */
+const isPristine = (d: TemplateData | undefined): boolean =>
+  !d ||
+  (d.heading === DEMO_DATA.heading &&
+    d.body === DEMO_DATA.body &&
+    d.senderName === DEMO_DATA.senderName);
+
 export default function EditPanel({ onClose }: Props) {
   const dispatch = useAppDispatch();
   const { editMode, currentStep, aiPrompt, aiLoading, aiError, savedData } =
     useAppSelector((s) => s.templateEdit);
 
-  const data = savedData[config.slug] || {
-    heading: config.previewText,
-    body: config.bodyText,
-    senderName: "With Love ❤️",
-  };
+  const data = savedData[config.slug] || DEMO_DATA;
 
   const handleClose = useCallback(() => {
     dispatch(resetEdit());
@@ -75,6 +94,59 @@ export default function EditPanel({ onClose }: Props) {
       }));
     }, 1500);
   }, [aiPrompt, dispatch]);
+
+  // ── AI story-fill ──────────────────────────────────────────────────────────
+  //
+  // Offered only over a panel still on its demo defaults. Someone who reopens
+  // the editor to fix one word came back for the form, not for a sheet on top
+  // of it — and `enabled: false` keeps the hook completely inert, schema fetch
+  // included. Without a schema for this slug the starter renders nothing at all
+  // and this panel behaves exactly as it did before.
+  const [starterEnabled] = useState(() => isPristine(savedData[config.slug]));
+
+  const handleFilled = useCallback(
+    (next: TemplateData) => {
+      // `prefillFromAI` writes the merged data AND opens the manual form at
+      // step one — which is precisely where the report screen should land.
+      // Nothing is locked: every step stays editable.
+      dispatch(prefillFromAI({ templateId: config.slug, data: next }));
+    },
+    [dispatch]
+  );
+
+  const fill = useStoryFill<TemplateData>({
+    slug: config.slug,
+    demo: DEMO_DATA,
+    current: data,
+    onFilled: handleFilled,
+    enabled: starterEnabled,
+  });
+
+  // ── Saving the story, without a publish to hang it on ──────────────────────
+  //
+  // Everywhere else `persistStory()` fires on publish. These four templates have
+  // no publish: no backend page, no share URL, the share button just copies the
+  // current address. So there is no later moment to catch, and leaving it out
+  // meant a sender whose FIRST page was one of these lost their story entirely —
+  // and with it the auto-fill on every template they made afterwards, which is
+  // the whole point of writing it down.
+  //
+  // A successful fill is the closest thing to a commit these templates have, so
+  // that is the moment used. `persistStory` is itself idempotent and no-ops when
+  // logged out or when the text is unchanged, so the ref guard here is only to
+  // avoid a pointless call on every re-render.
+  const storySaved = useRef(false);
+  useEffect(() => {
+    if (storySaved.current || fill.filled.length === 0) return;
+    storySaved.current = true;
+    void fill.persistStory();
+  }, [fill]);
+
+  // Both "I'll fill it in myself" and the report screen's button land here: the
+  // same three-step form as always, holding whatever the AI wrote.
+  const handleManual = useCallback(() => {
+    dispatch(setEditMode("manual"));
+  }, [dispatch]);
 
   const manualStepIndex = currentStep - 1;
   const isLastManualStep = editMode === "manual" && manualStepIndex === MANUAL_STEPS.length - 1;
@@ -205,6 +277,10 @@ export default function EditPanel({ onClose }: Props) {
           </AnimatePresence>
         </div>
       </motion.div>
+
+      {/* Sits over the panel above, so the first thing a sender sees is the
+          offer to have it written — with the manual form one tap behind it. */}
+      <StoryStarter fill={fill} onManual={handleManual} />
     </>
   );
 }

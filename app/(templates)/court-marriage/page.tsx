@@ -1,0 +1,169 @@
+"use client";
+
+import { Suspense } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, PenLine, Stamp, Share2, Loader2, X, Copy } from "lucide-react";
+import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
+import { useCourtMarriageEditor } from "./hooks/useCourtMarriageEditor";
+import CourtMarriageTemplate, { usePrefersReducedMotion } from "./components/CourtMarriageTemplate";
+import EditSheet from "./components/EditSheet";
+import type { Toast } from "./components/types";
+import { templateMediaBase } from "@/lib/templateMedia";
+
+/** Animation set for this template — served from S3, never bundled. */
+const ASSET = templateMediaBase("court-marriage");
+
+const SEAL = "#3f4c8f";
+const SEAL_GRADIENT = "linear-gradient(135deg,#5566b8,#2f3a70)";
+const CHROME = { fontFamily: "var(--font-inter), system-ui, sans-serif" } as const;
+
+function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
+  return (
+    <div className="pointer-events-none fixed left-1/2 top-16 z-[400] flex w-[92%] max-w-sm -translate-x-1/2 flex-col items-center gap-2" style={CHROME}>
+      <AnimatePresence>
+        {toasts.map((t) => (
+          <motion.div
+            key={t.id}
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="pointer-events-auto flex w-full items-center gap-3 rounded-2xl px-4 py-3 shadow-lg"
+            style={{ background: "#fff", border: "1px solid #dcdcf0" }}
+          >
+            <div className="flex-1">
+              <p className="text-sm font-bold" style={{ color: SEAL }}>{t.title}</p>
+              {t.message && <p className="mt-0.5 text-xs text-muted-foreground">{t.message}</p>}
+            </div>
+            {t.type === "publish" && (
+              <button onClick={() => onCopy(t.shareUrl)} aria-label="Copy link" className="rounded-lg p-1.5" style={{ color: SEAL, background: "#eef0fb" }}>
+                <Copy size={14} />
+              </button>
+            )}
+            <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1 text-muted-foreground"><X size={14} /></button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function CourtMarriagePageInner() {
+  const e = useCourtMarriageEditor();
+  const reduced = usePrefersReducedMotion();
+
+  const topAction = e.showShare
+    ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
+    : e.showPublish
+      ? { label: e.publishing ? "Registering…" : "Publish", onClick: e.publish, icon: <Stamp size={14} /> }
+      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+
+  const pill = {
+    background: "rgba(255,255,255,.9)",
+    color: SEAL,
+    border: "1px solid #d9dcef",
+    backdropFilter: "blur(8px)",
+    minHeight: 40,
+    ...CHROME,
+  } as const;
+
+  return (
+    <div style={{ minHeight: "100dvh", position: "relative" }}>
+      {/* Floating top bar */}
+      <div className="fixed left-0 right-0 top-3 z-[120] flex items-center gap-2 px-3" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        <button onClick={e.goBack} className="inline-flex items-center gap-1.5 rounded-full px-3 text-sm font-semibold shadow-sm" style={pill}>
+          <ArrowLeft size={15} /> Back
+        </button>
+        <div className="flex-1" />
+        {e.isPersonalized && !e.showShare && (
+          <button onClick={e.handleEditFromPreview} className="inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold shadow-sm" style={pill}>
+            <PenLine size={14} /> Edit
+          </button>
+        )}
+        <button
+          onClick={topAction.onClick}
+          disabled={e.publishing}
+          className="inline-flex items-center gap-1.5 rounded-full px-4 text-sm font-bold text-white shadow-md disabled:opacity-60"
+          style={{ background: SEAL_GRADIENT, minHeight: 40, ...CHROME }}
+        >
+          {topAction.icon} {topAction.label}
+        </button>
+      </div>
+
+      <CourtMarriageTemplate data={e.displayData} mode="preview" />
+
+      <EditSheet
+        editMode={e.editMode}
+        setEditMode={e.setEditMode}
+        mf={e.mf}
+        updateMf={e.updateMf}
+        pagePassword={e.pagePassword}
+        setPagePassword={e.setPagePassword}
+        onSave={e.handleSave}
+        saving={e.saving}
+      />
+
+      {/* Shown the first time Create is tapped, and only when the server has a
+          schema for this template. Every way out of it lands in the EditSheet
+          above, populated and fully editable. */}
+      {e.storyStarter && (
+        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's fill in the certificate" />
+      )}
+
+      {/* Registering overlay — the typewriter belongs here, never on the paper. */}
+      <AnimatePresence>
+        {e.publishing && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] grid place-items-center"
+            style={{ background: "rgba(31,35,60,.55)", backdropFilter: "blur(6px)" }}
+          >
+            <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-8 py-6" style={CHROME}>
+              {reduced ? (
+                <Loader2 size={28} className="animate-spin" style={{ color: SEAL }} />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`${ASSET}/typing.webp`} alt="" width={96} height={96} />
+              )}
+              <p className="font-semibold" style={{ color: SEAL }}>Entering it in the register…</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Publish-success celebration. Fires on the transition into Share. */}
+      <AnimatePresence>
+        {e.justPublished && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="pointer-events-none fixed inset-0 z-[320] grid place-items-center"
+            style={{ background: "rgba(250,246,237,.72)" }}
+          >
+            <div className="flex flex-col items-center gap-2" style={CHROME}>
+              {reduced ? (
+                <div className="text-6xl" aria-hidden>🎉</div>
+              ) : (
+                <video src={`${ASSET}/hug.webm`} autoPlay loop muted playsInline width={220} height={220} aria-hidden />
+              )}
+              <p className="text-lg font-extrabold" style={{ color: SEAL }}>Duly registered 📜</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
+
+      <AnimatePresence>
+        {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function CourtMarriagePage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#e2dac7" }} />}>
+      <CourtMarriagePageInner />
+    </Suspense>
+  );
+}

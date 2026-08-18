@@ -17,6 +17,7 @@ import {
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { useStoryFill } from "@/hooks/useStoryFill";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "darling";
@@ -69,6 +70,19 @@ export function useDarlingEditor() {
 
   const [mf, setMf] = useState<ContentData>({ ...DEMO_CONTENT });
   const [manualStep, setManualStep] = useState(0);
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  // Completely inert when the server has no schema for this slug: `schema`
+  // stays null, StoryStarter renders nothing, and the entry points below fall
+  // straight back to the sheet this editor has always shown.
+  const storyFill = useStoryFill<ContentData>({
+    slug: "darling",
+    demo: DEMO_CONTENT,
+    current: mf,
+    onFilled: setMf,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -212,6 +226,7 @@ export function useDarlingEditor() {
         if (pubResult.success) {
           const url = pubResult.data.shareUrl as string;
           setShareUrl(url);
+          await persistStory();
           setEditMode(null);
           try { sessionStorage.removeItem("darling_draft"); } catch {}
           pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
@@ -310,7 +325,8 @@ export function useDarlingEditor() {
     setEditMode("ai");
   }, [isPersonalized, content.recipientName, content.senderName]);
 
-  const startManualMode = useCallback(() => {
+  /** Seeds the manual form exactly as opening it does, without opening it. */
+  const seedManualForm = useCallback(() => {
     let initialData: ContentData = isPersonalized ? { ...content } : { ...DEMO_CONTENT };
     let initialStep = 0;
     try {
@@ -325,8 +341,41 @@ export function useDarlingEditor() {
     } catch {}
     setMf(initialData);
     setManualStep(initialStep);
-    setEditMode("manual");
   }, [isPersonalized, content]);
+
+  const startManualMode = useCallback(() => {
+    seedManualForm();
+    setEditMode("manual");
+  }, [seedManualForm]);
+
+  // ── StoryStarter entry points ──────────────────────────────────────────────
+  // `mf` is seeded up front — from the saved draft, the loaded page or the demo,
+  // whichever the manual form would have used — so a generated draft lands on
+  // the right base and `onManual` can open the untouched form over the top of it
+  // without re-seeding and throwing the AI's work away.
+  const openStoryStarter = useCallback(() => {
+    seedManualForm();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [seedManualForm, setStoryMode]);
+
+  /** Create / Personalise. Falls back to today's chooser when there is no schema. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) { handleEditClick(); return; }
+    preEditContentRef.current = content;
+    openStoryStarter();
+  }, [storySchema, handleEditClick, content, openStoryStarter]);
+
+  /** The chooser's "AI" button. Falls back to the old prompt sheet with no schema. */
+  const handleStartAi = useCallback(() => {
+    if (!storySchema) { startAiMode(); return; }
+    openStoryStarter();
+  }, [storySchema, startAiMode, openStoryStarter]);
+
+  /** StoryStarter's way out — the normal form, every field still hand-editable. */
+  const handleStoryManual = useCallback(() => {
+    setEditMode("manual");
+  }, []);
 
   const saveToServer = useCallback(
     async (data: ContentData, password?: string) => {
@@ -534,6 +583,7 @@ export function useDarlingEditor() {
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        await persistStory();
         setEditMode(null);
         try { sessionStorage.removeItem("darling_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -551,7 +601,7 @@ export function useDarlingEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast]);
+  }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast, persistStory]);
 
   const [showShareSheet, setShowShareSheet] = useState(false);
 
@@ -579,8 +629,10 @@ export function useDarlingEditor() {
     tab, content, editMode, isPersonalized, shareUrl, shareId, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
-    mf, manualStep, pendingContent,
+    mf, setMf, manualStep, pendingContent,
     showShareSheet, setShowShareSheet,
+
+    storyFill, storyStarted, handleStartCreate, handleStartAi, handleStoryManual,
 
     setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
     setPagePassword, setShowPwValue,

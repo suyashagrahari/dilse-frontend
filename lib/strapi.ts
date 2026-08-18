@@ -31,7 +31,42 @@ export interface Author {
   jobTitle?: string | null;
   twitter?: string | null;
   linkedin?: string | null;
+  instagram?: string | null;
+  github?: string | null;
+  website?: string | null;
   avatar?: StrapiMedia | null;
+}
+
+/**
+ * Fallback profiles for the site's founder, used only when their Strapi author
+ * record has no link of that kind yet (the instagram/github/website fields are
+ * newer than the record). Never applied to any other author.
+ */
+export const FOUNDER_NAME = "Suyash Agrahari";
+export const FOUNDER_PROFILES: Record<AuthorProfileKind, string> = {
+  twitter: "https://x.com/SuyashAgrahari",
+  linkedin: "https://www.linkedin.com/in/suyash-agrahari-717260228/",
+  instagram: "https://www.instagram.com/suyash_agrahari_",
+  github: "https://github.com/suyashagrahari",
+  website: "https://portfolio-website-mu-fawn-27.vercel.app/",
+};
+
+export type AuthorProfileKind = "twitter" | "linkedin" | "instagram" | "github" | "website";
+
+const PROFILE_ORDER: AuthorProfileKind[] = ["twitter", "linkedin", "instagram", "github", "website"];
+
+/**
+ * One ordered list of an author's profile links. Both the visible AuthorBox and
+ * the JSON-LD Person.sameAs read from this, so what a reader can click and what
+ * the graph claims can never drift apart.
+ */
+export function authorProfiles(author?: Author | null): { kind: AuthorProfileKind; url: string }[] {
+  if (!author) return [];
+  const isFounder = author.name?.trim() === FOUNDER_NAME;
+  return PROFILE_ORDER.map((kind) => ({
+    kind,
+    url: (author[kind] || (isFounder ? FOUNDER_PROFILES[kind] : "") || "").trim(),
+  })).filter((p) => /^https?:\/\//.test(p.url));
 }
 
 export interface Category {

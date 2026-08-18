@@ -1,10 +1,19 @@
 import Image from "next/image";
-import { Twitter, Linkedin } from "lucide-react";
-import type { Author } from "@/lib/strapi";
-import { strapiMedia } from "@/lib/strapi";
+import { Twitter, Linkedin, Instagram, Github, Globe } from "lucide-react";
+import type { Author, AuthorProfileKind } from "@/lib/strapi";
+import { strapiMedia, authorProfiles } from "@/lib/strapi";
+
+const PROFILE_META: Record<AuthorProfileKind, { Icon: typeof Twitter; label: string }> = {
+  twitter: { Icon: Twitter, label: "X" },
+  linkedin: { Icon: Linkedin, label: "LinkedIn" },
+  instagram: { Icon: Instagram, label: "Instagram" },
+  github: { Icon: Github, label: "GitHub" },
+  website: { Icon: Globe, label: "portfolio" },
+};
 
 export default function AuthorBox({ author }: { author: Author }) {
   const avatar = strapiMedia(author.avatar?.url);
+  const profiles = authorProfiles(author);
   return (
     <div
       className="flex flex-col gap-4 rounded-2xl p-6 sm:flex-row sm:items-center"
@@ -34,18 +43,26 @@ export default function AuthorBox({ author }: { author: Author }) {
             {author.bio}
           </p>
         )}
-        <div className="mt-3 flex gap-3">
-          {author.twitter && (
-            <a href={author.twitter} target="_blank" rel="noopener noreferrer" aria-label={`${author.name} on X`} style={{ color: "#3d0c11" }}>
-              <Twitter size={18} />
-            </a>
-          )}
-          {author.linkedin && (
-            <a href={author.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${author.name} on LinkedIn`} style={{ color: "#3d0c11" }}>
-              <Linkedin size={18} />
-            </a>
-          )}
-        </div>
+        {profiles.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-3">
+            {profiles.map(({ kind, url }) => {
+              const { Icon, label } = PROFILE_META[kind];
+              return (
+                <a
+                  key={kind}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  aria-label={`${author.name} on ${label}`}
+                  title={`${author.name} on ${label}`}
+                  style={{ color: "#3d0c11" }}
+                >
+                  <Icon size={18} />
+                </a>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

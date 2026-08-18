@@ -36,6 +36,13 @@ wait for it, verify its quality gate, then start the next stage.
    mirror the anatomy of existing ones (see `references/project-conventions.md`).
 6. **Verify, don't claim.** The Optimizer and Security stages must produce measured
    evidence (Lighthouse numbers, a checklist with pass/fail), never assertions.
+7. **Every template ships with AI story fill.** Tapping **Create** opens the AI
+   panel — "Use my story" for a returning sender, or a composer with a sample
+   paragraph — and Generate fills the whole form. This is a Stage 3 + Stage 4
+   deliverable, not a follow-up. It fails soft (no schema → the hook goes inert
+   and Create falls back to the blank form, with no error anywhere), so it is
+   invisible in review and glaring to the sender. Gate on it explicitly.
+   Reference: `subhsandesh-template` → `reference/ai-story-fill.md`.
 
 ## Companion skills — load these, don't reinvent
 
@@ -44,9 +51,10 @@ sibling skills; load them with the Skill tool at the stages noted:
 
 - **`subhsandesh-template`** — the canonical end-to-end template ARCHITECTURE:
   editor state machine, sessionStorage draft, **auth-deferred publish**, the server
-  model/controller/routes, the shared `/[id]` recipient viewer + password gate, and
-  the **exact 9-file checklist**. Stages 3 & 4 (Frontend/Backend) MUST follow it —
-  copy the `apology-dashboard` flow, don't invent a new one.
+  model/controller/routes, the shared `/[id]` recipient viewer + password gate,
+  **AI story fill** (`reference/ai-story-fill.md`), and the **exact 11-file
+  checklist**. Stages 3 & 4 (Frontend/Backend) MUST follow it — copy the
+  `apology-dashboard` flow, don't invent a new one.
 - **`subhsandesh-theme`** — the NEW SubhSandesh design system: fonts
   (Space Grotesk / Inter / Caveat), colors (indigo `#6C5CE7` / pink `#F72585` /
   lime `#C6FF3D` on `#FAFAF7`), radii, shadows, `--site-*` tokens. Stage 2 (UI/UX)
@@ -124,12 +132,23 @@ subagent prompt, along with the idea and prior artifacts.
 - **Inputs:** `00-brief.md`, `01-design.md`.
 - **Do:** build the route, sections, edit/share flows, animations (framer-motion),
   responsive CSS; reuse existing patterns (overlays, BottomNav, music, particles);
-  keep it typed; wire fonts via the app's next/font variables.
+  keep it typed; wire fonts via the app's next/font variables. **Wire AI story
+  fill**: `useStoryFill<XxxData>({ slug, demo: DEMO_DATA, current: mf, onFilled: setMf })`
+  in the editor hook, `seedManualForm` / `handleStartCreate` / `handleStoryManual` /
+  `storyStarted`, `<StoryStarter>` mounted in `page.tsx` **after** `EditSheet`,
+  **Create** pointed at `handleStartCreate`, and `await persistStory()` in **both**
+  publish paths (direct and auto-resume-after-login) before `clearDraft()`.
 - **DoD:** `npx tsc --noEmit` clean; `npm run build` compiles the new route; renders
   on mobile + desktop; no raw `<img>` for LCP images; follows conventions doc AND the
-  `subhsandesh-template` flow (editor → draft → deferred publish → share → viewer).
+  `subhsandesh-template` flow (editor → AI fill → draft → deferred publish → share →
+  viewer). AI fill wired at all five points above; **Create calls
+  `handleStartCreate`**; `persistStory()` present in both publish paths. The schema
+  does not exist yet (Stage 4 writes it), so at this stage the correct observed
+  behaviour is the graceful fallback: Create opens the plain form and nothing
+  errors. Stage 4 verifies the panel actually appears.
 - **Load the `subhsandesh-template` skill** for the exact editor/publish/viewer
-  architecture and the 9-file checklist. Then `references/project-conventions.md`.
+  architecture, `reference/ai-story-fill.md`, and the 11-file checklist. Then
+  `references/project-conventions.md`.
 
 ### Stage 4 — Backend Engineer  → code + notes in `03-backend.md`
 - **Role:** Backend engineer. Add whatever persistence/sharing/API the template needs
@@ -137,12 +156,29 @@ subagent prompt, along with the idea and prior artifacts.
 - **Inputs:** brief, design, frontend notes.
 - **Do:** implement API routes / data model consistent with existing templates; input
   validation (zod); safe media handling (S3/CDN patterns already in the repo);
-  no secrets in client code.
+  no secrets in client code. **Author the AI fill schema**
+  `server/src/config/aiFill/<slug>.ts` — `slug` (= route segment), `audience`,
+  a `premise` drawn from Stage 1's brief and Stage 2's tone, and one `fields[]`
+  entry per **text** leaf with a `guide` that says where it appears on the page,
+  what register fits, how long it should be, and what must never go there. Then
+  register it in `registry.generated.ts` (import + `SCHEMAS`, alphabetical).
 - **DoD:** endpoints typed + validated; errors handled; no secret leakage; builds.
-  (If the template is purely static/client-side, record that and skip cleanly.)
+  Schema present and every path resolves against the real `XxxData`; **no media
+  paths** (no photo/audio/url leaves — the model must never invent a URL); no
+  reserved envelope keys (`language`, `languageName`, `excludedKeywords`,
+  `filled_values`); ≤ 40 fields; and the **server boot log shows no
+  `[aiFill] schema "<slug>" has N problem(s)` line** — paste the relevant log
+  lines into the artifact, because validation is non-fatal and nothing else will
+  tell you. **Then verify the whole feature in a browser** (this is the stage where
+  both halves finally exist): tap Create → StoryStarter opens → type a real
+  two-line story → Generate → every declared field fills, the review rows are
+  editable, and bailing to the plain form keeps the AI's work. (If the template is
+  purely static/client-side, it still gets a fill schema; only the page model/API
+  can be skipped, and say so explicitly.)
 - **Follow the `subhsandesh-template` skill's server contract**: `XxxPage` model
   (shareId `randomUUID()`, bcrypt password), 8 controller handlers, public
-  `/share/:shareId` routes before `protect`, `TEMPLATE_LOOKUPS` entry, and
+  `/share/:shareId` routes before `protect`, `TEMPLATE_LOOKUPS` entry, the
+  `config/aiFill` schema + registry line (`reference/ai-story-fill.md`), and
   `SharePageClient` registration. Then `references/project-conventions.md`.
 
 ### Stage 5 — Performance Optimizer  → `04-optimize.md`
@@ -165,10 +201,15 @@ subagent prompt, along with the idea and prior artifacts.
 - **Do:** review for XSS (esp. `dangerouslySetInnerHTML`, user-supplied text/media),
   injection, auth/authz on new endpoints, SSRF in media fetch, unsafe redirects,
   secret exposure, dependency risk, and CSP/headers; verify user content is escaped
-  and share links are unguessable.
+  and share links are unguessable. **If the template parodies a real product or
+  brand**, check the AI fill schema too: generated copy is rendered on a public
+  page under the sender's name, so every trademark, product name and asset the
+  design brief forbids must be listed in the schema's `forbiddenOutput` — the
+  prompt alone is not trusted, a deterministic sweep enforces that list.
 - **DoD:** a findings table (severity, file:line, fix) with every High/Critical
   **fixed**, not just noted; confirms no secrets client-side; confirms user text is
-  escaped.
+  escaped; for a brand parody, confirms `forbiddenOutput` covers every forbidden
+  term and that a generated sample contains none of them.
 - Playbook: `references/security-playbook.md`
 
 ### Stage 7 — SEO / AEO / GEO Optimizer  → `06-seo.md`
@@ -188,9 +229,13 @@ subagent prompt, along with the idea and prior artifacts.
 
 After Stage 7:
 1. Update `STATUS.md` — all 7 gates passed, with the key metrics.
-2. Give the user a concise summary: what was built, the viral hook, the measured
+2. **Last gate before you report done: open the template and tap Create.** If the
+   AI panel does not appear, the template is not finished — check that the schema
+   slug, the route segment and `useStoryFill({ slug })` are the same string, and
+   that the server booted without an `[aiFill]` problem line for it.
+3. Give the user a concise summary: what was built, the viral hook, the measured
    Lighthouse numbers, and the route.
-3. **Do not deploy automatically.** Ask before pushing. Deploy flow: commit on a
+4. **Do not deploy automatically.** Ask before pushing. Deploy flow: commit on a
    branch → `main` = production, `dev` = staging (blue-green via GitHub Actions).
 
 ## Resuming a run

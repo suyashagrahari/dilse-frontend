@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Heart, Share2, Loader2, X, Copy } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
 import { useApologyEditor } from "./hooks/useApologyEditor";
 import ApologyDashboard from "./components/ApologyDashboard";
 import EditSheet from "./components/EditSheet";
@@ -81,6 +82,16 @@ function ApologyPageInner() {
         onSave={e.handleSave}
         saving={e.saving}
       />
+
+      {/* Rendered only once "Create" has opened the form on a page nobody has
+          personalised yet, so it greets the sender instead of the landing page.
+          It sits over the sheet, offering to write the whole thing first; both
+          "I'll fill it in myself" and the report screen drop straight back into
+          the sheet below, populated and entirely editable. With no schema for
+          this slug it renders nothing and the editor is unchanged. */}
+      {e.editMode === "manual" && !e.isPersonalized && (
+        <StoryStarter fill={e.fill} onManual={() => e.setEditMode("manual")} title="Let's write your apology" />
+      )}
 
       {/* Publishing overlay */}
       <AnimatePresence>

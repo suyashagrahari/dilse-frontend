@@ -27,6 +27,9 @@ ARG NEXT_PUBLIC_PROD_STRAPI_URL
 # analytics off with no code change.
 ARG NEXT_PUBLIC_PROD_GA_ID
 ARG NEXT_PUBLIC_PROD_CLARITY_ID
+# Scheme+host for every remote media asset. Unset = serve straight from the
+# bucket, which is the current, working default. See lib/templateMedia.ts.
+ARG NEXT_PUBLIC_MEDIA_ORIGIN
 
 ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
 ENV NEXT_PUBLIC_PROD_API_URL=$NEXT_PUBLIC_PROD_API_URL
@@ -39,6 +42,7 @@ ENV NEXT_PUBLIC_PROD_STRAPI_URL=$NEXT_PUBLIC_PROD_STRAPI_URL
 # the client bundle and analytics would silently never load in production.
 ENV NEXT_PUBLIC_PROD_GA_ID=$NEXT_PUBLIC_PROD_GA_ID
 ENV NEXT_PUBLIC_PROD_CLARITY_ID=$NEXT_PUBLIC_PROD_CLARITY_ID
+ENV NEXT_PUBLIC_MEDIA_ORIGIN=$NEXT_PUBLIC_MEDIA_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Persist the Next.js compilation cache (.next/cache) across builds → incremental

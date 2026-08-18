@@ -47,3 +47,9 @@ next-env.d.ts
 
 # template-factory skill run artifacts
 .template-factory/
+
+# Template media (court-marriage, hold-my-hand, train-ticket, legal-notice).
+# Binary, identical in every environment, and served from S3 in all of them.
+# Source of truth: <workspace>/media-src/templates  →  upload with
+#   cd server && npm run upload:template-media
+public/templates/

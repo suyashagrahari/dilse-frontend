@@ -102,6 +102,13 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   sorry:         { emoji: "🥺", label: "Sorry" },
   love:          { emoji: "💕", label: "Love" },
   shaadi:        { emoji: "💍", label: "Wedding" },
+  // Without this entry a forwarded rakhi link previews as "🎁 Gift for Ananya
+  // from Kabir" via the fallback below, which is the weakest possible version of
+  // the one thing that actually travels on WhatsApp. There is no
+  // `TEMPLATE_COVER_IMAGES` entry to go with it deliberately: the `/api/og`
+  // fallback composes both names into the image, and a static cover would lose
+  // that. See `getSharePageMeta`.
+  "raksha-bandhan-sister": { emoji: "🪢", label: "Raksha Bandhan" },
   gift:          { emoji: "🎁", label: "Gift" },
 };
 

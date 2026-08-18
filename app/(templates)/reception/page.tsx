@@ -3,9 +3,9 @@
 import { lazy, Suspense, useMemo, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { ShareSheet } from "@/components/share/ShareSheet";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
 import BokehParticles from "./components/BokehParticles";
@@ -275,12 +275,17 @@ export default function ReceptionPage() {
       </div>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <SocialShareSheet
+      <ShareSheet
         open={editor.showShareSheet}
         onClose={editor.closeShareSheet}
         shareUrl={editor.shareUrl}
-        onCopy={editor.handleCopy}
-        shareMessage={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`}
+        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`}
+        title="Reception Invitation"
+        cardTitle="You are invited to our reception"
+        cardNote="Scan for the venue, the timings and the evening's programme."
+        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
+        accent="#e11d48"
+        slug="reception"
       />
 
       <EditSheet

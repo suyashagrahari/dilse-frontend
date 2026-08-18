@@ -59,11 +59,11 @@ const HIT_MSGS = [
 ];
 const HIT_EMOJI = ["💥", "💗", "🥺", "🙏", "💔", "💞"];
 const EMOJI_FACES = ["🥺", "😜", "🤦‍♂️", "😅", "🙈", "🤡", "😇", "🫠", "😬"];
-// Was served from the gifts-media-prod-123 S3 bucket, which AWS disabled along
-// with the old account (every key 403s `AllAccessDisabled`). The file was never
-// kept in the repo or media-src, so there is nothing to fall back to locally —
-// empty disables the whack sound instead of firing a request that always fails.
-// Put a URL back here once the clip is re-sourced into a live bucket.
+// The whack sound only ever existed in the old AWS account's bucket, which is
+// gone, and it was never kept in the repo or media-src — so unlike the covers
+// and blooms there was no local copy to re-upload into the new bucket. Empty
+// disables it instead of firing a request that always fails; put a key back
+// here once the clip is re-sourced.
 const DISHOOM_SFX = "";
 
 // staggered entrance (re-triggers each time a step scrolls into view — works on mobile too)

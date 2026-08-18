@@ -9,6 +9,7 @@ import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { templateList } from "@/data/template-registry";
+import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
 
 const UI = {
   bg: "#f5ede6",
@@ -93,13 +94,19 @@ export default function FavoritesPage() {
   const loading = useAppSelector((s) => s.favorites.loading);
   const fetched = useAppSelector((s) => s.favorites.fetched);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const hiddenTemplates = useHiddenTemplates();
 
   useEffect(() => {
     // Avoid repeated fetch churn on every mount when data is already hydrated.
     if (isAuthenticated && !fetched && !loading) dispatch(fetchFavorites());
   }, [dispatch, isAuthenticated, fetched, loading]);
 
-  const favorited = templateList.filter((t) => favSlugs.includes(t.slug));
+  // Favourited AND still shown on this deployment. Somebody can have starred a
+  // template that has since been switched off; leaving it here would offer a
+  // card that leads to a closed builder.
+  const favorited = templateList.filter(
+    (t) => favSlugs.includes(t.slug) && !hiddenTemplates.has(t.slug)
+  );
 
   const handleRemove = useCallback((e: React.MouseEvent, slug: string) => {
     e.preventDefault(); e.stopPropagation();

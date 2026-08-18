@@ -1,0 +1,114 @@
+"use client";
+
+// ─── The builder gate ────────────────────────────────────────────────────────
+//
+// Taking a template out of the gallery removes the only way to FIND it. It does
+// not remove the way to reach it: a link somebody kept, a bookmarked builder, a
+// search result that has not been recrawled yet. This closes that door.
+//
+// ── WHY IN THE LAYOUT AND NOT IN EACH page.tsx ──────────────────────────────
+//
+// There are fifty-odd template routes. A guard added per page is a guard that
+// gets forgotten on the fifty-first, and the forgetting is silent — the template
+// just quietly stays reachable after being switched off. The slug is already in
+// the URL, so one component mounted in `app/(templates)/layout.tsx` covers every
+// route in the group, including ones nobody has written yet.
+//
+// ── WHAT THIS DOES NOT TOUCH ────────────────────────────────────────────────
+//
+// Published pages. They live at `/[id]`, outside the `(templates)` group, so a
+// rakhi page somebody has already sent keeps opening for its recipient after the
+// template is switched off. That is deliberate and it is the more important half
+// of the behaviour: a release control that breaks gifts people have already given
+// is not a release control, it is an outage. The server agrees — see the note on
+// `middleware/templateGate.ts` about guarding writes only.
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+
+/**
+ * Routes inside `(templates)` that are NOT a template builder.
+ *
+ * The group's first path segment is normally the template slug, but a couple of
+ * templates own sub-routes that a recipient (not the sender) opens, and those
+ * must survive their template being switched off for the same reason a published
+ * page does. Matched on the FULL path so a slug can never accidentally land here.
+ */
+const NEVER_GATED = (path: string): boolean =>
+  // e.g. /profile-pro/recommend/<token>, /profile-pro/endorse/<token>
+  /^\/profile-pro\/(recommend|endorse)\//.test(path);
+
+export function TemplateAvailabilityGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() || "/";
+  const hidden = useHiddenTemplates();
+
+  const slug = pathname.split("/").filter(Boolean)[0] || "";
+  const blocked = !!slug && hidden.has(slug) && !NEVER_GATED(pathname);
+
+  if (!blocked) return <>{children}</>;
+
+  return (
+    <main
+      style={{
+        minHeight: "100dvh",
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+        background: "linear-gradient(170deg, #fbf6f1 0%, #f5ede6 100%)",
+      }}
+    >
+      <div style={{ maxWidth: 380, textAlign: "center" }}>
+        <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 14 }} aria-hidden="true">
+          ✨
+        </div>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 22,
+            lineHeight: "28px",
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            color: "#2a0a0e",
+          }}
+        >
+          Not available yet
+        </h1>
+        {/* No mention of an admin, a flag or an environment. To the person who
+            landed here this is simply a page that is not open yet, and the rest
+            is our business. */}
+        <p
+          style={{
+            margin: "8px 0 22px",
+            fontSize: 14,
+            lineHeight: "21px",
+            color: "#7a5555",
+          }}
+        >
+          This one is still being finished. Everything else is ready to go — have a
+          look at what else you can make.
+        </p>
+        <Link
+          href="/templates"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 44,
+            padding: "0 22px",
+            borderRadius: 999,
+            background: "#3d0c11",
+            color: "#fdf8ee",
+            fontSize: 14,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          Browse templates
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+export default TemplateAvailabilityGate;

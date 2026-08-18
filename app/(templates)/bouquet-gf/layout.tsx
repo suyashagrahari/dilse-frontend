@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Baloo_2, Caveat, Inter } from "next/font/google";
 import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
 import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
+import { media } from "@/lib/templateMedia";
 
 // Self-hosted via next/font (no raw <link>/@import). display:"optional" so a font
 // swap never blocks the above-the-fold hero copy. This chunky rounded display +
@@ -29,10 +30,8 @@ const inter = Inter({
 const SLUG = "bouquet-gf";
 const tpl = TEMPLATE_SEO[SLUG];
 
-// Crawlers need an absolute URL. Now the live CDN, not the dead bucket in the
-// old AWS account (see components/assets.ts).
 const OG_IMAGE = {
-  url: "https://cdn.subhsandesh.in/gifts-media/bouquet-gf/cover.webp",
+  url: media("bouquet-gf/cover.webp"),
   width: 1000,
   height: 1000,
   alt: "A hand-tied digital flower bouquet — SubhSandesh",

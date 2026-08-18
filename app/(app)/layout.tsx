@@ -7,6 +7,7 @@ import GlobalEffects from "@/components/GlobalEffects";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayoutShell from "./AppLayoutShell";
 import AppSplash from "@/components/AppSplash";
+import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
@@ -27,6 +28,9 @@ export default function AppLayout({
         <GlobalEffects />
         <NavMount />
         <ErrorBoundary>{children}</ErrorBoundary>
+        {/* Same sheet the templates raise, so sharing a creation from the
+            profile offers the QR, the photo QR and the printable card too. */}
+        <ShareSheetHost />
       </AppLayoutShell>
     </TemplateSearchProvider>
   );

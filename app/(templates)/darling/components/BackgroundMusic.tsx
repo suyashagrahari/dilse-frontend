@@ -63,7 +63,7 @@ const DarlingBackgroundMusic = memo(function DarlingBackgroundMusic({
   }, [clearFade]);
 
   useEffect(() => {
-    // Was "/assets/christan-wedding/BeThouMyVision.mp3", which is wrong twice
+    // Was "https://cdn.subhsandesh.in/gifts-media/assets/christan-wedding/BeThouMyVision.mp3", which is wrong twice
     // over. The path 404s — that file lives at /christan-wedding/… with no
     // /assets prefix — so this template has never actually played anything.
     // And the track itself is a Christian wedding hymn, copy-pasted from that

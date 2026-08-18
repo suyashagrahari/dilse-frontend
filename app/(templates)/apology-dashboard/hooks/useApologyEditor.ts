@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -14,6 +15,14 @@ import {
   apologyDataToBody,
   dbToApologyData,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
+
+/**
+ * `persistStory` is being added to `useStoryFill` separately. Typed optional
+ * here so this editor compiles on either side of that landing — the call below
+ * is simply a no-op until the method exists, and needs no change when it does.
+ */
+type WithPersistStory = { persistStory?: () => Promise<unknown> };
 
 const DRAFT_KEY = "apology_draft";
 const BASE = `${API_URL}/apology-dashboard-pages`;
@@ -48,6 +57,27 @@ export function useApologyEditor() {
   const [content, setContent] = useState<ApologyData>(DEMO_DATA);
   const [mf, setMf] = useState<ApologyData>({ ...DEMO_DATA });
   const [editMode, setEditMode] = useState<EditMode>(null);
+
+  // ── AI story-fill ───────────────────────────────────────────────────────────
+  //
+  // `mf` in, `mf` out — the merge is `applyPatch`'s job, and anything already
+  // differing from DEMO_DATA is left alone. Until the server has a config for
+  // this slug `fill.schema` stays null and every consumer renders nothing, so
+  // the editor is unchanged.
+  const fill = useStoryFill<ApologyData>({
+    slug: TEMPLATE,
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+
+  // Called on the success path of both publishes. Never allowed to affect the
+  // result: a story that failed to save is not a page that failed to publish.
+  const persistStory = useCallback(async () => {
+    try {
+      await (fill as unknown as WithPersistStory).persistStory?.();
+    } catch {}
+  }, [fill]);
   const [pagePassword, setPagePassword] = useState("");
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -153,6 +183,7 @@ export function useApologyEditor() {
           // path so the login detour's completion rate is visible.
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
           pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
+          await persistStory();
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -251,6 +282,7 @@ export function useApologyEditor() {
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
+        await persistStory();
       } else {
         // `reason` is what surfaces a server-side gate such as PAYMENT_REQUIRED
         // appearing on a template whose editor cannot handle it (FINDINGS.md P2).
@@ -267,7 +299,7 @@ export function useApologyEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -284,12 +316,14 @@ export function useApologyEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "A little apology, just for you 💗", url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      title: "A little apology, just for you 💗",
+      accent: "#f43f5e",
+      slug: "apology-dashboard",
+    });
+  }, [shareUrl, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -298,6 +332,7 @@ export function useApologyEditor() {
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    fill,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

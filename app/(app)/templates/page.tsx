@@ -12,6 +12,7 @@ import ApologyTemplateCard from "@/components/ApologyTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
+import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -252,8 +253,16 @@ function TemplatesContent() {
     dispatch(toggleFavoriteAsync(slug));
   }, [dispatch]);
 
+  const hiddenTemplates = useHiddenTemplates();
+
   const sourceList = uiMode === "webpage" ? webpageTemplateList : templateList;
   const filtered = sourceList.filter((t) => {
+    // An admin has switched this one off for this deployment. Filtered here
+    // rather than rendered as "coming soon" below, because a card that says
+    // coming soon still advertises the template — and something held back is
+    // usually held back because it is not ready to be advertised. See
+    // lib/templateVisibility.ts.
+    if (hiddenTemplates.has(t.slug)) return false;
     const matchCategory = selectedCategory === "all" || t.category === selectedCategory;
     const matchType = selectedType === "all" || t.type === selectedType;
     const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());

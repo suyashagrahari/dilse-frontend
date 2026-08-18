@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, ChevronRight, Sparkles } from "lucide-react";
 import { buildMeta, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, articleCover, articleOgImage } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs, getRelatedArticles, articleCover, articleOgImage, strapiMedia, authorProfiles } from "@/lib/strapi";
 import { formatDate } from "@/lib/blog-utils";
 import ArticleBody from "@/components/blog/ArticleBody";
 import AuthorBox from "@/components/blog/AuthorBox";
@@ -93,14 +93,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     : article.readingTime
     ? article.readingTime * 200
     : undefined;
-  const authorSameAs = [article.author?.twitter, article.author?.linkedin].filter(
-    (v): v is string => typeof v === "string" && /^https?:\/\//.test(v)
-  );
+  // Same helper the visible AuthorBox uses, so sameAs and the clickable icons
+  // can never disagree: X, LinkedIn, Instagram, GitHub, portfolio.
+  const authorSameAs = authorProfiles(article.author).map((p) => p.url);
+  const authorAvatar = article.author?.avatar;
   const authorForLd = article.author
     ? {
         name: article.author.name,
+        slug: article.author.slug,
         url: `${SITE_URL}/blog`,
         jobTitle: article.author.jobTitle,
+        bio: article.author.bio,
+        image: strapiMedia(authorAvatar?.url) || null,
+        imageWidth: authorAvatar?.width ?? null,
+        imageHeight: authorAvatar?.height ?? null,
         sameAs: authorSameAs,
       }
     : null;
@@ -127,6 +133,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         keywords={article.seo?.keywords || (article.tags || []).join(", ") || undefined}
         section={article.category?.name}
         wordCount={wordCount}
+        readingTimeMinutes={article.readingTime}
         author={authorForLd}
         breadcrumb={breadcrumb}
         faqs={article.faqs ?? undefined}

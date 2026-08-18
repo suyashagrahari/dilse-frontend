@@ -264,14 +264,41 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
   // When on a subdomain, redirect the current page to the bridge on the root domain
   // so Google OAuth runs there (avoids Google's no-wildcard-origin restriction).
   // After auth, the bridge redirects back here with tokens in the URL hash.
+  //
+  // ── THE REDIRECT IS A LAST RESORT, NOT THE SUBDOMAIN DEFAULT ────────────────
+  //
+  // It costs the whole page. Signing in this way is a full-page navigation away
+  // and back, so every unsaved thing in memory is gone: a half-built template is
+  // an empty form again when the user returns, and anything that was mid-flight —
+  // "Send it", which is what raised this modal in the first place — never happens.
+  // Nothing is created, nothing is published, and the only honest reading
+  // afterwards is that it silently failed.
+  //
+  // That price buys something only when the bridge is on a DIFFERENT ORIGIN,
+  // which is the case it was written for: a personal subdomain borrowing the root
+  // domain's registered OAuth origin. On staging the two do not match up —
+  // `SITE_URL` is the subdomain itself while `ROOT_DOMAIN` is its parent — so the
+  // page navigated away to a bridge on its own origin and lost everything for no
+  // benefit at all. Where the bridge is same-origin there is nothing to bridge:
+  // use the in-page popup, which keeps the form, the modal and the pending
+  // publish alive.
   const handleGoogle = useCallback(() => {
+    if (typeof window === "undefined") return;
+
     const isSubdomain =
-      ROOT_DOMAIN &&
-      typeof window !== "undefined" &&
+      !!ROOT_DOMAIN &&
       window.location.hostname !== ROOT_DOMAIN &&
       window.location.hostname !== `www.${ROOT_DOMAIN}`;
 
-    if (isSubdomain) {
+    let bridgeIsCrossOrigin = false;
+    try {
+      bridgeIsCrossOrigin = !!SITE_URL && new URL(SITE_URL).origin !== window.location.origin;
+    } catch {
+      // An unparseable SITE_URL cannot be navigated to either — stay in-page.
+      bridgeIsCrossOrigin = false;
+    }
+
+    if (isSubdomain && bridgeIsCrossOrigin) {
       const returnTo = window.location.href;
       window.location.href = `${SITE_URL}/auth/google-bridge?return_to=${encodeURIComponent(returnTo)}`;
     } else {

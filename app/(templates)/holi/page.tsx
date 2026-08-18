@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { ShareSheet } from "@/components/share/ShareSheet";
 import PaymentModal from "@/components/PaymentModal";
 import { useHoliEditor } from "./hooks/useHoliEditor";
 
@@ -271,12 +271,18 @@ function HoliPage() {
       </main>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <SocialShareSheet
+      <ShareSheet
         open={editor.showShareSheet}
         onClose={editor.closeShareSheet}
         shareUrl={editor.shareUrl}
-        onCopy={editor.handleCopy}
-        shareMessage={`${editor.content.senderName || "Someone"} is sending Holi wishes${editor.content.recipientName ? ` to ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+        text={`${editor.content.senderName || "Someone"} is sending Holi wishes${editor.content.recipientName ? ` to ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+        title="Happy Holi"
+        cardTitle="Happy Holi"
+        cardNote="Scan to open the colours sent your way."
+        senderName={editor.content.senderName}
+        recipientName={editor.content.recipientName}
+        accent="#ec4899"
+        slug="holi"
       />
 
       <EditSheet

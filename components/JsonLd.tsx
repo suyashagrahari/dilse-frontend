@@ -1,17 +1,15 @@
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import type { HowToData, AggregateRatingData } from "@/lib/seo-data";
+import { FOUNDER_NAME, FOUNDER_PROFILES } from "@/lib/strapi";
 
-// Official profiles for the brand + its founder. Used as schema.org `sameAs` so
-// search & answer engines can confirm "SubhSandesh" is a single, real entity
-// across the web (strengthens Knowledge Graph / entity recognition → better GEO/AEO).
-const FOUNDER_NAME = "Suyash Agrahari";
-const FOUNDER_SAME_AS = [
-  "https://www.linkedin.com/in/suyash-agrahari-717260228/",
-  "https://x.com/SuyashAgrahari",
-  "https://www.instagram.com/suyash_agrahari_",
-  "https://github.com/suyashagrahari",
-  "https://portfolio-website-mu-fawn-27.vercel.app/",
-];
+// The founder's own profiles — X, LinkedIn, Instagram, GitHub, portfolio — used as
+// schema.org `sameAs` on the Person so search and answer engines can confirm this
+// is one real, identifiable author across the web.
+//
+// These belong to the PERSON, not the Organization. Claiming a founder's personal
+// profiles as the company's sameAs invites the two entities to be conflated; the
+// `founder` relation is the correct way to connect them, and it is already set.
+const FOUNDER_SAME_AS = Object.values(FOUNDER_PROFILES);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function JsonLd({ data }: { data: Record<string, any> }) {
@@ -78,12 +76,12 @@ export function OrganizationJsonLd() {
         },
         founder: {
           "@type": "Person",
+          "@id": `${SITE_URL}/#person-author`,
           name: FOUNDER_NAME,
           url: `${SITE_URL}/about-us`,
           jobTitle: "Founder",
           sameAs: FOUNDER_SAME_AS,
         },
-        sameAs: FOUNDER_SAME_AS,
       }}
     />
   );
@@ -450,6 +448,7 @@ export function ArticleGraphJsonLd({
   keywords,
   section,
   wordCount,
+  readingTimeMinutes,
   author,
   breadcrumb,
   faqs,
@@ -465,7 +464,22 @@ export function ArticleGraphJsonLd({
   keywords?: string | null;
   section?: string;
   wordCount?: number;
-  author?: { name: string; url?: string; jobTitle?: string | null; sameAs?: string[] } | null;
+  /** Strapi readingTime, in minutes → BlogPosting.timeRequired as an ISO 8601 duration. */
+  readingTimeMinutes?: number | null;
+  author?: {
+    name: string;
+    /** Strapi author slug — gives the Person a stable @id shared by every post. */
+    slug?: string | null;
+    url?: string;
+    jobTitle?: string | null;
+    /** Strapi bio → Person.description. */
+    bio?: string | null;
+    /** Absolute avatar URL (run Strapi paths through strapiMedia first). */
+    image?: string | null;
+    imageWidth?: number | null;
+    imageHeight?: number | null;
+    sameAs?: string[];
+  } | null;
   breadcrumb: { name: string; url: string }[];
   faqs?: { question: string; answer: string }[];
   extra?: unknown;
@@ -474,7 +488,12 @@ export function ArticleGraphJsonLd({
   const orgId = `${SITE_URL}/#organization`;
   const siteId = `${SITE_URL}/#website`;
   const postId = `${url}#post`;
-  const authorId = `${url}#author`;
+  // Site-wide, not per-article: every post by the same author must reference ONE
+  // Person entity, or the graph asserts 800+ unrelated people with the same name
+  // and no author authority accumulates anywhere.
+  const authorId = author?.slug
+    ? `${SITE_URL}/#person-${author.slug}`
+    : `${SITE_URL}/#person`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graph: Record<string, any>[] = [];
 
@@ -484,7 +503,6 @@ export function ArticleGraphJsonLd({
     name: SITE_NAME,
     url: SITE_URL,
     logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE, width: 1370, height: 784 },
-    sameAs: FOUNDER_SAME_AS,
   });
 
   graph.push({
@@ -498,15 +516,37 @@ export function ArticleGraphJsonLd({
 
   const hasAuthor = Boolean(author?.name);
   if (hasAuthor && author) {
+    const jobTitle = (author.jobTitle || "").trim();
+    // Already complete: the caller builds this with authorProfiles(), which applies
+    // the founder fallback only to the founder. Do NOT union FOUNDER_SAME_AS here —
+    // that would claim their personal profiles for any future author.
+    const sameAs = [...new Set(author.sameAs || [])].filter(Boolean);
     graph.push({
       "@type": "Person",
       "@id": authorId,
       name: author.name,
       ...(author.url ? { url: author.url } : {}),
-      ...(author.jobTitle ? { jobTitle: author.jobTitle } : {}),
+      ...(jobTitle ? { jobTitle } : {}),
+      ...(author.bio ? { description: author.bio } : {}),
+      ...(author.image
+        ? {
+            image: {
+              "@type": "ImageObject",
+              url: author.image,
+              ...(author.imageWidth ? { width: author.imageWidth } : {}),
+              ...(author.imageHeight ? { height: author.imageHeight } : {}),
+            },
+          }
+        : {}),
       worksFor: { "@id": orgId },
-      ...(author.sameAs && author.sameAs.length ? { sameAs: author.sameAs } : {}),
+      ...(sameAs.length ? { sameAs } : {}),
     });
+    // The bio and jobTitle both say founder, so assert it — a named founder is one
+    // of the stronger organisation-credibility signals available.
+    if (/founder/i.test(jobTitle)) {
+      const org = graph.find((n) => n["@id"] === orgId);
+      if (org && org.founder === undefined) org.founder = { "@id": authorId };
+    }
   }
 
   const kw = (keywords || "")
@@ -525,11 +565,18 @@ export function ArticleGraphJsonLd({
     dateModified: dateModified || datePublished,
     author: hasAuthor ? { "@id": authorId } : { "@id": orgId },
     publisher: { "@id": orgId },
-    ...(image ? { image: { "@type": "ImageObject", url: image, width: 1200, height: 630 } } : {}),
+    ...(image
+      ? { image: { "@type": "ImageObject", url: image, width: 1200, height: 630 }, thumbnailUrl: image }
+      : {}),
     ...(typeof wordCount === "number" && wordCount > 0 ? { wordCount } : {}),
     ...(kw.length ? { keywords: kw } : {}),
     ...(section ? { articleSection: section } : {}),
     inLanguage: "en-IN",
+    // True of every post on this blog — nothing is gated.
+    isAccessibleForFree: true,
+    ...(typeof readingTimeMinutes === "number" && readingTimeMinutes > 0
+      ? { timeRequired: `PT${Math.round(readingTimeMinutes)}M` }
+      : {}),
     ...(speakableSelectors && speakableSelectors.length
       ? { speakable: { "@type": "SpeakableSpecification", cssSelector: speakableSelectors } }
       : {}),
@@ -560,13 +607,32 @@ export function ArticleGraphJsonLd({
     });
   }
 
-  // Merge extra studio-authored types (HowTo, etc.) — strip their own @context
-  // (the graph root carries it) and skip anything already built above.
+  // Merge extra studio-authored blocks. Their own @context is stripped — the graph
+  // root carries it.
+  //
+  // A block whose @id matches a node already built above ENRICHES that node rather
+  // than being dropped. That is the only way the studio can attach citation /
+  // about / mentions to the BlogPosting, since those are properties of it and a
+  // second BlogPosting node would conflict with the first. Renderer-built values
+  // always win, so an enrichment block can fill gaps but never rewrite the graph.
+  //
+  // Blocks without a matching @id are appended, unless their type is already
+  // built above (see COVERED_LD_TYPES) — a duplicate FAQPage or BlogPosting is
+  // worse than none.
   for (const b of normalizeLdArray(extra)) {
-    const type = String(b["@type"] || "").toLowerCase();
-    if (!type || COVERED_LD_TYPES.has(type) || type === "person") continue;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const { ["@context"]: _ctx, ...rest } = b as Record<string, any>;
+    const id = typeof rest["@id"] === "string" ? rest["@id"] : "";
+    const target = id ? graph.find((n) => n["@id"] === id) : undefined;
+    if (target) {
+      for (const [k, v] of Object.entries(rest)) {
+        if (k === "@id" || k === "@type") continue;
+        if (target[k] === undefined) target[k] = v;
+      }
+      continue;
+    }
+    const type = String(rest["@type"] || "").toLowerCase();
+    if (!type || COVERED_LD_TYPES.has(type) || type === "person") continue;
     graph.push(rest);
   }
 

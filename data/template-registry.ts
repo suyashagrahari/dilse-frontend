@@ -12,6 +12,8 @@ import { config as sorryFriend } from "@/app/(templates)/sorry-friend/config";
 import { config as apologyDashboard } from "@/app/(templates)/apology-dashboard/config";
 import { config as missyouGf } from "@/app/(templates)/missyou-gf/config";
 import { config as bouquetGf } from "@/app/(templates)/bouquet-gf/config";
+import { config as courtOfLove } from "@/app/(templates)/court-of-love/config";
+import { config as proposal } from "@/app/(templates)/proposal/config";
 import { config as missyouBestfriend } from "@/app/(templates)/missyou-bestfriend/config";
 import { config as anniversaryGf } from "@/app/(templates)/anniversary-gf/config";
 import { config as anniversaryParents } from "@/app/(templates)/anniversary-parents/config";
@@ -24,24 +26,103 @@ import { config as holi } from "@/app/(templates)/holi/config";
 import { config as shaadiCard } from "@/app/(templates)/shaadi-card/config";
 import { config as christianWedding } from "@/app/(templates)/christian-wedding/config";
 import { config as christianWedding2 } from "@/app/(templates)/christian-wedding-2/config";
+import { config as courtMarriage } from "@/app/(templates)/court-marriage/config";
+import { config as holdMyHand } from "@/app/(templates)/hold-my-hand/config";
+import { config as trainTicket } from "@/app/(templates)/train-ticket/config";
+import { config as legalNotice } from "@/app/(templates)/legal-notice/config";
+import { config as kundliMilan } from "@/app/(templates)/kundli-milan/config";
+import { config as vendingMachine } from "@/app/(templates)/vending-machine/config";
+import { config as catchGame } from "@/app/(templates)/catch/config";
+import { config as flags } from "@/app/(templates)/flags/config";
+import { config as dateInvitation } from "@/app/(templates)/date-invitation/config";
+import { config as photoPuzzle } from "@/app/(templates)/photo-puzzle/config";
+import { config as loveflix } from "@/app/(templates)/loveflix/config";
+import { config as rewind } from "@/app/(templates)/rewind/config";
+import { config as streak } from "@/app/(templates)/streak/config";
+import { config as dedication } from "@/app/(templates)/dedication/config";
+import { config as searched } from "@/app/(templates)/searched/config";
+import { config as capsule } from "@/app/(templates)/capsule/config";
+import { config as us } from "@/app/(templates)/us/config";
+import { config as product } from "@/app/(templates)/product/config";
+import { config as watch } from "@/app/(templates)/watch/config";
+import { config as call } from "@/app/(templates)/call/config";
+import { config as recharge } from "@/app/(templates)/recharge/config";
+import { config as challan } from "@/app/(templates)/challan/config";
+import { config as nutrition } from "@/app/(templates)/nutrition/config";
+import { config as appListing } from "@/app/(templates)/app/config";
+import { config as profilePro } from "@/app/(templates)/profile-pro/config";
+import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
+import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshabandhan-to-sister/config";
 
+// The gallery renders in this order, so the first row is the shop window: it is
+// what someone sees before they have decided whether this site is for them.
+//
+// The six below lead deliberately — the strongest, most-wanted pages, and a
+// spread rather than four birthday cards in a row. Love You Forever and My
+// Darling were sitting at positions 42 and 43, several scrolls down, which is
+// effectively unpublished.
+//
+// Everything after them keeps the order it already had.
 const allConfigs = [
+  // ── SEASONAL, leading deliberately ────────────────────────────────────────
+  // Raksha Bandhan is 28 Aug 2026. A dated festival template is worth the top
+  // slot only while the date is ahead of it — after the 28th this is a page
+  // nobody is shopping for, and it should drop back down among the others.
+  // Move it below `apologyDashboard` once the festival has passed.
+  rakshaBandhan,
+  // Its pair, adjacent on purpose. The two halves of one festival, and someone
+  // arriving for "rakhi" wants to be shown both in one glance rather than
+  // discovering the second one four scrolls later and wondering which they were
+  // meant to use. Sister-side second because the brother-side page has the
+  // search history and is the one people arrive looking for; this one moves with
+  // it when the pair drops down after the 28th.
+  rakshaBandhanSister,
+
   birthdayGf,
+  loveGf,
+  darling,
+  missyouGf,
+  bouquetGf,
+  apologyDashboard,
+
+  // ── everything below is unchanged, in its existing order ──────────────────
   birthdayFriend,
   birthdayParents,
   birthdayBestfriend,
   valentineGf,
   valentineBestfriend,
-  apologyDashboard,
   sorryGf,
   sorryFriend,
-  missyouGf,
-  bouquetGf,
+  courtOfLove,
+  proposal,
+  courtMarriage,
+  holdMyHand,
+  trainTicket,
+  legalNotice,
+  kundliMilan,
+  vendingMachine,
+  catchGame,
+  flags,
+  dateInvitation,
+  photoPuzzle,
+  loveflix,
+  rewind,
+  streak,
+  dedication,
+  searched,
+  capsule,
+  us,
+  product,
+  watch,
+  call,
+  recharge,
+  challan,
+  nutrition,
+  appListing,
+  profilePro,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
-  loveGf,
-  darling,
   weddingShaadi,
   reception,
   eidMubarak,

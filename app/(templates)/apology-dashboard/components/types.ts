@@ -21,25 +21,23 @@ export const MUSIC_RESUME_EVENT = "apology:music-resume";
 export interface MusicPreset { id: string; label: string; url: string }
 /**
  * Selectable background songs. url "" = the built-in gentle lofi tune, which is
- * synthesised in-browser via WebAudio and therefore never depends on an origin.
+ * synthesised in-browser via WebAudio and so never depends on an origin.
  *
- * The "Chalo Jaane Do" and "Sorry — Justin Bieber" presets used to stream from
- * the gifts-media-prod-123 S3 bucket. AWS disabled that bucket with the old
- * account — every key answers 403 `AllAccessDisabled` — so both presets played
- * nothing but still showed up as choices. The mp3s were never kept in the repo
- * or media-src, so there is no local file to point at; they are removed rather
- * than left as options that silently fail. Re-add them once the audio is
- * re-sourced into a live bucket.
+ * "Chalo Jaane Do" and "Sorry — Justin Bieber" are gone. They lived only in the
+ * old AWS account's bucket and, unlike the covers and blooms, were never kept in
+ * the repo or media-src — so there was no copy to re-upload into the new bucket.
+ * They are removed rather than left as choices that play nothing. Re-add them
+ * once the audio is re-sourced.
  */
 export const MUSIC_PRESETS: MusicPreset[] = [
   { id: "lofi", label: "Gentle lofi (built-in)", url: "" },
 ];
 
 /**
- * Cards published before the bucket died still carry a gifts-media-prod-123 URL
- * in Mongo, and those rows cannot be edited from here. Treat any such URL as
- * unset so an already-shared card falls back to the built-in lofi tune instead
- * of sitting silent on a request that 403s.
+ * Cards published before the old account died still carry a
+ * gifts-media-prod-123 URL in Mongo, and those rows cannot be edited from here.
+ * Treat any such URL as unset so an already-shared card falls back to the lofi
+ * tune instead of sitting silent on a request that 403s.
  */
 export const playableMusicUrl = (url: string | undefined | null): string =>
   !url || url.includes("gifts-media-prod-123") ? "" : url;
@@ -133,9 +131,8 @@ export const DEMO_DATA: ApologyData = {
   deliveryEmail: "",
   sharePhoto: "",
   // default: the built-in lofi tune — plays in preview & on unset pages. Used to
-  // default to "Sorry" (Justin Bieber) from the now-disabled S3 bucket, which
-  // meant the default experience had no audio at all. "" is the WebAudio tune,
-  // so the default plays something again without depending on an origin.
+  // default to "Sorry" (Justin Bieber), which meant the default experience had no
+  // audio at all once that bucket died. "" needs no origin.
   backgroundMusic: "",
 };
 

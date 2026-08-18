@@ -1,3 +1,5 @@
+import { media } from "@/lib/templateMedia";
+
 // ─── Bouquet — central media registry + flower catalog ───────────────────────
 // Every flower + greenery image is addressed through BQ_MEDIA_BASE, so the whole
 // set can move to an S3/CDN origin by editing one line (after the files are
@@ -15,7 +17,7 @@
 // carried user uploads across but never these static assets, so all 33 files were
 // re-uploaded from the repo copy under /public/assets/bouquet-gf, which stays the
 // source of truth (and is why .dockerignore can keep excluding it from the image).
-export const BQ_MEDIA_BASE = "https://cdn.subhsandesh.in/gifts-media/bouquet-gf";
+export const BQ_MEDIA_BASE = media("bouquet-gf");
 
 /** The composed gallery/OG cover, served from the same S3 origin. */
 export const BQ_COVER_URL = `${BQ_MEDIA_BASE}/cover.webp`;

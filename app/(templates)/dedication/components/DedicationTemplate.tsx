@@ -1,0 +1,454 @@
+"use client";
+
+// ─── Dedication — the radio ──────────────────────────────────────────────────
+//
+// One chassis, four states. The chassis NEVER unmounts, which is the whole
+// reason this file is shaped the way it is: the YouTube player lives in a slot
+// set into its face, and re-parenting that slot would destroy the player
+// instance whose playback was authorised by the tune-in gesture. There is no
+// second gesture coming, so there is no second chance.
+//
+//   tuning   the dial fills the lower half; the player slot shows NO SIGNAL
+//   playing  the dial collapses to a locked readout; controls take its place
+//   signoff  the face dims and the request slip comes up over it
+//
+// `mode: "demo"` is the gallery preview, `mode: "live"` the recipient's
+// published page. They differ only in footer chrome — the show itself is
+// identical, because a preview that behaves differently from the real thing is
+// a preview of nothing.
+
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { RadioTower } from "lucide-react";
+
+import {
+  BODY_FACE,
+  BRAND_PLATE,
+  DISPLAY_FACE,
+  PALETTE,
+  TAP_TARGET_PX,
+  TIMING,
+  resolveDecoys,
+  type RadioShow,
+} from "./types";
+import {
+  amberGlow,
+  bodyBackground,
+  displayBackground,
+  grilleBackground,
+  KEYFRAMES,
+  lampStyle,
+  wearShapes,
+} from "./radioStyles";
+import { targetFrequency } from "./showData";
+import { ShowMachine } from "./showMachine";
+import { loadYouTubeApi } from "./ytPlayer";
+import Tuner from "./Tuner";
+import VuMeters from "./VuMeters";
+import { Controls, Marquee, PlayerPanel, SegmentDots, VOLUME_CSS } from "./BroadcastChrome";
+import { ExportableSlip } from "./RequestSlip";
+import SignOffActions from "./SignOffActions";
+
+declare global {
+  interface Window {
+    /** Development handle for manual and automated verification. */
+    __dedicationMachine?: ShowMachine;
+  }
+}
+
+export interface DedicationTemplateProps {
+  data: RadioShow;
+  mode: "demo" | "live";
+  shareId?: string;
+  hasPassword?: boolean;
+}
+
+export default function DedicationTemplate({ data, mode, shareId }: DedicationTemplateProps) {
+  const reducedRaw = useReducedMotion();
+  const reduced = reducedRaw ?? false;
+
+  const target = useMemo(() => targetFrequency(data.station.frequency), [data.station.frequency]);
+  const decoys = useMemo(() => resolveDecoys(target), [target]);
+  const seed = `${data.station.name}|${data.station.frequency}|${data.recipient.name}`;
+
+  // The machine outlives every render. `data` is captured at construction; the
+  // editor remounts this component (via a key) whenever the show changes, which
+  // is the only correct way to swap a show that owns an unlocked audio session.
+  const [machine] = useState(() => new ShowMachine({ show: data, targetFreq: target, decoys, seed }));
+  const snap = useSyncExternalStore(machine.subscribe, machine.getSnapshot, machine.getServerSnapshot);
+
+  // `attach()` is not optional and must stay paired with `destroy()` — Strict
+  // Mode runs setup → cleanup → setup on mount, and a destroy with no matching
+  // attach leaves the machine torn down before the user ever sees the dial.
+  useEffect(() => {
+    machine.attach();
+    return () => machine.destroy();
+  }, [machine]);
+
+  /**
+   * Pre-load the IFrame API on MOUNT, not on the lock.
+   *
+   * `new YT.Player(...)` has to run synchronously inside the tune-in handler.
+   * If the 60kB of API script were still in flight at that moment there would
+   * be nothing to construct, and by the time it landed the user activation
+   * would be spent. Fetching it while they are still dragging the needle costs
+   * nothing and is the difference between working and silently not working.
+   */
+  useEffect(() => {
+    if (machine.hasSongs) void loadYouTubeApi();
+  }, [machine]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    window.__dedicationMachine = machine;
+    return () => {
+      // Identity-checked: a keyed remount tears down the old instance around
+      // the same commit that sets up the new one, and an unconditional delete
+      // here can leave the handle pointing at a destroyed machine.
+      if (window.__dedicationMachine === machine) delete window.__dedicationMachine;
+    };
+  }, [machine]);
+
+  const handleLock = useCallback(() => machine.tuneIn(), [machine]);
+  const handlePrime = useCallback(() => machine.primeTuner(), [machine]);
+  const handleNeedle = useCallback((f: number) => machine.setNeedle(f), [machine]);
+
+  const wear = useMemo(() => wearShapes(seed), [seed]);
+  const kinds = useMemo(() => data.segments.map((s) => s.kind), [data.segments]);
+
+  const tuning = snap.phase === "tuning";
+  const signoff = snap.phase === "signoff";
+
+  return (
+    <div
+      className="relative w-full flex flex-col items-center"
+      style={{
+        minHeight: "100dvh",
+        background: "radial-gradient(120% 70% at 50% 0%, #241009 0%, #0d0604 60%, #070302 100%)",
+        padding: "18px 12px 28px",
+      }}
+    >
+      <style>{KEYFRAMES + VOLUME_CSS}</style>
+
+      {/* ══ THE CHASSIS. Never unmounts. ══════════════════════════════════ */}
+      <div
+        className="relative w-full rounded-[20px] overflow-hidden"
+        style={{
+          maxWidth: 420,
+          padding: 12,
+          opacity: signoff ? 0.3 : 1,
+          filter: signoff ? "saturate(.5)" : "none",
+          transition: reduced ? "none" : "opacity 900ms ease, filter 900ms ease",
+          ...bodyBackground(),
+        }}
+      >
+        {/* Wear. Seeded off the station, so a given radio always ages the same. */}
+        {wear.map((s) => (
+          <span
+            key={s.key}
+            aria-hidden
+            className="absolute rounded-[50%] pointer-events-none"
+            style={{
+              left: s.left,
+              top: s.top,
+              width: s.width,
+              height: s.height,
+              transform: `rotate(${s.rotate})`,
+              background: "radial-gradient(closest-side, rgba(255,255,255,.9), rgba(255,255,255,0))",
+              opacity: s.opacity,
+              filter: "blur(1.5px)",
+            }}
+          />
+        ))}
+
+        {/* ── Brand plate ────────────────────────────────────────────── */}
+        <div className="relative flex items-center justify-between mb-2.5 px-0.5">
+          <span
+            className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-[2px]"
+            style={{
+              fontFamily: BODY_FACE,
+              letterSpacing: "0.22em",
+              color: "rgba(29,22,16,.72)",
+              background: `linear-gradient(180deg, ${PALETTE.chrome}, ${PALETTE.chromeDark})`,
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.4)",
+            }}
+          >
+            {BRAND_PLATE}
+          </span>
+          <span
+            className="text-[8px] font-bold uppercase"
+            style={{ fontFamily: BODY_FACE, letterSpacing: "0.24em", color: "rgba(255,255,255,.28)" }}
+          >
+            FM · MW
+          </span>
+        </div>
+
+        {/* ── The illuminated display ────────────────────────────────── */}
+        <div className="relative rounded-[8px] px-3 py-2.5 mb-3" style={displayBackground()}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p
+                className="text-[11px] font-bold uppercase truncate"
+                style={{
+                  fontFamily: BODY_FACE,
+                  letterSpacing: "0.15em",
+                  color: tuning ? PALETTE.amberDim : PALETTE.amber,
+                  textShadow: tuning ? "none" : amberGlow(0.85),
+                }}
+              >
+                {tuning ? "—— · ——" : data.station.name}
+              </p>
+              <p
+                className="tabular-nums leading-none mt-1"
+                style={{
+                  fontFamily: DISPLAY_FACE,
+                  fontSize: 30,
+                  fontWeight: 700,
+                  color: tuning ? PALETTE.amberDim : PALETTE.amber,
+                  textShadow: tuning ? "none" : amberGlow(1.1),
+                }}
+              >
+                {data.station.frequency}
+                <span className="text-[11px] ml-1.5 align-top">MHz</span>
+              </p>
+            </div>
+
+            <div className="flex flex-col items-end gap-1.5 shrink-0 pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="w-2.5 h-2.5 rounded-full" style={lampStyle(PALETTE.red, snap.onAir)} />
+                <span
+                  className="text-[8px] font-bold uppercase"
+                  style={{
+                    fontFamily: BODY_FACE,
+                    letterSpacing: "0.18em",
+                    color: snap.onAir ? PALETTE.red : "rgba(226,69,46,.3)",
+                  }}
+                >
+                  On air
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="w-2.5 h-2.5 rounded-full" style={lampStyle(PALETTE.green, !tuning)} />
+                <span
+                  className="text-[8px] font-bold uppercase"
+                  style={{
+                    fontFamily: BODY_FACE,
+                    letterSpacing: "0.18em",
+                    color: !tuning ? PALETTE.green : "rgba(79,208,122,.3)",
+                  }}
+                >
+                  Tuned
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Grille + the player panel ──────────────────────────────── */}
+        <div className="relative flex items-stretch gap-2 mb-2.5">
+          <div className="flex-1 rounded-[6px] min-w-0" style={{ height: 80, ...grilleBackground() }} />
+          {/* COMPLIANCE: the official player, visible, bezelled, never hidden. */}
+          <PlayerPanel onHost={machine.attachPlayerHost} idleLabel={tuning ? "no signal" : "tuning…"} />
+        </div>
+
+        {/* ── VU meters ──────────────────────────────────────────────── */}
+        <div className="relative mb-1.5">
+          <VuMeters machine={machine} reduced={reduced} />
+        </div>
+
+        {/* ── NOW PLAYING ────────────────────────────────────────────── */}
+        <div
+          className="relative rounded-[5px] mb-3 py-1"
+          style={{ background: "rgba(0,0,0,.5)", boxShadow: "inset 0 1px 4px rgba(0,0,0,.7)" }}
+        >
+          <Marquee text={tuning ? "TUNE IN — FIND THE STATION" : snap.marquee} reduced={reduced} />
+        </div>
+
+        {/* ── The lower zone ─────────────────────────────────────────── */}
+        <div className="relative">
+          {tuning ? (
+            <Tuner
+              target={target}
+              decoys={decoys}
+              stationName={data.station.name}
+              onPrime={handlePrime}
+              onNeedle={handleNeedle}
+              onLock={handleLock}
+            />
+          ) : (
+            <div className="flex flex-col gap-3">
+              <Controls
+                playing={snap.playing}
+                volume={snap.volume}
+                onToggle={() => machine.togglePlay()}
+                onVolume={(v) => machine.setVolume(v)}
+                onSkipBack={() => machine.skipBack()}
+                onSkipForward={() => machine.skipForward()}
+                disabled={signoff}
+              />
+              <SegmentDots passed={snap.passed} current={snap.index} kinds={kinds} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ Subtitles. For someone who cannot use sound right now. ════════ */}
+      <div className="w-full mt-3" style={{ maxWidth: 420, minHeight: 54 }}>
+        <AnimatePresence mode="wait">
+          {snap.caption && !signoff && (
+            <motion.p
+              key={snap.caption}
+              initial={reduced ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? undefined : { opacity: 0 }}
+              className="text-center text-[13px] leading-relaxed px-3"
+              style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.86)" }}
+            >
+              {snap.caption}
+            </motion.p>
+          )}
+        </AnimatePresence>
+        {snap.suspended && !tuning && !signoff && (
+          <p
+            className="text-center text-[10px] mt-1"
+            style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.4)" }}
+          >
+            paused — the show waits for you
+          </p>
+        )}
+      </div>
+
+      {/* ══ The dedication card. The screenshot moment. ═══════════════════ */}
+      <AnimatePresence>
+        {snap.dedicationCard && (
+          <motion.div
+            key="ded-card"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: "110%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: "110%" }}
+            transition={{ duration: TIMING.dedicationSlideMs / 1000, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
+            style={{ bottom: "8%" }}
+          >
+            <div
+              className="mx-auto rounded-2xl px-5 py-4"
+              style={{
+                maxWidth: 400,
+                background: "linear-gradient(180deg,#f2e9d2,#e2d5b6)",
+                boxShadow: "0 22px 50px -18px rgba(0,0,0,.85)",
+                borderLeft: `4px solid ${PALETTE.red}`,
+              }}
+            >
+              <p
+                className="text-[8px] font-bold uppercase mb-1.5"
+                style={{ fontFamily: BODY_FACE, letterSpacing: "0.26em", color: "#6b5a45" }}
+              >
+                Dedication
+              </p>
+              <p className="text-[15px] leading-snug" style={{ fontFamily: DISPLAY_FACE, color: "#241a10" }}>
+                {snap.dedicationCard}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══ A dead video. One warm card, never a raw error code. ══════════ */}
+      <AnimatePresence>
+        {snap.errorCard && (
+          <motion.div
+            key="ded-error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
+            style={{ bottom: "8%" }}
+          >
+            <div
+              className="mx-auto rounded-2xl px-5 py-3.5 flex items-center gap-3"
+              style={{
+                maxWidth: 400,
+                background: "rgba(20,10,6,.94)",
+                border: "1px solid rgba(240,166,60,.3)",
+              }}
+            >
+              <RadioTower size={18} style={{ color: PALETTE.amber }} className="shrink-0" />
+              <p className="text-[13px]" style={{ fontFamily: BODY_FACE, color: PALETTE.cream }}>
+                {snap.errorCard}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══ Sign-off ══════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {signoff && (
+          <motion.div
+            key="ded-signoff"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+            className="fixed inset-0 z-[80] overflow-y-auto"
+            style={{ background: "linear-gradient(180deg, rgba(10,4,2,.86), rgba(6,3,2,.98))" }}
+          >
+            {/* 76px of head room: the editor's floating Back/Create bar sits at
+                the top of the viewport and would otherwise cut the sign-off in
+                half on the one screen the sender is most likely to screenshot. */}
+            <div
+              className="min-h-full flex flex-col items-center justify-start gap-5 px-4"
+              style={{ paddingTop: "calc(76px + env(safe-area-inset-top, 0px))", paddingBottom: 40 }}
+            >
+              <p
+                className="text-center text-[16px] leading-relaxed max-w-sm"
+                style={{ fontFamily: BODY_FACE, color: PALETTE.cream }}
+              >
+                {data.signOff}
+              </p>
+              <p
+                className="text-[9px] uppercase"
+                style={{ fontFamily: BODY_FACE, letterSpacing: "0.3em", color: PALETTE.amberDim }}
+              >
+                {data.station.name} · {data.station.frequency} MHz
+              </p>
+
+              <ExportableSlip show={data} reduced={reduced} />
+              <SignOffActions show={data} shareId={shareId} mode={mode} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══ Demo footer ═══════════════════════════════════════════════════ */}
+      {mode === "demo" && tuning && (
+        <p
+          className="text-center text-[10px] mt-4 px-6"
+          style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.34)", maxWidth: 380 }}
+        >
+          The static is generated live in your browser — there is no audio file. Tap Create to record your own
+          intros and pick the songs.
+        </p>
+      )}
+
+      {/* A hidden control that keeps the show reachable for keyboard users who
+          never touch the dial. Same handler, same gesture rules. */}
+      {tuning && (
+        <button
+          type="button"
+          onClick={handleLock}
+          className="mt-4 rounded-full px-5 text-[12px] font-bold"
+          style={{
+            minHeight: TAP_TARGET_PX,
+            fontFamily: BODY_FACE,
+            background: "rgba(240,166,60,.14)",
+            color: PALETTE.amber,
+            border: "1px solid rgba(240,166,60,.35)",
+          }}
+        >
+          skip the dial — just play it
+        </button>
+      )}
+    </div>
+  );
+}

@@ -85,6 +85,125 @@ const BouquetGfViewer = dynamic(() => import("./BouquetGfViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
+const RakshaBandhanViewer = dynamic(() => import("./RakshaBandhanViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+// The other half of the same festival — a brother's page to his sister. Split
+// separately from the one above so a visitor only ever downloads the one
+// template (and the one stylesheet) their link actually belongs to.
+const SisterRakhiViewer = dynamic(() => import("./SisterRakhiViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ProductViewer = dynamic(() => import("./ProductViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const WatchViewer = dynamic(() => import("./WatchViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const CallViewer = dynamic(() => import("./CallViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const RechargeViewer = dynamic(() => import("./RechargeViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ChallanViewer = dynamic(() => import("./ChallanViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const NutritionViewer = dynamic(() => import("./NutritionViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const AppViewer = dynamic(() => import("./AppViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ProfileProViewer = dynamic(() => import("./ProfileProViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const CourtOfLoveViewer = dynamic(() => import("./CourtOfLoveViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ProposalViewer = dynamic(() => import("./ProposalViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const CourtMarriageViewer = dynamic(() => import("./CourtMarriageViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const HoldMyHandViewer = dynamic(() => import("./HoldMyHandViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const TrainTicketViewer = dynamic(() => import("./TrainTicketViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const LegalNoticeViewer = dynamic(() => import("./LegalNoticeViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const KundliMilanViewer = dynamic(() => import("./KundliMilanViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const VendingMachineViewer = dynamic(() => import("./VendingMachineViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const CatchViewer = dynamic(() => import("./CatchViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const FlagsViewer = dynamic(() => import("./FlagsViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const DateInvitationViewer = dynamic(() => import("./DateInvitationViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const PhotoPuzzleViewer = dynamic(() => import("./PhotoPuzzleViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const LoveflixViewer = dynamic(() => import("./LoveflixViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const RewindViewer = dynamic(() => import("./RewindViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const StreakViewer = dynamic(() => import("./StreakViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const DedicationViewer = dynamic(() => import("./DedicationViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const SearchedViewer = dynamic(() => import("./SearchedViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const CapsuleViewer = dynamic(() => import("./CapsuleViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const UsViewer = dynamic(() => import("./UsViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
 
 // ── Lazy-load template-specific content (birthday / valentine) ───────────────
 const BirthdayContent = dynamic(
@@ -213,7 +332,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro" || result.templateType === "raksha-bandhan" || result.templateType === "raksha-bandhan-sister") {
             setData(result.data);
             setLoading(false);
             return;
@@ -409,6 +528,91 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
     return <DarlingViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
+  // Court Marriage Certificate has its own full-page viewer
+  if (!loading && templateType === "court-marriage" && data) {
+    return <CourtMarriageViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Hold My Hand has its own full-page viewer
+  if (!loading && templateType === "hold-my-hand" && data) {
+    return <HoldMyHandViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Train Ticket has its own full-page viewer
+  if (!loading && templateType === "train-ticket" && data) {
+    return <TrainTicketViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Legal Notice has its own full-page viewer
+  if (!loading && templateType === "legal-notice" && data) {
+    return <LegalNoticeViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Kundli Milan has its own full-page viewer
+  if (!loading && templateType === "kundli-milan" && data) {
+    return <KundliMilanViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Vending Machine has its own full-page viewer
+  if (!loading && templateType === "vending-machine" && data) {
+    return <VendingMachineViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Catch has its own full-page viewer
+  if (!loading && templateType === "catch" && data) {
+    return <CatchViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Flags has its own full-page viewer
+  if (!loading && templateType === "flags" && data) {
+    return <FlagsViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Invitation has its own full-page viewer
+  if (!loading && templateType === "date-invitation" && data) {
+    return <DateInvitationViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Last Piece has its own full-page viewer
+  if (!loading && templateType === "photo-puzzle" && data) {
+    return <PhotoPuzzleViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // LoveFlix has its own full-page viewer
+  if (!loading && templateType === "loveflix" && data) {
+    return <LoveflixViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Rewind has its own full-page viewer
+  if (!loading && templateType === "rewind" && data) {
+    return <RewindViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Streak has its own full-page viewer
+  if (!loading && templateType === "streak" && data) {
+    return <StreakViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Dedication has its own full-page viewer
+  if (!loading && templateType === "dedication" && data) {
+    return <DedicationViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Searched has its own full-page viewer
+  if (!loading && templateType === "searched" && data) {
+    return <SearchedViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Capsule has its own full-page viewer
+  if (!loading && templateType === "capsule" && data) {
+    return <CapsuleViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Us has its own full-page viewer
+  if (!loading && templateType === "us" && data) {
+    return <UsViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
   // Birthday GF has its own full-page viewer
   if (!loading && templateType === "birthday-gf" && data) {
     return <BirthdayGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
@@ -427,6 +631,67 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Build a Bouquet (gf) has its own full-page viewer
   if (!loading && templateType === "bouquet-gf" && data) {
     return <BouquetGfViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Raksha Bandhan has its own full-page viewer
+  if (!loading && templateType === "raksha-bandhan" && data) {
+    return <RakshaBandhanViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Raksha Bandhan, brother → sister. A different collection, a different API
+  // base and a different template, so it cannot share the branch above.
+  if (!loading && templateType === "raksha-bandhan-sister" && data) {
+    return <SisterRakhiViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Product listing has its own full-page viewer
+  if (!loading && templateType === "product" && data) {
+    return <ProductViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Watch page has its own full-page viewer
+  if (!loading && templateType === "watch" && data) {
+    return <WatchViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Caller ID has its own full-page viewer
+  if (!loading && templateType === "call" && data) {
+    return <CallViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Recharge has its own full-page viewer
+  if (!loading && templateType === "recharge" && data) {
+    return <RechargeViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Challan has its own full-page viewer
+  if (!loading && templateType === "challan" && data) {
+    return <ChallanViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Nutrition label has its own full-page viewer
+  if (!loading && templateType === "nutrition" && data) {
+    return <NutritionViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The App listing has its own full-page viewer
+  if (!loading && templateType === "app" && data) {
+    return <AppViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Endorsements has its own full-page viewer
+  if (!loading && templateType === "profile-pro" && data) {
+    return <ProfileProViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Court of Love has its own full-page viewer
+  if (!loading && templateType === "court-of-love" && data) {
+    return <CourtOfLoveViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // The Proposal has its own full-page viewer
+  if (!loading && templateType === "proposal" && data) {
+    return <ProposalViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   if (error || !entry || !data) {

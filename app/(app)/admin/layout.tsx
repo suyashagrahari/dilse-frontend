@@ -11,6 +11,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isLoading) return;
+
+    // ── WAIT BEFORE DECIDING ────────────────────────────────────────────────
+    //
+    // Opening an /admin URL directly — typing it, a bookmark, a shared link —
+    // arrives before `checkAuth` has run. `isLoading` starts false and the store
+    // starts empty, so this effect used to fire on the first commit, read "no
+    // user" and redirect home. Every admin page was reachable only by clicking
+    // through from inside the app, and a hard refresh threw you out.
+    //
+    // A token in storage means an answer is on its way. Hold the spinner until
+    // the user object lands or `checkAuth` rejects and clears it.
+    const token =
+      typeof window === "undefined" ? null : window.localStorage.getItem("gifts_access_token");
+    if (token && !user) return;
+
     if (!isAuthenticated || !user || user.role !== "admin") {
       router.replace("/");
       return;

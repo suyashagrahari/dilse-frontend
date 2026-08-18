@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 
 export default function BottomNav() {
@@ -161,6 +161,7 @@ export default function BottomNav() {
                 ...(isAdmin ? [
                   { label: "Analytics", icon: <BarChart3 size={15} />, href: "/admin/analytics" },
                   { label: "User Dashboard", icon: <Users size={15} />, href: "/admin/users" },
+                  { label: "Templates", icon: <LayoutGrid size={15} />, href: "/admin/templates" },
                   { label: "Contacts", icon: <MessageSquare size={15} />, href: "/admin/contacts" },
                 ] : []),
                 { label: "About Us", icon: <Info size={15} />, href: "/about-us" },

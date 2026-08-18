@@ -4,7 +4,7 @@ import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import SocialShareSheet from "@/components/SocialShareSheet";
+import { ShareSheet } from "@/components/share/ShareSheet";
 import { useEidEditor } from "./hooks/useEidEditor";
 
 import StarField from "./components/StarField";
@@ -247,12 +247,18 @@ function EidMubarakPage() {
       </main>
 
       <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <SocialShareSheet
+      <ShareSheet
         open={editor.showShareSheet}
         onClose={editor.closeShareSheet}
         shareUrl={editor.shareUrl}
-        onCopy={editor.handleCopy}
-        shareMessage={`${editor.content.senderName || "Someone"} is sharing Eid Mubarak wishes${editor.content.recipientName ? ` for ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+        text={`${editor.content.senderName || "Someone"} is sharing Eid Mubarak wishes${editor.content.recipientName ? ` for ${editor.content.recipientName}` : ""} on SubhSandesh!`}
+        title="Eid Mubarak"
+        cardTitle="Eid Mubarak"
+        cardNote="Scan to open the wishes written for you."
+        senderName={editor.content.senderName}
+        recipientName={editor.content.recipientName}
+        accent="#d97706"
+        slug="eid-mubarak"
       />
 
       <EditSheet

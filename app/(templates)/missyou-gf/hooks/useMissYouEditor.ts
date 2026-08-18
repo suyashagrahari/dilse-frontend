@@ -6,6 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { useStoryFill } from "@/hooks/useStoryFill";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "missyou-gf";
@@ -19,6 +20,7 @@ import {
   dbToMissYouData,
   dbToEngagement,
 } from "../components/types";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 const DRAFT_KEY = "missyou_draft";
 const BASE = `${API_URL}/missyou-gf-pages`;
@@ -58,6 +60,19 @@ export function useMissYouEditor() {
   // envelope re-seals, scratch re-covers, hug counter resets, chosen song plays.
   const [previewVersion, setPreviewVersion] = useState(0);
   const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
+
+  // ── AI story fill ──────────────────────────────────────────────────────────
+  // Completely inert when the server has no schema for this slug: `schema`
+  // stays null, StoryStarter renders nothing, and the entry point below falls
+  // straight back to the form this editor has always opened.
+  const storyFill = useStoryFill<MissYouData>({
+    slug: "missyou-gf",
+    demo: DEMO_DATA,
+    current: mf,
+    onFilled: setMf,
+  });
+  const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
+  const [storyStarted, setStoryStarted] = useState(false);
 
   const [showAuth, setShowAuth] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -149,6 +164,7 @@ export function useMissYouEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          await persistStory();
           clearDraft();
           pushToast({ type: "publish", title: "Published! 🤍", message: "Your letter is now live" });
         } else {
@@ -173,10 +189,32 @@ export function useMissYouEditor() {
 
   const updateMf = useCallback((key: keyof MissYouData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
-  const handleEditClick = useCallback(() => {
+  /** Seeds the form exactly as opening it does, without opening it. */
+  const seedManualForm = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
-    setEditMode("manual");
   }, [isPersonalized, content]);
+
+  const handleEditClick = useCallback(() => {
+    seedManualForm();
+    setEditMode("manual");
+  }, [seedManualForm]);
+
+  // ── StoryStarter entry point ────────────────────────────────────────────────
+  // `mf` is seeded up front — from the loaded page or the demo, whichever the
+  // form would have used — so a generated draft lands on the right base and
+  // `onManual` can open the untouched form without re-seeding over the AI's work.
+  /** Create. Falls back to today's form when there is no schema. */
+  const handleStartCreate = useCallback(() => {
+    if (!storySchema) { handleEditClick(); return; }
+    seedManualForm();
+    setStoryMode("idle");
+    setStoryStarted(true);
+  }, [storySchema, handleEditClick, seedManualForm, setStoryMode]);
+
+  /** StoryStarter's way out — the normal form, every field still hand-editable. */
+  const handleStoryManual = useCallback(() => {
+    setEditMode("manual");
+  }, []);
 
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
@@ -232,6 +270,7 @@ export function useMissYouEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({ type: "publish", title: "Published! 🤍", message: "Your letter is now live" });
@@ -248,7 +287,7 @@ export function useMissYouEditor() {
     } finally {
       setPublishing(false);
     }
-  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast]);
+  }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
 
   const closeAuth = useCallback(() => { setShowAuth(false); pendingPublishRef.current = null; }, []);
   const closeAuthSuccess = useCallback(() => { setShowAuth(false); }, []);
@@ -283,12 +322,16 @@ export function useMissYouEditor() {
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
     const text = "I made you something. Don't open it till you're alone tonight 🤍";
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      navigator.share({ title: "A letter for you 💌", text, url: shareUrl }).catch(() => {});
-    } else {
-      handleCopy();
-    }
-  }, [shareUrl, handleCopy]);
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      title: "A letter for you 💌",
+      text,
+      accent: "#4f46e5",
+      senderName: content.senderName,
+      slug: "missyou-gf",
+    });
+  }, [shareUrl, content.senderName, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -298,7 +341,8 @@ export function useMissYouEditor() {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setMf,
+    storyFill, storyStarted, handleStartCreate, handleStoryManual,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

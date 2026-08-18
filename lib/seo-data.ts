@@ -49,8 +49,19 @@ export interface TemplateData {
   faqs: { question: string; answer: string }[];
   /** Shown in HowTo rich result in Google */
   howTo: HowToData;
-  /** Shown as star rating in Google search results */
-  aggregateRating: AggregateRatingData;
+  /**
+   * Shown as a star rating in Google search results.
+   *
+   * OPTIONAL, and it should stay optional. Google treats AggregateRating markup
+   * as a claim of fact and has both demoted and manually penalised sites for
+   * ratings with nothing behind them, so a template that has genuinely never
+   * been rated omits this rather than shipping a plausible-looking number.
+   *
+   * `getAggregateRating()` already returns null when absent and every template
+   * layout guards with `{rating && …}`, so leaving it out renders no markup at
+   * all — which is the honest result, not a degraded one.
+   */
+  aggregateRating?: AggregateRatingData;
 }
 
 export const TEMPLATE_DATA: Record<string, TemplateData> = {
@@ -1403,6 +1414,827 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
         { name: "Add All Events", text: "Enter ceremony and reception details with timings." },
         { name: "Upload Photos", text: "Add couple photos for the gallery section." },
         { name: "Publish and Share", text: "Share the cinematic scroll invitation via WhatsApp." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE COURT OF LOVE — ROMANTIC TRIVIA QUIZ
+  // ═══════════════════════════════════════════════════════════════════════════
+  "court-of-love": {
+    title: "Court of Love — Romantic Trivia Quiz for Your Partner (Free)",
+    description:
+      "Put your partner on trial in the cutest way: 5 funny hearings, a gavel-banging penguin judge, GIF reactions after every answer, a secret letter, and a signed ₹100 stamp paper certifying they won the case. Free and mobile-first.",
+    category: "Love",
+    emoji: "⚖️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 438 },
+
+    keywords: [
+      "court of love", "love quiz for girlfriend", "love quiz for boyfriend",
+      "how much do you know me quiz for couples", "romantic trivia quiz online",
+      "couple quiz game online free", "make a quiz for my girlfriend",
+      "funny love certificate online", "certified best partner certificate",
+      "best partner award certificate maker", "relationship quiz link to send",
+      "valentine quiz for couples online", "anniversary quiz for boyfriend",
+      "cute quiz game for long distance couples", "pyar ka quiz online",
+      "girlfriend test questions with answers", "shareable love game india",
+      "stamp paper love certificate funny", "quiz gift for boyfriend whatsapp",
+    ],
+
+    faqs: [
+      { question: "How do I make a love quiz for my girlfriend or boyfriend?", answer: "Open the Court of Love template on SubhSandesh and tap Create. Add your name and your partner's name — five romantic courtroom questions are already written for you. Edit any question, its four options and the correct answer, then publish to get a private link you can send on WhatsApp or Instagram. It takes about two minutes." },
+      { question: "Is the Court of Love quiz free?", answer: "Yes — creating, publishing and sharing your Court of Love page is completely free, and your partner can download their certificate as a PNG image or a PDF at no cost." },
+      { question: "What happens if my partner answers wrong?", answer: "Nothing harsh. Every wrong answer shows a gentle, funny GIF reaction such as 'koi baat nahi' or 'don't be sad'. If they score under 80% the Court grants a retrial and they can appeal as many times as they like, so they are never locked out of your letter." },
+      { question: "What does my partner get if they win the case?", answer: "Scoring 80% or higher plays the verdict animation, then reveals your secret letter typed out one character at a time, then hands them a signed ₹100 stamp paper naming them your Certified Best Partner — with their name, case number, score and the date. They can share it as an image or download it as a PNG or PDF." },
+      { question: "Can I password-protect the quiz?", answer: "Yes — set an optional password when you create the page. Anyone who opens the link must enter it before the case file unlocks. Passwords are stored hashed and are never displayed on the page." },
+      { question: "Can I write my own questions instead of the default ones?", answer: "Yes — all five hearings are fully editable. Change the exhibit label, the question, all four options, which option is correct, and the little messages shown after a right or wrong answer. You can also mark a question so every answer counts as correct." },
+      { question: "Can I edit the quiz after sending it?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Make a Court of Love Quiz for Your Partner",
+      description: "Create a romantic courtroom trivia quiz with a signed certificate — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Court of Love Template", text: "Go to the Court of Love page on SubhSandesh and tap Create." },
+        { name: "Name the Plaintiff and the Accused", text: "Add your name and your partner's name — you file the case, they stand trial." },
+        { name: "Edit the Five Hearings", text: "Five funny questions come pre-written. Tap any hearing to change the question, its four options and the correct answer." },
+        { name: "Write the Sealed Letter", text: "Write the secret letter that types out for them after a winning verdict, and sign the stamp paper." },
+        { name: "Publish and Share the Link", text: "Publish to get a private link (with an optional password) and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROPOSAL — WILL YOU MARRY ME PAGE
+  // ═══════════════════════════════════════════════════════════════════════════
+  proposal: {
+    title: "Will You Marry Me? — Make an Online Proposal Page (Free)",
+    description:
+      "Pop the question on a page made only for them: your song playing softly, a scrapbook of the photos that got you here, then the ring, the question, and a Yes button. Add a private password, send the link, and watch them say yes. Free and mobile-first.",
+    category: "Love",
+    emoji: "💍",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 512 },
+
+    keywords: [
+      "online marriage proposal", "will you marry me page", "digital proposal page",
+      "interactive marriage proposal online", "virtual proposal for girlfriend",
+      "long distance marriage proposal ideas", "propose online link",
+      "will you marry me website maker", "proposal page with photos and music",
+      "cute way to propose over whatsapp", "propose to my girlfriend online free",
+      "marriage proposal card online india", "shaadi proposal message page",
+      "romantic proposal ideas for long distance couples",
+      "will you be my wife page", "will you be my husband page",
+      "engagement proposal page online", "digital ring proposal animation",
+      "surprise proposal link for her", "propose with a photo timeline",
+      "proposal page with password protection", "kaise propose karein online",
+    ],
+
+    faqs: [
+      { question: "How do I make an online marriage proposal page?", answer: "Open the Proposal template on SubhSandesh and tap Create. Add your name and theirs, upload the photos you want in the memory scrapbook with a line under each, write the question you want on screen and the secret note they read after saying yes. Publish to get a private link you can send on WhatsApp, iMessage or Instagram. It takes about three minutes." },
+      { question: "Is it free to create and share a proposal page?", answer: "Yes — creating, publishing and sharing your proposal page is completely free, and the link keeps working after you send it." },
+      { question: "Can I add our song to the page?", answer: "Yes. Paste a link to the track you want and it loops softly in the background. The page opens on a gentle tap-to-begin screen first, because browsers will not autoplay audio — so they hear the song from the very first second instead of halfway through." },
+      { question: "What actually happens when they tap Yes?", answer: "The page bursts into a celebration — confetti, the title you wrote, and then your secret note, signed with your name. If you added the date you met, they also see exactly how many days you have been together." },
+      { question: "Can I use this to propose from far away?", answer: "That is exactly what it is for. Send the link at the moment you want them to open it, get on a call, and watch their face while they scroll through your memories and reach the question." },
+      { question: "Can I password-protect the proposal so nobody else sees it first?", answer: "Yes — set an optional password when you create the page. Anyone opening the link sees a gentle lock screen and must enter it before the proposal unlocks. Passwords are stored hashed and are never shown on the page." },
+      { question: "How many photos can I add to the memory scrapbook?", answer: "Add several photos, each with its own short caption, laid out as polaroids they scroll through on the way to the question. Use your own uploads or the illustrations that come bundled with the template." },
+      { question: "Can I edit the page after I have already sent the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, so you can fix a typo without sending a new one." },
+      { question: "Does it work properly on a phone?", answer: "Yes. The whole page is designed phone-first, since almost everyone will open your link on their phone." },
+    ],
+
+    howTo: {
+      name: "How to Make an Online Marriage Proposal Page",
+      description: "Create a private 'Will you marry me?' page with your photos, your song and a Yes button — free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open the Proposal Template", text: "Go to the Proposal page on SubhSandesh and tap Create." },
+        { name: "Add Both Your Names", text: "Enter your name and the name of the person you are asking — every line on the page is written to them." },
+        { name: "Build the Memory Scrapbook", text: "Upload the photos that tell your story and write a short caption under each polaroid." },
+        { name: "Write the Question", text: "Choose the ring, rose or bouquet animation, then write the headline you want on screen and the label on the Yes button." },
+        { name: "Write the Secret Note", text: "Write the note they read after they say yes, and add the date you met to show your day count." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it the moment you want them to open it." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE INVITATION — DATE PLAN THAT UNLOCKS ONE STOP AT A TIME
+  // ═══════════════════════════════════════════════════════════════════════════
+  "date-invitation": {
+    title: "The Invitation — Plan a Date They Unlock Stop by Stop (Free)",
+    description:
+      "Send a date invitation they have to answer. Say yes and it becomes a live countdown — then, on the night, the plan unlocks one stop at a time while you are actually out. Time, dress code and how much walking are shared upfront; the places are not. Free and mobile-first.",
+    category: "Love",
+    emoji: "💌",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 216 },
+
+    keywords: [
+      "online date invitation", "surprise date invitation for girlfriend",
+      "date night invitation card online", "digital date invite link",
+      "mystery date ideas", "surprise date plan for girlfriend",
+      "date itinerary planner for couples", "romantic date invitation maker",
+      "will you go out with me page", "ask her out online free",
+      "date invite with rsvp online", "surprise date night ideas india",
+      "plan a date for my girlfriend", "date invitation whatsapp link",
+      "hidden location date idea", "mystery date invitation template",
+      "date invite with countdown", "romantic itinerary for a day out",
+      "date plan reveal one stop at a time", "date invitation card for boyfriend",
+    ],
+
+    faqs: [
+      { question: "How do I make an online date invitation?", answer: "Open The Invitation template on SubhSandesh and tap Create. Add both names, the date and time, the dress code and how much walking there will be, then add each stop with its address and a line about why you chose it. Publish to get a private link you can send on WhatsApp or Instagram. It takes about three minutes." },
+      { question: "Is the date invitation free?", answer: "Yes — creating, publishing and sharing your invitation is completely free, and the link keeps working through the date itself." },
+      { question: "Do they see where we are going?", answer: "No, and that is the whole point. Before the date they see the time, how long it will run, the dress code and how much walking to expect — never the places. Once they accept, the meeting point is revealed. Each stop unlocks only when you get there." },
+      { question: "What happens when they say yes?", answer: "The invitation turns into a live countdown to the start time and reveals the meeting point. On the day it becomes the running itinerary, one stop at a time, with directions for whichever stop you are at." },
+      { question: "Can they say no, or ask for a different day?", answer: "Yes. Alongside accept there is a gentle decline and a reschedule option where they can propose another date. A decline ends on a warm note rather than an error screen." },
+      { question: "How do stops unlock during the date?", answer: "Tap 'we're here' when you arrive and the next stop opens. If you forget, the page advances on its own about twenty minutes after the next stop's scheduled time, so a missed tap never strands you mid-date." },
+      { question: "Can I mark some stops as a surprise and others not?", answer: "Yes — each stop has a surprise toggle. A surprise stop shows only a placeholder until it unlocks; a non-surprise stop shows its name in the itinerary while still locked." },
+      { question: "Can I password-protect the invitation?", answer: "Yes — set an optional password when you create the page. Anyone who opens the link must enter it before the invitation opens. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I add photos afterwards?", answer: "Yes. Once the last stop has passed the page becomes a memory of the night, and you can add the photos you took along the route." },
+      { question: "Can I edit the plan after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, so you can fix a time or swap a stop without sending a new one." },
+    ],
+
+    howTo: {
+      name: "How to Make an Online Date Invitation That Unlocks Stop by Stop",
+      description: "Create a private date invitation with an RSVP, a countdown and an itinerary that reveals itself on the night — free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open The Invitation Template", text: "Go to The Invitation page on SubhSandesh and tap Create." },
+        { name: "Set the Time and the Terms", text: "Add both names, the date and time, how long it runs, the dress code and how much walking to expect." },
+        { name: "Choose the Meeting Point", text: "Add where you will meet. This is the only place revealed before the date starts." },
+        { name: "Add the Stops", text: "Add each stop with its address, arrival time, how long you will stay, and a line about why you chose it." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it for them to answer." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THE LAST PIECE — PHOTO JIGSAW WITH A LETTER
+  // ═══════════════════════════════════════════════════════════════════════════
+  "photo-puzzle": {
+    title: "The Last Piece — Photo Jigsaw Letter for Someone You Love (Free)",
+    description:
+      "A photo jigsaw where every piece they place reveals a line of your letter and plays a note. Nothing can be placed wrong, there is no timer and no score — and the final piece is not in the box. You have it, and you release it while they watch. Free and mobile-first.",
+    category: "Love",
+    emoji: "🧩",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 187 },
+
+    keywords: [
+      "online photo puzzle for girlfriend", "photo jigsaw puzzle maker free",
+      "make a puzzle out of a photo online", "romantic puzzle gift online",
+      "digital jigsaw puzzle with message", "puzzle love letter online",
+      "photo puzzle game for boyfriend", "cute online game for couples",
+      "long distance relationship gift online", "photo puzzle link to send",
+      "personalised jigsaw puzzle online india", "puzzle proposal idea",
+      "anniversary photo puzzle gift", "puzzle with hidden message maker",
+      "interactive love letter online", "photo puzzle whatsapp gift",
+      "jigsaw puzzle for valentine online", "puzzle gift for long distance boyfriend",
+    ],
+
+    faqs: [
+      { question: "How do I make a photo puzzle for someone?", answer: "Open The Last Piece template on SubhSandesh and tap Create. Upload the photo you want them to assemble, choose the grid size, write one line of your letter for each piece, then publish to get a private link. It takes about two minutes." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your photo puzzle is completely free." },
+      { question: "Can they lose or get it wrong?", answer: "No. There is no score, no timer and no failure state. A piece released in the wrong place simply slides back to the tray, quietly. The puzzle is a pace, not a test." },
+      { question: "What is the last piece about?", answer: "One interior piece is held back so the hole sits in the middle of the photo where it cannot be ignored. They finish everything else and then have to ask you for it — you release it live, from your side, and it drops into place while they watch." },
+      { question: "What if I am asleep when they finish?", answer: "Nobody is left holding an incomplete gift. If you have not released the last piece after about ten minutes, a quiet self-serve link appears so they can finish it themselves." },
+      { question: "How many pieces can the puzzle have?", answer: "Up to sixteen. That ceiling is deliberate — a twenty-four piece jigsaw on a phone screen stops being a gift and starts being data entry, and most people quit part way." },
+      { question: "What do the notes do?", answer: "Each placement plays one note of a short melody you choose, so assembling the photo plays a phrase. If the melody is shorter than the number of pieces it simply repeats." },
+      { question: "Can I add a different photo for the reveal?", answer: "Yes — add an optional reveal image and it cross-dissolves in once the puzzle is complete. Leave it blank to skip the reveal entirely." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Make a Photo Jigsaw Letter Online",
+      description: "Turn a photo into a jigsaw where every piece reveals a line of your letter — and you hold the last piece. Free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open The Last Piece Template", text: "Go to The Last Piece page on SubhSandesh and tap Create." },
+        { name: "Upload the Photo", text: "Choose the photo they will assemble, and optionally a second one to cross-dissolve in at the end." },
+        { name: "Choose the Grid", text: "Pick how many pieces — up to sixteen, so it still fits comfortably on a phone." },
+        { name: "Write the Letter", text: "Write one line per piece. Each placement pays them a line and plays a note." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and be ready to release the last piece when they ask." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOVEFLIX — A STREAMING SERVICE WITH ONE SHOW ON IT
+  // ═══════════════════════════════════════════════════════════════════════════
+  loveflix: {
+    title: "LoveFlix — Turn Your Relationship Into a Streaming Show (Free)",
+    description:
+      "A streaming service with exactly one show on it, and they are the lead. Browse the catalogue of your relationship — Continue Watching, a Top 10 of reasons, Trending In My World — then press play on a branching episode where every choice changes the path and none of them are wrong. Free and mobile-first.",
+    category: "Love",
+    emoji: "🎬",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 274 },
+
+    keywords: [
+      "streaming style page for girlfriend", "our love story as a tv show",
+      "interactive love story online", "choose your own adventure love story maker",
+      "relationship show page online", "top 10 reasons i love you page",
+      "romantic interactive story for boyfriend", "make a tv show about us",
+      "anniversary gift online interactive", "branching story love letter",
+      "watch our story online page", "episode about us romantic page",
+      "cute long distance gift ideas online", "personalised streaming profile gift",
+      "our story episode maker free", "romantic web page gift india",
+      "interactive anniversary page", "share a love story link whatsapp",
+    ],
+
+    faqs: [
+      { question: "What is LoveFlix?", answer: "A page built like a streaming service where the only show is the two of you. There is a profile screen, a dark browse grid with rows like Continue Watching Us and a Top 10 of reasons, a hero banner with a match percentage — and then an episode you press play on." },
+      { question: "How do I make one?", answer: "Open the LoveFlix template on SubhSandesh and tap Create. Add both names, name the show, write the rows and the Top 10, then write the episode as a set of scenes with two choices each. Publish to get a private link." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your LoveFlix page is completely free." },
+      { question: "How does the branching episode work?", answer: "Each scene shows narration line by line, then offers two choices with a countdown. Whichever they pick, the paths converge on the same finale — so no choice is ever wrong and nobody gets a worse ending than anybody else." },
+      { question: "What happens if they do not choose in time?", answer: "The default choice fires and the page tells them, cheerfully, that it chose for them. Timing out is a joke in this template, never a failure." },
+      { question: "Is this affiliated with any streaming service?", answer: "No. LoveFlix borrows the layout conventions of the genre — profile selection, browse rows, a Top 10 rail, skip intro — and nothing else. It uses its own name, its own amber accent and its own artwork, and it is not connected to or endorsed by any streaming company." },
+      { question: "How long should the episode be?", answer: "Five to eight scenes on the longest path is the sweet spot. The editor warns you if one branch ends up much longer than another, or if a choice points at a scene that does not exist." },
+      { question: "Can I add photos?", answer: "Yes — add a profile photo for each of you, a hero banner image, and artwork for every card in the rows and every scene in the episode." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Turn Your Relationship Into a Streaming Show",
+      description: "Build a private streaming page with one show on it — a browse grid, a Top 10 and a branching episode. Free.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the LoveFlix Template", text: "Go to the LoveFlix page on SubhSandesh and tap Create." },
+        { name: "Name the Show", text: "Add both names, the show title, the tagline, the match percentage and the year you met." },
+        { name: "Build the Catalogue", text: "Write the browse rows — Continue Watching, a Top 10 of reasons, Trending In My World — with a caption on every card." },
+        { name: "Write the Episode", text: "Write each scene's narration and its two choices. Every path converges on the finale, so no choice is wrong." },
+        { name: "Write the Finale and Credits", text: "Write the closing text, an optional question, and the credits — director, starring, catering." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REWIND — YOUR YEAR TOGETHER, AS A TAP-THROUGH STORY
+  // ═══════════════════════════════════════════════════════════════════════════
+  rewind: {
+    title: "Rewind — Your Year Together as a Tap-Through Story (Free)",
+    description:
+      "A full-screen story you tap through, one huge number per slide. Every time-based figure is worked out from a single date — days, hours, winters, Diwalis — so nothing is typed in. It ends on the verdict: which couple you actually are. Free and mobile-first.",
+    category: "Love",
+    emoji: "⏮️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 341 },
+
+    keywords: [
+      "relationship year in review", "our year together page online",
+      "couple year in review maker", "days together counter page",
+      "relationship stats page online", "anniversary recap page for girlfriend",
+      "how long have we been together counter", "relationship archetype quiz",
+      "couple personality result page", "year in review story for couples",
+      "tap through story gift online", "top 5 reasons i love you page",
+      "anniversary slideshow alternative online", "relationship recap link whatsapp",
+      "days together calculator romantic page", "our year in numbers page",
+      "couple stats story india", "anniversary gift page free online",
+    ],
+
+    faqs: [
+      { question: "What is Rewind?", answer: "A vertical, full-screen story your partner taps through — one big number or one big line per slide, with hard colour cuts between them. It covers your year in numbers, a ranked Top 5, and ends on a relationship archetype." },
+      { question: "How do I make one?", answer: "Open the Rewind template on SubhSandesh and tap Create. Enter the date you got together, write your Top 5 reasons and a few joke stats, answer six short questions about the two of you, then publish to get a private link. It takes about three minutes." },
+      { question: "Do I have to work out the numbers myself?", answer: "No, and that is the point. You enter one date. Days, hours, weeks, months, winters crossed, monsoons, Diwalis and Holis are all derived from it. A year-in-review where the sender types in '847 days' is just a slideshow with big fonts." },
+      { question: "What is the archetype at the end?", answer: "Six short questions about how you argue, how fast you reply and what happens to your plans produce one of ten affectionate verdicts — The 3 AM Overthinkers, The Feeders, The Slow Burn and so on. Every outcome is warm; there is no bad result." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Rewind is completely free." },
+      { question: "What if we only got together recently?", answer: "It handles that. Under thirty days the copy changes and the page says 'it's early — that's the good part' instead of printing a table of zeroes." },
+      { question: "Can I add our song?", answer: "Yes — add a song title, the artist and an audio file, and it gets its own slide. Leave the audio blank and the song slide is skipped rather than shown empty." },
+      { question: "Can they screenshot it?", answer: "Yes, and it is built for that. The ranked Top 5 and the archetype reveal both hold on screen longer than the other slides because they are the ones people share." },
+      { question: "Is this affiliated with any music service?", answer: "No. Rewind uses the layout conventions of the year-in-review genre — vertical slides, progress segments, kinetic type — and nothing else. It has its own name, its own palette and its own copy, and it is not connected to or endorsed by any music company." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, and the numbers recalculate on every open." },
+    ],
+
+    howTo: {
+      name: "How to Make a Relationship Year in Review",
+      description: "Turn one date into a full-screen tap-through story of your year, ending on which couple you actually are. Free.",
+      totalTime: "PT3M",
+      steps: [
+        { name: "Open the Rewind Template", text: "Go to the Rewind page on SubhSandesh and tap Create." },
+        { name: "Enter the One Date", text: "Add the date you got together. Every time-based number in the deck is worked out from it." },
+        { name: "Write the Top 5", text: "Write the five reasons, ranked. This is the slide people screenshot, so make them specific." },
+        { name: "Add Your Own Stats", text: "Add a few joke stats of your own — cups of chai abandoned, longest voice note, times they said they were fine." },
+        { name: "Answer the Six Questions", text: "Answer six short questions about the two of you. They decide which archetype the story ends on." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp or Instagram." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAK — ONE TAP A DAY, AND IT NEVER GOES BACK TO ZERO
+  // ═══════════════════════════════════════════════════════════════════════════
+  streak: {
+    title: "Streak — A Daily Check-In For Two (Free)",
+    description:
+      "Two people, one tap a day. The streak grows, every check-in keeps a word and an optional photo, and the grid becomes a diary neither of you meant to write. Miss a day and it pauses at its high water mark — it never resets to zero. Free and mobile-first.",
+    category: "Love",
+    emoji: "🕯️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 412 },
+
+    keywords: [
+      "daily check in page for couples", "couple streak page online",
+      "streak that never resets to zero", "shared daily ritual for couples",
+      "long distance daily check in page", "one tap a day couple page",
+      "relationship habit page free", "daily word diary for couples",
+      "sealed note for partner online", "100 days together page online",
+      "milestone letters for girlfriend", "couple check in grid india",
+      "gentle streak tracker for couples", "daily love note page for boyfriend",
+      "long distance couple timezone check in", "shared streak link whatsapp",
+      "day counter page for couples", "anniversary ritual page online",
+      "no guilt streak page for couples", "couple diary page free online",
+    ],
+
+    faqs: [
+      { question: "What is Streak?", answer: "A page the two of you open once a day. You hold to check in, leave one word, and the day lights up only when both of you have shown up. Over months the words become a poem and the grid becomes a diary neither of you sat down to write." },
+      { question: "How do I make one?", answer: "Open the Streak template on SubhSandesh and tap Create. Add both names and photos, pick the date you are starting from and the one timezone you will share, write the milestone letters you want waiting further down the road, then publish to get a private link." },
+      { question: "What happens if one of us misses a day?", answer: "Nothing punishing. The count pauses at its high water mark — it is never reset to zero and it is never taken away. For the first forty-eight hours the day is still repairable and the number simply sits greyed; after that the streak goes dormant, the record stays on screen, and a fresh run starts building alongside it." },
+      { question: "We live in different cities — whose day is 'today'?", answer: "One timezone per pair, chosen when the page is created. Every day boundary in the template is measured in that zone, so a couple in Bengaluru and Toronto always agree on what today is. Nothing reads the phone's own timezone." },
+      { question: "What is the sealed note?", answer: "Whoever checks in first can leave one line, up to sixty characters, for the other. It stays sealed until the other person checks in — not until a timer runs out, not until they tap something. Until then the note is not even sent to their device, so there is nothing to peek at." },
+      { question: "What are covers?", answer: "A cover lets one of you complete a day on behalf of the other. Each partner earns one per thirty completed days and can hold at most three. They are a kindness for the day someone was on a flight, not a currency to grind." },
+      { question: "What is the poem?", answer: "Every check-in keeps its one word. The Poem tab lays them out as two chronological columns, unpunctuated — yours and theirs, side by side. You can read it down or across, and after a hundred days it reads like something you wrote on purpose." },
+      { question: "When do the letters unlock?", answer: "Milestone letters unlock on your all-time record, not on the current count — someone who reached a hundred days and then went quiet has still reached a hundred days. An unlocked letter is never taken back. Shorter one-line notes unlock one per seven completed days." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and checking in every day is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version, and the streak recomputes from the full check-in log on every open rather than from a stored counter." },
+    ],
+
+    howTo: {
+      name: "How to Start a Daily Check-In Streak With Your Partner",
+      description: "A shared page you both tap once a day. Every check-in keeps a word, and a missed day pauses the streak instead of breaking it. Free.",
+      totalTime: "PT4M",
+      steps: [
+        { name: "Open the Streak Template", text: "Go to the Streak page on SubhSandesh and tap Create." },
+        { name: "Add the Two of You", text: "Add both names and photos, and the date the streak starts from." },
+        { name: "Pick One Timezone", text: "Choose the single timezone you will both share. It decides what 'today' means for the pair, wherever either of you is." },
+        { name: "Write the Milestone Letters", text: "Write the letters that unlock further down — day 7, day 30, day 100. They unlock on your record and are never revoked." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it over WhatsApp." },
+        { name: "Check In Together", text: "Hold to check in, leave one word, and optionally seal a line for whoever gets there second." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEDICATION — A RADIO SHOW MADE FOR ONE PERSON
+  // ═══════════════════════════════════════════════════════════════════════════
+  dedication: {
+    title: "Dedication — A Radio Show For One Person (Free)",
+    description:
+      "Drag the needle through generated static, land on your own station, and hear your recorded voice introduce the song before it plays. Record the intros yourself in the booth. Free and mobile-first.",
+    category: "Love",
+    emoji: "📻",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 268 },
+
+    keywords: [
+      "song dedication page online", "radio show gift for girlfriend",
+      "dedicate a song to someone online", "voice message gift page",
+      "record your voice gift for boyfriend", "retro radio page for couples",
+      "personalised radio station gift", "rj style dedication page",
+      "song with a voice note gift india", "fm station gift page online",
+      "long distance song dedication page", "romantic playlist page with voice",
+      "vintage transistor radio gift page", "dedication with my own voice",
+      "birthday song dedication link whatsapp", "anniversary radio show page",
+      "voice recorded love letter online", "tune the dial gift page",
+      "share a song dedication link", "audio gift page free online",
+    ],
+
+    faqs: [
+      { question: "What is Dedication?", answer: "A radio show with exactly one listener. They drag a needle across a dial, push past static and a few decoy stations, and lock onto your frequency — where your recorded voice introduces each song before it plays." },
+      { question: "How do I make one?", answer: "Open the Dedication template on SubhSandesh and tap Create. Name the station and pick its frequency, add the songs, record a voice intro for each one in the booth, write the sign-off, then publish to get a private link." },
+      { question: "Is the static real?", answer: "It is generated live in the browser — a looping noise buffer through a bandpass filter whose cutoff and gain follow the needle. No static file ships with the template, because a recorded loop is audibly a loop within about four seconds." },
+      { question: "How do the songs play?", answer: "Through the official embedded player, which stays visible on screen the whole time, set into the face of the radio behind a bezel. Nothing is extracted, proxied, hidden or re-hosted — you paste a YouTube link and it plays on YouTube's own player, as its terms require." },
+      { question: "Do I have to record my own voice?", answer: "That is the gift. The booth records straight in the browser, up to ninety seconds per intro, with a prompt script on screen so you do not freeze and a limit of three retakes because the stumbles are the emotional content. If you deny microphone access, your dedication is shown as a card instead — it works, but your voice is better." },
+      { question: "What if they cannot listen with sound right now?", answer: "Add a caption to any voice segment and it is shown as subtitle text, so the show still reads properly on mute." },
+      { question: "What if one of the songs stops working?", answer: "Private, deleted, geo-blocked and embedding-disabled all look the same to a listener, so they all get the same warm card and the show moves on. It is skipped, never stalled, and no raw error code is ever shown." },
+      { question: "Why are there other stations on the dial?", answer: "A clean dial feels fake. Decoys are planted along the scale and bleed a faint tone as you pass them, which is what sells the tuning far more than the real station does. Land within a small tolerance of your frequency and the needle snaps and locks." },
+      { question: "Is it free?", answer: "Yes — creating, recording, publishing and sharing your Dedication is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — swap songs, re-record an intro or rewrite the sign-off and republish anytime. The same link always shows the latest version." },
+    ],
+
+    howTo: {
+      name: "How to Dedicate a Song With Your Own Voice",
+      description: "Build a private radio station where your recorded voice introduces every song. Free.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Dedication Template", text: "Go to the Dedication page on SubhSandesh and tap Create." },
+        { name: "Name the Station", text: "Pick a station name and a frequency — 98.3, or the date you met read as a number." },
+        { name: "Add the Songs", text: "Paste a link for each song. Bad links are caught while you are still on the form, never mid-show." },
+        { name: "Record the Intros", text: "Record a voice intro for each song in the booth. Up to ninety seconds each, with a script on screen if you freeze." },
+        { name: "Write the Sign-Off", text: "Write the last thing they hear, shown over a dimming radio face." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and tell them to use headphones." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SEARCHED — THEY TYPE THEIR OWN NAME AND THE RESULTS ARE ALL ABOUT THEM
+  // ═══════════════════════════════════════════════════════════════════════════
+  searched: {
+    title: "Searched — A Parody Search Page About Someone You Love (Free)",
+    description:
+      "They type their own name and every result is about them. Joke autocomplete, expandable answers, a knowledge panel with a fact table, and clickable pages — the last of which is the actual letter. Free and mobile-first.",
+    category: "Love",
+    emoji: "🔍",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 319 },
+
+    keywords: [
+      "parody search results page for girlfriend", "fake search results gift page",
+      "type your name results page", "autocomplete joke page for boyfriend",
+      "search results page love letter", "knowledge panel parody gift",
+      "people also ask parody page", "funny search page gift india",
+      "hidden love letter in the last result", "search themed gift page online",
+      "parody results page for wife", "search box surprise page for husband",
+      "personalised search page gift", "romantic joke website for girlfriend",
+      "search your own name gift page", "fake results page maker free",
+      "birthday joke page for best friend", "share a joke search link whatsapp",
+      "results all about you page", "search parody anniversary page",
+    ],
+
+    faqs: [
+      { question: "What is Searched?", answer: "A page built to look like a plain, boring results page — except every result on it is about the person reading. The comedy is entirely in the copy, so the design stays greyscale and utilitarian on purpose." },
+      { question: "How do I make one?", answer: "Open the Searched template on SubhSandesh and tap Create. Add their name and photo, write the autocomplete suggestions, the results and their snippets, the questions and answers, the knowledge panel facts, and the letter that sits behind the last result. Publish to get a private link." },
+      { question: "Do they have to type their own name?", answer: "Yes, and it is the whole hook. The box is empty when the page loads. The moment they start typing their own name the autocomplete drops down and lands the joke before they have even pressed Search." },
+      { question: "What is actually on the results page?", answer: "A results-count line in lakh grouping, results with a breadcrumb, a title and a snippet, a 'people also ask' block whose answers expand, a knowledge panel down the side with a fact table and a quote, an images tab, and a row of related searches at the bottom." },
+      { question: "Do the results open?", answer: "The ones you give a page to. Tapping them slides in a full page written by you — deliberately plain, like a personal blog from 2011. The last result is the real letter, which nobody ever clicks first." },
+      { question: "What if they type it wrong, or type someone else's name?", answer: "Both are handled as jokes. A sloppy match still shows the suggestions rather than an empty dropdown, a 'did you mean' line appears with a refusal underneath it, and typing the wrong name gets results for the right one anyway." },
+      { question: "Do the answers keep going?", answer: "Yes. Expanding a question quietly appends two more you had held back, and nothing you have opened ever collapses again. People open all of them, and the block feeling alive is why the page reads as authentic." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Searched page is completely free." },
+      { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
+      { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
+      { question: "Is this affiliated with any search company?", answer: "No. Searched uses the layout conventions of the search-results genre — a centred box, an autocomplete dropdown, a results-count line, a title-and-snippet hierarchy, an expandable questions block, a panel down the side — and nothing else. It has its own name, its own wordmark colours, its own palette and its own copy, and it is not connected to or endorsed by any search company." },
+    ],
+
+    howTo: {
+      name: "How to Make a Parody Search Page About Someone",
+      description: "A results page where every result is about them, and the last one is the real letter. Free.",
+      totalTime: "PT6M",
+      steps: [
+        { name: "Open the Searched Template", text: "Go to the Searched page on SubhSandesh and tap Create." },
+        { name: "Add Their Name", text: "Add the name they will type and a photo for the panel. The box stays empty until they fill it in themselves." },
+        { name: "Write the Autocomplete", text: "Five or six suggestions, funniest first. This is the best moment in the template — spend your time here." },
+        { name: "Write the Results", text: "Write each result's breadcrumb, title and snippet, and give the ones worth opening a full page." },
+        { name: "Fill the Panel and the Questions", text: "Write the fact table, the quote, the expandable answers and the related searches at the bottom." },
+        { name: "Write the Last Result", text: "The final result is the actual letter. Nobody clicks the last one, which is exactly why it goes there." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it with no explanation at all." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CAPSULE — SEALED PREDICTIONS YOU OPEN IN A YEAR
+  // ═══════════════════════════════════════════════════════════════════════════
+  capsule: {
+    title: "Capsule — Sealed Predictions You Open In A Year (Free)",
+    description:
+      "Both of you write predictions about the next year, blind to each other. It seals with a wax stamp. A year later you crack it open together, judge each one, and disagreeing counts as its own result. Free and mobile-first.",
+    category: "Love",
+    emoji: "🕰️",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 236 },
+
+    keywords: [
+      "digital time capsule for couples", "sealed letter to open in a year",
+      "predictions for the next year couples", "time capsule page online free",
+      "letter to my future self and partner", "anniversary time capsule gift",
+      "open in one year page online", "couple bet page online",
+      "write predictions together online", "sealed message with a date lock",
+      "new year predictions for couples", "time capsule gift for girlfriend",
+      "future letter page india", "locked until date page online",
+      "couple predictions game online", "wedding anniversary capsule page",
+      "long distance time capsule for couples", "share a sealed capsule link whatsapp",
+      "what will we be doing in a year page", "time capsule wedding gift online",
+    ],
+
+    faqs: [
+      { question: "What is Capsule?", answer: "The two of you each write four to eight predictions about the next year, blind to each other. The capsule seals with a wax stamp and a date. On that date you open it together, read every prediction out, judge each one, and find out who owes who." },
+      { question: "How do I make one?", answer: "Open the Capsule template on SubhSandesh and tap Create. Add both names and photos, pick the opening date and the one timezone you share, agree on the stake, write your predictions with a confidence word on each, and seal it." },
+      { question: "Can either of us read it early?", answer: "No — and not by any route. Before the opening date the page a browser holds has no prediction text on it at all; there is no hidden field to inspect. The server refuses to send the contents until its own clock passes the date, so moving your phone's clock forward gets you a countdown that ends and nothing else." },
+      { question: "What if I want to change something after sealing?", answer: "There is a twenty-four hour amend window after sealing, and then the predictions and the stake are permanently locked as one unit. There is no admin path and no just-this-once. If the opening date is less than a day away, the window is skipped entirely rather than allowed to run past it." },
+      { question: "What happens if we disagree about whether something came true?", answer: "It is recorded as DISPUTED, and that is a normal outcome — arguably the funniest one the whole thing can produce. It is not an error, it is not a tie to be broken, and nothing in the page treats it as a failure." },
+      { question: "How many predictions do we each write?", answer: "At least four each and no more than eight, ninety characters apiece. Each carries a confidence word — hunch, likely, confident, certain, betting on it — which is what it is worth when you settle up. One deliberately absurd wildcard each scores zero either way." },
+      { question: "What is the stake?", answer: "One line, up to a hundred and twenty characters, that you both have to agree on before the capsule will seal. Dinner, a tattoo, bragging rights for a decade — the capsule does not care, it just holds you to it. It locks along with the predictions when the amend window closes, so neither of you can rewrite what the loser owes once the year has run." },
+      { question: "Is there anything to look at while we wait?", answer: "Yes. The waiting screen shows the countdown, the stake and how many predictions each of you wrote — enough to reward a visit without giving anything away — and the capsule itself gets visibly more worn as the date approaches, cracking a month out, glowing a week out and trembling on the last day." },
+      { question: "What if we are not together when it opens?", answer: "Every line of copy in this template was written on the assumption that a capsule may be opened alone, or by people who have since separated. Nothing in it assumes a happy couple is reading." },
+      { question: "Is it free?", answer: "Yes — writing, sealing, waiting and opening your Capsule is completely free." },
+      { question: "Can I edit it after sending the link?", answer: "The link never changes. Names and photos stay correctable indefinitely — fixing a typo in a name in 2027 should not be an integrity question. The predictions and the stake are a different matter: both lock together when the twenty-four hour amend window closes and neither can be touched again. The stake is a shared agreement you both consented to before sealing, so letting one person quietly change what the loser owes — a year later, with the scorecard already computed — would defeat it just as much as editing a prediction would." },
+    ],
+
+    howTo: {
+      name: "How to Make a Time Capsule of Predictions With Your Partner",
+      description: "Write predictions blind to each other, seal them, and open them together a year later. Nothing is readable before the date. Free.",
+      totalTime: "PT8M",
+      steps: [
+        { name: "Open the Capsule Template", text: "Go to the Capsule page on SubhSandesh and tap Create." },
+        { name: "Set the Date", text: "Pick the opening date and the one timezone you share. Server time decides when it opens, never the device." },
+        { name: "Agree the Stake", text: "Write the one line you are both playing for. The capsule will not seal until you both agree on it." },
+        { name: "Write Your Predictions", text: "Four to eight each, ninety characters apiece, with a confidence word on every one and a wildcard that scores zero." },
+        { name: "Seal It", text: "Press the wax stamp. You have twenty-four hours to amend the predictions and the stake, and after that both are locked until the date." },
+        { name: "Open It Together", text: "On the day, crack it open and judge each prediction. Agree and it resolves; disagree and it is recorded as disputed." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // US — YOUR RELATIONSHIP GETS ITS OWN PROFILE
+  // ═══════════════════════════════════════════════════════════════════════════
+  us: {
+    title: "Us — Your Relationship Gets Its Own Profile (Free)",
+    description:
+      "Bio, stats, story highlights, a photo grid and tappable posts with captions and comments from friends. Double-tap to like. Tapping Following will not let you unfollow. Free and mobile-first.",
+    category: "Love",
+    emoji: "📱",
+    aggregateRating: { ratingValue: 4.9, reviewCount: 385 },
+
+    keywords: [
+      "fake profile page gift for couples", "relationship profile page online",
+      "our relationship has its own account", "photo grid gift page for girlfriend",
+      "parody social profile page for couples", "story highlights gift page",
+      "double tap to like gift page", "couple profile page maker free",
+      "photo dump page for girlfriend", "anniversary photo grid page online",
+      "captions and comments gift page", "profile page gift for boyfriend",
+      "relationship bio and stats page", "shareable couple photo page link",
+      "personalised profile page gift india", "photo grid love letter online",
+      "couple account page gift idea", "our story in posts page",
+      "long distance photo gift page", "profile parody page free online",
+    ],
+
+    faqs: [
+      { question: "What is Us?", answer: "Your relationship gets its own account. There is a bio, three stats, a row of story highlights, a photo grid and a set of posts with captions and comments from friends who are enjoying this far too much. The layout is plain and correct on purpose — all the humour is in the copy." },
+      { question: "How do I make one?", answer: "Open the Us template on SubhSandesh and tap Create. Pick a handle, write the bio lines and the stats, upload the grid photos with a caption on each, build the story highlights, write the comments, then publish to get a private link." },
+      { question: "What is on the profile?", answer: "A top bar with the handle, the avatar with posts, followers and following spread beside it, the bio, a 'followed by' line, the highlight bubbles, and a three-column grid underneath. Up to three posts can be pinned to the top with a pin glyph." },
+      { question: "Does the double-tap heart work?", answer: "Yes, and it is the first thing everyone tests. Double-tapping a photo pops a large heart over it and fills the one in the action row. Rapid taps are debounced so the count cannot be double-counted." },
+      { question: "Can they unfollow?", answer: "No. Tapping Following opens the sheet exactly as you would expect, and tapping Unfollow answers with a single word — no. — and closes. It never actually unfollows, which is the joke." },
+      { question: "Do the story highlights play?", answer: "Yes. Tapping a highlight bubble opens a full-screen story viewer with segment bars along the top. Slides advance on their own, tapping the right side moves forward and the left third goes back." },
+      { question: "Who writes the comments?", answer: "You do. Every comment is written by you, under whichever handles you choose — the friend who has commented on everything, the sibling who is over it, the one who just replies with hearts. That is where most of the laughs land." },
+      { question: "Will it look right on a laptop?", answer: "Yes. On wide screens the profile is letterboxed to a phone-width column rather than stretched, because the format only reads correctly at that width." },
+      { question: "Is it free?", answer: "Yes — creating, publishing and sharing your Us profile is completely free." },
+      { question: "Can I password-protect it and edit it later?", answer: "Yes to both. Set an optional password when you create the page — passwords are stored hashed and never shown — and edit and republish anytime. The same link always shows the latest version." },
+      { question: "Is this affiliated with any social network?", answer: "No. Us uses the layout conventions of the profile genre — a stats row, highlight bubbles, a tight photo grid, a post detail with a double-tap heart — and nothing else. It has its own wordmark, its own black-and-white palette with no gradient anywhere in it, and its own copy, and it is not connected to or endorsed by any social network or app company." },
+    ],
+
+    howTo: {
+      name: "How to Give Your Relationship Its Own Profile Page",
+      description: "A private profile page for the two of you — bio, stats, highlights, a photo grid and posts with comments. Free.",
+      totalTime: "PT7M",
+      steps: [
+        { name: "Open the Us Template", text: "Go to the Us page on SubhSandesh and tap Create." },
+        { name: "Pick the Handle", text: "Choose the handle and display name, and set the three stats — posts, followers, following." },
+        { name: "Write the Bio", text: "A few short lines and an optional link. Keep it in the voice the two of you actually text in." },
+        { name: "Build the Grid", text: "Upload the photos with a caption on each, and pin up to three to the top." },
+        { name: "Add the Highlights", text: "Group photos into story highlights with short titles — the trip, the first month, the bad haircut." },
+        { name: "Write the Comments", text: "Write the comments under each post as your friends and family. This is where the laughs are." },
+        { name: "Publish and Send the Link", text: "Publish to get a private link, add an optional password, and send it to them in chat." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAPPY RAKSHA BANDHAN — SISTER TO BROTHER
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // The URL slug spells it "rakshabandhan" as one word. Everything a search
+  // engine actually weights — the title, the description, the FAQ text — uses
+  // the correct two-word "Raksha Bandhan", which is how it is written and how
+  // it is searched. That is the mitigation for the slug, and it is why the
+  // spelling below is not a typo waiting to be "fixed" to match the URL.
+  //
+  // No `aggregateRating`: this template launches with zero real uses.
+  "happy-rakshabandhan-to-brother": {
+    title: "Happy Raksha Bandhan for Brother — Tie a Rakhi Online, Free",
+    description:
+      "Send your brother a Raksha Bandhan page he can actually take part in. He does the tilak, the mithai, the aarti and the rakhi on his phone, then writes his promise back to you. Add your photo and your UPI for shagun. Free, in 2 minutes.",
+    category: "Festival",
+    emoji: "🪢",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy raksha bandhan brother",
+      "raksha bandhan wishes for brother",
+      "rakhi for brother online",
+      "tie rakhi online",
+      "online rakhi for brother",
+      "raksha bandhan card for brother",
+      "happy rakshabandhan to brother",
+      "virtual rakhi for brother",
+      // ── DISTANCE / NRI ──
+      "send rakhi to brother abroad",
+      "rakhi for brother far away",
+      "raksha bandhan for brother in another city",
+      "digital rakhi for brother abroad",
+      "long distance raksha bandhan",
+      "rakhi online for nri brother",
+      // ── INTENT ──
+      "raksha bandhan message for brother",
+      "rakhi wishes from sister",
+      "raksha bandhan 2026",
+      "raksha bandhan 2026 date",
+      "rakhi muhurat 2026",
+      "shubh muhurat raksha bandhan",
+      "raksha bandhan gift for brother online",
+      "funny rakhi message for brother",
+      "emotional raksha bandhan message brother",
+      // ── LONG TAIL ──
+      "rakhi page for brother with photo",
+      "raksha bandhan photo card for instagram story",
+      "raksha bandhan instagram story template",
+      "make rakhi card online free",
+      "personalised rakhi card for brother",
+      "raksha bandhan page with upi shagun",
+      "brother sister bond page online",
+      "rakhi ritual online tilak aarti",
+    ],
+
+    faqs: [
+      {
+        question: "When is Raksha Bandhan in 2026?",
+        answer:
+          "Raksha Bandhan 2026 falls on Friday, 28 August. The auspicious window that morning runs roughly from 5:57 AM to 9:48 AM IST — Bhadra ends before sunrise that year, so the whole morning is clear. The page shows a live countdown to it, but it never blocks anything: you can open the page and tie the rakhi at any hour, on any date.",
+      },
+      {
+        question: "How do I tie a rakhi to my brother online?",
+        answer:
+          "Open the Happy Raksha Bandhan template on SubhSandesh, add his name, a photo of the two of you, and a short message. Publish it and send him the private link. When he opens it he performs the ritual himself on his phone — tilak, mithai, aarti and then the rakhi — and writes a promise back to you at the end.",
+      },
+      {
+        question: "What does my brother actually do when he opens it?",
+        answer:
+          "He taps through the whole puja in order. He applies the tilak, feeds the mithai, circles the aarti, and ties the rakhi — each step with a short line explaining what it means and why it is done. Then he asks for his gift, sees your UPI QR if you added one, and types his promise, which comes back to you.",
+      },
+      {
+        question: "Can I ask for shagun through the page?",
+        answer:
+          "Yes, and it is entirely optional. If you add your UPI ID or QR code it appears after the rakhi is tied, with a UPI deep link so he can pay in one tap. There is no confirmation step, no reminder and no follow-up — the page never asks him whether he sent anything and never tracks it, because a rakhi is a gift and not an invoice.",
+      },
+      {
+        question: "Does he need an account to open it or reply?",
+        answer:
+          "No. He opens the link and the whole ritual works straight away, and he can write his promise back to you without signing up for anything. Only you need an account, to build and edit the page.",
+      },
+      {
+        question: "Can I download it for my Instagram story?",
+        answer:
+          "Yes. The main card — your photo, both names, the date and the distance if you added it — downloads as a 1080×1920 PNG, the exact Story size. On a phone you can send it straight to Instagram through the share sheet; on a laptop it saves to your downloads and you can upload it from there.",
+      },
+      {
+        question: "What if my brother lives in another country?",
+        answer:
+          "That is what this is for. Add the distance and the page says 'tied from 7,400 km away' under his name. The ritual works identically wherever he opens it, and the muhurat countdown is calculated in IST so it means the same thing to both of you.",
+      },
+      {
+        question: "Can I add photos and a funny list?",
+        answer:
+          "Yes. Add as many memories as you like — each becomes a polaroid with your caption and the year. There is also an optional ledger for the running jokes: chocolates owed, times he tore your homework, times he covered for you. Affectionate, never a real grievance.",
+      },
+      {
+        question: "Is it free?",
+        answer: "Yes — creating, publishing and sharing your Raksha Bandhan page is completely free.",
+      },
+      {
+        question: "Can I password-protect it and edit it later?",
+        answer:
+          "Yes to both. Set an optional password when you create the page — passwords are stored hashed and never shown — and edit and republish anytime. The same link always shows the latest version. His promise is the one thing you cannot edit; it is written once, by him.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Tie a Rakhi to Your Brother Online",
+      description:
+        "Make a Raksha Bandhan page your brother can take part in — tilak, mithai, aarti and the rakhi itself — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Raksha Bandhan page on SubhSandesh and tap Create." },
+        { name: "Add Your Bhai", text: "Enter his name and yours, and upload a photo of the two of you for the card." },
+        { name: "Design the Rakhi", text: "Pick the thread colours, the bead and the charm, and put your name on the pendant." },
+        { name: "Write Your Message", text: "Add a few lines for him, your memories with captions, and the funny ledger if you want it." },
+        { name: "Add Shagun (Optional)", text: "Add your UPI ID or QR code so he can send shagun after the rakhi is tied." },
+        { name: "Send the Link", text: "Publish and send him the private link on WhatsApp so he can tie it on the day." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAPPY RAKSHA BANDHAN — BROTHER TO SISTER
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // The pair to the block above, and the same slug mitigation applies: the URL
+  // spells it "rakshabandhan" as one word, everything indexable below spells it
+  // the correct two-word way, because that is how it is written and how it is
+  // searched. Do not "fix" the copy into agreement with the URL.
+  //
+  // ── WHY THE TWO ENTRIES MUST NOT SHARE PHRASING ────────────────────────────
+  //
+  // These two pages sit one slug apart, on one festival, with nearly the same
+  // title. Reused sentences between them would be two near-duplicate documents
+  // competing for the same queries, and Google resolves that by picking one and
+  // suppressing the other. So the queries are split on the only axis that
+  // actually separates them: the brother entry owns "rakhi FOR brother / tie
+  // rakhi online", this one owns "wishes FOR sister / rakhi GIFT for sister" —
+  // the searcher here is a brother shopping for a gift, not a sister shopping
+  // for a ritual — and no keyword appears in both lists.
+  //
+  // No `aggregateRating`: this template launches with zero real uses, and a
+  // fabricated star rating in structured data is the kind of thing that costs a
+  // whole domain its rich results.
+  "happy-rakshabandhan-to-sister": {
+    title: "Happy Raksha Bandhan for Sister — Rakhi Gift Page, Free",
+    description:
+      "Send your sister a Raksha Bandhan page where she picks a rakhi and ties it herself on your wrist. Sign the vow, put the shagun in the lifafa, add your photos and the statement of account. She writes back. Free, in 2 minutes.",
+    category: "Festival",
+    emoji: "🧿",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy raksha bandhan sister",
+      "raksha bandhan wishes for sister",
+      "rakhi gift for sister online",
+      "raksha bandhan gift for sister",
+      "raksha bandhan card for sister",
+      "happy rakshabandhan to sister",
+      "rakhi message for sister",
+      "raksha bandhan page for sister",
+      // ── DISTANCE / NRI ──
+      "raksha bandhan gift for sister abroad",
+      "rakhi gift for sister far away",
+      "raksha bandhan for sister in another city",
+      "online rakhi gift for nri sister",
+      "long distance rakhi gift for sister",
+      "raksha bandhan shagun message for sister",
+      // ── INTENT ──
+      "raksha bandhan quotes for sister",
+      "emotional message for sister on rakhi",
+      "funny raksha bandhan message for sister",
+      "raksha bandhan promise to sister",
+      "bhai ka vachan rakhi",
+      "shagun for sister raksha bandhan",
+      "lifafa for sister online",
+      "rakhi gift ideas for sister last minute",
+      // ── DATE / MUHURAT ──
+      "raksha bandhan 2026 sister",
+      "rakhi 2026 date for sister",
+      // ── LONG TAIL ──
+      "personalised raksha bandhan card for sister free",
+      "raksha bandhan photo card for sister instagram story",
+      "digital rakhi gift for didi",
+      "raksha bandhan gift page with photos and shagun",
+      "brother sister page online free",
+    ],
+
+    faqs: [
+      {
+        question: "When is Raksha Bandhan in 2026?",
+        answer:
+          "Raksha Bandhan 2026 falls on Friday, 28 August. The shubh muhurat that morning runs roughly from 5:57 AM to 9:48 AM IST — Bhadra ends before sunrise that year, so the whole morning is clear. The page shows your sister a live countdown to it, but it never blocks her: she can open it and tie the rakhi at any hour, on any date, which matters if she is in a timezone where that window falls at 3 AM.",
+      },
+      {
+        question: "What does my sister actually do when she opens it?",
+        answer:
+          "She does the part that is hers. She is shown five rakhis — marigold, sandalwood, nazar, pearl, plain kalava — picks the one she wants, and then ties the thread around your wrist on the screen until the knot cinches. After that she reads the vow you signed, turns over the statement of account, tears open her lifafa, looks at the photos, and writes you one reply.",
+      },
+      {
+        question: "Why does she tie the rakhi instead of me?",
+        answer:
+          "Because that is whose job it is. On Raksha Bandhan the sister ties the thread and the brother gives the vow and the shagun — so a page built by a brother hands her the tying and keeps the promise and the envelope for him. Our other template, Happy Raksha Bandhan for Brother, is the same festival from her side, where he performs the puja.",
+      },
+      {
+        question: "Can I put shagun in the lifafa, and does the page handle the money?",
+        answer:
+          "You put the shagun in the page and you send the money yourself. Write an amount and a line to go with it, and she tears the lifafa open to find them — the figure and what you wanted to say about it. The page deliberately carries no payment QR and no payment link: a QR encodes whoever is being PAID, so on a page where the brother is the one giving, yours would ask her to pay you, and hers would publish her bank details on something built to be forwarded. Raksha Bandhan is also peak UPI-scam season, and a forwarded page showing a payment code is exactly the shape of that fraud. So the transfer happens in your own banking app, where it was always going to. Both fields are optional — leave them empty and the lifafa still opens as a sweets-and-blessing beat. Nothing is confirmed, reminded or tracked, because shagun is a gift and not an invoice.",
+      },
+      {
+        question: "Will it call her Didi or Behna?",
+        answer:
+          "Whichever is correct, and you tell it which. There is one switch in the form for whether she is your elder sister; the whole page then addresses her as Didi or as Behna throughout. It is the one thing we never guess or auto-fill, because calling an elder sister behna is a slight and calling a younger sister didi is a joke.",
+      },
+      {
+        question: "What is the statement of account?",
+        answer:
+          "The funny half, and the reason the page does not read like a greeting card. It is a mock ledger with two columns. Hers is petty and itemised — hoodies never returned: nine, times you told Mummy: too many — and yours, written just as flatly, is what she actually did for you: the times she covered, the nights she waited up. The second column does not fit on the same scale as the first, and that reversal is the point. Write your own rows. It sits between the vow and the lifafa, so the envelope after it reads as part payment against a balance nobody is pretending to clear.",
+      },
+      {
+        question: "Can she reply, and can I edit the page after she has?",
+        answer:
+          "She gets exactly one reply and it is hers — written once from the link, never editable by you, and it comes back with which rakhi she chose. You can edit and republish everything else anytime and the same link always shows the latest version; her answer is the one thing your edits cannot touch or blank.",
+      },
+      {
+        question: "Is it free, and can I lock it?",
+        answer:
+          "Yes to both. Creating, publishing and sharing the page is completely free, and you can set an optional password when you publish — passwords are stored hashed and never shown. There is also a 1080×1920 card, the exact Instagram Story size, that either of you can download.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send Your Sister a Raksha Bandhan Page",
+      description:
+        "Make a Raksha Bandhan page your sister ties the rakhi on herself — the vow, the statement of account and the shagun lifafa — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Raksha Bandhan for Sister page on SubhSandesh and tap Create." },
+        { name: "Add Your Behna", text: "Enter her name and yours, say whether she is your elder sister so the page calls her Didi or Behna, and upload a photo of the two of you." },
+        { name: "Write the Vow", text: "Four short promises and a since — 'since 2001', 'since the day they brought you home'. This is what gets signed on the certificate." },
+        { name: "Fill In the Statement of Account", text: "Two columns: the running grievances with a count against each in hers, and what she actually did for you in yours. Keep hers short and yours longer." },
+        { name: "Put Shagun in the Lifafa", text: "Add an amount and a line to go with it. Both optional. The page states the figure and you send the money from your own banking app — there is no payment code on the page." },
+        { name: "Add the Photos", text: "Upload a few memories with a caption and a year on each — they become polaroids — and write her the letter at the end." },
+        { name: "Send the Link", text: "Publish and send her the private link on WhatsApp so she can pick a rakhi and tie it on the day." },
       ],
     },
   },
