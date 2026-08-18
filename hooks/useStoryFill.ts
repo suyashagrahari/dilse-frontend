@@ -218,16 +218,28 @@ function withTypedNames(
 ): Record<string, unknown> {
   if (!namePaths) return patch;
 
-  const has = (path: string | undefined): path is string =>
-    Boolean(path) && !String(patch[path as string] ?? "").trim();
-
   const recipientTyped =
     audience === "partner" ? people.partnerName.trim() : people.bestFriendName.trim();
   const senderTyped = people.userName.trim();
 
+  // ── A TYPED NAME WINS OUTRIGHT, IT DOES NOT MERELY FILL A BLANK ────────────
+  //
+  // This started as fill-if-empty and that was too weak. Measured on staging: a
+  // sender who typed "Rohan" and "Ishita" into the composer got back "रोहन" and
+  // "इशिता" — the model transliterated both into Devanagari while writing every
+  // other line in Latin Hinglish, so the largest text on the page ended up in a
+  // different script from the sentences around it.
+  //
+  // A name is not a piece of copy the model is being asked to write. The sender
+  // typed it, in the spelling they use, into a box labelled with exactly that
+  // person. There is no version the model can produce that is more correct, so
+  // it does not get a vote — including when it merely shortens or "tidies" it.
+  //
+  // Anything the sender typed into the FORM still wins over this, because the
+  // result goes through `applyPatch`, which never overwrites a touched field.
   let next = patch;
-  if (senderTyped && has(namePaths.sender)) next = { ...next, [namePaths.sender]: senderTyped };
-  if (recipientTyped && has(namePaths.recipient)) {
+  if (senderTyped && namePaths.sender) next = { ...next, [namePaths.sender]: senderTyped };
+  if (recipientTyped && namePaths.recipient) {
     next = { ...next, [namePaths.recipient]: recipientTyped };
   }
   return next;
@@ -258,9 +270,10 @@ export interface UseStoryFillOptions<T extends object> {
    * through the happy path.
    *
    * Declaring the paths here closes it. A typed name is written straight to the
-   * form for any of these paths the model left empty; a name the model DID
-   * return is left alone, and so is anything the sender had already typed into
-   * the form itself, because the merge still runs through `applyPatch`.
+   * form at these paths and OVERRIDES whatever the model returned for them — see
+   * `withTypedNames` for why the model does not get a vote on a person's name.
+   * Anything the sender typed into the form itself still wins over both, because
+   * the merge runs through `applyPatch`, which never overwrites a touched field.
    *
    * `recipient` reads whichever people slot this template's audience uses —
    * `partnerName` for a partner page, `bestFriendName` otherwise — so a caller
