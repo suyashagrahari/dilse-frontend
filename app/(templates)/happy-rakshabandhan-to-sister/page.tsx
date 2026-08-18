@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
+import { SISTER_CAST } from "@/components/story/casts";
 import { useSisterEditor } from "./hooks/useSisterEditor";
 import SisterTemplate from "./components/SisterTemplate";
 import EditSheet from "./components/EditSheet";
@@ -212,8 +213,7 @@ function SisterPageInner() {
         <StoryStarter
           fill={e.fill}
           onManual={e.openManualForm}
-          title="Tell me about your behna"
-        />
+          title="Tell me about your behna" cast={SISTER_CAST} />
       )}
 
       <AnimatePresence>

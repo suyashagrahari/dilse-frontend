@@ -85,6 +85,11 @@ export function useRakhiEditor() {
     demo: SAMPLE,
     current: mf,
     onFilled: setMf,
+    // The composer asks for her name and his; this says where they land if the
+    // model does not write them back itself. `brotherName` gates Save, so
+    // without this a fill that dropped it would strand her on a validation error
+    // for a name she typed thirty seconds earlier.
+    namePaths: { sender: "sisterName", recipient: "brotherName" },
   });
 
   // Mounted the first time Create is tapped. `StoryStarter` renders nothing at
