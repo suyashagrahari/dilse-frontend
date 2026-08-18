@@ -733,13 +733,33 @@ export default function EditSheet({
           </div>
 
           <Group title="Your UPI" hint="So he can send shagun in one tap.">
-            <Field label="UPI ID" htmlFor="rb-upi">
+            <Field
+              label="UPI ID"
+              htmlFor="rb-upi"
+              // ── WHY THIS FIELD SAYS "NO SPACES" OUT LOUD ────────────────────
+              //
+              // A UPI handle cannot contain a space, so this box drops them —
+              // which is right for a pasted `meera @okhdfcbank`, and was
+              // indistinguishable from a broken keyboard while typing. It used
+              // to call `.trim()` on every keystroke, and `.trim()` runs on the
+              // value AS IT STANDS: the moment a space became the last
+              // character it was deleted again, so nothing anyone typed after a
+              // space ever landed. `ab cd` arrived as `abcd`, the space bar felt
+              // dead, and there was nothing on screen to explain why.
+              //
+              // Stripping whitespace anywhere in the value (not just at the
+              // ends) is the honest version of the same rule, and the hint is
+              // what turns a disappearing keystroke into a rule the sender
+              // knows about.
+              hint="No spaces — a UPI ID never has any."
+            >
               <input
                 id="rb-upi"
                 style={field}
                 value={mf.shagun.upiId}
-                onChange={(e) => setShagun({ upiId: e.target.value.trim() })}
+                onChange={(e) => setShagun({ upiId: e.target.value.replace(/\s+/g, "") })}
                 placeholder="meera@okhdfcbank"
+                inputMode="email"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}

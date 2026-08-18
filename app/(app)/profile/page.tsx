@@ -49,6 +49,12 @@ const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
   "apology-dashboard": { label: "Apology Dashboard", emoji: "🙏", editor: "/apology-dashboard", endpoint: "apology-dashboard-pages" },
   "missyou-gf":        { label: "Miss You GF",       emoji: "🥺", editor: "/missyou-gf",        endpoint: "missyou-gf-pages" },
   "bouquet-gf":        { label: "Bouquet GF",        emoji: "💐", editor: "/bouquet-gf",        endpoint: "bouquet-gf-pages" },
+  // Both rakhi templates. The label has to say WHICH ONE: a brother and a
+  // sister page can sit next to each other in the same list, they are separate
+  // collections with separate editors, and "Raksha Bandhan" twice over is not
+  // something you can pick from.
+  "raksha-bandhan":        { label: "Rakhi for Bhai",  emoji: "🪢", editor: "/happy-rakshabandhan-to-brother", endpoint: "raksha-bandhan-pages" },
+  "raksha-bandhan-sister": { label: "Rakhi for Behna", emoji: "🪢", editor: "/happy-rakshabandhan-to-sister",  endpoint: "raksha-bandhan-sister-pages" },
 };
 
 const FALLBACK_TEMPLATE: TemplateMeta = { label: "Gift", emoji: "🎁", editor: "/templates", endpoint: "" };

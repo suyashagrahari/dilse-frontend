@@ -137,7 +137,12 @@ export function useSisterEditor() {
   const pushToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
+    // The publish toast is the one that stays longest, not the shortest. It used
+    // to be pulled after one second, which is less time than it takes to read
+    // it — and it is the only confirmation that the page went live, and it now
+    // carries a Copy button. Everything else is an acknowledgement of something
+    // he just did and can go.
+    const delay = toast.type === "publish" ? 7000 : 3500;
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
   }, []);
 
@@ -340,6 +345,39 @@ export function useSisterEditor() {
     []
   );
 
+  /**
+   * Raise the house share sheet for a link.
+   *
+   * The copy is written from HIS side of the thread — he is sending her a page to
+   * tie a rakhi on, which is the reverse of the brother template's "I tied you a
+   * rakhi". `slug` and `accent` have to match the registry and
+   * `lib/share/accents.ts` or the card renders in the other template's red.
+   *
+   * ── WHY THIS TAKES THE URL AS AN ARGUMENT ─────────────────────────────────
+   *
+   * `publish` calls this the instant the server confirms, which is inside the
+   * same tick that calls `setShareUrl` — so `shareUrl` in scope is still null.
+   * Reading it from state here would open an empty sheet on the one occasion it
+   * matters most. The button in the top bar passes the state copy instead.
+   */
+  const openShare = useCallback(
+    (url: string) => {
+      openShareSheet({
+        url,
+        password: pagePassword,
+        title: "Happy Raksha Bandhan 🪢",
+        text: `${content.sisterName || "Behna"} — tie it. I'm holding up my wrist 🪢`,
+        cardTitle: "Happy Raksha Bandhan",
+        cardNote: "Scan to tie the rakhi",
+        accent: "#A62A5C",
+        recipientName: content.sisterName,
+        senderName: content.brotherName,
+        slug: TEMPLATE,
+      });
+    },
+    [pagePassword, content.sisterName, content.brotherName]
+  );
+
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
 
@@ -382,9 +420,29 @@ export function useSisterEditor() {
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();
       if (pubResult.success) {
-        setShareUrl(String(pubResult.data.shareUrl));
+        const url = String(pubResult.data.shareUrl);
+        setShareUrl(url);
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Sent! 🪢", message: "Her page is live" });
+        pushToast({
+          type: "publish",
+          title: "Sent! 🪢",
+          message: "Her page is live",
+          shareUrl: url,
+        });
+        // ── SAY IT WORKED, WITH THE LINK IN HAND ──────────────────────────────
+        //
+        // Publishing used to end with a one-second toast and the top-bar button
+        // quietly relabelling itself from "Send it" to "Share". Nothing else
+        // changed on screen, so the honest reading of the page afterwards was
+        // "I don't know whether that worked" — and after signing in mid-publish
+        // the page also restarted from the cover, which reads as being thrown
+        // back to the beginning.
+        //
+        // The sheet is the answer to both. It is the same one every other
+        // template raises, it names the page and shows the link, and it cannot be
+        // mistaken for nothing having happened. He dismisses it and the page is
+        // still there, still published, with Share in the bar.
+        openShare(url);
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -409,6 +467,7 @@ export function useSisterEditor() {
     uploadHeld,
     headers,
     pushToast,
+    openShare,
   ]);
 
   // ── Resume the publish the auth modal interrupted ─────────────────────────
@@ -434,8 +493,22 @@ export function useSisterEditor() {
   useEffect(() => {
     if (!resumePublishRef.current || !isAuthenticated || !accessToken) return;
     resumePublishRef.current = false;
-    setEditMode("preview");
-    bumpPreview();
+    // ── WHY THE REMOUNT IS CONDITIONAL ────────────────────────────────────────
+    //
+    // `bumpPreview` remounts the template, which restarts it at the cover. That
+    // is right when the data underneath is about to change — the stage renders
+    // `mf` while the builder is open and `content` once it is closed, and leaving
+    // a half-finished page pointing at a different object is how you get a screen
+    // that does not match its own progress.
+    //
+    // It is wrong when he pressed Send from the preview, which is the ordinary
+    // path: nothing about the stage changes, so remounting it only throws away
+    // the screen he was on. That is the "it sent me back to the start" half of
+    // not knowing whether the page published.
+    if (editMode !== "preview") {
+      setEditMode("preview");
+      bumpPreview();
+    }
     void publish();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken, publish]);
@@ -477,25 +550,10 @@ export function useSisterEditor() {
     [shareUrl, pushToast]
   );
 
-  // The share copy is written from HIS side of the thread — he is sending her a
-  // page to tie a rakhi on, which is the reverse of the brother template's
-  // "I tied you a rakhi". `slug` and `accent` have to match the registry and
-  // `lib/share/accents.ts` or the card renders in the other template's red.
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    openShareSheet({
-      url: shareUrl,
-      password: pagePassword,
-      title: "Happy Raksha Bandhan 🪢",
-      text: `${content.sisterName || "Behna"} — tie it. I'm holding up my wrist 🪢`,
-      cardTitle: "Happy Raksha Bandhan",
-      cardNote: "Scan to tie the rakhi",
-      accent: "#A62A5C",
-      recipientName: content.sisterName,
-      senderName: content.brotherName,
-      slug: "happy-rakshabandhan-to-sister",
-    });
-  }, [shareUrl, content.sisterName, content.brotherName, pagePassword]);
+    openShare(shareUrl);
+  }, [shareUrl, openShare]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
