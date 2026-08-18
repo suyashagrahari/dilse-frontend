@@ -1,4 +1,5 @@
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
+import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 
 /**
  * The share sheet is mounted here, once, for every template.
@@ -16,7 +17,11 @@ export default function TemplatesLayout({
 }) {
   return (
     <>
-      {children}
+      {/* One gate for every route in this group. It reads the slug off the URL,
+          so a template switched off in the admin screen closes its builder here
+          without any per-template wiring. Published pages are at /[id], outside
+          this group, and are deliberately unaffected — see the component. */}
+      <TemplateAvailabilityGate>{children}</TemplateAvailabilityGate>
       <ShareSheetHost />
     </>
   );
