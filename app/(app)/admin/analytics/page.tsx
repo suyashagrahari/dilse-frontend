@@ -17,7 +17,7 @@ interface OverviewData {
   users: { total: number; today: number; thisWeek: number; thisMonth: number };
   pageViews: { total: number; today: number; thisWeek: number; thisMonth: number };
   pages: { totalCreated: number; totalPublished: number };
-  templateStats: { type: string; label: string; total: number; published: number }[];
+  templateStats: { type: string; label: string; slug?: string; live?: boolean; total: number; published: number }[];
   roleDistribution: { role: string; count: number }[];
   deviceBreakdown: { device: string; count: number }[];
 }
@@ -219,10 +219,15 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
             <div className="ac">
-              <CH icon={<FileText size={15} color={gD}/>} title={`Template Stats · ${(ov?.templateStats??[]).length} templates`}/>
+              <CH icon={<FileText size={15} color={gD}/>} title={`Template Stats · ${(ov?.templateStats??[]).length} templates · ${(ov?.templateStats??[]).filter(t=>t.live!==false).length} live`}/>
               {/* Busiest first, from the server. Templates nobody has used yet
                   stay in the list at zero — an admin deciding what to promote
-                  needs to see the ones going nowhere. */}
+                  needs to see the ones going nowhere.
+
+                  A hidden template also sits at zero, and the two mean opposite
+                  things: one nobody wanted, the other nobody could reach. Most
+                  of this table is currently switched off, so the row says which
+                  it is instead of leaving a zero to be misread. */}
               <div style={{overflowX:"auto",maxHeight:320,overflowY:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse"}}>
                   <thead><tr>
@@ -232,8 +237,13 @@ export default function AdminAnalyticsPage() {
                   </tr></thead>
                   <tbody>
                     {(ov?.templateStats??[]).map((t,i)=>(
-                      <tr key={t.type} style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",opacity:t.total===0?0.5:1}}>
-                        <td style={{padding:"6px 8px",fontSize:11,color:t1,fontWeight:600}}>{t.label}</td>
+                      <tr key={t.type} style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",opacity:t.total===0&&t.live!==false?0.5:1}}>
+                        <td style={{padding:"6px 8px",fontSize:11,color:t1,fontWeight:600}}>
+                          {t.label}
+                          {t.live===false&&(
+                            <span title="Switched off in Admin → Templates, so nobody can reach it" style={{marginLeft:6,padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,letterSpacing:"0.04em",textTransform:"uppercase",background:"rgba(61,12,17,0.07)",color:tM,border:`1px solid ${cB}`,verticalAlign:"middle"}}>hidden</span>
+                          )}
+                        </td>
                         <td style={{padding:"6px 8px",fontSize:11,color:t2}}>{t.total}</td>
                         <td style={{padding:"6px 8px",fontSize:11,color:t2}}>{t.published}</td>
                       </tr>
