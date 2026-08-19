@@ -32,6 +32,7 @@ const bg = "#3d0c11";
 const CC = ["#c9a84c","#8b5a2b","#a0522d","#7c3a2e","#5a2d1a","#b8860b","#d4a056","#6d4c2e","#9e7b4f","#4a2c17","#c5813a"];
 const DC: Record<string,string> = { mobile: "#c9a84c", desktop: "#8b5a2b", tablet: "#a0522d", unknown: "#9a7070" };
 const RC: Record<string,string> = { admin: "#c9a84c", member: "#8b5a2b", normal: "#9a7070" };
+const TP_MAX = 12;
 function fmt(n: number) { return n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(1)+"K" : String(n); }
 const tt: React.CSSProperties = { background:"#fff", border:`1px solid ${cB}`, borderRadius:10, color:t1, fontSize:11, boxShadow:"0 4px 16px rgba(0,0,0,0.06)" };
 
@@ -161,15 +162,20 @@ export default function AdminAnalyticsPage() {
 
           <div className="ag2" style={{marginBottom:14}}>
             <div className="ac">
-              <CH icon={<BarChart3 size={15} color="#a0522d"/>} title="Template Popularity"/>
-              <div style={{width:"100%",height:"clamp(200px,28vw,260px)"}}>
+              <CH icon={<BarChart3 size={15} color="#a0522d"/>} title={tp.length>TP_MAX?`Template Popularity · top ${TP_MAX} of ${tp.length}`:"Template Popularity"}/>
+              {/* Every template that has ever been viewed now reaches this
+                  endpoint, not the fourteen the label map used to cover. Forty
+                  bars in a 260px box is an unreadable smear, so the chart takes
+                  the busiest few and the full picture lives in the table below
+                  — truncation stated in the heading rather than implied. */}
+              <div style={{width:"100%",height:Math.max(200,Math.min(tp.length,TP_MAX)*24)}}>
                 <ResponsiveContainer>
-                  <BarChart data={tp} layout="vertical">
+                  <BarChart data={tp.slice(0,TP_MAX)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(61,12,17,0.06)"/>
                     <XAxis type="number" tick={{fill:tM,fontSize:9}}/>
-                    <YAxis type="category" dataKey="label" tick={{fill:t2,fontSize:9}} width={70}/>
+                    <YAxis type="category" dataKey="label" tick={{fill:t2,fontSize:9}} width={92}/>
                     <Tooltip contentStyle={tt}/>
-                    <Bar dataKey="views" name="Views" radius={[0,6,6,0]}>{tp.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}</Bar>
+                    <Bar dataKey="views" name="Views" radius={[0,6,6,0]}>{tp.slice(0,TP_MAX).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}</Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -213,8 +219,11 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
             <div className="ac">
-              <CH icon={<FileText size={15} color={gD}/>} title="Template Stats"/>
-              <div style={{overflowX:"auto"}}>
+              <CH icon={<FileText size={15} color={gD}/>} title={`Template Stats · ${(ov?.templateStats??[]).length} templates`}/>
+              {/* Busiest first, from the server. Templates nobody has used yet
+                  stay in the list at zero — an admin deciding what to promote
+                  needs to see the ones going nowhere. */}
+              <div style={{overflowX:"auto",maxHeight:320,overflowY:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse"}}>
                   <thead><tr>
                     {["Template","Created","Published"].map(h=>(
@@ -223,7 +232,7 @@ export default function AdminAnalyticsPage() {
                   </tr></thead>
                   <tbody>
                     {(ov?.templateStats??[]).map((t,i)=>(
-                      <tr key={t.type} style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)"}}>
+                      <tr key={t.type} style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",opacity:t.total===0?0.5:1}}>
                         <td style={{padding:"6px 8px",fontSize:11,color:t1,fontWeight:600}}>{t.label}</td>
                         <td style={{padding:"6px 8px",fontSize:11,color:t2}}>{t.total}</td>
                         <td style={{padding:"6px 8px",fontSize:11,color:t2}}>{t.published}</td>

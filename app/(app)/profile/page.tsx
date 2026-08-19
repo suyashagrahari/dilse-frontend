@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +18,7 @@ import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { openShareSheet } from "@/lib/share/shareBus";
 import MyStorySection from "@/components/profile/MyStorySection";
+import { templateList, webpageTemplateList } from "@/data/template-registry";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -27,38 +28,50 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 
 const SUBDOMAIN_RESERVED = new Set(["www","admin","api","mail","support","help","docs","blog","app","auth","login","signup","register","dashboard","static","assets","cdn","dev","test","staging","prod","u","user","users","share","gift","gifts","dilse"]);
 
-// Single source of truth for rendering a creation: its label, icon, editor route and
-// server DELETE route base. Must cover every templateType in TEMPLATE_LOOKUPS
-// (server/src/controllers/share.controller.ts) — a missing entry makes the card read
-// "🎁 Gift", sends Edit to /templates instead of the editor, and disables Delete.
-// `endpoint` deletes the page entirely, so its shared link stops resolving for everyone.
+// ─── What a template is called, where its builder lives, how it is deleted ──
+//
+// None of that is hardcoded here any more. Every row from /share/me/creations
+// and /share/me/received now carries its own `templateLabel`, `editorRoute` and
+// (for pages you own) `apiBase`, resolved on the server from the one list that
+// says which templates exist.
+//
+// This used to be a map of sixteen templateTypes, and forty-three exist. The
+// twenty-seven missing ones rendered as "🎁 Gift", their Edit button went to
+// /templates instead of the builder, and Delete did nothing because there was
+// no REST base to send it to — silently, for any template added after the map
+// was last touched. Server-side, that class of bug cannot come back.
+//
+// The emoji is the one part still resolved locally, from the template's own
+// config, because the client already has all forty-three and the server has
+// none of them.
 interface TemplateMeta { label: string; emoji: string; editor: string; endpoint: string }
 
-const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
-  birthday:            { label: "Birthday",          emoji: "🎂", editor: "/birthday-gf",       endpoint: "birthday-pages" },
-  valentine:           { label: "Valentine",         emoji: "💝", editor: "/valentine-gf",      endpoint: "valentine-pages" },
-  holi:                { label: "Holi",              emoji: "🎨", editor: "/holi",              endpoint: "holi-pages" },
-  eid:                 { label: "Eid",               emoji: "🌙", editor: "/eid-mubarak",       endpoint: "eid-pages" },
-  wedding:             { label: "Wedding",           emoji: "💍", editor: "/wedding-shaadi",    endpoint: "wedding-pages" },
-  reception:           { label: "Reception",         emoji: "🥂", editor: "/reception",         endpoint: "reception-pages" },
-  shaadi:              { label: "Shaadi Card",       emoji: "💌", editor: "/shaadi-card",       endpoint: "shaadi-card-pages" },
-  "christian-wedding": { label: "Christian Wedding", emoji: "⛪", editor: "/christian-wedding", endpoint: "christian-wedding-pages" },
-  "love-gf":           { label: "Love GF",           emoji: "❤️", editor: "/love-gf",           endpoint: "love-gf-pages" },
-  darling:             { label: "Darling",           emoji: "💖", editor: "/darling",           endpoint: "darling-pages" },
-  "birthday-gf":       { label: "Birthday GF",       emoji: "🎂", editor: "/birthday-gf",       endpoint: "birthday-gf-pages" },
-  "apology-dashboard": { label: "Apology Dashboard", emoji: "🙏", editor: "/apology-dashboard", endpoint: "apology-dashboard-pages" },
-  "missyou-gf":        { label: "Miss You GF",       emoji: "🥺", editor: "/missyou-gf",        endpoint: "missyou-gf-pages" },
-  "bouquet-gf":        { label: "Bouquet GF",        emoji: "💐", editor: "/bouquet-gf",        endpoint: "bouquet-gf-pages" },
-  // Both rakhi templates. The label has to say WHICH ONE: a brother and a
-  // sister page can sit next to each other in the same list, they are separate
-  // collections with separate editors, and "Raksha Bandhan" twice over is not
-  // something you can pick from.
-  "raksha-bandhan":        { label: "Rakhi for Bhai",  emoji: "🪢", editor: "/happy-rakshabandhan-to-brother", endpoint: "raksha-bandhan-pages" },
-  "raksha-bandhan-sister": { label: "Rakhi for Behna", emoji: "🪢", editor: "/happy-rakshabandhan-to-sister",  endpoint: "raksha-bandhan-sister-pages" },
-};
+const EMOJI_BY_SLUG: Record<string, string> = Object.fromEntries(
+  [...templateList, ...webpageTemplateList].map((t) => [t.slug, t.emoji])
+);
 
+// Reached only when a row arrives without server meta — an old cached response,
+// or a templateType whose lookup entry has gone. "/templates" has no accent
+// registered, so the share sheet falls back to house pink, and an empty
+// endpoint leaves Delete disabled rather than firing at a guessed URL.
 const FALLBACK_TEMPLATE: TemplateMeta = { label: "Gift", emoji: "🎁", editor: "/templates", endpoint: "" };
-const templateMeta = (type: string): TemplateMeta => TEMPLATE_REGISTRY[type] || FALLBACK_TEMPLATE;
+
+interface TemplateMetaRow {
+  templateType: string;
+  templateLabel?: string;
+  editorRoute?: string;
+  apiBase?: string;
+}
+
+function metaFromRow(row: TemplateMetaRow): TemplateMeta {
+  const editor = row.editorRoute || FALLBACK_TEMPLATE.editor;
+  return {
+    label: row.templateLabel || FALLBACK_TEMPLATE.label,
+    emoji: EMOJI_BY_SLUG[editor.replace(/^\//, "")] || FALLBACK_TEMPLATE.emoji,
+    editor,
+    endpoint: row.apiBase || "",
+  };
+}
 
 const UI = {
   bg: "#f5ede6",
@@ -146,12 +159,12 @@ function validateSubdomainLocal(val: string): string | null {
 }
 
 interface DashboardStats { favoritesCount: number; generatedCount: number; memberSince: string; }
-interface MyCreation {
+interface MyCreation extends TemplateMetaRow {
   _id: string; shareId: string; templateType: string; recipientName: string;
   senderName: string; isPublished: boolean; hasPassword: boolean; passwordRaw: string;
   viewCount: number; installCount: number; updatedAt: string; createdAt: string;
 }
-interface ReceivedPage {
+interface ReceivedPage extends TemplateMetaRow {
   shareId: string; templateType: string; recipientName: string; senderName: string;
   senderAvatar: string | null; hasPassword: boolean; passwordVerified: boolean;
   passwordRaw?: string; viewCount: number; createdAt: string;
@@ -403,6 +416,17 @@ export default function ProfilePage() {
       setDeletingId(null);
     }
   };
+
+  // Own pages first: they are the only rows that carry `apiBase`, so a type
+  // that appears in both lists must resolve to the deletable one.
+  const metaByType = useMemo(() => {
+    const map = new Map<string, TemplateMeta>();
+    for (const row of [...myCreations, ...receivedPages]) {
+      if (!map.has(row.templateType)) map.set(row.templateType, metaFromRow(row));
+    }
+    return map;
+  }, [myCreations, receivedPages]);
+  const templateMeta = (type: string): TemplateMeta => metaByType.get(type) || FALLBACK_TEMPLATE;
 
   const templateEmoji = (type: string) => templateMeta(type).emoji;
   const templateLabel = (type: string) => templateMeta(type).label;
