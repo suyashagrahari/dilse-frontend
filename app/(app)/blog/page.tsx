@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildMeta, SITE_URL } from "@/lib/seo";
-import { getArticles, getCategories } from "@/lib/strapi";
+import { getArticles, getCategoriesWithCounts } from "@/lib/strapi";
 import BlogCard from "@/components/blog/BlogCard";
 import CategoryChips from "@/components/blog/CategoryChips";
 import BlogSearch from "@/components/blog/BlogSearch";
@@ -35,9 +35,9 @@ export default async function BlogPage({
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam || "1", 10) || 1);
 
-  const [{ articles, pageCount }, categories] = await Promise.all([
+  const [{ articles, pageCount }, { categories, total }] = await Promise.all([
     getArticles({ page, pageSize: PAGE_SIZE }),
-    getCategories(),
+    getCategoriesWithCounts(),
   ]);
 
   const featured = page === 1 ? articles[0] : undefined;
@@ -79,7 +79,7 @@ export default async function BlogPage({
         <BlogSearch>
           {/* Categories */}
           <div className="mb-10">
-            <CategoryChips categories={categories} />
+            <CategoryChips categories={categories} total={total} />
           </div>
 
           {/* Posts */}
