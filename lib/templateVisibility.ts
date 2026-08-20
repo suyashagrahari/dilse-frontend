@@ -11,47 +11,61 @@
 // one — a request that fails leaves us with an empty hidden list and a gallery
 // that shows what it always showed.
 //
-// ── WHY THERE IS A COPY OF THE DEFAULT HERE ─────────────────────────────────
+// ── THE FIRST VALUE USED TO BE A GUESS. IT IS NOT ANY MORE ──────────────────
 //
-// `DEFAULT_HIDDEN` below duplicates the server constant of the same name, and
-// that duplication is deliberate rather than laziness. Without it there is a
-// window — from first paint until the fetch resolves — where a template the
-// admin has not released yet is on screen. Whatever made it worth holding back
-// is then in front of everyone for a second, which is the whole thing this
-// feature exists to prevent. Seeding the client with the same defaults means a
-// held-back template is never rendered even once.
+// A client module cannot know the real list until its fetch resolves, so this
+// store used to open with a hardcoded copy of the server's defaults. A guess is
+// wrong in one of two directions and both were on screen:
 //
-// The server still has the last word in both directions: once the response
-// lands, its list replaces this one entirely, so switching a template ON in the
-// admin screen shows it even though it is named here.
+//   guessed hidden, actually live  → the builder rendered "Not available yet"
+//                                    for a beat, then the template appeared
+//   guessed live, actually hidden  → the gallery painted every held-back
+//                                    template, then took them away
 //
-// ── THE TWO LISTS DO NOT MEAN QUITE THE SAME THING ──────────────────────────
+// The second is the one the guess existed to prevent, and it never did: the list
+// only ever named the newest one or two templates, so the thirty-odd others an
+// admin had switched off flashed in and out on every gallery load.
 //
-// The server applies its copy only on the apex domain — a new template is held
-// back from the public site but open on staging and on a laptop, which is where
-// it needs to be seen. This copy is pessimistic everywhere, because at first
-// paint the client does not yet know what the server will say and the wrong
-// guess to make is the one that shows something held back.
+// So the real answer now arrives with the HTML. `getHiddenTemplatesServer()`
+// resolves it during the server render and `TemplateVisibilityProvider` hands it
+// to consumers, which makes the server markup, the first client render and the
+// settled state one single list. Nothing flashes in either direction, and there
+// is no second copy of the list to keep in step with the server's.
 //
-// The visible consequence is small and correct: on staging these cards appear a
-// moment after the rest, once the answer arrives.
+// ── SO WHAT IS `DEFAULT_HIDDEN` STILL FOR ───────────────────────────────────
 //
-// Keep the slugs in step. They only ever name brand-new templates, so the moment
-// to edit both is the commit that adds one.
+// Only the case where that server-side resolve failed. Then nothing is provided,
+// we fall back to fetching from the client exactly as before, and this is what
+// is on screen until it lands. It is empty on purpose: now that the real answer
+// comes down in the HTML, a slug here cannot hold a new template back from
+// anybody — it can only hide a live one from the single visitor whose render was
+// the one that could not reach the API. The list that decides what is held back
+// is `server/src/config/templateVisibility.ts`.
 
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-/** Mirrors `DEFAULT_HIDDEN` in server/src/config/templateVisibility.ts. */
-export const DEFAULT_HIDDEN: readonly string[] = [
-  "happy-rakshabandhan-to-brother",
-  "happy-rakshabandhan-to-sister",
-];
+/**
+ * What is hidden before anything has told us otherwise: the resolve-failed
+ * fallback, and nothing else. Read the note above before adding a slug — this is
+ * no longer the list that holds a new template back.
+ */
+export const DEFAULT_HIDDEN: readonly string[] = [];
 
 type Listener = () => void;
 
 let hidden: ReadonlySet<string> = new Set(DEFAULT_HIDDEN);
 /** True once the server has answered — the admin screen shows this. */
 let settled = false;
+/**
+ * Bumped every time a fetch of ours completes.
+ *
+ * `useHiddenTemplates` prefers the list the server render provided while this is
+ * 0, and this store once it is not. That is what lets an admin's toggle win:
+ * `refreshTemplateVisibility` bumps it, so their fresh answer replaces the
+ * revalidated one in the page payload instead of being overwritten by it on the
+ * next navigation.
+ */
+let revision = 0;
 let inFlight: Promise<void> | null = null;
 const listeners = new Set<Listener>();
 
@@ -67,6 +81,11 @@ function emit(): void {
  * rate-limited into showing the wrong thing.
  */
 function load(fresh = false): Promise<void> {
+  // The server render already answered this, from the same endpoint, on this
+  // same page load. Asking again cannot improve on it and would cost a request
+  // every time somebody opens a template. `refreshTemplateVisibility` clears
+  // `settled` before calling, so the admin path still goes to the network.
+  if (settled && !fresh) return Promise.resolve();
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
@@ -94,6 +113,7 @@ function load(fresh = false): Promise<void> {
       // must not empty the gallery.
     } finally {
       settled = true;
+      revision += 1;
       emit();
     }
   })();
@@ -112,6 +132,25 @@ export function refreshTemplateVisibility(): Promise<void> {
   return load(true);
 }
 
+/**
+ * Adopt the list the server resolved for this page load.
+ *
+ * Called from `TemplateVisibilityProvider` on the client, purely so the fetch
+ * above can be skipped — the value consumers actually read comes through React
+ * context, which is per-request and therefore safe on the server. Deliberately
+ * a no-op once we have fetched something ourselves, so an admin's refresh is not
+ * walked back by a revalidated payload on their next navigation.
+ */
+export function seedTemplateVisibility(list: readonly string[]): void {
+  if (settled) return;
+  hidden = new Set(list);
+  settled = true;
+  // No `emit`, and no `revision` bump. This runs from a render, where telling
+  // React an external store changed earns a "Cannot update a component while
+  // rendering a different component" warning — and leaving `revision` at 0 is
+  // what keeps context, not this, the thing consumers read.
+}
+
 export function subscribeTemplateVisibility(listener: Listener): () => void {
   listeners.add(listener);
   void load();
@@ -122,12 +161,20 @@ export function subscribeTemplateVisibility(listener: Listener): () => void {
 
 export const getHiddenTemplates = (): ReadonlySet<string> => hidden;
 export const isTemplateVisibilitySettled = (): boolean => settled;
+/** See `revision`. Read by `useHiddenTemplates` to pick a source. */
+export const getTemplateVisibilityRevision = (): number => revision;
+export const getTemplateVisibilityRevisionServerSnapshot = (): number => 0;
 
 /**
  * Server snapshot. Deliberately the same value the client starts with, so the
  * markup React renders on the server matches the first client render and there
- * is no hydration mismatch — and so a held-back template is absent from the HTML
- * a crawler sees, not merely hidden after hydration.
+ * is no hydration mismatch.
+ *
+ * A frozen constant rather than `hidden`, because on the server this module is
+ * shared by every request in the process: reading the live variable would let
+ * one request's seed leak into another's HTML, and the client — which starts
+ * from the constant — would then hydrate against markup it cannot reproduce.
+ * The per-request value travels through context instead.
  */
 export const getHiddenTemplatesServerSnapshot = (): ReadonlySet<string> => SERVER_SNAPSHOT;
 const SERVER_SNAPSHOT: ReadonlySet<string> = new Set(DEFAULT_HIDDEN);
