@@ -188,6 +188,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Create-a-surprise CTA — phone/tablet only, and deliberately the first
+            thing after the cover.
+            There is no sidebar on a phone, so this used to be the reader's only
+            CTA and it sat after the body, the tags, the share row AND the FAQ —
+            past everything. Someone who arrived wanting the template had to read
+            the whole post to learn it existed. Above the takeaways it is the
+            first actionable thing on the page; the compact variant keeps it short
+            enough that the article still starts on the first screen, and the full
+            card still closes the post below. */}
+        <div className="mt-8 lg:hidden">
+          <TemplatesPromoCard linked={linkedTemplates} variant="compact" />
+        </div>
+
         {/* Key takeaways (GEO/AEO TL;DR) */}
         {takeaways.length > 0 && (
           <div className="key-takeaways mt-8 rounded-2xl p-5" style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.35)" }}>
@@ -203,17 +216,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </ul>
           </div>
         )}
-
-        {/* Create-a-surprise CTA — phone/tablet, placed HIGH.
-            On a phone the sidebar does not exist, so the only CTA used to sit
-            after the body, the tags, the share row and the FAQ — past everything.
-            A reader who arrived wanting the template had to read the whole post
-            to find out it existed. This is the compact variant so it hands over
-            the link without pushing the article off the screen; the full card
-            still closes the post below. */}
-        <div className="mt-8 lg:hidden">
-          <TemplatesPromoCard linked={linkedTemplates} variant="compact" />
-        </div>
 
         {/* TOC — mobile only (desktop uses the sticky sidebar) */}
         {hasBody && (

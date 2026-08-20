@@ -30,7 +30,7 @@ function TemplateLink({
   const inner = (
     <>
       <span
-        className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl"
+        className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl transition group-hover:scale-[1.04]"
         style={{ background: "rgba(61,12,17,0.06)" }}
       >
         {cover ? (
@@ -74,16 +74,20 @@ function TemplateLink({
           </span>
         )}
       </span>
+      {/* Always visible. A hover-only arrow tells a touch user nothing, and it is
+          the only thing on the row that says "this opens something". */}
       <ArrowRight
         size={16}
-        className="mt-1 shrink-0 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100"
+        className="mt-1 shrink-0 opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100"
         style={{ color: GOLD }}
       />
     </>
   );
 
   const className =
-    "group flex h-full items-start gap-3 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md";
+    "group flex h-full items-start gap-3 rounded-2xl border p-3.5 text-left transition " +
+    "hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.55)] hover:shadow-[0_10px_24px_-12px_rgba(61,12,17,0.35)] " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,168,76,0.6)]";
   const style = {
     borderColor: "rgba(61,12,17,0.1)",
     background: "#fffdfb",
@@ -186,6 +190,9 @@ function TemplatesModal({
             >
               Choose a template
             </h2>
+            <p className="mt-1 text-[13px] leading-snug" style={{ color: "rgba(42,10,14,0.55)" }}>
+              Add your photos and words, then send it as one link.
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -259,6 +266,26 @@ function TemplatesModal({
           ) : (
             filtered.map((t) => <TemplateLink key={t.id} template={t} onNavigate={onClose} />)
           )}
+        </div>
+
+        {/* The picker only lists what this post links to, so without this the
+            other ~50 templates are unreachable from inside the dialog. */}
+        <div
+          className="flex items-center justify-between gap-3 border-t px-5 py-3.5 sm:px-7"
+          style={{ borderColor: "rgba(61,12,17,0.1)", background: "rgba(61,12,17,0.02)" }}
+        >
+          <span className="text-xs" style={{ color: "rgba(42,10,14,0.55)" }}>
+            {templates.length} suggested for this post
+          </span>
+          <Link
+            href="/templates"
+            onClick={onClose}
+            className="group inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition hover:brightness-105"
+            style={{ background: MAROON, color: "#f5ede6" }}
+          >
+            Browse all templates
+            <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </div>
