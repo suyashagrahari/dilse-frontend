@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { buildMeta, SITE_URL, SITE_NAME } from "@/lib/seo";
-import { getArticles, getCategories, getCategoryBySlug } from "@/lib/strapi";
+import { getArticles, getCategories, getCategoriesWithCounts, getCategoryBySlug } from "@/lib/strapi";
 import InfiniteBlogGrid from "@/components/blog/InfiniteBlogGrid";
 import CategoryChips from "@/components/blog/CategoryChips";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
@@ -51,9 +51,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   // SSR only the first page for instant paint; InfiniteBlogGrid streams the rest
   // client-side as the user scrolls.
-  const [{ articles, pageCount }, categories, allLinks] = await Promise.all([
+  const [{ articles, pageCount }, { categories, total }, allLinks] = await Promise.all([
     getArticles({ category, page: 1, pageSize: PAGE_SIZE }),
-    getCategories(),
+    getCategoriesWithCounts(),
     getAllCategoryLinks(category),
   ]);
 
@@ -82,7 +82,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         </header>
 
         <div className="mb-10">
-          <CategoryChips categories={categories} active={cat.slug} />
+          <CategoryChips categories={categories} active={cat.slug} total={total} />
         </div>
 
         {articles.length === 0 ? (

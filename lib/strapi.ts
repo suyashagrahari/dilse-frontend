@@ -75,6 +75,8 @@ export interface Category {
   name: string;
   slug: string;
   description?: string | null;
+  /** Published articles in this category. Only set by `getCategoriesWithCounts()`. */
+  articleCount?: number;
 }
 
 export interface Seo {
@@ -292,6 +294,49 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     `/categories?filters[slug][$eq]=${encodeURIComponent(slug)}&pagination[pageSize]=1`
   );
   return res?.data?.[0] ?? null;
+}
+
+/**
+ * Every category plus how many published articles it holds, and the site-wide
+ * article total (for the "All" chip).
+ *
+ * Strapi has no aggregate endpoint, so each count is one `pageSize=1` request
+ * read off `meta.pagination.total` — the rows themselves never cross the wire.
+ * The requests are cached under the same `articles` tag as everything else, so
+ * a publish webhook refreshes the counts along with the grids, and a cold render
+ * costs one round trip per category (currently ten).
+ *
+ * The counts exist so the chip rail can hide categories that would lead to an
+ * empty page: three of the nine live categories hold zero articles today, and a
+ * chip that lands on "No posts in this category yet" spends a reader's click and
+ * a crawler's budget for nothing.
+ */
+export async function getCategoriesWithCounts(): Promise<{
+  categories: Category[];
+  total: number;
+}> {
+  const categories = await getCategories();
+
+  const countOf = async (query: string) => {
+    const res = await strapiFetch<StrapiListResponse<{ id: number }>>(
+      `/articles?${query}fields[0]=id&pagination[pageSize]=1&pagination[withCount]=true`
+    );
+    return res?.meta?.pagination?.total ?? 0;
+  };
+
+  const [total, counts] = await Promise.all([
+    countOf(""),
+    Promise.all(
+      categories.map((c) =>
+        countOf(`filters[category][slug][$eq]=${encodeURIComponent(c.slug)}&`)
+      )
+    ),
+  ]);
+
+  return {
+    categories: categories.map((c, i) => ({ ...c, articleCount: counts[i] })),
+    total,
+  };
 }
 
 /**

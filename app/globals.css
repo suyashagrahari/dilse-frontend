@@ -290,6 +290,31 @@ html, body {
 }
 .toc-scroll:hover::-webkit-scrollbar-thumb { background: rgba(61,12,17,0.32); }
 
+/* Blog category rail: one scrollable row of pills, no visible scrollbar.
+   Sits beside .toc-scroll because both are blog-chrome scroll containers whose
+   default 5px global scrollbar would otherwise cut through the design. */
+.blog-cat-rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Must match the rail's own px-5 / md:px-1 gutter. scroll-snap aligns a chip to
+     the scroll-padding edge, not the padding edge, so without this a snap parks
+     the first chip flush against the screen edge and it reads as clipped. */
+  scroll-padding-left: 1.25rem;
+  scroll-padding-right: 1.25rem;
+}
+@media (min-width: 768px) {
+  .blog-cat-rail { scroll-padding-left: 0.25rem; scroll-padding-right: 0.25rem; }
+}
+.blog-cat-rail::-webkit-scrollbar { display: none; }
+/* Hover lift only where there is a real pointer — on touch, :hover sticks after a tap. */
+@media (hover: hover) {
+  .blog-cat-rail a[data-active="false"]:hover {
+    background: #ffffff;
+    border-color: rgba(201,168,76,0.7);
+    transform: translateY(-1px);
+  }
+}
+
 /* App UI utility classes */
 .app-pill-inactive {
   color: var(--app-pill-text);
