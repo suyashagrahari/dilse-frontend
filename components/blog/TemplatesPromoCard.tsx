@@ -41,8 +41,8 @@ function TemplateLink({
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="truncate font-semibold" style={{ color: MAROON }}>
+        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="font-semibold leading-snug" style={{ color: MAROON }}>
             {template.title}
           </span>
           {template.category && (
@@ -56,8 +56,19 @@ function TemplateLink({
         </span>
         {template.description && (
           <span
-            className="mt-0.5 line-clamp-2 block text-[13px] leading-snug"
-            style={{ color: "rgba(42,10,14,0.6)" }}
+            className="mt-0.5 text-[13px] leading-snug"
+            // Clamped inline rather than with `line-clamp-2`. The utility needs
+            // display:-webkit-box, and the class it sat next to won the cascade,
+            // so the clamp silently did nothing and a long description made one
+            // card twice its neighbour's height. Inline styles cannot be lost to
+            // class ordering.
+            style={{
+              color: "rgba(42,10,14,0.6)",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
           >
             {template.description}
           </span>
@@ -72,7 +83,7 @@ function TemplateLink({
   );
 
   const className =
-    "group flex items-start gap-3 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md";
+    "group flex h-full items-start gap-3 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md";
   const style = {
     borderColor: "rgba(61,12,17,0.1)",
     background: "#fffdfb",
@@ -98,6 +109,9 @@ function TemplatesModal({
 }) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
+
+  /** Few enough entries that a fixed-height panel would be mostly empty. */
+  const short = templates.length <= 4;
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -144,7 +158,16 @@ function TemplatesModal({
           viewport) so the whole modal never changes size with the result count —
           only the list area inside scrolls. */}
       <div
-        className="flex h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:h-[600px] sm:max-h-[88vh] sm:rounded-3xl lg:h-[640px]"
+        className={
+          // A long list gets a FIXED height so the dialog does not resize on every
+          // keystroke while filtering. A short one — and a post usually links only
+          // one or two templates — gets a content height instead, because a 640px
+          // panel holding two cards is mostly empty space. Filtering a list this
+          // short has nothing to jump around.
+          short
+            ? "flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-3xl"
+            : "flex h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:h-[600px] sm:max-h-[88vh] sm:rounded-3xl lg:h-[640px]"
+        }
         style={{ background: "#f5ede6" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -174,7 +197,8 @@ function TemplatesModal({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Search — pointless when every option is already on screen. */}
+        {!short && (
         <div className="px-5 pt-4 sm:px-7">
           <div
             className="flex items-center gap-2 rounded-full border px-4 py-2.5"
@@ -192,8 +216,10 @@ function TemplatesModal({
             />
           </div>
         </div>
+        )}
 
-        {/* Category chips */}
+        {/* Category chips — same reasoning as the search box. */}
+        {!short && (
         <div className="flex flex-wrap gap-2 px-5 pt-3 sm:px-7">
           {categories.map((cat) => {
             const active = cat === activeCat;
@@ -213,9 +239,19 @@ function TemplatesModal({
             );
           })}
         </div>
+        )}
 
-        {/* List — the only scrollable region, filling the remaining height */}
-        <div className="mt-4 grid min-h-0 flex-1 auto-rows-min gap-2.5 overflow-y-auto px-5 pb-6 sm:grid-cols-2 sm:px-7">
+        {/* List — the only scrollable region.
+            gridAutoRows:min-content sizes each row to its tallest card; `h-full`
+            on the card (see TemplateLink) then stretches its neighbour to match.
+            1fr rows would instead give a single row the container's whole height,
+            which with two results produced two 423px-tall cards of empty space. */}
+        <div
+          className={`mt-4 grid min-h-0 content-start gap-2.5 overflow-y-auto px-5 pb-6 sm:grid-cols-2 sm:px-7 ${
+            short ? "" : "flex-1"
+          }`}
+          style={{ gridAutoRows: "min-content" }}
+        >
           {filtered.length === 0 ? (
             <p className="col-span-full py-10 text-center text-sm" style={{ color: "rgba(42,10,14,0.5)" }}>
               No templates match “{query}”.
@@ -231,9 +267,18 @@ function TemplatesModal({
 
 export default function TemplatesPromoCard({
   linked = [],
+  variant = "full",
 }: {
   /** Templates explicitly linked to this post in Strapi (relatedTemplates). */
   linked?: Template[];
+  /**
+   * `full` is the sidebar/end-of-post card. `compact` is the phone-only version
+   * placed near the top of the article: same identity and the same CTA, but
+   * without the feature list, so a reader can reach the template without
+   * scrolling past the whole post — and without a second full-height card
+   * shoving the article down the screen.
+   */
+  variant?: "full" | "compact";
 }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
@@ -249,8 +294,9 @@ export default function TemplatesPromoCard({
   else if (linkedList.length > 1) ctaHref = null; // null = open the picker modal
   const modalList = linkedList;
 
-  const ctaClass =
-    "mt-4 block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105";
+  const compact = variant === "compact";
+
+  const ctaClass = `${compact ? "mt-3" : "mt-4"} block w-full rounded-full py-2.5 text-center text-sm font-bold transition hover:brightness-105`;
   const ctaStyle = {
     background: "linear-gradient(90deg, #f3c9d2, #d8b4f0)",
     color: MAROON,
@@ -260,7 +306,7 @@ export default function TemplatesPromoCard({
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-3xl p-5 shadow-xl"
+        className={`relative overflow-hidden shadow-xl ${compact ? "rounded-2xl p-4" : "rounded-3xl p-5"}`}
         style={{
           background:
             "radial-gradient(120% 120% at 0% 0%, #4a1118 0%, #2a0a0e 55%, #1a0608 100%)",
@@ -282,28 +328,37 @@ export default function TemplatesPromoCard({
         </span>
 
         <h3
-          className="mt-3 text-xl leading-[1.15]"
+          className={`leading-[1.15] ${compact ? "mt-2 text-lg" : "mt-3 text-xl"}`}
           style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
         >
-          Turn this inspiration into an unforgettable surprise
+          {compact
+            ? "Make this into a page you can send"
+            : "Turn this inspiration into an unforgettable surprise"}
         </h3>
 
-        <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "rgba(245,237,230,0.7)" }}>
-          Build a page with photos, a heartfelt message, music and a ready-to-share link.
+        <p
+          className={`text-[13px] leading-relaxed ${compact ? "mt-1.5" : "mt-2"}`}
+          style={{ color: "rgba(245,237,230,0.7)" }}
+        >
+          {compact
+            ? "Photos, a message, music and a ready-to-share link — in a couple of minutes."
+            : "Build a page with photos, a heartfelt message, music and a ready-to-share link."}
         </p>
 
-        <ul className="mt-3 space-y-1.5">
-          {["Photos, message & music", "Ready-to-share link"].map((f) => (
-            <li
-              key={f}
-              className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-medium"
-              style={{ background: "rgba(245,237,230,0.06)" }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: GOLD }} />
-              {f}
-            </li>
-          ))}
-        </ul>
+        {!compact && (
+          <ul className="mt-3 space-y-1.5">
+            {["Photos, message & music", "Ready-to-share link"].map((f) => (
+              <li
+                key={f}
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-medium"
+                style={{ background: "rgba(245,237,230,0.06)" }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: GOLD }} />
+                {f}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {ctaHref ? (
           isInternal(ctaHref) ? (
@@ -321,13 +376,23 @@ export default function TemplatesPromoCard({
           </button>
         )}
 
-        <Link
-          href="/templates"
-          className="mt-2 block w-full rounded-full py-2 text-center text-[13px] font-semibold transition hover:bg-white/5"
-          style={{ border: "1px solid rgba(245,237,230,0.18)", color: "#f5ede6" }}
-        >
-          See all occasions
-        </Link>
+        {compact ? (
+          <Link
+            href="/templates"
+            className="mt-2 block text-center text-xs font-semibold underline decoration-white/25 underline-offset-2 transition hover:decoration-white/60"
+            style={{ color: "rgba(245,237,230,0.75)" }}
+          >
+            or browse all occasions
+          </Link>
+        ) : (
+          <Link
+            href="/templates"
+            className="mt-2 block w-full rounded-full py-2 text-center text-[13px] font-semibold transition hover:bg-white/5"
+            style={{ border: "1px solid rgba(245,237,230,0.18)", color: "#f5ede6" }}
+          >
+            See all occasions
+          </Link>
+        )}
       </div>
 
       {open && modalList.length > 1 && <TemplatesModal templates={modalList} onClose={close} />}

@@ -204,6 +204,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Create-a-surprise CTA — phone/tablet, placed HIGH.
+            On a phone the sidebar does not exist, so the only CTA used to sit
+            after the body, the tags, the share row and the FAQ — past everything.
+            A reader who arrived wanting the template had to read the whole post
+            to find out it existed. This is the compact variant so it hands over
+            the link without pushing the article off the screen; the full card
+            still closes the post below. */}
+        <div className="mt-8 lg:hidden">
+          <TemplatesPromoCard linked={linkedTemplates} variant="compact" />
+        </div>
+
         {/* TOC — mobile only (desktop uses the sticky sidebar) */}
         {hasBody && (
           <div className="mt-8">
