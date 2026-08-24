@@ -72,6 +72,20 @@ export function middleware(req: NextRequest) {
   // Root domain itself (no subdomain) falls through to normal routing
   if (!hostname.endsWith(`.${ROOT_DOMAIN}`)) return NextResponse.next();
 
+  // /sitemap.xml is byte-identical on every host, and wildcard DNS answers on
+  // all of them — so Bing had five "different" sitemaps on file (sitemap.,
+  // sitemaps., www. and yourname.subhsandesh.in alongside the apex) and 3.7K
+  // URLs discovered for a site with 934. A 308 to the apex collapses them back
+  // onto the one real sitemap. Checked before the reserved-subdomain skip so
+  // infrastructure-looking hosts are covered too — those are exactly the names
+  // crawlers probe for a sitemap.
+  if (req.nextUrl.pathname === "/sitemap.xml") {
+    const canonical = req.nextUrl.clone();
+    canonical.hostname = ROOT_DOMAIN;
+    canonical.port = "";
+    return NextResponse.redirect(canonical, 308);
+  }
+
   // Extract the subdomain part: "abc" from "abc.klyro.digital"
   const subdomain = hostname.slice(0, -(`.${ROOT_DOMAIN}`.length));
 
@@ -138,5 +152,13 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // Run on user-facing pages, skip internals and API/static assets
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icons|images|robots.txt|sitemap.xml|.*\\..*).*)"],
+  // The first pattern skips anything with a dot (static files, verification
+  // documents). /sitemap.xml is listed separately so the subdomain redirect
+  // above can reach it without loosening that rule — robots.txt stays out on
+  // purpose, because it must be SERVED per-host (app/robots.ts decides what it
+  // says) rather than redirected to the apex copy that says Allow: /.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|icons|images|robots.txt|sitemap.xml|.*\\..*).*)",
+    "/sitemap.xml",
+  ],
 };
