@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getSharePageMeta, buildMeta, SITE_URL } from "@/lib/seo";
 import { SharePageJsonLd } from "@/components/JsonLd";
 import SharePageWrapper from "./SharePageWrapper";
@@ -15,15 +16,30 @@ interface SharePageData {
   };
 }
 
-async function fetchShareData(shareId: string): Promise<SharePageData | null> {
+// A share id that the API definitively does not know about must render a real
+// 404, or every unknown root path (/BingSiteAuth.xml, /whatever) answers 200
+// with this shell and crawlers index it as a live page. A transient API failure
+// is NOT the same thing — there we still render the client, which retries and
+// shows its own message, rather than telling the world a valid link is gone.
+type ShareFetchResult =
+  | { status: "ok"; data: SharePageData }
+  | { status: "notfound" }
+  | { status: "unavailable" };
+
+async function fetchShareData(shareId: string): Promise<ShareFetchResult> {
   try {
     const res = await fetch(`${API_URL}/share/${shareId}`, {
       next: { revalidate: 60 },
     });
-    if (!res.ok) return null;
-    return await res.json();
+    if (res.status === 404 || res.status === 410) return { status: "notfound" };
+    // 401/403 are password-gated pages, 5xx is the API being unhappy: both are
+    // "can't tell from here", so let the client component take over.
+    if (!res.ok) return { status: "unavailable" };
+    const data = (await res.json()) as SharePageData;
+    if (!data?.success) return { status: "notfound" };
+    return { status: "ok", data };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
 }
 
@@ -33,7 +49,8 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: shareId } = await params;
-  const result = await fetchShareData(shareId);
+  const fetched = await fetchShareData(shareId);
+  const result = fetched.status === "ok" ? fetched.data : null;
 
   if (!result?.success || !result.data || !result.templateType) {
     return buildMeta({
@@ -68,7 +85,9 @@ export default async function SharePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: shareId } = await params;
-  const result = await fetchShareData(shareId);
+  const fetched = await fetchShareData(shareId);
+  if (fetched.status === "notfound") notFound();
+  const result = fetched.status === "ok" ? fetched.data : null;
 
   const senderName = result?.data?.senderName || "Someone Special";
   const recipientName = result?.data?.recipientName || "You";

@@ -169,6 +169,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  verification: {
+    other: {
+      "msvalidate.01": "3C832B30C2443749B7E1B02E805C9438",
+    },
+  },
   keywords: [
     "gifts",
     "personalized gifts",
