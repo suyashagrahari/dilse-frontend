@@ -34,7 +34,10 @@ export function buildMeta(overrides: Partial<Metadata> & { title?: string; descr
       images: [DEFAULT_OG_IMAGE],
       ...(typeof overrides.twitter === "object" ? overrides.twitter : {}),
     },
-    robots: {
+    // overrides.robots MUST win. This used to be a hardcoded index/follow with
+    // no spread, so /profile, /favorites and every personal share page asked for
+    // noindex and silently shipped "index, follow" instead.
+    robots: overrides.robots ?? {
       index: true,
       follow: true,
       googleBot: { index: true, follow: true },
@@ -149,6 +152,17 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
   return buildMeta({
     title: `${title} | ${SITE_NAME}`,
     description,
+    // A share page is one person's message to one person: real names, thin
+    // templated body, often password-gated. Indexing them puts private-ish
+    // near-duplicates in front of the whole web and drags down sitewide quality
+    // signals. `follow` stays on so link equity still flows back to the
+    // template pages we DO want ranked. OG/Twitter tags are unaffected, so
+    // WhatsApp/iMessage previews keep working exactly as before.
+    robots: {
+      index: false,
+      follow: true,
+      googleBot: { index: false, follow: true },
+    },
     openGraph: {
       title,
       description,

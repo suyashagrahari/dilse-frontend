@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { COMING_SOON_REDIRECTS } from "./lib/site-routes";
 
 const nextConfig: NextConfig = {
   // ── Standalone output for Docker deployment ─────────────────────────────
@@ -187,35 +188,36 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // ── Coming-soon templates → their live counterpart ─────────────────────
-  // These template routes exist on disk (a direct URL would open the editor)
-  // but are still shown as "Coming Soon" in the gallery. Until each one ships,
-  // send any direct visit to the closest LIVE template of the same theme.
-  // Temporary (307) on purpose: when a template goes live we just delete its
-  // entry here, and no permanent-redirect cache lingers in browsers/CDNs.
+  // ── Redirects: canonical host, then coming-soon templates ──────────────
   async redirects() {
-    const comingSoonToLive: Record<string, string> = {
-      // sorry → apology-dashboard
-      "sorry-gf": "apology-dashboard",
-      "sorry-friend": "apology-dashboard",
-      // birthday → birthday-gf
-      "birthday-bestfriend": "birthday-gf",
-      "birthday-friend": "birthday-gf",
-      "birthday-parents": "birthday-gf",
-      // miss you → missyou-gf
-      "missyou-bestfriend": "missyou-gf",
-      // valentine (no live valentine yet) → love-gf
-      "valentine-gf": "love-gf",
-      "valentine-bestfriend": "love-gf",
-      // anniversary (no live anniversary yet) → love-gf
-      "anniversary-parents": "love-gf",
-      "anniversary-gf": "love-gf",
-    };
-    return Object.entries(comingSoonToLive).map(([from, to]) => ({
-      source: `/${from}`,
-      destination: `/${to}`,
-      permanent: false,
-    }));
+    return [
+      // ── www → apex ──────────────────────────────────────────────────────
+      // www.subhsandesh.in answered 200 for every path, so the whole site
+      // existed at two hostnames. The canonical tag already pointed at the
+      // apex, but a canonical is a hint: Bing in particular will still crawl
+      // and hold both copies. A 308 makes the apex the only address, and the
+      // `has` host match keeps user subdomains ({username}.subhsandesh.in),
+      // dev and stag untouched.
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: "www.subhsandesh.in" }],
+        destination: "https://subhsandesh.in/:path*",
+        permanent: true,
+      },
+      // ── Coming-soon templates → their live counterpart ─────────────────
+      // These template routes exist on disk (a direct URL would open the
+      // editor) but are still shown as "Coming Soon" in the gallery. Until
+      // each one ships, send any direct visit to the closest LIVE template of
+      // the same theme. Temporary (307) on purpose: when a template goes live we just delete
+      // its entry from COMING_SOON_REDIRECTS, and no permanent-redirect cache
+      // lingers in browsers/CDNs. app/sitemap.ts reads the same map so these
+      // sources are never advertised to crawlers.
+      ...Object.entries(COMING_SOON_REDIRECTS).map(([from, to]) => ({
+        source: `/${from}`,
+        destination: `/${to}`,
+        permanent: false,
+      })),
+    ];
   },
 };
 

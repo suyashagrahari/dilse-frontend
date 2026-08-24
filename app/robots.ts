@@ -4,7 +4,11 @@ import { SITE_URL } from "@/lib/seo";
 export default function robots(): MetadataRoute.Robots {
   // Private/utility paths kept out of the index. `/api/og` is explicitly allowed
   // (more specific than `/api/`) because social + Google crawlers fetch OG images.
-  const disallow = ["/api/", "/profile", "/favorites"];
+  // `/admin` is guarded only by a client-side role check (see the note in
+  // middleware.ts), so the shell renders before it redirects — crawlable
+  // unless we say otherwise. `/saves` answers 307 and `/auth/` is OAuth
+  // plumbing; neither is a page anyone should land on from a search result.
+  const disallow = ["/api/", "/profile", "/favorites", "/admin", "/saves", "/auth/"];
   const allow = ["/", "/api/og"];
 
   // AI / answer-engine crawlers — explicitly allowed so blog content is eligible

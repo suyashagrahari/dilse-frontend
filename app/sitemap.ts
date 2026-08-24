@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL, TEMPLATE_SEO } from "@/lib/seo";
 import { getAllArticleSlugs, getCategories } from "@/lib/strapi";
+import { COMING_SOON_REDIRECTS, STANDALONE_INDEXABLE_PAGES } from "@/lib/site-routes";
 
 // Revalidated on demand by the Strapi webhook (tag `articles`) + hourly fallback.
 export const revalidate = 3600;
@@ -16,11 +17,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/contact-us`, lastModified: now, changeFrequency: "yearly", priority: 0.4 },
   ];
 
-  const templatePages: MetadataRoute.Sitemap = Object.keys(TEMPLATE_SEO).map((slug) => ({
-    url: `${SITE_URL}/${slug}`,
+  // Coming-soon slugs answer 307 (see COMING_SOON_REDIRECTS). Listing a URL that
+  // redirects earns a "Page with redirect — not indexed" in Search Console and
+  // Bing Webmaster Tools and burns crawl budget, so the source is dropped and
+  // only the live destination is advertised.
+  const templatePages: MetadataRoute.Sitemap = Object.keys(TEMPLATE_SEO)
+    .filter((slug) => !(slug in COMING_SOON_REDIRECTS))
+    .map((slug) => ({
+      url: `${SITE_URL}/${slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    }));
+
+  // Shipped pages that TEMPLATE_SEO never covered — they were live and
+  // crawlable but unreachable from the sitemap.
+  const standalonePages: MetadataRoute.Sitemap = STANDALONE_INDEXABLE_PAGES.map((page) => ({
+    url: `${SITE_URL}${page.path}`,
     lastModified: now,
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
+    changeFrequency: page.changeFrequency,
+    priority: page.priority,
   }));
 
   // Blog content from Strapi — degrades gracefully (empty) if the CMS is unreachable.
@@ -40,5 +56,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...templatePages, ...blogPosts, ...blogCategories];
+  return [...staticPages, ...templatePages, ...standalonePages, ...blogPosts, ...blogCategories];
 }
