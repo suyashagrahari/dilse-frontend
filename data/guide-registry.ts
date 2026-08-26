@@ -869,7 +869,309 @@ const guides: ProductGuide[] = [
     ],
 
     relatedBlogSlugs: [],
-    relatedGuideSlugs: [],
+    relatedGuideSlugs: ["love-gf"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Love GF
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "love-gf",
+    templateHref: "/love-gf",
+    templateName: "Love Page",
+    title: "Build the Love Page — a paper board she can pin through",
+    tagline: "Polaroids, pressed flowers, and six rooms behind them",
+    summary:
+      "A crumpled-paper board with your photos pinned to it as polaroids, and six rooms behind the rail — Home, Wish, Photos, Music, Games, Notes. You fill it through a nine-page wizard. Four photos go on the board itself, ten more into the gallery with a love letter on each, and the Games room holds a quiz you write, truth-or-dare, and your story.",
+    category: "love",
+    emoji: "🤍",
+    accent: "#a1785a",
+    buildTime: "About 10 minutes",
+    updatedAt: "2026-08-26",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-26",
+      silent: true,
+      // Read off the recording, not estimated — the cut stamps a "STEP n OF 14"
+      // chip, so one frame per second gives the exact second each step starts.
+      // Step 2's on-screen heading is the page's own handwritten "love you!",
+      // which is the fixed header leaking through on a page with no new
+      // prominent line of its own; the label below says what is actually being
+      // filled in instead.
+      chapters: [
+        { at: 0,  label: "The page she opens" },
+        { at: 4,  label: "Open the builder, and fill it in yourself", sectionId: "open" },
+        { at: 11, label: "Their name, your name, your date",          sectionId: "names" },
+        { at: 16, label: "The love message",                          sectionId: "message" },
+        { at: 19, label: "The wish card",                             sectionId: "wish" },
+        { at: 22, label: "Four photos for the board",                 sectionId: "home-photos" },
+        { at: 25, label: "Gallery photos",                            sectionId: "gallery" },
+        { at: 28, label: "A love letter on each one",                 sectionId: "gallery" },
+        { at: 32, label: "Quiz questions",                            sectionId: "quiz" },
+        { at: 35, label: "Truth & Dare",                              sectionId: "games" },
+        { at: 38, label: "The share photo",                           sectionId: "share-photo" },
+        { at: 40, label: "Save the page",                             sectionId: "save" },
+        { at: 47, label: "What she sees — all six rooms",             sectionId: "recipient" },
+        { at: 66, label: "Publish it",                                sectionId: "publish" },
+        { at: 73, label: "Link, QR, print",                           sectionId: "share" },
+        { at: 87, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder — and choose how to fill it",
+        intro:
+          "The page opens as a finished sample so you can wander it first. Edit sits at the foot of the left rail, not in a top bar.",
+        steps: [
+          {
+            title: "Press Edit, bottom-left",
+            body:
+              "This is a dashboard rather than a card, so its controls live at the foot of the rail you are standing in.",
+            shot: "step-01.webp",
+            shotAlt: "The Love Page board: crumpled paper, a pinned polaroid, and the handwritten love-you note",
+          },
+          {
+            title: "Then pick AI Magic or Write yourself",
+            body:
+              "AI Magic writes the messages, captions and quiz from a few words about your relationship. Write yourself opens the nine-page form.",
+            shot: "step-02.webp",
+            shotAlt: "The choice between AI Magic and Write yourself",
+            note:
+              "This guide follows Write yourself, and so does the video, because that is the path that shows every field. AI Magic lands you in the same nine pages with the words filled in — everything below still applies, you are just editing rather than typing from nothing.",
+          },
+          {
+            title: "The strip along the top is a progress bar, not a menu",
+            body:
+              "Names · Message · Wish · Photos · Gallery · Quiz · Games · Share · Finish shows where you are. You move with Next and Back; clicking the strip does nothing.",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Names, and the date you count from",
+        steps: [
+          {
+            title: "Their name is the only required field",
+            body:
+              "It is what the page is addressed to and what the share link previews with. Everything else in the wizard can wait.",
+            shot: "step-03.webp",
+            shotAlt: "The Names page: their name, your name and an optional special date",
+          },
+        ],
+      },
+      {
+        id: "message",
+        title: "The love message",
+        steps: [
+          {
+            title: "The paragraph on the home board",
+            body: "The first thing she reads once she is past the photos.",
+            shot: "step-04.webp",
+            shotAlt: "The Love Message page with its text area",
+          },
+        ],
+      },
+      {
+        id: "wish",
+        title: "The wish card",
+        steps: [
+          {
+            title: "A second, quieter note",
+            body:
+              "This one lives behind the Wish tab rather than on the board, so it is the one she finds rather than the one she is handed. Worth making it the more private of the two.",
+            shot: "step-05.webp",
+            shotAlt: "The Wish Card page",
+          },
+        ],
+      },
+      {
+        id: "home-photos",
+        title: "Four photos for the board",
+        steps: [
+          {
+            title: "These become the polaroids",
+            body:
+              "Up to four, and they are pinned to the paper board as polaroid cards at angles — the first thing she sees. Tap any one to crop and zoom it.",
+            shot: "step-06.webp",
+            shotAlt: "The Home Photos page: four polaroid slots",
+            note:
+              "Four, not one. If you have come from the Darling guide, note the difference — Darling puts a single photo in a circle, this one builds a board out of four.",
+          },
+        ],
+      },
+      {
+        id: "gallery",
+        title: "Gallery photos, and a letter on each",
+        steps: [
+          {
+            title: "Up to ten more",
+            body:
+              "These live behind the Photos tab rather than on the board. Every one takes its own love letter, so the gallery reads as a sequence of moments rather than an album.",
+            shot: "step-07.webp",
+            shotAlt: "The Gallery Photos page, empty, with the add control",
+            note:
+              "Ten is the ceiling, not the target. Six photos each with a real sentence beats ten captioned “us ❤️”.",
+          },
+        ],
+      },
+      {
+        id: "quiz",
+        title: "Quiz questions",
+        steps: [
+          {
+            title: "Three arrive already written",
+            body:
+              "So the Games room works even if you skip this page. Replace them with ones only she could answer.",
+            shot: "step-08.webp",
+            shotAlt: "The Quiz Questions page with three default questions",
+          },
+          {
+            title: "There is a library of thirty",
+            body: "Browse it if you are stuck, or write your own — up to ten in total.",
+          },
+        ],
+      },
+      {
+        id: "games",
+        title: "Truth & Dare",
+        steps: [
+          {
+            title: "Two lists, picked from a library",
+            body:
+              "Truth and Dare are separate tabs. Tap + on anything in the library, or write your own with Custom Truth / Custom Dare.",
+            shot: "step-09.webp",
+            shotAlt: "The Truth & Dare page with the Truth library open",
+            note:
+              "What you pick mixes with the built-in defaults rather than replacing them, so adding two of your own does not leave her with a two-question game.",
+          },
+        ],
+      },
+      {
+        id: "share-photo",
+        title: "The share photo",
+        steps: [
+          {
+            title: "The image on the link itself",
+            body:
+              "What appears when the link is pasted into WhatsApp or Instagram — seen before the page even opens.",
+            shot: "step-10.webp",
+            shotAlt: "The Share Photo page, with its Skip button",
+            note:
+              "The button here says Skip rather than Next, which is the honest label: leave it empty and the link still works, it just previews with the default artwork.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save the page",
+        steps: [
+          {
+            title: "Check the summary line first",
+            body:
+              "The card at the top counts what you actually filled — home photo, gallery photos, quiz questions, truth/dare. The fastest way to catch a page you meant to fill and skipped.",
+            shot: "step-11.webp",
+            shotAlt: "The Save page: the summary of what has been filled, and the optional password",
+          },
+          {
+            title: "Password is optional",
+            body:
+              "Set it and only someone with the word can open the page. Saving does not publish — you publish from the main page afterwards.",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she sees — all six rooms",
+        intro:
+          "The rail is her navigation, so the tour is the rail. Quickest understood by watching from 00:47.",
+        steps: [
+          {
+            title: "The board first",
+            body:
+              "Home is the paper board: your four polaroids, the pressed flowers, the handwritten note, your message.",
+            shot: "step-12.webp",
+            shotAlt: "The saved board with four polaroids pinned to it, Publish now in the rail",
+          },
+          {
+            title: "Then Wish, Photos, Music, Games, Notes",
+            body:
+              "Wish holds the wish card. Photos is the gallery, one love letter at a time. Music is the playlist. Notes is where she writes back.",
+          },
+          {
+            title: "Games holds three, not one",
+            body:
+              "Love Quiz — the questions you wrote. Truth or Dare. And Our Story, which walks your moments together. The quiz runs ten questions with a score.",
+            shot: "step-13.webp",
+            shotAlt: "The Games room: Love Quiz, Truth or Dare and Our Story, with a quiz question showing",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish appears once you have saved",
+            body:
+              "Saving puts a Publish button in the rail under Edit. Until then there is nothing to publish.",
+          },
+          {
+            title: "Signed out, you sign in here",
+            body:
+              "The page publishes immediately afterwards — nothing you filled in is asked for twice.",
+            shot: "step-14.webp",
+            shotAlt: "Pressing Publish while signed out brings up the sign-in sheet",
+            note:
+              "On a phone the Google button is a full-page redirect. Let it come back on its own; closing the tab part-way means the publish never completes.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link, show the QR if she is with you, or print the card. The QR opens the page — it is not a payment code.",
+          },
+          {
+            title: "You can keep editing afterwards",
+            body:
+              "Profile → My Creations → the card → Edit. The link does not change, so anything you add later reaches her without sending a new one.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "What is the difference between this and the Darling page?",
+        a: "Same nine-page wizard, genuinely different result. This one is a crumpled-paper board with four photos pinned to it as polaroids; Darling is a dark velvet page with a single photo in a circle and a live count of your time together. This one's Games room holds three games — Love Quiz, Truth or Dare and Our Story — and its home is the board itself. Pick on which one looks like her.",
+      },
+      {
+        q: "How many photos can I add in total?",
+        a: "Fourteen. Four go on the board as polaroids, and up to ten more into the gallery behind the Photos tab, each with its own love letter.",
+      },
+      {
+        q: "Do I have to fill in all nine pages?",
+        a: "No. Their name is the only required field, and the quiz arrives with three questions already written. Every other page can be skipped — the summary on the Save page tells you what you left empty.",
+      },
+      {
+        q: "Does saving publish it?",
+        a: "No. Save shows you the finished page in preview; a Publish button then appears in the rail. That is deliberate — it gives you a look at the whole thing before anyone else can see it.",
+      },
+      {
+        q: "How long does the whole thing take?",
+        a: "About ten minutes with the photos ready. The gallery letters and the quiz are where the time actually goes.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["darling"],
   },
 ];
 
