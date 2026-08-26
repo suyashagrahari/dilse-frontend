@@ -34,6 +34,7 @@ import type { ProductGuide } from "@/types/product-guide";
 export const GUIDE_CATEGORIES = [
   { id: "festival", label: "Festivals", emoji: "🪔" },
   { id: "love", label: "Love & Romance", emoji: "💕" },
+  { id: "birthday", label: "Birthday", emoji: "🎂" },
   { id: "basics", label: "Getting Started", emoji: "✨" },
 ] as const;
 
@@ -1171,7 +1172,488 @@ const guides: ProductGuide[] = [
     ],
 
     relatedBlogSlugs: [],
-    relatedGuideSlugs: ["darling"],
+    relatedGuideSlugs: ["darling", "bouquet-gf"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Birthday GF
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "birthday-gf",
+    templateHref: "/birthday-gf",
+    templateName: "Birthday Page",
+    title: "Build the Birthday page — five rooms and a scratch card",
+    tagline: "Ten wizard pages, a playlist, and a surprise she scratches open",
+    summary:
+      "A pressed-flower board with her photos taped to it, and five rooms behind the rail — Home, Gallery, Songs, Games, Surprise. Ten wizard pages fill it: two messages, three placed photos, a gallery, a playlist, a quiz, truth-or-dare, and a scratch-to-reveal surprise card that can carry your voice.",
+    category: "birthday",
+    emoji: "🎂",
+    accent: "#b06a4a",
+    buildTime: "About 12 minutes",
+    updatedAt: "2026-08-26",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-26",
+      silent: true,
+      // Read off the recording: the cut stamps "STEP n OF 14", so one frame per
+      // second gives the exact second each step starts.
+      chapters: [
+        { at: 0,  label: "The page she opens" },
+        { at: 4,  label: "Open the builder, and fill it in yourself", sectionId: "open" },
+        { at: 11, label: "Her name, your name, the birthday",         sectionId: "names" },
+        { at: 16, label: "The wish and the personal message",         sectionId: "messages" },
+        { at: 21, label: "Three photos for the board",                sectionId: "home-photos" },
+        { at: 24, label: "Gallery photos",                            sectionId: "gallery" },
+        { at: 27, label: "The playlist",                              sectionId: "songs" },
+        { at: 29, label: "Quiz questions",                            sectionId: "quiz" },
+        { at: 32, label: "Truth & Dare",                              sectionId: "games" },
+        { at: 35, label: "The surprise card",                         sectionId: "surprise" },
+        { at: 40, label: "The share photo",                           sectionId: "share-photo" },
+        { at: 42, label: "Save the page",                             sectionId: "save" },
+        { at: 49, label: "What she sees — all five rooms",            sectionId: "recipient" },
+        { at: 66, label: "Publish it",                                sectionId: "publish" },
+        { at: 72, label: "Link, QR, print",                           sectionId: "share" },
+        { at: 87, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro: "The page opens as a finished sample. Edit sits at the foot of the left rail.",
+        steps: [
+          {
+            title: "Press Edit, bottom-left",
+            body:
+              "A dashboard rather than a card, so the controls live at the foot of the rail rather than in a top bar.",
+            shot: "step-01.webp",
+            shotAlt: "The Birthday board: five rooms in the rail, taped photos, pressed flowers",
+          },
+          {
+            title: "Then pick AI Magic or Write Manually",
+            body:
+              "AI Magic writes the wishes, messages and quiz from a few words about her. Write Manually opens the ten-page form.",
+            shot: "step-02.webp",
+            shotAlt: "The choice between AI Magic and Write Manually",
+            note:
+              "This guide and the video both take the manual path, because it is the one that shows every field. AI Magic lands you in the same ten pages with the words filled in.",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Her name, your name, the birthday",
+        steps: [
+          {
+            title: "Only her name is required",
+            body:
+              "It is what the page is addressed to and what the share link previews with. The birthday date is optional but worth setting — it is what makes the page a birthday page rather than a card.",
+            shot: "step-03.webp",
+            shotAlt: "Birthday Details: their name, your name and the birthday date",
+          },
+        ],
+      },
+      {
+        id: "messages",
+        title: "The wish and the personal message",
+        steps: [
+          {
+            title: "Two fields, deliberately",
+            body:
+              "The birthday wish is the public one — the line anyone would be happy to read over her shoulder. The personal message is the one meant only for her. Writing the same thing twice wastes the second.",
+            shot: "step-04.webp",
+            shotAlt: "Birthday Messages: the birthday wish and the personal message",
+          },
+        ],
+      },
+      {
+        id: "home-photos",
+        title: "Three photos for the board",
+        steps: [
+          {
+            title: "Each has its own place",
+            body:
+              "Main cover photo, top-right photo, bottom-left photo — named positions rather than a grid, because the board tapes them down at set angles. The cover is the large one.",
+            shot: "step-05.webp",
+            shotAlt: "Home Photos: three named slots — cover, top-right, bottom-left",
+          },
+        ],
+      },
+      {
+        id: "gallery",
+        title: "Gallery photos",
+        steps: [
+          {
+            title: "Up to eight more",
+            body: "Behind the Gallery tab. Tap any one to adjust how it sits in its frame.",
+            shot: "step-06.webp",
+            shotAlt: "The Gallery Photos page, empty, with the add control",
+          },
+        ],
+      },
+      {
+        id: "songs",
+        title: "The playlist",
+        steps: [
+          {
+            title: "Five birthday tracks, already chosen",
+            body:
+              "Celebration, Best Day of My Life, Dynamite, Firework, Good Time. They fill the Songs room, so it works without you touching this page.",
+            shot: "step-07.webp",
+            shotAlt: "The Songs page: the five-track birthday playlist",
+          },
+        ],
+      },
+      {
+        id: "quiz",
+        title: "Quiz questions",
+        steps: [
+          {
+            title: "Three arrive written, up to ten",
+            body:
+              "About the birthday person — her favourite colour, the dessert she would pick, the superpower she would choose. Each opens to let you set the answers.",
+            shot: "step-08.webp",
+            shotAlt: "Quiz Questions with three defaults",
+          },
+        ],
+      },
+      {
+        id: "games",
+        title: "Truth & Dare",
+        steps: [
+          {
+            title: "Three of each already picked",
+            body:
+              "Truth and Dare are separate tabs, each starting with three selected and a library below to add from. You can write your own.",
+            shot: "step-09.webp",
+            shotAlt: "Truth & Dare: three truths selected, the library below",
+          },
+        ],
+      },
+      {
+        id: "surprise",
+        title: "The surprise card",
+        intro: "The one page here that has no equivalent on the other templates.",
+        steps: [
+          {
+            title: "A photo and a voice note she scratches to reveal",
+            body:
+              "Add either and she gets a scratch-off card. The audio field is the interesting one — record yourself singing Happy Birthday rather than uploading a track.",
+            shot: "step-10.webp",
+            shotAlt: "The Surprise Card page: an optional photo and an optional voice note",
+            note:
+              "Leave both empty and the Surprise tab does not appear at all — the page tells you so on this screen. So this is not a section she will find half-finished; it is either there or it is not.",
+          },
+        ],
+      },
+      {
+        id: "share-photo",
+        title: "The share photo",
+        steps: [
+          {
+            title: "The image on the link",
+            body:
+              "What shows when the link is pasted into WhatsApp or Instagram. The button says Skip, which is honest — leave it and the link still works.",
+            shot: "step-11.webp",
+            shotAlt: "The Share Photo page, with its Skip button",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save the page",
+        steps: [
+          {
+            title: "Password optional, then preview",
+            body:
+              "Saving does not publish. It shows you her version first, and a Publish button then appears in the rail.",
+            shot: "step-12.webp",
+            shotAlt: "Save Your Page: the optional password field",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she sees — all five rooms",
+        intro: "The rail is her navigation. Fastest understood by watching from 00:49.",
+        steps: [
+          {
+            title: "Home, Gallery, Songs, Games, Surprise",
+            body:
+              "Home is the board with your three photos and the wish. Gallery is the rest. Songs is the playlist. Games holds the quiz and truth-or-dare. Surprise is the scratch card — if you filled it.",
+            shot: "step-13.webp",
+            shotAlt: "The saved birthday board with her photos in place, Publish now in the rail",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Signed out, you sign in here",
+            body:
+              "The page publishes immediately afterwards — nothing you filled in is asked for twice.",
+            shot: "step-14.webp",
+            shotAlt: "Pressing Publish while signed out brings up the sign-in sheet",
+            note:
+              "On a phone the Google button is a full-page redirect. Let it come back on its own; closing the tab part-way means the publish never completes.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link, show the QR if you are with her, or print the card. The QR opens the page.",
+          },
+          {
+            title: "You can keep editing afterwards",
+            body:
+              "Profile → My Creations → the card → Edit. The link does not change, so a photo added later still reaches her.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Why has the Surprise tab not appeared on my page?",
+        a: "Because the surprise card is empty. The tab only shows if you added a photo or a voice note to it — the builder says so on that page. Go back to Edit → Surprise and add either one.",
+      },
+      {
+        q: "Can I record my own voice instead of uploading a song?",
+        a: "Yes, and that is what the field is for. Record yourself singing Happy Birthday and it goes behind the scratch card.",
+      },
+      {
+        q: "How many photos in total?",
+        a: "Eleven. Three are placed on the board — cover, top-right, bottom-left — and up to eight more go into the gallery.",
+      },
+      {
+        q: "Can I change the playlist?",
+        a: "The five birthday tracks are chosen for you and fill the Songs room. They are what makes that room work without any effort from you.",
+      },
+      {
+        q: "How long does the whole thing take?",
+        a: "About twelve minutes with the photos ready. It has more pages than the other templates — the quiz answers and the surprise card are where the time goes.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["love-gf", "darling"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Bouquet GF
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "bouquet-gf",
+    templateHref: "/bouquet-gf",
+    templateName: "Bouquet",
+    title: "Design a bouquet — twelve blooms, each one meaning something",
+    tagline: "Four steps, no rooms to fill, about three minutes",
+    summary:
+      "The shortest build on the site, and the only one that is not a dashboard. You pick six to ten blooms from twelve that each carry a meaning, shuffle the arrangement until it looks right, write the card, and optionally attach a Deed of Devotion — a mock contract of clauses you are signing up to. She taps once to unwrap it.",
+    category: "love",
+    emoji: "💐",
+    accent: "#c2569b",
+    buildTime: "About 3 minutes",
+    updatedAt: "2026-08-26",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-26",
+      silent: true,
+      // Eight steps, not the fourteen the dashboard templates run to — read off
+      // the recording's "STEP n OF 8" chip a frame at a time.
+      chapters: [
+        { at: 0,  label: "The bouquet she opens" },
+        { at: 6,  label: "Open the builder",                sectionId: "open" },
+        { at: 15, label: "Pick your blooms",                sectionId: "blooms" },
+        { at: 19, label: "Style the arrangement",           sectionId: "style" },
+        { at: 23, label: "Write the card",                  sectionId: "card" },
+        { at: 32, label: "The Deed of Devotion",            sectionId: "deed" },
+        { at: 42, label: "Save it",                         sectionId: "save" },
+        { at: 45, label: "What she actually sees",          sectionId: "recipient" },
+        { at: 56, label: "Publish it",                      sectionId: "publish" },
+        { at: 65, label: "Link, QR, print",                 sectionId: "share" },
+        { at: 86, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "This one is not a dashboard. There is no rail and there are no rooms — the whole thing is one bouquet, and the builder is four steps.",
+        steps: [
+          {
+            title: "Press Create, top-right",
+            body:
+              "Note the difference from the other templates: Create sits in the top bar here, not Edit at the foot of a rail, because there is no rail to put it in.",
+            shot: "step-01.webp",
+            shotAlt: "The finished bouquet with its tap-to-open button",
+          },
+          {
+            title: "There is no AI option, and it does not need one",
+            body:
+              "The other templates offer to write your messages. This one goes straight to picking flowers — there is only one piece of writing in the whole build, and it is the card.",
+          },
+        ],
+      },
+      {
+        id: "blooms",
+        title: "Pick your blooms",
+        steps: [
+          {
+            title: "Six to ten, from twelve",
+            body:
+              "Tap to add, tap the minus to remove. The counter at the top holds you between six and ten — fewer looks sparse, more stops reading as a bouquet.",
+            shot: "step-02.webp",
+            shotAlt: "The Pick your blooms step, with the colour and black-and-white choice",
+          },
+          {
+            title: "Every flower carries a meaning",
+            body:
+              "Rose is love and passion, tulip is perfect love, peony is romance, sunflower is adoration, lily is purity, daisy is innocence, orchid is beauty, dahlia is elegance, anemone is anticipation, carnation is fascination, zinnia is lasting affection, ranunculus is radiant charm. They are printed under each one, and she sees them too.",
+            shot: "step-03.webp",
+            shotAlt: "The twelve blooms with their meanings and the counts picked",
+            note:
+              "This is the whole point of the template, and the easiest thing to skip past. Picking by meaning rather than by colour is what makes the bouquet say something.",
+          },
+          {
+            title: "Colour or black & white",
+            body:
+              "Black and white renders the same blooms as ink drawings. Worth a look before you settle — it reads as older and quieter.",
+          },
+        ],
+      },
+      {
+        id: "style",
+        title: "Style the arrangement",
+        steps: [
+          {
+            title: "Shuffle until it sits right",
+            body:
+              "New arrangement re-lays the same flowers; Change greenery swaps the leaves behind them. You are not placing stems by hand — you are re-rolling until one looks good.",
+            shot: "step-04.webp",
+            shotAlt: "Style your bouquet, with the new-arrangement and change-greenery controls",
+          },
+        ],
+      },
+      {
+        id: "card",
+        title: "Write the card",
+        steps: [
+          {
+            title: "Who it is for, what you want to say, and from",
+            body:
+              "The only writing in the build. It arrives with a message already in it, which is a fine skeleton but says nothing only you would say.",
+            shot: "step-05.webp",
+            shotAlt: "The Write the card step: who it is for, the message, and from",
+          },
+        ],
+      },
+      {
+        id: "deed",
+        title: "The Deed of Devotion",
+        steps: [
+          {
+            title: "A mock contract, and it can be switched off",
+            body:
+              "Numbered clauses in the register of a legal deed — “1× unlimited forehead kisses, on demand”, “first and last text of every single day”, “shared fries, always — no negotiation”. Add your own, or toggle the whole thing off if it is not your tone.",
+            shot: "step-06.webp",
+            shotAlt: "The Deed of Devotion: the toggle, the numbered clauses, and the optional password",
+            note:
+              "The clauses work when they are small and specific. A clause that promises to love her forever is not funny and not a promise; one about fries is both.",
+          },
+          {
+            title: "Password, if you want one",
+            body: "Optional, on this same page. Set it and only someone with the word can open the bouquet.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save it",
+        steps: [
+          {
+            title: "Save & preview",
+            body:
+              "Shows you the finished bouquet before anything is published, and the top bar changes to Edit and Send it.",
+            shot: "step-07.webp",
+            shotAlt: "The saved bouquet, with Edit and Send it now in the top bar",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she actually sees",
+        steps: [
+          {
+            title: "One tap, and it unwraps",
+            body:
+              "She gets the wrapped bouquet with your name on it and a single tap to open. Then the flowers, their meanings, your card, and the deed if you attached one. No rooms, no navigation — it is over in a minute, and that is the point of it.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Send it, and sign in if you are signed out",
+            body:
+              "The bouquet publishes immediately afterwards. Nothing you built is asked for twice.",
+            shot: "step-08.webp",
+            shotAlt: "Pressing Send it while signed out brings up the sign-in sheet",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link, show the QR, or print the card. The QR opens the bouquet.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Why is this so much shorter than the other guides?",
+        a: "Because the template is. Bouquet is four steps and about three minutes; the Darling, Love Page and Birthday templates are nine or ten wizard pages and around ten. If you want something to arrive today rather than something she explores for twenty minutes, this is the one.",
+      },
+      {
+        q: "Do the flower meanings actually show on her page?",
+        a: "Yes. They are printed under each bloom in the builder and she sees them too, which is why picking by meaning is worth the extra minute.",
+      },
+      {
+        q: "Can I arrange the flowers myself?",
+        a: "Not stem by stem. New arrangement re-lays the ones you picked and Change greenery swaps the foliage — you re-roll until one looks right rather than placing anything by hand.",
+      },
+      {
+        q: "What is the Deed of Devotion, and can I leave it out?",
+        a: "A mock contract of small promises, written in legal register for the joke. It is a toggle on the last step — switch it off and the bouquet arrives with just the card.",
+      },
+      {
+        q: "Is there an AI option like the other templates?",
+        a: "No, and it would have little to do. The only writing in the whole build is the card, and it already arrives with a draft in it.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["love-gf", "darling"],
   },
 ];
 
