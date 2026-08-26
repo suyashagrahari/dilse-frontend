@@ -572,6 +572,305 @@ const guides: ProductGuide[] = [
     relatedBlogSlugs: [],
     relatedGuideSlugs: ["happy-rakshabandhan-to-sister"],
   },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Darling
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "darling",
+    templateHref: "/darling",
+    templateName: "My Darling",
+    title: "Build the Darling page — six rooms she can wander",
+    tagline: "A dashboard, not a card — and a nine-page wizard behind it",
+    summary:
+      "Darling is not a page she scrolls once. It is a dark little world with its own rail — Home, Wish, Photos, Music, Games, Notes — and she moves around it herself. You fill it through a nine-page wizard: the message, the wish card, her photos, a quiz you write, and truth-or-dare. This guide walks every page and then every room she sees.",
+    category: "love",
+    emoji: "🌹",
+    accent: "#e0457b",
+    buildTime: "About 10 minutes",
+    updatedAt: "2026-08-26",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-26",
+      silent: true,
+      // Timings read off the recording rather than estimated: the cut stamps a
+      // "STEP n OF 13" chip, so sampling one frame per second and reading the
+      // chip gives the exact second each step begins. Labels describe what is
+      // happening rather than echoing the on-screen heading — the recording's
+      // header is fixed, so a couple of its steps inherit the page title
+      // "Always Yours & My Love", which would be a useless thing to navigate by.
+      chapters: [
+        { at: 0,  label: "The page she opens" },
+        { at: 4,  label: "Open the builder, and fill it in yourself", sectionId: "open" },
+        { at: 11, label: "Their name, your name, your date",          sectionId: "names" },
+        { at: 17, label: "The love message",                          sectionId: "message" },
+        { at: 20, label: "The wish card",                             sectionId: "wish" },
+        { at: 24, label: "Her home photo",                            sectionId: "home-photo" },
+        { at: 26, label: "Gallery photos",                            sectionId: "gallery" },
+        { at: 29, label: "Quiz questions",                            sectionId: "quiz" },
+        { at: 32, label: "Truth & Dare",                              sectionId: "games" },
+        { at: 35, label: "The share photo",                           sectionId: "share-photo" },
+        { at: 38, label: "Save the page",                             sectionId: "save" },
+        { at: 45, label: "What she sees — all six rooms",             sectionId: "recipient" },
+        { at: 65, label: "Publish it",                                sectionId: "publish" },
+        { at: 72, label: "Link, QR, print",                           sectionId: "share" },
+        { at: 87, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder — and choose how to fill it",
+        intro:
+          "Darling opens as a finished sample so you can look round before committing to anything. Edit is at the foot of the left rail.",
+        steps: [
+          {
+            title: "Press Edit, bottom-left",
+            body:
+              "Not a Create button at the top like most templates — Darling is a dashboard, and its controls live at the foot of the rail you are standing in.",
+            shot: "step-01.webp",
+            shotAlt: "The Darling dashboard: the left rail, the love letter card and the time-together counter",
+          },
+          {
+            title: "Then pick AI Magic or Write yourself",
+            body:
+              "AI Magic asks you to describe your relationship in a few words and writes the messages, captions and quiz for you. Write yourself opens the nine-page form.",
+            shot: "step-02.webp",
+            shotAlt: "The choice between AI Magic and Write yourself",
+            note:
+              "This guide takes the Write yourself path, and so does the video — because that is the one that shows you every field. If you use AI Magic you land in the same nine pages with the words already filled in, and everything below still applies: you are editing rather than typing from nothing.",
+          },
+          {
+            title: "The strip along the top is a progress bar, not a menu",
+            body:
+              "Names · Message · Wish · Photos · Gallery · Quiz · Games · Share · Polish shows where you are. You move with Next and Back — clicking the strip does nothing.",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Names, and the date you count from",
+        steps: [
+          {
+            title: "Their name is the only required field",
+            body:
+              "Everything else on this page can wait. Their name is what the page is addressed to and what the share link previews with.",
+            shot: "step-03.webp",
+            shotAlt: "The Names page: their name, your name and an optional special date",
+          },
+          {
+            title: "The special date drives the counter",
+            body:
+              "Optional, and the field that earns its keep: set it and the home page runs a live count — years, months, days, hours, minutes, seconds — from that date. Leave it blank and the counter shows a sample.",
+          },
+        ],
+      },
+      {
+        id: "message",
+        title: "The love message",
+        steps: [
+          {
+            title: "The paragraph on the home page",
+            body:
+              "This sits under the title and is the first thing she reads. Long enough to say something, short enough that she reads it standing up.",
+            shot: "step-04.webp",
+            shotAlt: "The Love Message page with its text area",
+          },
+        ],
+      },
+      {
+        id: "wish",
+        title: "The wish card",
+        steps: [
+          {
+            title: "A second, softer note",
+            body:
+              "This one lives behind the Wish tab rather than on the home page, so it is the one she finds rather than the one she is shown. Worth making it the more private of the two.",
+            shot: "step-05.webp",
+            shotAlt: "The Wish Card page",
+          },
+        ],
+      },
+      {
+        id: "home-photo",
+        title: "Her home photo",
+        steps: [
+          {
+            title: "One photo, in a circle",
+            body:
+              "It sits at the top of the home page inside a circular frame, so centre the faces. Sliders set position and zoom — the same control the gallery photos use.",
+            shot: "step-06.webp",
+            shotAlt: "The Home Photo page with its circular crop area",
+          },
+        ],
+      },
+      {
+        id: "gallery",
+        title: "Gallery photos",
+        steps: [
+          {
+            title: "Up to ten, each with its own love letter",
+            body:
+              "This is the section people underestimate. Every photo takes its own note, so the gallery reads as a sequence of moments rather than an album.",
+            shot: "step-07.webp",
+            shotAlt: "The Gallery Photos page, empty, with the add control",
+            note:
+              "Ten is the ceiling, not the target. Six photos each with a real sentence beats ten with captions like “us ❤️”.",
+          },
+        ],
+      },
+      {
+        id: "quiz",
+        title: "Quiz questions",
+        steps: [
+          {
+            title: "Three are already written for you",
+            body:
+              "They arrive filled in, so the Games section works even if you skip this page entirely. Replace them with ones only she could answer.",
+            shot: "step-08.webp",
+            shotAlt: "The Quiz Questions page with three default questions",
+          },
+          {
+            title: "There is a library of thirty",
+            body:
+              "Browse 30 cute question templates if you are stuck, or write your own — up to ten in total.",
+          },
+        ],
+      },
+      {
+        id: "games",
+        title: "Truth & Dare",
+        steps: [
+          {
+            title: "Two lists, picked from a library",
+            body:
+              "Truth and Dare are separate tabs. Tap + on anything in the library to add it, or write your own with Custom Truth / Custom Dare.",
+            shot: "step-09.webp",
+            shotAlt: "The Truth & Dare page with the Truth library open",
+            note:
+              "Whatever you pick mixes with the built-in defaults rather than replacing them, so adding two of your own does not leave her with a two-question game.",
+          },
+        ],
+      },
+      {
+        id: "share-photo",
+        title: "The share photo",
+        steps: [
+          {
+            title: "The image on the link itself",
+            body:
+              "This is what appears when the link is pasted into WhatsApp or Instagram — the first thing she sees, before the page even opens.",
+            shot: "step-10.webp",
+            shotAlt: "The Share Photo page, with its Skip button",
+            note:
+              "The button on this page says Skip rather than Next, which is the honest label: leave it empty and the link still works, it just previews with the default artwork.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save the page",
+        steps: [
+          {
+            title: "Check the summary line first",
+            body:
+              "The card at the top counts what you actually filled — home photo, gallery photos, quiz questions, truth/dare. It is the fastest way to spot a page you meant to fill and skipped.",
+            shot: "step-11.webp",
+            shotAlt: "The Save page: the summary of what has been filled, and the optional password",
+          },
+          {
+            title: "Set a password if you want one",
+            body:
+              "Optional. With it set, only someone with the word can open the page.",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she sees — all six rooms",
+        intro:
+          "The rail is her navigation, so the tour is the rail. Fastest understood by watching from 00:45.",
+        steps: [
+          {
+            title: "Home, Wish, Photos, Music, Games, Notes",
+            body:
+              "Home carries the title, your message, the love letter and the counter. Wish holds the wish card. Photos is the gallery, one love letter at a time. Music is the playlist. Games is the quiz and truth-or-dare. Notes is where she writes back.",
+          },
+          {
+            title: "She is not walked through it",
+            body:
+              "Nothing is gated and there is no order — she wanders. That is the point of the format, and the reason it is worth filling more than one section.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish appears once you have saved",
+            body:
+              "Saving puts a Publish button in the rail under Edit. Until then there is nothing to publish.",
+            shot: "step-12.webp",
+            shotAlt: "The saved dashboard, now with a Publish button in the rail",
+          },
+          {
+            title: "Signed out, you sign in here",
+            body:
+              "The page publishes immediately afterwards — nothing you filled in is asked for twice.",
+            shot: "step-13.webp",
+            shotAlt: "Pressing Publish while signed out brings up the sign-in sheet",
+            note:
+              "On a phone the Google button is a full-page redirect. Let it come back on its own; closing the tab part-way means the publish never completes.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link, show the QR if she is with you, or print the card. The QR opens the page — it is not a payment code.",
+          },
+          {
+            title: "You can keep editing afterwards",
+            body:
+              "Profile → My Creations → the card → Edit. The link does not change, so anything you add later — another gallery photo, a better quiz question — reaches her without sending a new link.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Do I have to fill in all nine pages?",
+        a: "No. Their name is the only required field in the whole wizard, and the quiz arrives with three questions already written. Every other page can be skipped and the page still works — it just has fewer rooms worth wandering into. The summary on the Save page tells you what you left empty.",
+      },
+      {
+        q: "What does AI Magic actually write?",
+        a: "The messages, the photo captions and the quiz questions, from a few words you give it about your relationship. It drops you into the same nine pages with those fields filled, so you are editing rather than starting from a blank form. The video takes the manual path because it shows every field.",
+      },
+      {
+        q: "Can I change the music?",
+        a: "The Music room ships with a playlist. It is her side of the page rather than a builder field, so it is not part of the wizard.",
+      },
+      {
+        q: "What is the difference between the love message and the wish card?",
+        a: "Placement, and so tone. The love message is on the home page — the first thing she reads. The wish card is behind the Wish tab, so she finds it herself. Most people make the second one more private than the first.",
+      },
+      {
+        q: "How long does the whole thing take?",
+        a: "About ten minutes if you have the photos ready. It is longer than the other templates because there is genuinely more in it — the gallery letters and the quiz are where the time goes.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: [],
+  },
 ];
 
 export const guideList: ProductGuide[] = guides;
