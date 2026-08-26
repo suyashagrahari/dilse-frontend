@@ -80,6 +80,13 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/flags", priority: 0.8, changeFrequency: "monthly" },
   { path: "/app", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal-notice", priority: 0.8, changeFrequency: "monthly" },
+  // ── Product guides ───────────────────────────────────────────────────────
+  // The hub carries template priority rather than informational: a guide page
+  // ranks for "how to" intent around a template ("how to make a rakhi card
+  // online"), which is a buying query with the buyer one click further back.
+  // The per-guide pages are appended from the guide registry in sitemap.ts, so
+  // adding a guide does not mean editing this list a second time.
+  { path: "/guides", priority: 0.7, changeFrequency: "weekly" },
   // ── Informational ────────────────────────────────────────────────────────
   { path: "/help", priority: 0.5, changeFrequency: "monthly" },
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },

@@ -121,6 +121,15 @@ export default function DesktopNav() {
           >
             Favorite
           </button>
+          {/* Guides sits between Favorite and Blog rather than at the end with
+              About/Contact. It belongs with the tabs someone uses while they
+              are deciding what to make, not with the ones they use to find out
+              who we are — and next to Blog specifically, because the two are
+              the site's whole body of reading and people who want one often
+              want the other. */}
+          <button onClick={() => router.push("/guides")} style={tabTextStyle(pathname.startsWith("/guides"))}>
+            Guides
+          </button>
           <button onClick={() => router.push("/blog")} style={tabTextStyle(pathname.startsWith("/blog"))}>
             Blog
           </button>

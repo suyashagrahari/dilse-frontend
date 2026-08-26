@@ -74,3 +74,46 @@ export const templateMediaBase = (slug: string): string => `${TEMPLATE_MEDIA_BAS
 /** Resolve a single asset, e.g. templateMedia("train-ticket", "hug.webm"). */
 export const templateMedia = (slug: string, file: string): string =>
   `${TEMPLATE_MEDIA_BASE}/${slug}/${file}`;
+
+// ─── Product guides ──────────────────────────────────────────────────────────
+//
+// The guide media set — screen recordings, their posters, and the annotated
+// screenshots the written walkthrough is built from — lives beside the template
+// assets under the same prefix, in its own `guides/` folder rather than mixed
+// into `templates/<slug>/`.
+//
+// Keeping them apart matters because the two sets have different lifetimes. A
+// template's assets change when the template's design changes. A guide's assets
+// change when the *flow* changes — a renamed button, a reordered form step —
+// which happens on a different schedule and is re-captured by a different
+// script (`scripts/capture-guide-screenshots.mjs`). Folding them together would
+// mean a re-run of the screenshot capture could overwrite a template cover.
+//
+// Staging source: <workspace>/media-src/guides/<slug>/
+// Upload:         cd server && npm run upload:guide-media
+
+/** Where the per-guide folders live. */
+export const GUIDE_MEDIA_BASE = `${MEDIA_BASE}/guides`;
+
+/** Resolve a single guide asset, e.g. guideMedia("holi", "step-02.webp"). */
+export const guideMedia = (slug: string, file: string): string =>
+  `${GUIDE_MEDIA_BASE}/${slug}/${file}`;
+
+/**
+ * The three objects `scripts/compress-guide-videos.sh` produces for one guide,
+ * named by convention so the registry never has to spell them out.
+ *
+ * There is deliberately no WebM here. The obvious move on a video set is to ship
+ * VP9 alongside H.264 and let the browser take the smaller one, and on camera
+ * footage that is worth 35-45%. These sources are screen captures that have
+ * ALREADY been encoded to H.264 at ~916 kbps, and a measured VP9 pass came out
+ * at 7.46 MB against H.264's 7.52 MB — 1%, for a second encode, a second object
+ * in the bucket and a second thing to re-upload whenever a flow changes. It was
+ * dropped on the numbers rather than on principle; if a future guide starts from
+ * a real master, re-measure before assuming the same answer.
+ */
+export const guideVideoSet = (slug: string) => ({
+  mp4:    guideMedia(slug, `${slug}.mp4`),
+  mp4720: guideMedia(slug, `${slug}-720.mp4`),
+  poster: guideMedia(slug, `${slug}-poster.webp`),
+});

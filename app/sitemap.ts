@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL, TEMPLATE_SEO } from "@/lib/seo";
 import { getAllArticleSlugs, getCategories } from "@/lib/strapi";
 import { COMING_SOON_REDIRECTS, STANDALONE_INDEXABLE_PAGES } from "@/lib/site-routes";
+import { guideList } from "@/data/guide-registry";
 
 // Revalidated on demand by the Strapi webhook (tag `articles`) + hourly fallback.
 export const revalidate = 3600;
@@ -39,6 +40,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: page.priority,
   }));
 
+  // One entry per guide, generated from the registry rather than hand-listed.
+  // `updatedAt` is the date the guide's content was last checked against the
+  // live flow, which is the honest lastModified — a guide whose template has
+  // since changed should not be advertised as fresh just because the file was
+  // touched. Guides sit at 0.7, above the informational pages and below the
+  // templates they document: they exist to send someone to a template, so they
+  // should not outrank it.
+  const guidePages: MetadataRoute.Sitemap = guideList.map((g) => ({
+    url: `${SITE_URL}/guides/${g.slug}`,
+    lastModified: new Date(g.updatedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   // Blog content from Strapi — degrades gracefully (empty) if the CMS is unreachable.
   const [articles, categories] = await Promise.all([getAllArticleSlugs(), getCategories()]);
 
@@ -56,5 +71,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...templatePages, ...standalonePages, ...blogPosts, ...blogCategories];
+  return [...staticPages, ...templatePages, ...standalonePages, ...guidePages, ...blogPosts, ...blogCategories];
 }

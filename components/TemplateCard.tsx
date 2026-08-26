@@ -4,11 +4,12 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Crown } from "lucide-react";
+import { Crown, PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
+import { guideByTemplateHref } from "@/data/guide-registry";
 
 interface TemplateCardProps {
   template: TemplateListItem;
@@ -24,6 +25,10 @@ const TemplateCard = memo(function TemplateCard({
   index,
   onFavorite,
 }: TemplateCardProps) {
+  // A compile-time lookup against the guide registry, not a fetch — the registry
+  // is a static import, so this costs one object property read per card.
+  const hasGuide = Boolean(guideByTemplateHref[`/${template.slug}`]);
+
   return (
     <motion.div
       layout
@@ -85,6 +90,34 @@ const TemplateCard = memo(function TemplateCard({
             className="absolute inset-x-0 bottom-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }}
           />
+
+          {/* Guide badge — top-right, opposite the premium ribbon so the two
+              never collide on a template that is both.
+
+              This is the only discovery path from the gallery into the guides,
+              and it earns its place: someone scanning fifty cards for one they
+              can actually finish is helped by knowing which ones come with a
+              walkthrough. It is a marker on the card, not a second link — the
+              card still goes to the template, because that is what someone
+              clicking a template card means to do. */}
+          {hasGuide && (
+            <div className="absolute top-0 right-0 z-20">
+              <div
+                className="flex items-center gap-1 px-2.5 py-1 rounded-bl-xl rounded-tr-2xl text-[9px] font-black uppercase tracking-widest"
+                style={{
+                  background: "rgba(26,5,8,0.72)",
+                  backdropFilter: "blur(6px)",
+                  color: "#f2cf74",
+                  border: "1px solid rgba(242,207,116,0.42)",
+                  borderTop: "none",
+                  borderRight: "none",
+                }}
+              >
+                <PlayCircle size={9} />
+                Guide
+              </div>
+            </div>
+          )}
 
           {/* Premium crown badge — top-left ribbon */}
           {template.isPremium && (

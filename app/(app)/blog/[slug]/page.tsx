@@ -11,6 +11,8 @@ import AuthorBox from "@/components/blog/AuthorBox";
 import FAQAccordion from "@/components/blog/FAQAccordion";
 import ShareButtons from "@/components/blog/ShareButtons";
 import RelatedPosts from "@/components/blog/RelatedPosts";
+import GuidePromo from "@/components/guides/GuidePromo";
+import { getGuidesForArticle } from "@/lib/guides";
 import TableOfContents from "@/components/blog/TableOfContents";
 import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
 import { ArticleGraphJsonLd } from "@/components/JsonLd";
@@ -79,6 +81,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   //  • none linked → redirect to the /templates listing page (no picker)
   const linkedTemplates = article.relatedTemplates ?? [];
   const related = await getRelatedArticles(article);
+  // Guides for the templates this post is linked to, if any of them have one.
+  // Sits between the author box and the related posts: the reader has finished
+  // the article and is deciding what to do, which is the moment a "here is how
+  // to actually build it" is useful rather than an interruption.
+  const articleGuides = getGuidesForArticle(article);
   const cover = articleCover(article);
   const url = `${SITE_URL}/blog/${article.slug}`;
   const ogImage = articleOgImage(article) || DEFAULT_OG_IMAGE;
@@ -261,6 +268,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <AuthorBox author={article.author} />
           </div>
         )}
+
+        {/* How to build the thing the post is about */}
+        <GuidePromo guides={articleGuides} heading="See it built, step by step" />
 
         {/* Related */}
         <RelatedPosts articles={related} />

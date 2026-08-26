@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 
 export default function BottomNav() {
@@ -42,6 +42,7 @@ export default function BottomNav() {
     if (pathname.startsWith("/manifesto")) return 3;
     if (
       pathname.startsWith("/profile") ||
+      pathname.startsWith("/guides") ||
       pathname.startsWith("/blog") ||
       pathname.startsWith("/about-us") ||
       pathname.startsWith("/contact-us") ||
@@ -155,6 +156,11 @@ export default function BottomNav() {
               }}
             >
               {[
+                // Guides leads the menu. Everything else here is account
+                // admin or company info — this is the only entry that helps
+                // someone finish the thing they came to make, so it should not
+                // be the fifth item they read past.
+                { label: "Product Guides", icon: <GraduationCap size={15} />, href: "/guides" },
                 { label: "Profile", icon: <User size={15} />, href: "/profile" },
                 { label: "Blog", icon: <BookOpen size={15} />, href: "/blog" },
                 { label: "Refer & Earn", icon: <Gift size={15} />, href: "/profile#referral" },
