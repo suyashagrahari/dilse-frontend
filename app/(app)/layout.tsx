@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayoutShell from "./AppLayoutShell";
 import AppSplash from "@/components/AppSplash";
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
+import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
@@ -27,6 +28,10 @@ export default function AppLayout({
         <WebsiteJsonLd />
         <GlobalEffects />
         <NavMount />
+        {/* Renders nothing unless THIS tab holds an impersonation session.
+            Mounted at the layout so it cannot be scrolled past or missed on a
+            sub-page — the hazard of impersonation is forgetting you are in it. */}
+        <ImpersonationBanner />
         <ErrorBoundary>{children}</ErrorBoundary>
         {/* Same sheet the templates raise, so sharing a creation from the
             profile offers the QR, the photo QR and the printable card too. */}
