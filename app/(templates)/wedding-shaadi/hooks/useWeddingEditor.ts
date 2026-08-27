@@ -573,6 +573,13 @@ export function useWeddingEditor() {
     try {
       sessionStorage.setItem("wedding_draft", JSON.stringify({ data: mf, password: pagePassword, completed: true }));
     } catch {}
+    /* Publish is gated on isPersonalized, so without this the sender finishes all
+     * seven wizard steps, lands on the preview, and finds no way to publish at
+     * all — the invitation cannot go live. The only route through was to reload
+     * the page, because the draft-restore effect above sets the flag; nobody
+     * would guess that. reception, shaadi-card and christian-wedding all set it
+     * on this same path. */
+    setIsPersonalized(true);
     setEditMode("preview");
   }, [mf, pagePassword]);
 

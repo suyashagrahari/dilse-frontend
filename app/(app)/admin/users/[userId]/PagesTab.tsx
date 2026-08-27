@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL } from "@/lib/config";
-import { Eye, EyeOff, KeyRound, Trash2, ExternalLink, FileText, Search } from "lucide-react";
+import { API_URL, SITE_URL } from "@/lib/config";
+import { Eye, EyeOff, KeyRound, Trash2, ExternalLink, Search, Link2 } from "lucide-react";
 import { C, type ProfileData, type ProfilePage } from "./types";
 import { Card, Empty, Btn, Pill, Dialog, CopyBtn, useToast, fmtShort } from "./ui";
-import PageContentModal from "./PageContentModal";
 
 /**
- * Every page the user has made, with the per-page actions.
+ * What this user has made, as a list of links.
+ *
+ * Deliberately a LINK LIST, not a content viewer. The super admin's question is
+ * "what did they publish, what does it cost to open it, how many people saw it,
+ * and should it still exist" — so the share URL is the primary column and the
+ * page itself is one click away in a new tab. Rendering the stored document
+ * inline put a wall of someone's private photos and messages on screen to
+ * answer a question that the link already answers.
  *
  * Passwords are fetched one page at a time and only when asked for: each reveal
  * is its own audit entry, so a bulk "show all" would forge a record of the
@@ -25,10 +31,11 @@ export default function PagesTab({
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
-  const [viewing, setViewing] = useState<ProfilePage | null>(null);
   const [pwFor, setPwFor] = useState<ProfilePage | null>(null);
   const [pwValue, setPwValue] = useState("");
   const [delFor, setDelFor] = useState<ProfilePage | null>(null);
+
+  const urlOf = (p: ProfilePage) => (p.shareId ? `${SITE_URL}/${p.shareId}` : "");
 
   const reveal = async (p: ProfilePage) => {
     if (revealed[p._id]) {
@@ -86,9 +93,48 @@ export default function PagesTab({
       (p.shareId || "").includes(filter)
   );
 
+  /** The share link, as the thing you act on: open it or copy it. */
+  const Url = ({ p }: { p: ProfilePage }) => {
+    if (!p.shareId) return <span style={{ color: C.muted, fontSize: 12.5 }}>Not published</span>;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, maxWidth: "100%" }}>
+        <a
+          href={urlOf(p)}
+          target="_blank"
+          rel="noreferrer"
+          className="sa-mono"
+          title={urlOf(p)}
+          style={{
+            color: C.accent, textDecoration: "none", overflow: "hidden",
+            textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
+          }}
+        >
+          /{p.shareId}
+        </a>
+        <CopyBtn value={urlOf(p)} label="Copy full link" />
+      </span>
+    );
+  };
+
+  const Password = ({ p }: { p: ProfilePage }) =>
+    !p.hasPassword ? (
+      <span style={{ color: C.muted, fontSize: 12.5 }}>none</span>
+    ) : revealed[p._id] ? (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <code className="sa-mono" style={{ color: C.text, fontWeight: 700 }}>{revealed[p._id]}</code>
+        <CopyBtn value={revealed[p._id]} label="Copy password" />
+      </span>
+    ) : (
+      <span className="sa-mono" style={{ color: C.muted }}>••••••</span>
+    );
+
   const Actions = ({ p }: { p: ProfilePage }) => (
     <div className="sa-actions">
-      <Btn variant="ghost" icon title="See what they created" onClick={() => setViewing(p)}><FileText size={13} /></Btn>
+      {p.shareId && (
+        <a href={urlOf(p)} target="_blank" rel="noreferrer" className="sa-btn sa-icon-btn" data-v="ghost" title="Open the page">
+          <ExternalLink size={13} />
+        </a>
+      )}
       {p.hasPassword && (
         <Btn variant="ghost" icon title="Reveal password — this is logged" onClick={() => reveal(p)} disabled={busy === p._id}>
           {revealed[p._id] ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -99,33 +145,19 @@ export default function PagesTab({
           <KeyRound size={13} />
         </Btn>
       )}
-      {p.shareId && (
-        <a href={`/${p.shareId}`} target="_blank" rel="noreferrer" className="sa-btn sa-icon-btn" data-v="ghost" title="Open the live page">
-          <ExternalLink size={13} />
-        </a>
-      )}
       <Btn variant="danger" icon title="Delete permanently" onClick={() => setDelFor(p)} disabled={busy === p._id}>
         <Trash2 size={13} />
       </Btn>
     </div>
   );
 
-  const Password = ({ p }: { p: ProfilePage }) =>
-    !p.hasPassword ? (
-      <span style={{ color: C.muted }}>none</span>
-    ) : revealed[p._id] ? (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-        <code className="sa-mono" style={{ color: C.accent }}>{revealed[p._id]}</code>
-        <CopyBtn value={revealed[p._id]} label="Copy password" />
-      </span>
-    ) : (
-      <span className="sa-mono" style={{ color: C.muted }}>••••••</span>
-    );
+  const live = data.pages.filter((p) => p.isPublished).length;
+  const locked = data.pages.filter((p) => p.hasPassword).length;
 
   return (
     <>
       <Card
-        title={`Pages (${data.pages.length})`}
+        title={`Templates — ${data.pages.length} total · ${live} live · ${locked} password-locked`}
         action={
           <div style={{ display: "flex", alignItems: "center", gap: 7, flex: "1 1 200px", maxWidth: 300 }}>
             <Search size={14} color={C.muted} style={{ flexShrink: 0 }} />
@@ -133,50 +165,63 @@ export default function PagesTab({
               className="sa-input"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter template or share id…"
+              placeholder="Filter template or link…"
             />
           </div>
         }
       >
         {pages.length === 0 ? (
-          <Empty>{data.pages.length === 0 ? "This user hasn't created any pages yet." : "Nothing matches that filter."}</Empty>
+          <Empty>{data.pages.length === 0 ? "This user hasn't created any templates yet." : "Nothing matches that filter."}</Empty>
         ) : (
           <>
-            {/* Desktop / tablet */}
+            {/* Tablet / desktop */}
             <div className="sa-only-lg" style={{ overflowX: "auto" }}>
               <table className="sa-table">
                 <thead>
                   <tr>
-                    <th>Template</th><th>Status</th><th>Views</th><th>Password</th><th>Created</th><th>Actions</th>
+                    <th>Template</th>
+                    <th style={{ minWidth: 200 }}>Link</th>
+                    <th>Password</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pages.map((p) => (
                     <tr key={p._id}>
-                      <td style={{ fontWeight: 600 }}>{p.templateLabel}</td>
-                      <td>
-                        <Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.green : C.muted} />
-                      </td>
-                      <td style={{ color: C.muted }}>{p.viewCount}</td>
+                      <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{p.templateLabel}</td>
+                      <td style={{ maxWidth: 260 }}><Url p={p} /></td>
                       <td><Password p={p} /></td>
+                      <td style={{ fontWeight: 700 }}>{p.viewCount.toLocaleString()}</td>
+                      <td><Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.green : C.muted} /></td>
                       <td style={{ color: C.muted, whiteSpace: "nowrap" }}>{fmtShort(p.createdAt)}</td>
-                      <td><Actions p={p} /></td>
+                      <td>
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}><Actions p={p} /></div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Phone — a table here would either scroll invisibly or crush */}
+            {/* Phone — a table here scrolls sideways with invisible columns */}
             <div className="sa-only-sm sa-cards">
               {pages.map((p) => (
                 <div key={p._id} className="sa-mini">
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                     <strong style={{ fontSize: 14 }}>{p.templateLabel}</strong>
                     <Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.green : C.muted} />
                   </div>
-                  <div className="sa-mini-r"><span className="sa-mini-l">Views</span><span>{p.viewCount}</span></div>
+                  <div className="sa-mini-r" style={{ alignItems: "center" }}>
+                    <span className="sa-mini-l" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <Link2 size={12} /> Link
+                    </span>
+                    <span style={{ minWidth: 0, maxWidth: "68%" }}><Url p={p} /></span>
+                  </div>
                   <div className="sa-mini-r"><span className="sa-mini-l">Password</span><span><Password p={p} /></span></div>
+                  <div className="sa-mini-r"><span className="sa-mini-l">Views</span><strong>{p.viewCount.toLocaleString()}</strong></div>
                   <div className="sa-mini-r"><span className="sa-mini-l">Created</span><span>{fmtShort(p.createdAt)}</span></div>
                   <div style={{ marginTop: 10 }}><Actions p={p} /></div>
                 </div>
@@ -185,8 +230,6 @@ export default function PagesTab({
           </>
         )}
       </Card>
-
-      <PageContentModal page={viewing} hdr={hdr} onClose={() => setViewing(null)} />
 
       <Dialog open={!!pwFor} onClose={() => setPwFor(null)} title={`Password — ${pwFor?.templateLabel || ""}`}>
         <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, margin: "0 0 14px" }}>
@@ -209,13 +252,14 @@ export default function PagesTab({
         </div>
       </Dialog>
 
-      <Dialog open={!!delFor} onClose={() => setDelFor(null)} title="Delete this page?">
+      <Dialog open={!!delFor} onClose={() => setDelFor(null)} title="Delete this template?">
         <p style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 8px" }}>
-          <strong>{delFor?.templateLabel}</strong>, created {fmtShort(delFor?.createdAt)}.
+          <strong>{delFor?.templateLabel}</strong>
+          {delFor?.shareId ? <> · <code className="sa-mono">/{delFor.shareId}</code></> : null}
         </p>
         <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, margin: "0 0 16px" }}>
-          Its share link will 404 for everyone who has it, including recipients who
-          did nothing wrong. This cannot be undone.
+          The link will 404 for everyone who has it, including recipients who did
+          nothing wrong. This cannot be undone.
         </p>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Btn variant="ghost" onClick={() => setDelFor(null)}>Cancel</Btn>
