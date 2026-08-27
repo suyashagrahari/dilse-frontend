@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
+import { isSuperAdmin } from "@/lib/roles";
 import {
   Search, Users, Crown, UserCheck, User as UserIcon, MessageSquare,
   ChevronLeft, ChevronRight, Eye, FileText, Calendar, Mail,
@@ -12,7 +13,7 @@ import {
 
 interface UserItem {
   _id:string; name:string; email:string; avatar?:string; provider:string;
-  role:string; points:number; isVerified:boolean; createdAt:string;
+  role:string; status?:string; statusReason?:string; points:number; isVerified:boolean; createdAt:string;
 }
 interface UserDetailData {
   user: UserItem & { totalPointsEarned:number; referralCode:string; subdomain?:string; updatedAt:string };
@@ -28,15 +29,18 @@ const tM="#9a7070";
 const g="#c9a84c";
 const gD="#8b5a2b";
 const bg="#3d0c11";
-const RC:Record<string,string>={admin:g,member:gD,normal:tM};
+const RC:Record<string,string>={superadmin:"#b3261e",admin:g,member:gD,normal:tM};
+const SC:Record<string,string>={active:"#1e7a4b",suspended:gD,banned:"#b3261e"};
 
 export default function AdminUsersPage(){
   const router=useRouter();
-  const {accessToken}=useAppSelector(s=>s.auth);
+  const {accessToken,user:me}=useAppSelector(s=>s.auth);
+  const superAdmin=isSuperAdmin(me?.role);
   const [users,setUsers]=useState<UserItem[]>([]);
   const [pg,setPg]=useState<Pg>({page:1,limit:20,total:0,totalPages:0});
   const [search,setSearch]=useState("");
   const [rf,setRf]=useState("");
+  const [sf,setSf]=useState("");
   const [loading,setLoading]=useState(true);
   const [sel,setSel]=useState<UserDetailData|null>(null);
   const [dLoading,setDLoading]=useState(false);
@@ -51,14 +55,19 @@ export default function AdminUsersPage(){
     setLoading(true);
     try{
       const p=new URLSearchParams({page:String(page),limit:"20"});
-      if(search)p.set("search",search); if(rf)p.set("role",rf);
+      if(search)p.set("search",search); if(rf)p.set("role",rf); if(sf)p.set("status",sf);
       const res=await fetch(`${API_URL}/admin/users?${p}`,{headers:hdr()});
       const data=await res.json();
       if(data.success){setUsers(data.data.users);setPg(data.data.pagination);}
     }finally{setLoading(false);}
-  },[accessToken,search,rf,hdr]);
+  },[accessToken,search,rf,sf,hdr]);
 
   useEffect(()=>{fetchUsers(1);},[fetchUsers]);
+
+  const openUser=(id:string)=>{
+    if(superAdmin){router.push(`/admin/users/${id}`);return;}
+    fetchDetail(id);
+  };
 
   const fetchDetail=async(id:string)=>{
     setDLoading(true);
@@ -99,6 +108,19 @@ export default function AdminUsersPage(){
       }else alert(data.error||"Failed to delete page");
     }catch{alert("Failed to delete page. Please try again.");}
     finally{setPageDeleting(null);}
+  };
+
+  // Only rendered when the account is NOT active: a pill on every row would be
+  // noise, and the whole point is that a suspended or banned account stands out.
+  const StatusPill=({status}:{status?:string})=>{
+    if(!status||status==="active")return null;
+    return(
+      <span style={{display:"inline-flex",alignItems:"center",padding:"3px 8px",borderRadius:6,
+        fontSize:10,fontWeight:700,textTransform:"capitalize",marginLeft:4,
+        background:`${SC[status]}15`,color:SC[status],border:`1px solid ${SC[status]}30`}}>
+        {status}
+      </span>
+    );
   };
 
   const Badge=({role}:{role:string})=>{
@@ -156,13 +178,23 @@ export default function AdminUsersPage(){
               {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:tM,padding:2}}><X size={13}/></button>}
             </div>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {["","normal","member","admin"].map(r=>(
+              {["","normal","member","admin","superadmin"].map(r=>(
                 <button key={r} onClick={()=>setRf(r)} style={{
                   padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize",
                   border:rf===r?`1.5px solid ${g}`:`1px solid ${cB}`,
                   background:rf===r?`${g}15`:"rgba(255,255,255,0.5)",
                   color:rf===r?gD:tM,
                 }}>{r||"All"}</button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+              {["","active","suspended","banned"].map(st=>(
+                <button key={st} onClick={()=>setSf(st)} style={{
+                  padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize",
+                  border:sf===st?`1.5px solid ${SC[st]||g}`:`1px solid ${cB}`,
+                  background:sf===st?`${SC[st]||g}15`:"rgba(255,255,255,0.5)",
+                  color:sf===st?(SC[st]||gD):tM,
+                }}>{st||"Any status"}</button>
               ))}
             </div>
           </div>
@@ -194,7 +226,7 @@ export default function AdminUsersPage(){
                     </tr></thead>
                     <tbody>
                       {users.map((u,i)=>(
-                        <tr key={u._id} className="ur" style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",cursor:"pointer",transition:"background 0.15s"}} onClick={()=>fetchDetail(u._id)}>
+                        <tr key={u._id} className="ur" style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",cursor:"pointer",transition:"background 0.15s"}} onClick={()=>openUser(u._id)}>
                           <td style={{padding:"10px 14px"}}>
                             <div style={{display:"flex",alignItems:"center",gap:10}}>
                               {u.avatar?<img src={u.avatar} alt="" style={{width:30,height:30,borderRadius:8,objectFit:"cover"}}/>:
@@ -203,7 +235,7 @@ export default function AdminUsersPage(){
                             </div>
                           </td>
                           <td style={{padding:"10px 14px",fontSize:11,color:t2}}>{u.email}</td>
-                          <td style={{padding:"10px 14px"}}><Badge role={u.role}/></td>
+                          <td style={{padding:"10px 14px"}}><Badge role={u.role}/><StatusPill status={u.status}/></td>
                           <td style={{padding:"10px 14px",fontSize:11,color:tM,textTransform:"capitalize"}}>{u.provider}</td>
                           <td style={{padding:"10px 14px",fontSize:11,color:gD,fontWeight:700}}>{u.points}</td>
                           <td style={{padding:"10px 14px",fontSize:10,color:tM}}>{new Date(u.createdAt).toLocaleDateString()}</td>
@@ -223,7 +255,7 @@ export default function AdminUsersPage(){
                 {/* Mobile cards */}
                 <div className="flex flex-col gap-2 p-3 md:hidden">
                   {users.map(u=>(
-                    <div key={u._id} onClick={()=>fetchDetail(u._id)} style={{
+                    <div key={u._id} onClick={()=>openUser(u._id)} style={{
                       display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
                       borderRadius:12,background:"rgba(255,255,255,0.5)",border:`1px solid ${cB}`,cursor:"pointer",
                     }}>
@@ -232,7 +264,7 @@ export default function AdminUsersPage(){
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           <span style={{fontSize:12,fontWeight:700,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
-                          <Badge role={u.role}/>
+                          <Badge role={u.role}/><StatusPill status={u.status}/>
                         </div>
                         <p style={{fontSize:10,color:tM,margin:"2px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</p>
                       </div>
