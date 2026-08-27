@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { isAdmin } from "@/lib/roles";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,7 +27,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       typeof window === "undefined" ? null : window.localStorage.getItem("gifts_access_token");
     if (token && !user) return;
 
-    if (!isAuthenticated || !user || user.role !== "admin") {
+    // `isAdmin` is a rank check, not an equality check: a superadmin outranks
+    // admin and must still reach every admin page. `role !== "admin"` would
+    // redirect them straight back out.
+    if (!isAuthenticated || !user || !isAdmin(user.role)) {
       router.replace("/");
       return;
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { getImpersonation } from "@/lib/impersonation";
 
 export type UserRole = "normal" | "member" | "admin";
 
@@ -308,7 +309,13 @@ export const checkAuth = createAsyncThunk(
   "auth/check",
   async (_, { getState, dispatch, rejectWithValue }) => {
     const state = getState() as { auth: AuthState };
+    // An impersonation token lives in sessionStorage and belongs to this tab
+    // only. It must win here: otherwise `/auth/me` answers as the admin while
+    // the tab believes it is the user, and every later call acts as the wrong
+    // identity.
+    const impersonation = getImpersonation();
     const token =
+      impersonation?.token ||
       state.auth.accessToken ||
       (typeof window !== "undefined"
         ? localStorage.getItem("gifts_access_token")
@@ -403,6 +410,14 @@ const authSlice = createSlice({
     },
     hydrateAuth(state) {
       if (typeof window !== "undefined") {
+        const imp = getImpersonation();
+        if (imp) {
+          // Borrowed identity for this tab only. No refresh token is issued
+          // for an impersonation session — it is meant to expire, not renew.
+          state.accessToken = imp.token;
+          state.refreshToken = null;
+          return;
+        }
         const token = localStorage.getItem("gifts_access_token");
         const refresh = localStorage.getItem("gifts_refresh_token");
         if (token && refresh) {
