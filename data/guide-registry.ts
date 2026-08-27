@@ -1655,6 +1655,690 @@ const guides: ProductGuide[] = [
     relatedBlogSlugs: [],
     relatedGuideSlugs: ["love-gf", "darling"],
   },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Miss You — long-distance letter
+  //
+  // The first of two templates that are NOT dashboards. There is no rail and no
+  // paged wizard: Create opens one long form, and Save & Preview is at the foot
+  // of it. Worth saying plainly in the guide, because someone who has built a
+  // Darling or a Birthday page will look for a Next button that is not there.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "missyou-gf",
+    templateHref: "/missyou-gf",
+    templateName: "Miss You",
+    title: "Build a Miss You letter that asks her something back",
+    tagline: "One long form, no wizard — and a page that collects her answers",
+    summary:
+      "A letter for the distance: how long it has been, the two cities and the kilometres between them, a secret behind a scratch card, and a set of Open when… envelopes she keeps for the days that need them. The last section is the one nobody expects — four questions the page asks her, and her answers save back to you.",
+    category: "love",
+    emoji: "🌙",
+    accent: "#b8395f",
+    buildTime: "About 7 minutes",
+    updatedAt: "2026-08-27",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-27",
+      silent: true,
+      // Timings read off the recording's own "STEP n OF 12" chip and the title
+      // it prints over each region, a frame at a time. The chip counts twelve
+      // steps; the sections below are the same twelve, which is why the rail
+      // and the written guide agree without a lookup table.
+      chapters: [
+        { at: 0,  label: "The letter she opens" },
+        { at: 4,  label: "Open the builder",              sectionId: "open" },
+        { at: 7,  label: "Fill it in yourself",           sectionId: "open" },
+        { at: 11, label: "Build your letter",             sectionId: "letter" },
+        { at: 16, label: "Time apart & distance",         sectionId: "distance" },
+        { at: 19, label: "A secret",                      sectionId: "secret" },
+        { at: 23, label: "Open when… notes",              sectionId: "open-when" },
+        { at: 26, label: "Remember-us quiz",              sectionId: "quiz" },
+        { at: 30, label: "Accent tint & password",        sectionId: "tint" },
+        { at: 33, label: "Pick the song",                 sectionId: "song" },
+        { at: 37, label: "Save it",                       sectionId: "save" },
+        { at: 40, label: "What she actually sees",        sectionId: "recipient" },
+        { at: 43, label: "For your eyes only",            sectionId: "recipient" },
+        { at: 46, label: "The hug button",                sectionId: "recipient" },
+        { at: 50, label: "The scratch card",              sectionId: "recipient" },
+        { at: 53, label: "One silly question",            sectionId: "recipient" },
+        { at: 56, label: "Letters for later",             sectionId: "recipient" },
+        { at: 59, label: "Memory lane, as she sees it",   sectionId: "recipient" },
+        { at: 63, label: "Our love map",                  sectionId: "recipient" },
+        { at: 66, label: "Publish it",                    sectionId: "publish" },
+        { at: 73, label: "Link, QR, print",               sectionId: "share" },
+        { at: 88, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "Create is in the top bar, not Edit at the foot of a rail — this template has no rail. What opens is a single scrolling form, and the button that finishes it is Save & Preview at the very bottom.",
+        steps: [
+          {
+            title: "Press Create, top-right",
+            body:
+              "The page you are looking at first is the demo, already filled in with someone else's words. Nothing you do to it is saved until you press Save & Preview.",
+            shot: "step-01.webp",
+            shotAlt: "The finished Miss You letter with Create in the top bar",
+          },
+          {
+            title: "Write it for me, or fill it in yourself",
+            body:
+              "Two doors. Write it for me takes a couple of sentences about the two of you and drafts every field; I'll fill it in myself goes straight to the form. Either way every word stays editable afterwards.",
+            shot: "step-02.webp",
+            shotAlt: "The choice between Write it for me and I'll fill it in myself",
+            note:
+              "The AI draft is a decent skeleton and a poor letter. It cannot know the name of the stall where the chai tasted right. Use it to get past the blank page, then replace the specifics.",
+          },
+          {
+            title: "There are no Next buttons — scroll",
+            body:
+              "If you have built a Darling or Birthday page you will look for a wizard here and not find one. Everything is on one page, top to bottom, and nothing is lost by scrolling past a section you want to come back to.",
+          },
+        ],
+      },
+      {
+        id: "letter",
+        title: "Build your letter",
+        steps: [
+          {
+            title: "Names, pet-name, cover line",
+            body:
+              "Your name is the only required field on the whole form. Pet-name is what she is called throughout the page — “my moon” in the demo — and the cover line is the small italic above the headline.",
+            shot: "step-03.webp",
+            shotAlt: "Your name, their name, pet-name, cover line, the letter body and signature",
+          },
+          {
+            title: "The letter itself",
+            body:
+              "This is the body of the page and it deserves the most time. Write it in the second person, to her, and keep the small concrete things — a stall, a song, a rooftop. Signature is the line above your name.",
+          },
+          {
+            title: "A voice note, if you want one",
+            body:
+              "Record voice note captures straight from the browser; Upload audio takes a file. Optional, and easy to miss — it sits directly under the signature.",
+            note:
+              "Thirty seconds of your actual voice does more here than another paragraph. It is also the one part of the page she cannot re-read in your handwriting later, so it lands differently.",
+          },
+        ],
+      },
+      {
+        id: "distance",
+        title: "Time apart & distance",
+        steps: [
+          {
+            title: "Missing you since",
+            body:
+              "A date and a time. It drives the live counter on her page — days, hours, minutes, seconds, ticking while she reads.",
+            shot: "step-04.webp",
+            shotAlt: "Missing you since, your city and their city, reunion date, and the km/mi toggle",
+          },
+          {
+            title: "Two cities, and the kilometres between them",
+            body:
+              "Your city and their city are dropdowns, and the page works the distance out from them. Set the units with the km / mi pair beside the reunion date.",
+            note:
+              "The distance is the quietest thing on the page and the one that tends to land. It only works if both cities are actually set — leave one empty and the line simply does not appear.",
+          },
+          {
+            title: "Reunion date, if you have one",
+            body:
+              "Optional. Set it and the counter gains a second half counting down instead of up. Leave it empty if the date is not real yet — a made-up one reads as a made-up one.",
+          },
+        ],
+      },
+      {
+        id: "memories",
+        title: "Our memory lane",
+        intro:
+          "No chapter marker for this one — the recording keeps the same title over it as the region above, so there is no honest timestamp to link to. It sits between Time apart & distance and A secret in the form.",
+        steps: [
+          {
+            title: "Six captions, each with a photo slot",
+            body:
+              "The camera square to the left of each line takes the picture; the line beside it is the caption. They arrive as a numbered zigzag on her page, alternating left and right.",
+            shot: "step-05.webp",
+            shotAlt: "The memory lane rows, A secret, and the first Open when… note",
+          },
+          {
+            title: "Captions beat titles",
+            body:
+              "“the rooftop, 2am ✨” tells her which night. “Good times” tells her nothing. Add or remove rows freely — there is no fixed count.",
+          },
+        ],
+      },
+      {
+        id: "secret",
+        title: "A secret",
+        steps: [
+          {
+            title: "One field, and it arrives hidden",
+            body:
+              "Whatever you write here is covered on her page by a scratch card she has to drag across to uncover. Nothing tells you that in the builder, which is why it is worth knowing before you write it.",
+            note:
+              "Write something that earns the scratching. A line she has not heard from you before is the right size; a compliment she has heard a hundred times is not.",
+          },
+        ],
+      },
+      {
+        id: "open-when",
+        title: "Open when… notes",
+        intro:
+          "The part of this template people come back for. Each note is a sealed envelope on her page that she opens on the day it is for.",
+        steps: [
+          {
+            title: "A title and a note, as many as you like",
+            body:
+              "The title is the occasion — “open when you can't sleep”, “open when we're finally together” — and the body is the letter inside it. Add note adds another.",
+          },
+          {
+            title: "Four is plenty; ten is a chore",
+            body:
+              "She has to have a reason to open each one. Write for the days you can actually picture her having, and stop there.",
+          },
+        ],
+      },
+      {
+        id: "quiz",
+        title: "Remember-us quiz",
+        steps: [
+          {
+            title: "Three fields per card, not two",
+            body:
+              "The question, the answer, and then a third line — the thing you tell her once she has answered. That last field is what makes the quiz worth playing; skip it and the card just marks her right.",
+            shot: "step-06.webp",
+            shotAlt: "A quiz card: the question, the answer, and the line she gets afterwards",
+          },
+          {
+            title: "Ask things only she can answer",
+            body:
+              "“Where was our first date?” works. “What is my favourite colour?” is a trivia question about you, and she will resent getting it wrong.",
+          },
+        ],
+      },
+      {
+        id: "song",
+        title: "Pick the song",
+        steps: [
+          {
+            title: "A short list, or your own",
+            body:
+              "Six built-in tracks with a preview each, or Upload a song for a file and Paste a link for something hosted elsewhere. Your own song ✓ appears at the bottom of the list once you have set one.",
+            shot: "step-07.webp",
+            shotAlt: "The song list, the accent tint pair, the password field and Save & Preview",
+          },
+          {
+            title: "Her browser will not autoplay it",
+            body:
+              "The page opens muted with a tap-for-sound control in the corner — that is the browser's rule, not a setting you can change. Assume she reads the first screen in silence.",
+          },
+        ],
+      },
+      {
+        id: "tint",
+        title: "Accent tint & password",
+        steps: [
+          {
+            title: "Rose or Blush",
+            body:
+              "Two tints, and the difference is real rather than decorative: Rose is the deeper, more serious one; Blush is lighter and reads younger.",
+          },
+          {
+            title: "A password, if it is that kind of letter",
+            body:
+              "Optional, directly under the tint. Set it and the page asks for the word before it shows anything. Leave it empty and the link is the only key.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save it",
+        steps: [
+          {
+            title: "Save & Preview, at the foot of the form",
+            body:
+              "Nothing is published yet. The form closes, the finished letter appears, and the top bar changes to Edit and Publish.",
+            shot: "step-08.webp",
+            shotAlt: "The saved letter, with Edit and Publish now in the top bar",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she actually sees",
+        intro:
+          "Seven numbered sections, top to bottom. Walk it once before you send it — a section you left empty simply is not there, and it is easier to notice now than after.",
+        steps: [
+          {
+            title: "02 · A squeeze — and it counts",
+            body:
+              "A send-a-hug button with a running total underneath. It is not decoration: the count persists, so she can press it at 3am and you can see that she did.",
+            shot: "step-09.webp",
+            shotAlt: "The hug button with five hugs shared so far",
+          },
+          {
+            title: "03 · A little coupon — the scratch card",
+            body:
+              "This is where A secret ends up. She drags a finger across the card to uncover it.",
+            shot: "step-10.webp",
+            shotAlt: "The scratch card covering the secret",
+          },
+          {
+            title: "04 · One silly question, and this-or-that",
+            body:
+              "A yes/no she answers, and a pair of choices where both of you get a column — your pick and hers, side by side.",
+          },
+          {
+            title: "05 · Open when… — letters for later",
+            body:
+              "One sealed envelope per note, each with Tap to open under the title. She is not meant to open them all today, and the page does not push her to.",
+            shot: "step-11.webp",
+            shotAlt: "The Open when… envelopes, one per note",
+          },
+          {
+            title: "07 · Our love map — she answers back",
+            body:
+              "Four boxes for her: your favourite foods, what's weighing on you lately, dreams to chase together, dates that matter — and a save my answers button under them. This is the only section of any template on the site that collects something from the person receiving it.",
+            shot: "step-12.webp",
+            shotAlt: "Our love map — four questions for her and the save-my-answers button",
+            note:
+              "In preview it says “preview mode · it saves for real once you share it”, so testing it yourself will not save anything. It starts collecting once the page is published and sent.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish, and sign in if you are signed out",
+            body:
+              "The page goes live straight after you sign in — nothing you built is asked for a second time.",
+            shot: "step-13.webp",
+            shotAlt: "Pressing Publish while signed out brings up the sign-in sheet",
+            note:
+              "Sign in before you start if you are on a phone. Continue with Google is a full-page redirect, and it takes the page you were halfway through with it.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link for WhatsApp or Instagram, show the QR, or print the card to slip into a real envelope. The QR opens the letter.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Where are the Next buttons?",
+        a: "There aren't any. Miss You and the Apology Dashboard are the two templates built as one long form rather than a paged wizard — you scroll from your name at the top to Save & Preview at the bottom. If you have built a Darling or Birthday page before, this is the difference you will notice first.",
+      },
+      {
+        q: "Does she really answer back?",
+        a: "Yes, and it is the best thing in the template. The last section — our love map — asks her four questions and has a save my answers button. Her answers come back to you. In preview it says it will not save; that only starts once the page is published and shared.",
+      },
+      {
+        q: "What happens to the thing I wrote under A secret?",
+        a: "It arrives covered by a scratch card she has to drag across to uncover. The builder does not tell you that, so write something worth the scratching rather than a line she has heard before.",
+      },
+      {
+        q: "How does it know how far apart we are?",
+        a: "From the two city dropdowns under Time apart & distance. Set both and the page works out the kilometres itself; set only one and the line quietly does not appear. The km/mi toggle sits beside the reunion date.",
+      },
+      {
+        q: "How many Open when… notes should I write?",
+        a: "Four is usually right. Each one has to have a day she can actually picture — can't sleep, need a laugh, finally together. Ten of them turns a gift into a reading list.",
+      },
+      {
+        q: "Can I keep it private?",
+        a: "Set a password on the last step of the form, just under the accent tint. She will need the word as well as the link.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["love-gf", "apology-dashboard"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Apology Dashboard
+  //
+  // Two things about this one are unlike everything else on the site and both
+  // belong near the top of the guide: the delivery email is REQUIRED and sits
+  // near the bottom of a long form (press Publish without it and the form just
+  // reopens, with no explanation), and her page is a card carousel driven by
+  // arrows rather than a scroll. Everything else follows from those two.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "apology-dashboard",
+    templateHref: "/apology-dashboard",
+    templateName: "Apology Dashboard",
+    title: "Build an apology she has to work her way out of being angry at",
+    tagline: "An anger meter that actually goes down — plus the field that blocks publishing",
+    summary:
+      "Not a letter. A little dashboard of seven cards: an Anger-o-Meter that starts at Fuming, a Whack-a-Boyfriend game where every hit takes ten per cent off it, a desk of bribes worth thirty per cent more, and a forgive button whose No runs away from her finger. Her email address is required, and the guide says why before you find out the hard way.",
+    category: "love",
+    emoji: "🥺",
+    accent: "#ea3b81",
+    buildTime: "About 8 minutes",
+    updatedAt: "2026-08-27",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-27",
+      silent: true,
+      // Read off the recording's own "STEP n OF 10" chip and the heading it
+      // prints over each form region. Two beats in the video cover the same
+      // email field (the region, then the driver's dedicated sweep for it);
+      // they are one chapter here.
+      chapters: [
+        { at: 0,  label: "The page she lands on" },
+        { at: 4,  label: "Open the builder",              sectionId: "open" },
+        { at: 7,  label: "Fill it in yourself",           sectionId: "open" },
+        { at: 11, label: "Build your apology",            sectionId: "apology" },
+        { at: 16, label: "Whack game faces",              sectionId: "whack" },
+        { at: 21, label: "Background music",              sectionId: "bribery" },
+        { at: 25, label: "Her email — required",          sectionId: "email" },
+        { at: 32, label: "Save it",                       sectionId: "save" },
+        { at: 35, label: "What she actually sees",        sectionId: "recipient" },
+        { at: 39, label: "She opens it",                  sectionId: "recipient" },
+        { at: 42, label: "Anger-o-Meter",                 sectionId: "recipient" },
+        { at: 45, label: "A tiny secret",                 sectionId: "recipient" },
+        { at: 49, label: "Whack-a-Boyfriend",             sectionId: "recipient" },
+        { at: 52, label: "Sweet Bribery Desk",            sectionId: "recipient" },
+        { at: 55, label: "The sorry letter",              sectionId: "recipient" },
+        { at: 59, label: "Memory Lane",                   sectionId: "recipient" },
+        { at: 62, label: "Will you forgive me?",          sectionId: "recipient" },
+        { at: 66, label: "Publish it",                    sectionId: "publish" },
+        { at: 72, label: "Link, QR, print",               sectionId: "share" },
+        { at: 88, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "Create is in the top bar and what opens is one long scrolling form — no rail, no wizard pages, no Next. Save & Preview is at the very bottom.",
+        steps: [
+          {
+            title: "What she lands on is a closed door",
+            body:
+              "The page opens on the headline and a single button — “Take my hand, let's begin”. Nothing below it exists until she presses it. That is deliberate: the whole thing is meant to be entered rather than scrolled.",
+            shot: "step-01.webp",
+            shotAlt: "The gate: the headline, the sub-message, and Take my hand, let's begin",
+          },
+          {
+            title: "Press Create, then choose a door",
+            body:
+              "Write it for me drafts the headline, the sub-message and the sorry letter from a couple of sentences. I'll fill it in myself opens the form as it is. Note the Relationship dropdown behind the sheet — it is the first thing the form asks after the names.",
+            shot: "step-02.webp",
+            shotAlt: "The Write it for me / I'll fill it in myself choice, over the form",
+          },
+        ],
+      },
+      {
+        id: "apology",
+        title: "Build your apology",
+        steps: [
+          {
+            title: "Names, relationship, headline, sub-message",
+            body:
+              "Your name is the only required text field. Relationship is a dropdown — Girlfriend, Boyfriend and so on — and it sets the pronouns and wording the page uses about her. Headline and sub-message are the two lines on the door.",
+            shot: "step-03.webp",
+            shotAlt: "Names, the relationship dropdown, headline, sub-message and the sorry letter",
+          },
+          {
+            title: "Your sorry letter",
+            body:
+              "The one card on her page with no game attached to it, and the one that has to carry the actual apology. Name what you did. A page full of hammers and bribes with a vague letter in the middle reads as an attempt to be charming instead of sorry.",
+            note:
+              "The demo text is a competent template and says nothing specific. Replace it. It is the difference between a gift and a card bought at a petrol station.",
+          },
+          {
+            title: "Your photo",
+            body:
+              "A dashed square with a camera glyph, directly under the letter. Optional — but it is the face at the top of the whole dashboard.",
+          },
+        ],
+      },
+      {
+        id: "whack",
+        title: "Whack game faces, and the voice apology",
+        steps: [
+          {
+            title: "Your own face, or emoji",
+            body:
+              "Whack game faces (optional) is what she hits in the Whack-a-Boyfriend card. The hint under the box is the part worth reading: “No photos → cute emoji faces are used instead.” So the game works either way, and uploading yourself is the joke.",
+            shot: "step-04.webp",
+            shotAlt: "Whack game faces with its no-photos hint, the voice apology, and A tiny secret",
+          },
+          {
+            title: "A voice apology",
+            body:
+              "Record voice apology captures from the browser; Upload audio takes a file. Optional, and the one part of the page that cannot be mistaken for something you copied off the internet.",
+          },
+          {
+            title: "A tiny secret — the little note",
+            body:
+              "The pink panel is labelled “A tiny secret (revealed after scratching)”, and the Little note inside it is what ends up under the scratch card on her page. Photos to reveal, just below, are uncovered the same way.",
+          },
+        ],
+      },
+      {
+        id: "bribery",
+        title: "The Sweet Bribery Desk, and the music",
+        steps: [
+          {
+            title: "Six promises, and you can add more",
+            body:
+              "Each row is an emoji and a line — “1× premium massage night”, “All the chores for 7 days”, “Morning coffee in bed all week”. Add promise adds another; the bin removes one. They arrive on her page as a tick-list.",
+            shot: "step-05.webp",
+            shotAlt: "The Sweet Bribery Desk rows and the Memory Lane timeline below them",
+          },
+          {
+            title: "Promise things you will actually do",
+            body:
+              "She can tick them and lock them in, and the page keeps what she picked. A promise you quietly do not keep is worse than one you never made.",
+          },
+          {
+            title: "Background music",
+            body:
+              "One built-in option — Gentle lofi. Her browser opens the page muted regardless; there is a control in the corner for her to turn it on.",
+          },
+        ],
+      },
+      {
+        id: "memory",
+        title: "The Memory Lane timeline",
+        intro:
+          "No chapter marker for this one either — the recording never titles this region separately. In the form it sits directly below the Sweet Bribery Desk.",
+        steps: [
+          {
+            title: "Chapters, each an emoji and a line",
+            body:
+              "Three to start — The Spark, Inside Jokes, Growing Closer — and Add chapter for more. They render as a numbered vertical timeline with a coloured badge per chapter.",
+          },
+          {
+            title: "Chronology is the point",
+            body:
+              "The card is an argument that there is something here worth not throwing away. Keep the chapters in order and let them get more specific as they go.",
+          },
+        ],
+      },
+      {
+        id: "email",
+        title: "Her email address — required",
+        intro:
+          "The one thing on this page that will stop you, and the reason it is worth reading this section before you start filling anything in.",
+        steps: [
+          {
+            title: "YOUR GF / BF'S EMAIL is marked with an asterisk",
+            body:
+              "It sits near the bottom of the form, below the Memory Lane chapters and above the password. The hint under it says what it is for: the signed “Deed of Forgiveness” PDF is emailed there, and cc'd to you.",
+            shot: "step-06.webp",
+            shotAlt: "The required gf/bf's email field and the note about the Deed of Forgiveness PDF",
+          },
+          {
+            title: "Save works without it. Publish does not.",
+            body:
+              "This is the trap, and it is easy to walk into: Save & Preview succeeds with the field empty, the preview looks finished, and the top bar offers you Publish. Press it and the builder simply reopens — no sign-in sheet, no error you are likely to catch, nothing published.",
+            note:
+              "Verified against the live template on 27 Aug 2026: with the field empty, Publish reopened the form; with it filled, the same click went straight to the sign-in sheet. If Publish seems to do nothing, this field is the first place to look.",
+          },
+          {
+            title: "A password, if you want one",
+            body:
+              "Optional, directly below the email. Set it and she needs the word as well as the link.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save it",
+        steps: [
+          {
+            title: "Save & Preview, at the foot of the form",
+            body:
+              "The form closes and the door appears with her name on it — “For Aanya 💗”. The top bar becomes Edit and Publish. Still nothing is live.",
+            shot: "step-07.webp",
+            shotAlt: "The saved page, addressed to her, with Edit and Publish in the top bar",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What she actually sees",
+        intro:
+          "Not a scroll. Seven cards with an arrow on each side — she moves through them one at a time, or swipes on a phone. Walk it yourself before sending: a card you left empty is simply not in the deck.",
+        steps: [
+          {
+            title: "The Anger-o-Meter, and why it starts at Fuming",
+            body:
+              "A slider from “💚 Perfect love” to “💔 Fuming”, pinned at Fuming when she arrives, with a crying face beside it and the line “Take a deep breath… try sliding me left to calm down.”",
+            shot: "step-08.webp",
+            shotAlt: "The Anger-o-Meter slider at Fuming, with the crying bear",
+            note:
+              "Read this card together with the next two. The meter is not decoration — it is a score the rest of the dashboard exists to bring down, which is the whole idea of the template.",
+          },
+          {
+            title: "A tiny secret — the scratch card",
+            body:
+              "Your Little note, covered. “✦ Scratch to reveal ✦ — use your finger or mouse.”",
+          },
+          {
+            title: "Whack-a-Boyfriend — ten per cent a hit",
+            body:
+              "A three-by-three grid, a hit counter out of ten, and a Reset. The line under the title is the mechanic: “Every hit takes 10% off the anger meter — with a satisfying dishoom! 💥”",
+            shot: "step-09.webp",
+            shotAlt: "The Whack-a-Boyfriend grid, hits 0 of 10, with the ten-per-cent line",
+          },
+          {
+            title: "Sweet Bribery Desk — thirty per cent, once",
+            body:
+              "Your promises as a tick-list, and one button: “Lock it in (-30% anger)”. Ten whacks and the bribes together are exactly enough to take her from Fuming to Perfect love, which is not a coincidence.",
+            shot: "step-10.webp",
+            shotAlt: "The bribery tick-list and the Lock it in minus-thirty-per-cent button",
+          },
+          {
+            title: "From the bottom of my heart",
+            body:
+              "The sorry letter, addressed to her by name and signed with yours. The one card with nothing to press.",
+          },
+          {
+            title: "Memory Lane",
+            body:
+              "Your chapters as a timeline — Chapter I, Chapter II, Chapter III — each with its badge and its line.",
+            shot: "step-11.webp",
+            shotAlt: "Memory Lane, three numbered chapters with coloured badges",
+          },
+          {
+            title: "So… will you forgive me?",
+            body:
+              "The last card. “There's a right answer… and a running one 😌” — Yes, I forgive you! sits in the middle, and the No button moves away from her cursor when she goes for it.",
+            shot: "step-12.webp",
+            shotAlt: "The forgive card, with the No button already displaced to the side",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish, and sign in if you are signed out",
+            body:
+              "With the delivery email filled in, Publish goes straight to the sign-in sheet and the page is live immediately afterwards.",
+            shot: "step-13.webp",
+            shotAlt: "Pressing Publish brings up the sign-in sheet",
+            note:
+              "Sign in before you start if you are on a phone. Continue with Google is a full-page redirect and it takes an unpublished page with it.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "Copy the link, show the QR, or print the card. The QR opens the dashboard.",
+          },
+          {
+            title: "Send the link, not the PDF",
+            body:
+              "The Deed of Forgiveness email goes out on its own once she signs. The link is what you send.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "I pressed Publish and nothing happened. Why?",
+        a: "Almost certainly the delivery email. YOUR GF / BF'S EMAIL is required and sits near the bottom of the form, and it is the one field Save & Preview does not enforce — so the preview looks finished and Publish silently reopens the builder instead of publishing. Fill it in and press Publish again.",
+      },
+      {
+        q: "What is the Deed of Forgiveness, and who gets it?",
+        a: "A signed PDF the page emails to the address in that required field, cc'd to you, once she works her way to the end. It is why the field exists at all.",
+      },
+      {
+        q: "Does the Anger-o-Meter actually do anything?",
+        a: "Yes — it is the spine of the whole page. It starts pinned at Fuming, every whack in Whack-a-Boyfriend takes ten per cent off it, and locking in the bribes takes another thirty. Ten hits plus the bribes is exactly enough to reach Perfect love.",
+      },
+      {
+        q: "Do I have to upload a photo of myself to be whacked?",
+        a: "No. The hint under the field says it: with no photos it uses cute emoji faces instead. Uploading your own face is the better joke, but the game works either way.",
+      },
+      {
+        q: "Why doesn't her page scroll?",
+        a: "Because it is a carousel, not a page. There are arrows on either side of each card and she swipes on a phone. Seven cards, one at a time — which is what keeps the anger meter in front of her rather than three screens up.",
+      },
+      {
+        q: "Is this too silly for a real apology?",
+        a: "It depends entirely on the sorry letter. The games are the wrapping; the letter is the apology, and it is the one card with nothing to press. Write the letter properly and the hammer is charming. Leave the demo text in and the whole thing reads as a way of avoiding the conversation.",
+      },
+      {
+        q: "Where are the Next buttons?",
+        a: "There aren't any. This and Miss You are the two templates built as one long form rather than a paged wizard — scroll from your name at the top to Save & Preview at the bottom.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["missyou-gf", "love-gf"],
+  },
 ];
 
 export const guideList: ProductGuide[] = guides;
