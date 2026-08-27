@@ -1,47 +1,44 @@
 "use client";
 
 import { C, type ProfileData } from "./types";
-import { Card, Stat, Row, Empty, fmt } from "./ui";
+import { Card, Stat, Row, Empty, CopyBtn, fmt } from "./ui";
 
 export default function OverviewTab({ data }: { data: ProfileData }) {
   const { user, stats, referrals } = data;
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 16 }}>
+      <div className="sa-stats">
         <Stat label="Pages" value={stats.totalPages} />
-        <Stat label="Published" value={stats.publishedPages} />
-        <Stat label="Total views" value={stats.totalViews.toLocaleString()} />
+        <Stat label="Published" value={stats.publishedPages} tone={C.green} />
+        <Stat label="Total views" value={stats.totalViews.toLocaleString()} tone={C.accent} />
         <Stat label="Points" value={user.points} />
-        <Stat label="Password-locked" value={stats.passwordProtectedPages} />
-        <Stat label="Contributions" value={stats.totalContributions} />
+        <Stat label="Locked" value={stats.passwordProtectedPages} tone={C.amber} />
+        <Stat label="Contributions" value={stats.totalContributions} tone={C.pink} />
       </div>
 
       <Card title="Account">
-        <Row label="User ID" value={<code style={{ fontSize: 11 }}>{user._id}</code>} />
-        <Row label="Email" value={user.email} />
+        <Row label="User ID" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><code className="sa-mono">{user._id}</code><CopyBtn value={user._id} label="Copy id" /></span>} />
+        <Row label="Email" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{user.email}<CopyBtn value={user.email} label="Copy email" /></span>} />
         <Row label="Sign-in method" value={user.provider} />
-        <Row label="Email verified" value={user.isVerified ? "Yes" : "No"} />
+        <Row label="Email verified" value={<span style={{ color: user.isVerified ? C.green : C.amber }}>{user.isVerified ? "Yes" : "No"}</span>} />
         <Row label="Role" value={user.role} />
-        <Row label="Status" value={user.status || "active"} />
         {user.suspendedUntil && <Row label="Suspended until" value={fmt(user.suspendedUntil)} />}
         <Row label="Subdomain" value={user.subdomain || "—"} />
-        <Row label="Referral code" value={user.referralCode} />
+        <Row label="Referral code" value={<code className="sa-mono">{user.referralCode}</code>} />
         <Row label="Lifetime points earned" value={user.totalPointsEarned} />
         <Row label="Joined" value={fmt(user.createdAt)} />
         <Row label="Last updated" value={fmt(user.updatedAt)} />
       </Card>
 
       <Card title="Referrals">
-        <Row
-          label="Referred by"
-          value={referrals.referredBy?.referrer?.email || "—"}
-        />
+        <Row label="Referred by" value={referrals.referredBy?.referrer?.email || "—"} />
         <Row label="People they referred" value={referrals.made?.length || 0} />
         {referrals.made?.length > 0 && (
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
             {referrals.made.map((r, i) => (
-              <div key={i} style={{ fontSize: 12.5, color: C.t2, padding: "4px 0" }}>
-                {r.referee?.email || "—"} · {fmt(r.referee?.createdAt)}
+              <div key={i} className="sa-mini" style={{ padding: 10, fontSize: 12.5 }}>
+                <div style={{ fontWeight: 600 }}>{r.referee?.email || "—"}</div>
+                <div style={{ color: C.muted, marginTop: 2 }}>{fmt(r.referee?.createdAt)}</div>
               </div>
             ))}
           </div>
@@ -56,7 +53,7 @@ export default function OverviewTab({ data }: { data: ProfileData }) {
             <Row
               key={i}
               label={`${String(p.templateType || "—")} · ${String(p.status || "")}`}
-              value={`₹${Number(p.amount || 0)}`}
+              value={<strong style={{ color: String(p.status) === "paid" ? C.green : C.muted }}>₹{Number(p.amount || 0)}</strong>}
             />
           ))
         )}

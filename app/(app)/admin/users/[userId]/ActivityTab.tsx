@@ -3,17 +3,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "@/lib/config";
 import { C } from "./types";
-import { Card, Empty, fmt } from "./ui";
+import { Card, Empty, Skeleton, Pill, fmt } from "./ui";
 
 interface Entry {
-  _id: string;
-  action: string;
-  actorEmail: string;
-  createdAt: string;
-  reason?: string;
-  targetTemplateType?: string;
+  _id: string; action: string; actorEmail: string; createdAt: string;
+  reason?: string; targetTemplateType?: string;
   changes?: Record<string, { from: unknown; to: unknown }>;
 }
+
+/** Actions that changed something, so they read as heavier than the reads. */
+const TONE: Record<string, string> = {
+  "user.ban": C.pink, "user.suspend": C.amber, "user.reinstate": C.green,
+  "page.delete": C.pink, "impersonation.start": C.pink, "impersonation.end": C.muted,
+  "user.reveal_password": C.amber, "page.reset_password": C.amber,
+  "user.adjust_points": C.accent, "user.force_logout": C.amber, "user.change_role": C.accent,
+};
 
 /**
  * Everything a super admin has done TO this user.
@@ -41,32 +45,39 @@ export default function ActivityTab({ userId, hdr }: { userId: string; hdr: () =
   return (
     <Card title="Admin activity on this account">
       {loading ? (
-        <Empty>Loading…</Empty>
+        <><Skeleton h={54} /><Skeleton h={54} /><Skeleton h={54} /></>
       ) : entries.length === 0 ? (
         <Empty>Nothing recorded yet.</Empty>
       ) : (
-        entries.map((e) => (
-          <div key={e._id} style={{ padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{e.action}</span>
-              <span style={{ fontSize: 12, color: C.tM }}>{fmt(e.createdAt)}</span>
-            </div>
-            <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
-              by {e.actorEmail}
-              {e.targetTemplateType ? ` · ${e.targetTemplateType}` : ""}
-            </div>
-            {e.reason && <div style={{ fontSize: 12, color: C.tM, marginTop: 2 }}>“{e.reason}”</div>}
-            {e.changes && Object.keys(e.changes).length > 0 && (
-              <div style={{ fontSize: 11.5, color: C.tM, marginTop: 3, fontFamily: "monospace" }}>
-                {Object.entries(e.changes).map(([k, v]) => (
-                  <span key={k} style={{ marginRight: 10 }}>
-                    {k}: {String(v.from)} → {String(v.to)}
-                  </span>
-                ))}
+        <div style={{ display: "grid", gap: 2 }}>
+          {entries.map((e) => {
+            const tone = TONE[e.action] || C.muted;
+            return (
+              <div key={e._id} style={{ display: "flex", gap: 11, padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: tone, marginTop: 6, flexShrink: 0 }} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <Pill text={e.action.replace(/[._]/g, " ")} color={tone} />
+                    <span style={{ fontSize: 11.5, color: C.muted }}>{fmt(e.createdAt)}</span>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: C.muted, marginTop: 5 }}>
+                    by {e.actorEmail}{e.targetTemplateType ? ` · ${e.targetTemplateType}` : ""}
+                  </div>
+                  {e.reason && (
+                    <div style={{ fontSize: 12.5, marginTop: 4, fontStyle: "italic", color: C.text }}>“{e.reason}”</div>
+                  )}
+                  {e.changes && Object.keys(e.changes).length > 0 && (
+                    <div className="sa-mono" style={{ fontSize: 11.5, color: C.muted, marginTop: 5, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      {Object.entries(e.changes).map(([k, v]) => (
+                        <span key={k}>{k}: {String(v.from)} → <strong style={{ color: C.text }}>{String(v.to)}</strong></span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        ))
+            );
+          })}
+        </div>
       )}
     </Card>
   );

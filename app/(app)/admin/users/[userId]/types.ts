@@ -65,15 +65,43 @@ export interface ProfileData {
   };
 }
 
+/**
+ * SubhSandesh theme tokens.
+ *
+ * The `--site-*` CSS variables this palette is normally read from do not exist
+ * in `globals.css` in this repo, and there is no `data-sitetheme` attribute to
+ * hang them off — so the hex values are inlined here instead, in ONE place, and
+ * every surface on this screen reads from it. If the token layer lands later,
+ * this object is the only thing that has to change.
+ */
 export const C = {
-  border: "rgba(61,12,17,0.08)",
-  t1: "#2a0a0e",
-  t2: "#7f5f5f",
-  tM: "#9a7070",
-  gold: "#c9a84c",
-  goldD: "#8b5a2b",
-  bg: "#f5ede6",
-  card: "#fffdfb",
-  danger: "#b3261e",
-  ok: "#1e7a4b",
+  bg: "#FAFAF7",
+  bgAlt: "#F3F1EA",
+  surface: "#FFFFFF",
+  surfaceAlt: "#EFEDFD",
+  text: "#0E0E12",
+  muted: "#5B5B66",
+  border: "#ECEAE3",
+
+  accent: "#6C5CE7",
+  accentStrong: "#5646C9",
+  pink: "#F72585",
+  lime: "#C6FF3D",
+  onAccent: "#FFFFFF",
+
+  amber: "#FFB020",
+  green: "#3AA76D",
+
+  radius: 20,
+  radiusLg: 28,
+  shadow: "0 8px 24px rgba(14,14,18,.06)",
+  shadowElevated: "0 40px 80px -20px rgba(14,14,18,.38)",
+  gradient: "linear-gradient(135deg, #6C5CE7, #F72585)",
 } as const;
+
+/** Account status → the palette colour that carries its meaning. */
+export const STATUS_COLOR: Record<string, string> = {
+  active: "#3AA76D",
+  suspended: "#FFB020",
+  banned: "#F72585",
+};

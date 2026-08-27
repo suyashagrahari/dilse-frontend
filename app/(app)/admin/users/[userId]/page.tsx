@@ -2,20 +2,39 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Space_Grotesk } from "next/font/google";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
-import { setImpersonation } from "@/lib/impersonation";
-import { ArrowLeft, Loader2, ShieldAlert } from "lucide-react";
-import { C, type ProfileData } from "./types";
+import { ArrowLeft, ShieldAlert, UserCog } from "lucide-react";
+import { C, STATUS_COLOR, type ProfileData } from "./types";
+import { ProfileStyles, ToastHost, Skeleton, Empty, Pill, Btn, Dialog, useToast } from "./ui";
 import OverviewTab from "./OverviewTab";
 import PagesTab from "./PagesTab";
 import PointsTab from "./PointsTab";
 import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
 
+// Space Grotesk is the theme's display face and is not among the fonts the root
+// layout loads. Declaring it here keeps it scoped to this screen instead of
+// adding a family to every page in the app.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "optional",
+});
+
 const TABS = ["Overview", "Pages", "Points", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
+
+export default function AdminUserProfilePage() {
+  return (
+    <ToastHost>
+      <ProfileInner />
+    </ToastHost>
+  );
+}
 
 /**
  * The complete view of one user.
@@ -23,19 +42,23 @@ type Tab = (typeof TABS)[number];
  * A route rather than the modal this replaces: the content is far too tall for
  * a dialog, and a URL can be linked in a support thread and survives a refresh.
  *
- * Every destructive control lives behind the Danger Zone tab and its own typed
- * confirmation, so nothing irreversible is one stray click away from the
+ * Every destructive control lives behind the Danger Zone tab and its own
+ * confirmation, so nothing irreversible is one stray tap away from the
  * read-only browsing that is the common case.
  */
-export default function AdminUserProfilePage() {
+function ProfileInner() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { accessToken, user: me } = useAppSelector((s) => s.auth);
 
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [tab, setTab] = useState<Tab>("Overview");
+  const [impOpen, setImpOpen] = useState(false);
+  const [impReason, setImpReason] = useState("");
+  const [impBusy, setImpBusy] = useState(false);
 
   const superAdmin = isSuperAdmin(me?.role);
 
@@ -65,177 +88,158 @@ export default function AdminUserProfilePage() {
     else setLoading(false);
   }, [load, superAdmin]);
 
-  const impersonate = async () => {
-    const reason = window.prompt("Reason for viewing as this user? (recorded in the audit log)");
-    if (reason === null) return;
-    const r = await fetch(`${API_URL}/admin/super/users/${userId}/impersonate`, {
-      method: "POST",
-      headers: hdr(),
-      body: JSON.stringify({ reason }),
-    });
-    const j = await r.json();
-    if (!j.success) {
-      window.alert(j.error || "Could not start the session.");
-      return;
+  const startImpersonation = async () => {
+    setImpBusy(true);
+    try {
+      const r = await fetch(`${API_URL}/admin/super/users/${userId}/impersonate`, {
+        method: "POST", headers: hdr(), body: JSON.stringify({ reason: impReason }),
+      });
+      const j = await r.json();
+      if (!j.success) { toast(j.error || "Could not start the session", "bad"); return; }
+
+      // Opened FIRST so the token lands in the NEW tab's sessionStorage.
+      // Writing it here would put it in this tab and shadow the admin's own
+      // session instead.
+      const w = window.open("/", "_blank");
+      if (!w) { toast("Allow pop-ups to open the impersonation tab", "bad"); return; }
+      const payload = {
+        token: j.data.token,
+        userName: j.data.user.name,
+        userEmail: j.data.user.email,
+        expiresAt: Date.now() + j.data.expiresInSeconds * 1000,
+      };
+      setTimeout(() => {
+        try {
+          w.sessionStorage.setItem("gifts_impersonation", JSON.stringify(payload));
+          w.location.reload();
+          toast("Impersonation started in a new tab");
+        } catch {
+          toast("Could not start the session in the new tab", "bad");
+        }
+      }, 300);
+      setImpOpen(false);
+      setImpReason("");
+    } finally {
+      setImpBusy(false);
     }
-    // Opened FIRST so the token is written into the new tab's own
-    // sessionStorage — writing it here would put it in this tab instead and
-    // leave the admin's own session shadowed.
-    const w = window.open("/", "_blank");
-    if (!w) {
-      window.alert("Allow pop-ups for this site to open the impersonation tab.");
-      return;
-    }
-    const payload = {
-      token: j.data.token,
-      userName: j.data.user.name,
-      userEmail: j.data.user.email,
-      expiresAt: Date.now() + j.data.expiresInSeconds * 1000,
-    };
-    const write = () => {
-      try {
-        w.sessionStorage.setItem("gifts_impersonation", JSON.stringify(payload));
-        w.location.reload();
-      } catch {
-        window.alert("Could not start the session in the new tab.");
-      }
-    };
-    // The blank tab needs a moment before its storage is reachable.
-    setTimeout(write, 300);
   };
 
-  if (!superAdmin) {
-    return (
-      <Shell>
-        <div style={{ textAlign: "center", padding: 64, color: C.t2 }}>
-          <ShieldAlert size={36} style={{ color: C.danger, marginBottom: 12 }} />
-          <h2 style={{ color: C.t1, margin: "0 0 6px", fontSize: 18 }}>Super admin only</h2>
-          <p style={{ margin: 0, fontSize: 14 }}>
+  const body = () => {
+    if (!superAdmin) {
+      return (
+        <div className="sa-card" style={{ textAlign: "center", padding: "56px 20px" }}>
+          <ShieldAlert size={34} style={{ color: C.pink, marginBottom: 12 }} />
+          <h2 className="sa-h" style={{ margin: "0 0 6px", fontSize: 18 }}>Super admin only</h2>
+          <p style={{ margin: 0, fontSize: 13.5, color: C.muted }}>
             This page shows personal data and is limited to the super admin account.
           </p>
         </div>
-      </Shell>
-    );
-  }
+      );
+    }
+    if (loading) return <><Skeleton h={110} /><Skeleton h={44} /><Skeleton h={200} /><Skeleton h={160} /></>;
+    if (err || !data) return <div className="sa-card"><Empty>{err || "Not found"}</Empty></div>;
 
-  if (loading) {
+    const { user } = data;
+    const status = user.status || "active";
+
     return (
-      <Shell>
-        <div style={{ display: "flex", justifyContent: "center", padding: 80 }}>
-          <Loader2 size={28} className="animate-spin" style={{ color: C.gold }} />
-        </div>
-      </Shell>
-    );
-  }
-
-  if (err || !data) {
-    return (
-      <Shell>
-        <div style={{ textAlign: "center", padding: 64, color: C.danger }}>{err || "Not found"}</div>
-      </Shell>
-    );
-  }
-
-  const { user } = data;
-  const statusColor =
-    user.status === "banned" ? C.danger : user.status === "suspended" ? C.goldD : C.ok;
-
-  return (
-    <Shell>
-      <button
-        onClick={() => router.push("/admin/users")}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 6, background: "none",
-          border: "none", color: C.t2, cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 16,
-        }}
-      >
-        <ArrowLeft size={15} /> All users
-      </button>
-
-      <div
-        style={{
-          background: C.card, border: `1px solid ${C.border}`, borderRadius: 14,
-          padding: 20, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap",
-        }}
-      >
-        <div
-          style={{
-            width: 56, height: 56, borderRadius: "50%", background: C.bg,
-            display: "grid", placeItems: "center", fontSize: 20, fontWeight: 700,
-            color: C.goldD, overflow: "hidden", flexShrink: 0,
-          }}
-        >
-          {user.avatar ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            (user.name || "?").slice(0, 1).toUpperCase()
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <h1 style={{ margin: 0, fontSize: 20, color: C.t1 }}>{user.name}</h1>
-            <span
-              style={{
-                fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4,
-                color: statusColor, border: `1px solid ${statusColor}`, borderRadius: 999, padding: "2px 8px",
-              }}
-            >
-              {user.status || "active"}
-            </span>
-            <span style={{ fontSize: 11, color: C.tM, border: `1px solid ${C.border}`, borderRadius: 999, padding: "2px 8px" }}>
-              {user.role}
-            </span>
+      <>
+        <div className="sa-head">
+          <div className="sa-avatar">
+            {user.avatar ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              (user.name || "?").slice(0, 1).toUpperCase()
+            )}
           </div>
-          <div style={{ color: C.t2, fontSize: 13, marginTop: 3 }}>{user.email}</div>
-          {user.statusReason && (
-            <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>Reason: {user.statusReason}</div>
-          )}
+
+          <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+              <h1 className="sa-name sa-h">{user.name}</h1>
+              <Pill text={status} color={STATUS_COLOR[status] || C.muted} />
+              <Pill text={user.role} color={C.accent} />
+            </div>
+            <div className="sa-email">{user.email}</div>
+            {user.statusReason && (
+              <div style={{ color: C.pink, fontSize: 12.5, marginTop: 5 }}>Reason: {user.statusReason}</div>
+            )}
+          </div>
+
+          <div style={{ flex: "0 0 auto", width: "100%", maxWidth: 220 }}>
+            <Btn
+              variant="primary"
+              onClick={() => setImpOpen(true)}
+              disabled={status !== "active"}
+              title={status !== "active" ? "Reinstate the account first" : "Opens a 15-minute session in a new tab"}
+            >
+              <UserCog size={14} /> View as user
+            </Btn>
+          </div>
         </div>
-        <button
-          onClick={impersonate}
-          disabled={user.status !== "active"}
-          title={user.status !== "active" ? "Reinstate the account first" : "Opens a 15-minute session in a new tab"}
-          style={{
-            background: user.status === "active" ? C.t1 : "rgba(61,12,17,0.25)",
-            color: "#fff", border: "none", borderRadius: 9, padding: "9px 14px",
-            fontSize: 13, fontWeight: 600, cursor: user.status === "active" ? "pointer" : "not-allowed",
-          }}
-        >
-          View as user
-        </button>
-      </div>
 
-      <div style={{ display: "flex", gap: 4, margin: "18px 0", flexWrap: "wrap" }}>
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              background: tab === t ? C.t1 : "transparent",
-              color: tab === t ? "#fff" : t === "Danger Zone" ? C.danger : C.t2,
-              border: `1px solid ${tab === t ? C.t1 : C.border}`,
-              borderRadius: 8, padding: "7px 13px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+        <div className="sa-tabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={tab === t}
+              className="sa-tab"
+              data-on={tab === t ? "1" : "0"}
+              data-danger={t === "Danger Zone" ? "1" : "0"}
+              onClick={() => setTab(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
 
-      {tab === "Overview" && <OverviewTab data={data} />}
-      {tab === "Pages" && <PagesTab data={data} hdr={hdr} reload={load} />}
-      {tab === "Points" && <PointsTab data={data} hdr={hdr} reload={load} />}
-      {tab === "Activity" && <ActivityTab userId={String(userId)} hdr={hdr} />}
-      {tab === "Danger Zone" && <DangerTab data={data} hdr={hdr} reload={load} />}
-    </Shell>
-  );
-}
+        {tab === "Overview" && <OverviewTab data={data} />}
+        {tab === "Pages" && <PagesTab data={data} hdr={hdr} reload={load} />}
+        {tab === "Points" && <PointsTab data={data} hdr={hdr} reload={load} />}
+        {tab === "Activity" && <ActivityTab userId={String(userId)} hdr={hdr} />}
+        {tab === "Danger Zone" && <DangerTab data={data} hdr={hdr} reload={load} />}
 
-function Shell({ children }: { children: React.ReactNode }) {
+        <Dialog open={impOpen} onClose={() => setImpOpen(false)} title="View as this user?">
+          <p style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 12px" }}>
+            Opens a <strong>15-minute</strong> session as {user.name} in a new tab. It cannot be
+            extended, and changing their password, profile or subdomain stays blocked.
+          </p>
+          <p style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.6, margin: "0 0 14px" }}>
+            The start and end of the session are both recorded in the audit log.
+          </p>
+          <input
+            className="sa-input"
+            value={impReason}
+            onChange={(e) => setImpReason(e.target.value)}
+            placeholder="Reason (recorded in the audit log)"
+            autoFocus
+          />
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+            <Btn variant="ghost" onClick={() => setImpOpen(false)}>Cancel</Btn>
+            <Btn variant="primary" onClick={startImpersonation} disabled={impBusy}>
+              {impBusy ? "Starting…" : "Start session"}
+            </Btn>
+          </div>
+        </Dialog>
+      </>
+    );
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: "28px 20px" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>{children}</div>
+    <div className={`sa-root ${spaceGrotesk.variable}`}>
+      <ProfileStyles />
+      <div className="sa-wrap">
+        <button
+          onClick={() => router.push("/admin/users")}
+          className="sa-btn"
+          data-v="ghost"
+          style={{ marginBottom: 14 }}
+        >
+          <ArrowLeft size={14} /> All users
+        </button>
+        {body()}
+      </div>
     </div>
   );
 }
