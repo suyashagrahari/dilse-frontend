@@ -6,13 +6,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import { roleAtLeast } from "@/lib/roles";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
   const { user } = useAppSelector((s) => s.auth);
-  const isAdmin = user?.role === "admin";
+  // Rank check, not equality: `superadmin` outranks `admin` and must still
+  // see the Admin entry. `=== "admin"` hid it the moment that role existed.
+  const isAdmin = roleAtLeast(user?.role, "admin");
 
   const activeColor = "#f2cf74";
   const mutedColor = "rgba(245,222,177,0.80)";

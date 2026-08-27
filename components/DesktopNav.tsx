@@ -7,6 +7,7 @@ import { Search, X, SlidersHorizontal, User, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useAppSelector } from "@/store/hooks";
+import { roleAtLeast } from "@/lib/roles";
 
 export default function DesktopNav() {
   const pathname = usePathname();
@@ -20,7 +21,9 @@ export default function DesktopNav() {
   const isTemplates = pathname.startsWith("/templates");
   const isProfile = pathname.startsWith("/profile");
   const { user: authUser } = useAppSelector((s) => s.auth);
-  const isAdmin = authUser?.role === "admin";
+  // Rank check, not equality: `superadmin` outranks `admin` and must still
+  // see the Admin entry. `=== "admin"` hid it the moment that role existed.
+  const isAdmin = roleAtLeast(authUser?.role, "admin");
   const isAdminPage = pathname.startsWith("/admin");
 
   useEffect(() => {

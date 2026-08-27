@@ -204,7 +204,7 @@ export default function AdminAnalyticsPage() {
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {(ov?.roleDistribution??[]).map(r=>{
                   const total=ov?.users.total||1; const pct=((r.count/total)*100).toFixed(1);
-                  const Icon=r.role==="admin"?Crown:r.role==="member"?UserCheck:UserX;
+                  const Icon=r.role==="admin"||r.role==="superadmin"?Crown:r.role==="member"?UserCheck:UserX;
                   return(
                     <div key={r.role} style={{display:"flex",alignItems:"center",gap:8}}>
                       <Icon size={13} color={RC[r.role]}/>

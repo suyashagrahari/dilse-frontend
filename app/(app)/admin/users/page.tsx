@@ -124,7 +124,7 @@ export default function AdminUsersPage(){
   };
 
   const Badge=({role}:{role:string})=>{
-    const Icon=role==="admin"?Crown:role==="member"?UserCheck:UserIcon;
+    const Icon=role==="admin"||role==="superadmin"?Crown:role==="member"?UserCheck:UserIcon;
     return(
       <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:6,
         fontSize:10,fontWeight:700,textTransform:"capitalize",
