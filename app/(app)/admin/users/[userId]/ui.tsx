@@ -167,7 +167,70 @@ export function ProfileStyles() {
       .sa-table tbody tr { transition: background .12s; }
       .sa-table tbody tr:hover { background: rgba(201,168,76,0.07); }
 
-      .sa-cards { display: grid; gap: 7px; }
+      .sa-cards { display: grid; gap: 9px; }
+      .sa-tpl-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+      @media (min-width: 720px) { .sa-tpl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 1180px) { .sa-tpl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+      /* ── Template card ────────────────────────────────────────────────────
+         A card, not a table row: a title bar carrying name, status and reach; a
+         quiet body of facts; a footer of exactly three actions. Three fit one
+         line at 320px, a fourth does not — which is why revealing and changing
+         the password live inline on the password row instead of the footer. */
+      .sa-tpl {
+        border: 1px solid ${C.border}; border-radius: ${C.radiusLg}px;
+        background: ${C.surface}; overflow: hidden; min-width: 0;
+        box-shadow: ${C.shadow}; transition: border-color .15s, box-shadow .15s;
+      }
+      .sa-tpl:hover { border-color: rgba(201,168,76,0.55); box-shadow: 0 4px 16px rgba(61,12,17,0.09); }
+      .sa-tpl-h {
+        display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+        background: linear-gradient(180deg,#fdf9f4,#f8efe4);
+        border-bottom: 1px solid ${C.border}; min-width: 0;
+      }
+      .sa-tpl-name {
+        font-family: var(--font-lora), Georgia, serif;
+        font-size: 14.5px; font-weight: 700; margin: 0; min-width: 0; flex: 1;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .sa-tpl-b { padding: 9px 12px; }
+      .sa-tpl-f {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px; padding: 9px 12px; border-top: 1px solid ${C.border};
+        background: ${C.bgAlt};
+      }
+      .sa-tpl-f > .sa-btn, .sa-tpl-f > a.sa-btn {
+        width: 100%; min-height: 38px; border-radius: 9px;
+        font-size: 12px; gap: 5px; overflow: hidden;
+      }
+      @media (max-width: 400px) {
+        .sa-tpl-f > .sa-btn, .sa-tpl-f > a.sa-btn { font-size: 11.5px; padding: 8px 4px; gap: 4px; }
+      }
+
+      .sa-reach { display: flex; align-items: baseline; gap: 3px; flex-shrink: 0; font-size: 11px; color: ${C.muted}; }
+      .sa-reach strong { font-size: 13px; color: ${C.text}; }
+
+      .sa-det { border-top: 1px dashed ${C.border}; margin-top: 8px; padding-top: 8px; }
+      .sa-det-sum {
+        cursor: pointer; list-style: none; display: flex; align-items: center; gap: 5px;
+        font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+        color: ${C.accent}; user-select: none;
+      }
+      .sa-det-sum::-webkit-details-marker { display: none; }
+      .sa-det-grid { display: grid; gap: 8px; margin-top: 9px; }
+      @media (min-width: 620px) { .sa-det-grid { grid-template-columns: 1fr 1fr; gap: 9px 16px; } }
+      .sa-det-i { min-width: 0; }
+      .sa-det-k { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${C.faint}; }
+      .sa-det-v { font-size: 12.5px; line-height: 1.5; word-break: break-word; white-space: pre-wrap; margin-top: 1px; }
+
+      .sa-edit-f { display: grid; gap: 11px; }
+      .sa-edit-k { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${C.faint}; margin-bottom: 3px; }
+      .sa-ta {
+        width: 100%; border: 1px solid ${C.border}; border-radius: 8px;
+        padding: 7px 10px; font-size: 12.5px; color: ${C.text}; background: ${C.bgAlt};
+        outline: none; font-family: inherit; resize: vertical; min-height: 60px; line-height: 1.5;
+      }
+      .sa-ta:focus { border-color: ${C.gold}; background: ${C.surface}; }
       .sa-mini { border: 1px solid ${C.border}; border-radius: ${C.radius}px; padding: 10px; background: ${C.bgAlt}; }
       .sa-mini-r { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 2px 0; }
       .sa-mini-l { color: ${C.faint}; white-space: nowrap; flex-shrink: 0; }

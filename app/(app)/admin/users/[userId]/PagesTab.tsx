@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL, SITE_URL } from "@/lib/config";
-import { Eye, EyeOff, KeyRound, Trash2, ExternalLink, Search, Link2 } from "lucide-react";
+import { API_URL } from "@/lib/config";
+import { Search, LayoutGrid } from "lucide-react";
 import { C, type ProfileData, type ProfilePage } from "./types";
-import { Card, Empty, Btn, Pill, Dialog, CopyBtn, useToast, fmtShort } from "./ui";
+import { Card, Empty, Btn, Dialog, useToast, fmtShort } from "./ui";
+import TemplateCard from "./TemplateCard";
+import EditTemplateDialog from "./EditTemplateDialog";
 
 /**
- * What this user has made, as a list of links.
+ * What this user has made, as a grid of cards.
  *
- * Deliberately a LINK LIST, not a content viewer. The super admin's question is
- * "what did they publish, what does it cost to open it, how many people saw it,
- * and should it still exist" — so the share URL is the primary column and the
- * page itself is one click away in a new tab. Rendering the stored document
- * inline put a wall of someone's private photos and messages on screen to
- * answer a question that the link already answers.
+ * Cards rather than a table at every width. The per-row work here is not
+ * scanning a column — it is acting on one page: open it, read what they wrote,
+ * fix a typo, delete it. A card holds that comfortably and needs no separate
+ * phone layout, which is what the table forced.
  *
  * Passwords are fetched one page at a time and only when asked for: each reveal
  * is its own audit entry, so a bulk "show all" would forge a record of the
@@ -34,8 +34,8 @@ export default function PagesTab({
   const [pwFor, setPwFor] = useState<ProfilePage | null>(null);
   const [pwValue, setPwValue] = useState("");
   const [delFor, setDelFor] = useState<ProfilePage | null>(null);
-
-  const urlOf = (p: ProfilePage) => (p.shareId ? `${SITE_URL}/${p.shareId}` : "");
+  const [editFor, setEditFor] = useState<ProfilePage | null>(null);
+  const [editContent, setEditContent] = useState<Record<string, unknown> | null>(null);
 
   const reveal = async (p: ProfilePage) => {
     if (revealed[p._id]) {
@@ -93,72 +93,13 @@ export default function PagesTab({
       (p.shareId || "").includes(filter)
   );
 
-  /** The share link, as the thing you act on: open it or copy it. */
-  const Url = ({ p }: { p: ProfilePage }) => {
-    if (!p.shareId) return <span style={{ color: C.muted, fontSize: 12.5 }}>Not published</span>;
-    return (
-      <span style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, maxWidth: "100%" }}>
-        <a
-          href={urlOf(p)}
-          target="_blank"
-          rel="noreferrer"
-          className="sa-mono"
-          title={urlOf(p)}
-          style={{
-            color: C.accent, textDecoration: "none", overflow: "hidden",
-            textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
-          }}
-        >
-          /{p.shareId}
-        </a>
-        <CopyBtn value={urlOf(p)} label="Copy full link" />
-      </span>
-    );
-  };
-
-  const Password = ({ p }: { p: ProfilePage }) =>
-    !p.hasPassword ? (
-      <span style={{ color: C.muted, fontSize: 12.5 }}>none</span>
-    ) : revealed[p._id] ? (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-        <code className="sa-mono" style={{ color: C.text, fontWeight: 700 }}>{revealed[p._id]}</code>
-        <CopyBtn value={revealed[p._id]} label="Copy password" />
-      </span>
-    ) : (
-      <span className="sa-mono" style={{ color: C.muted }}>••••••</span>
-    );
-
-  const Actions = ({ p }: { p: ProfilePage }) => (
-    <div className="sa-actions">
-      {p.shareId && (
-        <a href={urlOf(p)} target="_blank" rel="noreferrer" className="sa-btn sa-icon-btn" data-v="ghost" title="Open the page">
-          <ExternalLink size={13} /><span className="sa-lbl">Open</span>
-        </a>
-      )}
-      {p.hasPassword && (
-        <Btn variant="ghost" icon title="Reveal password — this is logged" onClick={() => reveal(p)} disabled={busy === p._id}>
-          {revealed[p._id] ? <EyeOff size={13} /> : <Eye size={13} />}
-          <span className="sa-lbl">{revealed[p._id] ? "Hide" : "Show"}</span>
-        </Btn>
-      )}
-      {p.supportsPassword && (
-        <Btn variant="ghost" icon title="Set or remove the password" onClick={() => { setPwFor(p); setPwValue(""); }}>
-          <KeyRound size={13} /><span className="sa-lbl">Password</span>
-        </Btn>
-      )}
-      <Btn variant="danger" icon title="Delete permanently" onClick={() => setDelFor(p)} disabled={busy === p._id}>
-        <Trash2 size={13} /><span className="sa-lbl">Delete</span>
-      </Btn>
-    </div>
-  );
-
   const live = data.pages.filter((p) => p.isPublished).length;
   const locked = data.pages.filter((p) => p.hasPassword).length;
 
   return (
     <>
       <Card
-        title={`Templates — ${data.pages.length} total · ${live} live · ${locked} password-locked`}
+        title={`Templates — ${data.pages.length} total · ${live} live · ${locked} locked`}
         action={
           <div className="sa-search">
             <Search size={14} color={C.muted} style={{ flexShrink: 0 }} />
@@ -172,65 +113,37 @@ export default function PagesTab({
         }
       >
         {pages.length === 0 ? (
-          <Empty>{data.pages.length === 0 ? "This user hasn't created any templates yet." : "Nothing matches that filter."}</Empty>
+          <Empty>
+            {data.pages.length === 0 ? (
+              <><LayoutGrid size={22} style={{ opacity: 0.4, display: "block", margin: "0 auto 8px" }} />This user hasn&apos;t created any templates yet.</>
+            ) : "Nothing matches that filter."}
+          </Empty>
         ) : (
-          <>
-            {/* Tablet / desktop */}
-            <div className="sa-only-lg" style={{ overflowX: "auto" }}>
-              <table className="sa-table">
-                <thead>
-                  <tr>
-                    <th>Template</th>
-                    <th style={{ minWidth: 200 }}>Link</th>
-                    <th>Password</th>
-                    <th>Views</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th style={{ textAlign: "right" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pages.map((p) => (
-                    <tr key={p._id}>
-                      <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{p.templateLabel}</td>
-                      <td style={{ maxWidth: 260 }}><Url p={p} /></td>
-                      <td><Password p={p} /></td>
-                      <td style={{ fontWeight: 700 }}>{p.viewCount.toLocaleString()}</td>
-                      <td><Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.ok : C.muted} /></td>
-                      <td style={{ color: C.muted, whiteSpace: "nowrap" }}>{fmtShort(p.createdAt)}</td>
-                      <td>
-                        <div style={{ display: "flex", justifyContent: "flex-end" }}><Actions p={p} /></div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Phone — a table here scrolls sideways with invisible columns */}
-            <div className="sa-only-sm sa-cards">
-              {pages.map((p) => (
-                <div key={p._id} className="sa-mini">
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
-                    <strong style={{ fontSize: 14 }}>{p.templateLabel}</strong>
-                    <Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.ok : C.muted} />
-                  </div>
-                  <div className="sa-mini-r" style={{ alignItems: "center" }}>
-                    <span className="sa-mini-l" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      <Link2 size={12} /> Link
-                    </span>
-                    <span style={{ minWidth: 0, overflow: "hidden" }}><Url p={p} /></span>
-                  </div>
-                  <div className="sa-mini-r"><span className="sa-mini-l">Password</span><span><Password p={p} /></span></div>
-                  <div className="sa-mini-r"><span className="sa-mini-l">Views</span><strong>{p.viewCount.toLocaleString()}</strong></div>
-                  <div className="sa-mini-r"><span className="sa-mini-l">Created</span><span>{fmtShort(p.createdAt)}</span></div>
-                  <div style={{ marginTop: 10 }}><Actions p={p} /></div>
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="sa-tpl-grid">
+            {pages.map((p) => (
+              <TemplateCard
+                key={p._id}
+                page={p}
+                hdr={hdr}
+                revealed={revealed[p._id]}
+                busy={busy === p._id}
+                onReveal={reveal}
+                onSetPassword={(pg) => { setPwFor(pg); setPwValue(""); }}
+                onDelete={setDelFor}
+                onEdit={(pg, content) => { setEditContent(content); setEditFor(pg); }}
+              />
+            ))}
+          </div>
         )}
       </Card>
+
+      <EditTemplateDialog
+        page={editFor}
+        content={editContent}
+        hdr={hdr}
+        onClose={() => { setEditFor(null); setEditContent(null); }}
+        onSaved={reload}
+      />
 
       <Dialog open={!!pwFor} onClose={() => setPwFor(null)} title={`Password — ${pwFor?.templateLabel || ""}`}>
         <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, margin: "0 0 14px" }}>
@@ -257,6 +170,7 @@ export default function PagesTab({
         <p style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 8px" }}>
           <strong>{delFor?.templateLabel}</strong>
           {delFor?.shareId ? <> · <code className="sa-mono">/{delFor.shareId}</code></> : null}
+          {delFor ? <> · created {fmtShort(delFor.createdAt)}</> : null}
         </p>
         <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, margin: "0 0 16px" }}>
           The link will 404 for everyone who has it, including recipients who did
