@@ -5265,6 +5265,1134 @@ const guides: ProductGuide[] = [
     relatedBlogSlugs: [],
     relatedGuideSlugs: ["rewind", "capsule", "missyou-gf"],
   },
+
+  {
+    slug: "capsule",
+    templateHref: "/capsule",
+    templateName: "Capsule",
+    title: "Both write predictions, seal them, and open it in a year",
+    tagline: "Blind to each other, sealed, then judged together",
+    summary:
+      "The two of you write predictions about the next year without seeing each other's. It seals. A year later you crack it open together, judge every one, and a scorecard says who was Most Confidently Wrong — and what the loser owes.",
+    category: "fun",
+    emoji: "🕰️",
+    accent: "#6b7280",
+    buildTime: "About 4 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "write",
+        title: "Writing the predictions",
+        steps: [
+          {
+            title: "You write blind",
+            body:
+              "The prompt is “what do you think happens?” and neither of you sees the other's answers until it opens. That is the whole mechanism, and it only works if you actually do it separately.",
+          },
+          {
+            title: "The wildcard",
+            body: "There is a WILDCARD slot — the one prediction that is allowed to be absurd.",
+          },
+          {
+            title: "The stake",
+            body:
+              "THE STAKE asks “what does the loser owe?”. Agree it before you seal, because you cannot change it afterwards.",
+          },
+        ],
+      },
+      {
+        id: "seal",
+        title: "The seal",
+        steps: [
+          {
+            title: "SEALED is a real state",
+            body:
+              "Once sealed the predictions are not readable. The page keeps a line about “right now” and a city so that opening it a year later has some context to land against.",
+          },
+        ],
+      },
+      {
+        id: "wait",
+        title: "The wait",
+        steps: [
+          {
+            title: "It counts down for a year",
+            body:
+              "There is nothing to do in between, which is the point. This is the one template on the site whose payoff is deliberately a year away.",
+            note:
+              "Save the link somewhere that will survive a year — a chat you both keep, or a calendar entry on the open date. A capsule nobody can find is a capsule nobody opens.",
+          },
+        ],
+      },
+      {
+        id: "verdicts",
+        title: "Opening it",
+        steps: [
+          {
+            title: "You judge every prediction together",
+            body:
+              "It shows WRITTEN A YEAR AGO next to THEN, and you rule on each one.",
+          },
+          {
+            title: "The scorecard",
+            body:
+              "THE SCORECARD names MOST CONFIDENTLY WRONG. That title, rather than the score, is what people remember.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Can we see each other's predictions before it opens?",
+        a: "No, and that is the design — you both write blind. It only works if you genuinely fill it in separately.",
+      },
+      {
+        q: "What is the stake?",
+        a: "What the loser owes. Agree it before sealing; it is fixed once the capsule is closed.",
+      },
+      {
+        q: "How do we make sure we actually open it?",
+        a: "Put the link somewhere that survives a year — a pinned chat, or a calendar entry on the open date. There is nothing to do in the meantime, so it is easy to lose.",
+      },
+      {
+        q: "What happens at the end?",
+        a: "You judge every prediction together and get a scorecard, including the Most Confidently Wrong award.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["streak", "rewind", "missyou-gf"],
+  },
+
+  {
+    slug: "flags",
+    templateHref: "/flags",
+    templateName: "Red Flag, Green Flag",
+    title: "Let them swipe on your worst habits and rate you",
+    tagline: "One profile near you, three directions, and a verdict about them",
+    summary:
+      "A dating-app profile with exactly one person on it: you. They swipe your habits left, right, or “it's complicated”, and each direction reveals a different answer you wrote. It ends with a scorecard and a verdict — about them.",
+    category: "fun",
+    emoji: "🚩",
+    accent: "#e11d48",
+    buildTime: "About 6 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "profile",
+        title: "Your profile",
+        steps: [
+          {
+            title: "A tagline that admits something",
+            body:
+              "The placeholder is “Bad at texting, good at showing up.” Self-aware beats flattering — the whole template is you volunteering your own flaws.",
+          },
+        ],
+      },
+      {
+        id: "cards",
+        title: "The cards",
+        steps: [
+          {
+            title: "Each card is a statement about you",
+            body:
+              "The placeholder is exact: “takes 45 minutes to reply to anything”. Habits, not virtues.",
+          },
+          {
+            title: "Write all three answers, or the swipe hits nothing",
+            body:
+              "The builder warns you directly — “Swipe that direction and the card flips to nothing.” There is a Next unfinished card control and a Fix it prompt, which exist because this is the mistake everyone makes.",
+            note:
+              "Three directions per card is three times the writing, and it is the difference between a game and a dead end. Use Next unfinished card before you publish.",
+          },
+          {
+            title: "Five good ones beat eleven rushed",
+            body: "The builder says so in as many words. Take the advice.",
+          },
+          {
+            title: "Make this one sincere",
+            body:
+              "A per-card switch. One sincere card in a stack of jokes is what makes the stack land.",
+          },
+        ],
+      },
+      {
+        id: "verdict",
+        title: "The verdict",
+        steps: [
+          {
+            title: "The last card turns it around",
+            body:
+              "Its placeholder is “You just spent eleven cards judging me. Thanks for staying.” The scorecard says COMPATIBLE and THE VERDICT is about them, not you.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "One of my cards does nothing when swiped.",
+        a: "It has an unwritten direction. Every card needs all three answers — the builder warns that swiping a blank direction “flips to nothing”, and gives you a Next unfinished card control to find them.",
+      },
+      {
+        q: "How many cards should I write?",
+        a: "The builder's own advice: five good cards beat eleven rushed ones.",
+      },
+      {
+        q: "What should the statements be?",
+        a: "Real habits, not virtues. “Takes 45 minutes to reply to anything” is the template's example, and the honesty is the joke.",
+      },
+      {
+        q: "What is the sincere switch for?",
+        a: "It marks one card as not a joke. One of those in a stack of flaws is what stops the whole thing being flippant.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["catch", "court-of-love", "profile-pro"],
+  },
+
+  {
+    slug: "catch",
+    templateHref: "/catch",
+    templateName: "Catch",
+    title: "A letter that falls out of the sky, one line at a time",
+    tagline: "They catch it with their own face, and nothing can be lost",
+    summary:
+      "The letter is written onto falling objects. They catch them with their own face on the screen, and each catch adds another line. There are things to dodge, but nothing is ever locked — a miss just means the line comes round again.",
+    category: "fun",
+    emoji: "🎮",
+    accent: "#0ea5e9",
+    buildTime: "About 5 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "letter",
+        title: "The letter",
+        steps: [
+          {
+            title: "Write it onto things",
+            body:
+              "That is the builder's own instruction. Each object carries a line, so the letter has to break into pieces that survive being read one at a time.",
+          },
+          {
+            title: "The last line is its own field",
+            body:
+              "Its placeholder is “the line you'd want them to read last…”. Write the ending first; everything else can be arranged around it.",
+          },
+        ],
+      },
+      {
+        id: "items",
+        title: "The things",
+        steps: [
+          {
+            title: "A name and what it says",
+            body:
+              "“The things, and what they say” — each one is named (“name it”) and carries its line. Add another thing extends the letter.",
+          },
+        ],
+      },
+      {
+        id: "dodge",
+        title: "Things to dodge",
+        steps: [
+          {
+            title: "The petty thing",
+            body:
+              "That is the placeholder, and it tells you exactly what belongs here — the small grievances, falling alongside the letter. Dodging them is the joke.",
+          },
+        ],
+      },
+      {
+        id: "result",
+        title: "Nothing can be lost",
+        steps: [
+          {
+            title: "Missed lines come back",
+            body:
+              "The template is explicit: nothing is ever locked, every catch just adds another line. There is a Play again, and a “Play it instead” route for people who would rather not read.",
+            note:
+              "Worth saying when you send it — a game where you can fail would make a letter you might never finish. This one cannot be failed, which is why it can carry something serious.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save and share",
+        steps: [
+          {
+            title: "Save & play it",
+            body: "Then publish from the preview to get the link.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "What if they miss a line?",
+        a: "It comes back. Nothing is ever locked — the template is built so the letter cannot be lost, only delayed.",
+      },
+      {
+        q: "What should the dodge items be?",
+        a: "Petty grievances. The field's placeholder is literally “the petty thing”, and dodging them alongside catching the nice ones is the whole gag.",
+      },
+      {
+        q: "How do I break a letter into lines?",
+        a: "Write the last line first — it has its own field — then arrange the rest so each piece reads on its own.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["hold-my-hand", "flags", "photo-puzzle"],
+  },
+
+  {
+    slug: "hold-my-hand",
+    templateHref: "/hold-my-hand",
+    templateName: "Hold My Hand",
+    title: "Hold the screen for sixty seconds and the letter unlocks",
+    tagline: "Let go and it drains — with lines that try to make you",
+    summary:
+      "They press and hold the screen for a minute. Let go and the progress drains back. Fragments of the letter surface as they hold, ghost lines try to make them let go, and reaching the end unlocks the whole thing.",
+    category: "fun",
+    emoji: "🫀",
+    accent: "#be123c",
+    buildTime: "About 4 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "hold",
+        title: "The hold",
+        steps: [
+          {
+            title: "Sixty seconds, and letting go costs",
+            body:
+              "It drains rather than resetting, so a slip is recoverable. Say “hold it” when you send the link — a page that looks like it is doing nothing is a page people close.",
+          },
+        ],
+      },
+      {
+        id: "lines",
+        title: "The lines that surface",
+        steps: [
+          {
+            title: "Fragments, timed to the hold",
+            body:
+              "Add fragment takes “a fragment of the letter…”. They appear as the timer runs, so the letter is being read before it is unlocked.",
+          },
+          {
+            title: "Release lines",
+            body:
+              "Add release line covers what shows if they let go — the placeholders are “don't.” and “come back.” Two words, and they do more than anything else in the template.",
+          },
+        ],
+      },
+      {
+        id: "letter",
+        title: "The letter",
+        steps: [
+          {
+            title: "What you actually wanted to say",
+            body:
+              "That is the field's placeholder. Everything before it exists to buy this a minute of undivided attention, which is more than most messages get.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save and share",
+        steps: [
+          { title: "Save & Preview, then publish", body: "The link comes from publishing the preview." },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "What happens if they let go?",
+        a: "It drains rather than resetting, and a release line appears — “don't.”, “come back.” Picking it back up carries on from where the drain got to.",
+      },
+      {
+        q: "How long is the hold?",
+        a: "Sixty seconds. Tell them to hold when you send it, or a screen that looks idle gets closed.",
+      },
+      {
+        q: "What are the fragments for?",
+        a: "They surface during the hold, so the letter is already being read before it unlocks. It stops the minute feeling like a wait.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["catch", "photo-puzzle", "missyou-gf"],
+  },
+
+  {
+    slug: "proposal",
+    templateHref: "/proposal",
+    templateName: "Will You Marry Me?",
+    title: "A proposal with a YES button that grows every time they dodge",
+    tagline: "A scrapbook of your story, then the only question that matters",
+    summary:
+      "A surprise, then a scrapbook of how you got here, then the ask. The No button retreats and the YES grows every time they dodge it, so there is exactly one way through. A secret note waits on the other side.",
+    category: "love",
+    emoji: "💍",
+    accent: "#db2777",
+    buildTime: "About 6 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "surprise",
+        title: "The surprise",
+        steps: [
+          {
+            title: "The opening question",
+            body:
+              "“Are you ready for a surprise?” with “Yes, show me!” under it. It exists so the proposal is not the first thing on screen — give them the beat.",
+          },
+        ],
+      },
+      {
+        id: "memories",
+        title: "The scrapbook",
+        steps: [
+          {
+            title: "At least one photo is required",
+            body:
+              "The builder stops you: “Add at least one photo to continue.” This is the one place the template will not let you skip ahead.",
+          },
+          {
+            title: "Captions dated like diary entries",
+            body:
+              "The placeholder is “the day you said hi first 🐱”. Written as a moment rather than a label, they carry the whole middle of the page.",
+          },
+        ],
+      },
+      {
+        id: "ask",
+        title: "The ask",
+        steps: [
+          {
+            title: "Customise the wording",
+            body:
+              "“Will you be my forever?” is the default; the button says “YES! 💖”. Both are editable, and using your own words matters more here than anywhere else on the site.",
+          },
+          {
+            title: "There is no way to say no",
+            body:
+              "The YES grows each time they dodge. Know that before you build it — this is a keepsake of a question you have already had answered, not a question being asked for real.",
+            note:
+              "Worth being clear-eyed about. If the answer is genuinely uncertain, a page that refuses to accept no is the wrong instrument.",
+          },
+        ],
+      },
+      {
+        id: "after",
+        title: "After the yes",
+        steps: [
+          {
+            title: "The confirmation, and a secret note",
+            body:
+              "“You are officially mine forever ❤️”, and a Secret Note tab holding “Say the thing you've been rehearsing…”. That last field is the one to write slowly.",
+          },
+          {
+            title: "A song, if you have one",
+            body: "There is an audio URL — the placeholder is “https://…/our-song.mp3”.",
+          },
+          {
+            title: "Tell the whole world",
+            body: "A share control for afterwards, if they want it public.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Can they say no?",
+        a: "No — the No button retreats and the YES grows each time they dodge it. Treat this as a keepsake of a question you already know the answer to.",
+      },
+      {
+        q: "It will not let me past the memories step.",
+        a: "It needs at least one photo. The builder says so: “Add at least one photo to continue.”",
+      },
+      {
+        q: "What is the secret note?",
+        a: "A message that waits on the other side of the yes. Its placeholder is “Say the thing you've been rehearsing…”, which is exactly what it is for.",
+      },
+      {
+        q: "Can I use my own wording?",
+        a: "Yes. Customise wording changes the question and the button. Do — the defaults are placeholders, not a script.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["date-invitation", "court-marriage", "love-gf"],
+  },
+
+  {
+    slug: "date-invitation",
+    templateHref: "/date-invitation",
+    templateName: "The Invitation",
+    title: "An invitation they answer — then a plan that unlocks as you go",
+    tagline: "Say yes and it becomes a countdown; on the night, one stop at a time",
+    summary:
+      "An invitation with a real RSVP: yes, no, or a different day that works. Yes turns it into a countdown, and on the day itself the plan unlocks stop by stop while you are actually out — so they find out where they are going as they get there.",
+    category: "love",
+    emoji: "💌",
+    accent: "#9d174d",
+    buildTime: "About 7 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "invitation",
+        title: "The invitation",
+        steps: [
+          {
+            title: "The ask, and what to wear",
+            body:
+              "“The ask” carries the invitation; there is a Before you come note whose placeholder is “something you can walk in”. Practical instructions are romantic when the plan is a secret.",
+          },
+        ],
+      },
+      {
+        id: "rsvp",
+        title: "The RSVP",
+        steps: [
+          {
+            title: "Three answers, including a counter-offer",
+            body:
+              "Yes, no, and “A day that works” — “You suggested a different day instead.” The template handles being turned down gracefully: “Nothing is pending. Take care of yourself.” and “No rush on either side.”",
+            note:
+              "That third option is why this works better than a message. It gives them a way to say “not that night” without saying no.",
+          },
+          {
+            title: "It knows when the day has passed",
+            body:
+              "“This one passed.” and “The day it was for has already gone by.” The page ages honestly rather than sitting there pretending.",
+          },
+        ],
+      },
+      {
+        id: "where",
+        title: "The meeting point",
+        steps: [
+          {
+            title: "Paste a Google Maps link",
+            body: "That is the field's placeholder — the meeting point is a real location they can navigate to.",
+          },
+          {
+            title: "Keep this one a surprise",
+            body:
+              "A per-stop switch. Some stops can be named and others hidden until you arrive.",
+          },
+        ],
+      },
+      {
+        id: "night",
+        title: "The night itself",
+        steps: [
+          {
+            title: "Stops unlock as the evening goes",
+            body:
+              "Add a stop builds the route, and it reveals one at a time while you are out. Notes like “it gets cooler here — bring the jacket” land at the moment they are useful rather than in a list beforehand.",
+          },
+          {
+            title: "Photos stay on their device",
+            body:
+              "The template is explicit: “These stay on this device for now.” Worth knowing before anyone expects a shared album.",
+          },
+        ],
+      },
+      {
+        id: "after",
+        title: "Afterwards",
+        steps: [
+          {
+            title: "The whole evening, start to finish",
+            body:
+              "The After tab collects the night once it is over — the route, the time together, the photos.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "What if they can't make that day?",
+        a: "There is a third RSVP option — a day that works — so they can counter-offer instead of declining. The page handles a no kindly too.",
+      },
+      {
+        q: "Do they see the whole plan up front?",
+        a: "Only what you choose. Stops can be marked “Keep this one a surprise” and unlock one at a time on the night itself.",
+      },
+      {
+        q: "Where do the photos go?",
+        a: "Nowhere yet — the template says “These stay on this device for now.” Do not promise a shared album.",
+      },
+      {
+        q: "What happens if the date passes with no answer?",
+        a: "The page says so — “This one passed.” It ages honestly rather than sitting there waiting.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["proposal", "dedication", "love-gf"],
+  },
+
+  {
+    slug: "dedication",
+    templateHref: "/dedication",
+    templateName: "Dedication",
+    title: "A radio show for one listener, in your actual voice",
+    tagline: "They tune through static, land on your frequency, and hear you",
+    summary:
+      "A radio station made for one person. They drag a needle through static until they find your frequency, and your recorded voice introduces each song before it plays. Songs come from YouTube links with in and out points, so you can play the eight seconds that matter instead of the whole track.",
+    category: "love",
+    emoji: "📻",
+    accent: "#a16207",
+    buildTime: "About 8 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "station",
+        title: "The station",
+        steps: [
+          {
+            title: "A name, a frequency, and two cities",
+            body:
+              "The placeholders are the whole conceit: “RADIO MEERA” on “98.3”, for Meera in Bengaluru, from Arjun in Pune. The frequency is what they have to find, so a memorable number is worth choosing.",
+          },
+        ],
+      },
+      {
+        id: "booth",
+        title: "The recording booth",
+        steps: [
+          {
+            title: "This is the template, and it needs your voice",
+            body:
+              "The script placeholder is “Good evening. You're on 98.3…”. Everything else here is set-dressing around a recording of you talking — if you are not going to record, pick a different template.",
+            note:
+              "Radio voice, not reading voice. The convention the template is imitating — “This one goes out to Meera in Bengaluru, from Arjun.” — is doing the emotional work, so lean into it rather than apologising for it.",
+          },
+        ],
+      },
+      {
+        id: "songs",
+        title: "The songs",
+        steps: [
+          {
+            title: "YouTube links, with in and out points",
+            body:
+              "Each song takes a link, a title, an artist, and “Start at (sec)” / “Stop at (sec)”. There is a whole-song option, but the trim is the better tool — play the eight seconds that mean something.",
+          },
+          {
+            title: "Hold the card for (sec)",
+            body:
+              "How long the dedication card sits on screen before the music moves on. Set it to how long the words actually take to read.",
+          },
+        ],
+      },
+      {
+        id: "requests",
+        title: "Listener requests",
+        steps: [
+          {
+            title: "They can request back",
+            body:
+              "There is a Listener request slip — a message with a date. The station is not one-way, which most people sending it never realise.",
+          },
+        ],
+      },
+      {
+        id: "signoff",
+        title: "The sign-off",
+        steps: [
+          {
+            title: "“Same frequency, same time, whenever you want.”",
+            body: "The closing placeholder, and hard to improve on.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Do I have to record my voice?",
+        a: "Effectively yes — the Recording Booth is the point of the template. Everything else is built around hearing you introduce the songs.",
+      },
+      {
+        q: "Where do the songs come from?",
+        a: "YouTube links. Each one takes a start and stop second, so you can play just the part that matters rather than the whole track.",
+      },
+      {
+        q: "Can they reply?",
+        a: "Yes — there is a listener request slip they can send back with a message and a date.",
+      },
+      {
+        q: "How do they find the station?",
+        a: "They drag the needle through static until they hit your frequency. Pick a number worth remembering; it is the one thing they have to hunt for.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["watch", "date-invitation", "missyou-gf"],
+  },
+
+  {
+    slug: "photo-puzzle",
+    templateHref: "/photo-puzzle",
+    templateName: "The Last Piece",
+    title: "A jigsaw where every piece hands over a line of a letter",
+    tagline: "And the final piece is not in the box — you have it",
+    summary:
+      "A photo broken into pieces. Each one placed reveals a line of a letter and plays a note, so the melody assembles as the picture does. The last piece is missing on purpose: they have to ask you for it.",
+    category: "love",
+    emoji: "🧩",
+    accent: "#7c3aed",
+    buildTime: "About 6 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "photo",
+        title: "The photo and the pieces",
+        steps: [
+          {
+            title: "How many pieces",
+            body:
+              "This is the difficulty dial and the length dial at once — one line of the letter per piece. More pieces means a longer letter and a longer sit.",
+          },
+        ],
+      },
+      {
+        id: "letter",
+        title: "The letter, one line per piece",
+        steps: [
+          {
+            title: "“the line this piece hands over…”",
+            body:
+              "Each line has to work on its own, out of order, because they will not place the pieces in the order you wrote them.",
+          },
+          {
+            title: "The last thing she reads",
+            body: "Its own field, and the one worth writing first.",
+          },
+        ],
+      },
+      {
+        id: "melody",
+        title: "The melody",
+        steps: [
+          {
+            title: "Notes assemble with the picture",
+            body:
+              "There is a Hear it preview and a Tweak the notes yourself control if the generated melody is not right.",
+          },
+        ],
+      },
+      {
+        id: "last",
+        title: "The last piece",
+        steps: [
+          {
+            title: "“I have the last piece. Ask me for it.”",
+            body:
+              "That is what they see while they wait, and it is the whole design — the puzzle cannot be finished without talking to you.",
+            note:
+              "Be around when you send it. The template deliberately creates a moment that needs you to answer, and it falls flat if the message sits unread for a day.",
+          },
+          {
+            title: "The reveal",
+            body: "“There. That's the whole thing.” — the photo completes and the letter closes.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Why can't they finish it?",
+        a: "The last piece is deliberately not in the box. They see “I have the last piece. Ask me for it.” — the puzzle is designed to require you.",
+      },
+      {
+        q: "How many pieces should I use?",
+        a: "One line of letter per piece, so the count is really how long you want the letter to be. More pieces is a longer sit.",
+      },
+      {
+        q: "Do the lines need to be in order?",
+        a: "No, and they will not be. People place pieces in whatever order they manage, so each line has to stand on its own.",
+      },
+      {
+        q: "Can I change the music?",
+        a: "Yes — there is a preview and a control to tweak the notes yourself.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["catch", "hold-my-hand", "capsule"],
+  },
+
+  {
+    slug: "nutrition",
+    templateHref: "/nutrition",
+    templateName: "Nutrition Facts",
+    title: "Put them on a nutrition label — serving size 1, calories ∞",
+    tagline: "Tap any row and you explain why that one is on the label",
+    summary:
+      "A nutrition label where the product is a person. Serving size: 1 (there is only one). Rows for the things they are made of, with percentages that go past 100, an ingredients line, and a tap on any row that opens your reason for putting it there.",
+    category: "fun",
+    emoji: "🥫",
+    accent: "#166534",
+    buildTime: "About 4 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "product",
+        title: "The product",
+        steps: [
+          {
+            title: "Their name is the product name",
+            body:
+              "And the serving is “1 Meera”. The placeholders — “1 (there is only one)”, “worth every one” — set a tone the whole label has to hold.",
+          },
+        ],
+      },
+      {
+        id: "nutrients",
+        title: "The rows",
+        steps: [
+          {
+            title: "A name, an amount, a percentage",
+            body:
+              "The placeholders are “Total Loyalty”, “112g”, “140%”. Percentages above 100 are the joke; keep the units real and the numbers absurd.",
+          },
+          {
+            title: "Indent, for sub-rows",
+            body:
+              "Real labels indent their sub-nutrients. Using it makes the parody land far harder than another top-level row would.",
+          },
+          {
+            title: "Every row is tappable",
+            body:
+              "“Tap any line” — each one opens your reason for it being there. That is where the actual message lives, so a label with no reasons written is just a joke with no punchline.",
+            note:
+              "This is the field people skip. The label is the set-up; the reasons behind the rows are the letter.",
+          },
+        ],
+      },
+      {
+        id: "ingredients",
+        title: "Ingredients",
+        steps: [
+          {
+            title: "CONTAINS, in shouty caps",
+            body:
+              "The placeholder is “CONTAINS: sarcasm, strong opinions”. Allergen warnings are the funniest convention on a real label.",
+          },
+        ],
+      },
+      {
+        id: "message",
+        title: "The message",
+        steps: [
+          {
+            title: "Signed like a manufacturer",
+            body: "“Your name, Bengaluru” — the distributor line at the bottom of the pack.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Where does the real message go?",
+        a: "Behind the rows. Every line is tappable and opens your reason for putting it on the label — the template even says “Tap any line”. A label without those written is a joke with no punchline.",
+      },
+      {
+        q: "Should the percentages be realistic?",
+        a: "No. The template's own example is 140%. Keep the units real and let the numbers be absurd.",
+      },
+      {
+        q: "What is Indent for?",
+        a: "Sub-nutrients, the way a real label indents them. It is a small thing that makes the parody much more convincing.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["product", "app", "profile-pro"],
+  },
+
+  {
+    slug: "product",
+    templateHref: "/product",
+    templateName: "Product",
+    title: "List them as a product — price ∞, one per customer, permanently",
+    tagline: "A buy box, a spec table, Q&A, and reviews from their friends",
+    summary:
+      "A full marketplace listing for a person: a photo gallery, a buy box with Add to Cart, bullet points, a specification table, customer questions with answers, and a review section their friends write through a separate link. Qty limited to 1 per customer. Permanently.",
+    category: "fun",
+    emoji: "🛒",
+    accent: "#b45309",
+    buildTime: "About 7 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "listing",
+        title: "The listing",
+        steps: [
+          {
+            title: "Price is a text field, not a number",
+            body:
+              "The placeholder says so — “Price (text — ₹0, Free, ∞)”. That is deliberate, and ∞ is the default joke for a reason.",
+          },
+          {
+            title: "The store line and the search box",
+            body:
+              "“Visit the ___ Store”, and a search placeholder that does the work for you: “Search for someone better (you will not find one).”",
+          },
+          {
+            title: "About this item",
+            body: "Bullet points, in marketplace voice. Short, declarative, faintly overstated.",
+          },
+        ],
+      },
+      {
+        id: "details",
+        title: "The specification table",
+        steps: [
+          {
+            title: "Label and Value rows",
+            body:
+              "The flattest part of the page and often the funniest — spec tables are absurd when the product is a person, without needing a single joke word.",
+          },
+        ],
+      },
+      {
+        id: "qa",
+        title: "Customer questions",
+        steps: [
+          {
+            title: "Question, answer, and who answered",
+            body:
+              "There is an “asked 2 years ago” style timestamp too. Answering in the voice of a stranger who bought one is the right register.",
+          },
+        ],
+      },
+      {
+        id: "reviews",
+        title: "Reviews — a second link for their friends",
+        steps: [
+          {
+            title: "Two links: her page, and her reviews",
+            body:
+              "The builder hands you both, with Copy the review link and Share it on WhatsApp. Friends need no account — “No account, no email, nothing kept.”",
+            note:
+              "Same as the app listing and the endorsement profile: send the review link around first. “No ratings yet. Be the first.” is a sad thing to open.",
+          },
+          {
+            title: "Verified Purchase, and a Report button that does nothing",
+            body:
+              "Reviews can be marked Verified Purchase. The Report control replies “Reported. Nothing will come of it.”, which is the best line on the page.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "How do the reviews get written?",
+        a: "By their friends, through a separate review link — the builder gives you “Her page, and her reviews”. No account or email needed on their side.",
+      },
+      {
+        q: "What should the price be?",
+        a: "The field takes text, not a number — ₹0, Free, or ∞. It is a joke field by design.",
+      },
+      {
+        q: "What goes in the spec table?",
+        a: "Flat label-and-value facts. It is funnier the drier it is; a specification sheet about a person needs no help.",
+      },
+      {
+        q: "Does the Report button do anything?",
+        a: "It says “Reported. Nothing will come of it.” — which is the entire point of it.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["app", "nutrition", "profile-pro"],
+  },
+
+  {
+    slug: "us",
+    templateHref: "/us",
+    templateName: "Us",
+    title: "Give the relationship its own account",
+    tagline: "Bio, highlights, a photo grid, and comments from the group chat",
+    summary:
+      "A social profile for the two of you rather than either of you: a handle, a bio, follower stats, story highlights, a grid of posts with captions, and comments from friends who are enjoying it far too much.",
+    category: "love",
+    emoji: "📱",
+    accent: "#c13584",
+    buildTime: "About 5 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "profile",
+        title: "The profile",
+        steps: [
+          {
+            title: "The handle is the first joke",
+            body:
+              "The placeholder is “us_since_2023”. The display name is both of you — “Ananya & Rohan” — and the category line is “Domestic partnership”.",
+          },
+          {
+            title: "A profile card you can save",
+            body: "Save profile card exports it as an image, separately from the link.",
+          },
+        ],
+      },
+      {
+        id: "grid",
+        title: "The grid",
+        steps: [
+          {
+            title: "Posts with captions and places",
+            body:
+              "The placeholders show the shape — “Bandra, Mumbai”, “first date”. A location on a post does more than a paragraph.",
+          },
+        ],
+      },
+      {
+        id: "highlights",
+        title: "Story highlights",
+        steps: [
+          {
+            title: "The named circles under the bio",
+            body:
+              "“the-shared-album” is the placeholder. They are the fastest way to give the profile a history without writing more posts.",
+          },
+        ],
+      },
+      {
+        id: "comments",
+        title: "The comments",
+        steps: [
+          {
+            title: "Written from the group chat's point of view",
+            body:
+              "The commenter placeholders are “mom, her_mom, the_group_chat” and “her_mom”, with “2 years ago” timestamps. Writing them as the people who would actually comment is what makes the profile feel real.",
+          },
+          {
+            title: "Liked by",
+            body: "A likes line to fill in, in the same voice.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Whose account is it?",
+        a: "The relationship's, not either person's. The handle placeholder is “us_since_2023” and the display name is both of you.",
+      },
+      {
+        q: "Who writes the comments?",
+        a: "You do, in the voice of the people who would be commenting — the template's own placeholders are “mom, her_mom, the_group_chat”.",
+      },
+      {
+        q: "Can I post it as an image?",
+        a: "Yes — Save profile card exports the profile as a picture.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["rewind", "app", "love-gf"],
+  },
+
+  {
+    slug: "christian-wedding-2",
+    templateHref: "/christian-wedding-2",
+    templateName: "Christian Wedding — Scroll Edition",
+    title: "The Christian wedding invitation as one continuous scroll",
+    tagline: "Same content as the rail edition, in one page instead of five",
+    summary:
+      "The same sage-and-watercolour Christian wedding invitation, laid out as a single scroll rather than five rail sections. Card, the couple's story, events, gallery and blessings flow into one another — better for guests who will not tap through a menu.",
+    category: "wedding",
+    emoji: "⛪",
+    accent: "#5f7a5f",
+    buildTime: "About 10 minutes",
+    updatedAt: "2026-08-28",
+
+    sections: [
+      {
+        id: "which",
+        title: "Which edition to send",
+        intro:
+          "This is the only real decision. The content is the same; the navigation is not.",
+        steps: [
+          {
+            title: "Scroll edition, or rail edition",
+            body:
+              "This one flows top to bottom under a “Scroll to explore” prompt. The original Christian Wedding template puts the same five sections behind a rail. Guests who will not hunt through a menu see more of the invitation here.",
+            note:
+              "For an older or less phone-confident guest list, the scroll is the safer choice — nothing is hidden behind a tap they might not make.",
+          },
+          {
+            title: "Everything else is identical",
+            body:
+              "The builder, the seven-step wizard, the events, the gallery, the blessings guestbook and the share options are the same. The full walkthrough is in the Christian Wedding guide.",
+          },
+        ],
+      },
+      {
+        id: "sections",
+        title: "What the guest scrolls through",
+        steps: [
+          {
+            title: "Card, Us, Events, Gallery, Blessings",
+            body:
+              "In that order, continuously. Us carries About, Parents and Grandparents behind Open controls; Events carries each celebration with its Venue and a Maps link; Join Us closes it.",
+          },
+          {
+            title: "Blessings is still the guestbook",
+            body:
+              "As on the rail edition, it collects typed messages and voice notes from guests once the invitation is published.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "How is this different from the Christian Wedding template?",
+        a: "Only the navigation. Same content, same builder, same seven-step wizard — this one lays the five sections out as one continuous scroll instead of putting them behind a rail.",
+      },
+      {
+        q: "Which one should I use?",
+        a: "The scroll edition if your guest list will not tap through a menu; the rail edition if you want guests to jump straight to Events or Gallery. Older guest lists generally do better with the scroll.",
+      },
+      {
+        q: "Where is the full walkthrough?",
+        a: "In the Christian Wedding guide — the builder is identical, step for step.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["christian-wedding", "shaadi-card", "reception"],
+  },
 ];
 
 export const guideList: ProductGuide[] = guides;
