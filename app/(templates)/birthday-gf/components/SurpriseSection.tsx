@@ -144,6 +144,7 @@ interface Props {
 export default memo(function SurpriseSection({ data, isPreview = false }: Props) {
   const photo = data.surprisePhoto || (isPreview ? DEMO_PHOTO : "");
   const audio = data.surpriseAudioUrl || (isPreview ? DEMO_AUDIO : "");
+  const note = (data.personalMessage || "").trim();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [revealed, setRevealed] = useState(false);
@@ -498,6 +499,52 @@ export default memo(function SurpriseSection({ data, isPreview = false }: Props)
                       </div>
                     </div>
 
+                    {/* Personal message — the sender's note, under the photo */}
+                    {note && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        style={{
+                          marginTop: 14,
+                          marginBottom: 16,
+                          padding: "14px 16px",
+                          borderRadius: 14,
+                          background: "rgba(173,104,74,0.06)",
+                          border: "1px solid rgba(173,104,74,0.16)",
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontFamily: SERIF,
+                            fontStyle: "italic",
+                            fontSize: 15,
+                            lineHeight: 1.65,
+                            color: BROWN,
+                            margin: 0,
+                            textAlign: "center",
+                            whiteSpace: "pre-wrap",
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {note}
+                        </p>
+                        {!!data.senderName?.trim() && (
+                          <p
+                            style={{
+                              fontFamily: CURSIVE,
+                              fontSize: 16,
+                              color: TERRACOTTA,
+                              margin: "10px 0 0",
+                              textAlign: "right",
+                            }}
+                          >
+                            — {data.senderName.trim()}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+
                     {/* Audio player — real or pseudo */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -520,8 +567,8 @@ export default memo(function SurpriseSection({ data, isPreview = false }: Props)
                       )}
                     </motion.div>
 
-                    {/* No photo and no audio — extra celebratory message */}
-                    {!photo && !audio && (
+                    {/* Nothing from the sender at all — extra celebratory message */}
+                    {!photo && !audio && !note && (
                       <div style={{ textAlign: "center", padding: "16px 0 0" }}>
                         <span style={{ fontSize: 48, display: "block", marginBottom: 4 }}>🎂</span>
                         <p style={{ fontFamily: CURSIVE, fontSize: 18, color: BROWN, margin: 0 }}>

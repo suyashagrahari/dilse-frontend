@@ -663,11 +663,6 @@ export default function EditSheet({
               <input value={mf.senderName} onChange={(e) => updateMf("senderName", e.target.value)}
                 placeholder="Your name..." style={INPUT_STYLE} />
             </div>
-            <div>
-              {lbl("Birthday date")}
-              <input type="date" value={mf.birthdayDate}
-                onChange={(e) => updateMf("birthdayDate", e.target.value)} style={INPUT_STYLE} />
-            </div>
             <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
               {ghostBtn("← Back", () => setEditMode(isReview ? "ai" : "choose"))}
               {primaryBtn("Next →", () => setManualStep(1), !mf.recipientName.trim())}
