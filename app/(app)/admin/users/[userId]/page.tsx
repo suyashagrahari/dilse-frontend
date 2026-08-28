@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Space_Grotesk } from "next/font/google";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
@@ -14,16 +13,6 @@ import PagesTab from "./PagesTab";
 import PointsTab from "./PointsTab";
 import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
-
-// Space Grotesk is the theme's display face and is not among the fonts the root
-// layout loads. Declaring it here keeps it scoped to this screen instead of
-// adding a family to every page in the app.
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-space-grotesk",
-  display: "optional",
-});
 
 const TABS = ["Overview", "Pages", "Points", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
@@ -128,7 +117,7 @@ function ProfileInner() {
     if (!superAdmin) {
       return (
         <div className="sa-card" style={{ textAlign: "center", padding: "56px 20px" }}>
-          <ShieldAlert size={34} style={{ color: C.pink, marginBottom: 12 }} />
+          <ShieldAlert size={34} style={{ color: C.danger, marginBottom: 12 }} />
           <h2 className="sa-h" style={{ margin: "0 0 6px", fontSize: 18 }}>Super admin only</h2>
           <p style={{ margin: 0, fontSize: 13.5, color: C.muted }}>
             This page shows personal data and is limited to the super admin account.
@@ -157,16 +146,16 @@ function ProfileInner() {
           <div style={{ flex: "1 1 220px", minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
               <h1 className="sa-name sa-h">{user.name}</h1>
-              <Pill text={status} color={STATUS_COLOR[status] || C.muted} />
-              <Pill text={user.role} color={C.accent} />
+              <Pill text={status} color={STATUS_COLOR[status] || C.muted} solid />
+              <Pill text={user.role} color={C.gold} solid />
             </div>
             <div className="sa-email">{user.email}</div>
             {user.statusReason && (
-              <div style={{ color: C.pink, fontSize: 12.5, marginTop: 5 }}>Reason: {user.statusReason}</div>
+              <div style={{ color: "#f0b7bd", fontSize: 12, marginTop: 3 }}>Reason: {user.statusReason}</div>
             )}
           </div>
 
-          <div style={{ flex: "0 0 auto", width: "100%", maxWidth: 220 }}>
+          <div style={{ flex: "0 0 auto" }}>
             <Btn
               variant="primary"
               onClick={() => setImpOpen(true)}
@@ -227,14 +216,14 @@ function ProfileInner() {
   };
 
   return (
-    <div className={`sa-root ${spaceGrotesk.variable}`}>
+    <div className="sa-root">
       <ProfileStyles />
       <div className="sa-wrap">
         <button
           onClick={() => router.push("/admin/users")}
           className="sa-btn"
           data-v="ghost"
-          style={{ marginBottom: 14 }}
+          style={{ marginBottom: 10 }}
         >
           <ArrowLeft size={14} /> All users
         </button>

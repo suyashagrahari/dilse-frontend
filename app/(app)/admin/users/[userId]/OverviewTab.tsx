@@ -9,18 +9,18 @@ export default function OverviewTab({ data }: { data: ProfileData }) {
     <>
       <div className="sa-stats">
         <Stat label="Pages" value={stats.totalPages} />
-        <Stat label="Published" value={stats.publishedPages} tone={C.green} />
+        <Stat label="Published" value={stats.publishedPages} tone={C.ok} />
         <Stat label="Total views" value={stats.totalViews.toLocaleString()} tone={C.accent} />
         <Stat label="Points" value={user.points} />
-        <Stat label="Locked" value={stats.passwordProtectedPages} tone={C.amber} />
-        <Stat label="Contributions" value={stats.totalContributions} tone={C.pink} />
+        <Stat label="Locked" value={stats.passwordProtectedPages} tone={C.warn} />
+        <Stat label="Contributions" value={stats.totalContributions} tone={C.danger} />
       </div>
 
       <Card title="Account">
         <Row label="User ID" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><code className="sa-mono">{user._id}</code><CopyBtn value={user._id} label="Copy id" /></span>} />
         <Row label="Email" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{user.email}<CopyBtn value={user.email} label="Copy email" /></span>} />
         <Row label="Sign-in method" value={user.provider} />
-        <Row label="Email verified" value={<span style={{ color: user.isVerified ? C.green : C.amber }}>{user.isVerified ? "Yes" : "No"}</span>} />
+        <Row label="Email verified" value={<span style={{ color: user.isVerified ? C.ok : C.warn }}>{user.isVerified ? "Yes" : "No"}</span>} />
         <Row label="Role" value={user.role} />
         {user.suspendedUntil && <Row label="Suspended until" value={fmt(user.suspendedUntil)} />}
         <Row label="Subdomain" value={user.subdomain || "—"} />
@@ -53,7 +53,7 @@ export default function OverviewTab({ data }: { data: ProfileData }) {
             <Row
               key={i}
               label={`${String(p.templateType || "—")} · ${String(p.status || "")}`}
-              value={<strong style={{ color: String(p.status) === "paid" ? C.green : C.muted }}>₹{Number(p.amount || 0)}</strong>}
+              value={<strong style={{ color: String(p.status) === "paid" ? C.ok : C.muted }}>₹{Number(p.amount || 0)}</strong>}
             />
           ))
         )}

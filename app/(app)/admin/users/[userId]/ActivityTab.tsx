@@ -13,10 +13,10 @@ interface Entry {
 
 /** Actions that changed something, so they read as heavier than the reads. */
 const TONE: Record<string, string> = {
-  "user.ban": C.pink, "user.suspend": C.amber, "user.reinstate": C.green,
-  "page.delete": C.pink, "impersonation.start": C.pink, "impersonation.end": C.muted,
-  "user.reveal_password": C.amber, "page.reset_password": C.amber,
-  "user.adjust_points": C.accent, "user.force_logout": C.amber, "user.change_role": C.accent,
+  "user.ban": C.danger, "user.suspend": C.warn, "user.reinstate": C.ok,
+  "page.delete": C.danger, "impersonation.start": C.danger, "impersonation.end": C.muted,
+  "user.reveal_password": C.warn, "page.reset_password": C.warn,
+  "user.adjust_points": C.accent, "user.force_logout": C.warn, "user.change_role": C.accent,
 };
 
 /**

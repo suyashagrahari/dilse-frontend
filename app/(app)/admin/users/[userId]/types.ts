@@ -74,34 +74,51 @@ export interface ProfileData {
  * every surface on this screen reads from it. If the token layer lands later,
  * this object is the only thing that has to change.
  */
+/**
+ * SubhSandesh theme tokens — gold, deep maroon and cream.
+ *
+ * Taken from what the site actually ships: `components/home/*` uses #c9a84c
+ * 200 times, #3d0c11 61 times and #f5ede6 31 times, and every sibling admin
+ * page (analytics, contacts, users, templates) is built from the same three.
+ * Headings are Lora, the serif the landing uses, already loaded globally by the
+ * root layout as `--font-lora`.
+ *
+ * Defined once here so the whole screen shifts together if the brand does.
+ */
 export const C = {
-  bg: "#FAFAF7",
-  bgAlt: "#F3F1EA",
-  surface: "#FFFFFF",
-  surfaceAlt: "#EFEDFD",
-  text: "#0E0E12",
-  muted: "#5B5B66",
-  border: "#ECEAE3",
+  bg: "#f5ede6",
+  bgAlt: "#faf3ee",
+  surface: "#fffdfb",
+  surfaceAlt: "#f7eee5",
 
-  accent: "#6C5CE7",
-  accentStrong: "#5646C9",
-  pink: "#F72585",
-  lime: "#C6FF3D",
-  onAccent: "#FFFFFF",
+  text: "#2a0a0e",
+  muted: "#7f5f5f",
+  faint: "#9a7070",
+  border: "rgba(61,12,17,0.10)",
+  borderStrong: "rgba(61,12,17,0.18)",
 
-  amber: "#FFB020",
-  green: "#3AA76D",
+  /** Readable gold for links and icons — #c9a84c itself fails on cream. */
+  accent: "#8b5a2b",
+  /** Deep maroon: primary buttons, active tabs. */
+  accentStrong: "#3d0c11",
+  /** The brand gold, for highlights and fills rather than small text. */
+  gold: "#c9a84c",
+  goldDeep: "#a8823a",
 
-  radius: 20,
-  radiusLg: 28,
-  shadow: "0 8px 24px rgba(14,14,18,.06)",
-  shadowElevated: "0 40px 80px -20px rgba(14,14,18,.38)",
-  gradient: "linear-gradient(135deg, #6C5CE7, #F72585)",
+  ok: "#3aa76d",
+  warn: "#a8823a",
+  danger: "#a13540",
+
+  radius: 12,
+  radiusLg: 16,
+  shadow: "0 2px 10px rgba(61,12,17,0.05)",
+  shadowElevated: "0 24px 60px -18px rgba(26,5,7,0.42)",
+  gradient: "linear-gradient(135deg,#3d0c11,#5a1620)",
 } as const;
 
 /** Account status → the palette colour that carries its meaning. */
 export const STATUS_COLOR: Record<string, string> = {
-  active: "#3AA76D",
-  suspended: "#FFB020",
-  banned: "#F72585",
+  active: "#3aa76d",
+  suspended: "#a8823a",
+  banned: "#a13540",
 };

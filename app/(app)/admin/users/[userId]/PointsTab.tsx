@@ -65,7 +65,7 @@ export default function PointsTab({
                     <tr key={t._id}>
                       <td style={{ color: C.muted, whiteSpace: "nowrap" }}>{fmtShort(t.createdAt)}</td>
                       <td>{t.type}</td>
-                      <td style={{ color: t.delta >= 0 ? C.green : C.pink, fontWeight: 700 }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</td>
+                      <td style={{ color: t.delta >= 0 ? C.ok : C.danger, fontWeight: 700 }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</td>
                       <td style={{ color: C.muted }}>{t.balance}</td>
                       <td style={{ color: C.muted }}>{String(t.meta?.reason || "")}</td>
                     </tr>
@@ -78,7 +78,7 @@ export default function PointsTab({
                 <div key={t._id} className="sa-mini">
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                     <strong style={{ fontSize: 13 }}>{t.type}</strong>
-                    <strong style={{ color: t.delta >= 0 ? C.green : C.pink }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</strong>
+                    <strong style={{ color: t.delta >= 0 ? C.ok : C.danger }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</strong>
                   </div>
                   <div className="sa-mini-r"><span className="sa-mini-l">Balance after</span><span>{t.balance}</span></div>
                   <div className="sa-mini-r"><span className="sa-mini-l">When</span><span>{fmtShort(t.createdAt)}</span></div>

@@ -195,7 +195,7 @@ export default function PagesTab({
                       <td style={{ maxWidth: 260 }}><Url p={p} /></td>
                       <td><Password p={p} /></td>
                       <td style={{ fontWeight: 700 }}>{p.viewCount.toLocaleString()}</td>
-                      <td><Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.green : C.muted} /></td>
+                      <td><Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.ok : C.muted} /></td>
                       <td style={{ color: C.muted, whiteSpace: "nowrap" }}>{fmtShort(p.createdAt)}</td>
                       <td>
                         <div style={{ display: "flex", justifyContent: "flex-end" }}><Actions p={p} /></div>
@@ -212,7 +212,7 @@ export default function PagesTab({
                 <div key={p._id} className="sa-mini">
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                     <strong style={{ fontSize: 14 }}>{p.templateLabel}</strong>
-                    <Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.green : C.muted} />
+                    <Pill text={p.isPublished ? "Live" : "Draft"} color={p.isPublished ? C.ok : C.muted} />
                   </div>
                   <div className="sa-mini-r" style={{ alignItems: "center" }}>
                     <span className="sa-mini-l" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>

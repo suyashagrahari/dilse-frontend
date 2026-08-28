@@ -55,11 +55,12 @@ export default function ImpersonationBanner() {
     <div
       style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999,
-        background: "linear-gradient(135deg, #6C5CE7, #F72585)", color: "#fff",
+        background: "linear-gradient(135deg,#3d0c11,#7a1f2a)", color: "#f5ede6",
+        borderBottom: "1px solid rgba(201,168,76,0.55)",
         display: "flex", alignItems: "center", justifyContent: "center",
         gap: 10, padding: "9px 14px", fontSize: 12.5, fontWeight: 600,
         flexWrap: "wrap", textAlign: "center",
-        boxShadow: "0 8px 24px rgba(14,14,18,.18)",
+        boxShadow: "0 4px 16px rgba(26,5,7,0.28)",
       }}
     >
       <AlertTriangle size={16} />
@@ -71,8 +72,8 @@ export default function ImpersonationBanner() {
         onClick={exit}
         style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.4)",
-          color: "#fff", borderRadius: 999, padding: "4px 11px",
+          background: "rgba(201,168,76,0.2)", border: "1px solid rgba(201,168,76,0.65)",
+          color: "#f5ede6", borderRadius: 7, padding: "3px 10px",
           fontSize: 12, fontWeight: 700, cursor: "pointer",
         }}
       >
