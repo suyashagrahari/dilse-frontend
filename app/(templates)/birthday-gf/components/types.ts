@@ -50,6 +50,8 @@ export interface MusicTrack {
 export interface BirthdayData {
   recipientName: string;
   senderName: string;
+  /** No longer asked for in the editor and rendered nowhere; kept so re-saving an
+   *  older page does not silently drop the value it already stored. */
   birthdayDate: string;
   birthdayWish: string;
   personalMessage: string;
