@@ -36,6 +36,13 @@ export function ProfileStyles() {
       /* Lora is the site's heading serif and is already loaded globally. */
       .sa-h { font-family: var(--font-lora), Georgia, serif; letter-spacing: -0.01em; }
 
+      .sa-root, .sa-wrap { max-width: 100%; }
+      /* Every flex child defaults to min-width:auto, which refuses to shrink
+         below its content — that is what pushed a long share link past the
+         screen edge. Reset it wherever text can be long. */
+      .sa-card, .sa-mini, .sa-card-h, .sa-mini-r, .sa-row { min-width: 0; max-width: 100%; }
+      .sa-mini-r > *, .sa-row > *, .sa-card-h > * { min-width: 0; }
+
       .sa-card {
         background: ${C.surface};
         border: 1px solid ${C.border};
@@ -50,6 +57,12 @@ export function ProfileStyles() {
         display: flex; align-items: center; justify-content: space-between;
         gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
       }
+      @media (max-width: 759px) {
+        .sa-card-h { flex-direction: column; align-items: stretch; gap: 8px; }
+      }
+      .sa-search { display: flex; align-items: center; gap: 7px; width: 100%; }
+      @media (min-width: 760px) { .sa-search { width: 300px; } }
+
       .sa-card-t {
         margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .07em;
         text-transform: uppercase; color: ${C.muted};
@@ -118,7 +131,8 @@ export function ProfileStyles() {
       .sa-btn[data-v="danger"]:hover:not(:disabled) { filter: brightness(.92); }
       .sa-btn[data-v="ghost"] { background: rgba(255,255,255,0.55); color: ${C.muted}; border-color: ${C.border}; }
       .sa-btn[data-v="ghost"]:hover:not(:disabled) { border-color: ${C.gold}; color: ${C.accent}; }
-      .sa-icon-btn { padding: 5px; border-radius: 7px; }
+      /* Compact, but still a comfortable mouse target — 19x26 was too tight. */
+      .sa-icon-btn { padding: 6px; border-radius: 7px; min-width: 30px; min-height: 30px; }
 
       .sa-input {
         width: 100%; border: 1px solid ${C.border}; border-radius: 8px;
@@ -156,12 +170,39 @@ export function ProfileStyles() {
       .sa-cards { display: grid; gap: 7px; }
       .sa-mini { border: 1px solid ${C.border}; border-radius: ${C.radius}px; padding: 10px; background: ${C.bgAlt}; }
       .sa-mini-r { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 2px 0; }
-      .sa-mini-l { color: ${C.faint}; }
+      .sa-mini-l { color: ${C.faint}; white-space: nowrap; flex-shrink: 0; }
 
       .sa-only-lg { display: none; }
       @media (min-width: 760px) { .sa-only-lg { display: block; } .sa-only-sm { display: none; } }
 
       .sa-actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+
+      /* Phones get labelled, full-width buttons in a row that divides evenly,
+         each at a real touch size. Desktop keeps the compact icon strip. */
+      .sa-lbl { display: none; }
+      @media (max-width: 759px) {
+        /* Two across, not four. Four labelled buttons on a 360px phone leaves
+           ~67px each, and "Password" does not fit that — the label spilled out
+           of its own button. Two columns give ~145px, which fits comfortably. */
+        .sa-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 7px; width: 100%;
+        }
+        .sa-actions > .sa-btn, .sa-actions > a.sa-btn {
+          width: 100%; min-height: 42px; padding: 8px;
+          border-radius: 9px; font-size: 12px; gap: 6px;
+          overflow: hidden;
+        }
+        .sa-lbl {
+          display: inline; overflow: hidden;
+          text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+        }
+      }
+      /* Roomier phones and small tablets fit all four in one row. */
+      @media (min-width: 480px) and (max-width: 759px) {
+        .sa-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      }
 
       .sa-scrim {
         position: fixed; inset: 0; z-index: 1000; background: rgba(26,5,7,.42);
@@ -314,6 +355,7 @@ export function Btn({
       aria-label={icon && typeof children !== "string" ? title : undefined}
       className={`sa-btn${icon ? " sa-icon-btn" : ""}`}
       data-v={variant}
+      style={{ flexShrink: 0 }}
     >
       {children}
     </button>

@@ -97,7 +97,7 @@ export default function PagesTab({
   const Url = ({ p }: { p: ProfilePage }) => {
     if (!p.shareId) return <span style={{ color: C.muted, fontSize: 12.5 }}>Not published</span>;
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, maxWidth: "100%" }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, maxWidth: "100%" }}>
         <a
           href={urlOf(p)}
           target="_blank"
@@ -132,21 +132,22 @@ export default function PagesTab({
     <div className="sa-actions">
       {p.shareId && (
         <a href={urlOf(p)} target="_blank" rel="noreferrer" className="sa-btn sa-icon-btn" data-v="ghost" title="Open the page">
-          <ExternalLink size={13} />
+          <ExternalLink size={13} /><span className="sa-lbl">Open</span>
         </a>
       )}
       {p.hasPassword && (
         <Btn variant="ghost" icon title="Reveal password — this is logged" onClick={() => reveal(p)} disabled={busy === p._id}>
           {revealed[p._id] ? <EyeOff size={13} /> : <Eye size={13} />}
+          <span className="sa-lbl">{revealed[p._id] ? "Hide" : "Show"}</span>
         </Btn>
       )}
       {p.supportsPassword && (
         <Btn variant="ghost" icon title="Set or remove the password" onClick={() => { setPwFor(p); setPwValue(""); }}>
-          <KeyRound size={13} />
+          <KeyRound size={13} /><span className="sa-lbl">Password</span>
         </Btn>
       )}
       <Btn variant="danger" icon title="Delete permanently" onClick={() => setDelFor(p)} disabled={busy === p._id}>
-        <Trash2 size={13} />
+        <Trash2 size={13} /><span className="sa-lbl">Delete</span>
       </Btn>
     </div>
   );
@@ -159,7 +160,7 @@ export default function PagesTab({
       <Card
         title={`Templates — ${data.pages.length} total · ${live} live · ${locked} password-locked`}
         action={
-          <div style={{ display: "flex", alignItems: "center", gap: 7, flex: "1 1 200px", maxWidth: 300 }}>
+          <div className="sa-search">
             <Search size={14} color={C.muted} style={{ flexShrink: 0 }} />
             <input
               className="sa-input"
@@ -218,7 +219,7 @@ export default function PagesTab({
                     <span className="sa-mini-l" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                       <Link2 size={12} /> Link
                     </span>
-                    <span style={{ minWidth: 0, maxWidth: "68%" }}><Url p={p} /></span>
+                    <span style={{ minWidth: 0, overflow: "hidden" }}><Url p={p} /></span>
                   </div>
                   <div className="sa-mini-r"><span className="sa-mini-l">Password</span><span><Password p={p} /></span></div>
                   <div className="sa-mini-r"><span className="sa-mini-l">Views</span><strong>{p.viewCount.toLocaleString()}</strong></div>
