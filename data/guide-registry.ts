@@ -35,6 +35,7 @@ export const GUIDE_CATEGORIES = [
   { id: "festival", label: "Festivals", emoji: "🪔" },
   { id: "love", label: "Love & Romance", emoji: "💕" },
   { id: "birthday", label: "Birthday", emoji: "🎂" },
+  { id: "wedding", label: "Weddings", emoji: "💍" },
   { id: "basics", label: "Getting Started", emoji: "✨" },
 ] as const;
 
@@ -2338,6 +2339,857 @@ const guides: ProductGuide[] = [
 
     relatedBlogSlugs: [],
     relatedGuideSlugs: ["missyou-gf", "love-gf"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // The four wedding templates
+  //
+  // All four run the SAME seven-step wizard behind Edit Invitation — Names,
+  // Details, Events, Gallery, Descriptions, Share photo, Password — and finish
+  // on Set & Preview. Only the defaults, the palette and one or two sections
+  // differ. That is documented once, here, in the fullest of the four, and the
+  // other three say plainly that they share it rather than repeating it badly.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "christian-wedding",
+    templateHref: "/christian-wedding",
+    templateName: "Christian Wedding",
+    title: "Send a Christian wedding invitation your guests can bless back",
+    tagline: "Seven steps, a photo of your paper card as a shortcut, and a guestbook",
+    summary:
+      "A full wedding site rather than a card: the invitation, your story, every function with its own timings and venue, a gallery, and a Blessings page where guests write to you — by voice if they want. The builder will also read a photograph of your printed invitation and fill itself in from it.",
+    category: "wedding",
+    emoji: "⛪",
+    accent: "#5f7a5f",
+    buildTime: "About 10 minutes",
+    updatedAt: "2026-08-28",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-28",
+      silent: true,
+      // Read off the recording's own "STEP n OF 11" chip and the heading it
+      // prints over each wizard page, a frame at a time.
+      chapters: [
+        { at: 0,  label: "What the guest opens" },
+        { at: 4,  label: "Open the builder",           sectionId: "open" },
+        { at: 6,  label: "Fill it in yourself",        sectionId: "open" },
+        { at: 10, label: "Names & photos",             sectionId: "names" },
+        { at: 20, label: "Date, venue, families",      sectionId: "details" },
+        { at: 25, label: "The blessing",               sectionId: "details" },
+        { at: 30, label: "The events",                 sectionId: "events" },
+        { at: 33, label: "The gallery",                sectionId: "gallery" },
+        { at: 37, label: "Descriptions & parents",     sectionId: "descriptions" },
+        { at: 47, label: "The share photo",            sectionId: "share-photo" },
+        { at: 51, label: "Set & Preview",              sectionId: "save" },
+        { at: 53, label: "What the guest sees",        sectionId: "guest" },
+        { at: 56, label: "Card",                       sectionId: "guest" },
+        { at: 59, label: "Us",                         sectionId: "guest" },
+        { at: 61, label: "Events",                     sectionId: "guest" },
+        { at: 64, label: "Gallery",                    sectionId: "guest" },
+        { at: 66, label: "Blessings",                  sectionId: "guest" },
+        { at: 69, label: "Publish it",                 sectionId: "publish" },
+        { at: 75, label: "Link, QR, print",            sectionId: "share" },
+        { at: 88, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "The door is Edit Invitation, at the foot of the guest rail on desktop — not a Create button in a top bar. On a phone it is Create instead.",
+        steps: [
+          {
+            title: "Press Edit Invitation",
+            body:
+              "What you are looking at before you press it is the demo — Jane & Andrew, already filled in. Nothing is yours until you save.",
+            shot: "step-01.webp",
+            shotAlt: "The finished invitation with the guest rail and Edit Invitation",
+          },
+          {
+            title: "Generate with AI will read your paper card",
+            body:
+              "The AI door here is not the usual “describe it and I'll write it”. It says “Upload your invitation image or describe your wedding” — photograph the card the printer gave you and it fills the whole builder from it.",
+            shot: "step-02.webp",
+            shotAlt: "Customize Your Invitation: Generate with AI, or Fill Manually",
+            note:
+              "This is the fastest route by a distance if the wedding is already designed on paper, and it is the least obvious thing in the template. Check every field afterwards — a photograph of a card is not a database record.",
+          },
+          {
+            title: "Or Fill Manually, and use Continue",
+            body:
+              "Seven pages, and the forward button says Continue rather than Next. The progress bar above the heading fills a segment per page.",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Step 1 — names and photos",
+        steps: [
+          {
+            title: "Bride and groom, and a portrait each",
+            body:
+              "Both names are required; the two photos are not. They become the header of the whole site and the two cards in the Us section.",
+            shot: "step-03.webp",
+            shotAlt: "Step 1 of 7 — bride name, groom name, and the two photo slots",
+          },
+        ],
+      },
+      {
+        id: "details",
+        title: "Step 2 — date, venue, blessing, families",
+        steps: [
+          {
+            title: "The venue field is doing more than it looks",
+            body:
+              "Type the address and a live “View … on Google Maps” link appears under it. Guests get that link, so write the address the way you would want it typed into a map, not the way it reads on a card.",
+            shot: "step-04.webp",
+            shotAlt: "Wedding date and time, the venue with its Maps link, the blessing, and both families",
+          },
+          {
+            title: "The Sanskrit / Hindi blessing",
+            body:
+              "One line, set above the couple's names. The demo uses “God bless this union”; a Sanskrit or Hindi line sits here just as well and the field is named for both.",
+          },
+          {
+            title: "Both families, by name",
+            body:
+              "Bride's family and groom's family as they should be read out. These reappear in the Us section.",
+          },
+        ],
+      },
+      {
+        id: "events",
+        title: "Step 3 — the functions",
+        steps: [
+          {
+            title: "Each event gets a date, a time, a venue and a note",
+            body:
+              "Rehearsal Dinner, Ceremony and Reception to start with. The venue on each event carries its own Maps link, and the note is where the dress code and the “please arrive twenty minutes early” goes.",
+            shot: "step-05.webp",
+            shotAlt: "The events step — three functions, each with date, time, venue and a note",
+            note:
+              "The line above the list is worth reading: “Leave fields empty to use defaults.” An event you half-fill will show the demo's wording for the rest, so clear what you do not want rather than leaving it.",
+          },
+          {
+            title: "Deleted events are not gone",
+            body:
+              "The bin moves an event into a Removed events tray at the bottom of the page, with a + to put it back. Spare slots live there too, which is how you add a Mehendi or a Brunch.",
+            shot: "step-06.webp",
+            shotAlt: "The Removed events tray, each row with a plus to restore it",
+          },
+        ],
+      },
+      {
+        id: "gallery",
+        title: "Step 4 — the gallery",
+        steps: [
+          {
+            title: "Up to six, and the first one is the big one",
+            body:
+              "The instruction says it: “Upload up to 6 gallery photos. First photo will be featured large.” Pick the one you want at that size first.",
+            shot: "step-07.webp",
+            shotAlt: "The gallery step, six slots filled, each with a remove and a crop control",
+          },
+          {
+            title: "It arrives pre-filled, and you can empty it",
+            body:
+              "Six stock images are already in place. Remove all six and Continue still works — the section simply does not appear for guests. Verified on the live template.",
+          },
+        ],
+      },
+      {
+        id: "descriptions",
+        title: "Step 5 — descriptions and family",
+        steps: [
+          {
+            title: "A line each about the two of you",
+            body:
+              "Short. These sit under the names on the Us cards, and they are read in passing rather than studied.",
+            shot: "step-08.webp",
+            shotAlt: "Bride's and groom's descriptions, parents, and the optional grandparents fields",
+          },
+          {
+            title: "Grandparents, if they should be named",
+            body:
+              "Both grandparent fields are marked Optional and are easy to scroll past. On an Indian or a traditional Christian card they are often the first names on it.",
+          },
+        ],
+      },
+      {
+        id: "share-photo",
+        title: "Step 6 — the share photo",
+        steps: [
+          {
+            title: "This is the WhatsApp preview",
+            body:
+              "The form says it plainly: “Add a photo your guests will see the moment they open your invitation link.” It is the image that unfurls when the link is pasted into a chat, so it is the first thing most guests ever see. jpg, png or webp, up to 20MB.",
+            shot: "step-09.webp",
+            shotAlt: "The share photo step and its upload area",
+            note:
+              "Skip this and the link goes out as a bare grey card. It is the single highest-leverage upload in the whole build and it is on the second-to-last page, where most people are already hurrying.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Step 7 — password, then Set & Preview",
+        steps: [
+          {
+            title: "A guest password, or Skip",
+            body:
+              "“Add a password so only invited guests can view it. This is optional.” Skip sits beside Set & Preview, so there is no way to get stuck here.",
+            shot: "step-10.webp",
+            shotAlt: "The password step, with Skip and Set & Preview",
+          },
+          {
+            title: "Set & Preview finishes the wizard",
+            body:
+              "The sheet closes onto your finished invitation, and Publish appears in the rail under Edit Invitation.",
+            shot: "step-11.webp",
+            shotAlt: "The saved invitation, with Publish now under Edit Invitation",
+          },
+        ],
+      },
+      {
+        id: "guest",
+        title: "What the guest sees",
+        intro:
+          "Five sections down the left: Card, Us, Events, Gallery, Blessings. Walk them before you send — a step you skipped is simply an absent section.",
+        steps: [
+          {
+            title: "Events, one card per function",
+            body:
+              "“Tap any card for the full story — timings, venue, and notes from the hosts.” The date chip is on the right of each card.",
+            shot: "step-12.webp",
+            shotAlt: "The guest's Events section, three cards with date chips",
+          },
+          {
+            title: "Blessings is a guestbook, and it takes voice notes",
+            body:
+              "The banner says what it is for: “After you publish, guests on your shared link can type a blessing or record a voice note here.” The messages you see before publishing are examples.",
+            shot: "step-13.webp",
+            shotAlt: "Wishes & Blessings, with the banner explaining it opens after publishing",
+            note:
+              "This is the part of the template worth telling guests about when you send the link. Nobody leaves a blessing on a page they thought was just a card.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish goes live immediately",
+            body:
+              "On this template Publish does not ask you to sign in first — the invitation goes live at that click and the rail button becomes Share. Verified on the live site on 28 Aug 2026.",
+            note:
+              "Because it publishes without an account, the link is the only handle you have on the page afterwards. Copy it somewhere safe before you close the tab.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Three ways to hand it over",
+            body:
+              "WhatsApp, Instagram, Telegram, X and Facebook straight from the sheet, or copy the link. QR prints onto the card itself; Print gives you something to slip into an envelope.",
+            shot: "step-14.webp",
+            shotAlt: "The share sheet — Link, QR and Print, with the social buttons",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Can it just read my printed invitation?",
+        a: "Yes, and it is the best thing in the builder. Generate with AI accepts a photograph of your card and fills the whole thing in from it. Check the fields afterwards, then carry on from wherever it got to.",
+      },
+      {
+        q: "Where are the Next buttons?",
+        a: "The forward button on all four wedding templates says Continue, and the door is Edit Invitation at the foot of the rail rather than Create in a top bar. Seven pages, then Set & Preview.",
+      },
+      {
+        q: "Can guests write back?",
+        a: "Yes. The Blessings section is a guestbook that accepts typed messages and recorded voice notes, and it starts collecting once the page is published. The blessings visible before that are examples.",
+      },
+      {
+        q: "I deleted an event by mistake.",
+        a: "It is in the Removed events tray at the bottom of the events step, with a plus to put it back. The same tray holds the spare slots you add a Mehendi or a Brunch from.",
+      },
+      {
+        q: "What is the share photo for?",
+        a: "It is the preview image guests see when the link is pasted into WhatsApp. Skip it and the link arrives as a blank grey card, which is a poor first impression of a wedding.",
+      },
+      {
+        q: "Do I need an account?",
+        a: "Not on this template — Publish puts the invitation live straight away without a sign-in. That also means the link is your only way back to it, so save it as soon as you have it.",
+      },
+      {
+        q: "Can I keep it to invited guests only?",
+        a: "Set a password on the last step of the wizard. Guests need the word as well as the link.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["shaadi-card", "wedding-shaadi", "reception"],
+  },
+
+  {
+    slug: "shaadi-card",
+    templateHref: "/shaadi-card",
+    templateName: "Animated Shaadi Card",
+    title: "Build an animated shaadi card that opens like the real thing",
+    tagline: "The same seven steps, in the register of a printed Indian card",
+    summary:
+      "A vertical animated card — ॐ शुभ विवाह across the top, the two names in script, the mandap below — wrapped in the same five-section guest site as its siblings. The builder is the wedding wizard with Indian defaults already in it, and its AI door will read a photograph of your printed shaadi card.",
+    category: "wedding",
+    emoji: "🪔",
+    accent: "#b03050",
+    buildTime: "About 9 minutes",
+    updatedAt: "2026-08-28",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-28",
+      silent: true,
+      // From the recording's "STEP n OF 9" chip and the wizard heading over
+      // each region.
+      chapters: [
+        { at: 0,  label: "What the guest opens" },
+        { at: 5,  label: "Open the builder",           sectionId: "open" },
+        { at: 8,  label: "Fill it in yourself",        sectionId: "open" },
+        { at: 14, label: "Names & photos",             sectionId: "names" },
+        { at: 24, label: "The events",                 sectionId: "wizard" },
+        { at: 28, label: "The gallery",                sectionId: "wizard" },
+        { at: 33, label: "The share photo",            sectionId: "wizard" },
+        { at: 38, label: "Set & Preview",              sectionId: "save" },
+        { at: 41, label: "What the guest sees",        sectionId: "guest" },
+        { at: 45, label: "Card",                       sectionId: "guest" },
+        { at: 48, label: "Us",                         sectionId: "guest" },
+        { at: 52, label: "Events",                     sectionId: "guest" },
+        { at: 55, label: "Gallery",                    sectionId: "guest" },
+        { at: 58, label: "Blessings",                  sectionId: "guest" },
+        { at: 62, label: "Publish it",                 sectionId: "publish" },
+        { at: 69, label: "Link, QR, print",            sectionId: "share" },
+        { at: 87, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        steps: [
+          {
+            title: "Edit Invitation, at the foot of the rail",
+            body:
+              "The card animates in when the page loads — give it a few seconds before you reach for anything. Edit Invitation is under the five guest sections.",
+            shot: "step-01.webp",
+            shotAlt: "The finished animated shaadi card with the guest rail and Edit Invitation",
+          },
+          {
+            title: "Its AI door reads a shaadi card",
+            body:
+              "“Upload shaadi card or describe your wedding.” Photograph the printed card and the builder fills itself in from it — the same shortcut as the Christian template, worded for this one.",
+            shot: "step-02.webp",
+            shotAlt: "The fork: Generate with AI, which offers to read your shaadi card, or Fill Manually",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Step 1 — names and photos",
+        steps: [
+          {
+            title: "Both names, and a portrait each",
+            body:
+              "The names are what the card sets in script, so how you write them here is how they are read. Photos are optional and feed the Us cards.",
+            shot: "step-03.webp",
+            shotAlt: "Step 1 of 7 — bride name, groom name, and the two photo slots",
+          },
+        ],
+      },
+      {
+        id: "wizard",
+        title: "Steps 2 to 7 — the shared wizard",
+        intro:
+          "From here it is the same seven-step wizard all four wedding templates run: Details, Events, Gallery, Descriptions, Share photo, Password. The full walkthrough is in the Christian Wedding guide; what follows is what is specific to this one.",
+        steps: [
+          {
+            title: "The defaults are already Indian",
+            body:
+              "Step 2 arrives with ॐ शुभ विवाह in the blessing field and “Shri Deepak Mehta & Smt. Kavita Mehta” under bride's family. Swap the names and the wording holds up — you are editing a card rather than filling a form.",
+            shot: "step-04.webp",
+            shotAlt: "Step 2 of 7 — date, Udaipur as the venue, the Hindi blessing, both families",
+          },
+          {
+            title: "The venue types into a live map link",
+            body:
+              "Whatever you write appears under the field as a Google Maps link, and guests get it. Write it as an address, not as card copy.",
+          },
+          {
+            title: "The share photo is the WhatsApp preview",
+            body:
+              "Step 6. It is the image that unfurls when someone pastes the link into a chat, and skipping it sends a blank grey card to every guest.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Set & Preview",
+        steps: [
+          {
+            title: "The last step is the password, and it has a Skip",
+            body:
+              "Set & Preview closes the wizard onto the finished card, and Publish joins Edit Invitation in the rail.",
+          },
+        ],
+      },
+      {
+        id: "guest",
+        title: "What the guest sees",
+        steps: [
+          {
+            title: "Us — dulhan and dulha, family behind a tap",
+            body:
+              "Two cards with दुल्हन and दूल्हा chips, the descriptions you wrote, and a Bride's family / Groom's family row with Open on it. “Tap a card — family & story.” The parents you typed in step 2 are behind that.",
+            shot: "step-05.webp",
+            shotAlt: "The Us section — dulhan and dulha cards, each with a family row to open",
+          },
+          {
+            title: "Then Events, Gallery and Blessings",
+            body:
+              "Blessings is the guestbook: once published, guests can type a blessing or record a voice note on it.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish, then Share",
+            body:
+              "The rail button becomes Share and the sheet gives you the link, a QR and a printable card.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "Send it on WhatsApp, or print the QR onto the card",
+            body:
+              "The QR is worth knowing about for a wedding: printed on the paper card, it takes a guest who was handed an envelope to the gallery and the guestbook.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "How is this different from the Royal Indian Wedding template?",
+        a: "Same wizard, different guest experience. This one is a light, animated card in the register of printed stationery. Royal Indian Wedding is dark and gold, opens on a Play & Enter music gate, and carries a countdown to the day.",
+      },
+      {
+        q: "Can it read my printed card?",
+        a: "Yes — Generate with AI offers exactly that. Photograph the card and it fills the builder in from the photo.",
+      },
+      {
+        q: "Why does the card take a moment to appear?",
+        a: "It animates in deliberately, which is the point of the template. Give it a few seconds before pressing anything.",
+      },
+      {
+        q: "Where do the parents' names show up?",
+        a: "In the Us section, behind the Bride's family and Groom's family rows on the two cards. Guests tap to open them.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["christian-wedding", "wedding-shaadi", "reception"],
+  },
+
+  {
+    slug: "wedding-shaadi",
+    templateHref: "/wedding-shaadi",
+    templateName: "Royal Indian Wedding",
+    title: "A royal wedding invitation that opens with music and counts down",
+    tagline: "A Play & Enter gate, a live countdown, and a theme the guest controls",
+    summary:
+      "The dark, gold version of the wedding site. Guests land on a gate that asks whether to play the music before anything loads, then on a countdown to the day. They can switch the whole invitation between the dark royal look and a light one themselves. Behind Edit Invitation it is the same seven-step wizard as the other three.",
+    category: "wedding",
+    emoji: "👰",
+    accent: "#c9a227",
+    buildTime: "About 9 minutes",
+    updatedAt: "2026-08-28",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-28",
+      silent: true,
+      // From the recording's "STEP n OF 8" chip. Note the extra beat at 0:04
+      // that the two light templates do not have — the music gate.
+      chapters: [
+        { at: 0,  label: "What the guest opens" },
+        { at: 4,  label: "The music gate",             sectionId: "gate" },
+        { at: 9,  label: "Open the builder",           sectionId: "open" },
+        { at: 12, label: "Fill it in yourself",        sectionId: "open" },
+        { at: 17, label: "Names & photos",             sectionId: "wizard" },
+        { at: 27, label: "The events",                 sectionId: "wizard" },
+        { at: 30, label: "The gallery",                sectionId: "wizard" },
+        { at: 36, label: "The share photo",            sectionId: "wizard" },
+        { at: 39, label: "Set & Preview",              sectionId: "save" },
+        { at: 43, label: "What the guest sees",        sectionId: "guest" },
+        { at: 47, label: "Home",                       sectionId: "guest" },
+        { at: 50, label: "Us",                         sectionId: "guest" },
+        { at: 53, label: "Events",                     sectionId: "guest" },
+        { at: 56, label: "Gallery",                    sectionId: "guest" },
+        { at: 59, label: "Blessings",                  sectionId: "guest" },
+        { at: 63, label: "Publish it",                 sectionId: "publish" },
+        { at: 70, label: "Link, QR, print",            sectionId: "share" },
+        { at: 87, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "gate",
+        title: "The music gate",
+        intro:
+          "The thing to understand before you build anything: this invitation does not open straight onto the page.",
+        steps: [
+          {
+            title: "Play & Enter, or Skip",
+            body:
+              "Guests get शुभ विवाह, your two names, and a panel — “Wedding Background Music · Enhance your experience with beautiful wedding melodies” — with Play & Enter and Skip. Nothing below loads until one of them is pressed.",
+            shot: "step-01.webp",
+            shotAlt: "The Play & Enter gate over the darkened hero",
+            note:
+              "This is why the invitation can have music at all. Browsers refuse to autoplay sound, so the gate turns a blocked autoplay into a choice the guest actually makes — and it is also the reason a guest who taps Skip sees a silent page and has not broken anything.",
+          },
+        ],
+      },
+      {
+        id: "open",
+        title: "Open the builder",
+        steps: [
+          {
+            title: "Edit Invitation, under the rail",
+            body:
+              "Same door as the other three. The rail here labels itself with emoji — 🏠 Home, 💑 Us, 📅 Events, 📷 Gallery, 🙏 Blessings.",
+            shot: "step-04.webp",
+            shotAlt: "Customize Your Invitation — Generate with AI, or Fill Manually",
+          },
+          {
+            title: "Two doors: AI, or by hand",
+            body:
+              "“Upload shaadi card or describe your wedding” reads a photograph of a printed card. Fill Manually opens the seven-step wizard.",
+          },
+        ],
+      },
+      {
+        id: "wizard",
+        title: "The seven-step wizard",
+        intro:
+          "Identical to the other three wedding templates: Names, Details, Events, Gallery, Descriptions, Share photo, Password, then Set & Preview. The step-by-step is in the Christian Wedding guide.",
+        steps: [
+          {
+            title: "The date drives the countdown",
+            body:
+              "Step 2's wedding date and time is not decoration here — it feeds the days/hours/minutes/seconds counter on the guest's home screen. A wrong date is visible to everyone, ticking.",
+          },
+          {
+            title: "The venue city shows beside the date",
+            body:
+              "Home prints “15 MARCH 2026 · JAIPUR” under the names, taken from the venue field, and the field also produces the Google Maps link guests use.",
+          },
+          {
+            title: "The share photo is the WhatsApp preview",
+            body:
+              "Step 6, and the most-seen image in the whole build — it is what unfurls when the link is pasted into a chat.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Set & Preview",
+        steps: [
+          {
+            title: "Password or Skip, then Set & Preview",
+            body:
+              "The wizard closes onto the finished invitation and Publish appears in the rail. The music gate comes back on the way in, so expect to pass it again.",
+          },
+        ],
+      },
+      {
+        id: "guest",
+        title: "What the guest sees",
+        steps: [
+          {
+            title: "Home — the countdown, in the dark",
+            body:
+              "ॐ शुभ विवाह, the two names across the width, the date and city, and four counters ticking down. This is the template's whole argument.",
+            shot: "step-02.webp",
+            shotAlt: "The guest's home screen — names, date, city and the live countdown, dark theme",
+          },
+          {
+            title: "And the guest can turn the lights on",
+            body:
+              "The small sun/moon control at the bottom-left of the rail switches the entire invitation to a light cream-and-gold treatment. It is theirs to press, not yours to set — worth knowing before someone tells you the invitation “looks wrong” on their phone.",
+            shot: "step-03.webp",
+            shotAlt: "The same page after the guest presses the theme toggle, in light cream and gold",
+          },
+          {
+            title: "Then Us, Events, Gallery and Blessings",
+            body:
+              "Blessings is the guestbook — once published, guests type a blessing or record a voice note there.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish, then Share",
+            body: "The rail button becomes Share, and the sheet carries the link, the QR and the printable card.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "WhatsApp, a QR, or a printed card",
+            body: "The QR printed onto the paper card is the one worth planning for — it takes a guest from an envelope to the countdown and the guestbook.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Why does it ask about music before showing anything?",
+        a: "Browsers will not autoplay sound, so instead of failing silently the invitation asks. Play & Enter starts the music; Skip opens the same page without it. Nothing below the gate loads until a guest chooses.",
+      },
+      {
+        q: "A guest says the invitation looks light, not dark. Why?",
+        a: "They pressed the theme toggle at the bottom-left of the rail. It switches the whole invitation between the dark royal look and a cream-and-gold one, and it is the guest's choice rather than a setting you control.",
+      },
+      {
+        q: "Where does the countdown come from?",
+        a: "The wedding date and time on step 2 of the wizard. It ticks on every guest's screen, so it is the field to check twice.",
+      },
+      {
+        q: "How is this different from the Animated Shaadi Card?",
+        a: "Same builder, different evening. This one is dark and gold with a music gate and a countdown; the shaadi card is light and animates like printed stationery.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["reception", "shaadi-card", "christian-wedding"],
+  },
+
+  {
+    slug: "reception",
+    templateHref: "/reception",
+    templateName: "Reception",
+    title: "A reception invitation with the venue on a real map",
+    tagline: "One evening, one place — so it drops Events and adds Location",
+    summary:
+      "The wedding site narrowed to a single evening. There is no Events section because there is only one event; in its place is Location, a live map with a pin on the venue and directions a guest can follow. It also has the widest front door of the four: upload the card, describe it, or write it yourself.",
+    category: "wedding",
+    emoji: "🥂",
+    accent: "#c08a3e",
+    buildTime: "About 8 minutes",
+    updatedAt: "2026-08-28",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-08-28",
+      silent: true,
+      // From the recording's "STEP n OF 8" chip and the wizard heading over
+      // each region. Like wedding-shaadi it has a gate beat at 0:04.
+      chapters: [
+        { at: 0,  label: "What the guest opens" },
+        { at: 4,  label: "The music gate",             sectionId: "gate" },
+        { at: 8,  label: "Open the builder",           sectionId: "open" },
+        { at: 10, label: "Write it yourself",          sectionId: "open" },
+        { at: 15, label: "Names & families",           sectionId: "wizard" },
+        { at: 26, label: "Tagline, date, venue",       sectionId: "wizard" },
+        { at: 37, label: "The photos",                 sectionId: "wizard" },
+        { at: 41, label: "The gallery",                sectionId: "wizard" },
+        { at: 46, label: "Set & Preview",              sectionId: "save" },
+        { at: 49, label: "What the guest sees",        sectionId: "guest" },
+        { at: 53, label: "Home",                       sectionId: "guest" },
+        { at: 55, label: "Us",                         sectionId: "guest" },
+        { at: 58, label: "Gallery",                    sectionId: "guest" },
+        { at: 61, label: "Location",                   sectionId: "location" },
+        { at: 63, label: "Blessings",                  sectionId: "guest" },
+        { at: 66, label: "Publish it",                 sectionId: "publish" },
+        { at: 73, label: "Link, QR, print",            sectionId: "share" },
+        { at: 88, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "gate",
+        title: "The music gate",
+        steps: [
+          {
+            title: "Play & Enter, or Skip",
+            body:
+              "Like the Royal Indian Wedding template, the reception opens on a choice about music before it opens on anything else — “Reception Background Music · Enhance your experience with elegant celebration melodies.” Nothing below loads until a guest presses one.",
+            shot: "step-01.webp",
+            shotAlt: "The reception's Play & Enter gate",
+          },
+        ],
+      },
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "Note the wording throughout: this template says Reception where the other three say Invitation. The rail button is Edit Reception.",
+        steps: [
+          {
+            title: "Three doors, not two",
+            body:
+              "Upload Reception Card — “AI reads your invitation card & fills everything”. Generate with AI — “Describe your reception & AI creates the content”. Write Manually — “Fill in every detail & upload photos yourself”. The other three fold the first two together; this one names them separately.",
+            shot: "step-04.webp",
+            shotAlt: "Customize Your Invitation — Upload Reception Card, Generate with AI, Write Manually",
+            note:
+              "If the reception card is already printed, the first door is the fastest route in the whole wedding set. Photograph it and check the result rather than typing anything.",
+          },
+        ],
+      },
+      {
+        id: "wizard",
+        title: "The seven-step wizard",
+        intro:
+          "The same seven steps as its siblings, with reception wording — and the sheet opens as a panel down the right rather than in the middle. The full walkthrough is in the Christian Wedding guide.",
+        steps: [
+          {
+            title: "Step 1 is names and families, without photos",
+            body:
+              "Bride, groom, and both families. The portraits move to the photos step later, which is the one place the four templates order things differently.",
+            shot: "step-05.webp",
+            shotAlt: "Step 1 of 7 — bride, groom and both families, as a right-hand panel",
+          },
+          {
+            title: "The tagline is the line under the names",
+            body:
+              "“Request the pleasure of your company” by default. It is the only piece of card language in the build and it is worth writing yourself.",
+          },
+          {
+            title: "Date, timings and venue drive the whole page",
+            body:
+              "The reception date and time feed the countdown; the venue feeds the details panel, the line under the countdown, and the map in the Location section. One field, three places.",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Set & Preview",
+        steps: [
+          {
+            title: "Password or Skip, then Set & Preview",
+            body:
+              "The wizard closes onto the finished reception page and Publish appears in the rail. Expect the music gate again on the way back in.",
+          },
+        ],
+      },
+      {
+        id: "guest",
+        title: "What the guest sees",
+        intro:
+          "Home, Us, Gallery, Location, Blessings. No Events — there is one event, and it is the page.",
+        steps: [
+          {
+            title: "Home, plus a details panel the others do not have",
+            body:
+              "The countdown and the couple's names, and down the right: date, timings, venue, a gallery count and a blessings count. Before you have filled it in, that panel also carries a tip — “Click Edit Reception to add your couple details, venue, and gallery photos.”",
+            shot: "step-02.webp",
+            shotAlt: "The reception home screen with the countdown and the right-hand details panel",
+          },
+          {
+            title: "Blessings works as it does everywhere else",
+            body:
+              "A guestbook that takes typed messages and voice notes, live once the page is published. The panel on Home counts what has arrived.",
+          },
+        ],
+      },
+      {
+        id: "location",
+        title: "Location — the section only this template has",
+        steps: [
+          {
+            title: "A real map, a pin, and directions",
+            body:
+              "Not a static image: an interactive map centred on the venue, with the venue's own listing card and a directions control. Underneath, a panel repeats the venue, the date and the timings with “Tap for full details & directions”.",
+            shot: "step-03.webp",
+            shotAlt: "The Location section — an interactive map with the venue pinned",
+            note:
+              "This is why the venue field deserves care. Write the address as you would type it into a map — the hotel's actual name and city — rather than as it reads on a card, or the pin lands somewhere approximate and a guest drives there.",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Publish",
+        steps: [
+          {
+            title: "Publish, then Share",
+            body: "The rail button becomes Share and the sheet carries the link, the QR and the printable card.",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "WhatsApp, a QR, or a printed card",
+            body:
+              "For a reception the QR earns its place: printed on the card, it hands a guest the map and the directions rather than an address to retype.",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Why is there no Events section?",
+        a: "Because a reception is one event. The slot in the rail goes to Location instead — a live map with the venue pinned and directions from it.",
+      },
+      {
+        q: "Is the map real?",
+        a: "Yes. It is an interactive map centred on whatever you typed into the venue field, with the venue's listing and a directions control. Write the address as you would type it into a map rather than as card copy.",
+      },
+      {
+        q: "Why does this one have three ways to start?",
+        a: "It splits what the other templates combine: Upload Reception Card reads a photo of your printed card, Generate with AI writes from a description, and Write Manually opens the wizard. Same seven steps behind all three.",
+      },
+      {
+        q: "What is the panel down the right of the home screen?",
+        a: "A summary the other three templates do not have — date, timings, venue, how many gallery photos and how many blessings have arrived. Before you fill it in, it also carries the tip pointing you at Edit Reception.",
+      },
+      {
+        q: "Does it have the music gate too?",
+        a: "Yes, the same one as the Royal Indian Wedding template. Guests choose Play & Enter or Skip before anything below loads.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["wedding-shaadi", "christian-wedding", "shaadi-card"],
   },
 ];
 
