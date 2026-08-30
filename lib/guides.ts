@@ -1,5 +1,5 @@
 import { getArticles, type Article } from "@/lib/strapi";
-import type { ProductGuide } from "@/types/product-guide";
+import type { GuideVideo, ProductGuide } from "@/types/product-guide";
 import { guideList, getGuide, guideByTemplateHref } from "@/data/guide-registry";
 
 /** "1:30" from 90. Used on cards, chapter rows and the player. */
@@ -14,6 +14,49 @@ export function isoDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `PT${m > 0 ? `${m}M` : ""}${s}S`;
+}
+
+/**
+ * `uploadDate` for VideoObject, as an ISO 8601 datetime **with a timezone**.
+ *
+ * The registry stores `recordedAt` as a plain "2026-08-21", which is a valid
+ * schema.org Date but not a valid Google `uploadDate`: Search Console reports
+ * it as both "Invalid datetime value" and "missing a timezone". Google wants a
+ * full datetime and will not assume UTC, because the upload date is used to
+ * order and freshness-rank video results and a bare date is ambiguous by up to
+ * a day either way.
+ *
+ * The recordings are made in Asia/Kolkata, so +05:30 is the honest offset. The
+ * time of day is not recorded anywhere and nothing depends on it, so it is
+ * pinned to a fixed working hour rather than invented per guide — a stable
+ * value re-emits identically on every build, which matters because a changing
+ * uploadDate looks to Google like a re-upload.
+ *
+ * A value that already carries a time is passed through untouched, so the
+ * registry can move to full timestamps later without this needing to change.
+ */
+export function isoUploadDate(recordedAt: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(recordedAt) ? `${recordedAt}T10:00:00+05:30` : recordedAt;
+}
+
+/**
+ * Chapters as `Clip` nodes need a start *and* an end — Search Console flags
+ * `Missing field "endOffset" (in "hasPart")` without it, and a Clip with no end
+ * cannot become a "key moments" link because Google has no segment to draw.
+ *
+ * The end of a chapter is the start of the next one, and the last chapter runs
+ * to the end of the video. Crucially that is computed from the **full** chapter
+ * list before any filtering: chapters without a `sectionId` are dropped from
+ * the schema (they have no anchor to link to) but they still occupy time, so
+ * using the filtered list would stretch the preceding clip straight through
+ * them and mark the wrong segment.
+ */
+export function chapterClips(video: GuideVideo) {
+  return video.chapters.map((c, i) => ({
+    ...c,
+    startOffset: c.at,
+    endOffset: video.chapters[i + 1]?.at ?? video.seconds,
+  }));
 }
 
 /** Total written steps across a guide — the "12 steps" chip on the card. */

@@ -3,6 +3,8 @@ import { SITE_URL, TEMPLATE_SEO } from "@/lib/seo";
 import { getAllArticleSlugs, getCategories } from "@/lib/strapi";
 import { COMING_SOON_REDIRECTS, STANDALONE_INDEXABLE_PAGES } from "@/lib/site-routes";
 import { guideList } from "@/data/guide-registry";
+import { guideVideoSet } from "@/lib/templateMedia";
+import { isoUploadDate } from "@/lib/guides";
 
 // Revalidated on demand by the Strapi webhook (tag `articles`) + hourly fallback.
 export const revalidate = 3600;
@@ -47,12 +49,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // touched. Guides sit at 0.7, above the informational pages and below the
   // templates they document: they exist to send someone to a template, so they
   // should not outrank it.
-  const guidePages: MetadataRoute.Sitemap = guideList.map((g) => ({
-    url: `${SITE_URL}/guides/${g.slug}`,
-    lastModified: new Date(g.updatedAt),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+  //
+  // Guides that have a recording also carry a <video:video> entry. Video
+  // structured data on the page tells Google what the video *is*; a video
+  // sitemap tells it the video exists at all and which page to treat as its
+  // watch page. Search Console had filed one of these as "Video isn't on a
+  // watch page" — the sitemap is the direct, non-inferential answer to that,
+  // and it is also how the discovery date stops depending on when a crawl
+  // happens to reach the page.
+  const guidePages: MetadataRoute.Sitemap = guideList.map((g) => {
+    const url = `${SITE_URL}/guides/${g.slug}`;
+    const media = guideVideoSet(g.slug);
+    return {
+      url,
+      lastModified: new Date(g.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+      ...(g.video
+        ? {
+            videos: [
+              {
+                title: g.title,
+                thumbnail_loc: media.poster,
+                description: g.summary,
+                // content_loc (the MP4) only. `player_loc` means "a URL that
+                // loads a standalone player" and Google explicitly requires it
+                // to differ from <loc> — the page itself is not a player, same
+                // reason the VideoObject carries no embedUrl.
+                content_loc: media.mp4,
+                duration: g.video.seconds,
+                publication_date: isoUploadDate(g.video.recordedAt),
+                family_friendly: "yes" as const,
+                live: "no" as const,
+              },
+            ],
+          }
+        : {}),
+    };
+  });
 
   // Blog content from Strapi — degrades gracefully (empty) if the CMS is unreachable.
   const [articles, categories] = await Promise.all([getAllArticleSlugs(), getCategories()]);
