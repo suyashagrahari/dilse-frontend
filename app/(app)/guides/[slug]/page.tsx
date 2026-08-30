@@ -11,7 +11,6 @@ import {
   chapterClips,
   getRelatedGuides,
   getRelatedArticlesForGuide,
-  stepCount,
 } from "@/lib/guides";
 import GuideDetailClient from "./GuideDetailClient";
 
@@ -166,9 +165,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
               name: "SubhSandesh",
               url: SITE_URL,
             },
-            // Only chapters that map to a written section get a Clip: those are
-            // the ones with a real landing place. An intro marker as a "key
-            // moment" would send someone to the top of a page they are on.
+            // Only chapters that map to a written section get a Clip. Every
+            // chapter now has a valid time target, so this is an editorial cut
+            // rather than a technical one: a marker with no written section
+            // behind it is scaffolding in the recording, not a moment worth
+            // surfacing as a search result of its own.
             // Offsets are derived from the unfiltered chapter list so a dropped
             // marker does not stretch the clip before it over the gap.
             hasPart: chapterClips(guide.video)
@@ -178,7 +179,12 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                 name: c.label,
                 startOffset: c.startOffset,
                 endOffset: c.endOffset,
-                url: `${pageUrl}#${c.sectionId}`,
+                // ?t=<seconds>, not #<section>. Google's Clip spec requires
+                // the url to indicate the clip's start time; a section anchor
+                // is a place on the page, not a moment in the video, so a
+                // key-moment link built on it would land someone at the wrong
+                // thing. The player reads ?t= on arrival and seeks there.
+                url: `${pageUrl}?t=${c.startOffset}`,
               })),
           }}
         />
