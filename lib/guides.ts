@@ -17,9 +17,9 @@ export function isoDuration(seconds: number): string {
 }
 
 /**
- * `uploadDate` for VideoObject, as an ISO 8601 datetime **with a timezone**.
+ * A registry date as an ISO 8601 datetime **with a timezone**.
  *
- * The registry stores `recordedAt` as a plain "2026-08-21", which is a valid
+ * The registry stores dates as a plain "2026-08-21", which is a valid
  * schema.org Date but not a valid Google `uploadDate`: Search Console reports
  * it as both "Invalid datetime value" and "missing a timezone". Google wants a
  * full datetime and will not assume UTC, because the upload date is used to
@@ -35,8 +35,8 @@ export function isoDuration(seconds: number): string {
  * A value that already carries a time is passed through untouched, so the
  * registry can move to full timestamps later without this needing to change.
  */
-export function isoUploadDate(recordedAt: string): string {
-  return /^\d{4}-\d{2}-\d{2}$/.test(recordedAt) ? `${recordedAt}T10:00:00+05:30` : recordedAt;
+export function isoDateTime(date: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T10:00:00+05:30` : date;
 }
 
 /**

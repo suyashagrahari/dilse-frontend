@@ -1,5 +1,7 @@
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, TEMPLATE_SEO } from "@/lib/seo";
 import { getArticles, getCategories } from "@/lib/strapi";
+import { guideList } from "@/data/guide-registry";
+import { stepCount } from "@/lib/guides";
 
 // /llms.txt — a clean, markdown "map" of the site written for LLMs / answer
 // engines (ChatGPT, Claude, Perplexity, Gemini). It gives them a fast, ad-free
@@ -36,8 +38,25 @@ export async function GET() {
   lines.push(`- [Home](${SITE_URL}): Create a personalized celebration page in minutes — free.`);
   lines.push(`- [Templates](${SITE_URL}/templates): Browse every gift & celebration template.`);
   lines.push(`- [Blog](${SITE_URL}/blog): Guides and ideas for celebrations, gifts and Indian festivals.`);
+  lines.push(`- [Product guides](${SITE_URL}/guides): Step-by-step walkthroughs for building each template.`);
   lines.push(`- [About](${SITE_URL}/about-us): The story and founder behind ${SITE_NAME}.`);
   lines.push(`- [Contact](${SITE_URL}/contact-us): Support, partnerships and product feedback.`);
+  lines.push("");
+
+  // Guides go above templates deliberately. A template page is a tool — an
+  // answer engine has almost nothing to quote from it. A guide is the opposite:
+  // named, ordered steps written in the product's own vocabulary, which is
+  // exactly the shape a model can lift an answer from and attribute. These were
+  // missing from this file entirely while being the most citable pages on the
+  // site, so a question like "how do I add music to a wedding invite" had
+  // nothing here to reach for.
+  lines.push("## Product guides");
+  for (const g of guideList) {
+    const kind = g.video ? "video + written" : "written";
+    lines.push(
+      `- [${clean(g.title)}](${SITE_URL}/guides/${g.slug}): ${clean(g.summary)} (${stepCount(g)} steps, ${kind}, about ${clean(g.buildTime)} to build)`,
+    );
+  }
   lines.push("");
 
   lines.push("## Templates");

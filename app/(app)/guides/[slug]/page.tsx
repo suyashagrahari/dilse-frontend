@@ -7,7 +7,7 @@ import { getGuide, guideSlugs } from "@/data/guide-registry";
 import { guideVideoSet, guideMedia } from "@/lib/templateMedia";
 import {
   isoDuration,
-  isoUploadDate,
+  isoDateTime,
   chapterClips,
   getRelatedGuides,
   getRelatedArticlesForGuide,
@@ -124,6 +124,17 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           "@id": `${pageUrl}#howto`,
           mainEntityOfPage: pageUrl,
           name: guide.title,
+          // Freshness and authorship. `updatedAt` is the date the guide was
+          // last checked against the live flow, which is the only honest
+          // dateModified — a template that has since changed should not read as
+          // current just because the file was touched. Both Google and the
+          // answer engines weigh recency when deciding what to quote, and with
+          // no date at all they were left to guess from the crawl.
+          datePublished: isoDateTime(guide.updatedAt),
+          dateModified: isoDateTime(guide.updatedAt),
+          author: { "@type": "Organization", name: "SubhSandesh", url: SITE_URL },
+          publisher: { "@type": "Organization", name: "SubhSandesh", url: SITE_URL },
+          inLanguage: "en-IN",
           description: guide.summary,
           totalTime: `PT${/(\d+)/.exec(guide.buildTime)?.[1] ?? 6}M`,
           image: media.poster,
@@ -146,7 +157,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             // recording belongs to this URL rather than floating free.
             url: pageUrl,
             mainEntityOfPage: pageUrl,
-            uploadDate: isoUploadDate(guide.video.recordedAt),
+            uploadDate: isoDateTime(guide.video.recordedAt),
             duration: isoDuration(guide.video.seconds),
             inLanguage: "en-IN",
             isFamilyFriendly: true,

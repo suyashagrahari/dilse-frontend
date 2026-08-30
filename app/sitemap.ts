@@ -4,7 +4,7 @@ import { getAllArticleSlugs, getCategories } from "@/lib/strapi";
 import { COMING_SOON_REDIRECTS, STANDALONE_INDEXABLE_PAGES } from "@/lib/site-routes";
 import { guideList } from "@/data/guide-registry";
 import { guideVideoSet } from "@/lib/templateMedia";
-import { isoUploadDate } from "@/lib/guides";
+import { isoDateTime } from "@/lib/guides";
 
 // Revalidated on demand by the Strapi webhook (tag `articles`) + hourly fallback.
 export const revalidate = 3600;
@@ -78,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 // reason the VideoObject carries no embedUrl.
                 content_loc: media.mp4,
                 duration: g.video.seconds,
-                publication_date: isoUploadDate(g.video.recordedAt),
+                publication_date: isoDateTime(g.video.recordedAt),
                 family_friendly: "yes" as const,
                 live: "no" as const,
               },
