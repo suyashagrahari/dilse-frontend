@@ -1,4 +1,5 @@
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
+import PaywallHost from "@/components/PaywallHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
@@ -30,6 +31,12 @@ export default async function TemplatesLayout({
           this group, and are deliberately unaffected — see the component. */}
       <TemplateAvailabilityGate>{children}</TemplateAvailabilityGate>
       <ShareSheetHost />
+      {/* The paywall, mounted once for every template, for exactly the reason
+          the share sheet is. An editor hook raises it with one call to
+          `offerPaywall`; nothing per-template has to mount it. That is also why
+          this feature previously existed on two templates out of forty-two —
+          the old shape needed a modal in each template's page.tsx. */}
+      <PaywallHost />
     </TemplateVisibilityProvider>
   );
 }

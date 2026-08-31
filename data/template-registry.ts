@@ -1,5 +1,4 @@
 import type { TemplateListItem } from "@/types/template-config";
-import { isTemplatePremium } from "@/config/templatePricing";
 
 import { config as valentineGf } from "@/app/(templates)/valentine-gf/config";
 import { config as valentineBestfriend } from "@/app/(templates)/valentine-bestfriend/config";
@@ -142,7 +141,6 @@ function toListItem(c: typeof allConfigs[number]): TemplateListItem {
     color:       c.color,
     bgGradient:  c.bgGradient,
     coverImage:  c.coverImage,
-    isPremium:   isTemplatePremium(c.slug),
   };
 }
 
