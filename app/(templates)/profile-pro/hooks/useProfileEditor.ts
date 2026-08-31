@@ -37,7 +37,7 @@ import type {
   ProfileCertification,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
-import { publishFetch } from "@/lib/paywall/publishRequest";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "profile-pro";
@@ -282,10 +282,15 @@ export function useProfileEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await publishFetch(
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
           { slug: TEMPLATE, templateType: "profile-pro", pageId: savedId, templateTitle: "Endorsements" },
-          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+          setPublishing,
         );
+        if (gate === "cancelled") return;
+
+        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -389,10 +394,15 @@ export function useProfileEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await publishFetch(
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
         { slug: TEMPLATE, templateType: "profile-pro", pageId: id, templateTitle: "Endorsements" },
-        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+        setPublishing,
       );
+      if (gate === "cancelled") return;
+
+      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

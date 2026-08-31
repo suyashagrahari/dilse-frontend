@@ -53,3 +53,8 @@ next-env.d.ts
 # Source of truth: <workspace>/media-src/templates  →  upload with
 #   cd server && npm run upload:template-media
 public/templates/
+
+# Backups of env files. One got committed once; never again.
+*.env.bak
+.env.*.bak
+.env.local.bak

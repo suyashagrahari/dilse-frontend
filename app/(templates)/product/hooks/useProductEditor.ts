@@ -42,7 +42,7 @@ import {
 import { normalizeProductData } from "../components/tokens";
 import { useReviewModeration } from "../components/contribApi";
 import { openShareSheet } from "@/lib/share/shareBus";
-import { publishFetch } from "@/lib/paywall/publishRequest";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "product";
@@ -235,10 +235,15 @@ export function useProductEditor() {
         setIsPersonalized(true);
         if (typeof result.data.contribToken === "string") setContribToken(result.data.contribToken);
 
-        const pubRes = await publishFetch(
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
           { slug: TEMPLATE, templateType: "product", pageId: savedId, templateTitle: "Product" },
-          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+          setPublishing,
         );
+        if (gate === "cancelled") return;
+
+        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -372,10 +377,15 @@ export function useProductEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await publishFetch(
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
         { slug: TEMPLATE, templateType: "product", pageId: id, templateTitle: "Product" },
-        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+        setPublishing,
       );
+      if (gate === "cancelled") return;
+
+      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

@@ -6,7 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
-import { publishFetch } from "@/lib/paywall/publishRequest";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
@@ -353,10 +353,15 @@ export function useHoliEditor() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
-      const res = await publishFetch(
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
         { slug: TEMPLATE, templateType: "holi", pageId, templateTitle: "Holi card" },
-        () => fetch(`${API_URL}/holi-pages/${pageId}/publish`, { method: "POST", headers: headers() })
+        setPublishing,
       );
+      if (gate === "cancelled") return;
+
+      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, { method: "POST", headers: headers() });
       const result = await res.json();
 
       if (result.success) {
