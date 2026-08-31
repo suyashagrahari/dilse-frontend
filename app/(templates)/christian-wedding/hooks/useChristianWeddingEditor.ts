@@ -14,6 +14,7 @@ import {
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "christian-wedding";
@@ -605,10 +606,13 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
         setPageId(pid);
         setShareId(json.data.shareId);
       }
-      const pub = await fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
+      const pub = await publishFetch(
+        { slug: TEMPLATE, templateType: "christian-wedding", pageId: pid, templateTitle: "Christian Wedding Invitation" },
+        () => fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
         method: "POST",
         headers: headers(),
-      });
+      })
+      );
       const pj = await pub.json();
       if (pj.success) {
         const publishedShareId = pj.data.shareId as string;
@@ -654,10 +658,13 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
         if (!json.success) throw new Error("Create failed");
         const pid = json.data._id;
         setPageId(pid);
-        const pub = await fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
+        const pub = await publishFetch(
+        { slug: TEMPLATE, templateType: "christian-wedding", pageId: pid, templateTitle: "Christian Wedding Invitation" },
+        () => fetch(`${API_URL}/christian-wedding-pages/${pid}/publish`, {
           method: "POST",
           headers: headers(),
-        });
+        })
+      );
         const pj = await pub.json();
         if (pj.success) {
           const publishedShareId = pj.data.shareId as string;

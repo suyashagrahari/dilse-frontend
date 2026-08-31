@@ -19,6 +19,7 @@ import { DEMO_DATA, dbToRechargeData, rechargeDataToBody, type RechargeData } fr
 import { normalizeData } from "../components/ui";
 import type { EditMode } from "../components/EditSheet";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "recharge";
@@ -213,7 +214,10 @@ export function useRechargeEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "recharge", pageId: savedId, templateTitle: "Recharge" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult?.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -350,7 +354,10 @@ export function useRechargeEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "recharge", pageId: id, templateTitle: "Recharge" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult?.success) {
         setShareUrl(String(pubResult.data.shareUrl));

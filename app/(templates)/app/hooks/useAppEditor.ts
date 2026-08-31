@@ -38,6 +38,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { DEMO_APP, appDataToBody, dbToAppData } from "../components/demo";
 import type { AppData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "app";
@@ -219,7 +220,10 @@ export function useAppEditor() {
         setIsPersonalized(true);
         if (typeof result.data.contribToken === "string") setContribToken(result.data.contribToken);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "app", pageId: savedId, templateTitle: "The Listing" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -351,7 +355,10 @@ export function useAppEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "app", pageId: id, templateTitle: "The Listing" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

@@ -22,6 +22,7 @@ import {
   type Toast,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 const DRAFT_KEY = "loveflix_draft";
 const BASE = `${API_URL}/loveflix-pages`;
@@ -281,7 +282,10 @@ export function useLoveflixEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "loveflix", pageId: savedId, templateTitle: "LoveFlix" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           // The share URL is authored by the server — never assembled here.
@@ -450,7 +454,10 @@ export function useLoveflixEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "loveflix", pageId: id, templateTitle: "LoveFlix" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

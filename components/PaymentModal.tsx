@@ -1,24 +1,43 @@
 "use client";
 
+// ─── The paywall ─────────────────────────────────────────────────────────────
+//
+// A controlled component: it renders numbers and raises two intents. All the
+// checkout logic is in `PaywallHost`, which is mounted once — see
+// `lib/paywall/paywallBus.ts` for why that is not per-template state.
+//
+// ── IT DOES NO ARITHMETIC ───────────────────────────────────────────────────
+//
+// `mrp`, `savings` and `discountPercent` all arrive derived, from the `402` the
+// publish gate returned. This component must never recompute them: the number
+// beside a Pay button has to be the number that will be charged, and the only
+// way to be sure is to print what the server said. The one place a price is
+// formatted is `formatINR`.
+
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Coins, CreditCard, Crown, Sparkles, AlertCircle } from "lucide-react";
+import { X, Coins, CreditCard, Crown, AlertCircle, Loader2, Check } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
-import type { ClientTemplatePricing } from "@/config/templatePricing";
-import type { PaymentStatus } from "@/hooks/useTemplatePayment";
+import { BRAND as C } from "@/lib/brand";
+import { formatINR, type ResolvedPricing } from "@/config/templatePricing";
+
+export type PaymentStatus = "idle" | "loading" | "error";
 
 interface PaymentModalProps {
-  open:          boolean;
-  pricing:       ClientTemplatePricing;
+  open: boolean;
+  pricing: ResolvedPricing;
+  /** The template's own name, for the heading. Falls back to generic copy. */
+  templateTitle?: string;
   paymentStatus: PaymentStatus;
-  paymentError:  string | null;
-  onClose:       () => void;
+  paymentError: string | null;
+  onClose: () => void;
   onSpendPoints: () => void;
-  onRazorpay:    () => void;
+  onRazorpay: () => void;
 }
 
 export default function PaymentModal({
   open,
   pricing,
+  templateTitle,
   paymentStatus,
   paymentError,
   onClose,
@@ -26,282 +45,244 @@ export default function PaymentModal({
   onRazorpay,
 }: PaymentModalProps) {
   const { user } = useAppSelector((s) => s.auth);
-  const userPoints      = user?.points ?? 0;
+
+  const userPoints = user?.points ?? 0;
+  const pointsOffered = pricing.pointsCost > 0;
   const hasEnoughPoints = userPoints >= pricing.pointsCost;
-  const isLoading       = paymentStatus === "loading";
-  const savings         = pricing.originalPrice - pricing.finalPrice;
+  const isLoading = paymentStatus === "loading";
+
+  // Hidden entirely at 0%: a struck-through price beside "0% OFF" reads as a
+  // rendering bug, and "You save ₹0" is worse than saying nothing.
+  const discounted = pricing.discountPercent > 0 && pricing.savingsPaise > 0;
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* ── Backdrop ───────────────────────────────────────────────────── */}
+          {/* ── Backdrop ─────────────────────────────────────────────────── */}
           <motion.div
-            className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-md"
+            className="fixed inset-0 z-[200]"
+            style={{ background: "rgba(26,5,7,0.55)", backdropFilter: "blur(6px)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            // Not dismissable mid-charge. A click that closes the sheet while a
+            // payment is in flight looks like a cancellation and is not one.
             onClick={isLoading ? undefined : onClose}
           />
 
-          {/* ── Modal ──────────────────────────────────────────────────────── */}
-          <div className="fixed inset-0 z-[201] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          {/* ── Sheet ────────────────────────────────────────────────────── */}
+          <div className="fixed inset-0 z-[201] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
             <motion.div
-              className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label={templateTitle ? `Publish ${templateTitle}` : "Publish this page"}
+              className="w-full sm:max-w-[420px] overflow-hidden pointer-events-auto"
               style={{
-                background: "linear-gradient(160deg, #12121e 0%, #1a1a2e 50%, #0f1b35 100%)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: C.surface,
+                border: `1px solid ${C.border}`,
+                borderRadius: 0,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                boxShadow: C.shadowElevated,
               }}
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 280, damping: 32 }}
             >
-              {/* Gold shimmer top strip */}
+              {/* Gold hairline — the one brand flourish on the sheet. */}
               <div
-                className="h-[3px] w-full"
                 style={{
-                  background: "linear-gradient(90deg, transparent 0%, #FFD700 30%, #FF6B35 70%, transparent 100%)",
+                  height: 3,
+                  background: `linear-gradient(90deg, transparent, ${C.gold} 35%, ${C.goldDeep} 65%, transparent)`,
                 }}
               />
 
-              {/* ── Header ─────────────────────────────────────────────────── */}
-              <div className="relative px-6 pt-5 pb-4">
-                {/* Close button */}
+              {/* ── Header ─────────────────────────────────────────────── */}
+              <div style={{ padding: "18px 20px 0", position: "relative" }}>
                 <button
+                  type="button"
                   onClick={onClose}
                   disabled={isLoading}
-                  className="absolute right-4 top-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
-                >
-                  <X size={14} style={{ color: "rgba(255,255,255,0.55)" }} />
-                </button>
-
-                {/* Badge row */}
-                <div className="flex items-center gap-2 mb-3">
-                  <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-                    style={{
-                      background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-                      color: "#000",
-                      boxShadow: "0 2px 12px rgba(255,165,0,0.4)",
-                    }}
-                  >
-                    <Crown size={9} fill="currentColor" />
-                    PREMIUM
-                  </span>
-                  <span
-                    className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                    style={{
-                      background: "rgba(34,197,94,0.12)",
-                      color: "#4ade80",
-                      border: "1px solid rgba(34,197,94,0.2)",
-                    }}
-                  >
-                    {pricing.discountPercent}% OFF
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h2
-                  className="text-xl font-black text-white mb-0.5"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  Unlock {pricing.name}
-                </h2>
-                <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  One-time payment · publish & share your personalized page
-                </p>
-
-                {/* Price display */}
-                <div className="flex items-end gap-3 mt-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-[2.2rem] font-black leading-none" style={{ color: "#FF6B35" }}>
-                      ₹{pricing.finalPrice}
-                    </span>
-                    <span
-                      className="text-lg line-through leading-none mb-0.5"
-                      style={{ color: "rgba(255,255,255,0.2)" }}
-                    >
-                      ₹{pricing.originalPrice}
-                    </span>
-                  </div>
-                  <span
-                    className="mb-1 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                    style={{ background: "rgba(34,197,94,0.1)", color: "#4ade80" }}
-                  >
-                    Save ₹{savings}
-                  </span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="mx-6 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-              {/* ── Options ────────────────────────────────────────────────── */}
-              <div className="px-6 pt-4 pb-5 flex flex-col gap-3">
-
-                {/* ─ Option A: Spend Points ─ */}
-                <button
-                  onClick={() => !isLoading && hasEnoughPoints && onSpendPoints()}
-                  disabled={isLoading || !hasEnoughPoints}
-                  className="relative w-full rounded-2xl p-4 text-left transition-all"
+                  aria-label="Close"
                   style={{
-                    background: hasEnoughPoints
-                      ? "rgba(255,215,0,0.07)"
-                      : "rgba(255,255,255,0.02)",
-                    border: hasEnoughPoints
-                      ? "1.5px solid rgba(255,215,0,0.22)"
-                      : "1.5px solid rgba(255,255,255,0.06)",
-                    cursor: hasEnoughPoints && !isLoading ? "pointer" : "not-allowed",
-                    opacity: isLoading ? 0.65 : 1,
+                    position: "absolute", top: 14, right: 14,
+                    width: 32, height: 32, borderRadius: 999,
+                    display: "grid", placeItems: "center",
+                    background: C.surfaceAlt, border: `1px solid ${C.border}`,
+                    color: C.muted, cursor: isLoading ? "not-allowed" : "pointer",
+                    opacity: isLoading ? 0.4 : 1,
                   }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                        style={{
-                          background: hasEnoughPoints
-                            ? "rgba(255,215,0,0.1)"
-                            : "rgba(255,255,255,0.04)",
-                        }}
-                      >
-                        <Coins
-                          size={22}
-                          style={{ color: hasEnoughPoints ? "#FFD700" : "rgba(255,255,255,0.18)" }}
-                        />
-                      </div>
+                  <X size={16} />
+                </button>
 
-                      <div>
-                        <div
-                          className="font-bold text-[13px]"
-                          style={{ color: hasEnoughPoints ? "#fff" : "rgba(255,255,255,0.3)" }}
-                        >
-                          Use {pricing.pointsCost} Points
-                        </div>
-                        <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                          Your balance:{" "}
-                          <span
-                            style={{ color: hasEnoughPoints ? "#FFD700" : "#f87171", fontWeight: 700 }}
-                          >
-                            {userPoints} pts
-                          </span>
-                        </div>
-                      </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <span
+                    style={{
+                      display: "inline-grid", placeItems: "center",
+                      width: 30, height: 30, borderRadius: 10,
+                      background: `${C.gold}22`, border: `1px solid ${C.gold}55`,
+                      color: C.goldDeep, flex: "none",
+                    }}
+                  >
+                    <Crown size={15} />
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.accent }}>
+                    Premium template
+                  </span>
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0, paddingRight: 40,
+                    fontFamily: "var(--font-lora), Georgia, serif",
+                    fontSize: 21, lineHeight: "27px", fontWeight: 700, color: C.text,
+                  }}
+                >
+                  {templateTitle ? `Publish your ${templateTitle}` : "Publish this page"}
+                </h2>
+
+                {/* True because gate rule 2 is unconditional: an already-published
+                    page always re-publishes free. Worth saying — it is the single
+                    biggest objection to a one-off charge. */}
+                <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: "19px", color: C.muted }}>
+                  One payment for this page. Edit and re-publish as often as you like —
+                  you will not be charged again.
+                </p>
+              </div>
+
+              {/* ── Price ──────────────────────────────────────────────── */}
+              <div style={{ padding: "16px 20px 0" }}>
+                <div
+                  style={{
+                    borderRadius: C.radiusLg,
+                    background: C.surfaceAlt,
+                    border: `1px solid ${C.border}`,
+                    padding: "14px 16px",
+                  }}
+                >
+                  {discounted && (
+                    <div
+                      style={{
+                        display: "inline-block", marginBottom: 8,
+                        padding: "3px 9px", borderRadius: 999,
+                        background: C.accentStrong, color: "#fff",
+                        fontSize: 11.5, fontWeight: 800, letterSpacing: "0.04em",
+                      }}
+                    >
+                      {pricing.discountPercent}% OFF
                     </div>
+                  )}
 
-                    {hasEnoughPoints ? (
-                      <span
-                        className="px-3 py-1.5 rounded-full text-[11px] font-black"
-                        style={{ background: "rgba(255,215,0,0.15)", color: "#FFD700" }}
-                      >
-                        FREE
-                      </span>
-                    ) : (
-                      <span
-                        className="text-[11px] font-semibold text-right leading-tight"
-                        style={{ color: "rgba(255,255,255,0.2)" }}
-                      >
-                        Need<br />{pricing.pointsCost - userPoints} more
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.02em", color: C.text, lineHeight: 1 }}>
+                      {formatINR(pricing.finalPrice)}
+                    </span>
+                    {discounted && (
+                      <span style={{ fontSize: 16, color: C.faint, textDecoration: "line-through" }}>
+                        {formatINR(pricing.mrp)}
                       </span>
                     )}
                   </div>
 
-                  {!hasEnoughPoints && (
-                    <p className="text-[11px] mt-2 pl-14" style={{ color: "rgba(255,255,255,0.22)" }}>
-                      Earn points by referring friends 🎁
-                    </p>
-                  )}
-                </button>
-
-                {/* OR divider */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-                  <span className="text-[10px] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
-                    or pay online
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-                </div>
-
-                {/* ─ Option B: Razorpay ─ */}
-                <button
-                  onClick={() => !isLoading && onRazorpay()}
-                  disabled={isLoading}
-                  className="w-full rounded-2xl p-4 text-left transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,107,53,0.09) 0%, rgba(255,140,0,0.05) 100%)",
-                    border: "1.5px solid rgba(255,107,53,0.28)",
-                    opacity: isLoading ? 0.65 : 1,
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: "rgba(255,107,53,0.13)" }}
-                      >
-                        <CreditCard size={22} style={{ color: "#FF6B35" }} />
-                      </div>
-                      <div>
-                        <div className="font-bold text-[13px] text-white">
-                          Pay ₹{pricing.finalPrice}
-                        </div>
-                        <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-                          UPI · Cards · Netbanking via Razorpay
-                        </div>
-                      </div>
+                  {discounted && (
+                    <div style={{ marginTop: 7, fontSize: 12.5, fontWeight: 600, color: C.ok }}>
+                      You save {formatINR(pricing.savings)}
                     </div>
+                  )}
+                </div>
+              </div>
 
-                    <span
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold"
-                      style={{ background: "rgba(255,107,53,0.14)", color: "#FF6B35" }}
-                    >
-                      <Sparkles size={9} fill="currentColor" />
-                      SECURE
-                    </span>
-                  </div>
-                </button>
-
-                {/* Loading indicator */}
-                {isLoading && (
-                  <div className="flex items-center justify-center gap-2 py-1">
-                    <div
-                      className="w-4 h-4 rounded-full border-2 animate-spin"
-                      style={{
-                        borderColor: "rgba(255,107,53,0.25)",
-                        borderTopColor: "#FF6B35",
-                      }}
-                    />
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
-                      Processing payment…
-                    </span>
-                  </div>
-                )}
-
-                {/* Error message */}
-                {paymentError && (
+              {/* ── Error ──────────────────────────────────────────────── */}
+              {paymentError && (
+                <div style={{ padding: "12px 20px 0" }}>
                   <div
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs"
+                    role="alert"
                     style={{
-                      background: "rgba(239,68,68,0.08)",
-                      border: "1px solid rgba(239,68,68,0.18)",
-                      color: "#f87171",
+                      display: "flex", gap: 8, alignItems: "flex-start",
+                      padding: "10px 12px", borderRadius: 12,
+                      background: `${C.danger}12`, border: `1px solid ${C.danger}40`,
+                      color: C.danger, fontSize: 12.5, lineHeight: "18px",
                     }}
                   >
-                    <AlertCircle size={14} className="shrink-0" />
-                    {paymentError}
+                    <AlertCircle size={15} style={{ flex: "none", marginTop: 1 }} />
+                    <span>{paymentError}</span>
                   </div>
+                </div>
+              )}
+
+              {/* ── Actions ────────────────────────────────────────────── */}
+              <div style={{ padding: "16px 20px 20px", display: "grid", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={onRazorpay}
+                  disabled={isLoading}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", padding: "14px 16px",
+                    borderRadius: 999, border: "none",
+                    background: C.gradient, color: "#fff",
+                    fontSize: 15, fontWeight: 700,
+                    cursor: isLoading ? "wait" : "pointer",
+                    opacity: isLoading ? 0.7 : 1,
+                    boxShadow: "0 8px 22px -8px rgba(61,12,17,0.5)",
+                  }}
+                >
+                  {isLoading ? <Loader2 size={17} className="animate-spin" /> : <CreditCard size={17} />}
+                  {isLoading ? "Please wait…" : `Pay ${formatINR(pricing.finalPrice)}`}
+                </button>
+
+                {pointsOffered && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "1px 0" }}>
+                      <span style={{ flex: 1, height: 1, background: C.border }} />
+                      <span style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.06em" }}>OR</span>
+                      <span style={{ flex: 1, height: 1, background: C.border }} />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={onSpendPoints}
+                      disabled={isLoading || !hasEnoughPoints}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                        width: "100%", padding: "13px 16px",
+                        borderRadius: 999,
+                        background: hasEnoughPoints ? C.surface : C.surfaceAlt,
+                        border: `1.5px solid ${hasEnoughPoints ? C.gold : C.border}`,
+                        color: hasEnoughPoints ? C.accentStrong : C.faint,
+                        fontSize: 14.5, fontWeight: 700,
+                        cursor: isLoading || !hasEnoughPoints ? "not-allowed" : "pointer",
+                        opacity: isLoading ? 0.6 : 1,
+                      }}
+                    >
+                      {hasEnoughPoints ? <Coins size={16} /> : <Coins size={16} />}
+                      Use {pricing.pointsCost.toLocaleString("en-IN")} points
+                    </button>
+
+                    <div style={{ textAlign: "center", fontSize: 11.5, color: C.muted }}>
+                      {hasEnoughPoints ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <Check size={12} style={{ color: C.ok }} />
+                          You have {userPoints.toLocaleString("en-IN")} points
+                        </span>
+                      ) : (
+                        // Naming the shortfall, not just refusing. "Insufficient
+                        // points" leaves the user to do the subtraction.
+                        <>
+                          You have {userPoints.toLocaleString("en-IN")} —{" "}
+                          {(pricing.pointsCost - userPoints).toLocaleString("en-IN")} more needed
+                        </>
+                      )}
+                    </div>
+                  </>
                 )}
 
-                {/* Trust footer */}
-                <p
-                  className="text-center text-[10px] pb-1"
-                  style={{ color: "rgba(255,255,255,0.18)" }}
-                >
-                  🔒 Secured by Razorpay · One-time payment · No subscription
-                </p>
+                <div style={{ textAlign: "center", fontSize: 11, color: C.faint, marginTop: 2 }}>
+                  Secure payment via Razorpay
+                </div>
               </div>
             </motion.div>
           </div>

@@ -18,6 +18,7 @@ import {
   dbToPuzzleData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 const DRAFT_KEY = "photo-puzzle_draft";
 const BASE = `${API_URL}/photo-puzzle-pages`;
@@ -196,7 +197,10 @@ export function usePhotoPuzzleEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "photo-puzzle", pageId: savedId, templateTitle: "The Last Piece" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           // The share URL is authored by the server — never assembled here.
@@ -349,7 +353,10 @@ export function usePhotoPuzzleEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "photo-puzzle", pageId: id, templateTitle: "The Last Piece" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

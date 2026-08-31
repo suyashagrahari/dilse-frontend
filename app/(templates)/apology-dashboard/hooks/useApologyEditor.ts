@@ -16,6 +16,7 @@ import {
   dbToApologyData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /**
  * `persistStory` is being added to `useStoryFill` separately. Typed optional
@@ -173,7 +174,10 @@ export function useApologyEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "apology-dashboard", pageId: savedId, templateTitle: "Apology Dashboard" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -275,7 +279,10 @@ export function useApologyEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "apology-dashboard", pageId: id, templateTitle: "Apology Dashboard" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

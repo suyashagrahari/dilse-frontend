@@ -19,6 +19,7 @@ import {
   dbToProposalData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 const DRAFT_KEY = "proposal_draft";
 const BASE = `${API_URL}/proposal-pages`;
@@ -221,7 +222,10 @@ export function useProposalEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
+        const pubRes = await publishFetch(
+          { slug: TEMPLATE, templateType: "proposal", pageId: savedId, templateTitle: "Will You Marry Me?" },
+          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+        );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           // The share URL is always the server's — never rebuilt on the client.
@@ -398,7 +402,10 @@ export function useProposalEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "proposal", pageId: id, templateTitle: "Will You Marry Me?" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
