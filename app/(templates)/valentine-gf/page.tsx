@@ -29,6 +29,7 @@ import { type ValentineData, type TabId, DEMO_CONTENT } from "./components/types
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "valentine-gf";
@@ -249,6 +250,14 @@ function ValentineGfPage() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "valentine", pageId: pageId, templateTitle: "Be My Valentine" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
+
       const res = await fetch(`${API_URL}/valentine-pages/${pageId}/publish`, { method: "POST", headers: headers() });
       const result = await res.json();
       if (result.success) {

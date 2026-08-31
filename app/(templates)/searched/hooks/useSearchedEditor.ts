@@ -11,6 +11,7 @@ import type { SearchData } from "../components/types";
 import { DEMO_DATA, retargetToRecipient, searchedDataToBody } from "../components/demoData";
 import { dbToSearchData } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const BASE = `${API_URL}/searched-pages`;
 const TEMPLATE = "searched";
@@ -203,6 +204,14 @@ export function useSearchedEditor() {
         setContent(data);
         setIsPersonalized(true);
 
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "searched", pageId: savedId, templateTitle: "Searched" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult?.success) {
@@ -343,6 +352,14 @@ export function useSearchedEditor() {
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "searched", pageId: id, templateTitle: "Searched" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

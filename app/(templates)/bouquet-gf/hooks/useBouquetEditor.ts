@@ -19,6 +19,7 @@ import {
   dbToBouquetData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const DRAFT_KEY = "bouquet_draft";
 const BASE = `${API_URL}/bouquet-gf-pages`;
@@ -146,6 +147,14 @@ export function useBouquetEditor() {
         setContent(data);
         setIsPersonalized(true);
 
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "bouquet-gf", pageId: savedId, templateTitle: "Build a Bouquet" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
@@ -250,6 +259,14 @@ export function useBouquetEditor() {
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "bouquet-gf", pageId: id, templateTitle: "Build a Bouquet" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

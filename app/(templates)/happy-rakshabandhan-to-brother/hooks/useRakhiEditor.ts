@@ -27,6 +27,7 @@ import {
   resolveMedia,
 } from "../components/mediaStore";
 import { uploadImage } from "../components/upload";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "happy-rakshabandhan-to-brother";
@@ -399,6 +400,14 @@ export function useRakhiEditor() {
       if (!id) id = await create(data);
       else await update(id, data);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "raksha-bandhan", pageId: id, templateTitle: "Happy Raksha Bandhan" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

@@ -4,11 +4,12 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Crown, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
+import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { guideByTemplateHref } from "@/data/guide-registry";
 
 interface TemplateCardProps {
@@ -28,6 +29,13 @@ const TemplateCard = memo(function TemplateCard({
   // A compile-time lookup against the guide registry, not a fetch — the registry
   // is a static import, so this costs one object property read per card.
   const hasGuide = Boolean(guideByTemplateHref[`/${template.slug}`]);
+
+  // No price is shown on the card by design — the gallery stays a clean grid of
+  // templates. This is read only so the click event still records whether the
+  // template was a paid one, which is what makes the funnel readable. Fifty
+  // cards share one module-level fetch, so it is a map read per card.
+  const { pricingFor } = useTemplatePricing();
+  const pricing = pricingFor(template.slug);
 
   return (
     <motion.div
@@ -49,7 +57,7 @@ const TemplateCard = memo(function TemplateCard({
           track(EVENTS.TEMPLATE_CARD_CLICKED, {
             template: template.slug,
             position: index,
-            is_premium: Boolean(template.isPremium),
+            is_premium: !pricing.isFree,
           })
         }
       >
@@ -115,23 +123,6 @@ const TemplateCard = memo(function TemplateCard({
               >
                 <PlayCircle size={9} />
                 Guide
-              </div>
-            </div>
-          )}
-
-          {/* Premium crown badge — top-left ribbon */}
-          {template.isPremium && (
-            <div className="absolute top-0 left-0 z-20">
-              <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-black uppercase tracking-widest"
-                style={{
-                  background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-                  color: "#000",
-                  boxShadow: "0 2px 10px rgba(255,165,0,0.45)",
-                }}
-              >
-                <Crown size={8} fill="currentColor" />
-                Premium
               </div>
             </div>
           )}

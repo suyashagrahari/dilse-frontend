@@ -7,6 +7,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
+import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 
 interface Props {
   template: TemplateListItem;
@@ -52,6 +53,8 @@ function MiniBear() {
 }
 
 const ApologyTemplateCard = memo(function ApologyTemplateCard({ template, isFav, index, onFavorite }: Props) {
+  // Live price, replacing the build-time `isPremium` flag. See TemplateCard.
+  const { pricingFor } = useTemplatePricing();
   return (
     <motion.div
       layout
@@ -69,7 +72,7 @@ const ApologyTemplateCard = memo(function ApologyTemplateCard({ template, isFav,
           track(EVENTS.TEMPLATE_CARD_CLICKED, {
             template: template.slug,
             position: index,
-            is_premium: Boolean(template.isPremium),
+            is_premium: !pricingFor(template.slug).isFree,
           })
         }
       >

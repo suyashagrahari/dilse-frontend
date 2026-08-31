@@ -16,6 +16,7 @@ import {
   dbToVendingData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const DRAFT_KEY = "vending-machine_draft";
 const BASE = `${API_URL}/vending-machine-pages`;
@@ -174,6 +175,14 @@ export function useVendingMachineEditor() {
         setContent(data);
         setIsPersonalized(true);
 
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "vending-machine", pageId: savedId, templateTitle: "Affection Dispenser" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
@@ -291,6 +300,14 @@ export function useVendingMachineEditor() {
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "vending-machine", pageId: id, templateTitle: "Affection Dispenser" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

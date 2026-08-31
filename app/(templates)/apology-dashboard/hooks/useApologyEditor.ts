@@ -16,6 +16,7 @@ import {
   dbToApologyData,
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /**
  * `persistStory` is being added to `useStoryFill` separately. Typed optional
@@ -173,6 +174,14 @@ export function useApologyEditor() {
         setContent(data);
         setIsPersonalized(true);
 
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "apology-dashboard", pageId: savedId, templateTitle: "Apology Dashboard" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
@@ -274,6 +283,14 @@ export function useApologyEditor() {
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "apology-dashboard", pageId: id, templateTitle: "Apology Dashboard" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

@@ -6,8 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
-import { useTemplatePayment } from "@/hooks/useTemplatePayment";
-import { getClientPricing } from "@/config/templatePricing";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
@@ -138,8 +137,6 @@ export function useHoliEditor() {
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Payment hook — manages Razorpay checkout + points deduction flow
-  const payment = useTemplatePayment();
 
   // Stable ref so the payment-complete effect can call the latest handlePublish
   const handlePublishRef = useRef<() => Promise<void>>(async () => {});
@@ -353,15 +350,18 @@ export function useHoliEditor() {
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
-    // Also re-fired by the post-payment retry effect below, so a paid publish
-    // shows two publish_clicked events — the paywall attempt and the retry.
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, {
-        method: "POST",
-        headers: headers(),
-      });
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "holi", pageId, templateTitle: "Holi card" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
+
+      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, { method: "POST", headers: headers() });
       const result = await res.json();
 
       if (result.success) {
@@ -375,18 +375,6 @@ export function useHoliEditor() {
           message: hasPasswordSet ? "Card is password-protected" : "Your Holi card is now live",
           shareUrl: url,
         });
-      } else if (result.error === "PAYMENT_REQUIRED") {
-        // The paywall. begin_checkout comes from openPaymentModal (shared hook);
-        // this records that publish was blocked, which is what makes the paywall
-        // visible as a funnel step rather than an invisible detour.
-        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "PAYMENT_REQUIRED" });
-        // Server says payment needed — open payment modal
-        const pricing = getClientPricing("holi");
-        if (pricing) {
-          payment.openPaymentModal({ templateType: "holi", pageId, pricing });
-        } else {
-          pushToast({ type: "info", title: "Payment required", message: "Please complete payment to publish" });
-        }
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -401,20 +389,13 @@ export function useHoliEditor() {
       setPublishing(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageId, headers, hasPasswordSet, pushToast, payment.openPaymentModal]);
+  }, [pageId, headers, hasPasswordSet, pushToast]);
 
   // Keep ref up to date so the effect below always calls the latest version
   useEffect(() => {
     handlePublishRef.current = handlePublish;
   }, [handlePublish]);
 
-  // After payment completes, retry the publish — server will now allow it
-  useEffect(() => {
-    if (payment.paymentJustCompleted) {
-      payment.resetPaymentCompleted();
-      handlePublishRef.current();
-    }
-  }, [payment.paymentJustCompleted, payment.resetPaymentCompleted]);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -454,8 +435,6 @@ export function useHoliEditor() {
     handlePublish, handleCopy, handleShare,
     pushToast, dismissToast,
 
-    // Payment modal
-    payment,
 
     // Show publish if user has personalized but not yet published
     showPublish: isPersonalized && !publishing,

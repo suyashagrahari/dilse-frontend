@@ -45,6 +45,7 @@ import {
 } from "../components/capsuleData";
 import { capsuleToBody, projectSealed } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const BASE = `${API_URL}/capsule-pages`;
 const TEMPLATE = "capsule";
@@ -319,6 +320,14 @@ export function useCapsuleEditor() {
         } else {
           await fetch(`${BASE}/${id}`, { method: "PUT", headers: headers(), body: JSON.stringify(capsuleToBody(payload)) });
         }
+
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "capsule", pageId: id, templateTitle: "Capsule" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
 
         const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();

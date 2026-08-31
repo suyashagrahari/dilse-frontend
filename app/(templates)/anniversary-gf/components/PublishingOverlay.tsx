@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "lucide-react";
 
@@ -9,9 +10,12 @@ interface Props {
 }
 
 export default memo(function PublishingOverlay({ visible }: Props) {
+  // Held back so a publish that resolves in a few milliseconds -- or a paywall
+  // check that does -- never flashes a full-screen overlay. See the hook.
+  const show = useDelayedVisible(visible);
   return (
     <AnimatePresence>
-      {visible && (
+      {show && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -35,6 +35,7 @@ import {
 } from "../components/showData";
 import { parseYouTubeId, type Segment } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const BASE = `${API_URL}/dedication-pages`;
 const TEMPLATE = "dedication";
@@ -221,6 +222,14 @@ export function useDedicationEditor() {
         setContent(data);
         setIsPersonalized(true);
 
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "dedication", pageId: savedId, templateTitle: "Dedication" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
         const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
@@ -363,6 +372,14 @@ export function useDedicationEditor() {
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");
+
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "dedication", pageId: id, templateTitle: "Dedication" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
 
       const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();

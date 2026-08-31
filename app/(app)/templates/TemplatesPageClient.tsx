@@ -12,7 +12,7 @@ import ApologyTemplateCard from "@/components/ApologyTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
-import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -253,7 +253,11 @@ function TemplatesContent() {
     dispatch(toggleFavoriteAsync(slug));
   }, [dispatch]);
 
-  const hiddenTemplates = useHiddenTemplates();
+  // The EFFECTIVE hidden set: what this deployment hides, minus anything a
+  // super admin has granted this particular visitor early access to. A
+  // pre-release template therefore appears in the gallery for the client it
+  // was released to and for nobody else. See `useTemplateAccess`.
+  const { hidden: hiddenTemplates } = useTemplateAccess();
 
   const sourceList = uiMode === "webpage" ? webpageTemplateList : templateList;
   const filtered = sourceList.filter((t) => {

@@ -6,7 +6,6 @@ import Image from "next/image";
 import { ArrowLeft, Sparkles, Send, Share2, Check, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import { ShareSheet } from "@/components/share/ShareSheet";
-import PaymentModal from "@/components/PaymentModal";
 import { useHoliEditor } from "./hooks/useHoliEditor";
 
 import ColorBlobs from "./components/ColorBlobs";
@@ -328,18 +327,6 @@ function HoliPage() {
         )}
       </AnimatePresence>
 
-      {/* Payment modal — shown when user tries to publish without paying */}
-      {editor.payment.paymentModal && (
-        <PaymentModal
-          open={!!editor.payment.paymentModal}
-          pricing={editor.payment.paymentModal.pricing}
-          paymentStatus={editor.payment.paymentStatus}
-          paymentError={editor.payment.paymentError}
-          onClose={editor.payment.closePaymentModal}
-          onSpendPoints={editor.payment.handleSpendPoints}
-          onRazorpay={editor.payment.handleRazorpayPayment}
-        />
-      )}
     </div>
   );
 }

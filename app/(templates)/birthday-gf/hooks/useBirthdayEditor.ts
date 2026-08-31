@@ -17,6 +17,7 @@ import {
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "birthday-gf";
@@ -210,10 +211,15 @@ export function useBirthdayEditor() {
         setIsPersonalized(true);
         setShareUrl(null);
 
-        const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${savedId}/publish`, {
-          method: "POST",
-          headers: authHeaders,
-        });
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "birthday", pageId: savedId, templateTitle: "Happy Birthday My Love" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
+        const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${savedId}/publish`, { method: "POST", headers: authHeaders, });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           const url = pubResult.data.shareUrl as string;
@@ -516,10 +522,15 @@ export function useBirthdayEditor() {
         id = result.data._id as string;
         setPageId(id);
       }
-      const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${id}/publish`, {
-        method: "POST",
-        headers: headers(),
-      });
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
+        { slug: TEMPLATE, templateType: "birthday", pageId: id, templateTitle: "Happy Birthday My Love" },
+        setPublishing,
+      );
+      if (gate === "cancelled") return;
+
+      const pubRes = await fetch(`${API_URL}/birthday-gf-pages/${id}/publish`, { method: "POST", headers: headers(), });
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
