@@ -6,7 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
-import { offerPaywall, usePublishAfterPaywall } from "@/lib/paywall/paywallBus";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
@@ -350,15 +350,13 @@ export function useHoliEditor() {
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
-    // Also re-fired by the post-payment retry effect below, so a paid publish
-    // shows two publish_clicked events — the paywall attempt and the retry.
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/holi-pages/${pageId}/publish`, {
-        method: "POST",
-        headers: headers(),
-      });
+      const res = await publishFetch(
+        { slug: TEMPLATE, templateType: "holi", pageId, templateTitle: "Holi card" },
+        () => fetch(`${API_URL}/holi-pages/${pageId}/publish`, { method: "POST", headers: headers() })
+      );
       const result = await res.json();
 
       if (result.success) {
@@ -372,11 +370,6 @@ export function useHoliEditor() {
           message: hasPasswordSet ? "Card is password-protected" : "Your Holi card is now live",
           shareUrl: url,
         });
-      } else if (offerPaywall(result, { slug: TEMPLATE, templateType: "holi", pageId, templateTitle: "Holi card" })) {
-        // The paywall is open and owns it from here. `begin_checkout` fires in
-        // PaywallHost; this records that publish was BLOCKED, which is what makes
-        // the paywall a visible funnel step rather than an invisible detour.
-        track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "PAYMENT_REQUIRED" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -398,9 +391,6 @@ export function useHoliEditor() {
     handlePublishRef.current = handlePublish;
   }, [handlePublish]);
 
-  // A payment for this page has been verified — publish again, which the gate
-  // now allows. The hook owns the ref and the effect so no editor writes either.
-  usePublishAfterPaywall(pageId, handlePublish);
 
   const handleCopy = useCallback(
     (url?: string) => {

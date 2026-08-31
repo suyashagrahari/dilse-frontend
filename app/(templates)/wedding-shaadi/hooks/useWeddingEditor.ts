@@ -8,6 +8,7 @@ import { type TabId, type EditMode, type Toast, type WeddingData, DEMO_DATA } fr
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "wedding-shaadi";
@@ -259,10 +260,13 @@ export function useWeddingEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await fetch(`${API_URL}/wedding-pages/${savedId}/publish`, {
+        const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "wedding", pageId: savedId, templateTitle: "Royal Indian Wedding" },
+        () => fetch(`${API_URL}/wedding-pages/${savedId}/publish`, {
           method: "POST",
           headers: authHeaders,
-        });
+        })
+      );
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           const publishedShareId = pubResult.data.shareId as string;
@@ -694,10 +698,13 @@ export function useWeddingEditor() {
         setShareId(result.data.shareId || null);
         setIsPersonalized(true);
       }
-      const pubRes = await fetch(`${API_URL}/wedding-pages/${id}/publish`, {
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "wedding", pageId: id, templateTitle: "Royal Indian Wedding" },
+        () => fetch(`${API_URL}/wedding-pages/${id}/publish`, {
         method: "POST",
         headers: headers(),
-      });
+      })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         const publishedShareId = pubResult.data.shareId as string;

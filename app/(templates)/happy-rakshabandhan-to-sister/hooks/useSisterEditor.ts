@@ -27,6 +27,7 @@ import {
   resolveMedia,
 } from "../components/mediaStore";
 import { uploadImage } from "../components/upload";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "happy-rakshabandhan-to-sister";
@@ -417,7 +418,10 @@ export function useSisterEditor() {
       else await update(id, data);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
+      const pubRes = await publishFetch(
+        { slug: TEMPLATE, templateType: "raksha-bandhan-sister", pageId: id, templateTitle: "Happy Raksha Bandhan" },
+        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+      );
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         const url = String(pubResult.data.shareUrl);

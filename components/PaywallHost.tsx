@@ -17,7 +17,7 @@ import { setPoints } from "@/store/authSlice";
 import PaymentModal from "@/components/PaymentModal";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { refreshPricing } from "@/lib/pricing";
-import { closePaywall, markPagePaid, usePaywallRequest } from "@/lib/paywall/paywallBus";
+import { closePaywall, completePaywall, usePaywallRequest } from "@/lib/paywall/paywallBus";
 import { track } from "@/lib/analytics/track";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -86,7 +86,7 @@ export default function PaywallHost() {
       // average order value toward zero and makes both reports meaningless.
       track(EVENTS.SPEND_POINTS, { template: slug, points_cost: pricing.pointsCost });
 
-      markPagePaid(pageId);
+      completePaywall();
     } catch (err) {
       track(EVENTS.PAYMENT_FAILED, { template: slug, method: "points" });
       setStatus("error");
@@ -128,7 +128,7 @@ export default function PaywallHost() {
       if (orderRes.status === 400 && orderData?.code === "ALREADY_PUBLISHED") {
         // Nothing to pay for. Treat it as unlocked so the editor re-publishes and
         // the user lands where they were going.
-        markPagePaid(pageId);
+        completePaywall();
         return;
       }
       if (!orderRes.ok || !orderData.success) {
@@ -199,7 +199,7 @@ export default function PaywallHost() {
         transaction_id: typeof orderId === "string" ? orderId : undefined,
       });
 
-      markPagePaid(pageId);
+      completePaywall();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Payment failed";
 

@@ -29,6 +29,7 @@ import { type ValentineData, type TabId, DEMO_CONTENT } from "./components/types
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { publishFetch } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "valentine-gf";
@@ -249,7 +250,10 @@ function ValentineGfPage() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: true });
     setPublishing(true);
     try {
-      const res = await fetch(`${API_URL}/valentine-pages/${pageId}/publish`, { method: "POST", headers: headers() });
+      const res = await publishFetch(
+        { slug: TEMPLATE, templateType: "valentine", pageId: pageId, templateTitle: "Be My Valentine" },
+        () => fetch(`${API_URL}/valentine-pages/${pageId}/publish`, { method: "POST", headers: headers() })
+      );
       const result = await res.json();
       if (result.success) {
         const url = result.data.shareUrl;
