@@ -32,7 +32,10 @@ function WatchGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () =>
           "Content-Type": "application/json",
           ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
         },
-        body: JSON.stringify({ password }),
+        // Trimmed like every other viewer. The stored password is trimmed at
+        // save time, so sending the raw value would be the only viewer that
+        // could still fail on a stray space.
+        body: JSON.stringify({ password: password.trim() }),
       });
       const result = await res.json();
       if (result.success && result.verified) {
