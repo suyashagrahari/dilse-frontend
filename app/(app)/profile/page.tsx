@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
+import PagePasswordControl from "@/components/profile/PagePasswordControl";
 import { API_URL, IS_NGROK, SITE_URL, ROOT_DOMAIN } from "@/lib/config";
 import { clearFavorites } from "@/store/favoritesSlice";
 import AuthModal from "@/components/AuthModal";
@@ -941,41 +942,26 @@ export default function ProfilePage() {
                               </button>
                             </div>
                           </div>
-                          {page.hasPassword && (
-                              <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)" }}>
-                                <KeyRound size={12} style={{ color: "#f59e0b" }} className="shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[10px] font-medium mb-0.5" style={{ color: "#f59e0b" }}>Secret Password</p>
-                                  {page.passwordRaw ? (
-                                    <p className="text-xs font-mono font-semibold truncate" style={{ color: "var(--app-text)" }}>{visiblePw.has(page._id) ? page.passwordRaw : "••••••••"}</p>
-                                  ) : (
-                                    <p className="text-[10px] italic" style={{ color: "var(--app-text-faint)" }}>Protected (re-publish to track)</p>
-                                  )}
-                                </div>
-                                {page.passwordRaw && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVisiblePw((p) => {
-                                        const n = new Set(p);
-                                        if (n.has(page._id)) n.delete(page._id);
-                                        else n.add(page._id);
-                                        return n;
-                                      });
-                                    }}
-                                      className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                                      {visiblePw.has(page._id) ? <EyeOff size={12} /> : <Eye size={12} />}
-                                    </button>
-                                    <button onClick={(e) => { e.stopPropagation(); copyToClipboard(page.passwordRaw, page._id + "-pw", "pw"); }}
-                                      className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                                      {copiedPw === page._id + "-pw" ? <Check size={12} /> : <Copy size={12} />}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                        </div>
                         )}
+                      {/* Outside the isPublished block on purpose: the password is set
+                          in the builder at create time, so a DRAFT can already carry one —
+                          and a draft is exactly when you would want to fix it before
+                          sending the link. Nothing about being unpublished makes a
+                          page's password unmanageable. */}
+                      <div className="mt-2">
+                        <PagePasswordControl
+                          templateType={page.templateType}
+                          pageId={page._id}
+                          hasPassword={page.hasPassword}
+                          passwordRaw={page.passwordRaw}
+                          onChanged={(next) =>
+                            setMyCreations((prev) =>
+                              prev.map((p) => (p._id === page._id ? { ...p, ...next } : p))
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                   </motion.div>
                 )}
