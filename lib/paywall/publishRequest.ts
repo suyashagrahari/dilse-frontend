@@ -1,68 +1,175 @@
-// ─── publishFetch ────────────────────────────────────────────────────────────
+// ─── Getting past the paywall, before publishing ─────────────────────────────
 //
-// The one thing a template editor calls. Every editor already had these two
-// lines somewhere in its publish path:
+// One function a template editor calls, between saving the page and publishing
+// it:
 //
-//     const pubRes    = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
-//     const pubResult = await pubRes.json();
-//
-// and the change is to the first line only:
-//
-//     const pubRes    = await publishFetch(
-//       { slug: TEMPLATE, templateType: "streak", pageId: id },
-//       () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+//     const gate = await ensurePublishAllowed(
+//       { slug: TEMPLATE, templateType: "streak", pageId: id, templateTitle: "Streak" },
+//       setPublishing,
 //     );
+//     if (gate === "cancelled") return;
 //
-// Nothing else in the editor changes — not the `.json()`, not the
-// `if (pubResult.success)`, not the toast, not the `finally`. That is the point.
+//     const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
 //
-// ── WHY WRAPPING THE REQUEST BEATS INSPECTING THE RESPONSE ──────────────────
+// Everything after that line is the editor's existing code, unchanged.
 //
-// The obvious shape is to leave the fetch alone and add a branch:
+// ── WHY ASK FIRST INSTEAD OF READING THE 402 ────────────────────────────────
 //
-//     } else if (offerPaywall(pubResult, { … })) { … }
+// The previous shape wrapped the publish request and put the paywall up when the
+// server refused it. It worked, and it is still the backstop, but it meant the
+// Publish button began spinning, the request went out, came back refused, and the
+// paywall opened — with the spinner still going, because the publish had not
+// completed and would not until payment finished. A user pressing Publish on a
+// paid template saw a loading state before being asked for money, and another one
+// behind the sheet the whole time they were paying.
 //
-// It does not survive contact with forty-one editors. Each one then needs a way
-// to re-run its publish once payment lands, which means either a `useRef` plus an
-// effect per file, or naming the enclosing publish callback at the call site.
-// Across these files that callback is named `handlePublish`, `publish`,
-// `doPublish` — or nothing at all, because several publish sites sit inside a
-// `useEffect` that auto-publishes after login and have no name to give. Getting
-// that wrong in one file means a user pays and the page never goes live.
+// Asking first costs one fast GET and inverts that: the paywall appears with
+// nothing spinning, and the publish request is only ever made when it will
+// succeed.
 //
-// Wrapping the request removes the question. The returned promise does not settle
-// until the paywall is resolved, so the editor's own `if (pubResult.success)` —
-// the code that sets the share URL and shows the toast — runs afterwards exactly
-// as it always did, against the second attempt's response.
+// ── WHY IT TAKES THE SPINNER SETTER ────────────────────────────────────────
 //
-// Returning a `Response` rather than parsed JSON is what keeps the diff to one
-// line: `await pubRes.json()` still works, and `pubResult` keeps the same
-// implicit type it had before, so none of the seventy-five call sites need a cast.
+// Because the honest state changes twice. While we are checking, and while the
+// sheet is open, the editor is NOT publishing — it is waiting for a person. Only
+// after payment does publishing resume. Handing the setter over lets this function
+// own that, rather than every one of forty-two editors reproducing the same
+// three-state dance and one of them getting it wrong.
 //
-// Three consequences, all of them wanted:
-//
-//   • The editor's `publishing` flag stays true while the paywall is up, because
-//     its `await` has not returned. The Publish button keeps its spinner, which
-//     is the truth: the publish is still in progress.
-//   • Its `finally { setPublishing(false) }` runs once, at the real end.
-//   • If the user dismisses the paywall, this resolves with the original 402
-//     response, so the editor's existing failure branch shows its normal
-//     message. A dismissed paywall is a failed publish, and every editor already
-//     knows how to say so.
+// It is optional. An editor with no spinner passes nothing.
 
-import { isPaymentRequired, offerPaywall, type PaywallContext } from "./paywallBus";
+import { API_URL, IS_NGROK } from "@/lib/config";
+import { isPaymentRequired, offerPaywall, readPricing, type PaywallContext } from "./paywallBus";
+
+export type PublishGateResult =
+  /** Free, already paid, already published, or paid just now. Go ahead. */
+  | "allowed"
+  /** The user closed the paywall without paying. The caller must stop. */
+  | "cancelled";
+
+function headers(token: string | null | undefined): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+  };
+}
+
+/** The access token, read at call time so a fresh login is picked up. */
+function currentToken(): string | null {
+  try {
+    return (
+      window.sessionStorage.getItem("gifts_impersonation_token") ||
+      window.localStorage.getItem("gifts_access_token")
+    );
+  } catch {
+    return null;
+  }
+}
 
 /**
- * Perform a publish request, showing the paywall if the page must be paid for.
+ * Make sure this page may be published, paying for it first if it must be.
  *
- * `doFetch` is a function rather than a promise because it is called again —
- * once, after payment. Pass the same request the editor would have made; it is a
- * POST with no body, so issuing it twice is safe, and the second one is what the
- * gate finally allows.
+ * Resolves `"allowed"` when the caller should go on and publish, `"cancelled"`
+ * when the user walked away from the paywall.
  *
- * Never throws on the paywall path. A network failure in `doFetch` propagates
- * exactly as the editor's own `fetch` would have, so existing `catch` blocks keep
- * working unchanged.
+ * Never throws. Every failure resolves `"allowed"` so the caller proceeds and the
+ * server's own 402 becomes the backstop — the behaviour that existed before this
+ * function did. A broken check must not be a dead Publish button.
+ */
+export async function ensurePublishAllowed(
+  ctx: PaywallContext,
+  setBusy?: (busy: boolean) => void
+): Promise<PublishGateResult> {
+  if (!ctx.pageId) {
+    // Nothing saved yet, so nothing to price against. Let the caller carry on;
+    // it will fail for its own reasons and say so in its own words.
+    return "allowed";
+  }
+
+  // ── Drop the busy state NOW, before the check ─────────────────────────────
+  //
+  // Not after. Several editors render a full-screen "Publishing your card…"
+  // overlay off this flag, and leaving it up while we ask whether payment is owed
+  // is the exact complaint this function exists to fix: a loading state that
+  // appears before the paywall, and then sits behind it.
+  //
+  // From here until we know the answer, the honest state is "not publishing" —
+  // we are asking a question, and then possibly waiting on a person. If the
+  // answer is "go ahead", the flag goes back on around the publish itself.
+  setBusy?.(false);
+
+  let needsPayment = false;
+  let pricing: unknown = null;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/payment/access?templateType=${encodeURIComponent(ctx.templateType)}&pageId=${encodeURIComponent(ctx.pageId)}`,
+      { headers: headers(currentToken()), cache: "no-store" }
+    );
+    const json = await res.json();
+    if (!res.ok || !json?.success) {
+      // Includes the 403 for a page the user does not own. Not our call to
+      // report — the publish that follows will say the same thing properly.
+      setBusy?.(true);
+      return "allowed";
+    }
+    needsPayment = Boolean(json.data?.needsPayment);
+    pricing = json.data?.pricing;
+  } catch {
+    setBusy?.(true);
+    return "allowed";
+  }
+
+  // Nothing owed — straight on to the publish, so the flag goes back.
+  if (!needsPayment) {
+    setBusy?.(true);
+    return "allowed";
+  }
+
+  // A 402-shaped object, because `offerPaywall` validates the same envelope
+  // whether it came from a refusal or from this check — one parser, one set of
+  // rules about what counts as usable pricing.
+  const asRefusal = { error: "PAYMENT_REQUIRED", pricing };
+  if (!readPricing(pricing)) {
+    // The server says payment is owed but did not give a usable price. Showing a
+    // paywall we cannot fill would be worse than letting the publish be refused
+    // with a message.
+    console.error("[paywall] access says payment is required but sent no usable pricing", pricing);
+    setBusy?.(true);
+    return "allowed";
+  }
+
+  // Already off, and it stays off: from here we are waiting on a person.
+  return new Promise<PublishGateResult>((resolve) => {
+    let settled = false;
+    const once = (v: PublishGateResult) => {
+      if (settled) return;
+      settled = true;
+      // Back to busy only on the way to an actual publish.
+      if (v === "allowed") setBusy?.(true);
+      resolve(v);
+    };
+
+    const raised = offerPaywall(asRefusal, {
+      ...ctx,
+      onPaid: () => once("allowed"),
+      onDismiss: () => once("cancelled"),
+    });
+
+    // Could not render it — no pageId, or pricing it rejected. Fall through to
+    // the publish attempt and let the server's 402 be the honest answer.
+    if (!raised) once("allowed");
+  });
+}
+
+/**
+ * Publish, putting the paywall up if the server refuses with a 402.
+ *
+ * The BACKSTOP, not the main path — `ensurePublishAllowed` above is what editors
+ * call. This stays for the case the check could not answer: a network blip, a
+ * price that changed in the moment between asking and publishing, or an editor
+ * that has not been moved over yet. It returns a `Response` so
+ * `await pubRes.json()` keeps working unchanged.
  */
 export async function publishFetch(
   ctx: PaywallContext,
@@ -70,17 +177,11 @@ export async function publishFetch(
 ): Promise<Response> {
   const res = await doFetch();
 
-  // Cheap exit for the overwhelming majority: free templates, and paid ones the
-  // user has already paid for.
   if (res.status !== 402) return res;
 
-  // `clone()` so the caller's own `.json()` still has an unread body to parse if
-  // we hand this same response back.
-  const body = await res
-    .clone()
-    .json()
-    .catch(() => null);
-
+  // `clone()` so the caller's own `.json()` still has an unread body if we hand
+  // this same response back.
+  const body = await res.clone().json().catch(() => null);
   if (!isPaymentRequired(body)) return res;
 
   return new Promise<Response>((resolve) => {
@@ -94,14 +195,12 @@ export async function publishFetch(
     const raised = offerPaywall(body, {
       ...ctx,
       onPaid: () => {
-        // Publish again. The gate now finds a paid PaymentOrder and allows it.
         void doFetch()
           .then(once)
           .catch((err) => {
-            // The payment succeeded and the page is unlocked, but this second
-            // request did not get through — a dropped connection, most likely.
-            // Say something true rather than leaving the editor awaiting a
-            // promise that never settles. Pressing Publish again costs nothing.
+            // Paid, unlocked, and this second request did not get through.
+            // Say something true rather than leaving the caller on a promise
+            // that never settles. Pressing Publish again costs nothing.
             console.error("[paywall] re-publish after payment failed", err);
             once(
               new Response(
@@ -114,14 +213,9 @@ export async function publishFetch(
             );
           });
       },
-      // A dismissed paywall is a failed publish. Handing back the original 402
-      // lets the editor's existing else-branch handle it with no new wiring.
       onDismiss: () => once(res),
     });
 
-    // `offerPaywall` declined to render — no usable pricing, or no pageId. Give
-    // the caller the 402 so it takes its normal failure path rather than waiting
-    // on a paywall that was never shown.
     if (!raised) once(res);
   });
 }

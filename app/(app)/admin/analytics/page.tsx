@@ -16,7 +16,7 @@ import {
 interface OverviewData {
   users: { total: number; today: number; thisWeek: number; thisMonth: number };
   pageViews: { total: number; today: number; thisWeek: number; thisMonth: number };
-  pages: { totalCreated: number; totalPublished: number };
+  pages: { totalCreated: number; totalPublished: number; totalDrafts?: number };
   templateStats: { type: string; label: string; slug?: string; live?: boolean; total: number; published: number }[];
   roleDistribution: { role: string; count: number }[];
   deviceBreakdown: { device: string; count: number }[];
@@ -120,7 +120,11 @@ export default function AdminAnalyticsPage() {
           <div className="asg" style={{marginBottom:14}}>
             <SC icon={<Users size={17}/>} label="Total Users" value={ov?.users.total??0} sub={`+${ov?.users.today??0} today`} accent={g}/>
             <SC icon={<Eye size={17}/>} label="Page Views" value={ov?.pageViews.total??0} sub={`+${ov?.pageViews.today??0} today`} accent={gD}/>
-            <SC icon={<FileText size={17}/>} label="Pages Created" value={ov?.pages.totalCreated??0} sub={`${ov?.pages.totalPublished??0} published`} accent="#a0522d"/>
+            {/* Drafts are the drop-off number: a page somebody built and did not
+                publish — because they abandoned the login, closed the paywall, or
+                simply have not come back. `?? subtraction` so this still reads
+                correctly against a server that predates `totalDrafts`. */}
+            <SC icon={<FileText size={17}/>} label="Pages Created" value={ov?.pages.totalCreated??0} sub={`${ov?.pages.totalPublished??0} published · ${ov?.pages.totalDrafts ?? Math.max(0,(ov?.pages.totalCreated??0)-(ov?.pages.totalPublished??0))} draft`} accent="#a0522d"/>
             <SC icon={<TrendingUp size={17}/>} label="This Week" value={ov?.users.thisWeek??0} sub={`${ov?.pageViews.thisWeek??0} views`} accent={bg}/>
           </div>
           <div style={{height:1,background:cB}}/>

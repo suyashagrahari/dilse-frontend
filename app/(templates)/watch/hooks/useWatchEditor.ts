@@ -24,7 +24,7 @@ import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { DEMO_DATA, dbToWatchData, watchDataToBody, type WatchData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
-import { publishFetch } from "@/lib/paywall/publishRequest";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "watch";
@@ -208,10 +208,15 @@ export function useWatchEditor() {
         setIsPersonalized(true);
         if (typeof result.data.contribToken === "string") setContribToken(result.data.contribToken);
 
-        const pubRes = await publishFetch(
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
           { slug: TEMPLATE, templateType: "watch", pageId: savedId, templateTitle: "Watch" },
-          () => fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() })
+          setPublishing,
         );
+        if (gate === "cancelled") return;
+
+        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers() });
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
@@ -335,10 +340,15 @@ export function useWatchEditor() {
       else await update(id);
       if (!id) throw new Error("Save failed");
 
-      const pubRes = await publishFetch(
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
         { slug: TEMPLATE, templateType: "watch", pageId: id, templateTitle: "Watch" },
-        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+        setPublishing,
       );
+      if (gate === "cancelled") return;
+
+      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));

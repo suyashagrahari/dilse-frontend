@@ -29,7 +29,7 @@ import { DEMO_DATA, usDataToBody } from "../components/data";
 import { dbToProfileData } from "../components/coerce";
 import type { ProfileData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
-import { publishFetch } from "@/lib/paywall/publishRequest";
+import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 
 const BASE = `${API_URL}/us-pages`;
 const TEMPLATE = "us";
@@ -170,13 +170,15 @@ export function useUsEditor() {
         setContent(data);
         setIsPersonalized(true);
 
-        const pubRes = await publishFetch(
-        { slug: TEMPLATE, templateType: "us", pageId: savedId, templateTitle: "Us" },
-        () => fetch(`${BASE}/${savedId}/publish`, {
-          method: "POST",
-          headers: headers(),
-        })
-      );
+        // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+        // and the publish request is only made when it will succeed.
+        const gate = await ensurePublishAllowed(
+          { slug: TEMPLATE, templateType: "us", pageId: savedId, templateTitle: "Us" },
+          setPublishing,
+        );
+        if (gate === "cancelled") return;
+
+        const pubRes = await fetch(`${BASE}/${savedId}/publish`, { method: "POST", headers: headers(), });
         const pub = await pubRes.json();
         if (pub?.success) {
           setShareUrl(String(pub.data.shareUrl));
@@ -317,10 +319,15 @@ export function useUsEditor() {
       else await update(id);
       if (!id) throw new Error("save failed");
 
-      const pubRes = await publishFetch(
+      // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
+      // and the publish request is only made when it will succeed.
+      const gate = await ensurePublishAllowed(
         { slug: TEMPLATE, templateType: "us", pageId: id, templateTitle: "Us" },
-        () => fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() })
+        setPublishing,
       );
+      if (gate === "cancelled") return;
+
+      const pubRes = await fetch(`${BASE}/${id}/publish`, { method: "POST", headers: headers() });
       const pub = await pubRes.json();
       if (pub?.success) {
         setShareUrl(String(pub.data.shareUrl));

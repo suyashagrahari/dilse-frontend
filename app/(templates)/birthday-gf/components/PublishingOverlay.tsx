@@ -1,11 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useDelayedVisible } from "@/hooks/useDelayedVisible";
 
 export default function PublishingOverlay({ visible }: { visible: boolean }) {
+  // Held back so a publish that resolves in a few milliseconds -- or a paywall
+  // check that does -- never flashes a full-screen overlay. See the hook.
+  const show = useDelayedVisible(visible);
   return (
     <AnimatePresence>
-      {visible && (
+      {show && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
