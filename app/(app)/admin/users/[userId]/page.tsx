@@ -13,8 +13,9 @@ import PagesTab from "./PagesTab";
 import PointsTab from "./PointsTab";
 import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
+import AccessTab from "./AccessTab";
 
-const TABS = ["Overview", "Pages", "Points", "Activity", "Danger Zone"] as const;
+const TABS = ["Overview", "Pages", "Points", "Access", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminUserProfilePage() {
@@ -186,6 +187,7 @@ function ProfileInner() {
         {tab === "Overview" && <OverviewTab data={data} />}
         {tab === "Pages" && <PagesTab data={data} hdr={hdr} reload={load} />}
         {tab === "Points" && <PointsTab data={data} hdr={hdr} reload={load} />}
+        {tab === "Access" && <AccessTab userId={String(userId)} hdr={hdr} />}
         {tab === "Activity" && <ActivityTab userId={String(userId)} hdr={hdr} />}
         {tab === "Danger Zone" && <DangerTab data={data} hdr={hdr} reload={load} />}
 

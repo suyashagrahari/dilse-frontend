@@ -16,6 +16,13 @@ export interface AuthUser {
   subdomain?: string;
   points?: number;
   referralCode?: string;
+  /**
+   * Template slugs this user may use even while they are hidden from everyone
+   * else — see `hooks/useTemplateAccess`. Returned by `GET /auth/me`, so it is
+   * present on the same render as `isAuthenticated` and no separate request is
+   * needed. Optional because an older cached user object will not carry it.
+   */
+  earlyAccess?: string[];
 }
 
 interface AuthState {

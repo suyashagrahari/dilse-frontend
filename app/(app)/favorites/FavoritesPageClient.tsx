@@ -9,7 +9,7 @@ import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { templateList } from "@/data/template-registry";
-import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 
 const UI = {
   bg: "#f5ede6",
@@ -94,7 +94,11 @@ export default function FavoritesPage() {
   const loading = useAppSelector((s) => s.favorites.loading);
   const fetched = useAppSelector((s) => s.favorites.fetched);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const hiddenTemplates = useHiddenTemplates();
+  // The EFFECTIVE hidden set: what this deployment hides, minus anything a
+  // super admin has granted this particular visitor early access to. A
+  // pre-release template therefore appears in the gallery for the client it
+  // was released to and for nobody else. See `useTemplateAccess`.
+  const { hidden: hiddenTemplates } = useTemplateAccess();
 
   useEffect(() => {
     // Avoid repeated fetch churn on every mount when data is already hydrated.
