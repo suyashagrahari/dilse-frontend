@@ -25,7 +25,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 
 /**
  * Routes inside `(templates)` that are NOT a template builder.
@@ -41,12 +41,49 @@ const NEVER_GATED = (path: string): boolean =>
 
 export function TemplateAvailabilityGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
-  const hidden = useHiddenTemplates();
+  const { hidden, resolved } = useTemplateAccess();
 
   const slug = pathname.split("/").filter(Boolean)[0] || "";
   const blocked = !!slug && hidden.has(slug) && !NEVER_GATED(pathname);
 
   if (!blocked) return <>{children}</>;
+
+  // ── Hold rather than refuse while access is still unknown ─────────────────
+  //
+  // A super admin can grant one person early access to a hidden template, and
+  // that grant arrives with `/auth/me` — after the first paint. Refusing on the
+  // first render would show "Not available yet" to the exact client the grant was
+  // made for, and then replace it with their template a moment later. That reads
+  // as the grant being broken.
+  //
+  // Only reached when the slug IS hidden, so a visitor with no token and nobody
+  // on a public template never sees this: `resolved` is true for them
+  // immediately. See `useTemplateAccess`.
+  if (!resolved) {
+    return (
+      <main
+        style={{
+          minHeight: "100dvh",
+          display: "grid",
+          placeItems: "center",
+          background: "linear-gradient(170deg, #fbf6f1 0%, #f5ede6 100%)",
+        }}
+        aria-busy="true"
+      >
+        <span
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 999,
+            border: "2.5px solid rgba(61,12,17,0.14)",
+            borderTopColor: "#c9a84c",
+            animation: "spin 0.7s linear infinite",
+          }}
+        />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </main>
+    );
+  }
 
   return (
     <main

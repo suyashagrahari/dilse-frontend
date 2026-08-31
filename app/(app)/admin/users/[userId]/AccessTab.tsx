@@ -1,0 +1,173 @@
+"use client";
+
+// ─── What this user can see before everybody else ────────────────────────────
+//
+// The other half of `/admin/early-access`. That screen is template-first — you
+// release a template to a list of testers. This one answers the question you
+// actually get asked: "what can this client see?" — which the template-first view
+// answers only by opening every template in turn.
+//
+// Read-only apart from revoke. Granting from here would need a template picker
+// duplicating the catalogue and the hidden/live state that the early-access screen
+// already shows, and a grant made without seeing whether the template is even
+// hidden is a grant that quietly does nothing.
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { API_URL } from "@/lib/config";
+import { Loader2, Trash2, KeyRound, AlertTriangle } from "lucide-react";
+import { C } from "./types";
+import { Card, Empty, useToast } from "./ui";
+
+interface Grant {
+  slug: string;
+  grantedByEmail: string;
+  note: string;
+  createdAt: string | null;
+  /** False when the slug no longer matches a template that ships. */
+  known: boolean;
+}
+
+export default function AccessTab({
+  userId,
+  hdr,
+}: {
+  userId: string;
+  hdr: () => Record<string, string>;
+}) {
+  const toast = useToast();
+  const [grants, setGrants] = useState<Grant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/template-grants/user/${userId}`, { headers: hdr() });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Failed to load");
+      setGrants(json.data.grants || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load early access");
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, hdr]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const revoke = useCallback(
+    async (slug: string) => {
+      if (busy) return;
+      setBusy(slug);
+      try {
+        const res = await fetch(`${API_URL}/admin/template-grants/${slug}/${userId}`, {
+          method: "DELETE",
+          headers: hdr(),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || "Failed to revoke");
+        setGrants((p) => p.filter((x) => x.slug !== slug));
+        toast?.(`Revoked access to ${slug}`);
+      } catch (e) {
+        toast?.(e instanceof Error ? e.message : "Could not revoke");
+      } finally {
+        setBusy(null);
+      }
+    },
+    [busy, userId, hdr, toast]
+  );
+
+  return (
+    <Card
+      title="Early access"
+      action={
+        <Link
+          href="/admin/early-access"
+          style={{ fontSize: 12.5, fontWeight: 600, color: C.accent, textDecoration: "none" }}
+        >
+          Grant access →
+        </Link>
+      }
+    >
+      <p style={{ margin: "0 0 12px", fontSize: 12.5, lineHeight: "18px", color: C.muted }}>
+        Templates this person can use while they are hidden from everyone else. A
+        grant also lets them publish a paid template without being charged.
+      </p>
+
+      {loading ? (
+        <div style={{ display: "grid", placeItems: "center", padding: 24 }}>
+          <Loader2 size={20} className="animate-spin" style={{ color: C.gold }} />
+        </div>
+      ) : error ? (
+        <div
+          style={{
+            display: "flex", gap: 8, alignItems: "flex-start",
+            padding: "10px 12px", borderRadius: 12,
+            background: `${C.danger}12`, border: `1px solid ${C.danger}38`,
+          }}
+        >
+          <AlertTriangle size={15} style={{ color: C.danger, flex: "none", marginTop: 1 }} />
+          <span style={{ fontSize: 12.5, color: C.text }}>{error}</span>
+        </div>
+      ) : grants.length === 0 ? (
+        <Empty>No early access. This user sees only what everyone else sees.</Empty>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {grants.map((gr) => (
+            <div
+              key={gr.slug}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 11px", borderRadius: 12,
+                background: C.surface, border: `1px solid ${C.border}`,
+              }}
+            >
+              <KeyRound size={15} style={{ color: C.accent, flex: "none" }} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 13, fontWeight: 700, color: C.text,
+                    fontFamily: "ui-monospace, monospace",
+                  }}
+                >
+                  {gr.slug}
+                </div>
+                <div style={{ fontSize: 11, color: C.faint, marginTop: 2 }}>
+                  {gr.grantedByEmail ? `by ${gr.grantedByEmail}` : ""}
+                  {gr.createdAt ? ` · ${new Date(gr.createdAt).toLocaleDateString("en-IN")}` : ""}
+                  {gr.note ? ` · ${gr.note}` : ""}
+                </div>
+                {/* A grant can outlive the template it names — a slug renamed or
+                    retired. Saying so beats an entry that looks fine and does
+                    nothing. */}
+                {!gr.known && (
+                  <div style={{ fontSize: 11, color: C.warn, marginTop: 3 }}>
+                    No template ships under this slug any more — safe to revoke.
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={busy === gr.slug}
+                onClick={() => void revoke(gr.slug)}
+                title="Revoke"
+                aria-label={`Revoke access to ${gr.slug}`}
+                style={{
+                  width: 40, height: 40, borderRadius: 11, flex: "none",
+                  background: C.surface, border: `1px solid ${C.border}`, color: C.danger,
+                  cursor: busy === gr.slug ? "default" : "pointer",
+                  display: "grid", placeItems: "center",
+                }}
+              >
+                {busy === gr.slug ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}

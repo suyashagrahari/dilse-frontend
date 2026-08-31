@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap, IndianRupee } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap, IndianRupee, KeyRound } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { roleAtLeast } from "@/lib/roles";
 
@@ -176,6 +176,7 @@ export default function BottomNav() {
                   { label: "Templates", icon: <LayoutGrid size={15} />, href: "/admin/templates" },
                   ...(isSuper ? [
                     { label: "Template Pricing", icon: <IndianRupee size={15} />, href: "/admin/pricing" },
+                    { label: "Early Access", icon: <KeyRound size={15} />, href: "/admin/early-access" },
                   ] : []),
                   { label: "Contacts", icon: <MessageSquare size={15} />, href: "/admin/contacts" },
                 ] : []),
