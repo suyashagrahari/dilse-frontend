@@ -1,24 +1,16 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap, IndianRupee, KeyRound } from "lucide-react";
-import { useAppSelector } from "@/store/hooks";
-import { roleAtLeast } from "@/lib/roles";
+import { Ellipsis, Heart, Home, LayoutTemplate, ScrollText } from "lucide-react";
+import MoreDrawer from "@/components/MoreDrawer";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
-  const { user } = useAppSelector((s) => s.auth);
-  // Rank check, not equality: `superadmin` outranks `admin` and must still
-  // see the Admin entry. `=== "admin"` hid it the moment that role existed.
-  const isAdmin = roleAtLeast(user?.role, "admin");
-  // Pricing decides what users are charged, so it is a tier above the rest of
-  // the admin menu. The page and the API both re-check this.
-  const isSuper = roleAtLeast(user?.role, "superadmin");
+  // Who may see which destinations is `MoreDrawer`'s business now — it owns the
+  // list, so it owns the role checks that shape it.
 
   const activeColor = "#f2cf74";
   const mutedColor = "rgba(245,222,177,0.80)";
@@ -26,12 +18,6 @@ export default function BottomNav() {
   useEffect(() => {
     setMoreOpen(false);
   }, [pathname]);
-
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    if (href === "/favorites") return pathname.startsWith("/favorites") || pathname.startsWith("/saves");
-    return pathname.startsWith(href);
-  };
 
   const tabBg = (active: boolean) =>
     active
@@ -134,99 +120,10 @@ export default function BottomNav() {
 
   return (
     <>
-      <AnimatePresence>
-        {moreOpen && (
-          <>
-            <motion.button
-              className="md:hidden fixed inset-0 z-[74]"
-              onClick={() => setMoreOpen(false)}
-              aria-label="Close menu"
-              style={{ background: "rgba(23,6,9,0.28)", border: "none" }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
-            <motion.div
-              className="md:hidden fixed z-[75] right-4 bottom-[88px]"
-              initial={{ y: 12, opacity: 0, scale: 0.96 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 12, opacity: 0, scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 360, damping: 28 }}
-              style={{
-                width: 228,
-                borderRadius: 16,
-                background: "linear-gradient(180deg,#2a070d 0%,#3b0812 58%,#22060b 100%)",
-                border: "1px solid rgba(212,175,84,0.42)",
-                boxShadow: "0 16px 30px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,228,160,0.2)",
-                padding: "8px",
-              }}
-            >
-              {[
-                // Guides leads the menu. Everything else here is account
-                // admin or company info — this is the only entry that helps
-                // someone finish the thing they came to make, so it should not
-                // be the fifth item they read past.
-                { label: "Product Guides", icon: <GraduationCap size={15} />, href: "/guides" },
-                { label: "Profile", icon: <User size={15} />, href: "/profile" },
-                { label: "Blog", icon: <BookOpen size={15} />, href: "/blog" },
-                { label: "Refer & Earn", icon: <Gift size={15} />, href: "/profile#referral" },
-                ...(isAdmin ? [
-                  { label: "Analytics", icon: <BarChart3 size={15} />, href: "/admin/analytics" },
-                  { label: "User Dashboard", icon: <Users size={15} />, href: "/admin/users" },
-                  { label: "Templates", icon: <LayoutGrid size={15} />, href: "/admin/templates" },
-                  ...(isSuper ? [
-                    { label: "Template Pricing", icon: <IndianRupee size={15} />, href: "/admin/pricing" },
-                    { label: "Early Access", icon: <KeyRound size={15} />, href: "/admin/early-access" },
-                  ] : []),
-                  { label: "Contacts", icon: <MessageSquare size={15} />, href: "/admin/contacts" },
-                ] : []),
-                { label: "About Us", icon: <Info size={15} />, href: "/about-us" },
-                { label: "Contact Us", icon: <Mail size={15} />, href: "/contact-us" },
-                { label: "Help", icon: <HelpCircle size={15} />, href: "/help" },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    router.push(item.href);
-                  }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    borderRadius: 12,
-                    border: "1px solid rgba(212,175,84,0.22)",
-                    background: "rgba(245,237,230,0.08)",
-                    color: "#f7dfaa",
-                    padding: "10px 10px",
-                    marginBottom: 7,
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    textAlign: "left",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 8,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "rgba(201,168,76,0.18)",
-                      color: "#f2cf74",
-                    }}
-                  >
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </button>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* The destinations list lives in `MoreDrawer` — a full-height panel
+          rather than the 228px popover this replaces. See the note at the top of
+          that file for why, and for why the item order did not change. */}
+      <MoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
 
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-[79] pointer-events-none"
