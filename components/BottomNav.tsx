@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap } from "lucide-react";
+import { Ellipsis, Heart, HelpCircle, Home, Info, LayoutTemplate, Mail, ScrollText, User, Gift, BarChart3, Users, MessageSquare, BookOpen, LayoutGrid, GraduationCap, IndianRupee } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { roleAtLeast } from "@/lib/roles";
 
@@ -16,6 +16,9 @@ export default function BottomNav() {
   // Rank check, not equality: `superadmin` outranks `admin` and must still
   // see the Admin entry. `=== "admin"` hid it the moment that role existed.
   const isAdmin = roleAtLeast(user?.role, "admin");
+  // Pricing decides what users are charged, so it is a tier above the rest of
+  // the admin menu. The page and the API both re-check this.
+  const isSuper = roleAtLeast(user?.role, "superadmin");
 
   const activeColor = "#f2cf74";
   const mutedColor = "rgba(245,222,177,0.80)";
@@ -171,6 +174,9 @@ export default function BottomNav() {
                   { label: "Analytics", icon: <BarChart3 size={15} />, href: "/admin/analytics" },
                   { label: "User Dashboard", icon: <Users size={15} />, href: "/admin/users" },
                   { label: "Templates", icon: <LayoutGrid size={15} />, href: "/admin/templates" },
+                  ...(isSuper ? [
+                    { label: "Template Pricing", icon: <IndianRupee size={15} />, href: "/admin/pricing" },
+                  ] : []),
                   { label: "Contacts", icon: <MessageSquare size={15} />, href: "/admin/contacts" },
                 ] : []),
                 { label: "About Us", icon: <Info size={15} />, href: "/about-us" },
