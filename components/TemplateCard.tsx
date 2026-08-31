@@ -4,13 +4,12 @@ import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Crown, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
-import { formatINR } from "@/config/templatePricing";
 import { guideByTemplateHref } from "@/data/guide-registry";
 
 interface TemplateCardProps {
@@ -31,9 +30,11 @@ const TemplateCard = memo(function TemplateCard({
   // is a static import, so this costs one object property read per card.
   const hasGuide = Boolean(guideByTemplateHref[`/${template.slug}`]);
 
-  // Live price, not the build-time `isPremium` flag this replaced. Fifty cards
-  // share one module-level fetch, so this is a map read per card.
-  const { pricingFor, settled: pricingSettled } = useTemplatePricing();
+  // No price is shown on the card by design — the gallery stays a clean grid of
+  // templates. This is read only so the click event still records whether the
+  // template was a paid one, which is what makes the funnel readable. Fifty
+  // cards share one module-level fetch, so it is a map read per card.
+  const { pricingFor } = useTemplatePricing();
   const pricing = pricingFor(template.slug);
 
   return (
@@ -122,59 +123,6 @@ const TemplateCard = memo(function TemplateCard({
               >
                 <PlayCircle size={9} />
                 Guide
-              </div>
-            </div>
-          )}
-
-          {/* ── Price ribbon, top-left ────────────────────────────────────
-              Read live, so a super admin's change reaches the gallery within
-              the cache window rather than at the next deploy.
-
-              Nothing renders until pricing has SETTLED. Before that the map is
-              empty, which reads as free — and a card that paints "Free" and
-              then changes to "₹10" is worse than one that shows nothing for a
-              beat. `settled` is the difference between "free" and "not known
-              yet", and it is why the hook exposes it. */}
-          {pricingSettled && !pricing.isFree && (
-            <div className="absolute top-0 left-0 z-20">
-              <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-black uppercase tracking-widest"
-                style={{
-                  background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-                  color: "#000",
-                  boxShadow: "0 2px 10px rgba(255,165,0,0.45)",
-                }}
-              >
-                <Crown size={8} fill="currentColor" />
-                {pricing.discountPercent > 0 ? `${pricing.discountPercent}% off` : "Premium"}
-              </div>
-
-              {/* The price itself. The struck MRP appears only when there is a
-                  real discount — "₹10" beside "₹10", or "0% off", reads as a bug. */}
-              <div
-                className="mt-1 ml-1 inline-flex items-baseline gap-1 px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(0,0,0,0.62)" }}
-              >
-                <span className="text-[10px] font-extrabold text-white leading-none">
-                  {formatINR(pricing.finalPrice)}
-                </span>
-                {pricing.discountPercent > 0 && (
-                  <span className="text-[9px] text-white/60 line-through leading-none">
-                    {formatINR(pricing.mrp)}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Free, said quietly — and only once we actually know it is free. */}
-          {pricingSettled && pricing.isFree && (
-            <div className="absolute top-0 left-0 z-20">
-              <div
-                className="px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-bold uppercase tracking-widest"
-                style={{ background: "rgba(255,255,255,0.88)", color: "#3aa76d" }}
-              >
-                Free
               </div>
             </div>
           )}

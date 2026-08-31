@@ -315,7 +315,44 @@ export default function AdminPricingPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5ede6", paddingBottom: 60 }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "22px 16px 0" }}>
+      {/* ── The responsive rules ────────────────────────────────────────────
+          Inline styles cannot hold a media query, and this screen genuinely
+          needs three. A super admin sets prices from a phone as often as from a
+          desk, and the desktop layout — inputs beside a preview panel — collapses
+          into two unreadable columns at 380px.
+
+          Scoped to `ap-` classes so nothing here reaches the rest of the app. */}
+      <style>{`
+        /* Inputs beside the preview on a wide screen; stacked on a phone, where
+           220px of preview next to three number fields leaves ~40px each. */
+        .ap-edit { grid-template-columns: minmax(0, 1fr) minmax(0, 220px); }
+        .ap-fields { display: flex; gap: 8px; flex-wrap: wrap; }
+        .ap-field { flex: 1 1 96px; min-width: 90px; }
+
+        @media (max-width: 640px) {
+          .ap-edit { grid-template-columns: 1fr; }
+          /* Three fields across even on the narrowest phone: they hold at most
+             six digits each, and stacking them makes the row twice as tall for
+             no gain. */
+          .ap-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+          .ap-field { flex: none; min-width: 0; }
+          /* The preview reads as the result of the fields above it, so it keeps
+             its label but loses the panel inset that implied a sidebar. */
+          .ap-preview { order: 2; }
+        }
+
+        /* Filter pills scroll rather than wrap into three ragged rows. */
+        @media (max-width: 520px) {
+          .ap-filters {
+            display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px;
+            scrollbar-width: none; -ms-overflow-style: none;
+          }
+          .ap-filters::-webkit-scrollbar { display: none; }
+          .ap-filters > button { flex: none; }
+        }
+      `}</style>
+
+      <div className="ap-shell" style={{ maxWidth: 900, margin: "0 auto", padding: "18px 14px 0" }}>
         <Link
           href="/admin/analytics"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: t2, textDecoration: "none", marginBottom: 14 }}
@@ -357,13 +394,14 @@ export default function AdminPricingPage() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or slug"
               style={{
-                width: "100%", height: 40, paddingLeft: 34, paddingRight: 12,
-                borderRadius: 11, border: `1px solid ${cB}`, background: "#fff",
-                fontSize: 13.5, color: t1, outline: "none",
+                width: "100%", height: 44, paddingLeft: 34, paddingRight: 12,
+                borderRadius: 12, border: `1px solid ${cB}`, background: "#fff",
+                fontSize: 16, color: t1, outline: "none",
               }}
             />
           </div>
 
+          <div className="ap-filters" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {([
             ["all", `All ${CATALOGUE.length}`],
             ["paid", `Paid ${paidCount}`],
@@ -375,8 +413,8 @@ export default function AdminPricingPage() {
               type="button"
               onClick={() => setOnly(key)}
               style={{
-                height: 40, padding: "0 14px", borderRadius: 11, cursor: "pointer",
-                fontSize: 13, fontWeight: 600,
+                minHeight: 44, padding: "0 15px", borderRadius: 12, cursor: "pointer",
+                fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
                 background: only === key ? bg : "#fff",
                 color: only === key ? "#fdf8ee" : t2,
                 border: `1px solid ${only === key ? bg : cB}`,
@@ -385,6 +423,7 @@ export default function AdminPricingPage() {
               {label}
             </button>
           ))}
+          </div>
         </div>
 
         {error ? (
@@ -468,8 +507,10 @@ export default function AdminPricingPage() {
                             disabled={busy}
                             onClick={() => setDraft(t.slug, { paid })}
                             style={{
-                              padding: "7px 15px", border: "none", cursor: busy ? "default" : "pointer",
-                              fontSize: 12.5, fontWeight: 700, textTransform: "capitalize",
+                              minHeight: 40, padding: "0 18px", border: "none",
+                              cursor: busy ? "default" : "pointer",
+                              fontSize: 13, fontWeight: 700, textTransform: "capitalize",
+                              WebkitTapHighlightColor: "transparent",
                               background: d.paid === paid ? (paid ? bg : OK) : "#fff",
                               color: d.paid === paid ? "#fdf8ee" : t2,
                             }}
@@ -490,12 +531,10 @@ export default function AdminPricingPage() {
                   {/* Inputs + live preview */}
                   {!blockedReason && d.paid && (
                     <div
-                      style={{
-                        marginTop: 12, display: "grid", gap: 12,
-                        gridTemplateColumns: "minmax(0,1fr) minmax(0,220px)",
-                      }}
+                      className="ap-edit"
+                      style={{ marginTop: 12, display: "grid", gap: 12 }}
                     >
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <div className="ap-fields">
                         <Field
                           label="Price charged"
                           prefix={<IndianRupee size={12} style={{ color: tM }} />}
@@ -524,6 +563,7 @@ export default function AdminPricingPage() {
                       {/* What the customer will actually see. Same derivePricing
                           the paywall runs, so these cannot disagree. */}
                       <div
+                        className="ap-preview"
                         style={{
                           borderRadius: 12, background: "#f7eee5",
                           border: `1px solid ${cB}`, padding: "10px 12px",
@@ -585,7 +625,7 @@ export default function AdminPricingPage() {
                           disabled={busy}
                           title="Remove the decision entirely, so this template is free by default again"
                           style={{
-                            height: 34, padding: "0 12px", borderRadius: 10,
+                            minHeight: 40, padding: "0 14px", borderRadius: 11,
                             background: "#fff", border: `1px solid ${cB}`, color: t2,
                             fontSize: 12.5, fontWeight: 600, cursor: busy ? "default" : "pointer",
                             display: "inline-flex", alignItems: "center", gap: 6,
@@ -600,7 +640,7 @@ export default function AdminPricingPage() {
                         onClick={() => void save(t.slug)}
                         disabled={busy || !dirty || Boolean(problem)}
                         style={{
-                          height: 34, padding: "0 14px", borderRadius: 10, border: "none",
+                          minHeight: 40, padding: "0 18px", borderRadius: 11, border: "none",
                           background: !dirty || problem ? "#e6dbd0" : bg,
                           color: !dirty || problem ? tM : "#fdf8ee",
                           fontSize: 12.5, fontWeight: 700,
@@ -650,14 +690,14 @@ function Field({
   suffix?: string;
 }) {
   return (
-    <label style={{ display: "block", flex: "1 1 96px", minWidth: 90 }}>
+    <label className="ap-field" style={{ display: "block" }}>
       <span style={{ display: "block", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM, marginBottom: 4 }}>
         {label}
       </span>
       <span
         style={{
           display: "flex", alignItems: "center", gap: 4,
-          height: 36, padding: "0 9px", borderRadius: 10,
+          minHeight: 40, padding: "0 10px", borderRadius: 11,
           background: "#fff", border: `1px solid ${cB}`,
         }}
       >
@@ -669,8 +709,21 @@ function Field({
           placeholder={placeholder}
           inputMode="numeric"
           style={{
-            width: "100%", border: "none", outline: "none", background: "transparent",
-            fontSize: 13.5, fontWeight: 600, color: t1, minWidth: 0,
+            // Fills the 40px wrapper so the whole control is the tap target. As a
+            // 24px input inside 40px of padding, two thirds of what looks like
+            // the field did nothing on a phone.
+            // The padding is on the INPUT, not just the wrapper, so the whole
+            // 42px is a real tap target. Relying on the wrapper's minHeight left
+            // a 24px input inside 40px of dead space, and two thirds of what
+            // looked like the field did nothing on a phone. `align-self:
+            // stretch` ought to fix that and does not here, so the input is
+            // sized directly rather than left depending on a flex subtlety.
+            width: "100%", padding: "11px 0",
+            border: "none", outline: "none", background: "transparent",
+            // 16px is the threshold below which iOS Safari zooms the whole page
+            // on focus. A super admin typing a price should not have the layout
+            // jump and then have to pinch back out.
+            fontSize: 16, fontWeight: 600, color: t1, minWidth: 0,
           }}
         />
         {suffix && <span style={{ fontSize: 12, color: tM, flex: "none" }}>{suffix}</span>}
