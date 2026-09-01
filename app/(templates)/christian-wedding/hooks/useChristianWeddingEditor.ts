@@ -15,6 +15,7 @@ import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "christian-wedding";
@@ -627,6 +628,12 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
         setEditMode(null);
         try { sessionStorage.removeItem("christian_wedding_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
+        // Ask how it went, before this editor's own "Published!" panel takes
+        // over. Unlike most templates it does not raise the house share sheet,
+        // so the interception inside `openShareSheet` never runs here — see
+        // lib/feedback/feedbackBus. Asking twice is impossible: the bus marks
+        // the page the moment it raises, and this is a no-op if it already has.
+        requestFeedback({ templateSlug: TEMPLATE, pageUrl: normalizedShareUrl }, () => {});
         pushToast({
           type: "publish",
           title: "Published! 🎊",

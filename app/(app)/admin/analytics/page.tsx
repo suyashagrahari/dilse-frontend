@@ -4,12 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
+import { isSuperAdmin } from "@/lib/roles";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  Users, Eye, FileText, TrendingUp, BarChart3, MessageSquare,
+  Users, Eye, FileText, TrendingUp, BarChart3, MessageSquare, Star,
   Smartphone, Activity, Crown, UserCheck, UserX,
 } from "lucide-react";
 
@@ -38,7 +39,7 @@ const tt: React.CSSProperties = { background:"#fff", border:`1px solid ${cB}`, b
 
 export default function AdminAnalyticsPage() {
   const router = useRouter();
-  const { accessToken } = useAppSelector((s) => s.auth);
+  const { accessToken, user } = useAppSelector((s) => s.auth);
   const [ov, setOv] = useState<OverviewData|null>(null);
   const [ug, setUg] = useState<{date:string;count:number}[]>([]);
   const [vc, setVc] = useState<{date:string;count:number}[]>([]);
@@ -104,6 +105,13 @@ export default function AdminAnalyticsPage() {
               <button onClick={()=>router.push("/admin/contacts")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
                 <MessageSquare size={13} style={{verticalAlign:"middle",marginRight:5}}/>Contacts
               </button>
+              {/* Super admin only — /admin/feedback bounces anybody else, so
+                  showing the tab to an admin would be a dead end. */}
+              {isSuperAdmin(user?.role) && (
+                <button onClick={()=>router.push("/admin/feedback")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
+                  <Star size={13} style={{verticalAlign:"middle",marginRight:5}}/>Feedback
+                </button>
+              )}
             </div>
             <div style={{marginLeft:"auto",display:"flex",gap:4}}>
               {[7,30,90].map(d=>(

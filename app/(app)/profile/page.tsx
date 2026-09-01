@@ -389,6 +389,10 @@ export default function ProfilePage() {
       recipientName: payload.recipientName,
       senderName: payload.senderName,
       password: payload.password,
+      // Re-sharing something already published, not finishing it. "How was
+      // making this?" about a page from last month has no useful answer, and the
+      // ask belongs to the publish moment. See lib/feedback/feedbackBus.
+      askFeedback: false,
     });
   };
 
