@@ -720,8 +720,8 @@ export default function AdminFeedbackPage() {
                   rows={9}
                   style={{
                     width: "100%", padding: 12, borderRadius: 12, resize: "vertical",
-                    border: `1px solid ${cB}`, background: "#fff", fontSize: 15,
-                    lineHeight: "22px", color: t1, outline: "none", fontFamily: "inherit",
+                    border: `1px solid ${cB}`, background: "#fff", fontSize: 16,
+                    lineHeight: "23px", color: t1, outline: "none", fontFamily: "inherit",
                   }}
                 />
 
@@ -782,7 +782,7 @@ export default function AdminFeedbackPage() {
                     placeholder="For the team"
                     style={{
                       width: "100%", padding: 10, borderRadius: 12, resize: "vertical",
-                      border: `1px solid ${cB}`, background: "#f7eee5", fontSize: 15,
+                      border: `1px solid ${cB}`, background: "#f7eee5", fontSize: 16,
                       color: t1, outline: "none", fontFamily: "inherit",
                     }}
                   />
