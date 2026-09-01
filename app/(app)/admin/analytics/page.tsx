@@ -112,6 +112,11 @@ export default function AdminAnalyticsPage() {
                   <Star size={13} style={{verticalAlign:"middle",marginRight:5}}/>Feedback
                 </button>
               )}
+              {isSuperAdmin(user?.role) && (
+                <button onClick={()=>router.push("/admin/drafts")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
+                  <FileText size={13} style={{verticalAlign:"middle",marginRight:5}}/>Drafts
+                </button>
+              )}
             </div>
             <div style={{marginLeft:"auto",display:"flex",gap:4}}>
               {[7,30,90].map(d=>(
