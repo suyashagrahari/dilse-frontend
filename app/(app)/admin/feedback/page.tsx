@@ -334,8 +334,11 @@ export default function AdminFeedbackPage() {
         .af-filters > button { flex: none; }
         @media (max-width: 899px) {
           .af-detail {
-            position: fixed; inset: 0; z-index: 60; overflow-y: auto;
-            background: #f5ede6; padding: 14px 14px 40px;
+            /* 189, not 60: BottomNav is z-[79] and 82px tall, so the old
+               value put this panel and its Send button under the nav. */
+            position: fixed; inset: 0; z-index: 189; overflow-y: auto;
+            background: #f5ede6;
+            padding: 14px 14px calc(82px + env(safe-area-inset-bottom, 0px) + 24px);
           }
         }
       `}</style>
