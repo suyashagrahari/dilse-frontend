@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
+import TemplateSelect from "@/components/admin/TemplateSelect";
 import {
   ArrowLeft, Loader2, Sparkles, Send, X, Mail, Clock, FileText,
   ChevronLeft, ChevronRight, AlertTriangle, Check, Search, IndianRupee, Info,
@@ -333,7 +334,15 @@ export default function AdminDraftsPage() {
           .ad-detail { position: sticky; top: 16px; }
         }
         @media (max-width: 979px) {
-          .ad-detail { position: fixed; inset: 0; z-index: 60; overflow-y: auto; background: #f5ede6; padding: 14px 14px 40px; }
+          /* z-index 189, not 60: components/BottomNav.tsx is z-[79], so the old
+             value let the nav paint over this panel — and the nav element is
+             82px tall, so the Send button needed clearing too. Same defect the
+             early-access sheet had; both now use the same numbers. */
+          .ad-detail {
+            position: fixed; inset: 0; z-index: 189; overflow-y: auto;
+            background: #f5ede6;
+            padding: 14px 14px calc(82px + env(safe-area-inset-bottom, 0px) + 24px);
+          }
         }
         .ad-filters { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
         .ad-filters::-webkit-scrollbar { display: none; }
@@ -351,9 +360,9 @@ export default function AdminDraftsPage() {
         <h1 style={{ margin: 0, fontSize: 23, fontWeight: 800, color: t1, letterSpacing: "-0.01em" }}>
           Unfinished drafts
         </h1>
-        <p style={{ margin: "5px 0 0", fontSize: 13, lineHeight: "19px", color: t2 }}>
-          Pages somebody started and never published, across every template. Each row says why it
-          stalled. Follow-ups go out from <strong>feedback@subhsandesh.in</strong> through Amazon SES.
+        <p style={{ margin: "4px 0 0", fontSize: 12.5, lineHeight: "18px", color: t2 }}>
+          Started and never published. Each row says why. Follow-ups send from{" "}
+          <strong>feedback@subhsandesh.in</strong>.
         </p>
 
         {/* SES not configured is not a subtle failure — say it before anybody
@@ -379,21 +388,21 @@ export default function AdminDraftsPage() {
         {stats && (
           <div
             style={{
-              marginTop: 14, padding: 14, borderRadius: 14, background: "#fffdfb",
-              border: `1px solid ${cB}`, display: "flex", flexWrap: "wrap", gap: 22, alignItems: "center",
+              marginTop: 12, padding: "10px 13px", borderRadius: 13, background: "#fffdfb",
+              border: `1px solid ${cB}`, display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center",
             }}
           >
             {[
-              { label: "Unpublished drafts", value: stats.totalDrafts, color: t1 },
-              { label: "Stopped by price", value: stats.priceBlocked, color: OFF },
-              { label: "Free, unfinished", value: stats.freeStalled, color: "#a8823a" },
-              { label: "Already contacted", value: stats.contacted, color: OK },
+              { label: "Drafts", value: stats.totalDrafts, color: t1 },
+              { label: "By price", value: stats.priceBlocked, color: OFF },
+              { label: "Unfinished", value: stats.freeStalled, color: "#a8823a" },
+              { label: "Contacted", value: stats.contacted, color: OK },
             ].map((s) => (
               <div key={s.label}>
-                <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: s.color, lineHeight: 1.1 }}>
+                <p style={{ margin: 0, fontSize: 19, fontWeight: 800, color: s.color, lineHeight: 1.15 }}>
                   {s.value}
                 </p>
-                <p style={{ margin: "3px 0 0", fontSize: 11.5, color: tM }}>{s.label}</p>
+                <p style={{ margin: "1px 0 0", fontSize: 10.5, color: tM, whiteSpace: "nowrap" }}>{s.label}</p>
               </div>
             ))}
             {stats.capped && (
@@ -423,19 +432,11 @@ export default function AdminDraftsPage() {
               }}
             />
           </div>
-          <select
+          <TemplateSelect
             value={templateType}
-            onChange={(e) => setTemplateType(e.target.value)}
-            style={{
-              height: 44, padding: "0 12px", borderRadius: 12, border: `1px solid ${cB}`,
-              background: "#fff", fontSize: 16, color: t1, outline: "none", maxWidth: 220,
-            }}
-          >
-            <option value="">Every template</option>
-            {templates.map((t) => (
-              <option key={t.templateType} value={t.templateType}>{t.label}</option>
-            ))}
-          </select>
+            options={templates}
+            onChange={setTemplateType}
+          />
           <button
             type="button"
             onClick={() => void load(1)}
@@ -505,7 +506,7 @@ export default function AdminDraftsPage() {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ display: "grid", gap: 7 }}>
                 {items.map((row) => {
                   const isOpen = sel?.pageId === row.pageId;
                   return (
@@ -514,7 +515,7 @@ export default function AdminDraftsPage() {
                       type="button"
                       onClick={() => void open(row)}
                       style={{
-                        textAlign: "left", padding: 13, borderRadius: 14, background: "#fffdfb",
+                        textAlign: "left", padding: "11px 12px", borderRadius: 13, background: "#fffdfb",
                         border: `1px solid ${isOpen ? bg : cB}`,
                         boxShadow: isOpen ? "0 2px 12px rgba(61,12,17,0.08)" : "none",
                         cursor: "pointer", display: "block", width: "100%",
