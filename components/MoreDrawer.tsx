@@ -193,6 +193,7 @@ export default function MoreDrawer({
               // mail as SubhSandesh to a named customer.
               { label: "Feedback", icon: <Star size={17} />, href: "/admin/feedback" },
               { label: "Unfinished Drafts", icon: <FileText size={17} />, href: "/admin/drafts" },
+              { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },
             ]
           : []),
         { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },

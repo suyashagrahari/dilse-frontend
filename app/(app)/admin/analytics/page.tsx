@@ -11,8 +11,7 @@ import {
 } from "recharts";
 import {
   Users, Eye, FileText, TrendingUp, BarChart3, MessageSquare, Star,
-  Smartphone, Activity, Crown, UserCheck, UserX,
-} from "lucide-react";
+  Smartphone, Activity, Crown, UserCheck, UserX, Mail} from "lucide-react";
 
 interface OverviewData {
   users: { total: number; today: number; thisWeek: number; thisMonth: number };
@@ -115,6 +114,11 @@ export default function AdminAnalyticsPage() {
               {isSuperAdmin(user?.role) && (
                 <button onClick={()=>router.push("/admin/drafts")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
                   <FileText size={13} style={{verticalAlign:"middle",marginRight:5}}/>Drafts
+                </button>
+              )}
+              {isSuperAdmin(user?.role) && (
+                <button onClick={()=>router.push("/admin/threads")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
+                  <Mail size={13} style={{verticalAlign:"middle",marginRight:5}}/>Conversations
                 </button>
               )}
             </div>
