@@ -90,9 +90,17 @@ interface Detail {
   fromEmail: string;
   threads: Thread[];
   defaultThreadMode: "same" | "new";
-  /** Whether replies arrive on their own, or have to be pasted in. */
+  /**
+   * Whether replies arrive on their own, or have to be pasted in.
+   *
+   * `configured` is true for EITHER route — the SES receiving webhook or the
+   * mailbox poller — so `mechanisms` says which, and `etaSeconds` reflects
+   * that choice rather than assuming one of them.
+   */
   inbound: {
     configured: boolean;
+    mechanisms?: string[];
+    etaSeconds?: number;
     user?: string;
     filterAddresses: string[];
     pollSeconds?: number;
@@ -964,10 +972,14 @@ export default function AdminDraftsPage() {
                     <p style={{ margin: "8px 0 0", fontSize: 10.5, color: tM, lineHeight: 1.5 }}>
                       If they reply, it goes to <strong style={{ color: t2 }}>{sel.fromEmail}</strong>.{" "}
                       {sel.inbound?.configured
-                        ? `It appears above on its own within ${Math.round((sel.inbound.pollSeconds || 120) / 60) || 1} min.`
+                        ? // Honest per route: the SES webhook lands in seconds,
+                          // the mailbox poller on its interval.
+                          (sel.inbound.etaSeconds ?? 120) <= 60
+                          ? "It appears above on its own, within seconds."
+                          : `It appears above on its own within ${Math.max(1, Math.round((sel.inbound.etaSeconds ?? 120) / 60))} min.`
                         : "Paste it back in above and the conversation stays in one place."}
                     </p>
-                    {sel.inbound?.configured && sel.inbound.lastError ? (
+                    {sel.inbound?.configured && sel.inbound.lastError && sel.inbound.mechanisms?.includes("imap") ? (
                       // Loud, because a silently broken poller looks exactly
                       // like a creator who never replied.
                       <p style={{ margin: "6px 0 0", fontSize: 10.5, color: OFF, lineHeight: 1.5 }}>
