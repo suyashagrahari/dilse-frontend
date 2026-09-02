@@ -25,13 +25,14 @@
 // That was a deliberate product decision and the server enforces it by throwing
 // the draft away if the model tries. If you want to make an offer, type it in.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import TemplateSelect from "@/components/admin/TemplateSelect";
+import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
 import {
   ArrowLeft, Loader2, Sparkles, Send, X, Mail, Clock, FileText,
   ChevronLeft, ChevronRight, AlertTriangle, Check, Search, IndianRupee, Info,
@@ -87,6 +88,8 @@ interface Detail {
   cooldown: { until: string } | null;
   sesConfigured: boolean;
   fromEmail: string;
+  threads: Thread[];
+  defaultThreadMode: "same" | "new";
 }
 
 interface Pg { page: number; limit: number; total: number; totalPages: number }
@@ -176,6 +179,15 @@ export default function AdminDraftsPage() {
   const [sending, setSending] = useState(false);
   /** Set when the server refuses on a guard and offers "send anyway". */
   const [needsForce, setNeedsForce] = useState<string | null>(null);
+  /**
+   * Which conversation the next message joins.
+   *
+   * Chosen by the server on open (`defaultThreadMode`) so the safe answer —
+   * continue a conversation if one exists — is decided in one place rather than
+   * guessed here.
+   */
+  const [threadMode, setThreadMode] = useState<"same" | "new">("new");
+  const [pasting, setPasting] = useState(false);
 
   const [allowed, setAllowed] = useState(false);
   useEffect(() => {
@@ -245,10 +257,61 @@ export default function AdminDraftsPage() {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not open this draft");
       setSel(json.data);
+      setThreadMode(json.data.defaultThreadMode === "same" ? "same" : "new");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not open this draft");
     } finally {
       setSelLoading(false);
+    }
+  };
+
+  /**
+   * Reload the open draft — after a send, or after a reply is pasted in.
+   *
+   * `resetMode` is deliberately a parameter. After a SEND the composer is
+   * emptied and the server's default is the right answer again. After a PASTE
+   * it is not: the composer still holds unsent text and whatever mode was
+   * chosen for it, and quietly flipping "New thread" back to "Same thread"
+   * would change where that text goes without saying so.
+   */
+  const reopen = useCallback(
+    async (templateType: string, pageId: string, resetMode: boolean) => {
+      try {
+        const res = await fetch(
+          `${API_URL}/admin/drafts/${encodeURIComponent(templateType)}/${encodeURIComponent(pageId)}`,
+          { headers: hdr() }
+        );
+        const json = await res.json();
+        if (res.ok && json.success) {
+          setSel(json.data);
+          if (resetMode) setThreadMode(json.data.defaultThreadMode === "same" ? "same" : "new");
+        }
+      } catch {
+        // Non-fatal: the send already succeeded and was reported. A stale
+        // conversation view is a refresh away.
+      }
+    },
+    [hdr]
+  );
+
+  const pasteReply = async (threadId: string, text: string) => {
+    if (!sel || pasting) return;
+    setPasting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/threads/${encodeURIComponent(threadId)}/inbound`, {
+        method: "POST",
+        headers: hdr(),
+        body: JSON.stringify({ text }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || "Could not add the reply");
+      await reopen(sel.templateType, sel.pageId, false);
+      say("Added to the conversation");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not add the reply");
+    } finally {
+      setPasting(false);
     }
   };
 
@@ -285,7 +348,13 @@ export default function AdminDraftsPage() {
         {
           method: "POST",
           headers: hdr(),
-          body: JSON.stringify({ subject: subject.trim(), body: body.trim(), aiAssisted, force }),
+          body: JSON.stringify({
+            subject: subject.trim(),
+            body: body.trim(),
+            aiAssisted,
+            force,
+            threadMode,
+          }),
         }
       );
       const json = await res.json();
@@ -306,8 +375,14 @@ export default function AdminDraftsPage() {
       setSubject("");
       setBody("");
       setAiAssisted(false);
-      setSel({ ...sel, alreadyContacted: { sentAt: new Date().toISOString(), subject, body } });
       say(json.message || "Sent");
+
+      // Refetch rather than patch the local copy. The send may have opened a
+      // new conversation, appended to an existing one, or rewritten the
+      // subject — the panel would have to reimplement all three rules to guess
+      // the result, and a conversation view showing a message that is not
+      // really there is worse than a moment's wait.
+      await reopen(sel.templateType, sel.pageId, true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not send the email");
     } finally {
@@ -315,7 +390,25 @@ export default function AdminDraftsPage() {
     }
   };
 
-  const canSend = subject.trim().length > 0 && body.trim().length >= 40 && !sending;
+  /** The newest conversation about this draft — the one a reply joins. */
+  const latestThread = useMemo(
+    () => (sel?.threads?.length ? sel.threads[0] : null),
+    [sel]
+  );
+
+  /**
+   * In "same" mode the subject is DERIVED, and the server derives it again and
+   * ignores whatever we send. Shown read-only rather than hidden, because the
+   * recipient will see it and so should whoever is sending it.
+   */
+  const replyingSubject = latestThread
+    ? `Re: ${latestThread.subject.replace(/^\s*(?:re|fwd?)\s*:\s*/i, "")}`
+    : "";
+
+  const usingThread = threadMode === "same" && !!latestThread;
+
+  const canSend =
+    (usingThread || subject.trim().length > 0) && body.trim().length >= 40 && !sending;
 
   if (!allowed) {
     return (
@@ -643,15 +736,39 @@ export default function AdminDraftsPage() {
                       </p>
                     </div>
 
-                    {sel.alreadyContacted && (
+                    {/* ── The conversation so far ───────────────────────
+                        Replaces what used to be an echo of the single last
+                        email we sent. That echo was fine when there could only
+                        ever be one message; now that a creator can reply and be
+                        replied to, showing one side of a conversation would read
+                        as if they never answered. */}
+                    {sel.threads.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ margin: "0 0 7px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM }}>
+                          Conversation
+                        </p>
+                        {sel.threads.map((th) => (
+                          <ConversationThread
+                            key={th.id}
+                            thread={th}
+                            pasting={pasting}
+                            onPaste={(text) => pasteReply(th.id, text)}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {sel.threads.length === 0 && sel.alreadyContacted && (
+                      // A follow-up sent before conversations existed: the
+                      // ledger row survives, the thread does not.
                       <div
                         style={{
-                          padding: 11, borderRadius: 12, background: "rgba(31,122,77,0.06)",
-                          border: "1px solid rgba(31,122,77,0.16)", marginBottom: 12,
+                          marginBottom: 12, padding: 10, borderRadius: 12,
+                          background: "rgba(61,12,17,0.04)", border: `1px solid ${cB}`,
                         }}
                       >
-                        <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase", color: OK }}>
-                          Already followed up · {when(sel.alreadyContacted.sentAt)}
+                        <p style={{ margin: "0 0 4px", fontSize: 10.5, color: tM, fontWeight: 700 }}>
+                          Sent {new Date(sel.alreadyContacted.sentAt).toDateString()} · before conversations were recorded
                         </p>
                         <p style={{ margin: "0 0 5px", fontSize: 12.5, fontWeight: 700, color: t1 }}>
                           {sel.alreadyContacted.subject}
@@ -670,8 +787,55 @@ export default function AdminDraftsPage() {
                     )}
 
                     <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM }}>
-                      {sel.alreadyContacted ? "Write again" : "Follow-up email"}
+                      {latestThread ? "Write again" : "Follow-up email"}
                     </p>
+
+                    {/* ── Same thread, or a new one ─────────────────────────
+                        Only shown when there IS a conversation to continue —
+                        a two-way switch with one reachable side is noise. */}
+                    {latestThread && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div
+                          role="radiogroup"
+                          aria-label="Where this message goes"
+                          style={{
+                            display: "flex", gap: 4, padding: 3, borderRadius: 11,
+                            background: "rgba(61,12,17,0.05)", border: `1px solid ${cB}`,
+                          }}
+                        >
+                          {([
+                            { key: "same", label: "Same thread", hint: `Continues "${latestThread.subject}" in their inbox` },
+                            { key: "new", label: "New thread", hint: "Arrives as a separate, unrelated email" },
+                          ] as const).map((opt) => {
+                            const on = threadMode === opt.key;
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                role="radio"
+                                aria-checked={on}
+                                title={opt.hint}
+                                onClick={() => setThreadMode(opt.key)}
+                                style={{
+                                  flex: 1, minHeight: 34, borderRadius: 9, border: "none",
+                                  background: on ? "#fff" : "transparent",
+                                  boxShadow: on ? "0 1px 4px rgba(61,12,17,0.10)" : "none",
+                                  color: on ? t1 : t2,
+                                  fontSize: 12.5, fontWeight: on ? 800 : 600, cursor: "pointer",
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p style={{ margin: "5px 0 0", fontSize: 10.5, color: tM, lineHeight: 1.5 }}>
+                          {usingThread
+                            ? "Goes into the conversation above, so they see one thread and not two emails."
+                            : "Starts a separate conversation. Right when the subject genuinely changed."}
+                        </p>
+                      </div>
+                    )}
 
                     <button
                       type="button" onClick={() => void generate()} disabled={drafting}
@@ -686,15 +850,31 @@ export default function AdminDraftsPage() {
                       {drafting ? "Writing…" : "Generate email"}
                     </button>
 
+                    {/* The subject is derived when replying, and the server
+                        derives it again and ignores what we send. It is one of
+                        the three things holding a thread together, so letting
+                        it drift would break the only thing this mode promises.
+                        Shown, not hidden — the recipient sees it. */}
                     <input
-                      value={subject}
+                      value={usingThread ? replyingSubject : subject}
                       onChange={(e) => setSubject(e.target.value)}
+                      readOnly={usingThread}
                       placeholder="Subject"
+                      title={usingThread ? "Fixed while replying in the same thread — changing it would split the conversation" : undefined}
                       style={{
-                        width: "100%", height: 44, padding: "0 12px", marginBottom: 8, borderRadius: 12,
-                        border: `1px solid ${cB}`, background: "#fff", fontSize: 16, color: t1, outline: "none",
+                        width: "100%", height: 44, padding: "0 12px",
+                        marginBottom: usingThread ? 3 : 8, borderRadius: 12,
+                        border: `1px solid ${cB}`,
+                        background: usingThread ? "rgba(61,12,17,0.04)" : "#fff",
+                        fontSize: 16, color: usingThread ? t2 : t1, outline: "none",
+                        cursor: usingThread ? "default" : "text",
                       }}
                     />
+                    {usingThread && (
+                      <p style={{ margin: "0 0 8px", fontSize: 10.5, color: tM }}>
+                        Fixed while replying — a changed subject splits the thread in their inbox.
+                      </p>
+                    )}
                     <textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
@@ -754,9 +934,22 @@ export default function AdminDraftsPage() {
                         }}
                       >
                         {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                        {sending ? "Sending" : `Send from ${sel.fromEmail}`}
+                        {sending
+                          ? "Sending"
+                          : usingThread
+                            ? `Reply from ${sel.fromEmail}`
+                            : `Send from ${sel.fromEmail}`}
                       </button>
                     )}
+
+                    {/* Where a reply lands. Worth stating plainly: the whole
+                        point of sending from feedback@ rather than a no-reply
+                        address is that the creator can answer, and whoever is
+                        sending should know somebody has to read that mailbox. */}
+                    <p style={{ margin: "8px 0 0", fontSize: 10.5, color: tM, lineHeight: 1.5 }}>
+                      If they reply, it goes to <strong style={{ color: t2 }}>{sel.fromEmail}</strong>.
+                      Paste it back in above and the conversation stays in one place.
+                    </p>
 
                     {body.trim().length > 0 && body.trim().length < 40 && (
                       <p style={{ margin: "8px 0 0", fontSize: 11.5, color: OFF }}>
