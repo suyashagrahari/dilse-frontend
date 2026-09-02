@@ -90,6 +90,16 @@ interface Detail {
   fromEmail: string;
   threads: Thread[];
   defaultThreadMode: "same" | "new";
+  /** Whether replies arrive on their own, or have to be pasted in. */
+  inbound: {
+    configured: boolean;
+    user?: string;
+    filterAddresses: string[];
+    pollSeconds?: number;
+    lastOkAt?: string | null;
+    lastError?: string;
+    totalStored?: number;
+  };
 }
 
 interface Pg { page: number; limit: number; total: number; totalPages: number }
@@ -752,7 +762,12 @@ export default function AdminDraftsPage() {
                             key={th.id}
                             thread={th}
                             pasting={pasting}
-                            onPaste={(text) => pasteReply(th.id, text)}
+                            // Hidden once the mailbox poller is running: telling
+                            // somebody to paste a reply that is already being
+                            // collected invites a duplicate of it.
+                            onPaste={
+                              sel.inbound?.configured ? undefined : (text) => pasteReply(th.id, text)
+                            }
                           />
                         ))}
                       </div>
@@ -947,9 +962,18 @@ export default function AdminDraftsPage() {
                         address is that the creator can answer, and whoever is
                         sending should know somebody has to read that mailbox. */}
                     <p style={{ margin: "8px 0 0", fontSize: 10.5, color: tM, lineHeight: 1.5 }}>
-                      If they reply, it goes to <strong style={{ color: t2 }}>{sel.fromEmail}</strong>.
-                      Paste it back in above and the conversation stays in one place.
+                      If they reply, it goes to <strong style={{ color: t2 }}>{sel.fromEmail}</strong>.{" "}
+                      {sel.inbound?.configured
+                        ? `It appears above on its own within ${Math.round((sel.inbound.pollSeconds || 120) / 60) || 1} min.`
+                        : "Paste it back in above and the conversation stays in one place."}
                     </p>
+                    {sel.inbound?.configured && sel.inbound.lastError ? (
+                      // Loud, because a silently broken poller looks exactly
+                      // like a creator who never replied.
+                      <p style={{ margin: "6px 0 0", fontSize: 10.5, color: OFF, lineHeight: 1.5 }}>
+                        The mailbox watcher is failing: {sel.inbound.lastError}
+                      </p>
+                    ) : null}
 
                     {body.trim().length > 0 && body.trim().length < 40 && (
                       <p style={{ margin: "8px 0 0", fontSize: 11.5, color: OFF }}>
