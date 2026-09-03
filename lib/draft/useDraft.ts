@@ -6,13 +6,16 @@
 //
 //     const draft = useDraft({
 //       templateType: TEMPLATE,
-//       apiBase: `${API_URL}/holi-pages`,
 //       content,
 //       enabled: isPersonalized,
-//       busy: publishing,
+//       busy: publishing || saving,
+//       isAuthenticated,
+//       accessToken,
 //       pageId,
-//       setPageId,
-//       toBody: (d) => holiDataToBody(d, pagePassword),
+//       persist: async (d) => {
+//         const r = await saveToServer(d, pagePassword);
+//         return r?.data?._id ? String(r.data._id) : pageId;
+//       },
 //       onAdopted: (d) => { setContent(d); setMf({ ...d }); },
 //     });
 //
@@ -39,7 +42,6 @@
 // `publishRequest.ts` records: watch the state, not the button.
 
 import { useCallback, useEffect, useRef } from "react";
-import { API_URL, IS_NGROK } from "@/lib/config";
 import { adoptScratch } from "./adopt";
 import { fingerprint, hasContentChanged } from "./scratchCodec";
 import { clearScratch, saveScratch } from "./localScratch";
@@ -47,8 +49,18 @@ import type { LocalRefResolver } from "./mediaUpload";
 
 export interface UseDraftOptions<T> {
   templateType: string;
-  /** e.g. `` `${API_URL}/holi-pages` ``. The editor already holds this. */
-  apiBase: string;
+  /**
+   * Write this content and answer with the row's id.
+   *
+   * This is the editor's OWN save — `saveToServer`, or whatever it is called
+   * there — wrapped to return the id. Passing the save rather than a URL and a
+   * field map means there is one description of each template's wire shape, in
+   * the place it already lived. See the long note in `adopt.ts`.
+   *
+   * It must handle both create and update; every editor's already does, keyed on
+   * its own `pageId`.
+   */
+  persist: (data: T) => Promise<string | null>;
   /** The editor's live content. Read at save time, never written to. */
   content: T;
   /**
@@ -64,9 +76,13 @@ export interface UseDraftOptions<T> {
   isAuthenticated: boolean;
   accessToken: string | null | undefined;
   pageId: string | null;
-  setPageId: (id: string) => void;
-  /** Editor content → the body its own POST/PUT expects. */
-  toBody?: (data: T) => unknown;
+  /**
+   * Told the id when adoption creates the row.
+   *
+   * Optional: an editor whose `persist` already sets its own `pageId` — most of
+   * them do — needs nothing here.
+   */
+  setPageId?: (id: string) => void;
   /** Called with the adopted payload so the editor can show the CDN URLs. */
   onAdopted?: (data: T) => void;
   /** Progress copy for the editor's existing stage line. */
@@ -118,32 +134,16 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
         return;
       }
 
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${o.accessToken}`,
-        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
-      };
-      const body = JSON.stringify(o.toBody ? o.toBody(o.content) : o.content);
+      // ── Signed in: the editor's own save, which handles create and update ──
+      const id = await o.persist(o.content);
+      if (!id) return;
 
-      // ── Signed in, row exists: update it ──────────────────────────────────
-      if (o.pageId) {
-        const res = await fetch(`${o.apiBase}/${o.pageId}`, { method: "PUT", headers, body });
-        if (res.ok) savedAt.current = stamp;
-        return;
-      }
-
-      // ── Signed in, no row yet: create one ─────────────────────────────────
-      const res = await fetch(o.apiBase, { method: "POST", headers, body });
-      const json = await res.json();
-      const id = json?.data?._id ? String(json.data._id) : "";
-      if (res.ok && json?.success && id) {
-        o.setPageId(id);
-        savedAt.current = stamp;
-        // The row now holds this work, so the browser copy is redundant — and a
-        // stale scratch left behind would be adopted as a SECOND draft the next
-        // time this editor opened.
-        await clearScratch(o.templateType);
-      }
+      o.setPageId?.(id);
+      savedAt.current = stamp;
+      // The row now holds this work, so the browser copy is redundant — and a
+      // stale scratch left behind would be adopted as a SECOND draft the next
+      // time this editor opened.
+      await clearScratch(o.templateType);
     } catch {
       // Left dirty on purpose: the next milestone retries. A failed draft save
       // is not something to interrupt someone mid-sentence about.
@@ -172,15 +172,14 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
     void (async () => {
       const result = await adoptScratch({
         templateType: o.templateType,
-        apiBase: o.apiBase,
+        persist: (d) => latest.current.persist(d as T),
         accessToken: o.accessToken as string,
         resolveLocalRef: o.resolveLocalRef,
         onProgress: o.onProgress,
-        toBody: o.toBody as ((d: unknown) => unknown) | undefined,
       });
 
       if (result.status === "adopted") {
-        latest.current.setPageId(result.pageId);
+        latest.current.setPageId?.(result.pageId);
         savedAt.current = fingerprint(result.data);
         latest.current.onAdopted?.(result.data as T);
         return;
@@ -217,9 +216,4 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
   }, [saveNow]);
 
   return { saveNow };
-}
-
-/** The REST base for a template, for editors that do not already hold one. */
-export function apiBaseFor(routeSegment: string): string {
-  return `${API_URL}/${routeSegment}`;
 }

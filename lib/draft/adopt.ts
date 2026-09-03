@@ -32,7 +32,6 @@
 // signed in. Friday's visit to the holi editor adopts Monday's holi page. The
 // scratch is never orphaned, and no map has to exist.
 
-import { API_URL, IS_NGROK } from "@/lib/config";
 import { clearScratch, readScratch } from "./localScratch";
 import { collectMediaRefs, replaceMediaRefs } from "./mediaRefs";
 import { uploadPendingRef, type LocalRefResolver } from "./mediaUpload";
@@ -41,13 +40,22 @@ export interface AdoptOptions {
   /** The editor's templateType, e.g. `"holi"`. Keys the scratch and the S3 folder. */
   templateType: string;
   /**
-   * The template's own REST base, e.g. `` `${API_URL}/holi-pages` ``.
+   * Write this payload and answer with the row's id.
    *
-   * Passed in rather than derived: every editor already holds this constant, and
-   * a second 43-entry map on the client is a thing to keep in sync and get
-   * wrong.
+   * ── WHY THE EDITOR'S OWN SAVE, AND NOT A URL AND A FIELD MAP ──────────────
+   *
+   * The first version of this took `apiBase` plus a `toBody` mapping. That
+   * means every one of forty-three editors restating a field list it ALREADY
+   * states inside its own `saveToServer` — and a duplicated field list does not
+   * fail loudly. It saves eleven of twelve fields, and the twelfth goes missing
+   * only for people who left and came back, which is the hardest kind of bug to
+   * hear about.
+   *
+   * So adoption reuses the editor's existing, already-correct save instead.
+   * There is exactly one description of a holi page's wire shape, and it lives
+   * where it always did.
    */
-  apiBase: string;
+  persist: (data: unknown) => Promise<string | null>;
   accessToken: string;
   /** Only needed by templates that hold blobs under `idb:` refs. */
   resolveLocalRef?: LocalRefResolver;
@@ -56,14 +64,6 @@ export interface AdoptOptions {
    * "Saving your photos… 2 of 5". Called with `null` when done.
    */
   onProgress?: (message: string | null) => void;
-  /**
-   * Turns the editor's payload into the request body its own POST expects.
-   *
-   * Most editors wrap content in `{ ...content, password }` or similar; the
-   * scratch holds the editor's content shape, not its wire shape. Absent, the
-   * payload is sent as-is.
-   */
-  toBody?: (data: unknown) => unknown;
 }
 
 export type AdoptResult =
@@ -121,24 +121,8 @@ export async function adoptScratch(opts: AdoptOptions): Promise<AdoptResult> {
 
   // ── 4. the row ────────────────────────────────────────────────────────────
   try {
-    const res = await fetch(opts.apiBase, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${opts.accessToken}`,
-        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
-      },
-      body: JSON.stringify(opts.toBody ? opts.toBody(data) : data),
-    });
-    const json = await res.json();
-    const pageId = json?.data?._id ? String(json.data._id) : "";
-
-    if (!res.ok || !json?.success || !pageId) {
-      return {
-        status: "failed",
-        error: typeof json?.error === "string" ? json.error : "Could not save your draft",
-      };
-    }
+    const pageId = await opts.persist(data);
+    if (!pageId) return { status: "failed", error: "Could not save your draft" };
 
     // ── 5. and only now ───────────────────────────────────────────────────────
     await clearScratch(opts.templateType);
