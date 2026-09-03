@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type TabId, type EditMode, type Toast, type ReceptionData, DEMO_DATA } from "../components/types";
 
@@ -18,7 +18,6 @@ const TEMPLATE = "reception";
 
 export function useReceptionEditor() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
   const [darkMode, setDarkMode] = useState(true);
@@ -436,7 +435,6 @@ export function useReceptionEditor() {
   // added to this template later survives a reopen without anyone remembering.
   useResumeDraft({
     base: `${API_URL}/reception-pages`,
-    editId: searchParams.get("edit"),
     accessToken,
     defaults: DEMO_DATA,
     ready: themeReady,

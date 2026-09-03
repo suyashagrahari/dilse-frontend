@@ -103,7 +103,13 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
   // that is the exact class of bug the resume-publish effect in the rakhi editor
   // documents at length.
   const latest = useRef(opts);
-  latest.current = opts;
+  // Kept in an effect, not written during render: refs are not render values,
+  // and React's lint rule for that is correct here. Declared FIRST so it runs
+  // before the effects below on the same commit — effects fire in declaration
+  // order, so everything after this sees the current props.
+  useEffect(() => {
+    latest.current = opts;
+  });
 
   /** Fingerprint of what is already persisted, so unchanged content is free. */
   const savedAt = useRef<string | null>(null);

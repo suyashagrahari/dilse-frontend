@@ -23,8 +23,28 @@ import { pickKnownFields } from "./pickFields";
 export interface UseResumeDraftOptions<T extends object> {
   /** The template's REST base, e.g. `` `${API_URL}/darling-pages` ``. */
   base: string;
-  /** The `edit` search param, or null. Read by the caller, which owns the router. */
-  editId: string | null;
+  /**
+   * The `edit` param, if the editor already reads one.
+   *
+   * ── WHY THIS IS OPTIONAL ──────────────────────────────────────────────────
+   *
+   * The first version required it, and every editor supplied
+   * `searchParams.get("edit")`. For the forty that already called
+   * `useSearchParams` that cost nothing. For the two that did not, adding the
+   * call broke the production build outright:
+   *
+   *     useSearchParams() should be wrapped in a suspense boundary
+   *     at page "/anniversary-gf"
+   *
+   * `useSearchParams` opts a page out of static prerendering unless it sits
+   * under Suspense, so a hook meant to be droppable into any of forty-three
+   * editors cannot be the thing that requires one.
+   *
+   * Omit it and the id is read from `window.location.search` inside the effect
+   * — client-only by construction, so there is nothing to prerender and no
+   * boundary to add.
+   */
+  editId?: string | null;
   accessToken: string | null | undefined;
   /** The editor's demo/blank content — the shape and the fallbacks. */
   defaults: T;
@@ -49,19 +69,32 @@ export interface UseResumeDraftOptions<T extends object> {
  */
 export function useResumeDraft<T extends object>(opts: UseResumeDraftOptions<T>): void {
   const latest = useRef(opts);
-  latest.current = opts;
+  // Kept in an effect, not written during render: refs are not render values,
+  // and React's lint rule for that is correct here. Declared FIRST so it runs
+  // before the effects below on the same commit — effects fire in declaration
+  // order, so everything after this sees the current props.
+  useEffect(() => {
+    latest.current = opts;
+  });
 
   const loaded = useRef(false);
   const ready = opts.ready !== false;
 
   useEffect(() => {
     const o = latest.current;
-    if (loaded.current || !o.editId || !o.accessToken || o.ready === false) return;
+    // Supplied by editors that already hold a `searchParams`; read from the URL
+    // for the rest. Effects are client-only, so this is always defined here.
+    const editId =
+      o.editId !== undefined && o.editId !== null
+        ? o.editId
+        : new URLSearchParams(window.location.search).get("edit");
+
+    if (loaded.current || !editId || !o.accessToken || o.ready === false) return;
     loaded.current = true;
 
     void (async () => {
       try {
-        const res = await fetch(`${o.base}/${o.editId}`, {
+        const res = await fetch(`${o.base}/${editId}`, {
           headers: {
             Authorization: `Bearer ${o.accessToken}`,
             ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
@@ -75,7 +108,7 @@ export function useResumeDraft<T extends object>(opts: UseResumeDraftOptions<T>)
           loaded.current = false;
           return;
         }
-        latest.current.onLoaded(pickKnownFields(latest.current.defaults, json.data), o.editId as string);
+        latest.current.onLoaded(pickKnownFields(latest.current.defaults, json.data), editId);
       } catch {
         // Retry on the next token or ready change rather than stranding them.
         loaded.current = false;

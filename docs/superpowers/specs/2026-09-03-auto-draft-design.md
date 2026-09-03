@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-03
 **Branch:** `feat/auto-draft` (client + server)
-**Status:** approved in chat, implementing
+**Status:** built. Three decisions changed during implementation — see *Corrections* at the end.
 
 ## Goal
 
@@ -147,3 +147,75 @@ Three reviewable stages on `feat/auto-draft`, each deployable to dev alone:
 3. roll `useDraft` across the remaining editors
 
 Verify at **stag.subhsandesh.in** — `dev.subhsandesh.in` serves the prod build.
+
+
+## Corrections made during implementation
+
+Three things in the design above turned out to be wrong. They are recorded here
+rather than edited away, because each was wrong for a reason worth keeping.
+
+### 1. `adopt`/`useDraft` take the editor's save, not `apiBase` + `toBody`
+
+The design had each editor hand over a REST base and a field-mapping function.
+That means forty-three editors restating a field list each already states
+inside its own `saveToServer`/`create`. A duplicated field list does not fail
+loudly — it saves eleven of twelve fields, and the twelfth goes missing only
+for people who left and came back.
+
+They now take `persist: (data) => Promise<id | null>`. Each template's wire
+shape is described exactly once, where it already lived.
+
+The draft path still does not call `create`/`update` directly in the 31
+editors that have them: both read `content` from the closure rather than taking
+it as an argument, and adoption must write the payload that came out of the
+scratch — which during a sign-in is not what the editor is showing. Those get
+`persistDraft` plus the template's own `{x}DataToBody`.
+
+### 2. `useResumeDraft` reads the URL itself
+
+The design had each editor pass `searchParams.get("edit")`. For the forty that
+already call `useSearchParams` that cost nothing. For the two that did not,
+adding the call broke the production build:
+
+    useSearchParams() should be wrapped in a suspense boundary
+    at page "/anniversary-gf"
+
+`useSearchParams` opts a page out of static prerendering unless it sits under
+Suspense, and a hook meant to drop into any of forty-three editors cannot be
+the thing that requires one. The id is now read from `window.location.search`
+inside the effect — client-only by construction. Editors that already hold a
+`searchParams` may still pass `editId`.
+
+### 3. Media promotion is best-effort per photo, not all-or-nothing
+
+The design implied adoption fails if a photo fails. It does not: an unmapped
+ref stays in the payload and the rest of the draft is saved. Saving nine of ten
+photos and re-adding the tenth is a better afternoon than losing all ten
+because one was corrupt, and the ref is the only pointer to the local blob, so
+blanking it would destroy the photo to make the payload tidy.
+
+The publish path is where a failed photo must stop everything, and it still
+does — it uploads independently and refuses to publish a page whose image would
+404 for the recipient.
+
+## What shipped
+
+| | |
+|---|---|
+| `useDraft` coverage | **43/43** publishing templates |
+| `?edit=` resume | **43/43**, up from 37 |
+| Client unit tests | 35, all passing |
+| Server unit tests | 251, all passing |
+| `tsc --noEmit` | clean, both repos |
+| `next build` | clean |
+| Assertion | `npm run draft:check` fails CI if a publishing template stops keeping a draft or stops reopening |
+
+Editors needing individual handling: `product` (normalises before mapping),
+both rakhi templates (`idb:` blob refs, so they pass their own `getLocal`),
+`streak` (its `mf` is a `StreakForm`, converted via `dataToForm`), `capsule`
+(saves `capsule` not `draft`, milestone is sealing, and resume must rebuild the
+form with `capsuleToDraft`), `valentine-gf` (lives in `page.tsx` with plain
+async functions; its save answered only from the POST branch, so an update
+always looked like a failure), and four whose `saveToServer` returned nothing —
+which reads as a failed save and would have produced a second identical draft
+at the next milestone.
