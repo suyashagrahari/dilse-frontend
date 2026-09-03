@@ -32,7 +32,8 @@ included.
 3. Six editors ignore `?edit=` — the profile's Edit button opens a blank editor
    for them: `anniversary-gf`, `birthday-gf`, `capsule`, `darling`, `love-gf`,
    `reception`.
-4. 29 bespoke autosave implementations with no shared contract.
+4. 29 bespoke autosave implementations with no shared contract. (Narrowed
+   during implementation — see *Corrections*.)
 5. 38 templates store photos as base64 data URLs inside the page document.
    Drafts multiply those documents, and `localStorage` cannot hold them.
 
@@ -64,7 +65,8 @@ included.
 ## Components
 
 ### `client/lib/draft/localScratch.ts`
-Replaces 29 ad-hoc `localStorage` keys with one IndexedDB store.
+One IndexedDB store, running ALONGSIDE the 29 ad-hoc `localStorage` keys
+rather than replacing them — see the correction at the end of this document.
 
     interface Scratch {
       schemaVersion: number;   // bump rejects incompatible old scratch
@@ -219,3 +221,22 @@ async functions; its save answered only from the POST branch, so an update
 always looked like a failure), and four whose `saveToServer` returned nothing —
 which reads as a failed save and would have produced a second identical draft
 at the next milestone.
+
+### 4. The 29 legacy autosaves were NOT removed
+
+The design said `localScratch` "replaces 29 ad-hoc localStorage keys". It does
+not. It runs alongside them.
+
+Removing them was cut deliberately, not forgotten: several save the
+manual-form buffer rather than the content, one uses `sessionStorage`, and
+unpicking twenty-nine bespoke restore paths in the same change that introduces
+server drafts puts the risk in the wrong place.
+
+The consequence is honest and small. The new store is the one copy adoption
+reads and the one that carries a version stamp, but a photo-heavy template
+still performs its old localStorage write too — so the `QuotaExceededError`
+described in `localScratch.ts` can still happen there. It is no longer the only
+place that work lives, which is what made it dangerous.
+
+Consolidating them is a follow-up, and `draft:check` does not currently assert
+anything about it.

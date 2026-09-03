@@ -44,7 +44,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { adoptScratch } from "./adopt";
 import { fingerprint, hasContentChanged } from "./scratchCodec";
-import { clearScratch, saveScratch } from "./localScratch";
+import { clearScratch, readScratch, saveScratch } from "./localScratch";
 import type { LocalRefResolver } from "./mediaUpload";
 
 export interface UseDraftOptions<T> {
@@ -83,7 +83,18 @@ export interface UseDraftOptions<T> {
    * them do — needs nothing here.
    */
   setPageId?: (id: string) => void;
-  /** Called with the adopted payload so the editor can show the CDN URLs. */
+  /**
+   * Put held work back on screen.
+   *
+   * Called on both paths that produce content the editor is not already
+   * showing:
+   *
+   *   • RESTORED — a signed-out visitor came back to this editor and the
+   *     browser still holds what they built. No server involved.
+   *   • ADOPTED  — they signed in, so the same work is now a row and its
+   *     photos are CDN URLs. The editor MUST be told, or its next save sends
+   *     the base64 back and re-uploads all of it.
+   */
   onAdopted?: (data: T) => void;
   /** Progress copy for the editor's existing stage line. */
   onProgress?: (message: string | null) => void;
@@ -157,6 +168,42 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
       inFlight.current = false;
     }
   }, []);
+
+  // ── Restore: put the browser's copy back on screen ───────────────────────
+  //
+  // THIS IS THE OTHER HALF OF "carry on where you left off".
+  //
+  // Saving to the scratch is useless on its own. A signed-out visitor who
+  // builds a page, closes the tab and comes back gets the demo content, while
+  // their actual work sits in IndexedDB — invisible until they happen to sign
+  // in, at which point it appears as a draft they had no idea still existed.
+  //
+  // Runs only when there is no `pageId`: a page opened from the profile is
+  // already the real thing, and overwriting it with older browser scratch would
+  // silently revert edits the user made on another device.
+  //
+  // Adoption is left to the effect below. If a token is already present on
+  // mount, both would otherwise race for the same content — this one stops at
+  // putting it on screen, which is what the ordering guard below relies on.
+  const restored = useRef(false);
+  useEffect(() => {
+    const o = latest.current;
+    if (restored.current || o.pageId) return;
+    restored.current = true;
+
+    void (async () => {
+      const held = await readScratch(o.templateType);
+      if (held === null) return;
+      // Signed in already? Adoption is about to write this same payload to the
+      // server and will call `onAdopted` itself with the CDN URLs. Showing the
+      // base64 version first would flash the old photos and, worse, leave the
+      // fingerprint pointing at content the server does not have.
+      if (latest.current.isAuthenticated && latest.current.accessToken) return;
+
+      savedAt.current = fingerprint(held);
+      latest.current.onAdopted?.(held as T);
+    })();
+  }, [opts.pageId]);
 
   // ── Adoption: held work becomes a row the moment there is an owner ────────
   //

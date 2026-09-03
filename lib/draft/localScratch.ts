@@ -4,13 +4,25 @@
 // payload until the moment the user signs in and `adopt.ts` promotes it to a
 // real draft row.
 //
-// ── WHY THIS REPLACES twenty-nine localStorage KEYS ─────────────────────────
+// ── WHAT THIS DOES AND DOES NOT REPLACE ─────────────────────────────────────
 //
 // Twenty-nine editors already autosave, each to its own hand-rolled key —
 // `holi_mf_draft`, `flags_draft`, `court-marriage_draft`, `reception_mf_draft`.
 // Same idea implemented twenty-nine times, no shared contract, no version
 // stamp, and no way to answer "does this browser hold unsaved work" without
 // knowing all twenty-nine names.
+//
+// This store does NOT delete those. It runs alongside them, and that is a
+// deliberate limit on the change rather than a design view: several of them
+// save the manual-form buffer rather than the content, one uses sessionStorage,
+// and unpicking twenty-nine bespoke restore paths in the same change that
+// introduces server drafts would put the risk in the wrong place.
+//
+// What this store is, then, is the ONE copy that adoption reads and the one
+// that survives a version bump. Consolidating the legacy keys onto it is a
+// follow-up, and until that happens a photo-heavy template still has a
+// localStorage write that can throw the quota error described below — just no
+// longer the only place its work lives.
 //
 // ── WHY IndexedDB AND NOT localStorage ──────────────────────────────────────
 //
