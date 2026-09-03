@@ -46,6 +46,8 @@ import {
 import { capsuleToBody, projectSealed } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
+import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/capsule-pages`;
 const TEMPLATE = "capsule";
@@ -303,6 +305,50 @@ export function useCapsuleEditor() {
 
   /** StoryStarter's way out — the normal sheet, every field still editable. */
   const handleStoryManual = useCallback(() => setSheetOpen(true), []);
+
+  // ── Auto-draft ──────────────────────────────────────────────────────────────
+  //
+  // Work built while signed OUT is held in the browser and promoted to a real
+  // draft the moment the visitor signs up or logs in. `doPublish` was the only
+  // thing that ever wrote a row here, so a capsule sealed and then abandoned
+  // left nothing behind at all.
+  //
+  // ── WHY THE CONTENT IS `capsule` AND NOT `draft` ──────────────────────────
+  //
+  // `draft` is the letters being written — a form, changing on every keystroke,
+  // and not yet a page. `capsule` is what sealing produces, and `isPersonalized`
+  // is already defined as `capsule !== null`. Saving the form would put an
+  // unsealed capsule in someone's profile, which is not a thing this template
+  // can reopen.
+  //
+  // Named `autoDraft` because `draft` is taken, by the form.
+  const autoDraft = useDraft<Capsule | null>({
+    templateType: TEMPLATE,
+    content: capsule,
+    enabled: isPersonalized,
+    busy: publishing || sealing,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    persist: (d) =>
+      d
+        ? persistDraft({
+            base: BASE,
+            headers: headers(),
+            pageId,
+            setPageId,
+            body: capsuleToBody(d),
+          })
+        : Promise.resolve(null),
+    onAdopted: (d) => setCapsule(d),
+  });
+
+  // Sealing is the milestone here — this template has no edit-mode transition,
+  // and a sealed capsule with the sheet shut is exactly "worth keeping".
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (capsule && !sheetOpen) void autoDraft.saveNow();
+  }, [capsule, sheetOpen, autoDraft]);
 
   // ── Publish (auth-deferred, never auth-gated) ──────────────────────────────
 
