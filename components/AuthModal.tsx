@@ -308,6 +308,10 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
 
   const displayError = validationError || error;
   const anyLoading = isLoading || googleLoading;
+  // Undefined for an older response shape, so the default has to be "sent" —
+  // showing a scary message because a field is missing would be worse than
+  // the problem it warns about.
+  const codeWasSent = pendingVerification?.emailDelivered !== false;
   const maskedEmail = otpEmail
     ? otpEmail.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(Math.max(1, b.length)) + c)
     : "";
@@ -404,7 +408,12 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
             style={{ fontSize: 14, color: "#7a5555" }}
           >
             {mode === "otp"
-              ? `We sent a 6-digit code to ${maskedEmail}`
+              ? codeWasSent
+                ? `We sent a 6-digit code to ${maskedEmail}`
+                : // The account exists, but every mail provider refused the
+                  // send. Telling somebody to check their email here is the
+                  // one thing that guarantees they wait for nothing.
+                  `Your account is created, but we could not email a code to ${maskedEmail} just now.`
               : mode === "login"
               ? "Sign in to save and personalize your templates"
               : "Join to create beautiful personalized gifts"}
@@ -454,6 +463,53 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
                       </div>
                     </motion.div>
                   </div>
+
+                  {/* ── Nothing was sent ─────────────────────────────────────
+                      Shown only when every mail provider refused. Google
+                      sign-in is the real way in here: it needs no email
+                      delivery at all, so it works while mail is broken. The
+                      code below is still valid if mail recovers, which is why
+                      the boxes stay. */}
+                  {!codeWasSent && (
+                    <div
+                      style={{
+                        margin: "0 0 4px", padding: "11px 13px", borderRadius: 14,
+                        background: "rgba(179,38,30,0.07)",
+                        border: "1px solid rgba(179,38,30,0.28)",
+                      }}
+                    >
+                      <p style={{ margin: "0 0 9px", fontSize: 13, lineHeight: 1.55, color: "#7a2b26" }}>
+                        <strong>We could not send the code.</strong> Our email service is
+                        not responding. Sign in with Google instead — it needs no email —
+                        or tap Resend in a few minutes.
+                      </p>
+                      {/* The Google button proper is gated behind
+                          `mode !== "otp"`, so it does NOT exist on this screen.
+                          It is repeated here rather than referred to: somebody
+                          stuck waiting for a code that will never arrive must
+                          not also have to find their way back to the previous
+                          screen. Same handler, so there is one auth path. */}
+                      <button
+                        onClick={() => handleGoogle()}
+                        disabled={anyLoading}
+                        className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
+                        style={{
+                          border: "1.5px solid rgba(61,12,17,0.16)",
+                          background: "rgba(255,255,255,0.96)",
+                          boxShadow: "0 4px 12px rgba(61,12,17,0.08)",
+                        }}
+                      >
+                        {googleLoading ? (
+                          <Loader2 size={17} className="animate-spin" style={{ color: "#7a5555" }} />
+                        ) : (
+                          <GoogleIcon />
+                        )}
+                        <span className="text-sm font-semibold" style={{ color: "#2a0a0e" }}>
+                          {googleLoading ? "Connecting..." : "Continue with Google"}
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* 6 digit boxes */}
                   <motion.div

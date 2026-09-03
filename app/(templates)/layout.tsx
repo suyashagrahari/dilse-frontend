@@ -1,5 +1,6 @@
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import PaywallHost from "@/components/PaywallHost";
+import FeedbackHost from "@/components/FeedbackHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
@@ -37,6 +38,11 @@ export default async function TemplatesLayout({
           this feature previously existed on two templates out of forty-two —
           the old shape needed a modal in each template's page.tsx. */}
       <PaywallHost />
+      {/* "How was making this?", raised the moment a publish succeeds and
+          before the share sheet. Mounted here for the same reason the two
+          above are — the trigger is a module bus, so exactly one component
+          has to be listening. */}
+      <FeedbackHost />
     </TemplateVisibilityProvider>
   );
 }

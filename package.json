@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "seo:check": "node scripts/seo-coverage.mjs",
-    "indexnow:submit": "node scripts/indexnow-submit.mjs"
+    "indexnow:submit": "node scripts/indexnow-submit.mjs",
+    "feedback:check": "node scripts/feedback-coverage.mjs"
   },
   "dependencies": {
     "@radix-ui/react-toast": "^1.2.15",

@@ -54,7 +54,17 @@ next-env.d.ts
 #   cd server && npm run upload:template-media
 public/templates/
 
-# Backups of env files. One got committed once; never again.
+# Backups of env files.
+#
+# The narrow patterns below were added after `.env.local.bak` was committed
+# once. They were not enough: `.env.local.bak3` still slipped through, because
+# none of them match a suffix with a digit on the end. The rule that actually
+# holds is the first one — anything that starts with `.env.` and is not
+# `.env.example` — so prefer editing that over adding a fourth special case.
+.env.*
+!.env.example
 *.env.bak
 .env.*.bak
 .env.local.bak
+*.env.bak[0-9]*
+.env.*.bak[0-9]*

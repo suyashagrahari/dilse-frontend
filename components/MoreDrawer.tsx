@@ -33,7 +33,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
-  BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare,
+  BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
   Coins, LogIn, ChevronRight,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
@@ -189,6 +189,11 @@ export default function MoreDrawer({
           ? [
               { label: "Template Pricing", icon: <IndianRupee size={17} />, href: "/admin/pricing" },
               { label: "Early Access", icon: <KeyRound size={17} />, href: "/admin/early-access" },
+              // Super admin only, like the two above: replying from here sends
+              // mail as SubhSandesh to a named customer.
+              { label: "Feedback", icon: <Star size={17} />, href: "/admin/feedback" },
+              { label: "Unfinished Drafts", icon: <FileText size={17} />, href: "/admin/drafts" },
+              { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },
             ]
           : []),
         { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },

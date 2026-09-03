@@ -32,6 +32,8 @@
 
 import { useSyncExternalStore } from "react";
 
+import { deferUntilFeedbackClosed, requestFeedback } from "@/lib/feedback/feedbackBus";
+
 export interface SharePayload {
   /** The published page's URL. The only required field. */
   url: string;
@@ -65,6 +67,16 @@ export interface SharePayload {
   accent?: string;
   /** Filename stem for the two downloads. Defaults to "subhsandesh". */
   slug?: string;
+  /**
+   * Whether opening this sheet may first ask the creator how it went.
+   *
+   * Defaults to true, so a new template editor gets the feedback prompt without
+   * anybody wiring it — the same reasoning that keeps the sheet itself on a bus.
+   * Set false where the sheet is NOT the end of a publish: the profile re-shares
+   * pages made weeks ago, and "how was making this?" about a page somebody
+   * finished in August is a question with no useful answer.
+   */
+  askFeedback?: boolean;
 }
 
 let current: SharePayload | null = null;
@@ -81,6 +93,42 @@ function emit(): void {
  */
 export function openShareSheet(payload: SharePayload): void {
   if (!payload?.url) return;
+
+  // ── The feedback ask goes FIRST ─────────────────────────────────────────
+  //
+  // Publish → "how was that?" → the link. This is the one place in the app
+  // that knows a publish has just succeeded for every one of the forty-three
+  // templates, which is why the interception lives here rather than in the
+  // editors. `requestFeedback` applies its own restraint — once per page, never
+  // when signed out, never two at once — and returns false whenever it decides
+  // not to ask, in which case this behaves exactly as it always did.
+  //
+  // The payload is held in the release callback, not in `current`, so the sheet
+  // is genuinely not open while the modal is up: nothing renders behind it and
+  // an interrupted session leaves no half-open sheet.
+  if (payload.askFeedback !== false) {
+    const asked = requestFeedback(
+      {
+        templateSlug: payload.slug ?? "",
+        pageUrl: payload.url,
+        templateTitle: payload.cardTitle || payload.title,
+      },
+      () => {
+        current = payload;
+        emit();
+      }
+    );
+    if (asked) return;
+
+    // Already asking — raised a moment ago by a template that publishes through
+    // its own handler. Wait for that modal rather than opening the sheet
+    // underneath it.
+    if (deferUntilFeedbackClosed(() => {
+      current = payload;
+      emit();
+    })) return;
+  }
+
   current = payload;
   emit();
 }

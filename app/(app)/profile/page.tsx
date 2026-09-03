@@ -11,7 +11,7 @@ import {
   Trash2, AlertTriangle, BookHeart,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { updateProfile, changePassword, logoutUser, setSubdomain as setSubdomainAction } from "@/store/authSlice";
+import { updateProfile, changePassword, logoutUser, checkAuth, setSubdomain as setSubdomainAction } from "@/store/authSlice";
 import PagePasswordControl from "@/components/profile/PagePasswordControl";
 import { API_URL, IS_NGROK, SITE_URL, ROOT_DOMAIN } from "@/lib/config";
 import { clearFavorites } from "@/store/favoritesSlice";
@@ -328,12 +328,36 @@ export default function ProfilePage() {
     catch { /* handled by Redux */ } finally { setNameLoading(false); }
   };
 
+  /**
+   * A Google account has no password, so there is nothing to prove and no
+   * "current password" to ask for. The server accepts the omission for exactly
+   * that case and requires it otherwise.
+   */
+  const hasNoPassword = user?.provider === "google";
+
   const handleChangePassword = async () => {
-    if (!currentPw || !newPw) return;
+    if (!newPw) return;
+    if (!hasNoPassword && !currentPw) return;
     setPwLoading(true); setPwMessage(null);
     try {
-      await dispatch(changePassword({ currentPassword: currentPw, newPassword: newPw })).unwrap();
-      setPwMessage({ type: "success", text: "Password updated successfully!" });
+      await dispatch(changePassword({
+        currentPassword: hasNoPassword ? undefined : currentPw,
+        newPassword: newPw,
+      })).unwrap();
+      setPwMessage({
+        type: "success",
+        text: hasNoPassword
+          ? "Password set. You can now sign in with your email too."
+          : "Password updated successfully!",
+      });
+      // Setting a FIRST password flips `provider` to "local" on the server.
+      // Without re-reading the user, Redux still says "google", so reopening
+      // this form would omit `currentPassword` again — and the server, which
+      // now sees a password on the account, would refuse it. Refresh so the
+      // form matches reality.
+      if (hasNoPassword) {
+        await dispatch(checkAuth()).unwrap().catch(() => {});
+      }
       setCurrentPw(""); setNewPw("");
       setTimeout(() => setShowPasswordSection(false), 1500);
     } catch (err) {
@@ -389,6 +413,10 @@ export default function ProfilePage() {
       recipientName: payload.recipientName,
       senderName: payload.senderName,
       password: payload.password,
+      // Re-sharing something already published, not finishing it. "How was
+      // making this?" about a page from last month has no useful answer, and the
+      // ask belongs to the publish moment. See lib/feedback/feedbackBus.
+      askFeedback: false,
     });
   };
 
@@ -725,7 +753,12 @@ export default function ProfilePage() {
       <div className="overflow-hidden rounded-2xl" style={cardStyle}>
         <Row icon={<Mail size={16} style={{ color: "#60a5fa" }} />} label="Email" value={user?.email} accent="blue" />
         <Row icon={<Shield size={16} style={{ color: "#a78bfa" }} />} label="Sign-in method" value={user?.provider} accent="violet" />
-        {user?.provider === "local" && (
+        {/* Shown for Google accounts too, as "Set Password". There is no
+            /forgot-password route in this app, so this is the ONLY way a
+            Google-only account can ever gain a password — and the only way
+            back for an account whose unverified-era password was cleared when
+            Google sign-in verified it. */}
+        {(user?.provider === "local" || user?.provider === "google") && (
           <div>
             <button onClick={() => { setShowPasswordSection(!showPasswordSection); setPwMessage(null); setCurrentPw(""); setNewPw(""); }}
               className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 transition-colors">
@@ -733,8 +766,14 @@ export default function ProfilePage() {
                 <Lock size={16} style={{ color: "#f59e0b" }} />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium" style={{ color: "var(--app-text)" }}>Change Password</p>
-                <p className="text-xs" style={{ color: "var(--app-text-faint)" }}>Update your account password</p>
+                <p className="text-sm font-medium" style={{ color: "var(--app-text)" }}>
+                  {hasNoPassword ? "Set Password" : "Change Password"}
+                </p>
+                <p className="text-xs" style={{ color: "var(--app-text-faint)" }}>
+                  {hasNoPassword
+                    ? "Add a password so you can sign in without Google"
+                    : "Update your account password"}
+                </p>
               </div>
               <ChevronRight size={15} className={`transition-transform ${showPasswordSection ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
             </button>
@@ -742,7 +781,9 @@ export default function ProfilePage() {
               {showPasswordSection && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                   <div className="px-4 pb-4 space-y-3">
-                    {[{ val: currentPw, set: setCurrentPw, show: showCurrentPw, toggle: setShowCurrentPw, placeholder: "Current password" },
+                    {[...(hasNoPassword
+                        ? []
+                        : [{ val: currentPw, set: setCurrentPw, show: showCurrentPw, toggle: setShowCurrentPw, placeholder: "Current password", onEnter: undefined }]),
                       { val: newPw, set: setNewPw, show: showNewPw, toggle: setShowNewPw, placeholder: "New password (min 6 chars)", onEnter: handleChangePassword }
                     ].map(({ val, set, show, toggle, placeholder, onEnter }) => (
                       <div key={placeholder} className="relative">

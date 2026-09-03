@@ -32,7 +32,12 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  pendingVerification: { email: string } | null;
+  /**
+   * `emailDelivered: false` means the account exists but the code was NOT
+   * sent — every mail provider refused. Carried through so the OTP screen can
+   * say so instead of asking someone to check an inbox that has nothing in it.
+   */
+  pendingVerification: { email: string; emailDelivered?: boolean } | null;
 }
 
 const initialState: AuthState = {
@@ -130,7 +135,7 @@ export const loginUser = createAsyncThunk(
       if (!res.ok) {
         // Unverified account — treat as fulfilled so we can show OTP screen
         if (res.status === 403 && data.requiresVerification) {
-          return { requiresVerification: true, email: data.email };
+          return { requiresVerification: true, email: data.email, emailDelivered: data.emailDelivered !== false };
         }
         return rejectWithValue(data.error || "Login failed");
       }
@@ -225,7 +230,10 @@ export const updateProfile = createAsyncThunk(
 export const changePassword = createAsyncThunk(
   "auth/changePassword",
   async (
-    { currentPassword, newPassword }: { currentPassword: string; newPassword: string },
+    // `currentPassword` is optional: an account with no password (a Google
+    // signup) has nothing to prove, and the server requires it only when a
+    // password already exists.
+    { currentPassword, newPassword }: { currentPassword?: string; newPassword: string },
     { getState, rejectWithValue }
   ) => {
     const state = getState() as { auth: AuthState };
@@ -236,7 +244,11 @@ export const changePassword = createAsyncThunk(
       const res = await fetch(`${API_URL}/auth/password`, {
         method: "PUT",
         headers: apiHeaders({ Authorization: `Bearer ${token}` }),
-        body: JSON.stringify({ currentPassword, newPassword }),
+        // Omitted entirely rather than sent as undefined, so the server sees
+        // an absent field instead of a present-but-empty one.
+        body: JSON.stringify(
+          currentPassword ? { currentPassword, newPassword } : { newPassword }
+        ),
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Failed to change password");
@@ -450,7 +462,7 @@ const authSlice = createSlice({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload = action.payload as any;
         if (payload?.requiresVerification) {
-          state.pendingVerification = { email: payload.email };
+          state.pendingVerification = { email: payload.email, emailDelivered: payload.emailDelivered !== false };
           state.isLoading = false;
           return;
         }
@@ -469,7 +481,7 @@ const authSlice = createSlice({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload = action.payload as any;
         if (payload?.requiresVerification) {
-          state.pendingVerification = { email: payload.email };
+          state.pendingVerification = { email: payload.email, emailDelivered: payload.emailDelivered !== false };
           state.isLoading = false;
           return;
         }

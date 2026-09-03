@@ -92,6 +92,7 @@ export default function AdminEarlyAccessPage() {
   const [found, setFound] = useState<FoundUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [note, setNote] = useState("");
+  const userSearchRef = useRef<HTMLInputElement>(null);
 
   const [allowed, setAllowed] = useState(false);
   useEffect(() => {
@@ -183,6 +184,45 @@ export default function AdminEarlyAccessPage() {
 
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
   }, [userQuery, hdr]);
+
+  // ── Sheet behaviours ──────────────────────────────────────────────────────
+  //
+  // Three things a dialog owes the person using it, none of which this one had:
+  // the cursor starts where the work is, Escape gets out, and the page behind
+  // stops moving. The last one matters most on a phone — this list of templates
+  // is long, and a scroll gesture aimed at the sheet used to scroll the page
+  // underneath it, which reads as the sheet drifting.
+  useEffect(() => {
+    if (!openSlug) return;
+
+    const t = setTimeout(() => userSearchRef.current?.focus(), 80);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpenSlug(null);
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("keydown", onKey, true);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [openSlug]);
+
+  // A fresh sheet starts with an empty search rather than the last one's
+  // results, which otherwise appear to belong to the template just opened.
+  useEffect(() => {
+    if (!openSlug) return;
+    setUserQuery("");
+    setFound([]);
+    setNote("");
+  }, [openSlug]);
 
   const grant = useCallback(
     async (u: FoundUser) => {
@@ -286,6 +326,65 @@ export default function AdminEarlyAccessPage() {
              characters and an ellipsis. */
           .ea-found { flex-wrap: wrap; }
           .ea-found > button { width: 100%; }
+        }
+
+        /* ── The sheet, and why it is lifted ─────────────────────────────────
+           components/BottomNav.tsx is "fixed bottom-0 ... z-[79]" and 68px tall
+           on phones (md:hidden). This sheet used to sit at z-index 61 and flush
+           to the bottom of the viewport, so the nav painted straight over its
+           lower third — which is exactly where the search results and the
+           "Give access" buttons are. The fix is both halves: get above 79, and
+           stop before the nav starts.
+
+           --ea-nav-h is the nav ELEMENT's rendered height, not the 68px pill
+           inside it — the <nav> measures 82px once its padding is counted, and
+           using 68 left a 4px overlap. Measured in a browser at 390x844 rather
+           than read off the source. If the nav changes, this is the other place
+           to edit.
+
+           (No back-ticks anywhere in this block: it lives inside a template
+           literal, and one unescaped back-tick closes the whole stylesheet.) */
+        .ea-sheet-wrap {
+          --ea-nav-h: 82px;
+          position: fixed;
+          inset: 0;
+          z-index: 189;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          pointer-events: none;
+        }
+        .ea-sheet {
+          pointer-events: auto;
+          width: 100%;
+          max-width: 520px;
+          display: flex;
+          flex-direction: column;
+          background: #fffdfb;
+          border: 1px solid rgba(61,12,17,0.08);
+          /* All four corners: no longer flush to the screen edge, so a sheet
+             with two square corners would look broken rather than anchored. */
+          border-radius: 22px;
+          margin: 0 10px calc(var(--ea-nav-h) + env(safe-area-inset-bottom, 0px) + 10px);
+          max-height: calc(100dvh - var(--ea-nav-h) - env(safe-area-inset-bottom, 0px) - 34px);
+          box-shadow: 0 24px 60px -18px rgba(26,5,7,0.5);
+        }
+        @media (min-width: 768px) {
+          /* The nav is md:hidden, so above this breakpoint there is nothing to
+             clear and the sheet is better as a centred dialog. */
+          .ea-sheet-wrap { align-items: center; }
+          .ea-sheet { margin: 0; max-height: min(86dvh, 760px); }
+        }
+
+        /* The search stays put while results grow beneath it. Without this,
+           typing pushes the field up and out of view on a short screen. */
+        .ea-add {
+          position: sticky;
+          top: 0;
+          z-index: 2;
+          background: #fffdfb;
+          padding-bottom: 10px;
+          margin-bottom: 2px;
         }
       `}</style>
 
@@ -464,23 +563,14 @@ export default function AdminEarlyAccessPage() {
         <>
           <div
             onClick={() => setOpenSlug(null)}
-            style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(26,5,7,0.5)", backdropFilter: "blur(4px)" }}
+            style={{ position: "fixed", inset: 0, zIndex: 188, background: "rgba(26,5,7,0.5)", backdropFilter: "blur(4px)" }}
           />
-          <div style={{ position: "fixed", inset: 0, zIndex: 61, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0, pointerEvents: "none" }}>
+          <div className="ea-sheet-wrap">
             <div
+              className="ea-sheet"
               role="dialog"
               aria-modal="true"
               aria-label={`Early access for ${openTemplateMeta?.title || openSlug}`}
-              style={{
-                pointerEvents: "auto",
-                width: "100%", maxWidth: 520,
-                maxHeight: "min(90dvh, 720px)",
-                display: "flex", flexDirection: "column",
-                background: "#fffdfb",
-                borderTopLeftRadius: 22, borderTopRightRadius: 22,
-                border: `1px solid ${cB}`,
-                boxShadow: "0 -20px 60px -20px rgba(26,5,7,0.45)",
-              }}
             >
               <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${cB}`, flex: "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -509,40 +599,79 @@ export default function AdminEarlyAccessPage() {
               </div>
 
               <div style={{ overflowY: "auto", padding: "14px 18px", flex: 1 }}>
-                {/* Add somebody */}
-                <div style={{ position: "relative" }}>
-                  <UserPlus size={15} style={{ position: "absolute", left: 11, top: 15, color: tM }} />
+                {/* Add somebody. Sticky, so results grow beneath the field
+                    instead of pushing it off a short screen. */}
+                <div className="ea-add">
+                  <div style={{ position: "relative" }}>
+                    <UserPlus size={15} style={{ position: "absolute", left: 11, top: 15, color: tM }} />
+                    <input
+                      ref={userSearchRef}
+                      value={userQuery}
+                      onChange={(e) => setUserQuery(e.target.value)}
+                      placeholder="Find a registered user by name or email"
+                      style={{
+                        width: "100%", height: 44, paddingLeft: 34, paddingRight: 60,
+                        borderRadius: 12, border: `1px solid ${cB}`, background: "#fff",
+                        fontSize: 16, color: t1, outline: "none",
+                      }}
+                    />
+                    {searching && (
+                      <Loader2 size={15} className="animate-spin" style={{ position: "absolute", right: 36, top: 15, color: tM }} />
+                    )}
+                    {userQuery.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setUserQuery(""); setFound([]); userSearchRef.current?.focus(); }}
+                        aria-label="Clear search"
+                        style={{
+                          position: "absolute", right: 6, top: 6, width: 32, height: 32,
+                          borderRadius: 9, border: "none", background: "transparent",
+                          color: tM, cursor: "pointer", display: "grid", placeItems: "center",
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
                   <input
-                    value={userQuery}
-                    onChange={(e) => setUserQuery(e.target.value)}
-                    placeholder="Find a registered user by name or email"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value.slice(0, 200))}
+                    placeholder="Why, optionally — e.g. Sharma wedding demo, 3 Sep"
                     style={{
-                      width: "100%", height: 44, paddingLeft: 34, paddingRight: 34,
-                      borderRadius: 12, border: `1px solid ${cB}`, background: "#fff",
+                      width: "100%", height: 40, marginTop: 8, padding: "0 12px",
+                      borderRadius: 11, border: `1px solid ${cB}`, background: "#fff",
                       fontSize: 16, color: t1, outline: "none",
                     }}
                   />
-                  {searching && (
-                    <Loader2 size={15} className="animate-spin" style={{ position: "absolute", right: 12, top: 15, color: tM }} />
-                  )}
                 </div>
 
-                <input
-                  value={note}
-                  onChange={(e) => setNote(e.target.value.slice(0, 200))}
-                  placeholder="Why, optionally — e.g. Sharma wedding demo, 3 Sep"
-                  style={{
-                    width: "100%", height: 40, marginTop: 8, padding: "0 12px",
-                    borderRadius: 11, border: `1px solid ${cB}`, background: "#fff",
-                    fontSize: 16, color: t1, outline: "none",
-                  }}
-                />
+                {/* Say what the field wants before it is used, rather than
+                    leaving an empty pane that looks broken. */}
+                {userQuery.trim().length === 0 && (
+                  <p style={{ margin: "10px 0 0", fontSize: 12.5, color: tM, lineHeight: 1.55 }}>
+                    Type at least two characters. Only people who already have an
+                    account can be given early access.
+                  </p>
+                )}
+
+                {userQuery.trim().length === 1 && (
+                  <p style={{ margin: "10px 0 0", fontSize: 12.5, color: tM }}>
+                    One more character…
+                  </p>
+                )}
 
                 {userQuery.trim().length >= 2 && !searching && found.length === 0 && (
-                  <p style={{ margin: "12px 0 0", fontSize: 12.5, color: tM }}>
-                    No account matches that. Early access can only be given to someone
-                    who has already signed up.
+                  <p style={{ margin: "12px 0 0", fontSize: 12.5, color: tM, lineHeight: 1.55 }}>
+                    No account matches <strong style={{ color: t1 }}>{userQuery.trim()}</strong>.
+                    Early access can only be given to someone who has already signed up.
                   </p>
+                )}
+
+                {found.length > 0 && (
+                  <div style={{ margin: "12px 0 0", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: tM }}>
+                    {found.length} {found.length === 1 ? "match" : "matches"}
+                  </div>
                 )}
 
                 {found.length > 0 && (
@@ -553,8 +682,27 @@ export default function AdminEarlyAccessPage() {
                         <div
                           key={u._id}
                           className="ea-found"
-                          style={{ padding: "9px 11px", borderRadius: 12, background: "#f7eee5", border: `1px solid ${cB}` }}
+                          style={{
+                            padding: "9px 11px", borderRadius: 12,
+                            background: already ? "#f3ece4" : "#f7eee5",
+                            border: `1px solid ${already ? "rgba(61,12,17,0.06)" : cB}`,
+                            opacity: already ? 0.75 : 1,
+                          }}
                         >
+                          {/* An initial rather than a generic icon: with three
+                              Priyas in the list, the letter is the only part
+                              that is not identical. */}
+                          <div
+                            aria-hidden
+                            style={{
+                              width: 34, height: 34, borderRadius: 999, flex: "none",
+                              background: "rgba(201,168,76,0.22)", color: "#8b5a2b",
+                              display: "grid", placeItems: "center",
+                              fontSize: 14, fontWeight: 800,
+                            }}
+                          >
+                            {(u.name || u.email || "?").trim().charAt(0).toUpperCase()}
+                          </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: 600, color: t1, overflow: "hidden", textOverflow: "ellipsis" }}>
                               {u.name || "(no name)"}
@@ -653,9 +801,13 @@ export default function AdminEarlyAccessPage() {
       {toast && (
         <div
           style={{
-            position: "fixed", left: "50%", bottom: 22, transform: "translateX(-50%)",
+            // Above the sheet (189) and clear of the 68px nav, so "Access
+            // given" is not delivered underneath the thing it is about.
+            position: "fixed", left: "50%",
+            bottom: "calc(82px + env(safe-area-inset-bottom, 0px) + 14px)",
+            transform: "translateX(-50%)",
             background: bg, color: "#fdf8ee", padding: "10px 16px", borderRadius: 999,
-            fontSize: 13, fontWeight: 600, zIndex: 80, maxWidth: "90vw", textAlign: "center",
+            fontSize: 13, fontWeight: 600, zIndex: 200, maxWidth: "90vw", textAlign: "center",
             boxShadow: "0 10px 30px -10px rgba(26,5,7,0.6)",
           }}
         >
