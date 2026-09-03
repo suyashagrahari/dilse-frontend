@@ -47,6 +47,7 @@ import { capsuleToBody, projectSealed } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useResumeDraft } from "@/lib/draft/resume";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/capsule-pages`;
@@ -305,6 +306,28 @@ export function useCapsuleEditor() {
 
   /** StoryStarter's way out — the normal sheet, every field still editable. */
   const handleStoryManual = useCallback(() => setSheetOpen(true), []);
+
+  // ── Reopening from the profile ────────────────────────────────────────────
+  //
+  // This editor ignored `?edit=<id>`, so the profile's Edit button opened it on
+  // a blank capsule — and sealing from there overwrote the user's page with a
+  // new one. Nothing about that was visible: no error, no empty state, just the
+  // wrong page.
+  //
+  // `setDraft(capsuleToDraft(...))` is not optional here. `draft` is the form
+  // and `capsule` is the sealed content; setting only the latter would show the
+  // right page in preview and an empty sheet the moment they opened Amend.
+  useResumeDraft({
+    base: BASE,
+    editId: searchParams.get("edit"),
+    accessToken,
+    defaults: DEMO_CAPSULE,
+    onLoaded: (data, id) => {
+      setCapsule(data);
+      setDraft(capsuleToDraft(data));
+      setPageId(id);
+    },
+  });
 
   // ── Auto-draft ──────────────────────────────────────────────────────────────
   //

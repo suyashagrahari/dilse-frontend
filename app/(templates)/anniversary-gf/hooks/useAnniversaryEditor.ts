@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
 
@@ -9,6 +9,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useResumeDraft } from "@/lib/draft/resume";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { openShareSheet } from "@/lib/share/shareBus";
 
@@ -17,6 +18,7 @@ const TEMPLATE = "anniversary-gf";
 
 export function useAnniversaryEditor() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
   const [tab, setTab] = useState<TabId>("cover");
@@ -261,6 +263,28 @@ export function useAnniversaryEditor() {
     setPendingContent(null);
     setEditMode("choose");
   }, [pendingContent, isPersonalized, content]);
+
+  // ── Reopening from the profile ────────────────────────────────────────────
+  //
+  // This editor ignored `?edit=<id>` entirely, so the profile's Edit button
+  // opened it on demo content — and saving from there overwrote the user's page
+  // with a fresh one. Nothing about that was visible: no error, no empty state,
+  // just the wrong page.
+  //
+  // The fields come from DEMO_CONTENT rather than a hand-written list, so a field
+  // added to this template later survives a reopen without anyone remembering.
+  useResumeDraft({
+    base: `${API_URL}/anniversary-pages`,
+    editId: searchParams.get("edit"),
+    accessToken,
+    defaults: DEMO_CONTENT,
+    onLoaded: (data, id) => {
+      setContent(data);
+      setMf({ ...data });
+      setPageId(id);
+      setIsPersonalized(true);
+    },
+  });
 
   // ── Auto-draft ────────────────────────────────────────────────────────────
   //

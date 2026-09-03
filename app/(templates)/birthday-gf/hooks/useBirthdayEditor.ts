@@ -19,6 +19,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useResumeDraft } from "@/lib/draft/resume";
 import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
@@ -481,6 +482,28 @@ export function useBirthdayEditor() {
     setPendingContent(null);
     setEditMode("choose");
   }, [pendingContent]);
+
+  // ── Reopening from the profile ────────────────────────────────────────────
+  //
+  // This editor ignored `?edit=<id>` entirely, so the profile's Edit button
+  // opened it on demo content — and saving from there overwrote the user's page
+  // with a fresh one. Nothing about that was visible: no error, no empty state,
+  // just the wrong page.
+  //
+  // The fields come from DEMO_DATA rather than a hand-written list, so a field
+  // added to this template later survives a reopen without anyone remembering.
+  useResumeDraft({
+    base: `${API_URL}/birthday-gf-pages`,
+    editId: searchParams.get("edit"),
+    accessToken,
+    defaults: DEMO_DATA,
+    onLoaded: (data, id) => {
+      setContent(data);
+      setMf({ ...data });
+      setPageId(id);
+      setIsPersonalized(true);
+    },
+  });
 
   // ── Auto-draft ────────────────────────────────────────────────────────────
   //
