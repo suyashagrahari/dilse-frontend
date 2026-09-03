@@ -101,6 +101,13 @@ interface Detail {
     configured: boolean;
     mechanisms?: string[];
     etaSeconds?: number;
+    /**
+     * The address a reply is actually ADDRESSED to, which is not the From
+     * address: outbound mail goes as feedback@ on the apex domain, whose mail
+     * is GoDaddy's, while SES receives on a subdomain. Naming the From address
+     * here was a claim the pipeline did not honour.
+     */
+    replyToAddress?: string;
     user?: string;
     filterAddresses: string[];
     pollSeconds?: number;
@@ -129,6 +136,18 @@ const REASON_META: Record<string, { label: string; color: string; bg: string }> 
   unfinished:          { label: "Stopped partway", color: t2,     bg: "rgba(61,12,17,0.06)" },
   just_started:        { label: "Barely started",  color: tM,     bg: "rgba(61,12,17,0.05)" },
 };
+
+/**
+ * The bare address out of a Reply-To header value.
+ *
+ * The server sends it with a display name — `SubhSandesh <inbox@…>` — which is
+ * right for the email header and wrong to print in a sentence.
+ */
+function replyAddressOf(value?: string): string {
+  if (!value) return "";
+  const angled = value.match(/<([^>]+)>/);
+  return (angled ? angled[1] : value).trim();
+}
 
 function when(iso: string): string {
   if (!iso) return "—";
@@ -968,9 +987,18 @@ export default function AdminDraftsPage() {
                     {/* Where a reply lands. Worth stating plainly: the whole
                         point of sending from feedback@ rather than a no-reply
                         address is that the creator can answer, and whoever is
-                        sending should know somebody has to read that mailbox. */}
+                        sending should know somebody has to read that mailbox.
+
+                        It must be the REPLY-TO address, not the From address.
+                        Those differ — see `replyToAddress` above — and naming
+                        the From address here told the sender their reply would
+                        arrive somewhere it could not. */}
                     <p style={{ margin: "8px 0 0", fontSize: 10.5, color: tM, lineHeight: 1.5 }}>
-                      If they reply, it goes to <strong style={{ color: t2 }}>{sel.fromEmail}</strong>.{" "}
+                      If they reply, it goes to{" "}
+                      <strong style={{ color: t2 }}>
+                        {replyAddressOf(sel.inbound?.replyToAddress) || sel.fromEmail}
+                      </strong>
+                      .{" "}
                       {sel.inbound?.configured
                         ? // Honest per route: the SES webhook lands in seconds,
                           // the mailbox poller on its interval.
