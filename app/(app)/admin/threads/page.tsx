@@ -61,6 +61,22 @@ interface Row extends Thread {
   kind: string;
 }
 
+/**
+ * An address a reply may be sent FROM.
+ *
+ * Sent by the server with the conversation, and identified by `id` — never by
+ * address. SES sends only from a verified identity, so which addresses are
+ * usable is the server's fact to state, not the panel's to remember. A stale
+ * copy here would be a bounced reply.
+ */
+interface SenderOption {
+  id: string;
+  address: string;
+  label: string;
+  description: string;
+  isDefault?: boolean;
+}
+
 const KIND_META: Record<string, { label: string; color: string; bg: string }> = {
   draft:    { label: "Unfinished page", color: "#a8823a", bg: "rgba(201,168,76,0.16)" },
   feedback: { label: "Feedback",        color: OK,        bg: "rgba(31,122,77,0.10)" },
@@ -105,6 +121,10 @@ export default function AdminThreadsPage() {
   const [body, setBody] = useState("");
   const [reading, setReading] = useState<string | null>(null);
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [senders, setSenders] = useState<SenderOption[]>([]);
+  const [senderId, setSenderId] = useState("");
+  /** Where replies to this conversation come back to. Fixed, shown, not chosen. */
+  const [replyToAddress, setReplyToAddress] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [sending, setSending] = useState(false);
   const [pasting, setPasting] = useState(false);
@@ -158,6 +178,22 @@ export default function AdminThreadsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, allowed, filter]);
 
+  /**
+   * Take the sender facts off a conversation response.
+   *
+   * They sit beside `data` rather than inside it because they describe this
+   * deployment, not this conversation. Selecting the default here rather than
+   * leaving it blank means the composer always names an address — a picker
+   * whose value is "" would send from the default anyway and say nothing about
+   * it, which is the state this whole change exists to remove.
+   */
+  const applySenders = (json: { senderOptions?: SenderOption[]; replyToAddress?: string }) => {
+    const options = Array.isArray(json.senderOptions) ? json.senderOptions : [];
+    setSenders(options);
+    setReplyToAddress(String(json.replyToAddress || ""));
+    setSenderId((options.find((o) => o.isDefault) || options[0])?.id || "");
+  };
+
   const open = async (row: Row) => {
     setSelLoading(true);
     setBody("");
@@ -169,6 +205,7 @@ export default function AdminThreadsPage() {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not open it");
       setSel(json.data);
+      applySenders(json);
       // Opening marks it read on the server; mirror that here so the badge
       // does not keep claiming attention for something just dealt with.
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, unread: false } : r)));
@@ -184,7 +221,10 @@ export default function AdminThreadsPage() {
     try {
       const res = await fetch(`${API_URL}/admin/threads/${id}`, { headers: hdr() });
       const json = await res.json();
-      if (res.ok && json.success) setSel(json.data);
+      if (res.ok && json.success) {
+        setSel(json.data);
+        applySenders(json);
+      }
     } catch { /* a stale view is a refresh away */ }
   };
 
@@ -216,7 +256,7 @@ export default function AdminThreadsPage() {
     try {
       const res = await fetch(`${API_URL}/admin/threads/${sel.id}/reply`, {
         method: "POST", headers: hdr(),
-        body: JSON.stringify({ body: body.trim(), aiAssisted }),
+        body: JSON.stringify({ body: body.trim(), aiAssisted, senderId }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not send");
@@ -516,6 +556,68 @@ export default function AdminThreadsPage() {
                           What the AI understood
                         </p>
                         <p style={{ margin: "3px 0 0", fontSize: 12.5, color: t2, lineHeight: 1.5 }}>{reading}</p>
+                      </div>
+                    )}
+
+                    {/* ── Who this comes from, and where it comes back to ────────
+                        The composer used to say nothing about either. A super
+                        admin wrote a reply, sent it, and found out which
+                        address it left from by checking their own inbox.
+
+                        Both lines are here on purpose. From is a choice; Reply-To
+                        is NOT, and showing them together is the only way that
+                        reads as deliberate rather than broken — apex mail is
+                        GoDaddy's, so a reply sent back to feedback@ never
+                        reaches this panel. Only reply.subhsandesh.in does. */}
+                    {senders.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <p style={{ margin: "0 0 6px", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase", color: tM }}>
+                          Send as
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {senders.map((o) => {
+                            const on = o.id === senderId;
+                            return (
+                              <button
+                                key={o.id}
+                                type="button"
+                                onClick={() => setSenderId(o.id)}
+                                title={o.description}
+                                aria-pressed={on}
+                                style={{
+                                  padding: "7px 11px", borderRadius: 999, cursor: "pointer",
+                                  border: `1px solid ${on ? bg : cB}`,
+                                  background: on ? bg : "#fff",
+                                  color: on ? "#fff" : t2,
+                                  fontSize: 12.5, fontWeight: 700, fontFamily: "inherit",
+                                  display: "flex", alignItems: "center", gap: 6,
+                                }}
+                              >
+                                {o.label}
+                                <span style={{ fontSize: 11, fontWeight: 600, opacity: on ? 0.75 : 0.6 }}>
+                                  {o.address}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* The chosen option's own sentence, so the choice is
+                            explained at the moment it is made rather than in a
+                            tooltip nobody hovers on a phone. */}
+                        {senders.find((o) => o.id === senderId)?.description && (
+                          <p style={{ margin: "7px 0 0", fontSize: 11.5, color: tM, lineHeight: 1.5 }}>
+                            {senders.find((o) => o.id === senderId)?.description}
+                          </p>
+                        )}
+
+                        {replyToAddress && (
+                          <p style={{ margin: "6px 0 0", fontSize: 11.5, color: tM, lineHeight: 1.5 }}>
+                            Their reply comes back to{" "}
+                            <span style={{ fontWeight: 700, color: t2 }}>{replyToAddress}</span>{" "}
+                            whichever address you send as — that is the only one this panel can read.
+                          </p>
+                        )}
                       </div>
                     )}
 

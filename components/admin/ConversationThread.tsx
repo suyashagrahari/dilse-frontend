@@ -40,6 +40,14 @@ export interface ThreadMessage {
   rawBody: string;
   at: string;
   byEmail: string;
+  /**
+   * Which of OUR addresses this went out as.
+   *
+   * Empty on inbound mail, and on every outbound message sent before replies
+   * could choose one — so the badge below is conditional rather than assuming
+   * a default that may not have been what was used.
+   */
+  fromAddress?: string;
   aiAssisted: boolean;
   confidence: string;
   source: string;
@@ -93,6 +101,15 @@ function Bubble({ m }: { m: ThreadMessage }) {
           {out ? <Mail size={10} /> : <User size={10} />}
           <span style={{ fontWeight: 700 }}>{out ? "We wrote" : "They wrote"}</span>
           <span>· {stamp(m.at)}</span>
+          {/* Replies can go out as feedback@ or support@, so "we wrote" alone no
+              longer says who the recipient saw. Only shown when recorded:
+              messages sent before the choice existed have nothing to show, and
+              guessing the default would be a claim rather than a fact. */}
+          {out && m.fromAddress && (
+            <span title={`Sent from ${m.fromAddress}`} style={{ fontWeight: 600 }}>
+              · from {m.fromAddress}
+            </span>
+          )}
           {m.aiAssisted && (
             <span
               title="Started as a generated draft, then approved by a person before it was sent"
