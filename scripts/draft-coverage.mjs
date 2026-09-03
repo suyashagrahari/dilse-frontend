@@ -63,16 +63,23 @@ function walk(dir) {
 }
 
 /**
- * Reading the resume id, as the editors actually do it.
+ * Reading the resume id — either way an editor is allowed to do it.
  *
- * NOT the substring "edit=". Almost every editor carries the comment "navigated
- * from profile with ?edit=<id>", and the first version of this check matched
- * that — reporting 36 of 43 wired when the truth was 45 of 51, and it only
- * looked wrong because stripping comments made the number collapse. The param
- * is read through `searchParams.get("edit")` or `useSearchParams()`; that is
- * what to look for.
+ * Two corrections are baked into this regex, and both were caught by the number
+ * it reported rather than by reading the code:
+ *
+ *   1. NOT the substring "edit=". Almost every editor carries the comment
+ *      "navigated from profile with ?edit=<id>", so the first version counted
+ *      the comment as the wiring.
+ *
+ *   2. `useResumeDraft` counts on its own. It reads the id from
+ *      window.location.search itself — it has to, because useSearchParams opts
+ *      a page out of static prerendering unless it sits under Suspense, and
+ *      that broke `next build` on the two retrofitted editors that did not
+ *      already call it. So a retrofitted editor legitimately contains no
+ *      `.get("edit")` at all.
  */
-const READS_EDIT_PARAM = /\.get\(\s*["'`]edit["'`]\s*\)/;
+const READS_EDIT_PARAM = /\.get\(\s*["'`]edit["'`]\s*\)|useResumeDraft/;
 
 const templates = readdirSync(ROOT).filter((d) => statSync(join(ROOT, d)).isDirectory());
 
