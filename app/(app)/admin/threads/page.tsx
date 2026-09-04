@@ -39,7 +39,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import {
   ArrowLeft, Loader2, Sparkles, Send, X, Mail, Search,
-  Inbox, CheckCircle2, AlertTriangle, MessageSquare, RefreshCw,
+  Inbox, CheckCircle2, AlertTriangle, MessageSquare, RefreshCw, UserRound,
 } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
 
@@ -59,6 +59,16 @@ interface Row extends Thread {
   templateType: string;
   pageId: string;
   kind: string;
+  /**
+   * The account behind this conversation, when there is one.
+   *
+   * Resolved server-side, and NOT the same thing as the thread's `userId`.
+   * An unmatched inbound thread has no userId at all — that is what unmatched
+   * means — so the server resolves it from the address instead. It is also ""
+   * when the account has since been deleted, because a link built from a dead
+   * ref 404s and reads as this panel being broken.
+   */
+  profileUserId?: string;
 }
 
 /**
@@ -470,6 +480,22 @@ export default function AdminThreadsPage() {
                         {meta.label}
                       </span>
                       <span style={{ fontSize: 10.5, color: tM }}>{r.messageCount} msg</span>
+                      {/* An icon rather than a linked name here: the whole row
+                          is already a button that opens the conversation, and
+                          a link inside it needs its own stopPropagation and a
+                          target big enough to hit on a phone without opening
+                          the thread by accident. */}
+                      {r.profileUserId && (
+                        <Link
+                          href={`/admin/users/${r.profileUserId}`}
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Open ${r.userName || r.userEmail}'s profile`}
+                          aria-label="Open this person's profile"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5, fontWeight: 700, color: "#8b5a2b", textDecoration: "none" }}
+                        >
+                          <UserRound size={11} /> profile
+                        </Link>
+                      )}
                       {r.status === "closed" && (
                         <span style={{ fontSize: 10.5, color: OK, display: "inline-flex", alignItems: "center", gap: 3 }}>
                           <CheckCircle2 size={10} /> done
@@ -500,6 +526,17 @@ export default function AdminThreadsPage() {
                         <p style={{ margin: "2px 0 0", fontSize: 12, color: t2, display: "flex", alignItems: "center", gap: 5 }}>
                           <Mail size={11} /> {sel.userEmail}
                         </p>
+                        {/* Named, not an icon: this is where you decide what to
+                            say to somebody, and their account is the context
+                            worth one deliberate click. */}
+                        {sel.profileUserId && (
+                          <Link
+                            href={`/admin/users/${sel.profileUserId}`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#8b5a2b", textDecoration: "none", marginTop: 3 }}
+                          >
+                            <UserRound size={12} /> Open their profile
+                          </Link>
+                        )}
                         {sel.templateLabel && (
                           <p style={{ margin: "2px 0 0", fontSize: 11.5, color: tM }}>{sel.templateLabel}</p>
                         )}

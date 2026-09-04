@@ -34,6 +34,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import {
   ArrowLeft, Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock,
   StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle,
+  UserRound,
 } from "lucide-react";
 
 const t1 = "#2a0a0e";
@@ -57,6 +58,15 @@ interface Item {
   _id: string;
   userName: string;
   userEmail: string;
+  /**
+   * The account behind this feedback, when there still is one.
+   *
+   * Answered by the server rather than derived from `userId` here, because
+   * "has a userId" and "has an account you can open" are different questions:
+   * the ref has no cascade, so a deleted user leaves the row pointing at
+   * nothing and a link built from it 404s. Empty means no button.
+   */
+  profileUserId?: string;
   templateSlug: string;
   templateLabel: string;
   pageUrl: string;
@@ -535,9 +545,29 @@ export default function AdminFeedbackPage() {
                       </p>
 
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8, alignItems: "center" }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: t1 }}>
-                          {item.userName || "—"}
-                        </span>
+                        {/* The name IS the link when there is an account behind
+                            it — a separate icon competes with the row's own
+                            click, which opens the feedback. Plain text when
+                            there is no account, so the absence is quiet. */}
+                        {item.profileUserId ? (
+                          <Link
+                            href={`/admin/users/${item.profileUserId}`}
+                            onClick={(e) => e.stopPropagation()}
+                            title="Open this person's profile"
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              fontSize: 11.5, fontWeight: 700, color: "#8b5a2b",
+                              textDecoration: "none",
+                            }}
+                          >
+                            <UserRound size={11} />
+                            {item.userName || item.userEmail || "—"}
+                          </Link>
+                        ) : (
+                          <span style={{ fontSize: 11.5, fontWeight: 700, color: t1 }}>
+                            {item.userName || "—"}
+                          </span>
+                        )}
                         <span style={{ fontSize: 11.5, color: tM }}>{item.userEmail}</span>
                         {item.templateLabel && (
                           <span
@@ -601,6 +631,17 @@ export default function AdminFeedbackPage() {
                     <p style={{ margin: "7px 0 0", fontSize: 14, fontWeight: 800, color: t1 }}>
                       {sel.userName || "—"}
                     </p>
+                    {/* Spelled out here rather than shown as a bare icon: this
+                        panel is where you decide what to say to somebody, and
+                        their history is the thing worth a full-width link. */}
+                    {sel.profileUserId && (
+                      <Link
+                        href={`/admin/users/${sel.profileUserId}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#8b5a2b", textDecoration: "none", marginTop: 3 }}
+                      >
+                        <UserRound size={12} /> Open their profile
+                      </Link>
+                    )}
                     <a
                       href={`mailto:${sel.userEmail}`}
                       style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#8b5a2b", textDecoration: "none", marginTop: 2 }}
