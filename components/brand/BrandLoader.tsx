@@ -40,9 +40,26 @@
 // Dark mode is a real variant, not an inversion: many of the 43 templates open
 // on a dark stage, and a cream flash before one of those is a jolt.
 
+import { useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 
 const WORDMARK = "SubhSandesh";
+
+// ─── The reveal plays ONCE per page load ─────────────────────────────────────
+//
+// A recipient goes through two waits: the share fetch, then the viewer's own
+// JavaScript chunk. Both show this screen, which is deliberate — two different
+// loading screens back to back make one page feel like two failed ones. But the
+// second one is a fresh MOUNT, and a CSS animation runs on mount, so the letters
+// resolved, settled, and then resolved again. Once the fetch is held long enough
+// for the reveal to finish (see LOADER_MIN_MS), that replay is the most visible
+// thing on the screen.
+//
+// So the first mount reveals and every later mount renders the settled lockup,
+// which is what makes the two waits read as one continuous loader. Module scope
+// is exactly the right lifetime: it resets on a real page load, which is when a
+// recipient should see the reveal again.
+let introPlayed = false;
 
 export default function BrandLoader({
   /**
@@ -54,6 +71,14 @@ export default function BrandLoader({
 }: {
   note?: string;
 } = {}) {
+  // Read during render, written in an effect. Writing it during render would
+  // make React's double-invoked render in development mark the FIRST mount as
+  // already-played and skip the reveal it is there to show.
+  const [settled] = useState(() => introPlayed);
+  useEffect(() => {
+    introPlayed = true;
+  }, []);
+
   // ── WHY THERE IS NO `inline` VARIANT ──────────────────────────────────────
   //
   // There was one, with `minHeight: 100%`, and the first thing it did was break
@@ -249,6 +274,27 @@ export default function BrandLoader({
           .ssbl-domain { color: rgba(247,236,226,0.32) }
         }
 
+        /* ── A remount shows the lockup already landed ──────────────────
+           Two classes deep on purpose: '.ssbl-word span' is a class plus a
+           type selector, so a single-class rule would lose to it and the
+           letters would animate anyway. */
+        .ssbl-settled .ssbl-word span,
+        .ssbl-settled .ssbl-sub,
+        .ssbl-settled .ssbl-deva {
+          animation: none;
+          opacity: 1;
+        }
+        .ssbl-settled .ssbl-word span { filter: none; transform: none }
+        /* ...except the sheen, which is the 'still working' cue ON the
+           wordmark and is the one thing that SHOULD keep moving after the
+           lockup has landed. Three classes to outrank the two-classes-plus-a-
+           type rule above, and no start delay, because on a remount it should
+           already be sweeping. */
+        .ssbl-settled .ssbl-word .ssbl-sheen {
+          animation: ssblSheen 2.6s ease-in-out infinite;
+          opacity: 1;
+        }
+
         /* Nothing moves on its own, and everything that animated IN is simply
            there. A person who asked for less motion still gets the brand. */
         @media (prefers-reduced-motion: reduce) {
@@ -261,7 +307,7 @@ export default function BrandLoader({
         }
       `}</style>
 
-      <div className="ssbl-stack">
+      <div className={settled ? "ssbl-stack ssbl-settled" : "ssbl-stack"}>
         <div className="ssbl-ring">
           <div className="ssbl-arc" aria-hidden="true" />
           <div className="ssbl-plate">
