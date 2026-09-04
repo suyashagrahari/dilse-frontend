@@ -36,6 +36,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Loader2, Star, X } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import RatingFace from "./feedback/RatingFace";
 import { BRAND } from "@/lib/brand";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import type { FeedbackContext } from "@/lib/feedback/feedbackBus";
@@ -189,6 +190,21 @@ export default function FeedbackModal({
 
   const pick = (value: number) => {
     setRating(value);
+
+    // ── A 12ms tick, on phones that support it ──────────────────────────────
+    //
+    // Five targets across a phone screen are small, and the most common
+    // mis-tap is landing on the neighbour of the star you meant. A tick
+    // confirms the tap by touch, before the eye has moved. Short on purpose:
+    // anything longer reads as an error buzz.
+    //
+    // Wrapped because Safari does not implement it and some Android builds
+    // throw rather than returning false.
+    try {
+      navigator.vibrate?.(12);
+    } catch {
+      /* no haptics here, and nothing to do about it */
+    }
     // Move to the box they can now see. Not on a phone: focusing a textarea
     // there throws the keyboard up over the stars they just tapped, before they
     // have had a chance to see the rating land.
@@ -255,14 +271,30 @@ export default function FeedbackModal({
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
         display: "flex",
-        alignItems: "center",
+        // ── A SHEET ON A PHONE, A CARD ON A DESKTOP ───────────────────────
+        //
+        // `flex-end` on a phone so the card rises from the bottom edge, which
+        // puts the stars inside thumb reach instead of halfway up a screen
+        // nobody can reach the middle of one-handed. The same pattern
+        // `PaymentModal` already uses, so the two sheets in this product behave
+        // alike.
+        alignItems: "flex-end",
         justifyContent: "center",
-        // The extra bottom padding keeps the card clear of the phone's home
-        // indicator and of the app's own bottom navigation bar.
-        padding: "16px 16px calc(16px + env(safe-area-inset-bottom, 0px))",
+        padding: 0,
         animation: "ssFeedbackFade 180ms ease-out both",
       }}
+      className="ssFeedbackHost"
     >
+      <style>{`
+        /* From 640px there is room to centre it, and a full-width sheet on a
+           desktop looks like a mistake. The bottom corners round only once it
+           is floating — while it meets the screen edge, rounding them leaves
+           two slivers of backdrop under the card. */
+        @media (min-width: 640px) {
+          .ssFeedbackHost { align-items: center; padding: 16px }
+          .ssFeedbackCard { --ss-r-bottom: 24px; max-width: 400px }
+        }
+      `}</style>
       <div
         ref={cardRef}
         role="dialog"
@@ -272,21 +304,41 @@ export default function FeedbackModal({
           // The skip affordance is absolutely positioned inside this card.
           position: "relative",
           width: "100%",
-          maxWidth: 400,
           // Never taller than the viewport: a rotated phone with the keyboard
           // up leaves very little room, and a card that overflows loses its
-          // buttons off the bottom.
-          maxHeight: "calc(100dvh - 32px)",
+          // buttons off the bottom. `dvh` rather than `vh` because iOS Safari's
+          // toolbars make `vh` taller than what you can actually see.
+          maxHeight: "calc(100dvh - 24px)",
           overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
           background: BRAND.surface,
-          borderRadius: 22,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderBottomLeftRadius: "var(--ss-r-bottom, 0px)",
+          borderBottomRightRadius: "var(--ss-r-bottom, 0px)",
           border: `1px solid ${BRAND.border}`,
           boxShadow: BRAND.shadowElevated,
-          padding: "26px 22px 20px",
+          // The bottom padding clears the iOS home bar, which sits ON TOP of a
+          // sheet rather than beside it.
+          padding: "10px 20px calc(18px + env(safe-area-inset-bottom, 0px))",
           textAlign: "center",
           animation: "ssFeedbackRise 240ms cubic-bezier(0.16,1,0.3,1) both",
         }}
+        className="ssFeedbackCard"
       >
+        {/* A grab handle. It is not draggable, and it is here anyway: without
+            one, a panel flush against the bottom edge reads as a stuck dialog
+            rather than something that came up and can go away. */}
+        <div
+          aria-hidden="true"
+          style={{
+            width: 38,
+            height: 4,
+            borderRadius: 99,
+            background: "rgba(61,12,17,0.14)",
+            margin: "4px auto 10px",
+          }}
+        />
         {sent ? (
           // ── Thank-you ──────────────────────────────────────────────────────
           <div style={{ padding: "22px 0 16px" }}>
@@ -363,10 +415,15 @@ export default function FeedbackModal({
               Published 🎉
             </p>
 
+            {/* The face goes above the question, because it is the thing that
+                makes someone look at all — and it is the thing that rewards the
+                first tap. See components/feedback/RatingFace.tsx. */}
+            <RatingFace rating={rating} size={100} />
+
             <h2
               id="ss-feedback-title"
               style={{
-                margin: "0 0 6px",
+                margin: "10px 0 6px",
                 fontSize: 20,
                 lineHeight: 1.3,
                 fontWeight: 700,
@@ -376,8 +433,43 @@ export default function FeedbackModal({
             >
               How was making {what}?
             </h2>
-            <p style={{ margin: "0 0 20px", fontSize: 13, color: BRAND.muted, lineHeight: 1.6 }}>
-              One tap. We read every single one.
+
+            {/* ── WHY THIS LINE CHANGES ONCE THEY TAP ────────────────────────
+                Before: the smallest possible ask, naming the cost ("one tap")
+                because the honest objection is "how long will this take".
+                After: their own rating named back to them, which confirms the
+                tap landed on the star they meant — thumbs are imprecise on a
+                five-across row — and turns the box below into an invitation
+                rather than a form. */}
+            {/* ── ONE line, not two ──────────────────────────────────────────
+                A second, fixed-height paragraph used to sit below the stars
+                printing the same rating label — the identical words twice once
+                a star was tapped. This one carries both jobs, including the
+                `aria-live` announcement, which is the half a sighted reader
+                never notices and a screen-reader user depends on.
+
+                `minHeight` because the two states are different lengths, and
+                without it tapping a star reflows the card taller and moves the
+                Send button out from under the thumb already travelling toward
+                it. */}
+            <p
+              aria-live="polite"
+              style={{
+                margin: "0 0 18px",
+                minHeight: 40,
+                fontSize: 13,
+                color: BRAND.muted,
+                lineHeight: 1.6,
+              }}
+            >
+              {rating === 0 ? (
+                <>One tap is plenty. We read every single one.</>
+              ) : (
+                <>
+                  <span style={{ color: BRAND.text, fontWeight: 700 }}>{copy.label}</span>
+                  {rating >= 4 ? " — thank you." : " — tell us what happened?"}
+                </>
+              )}
             </p>
 
             {/* ── The stars ──────────────────────────────────────────────────
@@ -398,7 +490,7 @@ export default function FeedbackModal({
                   pick(Math.max(1, (rating || 6) - 1));
                 }
               }}
-              style={{ display: "flex", justifyContent: "center", gap: 2, marginBottom: 10 }}
+              style={{ display: "flex", justifyContent: "center", gap: 0, marginBottom: 10, touchAction: "manipulation" }}
             >
               {[1, 2, 3, 4, 5].map((value) => {
                 const on = value <= rating;
@@ -413,10 +505,17 @@ export default function FeedbackModal({
                     onClick={() => pick(value)}
                     disabled={busy}
                     style={{
-                      width: 46,
-                      height: 46,
+                      // 52px, up from 46. The WCAG floor is 44 and the stars
+                      // sit edge to edge in a five-across row, so the common
+                      // mis-tap is the neighbour of the one you meant.
+                      width: 52,
+                      height: 52,
                       border: "none",
                       background: "transparent",
+                      // Without this, mobile Safari waits ~300ms on every tap
+                      // to see whether it was a double-tap zoom. On the row
+                      // that IS the interaction, that delay reads as lag.
+                      touchAction: "manipulation",
                       cursor: busy ? "default" : "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -428,7 +527,7 @@ export default function FeedbackModal({
                     }}
                   >
                     <Star
-                      size={31}
+                      size={34}
                       strokeWidth={1.75}
                       style={{
                         color: on ? BRAND.gold : "rgba(61,12,17,0.22)",
@@ -440,23 +539,6 @@ export default function FeedbackModal({
                 );
               })}
             </div>
-
-            {/* The label is always in the layout, at a fixed height, so picking
-                a star does not push the card taller and move the button out
-                from under the thumb that is heading for it. */}
-            <p
-              aria-live="polite"
-              style={{
-                margin: "0 0 14px",
-                height: 18,
-                fontSize: 13,
-                fontWeight: 600,
-                color: rating ? (rating <= 2 ? BRAND.danger : BRAND.accent) : "transparent",
-                transition: "color 160ms ease",
-              }}
-            >
-              {copy?.label ?? " "}
-            </p>
 
             {rating > 0 && (
               <div style={{ animation: "ssFeedbackFade 200ms ease-out both" }}>
