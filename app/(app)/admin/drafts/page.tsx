@@ -304,6 +304,16 @@ export default function AdminDraftsPage() {
             <Stat label="By price" value={stats.priceBlocked} color={BRAND.danger} />
             <Stat label="Unfinished" value={stats.freeStalled} color={BRAND.goldDeep} />
             <Stat label="Contacted" value={stats.contacted} color={BRAND.ok} />
+            {!!stats.hiddenNoOwner && stats.hiddenNoOwner > 0 && (
+              <div style={{ display: "flex", gap: 6, alignItems: "flex-start", flex: "1 1 240px", minWidth: 220 }}>
+                <Info size={13} style={{ color: BRAND.faint, flex: "none", marginTop: 2 }} />
+                <span style={{ fontSize: 11, color: BRAND.faint, lineHeight: 1.5 }}>
+                  {stats.hiddenNoOwner} draft{stats.hiddenNoOwner === 1 ? "" : "s"} not listed —
+                  the account that made {stats.hiddenNoOwner === 1 ? "it" : "them"} no longer
+                  exists, so there is nobody to write to.
+                </span>
+              </div>
+            )}
             {stats.capped && (
               <div style={{ display: "flex", gap: 6, alignItems: "flex-start", flex: "1 1 240px", minWidth: 220 }}>
                 <Info size={13} style={{ color: BRAND.faint, flex: "none", marginTop: 2 }} />
