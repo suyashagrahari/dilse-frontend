@@ -41,6 +41,14 @@ export interface Stats {
   freeStalled: number;
   contacted: number;
   capped: boolean;
+  /**
+   * Drafts the list is NOT showing because their creator's account is gone.
+   *
+   * `totalDrafts` counts every unpublished page; the list drops the ones that
+   * cannot be written to. Without this number the header and the list disagree
+   * with nothing to explain the gap, which reads as a broken panel.
+   */
+  hiddenNoOwner?: number;
 }
 
 export interface Detail {
