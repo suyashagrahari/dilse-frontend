@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
 import SenderPicker, { type SenderOption } from "@/components/admin/SenderPicker";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -127,6 +128,7 @@ export default function AdminThreadsPage() {
   const [body, setBody] = useState("");
   const [reading, setReading] = useState<string | null>(null);
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [sort, setSort] = useState<SortOrder>("newest");
   const [senders, setSenders] = useState<SenderOption[]>([]);
   const [senderId, setSenderId] = useState("");
   /** Where replies to this conversation come back to. Fixed, shown, not chosen. */
@@ -161,7 +163,7 @@ export default function AdminThreadsPage() {
     setLoading(true);
     setError(null);
     try {
-      const q = new URLSearchParams({ limit: "50" });
+      const q = new URLSearchParams({ limit: "50", sort });
       if (filter === "unread") q.set("unread", "1");
       else if (filter) q.set("kind", filter);
       if (search.trim()) q.set("q", search.trim());
@@ -176,13 +178,13 @@ export default function AdminThreadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, allowed, filter, search, hdr]);
+  }, [accessToken, allowed, filter, search, sort, hdr]);
 
   useEffect(() => {
     void load();
     // `search` is submitted with Enter, not on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, allowed, filter]);
+  }, [accessToken, allowed, filter, sort]);
 
   /**
    * Take the sender facts off a conversation response.
@@ -417,6 +419,21 @@ export default function AdminThreadsPage() {
               </button>
             );
           })}
+          {/* ── The words are not "Newest" and "Oldest" here ──────────────────
+              This list is ordered by LAST MESSAGE, so a thread opened in March
+              that somebody answered an hour ago is at the top. Calling that
+              "Newest" would claim the conversation started recently, which is
+              exactly what it does not mean — and the other end is not "old
+              conversations", it is the ones that have been waiting longest for
+              an answer. */}
+          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center", flex: "none" }}>
+            <SortToggle
+              value={sort}
+              onChange={setSort}
+              labels={{ newest: "Latest reply", oldest: "Waiting longest" }}
+              size="sm"
+            />
+          </div>
         </div>
 
         {error && (

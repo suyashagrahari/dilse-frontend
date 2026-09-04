@@ -8,6 +8,7 @@ import {
   BarChart3, Users, MessageSquare, ChevronLeft, ChevronRight,
   X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff, Send,
 } from "lucide-react";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
 interface IReply { body: string; sentAt: string; }
 interface ContactItem {
@@ -30,6 +31,7 @@ export default function AdminContactsPage() {
   const [items, setItems] = useState<ContactItem[]>([]);
   const [pg, setPg] = useState<Pg>({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState<SortOrder>("newest");
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState<ContactItem | null>(null);
@@ -44,7 +46,7 @@ export default function AdminContactsPage() {
     if (!accessToken) return;
     setLoading(true);
     try {
-      const p = new URLSearchParams({ page: String(page), limit: "20", filter });
+      const p = new URLSearchParams({ page: String(page), limit: "20", filter, sort });
       const res = await fetch(`${API_URL}/admin/contacts?${p}`, { headers: hdr() });
       const data = await res.json();
       if (data.success) {
@@ -53,7 +55,7 @@ export default function AdminContactsPage() {
         setUnread(data.data.unreadCount);
       }
     } finally { setLoading(false); }
-  }, [accessToken, filter, hdr]);
+  }, [accessToken, filter, sort, hdr]);
 
   useEffect(() => { fetchItems(1); }, [fetchItems]);
 
@@ -180,9 +182,12 @@ export default function AdminContactsPage() {
                 color: filter === f.key ? gD : tM,
               }}>{f.label}</button>
             ))}
-            <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: "rgba(255,255,255,0.55)", border: `1px solid ${cB}`, fontSize: 11, fontWeight: 700, color: t2 }}>
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <SortToggle value={sort} onChange={setSort} size="sm" />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: "rgba(255,255,255,0.55)", border: `1px solid ${cB}`, fontSize: 11, fontWeight: 700, color: t2 }}>
               <MessageSquare size={12} color={g} /> {pg.total} total
             </span>
+            </div>
           </div>
           <div style={{ height: 1, background: cB }} />
         </div>
