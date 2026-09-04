@@ -31,7 +31,7 @@
 // catch a draft that answers the wrong question is to see the question it
 // thought it was answering.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
@@ -42,6 +42,7 @@ import {
   Inbox, CheckCircle2, AlertTriangle, MessageSquare, RefreshCw, UserRound,
 } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
+import SenderPicker, { type SenderOption } from "@/components/admin/SenderPicker";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -79,13 +80,8 @@ interface Row extends Thread {
  * usable is the server's fact to state, not the panel's to remember. A stale
  * copy here would be a bounced reply.
  */
-interface SenderOption {
-  id: string;
-  address: string;
-  label: string;
-  description: string;
-  isDefault?: boolean;
-}
+// The shape itself now lives with the picker that renders it, so the two
+// cannot drift: `components/admin/SenderPicker`.
 
 const KIND_META: Record<string, { label: string; color: string; bg: string }> = {
   draft:    { label: "Unfinished page", color: "#a8823a", bg: "rgba(201,168,76,0.16)" },
@@ -605,67 +601,18 @@ export default function AdminThreadsPage() {
                       </div>
                     )}
 
-                    {/* ── Who this comes from, and where it comes back to ────────
-                        The composer used to say nothing about either. A super
-                        admin wrote a reply, sent it, and found out which
-                        address it left from by checking their own inbox.
-
-                        Both lines are here on purpose. From is a choice; Reply-To
-                        is NOT, and showing them together is the only way that
-                        reads as deliberate rather than broken — apex mail is
-                        GoDaddy's, so a reply sent back to feedback@ never
-                        reaches this panel. Only reply.subhsandesh.in does. */}
-                    {senders.length > 0 && (
-                      <div style={{ marginBottom: 10 }}>
-                        <p style={{ margin: "0 0 6px", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase", color: tM }}>
-                          Send as
-                        </p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {senders.map((o) => {
-                            const on = o.id === senderId;
-                            return (
-                              <button
-                                key={o.id}
-                                type="button"
-                                onClick={() => setSenderId(o.id)}
-                                title={o.description}
-                                aria-pressed={on}
-                                style={{
-                                  padding: "7px 11px", borderRadius: 999, cursor: "pointer",
-                                  border: `1px solid ${on ? bg : cB}`,
-                                  background: on ? bg : "#fff",
-                                  color: on ? "#fff" : t2,
-                                  fontSize: 12.5, fontWeight: 700, fontFamily: "inherit",
-                                  display: "flex", alignItems: "center", gap: 6,
-                                }}
-                              >
-                                {o.label}
-                                <span style={{ fontSize: 11, fontWeight: 600, opacity: on ? 0.75 : 0.6 }}>
-                                  {o.address}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* The chosen option's own sentence, so the choice is
-                            explained at the moment it is made rather than in a
-                            tooltip nobody hovers on a phone. */}
-                        {senders.find((o) => o.id === senderId)?.description && (
-                          <p style={{ margin: "7px 0 0", fontSize: 11.5, color: tM, lineHeight: 1.5 }}>
-                            {senders.find((o) => o.id === senderId)?.description}
-                          </p>
-                        )}
-
-                        {replyToAddress && (
-                          <p style={{ margin: "6px 0 0", fontSize: 11.5, color: tM, lineHeight: 1.5 }}>
-                            Their reply comes back to{" "}
-                            <span style={{ fontWeight: 700, color: t2 }}>{replyToAddress}</span>{" "}
-                            whichever address you send as — that is the only one this panel can read.
-                          </p>
-                        )}
-                      </div>
-                    )}
+                    {/* Who this comes from, and where it comes back to. Both
+                        lines are the picker's own job now — it is shared with
+                        the unfinished-drafts composer, which needs exactly the
+                        same control, and two copies of a control that decides
+                        what a customer sees in their inbox is how the two
+                        quietly drift apart. */}
+                    <SenderPicker
+                      options={senders}
+                      value={senderId}
+                      onChange={setSenderId}
+                      replyToAddress={replyToAddress}
+                    />
 
                     <textarea
                       value={body}
