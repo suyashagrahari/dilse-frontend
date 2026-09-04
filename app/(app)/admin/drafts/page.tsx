@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import DraftDetail from "./DraftDetail";
 import DraftRowCard from "./DraftRowCard";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 import { FILTERS, type Detail, type Pg, type Row, type Stats } from "./types";
 import { Stat, Warn } from "./parts";
 
@@ -70,6 +71,7 @@ export default function AdminDraftsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [templateType, setTemplateType] = useState("");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortOrder>("newest");
   /**
    * The `?search=` in the URL, once read. `null` means "not read yet".
    *
@@ -124,7 +126,7 @@ export default function AdminDraftsPage() {
       setLoading(true);
       setError(null);
       try {
-        const q = new URLSearchParams({ page: String(page), limit: "20", filter });
+        const q = new URLSearchParams({ page: String(page), limit: "20", filter, sort });
         if (templateType) q.set("templateType", templateType);
         if (search.trim()) q.set("search", search.trim());
         const res = await fetch(`${API_URL}/admin/drafts?${q}`, { headers: hdr() });
@@ -141,7 +143,7 @@ export default function AdminDraftsPage() {
         setLoading(false);
       }
     },
-    [accessToken, allowed, filter, templateType, search, hdr]
+    [accessToken, allowed, filter, templateType, search, sort, hdr]
   );
 
   useEffect(() => {
@@ -152,7 +154,7 @@ export default function AdminDraftsPage() {
     // `search` is deliberately not a dependency — retyping would refetch on
     // every keystroke. It is submitted with Enter or the button.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, allowed, filter, templateType, urlSearch]);
+  }, [accessToken, allowed, filter, templateType, sort, urlSearch]);
 
   const fetchDetail = useCallback(
     async (type: string, pageId: string): Promise<Detail | null> => {
@@ -364,6 +366,13 @@ export default function AdminDraftsPage() {
               </button>
             );
           })}
+          {/* Pushed to the end of the row so the filters keep their reading
+              order and the sort sits where the list starts. It is `flex: none`
+              inside a scrolling row, so on a phone it scrolls into view with
+              the last filter rather than squashing them. */}
+          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center" }}>
+            <SortToggle value={sort} onChange={setSort} />
+          </div>
         </div>
 
         {error && (

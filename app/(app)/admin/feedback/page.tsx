@@ -36,6 +36,7 @@ import {
   StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle,
   UserRound,
 } from "lucide-react";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -135,6 +136,7 @@ export default function AdminFeedbackPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pg, setPg] = useState<Pg>({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [filter, setFilter] = useState<string>("all");
+  const [sort, setSort] = useState<SortOrder>("newest");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -183,7 +185,7 @@ export default function AdminFeedbackPage() {
       setLoading(true);
       setError(null);
       try {
-        const q = new URLSearchParams({ page: String(page), limit: "20", filter });
+        const q = new URLSearchParams({ page: String(page), limit: "20", filter, sort });
         const res = await fetch(`${API_URL}/admin/feedback?${q}`, { headers: hdr() });
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Could not load feedback");
@@ -196,7 +198,7 @@ export default function AdminFeedbackPage() {
         setLoading(false);
       }
     },
-    [accessToken, allowed, filter, hdr]
+    [accessToken, allowed, filter, sort, hdr]
   );
 
   useEffect(() => {
@@ -457,6 +459,10 @@ export default function AdminFeedbackPage() {
               </button>
             );
           })}
+          {/* Oldest first is the un-replied backlog in the order it arrived. */}
+          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center" }}>
+            <SortToggle value={sort} onChange={setSort} />
+          </div>
         </div>
 
         {error && (

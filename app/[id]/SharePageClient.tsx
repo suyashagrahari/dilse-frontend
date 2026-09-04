@@ -8,6 +8,7 @@ import { Loader2, HeartCrack, X, Sparkles, PenLine, Lock, Eye, EyeOff, ShieldAle
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import { usePwa } from "@/components/PwaProvider";
+import BrandLoader from "@/components/brand/BrandLoader";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -18,17 +19,14 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
   return headers;
 }
 
-// ── Skeleton shown while a heavy viewer chunk downloads ─────────────────────
+// ── Shown while a heavy viewer chunk downloads ──────────────────────────────
+//
+// The SAME screen as the fetch above it, deliberately. A recipient opening a
+// link goes through two waits — the share fetch, then a ~40KB viewer chunk —
+// and showing them two different loading screens in a row makes one page feel
+// like two failed ones. One continuous brand moment instead.
 function ViewerSkeleton() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
-      <div className="text-center">
-        <div className="text-5xl mb-6 animate-bounce">🎁</div>
-        <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
-        <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
-      </div>
-    </div>
-  );
+  return <BrandLoader />;
 }
 
 // ── Lazy-load heavy viewer components (~1000 lines / ~40KB each) ─────────────
@@ -465,23 +463,12 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
     } finally { setPwLoading(false); }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="text-5xl mb-6"
-          >
-            🎁
-          </motion.div>
-          <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  // The first thing a recipient sees. See components/brand/BrandLoader — the
+  // framer-motion wrapper that used to be here is gone on purpose: this screen
+  // is on-stage while the fetch and a viewer chunk are both competing for the
+  // main thread, and the loader's own animation must not be one of the things
+  // in that fight.
+  if (loading) return <BrandLoader />;
 
   // Holi has its own full-page viewer
   if (!loading && templateType === "holi" && data) {
