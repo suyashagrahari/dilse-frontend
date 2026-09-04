@@ -501,8 +501,20 @@ export default function AdminFeedbackPage() {
                 {items.map((item) => {
                   const isOpen = sel?._id === item._id;
                   return (
+                    // ── WHY THE ROW IS WRAPPED ──────────────────────────────
+                    //
+                    // So the profile link can sit BESIDE the button instead of
+                    // inside it. An <a> nested in a <button> is invalid HTML —
+                    // interactive elements cannot nest — and browsers disagree
+                    // about what a click, a Tab and a screen reader should do
+                    // with it. `stopPropagation` makes the mouse behave and
+                    // fixes none of the rest.
+                    //
+                    // As siblings, both are real controls: the button opens the
+                    // feedback, the link opens the account, and neither needs
+                    // to know about the other.
+                    <div key={item._id} style={{ position: "relative" }}>
                     <button
-                      key={item._id}
                       type="button"
                       onClick={() => void open(item)}
                       style={{
@@ -545,29 +557,9 @@ export default function AdminFeedbackPage() {
                       </p>
 
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8, alignItems: "center" }}>
-                        {/* The name IS the link when there is an account behind
-                            it — a separate icon competes with the row's own
-                            click, which opens the feedback. Plain text when
-                            there is no account, so the absence is quiet. */}
-                        {item.profileUserId ? (
-                          <Link
-                            href={`/admin/users/${item.profileUserId}`}
-                            onClick={(e) => e.stopPropagation()}
-                            title="Open this person's profile"
-                            style={{
-                              display: "inline-flex", alignItems: "center", gap: 4,
-                              fontSize: 11.5, fontWeight: 700, color: "#8b5a2b",
-                              textDecoration: "none",
-                            }}
-                          >
-                            <UserRound size={11} />
-                            {item.userName || item.userEmail || "—"}
-                          </Link>
-                        ) : (
-                          <span style={{ fontSize: 11.5, fontWeight: 700, color: t1 }}>
-                            {item.userName || "—"}
-                          </span>
-                        )}
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: t1 }}>
+                          {item.userName || "—"}
+                        </span>
                         <span style={{ fontSize: 11.5, color: tM }}>{item.userEmail}</span>
                         {item.templateLabel && (
                           <span
@@ -581,6 +573,26 @@ export default function AdminFeedbackPage() {
                         )}
                       </div>
                     </button>
+                    {/* Top-right, clear of the stars on the left. 34px tall so
+                        it is a real tap target rather than a decoration. */}
+                    {item.profileUserId && (
+                      <Link
+                        href={`/admin/users/${item.profileUserId}`}
+                        title={`Open ${item.userName || item.userEmail}'s profile`}
+                        aria-label="Open this person's profile"
+                        style={{
+                          position: "absolute", top: 8, right: 8,
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          minHeight: 26, padding: "4px 9px", borderRadius: 99,
+                          border: `1px solid ${cB}`, background: "#fff",
+                          fontSize: 10.5, fontWeight: 800, color: "#8b5a2b",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <UserRound size={11} /> profile
+                      </Link>
+                    )}
+                    </div>
                   );
                 })}
               </div>

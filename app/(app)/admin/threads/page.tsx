@@ -452,8 +452,13 @@ export default function AdminThreadsPage() {
                 const meta = KIND_META[r.kind] || KIND_META.inbound;
                 const last = r.messages?.[r.messages.length - 1];
                 return (
+                  // Wrapped so the profile link is a SIBLING of the button. An
+                  // <a> inside a <button> is invalid HTML and browsers disagree
+                  // on what a click, a Tab and a screen reader do with it;
+                  // stopPropagation fixes the mouse and none of the rest.
+                  <div key={r.id} style={{ position: "relative" }}>
                   <button
-                    key={r.id} type="button" className="th-row" onClick={() => void open(r)}
+                    type="button" className="th-row" onClick={() => void open(r)}
                     style={{
                       width: "100%", textAlign: "left", border: "none", background: sel?.id === r.id ? "rgba(201,168,76,0.10)" : "transparent",
                       borderTop: i === 0 ? "none" : `1px solid ${cB}`,
@@ -480,22 +485,7 @@ export default function AdminThreadsPage() {
                         {meta.label}
                       </span>
                       <span style={{ fontSize: 10.5, color: tM }}>{r.messageCount} msg</span>
-                      {/* An icon rather than a linked name here: the whole row
-                          is already a button that opens the conversation, and
-                          a link inside it needs its own stopPropagation and a
-                          target big enough to hit on a phone without opening
-                          the thread by accident. */}
-                      {r.profileUserId && (
-                        <Link
-                          href={`/admin/users/${r.profileUserId}`}
-                          onClick={(e) => e.stopPropagation()}
-                          title={`Open ${r.userName || r.userEmail}'s profile`}
-                          aria-label="Open this person's profile"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5, fontWeight: 700, color: "#8b5a2b", textDecoration: "none" }}
-                        >
-                          <UserRound size={11} /> profile
-                        </Link>
-                      )}
+
                       {r.status === "closed" && (
                         <span style={{ fontSize: 10.5, color: OK, display: "inline-flex", alignItems: "center", gap: 3 }}>
                           <CheckCircle2 size={10} /> done
@@ -503,6 +493,25 @@ export default function AdminThreadsPage() {
                       )}
                     </div>
                   </button>
+                  {/* Top-right of the row, clear of the timestamp. */}
+                  {r.profileUserId && (
+                    <Link
+                      href={`/admin/users/${r.profileUserId}`}
+                      title={`Open ${r.userName || r.userEmail}'s profile`}
+                      aria-label="Open this person's profile"
+                      style={{
+                        position: "absolute", bottom: 8, right: 10,
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        minHeight: 24, padding: "3px 8px", borderRadius: 99,
+                        border: `1px solid ${cB}`, background: "#fff",
+                        fontSize: 10, fontWeight: 800, color: "#8b5a2b",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <UserRound size={10} /> profile
+                    </Link>
+                  )}
+                  </div>
                 );
               })
             )}
