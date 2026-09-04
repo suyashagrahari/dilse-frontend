@@ -214,6 +214,22 @@ export default function ProfilePage() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [copiedPw, setCopiedPw] = useState<string | null>(null);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  // ── Drafts and live pages in ONE list ───────────────────────────────────────
+  //
+  // Every abandoned build is now a draft, so this list is no longer "the pages I
+  // sent people" — it is that plus everything half-finished, and for most users
+  // the unfinished ones will outnumber the rest.
+  //
+  // Filtering rather than splitting into two sections, because a page moves
+  // between the two states by being published and the row is otherwise
+  // identical. Two sections would mean two copies of this card and a row that
+  // silently teleports.
+  //
+  // The server already sorts by updatedAt descending, so the most recently
+  // touched draft is the first thing anyone sees — which is the whole point of
+  // "carry on where I left off".
+  const [creationFilter, setCreationFilter] = useState<"all" | "draft" | "live">("all");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
@@ -422,10 +438,27 @@ export default function ProfilePage() {
 
   const handleDeleteCreation = async (page: MyCreation) => {
     const base = templateMeta(page.templateType).endpoint;
-    if (!base || !accessToken) return;
+    if (!accessToken) return;
+
+    // ── WHY A DRAFT GOES THROUGH A DIFFERENT ROUTE ──────────────────────────
+    //
+    // Not because the template's own DELETE would fail — it would work fine.
+    // Because `/share/me/drafts/...` carries `isPublished: { $ne: true }` inside
+    // the delete filter, so it CANNOT remove a published page.
+    //
+    // The race that matters: the confirm banner is open on a draft, the user
+    // publishes the same page in another tab, then presses Discard here. The
+    // per-template route would delete a live card the recipient may already
+    // have the link to, on the strength of a banner that promised "nobody has a
+    // link to it". The draft route refuses and the row simply stays.
+    const url = page.isPublished
+      ? base && `${API_URL}/${base}/${page._id}`
+      : `${API_URL}/share/me/drafts/${page.templateType}/${page._id}`;
+    if (!url) return;
+
     setDeletingId(page._id);
     try {
-      const res = await fetch(`${API_URL}/${base}/${page._id}`, {
+      const res = await fetch(url, {
         method: "DELETE",
         headers: authHeaders(),
       });
@@ -436,6 +469,13 @@ export default function ProfilePage() {
         setMyCreations((prev) => prev.filter((p) => p._id !== page._id));
         setDeleteConfirmId(null);
         if (expandedCard === page._id) setExpandedCard(null);
+      } else if (!page.isPublished && res.status === 404) {
+        // The draft route's refusal. Almost always the race above: it is a live
+        // page now, so say that rather than "failed", and refresh so the row
+        // shows Live and offers the deliberate delete instead.
+        alert("This page has been published, so it can't be discarded as a draft. Reloading your pages.");
+        setDeleteConfirmId(null);
+        void fetchMyCreations();
       } else {
         alert(data.error || "Failed to delete. Please try again.");
       }
@@ -833,12 +873,50 @@ export default function ProfilePage() {
     </motion.div>
   );
 
+  const draftCount = myCreations.filter((p) => !p.isPublished).length;
+  const liveCount = myCreations.length - draftCount;
+  const visibleCreations = myCreations.filter((p) =>
+    creationFilter === "all" ? true : creationFilter === "live" ? p.isPublished : !p.isPublished
+  );
+
+  /**
+   * One chip.
+   *
+   * Chips for empty buckets are hidden rather than disabled: a "Drafts 0" chip
+   * that cannot be pressed is a dead control, and offering the filter at all
+   * only makes sense once there is something to filter.
+   */
+  const filterChip = (id: "all" | "draft" | "live", label: string, count: number) =>
+    count === 0 && id !== "all" ? null : (
+      <button
+        key={id}
+        onClick={() => { setCreationFilter(id); setExpandedCard(null); setDeleteConfirmId(null); }}
+        className="text-[12px] font-bold rounded-full px-3 py-1.5 transition-colors"
+        style={{
+          background: creationFilter === id ? "var(--app-accent)" : "var(--app-accent-a08)",
+          color: creationFilter === id ? "#fff" : "var(--app-text-faint)",
+          border: "1px solid var(--app-border-faint)",
+        }}
+        aria-pressed={creationFilter === id}
+      >
+        {label} {count}
+      </button>
+    );
+
   const CreationsBlock = myCreations.length > 0 ? (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
       {sectionLabel("My Creations")}
+      {/* Only worth showing once there are both kinds to choose between. */}
+      {draftCount > 0 && liveCount > 0 && (
+        <div className="flex items-center gap-2 mb-2.5 px-0.5">
+          {filterChip("all", "All", myCreations.length)}
+          {filterChip("draft", "Drafts", draftCount)}
+          {filterChip("live", "Live", liveCount)}
+        </div>
+      )}
       <div className="overflow-hidden rounded-2xl" style={cardStyle}>
         <div className="max-h-[72vh] overflow-y-auto">
-        {myCreations.map((page) => {
+        {visibleCreations.map((page) => {
           const shareLink = getShareLink(page.shareId);
           const isExpanded = expandedCard === page._id;
           return (
@@ -870,10 +948,12 @@ export default function ProfilePage() {
                       <Edit3 size={14} style={{ color: "var(--app-text-muted)" }} /> <span className="hidden sm:inline">Edit</span>
                     </button>
                     <div className="w-px h-4 sm:h-5" style={{ background: "var(--app-border-faint)" }} />
-                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setExpandedCard(page._id); setDeleteConfirmId(page._id); }}
+                    <button title={page.isPublished ? "Delete" : "Discard"} onClick={(e) => { e.stopPropagation(); setExpandedCard(page._id); setDeleteConfirmId(page._id); }}
                       className="pl-2.5 pr-3 sm:px-3.5 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-r-full flex items-center gap-1.5 transition-colors hover:bg-[rgba(220,38,38,0.07)]"
                       style={{ color: "#dc2626" }}>
-                      <Trash2 size={14} /> <span className="hidden sm:inline">Delete</span>
+                      {/* "Discard" for a draft: it names an action with no audience,
+                          which is what discarding an unpublished page is. */}
+                      <Trash2 size={14} /> <span className="hidden sm:inline">{page.isPublished ? "Delete" : "Discard"}</span>
                     </button>
                   </div>
                   <ChevronDown size={18} className={`transition-transform duration-300 shrink-0 ${isExpanded ? "rotate-180" : ""}`} style={{ color: "var(--app-text-faint)" }} />
@@ -890,9 +970,23 @@ export default function ProfilePage() {
                           <div className="flex items-start gap-2 sm:gap-2.5">
                             <AlertTriangle size={15} style={{ color: "#dc2626" }} className="shrink-0 mt-0.5" />
                             <div className="min-w-0">
-                              <p className="text-[12px] sm:text-sm font-bold" style={{ color: "#dc2626" }}>Permanently delete this card?</p>
+                              {/* ── The warning has to match what is actually at stake ──────
+                                  Every abandoned build is now a draft, so most rows in this
+                                  list were never sent to anyone. Telling someone that
+                                  discarding one will "stop the link working for everyone you
+                                  sent it to" is not true of a draft, and a warning that
+                                  overstates its case is one people learn to click through —
+                                  including on the published card where every word of it IS
+                                  true. */}
+                              <p className="text-[12px] sm:text-sm font-bold" style={{ color: "#dc2626" }}>
+                                {page.isPublished ? "Permanently delete this card?" : "Discard this draft?"}
+                              </p>
                               <p className="text-[10.5px] sm:text-xs mt-0.5 leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
-                                This is <span style={{ color: "#dc2626", fontWeight: 700 }}>permanent and cannot be undone</span>. The card and all its content, photos and settings will be erased. The shared link will stop working for you and everyone you sent it to, and <span style={{ color: "#dc2626", fontWeight: 700 }}>it can never be recovered or published again</span> — you would have to build a brand-new card from scratch.
+                                {page.isPublished ? (
+                                  <>This is <span style={{ color: "#dc2626", fontWeight: 700 }}>permanent and cannot be undone</span>. The card and all its content, photos and settings will be erased. The shared link will stop working for you and everyone you sent it to, and <span style={{ color: "#dc2626", fontWeight: 700 }}>it can never be recovered or published again</span> — you would have to build a brand-new card from scratch.</>
+                                ) : (
+                                  <>This draft was never published, so nobody has a link to it. Its content and photos will be erased and <span style={{ color: "#dc2626", fontWeight: 700 }}>cannot be recovered</span> — you would have to start this one again.</>
+                                )}
                               </p>
                             </div>
                           </div>

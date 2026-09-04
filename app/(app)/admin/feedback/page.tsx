@@ -34,7 +34,9 @@ import { isSuperAdmin } from "@/lib/roles";
 import {
   ArrowLeft, Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock,
   StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle,
+  UserRound,
 } from "lucide-react";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -57,6 +59,15 @@ interface Item {
   _id: string;
   userName: string;
   userEmail: string;
+  /**
+   * The account behind this feedback, when there still is one.
+   *
+   * Answered by the server rather than derived from `userId` here, because
+   * "has a userId" and "has an account you can open" are different questions:
+   * the ref has no cascade, so a deleted user leaves the row pointing at
+   * nothing and a link built from it 404s. Empty means no button.
+   */
+  profileUserId?: string;
   templateSlug: string;
   templateLabel: string;
   pageUrl: string;
@@ -125,6 +136,7 @@ export default function AdminFeedbackPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pg, setPg] = useState<Pg>({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [filter, setFilter] = useState<string>("all");
+  const [sort, setSort] = useState<SortOrder>("newest");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +185,7 @@ export default function AdminFeedbackPage() {
       setLoading(true);
       setError(null);
       try {
-        const q = new URLSearchParams({ page: String(page), limit: "20", filter });
+        const q = new URLSearchParams({ page: String(page), limit: "20", filter, sort });
         const res = await fetch(`${API_URL}/admin/feedback?${q}`, { headers: hdr() });
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Could not load feedback");
@@ -186,7 +198,7 @@ export default function AdminFeedbackPage() {
         setLoading(false);
       }
     },
-    [accessToken, allowed, filter, hdr]
+    [accessToken, allowed, filter, sort, hdr]
   );
 
   useEffect(() => {
@@ -447,6 +459,10 @@ export default function AdminFeedbackPage() {
               </button>
             );
           })}
+          {/* Oldest first is the un-replied backlog in the order it arrived. */}
+          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center" }}>
+            <SortToggle value={sort} onChange={setSort} />
+          </div>
         </div>
 
         {error && (
@@ -491,8 +507,20 @@ export default function AdminFeedbackPage() {
                 {items.map((item) => {
                   const isOpen = sel?._id === item._id;
                   return (
+                    // ── WHY THE ROW IS WRAPPED ──────────────────────────────
+                    //
+                    // So the profile link can sit BESIDE the button instead of
+                    // inside it. An <a> nested in a <button> is invalid HTML —
+                    // interactive elements cannot nest — and browsers disagree
+                    // about what a click, a Tab and a screen reader should do
+                    // with it. `stopPropagation` makes the mouse behave and
+                    // fixes none of the rest.
+                    //
+                    // As siblings, both are real controls: the button opens the
+                    // feedback, the link opens the account, and neither needs
+                    // to know about the other.
+                    <div key={item._id} style={{ position: "relative" }}>
                     <button
-                      key={item._id}
                       type="button"
                       onClick={() => void open(item)}
                       style={{
@@ -551,6 +579,26 @@ export default function AdminFeedbackPage() {
                         )}
                       </div>
                     </button>
+                    {/* Top-right, clear of the stars on the left. 34px tall so
+                        it is a real tap target rather than a decoration. */}
+                    {item.profileUserId && (
+                      <Link
+                        href={`/admin/users/${item.profileUserId}`}
+                        title={`Open ${item.userName || item.userEmail}'s profile`}
+                        aria-label="Open this person's profile"
+                        style={{
+                          position: "absolute", top: 8, right: 8,
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          minHeight: 26, padding: "4px 9px", borderRadius: 99,
+                          border: `1px solid ${cB}`, background: "#fff",
+                          fontSize: 10.5, fontWeight: 800, color: "#8b5a2b",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <UserRound size={11} /> profile
+                      </Link>
+                    )}
+                    </div>
                   );
                 })}
               </div>
@@ -601,6 +649,17 @@ export default function AdminFeedbackPage() {
                     <p style={{ margin: "7px 0 0", fontSize: 14, fontWeight: 800, color: t1 }}>
                       {sel.userName || "—"}
                     </p>
+                    {/* Spelled out here rather than shown as a bare icon: this
+                        panel is where you decide what to say to somebody, and
+                        their history is the thing worth a full-width link. */}
+                    {sel.profileUserId && (
+                      <Link
+                        href={`/admin/users/${sel.profileUserId}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#8b5a2b", textDecoration: "none", marginTop: 3 }}
+                      >
+                        <UserRound size={12} /> Open their profile
+                      </Link>
+                    )}
                     <a
                       href={`mailto:${sel.userEmail}`}
                       style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#8b5a2b", textDecoration: "none", marginTop: 2 }}

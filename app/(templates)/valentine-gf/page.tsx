@@ -30,6 +30,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
 import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
@@ -235,16 +236,55 @@ function ValentineGfPage() {
     setEditMode("choose");
   };
 
-  const saveToServer = async (data: ValentineData) => {
-    if (!accessToken) return;
+  /**
+   * Answers with the row's id, so the draft path can learn it.
+   *
+   * It used to answer with nothing. That reads as a failed save to `useDraft`:
+   * the content stays dirty and the next milestone creates a SECOND identical
+   * draft. Both branches answer now — the update case returns the id it already
+   * had, which is what "this landed" means for an update.
+   */
+  const saveToServer = async (data: ValentineData): Promise<string | null> => {
+    if (!accessToken) return null;
     if (pageId) {
-      await fetch(`${API_URL}/valentine-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(data) });
-    } else {
-      const res = await fetch(`${API_URL}/valentine-pages`, { method: "POST", headers: headers(), body: JSON.stringify(data) });
-      const result = await res.json();
-      if (result.success) setPageId(result.data._id);
+      const res = await fetch(`${API_URL}/valentine-pages/${pageId}`, { method: "PUT", headers: headers(), body: JSON.stringify(data) });
+      return res.ok ? pageId : null;
     }
+    const res = await fetch(`${API_URL}/valentine-pages`, { method: "POST", headers: headers(), body: JSON.stringify(data) });
+    const result = await res.json();
+    if (!result.success || !result.data?._id) return null;
+    setPageId(result.data._id);
+    return String(result.data._id);
   };
+
+  // ── Auto-draft ──────────────────────────────────────────────────────────────
+  //
+  // Work built while signed OUT is held in the browser and promoted to a real
+  // draft — photos to S3 — the moment the visitor signs up or logs in.
+  // `saveToServer` returns early without a token, so everything built before
+  // signing in was lost at the first navigation.
+  const draft = useDraft({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing || saving,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    persist: (d) => saveToServer(d),
+    onAdopted: (d) => {
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // Closing the sheet and entering preview are the two moments the user has
+  // decided something is worth keeping. Leaving the editor and backgrounding
+  // the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const handlePublish = async () => {
     if (!pageId) return;

@@ -31,7 +31,7 @@
 // catch a draft that answers the wrong question is to see the question it
 // thought it was answering.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
@@ -39,9 +39,11 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import {
   ArrowLeft, Loader2, Sparkles, Send, X, Mail, Search,
-  Inbox, CheckCircle2, AlertTriangle, MessageSquare, RefreshCw,
+  Inbox, CheckCircle2, AlertTriangle, MessageSquare, RefreshCw, UserRound,
 } from "lucide-react";
 import ConversationThread, { type Thread } from "@/components/admin/ConversationThread";
+import SenderPicker, { type SenderOption } from "@/components/admin/SenderPicker";
+import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
 const t1 = "#2a0a0e";
 const t2 = "#7f5f5f";
@@ -59,7 +61,28 @@ interface Row extends Thread {
   templateType: string;
   pageId: string;
   kind: string;
+  /**
+   * The account behind this conversation, when there is one.
+   *
+   * Resolved server-side, and NOT the same thing as the thread's `userId`.
+   * An unmatched inbound thread has no userId at all — that is what unmatched
+   * means — so the server resolves it from the address instead. It is also ""
+   * when the account has since been deleted, because a link built from a dead
+   * ref 404s and reads as this panel being broken.
+   */
+  profileUserId?: string;
 }
+
+/**
+ * An address a reply may be sent FROM.
+ *
+ * Sent by the server with the conversation, and identified by `id` — never by
+ * address. SES sends only from a verified identity, so which addresses are
+ * usable is the server's fact to state, not the panel's to remember. A stale
+ * copy here would be a bounced reply.
+ */
+// The shape itself now lives with the picker that renders it, so the two
+// cannot drift: `components/admin/SenderPicker`.
 
 const KIND_META: Record<string, { label: string; color: string; bg: string }> = {
   draft:    { label: "Unfinished page", color: "#a8823a", bg: "rgba(201,168,76,0.16)" },
@@ -105,6 +128,11 @@ export default function AdminThreadsPage() {
   const [body, setBody] = useState("");
   const [reading, setReading] = useState<string | null>(null);
   const [aiAssisted, setAiAssisted] = useState(false);
+  const [sort, setSort] = useState<SortOrder>("newest");
+  const [senders, setSenders] = useState<SenderOption[]>([]);
+  const [senderId, setSenderId] = useState("");
+  /** Where replies to this conversation come back to. Fixed, shown, not chosen. */
+  const [replyToAddress, setReplyToAddress] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [sending, setSending] = useState(false);
   const [pasting, setPasting] = useState(false);
@@ -135,7 +163,7 @@ export default function AdminThreadsPage() {
     setLoading(true);
     setError(null);
     try {
-      const q = new URLSearchParams({ limit: "50" });
+      const q = new URLSearchParams({ limit: "50", sort });
       if (filter === "unread") q.set("unread", "1");
       else if (filter) q.set("kind", filter);
       if (search.trim()) q.set("q", search.trim());
@@ -150,13 +178,29 @@ export default function AdminThreadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, allowed, filter, search, hdr]);
+  }, [accessToken, allowed, filter, search, sort, hdr]);
 
   useEffect(() => {
     void load();
     // `search` is submitted with Enter, not on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, allowed, filter]);
+  }, [accessToken, allowed, filter, sort]);
+
+  /**
+   * Take the sender facts off a conversation response.
+   *
+   * They sit beside `data` rather than inside it because they describe this
+   * deployment, not this conversation. Selecting the default here rather than
+   * leaving it blank means the composer always names an address — a picker
+   * whose value is "" would send from the default anyway and say nothing about
+   * it, which is the state this whole change exists to remove.
+   */
+  const applySenders = (json: { senderOptions?: SenderOption[]; replyToAddress?: string }) => {
+    const options = Array.isArray(json.senderOptions) ? json.senderOptions : [];
+    setSenders(options);
+    setReplyToAddress(String(json.replyToAddress || ""));
+    setSenderId((options.find((o) => o.isDefault) || options[0])?.id || "");
+  };
 
   const open = async (row: Row) => {
     setSelLoading(true);
@@ -169,6 +213,7 @@ export default function AdminThreadsPage() {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not open it");
       setSel(json.data);
+      applySenders(json);
       // Opening marks it read on the server; mirror that here so the badge
       // does not keep claiming attention for something just dealt with.
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, unread: false } : r)));
@@ -184,7 +229,10 @@ export default function AdminThreadsPage() {
     try {
       const res = await fetch(`${API_URL}/admin/threads/${id}`, { headers: hdr() });
       const json = await res.json();
-      if (res.ok && json.success) setSel(json.data);
+      if (res.ok && json.success) {
+        setSel(json.data);
+        applySenders(json);
+      }
     } catch { /* a stale view is a refresh away */ }
   };
 
@@ -216,7 +264,7 @@ export default function AdminThreadsPage() {
     try {
       const res = await fetch(`${API_URL}/admin/threads/${sel.id}/reply`, {
         method: "POST", headers: hdr(),
-        body: JSON.stringify({ body: body.trim(), aiAssisted }),
+        body: JSON.stringify({ body: body.trim(), aiAssisted, senderId }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not send");
@@ -371,6 +419,21 @@ export default function AdminThreadsPage() {
               </button>
             );
           })}
+          {/* ── The words are not "Newest" and "Oldest" here ──────────────────
+              This list is ordered by LAST MESSAGE, so a thread opened in March
+              that somebody answered an hour ago is at the top. Calling that
+              "Newest" would claim the conversation started recently, which is
+              exactly what it does not mean — and the other end is not "old
+              conversations", it is the ones that have been waiting longest for
+              an answer. */}
+          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center", flex: "none" }}>
+            <SortToggle
+              value={sort}
+              onChange={setSort}
+              labels={{ newest: "Latest reply", oldest: "Waiting longest" }}
+              size="sm"
+            />
+          </div>
         </div>
 
         {error && (
@@ -402,8 +465,13 @@ export default function AdminThreadsPage() {
                 const meta = KIND_META[r.kind] || KIND_META.inbound;
                 const last = r.messages?.[r.messages.length - 1];
                 return (
+                  // Wrapped so the profile link is a SIBLING of the button. An
+                  // <a> inside a <button> is invalid HTML and browsers disagree
+                  // on what a click, a Tab and a screen reader do with it;
+                  // stopPropagation fixes the mouse and none of the rest.
+                  <div key={r.id} style={{ position: "relative" }}>
                   <button
-                    key={r.id} type="button" className="th-row" onClick={() => void open(r)}
+                    type="button" className="th-row" onClick={() => void open(r)}
                     style={{
                       width: "100%", textAlign: "left", border: "none", background: sel?.id === r.id ? "rgba(201,168,76,0.10)" : "transparent",
                       borderTop: i === 0 ? "none" : `1px solid ${cB}`,
@@ -430,6 +498,7 @@ export default function AdminThreadsPage() {
                         {meta.label}
                       </span>
                       <span style={{ fontSize: 10.5, color: tM }}>{r.messageCount} msg</span>
+
                       {r.status === "closed" && (
                         <span style={{ fontSize: 10.5, color: OK, display: "inline-flex", alignItems: "center", gap: 3 }}>
                           <CheckCircle2 size={10} /> done
@@ -437,6 +506,25 @@ export default function AdminThreadsPage() {
                       )}
                     </div>
                   </button>
+                  {/* Top-right of the row, clear of the timestamp. */}
+                  {r.profileUserId && (
+                    <Link
+                      href={`/admin/users/${r.profileUserId}`}
+                      title={`Open ${r.userName || r.userEmail}'s profile`}
+                      aria-label="Open this person's profile"
+                      style={{
+                        position: "absolute", bottom: 8, right: 10,
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        minHeight: 24, padding: "3px 8px", borderRadius: 99,
+                        border: `1px solid ${cB}`, background: "#fff",
+                        fontSize: 10, fontWeight: 800, color: "#8b5a2b",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <UserRound size={10} /> profile
+                    </Link>
+                  )}
+                  </div>
                 );
               })
             )}
@@ -460,6 +548,17 @@ export default function AdminThreadsPage() {
                         <p style={{ margin: "2px 0 0", fontSize: 12, color: t2, display: "flex", alignItems: "center", gap: 5 }}>
                           <Mail size={11} /> {sel.userEmail}
                         </p>
+                        {/* Named, not an icon: this is where you decide what to
+                            say to somebody, and their account is the context
+                            worth one deliberate click. */}
+                        {sel.profileUserId && (
+                          <Link
+                            href={`/admin/users/${sel.profileUserId}`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#8b5a2b", textDecoration: "none", marginTop: 3 }}
+                          >
+                            <UserRound size={12} /> Open their profile
+                          </Link>
+                        )}
                         {sel.templateLabel && (
                           <p style={{ margin: "2px 0 0", fontSize: 11.5, color: tM }}>{sel.templateLabel}</p>
                         )}
@@ -518,6 +617,19 @@ export default function AdminThreadsPage() {
                         <p style={{ margin: "3px 0 0", fontSize: 12.5, color: t2, lineHeight: 1.5 }}>{reading}</p>
                       </div>
                     )}
+
+                    {/* Who this comes from, and where it comes back to. Both
+                        lines are the picker's own job now — it is shared with
+                        the unfinished-drafts composer, which needs exactly the
+                        same control, and two copies of a control that decides
+                        what a customer sees in their inbox is how the two
+                        quietly drift apart. */}
+                    <SenderPicker
+                      options={senders}
+                      value={senderId}
+                      onChange={setSenderId}
+                      replyToAddress={replyToAddress}
+                    />
 
                     <textarea
                       value={body}

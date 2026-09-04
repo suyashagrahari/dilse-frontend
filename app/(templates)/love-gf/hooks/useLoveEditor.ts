@@ -20,6 +20,8 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
+import { useResumeDraft } from "@/lib/draft/resume";
 import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
@@ -400,6 +402,11 @@ export function useLoveEditor() {
         });
         const result = await res.json();
         if (result.success) setPageId(result.data._id);
+        // Answered so the draft path can learn the id of a row it just created.
+        // Without it a create looks like a failure, the content stays dirty, and
+        // the next milestone creates a SECOND identical draft. The five other
+        // saveToServer editors already returned it.
+        return result;
       }
     },
     [accessToken, pageId, headers],
@@ -549,6 +556,72 @@ export function useLoveEditor() {
     setPendingContent(null);
     setEditMode("choose");
   }, [pendingContent]);
+
+  // ── Reopening from the profile ────────────────────────────────────────────
+  //
+  // This editor ignored `?edit=<id>` entirely, so the profile's Edit button
+  // opened it on demo content — and saving from there overwrote the user's page
+  // with a fresh one. Nothing about that was visible: no error, no empty state,
+  // just the wrong page.
+  //
+  // The fields come from DEMO_CONTENT rather than a hand-written list, so a field
+  // added to this template later survives a reopen without anyone remembering.
+  useResumeDraft({
+    base: `${API_URL}/love-gf-pages`,
+    editId: searchParams.get("edit"),
+    accessToken,
+    defaults: DEMO_CONTENT,
+    onLoaded: (data, id) => {
+      setContent(data);
+      setMf({ ...data });
+      setPageId(id);
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── Auto-draft ────────────────────────────────────────────────────────────
+  //
+  // What this adds that `saveToServer` did not: work built while signed OUT is
+  // held in the browser and promoted to a real draft — photos to S3 — the moment
+  // the visitor signs up or logs in. `saveToServer` returns early without a
+  // token, so everything built before signing in was lost at the first
+  // navigation.
+  //
+  // `enabled: isPersonalized` keeps every visitor who merely opened the editor
+  // out of their own profile: the demo content is not a draft.
+  const draft = useDraft({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing || saving,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    // The editor's own save, which already handles create vs update and already
+    // sets `pageId`. Nothing about the wire shape is restated here.
+    persist: async (d) => {
+      const r = await saveToServer(d, pagePassword);
+      const id = r?.data?._id ? String(r.data._id) : pageId;
+      return id || null;
+    },
+    onAdopted: (d) => {
+      // The adopted payload carries CDN URLs where the browser held base64, so
+      // the form has to be told — otherwise the next save sends the base64 back
+      // and re-uploads it.
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── The milestones ────────────────────────────────────────────────────────
+  //
+  // Watching `editMode` rather than calling `saveNow()` from each place that
+  // sets it: a transition is impossible to forget in a way a call site is not.
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const handlePublish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });

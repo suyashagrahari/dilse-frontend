@@ -10,7 +10,10 @@
     "lint": "eslint",
     "seo:check": "node scripts/seo-coverage.mjs",
     "indexnow:submit": "node scripts/indexnow-submit.mjs",
-    "feedback:check": "node scripts/feedback-coverage.mjs"
+    "feedback:check": "node scripts/feedback-coverage.mjs",
+    "draft:test": "node --experimental-strip-types --test lib/draft/*.test.mjs",
+    "share:test": "node --experimental-strip-types --test lib/share/*.test.mjs",
+    "draft:check": "node scripts/draft-coverage.mjs"
   },
   "dependencies": {
     "@radix-ui/react-toast": "^1.2.15",

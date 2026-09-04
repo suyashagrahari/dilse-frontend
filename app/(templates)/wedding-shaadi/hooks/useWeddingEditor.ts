@@ -9,6 +9,7 @@ import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
 import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
@@ -674,6 +675,50 @@ export function useWeddingEditor() {
       setEditMode("choose");
     }
   }, [pendingContent]);
+
+  // ── Auto-draft ────────────────────────────────────────────────────────────
+  //
+  // What this adds that `saveToServer` did not: work built while signed OUT is
+  // held in the browser and promoted to a real draft — photos to S3 — the moment
+  // the visitor signs up or logs in. `saveToServer` returns early without a
+  // token, so everything built before signing in was lost at the first
+  // navigation.
+  //
+  // `enabled: isPersonalized` keeps every visitor who merely opened the editor
+  // out of their own profile: the demo content is not a draft.
+  const draft = useDraft({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing || saving,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    // The editor's own save, which already handles create vs update and already
+    // sets `pageId`. Nothing about the wire shape is restated here.
+    persist: async (d) => {
+      const r = await saveToServer(d, pagePassword);
+      const id = r?.data?._id ? String(r.data._id) : pageId;
+      return id || null;
+    },
+    onAdopted: (d) => {
+      // The adopted payload carries CDN URLs where the browser held base64, so
+      // the form has to be told — otherwise the next save sends the base64 back
+      // and re-uploads it.
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── The milestones ────────────────────────────────────────────────────────
+  //
+  // Watching `editMode` rather than calling `saveNow()` from each place that
+  // sets it: a transition is impossible to forget in a way a call site is not.
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const handlePublish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });

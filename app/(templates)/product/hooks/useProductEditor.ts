@@ -43,6 +43,8 @@ import { normalizeProductData } from "../components/tokens";
 import { useReviewModeration } from "../components/contribApi";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
+import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "product";
@@ -353,6 +355,45 @@ export function useProductEditor() {
     },
     [content, pagePassword, headers]
   );
+
+  // ── Auto-draft ────────────────────────────────────────────────────────────
+  //
+  // Work built while signed OUT is held in the browser and promoted to a real
+  // draft — photos to S3 — the moment the visitor signs up or logs in.
+  //
+  // `normalizeProductData` is applied here as well, so a draft and a publish of
+  // the same content cannot produce different documents.
+  const draft = useDraft({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    persist: (d) =>
+      persistDraft({
+        base: BASE,
+        headers: headers(),
+        pageId,
+        setPageId,
+        body: productDataToBody(normalizeProductData(d), pagePassword),
+      }),
+    onAdopted: (d) => {
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── The milestones ────────────────────────────────────────────────────────
+  //
+  // Watching `editMode` rather than calling `saveNow()` from each place that
+  // sets it: a transition is impossible to forget in a way a call site is not.
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });

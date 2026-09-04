@@ -17,6 +17,8 @@ import {
 } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
+import { useDraft } from "@/lib/draft/useDraft";
+import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "court-marriage_draft";
 const BASE = `${API_URL}/court-marriage-pages`;
@@ -246,6 +248,59 @@ export function useCourtMarriageEditor() {
   const update = useCallback(async (id: string) => {
     await fetch(`${BASE}/${id}`, { method: "PUT", headers: headers(), body: JSON.stringify(courtMarriageDataToBody(content, pagePassword)) });
   }, [content, pagePassword, headers]);
+
+  // ── Auto-draft ────────────────────────────────────────────────────────────
+  //
+  // What this adds that `create`/`update` did not: work built while signed OUT
+  // is held in the browser and promoted to a real draft — photos to S3 — the
+  // moment the visitor signs up or logs in. Both of those only ever ran with a
+  // token, so everything built before signing in was lost at the first
+  // navigation.
+  //
+  // `enabled: isPersonalized` keeps every visitor who merely opened the editor
+  // out of their own profile: the demo content is not a draft.
+  //
+  // It does not reuse `create`/`update`, because those read `content` from the
+  // closure and adoption has to write the payload that came out of the scratch —
+  // which during a sign-in is not what the editor is showing. It reuses
+  // `courtMarriageDataToBody`, the one description of this template's wire shape.
+  const draft = useDraft({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    persist: (d) =>
+      persistDraft({
+        base: BASE,
+        headers: headers(),
+        pageId,
+        setPageId,
+        body: courtMarriageDataToBody(d, pagePassword),
+      }),
+    onAdopted: (d) => {
+      // The adopted payload carries CDN URLs where the browser held base64, so
+      // the form has to be told — otherwise the next save sends the base64 back
+      // and re-uploads it.
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── The milestones ────────────────────────────────────────────────────────
+  //
+  // Watching `editMode` rather than calling `saveNow()` from each place that
+  // sets it. Closing the sheet (`null`) and entering preview are the two moments
+  // the user has decided something is worth keeping, and a transition is
+  // impossible to forget in a way a call site is not.
+  //
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });

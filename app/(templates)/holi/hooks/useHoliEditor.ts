@@ -10,9 +10,35 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { requestFeedback } from "@/lib/feedback/feedbackBus";
+import { useDraft } from "@/lib/draft/useDraft";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "holi";
+
+/**
+ * Editor content → the shape `/holi-pages` accepts.
+ *
+ * Extracted from inside `saveToServer` because the draft hook has to send the
+ * same body. Two copies of a field list is how a draft ends up saving eleven of
+ * the twelve fields a publish sends, and the twelfth goes missing only for
+ * people who left and came back.
+ */
+export function holiDataToBody(data: HoliData, password?: string) {
+  return {
+    senderName: data.senderName,
+    senderFamily: data.senderFamily,
+    senderMembers: data.senderMembers,
+    senderPhoto: data.senderPhoto,
+    recipientName: data.recipientName,
+    homeWishMessage: data.homeWishMessage,
+    congratsMessage: data.congratsMessage,
+    hindiTitle: data.hindiTitle,
+    hindiSubtitle: data.hindiSubtitle,
+    englishSubtitle: data.englishSubtitle,
+    holiDate: data.holiDate,
+    password: password || "",
+  };
+}
 
 export function useHoliEditor() {
   const router = useRouter();
@@ -267,20 +293,7 @@ export function useHoliEditor() {
   const saveToServer = useCallback(
     async (data: HoliData, password?: string) => {
       if (!accessToken) return;
-      const body = {
-        senderName: data.senderName,
-        senderFamily: data.senderFamily,
-        senderMembers: data.senderMembers,
-        senderPhoto: data.senderPhoto,
-        recipientName: data.recipientName,
-        homeWishMessage: data.homeWishMessage,
-        congratsMessage: data.congratsMessage,
-        hindiTitle: data.hindiTitle,
-        hindiSubtitle: data.hindiSubtitle,
-        englishSubtitle: data.englishSubtitle,
-        holiDate: data.holiDate,
-        password: password || "",
-      };
+      const body = holiDataToBody(data, password);
 
       if (pageId) {
         const res = await fetch(`${API_URL}/holi-pages/${pageId}`, {
@@ -348,6 +361,52 @@ export function useHoliEditor() {
       setEditMode("choose");
     }
   }, [pendingContent]);
+
+  // ── Auto-draft ────────────────────────────────────────────────────────────
+  //
+  // What this adds that `saveToServer` did not: a signed-OUT visitor's work is
+  // held in the browser and promoted to a real draft — photos on S3 — the moment
+  // they sign up or log in. `saveToServer` only ever ran with a token, so
+  // everything built before signing in was lost at the first navigation.
+  //
+  // `enabled: isPersonalized` keeps every visitor who merely opened the editor
+  // out of their own profile: the demo content is not a draft.
+  const draft = useDraft<HoliData>({
+    templateType: TEMPLATE,
+    content,
+    enabled: isPersonalized,
+    busy: publishing || saving,
+    isAuthenticated,
+    accessToken,
+    pageId,
+    // The editor's own save, which already handles create vs update and already
+    // sets `pageId` on create. Nothing about the wire shape is restated here.
+    persist: async (d: HoliData) => {
+      const r = await saveToServer(d, pagePassword);
+      const id = r?.data?._id ? String(r.data._id) : pageId;
+      return id || null;
+    },
+    onAdopted: (d: HoliData) => {
+      // The adopted payload carries CDN URLs where the browser held base64, so
+      // the form has to be told — otherwise the next save sends the base64 back
+      // and re-uploads it.
+      setContent(d);
+      setMf({ ...d });
+      setIsPersonalized(true);
+    },
+  });
+
+  // ── The milestones ────────────────────────────────────────────────────────
+  //
+  // Watching `editMode` rather than calling `saveNow()` from each of the six
+  // places that set it. Closing the sheet (`null`) and entering preview are the
+  // two moments the user has decided something is worth keeping, and a
+  // transition is impossible to forget in a way a call site is not.
+  //
+  // Leaving the editor and backgrounding the tab are handled inside the hook.
+  useEffect(() => {
+    if (editMode === null || editMode === "preview") void draft.saveNow();
+  }, [editMode, draft]);
 
   const handlePublish = useCallback(async () => {
     if (!pageId) return;
@@ -425,6 +484,7 @@ export function useHoliEditor() {
   const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   return {
+    saveDraftNow: draft.saveNow,
     tab, content, editMode, isPersonalized, shareUrl, showShareSheet, copied, showAuth,
     toasts, saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,

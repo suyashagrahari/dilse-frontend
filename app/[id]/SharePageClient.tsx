@@ -8,6 +8,10 @@ import { Loader2, HeartCrack, X, Sparkles, PenLine, Lock, Eye, EyeOff, ShieldAle
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
 import { usePwa } from "@/components/PwaProvider";
+import BrandLoader from "@/components/brand/BrandLoader";
+import { collectImageUrls, warmImages } from "@/lib/share/prefetch";
+// The floor the loader is held for, and why it is the number it is.
+import { holdRemainingMs } from "@/lib/share/loaderHold";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
@@ -18,17 +22,14 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
   return headers;
 }
 
-// ── Skeleton shown while a heavy viewer chunk downloads ─────────────────────
+// ── Shown while a heavy viewer chunk downloads ──────────────────────────────
+//
+// The SAME screen as the fetch above it, deliberately. A recipient opening a
+// link goes through two waits — the share fetch, then a ~40KB viewer chunk —
+// and showing them two different loading screens in a row makes one page feel
+// like two failed ones. One continuous brand moment instead.
 function ViewerSkeleton() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
-      <div className="text-center">
-        <div className="text-5xl mb-6 animate-bounce">🎁</div>
-        <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
-        <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
-      </div>
-    </div>
-  );
+  return <BrandLoader />;
 }
 
 // ── Lazy-load heavy viewer components (~1000 lines / ~40KB each) ─────────────
@@ -317,11 +318,31 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   const [pendingTab, setPendingTab] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    const startedAt = Date.now();
+    /**
+     * Will a page actually render? Decides which floor applies.
+     *
+     * Deliberately not "did the API say success": a payload naming a template
+     * this build does not know about is a broken link, and holding the full
+     * brand moment before saying so is the worst of both.
+     */
+    let ok = false;
+    /** The photos worth a head start, once the payload names them. */
+    let warmable: string[] = [];
+
     async function load() {
       try {
         const res = await fetch(`${API_URL}/share/${shareId}`, { headers: apiHeaders() });
         const result = await res.json();
         if (result.success && result.data && result.templateType) {
+          // ── Spend the wait ──────────────────────────────────────────────
+          //
+          // Collected here, warmed in `finally` — so the images get whatever
+          // is left of the floor as a head start and the page still appears
+          // when the floor expires, not when the last photo lands. See
+          // lib/share/prefetch.
+          warmable = collectImageUrls(result.data);
           setTemplateType(result.templateType);
           setTemplateVariant(
             (result.templateVariant as string) ||
@@ -334,7 +355,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
           if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro" || result.templateType === "raksha-bandhan" || result.templateType === "raksha-bandhan-sister") {
             setData(result.data);
-            setLoading(false);
+            ok = true;
+            // No setLoading here: the `finally` below owns it, because it is
+            // the only place that knows how much of the floor is left. This
+            // branch used to flip it directly and would now skip the hold
+            // entirely for the 40 templates that take it.
             return;
           }
 
@@ -346,12 +371,23 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
             setTab(matched.defaultTab);
             const stored = sessionStorage.getItem(SESSION_KEY(shareId));
             if (stored === "true") setIsUnlocked(true);
+            ok = true;
           } else { setError(true); }
         } else { setError(true); }
       } catch { setError(true); }
-      finally { setLoading(false); }
+      finally {
+        const remaining = holdRemainingMs(Date.now() - startedAt, ok);
+        // Both at once, bounded by what is left of the floor: the images get a
+        // head start for free and can never push the page back.
+        await Promise.all([
+          new Promise((resolve) => setTimeout(resolve, remaining)),
+          warmImages(warmable, remaining),
+        ]);
+        if (!cancelled) setLoading(false);
+      }
     }
     if (shareId) load();
+    return () => { cancelled = true; };
   }, [shareId]);
 
   // A published page was successfully opened. Instrumented here rather than in
@@ -465,23 +501,12 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
     } finally { setPwLoading(false); }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 via-pink-50/30 to-white dark:from-slate-950 dark:via-rose-950/20 dark:to-slate-950">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="text-5xl mb-6"
-          >
-            🎁
-          </motion.div>
-          <Loader2 size={20} className="animate-spin text-rose-400 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Unwrapping your surprise...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  // The first thing a recipient sees. See components/brand/BrandLoader — the
+  // framer-motion wrapper that used to be here is gone on purpose: this screen
+  // is on-stage while the fetch and a viewer chunk are both competing for the
+  // main thread, and the loader's own animation must not be one of the things
+  // in that fight.
+  if (loading) return <BrandLoader />;
 
   // Holi has its own full-page viewer
   if (!loading && templateType === "holi" && data) {
