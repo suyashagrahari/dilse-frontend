@@ -106,10 +106,58 @@ export default function GuideVideoPlayer({ video, sources, title, onReadSection 
     const apply = () => { el.currentTime = seconds; };
     if (el.readyState >= 1) apply();
     else el.addEventListener("loadedmetadata", apply, { once: true });
-    void el.play();
+    // A refused play() must not lose the seek, and must not surface as an
+    // unhandled rejection. Autoplay is refused for any recording that carries
+    // sound, and arriving from a search result is exactly when that happens.
+    void el.play().catch(() => {});
   }, []);
 
   const restart = useCallback(() => seek(0), [seek]);
+
+  /**
+   * Deep link from a "key moment" in a search result: /guides/<slug>?t=42.
+   *
+   * Google requires a Clip's `url` to carry its start time as a query
+   * parameter or fragment — a bare page URL is not a valid Clip target, and a
+   * section anchor is not a time. But the requirement exists because of the
+   * promise the link makes to whoever clicks it: they picked a moment out of
+   * the results and expect to land on it. So the markup and the behaviour are
+   * added together — emitting ?t= without honouring it would drop people at
+   * the top of the page and read as a bait-and-switch to Google as much as to
+   * them.
+   *
+   * The seek itself goes through the same `seek()` every chapter row already
+   * uses, which handles the `preload="none"` case: currentTime assigned before
+   * metadata exists is silently dropped, so it defers to `loadedmetadata`. No
+   * explicit `load()` is needed to get there — `play()` starts the fetch, and
+   * every recording is silent and therefore muted, so autoplay is never
+   * refused. An added `load()` would only have mattered for a recording with
+   * sound, and it carries reset-and-abort semantics, so it is not worth
+   * shipping for a case that does not exist.
+   */
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("t");
+    if (raw === null) return;
+    const t = Number(raw);
+    if (!Number.isFinite(t) || t <= 0 || t >= duration) return;
+    const el = ref.current;
+    if (!el) return;
+    seek(t);
+    // Deferred by two frames rather than scrolled straight away. The browser
+    // positions a freshly loaded document itself, and a smooth scroll started
+    // in a mount effect is simply cancelled by that — measured here as the page
+    // sitting at scrollY 0 with the player still below the fold, while the same
+    // call from the console worked. Waiting until after the first paint puts
+    // the scroll after the reset instead of underneath it.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        shellRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      ),
+    );
+    // Run once, on arrival. Re-seeking on any later re-render would yank the
+    // playhead back while someone is watching.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

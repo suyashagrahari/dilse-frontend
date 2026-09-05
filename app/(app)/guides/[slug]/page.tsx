@@ -5,7 +5,13 @@ import { JsonLd } from "@/components/JsonLd";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { getGuide, guideSlugs } from "@/data/guide-registry";
 import { guideVideoSet, guideMedia } from "@/lib/templateMedia";
-import { isoDuration, getRelatedGuides, getRelatedArticlesForGuide, stepCount } from "@/lib/guides";
+import {
+  isoDuration,
+  isoDateTime,
+  chapterClips,
+  getRelatedGuides,
+  getRelatedArticlesForGuide,
+} from "@/lib/guides";
 import GuideDetailClient from "./GuideDetailClient";
 
 const CORNER_FILTER =
@@ -71,7 +77,25 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
    *
    * BreadcrumbList is included separately so the result shows
    * Guides › <template> rather than a bare URL.
+   *
+   * ── ONE VideoObject, REFERENCED, NOT REPEATED ──────────────────────────────
+   * The HowTo used to carry its own inline copy of the VideoObject alongside
+   * the standalone one. Both described the same file, so Search Console counted
+   * every guide twice under Enhancements › Videos, and Google was left to guess
+   * which of two competing nodes was the page's video. Now the VideoObject is
+   * declared once with an `@id` and the HowTo points at it by reference — the
+   * standard way to say "the same thing" in JSON-LD across separate blocks.
+   *
+   * There is deliberately no `embedUrl`. `embedUrl` means "a URL that loads a
+   * standalone player, embeddable in an iframe", and this page is an article
+   * with a player in it, not a player. Pointing it here invited Google to embed
+   * the whole guide and fail, which is one of the ways a video ends up filed as
+   * "Video isn't on a watch page". `contentUrl` is the correct field for a
+   * self-hosted MP4 and Google accepts either one.
    */
+  const pageUrl = `${SITE_URL}/guides/${guide.slug}`;
+  const videoId = `${pageUrl}#video`;
+
   const howToSteps = guide.sections.flatMap((section, si) =>
     section.steps.map((step, i) => ({
       "@type": "HowToStep",
@@ -96,24 +120,25 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         data={{
           "@context": "https://schema.org",
           "@type": "HowTo",
+          "@id": `${pageUrl}#howto`,
+          mainEntityOfPage: pageUrl,
           name: guide.title,
+          // Freshness and authorship. `updatedAt` is the date the guide was
+          // last checked against the live flow, which is the only honest
+          // dateModified — a template that has since changed should not read as
+          // current just because the file was touched. Both Google and the
+          // answer engines weigh recency when deciding what to quote, and with
+          // no date at all they were left to guess from the crawl.
+          datePublished: isoDateTime(guide.updatedAt),
+          dateModified: isoDateTime(guide.updatedAt),
+          author: { "@type": "Organization", name: "SubhSandesh", url: SITE_URL },
+          publisher: { "@type": "Organization", name: "SubhSandesh", url: SITE_URL },
+          inLanguage: "en-IN",
           description: guide.summary,
           totalTime: `PT${/(\d+)/.exec(guide.buildTime)?.[1] ?? 6}M`,
           image: media.poster,
           step: howToSteps,
-          ...(guide.video
-            ? {
-                video: {
-                  "@type": "VideoObject",
-                  name: guide.title,
-                  description: guide.summary,
-                  thumbnailUrl: [media.poster],
-                  contentUrl: media.mp4,
-                  uploadDate: guide.video.recordedAt,
-                  duration: isoDuration(guide.video.seconds),
-                },
-              }
-            : {}),
+          ...(guide.video ? { video: { "@id": videoId } } : {}),
         }}
       />
 
@@ -122,23 +147,44 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           data={{
             "@context": "https://schema.org",
             "@type": "VideoObject",
+            "@id": videoId,
             name: guide.title,
             description: guide.summary,
             thumbnailUrl: [media.poster],
             contentUrl: media.mp4,
-            embedUrl: `${SITE_URL}/guides/${guide.slug}`,
-            uploadDate: guide.video.recordedAt,
+            // The watch page. Naming it explicitly is what tells Google this
+            // recording belongs to this URL rather than floating free.
+            url: pageUrl,
+            mainEntityOfPage: pageUrl,
+            uploadDate: isoDateTime(guide.video.recordedAt),
             duration: isoDuration(guide.video.seconds),
-            // Only chapters that map to a written section get a Clip: those are
-            // the ones with a real landing place. An intro marker as a "key
-            // moment" would send someone to the top of a page they are on.
-            hasPart: guide.video.chapters
+            inLanguage: "en-IN",
+            isFamilyFriendly: true,
+            publisher: {
+              "@type": "Organization",
+              name: "SubhSandesh",
+              url: SITE_URL,
+            },
+            // Only chapters that map to a written section get a Clip. Every
+            // chapter now has a valid time target, so this is an editorial cut
+            // rather than a technical one: a marker with no written section
+            // behind it is scaffolding in the recording, not a moment worth
+            // surfacing as a search result of its own.
+            // Offsets are derived from the unfiltered chapter list so a dropped
+            // marker does not stretch the clip before it over the gap.
+            hasPart: chapterClips(guide.video)
               .filter((c) => c.sectionId)
               .map((c) => ({
                 "@type": "Clip",
                 name: c.label,
-                startOffset: c.at,
-                url: `${SITE_URL}/guides/${guide.slug}#${c.sectionId}`,
+                startOffset: c.startOffset,
+                endOffset: c.endOffset,
+                // ?t=<seconds>, not #<section>. Google's Clip spec requires
+                // the url to indicate the clip's start time; a section anchor
+                // is a place on the page, not a moment in the video, so a
+                // key-moment link built on it would land someone at the wrong
+                // thing. The player reads ?t= on arrival and seeks there.
+                url: `${pageUrl}?t=${c.startOffset}`,
               })),
           }}
         />
