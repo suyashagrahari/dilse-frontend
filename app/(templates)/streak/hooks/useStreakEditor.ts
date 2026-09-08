@@ -353,6 +353,23 @@ export function useStreakEditor() {
       // photoA and four more fields, which is a silently half-filled edit sheet.
       setMf(dataToForm(d));
       setIsPersonalized(true);
+      // ── AND RE-SEAT THE PREVIEW ──────────────────────────────────────────
+      //
+      // `StreakTemplate` is keyed on `previewVersion` in page.tsx, and it seeds
+      // its own session state from `data` when that key changes. Setting
+      // `content` alone is invisible: the key does not move, the component does
+      // not remount, and it goes on rendering the demo pair it seeded with at
+      // mount.
+      //
+      // That was the bug. A signed-out visitor who built a page, closed the tab
+      // and came back got their work back in the edit sheet — which reads `mf`
+      // directly and is not keyed — while the page behind it still showed
+      // Ananya and Rohan. The data was never lost, but it looked lost, which is
+      // the same thing to the person looking at it.
+      //
+      // The other two restore paths (`?edit=` and the post-login resume) both
+      // bump; this one was the only one that did not.
+      bumpPreview();
     },
   });
 

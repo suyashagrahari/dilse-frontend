@@ -15,6 +15,7 @@
     "share:test": "node --experimental-strip-types --test lib/share/*.test.mjs",
     "feedback:test": "node --experimental-strip-types --test lib/feedback/*.test.mjs",
     "toast:test": "node --experimental-strip-types --test lib/toast/*.test.mjs",
+    "paywall:test": "node --experimental-strip-types --import ./scripts/alias-loader.mjs --test lib/paywall/*.test.mjs",
     "toast:check": "node scripts/toast-coverage.mjs",
     "draft:check": "node scripts/draft-coverage.mjs"
   },

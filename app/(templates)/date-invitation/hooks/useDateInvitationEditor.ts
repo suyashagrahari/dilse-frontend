@@ -452,6 +452,20 @@ export function useDateInvitationEditor() {
       setContent(d);
       setMf({ ...d });
       setIsPersonalized(true);
+      // ── AND RE-SEAT THE PREVIEW ──────────────────────────────────────────
+      //
+      // The preview component is keyed on `previewVersion` in page.tsx and
+      // seeds its own state from `data` when that key changes. Setting
+      // `content` alone is invisible: the key does not move, the component does
+      // not remount, and it goes on showing the demo it seeded with at mount.
+      //
+      // That was the bug. A signed-out visitor who built a page, closed the tab
+      // and came back got their work back in the edit sheet — which reads the
+      // form directly and is not keyed — while the page behind it still showed
+      // the demo names. The data was never lost and would have published
+      // correctly; it only looked lost, which is the same thing to the person
+      // looking at it.
+      bumpPreview();
     },
   });
 

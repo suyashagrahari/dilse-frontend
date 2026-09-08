@@ -356,7 +356,13 @@ export function useCapsuleEditor() {
             body: capsuleToBody(d),
           })
         : Promise.resolve(null),
-    onAdopted: (d) => setCapsule(d),
+    onAdopted: (d) => {
+      setCapsule(d);
+      // Re-seat the preview for the same reason as the other thirty: the
+      // wrapper is keyed on `previewVersion` in page.tsx so `CapsuleTemplate`
+      // re-seeds, and a restore that only sets state leaves the key still.
+      setPreviewVersion((v) => v + 1);
+    },
   });
 
   // Sealing is the milestone here — this template has no edit-mode transition,

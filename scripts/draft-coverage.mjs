@@ -131,6 +131,84 @@ if (missingResume.length) {
   console.log("");
 }
 
+// ── A RESTORED DRAFT MUST RE-SEAT THE PREVIEW ───────────────────────────────
+//
+// Thirty-one editors key their preview component on `previewVersion` so it
+// re-seeds its own state when the key moves. For those, restoring a draft by
+// setting state alone is INVISIBLE: the key does not change, the component does
+// not remount, and it goes on rendering the demo it seeded with at mount.
+//
+// That shipped in 30 of the 31. A signed-out visitor who built a page, closed
+// the tab and came back got their work back in the edit sheet — which reads the
+// form directly and is not keyed — while the page behind it still showed the
+// demo names. The data was intact and would have published correctly; it only
+// looked lost, which is the same thing to the person looking at it.
+//
+// It was found by walking the flow in a browser, not by review, and it is
+// exactly the kind of thing review does not catch: every `onAdopted` looked
+// complete on its own, and the missing line lives in a different file.
+const keyedOnPreview = [];
+const notReseating = [];
+
+for (const name of readdirSync(ROOT)) {
+  const dir = join(ROOT, name);
+  if (!statSync(dir).isDirectory()) continue;
+  const pagePath = join(dir, "page.tsx");
+  let page;
+  try {
+    page = readFileSync(pagePath, "utf8");
+  } catch {
+    continue;
+  }
+  if (!/key=\{[^}]*previewVersion/.test(page)) continue;
+  keyedOnPreview.push(name);
+
+  // The editor hook, including one borrowed from another template.
+  const hooks = [];
+  const hooksDir = join(dir, "hooks");
+  try {
+    for (const f of readdirSync(hooksDir)) if (f.endsWith(".ts")) hooks.push(join(hooksDir, f));
+  } catch {
+    /* no hooks dir */
+  }
+  for (const m of page.matchAll(/@\/app\/\(templates\)\/([\w-]+)\/hooks\/(\w+)/g)) {
+    const candidate = join(ROOT, m[1], "hooks", `${m[2]}.ts`);
+    if (!hooks.includes(candidate)) hooks.push(candidate);
+  }
+
+  let reseats = false;
+  let sawAdopt = false;
+  for (const hookPath of hooks) {
+    let hook;
+    try {
+      hook = readFileSync(hookPath, "utf8");
+    } catch {
+      continue;
+    }
+    // Both shapes: `onAdopted: (d) => { … }` and a single-expression arrow.
+    const block = /onAdopted:\s*(?:\([^)]*\)|\w+)\s*=>\s*\{([\s\S]*?)\n    \},/.exec(hook);
+    if (!block) continue;
+    sawAdopt = true;
+    if (/bumpPreview\(\)|setPreviewVersion/.test(block[1])) reseats = true;
+    break;
+  }
+  if (sawAdopt && !reseats) notReseating.push(name);
+}
+
+console.log(`  preview keyed on previewVersion : ${keyedOnPreview.length}`);
+console.log(`  re-seated when a draft restores : ${keyedOnPreview.length - notReseating.length}`);
+
+if (notReseating.length > 0) {
+  failed = true;
+  console.log("");
+  console.log(`  ✗ ${notReseating.length} template(s) restore a draft without re-seating the preview:`);
+  for (const n of notReseating) console.log(`      ${n}`);
+  console.log("");
+  console.log("    Their preview is keyed on `previewVersion`, so setting content in");
+  console.log("    `onAdopted` changes nothing on screen. Add the bump the rest use:");
+  console.log("        bumpPreview();            // or setPreviewVersion((v) => v + 1)");
+}
+
 if (failed) {
   console.log("  A template that publishes must keep a draft and must reopen it.");
   console.log("");
