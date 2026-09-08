@@ -85,6 +85,21 @@ export default function GuidesPage() {
             feel of it; read if you are mid-build and need one specific field.
           </p>
 
+          {/* A reciprocal link to the video hub. /showcase links every guide;
+              this sends signal back, which is what keeps a hub from being a
+              one-way sink of internal links. */}
+          <p className="mt-3 text-sm" style={{ color: "#7a5555" }}>
+            Prefer to watch first?{" "}
+            <Link
+              href="/showcase"
+              prefetch={false}
+              style={{ color: "#c9a84c", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 2 }}
+            >
+              All {withVideo.length} walkthrough videos on one page
+            </Link>
+            .
+          </p>
+
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2" style={{ fontSize: 12, fontWeight: 600, color: "#7a5555" }}>
             <span>{guideList.length} guides</span>
             <span aria-hidden style={{ color: "#c9a84c" }}>·</span>

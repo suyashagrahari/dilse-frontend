@@ -160,7 +160,12 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
               allowFullScreen
             />
           ) : (
-            <Facade poster={media.poster} label="Play on YouTube" onPlay={() => pick("youtube")} />
+            <Facade
+              poster={media.poster}
+              alt={`${guide.templateName} — the finished page, from the walkthrough video`}
+              label="Play on YouTube"
+              onPlay={() => pick("youtube")}
+            />
           )}
         </div>
 
@@ -184,7 +189,12 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
             {...SOCIAL_LINK_ATTRS}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={media.poster} alt="" loading="lazy" decoding="async" />
+            <img
+              src={media.poster}
+              alt={`${guide.templateName} — the reel version of the walkthrough`}
+              loading="lazy"
+              decoding="async"
+            />
             <span className="sc-facade-play">
               <InstagramGlyph />
             </span>
@@ -256,13 +266,30 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
 }
 
 /** The stand-in an embed gets before anybody asks for it. */
-function Facade({ poster, label, onPlay }: { poster: string; label: string; onPlay: () => void }) {
+function Facade({
+  poster,
+  alt,
+  label,
+  onPlay,
+}: {
+  poster: string;
+  alt: string;
+  label: string;
+  onPlay: () => void;
+}) {
   return (
     <button type="button" className="sc-facade" onClick={onPlay} aria-label={label}>
-      {/* A plain <img>: this is a fixed-size decorative frame on a CDN that
-          next/image would only re-proxy. */}
+      {/* A plain <img>: this is a fixed-size frame on a CDN that next/image
+          would only re-proxy.
+
+          `alt` is descriptive rather than empty. Empty alt is the correct
+          a11y answer for a decorative image, and these are not decorative —
+          each one is a frame of the template being demonstrated, and it is
+          the only thing on the card an image crawler can read. The button's
+          `aria-label` still overrides this for a screen reader, so there is
+          no double announcement. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={poster} alt="" loading="lazy" decoding="async" />
+      <img src={poster} alt={alt} loading="lazy" decoding="async" />
       <span className="sc-facade-play">
         <PlayGlyph size={26} />
       </span>
@@ -286,14 +313,37 @@ export default function ShowcaseClient() {
     <main className="sc-root">
       <style>{SHOWCASE_CSS}</style>
 
+      {/* ── WHY THERE IS PROSE ON A PAGE MADE OF VIDEO ────────────────────
+          A wall of twelve players and twelve taglines is, to a crawler, a page
+          with almost no text on it — and a page with almost no text does not
+          rank, however good the videos are. Google cannot watch them. This
+          header and the closing section are the part it CAN read, so they say
+          plainly what the recordings contain and who they are for, in the words
+          somebody would actually search. */}
       <header className="sc-head">
-        <p className="sc-kicker">Walkthroughs</p>
-        <h1 className="sc-h1">
-          Every template, built start to finish
-        </h1>
+        <p className="sc-kicker">Walkthrough videos</p>
+        <h1 className="sc-h1">Watch every template built, start to finish</h1>
         <p className="sc-sub">
-          {SHOWCASE_COUNT} recordings. Each one is the whole build — every field filled, then the
-          page as the person receiving it sees it. Watch here, or open it on YouTube or Instagram.
+          {SHOWCASE_COUNT} full recordings — Raksha Bandhan pages, wedding and reception
+          invitations, birthday and love pages, and an apology dashboard. Each one shows the whole
+          build: every field filled in, the photos uploaded, the password set, and then the finished
+          page exactly as the person receiving it sees it on their phone. Nothing is sped up and
+          nothing is cut.
+        </p>
+        <p className="sc-sub">
+          Watch them here, or open any one on{" "}
+          <a href={SOCIAL.youtube} {...SOCIAL_LINK_ATTRS}>
+            YouTube
+          </a>{" "}
+          or{" "}
+          <a href={SOCIAL.instagram} {...SOCIAL_LINK_ATTRS}>
+            Instagram
+          </a>
+          . Every card links to the written{" "}
+          <Link href="/guides" prefetch={false}>
+            step-by-step guide
+          </Link>{" "}
+          for that template, and to the builder itself.
         </p>
       </header>
 
@@ -303,19 +353,42 @@ export default function ShowcaseClient() {
         ))}
       </div>
 
-      <footer className="sc-foot">
+      <section className="sc-outro">
+        <h2>What these recordings show</h2>
         <p>
-          More on{" "}
+          Every SubhSandesh template is a page you fill in and send as a link — no app to install
+          at either end. The hard part is not the sending, it is knowing what the finished thing
+          looks like before you spend twenty minutes on it. That is what these are for: each
+          recording runs the builder end to end, so you can see the fields, the photo uploads, the
+          music, the password screen and the finished page before you start.
+        </p>
+        <p>
+          Every video here has a written companion. The{" "}
+          <Link href="/guides" prefetch={false}>
+            product guides
+          </Link>{" "}
+          repeat the same build as numbered steps with annotated screenshots, chapter markers and
+          answers to the questions people actually ask — useful if you would rather read than
+          watch, or want to follow along with the builder open in another tab. If you already know
+          which occasion you are making something for, start from{" "}
+          <Link href="/templates" prefetch={false}>
+            all templates
+          </Link>{" "}
+          instead.
+        </p>
+        <h2>Where else to watch</h2>
+        <p>
+          The same walkthroughs are on{" "}
           <a href={SOCIAL.youtube} {...SOCIAL_LINK_ATTRS}>
-            YouTube
+            our YouTube channel
           </a>{" "}
-          and{" "}
+          with full descriptions, and as short reels on{" "}
           <a href={SOCIAL.instagram} {...SOCIAL_LINK_ATTRS}>
             Instagram
           </a>
-          .
+          . New templates get a recording as they ship, so this page grows.
         </p>
-      </footer>
+      </section>
     </main>
   );
 }
@@ -482,9 +555,30 @@ const SHOWCASE_CSS = `
 .sc-link-quiet:hover { border-color: var(--sc-gold); color: var(--sc-gold); opacity: 1; }
 .sc-link:focus-visible { outline: 2px solid var(--sc-gold); outline-offset: 2px; }
 
-/* ── Foot ─────────────────────────────────────────────────────────────── */
-.sc-foot { margin: clamp(36px, 6vw, 64px) auto 0; text-align: center; font-size: 13px; color: var(--sc-muted); }
-.sc-foot a { color: var(--sc-gold); font-weight: 600; }
+/* ── Outro prose ──────────────────────────────────────────────────────────
+   Measure capped at 68ch: this is the part of the page meant to be read, and
+   a line that runs the full 1500px grid width is not. */
+.sc-outro {
+  max-width: 68ch;
+  margin: clamp(40px, 7vw, 76px) auto 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--sc-muted);
+}
+.sc-outro h2 {
+  margin: 28px 0 10px;
+  font-family: var(--font-lora), Georgia, serif;
+  font-size: clamp(19px, 3vw, 24px);
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--sc-ink);
+}
+.sc-outro h2:first-child { margin-top: 0; }
+.sc-outro p { margin: 0 0 14px; }
+.sc-outro a { color: var(--sc-gold); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.sc-outro a:hover { text-decoration-thickness: 2px; }
+.sc-head a { color: var(--sc-gold); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.sc-head .sc-sub + .sc-sub { margin-top: 12px; }
 
 /* A card lifting and a play button scaling are decoration on a page whose
    whole content is video. */

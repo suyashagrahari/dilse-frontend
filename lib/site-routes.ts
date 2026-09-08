@@ -92,6 +92,11 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
+  // ── The video hub ────────────────────────────────────────────────────────
+  // Weekly because it grows whenever another walkthrough is recorded, and 0.7
+  // rather than 0.8: it is an index that points at the guides, and the guides
+  // are the pages that should win the query.
+  { path: "/showcase", priority: 0.7, changeFrequency: "weekly" },
 ];
 
 /**
@@ -106,8 +111,4 @@ export const NON_INDEXABLE_ROUTES: Record<string, string> = {
   "/auth/google-bridge": "OAuth plumbing, not a page",
   "/admin": "staff only — robots.txt Disallow (covers /admin/* children)",
   "/love": "generic fallback metadata, duplicates /love-gf",
-  "/showcase":
-    "unlisted on purpose — the video wall is handed out as a link, is reachable " +
-    "from no nav item, tab or card, and carries robots noindex,nofollow. Not " +
-    "private: anyone with the URL can open it, so nothing confidential goes there.",
 };

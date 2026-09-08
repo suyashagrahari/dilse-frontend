@@ -55,9 +55,13 @@ const OCCASIONS = ["Birthday Pages", "Wedding", "Holi Festival", "Eid Mubarak", 
 const PLATFORM = [
   { label: "How It Works", href: "#how" },
   { label: "Templates", href: "/templates" },
+  // Two real destinations in a column that was half placeholders. /showcase in
+  // particular NEEDS this link: it is meant to be indexed and to rank, and a
+  // page reached only from the sitemap is crawled late and treated as low
+  // value. See the note at the top of app/(app)/showcase/page.tsx.
+  { label: "Walkthrough Videos", href: "/showcase" },
+  { label: "Guides", href: "/guides" },
   { label: "AI Generator", href: "#demo" },
-  { label: "Blessings Wall", href: "#" },
-  { label: "Sharing", href: "#" },
 ];
 const COMPANY = ["About Us", "Contact Us", "Help", "Privacy Policy", "Terms of Service"];
 
