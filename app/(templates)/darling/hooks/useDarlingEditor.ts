@@ -89,6 +89,15 @@ export function useDarlingEditor() {
 
   // Holds draft data when user tries to publish without being authenticated
   const pendingPublishRef = useRef<{ data: ContentData; password: string } | null>(null);
+  /**
+   * True while the auth-deferred publish below is creating the row.
+   *
+   * Adoption in `useDraft` answers the same event — a token appearing — and
+   * used to POST a row of its own, leaving a duplicate behind as a draft. This
+   * tells it to stand down. A ref because both effects run in the same commit,
+   * so a state flag would still read as the previous render's value.
+   */
+  const publishInFlightRef = useRef(false);
 
   // Game data from DB (persisted across refreshes)
   const [gameResponsesFromDB, setGameResponsesFromDB] = useState<Record<string, unknown>[]>([]);
@@ -170,6 +179,8 @@ export function useDarlingEditor() {
 
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    // We own the row from here; adoption stands down (see useDraft).
+    publishInFlightRef.current = true;
 
     const authHeaders: Record<string, string> = {
       "Content-Type": "application/json",
@@ -235,6 +246,7 @@ export function useDarlingEditor() {
       } catch {
         pushToast({ type: "info", title: "Save failed", message: "Please try again" });
       } finally {
+        publishInFlightRef.current = false;
         setSaving(false);
         setPublishing(false);
       }
@@ -565,6 +577,7 @@ export function useDarlingEditor() {
   // `enabled: isPersonalized` keeps every visitor who merely opened the editor
   // out of their own profile: the demo content is not a draft.
   const draft = useDraft({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content,
     enabled: isPersonalized,

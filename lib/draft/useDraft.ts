@@ -71,6 +71,24 @@ export interface UseDraftOptions<T> {
    * own `isPersonalized`-style flag.
    */
   enabled: boolean;
+  /**
+   * Set by the editor while IT is creating the row, so adoption stands down.
+   *
+   * ── WHY THIS EXISTS ──────────────────────────────────────────────────────
+   *
+   * An auth-deferred publish and adoption are triggered by the same event — a
+   * token appearing — and both used to answer it by POSTing a row. The editor's
+   * resume effect creates one and publishes it; adoption created another and
+   * left it as a draft. Two rows from one piece of work, every time somebody
+   * published while signed out. Production carried 150 such orphans against
+   * 3706 published pages before this was found.
+   *
+   * A ref rather than a boolean on purpose. Both effects run in the same commit,
+   * so a boolean prop would still be the value from the previous render; the
+   * editor sets `.current` synchronously before starting its POST, and this is
+   * read at effect time, which is the only ordering that actually holds.
+   */
+  publishInFlight?: { current: boolean };
   /** True while publishing, so a draft save never races the publish it precedes. */
   busy?: boolean;
   isAuthenticated: boolean;
@@ -220,6 +238,11 @@ export function useDraft<T>(opts: UseDraftOptions<T>): DraftHandle {
       adopted.current = true;
       return;
     }
+    // The editor is mid-publish and will create the row itself. Stand down —
+    // and do NOT mark this as adopted, because if that publish falls through
+    // the held work still needs a home. The effect re-runs when `pageId`
+    // lands, and the guard above catches it then.
+    if (o.publishInFlight?.current) return;
     adopted.current = true;
 
     void (async () => {

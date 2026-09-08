@@ -192,6 +192,15 @@ export function useLoveflixEditor() {
 
   // Holds the draft when the user hits Publish while logged out → auto-resumes after login.
   const pendingPublishRef = useRef<{ data: LoveflixData; password: string } | null>(null);
+  /**
+   * True while the auth-deferred publish below is creating the row.
+   *
+   * Adoption in `useDraft` answers the same event — a token appearing — and
+   * used to POST a row of its own, leaving a duplicate behind as a draft. This
+   * tells it to stand down. A ref because both effects run in the same commit,
+   * so a state flag would still read as the previous render's value.
+   */
+  const publishInFlightRef = useRef(false);
 
   const headers = useCallback(
     () => ({
@@ -251,6 +260,8 @@ export function useLoveflixEditor() {
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    // We own the row from here; adoption stands down (see useDraft).
+    publishInFlightRef.current = true;
 
     setPublishing(true);
     setEditMode("preview");
@@ -293,6 +304,7 @@ export function useLoveflixEditor() {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "save_error" });
         pushToast({ type: "info", title: "Save failed", message: "Please try again" });
       } finally {
+        publishInFlightRef.current = false;
         setPublishing(false);
       }
     })();
@@ -425,6 +437,7 @@ export function useLoveflixEditor() {
   // which during a sign-in is not what the editor is showing. It reuses
   // `loveflixDataToBody`, the one description of this template's wire shape.
   const draft = useDraft({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content,
     enabled: isPersonalized,

@@ -80,6 +80,15 @@ export function useTrainTicketEditor() {
 
   // Holds the draft when the sender hits Publish while logged out → auto-resumed.
   const pendingPublishRef = useRef<{ data: TicketData; password: string } | null>(null);
+  /**
+   * True while the auth-deferred publish below is creating the row.
+   *
+   * Adoption in `useDraft` answers the same event — a token appearing — and
+   * used to POST a row of its own, leaving a duplicate behind as a draft. This
+   * tells it to stand down. A ref because both effects run in the same commit,
+   * so a state flag would still read as the previous render's value.
+   */
+  const publishInFlightRef = useRef(false);
 
   const headers = useCallback(
     () => ({
@@ -133,6 +142,8 @@ export function useTrainTicketEditor() {
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    // We own the row from here; adoption stands down (see useDraft).
+    publishInFlightRef.current = true;
 
     setPublishing(true);
     setEditMode("preview");
@@ -175,6 +186,7 @@ export function useTrainTicketEditor() {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "save_error" });
         pushToast({ type: "info", title: "Save failed", message: "Please try again" });
       } finally {
+        publishInFlightRef.current = false;
         setPublishing(false);
       }
     })();
@@ -254,6 +266,7 @@ export function useTrainTicketEditor() {
   // which during a sign-in is not what the editor is showing. It reuses
   // `trainTicketDataToBody`, the one description of this template's wire shape.
   const draft = useDraft({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content,
     enabled: isPersonalized,

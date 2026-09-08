@@ -86,6 +86,13 @@ export function useCapsuleEditor() {
   const [copied, setCopied] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const pendingPublishRef = useRef<{ capsule: Capsule } | null>(null);
+  /**
+   * True while `doPublish` is creating the row, so adoption in `useDraft`
+   * stands down instead of POSTing a second one and leaving it as a draft.
+   * Set here rather than in the resume effect because capsule routes both the
+   * direct and the auth-deferred publish through the same function.
+   */
+  const publishInFlightRef = useRef(false);
 
   const headers = useCallback(
     () => ({
@@ -339,6 +346,7 @@ export function useCapsuleEditor() {
   //
   // Named `autoDraft` because `draft` is taken, by the form.
   const autoDraft = useDraft<Capsule | null>({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content: capsule,
     enabled: isPersonalized,
@@ -377,6 +385,7 @@ export function useCapsuleEditor() {
   const doPublish = useCallback(
     async (payload: Capsule, source: "direct" | "auth_deferred") => {
       setPublishing(true);
+      publishInFlightRef.current = true;
       try {
         let id = pageId;
         if (!id) {
@@ -415,6 +424,7 @@ export function useCapsuleEditor() {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source, reason: "network_error" });
         pushToast({ type: "info", title: "publish failed", message: "please try again" });
       } finally {
+        publishInFlightRef.current = false;
         setPublishing(false);
       }
     },

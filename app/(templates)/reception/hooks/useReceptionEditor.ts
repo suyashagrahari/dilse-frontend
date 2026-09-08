@@ -89,6 +89,15 @@ export function useReceptionEditor() {
   const preEditContentRef = useRef<ReceptionData>(DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const pendingPublishRef = useRef<{ data: ReceptionData; password: string } | null>(null);
+  /**
+   * True while the auth-deferred publish below is creating the row.
+   *
+   * Adoption in `useDraft` answers the same event — a token appearing — and
+   * used to POST a row of its own, leaving a duplicate behind as a draft. This
+   * tells it to stand down. A ref because both effects run in the same commit,
+   * so a state flag would still read as the previous render's value.
+   */
+  const publishInFlightRef = useRef(false);
   const fromPreviewRef = useRef(false);
 
   // Persist WIP draft to sessionStorage while filling the form
@@ -135,6 +144,8 @@ export function useReceptionEditor() {
   const closeAuth = useCallback(() => {
     setShowAuth(false);
     pendingPublishRef.current = null;
+    // We own the row from here; adoption stands down (see useDraft).
+    publishInFlightRef.current = true;
   }, []);
 
   const closeAuthSuccess = useCallback(() => {
@@ -254,6 +265,7 @@ export function useReceptionEditor() {
     } catch {
       pushToast({ type: "info", title: "Generation failed", message: "Please try again" });
     } finally {
+        publishInFlightRef.current = false;
       setAiLoading(false);
     }
   }, [aiName, aiSender, aiPrompt, headers, pushToast]);
@@ -447,6 +459,7 @@ export function useReceptionEditor() {
   // `enabled: isPersonalized` keeps every visitor who merely opened the editor
   // out of their own profile: the demo content is not a draft.
   const draft = useDraft({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content,
     enabled: isPersonalized,

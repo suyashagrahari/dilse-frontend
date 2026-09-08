@@ -200,6 +200,15 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   const preEditContentRef = useRef<ShaadiData>(CHRISTIAN_DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const pendingPublishRef = useRef<{ data: ShaadiData; password: string } | null>(null);
+  /**
+   * True while the auth-deferred publish below is creating the row.
+   *
+   * Adoption in `useDraft` answers the same event — a token appearing — and
+   * used to POST a row of its own, leaving a duplicate behind as a draft. This
+   * tells it to stand down. A ref because both effects run in the same commit,
+   * so a state flag would still read as the previous render's value.
+   */
+  const publishInFlightRef = useRef(false);
   const fromPreviewRef = useRef(false);
 
   // Persist draft form data to sessionStorage
@@ -270,6 +279,8 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   const closeAuth = useCallback(() => {
     setShowAuth(false);
     pendingPublishRef.current = null;
+    // We own the row from here; adoption stands down (see useDraft).
+    publishInFlightRef.current = true;
   }, []);
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
@@ -399,6 +410,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
       } catch {
         pushToast({ type: "info", title: "Extraction failed", message: "Could not read the card. Please try manual entry." });
       } finally {
+        publishInFlightRef.current = false;
         setExtractLoading(false);
       }
     },
@@ -573,6 +585,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   // `enabled: isPersonalized` keeps every visitor who merely opened the editor
   // out of their own profile: the demo content is not a draft.
   const draft = useDraft({
+    publishInFlight: publishInFlightRef,
     templateType: TEMPLATE,
     content,
     enabled: isPersonalized,

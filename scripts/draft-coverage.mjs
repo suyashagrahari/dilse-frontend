@@ -209,6 +209,63 @@ if (notReseating.length > 0) {
   console.log("        bumpPreview();            // or setPreviewVersion((v) => v + 1)");
 }
 
+// ── ADOPTION AND AN AUTH-DEFERRED PUBLISH MUST NOT BOTH CREATE A ROW ───────
+//
+// A signed-out visitor who presses Publish parks the intent and signs in. That
+// one token change wakes two writers: the editor's resume effect, which POSTs a
+// row and publishes it, and adoption inside `useDraft`, which POSTed a row of
+// its own and left it as a draft. One piece of work, two rows, every time.
+//
+// Production carried 150 such orphans against 3706 published pages — 150 of the
+// 152 drafts in the database. It read to the user as "publishing puts the page
+// live AND leaves the same thing sitting in drafts", which is exactly what it
+// was doing.
+//
+// The editor claims the row by setting `publishInFlight` before it POSTs, and
+// adoption stands down while that is true. This asserts the claim is wired: a
+// template with an auth-deferred resume that does not hand the ref to useDraft
+// is one that will duplicate again.
+const deferredPublishers = [];
+const notClaiming = [];
+
+for (const name of readdirSync(ROOT)) {
+  const dir = join(ROOT, name);
+  if (!statSync(dir).isDirectory()) continue;
+  const hooksDir = join(dir, "hooks");
+  let hookFiles = [];
+  try {
+    hookFiles = readdirSync(hooksDir).filter((f) => f.endsWith(".ts")).map((f) => join(hooksDir, f));
+  } catch {
+    continue;
+  }
+  for (const hookPath of hookFiles) {
+    const src = readFileSync(hookPath, "utf8");
+    // Only editors that BOTH defer a publish and keep a draft can collide.
+    if (!/pendingPublishRef/.test(src) || !/useDraft/.test(src)) continue;
+    deferredPublishers.push(name);
+    const claims =
+      /publishInFlight:\s*publishInFlightRef/.test(src) &&
+      /publishInFlightRef\.current = true/.test(src) &&
+      /publishInFlightRef\.current = false/.test(src);
+    if (!claims) notClaiming.push(name);
+    break;
+  }
+}
+
+console.log(`  defer a publish until sign-in    : ${deferredPublishers.length}`);
+console.log(`  claim the row so adoption waits  : ${deferredPublishers.length - notClaiming.length}`);
+
+if (notClaiming.length > 0) {
+  failed = true;
+  console.log("");
+  console.log(`  ✗ ${notClaiming.length} template(s) could duplicate a page on sign-in:`);
+  for (const n of notClaiming) console.log(`      ${n}`);
+  console.log("");
+  console.log("    An auth-deferred publish and adoption both POST a row. Claim it:");
+  console.log("        const publishInFlightRef = useRef(false);   // set true before the POST,");
+  console.log("        publishInFlight: publishInFlightRef,        // false in the finally");
+}
+
 if (failed) {
   console.log("  A template that publishes must keep a draft and must reopen it.");
   console.log("");
