@@ -7,8 +7,6 @@ import { store } from "@/store";
 import { checkAuth, hydrateAuth } from "@/store/authSlice";
 import { fetchFavorites } from "@/store/favoritesSlice";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PwaProvider from "@/components/PwaProvider";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
@@ -59,8 +57,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <AnalyticsProvider />
           <PwaProvider>
             <TooltipProvider>
-              <Toaster />
-              <Sonner />
+              {/* No toast host here on purpose. There is exactly one toast in
+                  this app — components/toast/ToastHost — and it is mounted per
+                  route group beside the share, feedback and paywall hosts. Two
+                  more used to be mounted at this level: shadcn's <Toaster/>,
+                  which nothing had called in a long time, and <Sonner/>, which
+                  two components in the `app` template used. Both shipped in
+                  every bundle for every visitor. See lib/toast/toastBus.ts. */}
               {children}
             </TooltipProvider>
           </PwaProvider>

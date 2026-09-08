@@ -47,7 +47,6 @@ export interface Toast {
   type: "success" | "publish" | "error" | "info";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export type EditMode = null | "manual" | "choose" | "preview";

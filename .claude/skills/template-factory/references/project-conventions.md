@@ -53,7 +53,7 @@ server/src/config/aiFill/
   `server/src/config/aiFill/<slug>.ts`, register it, and call `persistStory()` in
   both publish paths. It fails soft, so a missing schema shows up as "this one
   template can't write itself" and nothing else. Full detail: the
-  `subhsandesh-template` skill, `reference/ai-story-fill.md`.
+  `share-page-builder` skill, `reference/ai-story-fill.md`.
 - **Types:** everything typed; `npx tsc --noEmit` must stay at 0 errors.
 - **A11y:** buttons have accessible names, touch targets ≥24px, sequential headings
   (no h2→h4 skips), `aria-hidden` on decorative SVGs, respect `prefers-reduced-motion`.

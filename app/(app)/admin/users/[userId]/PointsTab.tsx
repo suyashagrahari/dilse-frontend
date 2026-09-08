@@ -3,30 +3,31 @@
 import { useState } from "react";
 import { API_URL } from "@/lib/config";
 import { C, type ProfileData } from "./types";
-import { Card, Empty, Btn, Stat, useToast, fmtShort } from "./ui";
+import { Card, Empty, Btn, Stat, fmtShort } from "./ui";
+import { useToast } from "@/lib/toast/useToast";
 
 export default function PointsTab({
   data, hdr, reload,
 }: {
   data: ProfileData; hdr: () => Record<string, string>; reload: () => void;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [delta, setDelta] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   const apply = async () => {
     const n = Number(delta);
-    if (!Number.isFinite(n) || n === 0) return toast("Enter a non-zero number, e.g. 50 or -25", "bad");
-    if (!reason.trim()) return toast("A reason is required — it is stored in the ledger", "bad");
+    if (!Number.isFinite(n) || n === 0) { pushToast({ title: "Enter a non-zero number, e.g. 50 or -25", type: "error" }); return; }
+    if (!reason.trim()) { pushToast({ title: "A reason is required — it is stored in the ledger", type: "error" }); return; }
     setBusy(true);
     try {
       const r = await fetch(`${API_URL}/admin/super/users/${data.user._id}/points`, {
         method: "POST", headers: hdr(), body: JSON.stringify({ delta: n, reason: reason.trim() }),
       });
       const j = await r.json();
-      if (!j.success) toast(j.error || "Failed", "bad");
-      else { toast(`Balance is now ${j.data.points}`); setDelta(""); setReason(""); reload(); }
+      if (!j.success) pushToast({ title: j.error || "Failed", type: "error" });
+      else { pushToast({ title: `Balance is now ${j.data.points}`, type: "success" }); setDelta(""); setReason(""); reload(); }
     } finally {
       setBusy(false);
     }

@@ -6,46 +6,15 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Stars, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Stars, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useKundliMilanEditor } from "./hooks/useKundliMilanEditor";
 import KundliMilanTemplate from "./components/KundliMilanTemplate";
 import EditSheet from "./components/EditSheet";
-import type { Toast } from "./components/types";
 
 const ACCENT = "#6C5CE7";
 const PAPER = "#fdfbf4";
-
-function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
-            style={{ background: "#fff", border: "1px solid #e2ddf8" }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: ACCENT }}>{t.title}</p>
-              {t.message && <p className="text-xs text-muted-foreground mt-0.5">{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} className="p-1.5 rounded-lg" style={{ color: ACCENT, background: "#efedfd" }} aria-label="Copy link">
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} className="p-1 text-muted-foreground" aria-label="Dismiss"><X size={14} /></button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function KundliMilanPageInner() {
   const e = useKundliMilanEditor();
@@ -125,8 +94,6 @@ function KundliMilanPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       {/* Auth is deferred, not gated: this only ever appears from a Publish
           click, and the hook resumes that publish once it closes successfully. */}

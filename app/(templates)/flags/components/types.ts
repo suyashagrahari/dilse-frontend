@@ -20,7 +20,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** LEFT = red flag, RIGHT = green flag, UP = it's complicated. */

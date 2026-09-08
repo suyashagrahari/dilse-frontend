@@ -15,20 +15,11 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { isPastDate } from "@/lib/wire";
-import {
-  type EditMode,
-  type KootaName,
-  type KundliData,
-  type Person,
-  type Toast,
-  DEMO_DATA,
-  KOOTA_ORDER,
-  dbToKundliMilanData,
-  kundliMilanDataToBody,
-} from "../components/types";
+import { type EditMode, type KootaName, type KundliData, type Person, DEMO_DATA, KOOTA_ORDER, dbToKundliMilanData, kundliMilanDataToBody } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "kundli-milan_draft";
@@ -132,9 +123,8 @@ export function useKundliMilanEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local and synchronous
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Holds the payload when Publish is pressed while logged out → auto-resumed
   // by the effect on [isAuthenticated, accessToken] once auth lands.
@@ -149,13 +139,7 @@ export function useKundliMilanEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), toast.type === "publish" ? 4000 : 3200);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load an existing page (?edit=<id>) or restore a local draft ────────────
   useEffect(() => {
@@ -229,7 +213,7 @@ export function useKundliMilanEditor() {
           await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Report filed 🔮", message: "Send them the link" });
+          pushToast({ type: "publish", title: "Report filed 🔮", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -439,7 +423,7 @@ export function useKundliMilanEditor() {
         await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Report filed 🔮", message: "Send them the link" });
+        pushToast({ type: "publish", title: "Report filed 🔮", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -486,7 +470,7 @@ export function useKundliMilanEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     fill, storyStarter, openManualForm,
 
@@ -494,9 +478,7 @@ export function useKundliMilanEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

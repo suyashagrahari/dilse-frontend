@@ -10,61 +10,18 @@
 
 import { Suspense, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Send, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useDedicationEditor } from "./hooks/useDedicationEditor";
 import DedicationTemplate from "./components/DedicationTemplate";
 import EditSheet from "./components/EditSheet";
-import { toShow, type Toast } from "./components/showData";
+import { toShow } from "./components/showData";
 
 const ACCENT = "#B4441F";
 const ACCENT_GRAD = "linear-gradient(135deg,#C2551F,#8c3b2a)";
 const CHROME = "rgba(255,251,246,.94)";
 const CHROME_BORDER = "1px solid #EDDCC9";
-
-function ToastStack({
-  toasts, onDismiss, onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
-            style={{ background: "#fff", border: CHROME_BORDER }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: ACCENT }}>{t.title}</p>
-              {t.message && <p className="text-xs text-muted-foreground mt-0.5">{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                className="p-1.5 rounded-lg"
-                style={{ color: ACCENT, background: "#FDF3EC" }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1 text-muted-foreground">
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function DedicationPageInner() {
   const e = useDedicationEditor();
@@ -145,7 +102,6 @@ function DedicationPageInner() {
         )}
       </AnimatePresence>
 
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       {/* Auth is deferred, not gating: onClose cancels the pending publish,
           onSuccess just closes and the hook's effect resumes it. */}

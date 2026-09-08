@@ -8,15 +8,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { openShareSheet } from "@/lib/share/shareBus";
-import {
-  type RakhiData,
-  type EditMode,
-  type Toast,
-  SAMPLE,
-  DEMO,
-  rakhiDataToBody,
-  dbToRakhiData,
-} from "../components/types";
+import { type RakhiData, type EditMode, SAMPLE, DEMO, rakhiDataToBody, dbToRakhiData } from "../components/types";
 import {
   applyUploaded,
   blobToFile,
@@ -29,6 +21,7 @@ import {
 import { uploadImage } from "../components/upload";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -103,6 +96,7 @@ export function useRakhiEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   /**
    * What the publish is doing right now, e.g. "Uploading photos… 2 of 4".
    *
@@ -113,8 +107,6 @@ export function useRakhiEditor() {
    */
   const [publishStage, setPublishStage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   /**
    * She pressed Send without an account. Set on the way into the auth modal and
@@ -137,22 +129,7 @@ export function useRakhiEditor() {
     [accessToken]
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    // The publish toast is the one that stays longest, not the shortest. It used
-    // to be pulled after one second, which is less time than it takes to read
-    // it — and it is the only confirmation that the page went live, and it now
-    // carries a Copy button. Everything else is an acknowledgement of something
-    // she just did and can go.
-    const delay = toast.type === "publish" ? 7000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback(
-    (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-    []
-  );
 
   // ── Load an existing page (?edit=<id>) ──
   useEffect(() => {
@@ -340,34 +317,6 @@ export function useRakhiEditor() {
     []
   );
 
-  /**
-   * Raise the house share sheet for a link.
-   *
-   * ── WHY THIS TAKES THE URL AS AN ARGUMENT ─────────────────────────────────
-   *
-   * `publish` calls this the instant the server confirms, which is inside the
-   * same tick that calls `setShareUrl` — so `shareUrl` in scope is still null.
-   * Reading it from state here would open an empty sheet on the one occasion it
-   * matters most. The button in the top bar passes the state copy instead.
-   */
-  const openShare = useCallback(
-    (url: string) => {
-      openShareSheet({
-        url,
-        password: pagePassword,
-        title: "Happy Raksha Bandhan 🪢",
-        text: `${content.brotherName || "Bhai"} — I tied you a rakhi 🪢`,
-        cardTitle: "Happy Raksha Bandhan",
-        cardNote: "Scan to tie your rakhi",
-        accent: "#9B2226",
-        recipientName: content.brotherName,
-        senderName: content.sisterName,
-        slug: TEMPLATE,
-      });
-    },
-    [pagePassword, content.brotherName, content.sisterName]
-  );
-
   // ── Auto-draft ────────────────────────────────────────────────────────────
   //
   // Work built while signed OUT is held in the browser and promoted to a real
@@ -462,23 +411,19 @@ export function useRakhiEditor() {
         pushToast({
           type: "publish",
           title: "Sent! 🪢",
-          message: "Your rakhi page is live",
-          shareUrl: url,
+          message: "Tap Share to send it",
         });
-        // ── SAY IT WORKED, WITH THE LINK IN HAND ──────────────────────────────
+        // ── SAY IT WORKED, AND POINT AT SHARE ─────────────────────────────────
         //
-        // Publishing used to end with a one-second toast and the top-bar button
-        // quietly relabelling itself from "Send it" to "Share". Nothing else
-        // changed on screen, so the honest reading of the page afterwards was
-        // "I don't know whether that worked" — and after signing in mid-publish
-        // the ritual also restarted from the cover, which reads as being thrown
-        // back to the beginning.
+        // Publishing used to raise the share sheet itself, which proved the
+        // publish had happened but also handed over the link before anyone had
+        // asked for it. The link now lives behind Share alone — one door, so the
+        // "how did that go?" ask has exactly one place to stand and nobody can
+        // walk around it by copying from a toast.
         //
-        // The sheet is the answer to both. It is the same one every other
-        // template raises, it names the page and shows the link, and it cannot be
-        // mistaken for nothing having happened. She dismisses it and the page is
-        // still there, still published, with Share in the bar.
-        openShare(url);
+        // That puts the whole burden of "did that work?" on this toast, so it
+        // names the next action rather than trailing off: the top-bar button has
+        // just relabelled itself to Share, and this says so.
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -503,7 +448,6 @@ export function useRakhiEditor() {
     uploadHeld,
     headers,
     pushToast,
-    openShare,
   ]);
 
   // ── Resume the publish the auth modal interrupted ─────────────────────────
@@ -584,8 +528,19 @@ export function useRakhiEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    openShare(shareUrl);
-  }, [shareUrl, openShare]);
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      title: "Happy Raksha Bandhan 🪢",
+      text: `${content.brotherName || "Bhai"} — I tied you a rakhi 🪢`,
+      cardTitle: "Happy Raksha Bandhan",
+      cardNote: "Scan to tie your rakhi",
+      accent: "#9B2226",
+      recipientName: content.brotherName,
+      senderName: content.sisterName,
+      slug: TEMPLATE,
+    });
+  }, [shareUrl, pagePassword, content]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -593,7 +548,7 @@ export function useRakhiEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     fill, storyStarter, openManualForm, publishStage,
 
@@ -601,9 +556,7 @@ export function useRakhiEditor() {
     handleStartCreate, handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

@@ -7,17 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type ApologyData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  apologyDataToBody,
-  dbToApologyData,
-} from "../components/types";
+import { type ApologyData, type EditMode, DEMO_DATA, apologyDataToBody, dbToApologyData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /**
@@ -94,9 +88,8 @@ export function useApologyEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Holds draft when user tries to publish while unauthenticated → auto-resume after login.
   const pendingPublishRef = useRef<{ data: ApologyData; password: string } | null>(null);
@@ -110,14 +103,7 @@ export function useApologyEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a completed local draft ──────
   useEffect(() => {
@@ -193,7 +179,7 @@ export function useApologyEditor() {
           // and this resumed automatically. Tracked separately from the direct
           // path so the login detour's completion rate is visible.
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
+          pushToast({ type: "publish", title: "Published! 💗", message: "Tap Share to send it" });
           await persistStory();
         } else {
           track(EVENTS.PUBLISH_FAILED, {
@@ -353,7 +339,7 @@ export function useApologyEditor() {
         setShareUrl(String(pubResult.data.shareUrl));
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published! 💗", message: "Your apology is now live" });
+        pushToast({ type: "publish", title: "Published! 💗", message: "Tap Share to send it" });
         await persistStory();
       } else {
         // `reason` is what surfaces a server-side gate such as PAYMENT_REQUIRED
@@ -403,16 +389,14 @@ export function useApologyEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
     fill,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

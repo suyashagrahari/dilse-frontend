@@ -17,7 +17,8 @@ import Link from "next/link";
 import { API_URL } from "@/lib/config";
 import { Loader2, Trash2, KeyRound, AlertTriangle } from "lucide-react";
 import { C } from "./types";
-import { Card, Empty, useToast } from "./ui";
+import { Card, Empty } from "./ui";
+import { useToast } from "@/lib/toast/useToast";
 
 interface Grant {
   slug: string;
@@ -35,7 +36,7 @@ export default function AccessTab({
   userId: string;
   hdr: () => Record<string, string>;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [grants, setGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,14 +71,14 @@ export default function AccessTab({
         const json = await res.json();
         if (!json.success) throw new Error(json.error || "Failed to revoke");
         setGrants((p) => p.filter((x) => x.slug !== slug));
-        toast?.(`Revoked access to ${slug}`);
+        pushToast({ title: `Revoked access to ${slug}`, type: "success" });
       } catch (e) {
-        toast?.(e instanceof Error ? e.message : "Could not revoke");
+        pushToast({ title: e instanceof Error ? e.message : "Could not revoke", type: "error" });
       } finally {
         setBusy(null);
       }
     },
-    [busy, userId, hdr, toast]
+    [busy, userId, hdr, pushToast]
   );
 
   return (

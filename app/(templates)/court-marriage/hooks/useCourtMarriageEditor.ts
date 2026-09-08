@@ -7,17 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type CertificateData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  courtMarriageDataToBody,
-  dbToCourtMarriageData,
-} from "../components/types";
+import { type CertificateData, type EditMode, DEMO_DATA, courtMarriageDataToBody, dbToCourtMarriageData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "court-marriage_draft";
@@ -73,10 +67,9 @@ export function useCourtMarriageEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local & synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [justPublished, setJustPublished] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Holds the payload when Publish is hit logged-out → auto-resumes after login.
   const pendingPublishRef = useRef<{ data: CertificateData; password: string } | null>(null);
@@ -90,13 +83,7 @@ export function useCourtMarriageEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), toast.type === "publish" ? 4000 : 3500);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   /** Fires the celebration overlay once, on the transition into the Share state. */
   const celebrate = useCallback(() => {
@@ -172,7 +159,7 @@ export function useCourtMarriageEditor() {
           clearDraft();
           celebrate();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Registered! 📜", message: "Your certificate is live", shareUrl: String(pubResult.data.shareUrl) });
+          pushToast({ type: "publish", title: "Registered! 📜", message: "Tap Share to send it"});
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -341,7 +328,7 @@ export function useCourtMarriageEditor() {
         clearDraft();
         celebrate();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Registered! 📜", message: "Your certificate is live", shareUrl: String(pubResult.data.shareUrl) });
+        pushToast({ type: "publish", title: "Registered! 📜", message: "Tap Share to send it"});
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -388,17 +375,13 @@ export function useCourtMarriageEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, justPublished, copied, toasts,
-
-    fill, storyStarter, openManualForm,
+    isPersonalized, showAuth, saving, publishing, justPublished, copied, fill, storyStarter, openManualForm,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

@@ -7,18 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type RewindData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  deriveStats,
-  rewindDataToBody,
-  dbToRewindData,
-} from "../components/types";
+import { type RewindData, type EditMode, DEMO_DATA, deriveStats, rewindDataToBody, dbToRewindData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "rewind_draft";
@@ -113,9 +106,8 @@ export function useRewindEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // True once `mf` holds something the sender would be upset to lose: a draft
   // restored from storage, or a keystroke. Nothing that opens the sheet is
@@ -157,14 +149,7 @@ export function useRewindEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a local draft ────────────────
   useEffect(() => {
@@ -258,7 +243,7 @@ export function useRewindEditor() {
           await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published! ⏮️", message: "Their year is ready to play" });
+          pushToast({ type: "publish", title: "Published! ⏮️", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -503,7 +488,7 @@ export function useRewindEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published! ⏮️", message: "Their year is ready to play" });
+        pushToast({ type: "publish", title: "Published! ⏮️", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -551,16 +536,14 @@ export function useRewindEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
     restoredDraft, storyFill, storyStarted,
 
     setEditMode, setPagePassword: updatePassword, updateMf,
     handleEditClick, handleStartCreate, handleStoryManual, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

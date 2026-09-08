@@ -3,14 +3,15 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type TabId, type EditMode, type Toast, type ShaadiData, DEMO_DATA } from "../components/types";
+import { type TabId, type EditMode, type ShaadiData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
-import { requestFeedback } from "@/lib/feedback/feedbackBus";
+import { useToast } from "@/lib/toast/useToast";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "shaadi-card";
@@ -163,7 +164,6 @@ export function useShaadiCardEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [showShareSheet, setShowShareSheet] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -217,19 +217,9 @@ export function useShaadiCardEditor() {
   }, []);
 
   const [publishing, setPublishing] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
+  const { pushToast } = useToast();
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   const headers = useCallback(
     () => ({
@@ -695,13 +685,7 @@ export function useShaadiCardEditor() {
         setEditMode(null);
         try { sessionStorage.removeItem("shaadi_card_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        // Ask how it went, before this editor's own "Published!" panel takes
-        // over. Unlike most templates it does not raise the house share sheet,
-        // so the interception inside `openShareSheet` never runs here — see
-        // lib/feedback/feedbackBus. Asking twice is impossible: the bus marks
-        // the page the moment it raises, and this is a no-op if it already has.
-        requestFeedback({ templateSlug: TEMPLATE, pageUrl: normalizedShareUrl }, () => {});
-        pushToast({ type: "publish", title: "Published! 🎊", message: "Your wedding invitation is now live", shareUrl: normalizedShareUrl });
+        pushToast({ type: "publish", title: "Published! 🎊", message: "Tap Share to send it"});
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -758,7 +742,7 @@ export function useShaadiCardEditor() {
           setShareId(publishedShareId);
           setEditMode(null);
           try { sessionStorage.removeItem("shaadi_card_draft"); } catch {}
-          pushToast({ type: "publish", title: "Published! 🎊", message: "Your wedding invitation is now live", shareUrl: normalizedShareUrl });
+          pushToast({ type: "publish", title: "Published! 🎊", message: "Tap Share to send it"});
         }
       } catch {
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
@@ -784,10 +768,19 @@ export function useShaadiCardEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    setShowShareSheet(true);
-  }, [shareUrl]);
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      text: `${content.brideName || "Bride"} & ${content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`,
+      title: "Wedding Invitation",
+      cardTitle: "You are invited to our wedding",
+      cardNote: "Scan for the venue, the timings and the whole day's programme.",
+      senderName: `${content.brideName || "Bride"} & ${content.groomName || "Groom"}`,
+      accent: "#f43f5e",
+      slug: "shaadi-card",
+    });
+  }, [shareUrl, pagePassword, content]);
 
-  const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   // Add blessing
   const addBlessing = useCallback(
@@ -822,8 +815,8 @@ export function useShaadiCardEditor() {
   );
 
   return {
-    tab, content, editMode, isPersonalized, shareUrl, showShareSheet, shareId, copied, showAuth,
-    toasts, saving, publishing, pagePassword, showPwValue,
+    tab, content, editMode, isPersonalized, shareUrl, shareId, copied, showAuth,
+    saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading, extractLoading,
     mf, manualStep, aiEditData,
     themeReady,
@@ -832,13 +825,12 @@ export function useShaadiCardEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth, closeAuthSuccess, closeShareSheet,
-    handleEditClick, handleEditFromPreview, startAiMode, startManualMode,
+    goBack, closeAuth, closeAuthSuccess, handleEditClick, handleEditFromPreview, startAiMode, startManualMode,
     handleCardExtract, handleAiGenerate, handleAiEditPreview,
     handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
-    pushToast, dismissToast, addBlessing,
+    pushToast, addBlessing,
 
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,

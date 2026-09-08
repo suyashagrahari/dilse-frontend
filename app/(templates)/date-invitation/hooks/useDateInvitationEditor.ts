@@ -15,19 +15,11 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { clampNum } from "@/lib/wire";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  buildDemoData,
-  dateInviteDataToBody,
-  dbToDateInviteData,
-  isPast,
-  type DateInviteData,
-  type EditMode,
-  type Stop,
-  type Toast,
-} from "../components/types";
+import { buildDemoData, dateInviteDataToBody, dbToDateInviteData, isPast, type DateInviteData, type EditMode, type Stop } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /**
@@ -139,9 +131,8 @@ export function useDateInvitationEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   /**
    * ── THE BUG THIS HOOK DOES NOT COPY ────────────────────────────────────────
@@ -176,14 +167,7 @@ export function useDateInvitationEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a local draft ────────────────
   useEffect(() => {
@@ -267,7 +251,7 @@ export function useDateInvitationEditor() {
           await fill.persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Sent 💌", message: "Now she has to answer it" });
+          pushToast({ type: "publish", title: "Sent 💌", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -534,7 +518,7 @@ export function useDateInvitationEditor() {
         await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Sent 💌", message: "Now she has to answer it" });
+        pushToast({ type: "publish", title: "Sent 💌", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -583,7 +567,7 @@ export function useDateInvitationEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     fill, storyStarter, openManualForm,
 
@@ -591,9 +575,7 @@ export function useDateInvitationEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

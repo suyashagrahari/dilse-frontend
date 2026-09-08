@@ -3,25 +3,16 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import {
-  type ContentData,
-  type HomeCoverPhoto,
-  type PhotoItem,
-  type TabId,
-  type EditMode,
-  type Toast,
-  DEMO_CONTENT,
-  EMPTY_HOME_COVER,
-  clampHomeCoverCrop,
-} from "../components/types";
+import { type ContentData, type HomeCoverPhoto, type PhotoItem, type TabId, type EditMode, DEMO_CONTENT, EMPTY_HOME_COVER, clampHomeCoverCrop } from "../components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
+import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
-import { requestFeedback } from "@/lib/feedback/feedbackBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "darling";
@@ -89,8 +80,7 @@ export function useDarlingEditor() {
   const [storyStarted, setStoryStarted] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
+  const { pushToast } = useToast();
 
   // Tracks when form is opened FROM preview — closing form returns to preview
   const fromPreviewRef = useRef(false);
@@ -238,7 +228,7 @@ export function useDarlingEditor() {
           await persistStory();
           setEditMode(null);
           try { sessionStorage.removeItem("darling_draft"); } catch {}
-          pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
+          pushToast({ type: "publish", title: "Published! ♡", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -263,16 +253,7 @@ export function useDarlingEditor() {
     } catch {}
   }, [mf, manualStep, editMode]);
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   const headers = useCallback(
     () => ({
@@ -672,13 +653,7 @@ export function useDarlingEditor() {
         setEditMode(null);
         try { sessionStorage.removeItem("darling_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        // Ask how it went, before this editor's own "Published!" panel takes
-        // over. Unlike most templates it does not raise the house share sheet,
-        // so the interception inside `openShareSheet` never runs here — see
-        // lib/feedback/feedbackBus. Asking twice is impossible: the bus marks
-        // the page the moment it raises, and this is a no-op if it already has.
-        requestFeedback({ templateSlug: TEMPLATE, pageUrl: url }, () => {});
-        pushToast({ type: "publish", title: "Published! ♡", message: "Your darling page is now live" });
+        pushToast({ type: "publish", title: "Published! ♡", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -694,7 +669,6 @@ export function useDarlingEditor() {
     }
   }, [isAuthenticated, accessToken, pageId, content, pagePassword, headers, pushToast, persistStory]);
 
-  const [showShareSheet, setShowShareSheet] = useState(false);
 
   const handleCopy = useCallback(
     (url?: string) => {
@@ -710,19 +684,26 @@ export function useDarlingEditor() {
   );
 
   const handleShare = useCallback(() => {
-    if (shareUrl) setShowShareSheet(true);
-  }, [shareUrl]);
+    if (!shareUrl) return;
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      title: "A darling page for you",
+      cardTitle: "There is a page waiting for you",
+      cardNote: "Scan it and the whole page opens — no app, nothing to install.",
+      accent: "#e11d48",
+      slug: "darling",
+    });
+  }, [shareUrl, pagePassword]);
 
   // Extract shareId from shareUrl (last path segment)
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 
   return {
     tab, content, editMode, isPersonalized, shareUrl, shareId, copied, showAuth,
-    toasts, saving, publishing, pagePassword, showPwValue,
+    saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, setMf, manualStep, pendingContent,
-    showShareSheet, setShowShareSheet,
-
     storyFill, storyStarted, handleStartCreate, handleStartAi, handleStoryManual,
 
     setEditMode, setEditModeFromSheet, setAiName, setAiSender, setAiPrompt, setManualStep,
@@ -735,9 +716,7 @@ export function useDarlingEditor() {
     handleEditFromPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
-    pushToast, dismissToast,
-
-    gameResponsesFromDB, quizAttemptsFromDB,
+    pushToast, gameResponsesFromDB, quizAttemptsFromDB,
 
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,

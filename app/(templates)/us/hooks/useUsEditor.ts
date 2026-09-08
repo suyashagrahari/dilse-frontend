@@ -31,6 +31,7 @@ import type { ProfileData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/us-pages`;
@@ -43,7 +44,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** A profile with no handle and no photos is not a profile. */
@@ -70,9 +70,8 @@ export function useUsEditor() {
 
   const [showAuth, setShowAuth] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastId = useRef(0);
 
   /** True from the first keystroke. Nothing may overwrite `mf` while it is set. */
   const hasWip = useRef(false);
@@ -108,17 +107,7 @@ export function useUsEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastId.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1200 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback(
-    (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-    [],
-  );
 
   // ── Load an existing page (?edit=<id>) ──────────────────────────────────────
   useEffect(() => {
@@ -187,7 +176,7 @@ export function useUsEditor() {
           // Never throws, never blocks — the page is already live either way.
           await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 📱", message: "The profile is live" });
+          pushToast({ type: "publish", title: "Published 📱", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "publish_rejected" });
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
@@ -389,7 +378,7 @@ export function useUsEditor() {
         // Never throws, never blocks — the page is already live either way.
         await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 📱", message: "The profile is live" });
+        pushToast({ type: "publish", title: "Published 📱", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "publish_rejected" });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
@@ -446,7 +435,6 @@ export function useUsEditor() {
     showAuth,
     publishing,
     copied,
-    toasts,
     previewVersion,
 
     storyFill,
@@ -466,8 +454,6 @@ export function useUsEditor() {
     handleCopy,
     handleShare,
     goBack,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "Copied" : "Share",

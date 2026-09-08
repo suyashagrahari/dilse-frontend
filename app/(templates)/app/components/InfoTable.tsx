@@ -24,7 +24,7 @@
 
 "use client";
 
-import { toast } from "sonner";
+import { useToast } from "@/lib/toast/useToast";
 import type { AppInfoRow } from "./types";
 import { AP, SECTION_GAP } from "./theme";
 
@@ -32,6 +32,7 @@ import { AP, SECTION_GAP } from "./theme";
 const TAP = 44;
 
 export function InfoTable({ rows }: { rows: AppInfoRow[] }) {
+  const { pushToast } = useToast();
   return (
     <section
       aria-labelledby="info-heading"
@@ -99,8 +100,9 @@ export function InfoTable({ rows }: { rows: AppInfoRow[] }) {
                   <button
                     type="button"
                     onClick={() =>
-                      toast(row.value, {
-                        description: `${row.label} — this listing is a keepsake, so there is nothing to open.`,
+                      pushToast({
+                        title: row.value,
+                        message: `${row.label} — this listing is a keepsake, so there is nothing to open.`,
                       })
                     }
                     style={{

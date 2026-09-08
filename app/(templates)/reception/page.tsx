@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import { ShareSheet } from "@/components/share/ShareSheet";
 import { useReceptionEditor } from "./hooks/useReceptionEditor";
 
 import BokehParticles from "./components/BokehParticles";
@@ -13,7 +12,6 @@ import DesktopNav from "./components/DesktopNav";
 import DesktopRightPanel from "./components/DesktopRightPanel";
 import BottomNav from "./components/BottomNav";
 import SplashSection from "./components/SplashSection";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ReceptionWelcomeOverlay from "./components/ReceptionWelcomeOverlay";
@@ -274,19 +272,6 @@ export default function ReceptionPage() {
         </AnimatePresence>
       </div>
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <ShareSheet
-        open={editor.showShareSheet}
-        onClose={editor.closeShareSheet}
-        shareUrl={editor.shareUrl}
-        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} warmly invite you to their reception on SubhSandesh!`}
-        title="Reception Invitation"
-        cardTitle="You are invited to our reception"
-        cardNote="Scan for the venue, the timings and the evening's programme."
-        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
-        accent="#e11d48"
-        slug="reception"
-      />
 
       <EditSheet
         editMode={editor.editMode}

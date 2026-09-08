@@ -23,18 +23,11 @@ import { track } from "@/lib/analytics/track";
 import type { StreakData } from "../components/types";
 import { dbToStreakData, streakDataToBody } from "../components/coerce";
 import { makeDemoData } from "../components/demoData";
-import {
-  dataToForm,
-  emptyForm,
-  formToData,
-  validateForm,
-  type EditMode,
-  type StreakForm,
-  type Toast,
-} from "../components/editorTypes";
+import { dataToForm, emptyForm, formToData, validateForm, type EditMode, type StreakForm } from "../components/editorTypes";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/streak-pages`;
@@ -77,9 +70,8 @@ export function useStreakEditor() {
 
   const [showAuth, setShowAuth] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // The draft, in memory, under DRAFT_KEY. A plain object rather than a bare
   // value so the shape matches what a storage-backed version would hold.
@@ -124,17 +116,7 @@ export function useStreakEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1200 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback(
-    (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-    [],
-  );
 
   // ── Load an existing page (?edit=<id>) ──────────────────────────────────────
   useEffect(() => {
@@ -204,7 +186,7 @@ export function useStreakEditor() {
           await persistStory();
           setDrafts({});
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 🕯️", message: "Send it to them" });
+          pushToast({ type: "publish", title: "Published 🕯️", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -428,7 +410,7 @@ export function useStreakEditor() {
         await persistStory();
         setDrafts({});
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 🕯️", message: "Send it to them" });
+        pushToast({ type: "publish", title: "Published 🕯️", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -490,7 +472,6 @@ export function useStreakEditor() {
     saving: false,
     publishing,
     copied,
-    toasts,
     previewVersion,
     restoredDraft: Boolean(drafts[DRAFT_KEY]) && !isPersonalized,
 
@@ -512,8 +493,6 @@ export function useStreakEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "Copied" : "Share",

@@ -2,13 +2,13 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Stamp, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Stamp, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useCourtMarriageEditor } from "./hooks/useCourtMarriageEditor";
 import CourtMarriageTemplate, { usePrefersReducedMotion } from "./components/CourtMarriageTemplate";
 import EditSheet from "./components/EditSheet";
-import type { Toast } from "./components/types";
+
 import { templateMediaBase } from "@/lib/templateMedia";
 
 /** Animation set for this template — served from S3, never bundled. */
@@ -17,36 +17,6 @@ const ASSET = templateMediaBase("court-marriage");
 const SEAL = "#3f4c8f";
 const SEAL_GRADIENT = "linear-gradient(135deg,#5566b8,#2f3a70)";
 const CHROME = { fontFamily: "var(--font-inter), system-ui, sans-serif" } as const;
-
-function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="pointer-events-none fixed left-1/2 top-16 z-[400] flex w-[92%] max-w-sm -translate-x-1/2 flex-col items-center gap-2" style={CHROME}>
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto flex w-full items-center gap-3 rounded-2xl px-4 py-3 shadow-lg"
-            style={{ background: "#fff", border: "1px solid #dcdcf0" }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: SEAL }}>{t.title}</p>
-              {t.message && <p className="mt-0.5 text-xs text-muted-foreground">{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} aria-label="Copy link" className="rounded-lg p-1.5" style={{ color: SEAL, background: "#eef0fb" }}>
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1 text-muted-foreground"><X size={14} /></button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function CourtMarriagePageInner() {
   const e = useCourtMarriageEditor();
@@ -150,8 +120,6 @@ function CourtMarriagePageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

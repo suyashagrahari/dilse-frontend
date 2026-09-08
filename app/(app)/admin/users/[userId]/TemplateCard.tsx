@@ -6,7 +6,8 @@ import {
   Eye, EyeOff, KeyRound, Trash2, ExternalLink, Pencil, ChevronRight, BarChart3,
 } from "lucide-react";
 import { C, type ProfilePage } from "./types";
-import { Btn, Pill, CopyBtn, useToast, fmtShort } from "./ui";
+import { Btn, Pill, CopyBtn, fmtShort } from "./ui";
+import { useToast } from "@/lib/toast/useToast";
 
 /**
  * One template the user made.
@@ -31,7 +32,7 @@ export default function TemplateCard({
   onEdit: (p: ProfilePage, content: Record<string, unknown>) => void;
   busy: boolean;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const url = page.shareId ? `${SITE_URL}/${page.shareId}` : "";
@@ -43,14 +44,14 @@ export default function TemplateCard({
       const r = await fetch(`${API_URL}/admin/super/pages/${page.templateType}/${page._id}/content`, { headers: hdr() });
       const j = await r.json();
       if (j.success) { setDetails(j.data.page); return j.data.page; }
-      toast(j.error || "Could not load the details", "bad");
+      pushToast({ title: j.error || "Could not load the details", type: "error" });
     } catch {
-      toast("Could not load the details", "bad");
+      pushToast({ title: "Could not load the details", type: "error" });
     } finally {
       setLoading(false);
     }
     return null;
-  }, [details, loading, page, hdr, toast]);
+  }, [details, loading, page, hdr, pushToast]);
 
   const startEdit = async () => {
     const content = details || (await loadDetails());

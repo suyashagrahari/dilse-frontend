@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
+import { ArrowLeft, PenLine, Share2, Loader2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { BROTHER_CAST } from "@/components/story/casts";
@@ -10,68 +10,8 @@ import { useRakhiEditor } from "./hooks/useRakhiEditor";
 import RakhiTemplate from "./components/RakhiTemplate";
 import EditSheet from "./components/EditSheet";
 import { RB, PAPER_GRADIENT, BRAND_GRADIENT, CARD_BORDER, CARD_SHADOW } from "./components/theme";
-import type { Toast } from "./components/types";
-import "./components/rakhi.css";
 
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 flex items-center gap-3"
-            style={{
-              background: RB.surface,
-              border: CARD_BORDER,
-              boxShadow: CARD_SHADOW,
-            }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: RB.red }}>
-                {t.title}
-              </p>
-              {t.message && (
-                <p className="text-xs" style={{ color: RB.muted }}>
-                  {t.message}
-                </p>
-              )}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                className="p-1.5 rounded-lg"
-                style={{ color: RB.red, background: "rgba(155,34,38,0.12)" }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              className="p-1.5 rounded-lg"
-              style={{ color: RB.muted }}
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
+import "./components/rakhi.css";
 
 function RakhiPageInner() {
   const e = useRakhiEditor();
@@ -231,8 +171,6 @@ function RakhiPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

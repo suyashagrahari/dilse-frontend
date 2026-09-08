@@ -11,67 +11,16 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Send, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useStreakEditor } from "./hooks/useStreakEditor";
 import StreakTemplate from "./components/StreakTemplate";
 import EditSheet from "./components/EditSheet";
 import { PALETTE, SERIF, UI } from "./components/types";
-import type { Toast } from "./components/editorTypes";
 
 const CHROME = "rgba(250,247,240,0.92)";
 const CHROME_BORDER = `1px solid ${PALETTE.edge}`;
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 flex items-center gap-3"
-            style={{ background: PALETTE.paper, border: CHROME_BORDER, boxShadow: "0 6px 20px rgba(43,38,32,0.08)" }}
-          >
-            <div className="flex-1">
-              <p style={{ fontFamily: SERIF, fontSize: 15, color: PALETTE.ink }}>{t.title}</p>
-              {t.message && (
-                <p style={{ fontFamily: UI, fontSize: 12, color: PALETTE.inkSoft, marginTop: 1 }}>{t.message}</p>
-              )}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                style={{ minWidth: 44, minHeight: 44, display: "grid", placeItems: "center", background: "transparent", border: "none", color: PALETTE.accent }}
-              >
-                <Copy size={15} />
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{ minWidth: 44, minHeight: 44, display: "grid", placeItems: "center", background: "transparent", border: "none", color: PALETTE.inkFaint }}
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function StreakPageInner() {
   const e = useStreakEditor();
@@ -186,8 +135,6 @@ function StreakPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

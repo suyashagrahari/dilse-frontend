@@ -32,7 +32,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { toast } from "sonner";
+import { useToast } from "@/lib/toast/useToast";
 import StarRating from "@/components/contrib/StarRating";
 import type { AppRating, AppReview } from "./types";
 import { AP, SECTION_GAP } from "./theme";
@@ -400,6 +400,7 @@ export function Reviews({
   reviews: AppReview[];
   onWriteReview: () => void;
 }) {
+  const { pushToast } = useToast();
   const reduced = useReducedMotion() ?? false;
 
   /**
@@ -586,8 +587,9 @@ export function Reviews({
         <FootLink onClick={onWriteReview}>Write a Review</FootLink>
         <FootLink
           onClick={() =>
-            toast("Support request noted.", {
-              description: "Estimated response time: whenever the developer feels like it.",
+            pushToast({
+              title: "Support request noted.",
+              message: "Estimated response time: whenever the developer feels like it.",
             })
           }
         >

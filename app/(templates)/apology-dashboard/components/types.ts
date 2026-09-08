@@ -47,7 +47,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** One selectable promise on the Sweet Bribery Desk. */

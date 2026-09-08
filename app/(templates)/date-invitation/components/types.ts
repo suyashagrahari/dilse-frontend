@@ -24,7 +24,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export type WalkingLevel = "minimal" | "some" | "a lot";

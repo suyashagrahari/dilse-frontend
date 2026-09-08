@@ -7,17 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type VendingData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  vendingDataToBody,
-  dbToVendingData,
-} from "../components/types";
+import { type VendingData, type EditMode, DEMO_DATA, vendingDataToBody, dbToVendingData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "vending-machine_draft";
@@ -94,9 +88,8 @@ export function useVendingMachineEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Holds draft when user tries to publish while unauthenticated → auto-resume after login.
   const pendingPublishRef = useRef<{ data: VendingData; password: string } | null>(null);
@@ -110,14 +103,7 @@ export function useVendingMachineEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a completed local draft ──────
   useEffect(() => {
@@ -196,7 +182,7 @@ export function useVendingMachineEditor() {
           // and this resumed automatically. Tracked separately from the direct
           // path so the login detour's completion rate is visible.
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Machine stocked 🎰", message: "Your link is ready" });
+          pushToast({ type: "publish", title: "Machine stocked 🎰", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -371,7 +357,7 @@ export function useVendingMachineEditor() {
         await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Machine stocked 🎰", message: "Your link is ready" });
+        pushToast({ type: "publish", title: "Machine stocked 🎰", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -419,7 +405,7 @@ export function useVendingMachineEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     fill, storyStarter, openManualForm,
 
@@ -427,9 +413,7 @@ export function useVendingMachineEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

@@ -20,7 +20,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export const DEMO_CHALLAN: ChallanData = {

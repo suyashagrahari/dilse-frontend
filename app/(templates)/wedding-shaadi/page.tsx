@@ -5,14 +5,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowLeft, Sparkles, Send, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import { ShareSheet } from "@/components/share/ShareSheet";
 import { useWeddingEditor } from "./hooks/useWeddingEditor";
 
 import GoldenParticles from "./components/GoldenParticles";
 import DesktopSidebar from "./components/DesktopSidebar";
 import BottomNav from "./components/BottomNav";
 import CoverSection from "./components/CoverSection";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import WeddingWelcomeOverlay from "./components/WeddingWelcomeOverlay";
@@ -292,19 +290,6 @@ function WeddingShadiPage() {
         </AnimatePresence>
       </div>
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <ShareSheet
-        open={editor.showShareSheet}
-        onClose={editor.closeShareSheet}
-        shareUrl={editor.shareUrl}
-        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
-        title="Wedding Invitation"
-        cardTitle="You are invited to our wedding"
-        cardNote="Scan for the venue, the timings and the whole day's programme."
-        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
-        accent="#f59e0b"
-        slug="wedding-shaadi"
-      />
 
       <EditSheet
         editMode={editor.editMode}

@@ -9,12 +9,10 @@ import { useBirthdayEditor } from "./hooks/useBirthdayEditor";
 import HomeSection from "./components/HomeSection";
 import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PublishSheet from "./components/PublishSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import BirthdayBgMusic from "./components/BirthdayBgMusic";
-import { ShareSheet } from "@/components/share/ShareSheet";
 
 const GallerySection  = lazy(() => import("./components/GallerySection"));
 const SongsSection    = lazy(() => import("./components/SongsSection"));
@@ -276,7 +274,6 @@ function BirthdayGfPageInner() {
 
       <PublishingOverlay visible={editor.publishing} />
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
 
       <AnimatePresence>
         {editor.showAuth && (
@@ -284,16 +281,6 @@ function BirthdayGfPageInner() {
         )}
       </AnimatePresence>
 
-      <ShareSheet
-        open={editor.showShareSheet}
-        onClose={() => editor.setShowShareSheet(false)}
-        shareUrl={editor.shareUrl}
-        title="A birthday page for you"
-        cardTitle="Happy birthday"
-        cardNote="Scan it and the whole page opens — no app, nothing to install."
-        accent="#f43f5e"
-        slug="birthday-gf"
-      />
     </div>
   );
 }

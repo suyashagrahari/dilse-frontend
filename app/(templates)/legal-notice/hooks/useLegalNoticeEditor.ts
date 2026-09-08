@@ -7,19 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type NoticeData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  addDaysIso,
-  dbToLegalNoticeData,
-  isoDay,
-  legalNoticeDataToBody,
-} from "../components/types";
+import { type NoticeData, type EditMode, DEMO_DATA, addDaysIso, dbToLegalNoticeData, isoDay, legalNoticeDataToBody } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /**
@@ -105,9 +97,8 @@ export function useLegalNoticeEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local and synchronous
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: NoticeData; password: string } | null>(null);
 
@@ -120,13 +111,7 @@ export function useLegalNoticeEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), toast.type === "publish" ? 4000 : 3200);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Stamp the demo dates once, client-side ─────────────────────────────────
   useEffect(() => {
@@ -204,7 +189,7 @@ export function useLegalNoticeEditor() {
           setShareUrl(String(pubResult.data.shareUrl));
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Notice served ⚖️", message: "Send them the link" });
+          pushToast({ type: "publish", title: "Notice served ⚖️", message: "Tap Share to send it" });
           await persistStory();
         } else {
           track(EVENTS.PUBLISH_FAILED, {
@@ -364,7 +349,7 @@ export function useLegalNoticeEditor() {
         setShareUrl(String(pubResult.data.shareUrl));
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Notice served ⚖️", message: "Send them the link" });
+        pushToast({ type: "publish", title: "Notice served ⚖️", message: "Tap Share to send it" });
         await persistStory();
       } else {
         track(EVENTS.PUBLISH_FAILED, {
@@ -412,16 +397,14 @@ export function useLegalNoticeEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
     fill,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

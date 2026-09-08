@@ -2,43 +2,14 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, TicketCheck, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, TicketCheck, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import { useTrainTicketEditor } from "./hooks/useTrainTicketEditor";
 import TrainTicket from "./components/TrainTicket";
 import EditSheet from "./components/EditSheet";
 import StoryStarter from "@/components/story/StoryStarter";
-import type { Toast } from "./components/types";
 
 const INK = "#1c1c1c";
-
-function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full px-4 py-3 flex items-center gap-3"
-            style={{ background: "#fff", border: "1px solid #111", fontFamily: "var(--font-courier-prime), monospace" }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: INK }}>{t.title}</p>
-              {t.message && <p className="text-xs text-muted-foreground mt-0.5">{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} className="p-1.5" style={{ color: INK, border: "1px solid #111" }}><Copy size={14} /></button>
-            )}
-            <button onClick={() => onDismiss(t.id)} className="p-1 text-muted-foreground"><X size={14} /></button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function TrainTicketPageInner() {
   const e = useTrainTicketEditor();
@@ -123,8 +94,6 @@ function TrainTicketPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

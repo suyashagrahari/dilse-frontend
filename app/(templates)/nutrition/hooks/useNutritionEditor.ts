@@ -25,17 +25,12 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
-import {
-  DEMO_NUTRITION,
-  nutritionDataToBody,
-  dbToNutritionData,
-  type EditMode,
-  type Toast,
-} from "../components/demo";
+import { DEMO_NUTRITION, nutritionDataToBody, dbToNutritionData, type EditMode } from "../components/demo";
 import type { NutritionData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -89,9 +84,8 @@ export function useNutritionEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: NutritionData; password: string } | null>(null);
 
@@ -104,13 +98,6 @@ export function useNutritionEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a completed draft ──
   useEffect(() => {
@@ -181,7 +168,7 @@ export function useNutritionEditor() {
           await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_resume" });
-          pushToast({ type: "publish", title: "Published", message: "The label is live" });
+          pushToast({ type: "publish", title: "Published", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -348,7 +335,7 @@ export function useNutritionEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published", message: "The label is live" });
+        pushToast({ type: "publish", title: "Published", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -396,16 +383,14 @@ export function useNutritionEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     setEditMode, setPagePassword, updateMf, setMf,
     storyFill, storyStarted, handleStartCreate, handleStoryManual,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied" : "Share",
   };

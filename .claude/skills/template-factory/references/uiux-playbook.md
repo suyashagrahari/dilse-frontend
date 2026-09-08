@@ -7,7 +7,7 @@ Turn `00-brief.md` into a buildable design. Output `01-design.md`. Mobile-first.
   Every text/background pair must pass **WCAG AA** (≥4.5:1 body, ≥3:1 large text).
   Verify each pair (compute the ratio); the landing shipped a broken gold `#c9a84c`
   at 1.97:1 — don't repeat it. Darken accents until they pass.
-- **Typography:** use the fonts from the chosen theme (load the `subhsandesh-theme`
+- **Typography:** use the fonts from the chosen theme (load the `theme-design-system`
   skill). **New SubhSandesh theme:** Space Grotesk (headings), Inter (body), Caveat
   (handwritten accent) — via `--font-space-grotesk` / `--font-inter` / `--font-caveat`.
   **Classic theme only if requested:** Playfair Display + Outfit + Lora + Dancing

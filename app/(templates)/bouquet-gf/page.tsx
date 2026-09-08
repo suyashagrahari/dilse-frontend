@@ -2,36 +2,13 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
+import { ArrowLeft, PenLine, Share2, Loader2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useBouquetEditor } from "./hooks/useBouquetEditor";
 import BouquetTemplate from "./components/BouquetTemplate";
 import EditSheet from "./components/EditSheet";
 import { LIGHT, BQ, BRAND_GRADIENT } from "./components/theme";
-import type { Toast } from "./components/types";
-
-function ToastStack({ toasts, onDismiss, onCopy }: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div key={t.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: LIGHT.surface, border: `2px solid ${LIGHT.ink}`, boxShadow: "3px 4px 0 rgba(43,36,64,0.14)" }}>
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: BQ.bubblegumDeep }}>{t.title}</p>
-              {t.message && <p className="text-xs" style={{ color: LIGHT.muted }}>{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} aria-label="Copy link" className="p-1.5 rounded-lg" style={{ color: BQ.lilacDeep, background: "rgba(184,164,240,0.16)" }}><Copy size={14} /></button>
-            )}
-            <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1" style={{ color: LIGHT.muted }}><X size={14} /></button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function BouquetPageInner() {
   const e = useBouquetEditor();
@@ -90,8 +67,6 @@ function BouquetPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

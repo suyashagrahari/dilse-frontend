@@ -13,6 +13,7 @@ import { dbToSearchData } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/searched-pages`;
@@ -25,7 +26,6 @@ export interface Toast {
   type: "info" | "success" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /* ── Draft handling ──────────────────────────────────────────────────────────
@@ -110,10 +110,9 @@ export function useSearchedEditor() {
   const [previewVersion, setPreviewVersion] = useState(0);
   const [showAuth, setShowAuth] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toastIdRef = useRef(0);
   const hasWipRef = useRef(false);
   const pendingPublishRef = useRef<{ data: SearchData; password: string } | null>(null);
 
@@ -150,14 +149,7 @@ export function useSearchedEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 6000 : 3500;
-    window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load an existing page (?edit=<id>) ──────────────────────────────────────
   useEffect(() => {
@@ -221,7 +213,7 @@ export function useSearchedEditor() {
           // Never throws, never blocks — the page is already live either way.
           await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 🔍", message: "Send it. Let them type their own name.", shareUrl: String(pubResult.data.shareUrl) });
+          pushToast({ type: "publish", title: "Published 🔍", message: "Tap Share to send it"});
         } else {
           track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "publish_rejected" });
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
@@ -423,7 +415,7 @@ export function useSearchedEditor() {
         // Never throws, never blocks — the page is already live either way.
         await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 🔍", message: "Send it. Let them type their own name.", shareUrl: String(pubResult.data.shareUrl) });
+        pushToast({ type: "publish", title: "Published 🔍", message: "Tap Share to send it"});
       } else {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "publish_rejected" });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
@@ -469,14 +461,12 @@ export function useSearchedEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl,
-    isPersonalized, showAuth, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, publishing, copied, previewVersion,
     storyFill, storyStarted,
 
     setEditMode, setPagePassword: updatePassword, updateMf, setRecipientName,
     openSheet, handleStartCreate, handleStoryManual, handleSave, publish, closeAuth, closeAuthSuccess,
-    handleCopy, handleShare, goBack, pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    handleCopy, handleShare, goBack, pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "Copied" : "Share",
   };

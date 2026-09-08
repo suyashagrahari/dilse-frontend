@@ -19,7 +19,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** A falling object that carries one line of the letter. */

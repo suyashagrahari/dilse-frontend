@@ -9,6 +9,7 @@ import AppLayoutShell from "./AppLayoutShell";
 import AppSplash from "@/components/AppSplash";
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import FeedbackHost from "@/components/FeedbackHost";
+import ToastHost from "@/components/toast/ToastHost";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
 export const metadata: Metadata = buildMeta({
@@ -43,6 +44,7 @@ export default function AppLayout({
             raised from here without that opt-out must find a host rather than
             hanging on a modal nobody renders. */}
         <FeedbackHost />
+        <ToastHost />
       </AppLayoutShell>
     </TemplateSearchProvider>
   );

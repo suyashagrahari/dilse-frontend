@@ -26,7 +26,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export type FinalPieceMode = "auto" | "sender-release";

@@ -2,12 +2,11 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Gavel, Share2, Loader2, X, Copy } from "lucide-react";
+import { ArrowLeft, PenLine, Gavel, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import { useCourtOfLoveEditor } from "./hooks/useCourtOfLoveEditor";
 import CourtOfLove from "./components/CourtOfLove";
 import EditSheet from "./components/EditSheet";
-import type { Toast } from "./components/types";
 
 const TEXT = "#0E0E12";
 const SURFACE = "#FFFFFF";
@@ -15,7 +14,6 @@ const BORDER = "#ECEAE3";
 const INDIGO = "#6C5CE7";
 const LIME = "#C6FF3D";
 const HEAD = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
-const BODY = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
 
 const pill: React.CSSProperties = {
   display: "inline-flex",
@@ -34,77 +32,6 @@ const pill: React.CSSProperties = {
   cursor: "pointer",
   minHeight: 42,
 };
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none"
-      style={{ top: "calc(env(safe-area-inset-top, 0px) + 62px)" }}
-    >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full flex items-center gap-3"
-            style={{
-              background: SURFACE,
-              border: `1px solid ${BORDER}`,
-              borderRadius: 20,
-              padding: "12px 15px",
-              boxShadow: "0 12px 30px rgba(14,14,18,.12)",
-            }}
-          >
-            <div className="flex-1 min-w-0">
-              <p style={{ fontFamily: HEAD, fontSize: 13.5, fontWeight: 700, color: TEXT, margin: 0 }}>
-                {t.title}
-              </p>
-              {t.message && (
-                <p style={{ fontFamily: BODY, fontSize: 11.5, color: "#5B5B66", margin: "2px 0 0" }}>
-                  {t.message}
-                </p>
-              )}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                style={{
-                  flexShrink: 0,
-                  padding: 7,
-                  borderRadius: 12,
-                  color: INDIGO,
-                  background: "rgba(108,92,231,.1)",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{ flexShrink: 0, padding: 4, color: "#5B5B66", background: "none", border: "none", cursor: "pointer" }}
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function CourtOfLovePageInner() {
   const e = useCourtOfLoveEditor();
@@ -193,8 +120,6 @@ function CourtOfLovePageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

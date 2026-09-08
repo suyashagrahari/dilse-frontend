@@ -11,7 +11,7 @@
 // should try to make it responsive; it is a fixed 420px sheet by design.
 
 import { Suspense, useCallback, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { exportNodeToPng } from "@/lib/exportPng";
@@ -19,7 +19,7 @@ import { useChallanEditor } from "./hooks/useChallanEditor";
 import { ChallanTemplate } from "./components/ChallanTemplate";
 import EditSheet from "./components/EditSheet";
 import ShareCard, { SHARE_W, SHARE_H } from "./components/ShareCard";
-import type { Toast } from "./components/demo";
+
 import { CH } from "./components/theme";
 
 /* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
@@ -52,80 +52,9 @@ function IconLink() {
   );
 }
 
-function IconClose() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" aria-hidden="true" focusable="false">
-      <path d="m6 6 12 12" /><path d="M18 6 6 18" />
-    </svg>
-  );
-}
 
-function IconCopy() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <rect x="9" y="9" width="11" height="11" rx="2" /><path d="M15 5.5H6A1.5 1.5 0 0 0 4.5 7v9" />
-    </svg>
-  );
-}
 
 /* ── Toasts ───────────────────────────────────────────────────────────────── */
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none"
-      style={{ top: 62 }}
-    >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="pointer-events-auto w-full flex items-center gap-3"
-            style={{ background: "#FFFFFF", border: `1px solid ${CH.portalEdge}`, padding: "10px 12px" }}
-          >
-            <div className="flex-1 min-w-0">
-              <p style={{ margin: 0, fontFamily: CH.serif, fontSize: 13, fontWeight: 700, color: CH.ink }}>{t.title}</p>
-              {t.message ? (
-                <p style={{ margin: 0, fontFamily: CH.serif, fontSize: 11.5, color: CH.faint }}>{t.message}</p>
-              ) : null}
-            </div>
-            {t.type === "publish" ? (
-              <button
-                type="button"
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                style={{ minWidth: 44, minHeight: 44, border: "none", background: "transparent", color: CH.ink, cursor: "pointer" }}
-              >
-                <IconCopy />
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{ minWidth: 44, minHeight: 44, border: "none", background: "transparent", color: CH.faint, cursor: "pointer" }}
-            >
-              <IconClose />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 
@@ -228,8 +157,6 @@ function ChallanPageInner() {
 
       {/* Offscreen, at true size. Never the on-screen node scaled up. */}
       <ShareCard data={e.content} paid={false} attach={attach} />
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth ? <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} /> : null}

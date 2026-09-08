@@ -15,6 +15,28 @@
 // With a bus, `handleShare` is one line, the sheet is mounted once in the
 // templates layout, and there is no per-template wiring left to forget.
 //
+// ── ONE SHAPE, EVERY TEMPLATE ───────────────────────────────────────────────
+//
+// Ten templates used to opt out of this: they imported the same house
+// `ShareSheet`, then drove it from their own `showShareSheet` state and rendered
+// it themselves. Identical component, private wiring — so they also needed
+// their own feedback trigger, and that is precisely how the ask went missing in
+// ten editors and nobody noticed. Duplicated logic does not stay identical; it
+// only starts that way.
+//
+// Every editor now has the same `handleShare` and nothing else:
+//
+//     const handleShare = useCallback(() => {
+//       if (!shareUrl) return;
+//       openShareSheet({ url: shareUrl, password: pagePassword, title, accent, slug });
+//     }, [shareUrl, pagePassword, content]);
+//
+// The payload differs — titles, accents, the line on the printed card — because
+// that is data. The flow does not. `scripts/feedback-coverage.mjs` fails the
+// build on a template that renders `<ShareSheet>` itself, keeps its own sheet
+// state, or calls the feedback bus directly, so the eleventh opt-out cannot
+// happen quietly.
+//
 // ── WHY NOT REACT CONTEXT ────────────────────────────────────────────────────
 //
 // Context would need a provider above every template AND a `useContext` call in
@@ -32,7 +54,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { deferUntilFeedbackClosed, requestFeedback } from "@/lib/feedback/feedbackBus";
+import { askThenRun } from "@/lib/feedback/feedbackBus";
 
 export interface SharePayload {
   /** The published page's URL. The only required field. */
@@ -94,43 +116,34 @@ function emit(): void {
 export function openShareSheet(payload: SharePayload): void {
   if (!payload?.url) return;
 
-  // ── The feedback ask goes FIRST ─────────────────────────────────────────
-  //
-  // Publish → "how was that?" → the link. This is the one place in the app
-  // that knows a publish has just succeeded for every one of the forty-three
-  // templates, which is why the interception lives here rather than in the
-  // editors. `requestFeedback` applies its own restraint — once per page, never
-  // when signed out, never two at once — and returns false whenever it decides
-  // not to ask, in which case this behaves exactly as it always did.
-  //
-  // The payload is held in the release callback, not in `current`, so the sheet
-  // is genuinely not open while the modal is up: nothing renders behind it and
-  // an interrupted session leaves no half-open sheet.
-  if (payload.askFeedback !== false) {
-    const asked = requestFeedback(
-      {
-        templateSlug: payload.slug ?? "",
-        pageUrl: payload.url,
-        templateTitle: payload.cardTitle || payload.title,
-      },
-      () => {
-        current = payload;
-        emit();
-      }
-    );
-    if (asked) return;
+  const reveal = () => {
+    current = payload;
+    emit();
+  };
 
-    // Already asking — raised a moment ago by a template that publishes through
-    // its own handler. Wait for that modal rather than opening the sheet
-    // underneath it.
-    if (deferUntilFeedbackClosed(() => {
-      current = payload;
-      emit();
-    })) return;
+  // ── The feedback ask goes FIRST, and only here ──────────────────────────
+  //
+  // Opening this sheet is the creator ASKING FOR THE LINK, which is the one
+  // moment where "how was that?" is a fair question: they have finished, they
+  // are about to leave for WhatsApp, and one dismissible modal is the whole
+  // cost. It is deliberately NOT asked at publish — see the note in
+  // lib/feedback/feedbackBus on why the publish toast no longer carries a link.
+  //
+  // `askThenRun` guarantees `reveal` runs on every path, so a declined ask,
+  // a second modal, or a thrown callback can never cost somebody their link.
+  if (payload.askFeedback === false) {
+    reveal();
+    return;
   }
 
-  current = payload;
-  emit();
+  askThenRun(
+    {
+      templateSlug: payload.slug ?? "",
+      pageUrl: payload.url,
+      templateTitle: payload.cardTitle || payload.title,
+    },
+    reveal
+  );
 }
 
 export function closeShareSheet(): void {

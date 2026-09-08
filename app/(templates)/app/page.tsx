@@ -24,7 +24,7 @@ import StoryStarter from "@/components/story/StoryStarter";
 import { whatsappNudgeUrl } from "@/components/contrib/ContributorShell";
 
 import { useAppEditor } from "./hooks/useAppEditor";
-import type { Toast } from "./hooks/useAppEditor";
+
 import { AppTemplate } from "./components/AppTemplate";
 import EditSheet from "./components/EditSheet";
 import ShareCardPanel from "./components/ShareCard";
@@ -50,89 +50,6 @@ function BackGlyph() {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] pointer-events-none"
-      style={{ top: 14, maxWidth: COLUMN - 32 }}
-    >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -14, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            className="pointer-events-auto w-full flex items-center gap-3"
-            style={{
-              background: "#fff",
-              border: `1px solid ${AP.edge}`,
-              borderRadius: 14,
-              padding: "10px 12px",
-              boxShadow: "0 6px 22px rgba(22,20,31,0.18)",
-              fontFamily: AP.font,
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: INK, overflowWrap: "anywhere" }}>
-                {t.title}
-              </p>
-              {t.message ? (
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: AP.inkSoft, overflowWrap: "anywhere" }}>
-                  {t.message}
-                </p>
-              ) : null}
-            </div>
-            {t.type === "publish" ? (
-              <button
-                type="button"
-                onClick={() => onCopy(t.shareUrl)}
-                style={{
-                  minHeight: AP_TAP,
-                  padding: "0 6px",
-                  border: "none",
-                  background: "none",
-                  color: AP.accent,
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Copy
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{
-                minWidth: AP_TAP,
-                minHeight: AP_TAP,
-                border: "none",
-                background: "none",
-                color: AP.inkSoft,
-                fontSize: 18,
-                cursor: "pointer",
-                lineHeight: 1,
-              }}
-            >
-              ×
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -294,31 +211,6 @@ function AppPageInner() {
                 </button>
               </div>
 
-              {e.shareUrl ? (
-                <div style={{ marginTop: 14 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: AP.inkSoft }}>Her link</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: AP.accent, overflowWrap: "anywhere" }}>
-                    {e.shareUrl}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => e.handleCopy()}
-                    style={{
-                      minHeight: AP_TAP,
-                      padding: "0 2px",
-                      border: "none",
-                      background: "none",
-                      color: AP.accent,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {e.copied ? "Copied!" : "Copy her link"}
-                  </button>
-                </div>
-              ) : null}
-
               {e.reviewLink ? (
                 <div style={{ marginTop: 12 }}>
                   <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: AP.inkSoft }}>
@@ -411,8 +303,6 @@ function AppPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

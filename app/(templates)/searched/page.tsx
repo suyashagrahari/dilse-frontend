@@ -2,10 +2,10 @@
 
 import React, { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Copy, Loader2, PenLine, Send, Share2, X } from "lucide-react";
+import { ArrowLeft, Loader2, PenLine, Send, Share2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
-import { useSearchedEditor, type Toast } from "./hooks/useSearchedEditor";
+import { useSearchedEditor } from "./hooks/useSearchedEditor";
 import SearchedTemplate from "./components/SearchedTemplate";
 import EditSheet from "./components/EditSheet";
 import { PALETTE } from "./components/types";
@@ -14,49 +14,6 @@ const VIOLET = "#6D28D9";
 const VIOLET_GRAD = "linear-gradient(135deg,#7C3AED,#4F46E5)";
 const BAR = "rgba(255,255,255,.94)";
 const BAR_BORDER = "1px solid #E6E0F5";
-
-function ToastStack({
-  toasts, onDismiss, onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
-            style={{ background: "#fff", border: BAR_BORDER }}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold" style={{ color: VIOLET }}>{t.title}</p>
-              {t.message && <p className="text-xs text-muted-foreground mt-0.5">{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                className="p-1.5 rounded-lg shrink-0"
-                style={{ color: VIOLET, background: "#F5F1FE" }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} aria-label="Dismiss" className="p-1 text-muted-foreground shrink-0">
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function SearchedPageInner() {
   const e = useSearchedEditor();
@@ -142,7 +99,6 @@ function SearchedPageInner() {
         )}
       </AnimatePresence>
 
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       {/* Auth is deferred, not gating: closing cancels the pending publish and
           the hook's effect resumes it on a successful login. */}

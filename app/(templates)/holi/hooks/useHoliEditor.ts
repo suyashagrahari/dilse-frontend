@@ -3,14 +3,15 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type TabId, type EditMode, type Toast, type HoliData, DEMO_DATA } from "../components/types";
+import { type TabId, type EditMode, type HoliData, DEMO_DATA } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { requestFeedback } from "@/lib/feedback/feedbackBus";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
+import { openShareSheet } from "@/lib/share/shareBus";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "holi";
@@ -77,7 +78,6 @@ export function useHoliEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [showShareSheet, setShowShareSheet] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -162,24 +162,13 @@ export function useHoliEditor() {
   }, [mf]);
 
   const [publishing, setPublishing] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const { pushToast } = useToast();
 
 
   // Stable ref so the payment-complete effect can call the latest handlePublish
   const handlePublishRef = useRef<() => Promise<void>>(async () => {});
-  const toastIdRef = useRef(0);
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
-  }, []);
 
-  const dismissToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   const headers = useCallback(
     () => ({
@@ -428,18 +417,11 @@ export function useHoliEditor() {
         const url = result.data.shareUrl;
         setShareUrl(url);
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        // Ask how it went, before this editor's own "Published!" panel takes
-        // over. Unlike most templates it does not raise the house share sheet,
-        // so the interception inside `openShareSheet` never runs here — see
-        // lib/feedback/feedbackBus. Asking twice is impossible: the bus marks
-        // the page the moment it raises, and this is a no-op if it already has.
-        requestFeedback({ templateSlug: TEMPLATE, pageUrl: url }, () => {});
         // Keep pageId so user can edit and republish to the same URL
         pushToast({
           type: "publish",
           title: "Published!",
-          message: hasPasswordSet ? "Card is password-protected" : "Your Holi card is now live",
-          shareUrl: url,
+          message: "Tap Share to send it",
         });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
@@ -478,15 +460,25 @@ export function useHoliEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    setShowShareSheet(true);
-  }, [shareUrl]);
+    openShareSheet({
+      url: shareUrl,
+      password: pagePassword,
+      text: `${content.senderName || "Someone"} is sending Holi wishes${content.recipientName ? ` to ${content.recipientName}` : ""} on SubhSandesh!`,
+      title: "Happy Holi",
+      cardTitle: "Happy Holi",
+      cardNote: "Scan to open the colours sent your way.",
+      senderName: content.senderName,
+      recipientName: content.recipientName,
+      accent: "#ec4899",
+      slug: "holi",
+    });
+  }, [shareUrl, pagePassword, content]);
 
-  const closeShareSheet = useCallback(() => setShowShareSheet(false), []);
 
   return {
     saveDraftNow: draft.saveNow,
-    tab, content, editMode, isPersonalized, shareUrl, showShareSheet, copied, showAuth,
-    toasts, saving, publishing, pagePassword, showPwValue,
+    tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
+    saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, manualStep,
     darkMode, themeReady, toggleDark,
@@ -495,15 +487,11 @@ export function useHoliEditor() {
     setPagePassword, setShowPwValue,
     updateMf, handleTabChange,
 
-    goBack, closeAuth, closeAuthSuccess, closeShareSheet,
-    handleEditClick, startAiMode, startManualMode,
+    goBack, closeAuth, closeAuthSuccess, handleEditClick, startAiMode, startManualMode,
     handleAiGenerate, handleManualPreview, handleAiEditPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
-    pushToast, dismissToast,
-
-
-    // Show publish if user has personalized but not yet published
+    pushToast, // Show publish if user has personalized but not yet published
     showPublish: isPersonalized && !publishing,
     // Show share/copy after publishing
     showShare: !!shareUrl,

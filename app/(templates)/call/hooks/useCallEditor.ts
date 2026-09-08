@@ -39,6 +39,7 @@ import {
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -55,7 +56,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /* ── Draft ─────────────────────────────────────────────────────────────────── */
@@ -199,9 +199,8 @@ export function useCallEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: CallData; password: string } | null>(null);
 
@@ -214,14 +213,7 @@ export function useCallEditor() {
     [accessToken]
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1200 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load an existing page (?edit=<id>) or restore a draft ──────────────────
   useEffect(() => {
@@ -300,7 +292,7 @@ export function useCallEditor() {
           await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_resume" });
-          pushToast({ type: "publish", title: "It's ringing", message: "Your call is live" });
+          pushToast({ type: "publish", title: "It's ringing", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -496,7 +488,7 @@ export function useCallEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "It's ringing", message: "Your call is live" });
+        pushToast({ type: "publish", title: "It's ringing", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -579,7 +571,6 @@ export function useCallEditor() {
     saving,
     publishing,
     copied,
-    toasts,
     previewVersion,
     isAuthenticated,
     accessToken,
@@ -605,8 +596,6 @@ export function useCallEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied" : "Share",

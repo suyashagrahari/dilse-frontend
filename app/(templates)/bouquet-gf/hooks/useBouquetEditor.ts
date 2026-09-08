@@ -10,17 +10,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "bouquet-gf";
-import {
-  type BouquetData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  bouquetDataToBody,
-  dbToBouquetData,
-} from "../components/types";
+import { type BouquetData, type EditMode, DEMO_DATA, bouquetDataToBody, dbToBouquetData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "bouquet_draft";
@@ -72,9 +66,8 @@ export function useBouquetEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: BouquetData; password: string } | null>(null);
 
@@ -87,13 +80,6 @@ export function useBouquetEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a completed draft ──
   useEffect(() => {
@@ -163,7 +149,7 @@ export function useBouquetEditor() {
           setShareUrl(String(pubResult.data.shareUrl));
           await persistStory();
           clearDraft();
-          pushToast({ type: "publish", title: "Sent! 💐", message: "Your bouquet is live" });
+          pushToast({ type: "publish", title: "Sent! 💐", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -330,7 +316,7 @@ export function useBouquetEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Sent! 💐", message: "Your bouquet is live" });
+        pushToast({ type: "publish", title: "Sent! 💐", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -379,16 +365,14 @@ export function useBouquetEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     setEditMode, setPagePassword, updateMf, setMf,
     storyFill, storyStarted, handleStartCreate, handleStoryManual,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

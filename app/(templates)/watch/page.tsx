@@ -20,7 +20,7 @@ import StoryStarter from "@/components/story/StoryStarter";
 import { useWatchEditor } from "./hooks/useWatchEditor";
 import WatchTemplate from "./components/WatchTemplate";
 import EditSheet from "./components/EditSheet";
-import { CloseGlyph, FONT, T } from "./components/theme";
+import { FONT, T } from "./components/theme";
 
 const BAR_H = 48;
 
@@ -87,30 +87,6 @@ function WatchPageInner() {
           <p>Putting it up…</p>
         </div>
       ) : null}
-
-      <div className="wt-editor-toasts" aria-live="polite">
-        {e.toasts.map((t) => (
-          <div key={t.id} className="wt-editor-toast">
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className="wt-editor-toast-title">{t.title}</p>
-              {t.message ? <p className="wt-editor-toast-msg">{t.message}</p> : null}
-            </div>
-            {t.type === "publish" && e.shareUrl ? (
-              <button type="button" className="wt-editor-toast-act" onClick={() => e.handleCopy()}>
-                Copy
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="wt-editor-toast-x"
-              onClick={() => e.dismissToast(t.id)}
-              aria-label="Dismiss"
-            >
-              <CloseGlyph size={14} color={T.inkSoft} />
-            </button>
-          </div>
-        ))}
-      </div>
 
       {e.showAuth ? <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} /> : null}
     </div>

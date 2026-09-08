@@ -17,15 +17,15 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Copy, Loader2, PenLine, Send, Share2, X } from "lucide-react";
+import { ArrowLeft, Loader2, PenLine, Send, Share2 } from "lucide-react";
 
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useDateInvitationEditor } from "./hooks/useDateInvitationEditor";
 import DateInvitationTemplate from "./components/DateInvitationTemplate";
 import EditSheet from "./components/EditSheet";
-import type { Toast } from "./components/types";
-import { ACCENT, ACCENT_EDGE, ACCENT_WASH, INK, INK_SOFT, PAPER, PAPER_EDGE, UI } from "./components/dateTheme";
+
+import { ACCENT, ACCENT_EDGE, INK, PAPER, PAPER_EDGE, UI } from "./components/dateTheme";
 import { TAP_TARGET_PX as TAP } from "./components/types";
 
 /** Editor chrome sits on the paper, in the invitation's own palette. */
@@ -37,55 +37,6 @@ const CHROME: React.CSSProperties = {
   fontFamily: UI,
   minHeight: TAP,
 };
-
-function ToastStack({
-  toasts, onDismiss, onCopy,
-}: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            className="pointer-events-auto w-full rounded-md px-4 py-3 flex items-center gap-3"
-            style={{
-              background: PAPER,
-              border: `1px solid ${PAPER_EDGE}`,
-              boxShadow: "0 14px 34px -18px rgba(58,44,32,.5)",
-              fontFamily: UI,
-            }}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold" style={{ color: ACCENT }}>{t.title}</p>
-              {t.message && <p className="text-xs mt-0.5" style={{ color: INK_SOFT }}>{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                className="rounded-md grid place-items-center shrink-0"
-                style={{ width: 34, height: 34, color: ACCENT, background: ACCENT_WASH }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              className="grid place-items-center shrink-0"
-              style={{ width: 30, height: 30, color: INK_SOFT }}
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function DateInvitationPageInner() {
   const e = useDateInvitationEditor();
@@ -176,8 +127,6 @@ function DateInvitationPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       {/* Auth is deferred, not gating: onClose cancels the pending publish,
           onSuccess just closes and the hook's effect resumes it. */}

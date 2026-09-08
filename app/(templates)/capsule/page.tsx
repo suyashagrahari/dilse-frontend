@@ -12,10 +12,10 @@
 
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2, X, Copy, Lock } from "lucide-react";
+import { ArrowLeft, PenLine, Send, Share2, Loader2, Lock } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
-import { useCapsuleEditor, type Toast } from "./hooks/useCapsuleEditor";
+import { useCapsuleEditor } from "./hooks/useCapsuleEditor";
 import CapsuleTemplate from "./components/CapsuleTemplate";
 import EditSheet from "./components/EditSheet";
 import SealCeremony from "./components/SealCeremony";
@@ -26,53 +26,6 @@ import { DebugBar, DebugButton } from "./components/ui";
 
 const CHROME = "rgba(249,245,235,.93)";
 const CHROME_BORDER = `1px solid ${PALETTE.edge}`;
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div className="pointer-events-none fixed left-1/2 top-16 z-[400] flex w-[92%] max-w-sm -translate-x-1/2 flex-col items-center gap-2">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -18, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.96 }}
-            className="pointer-events-auto flex w-full items-center gap-3 rounded-[8px] px-4 py-3 shadow-lg"
-            style={{ background: PALETTE.paper, border: CHROME_BORDER }}
-          >
-            <div className="flex-1">
-              <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: 1, color: PALETTE.wax }}>{t.title}</p>
-              {t.message && (
-                <p style={{ fontFamily: UI, fontSize: 11, color: PALETTE.inkSoft }}>{t.message}</p>
-              )}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="copy link"
-                className="rounded-[5px] p-2"
-                style={{ color: PALETTE.wax, background: PALETTE.amberWash }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} aria-label="dismiss" className="p-1" style={{ color: PALETTE.inkSoft }}>
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function CapsulePageInner() {
   const e = useCapsuleEditor();
@@ -255,7 +208,6 @@ function CapsulePageInner() {
         )}
       </AnimatePresence>
 
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, createContext, useContext, useCallback } from "react";
-import { X, Check, AlertTriangle, Copy } from "lucide-react";
+import { useEffect } from "react";
+import { X, Copy } from "lucide-react";
+import { useToast } from "@/lib/toast/useToast";
 import { C } from "./types";
 
 /**
@@ -285,15 +286,6 @@ export function ProfileStyles() {
       @keyframes saUp { from { transform: translateY(12px); opacity: .6 } to { transform: none; opacity: 1 } }
       .sa-dialog-wide { max-width: 820px; }
 
-      .sa-toasts {
-        position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px;
-        z-index: 1100; display: grid; gap: 7px; width: calc(100% - 24px); max-width: 380px;
-      }
-      .sa-toast {
-        display: flex; align-items: center; gap: 8px;
-        border-radius: 9px; padding: 9px 12px; font-size: 12.5px; font-weight: 600;
-        box-shadow: ${C.shadowElevated}; color: #fff; animation: saUp .18s ease;
-      }
 
       .sa-skel {
         background: linear-gradient(90deg, ${C.bgAlt} 25%, #eee2d6 37%, ${C.bgAlt} 63%);
@@ -307,32 +299,6 @@ export function ProfileStyles() {
 }
 
 /* ── Toasts ───────────────────────────────────────────────────────────────── */
-
-type Toast = { id: number; msg: string; tone: "ok" | "bad" };
-const ToastCtx = createContext<(msg: string, tone?: "ok" | "bad") => void>(() => {});
-export const useToast = () => useContext(ToastCtx);
-
-export function ToastHost({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<Toast[]>([]);
-  const push = useCallback((msg: string, tone: "ok" | "bad" = "ok") => {
-    const id = Date.now() + Math.random();
-    setItems((x) => [...x, { id, msg, tone }]);
-    setTimeout(() => setItems((x) => x.filter((t) => t.id !== id)), 4200);
-  }, []);
-  return (
-    <ToastCtx.Provider value={push}>
-      {children}
-      <div className="sa-toasts">
-        {items.map((t) => (
-          <div key={t.id} className="sa-toast" style={{ background: t.tone === "ok" ? C.ok : C.danger }}>
-            {t.tone === "ok" ? <Check size={15} /> : <AlertTriangle size={15} />}
-            <span>{t.msg}</span>
-          </div>
-        ))}
-      </div>
-    </ToastCtx.Provider>
-  );
-}
 
 /* ── Dialog ───────────────────────────────────────────────────────────────── */
 
@@ -446,7 +412,7 @@ export function Pill({ text, color, solid }: { text: string; color: string; soli
 }
 
 export function CopyBtn({ value, label = "Copy" }: { value: string; label?: string }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   return (
     <Btn
       variant="ghost"
@@ -455,9 +421,9 @@ export function CopyBtn({ value, label = "Copy" }: { value: string; label?: stri
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value);
-          toast("Copied");
+          pushToast({ title: "Copied", type: "success" });
         } catch {
-          toast("Clipboard unavailable", "bad");
+          pushToast({ title: "Clipboard unavailable", type: "error" });
         }
       }}
     >

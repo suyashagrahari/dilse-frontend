@@ -14,7 +14,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export type SlotKind = "compliment" | "memory" | "voucher" | "empty";

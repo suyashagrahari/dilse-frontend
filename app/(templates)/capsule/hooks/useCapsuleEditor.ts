@@ -47,6 +47,7 @@ import { capsuleToBody, projectSealed } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
@@ -58,7 +59,6 @@ export interface Toast {
   type: "info" | "success" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 export function useCapsuleEditor() {
@@ -82,10 +82,9 @@ export function useCapsuleEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
   const pendingPublishRef = useRef<{ capsule: Capsule } | null>(null);
 
   const headers = useCallback(
@@ -97,13 +96,7 @@ export function useCapsuleEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), toast.type === "publish" ? 6000 : 3500);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── `seal another` carries the stake forward ────────────────────────────────
   const carriedStake = searchParams.get("stake") ?? "";
@@ -407,7 +400,7 @@ export function useCapsuleEditor() {
           // from inside the capsule is reachable from here.
           await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source });
-          pushToast({ type: "publish", title: "sealed and shared 🕰️", message: "nothing inside is readable yet", shareUrl: String(pubResult.data.shareUrl) });
+          pushToast({ type: "publish", title: "sealed and shared 🕰️", message: "Tap Share to send it"});
         } else {
           track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source, reason: "publish_rejected" });
           pushToast({ type: "info", title: "publish failed", message: "saved — try publish again" });
@@ -512,9 +505,7 @@ export function useCapsuleEditor() {
     handleCopy,
     handleShare,
     goBack,
-    toasts,
     pushToast,
-    dismissToast,
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "copied" : "share",

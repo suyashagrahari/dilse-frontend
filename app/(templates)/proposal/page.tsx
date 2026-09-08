@@ -2,16 +2,14 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Sparkles } from "lucide-react";
+import { ArrowLeft, PenLine, Share2, Loader2, Sparkles } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useProposalEditor } from "./hooks/useProposalEditor";
 import ProposalTemplate from "./components/ProposalTemplate";
 import EditSheet from "./components/EditSheet";
-import type { Toast } from "./components/types";
 
 const INK = "#4A3547";
-const MUTED = "#8B7B88";
 const SURFACE = "#FFFBF7";
 const LINE = "#F3E3EC";
 const PINK = "#F2789F";
@@ -35,75 +33,6 @@ const pill: React.CSSProperties = {
   cursor: "pointer",
   minHeight: 42,
 };
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div
-      className="pointer-events-none fixed left-1/2 z-[400] flex w-[92%] max-w-sm -translate-x-1/2 flex-col items-center gap-2"
-      style={{ top: "calc(env(safe-area-inset-top, 0px) + 62px)" }}
-    >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto flex w-full items-center gap-3"
-            style={{
-              background: SURFACE,
-              border: `1px solid ${LINE}`,
-              borderRadius: 24,
-              padding: "12px 15px",
-              boxShadow: "0 12px 30px rgba(74,53,71,.14)",
-            }}
-          >
-            <div className="min-w-0 flex-1">
-              <p style={{ fontFamily: HEAD, fontSize: 13.5, fontWeight: 700, color: INK, margin: 0 }}>
-                {t.title}
-              </p>
-              {t.message && (
-                <p style={{ fontSize: 11.5, color: MUTED, margin: "2px 0 0" }}>{t.message}</p>
-              )}
-            </div>
-            {t.type === "publish" && (
-              <button
-                onClick={() => onCopy(t.shareUrl)}
-                aria-label="Copy link"
-                style={{
-                  flexShrink: 0,
-                  padding: 7,
-                  borderRadius: 14,
-                  color: PINK,
-                  background: "rgba(242,120,159,.12)",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{ flexShrink: 0, padding: 4, color: MUTED, background: "none", border: "none", cursor: "pointer" }}
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function ProposalPageInner() {
   const e = useProposalEditor();
@@ -205,8 +134,6 @@ function ProposalPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

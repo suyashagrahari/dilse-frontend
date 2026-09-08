@@ -10,19 +10,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "missyou-gf";
-import {
-  type MissYouData,
-  type EditMode,
-  type Toast,
-  type EngagementData,
-  DEMO_DATA,
-  missYouDataToBody,
-  dbToMissYouData,
-  dbToEngagement,
-} from "../components/types";
+import { type MissYouData, type EditMode, type EngagementData, DEMO_DATA, missYouDataToBody, dbToMissYouData, dbToEngagement } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "missyou_draft";
@@ -83,9 +75,8 @@ export function useMissYouEditor() {
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Holds the draft when the user tries to publish while logged out → auto-resume after login.
   const pendingPublishRef = useRef<{ data: MissYouData; password: string } | null>(null);
@@ -99,14 +90,7 @@ export function useMissYouEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a completed local draft ──────
   useEffect(() => {
@@ -177,7 +161,7 @@ export function useMissYouEditor() {
           setShareUrl(String(pubResult.data.shareUrl));
           await persistStory();
           clearDraft();
-          pushToast({ type: "publish", title: "Published! 🤍", message: "Your letter is now live" });
+          pushToast({ type: "publish", title: "Published! 🤍", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -345,7 +329,7 @@ export function useMissYouEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published! 🤍", message: "Your letter is now live" });
+        pushToast({ type: "publish", title: "Published! 🤍", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -411,16 +395,14 @@ export function useMissYouEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
     setEditMode, setPagePassword, updateMf, setMf,
     storyFill, storyStarted, handleStartCreate, handleStoryManual,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    // history
+    pushToast, // history
     showHistory, historyLoading, engagement, openHistory, closeHistory,
     canViewHistory: !!pageId && !!shareUrl,
 

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/config";
 import { C, type ProfilePage } from "./types";
-import { Dialog, Btn, useToast } from "./ui";
+import { Dialog, Btn } from "./ui";
 import { HIDDEN_KEYS, humanKey, isEditableScalar } from "./TemplateCard";
+import { useToast } from "@/lib/toast/useToast";
 
 /**
  * Edits the text a user wrote on their page.
@@ -26,7 +27,7 @@ export default function EditTemplateDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [initial, setInitial] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -44,7 +45,7 @@ export default function EditTemplateDialog({
   const changed = Object.keys(draft).filter((k) => draft[k] !== initial[k]);
 
   const save = async () => {
-    if (changed.length === 0) return toast("Nothing changed", "bad");
+    if (changed.length === 0) { pushToast({ title: "Nothing changed", type: "error" }); return; }
     setBusy(true);
     try {
       const updates = Object.fromEntries(changed.map((k) => [k, draft[k]]));
@@ -52,8 +53,8 @@ export default function EditTemplateDialog({
         method: "PATCH", headers: hdr(), body: JSON.stringify({ updates }),
       });
       const j = await r.json();
-      if (!j.success) { toast(j.error || "Failed", "bad"); return; }
-      toast(j.message || "Saved");
+      if (!j.success) { pushToast({ title: j.error || "Failed", type: "error" }); return; }
+      pushToast({ title: j.message || "Saved", type: "success" });
       onSaved();
       onClose();
     } finally {

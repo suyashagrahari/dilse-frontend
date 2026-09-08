@@ -7,17 +7,11 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  type FlagsData,
-  type EditMode,
-  type Toast,
-  DEMO_DATA,
-  flagsDataToBody,
-  dbToFlagsData,
-} from "../components/types";
+import { type FlagsData, type EditMode, DEMO_DATA, flagsDataToBody, dbToFlagsData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const DRAFT_KEY = "flags_draft";
@@ -84,9 +78,8 @@ export function useFlagsEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local/synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   // Set to true once the draft has been written at least once, so the EditSheet
   // can show "saved" and the sender can trust closing the tab mid-deck.
@@ -110,14 +103,7 @@ export function useFlagsEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load existing page (?edit=<id>) or restore a local draft ────────────────
   useEffect(() => {
@@ -198,7 +184,7 @@ export function useFlagsEditor() {
           // and this resumed automatically. Tracked apart from the direct path so
           // the login detour's completion rate stays visible.
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 🚩", message: "Your profile is live" });
+          pushToast({ type: "publish", title: "Published 🚩", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -390,7 +376,7 @@ export function useFlagsEditor() {
         await fill.persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 🚩", message: "Your profile is live" });
+        pushToast({ type: "publish", title: "Published 🚩", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -438,7 +424,7 @@ export function useFlagsEditor() {
 
   return {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
-    isPersonalized, showAuth, saving, publishing, copied, toasts, previewVersion, draftSavedAt,
+    isPersonalized, showAuth, saving, publishing, copied, previewVersion, draftSavedAt,
 
     fill, storyStarter, openManualForm,
 
@@ -446,9 +432,7 @@ export function useFlagsEditor() {
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

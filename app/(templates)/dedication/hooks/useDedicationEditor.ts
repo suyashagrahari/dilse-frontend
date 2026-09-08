@@ -25,18 +25,12 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import {
-  DEMO_DATA,
-  dbToDedicationData,
-  dedicationDataToBody,
-  type DedicationData,
-  type EditMode,
-  type Toast,
-} from "../components/showData";
+import { DEMO_DATA, dbToDedicationData, dedicationDataToBody, type DedicationData, type EditMode } from "../components/showData";
 import { parseYouTubeId, type Segment } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/dedication-pages`;
@@ -127,9 +121,8 @@ export function useDedicationEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local and synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const hasWipRef = useRef(false);
   const pendingPublishRef = useRef<{ data: DedicationData; password: string } | null>(null);
@@ -165,14 +158,7 @@ export function useDedicationEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1000 : 3500;
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load an existing page (?edit=<id>) ──────────────────────────────────
   useEffect(() => {
@@ -239,7 +225,7 @@ export function useDedicationEditor() {
           // Never throws, never blocks — the page is already live either way.
           await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "On air! 📻", message: "Their station is live" });
+          pushToast({ type: "publish", title: "On air! 📻", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -443,7 +429,7 @@ export function useDedicationEditor() {
         // Never throws, never blocks — the page is already live either way.
         await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "On air! 📻", message: "Their station is live" });
+        pushToast({ type: "publish", title: "On air! 📻", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -504,7 +490,6 @@ export function useDedicationEditor() {
     saving,
     publishing,
     copied,
-    toasts,
     previewVersion,
 
     storyFill,
@@ -527,8 +512,6 @@ export function useDedicationEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "Copied!" : "Share",

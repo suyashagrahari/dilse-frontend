@@ -1,6 +1,7 @@
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import PaywallHost from "@/components/PaywallHost";
 import FeedbackHost from "@/components/FeedbackHost";
+import ToastHost from "@/components/toast/ToastHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
@@ -43,6 +44,7 @@ export default async function TemplatesLayout({
           above are — the trigger is a module bus, so exactly one component
           has to be listening. */}
       <FeedbackHost />
+      <ToastHost />
     </TemplateVisibilityProvider>
   );
 }

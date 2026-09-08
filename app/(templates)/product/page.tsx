@@ -21,7 +21,6 @@ import ProductTemplate from "./components/ProductTemplate";
 import EditSheet from "./components/EditSheet";
 import ShareCardPanel from "./components/ShareCard";
 import { C, FONT, LinkText, WRAP, aggregateOf } from "./components/tokens";
-import type { Toast } from "./hooks/useProductEditor";
 
 /* ── Bits ──────────────────────────────────────────────────────────────────── */
 
@@ -30,67 +29,6 @@ function BackGlyph() {
     <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M14.5 5 8 12l6.5 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  );
-}
-
-function ToastStack({
-  toasts,
-  onDismiss,
-  onCopy,
-}: {
-  toasts: Toast[];
-  onDismiss: (id: number) => void;
-  onCopy: (url?: string) => void;
-}) {
-  return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none"
-      style={{ top: 14 }}
-    >
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -14, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            className="pointer-events-auto w-full flex items-center gap-3"
-            style={{
-              background: "#fff",
-              border: `1px solid ${C.border}`,
-              borderRadius: 10,
-              padding: "10px 12px",
-              boxShadow: "0 4px 16px rgba(15,17,17,0.18)",
-              fontFamily: FONT,
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: C.text, ...WRAP }}>{t.title}</p>
-              {t.message ? (
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: C.secondary, ...WRAP }}>{t.message}</p>
-              ) : null}
-            </div>
-            {t.type === "publish" ? (
-              <button
-                type="button"
-                onClick={() => onCopy(t.shareUrl)}
-                style={{ border: "none", background: "none", color: C.link, fontSize: 12.5, cursor: "pointer" }}
-              >
-                Copy
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => onDismiss(t.id)}
-              aria-label="Dismiss"
-              style={{ border: "none", background: "none", color: C.secondary, fontSize: 16, cursor: "pointer", lineHeight: 1 }}
-            >
-              ×
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -284,18 +222,6 @@ function ProductPageInner() {
                 </button>
               </div>
 
-              {e.shareUrl ? (
-                <div style={{ marginTop: 14 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.secondary }}>Her link</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: C.link, ...WRAP }}>{e.shareUrl}</p>
-                  <p style={{ margin: "6px 0 0" }}>
-                    <LinkText onClick={() => e.handleCopy()} size={13}>
-                      {e.copied ? "Copied!" : "Copy her link"}
-                    </LinkText>
-                  </p>
-                </div>
-              ) : null}
-
               {e.reviewLink ? (
                 <div style={{ marginTop: 18 }}>
                   <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.secondary }}>
@@ -383,8 +309,6 @@ function ProductPageInner() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

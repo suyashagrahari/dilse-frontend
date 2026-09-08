@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { type ContentData, type TabId, type EditMode, type Toast, DEMO_CONTENT } from "../components/types";
+import { type ContentData, type TabId, type EditMode, DEMO_CONTENT } from "../components/types";
 
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { useResumeDraft } from "@/lib/draft/resume";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import { openShareSheet } from "@/lib/share/shareBus";
@@ -58,22 +59,11 @@ export function useAnniversaryEditor() {
   const [storyStarted, setStoryStarted] = useState(false);
 
   const [publishing, setPublishing] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
+  const { pushToast } = useToast();
 
   /* ── helpers ── */
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    if (toast.type !== "publish") {
-      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }
-  }, []);
 
-  const dismissToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   const headers = useCallback(
     () => ({
@@ -346,8 +336,7 @@ export function useAnniversaryEditor() {
         pushToast({
           type: "publish",
           title: "Published!",
-          message: hasPasswordSet ? "Surprise tab is password-protected" : "Your page is now live",
-          shareUrl: url,
+          message: "Tap Share to send it",
         });
       } else {
         // No user-facing feedback existed on this path; the click silently did
@@ -392,7 +381,7 @@ export function useAnniversaryEditor() {
 
   return {
     tab, content, editMode, isPersonalized, shareUrl, copied, showAuth,
-    toasts, saving, publishing, pagePassword, showPwValue,
+    saving, publishing, pagePassword, showPwValue,
     aiName, aiSender, aiPrompt, aiLoading,
     mf, setMf, manualStep, photoInput,
 
@@ -407,9 +396,7 @@ export function useAnniversaryEditor() {
     handleAiGenerate, handleManualPreview,
     handleConfirmSave, handlePasswordDone, handleDiscardPreview,
     handlePublish, handleCopy, handleShare,
-    pushToast, dismissToast,
-
-    showPublish: isPersonalized && !shareUrl && !publishing,
+    pushToast, showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",
   };

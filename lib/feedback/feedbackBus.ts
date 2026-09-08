@@ -4,45 +4,53 @@
 // `lib/paywall/paywallBus`, holding the request to ask a creator how making
 // their page went.
 //
-// ── WHERE THE ASK IS RAISED FROM: TWO PLACES, NOT FORTY-THREE ───────────────
+// ── ONE DOOR: THE SHARE ACTION ──────────────────────────────────────────────
 //
-// The first plan was one interception inside `openShareSheet`, on the theory
-// that every editor calls it on publish. Measured, that turned out to be 33 of
-// the 43 that publish. Ten templates — holi, eid-mubarak, valentine-gf, love-gf,
-// darling, birthday-gf, reception, shaadi-card, christian-wedding,
-// wedding-shaadi — show their own inline "Published!" panel and never raise the
-// house sheet, so the single interception silently missed them. Holi was the
-// template used to test it, which is the only reason it was noticed.
+// The ask is raised when the creator taps SHARE, never on publish, and there is
+// exactly one function that raises it: `askThenRun` below. Two earlier designs
+// were wrong in instructive ways:
 //
-// So there are two triggers:
+//   1. One interception inside `openShareSheet`, on the theory that every
+//      editor calls it on publish. Measured, 33 of 43 did — the other ten
+//      render their own "Published!" panel and never touch the house sheet, so
+//      the interception silently missed them.
+//   2. Those ten then called `requestFeedback` directly at publish success.
+//      That closed the hole and opened a worse one: it put a form over the
+//      "it worked" confirmation, which is the single message somebody needs at
+//      that instant, and it asked people who were not finished — publish is not
+//      the end of a session, because plenty of creators edit and publish again.
 //
-//   · `openShareSheet` intercepts, for the 33. This one also HOLDS THE SHEET
-//     BACK, so the ask genuinely comes first.
-//   · those ten editors call `requestFeedback` directly at their publish
-//     success point.
+// Both were also unmeasurable, because the publish toast carried the link and a
+// Copy button. A creator could copy from the toast, never open a sheet, and
+// never be asked — so "43 of 43 covered" was true of the code and false of the
+// product.
 //
-// Two triggers cannot double-ask: `markAsked` is written the moment the modal is
-// raised, and `requestFeedback` refuses while one is open. `scripts/feedback-coverage.mjs`
-// asserts the union still covers every template that publishes, so template
-// forty-four cannot ship silently unasked — which is the failure this shape was
-// chosen to avoid and did not, on its own, prevent.
+// The current shape removes the second door rather than adding a third trigger:
+// the toast confirms the publish and says nothing else, the link lives behind
+// the Share button alone, and Share routes through `askThenRun`. Two reveal
+// paths remain — the house sheet for 33 templates, a template's own sheet for
+// the other ten — and both call the same function, so neither can drift.
+// `scripts/feedback-coverage.mjs` fails the build if a template publishes with
+// no gated share path, asks at publish, or puts a link back in a toast.
 //
-// ── WHY IT SITS IN FRONT OF THE SHARE SHEET AND NOT BEHIND IT ───────────────
+// ── WHY IN FRONT OF THE LINK AND NOT AFTER IT ───────────────────────────────
 //
-// Publish → feedback → share sheet. The share payload is held in this module's
-// `onRelease` callback while the modal is up, and handed on the instant the
-// person submits or skips.
+// Share → feedback → the link. The payload is held in this module's `onRelease`
+// callback while the modal is up, and handed on the instant the person submits,
+// skips or dismisses.
 //
-// The obvious alternative — let them have their link first and ask on the way
-// out — was considered and rejected as a product decision: the share sheet is
-// where a session ENDS, because the next thing that happens is the creator
-// leaving for WhatsApp. Almost nobody comes back through it. Asking first costs
-// one dismissible modal on the way to the link and is the difference between a
-// feature that collects feedback and one that collects almost none.
+// The obvious alternative — give them the link and ask on the way out — was
+// considered and rejected. Tapping Share is where a session ENDS: the next
+// thing that happens is the creator leaving for WhatsApp, and almost nobody
+// comes back. Asking first costs one dismissible modal on the way to a link
+// they are about to receive anyway, and it is the difference between a feature
+// that collects feedback and one that collects almost none.
 //
 // What that buys has to be paid for in restraint, and it is: one ask per page
 // (never twice for the same link), never for a logged-out visitor, never two at
-// once, and Escape or a backdrop tap gets straight through to the link.
+// once, Escape or a backdrop tap gets straight through, and `run` fires on every
+// path — including a thrown callback — so the ask can never cost somebody the
+// link. `lib/feedback/feedbackBus.test.mjs` exists to keep that last promise.
 //
 // ── WHY localStorage AND NOT ONLY THE SERVER'S UNIQUE INDEX ─────────────────
 //
@@ -170,6 +178,33 @@ export function deferUntilFeedbackClosed(run: () => void): boolean {
     run();
   };
   return true;
+}
+
+/**
+ * The one gate every link-reveal goes through: ask, then run.
+ *
+ * ── WHY THIS EXISTS RATHER THAN THREE CALLERS DOING IT BY HAND ──────────────
+ *
+ * `run` is "show the creator their link" — the house share sheet for most
+ * templates, a template's own sheet for the ten that render their own. Both
+ * need the identical three-case decision, and getting it wrong is silent in
+ * opposite directions: forget the fallback and a template's Share button stops
+ * working the moment feedback declines to ask; forget the defer and the sheet
+ * opens underneath an open modal. Writing it once means a new template cannot
+ * pick the wrong half.
+ *
+ * `run` is called exactly once on every path, so the creator ALWAYS reaches
+ * their link — asking is best-effort, delivering the link is not.
+ */
+export function askThenRun(ctx: FeedbackContext, run: () => void): void {
+  // Asked: the modal is up and owns `run`, firing it on submit, skip or dismiss.
+  if (requestFeedback(ctx, run)) return;
+  // A modal is already up for something else — queue behind it rather than
+  // opening a sheet under it.
+  if (deferUntilFeedbackClosed(run)) return;
+  // Not a moment to ask (already asked, signed out, no URL). Straight through,
+  // exactly as if this feature did not exist.
+  run();
 }
 
 /**

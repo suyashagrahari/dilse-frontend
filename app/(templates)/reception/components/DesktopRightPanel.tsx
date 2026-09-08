@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, MapPin, Clock, Image as ImageIcon, Flower2, Sparkles, Link2 } from "lucide-react";
+import { CalendarDays, MapPin, Clock, Image as ImageIcon, Flower2, Sparkles } from "lucide-react";
 import type { ReceptionData } from "./types";
 
 interface Props {
@@ -211,25 +211,6 @@ export default memo(function DesktopRightPanel({ content, shareUrl, isPersonaliz
         </div>
 
         {/* Share URL */}
-        {shareUrl && (
-          <div
-            className="rounded-xl p-3"
-            style={{ background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.18)" }}
-          >
-            <div className="flex items-center gap-1.5 mb-1">
-              <Link2 size={11} style={{ color: "#818cf8" }} />
-              <p
-                className="text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: "#818cf8" }}
-              >
-                Published Link
-              </p>
-            </div>
-            <p className="text-[11px] break-all leading-relaxed" style={{ color: "#a5b4fc" }}>
-              {shareUrl}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Footer tip */}

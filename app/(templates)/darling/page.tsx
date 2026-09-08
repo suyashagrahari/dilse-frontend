@@ -12,13 +12,11 @@ import HomeSection from "./components/HomeSection";
 import WishSection from "./components/WishSection";
 import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import DarlingBg from "./components/DarlingBg";
 import DarlingBackgroundMusic from "./components/BackgroundMusic";
-import { ShareSheet } from "@/components/share/ShareSheet";
 
 const GallerySection = lazy(() => import("./components/GallerySection"));
 const MusicSection = lazy(() => import("./components/MusicSection"));
@@ -436,7 +434,6 @@ function DarlingPageInner() {
 
       <PublishingOverlay visible={editor.publishing} />
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
 
       <AnimatePresence>
         {editor.showAuth && (
@@ -444,16 +441,6 @@ function DarlingPageInner() {
         )}
       </AnimatePresence>
 
-      <ShareSheet
-        open={editor.showShareSheet}
-        onClose={() => editor.setShowShareSheet(false)}
-        shareUrl={editor.shareUrl}
-        title="A darling page for you"
-        cardTitle="There is a page waiting for you"
-        cardNote="Scan it and the whole page opens — no app, nothing to install."
-        accent="#e11d48"
-        slug="darling"
-      />
     </div>
   );
 }

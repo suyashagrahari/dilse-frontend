@@ -11,7 +11,6 @@ import { useAnniversaryEditor } from "./hooks/useAnniversaryEditor";
 import CoverTab from "./components/CoverTab";
 import AnniversaryNav from "./components/AnniversaryNav";
 import FloatingEmojis from "./components/FloatingEmojis";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PasswordSheet from "./components/PasswordSheet";
 import PreviewBar from "./components/PreviewBar";
@@ -125,7 +124,6 @@ export default function AnniversaryGfPage() {
         showShare={editor.showShare}
       />
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
 
       <EditSheet
         editMode={editor.editMode}

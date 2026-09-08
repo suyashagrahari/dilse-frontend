@@ -4,9 +4,10 @@ import { useState } from "react";
 import { API_URL } from "@/lib/config";
 import { Search, LayoutGrid } from "lucide-react";
 import { C, type ProfileData, type ProfilePage } from "./types";
-import { Card, Empty, Btn, Dialog, useToast, fmtShort } from "./ui";
+import { Card, Empty, Btn, Dialog, fmtShort } from "./ui";
 import TemplateCard from "./TemplateCard";
 import EditTemplateDialog from "./EditTemplateDialog";
+import { useToast } from "@/lib/toast/useToast";
 
 /**
  * What this user has made, as a grid of cards.
@@ -27,7 +28,7 @@ export default function PagesTab({
   hdr: () => Record<string, string>;
   reload: () => void;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -48,7 +49,7 @@ export default function PagesTab({
       const j = await r.json();
       setRevealed((s) => ({ ...s, [p._id]: j?.data?.password ?? (j?.data?.reason || "Not recoverable") }));
     } catch {
-      toast("Could not reveal the password", "bad");
+      pushToast({ title: "Could not reveal the password", type: "error" });
     } finally {
       setBusy(null);
     }
@@ -62,7 +63,7 @@ export default function PagesTab({
         method: "PUT", headers: hdr(), body: JSON.stringify({ password: pwValue }),
       });
       const j = await r.json();
-      toast(j.success ? j.message : j.error || "Failed", j.success ? "ok" : "bad");
+      pushToast({ title: j.success ? j.message : j.error || "Failed", type: j.success ? "success" : "error" });
       if (j.success) {
         setRevealed((s) => { const n = { ...s }; delete n[pwFor._id]; return n; });
         setPwFor(null); setPwValue(""); reload();
@@ -80,7 +81,7 @@ export default function PagesTab({
         method: "DELETE", headers: hdr(),
       });
       const j = await r.json();
-      toast(j.success ? `${delFor.templateLabel} page deleted.` : j.error || "Failed", j.success ? "ok" : "bad");
+      pushToast({ title: j.success ? `${delFor.templateLabel} page deleted.` : j.error || "Failed", type: j.success ? "success" : "error" });
       if (j.success) { setDelFor(null); reload(); }
     } finally {
       setBusy(null);

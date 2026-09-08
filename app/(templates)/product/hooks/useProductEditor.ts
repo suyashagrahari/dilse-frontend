@@ -44,6 +44,7 @@ import { useReviewModeration } from "../components/contribApi";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -60,7 +61,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /* ── Draft ─────────────────────────────────────────────────────────────────── */
@@ -141,9 +141,8 @@ export function useProductEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const pendingPublishRef = useRef<{ data: ProductData; password: string } | null>(null);
@@ -165,17 +164,7 @@ export function useProductEditor() {
     [accessToken]
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1400 : 3500;
-    timers.current.push(setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay));
-  }, []);
 
-  const dismissToast = useCallback(
-    (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-    []
-  );
 
   // ── Load an existing page (?edit=<id>) or restore a completed draft ────────
   useEffect(() => {
@@ -252,7 +241,7 @@ export function useProductEditor() {
           await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_resume" });
-          pushToast({ type: "publish", title: "Listed.", message: "Her page is live 🛒" });
+          pushToast({ type: "publish", title: "Listed.", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -433,7 +422,7 @@ export function useProductEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Listed.", message: "Her page is live 🛒" });
+        pushToast({ type: "publish", title: "Listed.", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -527,7 +516,6 @@ export function useProductEditor() {
     saving,
     publishing,
     copied,
-    toasts,
     previewVersion,
     moderation,
 
@@ -551,8 +539,6 @@ export function useProductEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

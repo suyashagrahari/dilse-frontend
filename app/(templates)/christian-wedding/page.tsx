@@ -4,13 +4,11 @@ import { lazy, Suspense, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Sparkles, Send, Share2, Loader2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
-import { ShareSheet } from "@/components/share/ShareSheet";
 import { useChristianWeddingEditor } from "./hooks/useChristianWeddingEditor";
 
 import DesktopSidebar from "./components/DesktopSidebar";
 import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
-import ToastStack from "./components/ToastStack";
 import EditSheet from "./components/EditSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import ChristianBackgroundMusic from "./components/ChristianBackgroundMusic";
@@ -226,19 +224,6 @@ function ChristianWeddingPage() {
         </AnimatePresence>
       </div>
 
-      <ToastStack toasts={editor.toasts} onDismiss={editor.dismissToast} onCopy={editor.handleCopy} />
-      <ShareSheet
-        open={editor.showShareSheet}
-        onClose={editor.closeShareSheet}
-        shareUrl={editor.shareUrl}
-        text={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"} invite you to their wedding celebration on SubhSandesh!`}
-        title="Wedding Invitation"
-        cardTitle="You are invited to our wedding"
-        cardNote="Scan for the venue, the timings and the whole day's programme."
-        senderName={`${editor.content.brideName || "Bride"} & ${editor.content.groomName || "Groom"}`}
-        accent="#065f46"
-        slug="christian-wedding"
-      />
 
       <EditSheet
         editMode={editor.editMode}

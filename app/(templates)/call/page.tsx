@@ -160,63 +160,6 @@ function CallEditorPage() {
         />
       )}
 
-      {/* Toasts */}
-      <div
-        style={{
-          position: "fixed",
-          top: "calc(env(safe-area-inset-top, 0px) + 68px)",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 400,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          width: "92%",
-          maxWidth: 360,
-          pointerEvents: "none",
-        }}
-      >
-        {e.toasts.map((t) => (
-          <div
-            key={t.id}
-            style={{
-              pointerEvents: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "11px 14px",
-              borderRadius: 14,
-              background: "rgba(16,20,24,0.95)",
-              border: `1px solid ${DARK.edge}`,
-              color: DARK.text,
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{t.title}</p>
-              {t.message && <p style={{ margin: "2px 0 0", fontSize: 12.5, color: DARK.dim }}>{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button
-                type="button"
-                onClick={() => e.handleCopy(t.shareUrl)}
-                aria-label="Copy the link"
-                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
-              >
-                <CopyGlyph size={15} color={DARK.dim} />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => e.dismissToast(t.id)}
-              aria-label="Dismiss"
-              style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, color: DARK.dim }}
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-
       {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
     </div>
   );

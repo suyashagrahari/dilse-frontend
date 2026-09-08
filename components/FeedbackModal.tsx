@@ -2,7 +2,27 @@
 
 // ─── "How was making this?" ───────────────────────────────────────────────────
 //
-// Shown once, centred, immediately after a page publishes and before the share
+// Shown once, centred, when the creator taps Share — after the page is already
+// published and before the share sheet that carries the link.
+//
+// ── WHY ON SHARE AND NOT ON PUBLISH ─────────────────────────────────────────
+//
+// Asking at publish put a form over the confirmation that the thing had worked,
+// which is the one message somebody actually needs at that second. It also
+// asked people who had not finished: publish is not the end of the session,
+// because the next thing many creators do is edit and publish again.
+//
+// Tapping Share IS the end. They are done, they are leaving for WhatsApp, and
+// they have asked us for something — so asking once in return is a fair trade
+// and reads as a step on the way out rather than an interruption. The eyebrow
+// says "Before you share" for exactly that reason: it tells the reader why this
+// is on screen now and that the link is directly behind it, which is what stops
+// a modal like this feeling like a toll gate.
+//
+// It is also the ONLY door: the publish toast no longer carries the link or a
+// copy button, so there is no path to the URL that skips this. See
+// scripts/feedback-coverage.mjs, which fails the build if one reappears.
+//
 // sheet. Five stars, and — once a star is picked — a box for words.
 //
 // ── WHY IT IS CENTRED AND NOT A BOTTOM SHEET ────────────────────────────────
@@ -412,7 +432,7 @@ export default function FeedbackModal({
                 color: BRAND.gold,
               }}
             >
-              Published 🎉
+              Before you share
             </p>
 
             {/* The face goes above the question, because it is the thing that

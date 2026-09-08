@@ -26,6 +26,7 @@ import { DEMO_DATA, dbToWatchData, watchDataToBody, type WatchData } from "../co
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -41,7 +42,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 const draftStore = (): Storage | null => {
@@ -118,9 +118,8 @@ export function useWatchEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: WatchData; password: string } | null>(null);
 
@@ -133,16 +132,6 @@ export function useWatchEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 1400 : 3500;
-    window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
-  const dismissToast = useCallback(
-    (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-    [],
-  );
 
   // ── Load an existing page (?edit=<id>) or restore a completed draft ────────
   useEffect(() => {
@@ -225,7 +214,7 @@ export function useWatchEditor() {
           await persistStory();
           clearDraft();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auto_resume" });
-          pushToast({ type: "publish", title: "It's live", message: "Send her the link" });
+          pushToast({ type: "publish", title: "It's live", message: "Tap Share to send it" });
         } else {
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
@@ -410,7 +399,7 @@ export function useWatchEditor() {
         await persistStory();
         clearDraft();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "It's live", message: "Send her the link" });
+        pushToast({ type: "publish", title: "It's live", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -492,7 +481,6 @@ export function useWatchEditor() {
     saving,
     publishing,
     copied,
-    toasts,
     previewVersion,
 
     setEditMode,
@@ -515,8 +503,6 @@ export function useWatchEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

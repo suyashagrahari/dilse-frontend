@@ -12,7 +12,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** A chosen bloom + how many of it are in the bouquet. */

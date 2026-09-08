@@ -21,6 +21,7 @@ import type { EditMode } from "../components/EditSheet";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
+import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 /** Slug reported on every analytics event from this editor. */
@@ -35,7 +36,6 @@ export interface Toast {
   type: "info" | "success" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 const draftStore = (): Storage | null => {
@@ -102,9 +102,8 @@ export function useRechargeEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false;
   const [publishing, setPublishing] = useState(false);
+  const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
 
   const pendingPublishRef = useRef<{ data: RechargeData; password: string } | null>(null);
 
@@ -141,14 +140,7 @@ export function useRechargeEditor() {
     [accessToken],
   );
 
-  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    const delay = toast.type === "publish" ? 6000 : 3500;
-    window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay);
-  }, []);
 
-  const dismissToast = useCallback((id: number) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
 
   // ── Load an existing page (?edit=<id>) or restore a completed draft ────────
   useEffect(() => {
@@ -235,8 +227,7 @@ export function useRechargeEditor() {
           pushToast({
             type: "publish",
             title: "Recharge successful",
-            message: "Send them the link.",
-            shareUrl: String(pubResult.data.shareUrl),
+            message: "Tap Share to send it",
           });
         } else {
           track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "publish_rejected" });
@@ -432,8 +423,7 @@ export function useRechargeEditor() {
         pushToast({
           type: "publish",
           title: "Recharge successful",
-          message: "Send them the link.",
-          shareUrl: String(pubResult.data.shareUrl),
+          message: "Tap Share to send it",
         });
       } else {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "publish_rejected" });
@@ -491,7 +481,6 @@ export function useRechargeEditor() {
     saving,
     publishing,
     copied,
-    toasts,
     previewVersion,
     storyFill,
     storyStarted,
@@ -512,8 +501,6 @@ export function useRechargeEditor() {
     handleShare,
     goBack,
     pushToast,
-    dismissToast,
-
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: Boolean(shareUrl),
     shareLabel: copied ? "Copied" : "Share",

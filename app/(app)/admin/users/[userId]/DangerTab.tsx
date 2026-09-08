@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { API_URL } from "@/lib/config";
 import { C, STATUS_COLOR, type ProfileData } from "./types";
-import { Card, Btn, Dialog, Pill, useToast } from "./ui";
+import { Card, Btn, Dialog, Pill } from "./ui";
+import { useToast } from "@/lib/toast/useToast";
 
 type Pending = { kind: "status"; status: string } | { kind: "logout" } | null;
 
@@ -19,7 +20,7 @@ export default function DangerTab({
 }: {
   data: ProfileData; hdr: () => Record<string, string>; reload: () => void;
 }) {
-  const toast = useToast();
+  const { pushToast } = useToast();
   const [reason, setReason] = useState("");
   const [until, setUntil] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,9 +40,9 @@ export default function DangerTab({
         method: "POST", headers: hdr(), body: JSON.stringify(body),
       });
       const j = await r.json();
-      if (!j.success) toast(j.error || "Failed", "bad");
+      if (!j.success) pushToast({ title: j.error || "Failed", type: "error" });
       else {
-        toast(pending.kind === "logout" ? "Signed out of all devices" : `Account is now ${(pending as { status: string }).status}`);
+        pushToast({ title: pending.kind === "logout" ? "Signed out of all devices" : `Account is now ${(pending as { status: string }).status}`, type: "success" });
         setReason(""); setUntil(""); setPending(null); reload();
       }
     } finally {
@@ -50,7 +51,7 @@ export default function DangerTab({
   };
 
   const ask = (status: string) => {
-    if (status !== "active" && !reason.trim()) return toast("A reason is required to suspend or ban", "bad");
+    if (status !== "active" && !reason.trim()) { pushToast({ title: "A reason is required to suspend or ban", type: "error" }); return; }
     setPending({ kind: "status", status });
   };
 

@@ -7,7 +7,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { ArrowLeft, ShieldAlert, UserCog } from "lucide-react";
 import { C, STATUS_COLOR, type ProfileData } from "./types";
-import { ProfileStyles, ToastHost, Skeleton, Empty, Pill, Btn, Dialog, useToast } from "./ui";
+import { ProfileStyles, Skeleton, Empty, Pill, Btn, Dialog } from "./ui";
 import OverviewTab from "./OverviewTab";
 import PagesTab from "./PagesTab";
 import DraftsTab from "./DraftsTab";
@@ -15,15 +15,14 @@ import PointsTab from "./PointsTab";
 import ActivityTab from "./ActivityTab";
 import DangerTab from "./DangerTab";
 import AccessTab from "./AccessTab";
+import { useToast } from "@/lib/toast/useToast";
 
 const TABS = ["Overview", "Pages", "Drafts", "Points", "Access", "Activity", "Danger Zone"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminUserProfilePage() {
   return (
-    <ToastHost>
-      <ProfileInner />
-    </ToastHost>
+    <ProfileInner />
   );
 }
 
@@ -40,7 +39,7 @@ export default function AdminUserProfilePage() {
 function ProfileInner() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
-  const toast = useToast();
+  const { pushToast } = useToast();
   const { accessToken, user: me } = useAppSelector((s) => s.auth);
 
   const [data, setData] = useState<ProfileData | null>(null);
@@ -86,13 +85,13 @@ function ProfileInner() {
         method: "POST", headers: hdr(), body: JSON.stringify({ reason: impReason }),
       });
       const j = await r.json();
-      if (!j.success) { toast(j.error || "Could not start the session", "bad"); return; }
+      if (!j.success) { pushToast({ title: j.error || "Could not start the session", type: "error" }); return; }
 
       // Opened FIRST so the token lands in the NEW tab's sessionStorage.
       // Writing it here would put it in this tab and shadow the admin's own
       // session instead.
       const w = window.open("/", "_blank");
-      if (!w) { toast("Allow pop-ups to open the impersonation tab", "bad"); return; }
+      if (!w) { pushToast({ title: "Allow pop-ups to open the impersonation tab", type: "error" }); return; }
       const payload = {
         token: j.data.token,
         userName: j.data.user.name,
@@ -103,9 +102,9 @@ function ProfileInner() {
         try {
           w.sessionStorage.setItem("gifts_impersonation", JSON.stringify(payload));
           w.location.reload();
-          toast("Impersonation started in a new tab");
+          pushToast({ title: "Impersonation started in a new tab", type: "success" });
         } catch {
-          toast("Could not start the session in the new tab", "bad");
+          pushToast({ title: "Could not start the session in the new tab", type: "error" });
         }
       }, 300);
       setImpOpen(false);

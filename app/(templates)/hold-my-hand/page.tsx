@@ -2,47 +2,15 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Share2, Loader2, X, Copy, Hand } from "lucide-react";
+import { ArrowLeft, PenLine, Share2, Loader2, Hand } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useHoldMyHandEditor } from "./hooks/useHoldMyHandEditor";
 import HoldMyHand from "./components/HoldMyHand";
 import EditSheet from "./components/EditSheet";
-import { HMH, type Toast } from "./components/types";
+import { HMH } from "./components/types";
 
 const CHIP = "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold shadow-sm";
-
-function ToastStack({
-  toasts, onDismiss, onCopy,
-}: { toasts: Toast[]; onDismiss: (id: number) => void; onCopy: (url?: string) => void }) {
-  return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[400] flex flex-col gap-2 items-center w-[92%] max-w-sm pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="pointer-events-auto w-full rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
-            style={{ background: HMH.surface, border: `1px solid ${HMH.border}`, fontFamily: HMH.body }}
-          >
-            <div className="flex-1">
-              <p className="text-sm font-bold" style={{ color: HMH.indigo }}>{t.title}</p>
-              {t.message && <p className="text-xs mt-0.5" style={{ color: HMH.muted }}>{t.message}</p>}
-            </div>
-            {t.type === "publish" && (
-              <button onClick={() => onCopy(t.shareUrl)} className="p-1.5 rounded-lg" style={{ color: HMH.indigo, background: "rgba(108,92,231,.1)" }}>
-                <Copy size={14} />
-              </button>
-            )}
-            <button onClick={() => onDismiss(t.id)} className="p-1" style={{ color: HMH.muted }}><X size={14} /></button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function HoldMyHandPageInner() {
   const e = useHoldMyHandEditor();
@@ -130,7 +98,6 @@ function HoldMyHandPageInner() {
         )}
       </AnimatePresence>
 
-      <ToastStack toasts={e.toasts} onDismiss={e.dismissToast} onCopy={e.handleCopy} />
 
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}

@@ -19,7 +19,6 @@ export interface Toast {
   type: "success" | "info" | "publish";
   title: string;
   message?: string;
-  shareUrl?: string;
 }
 
 /** A city the two clocks + distance are computed from. */

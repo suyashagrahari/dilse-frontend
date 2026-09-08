@@ -1,7 +1,7 @@
 ---
 name: template-factory
 description: >
-  Build a new SubhSandesh celebration/greeting template end-to-end by running a
+  Build a new celebration/greeting template end-to-end by running a
   fixed series of seven domain-expert agents — Product Researcher → UI/UX Designer
   → Frontend Engineer → Backend Engineer → Performance Optimizer → Security
   Reviewer → SEO/AEO/GEO Optimizer. Use whenever the user asks to create, design,
@@ -42,26 +42,26 @@ wait for it, verify its quality gate, then start the next stage.
    deliverable, not a follow-up. It fails soft (no schema → the hook goes inert
    and Create falls back to the blank form, with no error anywhere), so it is
    invisible in review and glaring to the sender. Gate on it explicitly.
-   Reference: `subhsandesh-template` → `reference/ai-story-fill.md`.
+   Reference: `share-page-builder` → `reference/ai-story-fill.md`.
 
 ## Companion skills — load these, don't reinvent
 
 This skill is the **orchestrator**. The deep, codebase-exact knowledge lives in two
 sibling skills; load them with the Skill tool at the stages noted:
 
-- **`subhsandesh-template`** — the canonical end-to-end template ARCHITECTURE:
+- **`share-page-builder`** — the canonical end-to-end template ARCHITECTURE:
   editor state machine, sessionStorage draft, **auth-deferred publish**, the server
   model/controller/routes, the shared `/[id]` recipient viewer + password gate,
   **AI story fill** (`reference/ai-story-fill.md`), and the **exact 11-file
   checklist**. Stages 3 & 4 (Frontend/Backend) MUST follow it — copy the
   `apology-dashboard` flow, don't invent a new one.
-- **`subhsandesh-theme`** — the NEW SubhSandesh design system: fonts
+- **`theme-design-system`** — the NEW SubhSandesh design system: fonts
   (Space Grotesk / Inter / Caveat), colors (indigo `#6C5CE7` / pink `#F72585` /
   lime `#C6FF3D` on `#FAFAF7`), radii, shadows, `--site-*` tokens. Stage 2 (UI/UX)
   MUST use it for any new-theme work.
 
 **Two themes exist — pick one up front and tell the designer:**
-- **New SubhSandesh theme** (default for new work): load `subhsandesh-theme`
+- **New SubhSandesh theme** (default for new work): load `theme-design-system`
   (Space Grotesk/Inter/Caveat, indigo/pink/lime). Never use Playfair/cream here.
 - **Classic luxury theme** (older templates): Playfair Display + cream `#f5ede6` +
   gold. Only if the user explicitly asks for the classic look.
@@ -123,7 +123,7 @@ subagent prompt, along with the idea and prior artifacts.
 - **DoD:** every section from the brief has a concrete layout + component list;
   colors have verified contrast; fonts chosen from the approved self-hosted set;
   motion respects `prefers-reduced-motion`.
-- **Load the `subhsandesh-theme` skill first** and design with its exact tokens
+- **Load the `theme-design-system` skill first** and design with its exact tokens
   (fonts, colors, radii, `--site-*`). Then `references/uiux-playbook.md`.
 
 ### Stage 3 — Frontend Engineer  → code in `app/(templates)/<slug>/` + notes in `02-frontend.md`
@@ -140,13 +140,13 @@ subagent prompt, along with the idea and prior artifacts.
   publish paths (direct and auto-resume-after-login) before `clearDraft()`.
 - **DoD:** `npx tsc --noEmit` clean; `npm run build` compiles the new route; renders
   on mobile + desktop; no raw `<img>` for LCP images; follows conventions doc AND the
-  `subhsandesh-template` flow (editor → AI fill → draft → deferred publish → share →
+  `share-page-builder` flow (editor → AI fill → draft → deferred publish → share →
   viewer). AI fill wired at all five points above; **Create calls
   `handleStartCreate`**; `persistStory()` present in both publish paths. The schema
   does not exist yet (Stage 4 writes it), so at this stage the correct observed
   behaviour is the graceful fallback: Create opens the plain form and nothing
   errors. Stage 4 verifies the panel actually appears.
-- **Load the `subhsandesh-template` skill** for the exact editor/publish/viewer
+- **Load the `share-page-builder` skill** for the exact editor/publish/viewer
   architecture, `reference/ai-story-fill.md`, and the 11-file checklist. Then
   `references/project-conventions.md`.
 
@@ -175,7 +175,7 @@ subagent prompt, along with the idea and prior artifacts.
   editable, and bailing to the plain form keeps the AI's work. (If the template is
   purely static/client-side, it still gets a fill schema; only the page model/API
   can be skipped, and say so explicitly.)
-- **Follow the `subhsandesh-template` skill's server contract**: `XxxPage` model
+- **Follow the `share-page-builder` skill's server contract**: `XxxPage` model
   (shareId `randomUUID()`, bcrypt password), 8 controller handlers, public
   `/share/:shareId` routes before `protect`, `TEMPLATE_LOOKUPS` entry, the
   `config/aiFill` schema + registry line (`reference/ai-story-fill.md`), and
