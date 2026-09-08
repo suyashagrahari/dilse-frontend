@@ -106,4 +106,8 @@ export const NON_INDEXABLE_ROUTES: Record<string, string> = {
   "/auth/google-bridge": "OAuth plumbing, not a page",
   "/admin": "staff only — robots.txt Disallow (covers /admin/* children)",
   "/love": "generic fallback metadata, duplicates /love-gf",
+  "/showcase":
+    "unlisted on purpose — the video wall is handed out as a link, is reachable " +
+    "from no nav item, tab or card, and carries robots noindex,nofollow. Not " +
+    "private: anyone with the URL can open it, so nothing confidential goes there.",
 };

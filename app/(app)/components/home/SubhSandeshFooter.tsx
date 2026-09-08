@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
+import { SOCIAL_ACCOUNTS, SOCIAL_LINK_ATTRS, type SocialId } from "@/lib/social";
 
 /*
  * SubhSandesh — footer. Simple, flat, luxurious.
@@ -9,6 +10,46 @@ import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
  * gradients, glows, or shadows. Same fonts as the landing (Playfair Display).
  * Scoped under `.ssfoot`.
  */
+
+/*
+ * One glyph per account in `SOCIAL_ACCOUNTS`. Keyed by id rather than listed in
+ * order, so adding an account to lib/social.ts and forgetting a glyph here is a
+ * missing key at the call site rather than a silently mismatched icon.
+ */
+const SOCIAL_GLYPH: Record<SocialId, React.ReactNode> = {
+  instagram: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" />
+    </svg>
+  ),
+  youtube: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="6" width="18" height="12" rx="4" />
+      <path d="M11 9.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  /* The real X mark, not the two crossed strokes that stood here before — at
+     40px those read as a close button, which is an odd thing to put in a row
+     of social links. */
+  twitter: (
+    <svg viewBox="0 0 24 24" fill="none">
+      <path
+        d="M18.9 4H21l-6.9 7.9L21.6 20h-4.5l-4.5-5.9L7 20H4.9l7.2-8.2L4 4h4.6l4.2 5.5L18.9 4Z"
+        fill="currentColor"
+      />
+    </svg>
+  ),
+  linkedin: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M7.5 10.5V17" strokeLinecap="round" />
+      <circle cx="7.5" cy="7.3" r="1.05" fill="currentColor" stroke="none" />
+      <path d="M11.5 17v-3.6a2.1 2.1 0 0 1 4.2 0V17" strokeLinecap="round" />
+    </svg>
+  ),
+};
 
 const OCCASIONS = ["Birthday Pages", "Wedding", "Holi Festival", "Eid Mubarak", "Anniversary"];
 const PLATFORM = [
@@ -73,11 +114,11 @@ export default function SubhSandeshFooter() {
             <p>Turn your heartfelt wishes into beautiful digital celebration pages — shared with love across India and the world.</p>
 
             <div className="ssfoot-social">
-              <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
-              <a href="#" aria-label="X"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4l16 16M20 4L4 20" /></svg></a>
-              <a href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" /><path d="M8.5 9.5c.3 3 2.5 5.2 5.5 5.5" /></svg></a>
-              <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H8v3h3v6h3v-6h3l1-3h-4V9c0-.6.4-1 1-1Z" /></svg></a>
-              <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="6" width="18" height="12" rx="4" /><path d="M11 9.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" /></svg></a>
+              {SOCIAL_ACCOUNTS.map((a) => (
+                <a key={a.id} href={a.href} aria-label={a.label} title={a.label} {...SOCIAL_LINK_ATTRS}>
+                  {SOCIAL_GLYPH[a.id]}
+                </a>
+              ))}
             </div>
 
             <div className="ssfoot-sub-label">Get new templates first</div>
