@@ -577,6 +577,406 @@ const guides: ProductGuide[] = [
   },
 
   // ───────────────────────────────────────────────────────────────────────────
+  // Ganesh Chaturthi
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    slug: "happy-ganesh-chaturthi",
+    templateHref: "/happy-ganesh-chaturthi",
+    templateName: "Happy Ganesh Chaturthi",
+    title: "Build a Ganesh Chaturthi page for the people you cannot sit with",
+    tagline: "One long page, nine groups of fields, about four minutes",
+    summary:
+      "There is nothing to tap through in this one: they open the link and scroll, from the lamp going round at the top to a box at the end where they write one line back to you. This guide walks all nine groups of the builder in the order it presents them, then scrolls the finished page the way its reader will — the five offerings and what each is for, your photograph, what the two of you are hoping for, the modak, and the reply.",
+    category: "festival",
+    emoji: "🪔",
+    accent: "#9E2B2B",
+    buildTime: "About 4 minutes",
+    updatedAt: "2026-09-09",
+
+    video: {
+      seconds: 90,
+      recordedAt: "2026-09-09",
+      silent: true,
+      // Fourteen steps, and the chip in the recording reads "STEP n OF 14".
+      // Timings are the cue table the cut was built from, not eyeballed off a
+      // scrub bar — see pipeline/cues-happy-ganesh-chaturthi.json.
+      chapters: [
+        { at: 0,  label: "The page they open" },
+        { at: 3,  label: "Open the builder",           sectionId: "open" },
+        { at: 9,  label: "Who it's for",               sectionId: "names" },
+        { at: 14, label: "Your photo",                 sectionId: "photo" },
+        { at: 17, label: "What you want to say",       sectionId: "greeting" },
+        { at: 21, label: "Your line at the aarti",     sectionId: "aarti" },
+        { at: 25, label: "What you're hoping for",     sectionId: "wishes" },
+        { at: 31, label: "A line with the sweet",      sectionId: "prasad" },
+        { at: 34, label: "Chipping in",                sectionId: "vargani" },
+        { at: 38, label: "Lock it",                    sectionId: "lock" },
+        { at: 42, label: "The dates",                  sectionId: "dates" },
+        { at: 45, label: "Save it",                    sectionId: "save" },
+        { at: 47, label: "What they actually see",     sectionId: "recipient" },
+        { at: 70, label: "Send it",                    sectionId: "publish" },
+        { at: 75, label: "Link, QR, print",            sectionId: "share" },
+        { at: 88, label: "Done" },
+      ],
+    },
+
+    sections: [
+      {
+        id: "open",
+        title: "Open the builder",
+        intro:
+          "On a laptop the builder is a rail docked down the left and the page stays live beside it, so you are watching the thing you are editing change as you type. On a phone it is a sheet over the page, and you close it to look.",
+        steps: [
+          {
+            title: "Press Create, top-right",
+            body:
+              "What you land on is filled in already — Rohit, Aditi, a stranger's photograph. That is a sample, and there is a line on the page saying so. None of it is yours and all of it is about to be replaced.",
+            shot: "step-01.webp",
+            shotAlt: "The sample Ganesh Chaturthi page, with the lamp going round at the top",
+          },
+          {
+            title: "Decline the AI, or don't",
+            body:
+              "It offers to write the page from a couple of sentences about the two of you. Everything in this guide is the other door — \"I'll fill it in myself\" — because a page for your mother is worth typing yourself. Either way you land in the same form with every field editable.",
+            shot: "step-03.webp",
+            shotAlt: "The builder open on the first group of fields",
+          },
+        ],
+      },
+      {
+        id: "names",
+        title: "Who it's for",
+        steps: [
+          {
+            title: "Their name, your name",
+            body:
+              "Their name is the only field in the whole form that is required — until it has something in it the save button reads \"Add their name first\" and does nothing. Whatever you type is what the page is headed with, so \"Aai\" is better than \"Mummy Deshpande\" if Aai is what you call her.",
+            shot: "step-04.webp",
+            shotAlt: "Their name, Your name and Where you are, filled in as Aai, Rohit, Bengaluru",
+          },
+          {
+            title: "Where you are is the whole point, and it is optional",
+            body:
+              "It prints as a small line under your name. On a page built by somebody who is not at home for the festival, that one word is doing more work than any other field on the form.",
+          },
+        ],
+      },
+      {
+        id: "photo",
+        title: "Your photo",
+        steps: [
+          {
+            title: "One picture, in a round gold frame",
+            body:
+              "It sits partway down the page inside a gold frame with real corner ornaments, and it is also the photograph on the card you can post to your story. One photo, not a gallery — this template does not have a gallery.",
+            shot: "step-05.webp",
+            shotAlt: "The photo in place in its round gold frame on the live page",
+          },
+          {
+            title: "Set the crop while you are here",
+            body:
+              "Drag to move it, pinch or scroll to zoom, then Use this photo. The cropping window is the same shape as the frame on the page, so what you line up is exactly what lands there — nothing is re-cropped behind you.",
+            note:
+              "Photos are uploaded when you press Send it, not when you pick them. If you pick a photo and then close the tab, the photo does not exist anywhere yet.",
+          },
+        ],
+      },
+      {
+        id: "greeting",
+        title: "What you want to say",
+        intro: "Three lines, set large, one under the other, directly beneath the title.",
+        steps: [
+          {
+            title: "Write three lines that stand on their own",
+            body:
+              "They are not a paragraph broken into three. Each is read alone, at size, with air around it — so \"This is the first Chaturthi I am not home for.\" then \"Keep a modak aside for me.\" then \"I will be back before the visarjan.\" Ninety characters each is the cap, and it is generous for the shape.",
+            shot: "step-06.webp",
+            shotAlt: "The three greeting lines typed into the builder, showing on the page beside it",
+          },
+          {
+            title: "Two is fine, and so is one",
+            body:
+              "Delete a line with the bin beside it, or add up to the cap with Add a line. Three is what the layout is drawn for; one very good line beats three filler ones.",
+          },
+        ],
+      },
+      {
+        id: "aarti",
+        title: "Your line at the aarti",
+        steps: [
+          {
+            title: "One sentence, and it gets the screen to itself",
+            body:
+              "This is the quietest moment on the page: your sentence alone, while the lamp goes round and the four lines of Karpura Gauram turn over two at a time. It is capped at 120 characters and it should not need them.",
+            shot: "step-07.webp",
+            shotAlt: "The aarti line typed in, shown alone on the page under the lamp",
+            note:
+              "The verse on screen is the aarti in English, not a transliteration — the recording plays the original. If you write something that answers it, the two read as one thought.",
+          },
+        ],
+      },
+      {
+        id: "wishes",
+        title: "What you're hoping for",
+        steps: [
+          {
+            title: "Two columns: who it is for, and what you are hoping",
+            body:
+              "\"For Aai's knee\" on the left, \"one painless year\" on the right. The left column takes 44 characters and the right takes 30, which is the form telling you to be specific and short.",
+            shot: "step-08.webp",
+            shotAlt: "The wish rows, each with who it is for and what is hoped for",
+          },
+          {
+            title: "Three real rows beat six invented ones",
+            body:
+              "The section prints as a table on the page and reads as a record — the heading on the page is \"Our wishes this year\" and under it, \"Written down, so it is on the record\". Rows you leave blank are dropped, so there is no cost to using fewer.",
+          },
+        ],
+      },
+      {
+        id: "prasad",
+        title: "A line with the sweet",
+        steps: [
+          {
+            title: "Optional, and the best-value field in the form",
+            body:
+              "It prints beside the modak near the end of the page, under \"Take one\". This is where a domestic fact belongs rather than a sentiment: \"She made fourteen this morning. Baba says there are four left.\" Leave it blank and the modak still gets its section.",
+            shot: "step-09.webp",
+            shotAlt: "The line beside the sweet, typed into the builder",
+          },
+        ],
+      },
+      {
+        id: "vargani",
+        title: "Chipping in",
+        intro:
+          "Only if somebody is actually collecting — a mandal for the pandal, a building, or just you for the sweets. Skip the whole group and nothing about money appears anywhere on the page.",
+        steps: [
+          {
+            title: "Who's collecting becomes the heading",
+            body:
+              "Put your mandal's name in and the block is headed with it. Leave it blank and it heads itself neutrally, which is the right shape when the money is simply coming to you.",
+            shot: "step-10.webp",
+            shotAlt: "The Chipping in group, with who is collecting and a UPI ID filled in",
+          },
+          {
+            title: "The UPI ID and the code do different jobs",
+            body:
+              "The ID renders as a one-tap copy button, for somebody already on their phone. The code is a screenshot of the QR from your payment app, for somebody on a laptop paying from the phone in their hand. Either one on its own shows the block; both is better.",
+            note:
+              "Never crop the QR screenshot — a code needs its white border to stay scannable, which is why this slot is the one image on the page that is never cropped for you.",
+          },
+          {
+            title: "No amount, and no record of who paid",
+            body:
+              "It appears near the end as an invitation with no figure attached, and the page does not record who sent anything. It says \"if you want to\", once, and never again.",
+          },
+        ],
+      },
+      {
+        id: "lock",
+        title: "Lock it",
+        steps: [
+          {
+            title: "A password, if the link is going into a group",
+            body:
+              "With one set, anyone opening the link types it before the page appears. Leave it blank and the link opens straight away. Worth setting if the page carries a UPI ID and the link is about to be forwarded around a family group.",
+            shot: "step-11.webp",
+            shotAlt: "The password field in the Lock it group",
+          },
+        ],
+      },
+      {
+        id: "dates",
+        title: "The dates",
+        steps: [
+          {
+            title: "Already right for 2026 — check them against your almanac",
+            body:
+              "Chaturthi is prefilled as 14 September 2026 and the visarjan as the 23rd, Anant Chaturdashi. The page prints the Chaturthi date under the title and uses the visarjan for its closing line, so if your household keeps a one-and-a-half-day or five-day Ganpati, change the second one.",
+            shot: "step-12.webp",
+            shotAlt: "The two date fields, Chaturthi and Visarjan",
+          },
+        ],
+      },
+      {
+        id: "save",
+        title: "Save it",
+        steps: [
+          {
+            title: "Save and see it",
+            body:
+              "The rail closes and the page replays from the top with your words in it. Nothing is published yet and nobody can reach it — this is you reading it as its reader will, which is the step most worth not skipping.",
+            shot: "step-13.webp",
+            shotAlt: "The finished page after saving, headed with the recipient's name",
+          },
+        ],
+      },
+      {
+        id: "recipient",
+        title: "What they actually see",
+        intro:
+          "One scroll, top to bottom, with nothing to unlock and nothing to tap through. This is the whole page in the order it arrives.",
+        steps: [
+          {
+            title: "The lamp, first",
+            body:
+              "The murti sits still in an ivory medallion and the thali goes round it — which is what an aarti is, the plate moving and the idol staying where it is. The verse turns over two lines at a time beside it. If the page is being read on the day, a small line says where in the muhurat you are.",
+            shot: "step-14.webp",
+            shotAlt: "The top of the page: the idol in its medallion with the thali orbiting",
+          },
+          {
+            title: "Then your three lines",
+            body:
+              "Set large, one under the other, against the lettered festival artwork. This is the part they will screenshot.",
+            shot: "step-15.webp",
+            shotAlt: "The three greeting lines on the page, beside the festival artwork",
+          },
+          {
+            title: "Five things, and why",
+            body:
+              "Durva grass, vermilion, flowers, modak, lamp and incense — five cards, each with a sentence about why it is done. Nothing is gated and nothing is counted: the reader who cares reads five sentences and the one who does not keeps scrolling, which they were going to do anyway.",
+            shot: "step-16.webp",
+            shotAlt: "The five offerings as a row of cards with their meanings",
+            note:
+              "This was once a five-tap sequence with a full-screen takeover per tap, and the reader could not reach the aarti until all five were done. It made a ceremony into a form. It is deliberately a row of cards you scroll past now.",
+          },
+          {
+            title: "What each one is for",
+            body:
+              "Twenty-one blades of durva tied in bunches of three; vermilion applied with the same finger to him and to you; flowers opened over his feet rather than thrown; modak in an odd number; the lamp circled three times, after which everybody has to sing. None of it is decoration on this page — each card says what it is for.",
+            shot: "step-17.webp",
+            shotAlt: "One offering card, durva grass, with its meaning",
+          },
+          {
+            title: "Your photograph, and both names",
+            body:
+              "The gold frame with its corner ornaments, then the two of you named together with the city underneath.",
+            shot: "step-18.webp",
+            shotAlt: "The photo in its gold frame, with both names and the city beneath",
+          },
+          {
+            title: "The wishes, written down",
+            body:
+              "Headed \"Our wishes this year\", and under it \"Written down, so it is on the record\". Three rows in one column is a list; three and three is a table, and on a wide screen a table is what this is drawn as.",
+          },
+          {
+            title: "Take one",
+            body:
+              "The modak, alone and large, with your line beside it if you wrote one.",
+            shot: "step-19.webp",
+            shotAlt: "The prasad section, headed Take one, with a single modak",
+          },
+          {
+            title: "And then they write back",
+            body:
+              "\"What did you ask for?\" — one line, from whoever opened the page, and the page says plainly that it cannot be changed afterwards. It is the only thing on the page its reader adds, and you see it the next time you open your own link.",
+            shot: "step-20.webp",
+            shotAlt: "The reply box at the end of the page",
+          },
+          {
+            title: "If somebody is collecting",
+            body:
+              "Last, and only if you filled it in: the heading you chose, your line, and the UPI ID as a tap-to-copy button with Open a payment app beside it. No amount anywhere.",
+          },
+          {
+            title: "A card for your story",
+            body:
+              "1080×1920, the exact size, carrying the photograph, both names, the date and a code back to the page. On a phone it opens the OS share sheet with Instagram in it; on a laptop it downloads. It is generated from the page rather than being a second design that could drift from it.",
+            shot: "step-21.webp",
+            shotAlt: "The Put it on your story section at the foot of the page",
+          },
+        ],
+      },
+      {
+        id: "publish",
+        title: "Send it",
+        steps: [
+          {
+            title: "Press Send it",
+            body:
+              "This is where the photograph is uploaded and the page goes live, so it takes a few seconds and says what it is doing. Sign in if you have not — the work you have already done is held and the publish resumes by itself afterwards.",
+            shot: "step-22.webp",
+            shotAlt: "Send it in the top bar, with the page ready behind it",
+          },
+          {
+            title: "It's live",
+            body:
+              "The button becomes Share. The page is on subhsandesh.in at its own address and will stay there; you can keep editing it from Profile → My Creations and the link does not change.",
+            shot: "step-23.webp",
+            shotAlt: "The published page, with Share now in the top bar",
+          },
+        ],
+      },
+      {
+        id: "share",
+        title: "Link, QR, print",
+        steps: [
+          {
+            title: "The link",
+            body:
+              "WhatsApp, Instagram, Telegram, X, Facebook, or Copy. If you set a password, tell them what it is in the same message — the page will ask for it and will not hint.",
+            shot: "step-25.webp",
+            shotAlt: "The share sheet on the Link tab, with the real page link and Copy",
+          },
+          {
+            title: "The QR code",
+            body:
+              "Send it as an image, or hold your phone up. Useful at a pandal, where the people you want to show it to are standing in front of you and not on WhatsApp.",
+            shot: "step-26.webp",
+            shotAlt: "The share sheet on the QR tab",
+          },
+          {
+            title: "The printable card",
+            body:
+              "A card with the code on it, to slip inside a real envelope or leave beside the murti at home. This is the one that works for grandparents.",
+            shot: "step-27.webp",
+            shotAlt: "The share sheet on the Print tab, showing the printable card",
+          },
+        ],
+      },
+    ],
+
+    faqs: [
+      {
+        q: "Do they need an app, or an account?",
+        a: "No. They open a link in whatever browser they already have. Only you need an account, and only at the moment you press Send it.",
+      },
+      {
+        q: "Is it in Hindi or Marathi?",
+        a: "The page is in English, including the aarti — the four lines of Karpura Gauram are carried as their meaning rather than as Devanagari or a transliteration. Everything you type is yours, so the words that matter can be in any language you like.",
+      },
+      {
+        q: "Does the aarti actually play?",
+        a: "Yes. The recording starts itself when the lamp section is on screen and there is no Play button to hunt for; the speaker control at the corner of the page turns it off.",
+      },
+      {
+        q: "Can I skip the money section?",
+        a: "Yes, and skipping it is the default. Leave both the UPI ID and the code blank and nothing about money appears on the page at all — no heading, no placeholder, nothing.",
+      },
+      {
+        q: "What happens after the visarjan?",
+        a: "Nothing expires. The page stays at its address with the dates printed on it, which is the point of a page rather than a message — a WhatsApp forward is gone by October and this is still there next year.",
+      },
+      {
+        q: "Can I edit it after sending?",
+        a: "Yes — Profile → My Creations → the card → Edit. The link is unchanged, so the next time they open it they see the new version, including anything they wrote in the reply box.",
+      },
+      {
+        q: "Can more than one person reply?",
+        a: "The reply box holds one line. Whoever writes first has written it, and a second person opening the page sees theirs rather than an empty box.",
+      },
+      {
+        q: "Why is the video silent?",
+        a: "All of the guide recordings are. The captions in the recording and the written steps above carry everything that would have been narrated, and a silent screen recording is easier to follow with the builder open in another tab.",
+      },
+    ],
+
+    relatedBlogSlugs: [],
+    relatedGuideSlugs: ["holi", "eid-mubarak", "happy-rakshabandhan-to-sister"],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
   // Darling
   // ───────────────────────────────────────────────────────────────────────────
   {

@@ -4,6 +4,7 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { JsonLd } from "@/components/JsonLd";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { getGuide, guideSlugs } from "@/data/guide-registry";
+import { getShowcase } from "@/data/video-showcase";
 import { guideVideoSet, guideMedia } from "@/lib/templateMedia";
 import {
   isoDuration,
@@ -62,6 +63,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
   const media = guideVideoSet(guide.slug);
   const relatedGuides = getRelatedGuides(guide);
+  /* The same recording on YouTube and Instagram, when it was posted there.
+     Resolved here rather than inside GuideDetailClient because this module
+     pulls the whole guide registry in behind it and that must not reach a
+     browser bundle — the client gets two strings. */
+  const showcase = getShowcase(guide.slug);
   const relatedArticles = await getRelatedArticlesForGuide(guide);
 
   /**
@@ -165,6 +171,22 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
               name: "SubhSandesh",
               url: SITE_URL,
             },
+            // ── THE SAME RECORDING, POSTED ELSEWHERE ─────────────────────────
+            //
+            // `sameAs` says "these URLs are this same work". It is not
+            // `contentUrl` and must not become one: `contentUrl` is the file a
+            // player can fetch, and a YouTube watch page is a page.
+            //
+            // The reason to say it at all is entity resolution. Without it,
+            // Google and every model reading this page see three unrelated
+            // videos with the same title — this one, a YouTube upload and a
+            // reel — and the authority each earns is split three ways. With it,
+            // the signals point at one work whose canonical watch page is this
+            // guide, which is also why this page keeps `url` and
+            // `mainEntityOfPage` and /showcase deliberately claims neither.
+            ...(showcase
+              ? { sameAs: [showcase.youtubeWatchUrl, showcase.instagramUrl] }
+              : {}),
             // Only chapters that map to a written section get a Clip. Every
             // chapter now has a valid time target, so this is an editorial cut
             // rather than a technical one: a marker with no written section
@@ -231,6 +253,8 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           guide={guide}
           relatedGuides={relatedGuides}
           relatedArticles={relatedArticles}
+          youtubeUrl={showcase?.youtubeWatchUrl}
+          instagramUrl={showcase?.instagramUrl}
         />
       </article>
     </main>

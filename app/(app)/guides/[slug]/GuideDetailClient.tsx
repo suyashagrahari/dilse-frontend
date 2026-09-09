@@ -1,11 +1,12 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Play, FileText, Clock, ListChecks, ArrowRight, ArrowLeft, Lightbulb,
-  CalendarCheck, ChevronRight, BookOpen, Sparkles,
+  CalendarCheck, ChevronRight, BookOpen, Sparkles, Youtube, Instagram, ExternalLink,
 } from "lucide-react";
 import type { ProductGuide } from "@/types/product-guide";
 import type { Article } from "@/lib/strapi";
@@ -19,13 +20,34 @@ const INK = "#2a0a0e";
 const MAROON = "#3d0c11";
 const MUTED = "#7a5555";
 
+/** The two "also on" links. Quieter than the page's own buttons on purpose —
+ *  they lead away from the guide, and the guide is the thing being read. */
+const SOCIAL_PILL: CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 6,
+  padding: "7px 13px", borderRadius: 999, textDecoration: "none",
+  background: "rgba(255,255,255,0.72)", color: INK,
+  border: "1px solid rgba(61,12,17,0.14)",
+  fontSize: 12, fontWeight: 700,
+};
+
 interface Props {
   guide: ProductGuide;
   relatedGuides: ProductGuide[];
   relatedArticles: Article[];
+  /** The same recording on YouTube, when it was posted there. Resolved on the
+   *  server from data/video-showcase.ts — see the note at its `getShowcase`. */
+  youtubeUrl?: string;
+  /** And the Instagram reel of the same recording. */
+  instagramUrl?: string;
 }
 
-export default function GuideDetailClient({ guide, relatedGuides, relatedArticles }: Props) {
+export default function GuideDetailClient({
+  guide,
+  relatedGuides,
+  relatedArticles,
+  youtubeUrl,
+  instagramUrl,
+}: Props) {
   const media = guideVideoSet(guide.slug);
   const steps = stepCount(guide);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -162,6 +184,54 @@ export default function GuideDetailClient({ guide, relatedGuides, relatedArticle
             Click a chapter to jump the video there. To read that step instead, use the
             ↓ beside it — the written walkthrough is below.
           </p>
+
+          {/* ── The same recording, elsewhere ────────────────────────────────
+           *
+           * The player above is our own mp4 and stays the primary — it is the
+           * one with the chapter rail wired to the written steps, and it is what
+           * the VideoObject's `contentUrl` points at, so it has to be the thing
+           * on the page. These are for people who would rather watch where they
+           * already are, and for the ones who want to send the video on: a
+           * YouTube or Instagram link travels through a chat far better than a
+           * link to an article that happens to contain a video.
+           *
+           * Rendered only when the recording was actually posted to each place,
+           * so a guide with no social copies shows nothing rather than a dead
+           * row of icons. */}
+          {(youtubeUrl || instagramUrl) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <span
+                style={{
+                  fontSize: 10.5, fontWeight: 800, letterSpacing: "0.16em",
+                  textTransform: "uppercase", color: MUTED,
+                }}
+              >
+                Also on
+              </span>
+              {youtubeUrl && (
+                <a
+                  href={youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={SOCIAL_PILL}
+                >
+                  <Youtube size={14} /> YouTube
+                  <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                </a>
+              )}
+              {instagramUrl && (
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={SOCIAL_PILL}
+                >
+                  <Instagram size={14} /> Instagram
+                  <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                </a>
+              )}
+            </div>
+          )}
         </section>
       )}
 

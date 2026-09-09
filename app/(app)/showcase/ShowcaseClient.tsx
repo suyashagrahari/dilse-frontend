@@ -2,23 +2,23 @@
 
 // ─── The video wall ──────────────────────────────────────────────────────────
 //
-// Twelve cards. Each one holds the same walkthrough from three sources, and the
+// One card per recording. Each holds the same walkthrough from three sources, and the
 // viewer picks which. See data/video-showcase.ts for where the list comes from
 // and app/(app)/showcase/page.tsx for why the page is unlisted.
 //
 // ── WHY OUR OWN MP4 IS THE DEFAULT AND THE EMBEDS ARE CLICK-TO-LOAD ─────────
 //
-// Twelve YouTube iframes and twelve Instagram iframes on one page is roughly
-// 24 third-party documents, each with its own scripts, cookies and layout
+// A YouTube iframe and an Instagram iframe per card is two third-party
+// documents each, every one with its own scripts, cookies and layout
 // thrash. Measured on the guide pages, one YouTube iframe alone costs more
 // transfer than the entire rest of that page. Instagram's embed is worse: it
-// ships a script that rewrites the node after load, so twelve of them fight for
+// ships a script that rewrites the node after load, so a wall of them fight for
 // the main thread and the page janks while you scroll.
 //
 // So nothing third-party loads until it is asked for:
 //
 //   · The CDN mp4 is `preload="none"` behind its poster, so a card costs one
-//     WebP (28–80 KB) until somebody presses play. Twelve posters is the whole
+//     WebP (28–80 KB) until somebody presses play. The posters are the whole
 //     initial media budget.
 //   · YouTube and Instagram render a FACADE — the same poster, the source's own
 //     mark, and a play button. The iframe is created on the first click, and
@@ -26,7 +26,7 @@
 //     and never gets a cookie from either.
 //
 // That is also why the tabs are per-card rather than one global switch: a
-// global "show YouTube" would mount twelve iframes in one go, which is the
+// global "show YouTube" would mount every iframe in one go, which is the
 // thing being avoided.
 //
 // ── WHY THE LAYOUT IS WIDTH-DRIVEN AND NOT DEVICE-DRIVEN ────────────────────
@@ -42,10 +42,10 @@
 // `aspect-ratio` rather than letting the video size itself means no layout
 // shift when a poster or an iframe arrives.
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
-import { SHOWCASE, SHOWCASE_COUNT, type ShowcaseEntry } from "@/data/video-showcase";
+import type { ShowcaseCardData } from "@/data/video-showcase";
 import { BRAND } from "@/lib/brand";
 import { SOCIAL, SOCIAL_LINK_ATTRS } from "@/lib/social";
 
@@ -59,7 +59,7 @@ const SOURCE_LABEL: Record<SourceKey, string> = {
 
 /* ── Marks ─────────────────────────────────────────────────────────────────
    Inline SVG rather than an icon package: three glyphs, and this page is
-   already asking the network for twelve posters. */
+   already asking the network for one poster per card. */
 
 function PlayGlyph({ size = 22 }: { size?: number }) {
   return (
@@ -103,7 +103,16 @@ function InstagramGlyph() {
 
 /* ── One card ───────────────────────────────────────────────────────────── */
 
-function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number }) {
+function ShowcaseCard({
+  card,
+  index,
+  hidden,
+}: {
+  card: ShowcaseCardData;
+  index: number;
+  /** Filtered out. Hidden rather than unmounted — see the note on the filter. */
+  hidden?: boolean;
+}) {
   const [source, setSource] = useState<SourceKey>("cdn");
   /** Whether the YouTube iframe has been created yet. Never un-set — tearing
       it down on a tab change would restart the video the viewer is watching.
@@ -111,9 +120,8 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
   const [ytLoaded, setYtLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const { guide, media } = entry;
-  const accent = guide.accent || BRAND.gold;
-  const headingId = `showcase-${entry.slug}`;
+  const accent = card.accent || BRAND.gold;
+  const headingId = `showcase-${card.slug}`;
 
   const pick = useCallback((next: SourceKey) => {
     setSource(next);
@@ -124,26 +132,26 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
   }, []);
 
   return (
-    <article className="sc-card" aria-labelledby={headingId}>
+    <article className="sc-card" aria-labelledby={headingId} hidden={hidden}>
       <div className="sc-stage" style={{ ["--sc-accent" as string]: accent }}>
         {/* ── Our own copy ───────────────────────────────────────────────── */}
         <div className="sc-pane" hidden={source !== "cdn"}>
           <video
             ref={videoRef}
             className="sc-video"
-            poster={media.poster}
+            poster={card.poster}
             preload="none"
             controls
             playsInline
             // The recordings are silent screen captures; muted lets a phone
             // start them without the extra tap iOS demands for audio.
             muted
-            aria-label={`${guide.templateName} walkthrough`}
+            aria-label={`${card.templateName} walkthrough`}
           >
             {/* 720p on small screens, the full file above that — the same
                 ladder the guide pages use. */}
-            <source src={media.mp4720} type="video/mp4" media="(max-width: 820px)" />
-            <source src={media.mp4} type="video/mp4" />
+            <source src={card.mp4720} type="video/mp4" media="(max-width: 820px)" />
+            <source src={card.mp4} type="video/mp4" />
           </video>
         </div>
 
@@ -152,8 +160,8 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
           {ytLoaded ? (
             <iframe
               className="sc-frame"
-              src={entry.youtubeEmbedUrl}
-              title={`${guide.templateName} on YouTube`}
+              src={card.youtubeEmbedUrl}
+              title={`${card.templateName} on YouTube`}
               loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
@@ -161,8 +169,8 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
             />
           ) : (
             <Facade
-              poster={media.poster}
-              alt={`${guide.templateName} — the finished page, from the walkthrough video`}
+              poster={card.poster}
+              alt={`${card.templateName} — the finished page, from the walkthrough video`}
               label="Play on YouTube"
               onPlay={() => pick("youtube")}
             />
@@ -184,14 +192,14 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
         <div className="sc-pane" hidden={source !== "instagram"}>
           <a
             className="sc-facade sc-facade-link"
-            href={entry.instagramUrl}
-            aria-label={`Open the ${guide.templateName} reel on Instagram`}
+            href={card.instagramUrl}
+            aria-label={`Open the ${card.templateName} reel on Instagram`}
             {...SOCIAL_LINK_ATTRS}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={media.poster}
-              alt={`${guide.templateName} — the reel version of the walkthrough`}
+              src={card.poster}
+              alt={`${card.templateName} — the reel version of the walkthrough`}
               loading="lazy"
               decoding="async"
             />
@@ -210,7 +218,7 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
       {/* ── Source switch ─────────────────────────────────────────────────
           A radiogroup, not tabs: the three panes are the same video, so this
           is a choice of source rather than navigation between contents. */}
-      <div className="sc-sources" role="radiogroup" aria-label={`Watch ${guide.templateName} on`}>
+      <div className="sc-sources" role="radiogroup" aria-label={`Watch ${card.templateName} on`}>
         {(["cdn", "youtube", "instagram"] as SourceKey[]).map((key) => (
           <button
             key={key}
@@ -230,19 +238,19 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
 
       <div className="sc-body">
         <p className="sc-eyebrow" style={{ color: accent }}>
-          <span aria-hidden="true">{guide.emoji}</span> {guide.templateName}
+          <span aria-hidden="true">{card.emoji}</span> {card.templateName}
         </p>
         <h2 className="sc-title" id={headingId}>
-          {guide.title}
+          {card.title}
         </h2>
         {/* No description was supplied for these, so the guide's own tagline is
             used — it is the line already written for this exact video, and one
             place to edit beats two that disagree. */}
-        <p className="sc-tagline">{guide.tagline}</p>
+        <p className="sc-tagline">{card.tagline}</p>
 
         <p className="sc-meta">
-          <span>{guide.buildTime}</span>
-          {guide.video ? <span>{formatDuration(guide.video.seconds)}</span> : null}
+          <span>{card.buildTime}</span>
+          {card.seconds !== null ? <span>{formatDuration(card.seconds)}</span> : null}
         </p>
 
         {/* ── TWO ACTIONS, NOT FOUR ────────────────────────────────────────
@@ -253,10 +261,10 @@ function ShowcaseCard({ entry, index }: { entry: ShowcaseEntry; index: number })
             Rendered as one row that wraps, so a narrow phone gets two lines
             rather than a squeeze. */}
         <div className="sc-links">
-          <Link className="sc-link" href={entry.templateHref} prefetch={false}>
+          <Link className="sc-link" href={card.templateHref} prefetch={false}>
             Open the template
           </Link>
-          <Link className="sc-link sc-link-quiet" href={entry.guideHref} prefetch={false}>
+          <Link className="sc-link sc-link-quiet" href={card.guideHref} prefetch={false}>
             Read the guide
           </Link>
         </div>
@@ -298,6 +306,11 @@ function Facade({
   );
 }
 
+/* Two lines rather than the identical `formatDuration` in lib/guides.ts, and
+   deliberately so: that module imports data/guide-registry.ts AND lib/strapi,
+   so importing one helper out of it would pull 300 KB of guide prose and a CMS
+   client into this browser bundle. The duplication is what keeps them out.
+   Do not consolidate it. */
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -306,15 +319,71 @@ function formatDuration(seconds: number): string {
 
 /* ── The page ───────────────────────────────────────────────────────────── */
 
-export default function ShowcaseClient() {
-  const entries = useMemo(() => SHOWCASE, []);
+export default function ShowcaseClient({ cards }: { cards: ShowcaseCardData[] }) {
+  const [cat, setCat] = useState("all");
+  const countId = useId();
+
+  /* ── THE FILTER, AND WHY IT HIDES RATHER THAN UNMOUNTS ──────────────────
+   *
+   * Facets are derived from the cards themselves, so a category appears the
+   * moment a recording in it ships and never appears empty. Labels come from
+   * the same GUIDE_CATEGORIES the /guides hub uses, resolved on the server, so
+   * the two pages cannot call the same thing different names.
+   *
+   * Every card stays MOUNTED and is hidden with the `hidden` attribute, which
+   * matters for three reasons the hub does not have to care about:
+   *
+   *   · each card holds a <video> with two <source>s and a poster, and
+   *     unmounting on a filter change would throw away a loaded poster and
+   *     restart anything playing;
+   *   · a YouTube iframe, once created, must survive a filter change for the
+   *     same reason it survives a tab change — see `ytLoaded`;
+   *   · a crawler that never clicks a filter still sees all thirteen cards and
+   *     their titles, taglines and posters in the HTML. Filtering by unmounting
+   *     would leave the default view as the only indexable one.
+   */
+  const facets = useMemo(() => {
+    const counts = new Map<string, { label: string; n: number }>();
+    for (const c of cards) {
+      const row = counts.get(c.category) ?? { label: c.categoryLabel, n: 0 };
+      row.n += 1;
+      counts.set(c.category, row);
+    }
+    return [
+      { id: "all", label: "All", emoji: "✦", n: cards.length },
+      ...[...counts.entries()]
+        .sort((a, b) => b[1].n - a[1].n || a[1].label.localeCompare(b[1].label))
+        .map(([id, { label, n }]) => ({ id, label, emoji: undefined, n })),
+    ];
+  }, [cards]);
+
+  const shownCount = cat === "all" ? cards.length : cards.filter((c) => c.category === cat).length;
+
+  /* The occasions sentence, built from the list instead of typed out. The
+     hand-written version said "Raksha Bandhan pages, wedding and reception
+     invitations, birthday and love pages, and an apology dashboard" — which
+     stopped being true the moment a Ganesh Chaturthi recording was added, on
+     the one page whose whole job is to be readable by a crawler. */
+  /* A comma list after a dash, not "a, b and c". One of the category labels is
+     "Love & Romance", and a conjunction join produced "love & romance and
+     birthday" — an ampersand and an "and" in four words. A dash sidesteps it
+     however the labels change. */
+  const occasions = useMemo(
+    () => facets.filter((f) => f.id !== "all").map((f) => f.label.toLowerCase()).join(", "),
+    [facets],
+  );
+
+  /* The two or three newest, named. A crawler and a reader both want to know
+     what is actually here, and the newest is the one most likely to be the
+     reason somebody arrived. */
+  const newest = useMemo(() => cards.slice(0, 3).map((c) => c.templateName), [cards]);
 
   return (
     <main className="sc-root">
       <style>{SHOWCASE_CSS}</style>
 
       {/* ── WHY THERE IS PROSE ON A PAGE MADE OF VIDEO ────────────────────
-          A wall of twelve players and twelve taglines is, to a crawler, a page
+          A wall of players and taglines is, to a crawler, a page
           with almost no text on it — and a page with almost no text does not
           rank, however good the videos are. Google cannot watch them. This
           header and the closing section are the part it CAN read, so they say
@@ -324,14 +393,13 @@ export default function ShowcaseClient() {
         <p className="sc-kicker">Walkthrough videos</p>
         <h1 className="sc-h1">Watch every template built, start to finish</h1>
         <p className="sc-sub">
-          {SHOWCASE_COUNT} full recordings — Raksha Bandhan pages, wedding and reception
-          invitations, birthday and love pages, and an apology dashboard. Each one shows the whole
-          build: every field filled in, the photos uploaded, the password set, and then the finished
-          page exactly as the person receiving it sees it on their phone. Nothing is sped up and
-          nothing is cut.
+          {cards.length} full recordings — {occasions}. Each one shows the whole build:
+          every field filled in, the photos uploaded, the password set, and then the finished page
+          exactly as the person receiving it sees it on their phone. Nothing is sped up and nothing
+          is cut.
         </p>
         <p className="sc-sub">
-          Watch them here, or open any one on{" "}
+          Newest first — {newest.join(", ")}. Watch them here, or open any one on{" "}
           <a href={SOCIAL.youtube} {...SOCIAL_LINK_ATTRS}>
             YouTube
           </a>{" "}
@@ -347,9 +415,44 @@ export default function ShowcaseClient() {
         </p>
       </header>
 
+      <div
+        className="sc-filters"
+        role="group"
+        aria-label="Filter by occasion"
+        aria-describedby={countId}
+      >
+        {facets.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            className="sc-filter"
+            data-on={cat === f.id || undefined}
+            aria-pressed={cat === f.id}
+            onClick={() => setCat(f.id)}
+          >
+            {f.emoji ? <span aria-hidden="true">{f.emoji}</span> : null}
+            <span>{f.label}</span>
+            <span className="sc-filter-n" aria-hidden="true">
+              {f.n}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Politely announced, because the change to the grid is otherwise
+          invisible to a screen reader. */}
+      <p className="sc-count" id={countId} aria-live="polite">
+        Showing {shownCount} of {cards.length}
+      </p>
+
       <div className="sc-grid">
-        {entries.map((entry, i) => (
-          <ShowcaseCard key={entry.slug} entry={entry} index={i} />
+        {cards.map((card, i) => (
+          <ShowcaseCard
+            key={card.slug}
+            card={card}
+            index={i}
+            hidden={cat !== "all" && card.category !== cat}
+          />
         ))}
       </div>
 
@@ -360,7 +463,9 @@ export default function ShowcaseClient() {
           at either end. The hard part is not the sending, it is knowing what the finished thing
           looks like before you spend twenty minutes on it. That is what these are for: each
           recording runs the builder end to end, so you can see the fields, the photo uploads, the
-          music, the password screen and the finished page before you start.
+          music, the password screen and the finished page before you start. The festival pages
+          also show what the person receiving one actually does with it — tying a rakhi, or
+          scrolling an aarti and writing a line back.
         </p>
         <p>
           Every video here has a written companion. The{" "}
@@ -423,6 +528,70 @@ const SHOWCASE_CSS = `
   letter-spacing: -0.01em;
 }
 .sc-sub { margin: 0; font-size: clamp(14px, 2.2vw, 16px); line-height: 1.65; color: var(--sc-muted); }
+
+/* ── Filters ──────────────────────────────────────────────────────────────
+   The same pill the /guides hub uses, so the two pages read as one system.
+   Scrolls horizontally on a phone rather than wrapping to three rows and
+   pushing the first card below the fold. */
+.sc-filters {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  max-width: 1500px;
+  margin: 0 auto clamp(10px, 1.6vw, 14px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.sc-filters::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) { .sc-filters { justify-content: center; } }
+
+.sc-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 9px 15px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sc-ink);
+  background: var(--sc-surface);
+  border: 1px solid var(--sc-border);
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.sc-filter[data-on] {
+  color: ${BRAND.bg};
+  background: var(--sc-ink);
+  border-color: var(--sc-ink);
+}
+@media (hover: hover) {
+  .sc-filter:not([data-on]):hover { border-color: var(--sc-gold); }
+}
+.sc-filter:focus-visible { outline: 2px solid var(--sc-gold); outline-offset: 2px; }
+
+/* Tabular, so the number does not shuffle its own pill's width. */
+.sc-filter-n {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: .62;
+}
+
+.sc-count {
+  max-width: 1500px;
+  margin: 0 auto clamp(16px, 2.4vw, 24px);
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--sc-faint);
+}
+@media (min-width: 900px) { .sc-count { text-align: center; } }
 
 /* ── Grid ─────────────────────────────────────────────────────────────────
    auto-fit with a 340px floor, so the column count follows the available

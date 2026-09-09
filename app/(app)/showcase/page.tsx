@@ -1,11 +1,13 @@
 // ─── /showcase — the video hub ───────────────────────────────────────────────
 //
-// Twelve template walkthroughs in one place, indexable, and pointing at the
-// guide that owns each recording.
+// Every template walkthrough in one place, indexable, and pointing at the
+// guide that owns each recording. The list itself is data/video-showcase.ts;
+// the count is read from it, so adding a recording is one line there and
+// nothing here needs touching.
 //
 // ── WHY THIS PAGE DOES NOT CLAIM THE VIDEOS ─────────────────────────────────
 //
-// Every one of these twelve recordings ALREADY has a canonical watch page:
+// Every one of these recordings ALREADY has a canonical watch page:
 // `/guides/<slug>`, which emits a full `VideoObject` with `contentUrl` set to
 // the mp4 and `url`/`mainEntityOfPage` set to itself — that is what tells
 // Google the recording belongs to that URL rather than floating free.
@@ -33,7 +35,7 @@
 import type { Metadata } from "next";
 
 import { JsonLd } from "@/components/JsonLd";
-import { SHOWCASE, SHOWCASE_COUNT } from "@/data/video-showcase";
+import { SHOWCASE, SHOWCASE_COUNT, showcaseCards } from "@/data/video-showcase";
 import { isoDateTime, isoDuration } from "@/lib/guides";
 import { buildMeta, SITE_URL } from "@/lib/seo";
 
@@ -43,10 +45,18 @@ const PAGE_URL = `${SITE_URL}/showcase`;
 
 const TITLE =
   "Template Walkthrough Videos — watch every SubhSandesh page built | SubhSandesh";
+/* Derived, not typed out. The hand-written version listed "Raksha Bandhan,
+   wedding invitations, birthday and love pages" and stopped being true the
+   moment a Ganesh Chaturthi recording was added — on the one page whose entire
+   job is to be readable by something that cannot watch a video. The header
+   paragraph in ShowcaseClient is built the same way, from the same data. */
+const OCCASIONS = [
+  ...new Set(showcaseCards().map((c) => c.categoryLabel.toLowerCase())),
+].join(", ");
+
 const DESCRIPTION =
-  `${SHOWCASE_COUNT} full walkthrough videos: every field filled in, then the finished page as the ` +
-  "person receiving it sees it. Raksha Bandhan, wedding invitations, birthday and love pages — " +
-  "watch here, on YouTube, or on Instagram.";
+  `${SHOWCASE_COUNT} full walkthrough videos — ${OCCASIONS}. Every field filled in, then the ` +
+  "finished page as the person receiving it sees it. Watch here, on YouTube, or on Instagram.";
 
 export const metadata: Metadata = buildMeta({
   title: TITLE,
@@ -130,7 +140,7 @@ export default function ShowcasePage() {
       />
 
       {/* One VideoObject for the page as a whole would be a lie — there are
-          twelve. Instead each guide keeps its own, and the freshest recording
+          many. Instead each guide keeps its own, and the freshest recording
           date is published here as the collection's `dateModified`, which is
           what a hub can honestly claim. */}
       <JsonLd
@@ -144,12 +154,17 @@ export default function ShowcasePage() {
         }}
       />
 
-      <ShowcaseClient />
+      {/* The cards are resolved HERE, on the server, and handed over as flat
+          rows. ShowcaseClient used to import the showcase list itself, which
+          pulled data/guide-registry.ts — 300 KB of source, forty-three guides,
+          every step body and every FAQ — into the browser bundle to render
+          thirteen cards. See the note above `ShowcaseCardData`. */}
+      <ShowcaseClient cards={showcaseCards()} />
     </>
   );
 }
 
-/** The most recent recording date across the twelve, as an ISO datetime. */
+/** The most recent recording date in the showcase, as an ISO datetime. */
 function newestRecording(): string {
   const dates = SHOWCASE.map((e) => e.guide.video?.recordedAt).filter(
     (d): d is string => typeof d === "string"
