@@ -349,11 +349,16 @@ export default function ShowcaseClient({ cards }: { cards: ShowcaseCardData[] })
       row.n += 1;
       counts.set(c.category, row);
     }
+    /* First appearance in the grid, which is newest-recording-first — NOT by
+       count. Two reasons, both visible on the page: the leading filter then
+       matches the leading card (a festival recording days before the festival
+       sat behind "Love & Romance" when this sorted by size), and the meta
+       description in page.tsx derives its list the same way, so one page no
+       longer prints the same four occasions in two different orders.
+       Map preserves insertion order, so this is just "do not sort". */
     return [
       { id: "all", label: "All", emoji: "✦", n: cards.length },
-      ...[...counts.entries()]
-        .sort((a, b) => b[1].n - a[1].n || a[1].label.localeCompare(b[1].label))
-        .map(([id, { label, n }]) => ({ id, label, emoji: undefined, n })),
+      ...[...counts.entries()].map(([id, { label, n }]) => ({ id, label, emoji: undefined, n })),
     ];
   }, [cards]);
 
