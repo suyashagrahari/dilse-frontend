@@ -65,24 +65,66 @@ const asset = (file: string, width: number, height: number): Asset => ({
 
 export const GANESH_ASSETS = {
   /**
-   * The gallery card, and the og:image.
+   * The gallery card, and the og:image. 900×1200 — 3:4, because that is exactly
+   * what `components/TemplateCard.tsx` renders (`aspect-[3/4]`, `object-cover`).
    *
-   * Composed rather than screenshotted: `.gc-stage` is capped at 420px below the
-   * 1024px breakpoint, so a 900px-wide page shot is a 420px page with 240px of
-   * empty cream down each side, and above that breakpoint the layout is a
-   * two-column desktop composition which is not what the card advertises either.
-   * So it is the mandap, built from the same wall gradient, toran and murti the
-   * darshan screen paints, at a size and crop chosen for a card.
+   * ── IT IS A SHOT OF THIS PAGE'S OWN HERO ──────────────────────────────────
+   *
+   * Captured from the live route with the words hidden and the medallion
+   * oversized, so the card shows the actual current design rather than a
+   * separate illustration that will drift from it. The recipe, for when the
+   * design changes and this needs retaking:
+   *
+   *   viewport 900×1200 on /happy-ganesh-chaturthi
+   *   hide  .gc-topbar, .gc-topbar-scrim, .gc-sample, .gc-music, nextjs-portal
+   *   hide  .gc-hero-split .gc-words, .gc-verse      (the card prints the words)
+   *   hide  the scrollbar, or it lands in the frame as a dark bar down the right
+   *   .gc-section--hero { padding-top: 70px; padding-bottom: 0; min-height: 1200px }
+   *   .gc-hero-split { display: block }
+   *   .gc-medallion { width: 720px; margin: 0 auto }
+   *   .gc-wrap { max-width: none; padding-inline: 0 }
+   *   clip { x: 0, y: 0, width: 900, height: 1200 }  →  webp q88
+   *
+   * ── WHY NO TEXT IN THE IMAGE ──────────────────────────────────────────────
+   *
+   * The card prints the type chip, the title in white Playfair and a two-line
+   * description over the bottom, under a black gradient that reaches 0.82. A
+   * title baked into the image would sit directly behind that one.
+   *
+   * ── AND WHY THE MEDALLION IS 720px AND NOT 980px ──────────────────────────
+   *
+   * 980 was the first try, and it looked better in isolation: the ring bled off
+   * both edges, which at card size reads as a composition rather than as a
+   * sticker.
+   *
+   * It failed on the PHONE card. `aspect-[3/4]` holds at every width, but the
+   * text block over it is fixed padding plus three lines of type — so the
+   * smaller the card, the bigger the share the text takes. At 291×388 on a
+   * laptop it covers everything below ~64%; at 175×233 on a phone, below ~51%.
+   * At 980 the murti's legs reached 71% and the phone card printed the title
+   * across them.
+   *
+   * At 720 the murti sits at 16%–56% and the whole ring is visible, which clears
+   * the text at both sizes. Verified by compositing the real gradient stops and
+   * the real text block over the finished file at both sizes — not by looking at
+   * the image on its own, which is what made 980 look right.
    *
    * ── AND WHY THE CARD IS NOT THE GIF ────────────────────────────────────────
    *
-   * The GIF was the first cover, and it is wrong twice. As a gallery card it is
-   * a 494×434 animation looping in a grid of fifty still cards. As an og:image
-   * it is worse: several scrapers refuse an animated source outright and others
+   * The GIF was the first cover and it is wrong twice. As a gallery card it is a
+   * 494×434 animation looping in a grid of fifty still cards. As an og:image it
+   * is worse: several scrapers refuse an animated source outright and others
    * take an arbitrary frame, so the WhatsApp preview of every link would be
    * whichever frame the encoder happened to leave first.
+   *
+   * ── ONE HONEST LIMITATION ─────────────────────────────────────────────────
+   *
+   * 3:4 is right for the gallery and wrong for a link preview, which wants
+   * something nearer 1.91:1. Scrapers centre-crop, and the murti is centred, so
+   * it survives — but if link previews ever matter more than the gallery card,
+   * that is a second asset and not a change to this one.
    */
-  cover: asset("cover.webp", 900, 900),
+  cover: asset("cover.webp", 900, 1200),
 
   /**
    * The murti. Transparent WebP, so it sits on whichever mandap backdrop the
