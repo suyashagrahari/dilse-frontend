@@ -356,45 +356,64 @@ export default function GaneshTemplate({
       {/* ════════════════════════════════════════════════════════════════════
           5. The photograph
           ════════════════════════════════════════════════════════════════════ */}
+      {/* ── ONE COLUMN, CENTRED, AND NO PROSE ────────────────────────────────
+       *
+       * This was a two-column split: the portrait on the left, and on the right
+       * a heading plus "Rohit and Aditi, and everyone who could get there."
+       *
+       * That sentence was the only text on the whole page that nobody wrote. It
+       * was assembled from the two name fields, so it said the same thing on
+       * every page ever made from this template, and it sat in the same
+       * `gc-lede` type as the sender's own words — which is worse than saying
+       * nothing, because it dilutes the lines that ARE theirs.
+       *
+       * So the prose is gone and with it the reason for the split. The portrait
+       * is the whole section now: centred, larger, garlanded, with the two real
+       * names under it and nothing invented anywhere. */}
       {data.photoUrl && (
         <section className="gc-section gc-section--sunk">
           <div className="gc-wrap">
-            <div className="gc-split" style={{ ["--gc-split" as string]: "0.9fr 1.1fr" }}>
-              <div className="gc-art">
-                <Reveal>
-                  <div style={{ display: "grid", placeItems: "center", gap: 16 }}>
-                    <RoundFrame size={280}>
-                      <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                        <UserImage
-                          src={data.photoUrl}
-                          alt=""
-                          sizes="(min-width: 1024px) 280px, 70vw"
-                          style={{ objectFit: "cover" }}
-                        />
-                      </div>
-                    </RoundFrame>
-                    {/* A garland under the portrait — how a photograph is
-                        actually dressed during the festival. */}
-                    <div aria-hidden style={{ display: "flex", gap: 3 }}>
-                      {Array.from({ length: 7 }, (_, i) => (
-                        <Marigold key={i} size={14} />
-                      ))}
+            <Reveal>
+              <figure className="gc-portrait">
+                {/* Sized off the viewport with a cap rather than at breakpoints:
+                    it is the second-largest thing on the page after the aarti
+                    medallion and a step change in it would be the most obvious
+                    thing about the layout. */}
+                <div className="gc-portrait-frame">
+                  <RoundFrame size="100%">
+                    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                      <UserImage
+                        src={data.photoUrl}
+                        alt={
+                          data.senderName && data.recipientName
+                            ? `${data.senderName} and ${data.recipientName}`
+                            : "The sender's photograph"
+                        }
+                        sizes="(min-width: 1024px) 340px, 74vw"
+                        style={{ objectFit: "cover" }}
+                      />
                     </div>
-                  </div>
-                </Reveal>
-              </div>
+                  </RoundFrame>
+                </div>
 
-              <div className="gc-words">
-                <Reveal delay={0.1}>
-                  <SectionHead eyebrow="At home" title="This year, from us" />
-                  <p className="gc-lede" style={{ marginTop: 18 }}>
-                    {data.senderName && data.recipientName
-                      ? `${data.senderName} and ${data.recipientName}, and everyone who could get there.`
-                      : "Everyone who could get there."}
-                  </p>
-                </Reveal>
-              </div>
-            </div>
+                {/* A garland under the portrait — how a photograph is actually
+                    dressed during the festival. */}
+                <div aria-hidden className="gc-portrait-garland">
+                  {Array.from({ length: 9 }, (_, i) => (
+                    <Marigold key={i} size={15} />
+                  ))}
+                </div>
+
+                {(data.senderName || data.recipientName) && (
+                  <figcaption className="gc-portrait-cap">
+                    <span className="gc-display gc-portrait-names gc-name">
+                      {[data.senderName, data.recipientName].filter(Boolean).join(" & ")}
+                    </span>
+                    {data.city && <span className="gc-portrait-city">{data.city}</span>}
+                  </figcaption>
+                )}
+              </figure>
+            </Reveal>
           </div>
         </section>
       )}
@@ -413,39 +432,38 @@ export default function GaneshTemplate({
                 sub="Written down, so it is on the record."
               />
             </Reveal>
+            {/* ── A LEDGER, NOT A LIST ──────────────────────────────────────
+             *
+             * The section is called "written down, so it is on the record", and
+             * the design should mean it: each row is a gold diamond, what it is
+             * for, a dot leader, and what is hoped for — the shape of a line in
+             * a household account book.
+             *
+             * The dot leader is the whole reason it reads that way, and it is a
+             * `repeating-radial-gradient` on a flexible cell rather than a run
+             * of "....": a character run does not stretch to fill the gap, so
+             * every row would end its dots in a different place and the
+             * right-hand column would stop being a column.
+             *
+             * Six rows in one column is a list; three and three is a table, and
+             * a table is what this is — hence `--wide` above three, with a gold
+             * hairline between the halves.
+             */}
             <Reveal delay={0.12}>
-              <Card
-                style={{
-                  marginTop: "clamp(24px, 4vw, 44px)",
-                  maxWidth: 860,
-                  marginInline: "auto",
-                }}
-              >
-                <div className={`gc-wishlist${wishes.length > 3 ? " gc-wishlist--wide" : ""}`}>
+              <div className="gc-ledger">
+                <ul className={`gc-wishlist${wishes.length > 3 ? " gc-wishlist--wide" : ""}`}>
                   {wishes.map((r, i) => (
-                    <div key={`${i}-${r.label}`} className="gc-wishrow">
-                      <span style={{ fontSize: 15, lineHeight: 1.45, color: GC.ink, minWidth: 0 }}>
+                    <li key={`${i}-${r.label}`} className="gc-wishrow">
+                      <span className="gc-wishrow-label">
+                        <span aria-hidden className="gc-wishrow-mark" />
                         {r.label}
                       </span>
                       <span aria-hidden className="gc-dots" />
-                      <span
-                        className="gc-display"
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color: GC.maroon,
-                          lineHeight: 1.45,
-                          textAlign: "right",
-                          flexShrink: 0,
-                          maxWidth: "52%",
-                        }}
-                      >
-                        {r.value || "—"}
-                      </span>
-                    </div>
+                      <span className="gc-display gc-wishrow-value">{r.value || "—"}</span>
+                    </li>
                   ))}
-                </div>
-              </Card>
+                </ul>
+              </div>
             </Reveal>
           </div>
         </section>

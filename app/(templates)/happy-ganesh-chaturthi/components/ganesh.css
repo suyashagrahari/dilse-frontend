@@ -392,19 +392,147 @@
   }
 }
 
+/* ── The portrait ───────────────────────────────────────────────────────────
+ *
+ * One centred column. It was a two-column split until the invented sentence
+ * beside it was removed — see the note in GaneshTemplate.
+ */
+.gc-portrait {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+
+/* Sized off the viewport with a cap, not at breakpoints: this is the
+   second-largest element on the page and a step change in it would be the most
+   obvious thing about the layout. `aspect-ratio` keeps it circular without the
+   height having to be computed anywhere. */
+.gc-portrait-frame {
+  width: min(74vw, 300px);
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 1024px) {
+  .gc-portrait-frame { width: 340px; }
+}
+
+/* Overlaps the frame's lower edge, the way a garland actually hangs ON a
+   photograph rather than under it. The negative margin is why the parent has
+   `gap: 0` — a gap and an overlap fight each other. */
+.gc-portrait-garland {
+  display: flex;
+  gap: 2px;
+  margin-top: -14px;
+  filter: drop-shadow(0 3px 4px rgba(46, 33, 25, 0.28));
+}
+
+.gc-portrait-cap {
+  margin-top: 22px;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  text-align: center;
+}
+
+.gc-portrait-names {
+  font-size: clamp(22px, 3.4vw, 30px);
+  line-height: 1.2;
+  font-weight: 600;
+  color: #2e2119;
+}
+
+.gc-portrait-city {
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #87745f;
+}
+
 /* ── The wish list ──────────────────────────────────────────────────────────
+ *
+ * A ledger: a gold diamond, what it is for, a dot leader, what is hoped for.
  *
  * The dots are a repeating radial-gradient on a flexible middle cell, not a run
  * of "....". A character run does not stretch to fill the gap, so every row
  * would end its dots in a different place and the right-hand column would stop
  * reading as a column.
  */
-.gc-wishlist { display: grid; gap: 14px; }
+.gc-ledger {
+  margin-top: clamp(24px, 4vw, 44px);
+  max-width: 860px;
+  margin-inline: auto;
+  padding: clamp(22px, 3vw, 34px) clamp(20px, 3vw, 36px);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fffdf9 0%, #fdfaf3 100%);
+  border: 1px solid rgba(46, 33, 25, 0.08);
+  box-shadow: 0 18px 44px -30px rgba(46, 33, 25, 0.34);
+}
+
+/* The same gold hairline the offering cards carry, so the two sections read as
+   one system rather than as a card and a panel. */
+.gc-ledger::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(193, 154, 62, 0) 0%,
+    rgba(193, 154, 62, 0.75) 50%,
+    rgba(193, 154, 62, 0) 100%
+  );
+}
+
+.gc-wishlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 15px;
+}
 
 .gc-wishrow {
   display: flex;
   align-items: flex-end;
   gap: 8px;
+}
+
+.gc-wishrow-label {
+  font-size: 15px;
+  line-height: 1.45;
+  color: #2e2119;
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+/* A small gold diamond, rotated square. It is what makes each line read as an
+   entry rather than as a wrapped paragraph, which matters most in the
+   two-column layout where the labels wrap. */
+.gc-wishrow-mark {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  margin-bottom: 1px;
+  background: #c19a3e;
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+
+.gc-wishrow-value {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #9e2b2b;
+  line-height: 1.45;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 52%;
 }
 
 .gc-wishrow > .gc-dots {
@@ -431,26 +559,41 @@
  */
 @media (max-width: 559.98px) {
   .gc-wishrow { flex-wrap: wrap; row-gap: 2px; }
-  .gc-wishrow > :first-child { flex: 0 0 100%; }
+  .gc-wishrow > .gc-wishrow-label { flex: 0 0 100%; }
   .gc-wishrow > .gc-dots { min-width: 24px; margin-bottom: 7px; }
 }
 
-/* Two-up on a wide screen: six rows in one column is a list, three and three is
-   a table, and a table is what this is.
+/* Two-up on a wide screen, with a gold hairline between the halves — six rows
+ * in one column is a list, three and three is a table, and a table is what this
+ * is.
  *
- * The rows inside those columns wrap for the same reason they wrap on a phone.
- * Two columns of a 860px card are ~400px each, which is about a phone's width,
- * so "For my father's blood pressure" wraps to two lines and its dots end up
- * stranded beside the second one. Splitting the row is not a small-screen
- * concession — it is what a narrow COLUMN needs, wherever that column happens
- * to be. */
+ * The rows inside those columns wrap for the same reason they wrap on a phone:
+ * two columns of an 860px card are ~380px each, which is about a phone's width,
+ * so a long label wraps and its dots end up stranded beside the second line.
+ * Splitting the row is not a small-screen concession — it is what a narrow
+ * COLUMN needs, wherever that column happens to be.
+ */
 @media (min-width: 1024px) {
   .gc-wishlist--wide {
     grid-template-columns: 1fr 1fr;
-    column-gap: 56px;
+    column-gap: 48px;
+    /* The divider is a background on the grid rather than a border on a child:
+       there is no element between the two columns to hang it on, and an
+       `:nth-child` border would land in a different place whenever the row count
+       changed from even to odd. */
+    background-image: linear-gradient(
+      180deg,
+      rgba(193, 154, 62, 0) 0%,
+      rgba(193, 154, 62, 0.35) 18%,
+      rgba(193, 154, 62, 0.35) 82%,
+      rgba(193, 154, 62, 0) 100%
+    );
+    background-size: 1px 100%;
+    background-position: 50% 0;
+    background-repeat: no-repeat;
   }
   .gc-wishlist--wide .gc-wishrow { flex-wrap: wrap; row-gap: 2px; }
-  .gc-wishlist--wide .gc-wishrow > :first-child { flex: 0 0 100%; }
+  .gc-wishlist--wide .gc-wishrow > .gc-wishrow-label { flex: 0 0 100%; }
   .gc-wishlist--wide .gc-wishrow > .gc-dots { min-width: 24px; margin-bottom: 7px; }
 }
 

@@ -503,7 +503,12 @@ export function RoundFrame({
   ring = GC.gold,
   background = GC.paperDeep,
 }: {
-  size: number;
+  /**
+   * A CSS length. `"100%"` lets the caller's own box decide, which is how the
+   * portrait scales continuously off the viewport instead of jumping at a
+   * breakpoint — the caller sets an `aspect-ratio: 1` wrapper and this fills it.
+   */
+  size: number | string;
   children?: React.ReactNode;
   ring?: string;
   background?: string;
