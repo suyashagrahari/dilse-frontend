@@ -12,27 +12,17 @@ import {
   Flowers,
   Modak,
   LampIncense,
-  Diya,
-  Garland,
   Marigold,
-  PetalFall,
-  RoundFrame,
+  PhotoFrame,
   Rule,
 } from "./Ornaments";
 import { Button, BrandBadge, Card, Reveal, SectionHead } from "./Bits";
-import AartiSection from "./AartiSection";
+import AartiHero from "./AartiHero";
 import BackgroundMusic from "./BackgroundMusic";
 import UserImage from "./UserImage";
 import { useStoryCard } from "./StoryCard";
 import { useNow } from "./useNow";
-import {
-  OFFERINGS,
-  formatFestivalDate,
-  muhuratLine,
-  visarjanLine,
-  type GaneshData,
-  type OfferingKey,
-} from "./types";
+import { OFFERINGS, visarjanLine, type GaneshData, type OfferingKey } from "./types";
 
 // ─── The page ────────────────────────────────────────────────────────────────
 //
@@ -99,8 +89,6 @@ export default function GaneshTemplate({
   sample?: boolean;
 }) {
   const now = useNow(60_000);
-  /** Raised by the aarti's own Play button — a real gesture, so `play()` is legal. */
-  const [playing, setPlaying] = useState(false);
 
   const story = useStoryCard(data, mode === "live" ? currentUrl() : null);
   const [storyMsg, setStoryMsg] = useState<string | null>(null);
@@ -117,8 +105,8 @@ export default function GaneshTemplate({
     [story]
   );
 
-  const date = formatFestivalDate(data.festivalDate);
-  const muhurat = now ? muhuratLine(now) : null;
+  // `formatFestivalDate` and `muhuratLine` moved into AartiHero with the hero.
+  // The footer still needs the visarjan countdown.
   const visarjan = visarjanLine(data.visarjanDate, now);
   const greeting = data.greeting.filter((l) => l.trim());
   const wishes = data.wishes.filter((r) => r.label.trim());
@@ -129,175 +117,67 @@ export default function GaneshTemplate({
       {mode === "live" && <BrandBadge />}
 
       {/* Mounted for the whole page, so the recording is not restarted by a
-          section scrolling in and out of view. */}
-      <BackgroundMusic shouldPlay={playing} />
+          section scrolling in and out of view. It starts itself and its only
+          control is the mute button in the bottom-right corner — there is no
+          Play button anywhere. See the note at the top of BackgroundMusic for
+          what "starts itself" can actually mean in a browser. */}
+      <BackgroundMusic shouldPlay />
 
       {/* ════════════════════════════════════════════════════════════════════
-          1. The greeting
+          1. The hero IS the aarti — see AartiHero
           ════════════════════════════════════════════════════════════════════ */}
-      <section className="gc-section gc-section--hero" style={{ position: "relative" }}>
-        <Garland pieces={15} />
-        <PetalFall count={14} seed={9} />
-
-        <div className="gc-wrap" style={{ position: "relative", zIndex: 2 }}>
-          <div className="gc-split gc-split--art-right" style={{ ["--gc-split" as string]: "1.05fr 0.95fr" }}>
-            {/* The artwork. First in the DOM so it is above the fold on a
-                phone — the picture is what says what this page is. */}
-            <div className="gc-art">
-              <Reveal>
-                <div
-                  style={{
-                    width: "min(86vw, 460px)",
-                    borderRadius: 24,
-                    overflow: "hidden",
-                    border: `1px solid ${GC.hairline}`,
-                    boxShadow: "0 30px 60px -34px rgba(46,33,25,0.42)",
-                    background: GC.surface,
-                  }}
-                >
-                  {/* `unoptimized` is REQUIRED. Without it Next's optimiser
-                      re-encodes the GIF to a static WebP and the greeting
-                      silently stops moving — nothing errors, it just freezes. */}
-                  <Image
-                    src={GANESH_ASSETS.shubhkamnaye.src}
-                    alt="Happy Ganesh Chaturthi"
-                    width={GANESH_ASSETS.shubhkamnaye.width}
-                    height={GANESH_ASSETS.shubhkamnaye.height}
-                    priority
-                    unoptimized
-                    sizes="(min-width: 1024px) 460px, 86vw"
-                    style={{ width: "100%", height: "auto", display: "block" }}
-                  />
-                </div>
-              </Reveal>
-            </div>
-
-            <div className="gc-words">
-              {sample && (
-                <Reveal>
-                  <p
-                    style={{
-                      display: "inline-block",
-                      margin: "0 0 18px",
-                      padding: "6px 13px",
-                      borderRadius: 999,
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      letterSpacing: 0.2,
-                      background: "rgba(46,33,25,0.06)",
-                      border: `1px solid ${GC.hairline}`,
-                      color: GC.muted,
-                    }}
-                  >
-                    A sample — yours will use your names and your photo
-                  </p>
-                </Reveal>
-              )}
-              <Reveal delay={0.08}>
-                <p className="gc-eyebrow" style={{ margin: "0 0 14px" }}>
-                  {date || "Ganesh Chaturthi"}
-                </p>
-                <h1 className="gc-display gc-title">Happy Ganesh Chaturthi</h1>
-              </Reveal>
-
-              <Reveal delay={0.16}>
-                <p
-                  className="gc-display gc-name"
-                  style={{
-                    fontSize: "clamp(24px, 4.4vw, 38px)",
-                    lineHeight: 1.15,
-                    fontWeight: 600,
-                    color: GC.ink,
-                    margin: "18px 0 0",
-                  }}
-                >
-                  {data.recipientName || "to your house"}
-                </p>
-                {(data.senderName || data.city) && (
-                  <p
-                    style={{
-                      fontSize: 13.5,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: GC.muted,
-                      margin: "12px 0 0",
-                    }}
-                  >
-                    from {data.senderName || "someone at home"}
-                    {data.city ? ` · ${data.city}` : ""}
-                  </p>
-                )}
-              </Reveal>
-
-              {/* ── The countdown, which gates nothing ──────────────────────
-               *
-               * Purely informational, and `muhuratLine` is documented as such: a
-               * panchang timing differs by a few minutes between almanacs and by
-               * city, so a page that refused to open outside the hour would be
-               * wrong for somebody, somewhere, every year. */}
-              {muhurat && (
-                <Reveal delay={0.24}>
-                  <p
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 12.5,
-                      margin: "22px 0 0",
-                      padding: "7px 14px",
-                      borderRadius: 999,
-                      background: "rgba(255,253,249,0.8)",
-                      border: `1px solid ${GC.hairline}`,
-                      color: muhurat.phase === "during" ? GC.leaf : GC.muted,
-                      fontWeight: muhurat.phase === "during" ? 600 : 400,
-                    }}
-                  >
-                    <Diya size={18} />
-                    {muhurat.label}
-                  </p>
-                </Reveal>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+      <AartiHero data={data} sample={sample} />
 
       {/* ════════════════════════════════════════════════════════════════════
-          2. What the sender wanted to say
-          ════════════════════════════════════════════════════════════════════ */}
+          2. What the sender wanted to say — and the lettered greeting artwork
+          ════════════════════════════════════════════════════════════════════
+
+          The GIF lives here now, not in the hero. It is a greeting-card
+          illustration with "Happy Ganesh Chaturthi" lettered into it, and at the
+          top of the page it was competing with the headline that says the same
+          words. Beside the sender's own three lines it is doing what an
+          illustration is for. */}
       {greeting.length > 0 && (
         <section className="gc-section gc-section--ruled">
-          <div className="gc-wrap" style={{ textAlign: "center" }}>
-            <div style={{ maxWidth: "44ch", margin: "0 auto", display: "grid", gap: "clamp(14px, 2vw, 22px)" }}>
-              {greeting.map((line, i) => (
-                <Reveal key={`${i}-${line}`} delay={i * 0.1} as="p">
-                  <span
-                    className="gc-quote"
-                    style={{
-                      display: "block",
-                      fontSize: "clamp(20px, 3.4vw, 30px)",
-                      lineHeight: 1.42,
-                      color: GC.ink,
-                    }}
-                  >
-                    {line}
-                  </span>
+          <div className="gc-wrap">
+            <div className="gc-split" style={{ ["--gc-split" as string]: "0.92fr 1.08fr" }}>
+              <div className="gc-art">
+                <Reveal>
+                  <div className="gc-greeting-art">
+                    {/* `unoptimized` is REQUIRED. Without it Next's optimiser
+                        re-encodes the GIF to a static WebP and the artwork
+                        silently stops moving — nothing errors, it just freezes. */}
+                    <Image
+                      src={GANESH_ASSETS.shubhkamnaye.src}
+                      alt="Happy Ganesh Chaturthi"
+                      width={GANESH_ASSETS.shubhkamnaye.width}
+                      height={GANESH_ASSETS.shubhkamnaye.height}
+                      unoptimized
+                      sizes="(min-width: 1024px) 420px, 82vw"
+                      style={{ width: "100%", height: "auto", display: "block" }}
+                    />
+                  </div>
                 </Reveal>
-              ))}
-            </div>
-            <Reveal delay={0.34}>
-              <div style={{ marginTop: 32, display: "flex", justifyContent: "center" }}>
-                <Rule width={160} />
               </div>
-            </Reveal>
+
+              <div className="gc-words">
+                <div className="gc-greeting-lines">
+                  {greeting.map((line, i) => (
+                    <Reveal key={`${i}-${line}`} delay={i * 0.1} as="p">
+                      <span className="gc-quote gc-greeting-line">{line}</span>
+                    </Reveal>
+                  ))}
+                </div>
+                <Reveal delay={0.34}>
+                  <div className="gc-rule-wrap" style={{ marginTop: 30, display: "flex" }}>
+                    <Rule width={150} />
+                  </div>
+                </Reveal>
+              </div>
+            </div>
           </div>
         </section>
       )}
-
-      {/* ════════════════════════════════════════════════════════════════════
-          3. The aarti — the centre of the page
-          ════════════════════════════════════════════════════════════════════ */}
-      <AartiSection data={data} playing={playing} onPlay={() => setPlaying(true)} />
 
       {/* ════════════════════════════════════════════════════════════════════
           4. The offerings — five cards, nothing gated
@@ -380,7 +260,7 @@ export default function GaneshTemplate({
                     medallion and a step change in it would be the most obvious
                     thing about the layout. */}
                 <div className="gc-portrait-frame">
-                  <RoundFrame size="100%">
+                  <PhotoFrame size="100%">
                     <div style={{ position: "relative", width: "100%", height: "100%" }}>
                       <UserImage
                         src={data.photoUrl}
@@ -393,7 +273,7 @@ export default function GaneshTemplate({
                         style={{ objectFit: "cover" }}
                       />
                     </div>
-                  </RoundFrame>
+                  </PhotoFrame>
                 </div>
 
                 {/* A garland under the portrait — how a photograph is actually
@@ -846,12 +726,23 @@ function VarganiSection({ data }: { data: GaneshData }) {
         <Reveal>
           <SectionHead
             eyebrow="If you want to"
-            title="For the pandal"
+            // The mandal's or the household's own name when there is one, and a
+            // neutral heading when there is not. "For the pandal" over a
+            // personal UPI ID made the sender look like they were fronting a
+            // collection they are not part of — see the note on `Vargani.title`.
+            title={data.vargani.title || "Chipping in"}
             centered
             sub={data.vargani.note || undefined}
           />
         </Reveal>
 
+        {/* ── ONE CARD, NOT TWO LOOSE HALVES ────────────────────────────────
+         *
+         * The code and the ID used to sit directly on the page as two centred
+         * blocks with a gap between them, and at every width one of them ended
+         * up looking like it belonged to a different section. Inside one card
+         * with a shared centre line they read as two ways to do the same thing,
+         * which is what they are. */}
         <Reveal delay={0.12}>
           <div className="gc-vargani">
             {data.vargani.qrImageUrl && (

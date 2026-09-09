@@ -246,11 +246,19 @@ export default function PhotoAdjuster({
           {title}
         </p>
         <p style={{ fontSize: 12, color: GC.muted, margin: "0 0 12px" }}>
-          Drag to move it. Pinch or scroll to zoom.
+          Drag to move it, pinch or scroll to zoom — or use the sliders below.
+          What you see here is exactly what the page will show.
         </p>
 
-        {/* The square. Rounded the same 22 as the frame on the cover so she is
-            judging the shape she will actually get. */}
+        {/* ── THE SHAPE HAS TO MATCH THE FRAME ON THE PAGE ────────────────
+         *
+         * A square with a 6px radius, because that is exactly what
+         * `.gc-frame-window` is. It was 22px while the page's frame was a
+         * circle, and both times the mismatch costs the same thing: the sender
+         * composes inside one shape and the page crops to another, so a face
+         * they carefully centred comes out clipped.
+         *
+         * If the frame's radius changes, change this with it. */}
         <div
           style={{
             position: "relative",
@@ -258,7 +266,7 @@ export default function PhotoAdjuster({
             height: VIEWPORT,
             maxWidth: "100%",
             margin: "0 auto",
-            borderRadius: 22,
+            borderRadius: 6,
             overflow: "hidden",
             background: "#e9dcc6",
             boxShadow: "inset 0 0 0 1px rgba(61,35,23,0.18)",

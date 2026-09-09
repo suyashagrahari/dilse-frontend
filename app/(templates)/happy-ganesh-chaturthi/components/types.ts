@@ -6,6 +6,18 @@ export interface WishRow {
 }
 
 export interface Vargani {
+  /**
+   * Who is collecting — a mandal's name, a building, a flat number.
+   *
+   * The block used to be headed "For the pandal" for everybody, which is wrong
+   * for about half the people who would use it: a sarvajanik mandal collecting
+   * for a public pandal and one cousin sending another money for the sweets are
+   * both legitimate uses of the same three fields, and "For the pandal" over a
+   * personal UPI ID makes the sender look like they are fronting a collection
+   * they are not part of. With a name here the heading becomes that name; empty,
+   * the block heads itself neutrally.
+   */
+  title: string;
   upiId: string;
   qrImageUrl: string;
   note: string;
@@ -201,7 +213,7 @@ export const SAMPLE: GaneshData = {
     { label: "For everyone at home", value: "one healthy year" },
     { label: "For the thing you are not saying", value: "a way through" },
   ],
-  vargani: { upiId: "", qrImageUrl: "", note: "" },
+  vargani: { title: "", upiId: "", qrImageUrl: "", note: "" },
   reply: "",
   festivalDate: FESTIVAL_DATE,
   visarjanDate: VISARJAN_DATE,
@@ -242,6 +254,7 @@ export const DEMO: GaneshData = {
     { label: "For the same thing you ask every year", value: "a motorbike, allegedly" },
   ],
   vargani: {
+    title: "Sai Mitra Mandal",
     upiId: "rohit@upi",
     qrImageUrl: DEMO_MEDIA.qr,
     note: "Whatever you feel like. It all goes on the decorations.",
@@ -273,7 +286,12 @@ export function dbToGaneshData(d: Record<string, unknown> | null | undefined): G
           })
           .filter((r) => r.label)
       : [],
-    vargani: { upiId: str(v.upiId), qrImageUrl: str(v.qrImageUrl), note: str(v.note) },
+    vargani: {
+      title: str(v.title),
+      upiId: str(v.upiId),
+      qrImageUrl: str(v.qrImageUrl),
+      note: str(v.note),
+    },
     reply: str(o.reply),
     festivalDate: /^\d{4}-\d{2}-\d{2}$/.test(str(o.festivalDate))
       ? str(o.festivalDate)

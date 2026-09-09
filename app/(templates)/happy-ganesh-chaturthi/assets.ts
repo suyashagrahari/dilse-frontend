@@ -186,11 +186,28 @@ export const DEMO_MEDIA = {
    * 900×900. Stands in for the sender's own photograph, on the page and on the
    * story card.
    *
-   * There used to be three more — a grid of "years before this one" — and they
-   * went with the twelve-slot photo grid they were demonstrating. There is one
-   * photo now, so there is one demo photo.
+   * ── IT IS A REAL PHOTOGRAPH NOW, AND THAT MATTERS ─────────────────────────
+   *
+   * It was a drawing — the mandap, built from the same SVG vocabulary as
+   * `Ornaments.tsx` — because there was no Ganesh Chaturthi photograph in the
+   * repo and the alternative was the rakhi one, which is unmistakably a rakhi
+   * being tied.
+   *
+   * A drawing in the round portrait frame was wrong for a different reason
+   * though: that frame's whole job is to say "put YOUR photograph here", and
+   * filling it with an illustration demonstrates the frame without
+   * demonstrating the feature. Somebody browsing could not tell whether the
+   * template took photos at all.
+   *
+   * This is cropped from `public/rakhi-sister/demo-hero.webp` — one person, warm
+   * indoor festival light, fairy lights, traditional clothes, and no rakhi
+   * anywhere in frame, so it reads as any Indian household at any festival.
+   * Cropped to drop the second hand at the bottom-right edge.
+   *
+   * Replace it the moment a real Ganesh Chaturthi photograph exists; nothing
+   * else has to change.
    */
-  hero: demo("demo-hero.webp"),
+  hero: demo("demo-photo.webp"),
   qr: demo("demo-qr.png"),
 } as const;
 

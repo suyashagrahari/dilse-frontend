@@ -609,9 +609,38 @@ export default function EditSheet({
                  * sender fills in and then cannot see without scrolling most of
                  * the page. */}
                 <Group
-                  title="For the pandal"
-                  hint="Only if your building or your friends are collecting. It appears near the end as an invitation with no amount on it, and the page never records who paid."
+                  title="Chipping in"
+                  hint="Only if somebody is collecting — a mandal for the pandal, a building, or just you for the sweets. It appears near the end as an invitation with no amount on it, and the page never records who paid."
                 >
+                  {/* ── WHO IS COLLECTING ──────────────────────────────────────
+                   *
+                   * This block was headed "For the pandal" for everybody, and
+                   * that is wrong for about half the people who would use it. A
+                   * sarvajanik mandal collecting for a public pandal and one
+                   * cousin sending another money for the sweets are both
+                   * legitimate uses of the same three fields — and "For the
+                   * pandal" printed over a personal UPI ID makes the sender look
+                   * like they are fronting a collection they are not part of.
+                   *
+                   * Whatever goes in here becomes the heading of the block. Left
+                   * blank it heads itself neutrally, which is right for the
+                   * personal case. */}
+                  <Field
+                    label="Who's collecting"
+                    htmlFor="gc-vartitle"
+                    count={`${mf.vargani.title.length}/48`}
+                    hint="Your mandal's name if this is for a pandal — it becomes the heading. Leave it blank if the money is just coming to you."
+                  >
+                    <input
+                      id="gc-vartitle"
+                      style={field}
+                      maxLength={48}
+                      value={mf.vargani.title}
+                      onChange={(e) => setVargani({ title: e.target.value })}
+                      placeholder="Sai Mitra Mandal"
+                    />
+                  </Field>
+
                   <Field
                     label="Your UPI ID"
                     htmlFor="gc-upi"
@@ -686,7 +715,7 @@ export default function EditSheet({
                     }}
                   >
                     {varganiOn
-                      ? `They will see ${
+                      ? `Headed “${mf.vargani.title.trim() || "Chipping in"}”, with ${
                           mf.vargani.qrImageUrl && mf.vargani.upiId
                             ? "the code and a button that copies your ID"
                             : mf.vargani.qrImageUrl

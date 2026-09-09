@@ -482,22 +482,83 @@ export const LampIncense = memo(function LampIncense({ size = 34, className }: O
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * A round, gold-ringed frame. The one place the sender's photograph appears.
+ * A corner flourish — two gold arcs and a small marigold, for a frame corner.
  *
- * ── WHY ROUND, AND WHY IT IS THE ONLY FRAME ─────────────────────────────────
- *
- * The first build clipped the photo into a temple arch with a CSS `clip-path:
- * path()`, and put it beside the murti on a coloured mandap wall. Two problems.
- * The arch shape read as a shrine, and a photograph of living people in a shrine
- * frame beside an idol reads, unmistakably, as a memorial. And the path had to
- * be computed in pixels for every size, because `path()` does not accept
- * percentages — a mistake that fails silently, dropping the whole declaration
- * and rendering a plain rectangle that looks like a choice.
- *
- * A circle has neither problem: `border-radius: 50%` needs no geometry, works at
- * every size, survives the story-card rasteriser, and reads as a portrait.
+ * Drawn once and rotated four times by the frame, so the four corners are
+ * guaranteed identical. Four separately-positioned decorations drift apart the
+ * first time anybody adjusts one of them.
  */
-export function RoundFrame({
+export const CornerFlourish = memo(function CornerFlourish({
+  size = 56,
+  color = GC.gold,
+}: {
+  /** A CSS length — the frame lays this into a square box at 100%. */
+  size?: number | string;
+  color?: string;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" aria-hidden>
+      {/* The two arcs sweep from the top edge round to the left edge, so the
+          shape reads as a corner rather than as a quarter circle floating in
+          one. */}
+      <path
+        d="M56 4 C 30 4 4 30 4 56"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.6"
+        opacity="0.85"
+      />
+      <path
+        d="M56 13 C 35 13 13 35 13 56"
+        fill="none"
+        stroke={color}
+        strokeWidth="0.9"
+        opacity="0.5"
+      />
+      {/* Three petals fanning out of the corner, and a bud where they meet. */}
+      {[18, 45, 72].map((deg) => (
+        <ellipse
+          key={deg}
+          cx="10"
+          cy="10"
+          rx="2.6"
+          ry="8"
+          fill={color}
+          opacity="0.55"
+          transform={`rotate(${deg} 10 10) translate(0 7)`}
+        />
+      ))}
+      <circle cx="10" cy="10" r="3.4" fill={color} opacity="0.9" />
+      <circle cx="10" cy="10" r="1.5" fill={GC.paper} />
+    </svg>
+  );
+});
+
+/**
+ * The frame the sender's photograph sits in: a soft-cornered square, a double
+ * gold rule, and a marigold flourish at each corner.
+ *
+ * ── WHY SQUARE, AND WHY IT WAS ROUND BEFORE ─────────────────────────────────
+ *
+ * It was a circle, and a circle solved a real problem: the version before THAT
+ * clipped the photo into a temple arch with `clip-path: path()`, which silently
+ * renders a plain rectangle because `path()` does not accept percentages — and
+ * an arch frame beside an idol reads as a memorial anyway.
+ *
+ * A circle has neither fault, but it costs the corners of the photograph, and
+ * the corners are where people are. A square keeps the whole frame the sender
+ * chose in the adjuster, and the ornament that a circle was providing for free
+ * comes back as the corner flourishes instead — which is how a framed
+ * photograph is actually decorated during the festival.
+ *
+ * ── THE BORDER IS RULES PLUS FLOURISHES, NOT AN IMAGE ───────────────────────
+ *
+ * The obvious way to do a decorative border is a nine-slice PNG. This is two
+ * inset rules and four rotated copies of one SVG: it recolours from `theme.ts`,
+ * it is sharp at any size, it survives the story card's rasteriser, and it adds
+ * nothing to the media set that has to be uploaded to object storage.
+ */
+export function PhotoFrame({
   size,
   children,
   ring = GC.gold,
@@ -505,7 +566,7 @@ export function RoundFrame({
 }: {
   /**
    * A CSS length. `"100%"` lets the caller's own box decide, which is how the
-   * portrait scales continuously off the viewport instead of jumping at a
+   * portrait scales continuously off the viewport instead of stepping at a
    * breakpoint — the caller sets an `aspect-ratio: 1` wrapper and this fills it.
    */
   size: number | string;
@@ -514,37 +575,32 @@ export function RoundFrame({
   background?: string;
 }) {
   return (
-    <div style={{ position: "relative", width: size, height: size }}>
-      {/* Two rings with a gap, rather than one thick border: a single 6px gold
-          border reads as a sticker, two hairlines read as a mount. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: -14,
-          borderRadius: "50%",
-          border: `1px solid ${ring}`,
-          opacity: 0.45,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: -6,
-          borderRadius: "50%",
-          border: `1.5px solid ${ring}`,
-          opacity: 0.85,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: "50%",
-          background,
-          overflow: "hidden",
-          boxShadow: "inset 0 2px 14px rgba(46,33,25,0.14)",
-        }}
-      >
+    <div className="gc-frame" style={{ width: size, height: size }}>
+      {/* Two rules with a gap. A single thick gold border reads as a sticker;
+          two hairlines read as a mount. */}
+      <span aria-hidden className="gc-frame-rule gc-frame-rule--outer" style={{ borderColor: ring }} />
+      <span aria-hidden className="gc-frame-rule gc-frame-rule--inner" style={{ borderColor: ring }} />
+
+      {/* One drawing, four rotations — see CornerFlourish. */}
+      {(
+        [
+          ["tl", 0],
+          ["tr", 90],
+          ["br", 180],
+          ["bl", 270],
+        ] as const
+      ).map(([pos, deg]) => (
+        <span
+          key={pos}
+          aria-hidden
+          className={`gc-frame-corner gc-frame-corner--${pos}`}
+          style={{ transform: `rotate(${deg}deg)` }}
+        >
+          <CornerFlourish size="100%" color={ring} />
+        </span>
+      ))}
+
+      <div className="gc-frame-window" style={{ background }}>
         {children}
       </div>
     </div>
