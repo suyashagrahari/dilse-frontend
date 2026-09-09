@@ -150,7 +150,22 @@ export const SectionHead = memo(function SectionHead({
         </div>
       )}
       {sub && (
-        <p className="gc-lede" style={{ margin: "14px 0 0", maxWidth: "56ch" }}>
+        // ── `marginInline: auto` IS LOAD-BEARING ────────────────────────────
+        //
+        // `text-align: center` on the wrapper centres the TEXT inside this
+        // paragraph, but the paragraph itself is capped at 56ch and, without
+        // auto margins, sits flush left inside a much wider section. So the
+        // heading centred on the section's axis and its own standfirst centred
+        // on an axis ~200px to the left of it — visible on every centred
+        // section at once, and it read as a layout that had come apart.
+        <p
+          className="gc-lede"
+          style={{
+            margin: "14px 0 0",
+            maxWidth: "56ch",
+            marginInline: centered ? "auto" : undefined,
+          }}
+        >
           {sub}
         </p>
       )}

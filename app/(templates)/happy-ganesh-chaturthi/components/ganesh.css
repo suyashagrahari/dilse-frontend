@@ -174,9 +174,10 @@
   padding-block: clamp(44px, 5.5vw, 84px);
 }
 
-/* The first section carries the fixed bar and the garland hanging under it. */
+/* The first section carries the fixed bar and the garland, which hangs from the
+   very top edge and reaches about 64px down. */
 .gc-section--hero {
-  padding-top: clamp(96px, 9vw, 132px);
+  padding-top: clamp(84px, 8vw, 120px);
   padding-bottom: clamp(40px, 5vw, 76px);
 }
 
@@ -451,6 +452,266 @@
   .gc-wishlist--wide .gc-wishrow { flex-wrap: wrap; row-gap: 2px; }
   .gc-wishlist--wide .gc-wishrow > :first-child { flex: 0 0 100%; }
   .gc-wishlist--wide .gc-wishrow > .gc-dots { min-width: 24px; margin-bottom: 7px; }
+}
+
+/* ── The five offering cards ────────────────────────────────────────────────
+ *
+ * In CSS rather than inline styles, because this is the one component on the
+ * page with a hover state, a pseudo-element and a nth-child rule — three things
+ * a style object cannot express — and splitting it half-and-half would be worse
+ * than either.
+ */
+.gc-offerings {
+  margin-top: clamp(28px, 4vw, 52px);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.gc-offering {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 20px 24px;
+  border-radius: 18px;
+  overflow: hidden;
+  /* Ivory to white, downward — the card lifts off the page rather than sitting
+     as a flat panel on it. */
+  background: linear-gradient(180deg, #fffdf9 0%, #fdfaf3 100%);
+  border: 1px solid rgba(46, 33, 25, 0.08);
+  box-shadow: 0 14px 34px -26px rgba(46, 33, 25, 0.32);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms;
+}
+
+/* A gold hairline across the top edge, brightest in the middle. It is what ties
+   five separate cards into one row — a full-width solid rule would be a stripe,
+   and no rule at all left them reading as five unrelated boxes. */
+.gc-offering::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(193, 154, 62, 0) 0%,
+    rgba(193, 154, 62, 0.75) 50%,
+    rgba(193, 154, 62, 0) 100%
+  );
+}
+
+/* Hover only where there is a pointer. On a touch screen `:hover` sticks after
+   a tap, so the card the reader last touched stays lifted for as long as the
+   page is open. */
+@media (hover: hover) and (pointer: fine) {
+  .gc-offering:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 44px -26px rgba(46, 33, 25, 0.4);
+  }
+}
+
+.gc-offering-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* The icon in a soft gold medallion, so five different drawings — a grass tuft,
+   a tray, a cluster of flowers, a sweet, a lamp — read as one set despite having
+   nothing in common as shapes. */
+.gc-offering-medal {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 38%, #fffdf9 0%, #f3e7c9 100%);
+  border: 1px solid rgba(193, 154, 62, 0.45);
+}
+
+.gc-offering-num {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 700;
+  color: rgba(193, 154, 62, 0.42);
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-offering-name {
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #2e2119;
+  margin: 2px 0 0;
+}
+
+.gc-offering-body {
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: #87745f;
+  margin: 0;
+}
+
+/* ── The last card, when it is alone on its row ────────────────────────────
+ *
+ * Five cards in an auto-fit grid land 5-across on a wide screen and 2-2-1 on a
+ * tablet, which leaves the fifth stretched across a single column while the
+ * others are half that width. Capping it and centring it keeps the row looking
+ * deliberate instead of broken.
+ *
+ * Scoped to the two-column band only: at one column every card is full width,
+ * and at five across nothing is orphaned.
+ */
+@media (min-width: 560px) and (max-width: 1023.98px) {
+  .gc-offerings > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    max-width: calc(50% - 7px);
+    margin-inline: auto;
+  }
+}
+
+/* ── The pandal collection ──────────────────────────────────────────────────
+ *
+ * Stacked and centred on a phone, code beside the id on a laptop. In CSS because
+ * of the hover and focus states on the copy button.
+ */
+.gc-vargani {
+  margin-top: clamp(24px, 4vw, 44px);
+  display: grid;
+  gap: clamp(22px, 3vw, 40px);
+  justify-items: center;
+  align-items: center;
+}
+
+@media (min-width: 720px) {
+  .gc-vargani {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    gap: clamp(32px, 4vw, 64px);
+  }
+}
+
+.gc-vargani-code { margin: 0; display: grid; justify-items: center; gap: 12px; }
+
+/* ── WHITE, NOT IVORY ──────────────────────────────────────────────────────
+ *
+ * A QR needs a white quiet zone. On this page's cream ground the contrast ratio
+ * between the dark modules and their surround drops enough that phone cameras
+ * hesitate, and the ones that do read it take noticeably longer. So the mount is
+ * pure white and the ivory stops at its edge.
+ *
+ * The ring is outside the white, as a box-shadow rather than a border, so it
+ * cannot eat into the quiet zone.
+ */
+.gc-vargani-code-mount {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(193, 154, 62, 0.5),
+    0 0 0 8px #ffffff,
+    0 0 0 9px rgba(193, 154, 62, 0.28),
+    0 22px 44px -30px rgba(46, 33, 25, 0.45);
+}
+
+@media (min-width: 1024px) {
+  .gc-vargani-code-mount { width: 200px; height: 200px; }
+}
+
+.gc-vargani-cap {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #87745f;
+  margin-top: 6px;
+}
+
+.gc-vargani-side {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+@media (min-width: 720px) {
+  .gc-vargani-side { justify-items: start; text-align: left; }
+}
+
+/* The id is the copy button. A separate icon beside a line of text is a smaller
+   target and one more thing to explain. */
+.gc-vargani-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: clamp(18px, 2.6vw, 23px);
+  font-weight: 700;
+  color: #2e2119;
+  background: linear-gradient(180deg, #fffdf9 0%, #f9f2e4 100%);
+  border: 1px solid rgba(193, 154, 62, 0.55);
+  box-shadow: 0 12px 26px -22px rgba(46, 33, 25, 0.5);
+  transition: transform 160ms, box-shadow 160ms, border-color 160ms;
+  max-width: 100%;
+}
+
+.gc-vargani-id-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.gc-vargani-id > svg { flex-shrink: 0; color: #c19a3e; }
+
+@media (hover: hover) and (pointer: fine) {
+  .gc-vargani-id:hover {
+    transform: translateY(-1px);
+    border-color: rgba(193, 154, 62, 0.9);
+    box-shadow: 0 16px 30px -20px rgba(46, 33, 25, 0.5);
+  }
+}
+
+/* A visible focus ring. The default outline sits under the box-shadow stack
+   above and is effectively invisible on this button. */
+.gc-vargani-id:focus-visible {
+  outline: 2px solid #c19a3e;
+  outline-offset: 3px;
+}
+
+.gc-vargani-hint {
+  font-size: 12px;
+  color: #87745f;
+  /* Reserved, so "Tap to copy" turning into "Copied" does not shift the button
+     above it by a line. */
+  min-height: 16px;
+}
+
+.gc-vargani-pay {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #2e2119;
+  background: transparent;
+  border: 1px solid rgba(46, 33, 25, 0.18);
 }
 
 /* ── Story card ─────────────────────────────────────────────────────────────

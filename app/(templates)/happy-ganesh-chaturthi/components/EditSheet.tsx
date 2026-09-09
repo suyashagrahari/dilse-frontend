@@ -332,6 +332,8 @@ export default function EditSheet({
 
   const canSave = mf.recipientName.trim().length > 0;
   const railed = isDesktop && visible;
+  /** Either half is enough to show the section — see the note on the group. */
+  const varganiOn = Boolean(mf.vargani.upiId.trim() || mf.vargani.qrImageUrl);
 
   return (
     <>
@@ -595,11 +597,26 @@ export default function EditSheet({
                   </Field>
                 </Group>
 
+                {/* ── The collection ────────────────────────────────────────
+                 *
+                 * Both halves are here — the id and the code image — because the
+                 * page uses them for different readers: the code is for somebody
+                 * on a laptop who will pay from the phone in their hand, and the
+                 * id is a copy button for somebody already on their phone.
+                 *
+                 * Adding EITHER shows the block, and the summary line below says
+                 * which of the two are in, because it is the one section a
+                 * sender fills in and then cannot see without scrolling most of
+                 * the page. */}
                 <Group
                   title="For the pandal"
-                  hint="Only if your building or your friends are collecting. It appears as an invitation with no amount on it, and the page never records who paid."
+                  hint="Only if your building or your friends are collecting. It appears near the end as an invitation with no amount on it, and the page never records who paid."
                 >
-                  <Field label="Your UPI ID" htmlFor="gc-upi" hint="Leave blank to hide the whole block.">
+                  <Field
+                    label="Your UPI ID"
+                    htmlFor="gc-upi"
+                    hint="Shown as a one-tap copy button. Leave both this and the code blank to hide the whole section."
+                  >
                     <input
                       id="gc-upi"
                       style={field}
@@ -608,18 +625,20 @@ export default function EditSheet({
                       placeholder="rohit@upi"
                       autoComplete="off"
                       spellCheck={false}
+                      inputMode="email"
                     />
                   </Field>
+
                   <Field
-                    label="Or a code screenshot"
-                    hint="Not cropped — a payment code needs its border to stay scannable."
+                    label="Your payment code"
+                    hint="A screenshot of the QR from your payment app. Never cropped — a code needs its white border to stay scannable."
                   >
                     <PhotoSlot
                       url={displayUrl(mf.vargani.qrImageUrl)}
                       busy={busy === "qr"}
-                      size={110}
+                      size={132}
                       fit="contain"
-                      emptyLabel="Add code"
+                      emptyLabel="Add the code"
                       onPick={() => qrRef.current?.click()}
                       onRemove={() => {
                         forget(mf.vargani.qrImageUrl);
@@ -638,6 +657,7 @@ export default function EditSheet({
                       }}
                     />
                   </Field>
+
                   <Field label="A line beside it" htmlFor="gc-varnote" count={`${mf.vargani.note.length}/120`}>
                     <AutoTextarea
                       id="gc-varnote"
@@ -647,6 +667,34 @@ export default function EditSheet({
                       onChange={(v) => setVargani({ note: v })}
                     />
                   </Field>
+
+                  {/* What the reader will actually get, stated plainly. Without
+                      it a sender who adds only the id has no way of knowing the
+                      section appears at all until they scroll to the bottom of
+                      their own page. */}
+                  <p
+                    aria-live="polite"
+                    style={{
+                      fontSize: 12,
+                      lineHeight: 1.55,
+                      color: varganiOn ? GC.leaf : GC.muted,
+                      margin: 0,
+                      padding: "9px 12px",
+                      borderRadius: 10,
+                      background: varganiOn ? "rgba(74,122,84,0.08)" : "rgba(46,33,25,0.04)",
+                      border: `1px solid ${varganiOn ? "rgba(74,122,84,0.22)" : GC.hairline}`,
+                    }}
+                  >
+                    {varganiOn
+                      ? `They will see ${
+                          mf.vargani.qrImageUrl && mf.vargani.upiId
+                            ? "the code and a button that copies your ID"
+                            : mf.vargani.qrImageUrl
+                              ? "the code to scan"
+                              : "a button that copies your ID"
+                        }.`
+                      : "Nothing about money will appear on the page."}
+                  </p>
                 </Group>
 
                 <Group

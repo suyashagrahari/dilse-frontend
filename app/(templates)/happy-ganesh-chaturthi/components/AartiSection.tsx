@@ -229,7 +229,10 @@ export default function AartiSection({
                     fontSize: "clamp(19px, 3vw, 27px)",
                     lineHeight: 1.5,
                     color: GC.ink,
-                    margin: 0,
+                    // `margin: 0 auto` and not `margin: 0`: the cap without auto
+                    // margins centres the text on the paragraph's own left-flush
+                    // box rather than on the section. See the note in Bits.tsx.
+                    margin: "0 auto",
                     maxWidth: "34ch",
                   }}
                 >
@@ -252,7 +255,7 @@ export default function AartiSection({
                       fontSize: "clamp(21px, 3.4vw, 31px)",
                       lineHeight: 1.45,
                       color: GC.ink,
-                      margin: 0,
+                      margin: "0 auto",
                       maxWidth: "30ch",
                     }}
                   >

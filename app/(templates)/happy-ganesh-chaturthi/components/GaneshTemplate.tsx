@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { Download, Instagram, Loader2 } from "lucide-react";
+import { Check, Copy, Download, Instagram, Loader2 } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { GANESH_ASSETS } from "../assets";
 import { GC, PAPER_GRADIENT } from "./theme";
@@ -313,38 +313,39 @@ export default function GaneshTemplate({
             />
           </Reveal>
 
-          {/* One column on a phone, two on a tablet, five across on a laptop.
-              `auto-fit` with a min track rather than three breakpoints: the
-              cards find their own number of columns and the odd one out centres
-              itself instead of stranding at the left. */}
-          <div
-            style={{
-              marginTop: "clamp(28px, 4vw, 48px)",
-              display: "grid",
-              gap: 16,
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            }}
-          >
+          {/* ── The five cards ───────────────────────────────────────────────
+           *
+           * One column on a phone, two on a tablet, five across on a laptop.
+           * `auto-fit` with a min track rather than three breakpoints: the cards
+           * find their own number of columns, and the odd one out centres itself
+           * instead of stranding at the left.
+           *
+           * Each one is an ordinal, an icon in a gold medallion, a name and a
+           * sentence — in that order, top to bottom, so five cards side by side
+           * scan as one row rather than five separate boxes. The ordinal is what
+           * does most of that work: these five things happen IN ORDER, and
+           * before the numbers were there the row read as an unordered menu.
+           */}
+          <div className="gc-offerings">
             {OFFERINGS.map((o, i) => {
               const Icon = OFFERING_ICONS[o.key];
               return (
                 <Reveal key={o.key} delay={i * 0.07}>
-                  <Card pad={20} style={{ height: "100%" }}>
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <span style={{ display: "grid", placeItems: "start" }}>
-                        <Icon size={40} />
+                  <article className="gc-offering">
+                    <header className="gc-offering-head">
+                      <span className="gc-offering-medal" aria-hidden>
+                        <Icon size={34} />
                       </span>
-                      <p
-                        className="gc-display"
-                        style={{ fontSize: 17, fontWeight: 700, color: GC.ink, margin: 0 }}
-                      >
-                        {o.label}
-                      </p>
-                      <p style={{ fontSize: 13.5, lineHeight: 1.6, color: GC.muted, margin: 0 }}>
-                        {o.meaning}
-                      </p>
-                    </div>
-                  </Card>
+                      {/* `aria-hidden`: a screen reader reading "zero one" before
+                          every name is noise, and the DOM order already carries
+                          the sequence. */}
+                      <span className="gc-offering-num" aria-hidden>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                    </header>
+                    <h3 className="gc-display gc-offering-name">{o.label}</h3>
+                    <p className="gc-offering-body">{o.meaning}</p>
+                  </article>
                 </Reveal>
               );
             })}
@@ -478,7 +479,7 @@ export default function GaneshTemplate({
                     fontSize: "clamp(17px, 2.6vw, 22px)",
                     lineHeight: 1.5,
                     color: GC.muted,
-                    margin: 0,
+                    margin: "0 auto",
                     maxWidth: "36ch",
                   }}
                 >
@@ -770,14 +771,45 @@ function ReplySection({
 /**
  * The collection a building or a group of friends runs for its pandal.
  *
- * The quietest block on the page, deliberately. Money on a devotional page is
- * defensible only if it is impossible to feel obliged by, so there is no amount,
- * no total raised, no count of who has paid, and nowhere for the page to record
- * that anybody did — the server has no field for it either.
+ * ── IT IS DESIGNED TO BE USED, AND STILL EASY TO IGNORE ─────────────────────
+ *
+ * Money on a devotional page is only defensible if nobody can feel obliged by
+ * it. So there is no amount, no total raised, no count of who has paid, and
+ * nowhere for the page to record that anybody did — the server has no field for
+ * it either. The section says "if you want to", once, and never again.
+ *
+ * Within that, it should actually work. The first version was a 104px code and
+ * a plain text UPI id, which is the shape of a thing nobody can use: the code
+ * was too small to scan off a laptop screen at arm's length, and the id could
+ * only be retyped by hand into a payment app.
+ *
+ * So the code is 168px on a phone and 200px on a laptop, mounted on white with
+ * a gold ring — a code on a cream ground scans badly, because the quiet zone
+ * needs to be white — and the id is a copy button that reports what it did.
+ *
+ * There are two routes onward and they are for different devices, which is why
+ * both are here: the deep link opens a payment app directly and only works on
+ * the phone the page is open on, and the code is for the person reading on a
+ * laptop who will pay from the phone in their hand.
  */
 function VarganiSection({ data }: { data: GaneshData }) {
+  const [copied, setCopied] = useState(false);
+
+  const copyId = useCallback(async () => {
+    if (!data.vargani.upiId) return;
+    try {
+      await navigator.clipboard.writeText(data.vargani.upiId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // Insecure origin, a denied permission, or a browser that wants the write
+      // inside a gesture it no longer considers active. The id is printed on the
+      // button either way, so there is always something to read and retype.
+    }
+  }, [data.vargani.upiId]);
+
   /**
-   * The payment link. Only when there is an actual ID: a QR image alone is
+   * The payment link. Only when there is an actual id: a code image alone is
    * scannable but cannot be turned into a link, and a `upi://` URL with an empty
    * `pa` opens somebody's payment app on an error screen.
    *
@@ -794,73 +826,70 @@ function VarganiSection({ data }: { data: GaneshData }) {
     <section className="gc-section gc-section--ruled">
       <div className="gc-wrap">
         <Reveal>
-          <Card
-            style={{
-              maxWidth: 560,
-              marginInline: "auto",
-              display: "flex",
-              gap: 20,
-              alignItems: "center",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
+          <SectionHead
+            eyebrow="If you want to"
+            title="For the pandal"
+            centered
+            sub={data.vargani.note || undefined}
+          />
+        </Reveal>
+
+        <Reveal delay={0.12}>
+          <div className="gc-vargani">
             {data.vargani.qrImageUrl && (
-              <div
-                style={{
-                  position: "relative",
-                  width: 104,
-                  height: 104,
-                  flexShrink: 0,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  background: "#fff",
-                  border: `1px solid ${GC.hairline}`,
-                }}
-              >
-                <UserImage
-                  src={data.vargani.qrImageUrl}
-                  alt="Payment code"
-                  sizes="104px"
-                  style={{ objectFit: "contain" }}
-                />
-              </div>
+              <figure className="gc-vargani-code">
+                {/* White mount, not ivory: a code needs a white quiet zone to
+                    scan reliably, and the page's cream ground is not white. */}
+                <div className="gc-vargani-code-mount">
+                  <UserImage
+                    src={data.vargani.qrImageUrl}
+                    alt="Payment code"
+                    sizes="(min-width: 1024px) 200px, 168px"
+                    style={{ objectFit: "contain" }}
+                  />
+                </div>
+                <figcaption className="gc-vargani-cap">Scan with any UPI app</figcaption>
+              </figure>
             )}
-            <div style={{ minWidth: 0, flex: 1, minInlineSize: 200 }}>
-              <p className="gc-eyebrow" style={{ margin: "0 0 8px" }}>
-                For the pandal
-              </p>
-              {data.vargani.note && (
-                <p style={{ fontSize: 14, lineHeight: 1.6, color: GC.ink, margin: "0 0 12px" }}>
-                  {data.vargani.note}
-                </p>
-              )}
-              {upiLink ? (
-                <a
-                  href={upiLink}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    minHeight: 38,
-                    padding: "0 16px",
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    color: GC.ink,
-                    background: GC.goldPale,
-                    border: `1px solid ${GC.goldSoft}`,
-                  }}
-                >
-                  {data.vargani.upiId}
-                </a>
+
+            <div className="gc-vargani-side">
+              {data.vargani.upiId ? (
+                <>
+                  <p className="gc-eyebrow" style={{ margin: 0 }}>
+                    Or send it to
+                  </p>
+                  {/* The id IS the button. A separate copy icon beside a line of
+                      text is a smaller target and one more thing to explain. */}
+                  <button
+                    type="button"
+                    onClick={() => void copyId()}
+                    className="gc-vargani-id"
+                    aria-label={`Copy the UPI ID ${data.vargani.upiId}`}
+                  >
+                    <span className="gc-vargani-id-text">{data.vargani.upiId}</span>
+                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                  </button>
+                  <span className="gc-vargani-hint" aria-live="polite">
+                    {copied ? "Copied" : "Tap to copy"}
+                  </span>
+
+                  {/* Opens a payment app, and only does anything on a phone. It
+                      is second because the code above is the one that works for
+                      everybody. */}
+                  {upiLink && (
+                    <a className="gc-vargani-pay" href={upiLink}>
+                      Open a payment app
+                    </a>
+                  )}
+                </>
               ) : (
-                <p style={{ fontSize: 12.5, color: GC.muted, margin: 0 }}>
-                  Scan it if you want to. Entirely optional.
+                <p className="gc-vargani-hint" style={{ maxWidth: "28ch", marginInline: "auto" }}>
+                  Scan it if you want to. Entirely optional, and nobody is
+                  keeping count.
                 </p>
               )}
             </div>
-          </Card>
+          </div>
         </Reveal>
       </div>
     </section>

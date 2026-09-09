@@ -109,15 +109,19 @@ export const Leaf = memo(function Leaf({ size = 22 }: OrnProps) {
 export const Garland = memo(function Garland({
   pieces = 15,
   /**
-   * Hangs BELOW the fixed bar, not behind it.
+   * Hangs from the very top edge of the page.
    *
-   * At `top: 0` the garland sat inside `.gc-topbar-scrim`'s densest 40px and
-   * came out as a row of faint smudges — the scrim's whole job is to fade
-   * content under the bar, and it cannot tell decoration from a control. Rather
-   * than punch a hole in the scrim, the garland simply hangs from below it,
-   * which is also where a garland hangs from in a doorway.
+   * It was at 46px for a while, to clear `.gc-topbar-scrim` — the scrim's job is
+   * to fade content passing under the fixed bar, and at first it was fading the
+   * garland into a row of faint smudges along with everything else.
+   *
+   * The fix for that was the z-index below, not the offset: at 195 the garland
+   * paints OVER the scrim, so it can hang from 0 and still read at full
+   * strength. The bar's own buttons sit at 200 and therefore draw on top of it,
+   * which is the right order — a garland hangs behind what is in the doorway,
+   * not in front of it.
    */
-  top = 46,
+  top = 0,
 }: {
   pieces?: number;
   top?: number;
