@@ -1989,6 +1989,144 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // HAPPY GANESH CHATURTHI
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // The slug spells the festival correctly and in full — unlike the rakhi pair
+  // above, there was no reason not to. "ganesh chaturthi" is how it is written
+  // and how it is searched, and the two-word form is what every title, FAQ and
+  // description below uses as well.
+  //
+  // ── THE KEYWORD SPREAD IS DELIBERATELY THREE-WAY ───────────────────────────
+  //
+  // This template has three genuinely different audiences and they search
+  // nothing like each other: people wanting a WISH to send ("happy ganesh
+  // chaturthi wishes"), people wanting the RITUAL ("ganesh chaturthi puja vidhi",
+  // "ganpati aarti"), and people wanting something to POST ("ganesh chaturthi
+  // instagram story"). The page serves all three — it is a wish, it walks the
+  // puja step by step, and it exports a 1080×1920 card — so all three are
+  // represented rather than optimising for the largest one and being invisible
+  // to the other two.
+  //
+  // No `aggregateRating`: this template launches with zero real uses, and the
+  // layout's guard renders no markup rather than stars nothing has earned.
+  "happy-ganesh-chaturthi": {
+    title: "Happy Ganesh Chaturthi — Send a Ganpati Wish They Can Perform, Free",
+    description:
+      "Send a Ganesh Chaturthi page they take part in. They offer the durva, kumkum, flowers and modak, the aarti thali circles while Karpur Gauram plays, and they write their own prarthana back to you. Add your photo and your mandap. Free, in 2 minutes.",
+    category: "Festival",
+    emoji: "🪔",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy ganesh chaturthi",
+      "ganesh chaturthi wishes",
+      "ganesh chaturthi 2026",
+      "happy ganesh chaturthi wishes",
+      "ganpati bappa morya wishes",
+      "ganesh chaturthi greeting card online",
+      "ganesh chaturthi card maker",
+      "vinayaka chaturthi wishes",
+      // ── THE RITUAL ──
+      "ganesh chaturthi puja vidhi",
+      "ganpati aarti online",
+      "karpur gauram aarti",
+      "ganesh sthapana muhurat 2026",
+      "ganesh chaturthi 2026 date",
+      "anant chaturdashi 2026",
+      "durva modak offering",
+      "online ganpati darshan",
+      // ── DISTANCE / NRI ──
+      "ganesh chaturthi wishes for family abroad",
+      "ganpati wishes long distance",
+      "celebrate ganesh chaturthi away from home",
+      "send ganpati wishes online",
+      // ── SOCIAL ──
+      "ganesh chaturthi instagram story",
+      "ganesh chaturthi instagram story template",
+      "ganesh chaturthi photo card",
+      "ganpati status photo download",
+      // ── LONG TAIL ──
+      "personalised ganesh chaturthi wish with photo",
+      "ganesh chaturthi page with my photo",
+      "ganesh chaturthi wishes in marathi",
+      "ganesh chaturthi wishes in hindi",
+      "interactive ganesh chaturthi card",
+      "ganesh chaturthi mandap decoration ideas online",
+      "ganesh chaturthi vargani collection online",
+      "ganpati invitation for aarti at home",
+    ],
+
+    faqs: [
+      {
+        question: "When is Ganesh Chaturthi in 2026?",
+        answer:
+          "Ganesh Chaturthi 2026 falls on Monday, 14 September, and the festival closes with the visarjan on Anant Chaturdashi, Thursday 24 September. The sthapana is traditionally done in the madhyahna kaal, which that day runs roughly 11:03 AM to 1:32 PM IST. The page shows a live countdown to it, but it never blocks anything — you can open it and do the whole puja at any hour, on any date. Panchang timings vary slightly between almanacs and by city, and both dates are editable on your own page.",
+      },
+      {
+        question: "What does the person I send it to actually do?",
+        answer:
+          "They perform the puja themselves, one tap at a time. Bappa is installed on a mandap you chose; they ring the ghanti and light the diya, then offer the durva, the kumkum, the pushpanjali, the modak and the dhoop in order, each with a line explaining what it is for. Then the aarti thali circles on screen while Karpur Gauram plays and the verse appears line by line. At the end they see what you are asking Bappa for, your photographs from previous years, and they write one line of their own prarthana back to you.",
+      },
+      {
+        question: "Does the aarti actually play?",
+        answer:
+          "Yes — Karpur Gauram Karunavataram, the verse sung at the end of any aarti, plays under the page and the words appear on screen in Devanagari with a transliteration and a plain-English line. It does not start on its own: it fades in only after they tap to open the page, and there is a mute button in the corner the whole time.",
+      },
+      {
+        question: "Do they need an account to open it or reply?",
+        answer:
+          "No. They open the link and the whole puja works straight away, and they can write their prarthana back to you without signing up for anything. Only you need an account, to build and edit the page.",
+      },
+      {
+        question: "Can I add my own photos?",
+        answer:
+          "Yes. One photo stands garlanded beside the murti and is also the picture on the shareable card. You can add up to twelve more from previous years' pandals, each becoming a polaroid with your caption and the year. You choose what the square keeps — nothing is cropped for you.",
+      },
+      {
+        question: "Can I download it for my Instagram story?",
+        answer:
+          "Yes. The card — your photo, both names, one of your lines, the date, and a QR to the page — downloads as a 1080×1920 PNG, the exact Story size. On a phone you can send it straight to Instagram through the share sheet; on a laptop it saves to your downloads. Instagram will not let an image carry a tappable link, so the page URL is copied to your clipboard at the same time and you add it as a Link sticker.",
+      },
+      {
+        question: "Can I collect vargani for our mandal through the page?",
+        answer:
+          "Yes, and it is entirely optional. Add your UPI ID or a QR screenshot and it appears near the end with a one-tap payment link. There is no amount on it, no total raised, no reminder, and the page has no way of recording who contributed — because vargani is whatever you feel like, and a page that could count it would be a bill.",
+      },
+      {
+        question: "Can I choose how the mandap looks?",
+        answer:
+          "There are four backdrops, and each one is a real way people decorate rather than four colourways of the same thing: a wall of genda phool, a lotus setting, a banana-leaf and sugarcane frame, and the red-and-gold of a big sarvajanik pandal. You can also put your family name on the mandap board and pick how many modak sit on the thali — odd numbers only, as they should be.",
+      },
+      {
+        question: "Is it free?",
+        answer:
+          "Yes — creating, publishing and sharing your Ganesh Chaturthi page is completely free.",
+      },
+      {
+        question: "Can I password-protect it and edit it later?",
+        answer:
+          "Yes to both. Set an optional password when you create the page — passwords are stored hashed and never shown — and edit and republish anytime. The same link always shows the latest version. Their prarthana is the one thing you cannot edit; it is written once, by them.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send a Ganesh Chaturthi Wish Online",
+      description:
+        "Make a Ganesh Chaturthi page the person you send it to performs themselves — durva, kumkum, flowers, modak and the full aarti — free.",
+      totalTime: "PT2M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Ganesh Chaturthi page on SubhSandesh and tap Create." },
+        { name: "Add the Names", text: "Enter their name and yours, and upload a photo to stand beside the murti." },
+        { name: "Dress the Mandap", text: "Pick one of the four backdrops, put your family name on the board, and choose how many modak go on the thali." },
+        { name: "Write Your Wish", text: "Add a few lines for the first screen and one sentence for the aarti, or let the AI draft them from your story." },
+        { name: "Add What You're Asking For", text: "List what you and they are asking Bappa for this year, and add photos from previous pandals." },
+        { name: "Send the Link", text: "Publish and send them the private link on WhatsApp so they can do the aarti themselves." },
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // HAPPY RAKSHA BANDHAN — SISTER TO BROTHER
   // ═══════════════════════════════════════════════════════════════════════════
   //

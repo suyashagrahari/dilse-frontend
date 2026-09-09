@@ -1,0 +1,581 @@
+/* ─── Ganesh Chaturthi ───────────────────────────────────────────────────────
+ *
+ * ── THIS IS A SCROLLING DOCUMENT, NOT A DECK ────────────────────────────────
+ *
+ * The first build was six full-viewport screens with a Continue button on each,
+ * and it inherited the rakhi template's `.rb-stage` — a 420px column at every
+ * width below 1024px and a two-column grid above it.
+ *
+ * Both went. A deck asks the reader to agree to five more taps before they know
+ * whether the page is worth it, and the taps were carrying nothing: four of the
+ * six screens were a heading, a paragraph and a button. And the 420px column
+ * meant that on a laptop the whole page was a phone letterboxed in the middle of
+ * a 1440px window, which reads as a broken embed rather than as a design.
+ *
+ * So: one page, top to bottom, and a layout that is actually different at each
+ * size rather than the same column three times.
+ *
+ *     phone    (<640)      one column, 20px gutters, 15px body
+ *     tablet   (640–1023)  one wider column, larger type, two-up where it helps
+ *     laptop   (1024+)     real two-column sections, 1180px measure
+ *     desktop  (1440+)     1280px measure, larger display type, more air
+ *
+ * ── MOTION BUDGET ───────────────────────────────────────────────────────────
+ *
+ * One thing on this page is allowed to move continuously: the aarti. Its ring
+ * and thali revolve, and that is the whole point of the section. Everything else
+ * is a one-shot reveal tied to scrolling into view, and nothing anywhere pops up
+ * over the page — there is not a single modal or takeover in this template.
+ *
+ * If you add a second continuous loop, the aarti stops being the moment the page
+ * is built around.
+ */
+
+/* ── Typefaces ───────────────────────────────────────────────────────────────
+ *
+ * Both variables come from the ROOT layout (app/layout.tsx). This template
+ * registers no font of its own, and that is load-bearing rather than tidiness.
+ *
+ * It renders on two route trees — the builder at /happy-ganesh-chaturthi and the
+ * shared page at /[id] — so its faces would have to reach both. Two attempts at
+ * exactly that, on the rakhi template, broke the Turbopack build in CI:
+ *
+ *   fonts declared inline in the template layout, one route tree      GREEN
+ *   same fonts in a shared module, imported by the layout AND the
+ *     /[id] client viewer                                            RED
+ *   same shared module, imported by the layout AND /[id]/page.tsx     RED
+ *
+ * Both failures reported `Module not found: Can't resolve
+ * '@vercel/turbopack-next/internal/font/google/font'` — and named fonts nobody
+ * had touched, in files the template never edited, which is what made it so hard
+ * to attribute. Server vs client component made no difference. The common factor
+ * is a next/font declaration pulled into more than one route entry point. Local
+ * builds passed throughout; it only reproduced in CI.
+ *
+ * The root layout already declares Playfair Display and Inter. Using those means
+ * one declaration site, fewer families on the wire, and no per-route font wiring.
+ *
+ * There is deliberately no script/handwriting face. The quotes are set in
+ * Playfair italic instead: a script face at the size these lines are shown reads
+ * as a greeting card, and this page is trying to read as paper.
+ */
+
+.gc-root {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  color: #2e2119;
+  /* Every ornament is a thin gold line; on a non-retina screen they alias into
+     grey without this. */
+  -webkit-font-smoothing: antialiased;
+}
+
+.gc-display {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+
+/* Quotes — the greeting lines, the aarti line, the note with the prasad. */
+.gc-quote {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Small caps label, used for every section eyebrow. */
+.gc-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c19a3e;
+}
+
+@media (min-width: 1024px) {
+  .gc-eyebrow { font-size: 11.5px; }
+}
+
+/* ── The page ───────────────────────────────────────────────────────────────*/
+
+.gc-page {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+/* ── The scrim under the fixed bar ─────────────────────────────────────────
+ *
+ * The bar is deliberately light and translucent, because an opaque bar is a
+ * stripe across the top of every screenshot of a page whose whole design is
+ * ivory and air. The cost is that content scrolling under it stays fully legible
+ * right up to the viewport edge, so a heading or an in-flow button passing
+ * behind it reads as PART of it — the "Play the aarti" button in particular,
+ * which for one scroll position sits in a neat row beside Back and Create.
+ *
+ * A short gradient fixes it without making the bar opaque: content fades out
+ * under the bar and there is nothing to mistake for a control.
+ *
+ * `pointer-events: none` because it covers the bar's own hit area, and
+ * `z-index: 190` puts it under the bar (200) and over the page.
+ */
+.gc-topbar-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 92px;
+  z-index: 190;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(251, 247, 240, 0.94) 0%,
+    rgba(251, 247, 240, 0.72) 46%,
+    rgba(251, 247, 240, 0) 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .gc-railed .gc-topbar-scrim { left: 440px; }
+}
+
+/* One measure, widening in three steps. Every section uses it, so nothing on
+   the page is ever out of alignment with anything else. */
+.gc-wrap {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding-inline: 20px;
+}
+
+@media (min-width: 640px) {
+  .gc-wrap { max-width: 720px; padding-inline: 32px; }
+}
+@media (min-width: 1024px) {
+  .gc-wrap { max-width: 1180px; padding-inline: 48px; }
+}
+@media (min-width: 1440px) {
+  .gc-wrap { max-width: 1280px; padding-inline: 64px; }
+}
+
+/* Vertical rhythm. `clamp` rather than breakpoints so the spacing grows
+   continuously — a section that jumps 40px at 1024 draws attention to the
+   breakpoint instead of to itself. */
+/* ── Vertical rhythm ────────────────────────────────────────────────────────
+ *
+ * `clamp` rather than breakpoints so the spacing grows continuously — a section
+ * that jumps 40px at 1024 draws attention to the breakpoint instead of to
+ * itself.
+ *
+ * The cap was 104px and two adjacent sections therefore put 208px of nothing
+ * between them on a 1440px screen, which is not air, it is a hole. 84px reads as
+ * generous at every width and still leaves ~170px between neighbours.
+ */
+.gc-section {
+  position: relative;
+  padding-block: clamp(44px, 5.5vw, 84px);
+}
+
+/* The first section carries the fixed bar and the garland hanging under it. */
+.gc-section--hero {
+  padding-top: clamp(96px, 9vw, 132px);
+  padding-bottom: clamp(40px, 5vw, 76px);
+}
+
+/* A section that needs separating from the one above takes a hairline, never a
+   colour field — see the note at the top of theme.ts. */
+.gc-section--ruled {
+  border-top: 1px solid rgba(46, 33, 25, 0.09);
+}
+
+/* Very slightly deeper ivory, for the two sections that should recede. */
+.gc-section--sunk {
+  background: linear-gradient(180deg, rgba(244, 235, 220, 0) 0%, rgba(244, 235, 220, 0.72) 18%, rgba(244, 235, 220, 0.72) 82%, rgba(244, 235, 220, 0) 100%);
+}
+
+/* ── Two-column sections ────────────────────────────────────────────────────
+ *
+ * Stacked below 1024, side by side above it. `--gc-split` lets a section set its
+ * own ratio without another class: the hero wants the artwork to lead, the photo
+ * section wants the frame narrower than the words beside it.
+ */
+.gc-split {
+  display: grid;
+  gap: clamp(28px, 5vw, 56px);
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .gc-split {
+    grid-template-columns: var(--gc-split, 1fr 1fr);
+    gap: clamp(48px, 5vw, 88px);
+  }
+  /* Artwork on the right on a wide screen, but FIRST in the DOM on a phone —
+     the picture is what says what this page is, and it should not be below the
+     fold on the smallest screen. */
+  .gc-split--art-right > .gc-art { order: 2; }
+  .gc-split--art-right > .gc-words { order: 1; }
+}
+
+.gc-art { position: relative; display: grid; place-items: center; }
+.gc-words { min-width: 0; }
+
+@media (max-width: 1023.98px) {
+  /* Centred while stacked; left-aligned once there is a column beside it. */
+  .gc-words { text-align: center; }
+  .gc-words .gc-wishlist { text-align: left; }
+  /* And the rule under the heading goes with the text — see `gc-rule-wrap`. */
+  .gc-words .gc-rule-wrap { justify-content: center; }
+}
+
+/* ── Type scale ─────────────────────────────────────────────────────────────*/
+
+.gc-title {
+  font-size: clamp(38px, 9vw, 76px);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: #9e2b2b;
+}
+
+@media (min-width: 1440px) {
+  .gc-title { font-size: 84px; }
+}
+
+.gc-h2 {
+  font-size: clamp(26px, 4.4vw, 40px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: #2e2119;
+}
+
+.gc-lede {
+  font-size: clamp(17px, 2.4vw, 21px);
+  line-height: 1.62;
+  color: #87745f;
+  margin: 0;
+}
+
+/* Long names wrap instead of punching out of the layout. */
+.gc-name {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* ── The aarti ──────────────────────────────────────────────────────────────
+ *
+ * The one section allowed continuous motion, and the reason the ring and the
+ * thali are two separate rotations is geometry: the thali has a flame on it, and
+ * a flame carried round on a rotating parent ends up upside down at the bottom
+ * of the arc, which no aarti has ever looked like. So the wrapper orbits and
+ * `gc-thali-upright` counter-rotates the plate inside it at the same rate,
+ * keeping the flame vertical the whole way round.
+ *
+ * Both must stay the same duration or the flame wobbles.
+ *
+ * `gc-halo` is the ornamental ring behind the murti, turning the other way at a
+ * third of the speed. Two rotations in opposite directions at different rates
+ * read as depth; two in the same direction read as one stuck layer.
+ */
+@keyframes gc-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.gc-thali-orbit {
+  animation: gc-orbit 9s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes gc-orbit-back {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+.gc-thali-upright {
+  animation: gc-orbit-back 9s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.gc-halo {
+  animation: gc-orbit-back 27s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* The rays behind the medallion, turning slower still. */
+.gc-rays {
+  animation: gc-orbit 90s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* The camphor on the thali. Faster and brighter than a diya — that is the
+   difference you can see across a room. */
+@keyframes gc-camphor {
+  0%   { opacity: 0.6; transform: scale(1); }
+  30%  { opacity: 0.95; transform: scale(1.12); }
+  55%  { opacity: 0.72; transform: scale(1.02); }
+  78%  { opacity: 1;    transform: scale(1.18); }
+  100% { opacity: 0.6;  transform: scale(1); }
+}
+.gc-camphor {
+  animation: gc-camphor 1.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+/* Five keyframes at uneven intervals; a symmetrical flicker reads as a pulse
+   and stops looking like fire. */
+@keyframes gc-flame {
+  0%   { transform: scale(1) rotate(-1deg);      opacity: 1; }
+  23%  { transform: scale(1.06) rotate(1.5deg);  opacity: 0.93; }
+  41%  { transform: scale(0.96) rotate(-0.5deg); opacity: 1; }
+  68%  { transform: scale(1.05) rotate(2deg);    opacity: 0.89; }
+  100% { transform: scale(1) rotate(-1deg);      opacity: 1; }
+}
+.gc-flame {
+  transform-origin: 50% 88%;
+  animation: gc-flame 2.4s ease-in-out infinite;
+}
+
+/* ── One-shots ──────────────────────────────────────────────────────────────*/
+
+@keyframes gc-rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.gc-rise { animation: gc-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Marigold petals, falling once, in the hero only. */
+@keyframes gc-petal-fall {
+  0%   { transform: translateY(-12vh) rotate(0deg);   opacity: 0; }
+  14%  { opacity: 0.85; }
+  100% { transform: translateY(112vh) rotate(520deg); opacity: 0; }
+}
+.gc-petal {
+  position: absolute;
+  top: 0;
+  border-radius: 60% 40% 55% 45%;
+  animation: gc-petal-fall 9s cubic-bezier(0.35, 0.1, 0.6, 1) infinite;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+ *
+ * The aarti's rotation is the single loudest motion here and exactly the kind
+ * that provokes symptoms, so it stops. `AartiSection` reads the same preference
+ * in JS and advances its couplets on a timer instead of on the thali's
+ * revolutions — otherwise the words would never arrive, because they are driven
+ * by `animationiteration`.
+ *
+ * The reveals become instant rather than absent: a section that never appears is
+ * a page with holes in it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .gc-thali-orbit,
+  .gc-thali-upright,
+  .gc-halo,
+  .gc-rays,
+  .gc-camphor,
+  .gc-flame,
+  .gc-rise,
+  .gc-petal {
+    animation: none !important;
+  }
+
+  /* Petals with no motion are a row of ovals parked at the top of the hero. */
+  .gc-petal { display: none !important; }
+
+  .gc-rise {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── The wish list ──────────────────────────────────────────────────────────
+ *
+ * The dots are a repeating radial-gradient on a flexible middle cell, not a run
+ * of "....". A character run does not stretch to fill the gap, so every row
+ * would end its dots in a different place and the right-hand column would stop
+ * reading as a column.
+ */
+.gc-wishlist { display: grid; gap: 14px; }
+
+.gc-wishrow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.gc-wishrow > .gc-dots {
+  flex: 1;
+  min-width: 16px;
+  height: 1px;
+  margin-bottom: 6px;
+  background-image: radial-gradient(circle, rgba(193, 154, 62, 0.85) 1px, transparent 1.2px);
+  background-size: 6px 2px;
+  background-repeat: repeat-x;
+  background-position: bottom;
+}
+
+/* ── The rows wrap on a narrow screen ──────────────────────────────────────
+ *
+ * A leader row needs enough width for a label, a run of dots and a value. On a
+ * 390px phone "For your interviews in October" wraps to three lines and the dots
+ * collapse to a two-pixel stub between them — the row stops reading as a row and
+ * the right-hand column stops looking like a column.
+ *
+ * So below 560px the row becomes two lines: the label across the full width, and
+ * the dots and the value beneath it. Same information, same order, and the dots
+ * finally have room to be dots.
+ */
+@media (max-width: 559.98px) {
+  .gc-wishrow { flex-wrap: wrap; row-gap: 2px; }
+  .gc-wishrow > :first-child { flex: 0 0 100%; }
+  .gc-wishrow > .gc-dots { min-width: 24px; margin-bottom: 7px; }
+}
+
+/* Two-up on a wide screen: six rows in one column is a list, three and three is
+   a table, and a table is what this is.
+ *
+ * The rows inside those columns wrap for the same reason they wrap on a phone.
+ * Two columns of a 860px card are ~400px each, which is about a phone's width,
+ * so "For my father's blood pressure" wraps to two lines and its dots end up
+ * stranded beside the second one. Splitting the row is not a small-screen
+ * concession — it is what a narrow COLUMN needs, wherever that column happens
+ * to be. */
+@media (min-width: 1024px) {
+  .gc-wishlist--wide {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 56px;
+  }
+  .gc-wishlist--wide .gc-wishrow { flex-wrap: wrap; row-gap: 2px; }
+  .gc-wishlist--wide .gc-wishrow > :first-child { flex: 0 0 100%; }
+  .gc-wishlist--wide .gc-wishrow > .gc-dots { min-width: 24px; margin-bottom: 7px; }
+}
+
+/* ── Story card ─────────────────────────────────────────────────────────────
+ * Fixed 1080×1920, scaled only for preview. The capture neutralises the
+ * transform (exportPng trap 2), so this is presentation only.
+ */
+.gc-storycard {
+  width: 1080px;
+  height: 1920px;
+  transform-origin: top left;
+  flex-shrink: 0;
+}
+
+/* ── The builder: one component, two geometries ─────────────────────────────
+ *
+ * PHONE — a bottom sheet, capped at 88dvh so the page stays visible above it.
+ * DESKTOP (≥1024px) — a docked rail down the left with the live page beside it,
+ * so the sender watches it change as they type instead of closing a sheet to
+ * look. `.gc-railed` on the page then shifts it and the top bar out from under
+ * the rail.
+ *
+ * The switch lives here rather than in the component because it is pure
+ * geometry: doing it in JS would mean the first paint after hydration is the
+ * wrong shape, and doing it in a second component would mean two copies of every
+ * field.
+ */
+.gc-editor {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 560px;
+  margin: 0 auto;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf9;
+  border-top: 1px solid rgba(46, 33, 25, 0.14);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  box-shadow: 0 -24px 60px -30px rgba(46, 33, 25, 0.4);
+}
+
+.gc-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 20px 10px;
+  flex-shrink: 0;
+}
+
+.gc-editor-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gc-editor-nav::-webkit-scrollbar { display: none; }
+
+.gc-editor-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 20px 20px;
+  flex: 1;
+}
+
+.gc-editor-foot {
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(46, 33, 25, 0.1);
+  background: #fffdf9;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .gc-editor {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: 440px;
+    max-width: none;
+    margin: 0;
+    max-height: none;
+    border-top: 0;
+    border-radius: 0;
+    border-right: 1px solid rgba(46, 33, 25, 0.14);
+    box-shadow: 18px 0 60px -34px rgba(46, 33, 25, 0.4);
+  }
+
+  /* The jump-nav stays put while the sections scroll under it. */
+  .gc-editor-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fffdf9;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  /* Make room for the rail. Without this the page stays centred in the whole
+     viewport and the rail sits on top of its left half. */
+  .gc-railed { padding-left: 440px; }
+
+  /* Two classes beat Tailwind's single-class `left-0` on the bar. */
+  .gc-railed .gc-topbar { left: 440px; }
+
+  /* And the measure has to be the space that is LEFT, not the viewport: at
+     1024px the page gets 584px, and a 1180px measure inside it would put the
+     right-hand column of every split section off screen. The splits collapse
+     back to one column until the window is wide enough for the rail AND the
+     full measure. */
+  .gc-railed .gc-wrap { max-width: 640px; padding-inline: 32px; }
+  .gc-railed .gc-split { grid-template-columns: minmax(0, 1fr); }
+  .gc-railed .gc-split--art-right > .gc-art { order: 1; }
+  .gc-railed .gc-split--art-right > .gc-words { order: 2; text-align: center; }
+  .gc-railed .gc-wishlist--wide { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 1560px) {
+  /* Room for both. The splits come back. */
+  .gc-railed .gc-wrap { max-width: 1000px; padding-inline: 48px; }
+  .gc-railed .gc-split { grid-template-columns: var(--gc-split, 1fr 1fr); }
+  .gc-railed .gc-split--art-right > .gc-art { order: 2; }
+  .gc-railed .gc-split--art-right > .gc-words { order: 1; text-align: left; }
+}

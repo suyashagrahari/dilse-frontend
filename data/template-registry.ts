@@ -52,6 +52,7 @@ import { config as appListing } from "@/app/(templates)/app/config";
 import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
 import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshabandhan-to-sister/config";
+import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chaturthi/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -64,6 +65,13 @@ import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshaban
 // Everything after them keeps the order it already had.
 const allConfigs = [
   // ── SEASONAL, leading deliberately ────────────────────────────────────────
+  // Ganesh Chaturthi is 14 Sep 2026 and is the nearest dated festival, so it
+  // takes the first slot ahead of the rakhi pair — whose date (28 Aug) is behind
+  // it. Same rule as the note below: a dated festival template is worth the top
+  // slot only while its date is still ahead, and this one drops back down among
+  // the others after the visarjan on the 24th.
+  ganeshChaturthi,
+
   // Raksha Bandhan is 28 Aug 2026. A dated festival template is worth the top
   // slot only while the date is ahead of it — after the 28th this is a page
   // nobody is shopping for, and it should drop back down among the others.

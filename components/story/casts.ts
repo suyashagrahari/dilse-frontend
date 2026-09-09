@@ -133,3 +133,47 @@ export const BROTHER_CAST: StoryCast = {
     `whole time. He is in Dubai now and I am in Delhi, and he still calls at 1am ` +
     `about nothing.`,
 };
+
+// ── The festival cast ────────────────────────────────────────────────────────
+//
+// Two boxes, like the sibling casts, and for the same wire reason: the recipient
+// occupies the `bestFriend` slot because that is the slot the prompt reads for a
+// non-partner audience, and nothing on screen says so.
+//
+// What is different here is that this template genuinely does NOT know the
+// relationship. A Ganesh Chaturthi page goes to a cousin, a colleague, a
+// building group or somebody's mother, and every other cast in this file can
+// name the person on the label ("Your sister's name"). This one cannot, so the
+// label asks the only question that is true for all of them.
+//
+// ── WHY THE SAMPLE IS ABOUT A HOUSEHOLD AND NOT ABOUT THE FESTIVAL ──────────
+//
+// A sender who writes "we celebrate Ganesh Chaturthi every year" has told the
+// model nothing it could not already assume, and the model gives that back as a
+// greeting anyone could have sent. The sample therefore spends every sentence on
+// the specifics — who does the sthapana, who folds the modak, who was missing,
+// who is where now — because those are what the greeting lines, the sankalp list
+// and the aarti line are actually built from.
+//
+// It is also deliberately about a family rather than a friendship. It is the
+// harder case to write for, and a sender whose recipient is a friend adapts down
+// from it easily; the reverse is not true.
+export const GANESH_CAST: StoryCast = {
+  slots: [
+    { slot: "you", label: "Your name", placeholder: "Rohit", prompt: "your name" },
+    {
+      slot: "bestFriend",
+      label: "Who you're wishing",
+      placeholder: "Aditi",
+      prompt: "their name",
+    },
+  ],
+  sample:
+    `${STORY_SLOTS.you} — this is the eleventh year we have done the sthapana in ` +
+    `this flat. Baba does the puja and gets the order of everything wrong, and Aai ` +
+    `will not let anybody else fold the modak. ${STORY_SLOTS.bestFriend} is my cousin ` +
+    `and she was on a work call through the whole aarti last year, which nobody has ` +
+    `let her forget. Her interviews are in October. She is in Bangalore now and I am ` +
+    `in Pune, and she still asks me every September whether the visarjan is on a ` +
+    `weekend.`,
+};
