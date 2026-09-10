@@ -2,8 +2,8 @@
 
 // ─── "How was making this?" ───────────────────────────────────────────────────
 //
-// Shown once, centred, when the creator taps Share — after the page is already
-// published and before the share sheet that carries the link.
+// Shown once, when the creator taps Share — after the page is already published
+// and before the share sheet that carries the link.
 //
 // ── WHY ON SHARE AND NOT ON PUBLISH ─────────────────────────────────────────
 //
@@ -14,102 +14,125 @@
 //
 // Tapping Share IS the end. They are done, they are leaving for WhatsApp, and
 // they have asked us for something — so asking once in return is a fair trade
-// and reads as a step on the way out rather than an interruption. The eyebrow
-// says "Before you share" for exactly that reason: it tells the reader why this
-// is on screen now and that the link is directly behind it, which is what stops
-// a modal like this feeling like a toll gate.
+// and reads as a step on the way out rather than an interruption.
 //
 // It is also the ONLY door: the publish toast no longer carries the link or a
 // copy button, so there is no path to the URL that skips this. See
 // scripts/feedback-coverage.mjs, which fails the build if one reappears.
 //
-// sheet. Five stars, and — once a star is picked — a box for words.
+// ─── THE THREE-BEAT ASK ──────────────────────────────────────────────────────
 //
-// ── WHY IT IS CENTRED AND NOT A BOTTOM SHEET ────────────────────────────────
+// Dismissing does not close this. It advances a small state machine:
 //
-// Every other modal in this app is a bottom sheet on a phone, because every
-// other one is a TASK: pay, share, edit. Those want a thumb and want the page
-// behind them still visible, because the page is the context.
+//     ask ──dismiss──▸ please ──dismiss──▸ pleasePlease ──dismiss──▸ imFine ─▸ out
+//      │                 │                     │
+//      └── submit ───────┴─────────────────────┴──▸ thanks ─▸ seeYou ─▸ out
 //
-// This is a question, and it is the only thing on screen that matters for the
-// four seconds it is up. Centred, with the page dimmed behind it, is what reads
-// as "we are asking you something" rather than "here is another panel of
-// controls". It is also the one shape that is identical on a phone, a laptop and
-// a desktop, which is what was asked for.
+// A mascot pleads a little harder at each step, and at the third it gives up,
+// says it is fine (it is visibly not fine), and lets go.
 //
-// ── WHY THE TEXTAREA IS NOT THERE FROM THE START ────────────────────────────
+// ── WHY THIS IS A JOKE AND NOT A TOLL GATE ──────────────────────────────────
 //
-// A rating plus an empty box is a form, and a form after publishing something is
-// a wall. Stars alone is one tap. The box appears only once a star is picked, by
-// which point the person has already engaged and the box reads as an invitation
-// rather than an obligation — and its placeholder can then be specific to the
-// rating, which is worth far more than a generic prompt.
+// The difference between a bit somebody enjoys and a dark pattern is entirely in
+// whether the exit keeps working, so every one of these is true and has to stay
+// true:
 //
-// ── WHY EVERY EXIT PATH CALLS onDone ────────────────────────────────────────
+//   · The way out is in the same place, the same size and the same colour at
+//     every beat. Nothing shrinks, moves, greys out or waits on a timer. The
+//     dismissal target never drops below the 44px WCAG floor.
+//   · The escalation is bounded at three and SAYS so — the second beat's eyebrow
+//     reads "Last one, promise", because an unbounded guilt loop is where a gag
+//     turns into a hostage situation. Somebody who wants out is out in three
+//     taps, and knows it by the second.
+//   · Escape leaves IMMEDIATELY, from any beat, with no mascot. A keyboard or
+//     screen-reader user gets a real escape hatch rather than a comedy routine
+//     they cannot see, and that path is exercised by the bus's own test.
+//   · Every terminal beat carries a visible "go now" button, so the closing
+//     animations are a gift and never a wait.
+//   · The mascot is sad about ITSELF, never accusing. "I'm fine" is the penguin
+//     being dramatic; there is no version of this that tells somebody they did
+//     something wrong by leaving.
 //
-// Because the share link is behind this modal. Skip, Escape, backdrop, a failed
-// network request, a 500 — all of them let the person through to their link. The
-// only thing that ever blocks is the ~1.1s thank-you beat after a successful
-// submit. Losing feedback is a cost; standing between a creator and the link
-// they came for is a bug.
+// The prior version of this file ended the ask at the first dismissal and is
+// preserved in the `ask` beat exactly as it was — same eyebrow, same headline,
+// same one-tap line. Nobody who intends to rate ever sees a penguin.
+//
+// ── WHY EVERY EXIT PATH STILL CALLS onDone ──────────────────────────────────
+//
+// Because the share link is behind this modal. Escape, the third dismissal, a
+// failed network request, a 500 — all of them let the person through. The only
+// things that ever hold are the short closing beats, and each of those can be
+// skipped by hand. Losing feedback is a cost; standing between a creator and the
+// link they came for is a bug.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Loader2, Star, X } from "lucide-react";
+import { Loader2, Star, X } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import RatingFace from "./feedback/RatingFace";
+import MascotStage from "./feedback/MascotStage";
+import { MASCOTS, preloadMascot, type MascotKey } from "@/lib/feedback/feedbackArt";
 import { BRAND } from "@/lib/brand";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import type { FeedbackContext } from "@/lib/feedback/feedbackBus";
 
 const COMMENT_MAX = 2000;
 
-/** How long the thank-you stays up before the share sheet arrives. */
-const THANKS_MS = 1100;
-
 /**
- * What each star means, in the creator's language rather than ours.
+ * How long each closing beat holds.
  *
- * Naming the rating back to them does two things: it confirms the tap landed on
- * the star they meant (thumbs are imprecise on a 5-across row), and it sets up
- * the placeholder below, so a one-star and a five-star are visibly different
- * conversations rather than the same box.
+ * 2.2s, not the 2–3s that was asked for, and the difference is deliberate: two
+ * beats play back to back on the thank-you path, so 3s each is 6s of animation
+ * between somebody and the link they came for, which is long enough to feel
+ * like a loading screen. 2.2s twice is 4.4s, still reads as unhurried, and both
+ * can be cut short by the button underneath.
  */
+const BEAT_MS = 2200;
+
+/** What each star means, in the creator's language rather than ours. */
 const RATING_COPY: Record<number, { label: string; placeholder: string }> = {
-  1: {
-    label: "Something went wrong",
-    placeholder: "What broke? We read these the same day.",
-  },
-  2: {
-    label: "Not great",
-    placeholder: "What got in your way?",
-  },
-  3: {
-    label: "It was okay",
-    placeholder: "What would have made this a five?",
-  },
-  4: {
-    label: "Pretty good",
-    placeholder: "What was the one thing that could be better?",
-  },
-  5: {
-    label: "Loved it",
-    placeholder: "What worked? (Optional — the stars are plenty.)",
-  },
+  1: { label: "Something went wrong", placeholder: "What broke? We read these the same day." },
+  2: { label: "Not great", placeholder: "What got in your way?" },
+  3: { label: "It was okay", placeholder: "What would have made this a five?" },
+  4: { label: "Pretty good", placeholder: "What was the one thing that could be better?" },
+  5: { label: "Loved it", placeholder: "What worked? (Optional — the stars are plenty.)" },
+};
+
+type Stage = "ask" | "please" | "pleasePlease" | "imFine" | "thanks" | "seeYou";
+
+/** The beats that still show the form. The rest are animations on the way out. */
+const IS_ASKING: Record<Stage, boolean> = {
+  ask: true,
+  please: true,
+  pleasePlease: true,
+  imFine: false,
+  thanks: false,
+  seeYou: false,
+};
+
+/** Where a dismissal goes from here. `null` means leave for real. */
+const NEXT_ON_DISMISS: Record<Stage, Stage | null> = {
+  ask: "please",
+  please: "pleasePlease",
+  pleasePlease: "imFine",
+  imFine: null,
+  thanks: null,
+  seeYou: null,
 };
 
 /**
- * The template's own name, for the headline: "How was making your Holi page?".
+ * The per-beat dressing: which mascot, what colour behind it, and the words.
  *
- * Resolved here from the slug rather than passed in by each editor. Ten of the
- * forty-three raise this modal from their own publish handler, and asking each
- * of them to hand over a display title is ten strings to keep in step with the
- * gallery — which is exactly how one of them ends up saying "your page" while
- * the other forty-two name themselves.
- *
- * `templateTitle` on the context still wins when it is given, because the share
- * payload's `cardTitle` is often warmer than the catalog's ("Happy Raksha
- * Bandhan" against "Rakhi for Bhai").
+ * Tones are read straight off the brand palette rather than invented here, so
+ * the glow behind a penguin cannot drift away from the rest of the product.
  */
+const STAGE_ART: Record<Exclude<Stage, "ask">, { mascot: MascotKey; tone: string }> = {
+  please: { mascot: "please", tone: BRAND.gold },
+  pleasePlease: { mascot: "pleasePlease", tone: "#c2557a" },
+  imFine: { mascot: "imFine", tone: "#6f8fb0" },
+  thanks: { mascot: "thankYou", tone: BRAND.ok },
+  seeYou: { mascot: "seeYou", tone: BRAND.gold },
+};
+
 const TITLE_BY_SLUG = new Map(
   [...templateList, ...webpageTemplateList].map((t) => [t.slug, t.title])
 );
@@ -140,17 +163,17 @@ export default function FeedbackModal({
   /** Closes the modal and releases whatever was waiting behind it. */
   onDone: () => void;
 }) {
+  const [stage, setStage] = useState<Stage>("ask");
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const firstStarRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Guards the thank-you timer against a double-close: without it, a submit
-  // followed by an Escape would call `onDone` twice and open the share sheet on
-  // a payload that has already been consumed.
+  // Guards against a double-close: without it, a submit followed by an Escape
+  // would call `onDone` twice and open the share sheet on a payload that has
+  // already been consumed.
   const closedRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -178,10 +201,69 @@ export default function FeedbackModal({
     return () => clearTimeout(t);
   }, []);
 
+  // ── Warm the next beat, never the current one ─────────────────────────────
+  //
+  // Fetched one step ahead so a dismissal cuts to a drawn penguin instead of an
+  // empty disc, and so somebody who rates immediately — the majority, and the
+  // outcome we actually want — pays for none of it. `thankYou` is warmed as soon
+  // as a star is picked, because that is the moment submitting became likely.
+  useEffect(() => {
+    if (stage === "ask") preloadMascot("please");
+    else if (stage === "please") preloadMascot("pleasePlease");
+    else if (stage === "pleasePlease") preloadMascot("imFine");
+    else if (stage === "thanks") preloadMascot("seeYou");
+  }, [stage]);
+
+  useEffect(() => {
+    if (rating > 0) preloadMascot("thankYou");
+  }, [rating]);
+
+  // ── The closing beats advance themselves ──────────────────────────────────
+  useEffect(() => {
+    if (stage === "imFine") {
+      const t = setTimeout(finish, BEAT_MS);
+      return () => clearTimeout(t);
+    }
+    if (stage === "thanks") {
+      const t = setTimeout(() => setStage("seeYou"), BEAT_MS);
+      return () => clearTimeout(t);
+    }
+    if (stage === "seeYou") {
+      const t = setTimeout(finish, BEAT_MS);
+      return () => clearTimeout(t);
+    }
+  }, [stage, finish]);
+
+  /**
+   * A dismissal — the X, the Skip button, or the backdrop.
+   *
+   * This is the escalation, and it is the ONLY thing that escalates. Escape
+   * deliberately does not route through here.
+   */
+  const dismiss = useCallback(() => {
+    if (busy) return;
+    const next = NEXT_ON_DISMISS[stage];
+    if (next === null) {
+      finish();
+      return;
+    }
+    // A different, softer tick than the star's — this one is the mascot
+    // reacting, not a control confirming a tap.
+    try {
+      navigator.vibrate?.([8, 40, 8]);
+    } catch {
+      /* no haptics here, and nothing to do about it */
+    }
+    setStage(next);
+  }, [stage, busy, finish]);
+
   // ── Escape, and a focus trap ──────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // Straight out, from any beat, with no escalation. The bit is for
+        // people who can see it; a keyboard escape hatch has to stay an escape
+        // hatch.
         e.stopPropagation();
         finish();
         return;
@@ -213,13 +295,10 @@ export default function FeedbackModal({
 
     // ── A 12ms tick, on phones that support it ──────────────────────────────
     //
-    // Five targets across a phone screen are small, and the most common
-    // mis-tap is landing on the neighbour of the star you meant. A tick
-    // confirms the tap by touch, before the eye has moved. Short on purpose:
-    // anything longer reads as an error buzz.
-    //
-    // Wrapped because Safari does not implement it and some Android builds
-    // throw rather than returning false.
+    // Five targets across a phone screen are small, and the most common mis-tap
+    // is landing on the neighbour of the star you meant. A tick confirms the tap
+    // by touch, before the eye has moved. Short on purpose: anything longer
+    // reads as an error buzz.
     try {
       navigator.vibrate?.(12);
     } catch {
@@ -269,19 +348,68 @@ export default function FeedbackModal({
     }
 
     setBusy(false);
-    setSent(true);
-    setTimeout(finish, THANKS_MS);
+    setStage("thanks");
   };
 
   const copy = RATING_COPY[rating];
   const what = nameFor(ctx);
+  const asking = IS_ASKING[stage];
+  const art = stage === "ask" ? null : STAGE_ART[stage];
+  /** The beat's colour, used by both the mascot plate and the card behind it. */
+  const tone = art ? art.tone : BRAND.gold;
+
+  // ── The words for this beat ───────────────────────────────────────────────
+  //
+  // Assembled here rather than in a lookup table because three of the six read
+  // differently once a star has been picked, and a table of functions returning
+  // strings is harder to scan than the thing it replaces.
+  let eyebrow = "";
+  let title = "";
+  let sub = "";
+  let skipLabel = "";
+
+  if (stage === "ask") {
+    eyebrow = "Before you share";
+    title = `How was making ${what}?`;
+    sub = "One tap is plenty. We read every single one.";
+    skipLabel = rating > 0 ? "Skip" : "Skip, take me to my link";
+  } else if (stage === "please") {
+    eyebrow = "Oh. Okay.";
+    title = rating > 0 ? "You were so close!" : "Wait — one tap?";
+    sub =
+      rating > 0
+        ? `You already picked ${rating}. One tap on Send and you're out of here, promise.`
+        : "You just made something for someone you love. We'd really like to know if it felt good to make.";
+    skipLabel = "Sorry, I have to go";
+  } else if (stage === "pleasePlease") {
+    eyebrow = "Last one, promise";
+    title = "Pretty please?";
+    sub =
+      rating > 0
+        ? `${rating} stars is genuinely all we need. The button is RIGHT THERE.`
+        : "It's a very small team back here, and your one tap is honestly how we decide what to build next.";
+    skipLabel = "Still going 🏃";
+  } else if (stage === "imFine") {
+    title = "I'm fine.";
+    sub = "Totally fine. Completely fine. Go on — send your page. It's a good one.";
+  } else if (stage === "thanks") {
+    title = rating >= 4 ? "Thank you!!" : "Thank you — really.";
+    sub =
+      rating <= 3
+        ? "Someone will read this properly today. That's a person, not an auto-reply."
+        : "You just made our whole day. Genuinely.";
+  } else {
+    title = "See you next time!";
+    sub = "Your link is ready. Go make someone's day 💛";
+  }
 
   return (
     <div
       role="presentation"
       onClick={(e) => {
-        // Backdrop only, and never while the thank-you is showing.
-        if (e.target === e.currentTarget && !busy && !sent) finish();
+        // Backdrop only. It escalates like any other dismissal — a stray tap
+        // outside the card is the same intent as tapping Skip.
+        if (e.target === e.currentTarget && !busy) dismiss();
       }}
       style={{
         position: "fixed",
@@ -291,213 +419,200 @@ export default function FeedbackModal({
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
         display: "flex",
-        // ── A SHEET ON A PHONE, A CARD ON A DESKTOP ───────────────────────
+        // ── LAYOUT LIVES IN THE STYLESHEET, NOT HERE ──────────────────────
         //
-        // `flex-end` on a phone so the card rises from the bottom edge, which
-        // puts the stars inside thumb reach instead of halfway up a screen
-        // nobody can reach the middle of one-handed. The same pattern
-        // `PaymentModal` already uses, so the two sheets in this product behave
-        // alike.
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: 0,
+        // `alignItems`, `justifyContent` and `padding` are set in the class
+        // below rather than inline. An inline style attribute outranks any
+        // rule in a <style> tag, media query or not, so an inline
+        // `alignItems: stretch` silently beat the 640px override and the card
+        // grew to fill every desktop viewport — 860px of card holding 420px of
+        // content. Anything a breakpoint needs to change cannot be set here.
         animation: "ssFeedbackFade 180ms ease-out both",
       }}
       className="ssFeedbackHost"
     >
       <style>{`
-        /* From 640px there is room to centre it, and a full-width sheet on a
-           desktop looks like a mistake. The bottom corners round only once it
-           is floating — while it meets the screen edge, rounding them leaves
-           two slivers of backdrop under the card. */
+        /* Phone: full bleed. The media query below takes over at 640px. */
+        .ssFeedbackHost {
+          align-items: stretch;
+          justify-content: center;
+          padding: 0;
+        }
+        /* ── PHONE: THE WHOLE SCREEN ───────────────────────────────────────
+           This beat is a performance and it wants the room. A bottom sheet on
+           a phone left the mascot competing with a half-visible editor behind
+           it, and the artwork is the message here. */
+        .ssFeedbackCard {
+          width: 100%;
+          min-height: 100dvh;
+          border-radius: 0;
+          border: none;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        /* ── TABLET AND UP: A CARD AGAIN ───────────────────────────────────
+           640px is where a full-bleed panel starts looking like a broken page
+           rather than a considered screen. From here it is a floating card,
+           and it stays one at every larger size — a modal that grows with a
+           27" monitor is a modal nobody reads. */
         @media (min-width: 640px) {
-          .ssFeedbackHost { align-items: center; padding: 16px }
-          .ssFeedbackCard { --ss-r-bottom: 24px; max-width: 400px }
+          .ssFeedbackHost { align-items: center; padding: 20px }
+          .ssFeedbackCard {
+            min-height: 0;
+            max-width: 420px;
+            max-height: calc(100dvh - 40px);
+            border-radius: 26px;
+            border: 1px solid ${BRAND.border};
+          }
+        }
+        /* A short landscape phone — the one case where vertical centring
+           pushes the Send button off the bottom. Let it scroll from the top. */
+        @media (max-height: 560px) {
+          .ssFeedbackCard { justify-content: flex-start }
         }
       `}</style>
+
       <div
         ref={cardRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="ss-feedback-title"
         style={{
-          // The skip affordance is absolutely positioned inside this card.
+          // The dismiss affordance is absolutely positioned inside this card.
           position: "relative",
-          width: "100%",
-          // Never taller than the viewport: a rotated phone with the keyboard
-          // up leaves very little room, and a card that overflows loses its
-          // buttons off the bottom. `dvh` rather than `vh` because iOS Safari's
-          // toolbars make `vh` taller than what you can actually see.
-          maxHeight: "calc(100dvh - 24px)",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
-          background: BRAND.surface,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          borderBottomLeftRadius: "var(--ss-r-bottom, 0px)",
-          borderBottomRightRadius: "var(--ss-r-bottom, 0px)",
-          border: `1px solid ${BRAND.border}`,
+          // ── A WASH BEHIND THE MASCOT ──────────────────────────────────────
+          //
+          // Full screen on a phone means roughly 300px of empty card above the
+          // artwork and as much below it, and flat cream across all of that
+          // read as an unfinished page rather than a composed one. A wide, very
+          // faint bloom in the beat's own colour, falling off before it reaches
+          // the stars, gives the space a reason to be there and carries the
+          // colour change from beat to beat across the whole screen instead of
+          // only inside a 200px plate.
+          background: `radial-gradient(125% 48% at 50% 4%, ${tone}1f 0%, ${tone}00 64%), ${BRAND.surface}`,
+          transition: "background 420ms ease",
           boxShadow: BRAND.shadowElevated,
           // The bottom padding clears the iOS home bar, which sits ON TOP of a
-          // sheet rather than beside it.
-          padding: "10px 20px calc(18px + env(safe-area-inset-bottom, 0px))",
+          // full-height panel rather than beside it.
+          padding: "56px 22px calc(26px + env(safe-area-inset-bottom, 0px))",
           textAlign: "center",
-          animation: "ssFeedbackRise 240ms cubic-bezier(0.16,1,0.3,1) both",
+          animation: "ssFeedbackRise 260ms cubic-bezier(0.16,1,0.3,1) both",
         }}
         className="ssFeedbackCard"
       >
-        {/* A grab handle. It is not draggable, and it is here anyway: without
-            one, a panel flush against the bottom edge reads as a stuck dialog
-            rather than something that came up and can go away. */}
-        <div
-          aria-hidden="true"
+        {/* ── The way out ───────────────────────────────────────────────────
+            Same corner, same size, same colour at every beat including the
+            closing ones, where it reads as "go now" rather than "cancel".
+            48px, comfortably over the 44px floor, because this is the control
+            that must never be a struggle to hit. */}
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label={asking ? "Skip, and go to my link" : "Go to my link now"}
+          disabled={busy}
           style={{
-            width: 38,
-            height: 4,
-            borderRadius: 99,
-            background: "rgba(61,12,17,0.14)",
-            margin: "4px auto 10px",
+            position: "absolute",
+            top: 12,
+            right: 12,
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            border: "none",
+            background: "rgba(61,12,17,0.04)",
+            color: BRAND.faint,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: busy ? "default" : "pointer",
+            touchAction: "manipulation",
           }}
-        />
-        {sent ? (
-          // ── Thank-you ──────────────────────────────────────────────────────
-          <div style={{ padding: "22px 0 16px" }}>
-            <div
-              style={{
-                width: 52,
-                height: 52,
-                margin: "0 auto 16px",
-                borderRadius: "50%",
-                background: "rgba(58,167,109,0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Check size={26} strokeWidth={2.6} style={{ color: BRAND.ok }} />
-            </div>
-            <p
-              style={{
-                margin: "0 0 6px",
-                fontSize: 18,
-                fontWeight: 700,
-                color: BRAND.text,
-                fontFamily: "var(--font-lora), Georgia, serif",
-              }}
-            >
-              Thank you
-            </p>
-            <p style={{ margin: 0, fontSize: 13, color: BRAND.muted, lineHeight: 1.6 }}>
-              {rating <= 3
-                ? "Someone on the team will read this properly."
-                : "That genuinely helps. Now go send it."}
-            </p>
-          </div>
-        ) : (
+        >
+          <X size={18} />
+        </button>
+
+        {/* ── The mascot, or the reacting face ──────────────────────────────
+            `beat` re-keys the stage so the entrance animation replays on every
+            change; without it the disc is the same DOM node and the new
+            character simply appears. */}
+        <MascotStage tone={tone} beat={stage}>
+          {art ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={MASCOTS[art.mascot].src}
+              alt={MASCOTS[art.mascot].alt}
+              width={MASCOTS[art.mascot].width}
+              height={MASCOTS[art.mascot].height}
+            />
+          ) : (
+            <RatingFace rating={rating} size={128} />
+          )}
+        </MascotStage>
+
+        {eyebrow ? (
+          <p
+            style={{
+              margin: "18px 0 0",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              color: BRAND.gold,
+            }}
+          >
+            {eyebrow}
+          </p>
+        ) : null}
+
+        <h2
+          id="ss-feedback-title"
+          style={{
+            margin: eyebrow ? "8px 0 6px" : "18px 0 6px",
+            fontSize: 22,
+            lineHeight: 1.28,
+            fontWeight: 700,
+            color: BRAND.text,
+            fontFamily: "var(--font-lora), Georgia, serif",
+          }}
+        >
+          {title}
+        </h2>
+
+        {/* One line, carrying both the prompt and the `aria-live` announcement
+            — the half a sighted reader never notices and a screen-reader user
+            depends on. `minHeight` because the states are different lengths,
+            and without it tapping a star reflows the card taller and moves the
+            Send button out from under a thumb already travelling toward it. */}
+        <p
+          aria-live="polite"
+          style={{
+            margin: "0 auto 18px",
+            maxWidth: 330,
+            minHeight: asking ? 44 : 0,
+            fontSize: 13.5,
+            color: BRAND.muted,
+            lineHeight: 1.62,
+          }}
+        >
+          {asking && rating > 0 && stage === "ask" ? (
+            <>
+              <span style={{ color: BRAND.text, fontWeight: 700 }}>{copy.label}</span>
+              {rating >= 4 ? " — thank you." : " — tell us what happened?"}
+            </>
+          ) : (
+            sub
+          )}
+        </p>
+
+        {asking ? (
           <>
-            {/* Skip, as an affordance rather than a hidden gesture. Top-right
-                and quiet: the way out has to be visible or the modal reads as
-                a trap, but it should not compete with the stars. */}
-            <button
-              type="button"
-              onClick={finish}
-              aria-label="Skip, and go to my link"
-              disabled={busy}
-              style={{
-                position: "absolute",
-                top: 10,
-                right: 10,
-                width: 34,
-                height: 34,
-                borderRadius: 12,
-                border: "none",
-                background: "transparent",
-                color: BRAND.faint,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-              }}
-            >
-              <X size={16} />
-            </button>
-
-            <p
-              style={{
-                margin: "0 0 8px",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.09em",
-                textTransform: "uppercase",
-                color: BRAND.gold,
-              }}
-            >
-              Before you share
-            </p>
-
-            {/* The face goes above the question, because it is the thing that
-                makes someone look at all — and it is the thing that rewards the
-                first tap. See components/feedback/RatingFace.tsx. */}
-            <RatingFace rating={rating} size={100} />
-
-            <h2
-              id="ss-feedback-title"
-              style={{
-                margin: "10px 0 6px",
-                fontSize: 20,
-                lineHeight: 1.3,
-                fontWeight: 700,
-                color: BRAND.text,
-                fontFamily: "var(--font-lora), Georgia, serif",
-              }}
-            >
-              How was making {what}?
-            </h2>
-
-            {/* ── WHY THIS LINE CHANGES ONCE THEY TAP ────────────────────────
-                Before: the smallest possible ask, naming the cost ("one tap")
-                because the honest objection is "how long will this take".
-                After: their own rating named back to them, which confirms the
-                tap landed on the star they meant — thumbs are imprecise on a
-                five-across row — and turns the box below into an invitation
-                rather than a form. */}
-            {/* ── ONE line, not two ──────────────────────────────────────────
-                A second, fixed-height paragraph used to sit below the stars
-                printing the same rating label — the identical words twice once
-                a star was tapped. This one carries both jobs, including the
-                `aria-live` announcement, which is the half a sighted reader
-                never notices and a screen-reader user depends on.
-
-                `minHeight` because the two states are different lengths, and
-                without it tapping a star reflows the card taller and moves the
-                Send button out from under the thumb already travelling toward
-                it. */}
-            <p
-              aria-live="polite"
-              style={{
-                margin: "0 0 18px",
-                minHeight: 40,
-                fontSize: 13,
-                color: BRAND.muted,
-                lineHeight: 1.6,
-              }}
-            >
-              {rating === 0 ? (
-                <>One tap is plenty. We read every single one.</>
-              ) : (
-                <>
-                  <span style={{ color: BRAND.text, fontWeight: 700 }}>{copy.label}</span>
-                  {rating >= 4 ? " — thank you." : " — tell us what happened?"}
-                </>
-              )}
-            </p>
-
-            {/* ── The stars ──────────────────────────────────────────────────
-                44px targets, which is the minimum a thumb hits reliably, and
-                laid out with `justify-content: center` rather than a grid so
-                they stay centred at every width. Arrow keys move the rating,
-                because a five-across row of buttons is miserable to Tab
-                through. */}
+            {/* ── The stars ────────────────────────────────────────────────
+                52px targets — the WCAG floor is 44 and these sit edge to edge
+                in a five-across row, so the common mis-tap is the neighbour of
+                the one you meant. Arrow keys move the rating, because a row of
+                five buttons is miserable to Tab through. */}
             <div
               role="radiogroup"
               aria-label="Rating, 1 to 5 stars"
@@ -510,7 +625,13 @@ export default function FeedbackModal({
                   pick(Math.max(1, (rating || 6) - 1));
                 }
               }}
-              style={{ display: "flex", justifyContent: "center", gap: 0, marginBottom: 10, touchAction: "manipulation" }}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 0,
+                marginBottom: 10,
+                touchAction: "manipulation",
+              }}
             >
               {[1, 2, 3, 4, 5].map((value) => {
                 const on = value <= rating;
@@ -525,16 +646,13 @@ export default function FeedbackModal({
                     onClick={() => pick(value)}
                     disabled={busy}
                     style={{
-                      // 52px, up from 46. The WCAG floor is 44 and the stars
-                      // sit edge to edge in a five-across row, so the common
-                      // mis-tap is the neighbour of the one you meant.
                       width: 52,
                       height: 52,
                       border: "none",
                       background: "transparent",
-                      // Without this, mobile Safari waits ~300ms on every tap
-                      // to see whether it was a double-tap zoom. On the row
-                      // that IS the interaction, that delay reads as lag.
+                      // Without this, mobile Safari waits ~300ms on every tap to
+                      // see whether it was a double-tap zoom. On the row that IS
+                      // the interaction, that delay reads as lag.
                       touchAction: "manipulation",
                       cursor: busy ? "default" : "pointer",
                       display: "flex",
@@ -595,7 +713,7 @@ export default function FeedbackModal({
                   disabled={busy}
                   style={{
                     width: "100%",
-                    minHeight: 48,
+                    minHeight: 50,
                     borderRadius: 14,
                     border: "none",
                     background: BRAND.gradient,
@@ -618,22 +736,53 @@ export default function FeedbackModal({
 
             <button
               type="button"
-              onClick={finish}
+              onClick={dismiss}
               disabled={busy}
               style={{
-                marginTop: rating > 0 ? 10 : 0,
+                marginTop: rating > 0 ? 10 : 4,
                 background: "none",
                 border: "none",
-                padding: "8px 10px",
+                // Padded to a 44px-tall target even though it reads as a link.
+                padding: "12px 14px",
                 color: BRAND.faint,
                 fontSize: 12.5,
                 fontWeight: 600,
                 cursor: busy ? "default" : "pointer",
+                touchAction: "manipulation",
               }}
             >
-              {rating > 0 ? "Skip" : "Skip, take me to my link"}
+              {skipLabel}
             </button>
           </>
+        ) : (
+          // ── A closing beat ────────────────────────────────────────────────
+          //
+          // The animation plays for BEAT_MS and then moves on by itself. This
+          // button is here so it is never a wait — anybody who does not want
+          // the send-off can take the link immediately.
+          //
+          // It calls `finish` from EVERY beat including thank-you, where it
+          // first advanced to the see-you beat instead. A button that says
+          // "Take me to my link" and plays another animation is a small lie,
+          // and it is the exact lie this whole flow can least afford: the one
+          // promise holding the escalation up is that the way out always works.
+          <button
+            type="button"
+            onClick={finish}
+            style={{
+              marginTop: 4,
+              background: "none",
+              border: "none",
+              padding: "12px 14px",
+              color: BRAND.faint,
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              touchAction: "manipulation",
+            }}
+          >
+            Take me to my link →
+          </button>
         )}
       </div>
 

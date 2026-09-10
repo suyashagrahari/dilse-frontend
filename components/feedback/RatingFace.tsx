@@ -21,20 +21,24 @@
 // doubles as confirmation the tap landed, which a five-across row of small
 // targets badly needs on a phone.
 //
-// ── WHY SVG AND NOT A GIF ───────────────────────────────────────────────────
+// ── WHY SVG AND NOT A GIF, FOR *THIS* FRAME ─────────────────────────────────
 //
-// A GIF was the ask, and it is the wrong medium for this particular spot:
+// The flow around this component now does use GIFs — see
+// `lib/feedback/feedbackArt.ts` — so this section is about why the FIRST thing
+// somebody sees is still drawn in code, and why that division should hold.
 //
-//   · This sheet appears the instant a page is published. A network fetch means
-//     an empty box or a layout shift at exactly the moment that has to feel
-//     good, on connections where that fetch is slowest.
-//   · A legible animated GIF at this size is 300KB–1MB. That is a real cost on
-//     mobile data, paid by every publisher, for decoration.
-//   · GIFs are fixed-resolution and go soft on any retina screen.
-//   · A GIF is one fixed loop. It cannot respond to the rating, which is the
-//     whole idea above.
-//   · Media on this project is uploaded to S3 by hand through the prod box, so
-//     an asset also buys a deploy ritual.
+// This face renders the instant a page is published, which makes three things
+// disqualifying about a fetched asset here:
+//
+//   · A network fetch means an empty box or a layout shift at exactly the
+//     moment that has to feel good, on the connections where it is slowest.
+//     Nothing in the mascot set is fetched on mount for the same reason; those
+//     load one beat ahead of when they are needed.
+//   · A GIF is one fixed loop. It cannot respond to the star being hovered,
+//     which is the whole idea below — and the reason the ask beat converts.
+//   · GIFs are fixed-resolution and go soft on any retina screen. That matters
+//     for the thing on screen for the full length of the decision; it matters
+//     much less for a two-second reaction shot.
 //
 // Inline SVG plus CSS keyframes costs nothing over the wire, is crisp at any
 // density, and can hold state. Every animation here is also disabled under
