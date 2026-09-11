@@ -204,7 +204,7 @@ export default function FeedbackModal({
   // ── Warm the next beat, never the current one ─────────────────────────────
   //
   // Fetched one step ahead so a dismissal cuts to a drawn penguin instead of an
-  // empty disc, and so somebody who rates immediately — the majority, and the
+  // empty slot, and so somebody who rates immediately — the majority, and the
   // outcome we actually want — pays for none of it. `thankYou` is warmed as soon
   // as a star is picked, because that is the moment submitting became likely.
   useEffect(() => {
@@ -355,7 +355,7 @@ export default function FeedbackModal({
   const what = nameFor(ctx);
   const asking = IS_ASKING[stage];
   const art = stage === "ask" ? null : STAGE_ART[stage];
-  /** The beat's colour, used by both the mascot plate and the card behind it. */
+  /** The beat's colour, used by both the mascot's halo and the card behind it. */
   const tone = art ? art.tone : BRAND.gold;
 
   // ── The words for this beat ───────────────────────────────────────────────
@@ -491,7 +491,7 @@ export default function FeedbackModal({
           // faint bloom in the beat's own colour, falling off before it reaches
           // the stars, gives the space a reason to be there and carries the
           // colour change from beat to beat across the whole screen instead of
-          // only inside a 200px plate.
+          // only behind the artwork itself.
           background: `radial-gradient(125% 48% at 50% 4%, ${tone}1f 0%, ${tone}00 64%), ${BRAND.surface}`,
           transition: "background 420ms ease",
           boxShadow: BRAND.shadowElevated,
@@ -535,7 +535,7 @@ export default function FeedbackModal({
 
         {/* ── The mascot, or the reacting face ──────────────────────────────
             `beat` re-keys the stage so the entrance animation replays on every
-            change; without it the disc is the same DOM node and the new
+            change; without it the slot is the same DOM node and the new
             character simply appears. */}
         <MascotStage tone={tone} beat={stage}>
           {art ? (
@@ -547,7 +547,7 @@ export default function FeedbackModal({
               height={MASCOTS[art.mascot].height}
             />
           ) : (
-            <RatingFace rating={rating} size={128} />
+            <RatingFace rating={rating} size={148} />
           )}
         </MascotStage>
 
