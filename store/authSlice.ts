@@ -17,6 +17,17 @@ export interface AuthUser {
   points?: number;
   referralCode?: string;
   /**
+   * When the account was created, as an ISO string. Returned by `GET /auth/me`
+   * and — since the welcome-back greeting needed it on every route in — by
+   * login, OTP verification and Google sign-in too.
+   *
+   * `lib/welcome/welcomeBus` uses it to tell a returning creator from somebody
+   * who signed up ninety seconds ago inside this very publish. Optional because
+   * an older cached user object will not carry it, and the greeting correctly
+   * stays silent when it is missing.
+   */
+  createdAt?: string;
+  /**
    * Template slugs this user may use even while they are hidden from everyone
    * else — see `hooks/useTemplateAccess`. Returned by `GET /auth/me`, so it is
    * present on the same render as `isAuthenticated` and no separate request is

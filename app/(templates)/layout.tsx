@@ -1,6 +1,7 @@
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import PaywallHost from "@/components/PaywallHost";
 import FeedbackHost from "@/components/FeedbackHost";
+import WelcomeHost from "@/components/WelcomeHost";
 import ToastHost from "@/components/toast/ToastHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
@@ -44,6 +45,12 @@ export default async function TemplatesLayout({
           above are — the trigger is a module bus, so exactly one component
           has to be listening. */}
       <FeedbackHost />
+      {/* "Welcome back", raised in front of the publish toast for a creator
+          whose account predates today. `preload` is set only here: the
+          greeting can only be reached through a publish, publishes only happen
+          in an editor, and warming ~200 KB of artwork anywhere else buys a
+          faster greeting that will never be shown. */}
+      <WelcomeHost preload />
       <ToastHost />
     </TemplateVisibilityProvider>
   );

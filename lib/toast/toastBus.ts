@@ -42,6 +42,8 @@
 
 import { useSyncExternalStore } from "react";
 
+import { greetThenRun } from "@/lib/welcome/welcomeBus";
+
 export type ToastType = "success" | "info" | "publish" | "error";
 
 export interface ToastInput {
@@ -132,6 +134,34 @@ export function pushToast(input: ToastInput): number {
   if (typeof window === "undefined") return id;
 
   const type: ToastType = input.type ?? "info";
+
+  // ── THE ONE PLACE A PUBLISH IS ANNOUNCED ──────────────────────────────────
+  //
+  // `type: "publish"` is pushed from forty-four editor hooks and nowhere else,
+  // in eighty places, with forty different words — "Published! 🧩", "Sent 💌",
+  // "Report filed 🔮". This line is the only thing all of them share, which
+  // makes it the only honest hook for anything that wants to happen AT a
+  // publish, and `lib/welcome/welcomeBus.ts` says at length why that matters:
+  // the last feature to pick a less universal seam went missing from ten
+  // templates and nobody noticed for a month.
+  //
+  // `greetThenRun` says hello to a creator who has been here before, then shows
+  // this toast. It runs `show` exactly once on every path — no greeting, a
+  // greeting tapped away, a greeting nobody waits for, or a callback that
+  // throws — so a publish is never announced twice and never not at all.
+  //
+  // The id is allocated above and closed over, so the contract here is
+  // unchanged: the caller still gets a usable handle synchronously.
+  if (type === "publish") {
+    greetThenRun(() => show(id, input, type));
+    return id;
+  }
+
+  return show(id, input, type);
+}
+
+/** Put a toast on screen and start its timer. */
+function show(id: number, input: ToastInput, type: ToastType): number {
   const toast: Toast = { ...input, type, id };
 
   toasts = [...toasts, toast];

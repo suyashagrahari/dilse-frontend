@@ -9,6 +9,7 @@ import AppLayoutShell from "./AppLayoutShell";
 import AppSplash from "@/components/AppSplash";
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import FeedbackHost from "@/components/FeedbackHost";
+import WelcomeHost from "@/components/WelcomeHost";
 import ToastHost from "@/components/toast/ToastHost";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
@@ -44,6 +45,12 @@ export default function AppLayout({
             raised from here without that opt-out must find a host rather than
             hanging on a modal nobody renders. */}
         <FeedbackHost />
+        {/* Mounted here as well, for the same reason `FeedbackHost` is: the bus
+            is shared and the two layouts are siblings. No `preload` — nothing
+            in this group publishes, so there is no greeting to warm for. It is
+            still the host that tells the bus who is signed in, which is why it
+            is not simply left out. */}
+        <WelcomeHost />
         <ToastHost />
       </AppLayoutShell>
     </TemplateSearchProvider>
