@@ -50,16 +50,28 @@
 // cannot survive. Come back that evening, or any later day, and it is simply
 // true.
 //
-// ── AND HOW OFTEN ───────────────────────────────────────────────────────────
+// ── AND HOW OFTEN: EVERY PUBLISH ────────────────────────────────────────────
 //
-// At most once per `GREET_COOLDOWN_MS`, per browser. A greeting is a small
-// delay in front of the confirmation somebody is waiting for, and the third one
-// in an afternoon is no longer a greeting, it is a toll. The first publish of
-// the day gets it; the run of cards after it goes straight through, exactly as
-// if this feature did not exist. Same reasoning as the feedback ask's "one per
-// page", and the same storage caveat: this is a client-side question ("have I
-// already said hello today?") so it is answered from client-side storage, and a
-// cleared cache costs one extra greeting and nothing else.
+// Every card a returning creator sends gets the greeting. There is no daily
+// cap, and the absence is deliberate — it was tried and removed.
+//
+// The first build allowed one greeting per twelve hours, on the reasoning that
+// the third one in an afternoon stops being a greeting and becomes a toll on
+// the confirmation somebody is waiting for. That reasoning is not wrong, but it
+// loses to a plainer fact: this feature exists to mark the moment a page goes
+// live, and a moment that only happens sometimes is indistinguishable, from the
+// inside, from one that is broken. The first person to test it published twice
+// and saw it once, and reasonably concluded it did not work.
+//
+// So the only thing left is a short debounce, and it is not a cap dressed up as
+// one. `GREET_DEBOUNCE_MS` covers a single case: publish, notice a typo, fix
+// it, publish again — one card, two publish toasts, seconds apart. Greeting
+// somebody twice in ninety seconds is a stutter, not a welcome. Anything slower
+// than that is a new card, and a new card is a new moment.
+//
+// Same storage caveat as the feedback ask: "when did I last say hello?" has to
+// be answerable offline in the same tick as the publish, so it is answered from
+// client-side storage, and a cleared cache costs one extra greeting.
 //
 // ── THE PROMISE THIS MODULE MAKES ───────────────────────────────────────────
 //
@@ -81,8 +93,14 @@ import {
 /** How old an account must be before "welcome back" is a true sentence. */
 export const RETURNING_AFTER_MS = 12 * 60 * 60 * 1000;
 
-/** At most one greeting per this window, per browser. */
-export const GREET_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+/**
+ * The only thing that suppresses a greeting once somebody qualifies for one.
+ *
+ * Not a daily cap — see the note above. Ninety seconds is long enough to cover
+ * "publish, spot a typo, fix it, publish again" as the single moment it
+ * actually is, and short enough that the next genuine card still gets greeted.
+ */
+export const GREET_DEBOUNCE_MS = 90 * 1000;
 
 /** The entrance animation in `MascotStage`, which runs before the loop does. */
 export const ENTRANCE_MS = 420;
@@ -167,8 +185,7 @@ function markGreeted(): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
   } catch {
-    // Nothing to do. The worst case is being greeted again tomorrow's worth of
-    // publishes early.
+    // Nothing to do. The worst case is a greeting that stutters on a republish.
   }
 }
 
@@ -196,7 +213,9 @@ export function shouldGreet(now: number = Date.now()): boolean {
   // which fails in the safe direction — no greeting — and needs no special case.
   if (now - created < RETURNING_AFTER_MS) return false;
 
-  if (now - lastGreetedAt() < GREET_COOLDOWN_MS) return false;
+  // Only a stutter is suppressed: two publish toasts for the same card, seconds
+  // apart. Every later card is a new moment and gets its own greeting.
+  if (now - lastGreetedAt() < GREET_DEBOUNCE_MS) return false;
   return true;
 }
 
@@ -315,7 +334,7 @@ export function useWelcomeGreeting(): WelcomeGreeting | null {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-/** Test/debug escape hatch: forget that we said hello today. */
+/** Test/debug escape hatch: forget when we last said hello. */
 export function clearGreeted(): void {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
