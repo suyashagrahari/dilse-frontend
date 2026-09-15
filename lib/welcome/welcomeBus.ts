@@ -146,7 +146,10 @@ export interface Viewer {
 
 let viewer: Viewer | null = null;
 let current: WelcomeGreeting | null = null;
+/** The mascot warmed and waiting for the next greeting, if one is. */
 let armed: WelcomeMascotKey | null = null;
+/** The one just shown, so the next greeting is a different character. */
+let lastShown: WelcomeMascotKey | null = null;
 const listeners = new Set<() => void>();
 
 function emit(): void {
@@ -198,27 +201,48 @@ export function shouldGreet(now: number = Date.now()): boolean {
   return true;
 }
 
+/** Anything but `not`. With two mascots that means the other one. */
+function randomMascot(not: WelcomeMascotKey | null): WelcomeMascotKey {
+  const pool = WELCOME_MASCOT_KEYS.filter((k) => k !== not);
+  const from = pool.length ? pool : WELCOME_MASCOT_KEYS;
+  return from[Math.floor(Math.random() * from.length)];
+}
+
 /**
- * Which mascot this session will use.
+ * Which mascot the NEXT greeting will use.
  *
- * Chosen ONCE and remembered, because the choice has to be made before the
- * greeting happens: `WelcomeHost` warms exactly one file, and warming the wrong
- * one is worse than warming neither — it pays the bytes and still shows a blank
- * stage. Re-picking per greeting would also mean a creator who publishes twice
- * in a day could see the same one twice, which is the thing having two was for.
+ * ── WHY THIS IS ARMED IN ADVANCE ────────────────────────────────────────────
+ *
+ * The choice has to exist before the greeting does, because `WelcomeHost` warms
+ * exactly one file and warming the wrong one is worse than warming neither — it
+ * pays the bytes and still shows a stage with nothing on it.
+ *
+ * ── WHY IT IS RE-ARMED AFTER EVERY GREETING ─────────────────────────────────
+ *
+ * It used to be chosen once and kept for the life of the page, which was a bug
+ * dressed as an optimisation. Module state survives client-side navigation, so
+ * somebody publishing three cards without a hard reload — the ordinary way to
+ * use this app — got the identical mascot all three times. Two exist precisely
+ * so that does not happen.
+ *
+ * So `closeWelcome` re-arms, which buys both halves at once: the next greeting
+ * is a different character AND its artwork is already warm by the time it is
+ * needed. `not` makes it genuinely different rather than a coin flip that lands
+ * the same way half the time — with two mascots, alternating IS the maximally
+ * varied sequence.
  */
 export function pickMascot(): WelcomeMascotKey {
-  if (armed === null) {
-    armed = WELCOME_MASCOT_KEYS[Math.floor(Math.random() * WELCOME_MASCOT_KEYS.length)];
-  }
+  if (armed === null) armed = randomMascot(lastShown);
   return armed;
 }
 
 /**
- * Warm the artwork, if a greeting is currently on the cards.
+ * Warm the artwork for the next greeting, if one is on the cards.
  *
- * Called from `WelcomeHost` on idle, and only under the templates route group —
- * see the note there on why this is not done everywhere.
+ * Called from `WelcomeHost` on idle under the templates route group, and again
+ * from `closeWelcome` the moment a greeting ends. Safe to call repeatedly: the
+ * pick is stable until it is spent, and the browser serves a warm file from
+ * cache rather than refetching it.
  */
 export function armWelcome(): void {
   if (!shouldGreet()) return;
@@ -261,6 +285,10 @@ export function greetThenRun(run: () => void): void {
   }
 
   const mascot = pickMascot();
+  // Spent. `closeWelcome` arms the next one — a different character, warmed
+  // while this one is still on screen.
+  armed = null;
+  lastShown = mascot;
   let released = false;
   const release = () => {
     if (released) return;
@@ -319,6 +347,10 @@ export function closeWelcome(): void {
   current = null;
   emit();
   greeting.onRelease();
+  // Pick and warm the next mascot now, while nobody is waiting on it. Guarded
+  // inside `armWelcome`, so this costs nothing for anybody who will not be
+  // greeted again.
+  armWelcome();
 }
 
 function subscribe(listener: () => void): () => void {
@@ -330,6 +362,14 @@ function subscribe(listener: () => void): () => void {
 
 const getSnapshot = () => current;
 const getServerSnapshot = () => null;
+
+/**
+ * The open greeting, read without React. For tests — `useWelcomeGreeting` is a
+ * hook and cannot be called from node.
+ */
+export function __snapshotForTests(): WelcomeGreeting | null {
+  return current;
+}
 
 /** The open greeting, or null. Re-renders only on open/close. */
 export function useWelcomeGreeting(): WelcomeGreeting | null {
