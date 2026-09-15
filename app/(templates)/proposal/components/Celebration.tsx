@@ -9,6 +9,8 @@ import { ASSETS } from "./assets";
 import { daysSince, type ProposalData } from "./types";
 import { celebrationBurst, heartPuff } from "./burst";
 import { chip, DISPLAY, GLASS, INK, INK_SOFT, PINK_DEEP, PINK_GLOW, PINK_GRADIENT, SCRIPT } from "./theme";
+import { copyFor } from "./copy";
+import { useStoryCard } from "./StoryCard";
 
 /** A different tease depending on how hard they fought it. */
 function dodgeCallback(dodges: number, name: string): string | null {
@@ -30,9 +32,12 @@ export default function Celebration({
   shareId?: string;
   reduced: boolean;
 }) {
+  const voice = copyFor(data.perspective);
   const [copied, setCopied] = useState(false);
+  const [note, setNote] = useState("");
   const reducedRef = useRef(reduced);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fire once on mount — reading the flag from a ref so a mid-celebration
   // preference change can't re-trigger the whole volley sequence.
@@ -44,6 +49,7 @@ export default function Celebration({
   useEffect(
     () => () => {
       if (copyTimer.current) clearTimeout(copyTimer.current);
+      if (noteTimer.current) clearTimeout(noteTimer.current);
     },
     [],
   );
@@ -57,11 +63,11 @@ export default function Celebration({
   const share = useCallback(async () => {
     if (typeof window === "undefined") return;
     const url = shareId ? `${window.location.origin}/${shareId}` : window.location.href;
-    const text = `${data.recipientName || "She"} said YES 💍💖`;
+    const text = voice.shareText(data.recipientName);
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "We're engaged!", text, url });
+        await navigator.share({ title: voice.storyHeadline, text, url });
         return;
       } catch (err) {
         // A cancelled share sheet is not a failure — don't silently copy instead.
@@ -94,7 +100,28 @@ export default function Celebration({
     } catch {
       flash(false);
     }
-  }, [data.recipientName, flash, shareId]);
+  }, [data.recipientName, flash, shareId, voice]);
+
+  // ── The story card ──────────────────────────────────────────────────────
+  //
+  // `shareId` is absent in preview, and that is on purpose: there is no
+  // published page yet, so the card omits the QR and the printed link rather
+  // than pointing at one that does not exist.
+  const shareUrl =
+    shareId && typeof window !== "undefined" ? `${window.location.origin}/${shareId}` : null;
+  const {
+    element: storyElement,
+    share: shareStory,
+    ready: storyReady,
+    busy,
+  } = useStoryCard(data, shareUrl);
+
+  const postStory = useCallback(async () => {
+    const res = await shareStory();
+    setNote(res.message);
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => setNote(""), 5200);
+  }, [shareStory]);
 
   const days = daysSince(data.metDate);
   const callback = dodgeCallback(dodges, data.recipientName || "you");
@@ -103,29 +130,61 @@ export default function Celebration({
   return (
     <section
       style={{
+        // Safe centring: `justify-content:center` clips both ends once the
+        // content outgrows the box, and the overflow above the start edge
+        // cannot be scrolled to. `margin:auto` on the child centres the same
+        // way and degrades to flex-start instead of cutting the top off.
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "78px 16px 46px",
         width: "100%",
+        // The bottom pad clears the fixed music dock.
+        padding: "78px 16px 108px",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className={reduced ? undefined : "ps-bob"}
-        src={ASSETS.joyTears}
-        alt="A penguin overwhelmed with happy tears"
-        onClick={(e) => heartPuff(e.clientX, e.clientY)}
+      <div
         style={{
-          width: "clamp(128px,38vw,178px)",
-          height: "auto",
-          objectFit: "contain",
-          cursor: "pointer",
-          filter: "drop-shadow(0 16px 26px rgba(200,110,150,.3))",
+          margin: "auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
         }}
-      />
+      >
+      {/*
+        A fixed frame, and the penguin holds still.
+
+        It used to bob inside a box sized to itself, which on a short viewport
+        drifted it in and out of the clipped region — it read as the art hanging
+        off the screen. The frame now reserves its height so nothing below
+        shifts when the image loads, and the only motion on this screen is the
+        confetti, which is the part that is supposed to move.
+      */}
+      <div
+        style={{
+          height: "clamp(128px,30vh,178px)",
+          width: "100%",
+          maxWidth: 260,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={ASSETS.joyTears}
+          alt="A penguin overwhelmed with happy tears"
+          onClick={(e) => heartPuff(e.clientX, e.clientY)}
+          style={{
+            height: "100%",
+            width: "auto",
+            maxWidth: "100%",
+            objectFit: "contain",
+            cursor: "pointer",
+            filter: "drop-shadow(0 16px 26px rgba(200,110,150,.3))",
+          }}
+        />
+      </div>
 
       <h2
         className="ps-pop"
@@ -160,7 +219,7 @@ export default function Celebration({
           </span>
         )}
         <span style={chip("rgba(255,255,255,.78)", PINK_DEEP)}>
-          <span aria-hidden>💍</span> {data.recipientName || "you"} said yes
+          {data.recipientName || "you"} {voice.saidYesChip}
         </span>
       </div>
 
@@ -269,6 +328,10 @@ export default function Celebration({
         </div>
       </article>
 
+      {/* ── The two ways out ──────────────────────────────────────────────
+          A story card and a link, side by side, because they are different
+          acts rather than a primary and a fallback: one posts a picture to
+          everyone, the other sends the page to one person. */}
       <div
         style={{
           display: "flex",
@@ -279,44 +342,82 @@ export default function Celebration({
           width: "100%",
         }}
       >
-        <button
-          type="button"
-          onClick={() => void share()}
-          className="ps-btn"
+        <div
           style={{
-            border: "none",
-            cursor: "pointer",
-            padding: "14px 26px",
-            borderRadius: 999,
-            background: PINK_GRADIENT,
-            color: "#fff",
-            fontFamily: DISPLAY,
-            fontWeight: 700,
-            fontSize: "clamp(15px,4.2vw,18px)",
-            boxShadow: PINK_GLOW,
-            maxWidth: "88vw",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 10,
+            justifyContent: "center",
+            width: "100%",
           }}
         >
-          <span aria-hidden>💌</span> Tell the whole world
-        </button>
+          <button
+            type="button"
+            onClick={() => void postStory()}
+            disabled={!storyReady || busy}
+            className="ps-btn"
+            style={{
+              border: "none",
+              cursor: storyReady && !busy ? "pointer" : "wait",
+              padding: "14px 24px",
+              borderRadius: 999,
+              background: PINK_GRADIENT,
+              color: "#fff",
+              fontFamily: DISPLAY,
+              fontWeight: 700,
+              fontSize: "clamp(14.5px,4vw,17px)",
+              boxShadow: PINK_GLOW,
+              opacity: storyReady ? 1 : 0.72,
+              maxWidth: "88vw",
+            }}
+          >
+            <span aria-hidden>📸</span> {busy ? "Making it…" : "Share to your story"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void share()}
+            className="ps-btn"
+            style={{
+              cursor: "pointer",
+              padding: "14px 24px",
+              borderRadius: 999,
+              background: "rgba(255,255,255,.8)",
+              border: "1px solid rgba(255,182,205,.95)",
+              color: PINK_DEEP,
+              fontFamily: DISPLAY,
+              fontWeight: 700,
+              fontSize: "clamp(14.5px,4vw,17px)",
+              boxShadow: "0 10px 24px -14px rgba(239,83,125,.6)",
+              maxWidth: "88vw",
+            }}
+          >
+            <span aria-hidden>💌</span> {voice.shareLabel}
+          </button>
+        </div>
 
         <span
           role="status"
           aria-live="polite"
           style={{
             ...chip("rgba(255,255,255,.82)", PINK_DEEP),
-            opacity: copied ? 1 : 0,
-            transform: copied ? "translateY(0)" : "translateY(-4px)",
+            opacity: copied || note ? 1 : 0,
+            transform: copied || note ? "translateY(0)" : "translateY(-4px)",
             transition: "opacity .25s ease, transform .25s ease",
             pointerEvents: "none",
+            textAlign: "center",
           }}
         >
-          {copied ? "Link copied — go on, send it 💞" : " "}
+          {note || (copied ? "Link copied — go on, send it 💞" : " ")}
         </span>
 
-        <p style={{ fontSize: 11.5, color: INK_SOFT, opacity: 0.8, textAlign: "center", maxWidth: 320 }}>
-          screenshot this. you&rsquo;ll want it later.
+        <p style={{ fontSize: 11.5, color: INK_SOFT, opacity: 0.8, textAlign: "center", maxWidth: 340 }}>
+          the story card is 1080&times;1920, sized for Instagram, with a QR back to this page.
         </p>
+      </div>
+
+      {/* The off-screen 1080x1920 node the card is captured from. */}
+      {storyElement}
       </div>
     </section>
   );

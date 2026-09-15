@@ -17,6 +17,7 @@ import type { ProposalData } from "./types";
 import { BODY, DISPLAY, INK, INK_SOFT, PAGE_BG, PINK_DEEP } from "./theme";
 import { usePrefersReducedMotion } from "./motion";
 import { useProposalAudio } from "./useProposalAudio";
+import MusicDock from "./MusicDock";
 import FloatingHearts from "./FloatingHearts";
 import GateScreen from "./GateScreen";
 import MemoryLane from "./MemoryLane";
@@ -39,7 +40,11 @@ export default function ProposalTemplate({
   /** Remembered across acts — Act 4 teases the recipient with this number. */
   const [dodges, setDodges] = useState(0);
   const reduced = usePrefersReducedMotion();
-  const { started, muted, start, toggleMute, attachAudio } = useProposalAudio(data.musicUrl);
+  // Destructured, not held as an object: `react-hooks/refs` treats the hook's
+  // whole return value as ref-bearing because it carries callback refs, and
+  // reading a field off it during render is an error.
+  const { mode: musicMode, track: musicTrackInfo, fileSrc, started, muted, start, toggleMute, attachAudio, attachYouTube } =
+    useProposalAudio(data.musicUrl, data.musicTrack);
 
   // Each act is its own full-height screen, so always begin at the top of it.
   useEffect(() => {
@@ -53,6 +58,26 @@ export default function ProposalTemplate({
     start();
     setAct("memories");
   }, [start]);
+
+  // ── Going back ──────────────────────────────────────────────────────────
+  //
+  // Every act after the gate can step back one. The gate is deliberately not a
+  // destination: returning to it would offer to start music that is already
+  // playing, and re-opening it is the one thing nobody wants to redo.
+  //
+  // Dodges are NOT reset. Somebody who fought the No button eleven times and
+  // then went back to re-read the scrapbook has earned the callback on the
+  // celebration screen, and zeroing it would quietly delete the joke.
+  const backTo: Record<Act, Act | null> = {
+    gate: null,
+    memories: null,
+    ask: "memories",
+    celebration: "ask",
+  };
+  const goBack = useCallback(() => {
+    setAct((a) => backTo[a] ?? a);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const bumpDodges = useCallback(() => setDodges((d) => d + 1), []);
 
@@ -117,44 +142,71 @@ export default function ProposalTemplate({
         }
       `}</style>
 
-      {/* The sender's own track, when they provided one. Never autoplays: the
-          gate's click handler is what calls play(). */}
-      {data.musicUrl ? (
-        <audio ref={attachAudio} src={data.musicUrl} loop preload="none" style={{ display: "none" }} />
+      {/* The sender's own file, when they gave one. Never autoplays: the gate's
+          click handler is what calls play(). A YouTube link is NOT played here
+          — it goes through the visible IFrame player in MusicDock. */}
+      {musicMode === "file" && fileSrc ? (
+        <audio ref={attachAudio} src={fileSrc} loop preload="none" style={{ display: "none" }} />
       ) : null}
 
       <FloatingHearts />
 
-      {/* Music toggle — deliberately TOP-LEFT: the brand badge owns the top-right
-          corner, and keeping both out of the lower half means the dodging "No"
-          button can never end up underneath a fixed control. */}
-      {started && (
+      {/* Music lives bottom-right now — see MusicDock for why, and for the
+          id TheAsk uses to keep the dodging No button out from under it. */}
+      <MusicDock
+        started={started}
+        muted={muted}
+        mode={musicMode}
+        track={musicTrackInfo}
+        onToggleMute={toggleMute}
+        attachYouTube={attachYouTube}
+      />
+
+      {/*
+        One step back, top-left — the corner the music control used to occupy.
+
+        Deliberately a single fixed control rather than a button inside each
+        act: it stays in one place as the acts change under it, which is what
+        makes it read as page navigation rather than as part of the moment. It
+        is absent on the gate and the scrapbook because there is nowhere useful
+        to go back TO from either.
+      */}
+      {backTo[act] && (
         <button
           type="button"
-          onClick={toggleMute}
-          aria-label={muted ? "Unmute the music" : "Mute the music"}
-          aria-pressed={muted}
+          onClick={goBack}
           className="ps-btn"
+          aria-label="Go back one step"
           style={{
             position: "fixed",
-            top: 12,
+            // In preview the builder draws its OWN Back/Create chrome in the
+            // same corner — that Back leaves the template, this one steps back
+            // an act, and stacking them would put one invisibly under the
+            // other. The recipient's page has no such chrome, so it sits in the
+            // corner proper.
+            top: mode === "preview" ? 66 : 12,
             left: 12,
             zIndex: 46,
-            width: 42,
-            height: 42,
-            borderRadius: 14,
-            display: "grid",
-            placeItems: "center",
-            fontSize: 17,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 40,
+            padding: "0 15px 0 12px",
+            borderRadius: 999,
             cursor: "pointer",
-            background: "rgba(255,255,255,.78)",
+            background: "rgba(255,255,255,.8)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             border: "1px solid rgba(255,214,228,.95)",
             boxShadow: "0 8px 20px -8px rgba(239,83,125,.45)",
+            fontFamily: DISPLAY,
+            fontSize: 13,
+            fontWeight: 600,
+            color: INK_SOFT,
           }}
         >
-          <span aria-hidden>{muted ? "🔇" : "🎵"}</span>
+          <span aria-hidden style={{ fontSize: 15, lineHeight: 1 }}>&#8592;</span>
+          back
         </button>
       )}
 

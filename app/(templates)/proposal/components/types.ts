@@ -3,6 +3,11 @@
 // visual template, the EditSheet and the recipient viewer all import from here,
 // so this file is frozen once the others are being built against it.
 
+import type { MusicChoice } from "./music";
+import { isTrackId } from "./music";
+import type { Perspective } from "./copy";
+import { copyFor, isPerspective } from "./copy";
+
 export type EditMode = null | "manual" | "preview";
 
 export interface Toast {
@@ -56,11 +61,25 @@ export interface ProposalData {
   metDate: string;
 
   /**
-   * Optional URL of a track to loop behind the page. Empty string means the
-   * template falls back to its built-in WebAudio melody, so a proposal always
-   * has music without the sender having to host a file.
+   * Optional URL of a track to loop behind the page — a YouTube link, or a
+   * direct link to an audio file. Empty string means the built-in melody named
+   * by `musicTrack` plays, so a proposal always has music without the sender
+   * having to host or licence anything.
    */
   musicUrl: string;
+
+  /**
+   * Which built-in melody plays when `musicUrl` is empty: one of the three ids
+   * in ./music, or "auto" for a different one on every visit. "auto" is the
+   * default, and is why the gallery preview does not sound the same twice.
+   */
+  musicTrack: MusicChoice;
+
+  /**
+   * Which of the two asks this page is making. Drives every default string in
+   * the template — see ./copy.
+   */
+  perspective: Perspective;
 }
 
 /** Every field persisted to the server. Anything absent here is view-only state. */
@@ -78,6 +97,8 @@ export const PROPOSAL_CONTENT_KEYS: (keyof ProposalData)[] = [
   "secretNote",
   "metDate",
   "musicUrl",
+  "musicTrack",
+  "perspective",
 ];
 
 export const MAX_MEMORIES = 6;
@@ -129,29 +150,29 @@ export function daysSince(metDate: string): number | null {
   return days > 0 ? days : null;
 }
 
+const MARRIAGE_COPY = copyFor("marriage");
+
 export const DEMO_DATA: ProposalData = {
   senderName: "Aarav",
   recipientName: "Ananya",
-  gateTitle: "Are you ready for a surprise?",
-  gateButtonLabel: "Yes, show me!",
-  memoryLaneTitle: "Everything that led to this",
+  gateTitle: MARRIAGE_COPY.gateTitle,
+  gateButtonLabel: MARRIAGE_COPY.gateButtonLabel,
+  memoryLaneTitle: MARRIAGE_COPY.memoryLaneTitle,
   memories: [
     { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/hello-cat.webp", caption: "the day you said hi first 🐱" },
     { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/sad-bear.webp", caption: "our first fight, over pizza toppings 🍕" },
     { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/joy-tears.webp", caption: "when you cried at that movie (twice)" },
     { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/ask-hero.webp", caption: "every single day after that 💕" },
   ],
-  askHeadline: "Will you be my forever?",
+  askHeadline: MARRIAGE_COPY.askHeadline,
   heroArt: "ring",
-  yesLabel: "YES! 💖",
-  celebrationTitle: "You are officially mine forever ❤️",
-  secretNote:
-    "I practised this a hundred times in my head and still forgot every word. " +
-    "So here it is, plainly: you are my favourite person, my calmest place and my " +
-    "loudest laugh. I would like to keep choosing you, every ordinary morning, for " +
-    "as long as you'll let me.",
+  yesLabel: MARRIAGE_COPY.yesLabel,
+  celebrationTitle: MARRIAGE_COPY.celebrationTitle,
+  secretNote: MARRIAGE_COPY.secretNote,
   metDate: "",
   musicUrl: "",
+  musicTrack: "auto",
+  perspective: "marriage",
 };
 
 export function proposalDataToBody(data: ProposalData, password?: string): Record<string, unknown> {
@@ -201,5 +222,10 @@ export function dbToProposalData(db: Record<string, unknown> | null | undefined)
     secretNote: pick("secretNote"),
     metDate: pick("metDate"),
     musicUrl: pick("musicUrl"),
+    // Anything unrecognised becomes "auto" rather than silencing the page.
+    musicTrack: typeof src.musicTrack === "string" && isTrackId(src.musicTrack)
+      ? (src.musicTrack as MusicChoice)
+      : "auto",
+    perspective: isPerspective(src.perspective) ? src.perspective : "marriage",
   };
 }

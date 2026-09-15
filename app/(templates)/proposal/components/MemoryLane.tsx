@@ -7,7 +7,9 @@
 // `animation-fill-mode: both` entrance coexist with a CSS transition on hover —
 // if both lived on one element the filled animation would win forever.
 
+import { useState } from "react";
 import { ASSETS } from "./assets";
+import PhotoZoom, { type ZoomTarget } from "./PhotoZoom";
 import type { ProposalData } from "./types";
 import { chip, DISPLAY, INK, INK_SOFT, PINK_DEEP, PINK_GLOW, PINK_GRADIENT, SCRIPT } from "./theme";
 
@@ -25,6 +27,14 @@ export default function MemoryLane({
   reduced: boolean;
 }) {
   const memories = data.memories;
+  /**
+   * The photo being looked at up close, or null.
+   *
+   * A scrapbook at 150px a card is a contact sheet; the detail in somebody's
+   * actual photograph is the reason it is on the page at all. Tapping opens it
+   * full-screen where it can be pinched and dragged — see PhotoZoom.
+   */
+  const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   // The CTA lands after the last polaroid has finished arriving.
   const ctaDelay = reduced ? 0 : 180 + memories.length * 90;
 
@@ -90,14 +100,30 @@ export default function MemoryLane({
             className={reduced ? "ps-pola" : "ps-pola ps-pop"}
             style={{ animationDelay: reduced ? undefined : `${140 + i * 90}ms`, position: "relative" }}
           >
-            <div
+            <button
+              type="button"
               className="ps-pola-in"
+              onClick={() =>
+                setZoom({
+                  src: m.imageUrl,
+                  caption: m.caption,
+                  alt: m.caption || `A memory of ${data.recipientName || "us"}`,
+                })
+              }
+              aria-label={m.caption ? `Open photo: ${m.caption}` : "Open photo"}
               style={{
+                display: "block",
+                width: "100%",
+                border: "none",
+                cursor: "zoom-in",
+                textAlign: "inherit",
+                font: "inherit",
                 transform: `rotate(${TILTS[i % TILTS.length]}deg)`,
                 background: "#fff",
                 borderRadius: 10,
                 padding: "9px 9px 0",
                 boxShadow: "0 16px 34px -18px rgba(150,80,110,.55), 0 2px 6px -2px rgba(150,80,110,.2)",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
               {/* washi tape, alternating corners */}
@@ -148,14 +174,13 @@ export default function MemoryLane({
               >
                 {m.caption}
               </p>
-            </div>
+            </button>
           </div>
         ))}
       </div>
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className={reduced ? undefined : "ps-bob"}
         src={ASSETS.askHero}
         alt="An illustrated couple mid-proposal inside a heart"
         style={{
@@ -199,6 +224,12 @@ export default function MemoryLane({
         <span className="ps-hint-hover">hover a photo to straighten it out</span>
         <span className="ps-hint-tap">tap a photo to straighten it out</span>
       </p>
+      {/* Full-screen, pinchable. Rendered here rather than inside the grid so
+          it is not a child of a transformed, tilted polaroid — a fixed element
+          inside a transformed ancestor is positioned against that ancestor, not
+          the viewport, and would open inside the card. */}
+      <PhotoZoom key={zoom?.src ?? "closed"} photo={zoom} onClose={() => setZoom(null)} />
+
     </section>
   );
 }

@@ -7,6 +7,8 @@ import {
   ArrowUp, ArrowDown, Music, CalendarHeart, AlertCircle,
 } from "lucide-react";
 import type { EditMode, HeroArt, Memory, ProposalData } from "./types";
+import { BUILTIN_TRACKS, TRACK_IDS, parseYouTubeId, type MusicChoice } from "./music";
+import { PERSPECTIVES, copyFor } from "./copy";
 import { MAX_MEMORIES, MIN_MEMORIES } from "./types";
 import { HERO_ART } from "./assets";
 import type { ProposalErrors } from "../hooks/useProposalEditor";
@@ -351,6 +353,22 @@ export default memo(function EditSheet({
   const close = useCallback(() => setEditMode("preview"), [setEditMode]);
 
   const usable = mf.memories.filter((m) => m.imageUrl.trim()).length;
+
+  /**
+   * What the pasted link resolves to, or null when the field is empty.
+   *
+   * Mirrors `resolveMusic`'s precedence rather than re-deciding it: the form
+   * must describe what the page will actually do, and two places deciding
+   * "YouTube or file?" separately is how they drift apart.
+   */
+  const trimmedMusic = mf.musicUrl.trim();
+  const linkedMusic: "youtube" | "file" | null = !trimmedMusic
+    ? null
+    : parseYouTubeId(trimmedMusic)
+      ? "youtube"
+      : /^https?:\/\//i.test(trimmedMusic)
+        ? "file"
+        : null;
   const err = (k: keyof ProposalErrors) => (showErrors ? errors[k] : undefined);
 
   return (
@@ -373,26 +391,62 @@ export default memo(function EditSheet({
             className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-auto lg:inset-0 lg:flex lg:items-center lg:justify-center lg:bg-transparent"
           >
             <div
-              className="mx-auto max-h-[86vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-3xl shadow-2xl lg:max-h-[92vh] lg:rounded-3xl"
+              className="psSheet mx-auto w-full overflow-y-auto overscroll-contain rounded-t-3xl shadow-2xl lg:rounded-3xl"
               style={{
-                // Inline, NOT a Tailwind class. `max-h-[86vh]`/`[86dvh]` both came
-                // out as `max-height: none` here, which removed the cap entirely:
-                // the sheet grew to its full content height, and because it is
-                // bottom-anchored that put ~1200px of the form above the top of the
-                // viewport with no way to scroll up to it. The height cap is what
-                // creates the scroll container, so it must not depend on class
-                // generation. `dvh` tracks mobile browser chrome correctly.
-                maxHeight: "86dvh",
                 background: "rgba(255,251,247,.94)",
                 backdropFilter: "blur(18px)",
-                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 28px)",
                 // Momentum scrolling on iOS; without it the sheet feels stuck at
                 // the ends of its range even though it does scroll.
                 WebkitOverflowScrolling: "touch",
               }}
             >
+              {/*
+                ── WHY THE SIZE IS A HAND-WRITTEN STYLE BLOCK ────────────────
+
+                Not a Tailwind class and not an inline style, and both for
+                recorded reasons.
+
+                Tailwind first: `max-h-[86vh]` and `max-h-[86dvh]` both came out
+                of the generator as `max-height: none` here, which removed the
+                cap entirely — the sheet grew to its full content height, and
+                because it is bottom-anchored that put about 1200px of form
+                above the top of the viewport with no way to scroll up to it.
+
+                Inline second: an inline style cannot be overridden by a media
+                query, so the phone's cap would also be the desktop's, which is
+                exactly the bug that left the desktop form cut off. This is the
+                trap documented at length in components/feedback/MascotStage.tsx.
+
+                A plain stylesheet is the only one of the three that can be both
+                reliable and responsive.
+
+                Desktop: half the viewport width and about two thirds its
+                height, which is what a form of this length wants — wide enough
+                for the two-column rows, short enough that the page behind still
+                frames it as a dialog rather than a takeover.
+              */}
+              <style>{`
+                .psSheet {
+                  max-height: 86dvh;
+                  max-width: 42rem;
+                  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+                }
+                @media (min-width: 1024px) {
+                  .psSheet {
+                    width: 50vw;
+                    min-width: 620px;
+                    max-width: 900px;
+                    height: 68dvh;
+                    max-height: 68dvh;
+                    padding-bottom: 26px;
+                  }
+                }
+                /* The grab handle is a phone affordance; a centred dialog has a
+                   close button and does not get dragged. */
+                @media (min-width: 1024px) { .psGrab { display: none } }
+              `}</style>
               <div
-                className="sticky top-0 z-10 flex justify-center pb-1 pt-3"
+                className="psGrab sticky top-0 z-10 flex justify-center pb-1 pt-3"
                 style={{ background: "linear-gradient(180deg,rgba(255,251,247,.98),rgba(255,251,247,.7))" }}
               >
                 <div className="h-1 w-10 rounded-full" style={{ background: "#EFD9E5" }} />
@@ -444,6 +498,49 @@ export default memo(function EditSheet({
                   />
                 </Field>
 
+                {/* ── What kind of ask this is ──────────────────────────
+                    First, because it rewrites the wording of every other field
+                    below it. Putting it lower would mean somebody writes their
+                    headline and then watches the toggle overwrite it. */}
+                <Field
+                  label="What are you asking?"
+                  hint="Changes the wording across the whole page. Anything you have written yourself is kept."
+                >
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {PERSPECTIVES.map((key) => {
+                      const c = copyFor(key);
+                      const on = mf.perspective === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => updateMf("perspective", key)}
+                          aria-pressed={on}
+                          className="rounded-2xl p-3 text-left transition-transform active:scale-95"
+                          style={{
+                            border: `2px solid ${on ? PINK : LINE}`,
+                            background: on ? PINK_SOFT : "#FFF",
+                            boxShadow: on ? "0 8px 20px -8px rgba(242,120,159,.5)" : "none",
+                          }}
+                        >
+                          <span
+                            className="block text-[13px] font-bold leading-tight"
+                            style={{ fontFamily: HEAD, color: on ? PINK : INK }}
+                          >
+                            {c.emoji} {c.pickerLabel}
+                          </span>
+                          <span
+                            className="mt-1 block text-[11px] leading-snug"
+                            style={{ color: MUTED }}
+                          >
+                            {c.pickerBlurb}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+
                 {/* ── Hero art picker ── */}
                 <Field label="Pick your moment" hint="The animation that headlines the proposal.">
                   <div className="grid grid-cols-3 gap-2.5">
@@ -463,8 +560,14 @@ export default memo(function EditSheet({
                           }}
                           aria-pressed={on}
                         >
+                          {/* 80px, and `objectFit` as a style rather than a
+                              class: at 56px these thumbnails were showing the
+                              top third of a tall animation and reading as
+                              broken art. The box is now tall enough to letterbox
+                              the real aspect ratio, and the fit cannot be lost
+                              to class generation. */}
                           <span
-                            className="grid h-14 w-full place-items-center overflow-hidden rounded-xl"
+                            className="grid h-20 w-full place-items-center overflow-hidden rounded-xl"
                             style={{ background: on ? "#FFF" : "#FDF6FA" }}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -472,7 +575,11 @@ export default memo(function EditSheet({
                               src={art.src}
                               alt={art.alt}
                               loading="lazy"
-                              className="h-full w-full object-contain"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                              }}
                             />
                           </span>
                           <span
@@ -587,11 +694,52 @@ export default memo(function EditSheet({
                   </div>
                 </Field>
 
+                {/* ── Music ─────────────────────────────────────────────────
+                    Two controls, and the link wins when it is filled in: a
+                    sender who pasted something meant it, and silently playing a
+                    built-in melody over the top of their choice would be the
+                    single most confusing thing this form could do. The picker
+                    is dimmed rather than removed when that happens, so it is
+                    visible why it is not in charge. */}
                 <Field
-                  label="Music link (optional)"
-                  hint="Leave this blank and the page plays its own built-in melody."
+                  label="Music"
+                  hint="Plays from the moment they open it. There is a mute button on the page."
                 >
-                  <div className="relative">
+                  <div
+                    className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                    style={{ opacity: linkedMusic ? 0.45 : 1 }}
+                  >
+                    {(["auto", ...TRACK_IDS] as MusicChoice[]).map((id) => {
+                      const t = id === "auto" ? null : BUILTIN_TRACKS[id as Exclude<MusicChoice, "auto">];
+                      const on = mf.musicTrack === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={Boolean(linkedMusic)}
+                          onClick={() => updateMf("musicTrack", id)}
+                          aria-pressed={on}
+                          className="rounded-2xl p-2.5 text-left transition-transform active:scale-95 disabled:cursor-not-allowed"
+                          style={{
+                            border: `2px solid ${on ? PINK : LINE}`,
+                            background: on ? PINK_SOFT : "#FFF",
+                          }}
+                        >
+                          <span
+                            className="block text-[12px] font-bold leading-tight"
+                            style={{ fontFamily: HEAD, color: on ? PINK : INK }}
+                          >
+                            {t ? `${t.emoji} ${t.label}` : "🎲 Surprise me"}
+                          </span>
+                          <span className="mt-0.5 block text-[10.5px] leading-snug" style={{ color: MUTED }}>
+                            {t ? t.blurb : "A different one each time."}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="relative mt-2.5">
                     <Music
                       size={15}
                       className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2"
@@ -600,12 +748,30 @@ export default memo(function EditSheet({
                     <input
                       value={mf.musicUrl}
                       onChange={(ev) => updateMf("musicUrl", ev.target.value)}
-                      placeholder="https://…/our-song.mp3"
+                      placeholder="Or paste a YouTube link, or an .mp3 URL"
                       inputMode="url"
                       className={INPUT_CLS + " pl-10"}
                       style={inputStyle}
                     />
                   </div>
+
+                  <p className="mt-1.5 text-[11px] leading-snug" style={{ color: MUTED }}>
+                    {linkedMusic === "youtube" ? (
+                      <>
+                        <strong style={{ color: PINK }}>YouTube song detected.</strong> It plays through
+                        YouTube&rsquo;s own player, which appears as a small panel in the corner of the
+                        page — it has to stay visible, that is YouTube&rsquo;s rule, not ours.
+                      </>
+                    ) : linkedMusic === "file" ? (
+                      <>
+                        <strong style={{ color: PINK }}>Audio link detected.</strong> Make sure it is a
+                        file you have the right to share.
+                      </>
+                    ) : (
+                      <>The melodies above are written for this page, so there is nothing to load and
+                      nothing that can be taken down. Paste a link if you have one particular song.</>
+                    )}
+                  </p>
                 </Field>
 
                 {/* ── Advanced wording ── */}

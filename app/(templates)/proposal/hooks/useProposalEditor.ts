@@ -8,6 +8,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { type ProposalData, type Memory, type EditMode, DEMO_DATA, MIN_MEMORIES, MAX_MEMORIES, proposalDataToBody, dbToProposalData } from "../components/types";
+import { applyPerspective, isPerspective } from "../components/copy";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -271,8 +272,24 @@ export function useProposalEditor() {
     return d.memories.length ? d : { ...d, memories: DEMO_DATA.memories };
   }, [editMode, mf, content]);
 
+  /**
+   * One setter for every field, with one special case.
+   *
+   * Changing `perspective` is not just changing a field: it is changing which
+   * of two sets of words the template speaks, and the sender is looking at
+   * those words in the form. `applyPerspective` rewrites only the strings that
+   * still hold the OTHER perspective's default — anything they typed
+   * themselves, including a letter they spent ten minutes on, survives the
+   * switch untouched. Flipping the toggle to see what it looks like must never
+   * be the thing that eats their writing.
+   */
   const updateMf = useCallback(
-    (key: keyof ProposalData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
+    (key: keyof ProposalData, val: unknown) =>
+      setMf((p) =>
+        key === "perspective" && isPerspective(val)
+          ? applyPerspective(p, val)
+          : { ...p, [key]: val },
+      ),
     [],
   );
 
