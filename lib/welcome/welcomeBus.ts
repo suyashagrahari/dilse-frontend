@@ -105,8 +105,17 @@ export const GREET_DEBOUNCE_MS = 90 * 1000;
 /** The entrance animation in `MascotStage`, which runs before the loop does. */
 export const ENTRANCE_MS = 420;
 
-/** A beat of stillness after the loop finishes, so it does not cut to black. */
-export const REST_MS = 280;
+/**
+ * Stillness after the loop finishes, so the greeting does not cut away on the
+ * frame it lands on.
+ *
+ * Raised from 280ms once the hold started being measured from the artwork
+ * rather than from the mount — see `WelcomeBackOverlay`. The pose at the end is
+ * the whole point of both files (the penguin's arms up under its confetti, the
+ * shiba holding its sign) and 280ms was not long enough to read it as a picture
+ * rather than a flicker.
+ */
+export const REST_MS = 700;
 
 const STORAGE_KEY = "ss_welcome_greeted";
 
@@ -273,6 +282,10 @@ export function firstName(raw: string | null | undefined): string {
  */
 export function greetThenRun(run: () => void): void {
   if (!shouldGreet()) {
+    // A greeting is already up — queue this toast behind it rather than
+    // flashing it under the scrim. Every other reason to skip falls through to
+    // showing the toast at once, exactly as if this feature did not exist.
+    if (current !== null && deferUntilWelcomeClosed(run)) return;
     run();
     return;
   }
@@ -303,6 +316,30 @@ export function greetThenRun(run: () => void): void {
     onRelease: release,
   };
   emit();
+}
+
+/**
+ * Queue something to run when the open greeting closes, if one is open.
+ *
+ * Returns `true` when it took responsibility. Without this, a second publish
+ * toast raised while the greeting is up would be shown IMMEDIATELY — technically
+ * behind the scrim, in practice a blurred smear of text under the mascot, and
+ * then gone by the time the greeting lifts. Queued instead, it lands where every
+ * publish toast lands: after the greeting, in full, on a clear screen.
+ *
+ * The same shape as `deferUntilFeedbackClosed`, and mutated in place for the
+ * same reason: `getSnapshot` returns this object, and handing
+ * `useSyncExternalStore` a new identity with no `emit()` is the shape React
+ * warns about. What is on screen has not changed — only what follows it.
+ */
+export function deferUntilWelcomeClosed(run: () => void): boolean {
+  if (current === null) return false;
+  const previous = current.onRelease;
+  current.onRelease = () => {
+    previous();
+    run();
+  };
+  return true;
 }
 
 /**

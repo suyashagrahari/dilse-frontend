@@ -33,6 +33,31 @@
 // "that disappeared" into "that finished". Tapping anywhere, or Escape, skips
 // straight to the end — nobody is ever held here.
 //
+// ── THE HOLD STARTS AT THE ARTWORK, NOT AT THE MOUNT ────────────────────────
+//
+// This is the whole reason the file has a `ready` state, and it was a real bug
+// rather than a precaution. Measured on a throttled connection with a cold
+// cache, a real publish looked like this:
+//
+//     687ms   overlay up, <img> LOADING, naturalWidth 0   ← an empty square
+//    1058ms   art finally decoding
+//    3078ms   gone, toast shown
+//
+// The hold ran from the mount, so on that connection most of the greeting was
+// a blank scrim and the animation appeared for a moment at the end. From the
+// outside that is indistinguishable from "it flashed and vanished" — which is
+// exactly how it was reported.
+//
+// So nothing is rendered until the image has decoded. `MascotStage` is mounted
+// only once it is ready, which matters twice over: it means the entrance
+// animation plays WITH the artwork instead of running out invisibly while the
+// bytes are still arriving, and it means the hold — and the hairline that
+// draws it — measures time the mascot was actually on screen.
+//
+// `READY_CAP_MS` is the backstop. A dead CDN, an offline phone, an image that
+// never fires either event: after that long we show the stage regardless and
+// start the hold anyway. The toast must never be stranded behind a picture.
+//
 // ── THE ONE PROMISE ─────────────────────────────────────────────────────────
 //
 // `closeWelcome` releases the publish toast. Every exit below routes through
@@ -40,7 +65,7 @@
 // the same frame must not push the toast twice — and no exit at all would mean
 // a creator who published successfully and was told nothing.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import MascotStage from "@/components/feedback/MascotStage";
 import { BRAND } from "@/lib/brand";
@@ -51,30 +76,95 @@ export interface WelcomeBackOverlayProps {
   greeting: WelcomeGreeting;
 }
 
+/**
+ * How long to wait for the artwork before showing the greeting anyway.
+ *
+ * Long enough to cover a cold cache on a slow connection, short enough that a
+ * CDN that is simply down cannot hold up somebody's "It's live". Past this the
+ * stage mounts regardless and the picture arrives whenever it arrives.
+ */
+const READY_CAP_MS = 1500;
+
+/**
+ * A tap inside this window does not dismiss.
+ *
+ * The greeting arrives moments after a deliberate tap on Publish, at the bottom
+ * of a screen somebody's thumb is already on. Without a grace period an
+ * impatient second tap — or a device that replays one — closes the greeting on
+ * the frame it appears, which looks exactly like the bug this file was fixed
+ * for. Escape has no such hazard and is live immediately.
+ */
+const TAP_GRACE_MS = 400;
+
 export default function WelcomeBackOverlay({ greeting }: WelcomeBackOverlayProps) {
   const mascot = WELCOME_MASCOTS[greeting.mascot];
   const { tone } = mascot;
 
+  // Whether the artwork is decoded and safe to show. See the note at the top of
+  // this file — this is the difference between a greeting and a blank scrim.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    const done = () => {
+      if (live) setReady(true);
+    };
+
+    // Decoded off-DOM rather than by rendering the <img> and waiting on its
+    // onLoad: the point is that `MascotStage` must not mount until the picture
+    // exists, and a stage with no image in it cannot report one arriving.
+    const probe = new window.Image();
+    probe.onload = done;
+    // An error resolves too. A greeting with a missing picture is a poor
+    // greeting; a publish with no confirmation is a broken publish.
+    probe.onerror = done;
+    probe.src = mascot.src;
+    // Already in cache — the normal case, because `WelcomeHost` warmed it while
+    // they were typing. `complete` is true synchronously and `onload` may never
+    // fire at all, so this branch is load-bearing rather than an optimisation.
+    if (probe.complete) done();
+
+    const cap = setTimeout(done, READY_CAP_MS);
+    return () => {
+      live = false;
+      clearTimeout(cap);
+      probe.onload = null;
+      probe.onerror = null;
+    };
+  }, [mascot.src]);
+
   // ── The hold ──────────────────────────────────────────────────────────────
   //
-  // `holdMs` comes from the bus, which computes it from this file's own
-  // measured loop length, so the penguin's confetti finishes falling and the
-  // shiba is still holding its sign when it leaves. A single hard-coded number
-  // would cut one of the two short.
+  // Started by `ready`, not by the mount. `holdMs` comes from the bus, which
+  // computes it from the artwork's own measured loop length, so the penguin's
+  // confetti finishes falling and the shiba is still holding its sign when it
+  // leaves. A single hard-coded number would cut one of the two short.
   //
-  // Escape is handled here beside it because both are the same intent — end
-  // this now — and both must land on the one release.
+  // Escape is handled here beside it, and deliberately outside the `ready`
+  // guard: somebody who wants out before the picture has even arrived should
+  // get out, and it releases the toast on the way.
   useEffect(() => {
-    const timer = setTimeout(closeWelcome, greeting.holdMs);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeWelcome();
     };
     window.addEventListener("keydown", onKey);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [greeting.holdMs]);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(closeWelcome, greeting.holdMs);
+    return () => clearTimeout(timer);
+  }, [ready, greeting.holdMs]);
+
+  // Taps are ignored until the greeting has been on screen long enough to have
+  // been seen. `ready` gates the timer, so this gates from the same moment.
+  const [tappable, setTappable] = useState(false);
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(() => setTappable(true), TAP_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [ready]);
 
   const line = greeting.name ? `${mascot.greeting}, ${greeting.name}` : `${mascot.greeting}!`;
 
@@ -85,7 +175,9 @@ export default function WelcomeBackOverlay({ greeting }: WelcomeBackOverlayProps
       // creator left it — on the Publish button they just used.
       role="status"
       aria-live="polite"
-      onClick={closeWelcome}
+      onClick={() => {
+        if (tappable) closeWelcome();
+      }}
       className="ssWelcomeHost"
       style={{
         position: "fixed",
@@ -109,25 +201,31 @@ export default function WelcomeBackOverlay({ greeting }: WelcomeBackOverlayProps
         animation: "ssWelcomeFade 200ms ease-out both",
       }}
     >
-      <div className="ssWelcomeCol">
-        <MascotStage tone={tone} beat={greeting.mascot}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mascot.src}
-            alt={mascot.alt}
-            width={mascot.width}
-            height={mascot.height}
-            decoding="async"
-          />
-        </MascotStage>
+      {/* Nothing until the picture exists — not a blank stage, not a spinner.
+          On a warm cache this is the same frame as the mount; on a cold one it
+          is a moment of plain scrim, which reads as the screen settling rather
+          than as something that failed to draw. */}
+      {ready && (
+        <div className="ssWelcomeCol">
+          <MascotStage tone={tone} beat={greeting.mascot}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={mascot.src}
+              alt={mascot.alt}
+              width={mascot.width}
+              height={mascot.height}
+              decoding="async"
+            />
+          </MascotStage>
 
-        <p className="ssWelcomeLine">{line}</p>
-        <p className="ssWelcomeSub">Good to have you making again.</p>
+          <p className="ssWelcomeLine">{line}</p>
+          <p className="ssWelcomeSub">Good to have you making again.</p>
 
-        <div className="ssWelcomeTrack" aria-hidden="true">
-          <i style={{ animationDuration: `${greeting.holdMs}ms` }} />
+          <div className="ssWelcomeTrack" aria-hidden="true">
+            <i style={{ animationDuration: `${greeting.holdMs}ms` }} />
+          </div>
         </div>
-      </div>
+      )}
 
       <style>{`
         .ssWelcomeCol {
