@@ -2,7 +2,26 @@
 //
 // The public wall. No sign-in, no account, no gate: the people this page is for
 // are the ones deciding whether to try the product at all, and most of them
-// have never logged in.
+// have never logged in. Nothing on this page reads the session, so it renders
+// identically for a signed-out stranger and for the person who wrote the top
+// review.
+//
+// ── WHAT THE COPY HAS TO DO ─────────────────────────────────────────────────
+//
+// One job: convince somebody that these are real people, not marketing. So the
+// lead says who wrote them and what we do NOT do to them — no editing, no
+// hiding the low ones — because that is the claim a testimonial page lives or
+// dies on, and it is a claim this page can actually keep: the rows come
+// straight out of the feedback modal, the distribution shows every star
+// including the ones we would rather not, and there is no "featured" flag
+// anywhere in the model to put a thumb on the scale with.
+//
+// An earlier version spent its lead explaining the privacy mechanics instead —
+// first names only, no links to anybody's card. True, and the wrong thing to
+// lead with: a reader who has not yet decided these are real people does not
+// care how carefully we hide the parts we are not showing. The privacy promise
+// is still kept, it is just kept in the projection on the server rather than
+// announced in the headline.
 //
 // ── WHY THE FIRST PAGE IS SERVER-RENDERED ───────────────────────────────────
 //
@@ -38,65 +57,152 @@ export const revalidate = 300;
 export const metadata: Metadata = buildMeta({
   title: "Feedback from creators — SubhSandesh",
   description:
-    "Real ratings and words from people who made and sent a SubhSandesh page. Star ratings, what they said, and what they made — no sign-in needed.",
+    "Real, unedited reviews from people who made and sent a SubhSandesh page. Star ratings and their own words, open to everyone — no sign-in needed.",
   alternates: { canonical: `${SITE_URL}/feedback` },
 });
 
 export default async function FeedbackPage() {
-  const initial = await fetchPublicFeedback({ sort: "recent", limit: 24 });
+  // ── WRITTEN REVIEWS FIRST, WITH A FALLBACK ───────────────────────────────
+  //
+  // Most people rate and leave; a wall that opens on a grid of bare stars is a
+  // chart, not a testimonial page, and the sentences are the only part a
+  // stranger can actually read. So the default view is the ones with words.
+  //
+  // The fallback matters more than it looks. Early on — a new deploy, a fresh
+  // environment — there can be genuine ratings and not one sentence yet, and
+  // defaulting to words would then render "nothing here yet" directly over a
+  // real average. When there is nothing written, the page opens on everything
+  // instead and the toggle starts off, so the wall is never emptier than the
+  // data.
+  const written = await fetchPublicFeedback({ sort: "recent", words: true, limit: 24 });
+  const wordsFirst = written.items.length > 0 || written.stats.total === 0;
+  const initial = wordsFirst
+    ? written
+    : await fetchPublicFeedback({ sort: "recent", limit: 24 });
 
   return (
     <main className="fbPage">
       <header className="fbHead">
-        <p className="fbEyebrow">Feedback</p>
-        <h1 className="fbTitle">What creators say</h1>
-        <p className="fbLead">
-          Every rating below was left by somebody the moment they finished a page and sent it to
-          someone they love. Names are first names only — no email addresses, and never a link to
-          anybody&rsquo;s card.
+        <p className="fbBadge">
+          <span className="fbBadgeDot" aria-hidden="true" />
+          Real reviews from real creators
         </p>
+
+        <h1 className="fbTitle">What creators say</h1>
+
+        <p className="fbLead">
+          Every review here was written by somebody who actually made a page and sent it to someone
+          they love. We don&rsquo;t edit them, and we don&rsquo;t hide the low ones.
+        </p>
+
+        <ul className="fbTrust">
+          <li>Real creators</li>
+          <li>Unedited</li>
+          <li>No sign-in needed</li>
+        </ul>
       </header>
 
-      <FeedbackWall initial={initial} />
+      <FeedbackWall initial={initial} initialWords={wordsFirst} />
 
       <style>{`
-        .fbPage { min-height: 100dvh; background: #f5ede6; padding-top: 18px }
+        .fbPage { min-height: 100dvh; background: #f5ede6; padding-top: 10px }
         .fbHead {
           width: 100%;
           max-width: 1240px;
           margin: 0 auto;
-          padding: 26px 16px 22px;
+          padding: 18px 16px 20px;
           text-align: center;
         }
-        @media (min-width: 600px) { .fbHead { padding: 40px 24px 28px } }
-        /* 64px, not 52: the desktop nav is a floating pill over the page, and
-           the eyebrow was landing about ten pixels under its edge. */
-        @media (min-width: 1024px) { .fbHead { padding: 64px 32px 32px } }
+        @media (min-width: 600px) { .fbHead { padding: 34px 24px 26px } }
+        /* The clearance rule, and the breakpoint is 768 rather than 1024 on
+           purpose. The desktop nav is a pill drawn OVER the page — position
+           fixed, not in flow — and it appears at Tailwind's "md" breakpoint, which is
+           768px. Measured: its lower edge is at 74px at every width from 768
+           up, and with only the 600px padding the badge sat at 44px, i.e.
+           thirty pixels UNDER the nav. Anything keyed to 1024 leaves a
+           268px-wide band of tablet widths broken. */
+        @media (min-width: 768px) { .fbHead { padding: 76px 32px 30px } }
 
-        .fbEyebrow {
-          margin: 0 0 10px;
+        /* ── The badge ───────────────────────────────────────────────────────
+           Replaces an eyebrow that read "FEEDBACK" directly under a nav tab
+           labelled FEEDBACK — a word the reader had just clicked, repeated
+           back at them, carrying nothing. This says something instead, and the
+           live dot is the one moving thing above the fold. */
+        .fbBadge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0 0 12px;
+          padding: 6px 14px 6px 11px;
+          border-radius: 999px;
+          background: rgba(201,168,76,0.12);
+          border: 1px solid rgba(201,168,76,0.34);
           font-size: 11.5px;
           font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: #a8823a;
+          letter-spacing: 0.04em;
+          color: #8b5a2b;
         }
+        @media (min-width: 600px) { .fbBadge { font-size: 12.5px } }
+        .fbBadgeDot {
+          width: 7px;
+          height: 7px;
+          flex: none;
+          border-radius: 50%;
+          background: #3aa76d;
+          box-shadow: 0 0 0 0 rgba(58,167,109,0.55);
+          animation: fbPulse 2400ms ease-out infinite;
+        }
+        @keyframes fbPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(58,167,109,0.5) }
+          70%  { box-shadow: 0 0 0 7px rgba(58,167,109,0) }
+          100% { box-shadow: 0 0 0 0 rgba(58,167,109,0) }
+        }
+
         .fbTitle {
           margin: 0;
-          font-size: clamp(27px, 6.4vw, 44px);
-          line-height: 1.1;
+          font-size: clamp(28px, 6.6vw, 46px);
+          line-height: 1.08;
           font-weight: 800;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.022em;
           color: #2a0a0e;
         }
         .fbLead {
-          margin: 14px auto 0;
-          max-width: 62ch;
-          font-size: 14.5px;
-          line-height: 1.62;
+          margin: 12px auto 0;
+          max-width: 60ch;
+          font-size: 14px;
+          line-height: 1.6;
           color: #7f5f5f;
         }
-        @media (min-width: 600px) { .fbLead { font-size: 15.5px } }
+        @media (min-width: 600px) { .fbLead { font-size: 15.5px; margin-top: 14px } }
+
+        /* ── Trust row ───────────────────────────────────────────────────────
+           Three short facts, on one line even at 360px — which is why the
+           labels are two words each and not sentences. The last one is there
+           because "can I read this without an account?" is a real question and
+           the answer is the whole point of the page. */
+        .fbTrust {
+          list-style: none;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px 14px;
+          margin: 14px 0 0;
+          padding: 0;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #9a7070;
+        }
+        @media (min-width: 600px) { .fbTrust { font-size: 12.5px; gap: 10px 20px } }
+        .fbTrust li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap }
+        .fbTrust li::before {
+          content: "✓";
+          font-weight: 800;
+          color: #3aa76d;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .fbBadgeDot { animation: none }
+        }
       `}</style>
     </main>
   );

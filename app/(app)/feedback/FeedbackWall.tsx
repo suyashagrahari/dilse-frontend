@@ -25,7 +25,18 @@
 // distribution bar is the one control where the affordance and the data are the
 // same object: the row that says "5 stars, 218" IS the button for "show me
 // those". Tapping the active one clears it, so there is no dead end and no
-// separate All chip to hunt for.
+// separate All chip to hunt for — which is also why the phone layout can drop
+// the "Clear filters" button entirely without stranding anybody.
+//
+// ── WHY "WITH WORDS" STARTS ON ──────────────────────────────────────────────
+//
+// Most people rate and leave. Open on everything and the first screen is a grid
+// of bare stars — a chart drawn as cards, with nothing on it a stranger can
+// read. The sentences are the entire value of this page to somebody deciding
+// whether to try the product, so they are what the page opens on, and the
+// toggle is there to widen it rather than to find it. The server component
+// falls back to everything when nothing has been written yet; see the note
+// there.
 //
 // ── ON NAMES AND FACES ──────────────────────────────────────────────────────
 //
@@ -43,11 +54,13 @@
 // is. A 320px floor rather than 280 is a deliberate typographic choice — 280
 // gave four columns of 285px at 1280, and 285px is a cramped measure for a
 // paragraph somebody wrote by hand. The summary flips from stacked to side by
-// side at 600.
+// side at 600, and the filter row is sized to stay on ONE line at 360px.
 //
 // All of it lives in the stylesheet below, never inline: an inline style
 // outranks every media query, which is the trap documented at length in
-// components/feedback/MascotStage.tsx.
+// components/feedback/MascotStage.tsx. The one inline value here is a
+// per-card animation delay, which is not a responsive property and which the
+// reduced-motion block neutralises by removing the animation itself.
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { User } from "lucide-react";
@@ -70,6 +83,16 @@ function toneFor(seed: string): string {
   for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) % 100000;
   return AVATAR_TONES[h % AVATAR_TONES.length];
 }
+
+/**
+ * How long the entrance stagger runs for.
+ *
+ * Capped at eight cards: past that the delay is longer than anybody waits, and
+ * on "Show more" the twenty-fifth card would otherwise arrive a second and a
+ * half after the button was pressed, which reads as jank rather than polish.
+ */
+const STAGGER_MS = 55;
+const STAGGER_CAP = 8;
 
 /** "2 days ago". Coarse on purpose — an exact timestamp is not the point. */
 function whenever(iso: string): string {
@@ -101,12 +124,18 @@ function Stars({ value, size = 15 }: { value: number; size?: number }) {
 export interface FeedbackWallProps {
   /** Server-rendered first page, so the wall has content before any JS runs. */
   initial: PublicFeedbackPage;
+  /**
+   * Whether that first page was the written-only view. Passed in rather than
+   * assumed `true`, so the toggle always agrees with the rows underneath it
+   * even on the fallback path where nothing has been written yet.
+   */
+  initialWords?: boolean;
 }
 
-export default function FeedbackWall({ initial }: FeedbackWallProps) {
+export default function FeedbackWall({ initial, initialWords = true }: FeedbackWallProps) {
   const [sort, setSort] = useState<FeedbackSort>("recent");
   const [rating, setRating] = useState<string>("all");
-  const [words, setWords] = useState(false);
+  const [words, setWords] = useState(initialWords);
 
   const [page, setPage] = useState<PublicFeedbackPage>(initial);
   const [items, setItems] = useState<PublicFeedbackItem[]>(initial.items);
@@ -164,7 +193,9 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
     [stats]
   );
 
-  const filtered = rating !== "all" || words;
+  // "Clear" is about getting back to the view the page opens on, which now has
+  // the words toggle ON — so a switched-off toggle counts as a filter too.
+  const filtered = rating !== "all" || !words;
 
   return (
     <div className="fbWrap">
@@ -172,12 +203,16 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
       <section className="fbSummary" aria-label="Rating summary">
         <div className="fbScore">
           <div className="fbBig">{stats.total ? stats.average.toFixed(1) : "—"}</div>
-          <Stars value={Math.round(stats.average)} size={19} />
-          <p className="fbScoreNote">
-            {stats.total === 0
-              ? "No ratings yet"
-              : `${stats.total.toLocaleString("en-IN")} ${stats.total === 1 ? "rating" : "ratings"}`}
-          </p>
+          {/* A column on a phone so the score reads as one horizontal unit and
+              gives the bars back about sixty vertical pixels above the fold. */}
+          <div className="fbScoreMeta">
+            <Stars value={Math.round(stats.average)} size={19} />
+            <p className="fbScoreNote">
+              {stats.total === 0
+                ? "No ratings yet"
+                : `${stats.total.toLocaleString("en-IN")} ${stats.total === 1 ? "rating" : "ratings"}`}
+            </p>
+          </div>
         </div>
 
         <div className="fbBars">
@@ -190,6 +225,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
                 type="button"
                 className={`fbBar${active ? " is-active" : ""}`}
                 aria-pressed={active}
+                aria-label={`${n} star ratings: ${count}`}
                 // Tapping the active row clears it, so the bars are the whole
                 // rating filter and there is nothing to get stuck in.
                 onClick={() => void apply({ rating: active ? "all" : String(n) })}
@@ -225,7 +261,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
             aria-pressed={sort === "rating"}
             onClick={() => void apply({ sort: "rating" })}
           >
-            Highest rated
+            Top rated
           </button>
         </div>
 
@@ -233,16 +269,22 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           type="button"
           className={`fbToggle${words ? " is-on" : ""}`}
           aria-pressed={words}
+          aria-label="Show only feedback that includes written words"
           onClick={() => void apply({ words: !words })}
         >
-          Only with words
+          <span className="fbTick" aria-hidden="true">
+            ✓
+          </span>
+          With words
         </button>
 
+        {/* Desktop only. On a phone the row has to stay on one line, and the
+            bars already clear themselves on a second tap. */}
         {filtered && (
           <button
             type="button"
             className="fbClear"
-            onClick={() => void apply({ rating: "all", words: false })}
+            onClick={() => void apply({ rating: "all", words: true, sort: "recent" })}
           >
             Clear filters
           </button>
@@ -277,18 +319,23 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
       ) : (
         <>
           <ul className="fbGrid">
-            {items.map((it) => (
-              <li key={it.id} className="fbCard">
+            {items.map((it, i) => (
+              <li
+                key={it.id}
+                // `is-quiet` rather than a line of apologetic italics where the
+                // quote would be. Somebody who rated without writing did not
+                // leave a gap to explain away; the card is simply shorter and
+                // a shade flatter, which reads as a rating rather than as a
+                // review that failed to load.
+                className={`fbCard${it.comment ? "" : " is-quiet"}`}
+                style={{ animationDelay: `${Math.min(i, STAGGER_CAP) * STAGGER_MS}ms` }}
+              >
                 <div className="fbCardTop">
                   <Stars value={it.rating} />
                   <span className="fbWhen">{whenever(it.createdAt)}</span>
                 </div>
 
-                {it.comment ? (
-                  <p className="fbQuote">{it.comment}</p>
-                ) : (
-                  <p className="fbQuote fbQuiet">Rated {it.rating} out of 5</p>
-                )}
+                {it.comment && <blockquote className="fbQuote">{it.comment}</blockquote>}
 
                 <div className="fbWho">
                   {/* A "?" over a bright colour reads as an error. Somebody
@@ -312,7 +359,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           {page.hasMore && (
             <div className="fbMoreRow">
               <button type="button" className="fbMore" onClick={loadMore} disabled={more}>
-                {more ? "Loading…" : "Show more"}
+                {more ? "Loading…" : "Show more reviews"}
               </button>
             </div>
           )}
@@ -334,8 +381,8 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
            that carries information at a glance. */
         .fbSummary {
           display: grid;
-          gap: 20px;
-          padding: 20px;
+          gap: 18px;
+          padding: 18px;
           border-radius: 20px;
           background: ${BRAND.surface};
           border: 1px solid ${BRAND.border};
@@ -350,36 +397,51 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           }
         }
 
-        .fbScore { text-align: center }
+        /* Phone: number and stars share a line. Desktop: the classic stacked
+           score column, which has the room for it. */
+        .fbScore {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+        }
+        .fbScoreMeta { text-align: left }
         @media (min-width: 600px) {
-          .fbScore { border-right: 1px solid ${BRAND.border}; padding-right: 28px }
+          .fbScore {
+            display: block;
+            text-align: center;
+            border-right: 1px solid ${BRAND.border};
+            padding-right: 28px;
+          }
+          .fbScoreMeta { text-align: center }
         }
         .fbBig {
-          font-size: 46px;
+          font-size: 44px;
           line-height: 1;
           font-weight: 800;
           letter-spacing: -0.02em;
           color: ${BRAND.text};
         }
         @media (min-width: 600px) { .fbBig { font-size: 54px } }
-        .fbScoreNote { margin: 8px 0 0; font-size: 13px; color: ${BRAND.muted} }
+        .fbScoreNote { margin: 6px 0 0; font-size: 13px; color: ${BRAND.muted} }
 
-        .fbStars { letter-spacing: 1px; white-space: nowrap; display: inline-block }
-        .fbStars .on { color: ${BRAND.gold} }
+        .fbStars { letter-spacing: 1.5px; white-space: nowrap; display: inline-block }
+        .fbStars .on { color: ${BRAND.gold}; text-shadow: 0 1px 1px rgba(168,130,58,0.28) }
         .fbStars .off { color: rgba(61,12,17,0.16) }
 
         /* ── Distribution, which is also the rating filter ─────────────── */
         /* Capped, and left-aligned against the score column. Allowed to take
            the full remaining width, a 1680px monitor draws a metre-long 5-star
            bar, which reads as decoration rather than data. */
-        .fbBars { display: flex; flex-direction: column; gap: 7px; max-width: 560px }
+        .fbBars { display: flex; flex-direction: column; gap: 4px; max-width: 560px }
+        @media (min-width: 600px) { .fbBars { gap: 6px } }
         .fbBar {
           display: grid;
-          grid-template-columns: 38px 1fr 40px;
+          grid-template-columns: 34px 1fr 32px;
           align-items: center;
           gap: 10px;
           width: 100%;
-          padding: 4px 6px;
+          padding: 3px 6px;
           border: 1px solid transparent;
           border-radius: 10px;
           background: none;
@@ -389,6 +451,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           text-align: left;
           transition: background 140ms ease, border-color 140ms ease;
         }
+        @media (min-width: 600px) { .fbBar { grid-template-columns: 38px 1fr 40px; gap: 12px } }
         .fbBar:hover:not(:disabled) { background: ${BRAND.surfaceAlt} }
         .fbBar:disabled { cursor: default; opacity: 0.55 }
         .fbBar.is-active { border-color: ${BRAND.gold}; background: ${BRAND.surfaceAlt} }
@@ -411,17 +474,26 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
         .fbBarCount { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums }
 
         /* ── Controls ──────────────────────────────────────────────────────
-           Wraps rather than scrolls: a horizontally scrolling filter bar hides
-           its own options, and there are only three here. */
+           ONE line on a phone, deliberately: the previous version wrapped the
+           "with words" chip onto a second row under the segmented control,
+           which put two stacked pill rows and a count between the summary and
+           the first card. Sized so segment + chip + count is ~300px and fits
+           inside a 360px viewport's 328px of content width; below 400px the
+           count drops out first, because it is the only part the cards
+           underneath already tell you. */
         .fbControls {
           display: flex;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
           align-items: center;
-          gap: 10px;
-          margin: 22px 0 18px;
+          gap: 8px;
+          margin: 16px 0 14px;
+        }
+        @media (min-width: 600px) {
+          .fbControls { flex-wrap: wrap; gap: 10px; margin: 22px 0 18px }
         }
         .fbSeg {
           display: inline-flex;
+          flex: none;
           padding: 3px;
           border-radius: 999px;
           background: ${BRAND.surfaceAlt};
@@ -431,14 +503,16 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           border: none;
           background: none;
           font: inherit;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 600;
           color: ${BRAND.muted};
-          padding: 7px 15px;
+          padding: 6px 12px;
           border-radius: 999px;
           cursor: pointer;
+          white-space: nowrap;
           transition: background 160ms ease, color 160ms ease;
         }
+        @media (min-width: 600px) { .fbSeg button { font-size: 13px; padding: 7px 15px } }
         .fbSeg button.is-on {
           background: ${BRAND.surface};
           color: ${BRAND.text};
@@ -448,24 +522,54 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
 
         .fbToggle, .fbClear, .fbMore {
           font: inherit;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 600;
-          padding: 8px 16px;
+          padding: 7px 13px;
           border-radius: 999px;
           cursor: pointer;
           border: 1px solid ${BRAND.border};
           background: ${BRAND.surface};
           color: ${BRAND.muted};
+          white-space: nowrap;
           transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
         }
+        @media (min-width: 600px) {
+          .fbToggle, .fbClear, .fbMore { font-size: 13px; padding: 8px 16px }
+        }
+        .fbToggle { display: inline-flex; align-items: center; gap: 6px; flex: none }
+        /* The tick is the state, not decoration: it collapses to nothing when
+           the filter is off, so the chip never claims to be on while showing
+           everything. */
+        .fbTick {
+          display: inline-block;
+          width: 0;
+          overflow: hidden;
+          color: ${BRAND.gold};
+          font-weight: 800;
+          transition: width 160ms ease, opacity 160ms ease;
+          opacity: 0;
+        }
+        .fbToggle.is-on .fbTick { width: 10px; opacity: 1 }
         .fbToggle:hover, .fbClear:hover, .fbMore:hover { border-color: ${BRAND.borderStrong}; color: ${BRAND.text} }
-        .fbToggle.is-on { border-color: ${BRAND.gold}; color: ${BRAND.text}; background: ${BRAND.surfaceAlt} }
-        .fbClear { border-color: transparent; background: none }
+        .fbToggle.is-on {
+          border-color: ${BRAND.gold};
+          color: ${BRAND.text};
+          background: ${BRAND.surfaceAlt};
+        }
+        .fbClear { display: none; border-color: transparent; background: none }
+        @media (min-width: 600px) { .fbClear { display: inline-block } }
         .fbToggle:focus-visible, .fbClear:focus-visible, .fbMore:focus-visible {
           outline: 2px solid ${BRAND.gold}; outline-offset: 2px;
         }
 
-        .fbCount { margin-left: auto; font-size: 12.5px; color: ${BRAND.faint} }
+        .fbCount {
+          margin-left: auto;
+          font-size: 12px;
+          color: ${BRAND.faint};
+          white-space: nowrap;
+        }
+        @media (max-width: 399px) { .fbCount { display: none } }
+        @media (min-width: 600px) { .fbCount { font-size: 12.5px } }
 
         /* ── The wall ──────────────────────────────────────────────────────
            auto-fill with a 320px floor: 1 column to 680, 2 to 1010, 3 above,
@@ -478,7 +582,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           margin: 0;
           padding: 0;
           display: grid;
-          gap: 14px;
+          gap: 12px;
           grid-template-columns: 1fr;
           align-items: start;
         }
@@ -486,32 +590,111 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           .fbGrid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px }
         }
 
+        /* ── The card ──────────────────────────────────────────────────────
+           Three things carry the polish and none of them cost layout: a
+           closing quote mark sunk into the bottom corner, a gold hairline that
+           draws itself across the top on hover, and a staggered rise on
+           entry. The lift is behind "hover: hover" so a phone tap does not
+           leave a card stuck in its hover state. */
         .fbCard {
+          position: relative;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
           gap: 10px;
-          padding: 18px;
-          border-radius: 16px;
+          padding: 16px 17px 15px;
+          border-radius: 18px;
           background: ${BRAND.surface};
           border: 1px solid ${BRAND.border};
           box-shadow: ${BRAND.shadow};
+          animation: fbRise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 240ms ease, border-color 240ms ease;
         }
-        .fbCardTop { display: flex; align-items: center; justify-content: space-between; gap: 10px }
+        @media (min-width: 600px) { .fbCard { padding: 18px 19px 16px } }
+
+        .fbCard::before {
+          content: "”";
+          position: absolute;
+          right: 8px;
+          bottom: -34px;
+          font-family: Georgia, "Times New Roman", serif;
+          font-size: 104px;
+          line-height: 1;
+          color: rgba(201,168,76,0.14);
+          pointer-events: none;
+          transition: color 260ms ease, transform 260ms ease;
+        }
+        .fbCard.is-quiet::before, .fbSkeleton::before { content: none }
+
+        .fbCard::after {
+          content: "";
+          position: absolute;
+          left: 0; right: 0; top: 0;
+          height: 3px;
+          background: linear-gradient(90deg, ${BRAND.gold}, rgba(201,168,76,0));
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @media (hover: hover) {
+          .fbCard:hover {
+            transform: translateY(-4px);
+            border-color: rgba(201,168,76,0.45);
+            box-shadow: 0 16px 34px -16px rgba(61,12,17,0.34);
+          }
+          .fbCard:hover::after { transform: scaleX(1) }
+          .fbCard:hover::before { color: rgba(201,168,76,0.24); transform: translateY(-3px) }
+          .fbCard:hover .fbAvatar { transform: scale(1.09) }
+        }
+
+        @keyframes fbRise {
+          from { opacity: 0; transform: translateY(14px) }
+          to   { opacity: 1; transform: none }
+        }
+
+        /* A rating with no words: shorter, a shade warmer, no quote mark. */
+        .fbCard.is-quiet {
+          gap: 12px;
+          padding: 14px 16px;
+          background: linear-gradient(180deg, ${BRAND.surface} 0%, ${BRAND.surfaceAlt} 100%);
+        }
+
+        .fbCardTop {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
         .fbWhen { font-size: 12px; color: ${BRAND.faint}; white-space: nowrap }
 
         .fbQuote {
+          position: relative;
+          z-index: 1;
           margin: 0;
           font-size: 14.5px;
-          line-height: 1.58;
+          line-height: 1.6;
+          font-weight: 500;
           color: ${BRAND.text};
           /* Long words and pasted links cannot widen the card past its column. */
           overflow-wrap: anywhere;
         }
-        .fbQuiet { color: ${BRAND.faint}; font-style: italic; font-size: 13.5px }
+        @media (min-width: 600px) { .fbQuote { font-size: 15px } }
 
-        .fbWho { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px }
+        .fbWho {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 2px;
+        }
         .fbAvatar {
-          width: 26px; height: 26px;
+          width: 27px; height: 27px;
           flex: none;
           border-radius: 50%;
           display: grid;
@@ -519,9 +702,11 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
           color: #fff;
           font-size: 12px;
           font-weight: 700;
+          box-shadow: 0 0 0 2px ${BRAND.surface}, 0 0 0 3px rgba(201,168,76,0.30);
+          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
         }
         .fbAvatar.is-anon { background: rgba(61,12,17,0.14); color: ${BRAND.muted} }
-        .fbName { font-size: 13px; font-weight: 600; color: ${BRAND.text} }
+        .fbName { font-size: 13px; font-weight: 700; color: ${BRAND.text} }
         .fbChip {
           font-size: 11px;
           padding: 3px 9px;
@@ -532,7 +717,7 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
         }
 
         /* ── Skeleton, empty, more ─────────────────────────────────────── */
-        .fbSkeleton { gap: 12px }
+        .fbSkeleton { gap: 12px; animation: none }
         .fbSkLine {
           height: 11px;
           border-radius: 6px;
@@ -556,8 +741,10 @@ export default function FeedbackWall({ initial }: FeedbackWallProps) {
         .fbMore { padding: 11px 26px }
 
         @media (prefers-reduced-motion: reduce) {
-          .fbBarFill { transition: none }
+          .fbBarFill, .fbCard, .fbAvatar, .fbTick { transition: none }
+          .fbCard { animation: none }
           .fbSkLine { animation: none }
+          .fbCard::after { transition: none }
         }
       `}</style>
     </div>
