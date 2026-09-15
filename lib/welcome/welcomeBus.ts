@@ -50,28 +50,33 @@
 // cannot survive. Come back that evening, or any later day, and it is simply
 // true.
 //
-// ── AND HOW OFTEN: EVERY PUBLISH ────────────────────────────────────────────
+// ── AND HOW OFTEN: EVERY PUBLISH, EVERY TEMPLATE, NO EXCEPTIONS ─────────────
 //
-// Every card a returning creator sends gets the greeting. There is no daily
-// cap, and the absence is deliberate — it was tried and removed.
+// There is no rate limit here at all. That is the design, arrived at the hard
+// way, and it should not be re-added without reading this paragraph.
 //
-// The first build allowed one greeting per twelve hours, on the reasoning that
-// the third one in an afternoon stops being a greeting and becomes a toll on
-// the confirmation somebody is waiting for. That reasoning is not wrong, but it
-// loses to a plainer fact: this feature exists to mark the moment a page goes
-// live, and a moment that only happens sometimes is indistinguishable, from the
-// inside, from one that is broken. The first person to test it published twice
-// and saw it once, and reasonably concluded it did not work.
+// It was capped twice. First at one greeting per twelve hours, on the reasoning
+// that the third one in an afternoon stops being a greeting and becomes a toll
+// on the confirmation somebody is waiting for. Then, when that was reported as
+// "the gif does not show", at a ninety-second debounce to cover the one case
+// that seemed genuinely worth suppressing: publish, spot a typo, publish again.
 //
-// So the only thing left is a short debounce, and it is not a cap dressed up as
-// one. `GREET_DEBOUNCE_MS` covers a single case: publish, notice a typo, fix
-// it, publish again — one card, two publish toasts, seconds apart. Greeting
-// somebody twice in ninety seconds is a stutter, not a welcome. Anything slower
-// than that is a new card, and a new card is a new moment.
+// Both were reported as bugs, by the same person, within a day. The second
+// produced the most instructive report of the three — "it only comes in one
+// template" — because somebody trying five editors in a row gets greeted on the
+// first and silence on the rest, and there is no way to tell that apart from a
+// feature that only works on one page.
 //
-// Same storage caveat as the feedback ask: "when did I last say hello?" has to
-// be answerable offline in the same tick as the publish, so it is answered from
-// client-side storage, and a cleared cache costs one extra greeting.
+// The lesson generalises past this file. A delight that fires SOMETIMES is not
+// a quieter version of one that fires always; it is indistinguishable, from the
+// outside, from one that is broken, and every hour anybody spends wondering
+// which costs more than the repetition ever saved. If it is worth showing, show
+// it. The only rule left is the one that keeps the sentence true — the account
+// has to predate today (`RETURNING_AFTER_MS`) — and `current !== null` already
+// stops two from stacking.
+//
+// The visible cost is small and bounded: republishing the same card greets
+// again. That is a real edge, and it is the right one to lose.
 //
 // ── THE PROMISE THIS MODULE MAKES ───────────────────────────────────────────
 //
@@ -93,15 +98,6 @@ import {
 /** How old an account must be before "welcome back" is a true sentence. */
 export const RETURNING_AFTER_MS = 12 * 60 * 60 * 1000;
 
-/**
- * The only thing that suppresses a greeting once somebody qualifies for one.
- *
- * Not a daily cap — see the note above. Ninety seconds is long enough to cover
- * "publish, spot a typo, fix it, publish again" as the single moment it
- * actually is, and short enough that the next genuine card still gets greeted.
- */
-export const GREET_DEBOUNCE_MS = 90 * 1000;
-
 /** The entrance animation in `MascotStage`, which runs before the loop does. */
 export const ENTRANCE_MS = 420;
 
@@ -116,8 +112,6 @@ export const ENTRANCE_MS = 420;
  * rather than a flicker.
  */
 export const REST_MS = 700;
-
-const STORAGE_KEY = "ss_welcome_greeted";
 
 export interface WelcomeGreeting {
   mascot: WelcomeMascotKey;
@@ -176,28 +170,6 @@ function hasSession(): boolean {
   }
 }
 
-/** When we last said hello on this device, or 0. */
-function lastGreetedAt(): number {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const at = raw === null ? 0 : Number(raw);
-    return Number.isFinite(at) ? at : 0;
-  } catch {
-    // Private mode, or storage disabled. Treated as "never greeted": erring
-    // towards one extra greeting is recoverable, and the alternative is a
-    // feature that silently never runs for a slice of people.
-    return 0;
-  }
-}
-
-function markGreeted(): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
-  } catch {
-    // Nothing to do. The worst case is a greeting that stutters on a republish.
-  }
-}
-
 /**
  * Is this a returning creator, at a moment where a greeting is right?
  *
@@ -222,9 +194,7 @@ export function shouldGreet(now: number = Date.now()): boolean {
   // which fails in the safe direction — no greeting — and needs no special case.
   if (now - created < RETURNING_AFTER_MS) return false;
 
-  // Only a stutter is suppressed: two publish toasts for the same card, seconds
-  // apart. Every later card is a new moment and gets its own greeting.
-  if (now - lastGreetedAt() < GREET_DEBOUNCE_MS) return false;
+  // Nothing else. Every publish by a returning creator, on every template.
   return true;
 }
 
@@ -289,11 +259,6 @@ export function greetThenRun(run: () => void): void {
     run();
     return;
   }
-
-  // Marked at the moment the greeting is RAISED, not when it ends. Somebody who
-  // taps it away has been greeted; replaying it on the next publish because
-  // they did not sit through it would be nagging, not welcoming.
-  markGreeted();
 
   const mascot = pickMascot();
   let released = false;
@@ -369,13 +334,4 @@ const getServerSnapshot = () => null;
 /** The open greeting, or null. Re-renders only on open/close. */
 export function useWelcomeGreeting(): WelcomeGreeting | null {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-/** Test/debug escape hatch: forget when we last said hello. */
-export function clearGreeted(): void {
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* nothing to do */
-  }
 }

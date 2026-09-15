@@ -18,6 +18,7 @@
     "welcome:test": "node --experimental-strip-types --import ./scripts/alias-loader.mjs --test lib/welcome/*.test.mjs",
     "paywall:test": "node --experimental-strip-types --import ./scripts/alias-loader.mjs --test lib/paywall/*.test.mjs",
     "toast:check": "node scripts/toast-coverage.mjs",
+    "welcome:check": "node scripts/welcome-coverage.mjs",
     "draft:check": "node scripts/draft-coverage.mjs"
   },
   "dependencies": {
