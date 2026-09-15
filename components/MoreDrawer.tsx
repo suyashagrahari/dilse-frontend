@@ -177,6 +177,7 @@ export default function MoreDrawer({
     { label: "Product Guides", icon: <GraduationCap size={17} />, href: "/guides" },
     { label: "Profile", icon: <User size={17} />, href: "/profile" },
     { label: "Blog", icon: <BookOpen size={17} />, href: "/blog" },
+    { label: "Feedback", icon: <Star size={17} />, href: "/feedback" },
     { label: "Refer & Earn", icon: <Gift size={17} />, href: "/profile#referral" },
   ];
 

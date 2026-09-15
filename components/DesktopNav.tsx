@@ -136,6 +136,12 @@ export default function DesktopNav() {
           <button onClick={() => router.push("/blog")} style={tabTextStyle(pathname.startsWith("/blog"))}>
             Blog
           </button>
+          {/* Feedback sits after the reading tabs and before the company ones,
+              because that is what it is: neither something you make with nor a
+              page about us, but the evidence somebody wants in between. */}
+          <button onClick={() => router.push("/feedback")} style={tabTextStyle(pathname.startsWith("/feedback"))}>
+            Feedback
+          </button>
           <button onClick={() => router.push("/about-us")} style={tabTextStyle(pathname.startsWith("/about-us"))}>
             About Us
           </button>

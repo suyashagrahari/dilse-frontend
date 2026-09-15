@@ -97,6 +97,12 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // rather than 0.8: it is an index that points at the guides, and the guides
   // are the pages that should win the query.
   { path: "/showcase", priority: 0.7, changeFrequency: "weekly" },
+
+  // ── The public feedback wall ─────────────────────────────────────────────
+  // Daily because it changes whenever anybody publishes and rates, and 0.6:
+  // it is worth indexing as social proof for a branded query, but it must not
+  // outrank the templates and guides people are actually searching for.
+  { path: "/feedback", priority: 0.6, changeFrequency: "daily" },
 ];
 
 /**
