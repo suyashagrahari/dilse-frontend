@@ -7,7 +7,7 @@
 // the edge exists in one direction at runtime and there is no cycle.
 import { MEMORY_PHOTOS } from "./assets";
 import type { MusicChoice } from "./music";
-import { isTrackId } from "./music";
+import { DEFAULT_MUSIC_URL, isTrackId } from "./music";
 import type { Perspective } from "./copy";
 import { copyFor, isPerspective } from "./copy";
 
@@ -173,7 +173,10 @@ export const DEMO_DATA: ProposalData = {
   celebrationTitle: MARRIAGE_COPY.celebrationTitle,
   secretNote: MARRIAGE_COPY.secretNote,
   metDate: "",
-  musicUrl: "",
+  // A real song from the first tap. The synthesised melodies are still in the
+  // picker, but a preview that opens on a pad nobody chose sounds like the
+  // feature is missing rather than like a default.
+  musicUrl: DEFAULT_MUSIC_URL,
   musicTrack: "auto",
   perspective: "marriage",
 };

@@ -4,20 +4,19 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Heart, ChevronDown,
-  ArrowUp, ArrowDown, Music, CalendarHeart, AlertCircle,
+  ArrowUp, ArrowDown, CalendarHeart, AlertCircle,
 } from "lucide-react";
 import type { EditMode, HeroArt, Memory, ProposalData } from "./types";
-import { BUILTIN_TRACKS, TRACK_IDS, parseYouTubeId, type MusicChoice } from "./music";
 import { PERSPECTIVES, copyFor } from "./copy";
 import { MAX_MEMORIES, MIN_MEMORIES } from "./types";
 import { HERO_ART } from "./assets";
 import type { ProposalErrors } from "../hooks/useProposalEditor";
 import PhotoCropper from "./PhotoCropper";
+import MusicPicker from "./MusicPicker";
 
 // ── Kawaii pastel palette (matches the template) ─────────────────────────────
 const PINK = "#F2789F";
 const PINK_SOFT = "#FFEAF2";
-const LAVENDER = "#A78BFA";
 const CREAM = "#FFFBF7";
 const INK = "#4A3547";
 const MUTED = "#8B7B88";
@@ -410,14 +409,6 @@ export default memo(function EditSheet({
    * must describe what the page will actually do, and two places deciding
    * "YouTube or file?" separately is how they drift apart.
    */
-  const trimmedMusic = mf.musicUrl.trim();
-  const linkedMusic: "youtube" | "file" | null = !trimmedMusic
-    ? null
-    : parseYouTubeId(trimmedMusic)
-      ? "youtube"
-      : /^https?:\/\//i.test(trimmedMusic)
-        ? "file"
-        : null;
   const err = (k: keyof ProposalErrors) => (showErrors ? errors[k] : undefined);
 
   return (
@@ -744,83 +735,23 @@ export default memo(function EditSheet({
                 </Field>
 
                 {/* ── Music ─────────────────────────────────────────────────
-                    Two controls, and the link wins when it is filled in: a
-                    sender who pasted something meant it, and silently playing a
-                    built-in melody over the top of their choice would be the
-                    single most confusing thing this form could do. The picker
-                    is dimmed rather than removed when that happens, so it is
-                    visible why it is not in charge. */}
+                    The whole picker moved into its own component: it is now a
+                    browsable, auditionable list of 33 recordings plus the three
+                    synthesised melodies plus a link field, and it owns the rule
+                    that `musicUrl` and `musicTrack` move together so the two can
+                    never both be set with only the code knowing which wins. */}
                 <Field
                   label="Music"
-                  hint="Plays from the moment they open it. There is a mute button on the page."
+                  hint="Starts the moment they open it. There is a mute button on the page."
                 >
-                  <div
-                    className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-                    style={{ opacity: linkedMusic ? 0.45 : 1 }}
-                  >
-                    {(["auto", ...TRACK_IDS] as MusicChoice[]).map((id) => {
-                      const t = id === "auto" ? null : BUILTIN_TRACKS[id as Exclude<MusicChoice, "auto">];
-                      const on = mf.musicTrack === id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          disabled={Boolean(linkedMusic)}
-                          onClick={() => updateMf("musicTrack", id)}
-                          aria-pressed={on}
-                          className="rounded-2xl p-2.5 text-left transition-transform active:scale-95 disabled:cursor-not-allowed"
-                          style={{
-                            border: `2px solid ${on ? PINK : LINE}`,
-                            background: on ? PINK_SOFT : "#FFF",
-                          }}
-                        >
-                          <span
-                            className="block text-[12px] font-bold leading-tight"
-                            style={{ fontFamily: HEAD, color: on ? PINK : INK }}
-                          >
-                            {t ? `${t.emoji} ${t.label}` : "🎲 Surprise me"}
-                          </span>
-                          <span className="mt-0.5 block text-[10.5px] leading-snug" style={{ color: MUTED }}>
-                            {t ? t.blurb : "A different one each time."}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="relative mt-2.5">
-                    <Music
-                      size={15}
-                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2"
-                      style={{ color: LAVENDER }}
-                    />
-                    <input
-                      value={mf.musicUrl}
-                      onChange={(ev) => updateMf("musicUrl", ev.target.value)}
-                      placeholder="Or paste a YouTube link, or an .mp3 URL"
-                      inputMode="url"
-                      className={INPUT_CLS + " pl-10"}
-                      style={inputStyle}
-                    />
-                  </div>
-
-                  <p className="mt-1.5 text-[11px] leading-snug" style={{ color: MUTED }}>
-                    {linkedMusic === "youtube" ? (
-                      <>
-                        <strong style={{ color: PINK }}>YouTube song detected.</strong> It plays through
-                        YouTube&rsquo;s own player, which appears as a small panel in the corner of the
-                        page — it has to stay visible, that is YouTube&rsquo;s rule, not ours.
-                      </>
-                    ) : linkedMusic === "file" ? (
-                      <>
-                        <strong style={{ color: PINK }}>Audio link detected.</strong> Make sure it is a
-                        file you have the right to share.
-                      </>
-                    ) : (
-                      <>The melodies above are written for this page, so there is nothing to load and
-                      nothing that can be taken down. Paste a link if you have one particular song.</>
-                    )}
-                  </p>
+                  <MusicPicker
+                    musicUrl={mf.musicUrl}
+                    musicTrack={mf.musicTrack}
+                    onChange={(next) => {
+                      updateMf("musicUrl", next.musicUrl);
+                      updateMf("musicTrack", next.musicTrack);
+                    }}
+                  />
                 </Field>
 
                 {/* ── Advanced wording ── */}
