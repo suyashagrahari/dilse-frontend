@@ -156,13 +156,45 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
 
   const hint = useMemo(() => HINTS.find((x) => anger <= x.max) ?? HINTS[HINTS.length - 1], [anger]);
 
-  // the ordered set of steps (sorry-letter is optional)
+  // ── THE ORDERED SET OF STEPS, MINUS THE ONES NOBODY FILLED IN ─────────────
+  //
+  // Only the letter used to be optional, so a sender who skipped the scratch
+  // card, left the promises empty or deleted every timeline chapter still shipped
+  // those pages — an empty scratch panel, a desk with nothing on it, a timeline
+  // rail with no stops. The recipient scrolls through blanks wondering what they
+  // were meant to find.
+  //
+  // A page only shows what somebody actually wrote. `hero`, `anger` and `final`
+  // are structural — the opening, the mood dial and the signing — and stay
+  // whatever happens; the rest earn their place by having content.
   const stepKeys = useMemo(() => {
-    const keys = ["hero", "anger", "scratch", "whack", "bribery"];
-    if (data.sorryLetter?.trim()) keys.push("letter");
-    keys.push("timeline", "final");
+    const keys = ["hero", "anger"];
+
+    const hasScratch =
+      !!data.scratchSecret?.trim() || data.scratchImages.length > 0 || !!data.scratchVoice?.trim();
+    if (hasScratch) keys.push("scratch");
+
+    // The whack game works with emoji when no faces are uploaded, so it is not
+    // "empty" without them — but a sender who wants it gone gets that by
+    // removing the faces, which is the only lever the editor gives them.
+    if (data.whackFaces.length > 0) keys.push("whack");
+
+    if (data.briberyItems.some((b) => b.label.trim())) keys.push("bribery");
+    if (data.sorryLetter?.trim() || data.voiceUrl?.trim()) keys.push("letter");
+    if (data.timeline.some((n) => n.title.trim() || n.text.trim())) keys.push("timeline");
+
+    keys.push("final");
     return keys;
-  }, [data.sorryLetter]);
+  }, [
+    data.scratchSecret,
+    data.scratchImages,
+    data.scratchVoice,
+    data.whackFaces,
+    data.briberyItems,
+    data.sorryLetter,
+    data.voiceUrl,
+    data.timeline,
+  ]);
 
   const total = stepKeys.length;
   const clamp = useCallback((n: number) => Math.max(0, Math.min(total - 1, n)), [total]);
@@ -395,10 +427,29 @@ function MusicFab({ url, toast }: { url: string; toast: (m: string, e?: string) 
   };
   const stopLofi = () => { lofiRef.current = false; if (timerRef.current) clearTimeout(timerRef.current); };
 
+  // ── WHY A FAILED SONG FALLS BACK RATHER THAN GOING QUIET ──────────────────
+  //
+  // `url` is a plain string in the document: a shelf track, something the sender
+  // pasted, or a link from a bucket that no longer exists. When it will not load
+  // this used to swallow the error and play nothing, so the recipient opened a
+  // silent page and the sender had no way to know. The lofi tune needs no origin
+  // and cannot 404, which makes it the right thing to land on — it is a worse
+  // song than the one they chose, and much better than silence.
+  const fellBackRef = useRef(false);
   const startMp3 = () => {
     let a = audioRef.current;
-    if (!a) { a = new Audio(url); a.loop = true; a.volume = 0.5; audioRef.current = a; }
-    a.play().catch(() => {});
+    if (!a) {
+      a = new Audio(url);
+      a.loop = true;
+      a.volume = 0.5;
+      a.onerror = () => { if (!fellBackRef.current) { fellBackRef.current = true; startLofi(); } };
+      audioRef.current = a;
+    }
+    a.play().catch(() => {
+      // A rejected play() is usually the autoplay policy, not a bad file — the
+      // next gesture will start it. Only a load error means the song is gone.
+      if (a.error && !fellBackRef.current) { fellBackRef.current = true; startLofi(); }
+    });
   };
 
   const start = useCallback(() => {
@@ -406,7 +457,11 @@ function MusicFab({ url, toast }: { url: string; toast: (m: string, e?: string) 
     setPlaying(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
-  const stop = useCallback(() => { if (url) audioRef.current?.pause(); else stopLofi(); setPlaying(false); }, [url]);
+  const stop = useCallback(() => {
+    audioRef.current?.pause();
+    stopLofi();
+    setPlaying(false);
+  }, []);
   const toggle = () => { if (playing) stop(); else { start(); toast("Music on 🎶", "🎵"); } };
 
   // Duck the background song while a voice note is being recorded / played, or a

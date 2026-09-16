@@ -11,7 +11,7 @@ import { PERSPECTIVES, copyFor } from "./copy";
 import { MAX_MEMORIES, MIN_MEMORIES } from "./types";
 import { HERO_ART } from "./assets";
 import type { ProposalErrors } from "../hooks/useProposalEditor";
-import PhotoCropper from "./PhotoCropper";
+import PhotoCropper from "@/components/media/PhotoCropper";
 import MusicPicker from "./MusicPicker";
 
 // ── Kawaii pastel palette (matches the template) ─────────────────────────────

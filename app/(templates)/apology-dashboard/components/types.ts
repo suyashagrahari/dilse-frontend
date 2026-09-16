@@ -1,3 +1,6 @@
+import { DEFAULT_MUSIC_URL } from "@/lib/music/library";
+import type { SongExtra } from "@/components/media/SongPicker";
+
 // ─── Apology Dashboard — shared type contract ────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer, and the server payload. Field names here === server model field names
@@ -18,29 +21,64 @@ export const RELATIONSHIPS: { id: Relationship; label: string }[] = [
 export const MUSIC_PAUSE_EVENT = "apology:music-pause";
 export const MUSIC_RESUME_EVENT = "apology:music-resume";
 
-export interface MusicPreset { id: string; label: string; url: string }
 /**
- * Selectable background songs. url "" = the built-in gentle lofi tune, which is
- * synthesised in-browser via WebAudio and so never depends on an origin.
+ * The one choice that is not a recording.
  *
- * "Chalo Jaane Do" and "Sorry — Justin Bieber" are gone. They lived only in the
- * old AWS account's bucket and, unlike the covers and blooms, were never kept in
- * the repo or media-src — so there was no copy to re-upload into the new bucket.
- * They are removed rather than left as choices that play nothing. Re-add them
- * once the audio is re-sourced.
+ * ── WHY THE DEFAULT IS A SONG NOW ───────────────────────────────────────────
+ *
+ * This list used to hold exactly one entry — the built-in lofi tune, four
+ * synthesised chords looping every 2.2 seconds — and `DEMO_DATA.backgroundMusic`
+ * was "". So every apology page ever previewed or shared played that chord loop,
+ * and there was nothing in the editor to pick instead of it. Senders described
+ * it as a ringtone, which is fair: it is an oscillator, not a song.
+ *
+ * The two real songs this list used to carry died with the old AWS account and
+ * were never re-sourced. But `lib/music/library.ts` has thirty-three recordings
+ * that are already on the CDN and already playing on other templates, so there
+ * is a shelf to point at — see `SongPicker`. The lofi tune stays as a choice
+ * because it needs no origin and cannot 404, which makes it the right fallback
+ * when a file will not load. It is no longer the only one, or the default.
  */
-export const MUSIC_PRESETS: MusicPreset[] = [
-  { id: "lofi", label: "Gentle lofi (built-in)", url: "" },
+/**
+ * Picking the lofi tune stores this, not "".
+ *
+ * "" has to keep meaning "nobody ever chose", because that is what every page
+ * published before this shelf existed has in it — and those pages should get a
+ * song rather than the chord loop they were stuck with. A sender who genuinely
+ * wants the loop needs a value that says so.
+ */
+export const LOFI_SENTINEL = "lofi";
+
+export const BUILTIN_LOFI: SongExtra[] = [
+  {
+    id: "lofi",
+    title: "Gentle lofi",
+    by: "built in — no file to load",
+    emoji: "\u{1F3B9}",
+    value: LOFI_SENTINEL,
+  },
 ];
 
 /**
- * Cards published before the old account died still carry a
- * gifts-media-prod-123 URL in Mongo, and those rows cannot be edited from here.
- * Treat any such URL as unset so an already-shared card falls back to the lofi
- * tune instead of sitting silent on a request that 403s.
+ * What the page should actually play, given what is stored.
+ *
+ * Returns a URL to stream, or "" meaning the synthesised lofi loop. Three cases
+ * that are easy to collapse and must not be:
+ *
+ *   • `LOFI_SENTINEL` — somebody chose the loop. Honour it.
+ *   • "" — nobody ever chose, because the editor offered nothing else until
+ *     now. Every page published before this gets a real song instead of the
+ *     chord loop it was stuck with; that is the whole point of the change.
+ *   • a gifts-media-prod-123 URL — the old AWS account that no longer exists.
+ *     Those rows cannot be edited from here and the request 403s, so they get
+ *     the default song rather than silence.
  */
-export const playableMusicUrl = (url: string | undefined | null): string =>
-  !url || url.includes("gifts-media-prod-123") ? "" : url;
+export const playableMusicUrl = (url: string | undefined | null): string => {
+  const v = (url || "").trim();
+  if (v === LOFI_SENTINEL) return "";
+  if (!v || v.includes("gifts-media-prod-123")) return DEFAULT_MUSIC_URL;
+  return v;
+};
 
 export interface Toast {
   id: number;
@@ -129,10 +167,10 @@ export const DEMO_DATA: ApologyData = {
   ],
   deliveryEmail: "",
   sharePhoto: "",
-  // default: the built-in lofi tune — plays in preview & on unset pages. Used to
-  // default to "Sorry" (Justin Bieber), which meant the default experience had no
-  // audio at all once that bucket died. "" needs no origin.
-  backgroundMusic: "",
+  // A real song, from the first tap of the preview. This was "" — the
+  // synthesised lofi chords — which is why every apology sounded like a hold
+  // tone rather than something somebody chose.
+  backgroundMusic: DEFAULT_MUSIC_URL,
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the server model content fields). */
