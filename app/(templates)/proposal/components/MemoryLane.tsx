@@ -23,6 +23,13 @@
 // gives two photos half a laptop each, which is worse than four across — and
 // the cap is derived from that count, so four memories genuinely use the width
 // and one memory is still a photograph rather than a billboard.
+//
+// A phone gets one column, full stop. The polaroid frame, the washi tape and
+// the handwritten caption are all drawn at the scale of a single picture; two
+// of them side by side on a 390px screen is a contact sheet of 170px thumbnails
+// with captions wrapping to four lines. Four across on a laptop and one on a
+// phone are the same decision — show the photograph at the size somebody would
+// actually look at it.
 
 import type { CSSProperties } from "react";
 import { useState } from "react";
@@ -59,6 +66,11 @@ export default function MemoryLane({
   /**
    * Column counts per breakpoint, capped by how many photos there actually are.
    *
+   * A phone is not in here: it is always one column, so there is nothing to
+   * cap. From the tablet breakpoint up the count is the smaller of "how many
+   * columns fit" and "how many photos exist" — four tracks holding two photos
+   * would leave half the row empty and the two survivors stretched.
+   *
    * Passed as custom properties because the stylesheet below needs them inside
    * media queries, and an inline `grid-template-columns` cannot be overridden
    * by any rule in a <style> tag — the one hard rule of styling in this
@@ -66,7 +78,6 @@ export default function MemoryLane({
    * unitless.
    */
   const cols = {
-    "--ml-sm": Math.min(memories.length, 2),
     "--ml-md": Math.min(memories.length, 3),
     "--ml-lg": Math.min(memories.length, 4),
   } as CSSProperties;
@@ -266,26 +277,36 @@ export default function MemoryLane({
         .mlTitle { font-size: clamp(24px, 6.8vw, 40px); max-width: 720px }
         .mlNames { font-size: clamp(18px, 5vw, 24px) }
 
-        /* Column count comes from the photo count, not from available space.
-           Two photos stretched across a laptop is not a scrapbook. */
+        /* ── ONE PHOTO AT A TIME ON A PHONE ────────────────────────────────
+           Two columns on a 390px screen is a 170px card: a contact sheet, at
+           the size the polaroid frame and the handwriting were drawn for a
+           single picture. One column nearly doubles the photograph and gives
+           the caption a line it can actually be read on — the album is meant
+           to be gone through, not skimmed.
+
+           320px, not 100%: the cards are tilted, and a rotated card that fills
+           the width has its corners cut off by the padding. This leaves the
+           tilt somewhere to happen. */
         .mlGrid {
           display: grid;
-          grid-template-columns: repeat(var(--ml-sm), minmax(0, 1fr));
-          gap: 18px 12px;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 22px;
           width: 100%;
-          max-width: calc(var(--ml-sm) * 200px);
+          max-width: 320px;
           margin: 0 auto;
         }
-        .mlCaption { font-size: clamp(14px, 3.7vw, 16px); padding: 10px 6px 16px; min-height: 52px }
+        .mlCaption { font-size: 16.5px; padding: 12px 16px 20px; min-height: 58px }
         .mlCta { margin-top: 26px; padding: 14px 26px; font-size: clamp(15px, 4.3vw, 18px) }
 
         @media (min-width: 700px) {
           .mlAct { padding: 84px 24px 52px }
+          /* Room for a row again. */
           .mlGrid {
             grid-template-columns: repeat(var(--ml-md), minmax(0, 1fr));
             gap: 26px 20px;
             max-width: calc(var(--ml-md) * 250px);
           }
+          .mlCaption { font-size: clamp(15px, 2.2vw, 17px); padding: 10px 8px 16px; min-height: 54px }
         }
 
         @media (min-width: 1100px) {
