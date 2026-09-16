@@ -12,6 +12,7 @@ import { PERSPECTIVES, copyFor } from "./copy";
 import { MAX_MEMORIES, MIN_MEMORIES } from "./types";
 import { HERO_ART } from "./assets";
 import type { ProposalErrors } from "../hooks/useProposalEditor";
+import PhotoCropper from "./PhotoCropper";
 
 // ── Kawaii pastel palette (matches the template) ─────────────────────────────
 const PINK = "#F2789F";
@@ -219,12 +220,43 @@ function MemoryRow({
   const [busy, setBusy] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
 
-  const pick = async (file: File) => {
+  /**
+   * The picked file, held as an object URL while the sender frames it.
+   *
+   * ── WHY A CROP STEP AT ALL ────────────────────────────────────────────────
+   *
+   * A phone camera shoots 4:3 or 16:9 and the card shows a square, so something
+   * has to decide what is lost. It used to be `object-fit: cover` — a centre
+   * crop, applied silently, which is how a photo of two people becomes a photo
+   * of one person's shoulder. Now the sender decides, on the picture, before it
+   * is saved.
+   *
+   * The cropper also replaces the downscale: it draws the chosen square to a
+   * 1080px canvas, so what comes back is already bounded. `compressToDataUrl`
+   * stays for the fallback path below, where there is no canvas to crop with.
+   */
+  const [pending, setPending] = useState<{ url: string; type: string; file: File } | null>(null);
+
+  const pick = (file: File) => {
     setRowError(null);
     if (file.size > MAX_UPLOAD_BYTES) {
       setRowError(`That photo is ${mbLabel(file.size)}. Please pick one under 1.2 MB 🥺`);
       return;
     }
+    // A blob URL, not a data URL: the cropper only needs to draw it, and a
+    // 1.2MB base64 string through React state on every keystroke is waste.
+    setPending({ url: URL.createObjectURL(file), type: file.type, file });
+  };
+
+  const closeCropper = useCallback(() => {
+    setPending((p) => {
+      if (p) URL.revokeObjectURL(p.url);
+      return null;
+    });
+  }, []);
+
+  /** No canvas, no crop — the old path, so the upload still works. */
+  const fallback = async (file: File) => {
     setBusy(true);
     try {
       let src = "";
@@ -271,10 +303,27 @@ function MemoryRow({
           className="hidden"
           onChange={(ev) => {
             const f = ev.target.files?.[0];
-            if (f) void pick(f);
+            if (f) pick(f);
             ev.target.value = "";
           }}
         />
+
+        {pending && (
+          <PhotoCropper
+            src={pending.url}
+            fileType={pending.type}
+            onCancel={closeCropper}
+            onDone={(dataUrl) => {
+              onPatch({ imageUrl: dataUrl });
+              closeCropper();
+            }}
+            onUnavailable={() => {
+              const f = pending.file;
+              closeCropper();
+              void fallback(f);
+            }}
+          />
+        )}
 
         <div className="min-w-0 flex-1">
           <AutoTextarea

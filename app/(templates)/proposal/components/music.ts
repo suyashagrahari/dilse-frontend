@@ -68,6 +68,20 @@ export interface BuiltInTrack {
   /** Low-pass cutoff. Lower is warmer and further away; higher is brighter. */
   cutoff: number;
   /** Master gain. This sits UNDER a proposal, it does not perform one. */
+  /**
+   * Master gain the fade-in settles at.
+   *
+   * These were 0.052–0.068 and the result measured −34.5 dBFS at the
+   * destination: running, correct, and inaudible on a phone speaker. "The song
+   * is not ringing" was a level bug, not a playback bug.
+   *
+   * Ten times louder lands around −14 dBFS, which is a background bed you can
+   * actually hear under a page somebody is reading. The signal arriving at the
+   * master gain peaks at about 0.32 — the voices are spread across a bar and
+   * their phases do not align — so even the loudest of these leaves roughly
+   * 13 dB of headroom and nothing clips. See the note in `start()` about why
+   * there is no limiter.
+   */
   peak: number;
 }
 
@@ -96,7 +110,7 @@ export const BUILTIN_TRACKS: Record<MusicTrackId, BuiltInTrack> = {
     arpWave: "triangle",
     padWave: "sine",
     cutoff: 2200,
-    peak: 0.06,
+    peak: 0.60,
   },
 
   // vi – IV – I – V, up an octave and quicker, with a bell-like arpeggio. Reads
@@ -118,7 +132,7 @@ export const BUILTIN_TRACKS: Record<MusicTrackId, BuiltInTrack> = {
     arpWave: "sine",
     padWave: "triangle",
     cutoff: 3200,
-    peak: 0.052,
+    peak: 0.52,
   },
 
   // I – iii – IV – V, voiced low and played slowly. The cinematic one: long
@@ -140,7 +154,7 @@ export const BUILTIN_TRACKS: Record<MusicTrackId, BuiltInTrack> = {
     arpWave: "triangle",
     padWave: "sine",
     cutoff: 1500,
-    peak: 0.068,
+    peak: 0.68,
   },
 };
 

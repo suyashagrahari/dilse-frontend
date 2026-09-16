@@ -305,12 +305,28 @@ export function useProposalAudio(musicUrl: string, musicTrack: string): Proposal
     warmth.type = "lowpass";
     warmth.frequency.value = track.cutoff;
     warmth.Q.value = 0.4;
+    // ── NO LIMITER, AND THAT IS THE MEASUREMENT TALKING ────────────────────
+    //
+    // A DynamicsCompressor was tried here as insurance against the pad and the
+    // arpeggio voices summing past unity. Measured at the destination it made
+    // things WORSE — 0.0096 peak against 0.019 without it, so it was costing
+    // about 6 dB while protecting against nothing.
+    //
+    // Nothing, because the summed signal reaching `master` peaks at about 0.32:
+    // the voices are spread across a bar and their phases do not line up. At
+    // the levels below that leaves roughly 13 dB of headroom, so unity is never
+    // approached and there is nothing for a compressor to catch. Insurance you
+    // cannot hear the difference without is just attenuation.
     master.connect(warmth).connect(ctx.destination);
 
     ctxRef.current = ctx;
     masterRef.current = master;
     stepRef.current = 0;
     void ctx.resume().catch(() => {});
+    // Anchor the ramp. A linear ramp with no preceding event is defined
+    // against the value at the previous event, of which there is none — so
+    // give it one, and the fade always starts from silence.
+    master.gain.setValueAtTime(0.0001, ctx.currentTime);
     master.gain.linearRampToValueAtTime(track.peak, ctx.currentTime + FADE_IN_S);
 
     liveRef.current = true;

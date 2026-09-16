@@ -3,6 +3,9 @@
 // visual template, the EditSheet and the recipient viewer all import from here,
 // so this file is frozen once the others are being built against it.
 
+// A value import, unlike assets.ts's type-only import back to this file — so
+// the edge exists in one direction at runtime and there is no cycle.
+import { MEMORY_PHOTOS } from "./assets";
 import type { MusicChoice } from "./music";
 import { isTrackId } from "./music";
 import type { Perspective } from "./copy";
@@ -159,10 +162,10 @@ export const DEMO_DATA: ProposalData = {
   gateButtonLabel: MARRIAGE_COPY.gateButtonLabel,
   memoryLaneTitle: MARRIAGE_COPY.memoryLaneTitle,
   memories: [
-    { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/hello-cat.webp", caption: "the day you said hi first 🐱" },
-    { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/sad-bear.webp", caption: "our first fight, over pizza toppings 🍕" },
-    { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/joy-tears.webp", caption: "when you cried at that movie (twice)" },
-    { imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/proposal/ask-hero.webp", caption: "every single day after that 💕" },
+    { imageUrl: MEMORY_PHOTOS[0], caption: "the day you said hi first ☕" },
+    { imageUrl: MEMORY_PHOTOS[1], caption: "our first fight, over pizza toppings 🍕" },
+    { imageUrl: MEMORY_PHOTOS[2], caption: "when you cried at that movie (twice)" },
+    { imageUrl: MEMORY_PHOTOS[3], caption: "every single day after that 💕" },
   ],
   askHeadline: MARRIAGE_COPY.askHeadline,
   heroArt: "ring",

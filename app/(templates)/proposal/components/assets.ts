@@ -57,10 +57,29 @@ export const REACTIONS: Record<ReactionKey, { src: string; alt: string }> = {
   sadWhy: { src: `${BASE}/sad-why.webp`, alt: "A character asking why, mid-cry" },
 };
 
-/** Art shown in the memory-lane picker when the sender has not uploaded a photo. */
-export const MEMORY_PLACEHOLDERS: string[] = [
-  ASSETS.helloCat,
-  REACTIONS.sadBear.src,
-  ASSETS.joyTears,
-  ASSETS.askHero,
+/**
+ * The photographs the scrapbook shows before the sender has uploaded their own.
+ *
+ * ── WHY NOT THE STICKERS ────────────────────────────────────────────────────
+ *
+ * They used to be the cat, the bear, the penguin and the couple — the same
+ * animations the rest of the template uses. Inside a polaroid frame, under a
+ * handwritten caption, on a page whose whole promise is "these are your
+ * photos", a cartoon reads as a placeholder that nobody replaced. A photograph
+ * of two people reads as the thing itself, and shows a sender what their own
+ * pictures are going to look like there.
+ *
+ * Borrowed from the darling template's gallery rather than added to the bucket:
+ * same CDN, already paid for, already cached for anybody who has opened that
+ * template. They are stills, which the scrapbook needs anyway — an animation in
+ * a card is motion competing with the caption beside it.
+ */
+export const MEMORY_PHOTOS: string[] = [
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp",
+  "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp",
 ];
+
+/** Art offered in the memory-lane picker when the sender has not uploaded one. */
+export const MEMORY_PLACEHOLDERS: string[] = MEMORY_PHOTOS;
