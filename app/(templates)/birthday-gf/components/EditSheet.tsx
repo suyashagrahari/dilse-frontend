@@ -10,6 +10,7 @@ import {
   type TruthDareItem,
   EMPTY_HOME_COVER,
 } from "./types";
+import { readAudioFileOrToast } from "@/lib/media/readAudioFile";
 
 const BROWN = "#5D3F31";
 const BROWN_MID = "rgba(93,63,49,0.55)";
@@ -1225,9 +1226,9 @@ export default function EditSheet({
                   <input type="file" accept="audio/*" style={{ display: "none" }} onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => updateMf("surpriseAudioUrl", ev.target?.result as string);
-                      reader.readAsDataURL(f);
+                      void readAudioFileOrToast(f).then((dataUrl) => {
+                        if (dataUrl) updateMf("surpriseAudioUrl", dataUrl);
+                      });
                     }
                     e.target.value = "";
                   }} />

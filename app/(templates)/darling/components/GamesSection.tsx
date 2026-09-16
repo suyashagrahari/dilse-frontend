@@ -7,6 +7,7 @@ import type { ContentData, QuizQuestion, TruthDareItem } from "./types";
 import MiniAudioPlayer from "./MiniAudioPlayer";
 import GameHistory, { type HistoryEntry, type QuizRecord } from "./GameHistory";
 import { API_URL } from "@/lib/config";
+import { readAudioFileOrToast } from "@/lib/media/readAudioFile";
 
 const ROSE = "#ff3d6b";
 const GRAD = "linear-gradient(135deg, #ff3d6b 0%, #a855f7 100%)";
@@ -429,9 +430,12 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
   }, [used, getTruths, getDares]);
 
   const loadAudioFile = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    // Shared reader: bounds the size and says so out loud. The bare
+    // FileReader this replaced had neither a ceiling nor an onerror, so an
+    // oversized clip became a save that failed at nginx with no explanation.
+    void readAudioFileOrToast(file).then((dataUrl) => {
+      if (dataUrl) setResponseAudioUrl(dataUrl);
+    });
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -471,9 +475,9 @@ function TruthOrDare({ shareId, customTruthDare, history, onAddToHistory, onUpda
     recorder.onstop = () => {
       stream.getTracks().forEach((t) => t.stop());
       const blob = new Blob(recordChunksRef.current, { type: effectiveMime });
-      const reader = new FileReader();
-      reader.onload = (ev) => setResponseAudioUrl(ev.target?.result as string);
-      reader.readAsDataURL(blob);
+      void readAudioFileOrToast(blob).then((dataUrl) => {
+        if (dataUrl) setResponseAudioUrl(dataUrl);
+      });
     };
     recorder.start(200);
     recorderRef.current = recorder;

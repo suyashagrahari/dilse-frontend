@@ -1,9 +1,10 @@
 // ─── Turning a held photo into an S3 URL ─────────────────────────────────────
 //
 // One uploader for every template, because adoption has to work for shapes it
-// has never seen. `POST /media/upload` re-encodes to WebP and answers with a CDN
-// URL; this module's whole job is getting bytes to it from the two forms a
-// pending photo can take.
+// has never seen. `POST /media/upload` stores the bytes and answers with a CDN
+// URL — re-encoding a photo to WebP, keeping a recording's container intact —
+// and this module's whole job is getting bytes to it from the two forms a
+// pending photo or clip can take.
 //
 // ── WHY DATA URLS ARE DECODED BY HAND ───────────────────────────────────────
 //
@@ -16,8 +17,15 @@
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { classifyMediaRef, LOCAL_REF_PREFIX } from "./mediaRefs";
 
-/** The server's own multer ceiling is 20 MB. Refuse earlier, before the bytes fly. */
-const MAX_BYTES = 12 * 1024 * 1024;
+// ── WHY THE CEILING IS PER KIND ─────────────────────────────────────────────
+//
+// One 12MB limit for everything was a photo limit wearing a general name, and
+// it silently truncated the feature it was not written for: a two-minute voice
+// note is comfortably larger than any photo anyone uploads. The server accepts
+// 20MB of audio and 12MB of an image; this matches, so the refusal happens here
+// with a sentence rather than there with a 400.
+const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 
 export interface UploadedRef {
   ok: boolean;
@@ -73,12 +81,40 @@ export async function uploadPendingRef(
     if (!blob) return { ok: false, error: "One of your photos went missing — add it again" };
   }
 
-  if (blob.size > MAX_BYTES) return { ok: false, error: "Too big — keep it under 12MB" };
+  // ── WHY THE KIND IS DERIVED AND NOT ASSUMED ───────────────────────────────
+  //
+  // This said `kind: "image"` unconditionally, because when it was written only
+  // photos came through here. Adoption collects EVERY pending data URL in a
+  // payload, and eleven templates put a recording in theirs — so every voice
+  // note ever adopted was handed to the server labelled as a photo, fed to
+  // sharp, and refused with "Unsupported image format". The upload failed, the
+  // ref was left in place as the code above intends, and the draft was saved
+  // with a megabyte of base64 where a URL belonged. That is the giant "music
+  // URL" people find in their profile.
+  //
+  // The server sniffs the bytes now and no longer trusts this field at all, but
+  // sending the truth is still what keeps the size check below honest.
+  const type = (blob.type || "").toLowerCase();
+  const isAudio = type.startsWith("audio/");
+  // A phone that could not name the file gives us nothing to go on. The server
+  // reads the magic bytes and will know; until it answers, assume the generous
+  // ceiling, because refusing a 15MB song as though it were an oversized photo
+  // is the wrong guess to make.
+  const undecided = !type || type === "application/octet-stream" || type === "binary/octet-stream";
+  const ceiling = isAudio || undecided ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+  if (blob.size > ceiling)
+    return {
+      ok: false,
+      error:
+        isAudio || undecided
+          ? "That clip is too long — keep it under 20MB"
+          : "Too big — keep it under 12MB",
+    };
 
   const body = new FormData();
   body.append("file", new File([blob], fileNameFor(ref, blob.type), { type: blob.type }));
   body.append("template", opts.templateType);
-  body.append("kind", "image");
+  body.append("kind", isAudio ? "audio" : undecided ? "" : "image");
 
   try {
     const res = await fetch(`${API_URL}/media/upload`, {
@@ -108,7 +144,10 @@ function dataUrlToBlob(dataUrl: string): Blob | null {
 
   const header = dataUrl.slice(5, comma); // past "data:"
   const isBase64 = header.endsWith(";base64");
-  const mime = (isBase64 ? header.slice(0, -";base64".length) : header) || "image/png";
+  // No default of "image/png" here. `data:;base64,…` is exactly what a browser
+  // writes for a recording it has no type for, and calling it a PNG is how an
+  // audio clip ended up being sized, labelled and processed as a photo.
+  const mime = (isBase64 ? header.slice(0, -";base64".length) : header) || "application/octet-stream";
   const payload = dataUrl.slice(comma + 1);
 
   try {
@@ -126,7 +165,10 @@ function dataUrlToBlob(dataUrl: string): Blob | null {
 }
 
 function fileNameFor(ref: string, mime: string): string {
-  const ext = (mime.split("/")[1] || "png").split("+")[0];
+  // `audio/webm;codecs=opus` → `webm`. The parameter has to come off or the
+  // filename ends up as `clip.webm;codecs=opus`.
+  const subtype = (mime.split("/")[1] || "").split(";")[0].trim();
+  const ext = (subtype && subtype !== "octet-stream" ? subtype : "bin").split("+")[0];
   const id = ref.startsWith(LOCAL_REF_PREFIX) ? ref.slice(LOCAL_REF_PREFIX.length) : "inline";
   return `${id.slice(0, 24) || "photo"}.${ext}`;
 }

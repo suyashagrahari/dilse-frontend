@@ -13,6 +13,7 @@ import { type ShaadiData, type TabId, TABS, DEMO_DATA } from "@/app/(templates)/
 import AuthModal from "@/components/AuthModal";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK, SITE_URL } from "@/lib/config";
+import { looksPickableAsAudio, readAudioFile } from "@/lib/media/readAudioFile";
 
 const ShaadiBackgroundMusic = lazy(() => import("@/app/(templates)/shaadi-card/components/ShaadiBackgroundMusic"));
 const HomeSection    = lazy(() => import("@/app/(templates)/shaadi-card/components/HomeSection"));
@@ -568,7 +569,8 @@ function BlessingsInput({
   const onPickFile = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("audio/")) {
+    if (!looksPickableAsAudio(f)) {
+      setVoiceLabel("That does not look like an audio file.");
       e.target.value = "";
       return;
     }
@@ -583,7 +585,17 @@ function BlessingsInput({
     try {
       let voiceDataUrl: string | undefined;
       if (voiceBlob) {
-        voiceDataUrl = await blobToDataUrl(voiceBlob);
+        // Bounded, because this clip travels inline as base64 inside the JSON
+        // below and nginx refuses an oversized body as a bare 413 — which lands
+        // in the catch here as an unexplained failure.
+        const read = await readAudioFile(voiceBlob);
+        if (!read.ok) {
+          setVoiceBlob(null);
+          setVoiceLabel(read.error);
+          setLoading(false);
+          return;
+        }
+        voiceDataUrl = read.dataUrl;
       }
       const res = await fetch(`${API_URL}/shaadi-card-pages/share/${shareId}/blessings`, {
         method: "POST",

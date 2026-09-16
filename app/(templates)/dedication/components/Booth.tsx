@@ -26,6 +26,7 @@ import { Mic, Square, RotateCcw, Check, Play, Pause, TriangleAlert } from "lucid
 import { BOOTH, BODY_FACE, DISPLAY_FACE, PALETTE, TAP_TARGET_PX } from "./types";
 import { pickRecorderMime } from "./types";
 import { lampStyle } from "./radioStyles";
+import { MAX_AUDIO_BYTES as SHARED_MAX_AUDIO_BYTES } from "@/lib/media/readAudioFile";
 
 export interface Recording {
   /**
@@ -51,18 +52,29 @@ export interface Recording {
 }
 
 /**
- * The server's `MAX_AUDIO_BYTES` is 20MB, measured on the DECODED buffer. Held
- * a little under it here so the sender is told plainly in the booth rather than
- * meeting a server error after they have already written everything else.
+ * Held at the shared ceiling so the sender is told plainly in the booth rather
+ * than meeting a server error after they have already written everything else.
  *
  * 90 seconds of opus is well under a megabyte, so this only ever fires for a
  * browser recording something uncompressed. It exists because when it does
  * fire, the alternative is `resolveAudioUrl` returning "" and the segment being
  * dropped without a word.
+ *
+ * This was 18MB, chosen against the server's 20MB decoded limit — but nginx
+ * caps the whole request at `client_max_body_size` long before the server sees
+ * it, and that is the number that decides. It lives in one place now.
  */
-const MAX_AUDIO_BYTES = 18 * 1024 * 1024;
-/** base64 inflates by ~4/3; this bounds what actually goes over the wire. */
-const MAX_ENCODED_CHARS = 25 * 1024 * 1024;
+const MAX_AUDIO_BYTES = SHARED_MAX_AUDIO_BYTES;
+/**
+ * base64 inflates by ~4/3; this bounds what actually goes over the wire.
+ *
+ * Kept in step with `MAX_AUDIO_BYTES` in `lib/media/readAudioFile.ts`, and with
+ * `client_max_body_size` in `nginx/backend.conf`, which is the limit that
+ * actually bites: 25MB of encoded audio was refused by nginx before the server
+ * ever saw it, as a 413 carrying no CORS headers — indistinguishable in the
+ * browser from the network dropping.
+ */
+const MAX_ENCODED_CHARS = Math.floor(MAX_AUDIO_BYTES * 1.4);
 
 /** Read a recorded blob into the `data:` URL the server expects. */
 function blobToDataUrl(blob: Blob): Promise<string> {

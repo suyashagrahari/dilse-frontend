@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { HandHeart, Quote, Mic, MicOff, Send, Loader2, X, Music, Sparkles } from "lucide-react";
 import type { ShaadiData, Wish } from "./types";
+import { looksPickableAsAudio, readAudioFile } from "@/lib/media/readAudioFile";
 
 const C_ACCENT = "#AB1C3E";
 const C_MED = "#CB6B82";
@@ -85,14 +86,6 @@ function BlessingForm({
   const chunksRef = useRef<Blob[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const blobToDataUrl = (blob: Blob) =>
-    new Promise<string>((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result as string);
-      r.onerror = rej;
-      r.readAsDataURL(blob);
-    });
-
   const toggleRecord = useCallback(async () => {
     if (recording && mediaRef.current && mediaRef.current.state !== "inactive") {
       mediaRef.current.stop();
@@ -119,7 +112,12 @@ function BlessingForm({
 
   const onPickFile = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f || !f.type.startsWith("audio/")) { if (e.target) e.target.value = ""; return; }
+    if (!f) { if (e.target) e.target.value = ""; return; }
+    if (!looksPickableAsAudio(f)) {
+      setVoiceLabel("That does not look like an audio file.");
+      if (e.target) e.target.value = "";
+      return;
+    }
     setVoiceBlob(f);
     setVoiceLabel(f.name);
   }, []);
@@ -135,7 +133,23 @@ function BlessingForm({
     setLoading(true);
     try {
       let voiceDataUrl: string | undefined;
-      if (voiceBlob) voiceDataUrl = await blobToDataUrl(voiceBlob);
+      if (voiceBlob) {
+        // A guest's voice note travels inline as base64 inside this JSON, so an
+        // unbounded one is refused by nginx as a bare 413 — which arrives here
+        // as an unexplained failed fetch. Bound it, and say why.
+        //
+        // The reason goes in this form's own label rather than a toast: this
+        // component renders on the shared page under `app/[id]`, which mounts
+        // no ToastHost, so a toast here would be a no-op the guest never sees.
+        const read = await readAudioFile(voiceBlob);
+        if (!read.ok) {
+          setVoiceBlob(null);
+          setVoiceLabel(read.error);
+          setLoading(false);
+          return;
+        }
+        voiceDataUrl = read.dataUrl;
+      }
       const res = await fetch(`${API_URL}/shaadi-card-pages/share/${shareId}/blessings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
