@@ -159,6 +159,14 @@ export default function MemoryLane({
               <button
                 type="button"
                 className="ps-pola-in mlCard"
+                /*
+                  The tilt travels as a custom property, not as a transform.
+                  An inline `transform` cannot be overridden by any rule in a
+                  <style> tag — the one hard rule of styling in this template —
+                  and the phone needs the cards straight. So the value comes
+                  down here and the stylesheet decides whether to use it.
+                */
+                style={{ ["--tilt" as string]: `${TILTS[i % TILTS.length]}deg` }}
                 onClick={() =>
                   setZoom({
                     src: m.imageUrl,
@@ -167,48 +175,28 @@ export default function MemoryLane({
                   })
                 }
                 aria-label={m.caption ? `Open photo: ${m.caption}` : "Open photo"}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  border: "none",
-                  cursor: "zoom-in",
-                  textAlign: "inherit",
-                  font: "inherit",
-                  transform: `rotate(${TILTS[i % TILTS.length]}deg)`,
-                  background: "#fff",
-                  borderRadius: 10,
-                  boxShadow: "0 18px 34px -20px rgba(150,80,110,.55)",
-                }}
               >
-                {/* Washi tape, alternating corners */}
+                {/* Washi tape. Centred and straight on a phone, taped to
+                    alternating corners at a jaunty angle from the tablet up —
+                    both decided in the stylesheet, for the reason above. */}
                 <span
                   aria-hidden
-                  style={{
-                    position: "absolute",
-                    top: -7,
-                    left: i % 2 === 0 ? 14 : undefined,
-                    right: i % 2 === 0 ? undefined : 14,
-                    width: 44,
-                    height: 17,
-                    borderRadius: 3,
-                    transform: `rotate(${i % 2 === 0 ? -8 : 9}deg)`,
-                    background: TAPE[i % TAPE.length],
-                    boxShadow: "0 3px 8px -4px rgba(150,80,110,.45)",
-                  }}
+                  className="mlTape"
+                  style={
+                    {
+                      ["--tape" as string]: TAPE[i % TAPE.length],
+                      ["--tape-l" as string]: i % 2 === 0 ? "14px" : "auto",
+                      ["--tape-r" as string]: i % 2 === 0 ? "auto" : "14px",
+                      ["--tape-rot" as string]: i % 2 === 0 ? "-8deg" : "9deg",
+                    } as CSSProperties
+                  }
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  className="mlPhoto"
                   src={m.imageUrl}
                   alt={m.caption || `A memory of ${data.recipientName || "us"}`}
                   loading={i < 2 ? "eager" : "lazy"}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    aspectRatio: "1 / 1",
-                    objectFit: "cover",
-                    borderRadius: 4,
-                    background: "linear-gradient(160deg, #fff1f6 0%, #f4ecff 100%)",
-                  }}
                 />
                 <p
                   className="mlCaption"
@@ -277,35 +265,79 @@ export default function MemoryLane({
         .mlTitle { font-size: clamp(24px, 6.8vw, 40px); max-width: 720px }
         .mlNames { font-size: clamp(18px, 5vw, 24px) }
 
-        /* ── ONE PHOTO AT A TIME ON A PHONE ────────────────────────────────
+        /* ── ONE PHOTO AT A TIME ON A PHONE, AND STRAIGHT ──────────────────
            Two columns on a 390px screen is a 170px card: a contact sheet, at
            the size the polaroid frame and the handwriting were drawn for a
-           single picture. One column nearly doubles the photograph and gives
-           the caption a line it can actually be read on — the album is meant
-           to be gone through, not skimmed.
+           single picture.
 
-           320px, not 100%: the cards are tilted, and a rotated card that fills
-           the width has its corners cut off by the padding. This leaves the
-           tilt somewhere to happen. */
+           One column, and none of the scrapbook's tilt. A tilt is charming in
+           a spread where cards sit beside each other at different angles and
+           the eye reads the arrangement — in a single column it is just four
+           cards that each look slightly crooked, one after another, with the
+           straight edges of the screen right there to measure them against.
+           So a phone gets a clean card: square corners to the screen, one
+           centred piece of tape, and the photograph. The tilt comes back at
+           700px, where there is a row for it to belong to. */
         .mlGrid {
           display: grid;
           grid-template-columns: minmax(0, 1fr);
-          gap: 22px;
-          width: 100%;
-          max-width: 320px;
+          gap: 18px;
+          /* 80% of the screen, not of the content box — the ask was in screen
+             terms, and the two differ by the section padding. */
+          width: 80vw;
+          max-width: 330px;
           margin: 0 auto;
         }
-        .mlCaption { font-size: 16.5px; padding: 12px 16px 20px; min-height: 58px }
+        .mlCard {
+          display: block;
+          width: 100%;
+          border: none;
+          cursor: zoom-in;
+          text-align: inherit;
+          font: inherit;
+          background: #fff;
+          border-radius: 16px;
+          padding: 8px 8px 0;
+          box-shadow: 0 14px 30px -18px rgba(150,80,110,.5);
+        }
+        /* 4:3 rather than square. The square card ran to about 400px a piece,
+           so four of them was a 2100px scroll before the button — "too much
+           big" was right. This is the same photograph, a third shorter. */
+        .mlPhoto {
+          display: block;
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          object-fit: cover;
+          border-radius: 10px;
+          background: linear-gradient(160deg, #fff1f6 0%, #f4ecff 100%);
+        }
+        .mlTape {
+          position: absolute;
+          top: -7px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 44px;
+          height: 17px;
+          border-radius: 3px;
+          background: var(--tape);
+          box-shadow: 0 3px 8px -4px rgba(150,80,110,.45);
+        }
+        .mlCaption { font-size: 15.5px; padding: 11px 14px 15px; min-height: 44px }
         .mlCta { margin-top: 26px; padding: 14px 26px; font-size: clamp(15px, 4.3vw, 18px) }
 
         @media (min-width: 700px) {
           .mlAct { padding: 84px 24px 52px }
-          /* Room for a row again. */
+          /* Room for a row again — so the scrapbook comes back: square photos,
+             tape at alternating corners, and every card at its own angle. */
           .mlGrid {
             grid-template-columns: repeat(var(--ml-md), minmax(0, 1fr));
             gap: 26px 20px;
+            width: 100%;
             max-width: calc(var(--ml-md) * 250px);
           }
+          .mlCard { border-radius: 10px; padding: 0; transform: rotate(var(--tilt)); box-shadow: 0 18px 34px -20px rgba(150,80,110,.55) }
+          .mlPhoto { aspect-ratio: 1 / 1; border-radius: 4px }
+          .mlTape { left: var(--tape-l); right: var(--tape-r); transform: rotate(var(--tape-rot)) }
           .mlCaption { font-size: clamp(15px, 2.2vw, 17px); padding: 10px 8px 16px; min-height: 54px }
         }
 
