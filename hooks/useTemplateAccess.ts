@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useAppSelector } from "@/store/hooks";
-import { useHiddenTemplates } from "@/hooks/useHiddenTemplates";
+import { useHiddenTemplates, useTemplateVisibilityConfirmed } from "@/hooks/useHiddenTemplates";
 
 /**
  * Which templates this visitor cannot use, and whether we know yet.
@@ -45,8 +45,19 @@ export function useTemplateAccess(): {
   hidden: ReadonlySet<string>;
   /** False while a grant list is still on its way. Do not refuse anyone yet. */
   resolved: boolean;
+  /**
+   * False while the only evidence is the list that came down inside the page.
+   *
+   * That list is baked into statically prerendered HTML and can be served stale,
+   * so it says what was true when the page was built rather than when it was
+   * opened — which is how a freshly released template greeted its first visitor
+   * with "Not available yet". A gallery may render on it happily; a refusal may
+   * not. See `verifyTemplateVisibility`.
+   */
+  confirmed: boolean;
 } {
   const publiclyHidden = useHiddenTemplates();
+  const confirmed = useTemplateVisibilityConfirmed();
   const { user, isLoading } = useAppSelector((s) => s.auth);
 
   // Read straight from the store rather than a second fetch: `checkAuth` already
@@ -69,5 +80,5 @@ export function useTemplateAccess(): {
 
   const resolved = !isLoading && (!hasToken || !!user);
 
-  return { hidden, resolved };
+  return { hidden, resolved, confirmed };
 }

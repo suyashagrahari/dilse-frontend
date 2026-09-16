@@ -67,6 +67,15 @@ let settled = false;
  */
 let revision = 0;
 let inFlight: Promise<void> | null = null;
+/**
+ * Whether this page load has checked the list against the server itself.
+ *
+ * Distinct from `settled`, and the distinction is the whole point. `settled`
+ * becomes true the moment a server-rendered list is adopted — but that list
+ * travelled inside the page's HTML, and the HTML can be older than the visit.
+ * See `verifyTemplateVisibility`.
+ */
+let verified = false;
 const listeners = new Set<Listener>();
 
 function emit(): void {
@@ -118,6 +127,38 @@ function load(fresh = false): Promise<void> {
     }
   })();
   return inFlight;
+}
+
+/**
+ * Check the adopted list against the server, once per page load.
+ *
+ * ── THE STALENESS THIS EXISTS FOR ───────────────────────────────────────────
+ *
+ * Template routes are statically prerendered, so the list resolved by
+ * `getHiddenTemplatesServer()` is baked into cached HTML and served back under
+ * Next's stale-while-revalidate: the first visitor after the window lapses gets
+ * the OLD page and only triggers the regeneration that fixes it. A visitor who
+ * lands on that copy therefore reads a hidden list that was true when the page
+ * was built, not when they opened it — and because `seedTemplateVisibility`
+ * marks the store settled, nothing ever went back to ask.
+ *
+ * The symptom was precise and repeatable: open a newly released template, get
+ * "Not available yet", open it again, get the template. First hit serves stale,
+ * second hit serves what the background regeneration wrote.
+ *
+ * So this exists for the one case where being wrong is expensive — a refusal.
+ * `load(true)` goes past the CDN, and completing bumps `revision`, which is
+ * what makes `useHiddenTemplates` prefer this answer over the page payload.
+ * Idempotent, because the caller is a render-driven effect.
+ */
+export function verifyTemplateVisibility(): Promise<void> {
+  if (verified) return Promise.resolve();
+  verified = true;
+  // Past `settled`: it may mean nothing more than "a prerendered list was
+  // adopted", which is exactly the state being questioned.
+  inFlight = null;
+  settled = false;
+  return load(true);
 }
 
 /**

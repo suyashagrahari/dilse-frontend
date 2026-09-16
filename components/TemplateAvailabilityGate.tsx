@@ -14,6 +14,21 @@
 // the URL, so one component mounted in `app/(templates)/layout.tsx` covers every
 // route in the group, including ones nobody has written yet.
 //
+// ── IT NEVER REFUSES ON THE PAGE'S OWN WORD ─────────────────────────────────
+//
+// The hidden list arrives inside the HTML, and template routes are statically
+// prerendered: Next serves the cached copy and regenerates behind it, so the
+// first visitor after the window lapses reads a list that was true when the page
+// was BUILT. A template released since then greeted its first visitor with "Not
+// available yet", and looked fine on the second visit — the regeneration having
+// landed in between.
+//
+// So a refusal is now checked against the server before it is shown. The two
+// directions are not symmetric: rendering the builder for a template that turns
+// out to be hidden costs a beat and corrects itself, while refusing a live one
+// sends somebody to the gallery to look for a template that is right there.
+// Only the expensive direction waits.
+//
 // ── WHAT THIS DOES NOT TOUCH ────────────────────────────────────────────────
 //
 // Published pages. They live at `/[id]`, outside the `(templates)` group, so a
@@ -23,9 +38,11 @@
 // is not a release control, it is an outage. The server agrees — see the note on
 // `middleware/templateGate.ts` about guarding writes only.
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
+import { verifyTemplateVisibility } from "@/lib/templateVisibility";
 
 /**
  * Routes inside `(templates)` that are NOT a template builder.
@@ -41,10 +58,20 @@ const NEVER_GATED = (path: string): boolean =>
 
 export function TemplateAvailabilityGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
-  const { hidden, resolved } = useTemplateAccess();
+  const { hidden, resolved, confirmed } = useTemplateAccess();
 
   const slug = pathname.split("/").filter(Boolean)[0] || "";
   const blocked = !!slug && hidden.has(slug) && !NEVER_GATED(pathname);
+
+  // Ask the server directly, once, and only when we are otherwise about to
+  // refuse. Every other visitor to every other template pays nothing: the
+  // condition is false for them and this never fires. `verifyTemplateVisibility`
+  // is idempotent, so a re-render cannot turn it into a second request, and the
+  // result reaches this component through the store rather than through state
+  // set from inside an effect.
+  useEffect(() => {
+    if (blocked && !confirmed) void verifyTemplateVisibility();
+  }, [blocked, confirmed]);
 
   if (!blocked) return <>{children}</>;
 
@@ -56,10 +83,14 @@ export function TemplateAvailabilityGate({ children }: { children: React.ReactNo
   // made for, and then replace it with their template a moment later. That reads
   // as the grant being broken.
   //
+  // The same beat is held for the check above: until this page load has asked
+  // the server itself, the only evidence against this template is a list that
+  // may have been baked into the HTML days ago.
+  //
   // Only reached when the slug IS hidden, so a visitor with no token and nobody
   // on a public template never sees this: `resolved` is true for them
   // immediately. See `useTemplateAccess`.
-  if (!resolved) {
+  if (!resolved || !confirmed) {
     return (
       <main
         style={{

@@ -56,3 +56,22 @@ export function useHiddenTemplates(): ReadonlySet<string> {
   if (revision > 0 || !providedSet) return stored;
   return providedSet;
 }
+
+/**
+ * Whether this page load has checked the hidden list against the server itself,
+ * rather than trusting the copy that arrived inside the HTML.
+ *
+ * `revision` is the fact: it stays 0 until a fetch of ours completes, and
+ * `seedTemplateVisibility` deliberately does not bump it. Callers that are about
+ * to REFUSE somebody wait for this; callers that are merely deciding what to
+ * list do not need to.
+ */
+export function useTemplateVisibilityConfirmed(): boolean {
+  return (
+    useSyncExternalStore(
+      subscribeTemplateVisibility,
+      getTemplateVisibilityRevision,
+      getTemplateVisibilityRevisionServerSnapshot
+    ) > 0
+  );
+}
