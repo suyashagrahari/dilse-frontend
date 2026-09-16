@@ -25,11 +25,13 @@ export default function Celebration({
   data,
   dodges,
   shareId,
+  onBack,
   reduced,
 }: {
   data: ProposalData;
   dodges: number;
   shareId?: string;
+  onBack: () => void;
   reduced: boolean;
 }) {
   const voice = copyFor(data.perspective);
@@ -414,6 +416,29 @@ export default function Celebration({
         <p style={{ fontSize: 11.5, color: INK_SOFT, opacity: 0.8, textAlign: "center", maxWidth: 340 }}>
           the story card is 1080&times;1920, sized for Instagram, with a QR back to this page.
         </p>
+
+        {/* In the flow, under the two things somebody actually came here to do
+            — not a chip floating over the confetti. */}
+        <button
+          type="button"
+          onClick={onBack}
+          className="ps-btn"
+          style={{
+            marginTop: 6,
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            padding: "8px 14px",
+            borderRadius: 999,
+            fontFamily: DISPLAY,
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: INK_SOFT,
+            opacity: 0.75,
+          }}
+        >
+          <span aria-hidden>&#8592;</span> read the question again
+        </button>
       </div>
 
       {/* The off-screen 1080x1920 node the card is captured from. */}

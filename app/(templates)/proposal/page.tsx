@@ -37,6 +37,37 @@ const pill: React.CSSProperties = {
 function ProposalPageInner() {
   const e = useProposalEditor();
 
+  /**
+   * Fixed, above everything, and gone only while the FORM is open.
+   *
+   * ── THE BUG THIS FIXES ────────────────────────────────────────────────────
+   *
+   * The guard used to be `editMode ? hidden : visible`, and `editMode` has
+   * three values, not two: `null`, `"manual"` (the form is up) and `"preview"`
+   * (the form has been filled in and put away). Saving the form sets
+   * `"preview"` — and so does restoring a draft from localStorage on load, and
+   * so does opening `?edit=<id>`. So the moment somebody filled the form in
+   * once, Back and Create vanished, on that visit and on every visit
+   * afterwards, because the draft came back as "preview" before first paint.
+   *
+   * Which is exactly the report: no Create option and no Back in the preview.
+   * A clean browser profile never reproduced it, because a clean profile has no
+   * draft and lands on `editMode === null`.
+   *
+   * The thing being avoided is the sheet, so the condition is the sheet —
+   * `"manual"`, the same test EditSheet itself uses to decide it is visible.
+   */
+  const formOpen = e.editMode === "manual";
+  const chrome: React.CSSProperties = {
+    position: "fixed",
+    top: "calc(env(safe-area-inset-top, 0px) + 10px)",
+    zIndex: 120,
+    opacity: formOpen ? 0 : 1,
+    pointerEvents: formOpen ? "none" : "auto",
+    visibility: formOpen ? "hidden" : "visible",
+    transition: "opacity .18s ease",
+  };
+
   const topAction = e.showShare
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
     : e.showPublish
@@ -45,23 +76,47 @@ function ProposalPageInner() {
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative" }}>
-      {/* Floating top bar. Hidden while the EditSheet is open: it sits at a higher
-          z-index than the sheet, so it would otherwise paint over the first field's
-          label, and an overlapping "Back" mid-edit is a tap-target hazard. */}
+      {/*
+        ── THE BUILDER'S CHROME ───────────────────────────────────────────────
+
+        Two separately positioned controls, not one full-width bar.
+
+        The bar was reported as missing on this template: "i am not able to see
+        create option in preview and also back option". A full-width
+        `position: fixed` strip pinned to the top of the page is precisely the
+        shape that content blockers' annoyance filters hunt for — it is what a
+        cookie nag, a newsletter gate and a sticky promo header all look like to
+        a cosmetic rule — and it is also a single element whose failure takes
+        both controls with it. Two corner controls fail independently and match
+        nothing.
+
+        Everything load-bearing here is an inline style rather than a utility
+        class, for the same reason: a class is a dependency on a stylesheet that
+        has to have been generated, shipped and not filtered. `position`,
+        `z-index` and `top` are the three properties that decide whether this is
+        on the screen at all, so they are stated where nothing can drop them.
+
+        Both are hidden while the EditSheet is open: they sit above it, so they
+        would otherwise paint over the first field, and an overlapping "Back"
+        mid-edit is a tap-target hazard.
+      */}
+      <button
+        onClick={e.goBack}
+        aria-label="Leave this template"
+        style={{ ...pill, ...chrome, left: 12 }}
+      >
+        <ArrowLeft size={15} /> Back
+      </button>
+
       <div
-        className="fixed left-0 right-0 z-[120] flex items-center gap-2 px-3"
         style={{
-          top: "calc(env(safe-area-inset-top, 0px) + 10px)",
-          opacity: e.editMode ? 0 : 1,
-          pointerEvents: e.editMode ? "none" : "auto",
-          visibility: e.editMode ? "hidden" : "visible",
-          transition: "opacity .18s ease",
+          ...chrome,
+          right: 12,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        <button onClick={e.goBack} style={pill}>
-          <ArrowLeft size={15} /> Back
-        </button>
-        <div className="flex-1" />
         {e.isPersonalized && !e.showShare && (
           <button onClick={e.handleEditFromPreview} style={pill}>
             <PenLine size={14} /> Edit
@@ -72,12 +127,15 @@ function ProposalPageInner() {
           disabled={e.publishing}
           style={{
             ...pill,
+            padding: "11px 20px",
+            fontSize: 14.5,
             background: PINK_GRADIENT,
             color: "#FFF",
             border: "none",
             fontWeight: 700,
-            boxShadow: "0 8px 22px rgba(242,120,159,.45)",
+            boxShadow: "0 10px 26px rgba(242,120,159,.5)",
             opacity: e.publishing ? 0.6 : 1,
+            minHeight: 46,
           }}
         >
           {topAction.icon} {topAction.label}

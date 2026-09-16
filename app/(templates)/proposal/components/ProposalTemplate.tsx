@@ -68,6 +68,11 @@ export default function ProposalTemplate({
   // Dodges are NOT reset. Somebody who fought the No button eleven times and
   // then went back to re-read the scrapbook has earned the callback on the
   // celebration screen, and zeroing it would quietly delete the joke.
+  //
+  // This used to be drawn here, as a pill fixed to the top-left corner. It is
+  // now passed to the acts that have somewhere to go and rendered in their
+  // flow: the corner belongs to the builder's own Back and Create in preview,
+  // and two floating chips in one corner means one of them is unreachable.
   const backTo: Record<Act, Act | null> = {
     gate: null,
     memories: null,
@@ -162,54 +167,6 @@ export default function ProposalTemplate({
         attachYouTube={attachYouTube}
       />
 
-      {/*
-        One step back, top-left — the corner the music control used to occupy.
-
-        Deliberately a single fixed control rather than a button inside each
-        act: it stays in one place as the acts change under it, which is what
-        makes it read as page navigation rather than as part of the moment. It
-        is absent on the gate and the scrapbook because there is nowhere useful
-        to go back TO from either.
-      */}
-      {backTo[act] && (
-        <button
-          type="button"
-          onClick={goBack}
-          className="ps-btn"
-          aria-label="Go back one step"
-          style={{
-            position: "fixed",
-            // In preview the builder draws its OWN Back/Create chrome in the
-            // same corner — that Back leaves the template, this one steps back
-            // an act, and stacking them would put one invisibly under the
-            // other. The recipient's page has no such chrome, so it sits in the
-            // corner proper.
-            top: mode === "preview" ? 66 : 12,
-            left: 12,
-            zIndex: 46,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            height: 40,
-            padding: "0 15px 0 12px",
-            borderRadius: 999,
-            cursor: "pointer",
-            background: "rgba(255,255,255,.8)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,214,228,.95)",
-            boxShadow: "0 8px 20px -8px rgba(239,83,125,.45)",
-            fontFamily: DISPLAY,
-            fontSize: 13,
-            fontWeight: 600,
-            color: INK_SOFT,
-          }}
-        >
-          <span aria-hidden style={{ fontSize: 15, lineHeight: 1 }}>&#8592;</span>
-          back
-        </button>
-      )}
-
       {/* SubhSandesh brand badge — recipient view only. */}
       {mode === "live" && (
         <Link
@@ -281,11 +238,18 @@ export default function ProposalTemplate({
                 dodges={dodges}
                 onDodge={bumpDodges}
                 onYes={() => setAct("celebration")}
+                onBack={goBack}
                 reduced={reduced}
               />
             )}
             {act === "celebration" && (
-              <Celebration data={data} dodges={dodges} shareId={shareId} reduced={reduced} />
+              <Celebration
+                data={data}
+                dodges={dodges}
+                shareId={shareId}
+                onBack={goBack}
+                reduced={reduced}
+              />
             )}
           </motion.div>
         </AnimatePresence>

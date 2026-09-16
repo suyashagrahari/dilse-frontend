@@ -21,10 +21,20 @@
 // placement decision — the No button AND its reaction art — is checked against
 // the same list.
 //
-// The reaction art is the part that was wrong: it was positioned purely
-// relative to the No button, so once YES had grown, the sad bear could sit
-// squarely on top of it. It now picks from candidate slots around the button
-// and takes the first one that is clear.
+// ── THE GUILT-TRIP ART IS NOT IN THE ARENA ──────────────────────────────────
+//
+// It used to be: a 76px sprite placed next to wherever the No button had just
+// landed. Two problems, one fatal. It collided — once YES had grown there were
+// screens where every candidate slot overlapped it, so the art had to be
+// dropped entirely on exactly the screens where the joke had built up most.
+// And at 76px, dropped in the middle of a playfield, it read as a stray asset
+// rather than as a reaction.
+//
+// It is now the headline art, at the top, swapped in place of the hero the
+// moment they poke "No" and swapped back when the chase ends. Bigger, always
+// visible, impossible to collide with, and it reads as what it is: the page
+// pulling a face at them. The arena below holds two buttons and nothing else,
+// which is the only thing it was ever good at.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
@@ -49,9 +59,6 @@ const SAFE_TOP = 68;
 const YES_MARGIN = 14;
 /** Candidate positions tried before falling back to "furthest from YES". */
 const TRIES = 24;
-const REACTION_SIZE = 76;
-/** Clearance kept around the reaction art, same idea as YES_MARGIN. */
-const REACT_MARGIN = 6;
 /** Two events can describe one poke (pointerdown + touchstart) — collapse them. */
 const DEBOUNCE_MS = 180;
 
@@ -133,64 +140,19 @@ function pickSpot(b: Bounds, blocked: Rect[]): { x: number; y: number } {
   return { x: clamp(best.x, PAD, b.maxX), y: clamp(best.y, b.minY, b.maxY) };
 }
 
-/**
- * Where the sad reaction art goes, given where the No button landed — or null
- * when there is nowhere for it.
- *
- * It used to be "just above the No button, or below it near the top", with no
- * awareness of anything else on the arena. Once YES had grown, that put the sad
- * bear squarely on top of the one button that matters.
- *
- * Four slots — above, below, right, left — and the first that clears every
- * obstacle wins.
- *
- * ── WHY IT GIVES UP INSTEAD OF PICKING THE LEAST-BAD SLOT ───────────────────
- *
- * Measured on a 360×640 screen: the arena is 328×243, YES at its full 1.7x is
- * about 250×95, and once the No button is somewhere in what is left, all four
- * slots genuinely overlap YES. An earlier version fell back to "furthest from
- * trouble", which meant the bear sat on the YES button on seven of eleven
- * pokes on that screen.
- *
- * A guilt-trip GIF is a delight; YES is the function. When the two cannot both
- * fit, the delight is the one that goes. Nobody misses a sad bear they never
- * knew was coming; everybody notices a button they cannot press.
- */
-function placeReaction(
-  pos: { x: number; y: number },
-  arenaW: number,
-  arenaH: number,
-  noW: number,
-  noH: number,
-  blocked: Rect[],
-): { x: number; y: number } | null {
-  const maxX = Math.max(PAD, arenaW - REACTION_SIZE - PAD);
-  const maxY = Math.max(PAD, arenaH - REACTION_SIZE - PAD);
-  const slots = [
-    { x: pos.x - 8, y: pos.y - REACTION_SIZE - 8 },
-    { x: pos.x - 8, y: pos.y + noH + 8 },
-    { x: pos.x + noW + 8, y: pos.y - REACTION_SIZE / 2 },
-    { x: pos.x - REACTION_SIZE - 8, y: pos.y - REACTION_SIZE / 2 },
-  ].map((c) => ({ x: clamp(c.x, PAD, maxX), y: clamp(c.y, PAD, maxY) }));
-
-  const size = REACTION_SIZE + REACT_MARGIN * 2;
-  for (const c of slots) {
-    if (!blocked.some((r) => hits(c.x - REACT_MARGIN, c.y - REACT_MARGIN, size, size, r))) return c;
-  }
-  return null;
-}
-
 export default function TheAsk({
   data,
   dodges,
   onDodge,
   onYes,
+  onBack,
   reduced,
 }: {
   data: ProposalData;
   dodges: number;
   onDodge: () => void;
   onYes: () => void;
+  onBack: () => void;
   reduced: boolean;
 }) {
   const arenaRef = useRef<HTMLDivElement | null>(null);
@@ -198,9 +160,6 @@ export default function TheAsk({
   const yesRef = useRef<HTMLButtonElement | null>(null);
 
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  /** Where the sad reaction art sits. Chosen in an effect — see below. */
-  /** Where the sad art sits, or null when there is no room for it at all. */
-  const [react, setReact] = useState<{ x: number; y: number } | null>(null);
   const lastFleeRef = useRef(0);
   /**
    * The obstacle list as of the last placement.
@@ -323,11 +282,9 @@ export default function TheAsk({
           ? { x: clamp(prev.x, PAD, b.maxX), y: clamp(prev.y, b.minY, b.maxY) }
           : // First resting place: just below and to the right of YES.
             { x: clamp(b.w / 2 - b.bw / 2 + 46, PAD, b.maxX), y: clamp(b.h * 0.78, b.minY, b.maxY) };
-        const next = blocked.some((r) => hits(clamped.x, clamped.y, b.bw, b.bh, r))
+        return blocked.some((r) => hits(clamped.x, clamped.y, b.bw, b.bh, r))
           ? pickSpot(b, blocked)
           : clamped;
-        setReact(placeReaction(next, b.w, b.h, b.bw, b.bh, blocked));
-        return next;
       });
     };
     settle();
@@ -349,9 +306,7 @@ export default function TheAsk({
       if (!b) return;
       const blocked = occupied(growTo);
       blockedRef.current = blocked;
-      const landed = pickSpot(b, blocked);
-      setPos(landed);
-      setReact(placeReaction(landed, b.w, b.h, b.bw, b.bh, blocked));
+      setPos(pickSpot(b, blocked));
     },
     [bounds, occupied],
   );
@@ -397,6 +352,14 @@ export default function TheAsk({
   }, []);
 
   const art = HERO_ART[data.heroArt];
+  /**
+   * What the frame at the top shows right now.
+   *
+   * Rest → the hero the sender chose. Mid-chase → the rung's sad face. Chase
+   * over → the "why" face, which used to be a second image stacked under the
+   * arena and is now simply the last frame of the same slot.
+   */
+  const frameArt = gaveUp ? REACTIONS.sadWhy : reaction ?? art;
   const voice = copyFor(data.perspective);
   const grow = yesScale(dodges);
   const noScale = Math.max(1 - dodges * 0.06, 0.55);
@@ -404,7 +367,7 @@ export default function TheAsk({
 
   return (
     <section
-      className="ps-act"
+      className="ps-act askAct"
       style={{
         // ── SAFE CENTRING ──────────────────────────────────────────────────
         //
@@ -420,7 +383,6 @@ export default function TheAsk({
         display: "flex",
         flexDirection: "column",
         width: "100%",
-        padding: "74px 14px 104px",
       }}
     >
       <div
@@ -439,6 +401,11 @@ export default function TheAsk({
       {/*
         A FIXED frame, and the art does not bob.
 
+        It also holds whichever face the page is currently pulling: the hero art
+        at rest, the guilt-trip art while they are poking "No", and the "fine,
+        you win" art once the No button gives up. One frame, one fixed height —
+        so a swap never moves a single pixel of the headline beneath it.
+
         Two separate complaints, one cause. The bob moved the image inside a box
         sized to the image, so on a short viewport it drifted in and out of the
         clipped region and read as "dangling". And because the box had no
@@ -449,25 +416,24 @@ export default function TheAsk({
         pulse on YES, the button that runs away. The one thing being looked at
         does not need to move as well.
       */}
-      <div
-        style={{
-          height: "clamp(96px,19vh,168px)",
-          width: "100%",
-          maxWidth: 320,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <div className="askFrame">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={art.src}
-          alt={art.alt}
+          key={frameArt.src}
+          className={reduced ? undefined : "ps-pop"}
+          src={frameArt.src}
+          alt={frameArt.alt}
           style={{
             height: "100%",
             width: "auto",
             maxWidth: "100%",
             objectFit: "contain",
+            // Most of this art has an alpha channel and the radius does
+            // nothing to it. The one reaction that is a photograph with square
+            // opaque edges stops looking like a screenshot dropped onto the
+            // page — and drop-shadow reads the clipped alpha, so the shadow
+            // follows the rounding too.
+            borderRadius: 20,
             filter: "drop-shadow(0 14px 24px rgba(200,110,150,.3))",
           }}
         />
@@ -540,8 +506,17 @@ export default function TheAsk({
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: 560,
-          height: "clamp(220px,38vh,360px)",
+          // ── WHY THE WHOLE ACT IS SIZED TO FIT ──────────────────────────
+          //
+          // The question has to be on the screen while they are deciding. It
+          // is the one sentence the page exists to say, and a headline that
+          // scrolls out of view the moment somebody reaches for a button has
+          // stopped asking anything. So the paddings, the art frame and this
+          // arena are all budgeted to add up to less than one viewport on the
+          // sizes that matter — 360x640 and up — instead of being pinned with
+          // `position: sticky`, which would put a blurred bar across the art.
+          maxWidth: 620,
+          height: "clamp(196px,31vh,320px)",
           marginTop: 4,
           touchAction: "manipulation",
         }}
@@ -560,28 +535,6 @@ export default function TheAsk({
             WebkitMaskImage: "radial-gradient(120% 100% at 50% 50%, #000 55%, transparent 100%)",
           }}
         />
-
-        {reaction && !gaveUp && react && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={`react-${dodges}`}
-            className="ps-pop"
-            src={reaction.src}
-            alt={reaction.alt}
-            loading="lazy"
-            style={{
-              position: "absolute",
-              left: react.x,
-              top: react.y,
-              width: REACTION_SIZE,
-              height: REACTION_SIZE,
-              objectFit: "contain",
-              pointerEvents: "none",
-              zIndex: 2,
-              filter: "drop-shadow(0 10px 18px rgba(200,110,150,.34))",
-            }}
-          />
-        )}
 
         {/* YES — absolutely centred, so growing it can never reflow anything */}
         <div
@@ -685,28 +638,60 @@ export default function TheAsk({
       {gaveUp && (
         <div
           className="ps-pop"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 4,
-            marginTop: 12,
-            pointerEvents: "none",
-          }}
+          style={{ display: "flex", justifyContent: "center", marginTop: 14, pointerEvents: "none" }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={REACTIONS.sadWhy.src}
-            alt={REACTIONS.sadWhy.alt}
-            loading="lazy"
-            style={{ width: 64, height: 64, objectFit: "contain", opacity: 0.95 }}
-          />
           <span style={chip("rgba(255,255,255,.85)", PINK_DEEP)}>
-            it&rsquo;s just you and YES now <span aria-hidden>💘</span>
+            it&rsquo;s just you and YES now <span aria-hidden>&#128156;</span>
           </span>
         </div>
       )}
+
+      {/*
+        ── ONE STEP BACK, IN THE FLOW ────────────────────────────────────────
+
+        This used to be a floating pill fixed to the top-left corner, over the
+        art. Two controls in that corner (the builder puts its own Back and
+        Create there in preview) is one too many, and a fixed chip hovering over
+        a proposal reads as browser chrome rather than as part of the page.
+
+        Quiet, in the flow, after the thing it would take you away from — which
+        is the only order in which "go back" is ever the second thought.
+      */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="ps-btn"
+        style={{
+          marginTop: 18,
+          alignSelf: "center",
+          border: "none",
+          background: "none",
+          cursor: "pointer",
+          padding: "8px 14px",
+          borderRadius: 999,
+          fontFamily: DISPLAY,
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: INK_SOFT,
+          opacity: 0.75,
+        }}
+      >
+        <span aria-hidden>&#8592;</span> back to our photos
+      </button>
       </div>
+
+      <style>{`
+        .askAct { padding: 64px 14px 58px }
+        .askFrame {
+          height: clamp(88px, 16vh, 150px);
+          width: 100%; max-width: 300px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        @media (min-width: 900px) {
+          .askAct { padding: 84px 28px 72px }
+          .askFrame { height: 168px; max-width: 340px }
+        }
+      `}</style>
     </section>
   );
 }
