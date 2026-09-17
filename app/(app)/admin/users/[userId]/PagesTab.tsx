@@ -65,9 +65,13 @@ export default function PagesTab({
       // Those first two are why this reads "Not recoverable" far more often
       // than there are unrecoverable passwords.
       if (!r.ok || !j?.success || !j?.data) {
+        // The server already says precisely why — "Access denied. Super Admin
+        // privileges required." or "Admin actions are not available while
+        // viewing as another user." Both are blanket 403s that would otherwise
+        // read as every password on the page being unrecoverable at once.
         pushToast({
-          title: r.status === 401 || r.status === 403
-            ? "Your session no longer has super-admin access — sign in again."
+          title: typeof j?.error === "string" && j.error
+            ? j.error
             : `Could not reveal the password (${r.status})`,
           type: "error",
         });
