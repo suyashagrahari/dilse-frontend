@@ -32,9 +32,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import {
-  ArrowLeft, Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock,
-  StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle,
-  UserRound,
+  ArrowLeft, Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock, StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle, UserRound, PenLine,
 } from "lucide-react";
 import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 
@@ -155,6 +153,16 @@ export default function AdminFeedbackPage() {
   const [body, setBody] = useState("");
   const [notes, setNotes] = useState("");
   const [drafting, setDrafting] = useState(false);
+  /**
+   * What the admin wants THIS email to do, in their own words.
+   *
+   * Empty = generate straight from the rating and the comment, exactly as
+   * before. Filled = the model is told to follow it, ranked above the default
+   * per-star intent but below the prompt's hard rules (no money, no dates, no
+   * invented fixes) — so a hurried "offer a refund" cannot put one in writing.
+   */
+  const [guidance, setGuidance] = useState("");
+  const [guideOpen, setGuideOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   /**
@@ -255,6 +263,7 @@ export default function AdminFeedbackPage() {
       const res = await fetch(`${API_URL}/admin/feedback/${sel._id}/draft-reply`, {
         method: "POST",
         headers: hdr(),
+        body: JSON.stringify({ guidance: guidance.trim() }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || "Could not generate a draft");
@@ -268,6 +277,11 @@ export default function AdminFeedbackPage() {
       setDrafting(false);
     }
   };
+
+  // Opening a different piece of feedback drops the note. An instruction
+  // written about somebody else's two-star is the last thing that should
+  // quietly shape the next reply.
+  useEffect(() => { setGuidance(""); setGuideOpen(false); }, [sel?._id]);
 
   const send = async () => {
     if (!sel || sending) return;
@@ -863,21 +877,116 @@ export default function AdminFeedbackPage() {
                   {sel.replies?.length ? "Write again" : "Reply"}
                 </p>
 
-                <button
-                  type="button"
-                  onClick={() => void generate()}
-                  disabled={drafting}
-                  style={{
-                    width: "100%", minHeight: 44, borderRadius: 12, marginBottom: 10,
-                    border: `1px solid ${g}`, background: "rgba(201,168,76,0.14)",
-                    color: "#8b5a2b", fontSize: 13.5, fontWeight: 700,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                    cursor: drafting ? "default" : "pointer",
-                  }}
-                >
-                  {drafting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                  {drafting ? "Writing…" : sel.replies?.length ? "Generate another draft" : "Generate response email"}
-                </button>
+                {/*
+                  Two ways to generate, one control.
+
+                  Pressing Generate with the note closed writes from the rating
+                  and their comment — the original behaviour, one click, nothing
+                  in the way. Opening "Steer it" adds an instruction the model
+                  must follow: why they gave two stars, what would have made it
+                  five, what we should own up to. The presets exist because the
+                  same four asks cover most of the queue and nobody wants to type
+                  them a hundred times.
+
+                  Collapsed by default so the panel does not grow a block of
+                  empty textarea on a phone for the common case.
+                */}
+                <div style={{ display: "flex", gap: 7, marginBottom: guideOpen ? 8 : 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => void generate()}
+                    disabled={drafting}
+                    style={{
+                      flex: 1, minHeight: 44, borderRadius: 12,
+                      border: `1px solid ${g}`, background: "rgba(201,168,76,0.14)",
+                      color: "#8b5a2b", fontSize: 13.5, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                      cursor: drafting ? "default" : "pointer",
+                    }}
+                  >
+                    {drafting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                    {drafting ? "Writing…" : guidance.trim() ? "Generate with your note" : sel.replies?.length ? "Generate another" : "Generate reply"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGuideOpen((v) => !v)}
+                    aria-expanded={guideOpen}
+                    title="Tell the AI what this email should do"
+                    style={{
+                      flex: "none", minHeight: 44, padding: "0 12px", borderRadius: 12,
+                      border: `1px solid ${guidance.trim() ? g : cB}`,
+                      background: guidance.trim() ? "rgba(201,168,76,0.14)" : "#fff",
+                      color: guidance.trim() ? "#8b5a2b" : t2,
+                      fontSize: 12.5, fontWeight: 700,
+                      display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
+                    }}
+                  >
+                    <PenLine size={14} />
+                    {guidance.trim() ? "Note added" : "Steer it"}
+                  </button>
+                </div>
+
+                {guideOpen && (
+                  <div style={{
+                    marginBottom: 10, padding: 10, borderRadius: 12,
+                    border: `1px solid ${cB}`, background: "#fffdfb",
+                  }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 7 }}>
+                      {[
+                        ["Why so low?", `Ask plainly why they gave ${sel.rating} star${sel.rating === 1 ? "" : "s"} and what specifically went wrong for them.`],
+                        ["What'd make it 5?", "Ask the one change that would have made this a five-star experience for them."],
+                        ["Own the problem", "Acknowledge the exact problem they hit, take responsibility for it, and ask for the page link so we can look at it."],
+                        ["What were they doing?", "Ask what they were trying to do when it went wrong, on which device, and at which step."],
+                      ].map(([label, text]) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => setGuidance((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))}
+                          style={{
+                            padding: "5px 9px", borderRadius: 99, border: `1px solid ${cB}`,
+                            background: "#fff", color: t2, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                          }}
+                        >
+                          + {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <textarea
+                      value={guidance}
+                      onChange={(e) => setGuidance(e.target.value.slice(0, 600))}
+                      rows={3}
+                      placeholder="e.g. Ask why it was 2 stars, what broke, and what would fix it. Mention we are a small team and we read every reply."
+                      style={{
+                        width: "100%", padding: "9px 11px", borderRadius: 10,
+                        border: `1px solid ${cB}`, background: "#fff",
+                        fontSize: 13, lineHeight: "19px", color: t1,
+                        outline: "none", resize: "vertical", minHeight: 76,
+                      }}
+                    />
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, gap: 8 }}>
+                      <span style={{ fontSize: 10.5, color: tM, lineHeight: "14px" }}>
+                        Their template and what else they&apos;ve made is sent as context. Money, dates and
+                        promised fixes stay off-limits.
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+                        <span style={{ fontSize: 10.5, color: guidance.length > 540 ? "#b3261e" : tM }}>
+                          {guidance.length}/600
+                        </span>
+                        {guidance && (
+                          <button
+                            type="button"
+                            onClick={() => setGuidance("")}
+                            style={{ background: "none", border: "none", color: tM, fontSize: 11, fontWeight: 700, cursor: "pointer", padding: 0 }}
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <input
                   value={subject}
