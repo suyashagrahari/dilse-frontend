@@ -599,7 +599,7 @@ export default function AdminFeedbackPage() {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ display: "grid", gap: 7 }}>
                 {items.map((item) => {
                   const isOpen = sel?._id === item._id;
                   return (
@@ -620,7 +620,7 @@ export default function AdminFeedbackPage() {
                       type="button"
                       onClick={() => void open(item)}
                       style={{
-                        textAlign: "left", padding: 13, borderRadius: 14,
+                        textAlign: "left", padding: "11px 12px", borderRadius: 13,
                         background: "#fffdfb",
                         border: `1px solid ${isOpen ? bg : cB}`,
                         boxShadow: isOpen ? "0 2px 12px rgba(61,12,17,0.08)" : "none",
@@ -649,25 +649,43 @@ export default function AdminFeedbackPage() {
 
                       <p
                         style={{
-                          margin: 0, fontSize: 13.5, lineHeight: "20px", color: item.comment ? t1 : tM,
+                          margin: 0, fontSize: 13, lineHeight: "19px", color: item.comment ? t1 : tM,
                           fontStyle: item.comment ? "normal" : "italic",
-                          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical",
+                          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                           overflow: "hidden",
                         }}
                       >
                         {item.comment || "No words — stars only"}
                       </p>
 
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8, alignItems: "center" }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: t1 }}>
-                          {item.userName || "—"}
+                      {/*
+                        Identity as one compact footer line rather than three
+                        wrapping spans. The initial gives the eye something to
+                        scan a long queue by, and the template is the chip that
+                        matters now that the list can be filtered by it — so it
+                        is pinned to the right where it lines up down the page.
+                      */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8, minWidth: 0 }}>
+                        <span style={{
+                          width: 20, height: 20, borderRadius: 6, flex: "none",
+                          background: "rgba(201,168,76,0.18)", color: "#8b5a2b",
+                          display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800,
+                        }}>
+                          {(item.userName || item.userEmail || "?").trim().charAt(0).toUpperCase()}
                         </span>
-                        <span style={{ fontSize: 11.5, color: tM }}>{item.userEmail}</span>
+                        <span style={{
+                          fontSize: 11.5, fontWeight: 700, color: t1,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "42%",
+                        }}>
+                          {item.userName || item.userEmail}
+                        </span>
                         {item.templateLabel && (
                           <span
                             style={{
-                              fontSize: 10.5, fontWeight: 700, padding: "3px 8px", borderRadius: 99,
+                              marginLeft: "auto", flex: "none",
+                              fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 99,
                               background: "rgba(201,168,76,0.16)", color: "#8b5a2b",
+                              maxWidth: "52%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             }}
                           >
                             {item.templateLabel}

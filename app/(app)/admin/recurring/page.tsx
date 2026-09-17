@@ -111,11 +111,11 @@ export default function AdminRecurringPage() {
   useEffect(() => { setPage(1); }, [segment, minDays, sort, search]);
 
   const Stat = ({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) => (
-    <div style={{ background: "#fff", border: `1px solid ${cB}`, borderRadius: 14, padding: "14px 16px", flex: "1 1 170px" }}>
+    <div style={{ background: "#fff", border: `1px solid ${cB}`, borderRadius: 14, padding: "12px 14px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, color: tM, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>
         {icon}{label}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: t1, marginTop: 6, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 24, fontWeight: 800, color: t1, marginTop: 5, lineHeight: 1 }}>{value}</div>
       {hint && <div style={{ fontSize: 11, color: tM, marginTop: 4 }}>{hint}</div>}
     </div>
   );
@@ -127,6 +127,9 @@ export default function AdminRecurringPage() {
 
   return (
     <div style={{ padding: "22px 18px 70px", maxWidth: 1180, margin: "0 auto" }}>
+      <style>{`
+        .rc-card:hover { box-shadow: 0 10px 26px -14px rgba(61,12,17,.35); transform: translateY(-1px); }
+      `}</style>
       <div style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 9 }}>
         <Repeat size={20} style={{ color: g }} />
         <h1 style={{ fontSize: 22, fontWeight: 800, color: t1, margin: 0 }}>Returning creators</h1>
@@ -137,7 +140,20 @@ export default function AdminRecurringPage() {
       </p>
 
       {summary && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+        /*
+          A grid, not a wrapping flex row.
+
+          With `flex: 1 1 170px` each of these grew to full width as soon as
+          four could not fit, so a phone got four stacked banners of mostly
+          whitespace and the list itself started below the fold. Two columns on
+          a phone, four on a laptop, and the numbers stay the first thing you
+          see either way.
+        */
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))",
+          gap: 9, marginBottom: 16,
+        }}>
           <Stat icon={<Users size={12} />} label="Creators" value={String(summary.creators)} hint="have made at least one page" />
           <Stat icon={<Repeat size={12} />} label="Came back" value={String(summary.recurring)} hint={`${summary.oneTime} made one and stopped`} />
           <Stat icon={<Percent size={12} />} label="Return rate" value={`${summary.recurringRate}%`} hint="of everyone who ever created" />
@@ -205,58 +221,122 @@ export default function AdminRecurringPage() {
               : "No one here."}
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 760 }}>
-              <thead>
-                <tr style={{ background: "#fbf7f2", color: tM, textAlign: "left" }}>
-                  {["Person", "Days active", "Pages", "First", "Latest", "Span", "Templates", ""].map((h) => (
-                    <th key={h} style={{ padding: "9px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", whiteSpace: "nowrap" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.userId} style={{ borderTop: `1px solid ${cB}` }}>
-                    <td style={{ padding: "10px 12px", minWidth: 200 }}>
-                      <div style={{ fontWeight: 700, color: t1 }}>{r.name || "—"}</div>
-                      <div style={{ color: tM, fontSize: 11 }}>{r.email}</div>
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontWeight: 800, fontSize: 12, background: `${g}1f`, color: "#8b5a2b" }}>
-                        {r.activeDays}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 12px", fontWeight: 600, color: t1 }}>{r.pages}</td>
-                    <td style={{ padding: "10px 12px", color: t2, whiteSpace: "nowrap" }}>{fmt(r.firstPageAt)}</td>
-                    <td style={{ padding: "10px 12px", color: t2, whiteSpace: "nowrap" }}>
-                      {fmt(r.lastPageAt)}
-                      <div style={{ fontSize: 10, color: tM }}>{r.daysSinceLast}d ago</div>
-                    </td>
-                    <td style={{ padding: "10px 12px", color: t2, whiteSpace: "nowrap" }}>{r.spanDays}d</td>
-                    <td style={{ padding: "10px 12px", maxWidth: 240 }}>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                        {r.templates.slice(0, 3).map((t) => (
-                          <span key={t.slug} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 6, background: "#f6f1ea", color: t2, whiteSpace: "nowrap" }}>
-                            {t.slug}{t.count > 1 ? ` ×${t.count}` : ""}
-                          </span>
-                        ))}
-                        {r.templates.length > 3 && (
-                          <span style={{ fontSize: 10, color: tM }}>+{r.templates.length - 3}</span>
-                        )}
+          /*
+            Cards, not a table.
+
+            A table forced every person onto one line, which meant the two
+            things this screen exists to show — how many separate days they
+            came back, and which templates they came back FOR — were squeezed
+            into narrow columns and truncated. A card gives each person a block
+            with room for all of it, and the grid reflows to one column on a
+            phone without a horizontal scrollbar.
+          */
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))",
+              gap: 10,
+              padding: 12,
+            }}
+          >
+            {rows.map((r) => {
+              const initial = (r.name || r.email || "?").trim().charAt(0).toUpperCase();
+              // Cold after a month without creating anything — the one number on
+              // the card that is a prompt to do something.
+              const cold = r.daysSinceLast > 30;
+              return (
+                <Link
+                  key={r.userId}
+                  href={`/admin/users/${r.userId}`}
+                  style={{
+                    display: "block", textDecoration: "none",
+                    border: `1px solid ${cB}`, borderRadius: 14,
+                    background: "#fffdfb", padding: 13,
+                    transition: "box-shadow .15s, transform .15s",
+                  }}
+                  className="rc-card"
+                >
+                  {/* Identity + the headline number */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {r.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.avatar} alt="" style={{ width: 38, height: 38, borderRadius: 11, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{
+                        width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                        background: `${g}1f`, color: "#8b5a2b",
+                        display: "grid", placeItems: "center", fontWeight: 800, fontSize: 15,
+                      }}>{initial}</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, color: t1, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {r.name || "—"}
                       </div>
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <Link
-                        href={`/admin/users/${r.userId}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, color: bg, fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}
-                      >
-                        Open <ArrowUpRight size={13} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div style={{ color: tM, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {r.email}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "center", flexShrink: 0 }}>
+                      <div style={{
+                        minWidth: 40, padding: "3px 9px", borderRadius: 9,
+                        background: `${g}22`, color: "#8b5a2b",
+                        fontWeight: 800, fontSize: 16, lineHeight: 1.25,
+                      }}>{r.activeDays}</div>
+                      <div style={{ fontSize: 9, color: tM, fontWeight: 700, letterSpacing: ".04em", marginTop: 2 }}>DAYS</div>
+                    </div>
+                  </div>
+
+                  {/* The dates, as a row of small facts */}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6,
+                    marginTop: 11, paddingTop: 10, borderTop: `1px solid ${cB}`,
+                  }}>
+                    {[
+                      { k: "Pages", v: String(r.pages) },
+                      { k: "Span", v: `${r.spanDays}d` },
+                      { k: "Last seen", v: `${r.daysSinceLast}d ago` },
+                    ].map((c) => (
+                      <div key={c.k}>
+                        <div style={{ fontSize: 9, color: tM, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase" }}>{c.k}</div>
+                        <div style={{
+                          fontSize: 12.5, fontWeight: 700, marginTop: 1,
+                          color: c.k === "Last seen" && cold ? "#b3261e" : t1,
+                        }}>{c.v}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: 8, fontSize: 11, color: t2 }}>
+                    {fmt(r.firstPageAt)} <span style={{ color: tM }}>→</span> {fmt(r.lastPageAt)}
+                  </div>
+
+                  {/* What they came back FOR */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 9 }}>
+                    {r.templates.slice(0, 4).map((t) => (
+                      <span key={t.slug} style={{
+                        fontSize: 10, fontWeight: 600, padding: "3px 7px", borderRadius: 7,
+                        background: "#f6f1ea", color: t2, whiteSpace: "nowrap",
+                      }}>
+                        {t.slug}{t.count > 1 ? ` ×${t.count}` : ""}
+                      </span>
+                    ))}
+                    {r.templates.length > 4 && (
+                      <span style={{ fontSize: 10, color: tM, alignSelf: "center" }}>+{r.templates.length - 4} more</span>
+                    )}
+                  </div>
+
+                  <div style={{
+                    marginTop: 10, paddingTop: 9, borderTop: `1px solid ${cB}`,
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <span style={{ fontSize: 10.5, color: tM }}>joined {fmt(r.joinedAt)}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: bg, fontWeight: 700, fontSize: 11.5 }}>
+                      Open profile <ArrowUpRight size={13} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 

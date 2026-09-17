@@ -148,7 +148,7 @@ export default function AdminUsersPage(){
         @media(min-width:1024px){.u-body{padding:0 40px 60px}}
         .uc{background:rgba(255,255,255,0.65);border:1px solid ${cB};border-radius:14px;backdrop-filter:blur(8px)}
         @media(min-width:768px){.uc{border-radius:16px}}
-        .ur:hover{background:rgba(201,168,76,0.06)!important}
+        .uCard:hover{box-shadow:0 10px 26px -14px rgba(61,12,17,.35);transform:translateY(-1px)}
       `}</style>
 
       <div className="uw">
@@ -216,65 +216,64 @@ export default function AdminUsersPage(){
               </div>
             ):(
               <>
-                {/* Desktop table */}
-                <div className="hidden md:block" style={{overflowX:"auto"}}>
-                  <table style={{width:"100%",borderCollapse:"collapse"}}>
-                    <thead><tr>
-                      {["User","Email","Role","Provider","Points","Joined","Actions"].map(h=>(
-                        <th key={h} style={{padding:"12px 14px",fontSize:9.5,fontWeight:700,color:tM,textAlign:"left",borderBottom:`1px solid ${cB}`,letterSpacing:"0.07em",textTransform:"uppercase",whiteSpace:"nowrap"}}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {users.map((u,i)=>(
-                        <tr key={u._id} className="ur" style={{background:i%2===0?"transparent":"rgba(61,12,17,0.015)",cursor:"pointer",transition:"background 0.15s"}} onClick={()=>openUser(u._id)}>
-                          <td style={{padding:"10px 14px"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:10}}>
-                              {u.avatar?<img src={u.avatar} alt="" style={{width:30,height:30,borderRadius:8,objectFit:"cover"}}/>:
-                              <div style={{width:30,height:30,borderRadius:8,background:`${g}15`,display:"flex",alignItems:"center",justifyContent:"center",color:gD,fontSize:12,fontWeight:700}}>{u.name[0]?.toUpperCase()}</div>}
-                              <span style={{fontSize:12,fontWeight:600,color:t1}}>{u.name}</span>
-                            </div>
-                          </td>
-                          <td style={{padding:"10px 14px",fontSize:11,color:t2}}>{u.email}</td>
-                          <td style={{padding:"10px 14px"}}><Badge role={u.role}/><StatusPill status={u.status}/></td>
-                          <td style={{padding:"10px 14px",fontSize:11,color:tM,textTransform:"capitalize"}}>{u.provider}</td>
-                          <td style={{padding:"10px 14px",fontSize:11,color:gD,fontWeight:700}}>{u.points}</td>
-                          <td style={{padding:"10px 14px",fontSize:10,color:tM}}>{new Date(u.createdAt).toLocaleDateString()}</td>
-                          <td style={{padding:"10px 14px"}}>
-                            <select value={u.role} onClick={e=>e.stopPropagation()} onChange={e=>changeRole(u._id,e.target.value)} disabled={rc===u._id}
-                              style={{padding:"4px 6px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",background:"rgba(255,255,255,0.8)",color:t1,border:`1px solid ${cB}`}}>
-                              <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
-                            </select>
-                          </td>
-                        </tr>
-                      ))}
-                      {!users.length&&<tr><td colSpan={7} style={{padding:40,textAlign:"center",color:tM,fontSize:12}}>No users found</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
+                {/*
+                  One card grid at every width.
 
-                {/* Mobile cards */}
-                <div className="flex flex-col gap-2 p-3 md:hidden">
+                  This used to be a desktop <table> plus a separate mobile
+                  list — two markups to keep in step, and the table squeezed
+                  role, provider, points and joined date into columns narrow
+                  enough to truncate. Cards show the same fields with room to
+                  read them, and the grid reflows to one column on a phone
+                  without a horizontal scrollbar.
+                */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,290px),1fr))",
+                  gap: 10, padding: 12,
+                }}>
                   {users.map(u=>(
-                    <div key={u._id} onClick={()=>openUser(u._id)} style={{
-                      display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
-                      borderRadius:12,background:"rgba(255,255,255,0.5)",border:`1px solid ${cB}`,cursor:"pointer",
+                    <div key={u._id} onClick={()=>openUser(u._id)} className="uCard" style={{
+                      border:`1px solid ${cB}`, borderRadius:14, background:"#fffdfb",
+                      padding:13, cursor:"pointer", transition:"box-shadow .15s, transform .15s",
                     }}>
-                      {u.avatar?<img src={u.avatar} alt="" style={{width:36,height:36,borderRadius:10,objectFit:"cover",flexShrink:0}}/>:
-                      <div style={{width:36,height:36,borderRadius:10,background:`${g}15`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:gD,fontSize:14,fontWeight:700}}>{u.name[0]?.toUpperCase()}</div>}
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                          <span style={{fontSize:12,fontWeight:700,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
-                          <Badge role={u.role}/><StatusPill status={u.status}/>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        {u.avatar?<img src={u.avatar} alt="" style={{width:38,height:38,borderRadius:11,objectFit:"cover",flexShrink:0}}/>:
+                        <div style={{width:38,height:38,borderRadius:11,flexShrink:0,background:`${g}1f`,color:gD,display:"grid",placeItems:"center",fontSize:15,fontWeight:800}}>{u.name[0]?.toUpperCase()}</div>}
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13.5,fontWeight:800,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</div>
+                          <div style={{fontSize:11,color:tM,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
                         </div>
-                        <p style={{fontSize:10,color:tM,margin:"2px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</p>
                       </div>
-                      <select value={u.role} onClick={e=>e.stopPropagation()} onChange={e=>changeRole(u._id,e.target.value)} disabled={rc===u._id}
-                        style={{padding:"4px 4px",borderRadius:6,fontSize:9,fontWeight:600,cursor:"pointer",flexShrink:0,background:"rgba(255,255,255,0.8)",color:t1,border:`1px solid ${cB}`,width:60}}>
-                        <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
-                      </select>
+
+                      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:9}}>
+                        <Badge role={u.role}/><StatusPill status={u.status}/>
+                        <span style={{fontSize:10,fontWeight:600,padding:"3px 7px",borderRadius:7,background:"#f6f1ea",color:t2,textTransform:"capitalize"}}>{u.provider}</span>
+                        {!u.isVerified&&<span style={{fontSize:10,fontWeight:700,padding:"3px 7px",borderRadius:7,background:"#fff4f4",color:"#b3261e"}}>unverified</span>}
+                      </div>
+
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6,marginTop:11,paddingTop:10,borderTop:`1px solid ${cB}`}}>
+                        <div>
+                          <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Points</div>
+                          <div style={{fontSize:12.5,fontWeight:800,color:gD,marginTop:1}}>{u.points}</div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Joined</div>
+                          <div style={{fontSize:12.5,fontWeight:700,color:t1,marginTop:1}}>{new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
+                        </div>
+                      </div>
+
+                      <div style={{marginTop:10,paddingTop:9,borderTop:`1px solid ${cB}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                        <select value={u.role} onClick={e=>e.stopPropagation()} onChange={e=>changeRole(u._id,e.target.value)} disabled={rc===u._id}
+                          style={{padding:"5px 7px",borderRadius:8,fontSize:10.5,fontWeight:700,cursor:"pointer",background:"#fff",color:t1,border:`1px solid ${cB}`}}>
+                          <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
+                        </select>
+                        <span style={{display:"inline-flex",alignItems:"center",gap:3,color:bg,fontWeight:700,fontSize:11.5}}>
+                          Open <Eye size={13}/>
+                        </span>
+                      </div>
                     </div>
                   ))}
-                  {!users.length&&<p style={{textAlign:"center",color:tM,fontSize:12,padding:30}}>No users found</p>}
+                  {!users.length&&<p style={{gridColumn:"1/-1",textAlign:"center",color:tM,fontSize:12,padding:30}}>No users found</p>}
                 </div>
 
                 {/* Pagination */}
