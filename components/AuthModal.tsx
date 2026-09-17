@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   RotateCcw,
 } from "lucide-react";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   registerUser,
@@ -58,7 +58,7 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }: AuthModalProps) {
+function AuthModalInner({ onClose, onSuccess, defaultMode = "login" }: AuthModalProps) {
   const dispatch = useAppDispatch();
   const { isLoading, error, pendingVerification } = useAppSelector((s) => s.auth);
 
@@ -827,5 +827,30 @@ export default function AuthModal({ onClose, onSuccess, defaultMode = "login" }:
         </motion.div>
       </div>
     </>
+  );
+}
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+/**
+ * The Google provider lives HERE, not in the root Providers tree.
+ *
+ * ── WHY ─────────────────────────────────────────────────────────────────────
+ *
+ * `GoogleOAuthProvider` injects https://accounts.google.com/gsi/client on
+ * mount. At the root that meant every visitor downloaded and executed ~99 KB of
+ * third-party sign-in code on every page — including the landing, which has no
+ * sign-in on it at all and never renders this modal.
+ *
+ * `useGoogleLogin` is called in exactly one component in the codebase (the one
+ * above), and every call site renders this modal conditionally — `{showAuth &&
+ * <AuthModal …/>}`. So scoping the provider to the modal means the script is
+ * fetched the moment somebody actually opens sign-in, and never before.
+ */
+export default function AuthModal(props: AuthModalProps) {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthModalInner {...props} />
+    </GoogleOAuthProvider>
   );
 }

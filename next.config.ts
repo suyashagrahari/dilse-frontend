@@ -27,6 +27,22 @@ const nextConfig: NextConfig = {
   // splitChunks block below, which only applies to webpack builds). Trims
   // the client JS that blocks FCP/TBT on every route.
   experimental: {
+    // ── Inline the route's CSS into the HTML ──────────────────────────────
+    //
+    // The landing page shipped two render-blocking stylesheets — 4.9 KiB and
+    // 23.9 KiB — and on an emulated Moto G over slow 4G they cost 410ms and
+    // 1,620ms. Nothing can paint until both arrive, which is why the LCP
+    // element (the hero paragraph) showed 3,060ms of "element render delay"
+    // against only 60ms of time-to-first-byte: the text was in the first HTML
+    // packet and sat there waiting for CSS.
+    //
+    // Inlined, they arrive in the same response as the markup and the critical
+    // path loses two round trips. The trade is that the bytes are no longer
+    // cached separately across navigations; at ~29 KiB before compression that
+    // is the better side of the deal on a phone, where the round trips cost
+    // far more than the bytes.
+    inlineCss: true,
+
     optimizePackageImports: [
       "framer-motion",
       "lucide-react",

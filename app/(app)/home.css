@@ -1,0 +1,436 @@
+/* Landing-page layout, extracted from a <style> tag that used to render inside
+   the page body.
+
+   ── WHY THIS FILE EXISTS ───────────────────────────────────────────────────
+
+   A <style> element in the body is parsed only when the parser reaches it —
+   after the hero above it has already been laid out and painted. Every rule in
+   here is a mobile override, and globals.css sets DIFFERENT values for the same
+   selectors, so the phone painted the hero at `padding-top: 80px` with a 40px
+   grid gap and then re-laid it out at 10px and 24px once this block arrived.
+   That reflow was the whole of the landing page's 0.122 Cumulative Layout
+   Shift, and a large part of its 7.8s Speed Index: the hero visibly jumped.
+
+   Imported from page.tsx it becomes a real stylesheet in the document head, so
+   the first paint is already the final layout. It is emitted after globals.css
+   (route CSS follows layout CSS), so where the two disagree these values still
+   win — the same outcome as before, minus the jump. */
+
+@media (max-width: 768px) {
+          html,
+          body {
+            background: #f5ede6;
+            overflow-x: hidden;
+          }
+
+          .app-main-shell {
+            padding-top: calc(env(safe-area-inset-top, 0px) + 58px) !important;
+            overflow: visible !important;
+          }
+
+          .app-main-shell > section {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            overflow: hidden;
+            border: none !important;
+            box-shadow: none !important;
+          }
+
+          .app-footer-shell footer {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            overflow: hidden;
+            border: none !important;
+            box-shadow: none !important;
+          }
+
+          /* Main shell already reserves ~58px for fixed MobileTopBar — keep hero top padding minimal */
+          .hero-section {
+            min-height: auto !important;
+            padding-top: 10px !important;
+            padding-bottom: 34px !important;
+          }
+
+          .hero-inner {
+            padding: 0 20px !important;
+          }
+
+          .hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+          }
+
+          .hero-copy-pane {
+            text-align: center !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .hero-kicker {
+            justify-content: center !important;
+          }
+
+          .hero-title {
+            font-size: clamp(48px, 11vw, 62px) !important;
+            line-height: 1.02 !important;
+            letter-spacing: -1.2px !important;
+          }
+
+          .hero-desc {
+            max-width: 95% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+
+          .hero-stats {
+            justify-content: center !important;
+            gap: 18px !important;
+            flex-wrap: nowrap !important;
+          }
+
+          .hero-btns {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+
+          .hero-note {
+            text-align: center !important;
+          }
+
+          .problem-cards-wrap {
+            gap: 14px !important;
+            margin-bottom: 42px !important;
+          }
+
+          .problem-card {
+            width: min(100%, 360px) !important;
+            padding: 30px 22px 24px !important;
+            margin: 0 auto !important;
+          }
+
+          .problem-card-title {
+            font-size: 12.6px !important;
+            text-align: center !important;
+          }
+
+          .sol-inner {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+          }
+
+          .sol-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+
+          .sol-link-btn {
+            display: flex !important;
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 14px 20px !important;
+            border-radius: 10px !important;
+            margin-bottom: 24px !important;
+          }
+
+          .sol-quote {
+            padding: 36px 28px !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            display: block !important;
+          }
+
+          .hiw-path,
+          .hiw-arrow {
+            display: none !important;
+          }
+
+          .hiw-grid {
+            grid-template-columns: 1fr !important;
+            gap: 18px !important;
+          }
+
+          .hiw-inner {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+
+          .hiw-cta-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 18px 24px !important;
+            font-size: 13px !important;
+          }
+
+          .feat-section {
+            padding: 72px 0 80px !important;
+          }
+
+          .feat-inner {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+
+          .feat-split {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+            margin-bottom: 32px !important;
+          }
+
+          .feat-showcase {
+            height: 400px !important;
+            border-radius: 20px !important;
+          }
+
+          .feat-tags {
+            justify-content: center !important;
+          }
+
+          .feat-info-panel {
+            text-align: center !important;
+            align-items: center !important;
+            gap: 18px !important;
+          }
+
+          .feat-info-panel h2 {
+            font-size: clamp(26px, 7vw, 36px) !important;
+          }
+
+          .feat-info-panel p {
+            max-width: 100% !important;
+            font-size: 14px !important;
+          }
+
+          .feat-metric-row {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 14px !important;
+            width: 100% !important;
+          }
+
+          .feat-metric-div {
+            display: none !important;
+          }
+
+          .feat-cta-btn {
+            width: 100% !important;
+            height: 52px !important;
+            border-radius: 14px !important;
+            font-size: 13px !important;
+            padding: 0 !important;
+            justify-content: center !important;
+          }
+
+          .pd-section {
+            padding: 48px 0 60px !important;
+            min-height: auto !important;
+            justify-content: flex-start !important;
+            overflow: visible !important;
+          }
+
+          .pd-grid {
+            grid-template-columns: 1fr !important;
+            gap: 32px !important;
+          }
+
+          .pd-left,
+          .pd-right,
+          .pd-outer-ring,
+          .pd-badge {
+            display: none !important;
+          }
+
+          .pd-header {
+            margin-bottom: 28px !important;
+            width: 100% !important;
+            padding: 0 16px !important;
+          }
+
+          .pd-center {
+            width: 100% !important;
+            padding: 0 20px !important;
+            box-sizing: border-box !important;
+          }
+
+          .pd-phone-body {
+            width: 100% !important;
+            max-width: 320px !important;
+            margin: 0 auto !important;
+            height: auto !important;
+            min-height: 560px !important;
+            border-radius: 44px !important;
+          }
+
+          .pd-stats-bar {
+            flex-wrap: wrap !important;
+            margin-top: 52px !important;
+            width: calc(100% - 28px) !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            border-radius: 18px !important;
+            overflow: hidden !important;
+            box-shadow: 0 8px 24px rgba(61, 12, 17, 0.08) !important;
+          }
+
+          .pd-stats-bar > div {
+            flex: 1 1 50% !important;
+            min-width: 0 !important;
+            padding: 20px 12px !important;
+          }
+
+          .occ-section {
+            padding: 64px 0 72px !important;
+          }
+
+          .occ-header {
+            padding: 0 20px !important;
+            margin-bottom: 32px !important;
+          }
+
+          .occ-card-wrap {
+            width: min(74vw, 260px) !important;
+          }
+
+          .occ-card-wrap > div {
+            height: 300px !important;
+            border-radius: 40% 40% 16px 16px / 14% 14% 16px 16px !important;
+          }
+
+          .occ-fade-l,
+          .occ-fade-r {
+            width: 28px !important;
+          }
+
+          .occ-hint-desktop {
+            display: none !important;
+          }
+
+          .occ-hint-mobile {
+            display: inline !important;
+          }
+
+          .occ-cta-btn {
+            width: calc(100% - 32px) !important;
+            padding: 16px !important;
+            border-radius: 16px !important;
+            font-size: 13px !important;
+            display: block !important;
+            margin: 0 auto !important;
+          }
+
+          .test-header {
+            padding: 0 16px !important;
+            margin-bottom: 36px !important;
+          }
+
+          .test-occasions {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border-radius: 12px !important;
+          }
+
+          .test-fade-l,
+          .test-fade-r {
+            width: 28px !important;
+          }
+
+          .rev-card {
+            width: min(80vw, 300px) !important;
+          }
+
+          .test-hint-desktop {
+            display: none !important;
+          }
+
+          .test-hint-mobile {
+            display: inline !important;
+          }
+
+          .test-stats {
+            margin: 42px auto 0 !important;
+            padding: 0 !important;
+            border-radius: 18px !important;
+            flex-wrap: wrap !important;
+            width: calc(100% - 28px) !important;
+            overflow: hidden !important;
+            box-shadow: 0 8px 24px rgba(61, 12, 17, 0.08) !important;
+          }
+
+          .test-stats > div {
+            flex: 1 1 50% !important;
+            padding: 20px 12px !important;
+          }
+
+          .sec-section {
+            padding: 72px 0 80px !important;
+          }
+
+          .sec-inner-wrap {
+            padding: 0 16px !important;
+          }
+
+          .sec-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+
+          .wl-header-wrap {
+            padding: 0 16px !important;
+            margin-bottom: 28px !important;
+          }
+
+          .wl-feat-outer {
+            padding: 0 16px !important;
+          }
+
+          .wl-feat-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+
+          .wl-stats {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 20px 16px !important;
+            margin-bottom: 0 !important;
+            border-radius: 16px !important;
+          }
+
+          .wl-stat-div {
+            display: none !important;
+          }
+
+          .wl-stat-item {
+            text-align: center !important;
+            padding: 12px 0 !important;
+            border-bottom: 1px solid rgba(61, 12, 17, 0.06) !important;
+          }
+
+          .wl-stat-item:last-child {
+            border-bottom: none !important;
+          }
+
+          .cta-section {
+            padding: 72px 20px 80px !important;
+          }
+
+          .cta-btn {
+            padding: 15px 32px !important;
+            font-size: 11px !important;
+          }
+
+          .cta-headline {
+            font-size: clamp(34px, 10vw, 60px) !important;
+          }
+
+          .footer-main-inner {
+            padding: 52px 20px 36px !important;
+          }
+
+          .footer-grid-main {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 24px !important;
+          }
+        }

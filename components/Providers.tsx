@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { Provider } from "react-redux";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { store } from "@/store";
 import { checkAuth, hydrateAuth } from "@/store/authSlice";
 import { fetchFavorites } from "@/store/favoritesSlice";
@@ -13,7 +12,6 @@ import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 function StoreHydrator() {
   useEffect(() => {
@@ -52,7 +50,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <ThemeProvider>
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <StoreHydrator />
           <AnalyticsProvider />
           <PwaProvider>
@@ -67,7 +64,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               {children}
             </TooltipProvider>
           </PwaProvider>
-        </GoogleOAuthProvider>
       </ThemeProvider>
     </Provider>
   );

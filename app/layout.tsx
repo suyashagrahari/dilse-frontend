@@ -29,11 +29,29 @@ const FONTS_HREF =
 // only upgrades if the font is cached / loads near-instantly, so there is never a
 // mid-view swap. Template-only fonts (Cinzel, Fredoka) stay "swap" so invitation
 // pages still get their exact display faces.
+// ── WHY MOST OF THESE SET preload: false ────────────────────────────────────
+//
+// next/font preloads every family it declares, and all twelve are declared in
+// this one root layout — so every page, including the landing, emitted twelve
+// `<link rel="preload" as="font">` tags at the highest priority the browser
+// has. On an emulated phone that was ~264 KB of woff2 competing for bandwidth
+// with the HTML the hero is painted from, and the landing renders exactly three
+// of them: Playfair (the <h1>, which IS the LCP element), Outfit
+// (--font-display) and Inter (body text).
+//
+// The other nine belong to individual templates. They are still self-hosted and
+// still load the moment a page actually uses one; they simply no longer jump the
+// queue ahead of the content on pages that never mention them.
+//
+// The three above-the-fold families keep their preload, and keep
+// display: "optional" — see the note further down on why that matters for CLS.
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-script",
   display: "optional",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 
 // Shaadi-card template fonts (also needed in share viewer page)
@@ -42,18 +60,24 @@ const dancingScriptAlt = Dancing_Script({
   weight: ["400", "700"],
   variable: "--font-dancing",
   display: "optional",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 const cinzel = Cinzel({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   variable: "--font-cinzel",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-lora",
   display: "optional",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 
 // Apology Dashboard template fonts (display + body)
@@ -62,6 +86,8 @@ const fredoka = Fredoka({
   weight: ["400", "500", "600", "700"],
   variable: "--font-fredoka",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 // Inter is the app BODY font (globals.css: body { font-family: 'Inter' }), so it
 // renders the hero description and most landing text. "optional" here is what
@@ -72,6 +98,7 @@ const inter = Inter({
   weight: ["400", "500", "600"],
   variable: "--font-inter",
   display: "optional",
+  preload: false,
 });
 
 // ── Critical above-the-fold fonts — SELF-HOSTED + preloaded via next/font ──────
@@ -99,6 +126,7 @@ const outfit = Outfit({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-outfit",
   display: "optional",
+  preload: false,
 });
 
 // ── Document-artifact fonts (court-marriage / train-ticket / legal-notice) ────
@@ -116,6 +144,8 @@ const tinos = Tinos({
   style: ["normal", "italic"],
   variable: "--font-tinos",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 const courierPrime = Courier_Prime({
   subsets: ["latin"],
@@ -123,6 +153,8 @@ const courierPrime = Courier_Prime({
   style: ["normal", "italic"],
   variable: "--font-courier-prime",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 // Devanagari sub-heading on the marriage certificate (विवाह प्रमाण पत्र).
 // Self-hosted rather than reusing the async Noto Serif Devanagari in FONTS_HREF,
@@ -134,6 +166,8 @@ const tiroDevanagari = Tiro_Devanagari_Hindi({
   style: ["normal", "italic"],
   variable: "--font-tiro-devanagari",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 // Condensed caps for machine-stencilled chrome (the vending machine's body
 // plates, shelf tags and keypad). A normal-width grotesque letter-spaced down
@@ -145,6 +179,8 @@ const oswald = Oswald({
   weight: ["400", "500", "600"],
   variable: "--font-oswald",
   display: "swap",
+  // Not on the landing's critical path — see the note above.
+  preload: false,
 });
 
 export const metadata: Metadata = {
