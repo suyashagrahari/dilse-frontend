@@ -47,7 +47,39 @@ export default function PagesTab({
     try {
       const r = await fetch(`${API_URL}/admin/super/pages/${p.templateType}/${p._id}/password`, { headers: hdr() });
       const j = await r.json();
-      setRevealed((s) => ({ ...s, [p._id]: j?.data?.password ?? (j?.data?.reason || "Not recoverable") }));
+
+      // ── WHY THIS IS NOT ONE `??` EXPRESSION ANY MORE ───────────────────────
+      //
+      // It used to be `j?.data?.password ?? (j?.data?.reason || "Not
+      // recoverable")`, which printed "Not recoverable" for three different
+      // situations that need different answers:
+      //
+      //   - the request FAILED (expired session, 403, 500). `data` is
+      //     undefined, so a signed-out admin was told the password could not be
+      //     recovered — about a password that is sitting there perfectly fine.
+      //   - the page has NO password. The server says so plainly
+      //     (`hasPassword: false`), and "Not recoverable" is the wrong reading
+      //     of a page that simply opens for anyone.
+      //   - the page really is hash-only, which is the one case it described.
+      //
+      // Those first two are why this reads "Not recoverable" far more often
+      // than there are unrecoverable passwords.
+      if (!r.ok || !j?.success || !j?.data) {
+        pushToast({
+          title: r.status === 401 || r.status === 403
+            ? "Your session no longer has super-admin access — sign in again."
+            : `Could not reveal the password (${r.status})`,
+          type: "error",
+        });
+        return;
+      }
+
+      const d = j.data as { hasPassword?: boolean; password?: string | null; reason?: string };
+      const text = d.hasPassword === false
+        ? "This page has no password — it opens for anyone with the link."
+        : d.password || d.reason || "Stored as a one-way hash; it can be reset but not recovered.";
+
+      setRevealed((s) => ({ ...s, [p._id]: text }));
     } catch {
       pushToast({ title: "Could not reveal the password", type: "error" });
     } finally {
