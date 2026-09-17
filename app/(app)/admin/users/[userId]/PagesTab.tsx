@@ -81,7 +81,9 @@ export default function PagesTab({
       const d = j.data as { hasPassword?: boolean; password?: string | null; reason?: string };
       const text = d.hasPassword === false
         ? "This page has no password — it opens for anyone with the link."
-        : d.password || d.reason || "Stored as a one-way hash; it can be reset but not recovered.";
+        : d.password ||
+          d.reason ||
+          "Created before passwords were kept in readable form. It will appear here the first time the recipient opens the page with it.";
 
       setRevealed((s) => ({ ...s, [p._id]: text }));
     } catch {
