@@ -3,9 +3,9 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, Hand, Skull, Heart,
+  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, Hand, Skull, Heart, ImagePlus,
 } from "lucide-react";
-import { DURATION_PRESETS, HMH, type HoldData, type EditMode } from "./types";
+import { DURATION_PRESETS, HMH, MAX_MEMORIES, MEMORY_NOTE_MAX, type HoldData, type EditMode } from "./types";
 
 const INPUT_CLS =
   "w-full px-4 py-3 rounded-xl bg-black/[.04] border border-black/10 focus:outline-none focus:border-[#6C5CE7] text-sm transition-all";
@@ -90,6 +90,7 @@ export default memo(function EditSheet({
 }: Props) {
   const visible = editMode !== null && editMode !== "preview";
   const photoRef = useRef<HTMLInputElement>(null);
+  const memoryRef = useRef<HTMLInputElement>(null);
 
   const updateHoldLine = (i: number, patch: Partial<{ atMs: number; text: string }>) =>
     updateMf("holdLines", mf.holdLines.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -102,6 +103,17 @@ export default memo(function EditSheet({
   const addToList = (key: "releaseLines" | "ghostFragments") => updateMf(key, [...mf[key], ""]);
   const removeFromList = (key: "releaseLines" | "ghostFragments", i: number) =>
     updateMf(key, mf[key].filter((_, idx) => idx !== i));
+
+  // ── Keepsake cards ────────────────────────────────────────────────────────
+  // Photo first, note second: a card with no picture is dropped by the server,
+  // so adding one starts by choosing the photograph rather than by leaving an
+  // empty frame on the page.
+  const addMemory = (src: string) =>
+    updateMf("memories", [...(mf.memories ?? []), { imageUrl: src, note: "" }].slice(0, MAX_MEMORIES));
+  const updateMemoryNote = (i: number, note: string) =>
+    updateMf("memories", (mf.memories ?? []).map((m, idx) => (idx === i ? { ...m, note } : m)));
+  const removeMemory = (i: number) =>
+    updateMf("memories", (mf.memories ?? []).filter((_, idx) => idx !== i));
 
   return (
     <AnimatePresence>
@@ -233,6 +245,62 @@ export default memo(function EditSheet({
                 </Field>
 
                 {/* Ghosts */}
+                <Field
+                  label={`Photos of you two (${(mf.memories ?? []).length}/${MAX_MEMORIES})`}
+                  hint="Shown under the letter, after they have held on. Add a line under each one — the photo says when, the line says why you kept it."
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    {(mf.memories ?? []).map((m, i) => (
+                      <div
+                        key={i}
+                        className="rounded-2xl overflow-hidden border"
+                        style={{ borderColor: HMH.border, background: "#fff" }}
+                      >
+                        <div className="relative" style={{ aspectRatio: "4 / 5", background: "#F3F1EC" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={m.imageUrl} alt="" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => removeMemory(i)}
+                            aria-label="Remove this photo"
+                            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center"
+                            style={{ background: "rgba(0,0,0,.62)", color: "#fff" }}
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        <textarea
+                          value={m.note}
+                          onChange={(e) => updateMemoryNote(i, e.target.value.slice(0, MEMORY_NOTE_MAX))}
+                          placeholder="the day we…"
+                          rows={2}
+                          className={INPUT_SM + " w-full resize-none border-0 rounded-none"}
+                        />
+                      </div>
+                    ))}
+
+                    {(mf.memories ?? []).length < MAX_MEMORIES && (
+                      <button
+                        onClick={() => memoryRef.current?.click()}
+                        className="rounded-2xl border border-dashed flex flex-col items-center justify-center gap-1.5"
+                        style={{ aspectRatio: "4 / 5", borderColor: HMH.border, color: HMH.muted, background: "#FBFAF7" }}
+                      >
+                        <ImagePlus size={20} />
+                        <span className="text-xs font-semibold">Add photo</span>
+                      </button>
+                    )}
+                    <input
+                      ref={memoryRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], addMemory);
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+                </Field>
+
                 <Field label="Ghost fragments" hint="One surfaces behind the photo every 12 seconds of progress. Draining takes them away again — that is what makes letting go hurt.">
                   <div className="space-y-2">
                     {mf.ghostFragments.map((s, i) => (

@@ -18,6 +18,8 @@ import ParticleBurst from "./ParticleBurst";
 import ResultCard, { type ResultStats } from "./ResultCard";
 import { useHoldEngine, type FrameState, type WinSummary } from "./useHoldEngine";
 import { HMH, effectiveHoldLines, fmtSecs, fmtWhole, type HoldData } from "./types";
+import { STAGES, stageIndexFor, releaseMoment, preloadStage } from "./moments";
+import MemoryCards from "./MemoryCards";
 import { templateMediaBase } from "@/lib/templateMedia";
 
 /** Animation set for this template — served from S3, never bundled. */
@@ -96,9 +98,22 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
   const scrimRef = useRef<HTMLSpanElement | null>(null);
   const haloRef = useRef<HTMLSpanElement | null>(null);
   const ringRef = useRef<SVGCircleElement | null>(null);
-  const handsRef = useRef<HTMLVideoElement | null>(null);
+  const gifRef = useRef<HTMLImageElement | null>(null);
   /** Mirrors engine.hasVibrate so the frame writer can read it without a re-bind. */
   const hapticsRef = useRef(true);
+
+  /**
+   * Which of the five warmth stages we are in.
+   *
+   * The rAF writer owns everything continuous, but the animation above the
+   * portrait is an <img> whose src has to change — a React concern. So the loop
+   * writes the index to a ref every frame and only lifts it into state on the
+   * four frames per hold where it actually changes. That keeps the swap off the
+   * hot path while still letting React render it.
+   */
+  const [stageIdx, setStageIdx] = useState(0);
+  const stageRef = useRef(0);
+  const stage = STAGES[stageIdx];
 
   const [photoBroken, setPhotoBroken] = useState(false);
   const showHeart = !data.photoUrl || photoBroken;
@@ -126,6 +141,16 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
     const p = Math.max(0, Math.min(1, s.p));
     const inv = 1 - p;
 
+    // Stage changes four times in a whole hold, so this comparison is free and
+    // the setState behind it is rare. Warming the next animation here means the
+    // swap never shows a blank frame to somebody holding perfectly still.
+    const idx = stageIndexFor(p);
+    if (idx !== stageRef.current) {
+      stageRef.current = idx;
+      setStageIdx(idx);
+      preloadStage(idx);
+    }
+
     if (photoRef.current) {
       // Spec formula, plus a saturation/contrast ramp so the last 20% reads as
       // light arriving on a face rather than a slider finishing its travel.
@@ -140,10 +165,18 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       scrimRef.current.style.opacity = Math.pow(inv, 1.15).toFixed(3);
     }
     if (photoWrapRef.current) {
-      // 1.5% normally. Where there is no Vibration API at all (iOS Safari) the
-      // beat has to be carried by the eye, so the amplitude nearly doubles.
-      const amp = hapticsRef.current ? 0.015 : 0.028;
+      // The portrait beats on its own, always — this is the "heart" of the
+      // screen and it should look alive before anybody touches it. Bigger than
+      // it was (it used to be a 1.5% twitch nobody noticed), and bigger again
+      // where there is no Vibration API at all (iOS Safari), because there the
+      // beat has to be carried entirely by the eye.
+      const amp = hapticsRef.current ? 0.032 : 0.046;
       photoWrapRef.current.style.transform = `scale(${(1 + amp * s.beat).toFixed(4)})`;
+    }
+    if (gifRef.current) {
+      // Same beat, half the amplitude, so the animation and the face pulse
+      // together rather than looking like two separate loops.
+      gifRef.current.style.transform = `translateX(-50%) scale(${(1 + 0.05 * s.beat).toFixed(4)})`;
     }
     if (ringRef.current) {
       const [r, g, b] = ringRgb(p);
@@ -155,17 +188,10 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       haloRef.current.style.background = `radial-gradient(circle, rgba(${r},${g},${b},${(0.10 + 0.5 * p).toFixed(3)}) 0%, rgba(${r},${g},${b},0) 68%)`;
       haloRef.current.style.transform = `scale(${(1 + 0.22 * p + 0.05 * s.beat).toFixed(4)})`;
     }
-    if (handsRef.current) {
-      // Zero unless they are actually holding, and even then it only blooms in
-      // as p rises. A flat idle opacity is what made it read as a grey box.
-      handsRef.current.style.opacity = s.holding ? (0.06 + 0.20 * p).toFixed(3) : "0";
-    }
-    if (rootRef.current && !reducedRef.current) {
-      const [r, g, b] = ringRgb(p);
-      rootRef.current.style.background =
-        `radial-gradient(118% 88% at 50% 40%, rgba(${r},${g},${b},${(0.05 + 0.34 * p).toFixed(3)}) 0%, ` +
-        `rgba(14,10,26,${(0.93 - 0.26 * p).toFixed(3)}) 44%, ${HMH.void} 100%)`;
-    }
+    // NOTE: the page background is no longer written here. It is the stage's
+    // gradient, applied in render with a slow CSS transition, so the world
+    // visibly warms from indigo night to golden dawn as they hold instead of
+    // shifting imperceptibly every frame.
   }, []);
 
   const engine = useHoldEngine({
@@ -248,13 +274,15 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
         className="relative w-full overflow-x-hidden"
         style={{
           minHeight: "100dvh",
-          background: `radial-gradient(120% 70% at 50% 0%, #2A1450 0%, #150B2C 42%, ${HMH.void} 100%)`,
+          // The letter opens in the same golden dawn the hold ended in, rather
+          // than snapping back to the indigo night they started in.
+          background: STAGES[STAGES.length - 1].bg,
           fontFamily: HMH.body,
           color: "#fff",
         }}
       >
         {brandBadge}
-        <div className="mx-auto w-full max-w-md px-6 pt-20 pb-16 flex flex-col items-center">
+        <div className="mx-auto w-full max-w-md md:max-w-2xl px-6 pt-20 pb-16 flex flex-col items-center">
           <p className="text-center" style={{ fontFamily: HMH.script, fontSize: 30, color: HMH.lime, lineHeight: 1.1 }}>
             {data.recipientName ? `${data.recipientName},` : "you held on."}
           </p>
@@ -282,6 +310,9 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
               — {data.senderName}
             </p>
           )}
+
+          {/* Their photographs, under the letter they just earned. */}
+          <MemoryCards memories={data.memories} reduced={reduced} accent={STAGES[STAGES.length - 1].accent} />
 
           <div className="mt-12 w-full flex justify-center">
             {stats && (
@@ -320,7 +351,13 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       aria-label="Press and hold to unlock the letter"
       className="fixed inset-0 z-0 overflow-hidden select-none"
       style={{
-        background: HMH.void,
+        // The world warms as they hold: indigo night -> plum -> rose -> ember ->
+        // golden dawn, one step per stage. A long transition means the change is
+        // felt rather than seen, and a glance at the screen says roughly how far
+        // in they are without reading the timer. Reduced motion keeps the first
+        // stage's flat night and never moves.
+        background: reduced ? STAGES[0].bg : stage.bg,
+        transition: "background 2200ms cubic-bezier(.4,0,.2,1)",
         touchAction: "none",
         userSelect: "none",
         WebkitUserSelect: "none",
@@ -332,33 +369,72 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       }}
     >
       {/*
-        holding-hands, blooming behind the photo while they hold.
+        The animation sits ABOVE the portrait, not behind it.
 
-        Three things keep it from reading as an opaque box against the void:
-        `mix-blend-mode: screen` so the clip's own dark backdrop contributes
-        nothing, a radial mask so the frame edge never draws a rectangle, and an
-        opacity that STARTS AT ZERO and is driven from the rAF loop by progress —
-        never a flat idle value. It is decorative chrome, so reduced motion drops
-        it entirely rather than looping, and it lives nowhere near the node
-        handed to html-to-image (that is ResultCard's own `cardRef`).
+        It used to be a webm blooming behind the photo at low opacity, which
+        read as a grey smudge under the face rather than as anything holding
+        anybody. Above the circle it has room to be what it is — two hearts,
+        then a hug — and the face underneath stays the thing you look at.
+
+        It changes with the stage (see moments.ts) and beats on the same frame
+        as the portrait, so the whole centre of the screen has one pulse.
+        Reduced motion drops it: it is decoration, and a looping gif is exactly
+        what that setting is asking us not to play.
       */}
       {!reduced && (
-        <video
-          ref={handsRef}
-          src={`${ASSET}/holding-hands.webm`}
-          autoPlay loop muted playsInline aria-hidden
-          className="absolute left-1/2 top-1/2 pointer-events-none transition-opacity duration-300"
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={gifRef}
+          key={stage.gif}
+          src={stage.gif}
+          alt={stage.alt}
+          className="absolute pointer-events-none"
           style={{
-            transform: "translate(-50%,-50%)",
-            width: "min(86vw, 420px)",
-            opacity: 0,
-            background: "transparent",
-            mixBlendMode: "screen",
-            maskImage: "radial-gradient(circle, #000 40%, transparent 72%)",
-            WebkitMaskImage: "radial-gradient(circle, #000 40%, transparent 72%)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            // Sits just above the portrait on every screen: the circle is
+            // min(70vw,340px) and vertically centred, so half of it plus a
+            // gap puts this clear of the frame without overlapping the timer.
+            bottom: "calc(50% + min(35vw, 170px) + 14px)",
+            width: "min(38vw, 150px)",
+            maxHeight: "22vh",
+            objectFit: "contain",
+            // These animations are drawn on white. Left bare on a dark page
+            // that reads as a broken image box, so it is framed as a sticker
+            // on purpose — rounded, hairline border, soft drop shadow.
+            borderRadius: 18,
+            border: "1px solid rgba(255,255,255,.22)",
+            boxShadow: "0 18px 40px -14px rgba(0,0,0,.75)",
+            opacity: hasStarted ? 1 : 0.88,
+            transition: "opacity 600ms ease",
+            willChange: "transform",
           }}
         />
       )}
+
+      {/* A warm line when the world changes, under the timer. */}
+      <AnimatePresence mode="wait">
+        {hasStarted && !won && !activeLine && (
+          <motion.p
+            key={`whisper-${stageIdx}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 0.75, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+            className="absolute left-0 right-0 text-center px-10 pointer-events-none"
+            style={{
+              top: "calc(50% + min(35vw, 170px) + 74px)",
+              fontFamily: HMH.script,
+              fontSize: 19,
+              lineHeight: 1.3,
+              color: stage.accent,
+              textShadow: "0 2px 16px rgba(0,0,0,.55)",
+            }}
+          >
+            {stage.whisper}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Ghost fragments — behind the photo. Draining takes them away again. */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -521,21 +597,55 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
         )}
       </AnimatePresence>
 
-      {/* They lifted. */}
+      {/*
+        They let go before the end.
+
+        A still image of somebody reaching out used to sit here. It is now the
+        crying animation for however many times they have released — panda,
+        bear, "don't be sad", cat — with the line that goes with it. The set
+        escalates but never scolds: the feeling to leave them with is "come
+        back", not "you failed", because this is a gift and nobody should be
+        told off by one.
+      */}
       <AnimatePresence>
         {hasStarted && !holding && !won && !reduced && (
-          <motion.img
-            key="sad"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 0.95, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.22 }}
-            src={`${ASSET}/reachingoutsad.webp`}
-            alt=""
-            aria-hidden
-            className="absolute pointer-events-none"
-            style={{ bottom: "9%", left: "50%", translate: "-50% 0", width: 92 }}
-          />
+          <motion.div
+            key="released"
+            initial={{ opacity: 0, y: 14, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 320, damping: 24 }}
+            className="absolute left-0 right-0 flex flex-col items-center pointer-events-none px-8"
+            style={{ bottom: "4%" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={releaseMoment(releaseCount).gif}
+              alt={releaseMoment(releaseCount).alt}
+              style={{
+                width: "min(28vw, 112px)",
+                maxHeight: "17vh",
+                objectFit: "contain",
+                borderRadius: 16,
+                border: "1px solid rgba(255,255,255,.2)",
+                boxShadow: "0 16px 34px -12px rgba(0,0,0,.7)",
+              }}
+            />
+            {!activeLine && (
+            <p
+              className="mt-2 text-center"
+              style={{
+                fontFamily: HMH.script,
+                fontSize: 21,
+                lineHeight: 1.25,
+                color: "rgba(255,255,255,.92)",
+                textShadow: "0 2px 18px rgba(0,0,0,.6)",
+              }}
+            >
+              {releaseMoment(releaseCount).line}
+            </p>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 

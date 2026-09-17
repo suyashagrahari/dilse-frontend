@@ -35,7 +35,26 @@ const clearDraft = () => {
 const readDraft = (): { data?: HoldData; password?: string; completed?: boolean } | null => {
   try {
     const raw = draftStore()?.getItem(DRAFT_KEY) ?? window.sessionStorage.getItem(DRAFT_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data?: Partial<HoldData>; password?: string; completed?: boolean };
+
+    // ── A draft is older than the code that reads it ────────────────────────
+    //
+    // This JSON was written by whatever version of the editor the sender last
+    // had open, and it can sit in their browser for weeks. A draft saved before
+    // `memories` existed has no such key, and the editor renders
+    // `mf.memories.length` — so restoring it raw crashes the sheet on open,
+    // with their unsaved work still in storage.
+    //
+    // Filling every missing key from DEMO_DATA makes the restore additive: old
+    // drafts gain the new fields at their defaults, and anything the draft does
+    // carry still wins.
+    if (!parsed?.data) {
+      // No content to restore — hand back only the scalars, so the return type
+      // never carries a half-filled HoldData.
+      return parsed ? { password: parsed.password, completed: parsed.completed } : null;
+    }
+    return { ...parsed, data: { ...DEMO_DATA, ...parsed.data } };
   } catch { return null; }
 };
 

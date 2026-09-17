@@ -24,6 +24,23 @@ export interface Toast {
   message?: string;
 }
 
+/**
+ * One card in the keepsake row shown after the letter — a photo of the two of
+ * them with a line written under it.
+ *
+ * `imageUrl` is uncapped in the controller on purpose: an uploaded photo arrives
+ * as a data URL and is swapped for its CDN URL on the way in.
+ */
+export interface Memory {
+  imageUrl: string;
+  note: string;
+}
+
+/** More than six turns a keepsake into a gallery, and the letter stops landing. */
+export const MAX_MEMORIES = 6;
+/** Long enough for a real memory, short enough to stay a caption. */
+export const MEMORY_NOTE_MAX = 220;
+
 export interface HoldData {
   /** Who is holding on. Drives every second-person line. */
   recipientName: string;
@@ -45,6 +62,8 @@ export interface HoldData {
   letter: string;
   /** Who is asking. Signs the letter. */
   senderName: string;
+  /** Photo cards shown under the letter. Empty is fine — the section hides. */
+  memories: Memory[];
 }
 
 // ─── Theme tokens ────────────────────────────────────────────────────────────
@@ -95,29 +114,36 @@ export const DEMO_DATA: HoldData = {
   durationMs: 60000,
   mode: "kind",
   hands: 1,
+  // ── Default copy is WARM ──────────────────────────────────────────────────
+  //
+  // These defaults ship on every page whose sender does not rewrite them, so
+  // they set the tone of the template. They are affectionate and a little shy —
+  // the feeling of holding somebody's hand, not of being tested. Anyone who
+  // wants the colder, needier version can still write it; `evil` mode is there
+  // for the mischief.
   holdLines: [
-    { atMs: 3000, text: "okay. hold." },
-    { atMs: 8000, text: "you're still here." },
+    { atMs: 3000, text: "hi. hold on a second — literally." },
+    { atMs: 8000, text: "there you are 🤍" },
     { atMs: 14000, text: "your hand is warm through the glass." },
-    { atMs: 20000, text: "most people let go by now." },
-    { atMs: 26000, text: "i'm counting. quietly." },
-    { atMs: 33000, text: "don't." },
-    { atMs: 38000, text: "this is the part that hurts." },
-    { atMs: 44000, text: "almost." },
-    { atMs: 49000, text: "eleven seconds. i can wait eleven seconds." },
-    { atMs: 52000, text: "still here. still you." },
-    { atMs: 55000, text: "okay, you can let go now." },
-    { atMs: 58000, text: "two more. two." },
+    { atMs: 20000, text: "this is my favourite minute of the day." },
+    { atMs: 26000, text: "i'd stay here a while, if you would." },
+    { atMs: 33000, text: "you make ordinary seconds feel like something." },
+    { atMs: 38000, text: "halfway. still holding. still you." },
+    { atMs: 44000, text: "i keep thinking about how lucky this is." },
+    { atMs: 49000, text: "nearly there, my favourite person." },
+    { atMs: 52000, text: "ten seconds of us. that's all i wanted." },
+    { atMs: 55000, text: "don't let go yet — something's coming." },
+    { atMs: 58000, text: "two more. two 🤍" },
   ],
   releaseLines: [
-    "come back.",
-    "you let go. i noticed.",
-    "third time.",
-    "i'm not upset. i'm just still here.",
-    "we're doing this all night, then.",
-    "your hand keeps leaving.",
-    "i keep putting mine back.",
-    "okay. one more. from wherever you are.",
+    "oh — come back? 🥺",
+    "you let go. i felt that.",
+    "i'll wait. i'm good at waiting.",
+    "no rush. i'm not going anywhere.",
+    "whenever you're ready, my hand's still out.",
+    "we can start again. i don't mind.",
+    "still here. still yours.",
+    "one more time. from wherever you are 🤍",
   ],
   ghostFragments: [
     "there is a version of this",
@@ -126,8 +152,9 @@ export const DEMO_DATA: HoldData = {
     "you are almost holding it",
   ],
   letter:
-    "i knew you'd hold on.\n\ni didn't build this to test you. i built it because i wanted one minute where you couldn't scroll past me, and this was the only way i could think of to ask for it.\n\nsixty seconds is nothing. you gave me sixty seconds anyway.\n\nthat's the whole letter. that's the whole point.",
+    "you held on 🤍\n\ni didn't make this to test you. i made it because i wanted one minute where the world couldn't interrupt us — and this was the only way i could think of to ask for it.\n\na minute is nothing. you gave it to me anyway. that's the part i'll keep.\n\nthank you for not letting go.",
   senderName: "Aarav",
+  memories: [],
 };
 
 /** Whitelisted keys that make up the flat wire payload (= server model content fields). */
@@ -142,6 +169,7 @@ export const HOLD_CONTENT_KEYS: (keyof HoldData)[] = [
   "ghostFragments",
   "letter",
   "senderName",
+  "memories",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` is optional (empty = no gate). */
@@ -189,6 +217,20 @@ export function dbToHoldMyHandData(db: Record<string, unknown> | null | undefine
     ghostFragments: strList(src.ghostFragments, DEMO_DATA.ghostFragments),
     letter: pickStr("letter"),
     senderName: pickStr("senderName"),
+    memories: Array.isArray(src.memories)
+      ? (src.memories as unknown[])
+          .map((m) => {
+            const o = (m ?? {}) as Record<string, unknown>;
+            return {
+              imageUrl: typeof o.imageUrl === "string" ? o.imageUrl : "",
+              note: typeof o.note === "string" ? o.note : "",
+            };
+          })
+          // A card with no picture would render an empty frame — drop it. A
+          // card with a picture and no note is fine: the photo is the point.
+          .filter((m) => m.imageUrl.trim().length > 0)
+          .slice(0, MAX_MEMORIES)
+      : [],
   };
 }
 

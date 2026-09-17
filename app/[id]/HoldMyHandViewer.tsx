@@ -6,6 +6,7 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import HoldMyHand from "@/app/(templates)/hold-my-hand/components/HoldMyHand";
 import { dbToHoldMyHandData, HMH } from "@/app/(templates)/hold-my-hand/components/types";
+import { LOCKED_GIF, WRONG_PASSWORD_GIF } from "@/app/(templates)/hold-my-hand/components/moments";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 /* ─────────────────────────────────────────
@@ -16,6 +17,8 @@ function HoldMyHandPasswordGate({ shareId, onUnlocked }: { shareId: string; onUn
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  /** Wrong tries so far. Drives which face is on the card and how it is worded. */
+  const [misses, setMisses] = useState(0);
 
   const handleVerify = useCallback(async () => {
     if (!pw.trim()) return;
@@ -30,16 +33,28 @@ function HoldMyHandPasswordGate({ shareId, onUnlocked }: { shareId: string; onUn
       if (result.success && result.verified) {
         sessionStorage.setItem(`hold-my-hand_unlocked_${shareId}`, "true");
         onUnlocked();
-      } else { setError("Wrong password. Try again."); setPw(""); }
-    } catch { setError("Something went wrong. Try again."); }
+      } else {
+        // Deliberately not "Wrong password." — this is a love letter with a
+        // lock on it, and the person typing is the one it was written for.
+        setMisses((m) => m + 1);
+        setError(
+          misses === 0
+            ? "not quite 🥺 try again?"
+            : misses === 1
+              ? "still no. they'd tell you if you asked…"
+              : "hmm. ask them for the word 🤍"
+        );
+        setPw("");
+      }
+    } catch { setError("something went wrong. try once more?"); }
     finally { setLoading(false); }
-  }, [pw, shareId, onUnlocked]);
+  }, [pw, shareId, onUnlocked, misses]);
 
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center px-5"
       style={{
-        background: `radial-gradient(120% 80% at 50% 20%, #2A1450 0%, #150B2C 44%, ${HMH.void} 100%)`,
+        background: `radial-gradient(120% 80% at 50% 18%, #46184A 0%, #1E0E33 46%, ${HMH.void} 100%)`,
         fontFamily: HMH.body,
       }}
     >
@@ -61,20 +76,47 @@ function HoldMyHandPasswordGate({ shareId, onUnlocked }: { shareId: string; onUn
         >
           <div className="h-1" style={{ background: "linear-gradient(90deg,#6C5CE7,#F72585)" }} />
           <div className="px-7 pt-8 pb-7">
+            {/*
+              The face on the lock screen.
+
+              A padlock icon is the right answer for a bank and the wrong one
+              here: whoever is typing is the person this was written for, and
+              the first thing they meet should be affection, not security. So
+              the card opens with a beating heart, and every wrong try swaps it
+              for the crying panda rather than a red error state — the same
+              character that appears if they let go of the hold, so the page has
+              one cast from the lock screen to the letter.
+            */}
             <div className="flex flex-col items-center mb-7">
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: "linear-gradient(135deg,#6C5CE7,#F72585)", boxShadow: "0 18px 40px -12px rgba(108,92,231,.8)" }}
+              <motion.img
+                key={misses ? "sad" : "heart"}
+                initial={{ opacity: 0, scale: 0.82 }}
+                animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
+                transition={{
+                  opacity: { duration: 0.28 },
+                  scale: { type: "spring", stiffness: 320, damping: 20 },
+                  y: { duration: 2.6, repeat: Infinity, ease: "easeInOut" },
+                }}
+                src={misses ? WRONG_PASSWORD_GIF : LOCKED_GIF}
+                alt={misses ? "A small sad panda" : "A beating heart"}
+                className="mb-4"
+                style={{
+                  width: 128,
+                  maxHeight: 128,
+                  objectFit: "contain",
+                  filter: "drop-shadow(0 16px 34px rgba(0,0,0,.6))",
+                }}
+              />
+              <h2
+                className="text-center mb-1"
+                style={{ color: "#fff", fontFamily: HMH.script, fontSize: 28, lineHeight: 1.15 }}
               >
-                <Lock size={28} color="#fff" />
-              </motion.div>
-              <h2 className="text-xl font-bold text-center mb-1" style={{ color: "#fff", fontFamily: HMH.display }}>
-                This one&apos;s locked
+                {misses ? "that's not the word" : "one word first"}
               </h2>
               <p className="text-xs text-center leading-relaxed" style={{ color: "rgba(255,255,255,.55)" }}>
-                They set a password before<br />handing you their hand.
+                {misses
+                  ? "they only gave it to you 🤍"
+                  : "they locked this before handing\nyou their hand."}
               </p>
             </div>
 
@@ -84,7 +126,7 @@ function HoldMyHandPasswordGate({ shareId, onUnlocked }: { shareId: string; onUn
                 value={pw}
                 onChange={(e) => { setPw(e.target.value); setError(""); }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleVerify(); }}
-                placeholder="Enter password…"
+                placeholder="the word they told you…"
                 autoFocus
                 className="w-full px-4 py-3.5 pr-11 rounded-2xl text-sm outline-none transition-all"
                 style={{
@@ -122,7 +164,7 @@ function HoldMyHandPasswordGate({ shareId, onUnlocked }: { shareId: string; onUn
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-40"
               style={{ background: HMH.lime, color: HMH.ink, fontFamily: HMH.display }}
             >
-              {loading ? <><Loader2 size={15} className="animate-spin" />Checking…</> : <><Lock size={15} />Open it</>}
+              {loading ? <><Loader2 size={15} className="animate-spin" />checking…</> : <><Lock size={15} />open it 🤍</>}
             </motion.button>
           </div>
         </div>
