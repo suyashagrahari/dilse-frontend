@@ -34,7 +34,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
-  Coins, LogIn, ChevronRight,
+  Coins, LogIn, ChevronRight, Repeat,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { roleAtLeast } from "@/lib/roles";
@@ -192,6 +192,9 @@ export default function MoreDrawer({
               { label: "Early Access", icon: <KeyRound size={17} />, href: "/admin/early-access" },
               // Super admin only, like the two above: replying from here sends
               // mail as SubhSandesh to a named customer.
+              // Retention reads every creator's activity across every template,
+              // so it sits with the other super-admin-only entries.
+              { label: "Returning Creators", icon: <Repeat size={17} />, href: "/admin/recurring" },
               { label: "Feedback", icon: <Star size={17} />, href: "/admin/feedback" },
               { label: "Unfinished Drafts", icon: <FileText size={17} />, href: "/admin/drafts" },
               { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },

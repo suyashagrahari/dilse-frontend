@@ -90,6 +90,9 @@ interface Stats {
 
 interface Pg { page: number; limit: number; total: number; totalPages: number }
 
+/** One row of the per-template rollup the list endpoint already returns. */
+interface TemplateStat { slug: string; label: string; count: number; avg: number }
+
 const FILTERS = [
   { key: "all", label: "All" },
   { key: "new", label: "New" },
@@ -136,6 +139,11 @@ export default function AdminFeedbackPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pg, setPg] = useState<Pg>({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [filter, setFilter] = useState<string>("all");
+  /** "" = every template. Narrows the list AND the rating read-out below it. */
+  const [slug, setSlug] = useState<string>("");
+  /** 0 = any number of stars. */
+  const [star, setStar] = useState<number>(0);
+  const [templates, setTemplates] = useState<TemplateStat[]>([]);
   const [sort, setSort] = useState<SortOrder>("newest");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
@@ -186,11 +194,17 @@ export default function AdminFeedbackPage() {
       setError(null);
       try {
         const q = new URLSearchParams({ page: String(page), limit: "20", filter, sort });
+        if (slug) q.set("slug", slug);
+        if (star) q.set("rating", String(star));
         const res = await fetch(`${API_URL}/admin/feedback?${q}`, { headers: hdr() });
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Could not load feedback");
         setItems(json.data.items);
         setStats(json.data.stats);
+        // The rollup is over EVERYTHING, so it must not be narrowed by the very
+        // filter it populates — otherwise choosing a template empties the menu
+        // you chose it from.
+        if (!slug && !star) setTemplates(json.data.templates || []);
         setPg(json.data.pagination);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load feedback");
@@ -198,7 +212,7 @@ export default function AdminFeedbackPage() {
         setLoading(false);
       }
     },
-    [accessToken, allowed, filter, sort, hdr]
+    [accessToken, allowed, filter, sort, slug, star, hdr]
   );
 
   useEffect(() => {
@@ -439,6 +453,88 @@ export default function AdminFeedbackPage() {
         )}
 
         {/* ── Filters ─────────────────────────────────────────────────────── */}
+        {/*
+          Template + star filters.
+
+          The list endpoint already accepted `slug` and `rating` and already
+          returned a per-template rollup; nothing here was reachable from the
+          panel. Choosing a template narrows the list and swaps the headline
+          numbers for that template's own — which is the question being asked
+          when somebody opens this: "how is THIS one doing?"
+        */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+          <select
+            value={slug}
+            onChange={(e) => { setSlug(e.target.value); void load(1); }}
+            style={{
+              height: 36, padding: "0 10px", borderRadius: 10,
+              border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
+              fontSize: 13, fontWeight: 600, maxWidth: 280,
+            }}
+          >
+            <option value="">All templates ({stats?.count ?? 0})</option>
+            {templates.map((t) => (
+              <option key={t.slug} value={t.slug}>
+                {t.label || t.slug} — {t.count} · {t.avg}★
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={star}
+            onChange={(e) => { setStar(Number(e.target.value)); void load(1); }}
+            style={{
+              height: 36, padding: "0 10px", borderRadius: 10,
+              border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <option value={0}>Any rating</option>
+            {[5, 4, 3, 2, 1].map((n) => (
+              <option key={n} value={n}>{n} star{n > 1 ? "s" : ""} only</option>
+            ))}
+          </select>
+
+          {(slug || star > 0) && (
+            <button
+              type="button"
+              onClick={() => { setSlug(""); setStar(0); void load(1); }}
+              style={{
+                height: 36, padding: "0 12px", borderRadius: 10,
+                border: `1px solid ${cB}`, background: "#fffdfb", color: t2,
+                fontSize: 12, fontWeight: 700,
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {/* What this template alone is scoring. */}
+        {slug && (() => {
+          const t = templates.find((x) => x.slug === slug);
+          if (!t) return null;
+          return (
+            <div
+              style={{
+                marginTop: 10, padding: "11px 14px", borderRadius: 12,
+                border: `1px solid ${cB}`, background: "#fffdfb",
+                display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+              }}
+            >
+              <span style={{ fontWeight: 800, color: t1, fontSize: 14 }}>{t.label || t.slug}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Stars value={Math.round(t.avg)} size={13} />
+                <b style={{ color: t1, fontSize: 14 }}>{t.avg}</b>
+                <span style={{ color: t2, fontSize: 12 }}>average</span>
+              </span>
+              <span style={{ color: t2, fontSize: 12 }}>
+                from {t.count} {t.count === 1 ? "rating" : "ratings"}
+              </span>
+            </div>
+          );
+        })()}
+
         <div className="af-filters" style={{ marginTop: 14, marginBottom: 12 }}>
           {FILTERS.map((f) => {
             const on = filter === f.key;
