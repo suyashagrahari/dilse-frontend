@@ -3,6 +3,7 @@ import { Dancing_Script, Cinzel, Lora, Fredoka, Inter, Playfair_Display, Outfit,
 import Providers from "@/components/Providers";
 import { OrganizationJsonLd, WebAppJsonLd } from "@/components/JsonLd";
 import { buildMeta, SITE_URL } from "@/lib/seo";
+import { ROOT_DOMAIN } from "@/lib/config";
 import "./globals.css";
 
 // Secondary / template fonts loaded NON-render-blocking (see <head> below). This
@@ -241,17 +242,32 @@ export default function RootLayout({
       <head suppressHydrationWarning>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Warm the secondary/template font stylesheet at high priority… */}
-        <link rel="preload" as="style" href={FONTS_HREF} />
-        {/* …but load it WITHOUT blocking render: the link is created with
-            media="print" (ignored for screen, so non-blocking) and flipped to
-            "all" only once it finishes downloading. This replaces the old
-            render-blocking `@import` in globals.css (~1.1s LCP saving). */}
+        {/* Template font stylesheet, loaded WITHOUT blocking render: the link
+            is created with media="print" (ignored for screen, so non-blocking)
+            and flipped to "all" once it has downloaded. This replaces the old
+            render-blocking `@import` in globals.css (~1.1s LCP saving).
+
+            Skipped on the landing page. Nothing on it uses these families, but
+            the media flip still re-styles and re-lays out the whole page: a
+            283ms layout task on a throttled phone, landing ~2.4s in, squarely
+            inside Total Blocking Time. `window.__loadTemplateFonts` stays
+            defined so <TemplateFontsLoader/> can load it the moment a visitor
+            navigates from the landing to any other page. A user's subdomain
+            profile is also served at "/", so only the apex (and www/dev/stag)
+            count as the landing. There used to be a <link rel="preload"> here
+            too; it was dropped because it downloaded this CSS on the landing
+            for nothing — fetchPriority on the created link keeps it prompt on
+            every other page. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href=${JSON.stringify(
+            __html: `(function(){var done=false;function load(){if(done)return;done=true;var l=document.createElement('link');l.rel='stylesheet';l.href=${JSON.stringify(
               FONTS_HREF
-            )};l.media='print';l.onload=function(){this.media='all'};document.head.appendChild(l);})();`,
+            )};l.media='print';l.fetchPriority='high';l.onload=function(){this.media='all'};document.head.appendChild(l);}
+window.__loadTemplateFonts=load;
+var root=${JSON.stringify(ROOT_DOMAIN)},h=location.hostname,sub='';
+if(root&&h!==root&&h.slice(-root.length-1)==='.'+root)sub=h.slice(0,-root.length-1);
+var landing=location.pathname==='/'&&(!sub||sub==='www'||sub==='dev'||sub==='stag');
+if(!landing)load();})();`,
           }}
         />
         <noscript>

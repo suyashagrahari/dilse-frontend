@@ -28,7 +28,8 @@
             overflow: visible !important;
           }
 
-          .app-main-shell > section {
+          .app-main-shell > section,
+          .app-main-shell > .hydrate-on-visible > section {
             margin: 0 !important;
             border-radius: 0 !important;
             overflow: hidden;
@@ -434,3 +435,20 @@
             gap: 24px !important;
           }
         }
+
+/* ── Below-the-fold sections: skip rendering work until they approach ──────
+
+   Every section below the hero is wrapped in <HydrateOnVisible>, which already
+   keeps React from hydrating it at load. This does the same for the browser's
+   rendering pipeline: with content-visibility:auto Chrome skips style, layout
+   and paint for a section while it is off-screen, instead of doing all of it
+   for the full ~15-screen page before the hero can be interactive. The markup
+   is still in the DOM, so crawlers, find-in-page and #anchor links see it.
+
+   contain-intrinsic-size gives each skipped section a placeholder height so
+   the scrollbar is sane; `auto` makes the browser remember the real height
+   once a section has rendered, so scrolling back up never jumps. */
+.hydrate-on-visible {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}

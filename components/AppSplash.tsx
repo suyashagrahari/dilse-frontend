@@ -14,7 +14,27 @@
 import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
 import SplashGuard from "@/components/SplashGuard";
 
+// ── WHERE THE SPLASH PLAYS ───────────────────────────────────────────────────
+//
+// false (current): the splash plays ONLY when the site is launched as an
+//   installed PWA (display-mode: standalone / iOS home-screen). In a normal
+//   browser tab it is display:none from the very first frame — never painted,
+//   never animated — so visitors see the page immediately.
+//
+// true: the splash also plays on the first visit of each browser session, the
+//   way it did before September 2026.
+//
+// Why it is off in the browser: a full-screen overlay held for ≥1.2s is what
+// Lighthouse's Speed Index measures (how soon the screen LOOKS finished), and
+// every Lighthouse/PageSpeed run is a first visit. With the splash on, the
+// mobile filmstrip showed ~2s of splash before the hero, and Speed Index sat at
+// 4.8s. Flip this back to `true` to restore it in browsers — nothing else needs
+// to change; the markup, CSS, animation and SplashGuard are all still here.
+const SPLASH_IN_BROWSER = false;
+
 const SPLASH_CSS = `
+/* Hidden unless the pre-paint script below opted in (html.ss-splash-on). */
+html:not(.ss-splash-on) #ss-splash{display:none}
 #ss-splash{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;
   background:radial-gradient(130% 130% at 50% 30%,#fdf9f4 0%,#f7efe7 55%,#efe3d3 100%);
   opacity:1;transition:opacity .6s ease,transform .6s ease;will-change:opacity,transform;overflow:hidden}
@@ -57,7 +77,13 @@ html.ss-splash-seen #ss-splash{display:none}
 // hide it from the very first frame (via an <html> class + CSS) so a refresh never
 // flashes or replays it. Only touches <html> — never the splash node — so React
 // hydration is untouched.
+//
+// It also decides whether the splash may play at all (see SPLASH_IN_BROWSER):
+// `ss-splash-on` is added only for an installed-app launch, or everywhere when
+// the flag is true. Without that class the CSS above keeps it display:none.
 const SKIP_JS = `try{var d=document.documentElement;
+var app=false;try{app=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;}catch(e){}
+if(${SPLASH_IN_BROWSER}||app)d.classList.add('ss-splash-on');
 if(sessionStorage.getItem('ss_splash_shown')==='1')d.classList.add('ss-splash-seen');}catch(e){}`;
 
 // First-time show only. Marks the session "seen" immediately (so rapid refreshes
@@ -68,6 +94,10 @@ const HIDE_JS = `
   if(!el)return;
   el.setAttribute('data-inline','1'); // marks that this node's lifecycle is owned by the inline script (a real document load). The client SplashGuard defers to this and only acts on client-nav / bfcache inserts.
   function markSeen(){try{document.documentElement.classList.add('ss-splash-seen');}catch(e){}}
+  // Not opted in (a browser tab while SPLASH_IN_BROWSER is false): it was never
+  // visible, so retire it now — no timers, and the session is NOT marked seen,
+  // so opening the installed app later still plays it.
+  if(!document.documentElement.classList.contains('ss-splash-on')){el.classList.add('ss-gone');return;}
   var KEY='ss_splash_shown',seen=false;
   try{seen=sessionStorage.getItem(KEY)==='1';}catch(e){}
   if(seen){markSeen();return;} // already hidden by CSS on this refresh
@@ -107,8 +137,12 @@ export default function AppSplash() {
       <div id="ss-splash" aria-hidden="true" suppressHydrationWarning>
         <div className="ss-stack">
           <div className="ss-logo">
+            {/* loading="lazy": while the splash is display:none (a browser tab,
+                see SPLASH_IN_BROWSER) the browser skips this download entirely
+                instead of spending high-priority bandwidth on an invisible logo.
+                When the splash does show, it is in the viewport and loads at once. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" />
+            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="" width={100} height={57} fetchPriority="high" loading="lazy" />
           </div>
           <svg
             className="ss-wm"

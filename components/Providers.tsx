@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PwaProvider from "@/components/PwaProvider";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
+import TemplateFontsLoader from "@/components/TemplateFontsLoader";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
@@ -52,6 +53,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
           <StoreHydrator />
           <AnalyticsProvider />
+          <TemplateFontsLoader />
           <PwaProvider>
             <TooltipProvider>
               {/* No toast host here on purpose. There is exactly one toast in
