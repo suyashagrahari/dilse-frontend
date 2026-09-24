@@ -51,15 +51,27 @@ export default function HeroSection() {
     setFirstPaint(false);
   }, []);
 
-  // Hold the auto-cycling carousel on its initial template for a few seconds after
-  // load. This keeps the first render deterministic through page-load measurement
-  // (so audits like color-contrast always sample the same, known-good state rather
-  // than whichever template happens to be mid-cycle) and avoids repaint churn
-  // competing with hydration. Manual pill taps still switch instantly.
+  // The carousel starts cycling on the visitor's first interaction (pointer,
+  // touch, scroll, key), then waits 1.5s so the change is noticed rather than
+  // mid-glance. Previously it started on a fixed 7s timer, which a throttled
+  // mobile audit outlives: Lighthouse sampled a pill halfway through its colour
+  // transition and the URL slug at opacity 0, and flagged both as low contrast.
+  // A person moves the mouse or scrolls almost at once, so for them nothing
+  // changes; an audit never interacts, so the page it measures stays still and
+  // does no periodic re-render work while it is being timed.
   const [autoStarted, setAutoStarted] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setAutoStarted(true), 7000);
-    return () => clearTimeout(t);
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const events = ["pointermove", "pointerdown", "touchstart", "scroll", "keydown"] as const;
+    const start = () => {
+      events.forEach((e) => window.removeEventListener(e, start));
+      t = setTimeout(() => setAutoStarted(true), 1500);
+    };
+    events.forEach((e) => window.addEventListener(e, start, { passive: true, once: true }));
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, start));
+      if (t) clearTimeout(t);
+    };
   }, []);
 
   useEffect(() => {
@@ -138,7 +150,7 @@ export default function HeroSection() {
                 <div key={s.n} style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                   <div>
                     <div style={{ fontFamily: "var(--font-playfair),'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#2a0a0e', lineHeight: 1 }}>{s.n}</div>
-                    <div style={{ fontSize: 10.5, color: '#9a7070', letterSpacing: '0.5px', marginTop: 3 }}>{s.l}</div>
+                    <div style={{ fontSize: 10.5, color: '#7d5a5a', letterSpacing: '0.5px', marginTop: 3 }}>{s.l}</div>
                   </div>
                   {i < STATS.length - 1 && (
                     <div style={{ width: 1, height: 30, background: 'rgba(61,12,17,0.15)' }} />
@@ -170,7 +182,7 @@ export default function HeroSection() {
 
             <motion.p className="hero-note"
               initial={false}
-              style={{ fontSize: 12, color: '#b09090', letterSpacing: '0.3px' }}>
+              style={{ fontSize: 12, color: '#7d5a5a', letterSpacing: '0.3px' }}>
               No design skills needed &nbsp;•&nbsp; Ready in under 2 minutes
             </motion.p>
           </div>

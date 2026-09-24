@@ -20,7 +20,7 @@ export default function LuxuryMobileTopBrand({ onBrandClick, topOffsetPx = 0 }: 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp"
-        alt="SubhSandesh"
+        alt=""
         width={48}
         height={48}
         style={{
@@ -73,7 +73,7 @@ export default function LuxuryMobileTopBrand({ onBrandClick, topOffsetPx = 0 }: 
             onClick={onBrandClick}
             className="mb-2 rounded-[999px] flex items-center justify-center"
             style={brandShellStyle}
-            aria-label="Go to home hero section"
+            aria-label="SubhSandesh — back to top"
           >
             {brandInner}
           </button>
@@ -82,7 +82,7 @@ export default function LuxuryMobileTopBrand({ onBrandClick, topOffsetPx = 0 }: 
             href="/"
             className="mb-2 rounded-[999px] flex items-center justify-center"
             style={brandShellStyle}
-            aria-label="Go to home"
+            aria-label="SubhSandesh home"
           >
             {brandInner}
           </Link>

@@ -246,7 +246,7 @@ export default function ActivityToast() {
                     </>
                   )}
                 </span>
-                <span style={{ display: "block", fontSize: 11.5, color: "#9d7b7b", marginTop: 2 }}>
+                <span style={{ display: "block", fontSize: 11.5, color: "#7a5555", marginTop: 2 }}>
                   {card.kind === "recent" && card.when}
                   {card.kind === "count" &&
                     `made ${card.count.toLocaleString("en-IN")} time${card.count === 1 ? "" : "s"}`}
@@ -266,10 +266,12 @@ export default function ActivityToast() {
           aria-label="Stop showing these"
           style={{
             position: "absolute",
-            top: -7,
-            right: -7,
-            width: 22,
-            height: 22,
+            top: -8,
+            right: -8,
+            // 24px is the WCAG 2.2 minimum target size (Lighthouse "target-size");
+            // at 22px this was the only failing audit in desktop Accessibility.
+            width: 24,
+            height: 24,
             borderRadius: 999,
             border: "1px solid rgba(61,12,17,0.16)",
             background: "#fffcf8",
