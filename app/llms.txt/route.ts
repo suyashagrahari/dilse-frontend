@@ -30,7 +30,7 @@ export async function GET() {
       `personalized digital celebration pages — for birthdays, anniversaries, weddings, ` +
       `Valentine's Day, and Indian festivals like Holi, Eid and Diwali. Every creation ` +
       `becomes a shareable link with photos, music and a heartfelt message. Made in India; ` +
-      `founded by Suyash Agrahari in 2024.`
+      `founded by Suyash Agrahari; operating as a registered sole proprietorship in Bengaluru since 4 March 2026.`
   );
   lines.push("");
 

@@ -1,4 +1,5 @@
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { BUSINESS } from "@/lib/business";
 import type { HowToData, AggregateRatingData } from "@/lib/seo-data";
 import { FOUNDER_NAME, FOUNDER_PROFILES } from "@/lib/strapi";
 
@@ -62,7 +63,20 @@ export function OrganizationJsonLd() {
           height: 784,
         },
         description: SITE_DESCRIPTION,
-        foundingDate: "2024",
+        // Must match the registered business (lib/business.ts) — payment
+        // gateways and search engines both compare it with the KYC record.
+        foundingDate: "2026-03-04",
+        legalName: BUSINESS.name,
+        email: BUSINESS.email,
+        telephone: BUSINESS.phone.tel,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: BUSINESS.address.line1,
+          addressLocality: BUSINESS.address.city,
+          addressRegion: BUSINESS.address.state,
+          postalCode: BUSINESS.address.postalCode,
+          addressCountry: "IN",
+        },
         areaServed: {
           "@type": "Country",
           name: "India",
@@ -71,6 +85,14 @@ export function OrganizationJsonLd() {
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer service",
+          email: BUSINESS.email,
+          telephone: BUSINESS.phone.tel,
+          hoursAvailable: {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            opens: "00:00",
+            closes: "23:59",
+          },
           availableLanguage: ["English", "Hindi"],
           areaServed: "IN",
         },

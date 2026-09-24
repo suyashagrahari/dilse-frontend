@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Github, Globe, Instagram, Linkedin, Twitter } from "lucide-react";
 import { buildMeta, SITE_URL } from "@/lib/seo";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
+import BusinessDetails from "@/components/legal/BusinessDetails";
 
 export const metadata: Metadata = buildMeta({
   title: "About Us | SubhSandesh",
@@ -41,12 +42,12 @@ export default function AboutUsPage() {
       <LuxuryMobileTopBrand />
 
       <section className="relative z-[1] max-w-5xl mx-auto px-5 pt-10 pb-24 md:pt-32">
-        <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3 text-center" style={{ color: "#c9a84c" }}>
+        <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3 text-center" style={{ color: "#7d5f18" }}>
           Founder Message
         </p>
         <h1 className="text-[40px] md:text-[68px] leading-[0.94] tracking-[-0.03em] text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
           I am Suyash Agrahari,
-          <em style={{ color: "#c9a84c", fontStyle: "italic" }}> Founder of SubhSandesh.</em>
+          <em style={{ color: "#8a6a1c", fontStyle: "italic" }}> Founder of SubhSandesh.</em>
         </h1>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6 md:gap-8 items-start">
@@ -87,8 +88,12 @@ export default function AboutUsPage() {
           </div>
         </div>
 
+        <div className="mt-8">
+          <BusinessDetails />
+        </div>
+
         <div className="mt-8 rounded-3xl border p-5 md:p-6" style={{ borderColor: "rgba(61,12,17,0.14)", background: "rgba(255,255,255,0.76)" }}>
-          <p className="text-[10px] uppercase tracking-[0.24em] font-bold mb-3" style={{ color: "#c9a84c" }}>Connect With Me</p>
+          <p className="text-[10px] uppercase tracking-[0.24em] font-bold mb-3" style={{ color: "#7d5f18" }}>Connect With Me</p>
           <div className="flex items-center justify-center flex-wrap gap-3">
             <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn"
               className="inline-flex items-center justify-center w-12 h-12 rounded-full"

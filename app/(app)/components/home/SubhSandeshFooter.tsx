@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { WM_VB, WORDMARK_GLYPHS } from "@/lib/wordmarkGlyphs";
+import Link from "next/link";
 import { SOCIAL_ACCOUNTS, SOCIAL_LINK_ATTRS, type SocialId } from "@/lib/social";
+import { BUSINESS, LEGAL_LINKS } from "@/lib/business";
 
 /*
  * SubhSandesh — footer. Simple, flat, luxurious.
@@ -51,7 +53,17 @@ const SOCIAL_GLYPH: Record<SocialId, React.ReactNode> = {
   ),
 };
 
-const OCCASIONS = ["Birthday Pages", "Wedding", "Holi Festival", "Eid Mubarak", "Anniversary"];
+// Every link here goes somewhere real. The Occasions and Company columns were
+// all `href="#"`, which left the footer — the first place a payment-gateway
+// reviewer looks for the policy pages — pointing nowhere. The occasion targets
+// are the same live templates the hero carousel opens.
+const OCCASIONS = [
+  { label: "Birthday Pages", href: "/birthday-gf" },
+  { label: "Wedding", href: "/wedding-shaadi" },
+  { label: "Holi Festival", href: "/holi" },
+  { label: "Eid Mubarak", href: "/eid-mubarak" },
+  { label: "Anniversary", href: "/anniversary-gf" },
+];
 const PLATFORM = [
   { label: "How It Works", href: "#how" },
   { label: "Templates", href: "/templates" },
@@ -63,7 +75,12 @@ const PLATFORM = [
   { label: "Guides", href: "/guides" },
   { label: "AI Generator", href: "#demo" },
 ];
-const COMPANY = ["About Us", "Contact Us", "Help", "Privacy Policy", "Terms of Service"];
+const COMPANY = [
+  { label: "About Us", href: "/about-us" },
+  { label: "Contact Us", href: "/contact-us" },
+  { label: "Help", href: "/help" },
+  { label: "Feedback", href: "/feedback" },
+];
 
 export default function SubhSandeshFooter() {
   const [email, setEmail] = useState("");
@@ -138,7 +155,7 @@ export default function SubhSandeshFooter() {
 
           <div className="ssfoot-col">
             <h3>Occasions</h3>
-            <ul>{OCCASIONS.map((o) => <li key={o}><a href="#">{o}</a></li>)}</ul>
+            <ul>{OCCASIONS.map((o) => <li key={o.label}><Link href={o.href}>{o.label}</Link></li>)}</ul>
           </div>
           <div className="ssfoot-col">
             <h3>Platform</h3>
@@ -146,7 +163,11 @@ export default function SubhSandeshFooter() {
           </div>
           <div className="ssfoot-col">
             <h3>Company</h3>
-            <ul>{COMPANY.map((c) => <li key={c}><a href="#">{c}</a></li>)}</ul>
+            <ul>{COMPANY.map((c) => <li key={c.label}><Link href={c.href}>{c.label}</Link></li>)}</ul>
+          </div>
+          <div className="ssfoot-col">
+            <h3>Legal</h3>
+            <ul>{LEGAL_LINKS.map((l) => <li key={l.href}><Link href={l.href}>{l.label}</Link></li>)}</ul>
           </div>
         </div>
 
@@ -176,8 +197,16 @@ export default function SubhSandeshFooter() {
 
         {/* bottom bar */}
         <div className="ssfoot-bottom">
-          <span>© 2026 SubhSandesh · Made with <span className="heart">❤</span> in India</span>
+          <span>© 2026 {BUSINESS.name}. All rights reserved. · Made with <span className="heart">❤</span> in India</span>
           <span className="ssfoot-tagline">India&rsquo;s #1 Digital Celebrations</span>
+          {/* The registered business, in one line — the legal name, proprietor,
+              city and a way to reach a person, as payment gateways require. */}
+          <address className="ssfoot-business">
+            {BUSINESS.name} ({BUSINESS.type}, Proprietor: {BUSINESS.proprietor}) · {BUSINESS.address.line1},{" "}
+            {BUSINESS.address.city} {BUSINESS.address.postalCode} ·{" "}
+            <a href={`tel:${BUSINESS.phone.tel}`}>{BUSINESS.phone.display}</a> ·{" "}
+            <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
+          </address>
         </div>
       </div>
     </footer>
@@ -194,7 +223,7 @@ const STYLES = `
 .ssfoot-flourish .line{height:1px;flex:1;max-width:280px;background:rgba(201,168,76,.28);}
 .ssfoot-flourish svg{width:66px;height:20px;flex-shrink:0;}
 
-.ssfoot-grid{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:44px;padding-bottom:52px;border-bottom:1px solid rgba(201,168,76,.16);}
+.ssfoot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.25fr;gap:40px;padding-bottom:52px;border-bottom:1px solid rgba(201,168,76,.16);}
 .ssfoot-logo{display:flex;align-items:center;gap:11px;font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:23px;color:#f5ede6;}
 .ssfoot-logo .dot{width:12px;height:12px;border-radius:50%;background:#c9a84c;}
 .ssfoot-brand p{color:#cdb3a5;font-size:14px;line-height:1.72;margin:16px 0 22px;max-width:310px;}
@@ -234,6 +263,18 @@ const STYLES = `
 .ssfoot-bottom .heart{color:#e07a86;}
 .ssfoot-tagline{color:#c9a84c;font-weight:600;letter-spacing:.02em;}
 
+.ssfoot-business{width:100%;font-style:normal;font-size:12.5px;line-height:1.7;color:#b99b8c;}
+.ssfoot-business a{color:#d8c1b3;text-decoration:none;}
+.ssfoot-business a:hover{color:#c9a84c;}
+/* Phones show a fixed bottom nav (md:hidden, ~112px tall) over the page, which
+   covered the business line. Clear it, plus the home-indicator inset. */
+@media (max-width:767px){
+  .ssfoot-bottom{padding-bottom:calc(128px + env(safe-area-inset-bottom, 0px));}
+}
+@media (max-width:1100px){
+  .ssfoot-grid{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .ssfoot-brand{grid-column:1 / -1;}
+}
 @media (max-width:860px){
   .ssfoot-grid{grid-template-columns:1fr 1fr;gap:34px;}
   .ssfoot-brand{grid-column:1 / -1;}

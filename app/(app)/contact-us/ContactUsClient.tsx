@@ -3,6 +3,8 @@
 import { useState } from "react";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import BusinessDetails from "@/components/legal/BusinessDetails";
+import { BUSINESS } from "@/lib/business";
 
 const CORNER_FILTER =
   "brightness(0) saturate(100%) invert(8%) sepia(55%) saturate(2800%) hue-rotate(330deg) brightness(90%) contrast(120%)";
@@ -74,22 +76,38 @@ export default function ContactUsClient() {
       <LuxuryMobileTopBrand />
 
       <section className="relative z-[1] max-w-4xl mx-auto px-5 pt-10 pb-24 md:pt-32">
-        <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3 text-center" style={{ color: "#c9a84c" }}>
+        <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3 text-center" style={{ color: "#7d5f18" }}>
           Contact Us
         </p>
         <h1 className="text-[42px] md:text-[72px] leading-[0.94] tracking-[-0.03em] text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
           We Would Love
-          <em style={{ color: "#c9a84c", fontStyle: "italic" }}> to Hear From You.</em>
+          <em style={{ color: "#8a6a1c", fontStyle: "italic" }}> to Hear From You.</em>
         </h1>
         <p className="mt-6 text-base md:text-lg leading-relaxed text-center max-w-2xl mx-auto" style={{ color: "#7a5555" }}>
-          Reach us for support, collaboration, or feedback. Our team is happy to help you create better celebration moments.
+          Reach us for support, payments, refunds, collaboration, or feedback. We are available {BUSINESS.hoursShort} and
+          happy to help you create better celebration moments.
         </p>
 
-        <div className="mt-10 rounded-3xl border p-6 md:p-8" style={{ borderColor: "rgba(61,12,17,0.14)", background: "rgba(255,255,255,0.76)" }}>
+        {/* The registered business, in full. Payment-gateway reviewers check that
+            this page shows the legal name, a verifiable address, a phone number
+            and an email — a form on its own does not count. */}
+        <div className="mt-10">
+          <BusinessDetails title="Get in Touch" />
+        </div>
+
+        <div className="mt-6 rounded-3xl border p-6 md:p-8" style={{ borderColor: "rgba(61,12,17,0.14)", background: "rgba(255,255,255,0.76)" }}>
+          <h2 className="text-[28px] md:text-[36px] leading-[1.04] tracking-[-0.02em] mb-2" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
+            Send Us a Message
+          </h2>
+          <p className="text-[15px] md:text-base mb-6" style={{ color: "#7a5555" }}>
+            For a payment or refund, include the email on your account and the date of payment.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#c9a84c" }}>Name *</p>
+              <label htmlFor="contact-name" className="block text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#7d5f18" }}>Name *</label>
               <input
+                id="contact-name"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name"
@@ -98,8 +116,10 @@ export default function ContactUsClient() {
               />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#c9a84c" }}>Email *</p>
+              <label htmlFor="contact-email" className="block text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#7d5f18" }}>Email *</label>
               <input
+                id="contact-email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
@@ -109,8 +129,11 @@ export default function ContactUsClient() {
               />
             </div>
             <div className="md:col-span-2">
-              <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#c9a84c" }}>Phone</p>
+              <label htmlFor="contact-phone" className="block text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#7d5f18" }}>Phone</label>
               <input
+                id="contact-phone"
+                type="tel"
+                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 XXXXX XXXXX"
@@ -119,8 +142,9 @@ export default function ContactUsClient() {
               />
             </div>
             <div className="md:col-span-2">
-              <p className="text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#c9a84c" }}>Message *</p>
+              <label htmlFor="contact-message" className="block text-[10px] uppercase tracking-[0.22em] font-bold mb-2" style={{ color: "#7d5f18" }}>Message *</label>
               <textarea
+                id="contact-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Tell us how we can help..."
@@ -145,7 +169,7 @@ export default function ContactUsClient() {
           )}
 
           <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <p className="text-xs" style={{ color: "#7a5555" }}>Usually within 24 hours.</p>
+            <p className="text-xs" style={{ color: "#7a5555" }}>We reply within 24 hours.</p>
             <button
               type="button"
               onClick={submitContact}
