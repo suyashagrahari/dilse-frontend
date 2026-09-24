@@ -6,6 +6,7 @@ import BlogCard from "@/components/blog/BlogCard";
 import CategoryChips from "@/components/blog/CategoryChips";
 import BlogSearch from "@/components/blog/BlogSearch";
 import { BlogIndexJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import FollowUs from "@/components/blog/FollowUs";
 
 // Time-based ISR fallback; the Strapi webhook revalidates instantly on publish.
 export const revalidate = 3600;
@@ -64,15 +65,16 @@ export default async function BlogPage({
       <section className="relative mx-auto max-w-6xl px-5 pt-12 pb-24 md:pt-32">
         {/* Header */}
         <header className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#c9a84c" }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#7d5f18" }}>
             The SubhSandesh Journal
           </p>
           <h1 className="text-[40px] leading-[0.95] tracking-[-0.03em] md:text-[64px]" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
-            Stories for every <em style={{ color: "#c9a84c", fontStyle: "italic" }}>celebration</em>
+            Stories for every <em style={{ color: "#8a6a1c", fontStyle: "italic" }}>celebration</em>
           </h1>
           <p className="mt-4 text-sm leading-relaxed md:text-base" style={{ color: "rgba(42,10,14,0.7)" }}>
             Gift ideas, festival traditions and heartfelt message inspiration to make every occasion unforgettable.
           </p>
+          <FollowUs variant="inline" />
         </header>
 
         {/* Search — while a query is active it replaces the default grid below */}

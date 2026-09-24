@@ -16,6 +16,7 @@ import { getGuidesForArticle } from "@/lib/guides";
 import TableOfContents from "@/components/blog/TableOfContents";
 import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
 import { ArticleGraphJsonLd } from "@/components/JsonLd";
+import FollowUs from "@/components/blog/FollowUs";
 
 export const revalidate = 3600;
 // Allow on-demand pages not built at deploy time to be generated + cached on first hit.
@@ -268,6 +269,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <AuthorBox author={article.author} />
           </div>
         )}
+
+        {/* The brand's own accounts — a reader who reached the end is the one
+            most likely to follow. Share buttons above are for THIS post. */}
+        <FollowUs />
 
         {/* How to build the thing the post is about */}
         <GuidePromo guides={articleGuides} heading="See it built, step by step" />

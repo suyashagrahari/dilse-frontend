@@ -5,6 +5,7 @@ import { getArticles, getCategories, getCategoriesWithCounts, getCategoryBySlug 
 import InfiniteBlogGrid from "@/components/blog/InfiniteBlogGrid";
 import CategoryChips from "@/components/blog/CategoryChips";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import FollowUs from "@/components/blog/FollowUs";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -68,7 +69,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       />
       <section className="relative mx-auto max-w-6xl px-5 pt-12 pb-24 md:pt-32">
         <header className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#c9a84c" }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#7d5f18" }}>
             Category
           </p>
           <h1 className="text-[38px] leading-[0.95] tracking-[-0.03em] md:text-[58px]" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>
@@ -79,6 +80,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
               {cat.description}
             </p>
           )}
+          <FollowUs variant="inline" />
         </header>
 
         <div className="mb-10">

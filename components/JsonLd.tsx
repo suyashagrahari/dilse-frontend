@@ -1,5 +1,6 @@
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { BUSINESS } from "@/lib/business";
+import { SOCIAL_ACCOUNTS } from "@/lib/social";
 import type { HowToData, AggregateRatingData } from "@/lib/seo-data";
 import { FOUNDER_NAME, FOUNDER_PROFILES } from "@/lib/strapi";
 
@@ -67,6 +68,9 @@ export function OrganizationJsonLd() {
         // gateways and search engines both compare it with the KYC record.
         foundingDate: "2026-03-04",
         legalName: BUSINESS.name,
+        // The COMPANY's own accounts (lib/social.ts). The founder's personal
+        // profiles stay on the Person below — see FOUNDER_SAME_AS.
+        sameAs: SOCIAL_ACCOUNTS.map((a) => a.href),
         email: BUSINESS.email,
         telephone: BUSINESS.phone.tel,
         address: {
