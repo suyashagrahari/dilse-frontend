@@ -15,13 +15,14 @@ export const BUSINESS = {
   /** Business commencement date. */
   established: "4 March 2026",
   address: {
-    line1: "Parangi Palaya, Sector 2, HSR Layout",
-    city: "Bengaluru",
-    state: "Karnataka",
-    postalCode: "560102",
+    /** Must match the address on the IEC (DGFT) and the Razorpay account. */
+    line1: "Ward No. 06, Indira Nagar, Dumariyaganj",
+    city: "Siddharth Nagar",
+    state: "Uttar Pradesh",
+    postalCode: "272189",
     country: "India",
   },
-  phone: { display: "+91 80904 23107", tel: "+918090423107" },
+  phone: { display: "+91 89570 89392", tel: "+918957089392" },
   email: "support@subhsandesh.in",
   hours: "24×7 — all days, including holidays",
   hoursShort: "24×7",
