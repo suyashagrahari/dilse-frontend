@@ -2,6 +2,7 @@ import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, TEMPLATE_SEO } from "@/lib/seo";
 import { getArticles, getCategories } from "@/lib/strapi";
 import { guideList } from "@/data/guide-registry";
 import { stepCount } from "@/lib/guides";
+import { BUSINESS } from "@/lib/business";
 
 // /llms.txt — a clean, markdown "map" of the site written for LLMs / answer
 // engines (ChatGPT, Claude, Perplexity, Gemini). It gives them a fast, ad-free
@@ -30,7 +31,7 @@ export async function GET() {
       `personalized digital celebration pages — for birthdays, anniversaries, weddings, ` +
       `Valentine's Day, and Indian festivals like Holi, Eid and Diwali. Every creation ` +
       `becomes a shareable link with photos, music and a heartfelt message. Made in India; ` +
-      `founded by Suyash Agrahari; operating as a registered sole proprietorship in Bengaluru since 4 March 2026.`
+      `founded by Suyash Agrahari; operating as a registered sole proprietorship in ${BUSINESS.address.city}, ${BUSINESS.address.state} since 4 March 2026.`
   );
   lines.push("");
 

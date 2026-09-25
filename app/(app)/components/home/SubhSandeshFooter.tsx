@@ -161,7 +161,7 @@ export default function SubhSandeshFooter() {
               city and a way to reach a person, as payment gateways require. */}
           <address className="ssfoot-business">
             {BUSINESS.name} ({BUSINESS.type}, Proprietor: {BUSINESS.proprietor}) · {BUSINESS.address.line1},{" "}
-            {BUSINESS.address.city} {BUSINESS.address.postalCode} ·{" "}
+            {BUSINESS.address.city}, {BUSINESS.address.state} {BUSINESS.address.postalCode} ·{" "}
             <a href={`tel:${BUSINESS.phone.tel}`}>{BUSINESS.phone.display}</a> ·{" "}
             <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
           </address>
