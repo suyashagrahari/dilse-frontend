@@ -35,7 +35,6 @@ import {
   amberGlow,
   bodyBackground,
   displayBackground,
-  grilleBackground,
   KEYFRAMES,
   lampStyle,
   wearShapes,
@@ -265,7 +264,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         {/* ── The photo reel — little cards drifting past a film window ── */}
         {data.photos.length > 0 && (
           <div className="relative mb-3">
-            <PhotoReel photos={data.photos} lit={!tuning && !signoff} reduced={reduced} />
+            <PhotoReel photos={data.photos} lit={!tuning && !signoff} locked={tuning} reduced={reduced} />
           </div>
         )}
 
@@ -301,12 +300,8 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         </div>
 
         {/* ── Speaker + VU meters ────────────────────────────────────── */}
-        <div className="relative mb-2 flex items-stretch gap-2">
-          <div className="w-10 sm:w-14 rounded-[6px] shrink-0" style={grilleBackground()} aria-hidden />
-          <div className="flex-1 min-w-0">
-            <VuMeters machine={machine} reduced={reduced} />
-          </div>
-          <div className="w-10 sm:w-14 rounded-[6px] shrink-0" style={grilleBackground()} aria-hidden />
+        <div className="relative mb-2">
+          <VuMeters machine={machine} reduced={reduced} />
         </div>
 
         {/* ── The lower zone ─────────────────────────────────────────── */}

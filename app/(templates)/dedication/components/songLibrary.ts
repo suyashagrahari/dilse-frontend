@@ -23,6 +23,11 @@ export interface LibrarySong {
 }
 
 export const SONG_LIBRARY: LibrarySong[] = [
+  { youtubeId: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran", vibe: "dancing in the dark", lang: "english" },
+  { youtubeId: "450p7goxZqg", title: "All of Me", artist: "John Legend", vibe: "all your curves and edges", lang: "english" },
+  { youtubeId: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri", vibe: "I have loved you for a thousand years", lang: "english" },
+  { youtubeId: "lp-EO5I60KA", title: "Thinking Out Loud", artist: "Ed Sheeran", vibe: "when we're seventy", lang: "english" },
+  { youtubeId: "LjhCEhWiKXk", title: "Just the Way You Are", artist: "Bruno Mars", vibe: "amazing, just the way you are", lang: "english" },
   { youtubeId: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh", vibe: "the one everyone dedicates", lang: "hindi" },
   { youtubeId: "IJq0yyWug1k", title: "Tum Hi Ho", artist: "Arijit Singh", vibe: "you are all I have", lang: "hindi" },
   { youtubeId: "gvyUuxdRdR4", title: "Raataan Lambiyan", artist: "Jubin Nautiyal, Asees Kaur", vibe: "long nights, thinking of you", lang: "hindi" },
@@ -32,11 +37,6 @@ export const SONG_LIBRARY: LibrarySong[] = [
   { youtubeId: "MJyKN-8UncM", title: "Shayad", artist: "Arijit Singh", vibe: "maybe this is love", lang: "hindi" },
   { youtubeId: "mt9xg0mmt28", title: "Tum Se Hi", artist: "Mohit Chauhan", vibe: "everything starts with you", lang: "hindi" },
   { youtubeId: "eWd4cSUsDHg", title: "Tujh Mein Rab Dikhta Hai", artist: "Shreya Ghoshal", vibe: "I see god in you", lang: "hindi" },
-  { youtubeId: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran", vibe: "dancing in the dark", lang: "english" },
-  { youtubeId: "450p7goxZqg", title: "All of Me", artist: "John Legend", vibe: "all your curves and edges", lang: "english" },
-  { youtubeId: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri", vibe: "I have loved you for a thousand years", lang: "english" },
-  { youtubeId: "lp-EO5I60KA", title: "Thinking Out Loud", artist: "Ed Sheeran", vibe: "when we're seventy", lang: "english" },
-  { youtubeId: "LjhCEhWiKXk", title: "Just the Way You Are", artist: "Bruno Mars", vibe: "amazing, just the way you are", lang: "english" },
 ];
 
 /** YouTube's own thumbnail for an id — used by the picker and the reel. */

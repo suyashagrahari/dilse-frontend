@@ -18,7 +18,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Play, Mic } from "lucide-react";
-import { BODY_FACE, DISPLAY_FACE, PALETTE, type Photo } from "./types";
+import { BODY_FACE, DISPLAY_FACE, PALETTE, cropStyle, photoCrop, type Photo } from "./types";
 import { amberGlow } from "./radioStyles";
 
 export interface ScreenProps {
@@ -144,11 +144,15 @@ export default function Screen(p: ScreenProps) {
               loading="lazy"
               decoding="async"
               draggable={false}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0"
               style={{
+                ...cropStyle(photoCrop(ph)),
                 opacity: i === slide % Math.max(1, photoCount) ? 1 : 0,
                 transition: "opacity 1200ms ease",
-                animation: p.reduced || !showSlides ? "none" : "dedKen 9s ease-out infinite alternate",
+                // Ken Burns only on photos the sender didn't zoom themselves —
+                // the animation owns `transform`, which is where their zoom lives.
+                animation:
+                  p.reduced || !showSlides || (ph.scale ?? 100) > 100 ? "none" : "dedKen 9s ease-out infinite alternate",
                 filter: "saturate(.92) contrast(1.02)",
               }}
             />

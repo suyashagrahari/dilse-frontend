@@ -14,15 +14,17 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X, Eye, Lock, Plus, Trash2, ChevronUp, ChevronDown, Mic, Music4, Radio, Users,
-  ScrollText, Check, AlertTriangle, Type, Film, Images, Upload, Heart, Loader2, Library,
+  ScrollText, Check, AlertTriangle, Type, Film, Images, Upload, Heart, Loader2, Library, Crop,
 } from "lucide-react";
 
 import {
-  parseYouTubeId, TAP_TARGET_PX, type ClipSegment, type Photo, type Segment, type SongSegment, type VoiceSegment,
+  parseYouTubeId, TAP_TARGET_PX, CROP_DEFAULT, cropStyle, photoCrop,
+  type ClipSegment, type Photo, type Segment, type SongSegment, type VoiceSegment,
 } from "./types";
+import PhotoAdjuster from "./PhotoAdjuster";
 import {
   MAX_SEGMENTS, MAX_NAME_LEN, MAX_CAPTION_LEN, MAX_DEDICATION_LEN, MAX_SIGNOFF_LEN,
-  MAX_CLIPS, MAX_PHOTOS, MAX_PHOTO_CAPTION_LEN, MAX_LETTER_LEN,
+  MAX_CLIPS, MAX_PHOTOS, MAX_PHOTO_CAPTION_LEN, MAX_PHOTO_NOTE_LEN, MAX_LETTER_LEN,
   blankClip, blankSong, blankVoice, isDemoPhoto, type DedicationData, type EditMode,
 } from "./showData";
 import Booth, { type Recording } from "./Booth";
@@ -564,8 +566,18 @@ function PhotosEditor({
   notify?: (title: string, message?: string) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const replaceInput = useRef<HTMLInputElement>(null);
+  const replaceIdx = useRef<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [adjusting, setAdjusting] = useState<number | null>(null);
   const allDemo = photos.length > 0 && photos.every((p) => isDemoPhoto(p.url));
+  // The adjuster edits whatever is at `adjusting` right now; a ref keeps the
+  // latest list so rapid slider changes never write into a stale copy.
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
+  const set = (i: number, patch: Partial<Photo>) =>
+    onChange(photosRef.current.map((p, j) => (j === i ? { ...p, ...patch } : p)));
 
   const addFiles = async (files: File[]) => {
     // The first real photo replaces the whole sample reel.
@@ -583,12 +595,31 @@ function PhotosEditor({
       }
       onChange(next);
       if (files.length > room) notify?.("Reel is full", `Up to ${MAX_PHOTOS} photos.`);
+      // One new photo: frame it straight away.
+      if (files.length === 1 && next.length) setAdjusting(next.length - 1);
     } finally {
       setBusy(false);
     }
   };
 
-  const set = (i: number, patch: Partial<Photo>) => onChange(photos.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const replaceFile = async (file: File) => {
+    const i = replaceIdx.current;
+    replaceIdx.current = null;
+    if (i === null) return;
+    try {
+      const url = await compressImage(file);
+      set(i, { url, cropX: undefined, cropY: undefined, scale: undefined });
+      setAdjusting(i);
+    } catch (e) {
+      notify?.("Couldn't use that photo", e instanceof Error ? e.message : undefined);
+    }
+  };
+
+  const askReplace = (i: number) => {
+    replaceIdx.current = i;
+    replaceInput.current?.click();
+  };
+
   const move = (i: number, d: number) => {
     const to = i + d;
     if (to < 0 || to >= photos.length) return;
@@ -597,69 +628,105 @@ function PhotosEditor({
     onChange(next);
   };
 
+  const current = adjusting !== null ? photos[adjusting] : undefined;
+
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {allDemo && (
         <p className="text-[11px] rounded-lg px-2.5 py-1.5" style={{ background: "rgba(240,166,60,.14)", color: "#8a5c1e" }}>
-          These are sample photos — your first upload replaces them.
+          These are sample photos with sample letters — your first upload replaces them.
         </p>
       )}
-      <div className="grid grid-cols-3 gap-2">
-        {photos.map((p, i) => (
-          <div key={`${p.url.slice(-24)}-${i}`} className="rounded-lg overflow-hidden" style={{ background: "#fff", border: `1px solid ${RULE}` }}>
-            <div className="relative" style={{ aspectRatio: "4 / 5", background: "#f2ebe3" }}>
+
+      {photos.map((p, i) => (
+        <div
+          key={`${p.url.slice(-24)}-${i}`}
+          className="rounded-2xl p-2.5 flex gap-3"
+          style={{ background: "#fff", border: `1px solid ${RULE}`, boxShadow: "0 6px 16px -12px rgba(42,26,18,.35)" }}
+        >
+          {/* the polaroid, exactly as framed */}
+          <div className="shrink-0" style={{ width: 104 }}>
+            <button
+              type="button"
+              onClick={() => setAdjusting(i)}
+              className="relative block w-full overflow-hidden"
+              style={{ aspectRatio: "4 / 5", borderRadius: 8, background: "#f2ebe3" }}
+              aria-label={`Adjust photo ${i + 1}`}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                aria-label="Remove photo"
-                onClick={() => onChange(photos.filter((_, j) => j !== i))}
-                className="absolute top-1 right-1 grid place-items-center rounded-full"
-                style={{ width: 26, height: 26, background: "rgba(0,0,0,.6)", color: "#fff" }}
+              <img src={p.url} alt="" draggable={false} style={cropStyle(photoCrop(p))} />
+              <span
+                className="absolute inset-x-0 bottom-0 py-1 text-[10px] font-bold text-white flex items-center justify-center gap-1"
+                style={{ background: "linear-gradient(transparent, rgba(0,0,0,.72))" }}
               >
-                <X size={13} />
-              </button>
-              <div className="absolute bottom-1 left-1 flex gap-1">
-                <button
-                  type="button" aria-label="Move earlier" onClick={() => move(i, -1)} disabled={i === 0}
-                  className="grid place-items-center rounded-full disabled:opacity-30"
-                  style={{ width: 24, height: 24, background: "rgba(255,255,255,.9)", color: INK }}
-                >
-                  <ChevronUp size={13} className="-rotate-90" />
-                </button>
-                <button
-                  type="button" aria-label="Move later" onClick={() => move(i, 1)} disabled={i === photos.length - 1}
-                  className="grid place-items-center rounded-full disabled:opacity-30"
-                  style={{ width: 24, height: 24, background: "rgba(255,255,255,.9)", color: INK }}
-                >
-                  <ChevronDown size={13} className="-rotate-90" />
-                </button>
-              </div>
+                <Crop size={11} /> adjust
+              </span>
+            </button>
+            <div className="mt-1.5 grid grid-cols-3 gap-1">
+              <MiniBtn label="Move earlier" onClick={() => move(i, -1)} disabled={i === 0}>
+                <ChevronUp size={13} />
+              </MiniBtn>
+              <MiniBtn label="Move later" onClick={() => move(i, 1)} disabled={i === photos.length - 1}>
+                <ChevronDown size={13} />
+              </MiniBtn>
+              <MiniBtn label="Remove photo" onClick={() => onChange(photos.filter((_, j) => j !== i))} danger>
+                <Trash2 size={12} />
+              </MiniBtn>
             </div>
-            <input
-              value={p.caption ?? ""}
-              onChange={(e) => set(i, { caption: e.target.value.slice(0, MAX_PHOTO_CAPTION_LEN) })}
-              placeholder="caption"
-              className="w-full px-2 py-1.5 bg-transparent focus:outline-none"
-              style={{ fontSize: 16, color: INK }}
-            />
+            <button
+              type="button"
+              onClick={() => askReplace(i)}
+              className="mt-1 w-full text-[10px] font-bold rounded-lg py-1.5"
+              style={{ color: ACCENT, background: "rgba(180,68,31,.08)" }}
+            >
+              change photo
+            </button>
           </div>
-        ))}
-        {photos.length < MAX_PHOTOS && (
-          <button
-            type="button"
-            onClick={() => input.current?.click()}
-            disabled={busy}
-            className="rounded-lg grid place-items-center text-center disabled:opacity-60"
-            style={{ aspectRatio: "4 / 5.6", border: `1.5px dashed ${ACCENT}66`, color: ACCENT }}
-          >
-            <span className="flex flex-col items-center gap-1 text-[11px] font-bold">
-              {busy ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
-              {busy ? "adding…" : "add photos"}
-            </span>
-          </button>
-        )}
-      </div>
+
+          {/* caption + its letter */}
+          <div className="flex-1 min-w-0 space-y-2">
+            <div>
+              <Label>Photo {i + 1} · caption</Label>
+              <input
+                value={p.caption ?? ""}
+                onChange={(e) => set(i, { caption: e.target.value.slice(0, MAX_PHOTO_CAPTION_LEN) })}
+                placeholder="the first date"
+                className="w-full px-3 py-2 rounded-lg bg-muted/40 border border-border/50 focus:outline-none focus:border-orange-400/60"
+                style={{ fontSize: 16 }}
+              />
+            </div>
+            <div>
+              <Label>
+                <span className="inline-flex items-center gap-1">💌 A letter for this photo</span>
+              </Label>
+              <GrowText
+                value={p.note ?? ""}
+                onChange={(v) => set(i, { note: v.slice(0, MAX_PHOTO_NOTE_LEN) })}
+                placeholder="What do you remember about this moment?"
+                minRows={3}
+                compact
+              />
+              <p className="text-[10px] text-right mt-0.5 tabular-nums" style={{ color: MUTED }}>
+                {(p.note ?? "").length}/{MAX_PHOTO_NOTE_LEN}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {photos.length < MAX_PHOTOS && (
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          disabled={busy}
+          className="w-full rounded-2xl flex items-center justify-center gap-2 font-bold text-[13px] disabled:opacity-60"
+          style={{ minHeight: 56, border: `1.5px dashed ${ACCENT}77`, color: ACCENT, background: "rgba(180,68,31,.04)" }}
+        >
+          {busy ? <Loader2 size={17} className="animate-spin" /> : <Plus size={17} />}
+          {busy ? "adding…" : allDemo ? "add your photos" : `add photos · ${photos.length}/${MAX_PHOTOS}`}
+        </button>
+      )}
+
       <input
         ref={input}
         type="file"
@@ -672,18 +739,63 @@ function PhotosEditor({
           if (files.length) void addFiles(files);
         }}
       />
+      <input
+        ref={replaceInput}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) void replaceFile(f);
+        }}
+      />
+
+      <PhotoAdjuster
+        open={Boolean(current)}
+        src={current?.url ?? ""}
+        crop={current ? photoCrop(current) : CROP_DEFAULT}
+        title={`Frame photo ${(adjusting ?? 0) + 1}`}
+        onChange={(c) => adjusting !== null && set(adjusting, { cropX: c.x, cropY: c.y, scale: c.scale })}
+        onClose={() => setAdjusting(null)}
+        onReplace={adjusting !== null ? () => askReplace(adjusting) : undefined}
+      />
     </div>
+  );
+}
+
+function MiniBtn({
+  label, onClick, disabled, danger, children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="grid place-items-center rounded-lg disabled:opacity-25"
+      style={{ height: 28, background: "#faf5ef", color: danger ? DANGER : INK, border: `1px solid ${RULE}` }}
+    >
+      {children}
+    </button>
   );
 }
 
 /** A textarea that grows with the letter instead of scrolling inside itself. */
 function GrowText({
-  value, onChange, placeholder, minRows = 6,
+  value, onChange, placeholder, minRows = 6, compact = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   minRows?: number;
+  compact?: boolean;
 }) {
   const ref = useCallback(
     (el: HTMLTextAreaElement | null) => {
@@ -701,8 +813,8 @@ function GrowText({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={minRows}
-      className={INPUT_CLS}
-      style={{ ...INPUT_STYLE, resize: "none", lineHeight: 1.55, overflow: "hidden" }}
+      className={compact ? "w-full px-3 py-2 rounded-lg bg-muted/40 border border-border/50 focus:outline-none focus:border-orange-400/60" : INPUT_CLS}
+      style={{ ...INPUT_STYLE, resize: "none", lineHeight: 1.5, overflow: "hidden" }}
     />
   );
 }
@@ -874,8 +986,8 @@ export default function EditSheet({
 
               <Section
                 icon={<Images size={14} />}
-                title="Photo reel"
-                blurb="Little cards that drift across the radio, and fill the screen while you talk."
+                title="Photos & little letters"
+                blurb="Frame each photo, and write a note that opens when they tap it on the reel."
                 right={<span className="text-[10px] tabular-nums" style={{ color: MUTED }}>{mf.photos.length}/{MAX_PHOTOS}</span>}
               >
                 <PhotosEditor photos={mf.photos} onChange={(v) => updateMf("photos", v)} notify={notify} />

@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 // ─── Dedication — the frozen contract ────────────────────────────────────────
 //
 // LEAD-OWNED AND FROZEN. Import from here; do not extend it.
@@ -73,7 +75,47 @@ export type SegmentKind = Segment["kind"];
 export interface Photo {
   url: string;
   caption?: string;
+  /** A little letter for this one photo, shown when it is opened. */
+  note?: string;
+  /** Framing: focal point 0–100 (object-position) and zoom 100–300 (%). */
+  cropX?: number;
+  cropY?: number;
+  scale?: number;
 }
+
+export interface Crop {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export const CROP_DEFAULT: Crop = { x: 50, y: 50, scale: 100 };
+export const CROP_MAX_SCALE = 300;
+
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+export const clampCrop = (c: Crop): Crop => ({
+  x: clamp(Number.isFinite(c.x) ? c.x : 50, 0, 100),
+  y: clamp(Number.isFinite(c.y) ? c.y : 50, 0, 100),
+  scale: clamp(Number.isFinite(c.scale) ? c.scale : 100, 100, CROP_MAX_SCALE),
+});
+
+export const photoCrop = (p: Photo): Crop =>
+  clampCrop({ x: p.cropX ?? 50, y: p.cropY ?? 50, scale: p.scale ?? 100 });
+
+/**
+ * One framing rule for every place a photo appears — reel card, viewer, the
+ * screen slideshow, the letter stamp — so what the sender sets in the editor
+ * is exactly what the recipient sees, whatever the frame's shape.
+ */
+export const cropStyle = (c: Crop): CSSProperties => ({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: `${c.x}% ${c.y}%`,
+  transform: c.scale > 100 ? `scale(${c.scale / 100})` : undefined,
+  transformOrigin: `${c.x}% ${c.y}%`,
+});
 
 export interface RadioShow {
   station: Station;

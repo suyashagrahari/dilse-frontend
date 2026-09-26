@@ -36,7 +36,7 @@ import {
   type EditMode,
 } from "../components/showData";
 import { resolvePendingClips } from "../components/mediaUploads";
-import { parseYouTubeId, type Segment } from "../components/types";
+import { parseYouTubeId, type Photo, type Segment } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -125,7 +125,15 @@ function cleanShow(d: DedicationData): DedicationData {
     photos: (d.photos ?? [])
       .filter((p) => p.url)
       .slice(0, MAX_PHOTOS)
-      .map((p) => (p.caption?.trim() ? { url: p.url, caption: p.caption.trim() } : { url: p.url })),
+      .map((p) => {
+        const out: Photo = { url: p.url };
+        if (p.caption?.trim()) out.caption = p.caption.trim();
+        if (p.note?.trim()) out.note = p.note.trim();
+        if (p.cropX !== undefined) out.cropX = Math.round(p.cropX * 10) / 10;
+        if (p.cropY !== undefined) out.cropY = Math.round(p.cropY * 10) / 10;
+        if (p.scale !== undefined && p.scale > 100) out.scale = Math.round(p.scale);
+        return out;
+      }),
     letter: (d.letter ?? "").trim().slice(0, MAX_LETTER_LEN),
   };
 }

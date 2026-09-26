@@ -10,7 +10,7 @@
 import type React from "react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BODY_FACE, DISPLAY_FACE, PALETTE, type Photo } from "./types";
+import { BODY_FACE, DISPLAY_FACE, PALETTE, cropStyle, photoCrop, type Photo } from "./types";
 
 const PAPER = "#fbf5e8";
 const INK = "#3a2418";
@@ -34,8 +34,10 @@ export default function LoveLetter({
   tuned: boolean;
   reduced: boolean;
 }) {
-  const [forced, setForced] = useState(false);
-  const open = tuned || forced;
+  const [nudge, setNudge] = useState(0);
+  // Sealed until the station locks. A tap before that only wiggles the seal —
+  // the letter is the reward for tuning in, not a shortcut around it.
+  const open = tuned;
   const text = letter.trim();
   if (!text) return null;
 
@@ -53,7 +55,7 @@ export default function LoveLetter({
           <motion.button
             key="sealed"
             type="button"
-            onClick={() => setForced(true)}
+            onClick={() => setNudge((n) => n + 1)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, rotateX: 70, y: -10 }}
@@ -67,7 +69,8 @@ export default function LoveLetter({
               background: `linear-gradient(160deg, #f3e7cf, #e6d4b1)`,
               boxShadow: "0 24px 50px -24px rgba(0,0,0,.9)",
             }}
-            aria-label="Open the letter"
+            aria-label="Sealed letter — tune in to open it"
+            aria-disabled="true"
           >
             <AirmailEdge />
             {/* envelope flap */}
@@ -108,7 +111,7 @@ export default function LoveLetter({
               className="absolute left-0 right-0 bottom-1.5 text-center text-[9px] uppercase"
               style={{ fontFamily: BODY_FACE, letterSpacing: ".24em", color: "rgba(58,36,24,.55)" }}
             >
-              tune in — or tap — to open
+              {nudge > 0 ? "🔒 find the station first" : "sealed · opens when you tune in"}
             </span>
           </motion.button>
         ) : (
@@ -120,6 +123,7 @@ export default function LoveLetter({
             className="relative overflow-hidden"
             style={{ ...PAPER_STYLE, perspective: 900 }}
           >
+            <AirmailEdge />
             <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
           </motion.article>
         )}
@@ -144,7 +148,7 @@ export function LetterBody({
 }) {
   return (
     <>
-    <AirmailEdge />
+    
 
     {/* stamp + postmark */}
     <div className="absolute top-5 right-4 flex items-start gap-1" aria-hidden>
@@ -185,7 +189,7 @@ export function LetterBody({
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.url} alt="" className="w-full h-full object-cover" />
+          <img src={photo.url} alt="" style={cropStyle(photoCrop(photo))} />
         </span>
       )}
     </div>

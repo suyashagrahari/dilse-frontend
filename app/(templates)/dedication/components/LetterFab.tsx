@@ -46,6 +46,9 @@ export default function LetterFab({
 }) {
   const [phase, setPhase] = useState<Phase>("closed");
   const [peek, setPeek] = useState(false);
+  /** Shown when they tap the envelope before the station is tuned. */
+  const [lockedTip, setLockedTip] = useState(false);
+  const [shake, setShake] = useState(0);
   const [read, setRead] = useState(false);
   const timers = useRef<number[]>([]);
 
@@ -77,6 +80,13 @@ export default function LetterFab({
   if (!text) return null;
 
   const openLetter = () => {
+    if (!tuned) {
+      // Sealed until the station locks — the letter is the reward for tuning in.
+      setShake((n) => n + 1);
+      setLockedTip(true);
+      timers.current.push(window.setTimeout(() => setLockedTip(false), 2400));
+      return;
+    }
     setPeek(false);
     setRead(true);
     if (reduced) {
@@ -108,7 +118,7 @@ export default function LetterFab({
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
           >
             <AnimatePresence>
-              {peek && (
+              {(peek || lockedTip) && (
                 <motion.button
                   type="button"
                   onClick={openLetter}
@@ -127,10 +137,10 @@ export default function LetterFab({
                     className="block text-[9px] font-bold uppercase"
                     style={{ fontFamily: BODY_FACE, letterSpacing: ".2em", color: PALETTE.body }}
                   >
-                    you&apos;ve got mail
+                    {lockedTip ? "sealed 🔒" : "you've got mail"}
                   </span>
                   <span className="block leading-tight" style={{ fontFamily: SCRIPT, fontSize: 18, color: "#3a2418" }}>
-                    {sender ? `${sender} left you a letter` : "a letter for you"}
+                    {lockedTip ? "tune in to the station to open it" : sender ? `${sender} left you a letter` : "a letter for you"}
                   </span>
                 </motion.button>
               )}
@@ -139,10 +149,26 @@ export default function LetterFab({
             <motion.button
               type="button"
               onClick={openLetter}
-              aria-label={tuned ? "Open your letter" : "Open the sealed letter"}
+              key={`env-${shake}`}
+              aria-label={tuned ? "Open your letter" : "Sealed letter — tune in to open it"}
+              aria-disabled={!tuned}
               whileTap={{ scale: 0.92 }}
-              animate={reduced || read ? undefined : { rotate: [0, -6, 6, -4, 0] }}
-              transition={reduced || read ? undefined : { duration: 0.9, repeat: Infinity, repeatDelay: 3.2 }}
+              animate={
+                reduced
+                  ? undefined
+                  : shake && !tuned
+                    ? { x: [0, -9, 9, -6, 6, 0] }
+                    : tuned && !read
+                      ? { rotate: [0, -6, 6, -4, 0] }
+                      : undefined
+              }
+              transition={
+                reduced
+                  ? undefined
+                  : shake && !tuned
+                    ? { duration: 0.45 }
+                    : { duration: 0.9, repeat: Infinity, repeatDelay: 3.2 }
+              }
               className="relative shrink-0"
               style={{ width: 70, height: 50 }}
             >
@@ -153,6 +179,8 @@ export default function LetterFab({
                   borderRadius: 7,
                   background: "linear-gradient(160deg,#f6ecd6,#e3cfa8)",
                   boxShadow: "0 12px 26px -8px rgba(0,0,0,.85), 0 0 0 1px rgba(0,0,0,.08)",
+                  filter: tuned ? "none" : "saturate(.55) brightness(.8)",
+                  transition: "filter 600ms ease",
                 }}
               >
                 <span style={{ position: "absolute", inset: 0, transform: "scale(.72)", transformOrigin: "center" }}>
@@ -181,10 +209,10 @@ export default function LetterFab({
                   boxShadow: "0 2px 5px rgba(0,0,0,.4)",
                 }}
               >
-                ♥
+                {tuned ? "♥" : "🔒"}
               </span>
               {/* unread badge */}
-              {!read && (
+              {tuned && !read && (
                 <span
                   className="absolute grid place-items-center rounded-full text-[10px] font-bold text-white"
                   style={{
@@ -210,7 +238,7 @@ export default function LetterFab({
         {open && (
           <motion.div
             key="letter-modal"
-            className="fixed inset-0 z-[160] flex items-end sm:items-center justify-center"
+            className="fixed inset-0 z-[160]"
             style={{ background: "rgba(10,4,2,.84)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -304,18 +332,28 @@ export default function LetterFab({
                 exit={{ opacity: 0, y: 60 }}
                 transition={{ type: "spring", stiffness: 190, damping: 24 }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full overflow-y-auto"
-                style={{
-                  ...PAPER_STYLE,
-                  maxWidth: 480,
-                  maxHeight: "88dvh",
-                  borderRadius: "22px 22px 0 0",
-                  paddingBottom: "calc(30px + env(safe-area-inset-bottom, 0px))",
-                  overscrollBehavior: "contain",
-                }}
+                className="absolute inset-0"
+                style={{ background: "#fbf5e8" }}
               >
+                {/* The paper scrolls; its ruled lines scroll with the words. */}
+                <div
+                  className="absolute inset-0 overflow-y-auto"
+                  style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+                >
+                  <div
+                    style={{
+                      minHeight: "100%",
+                      background: PAPER_STYLE.background,
+                      padding: "calc(78px + env(safe-area-inset-top, 0px)) 26px calc(44px + env(safe-area-inset-bottom, 0px))",
+                    }}
+                  >
+                    <div className="relative mx-auto" style={{ maxWidth: 560 }}>
+                      <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
+                    </div>
+                  </div>
+                </div>
+                {/* the par avion border stays put around the screen */}
                 <AirmailEdge />
-                <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
               </motion.article>
             )}
 
@@ -330,9 +368,10 @@ export default function LetterFab({
                 width: 42,
                 height: 42,
                 zIndex: 5,
-                background: "rgba(255,255,255,.14)",
+                background: phase === "letter" ? PALETTE.body : "rgba(255,255,255,.14)",
                 color: "#fff",
                 border: "1px solid rgba(255,255,255,.25)",
+                boxShadow: phase === "letter" ? "0 6px 16px -6px rgba(0,0,0,.5)" : "none",
               }}
             >
               <X size={19} />

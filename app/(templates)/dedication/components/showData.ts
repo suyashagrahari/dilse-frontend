@@ -88,16 +88,37 @@ export const MAX_CLIPS = 3;
 export const MAX_CLIP_BYTES = 10 * 1024 * 1024;
 export const MAX_PHOTOS = 12;
 export const MAX_PHOTO_CAPTION_LEN = 60;
+export const MAX_PHOTO_NOTE_LEN = 400;
 export const MAX_LETTER_LEN = 1500;
 
 const CDN = "https://cdn.subhsandesh.in/gifts-media/assets";
 /** The Darling couple photographs — the demo reel. */
 export const DEMO_PHOTOS: Photo[] = [
-  { url: `${CDN}/couple1.webp`, caption: "the first date" },
-  { url: `${CDN}/couple2.webp`, caption: "that sunset" },
-  { url: `${CDN}/hero-bg.webp`, caption: "us, always" },
-  { url: `${CDN}/couple3.webp`, caption: "your laugh" },
-  { url: `${CDN}/couple4.webp`, caption: "home" },
+  {
+    url: `${CDN}/couple1.webp`,
+    caption: "the first date",
+    note: "You were twenty minutes late and I had already decided I didn't mind. I still don't.",
+  },
+  {
+    url: `${CDN}/couple2.webp`,
+    caption: "that sunset",
+    note: "We didn't say anything for the whole sunset. Best conversation we ever had.",
+  },
+  {
+    url: `${CDN}/hero-bg.webp`,
+    caption: "us, always",
+    note: "If I could keep one moment forever, it would look exactly like this.",
+  },
+  {
+    url: `${CDN}/couple3.webp`,
+    caption: "your laugh",
+    note: "This is the laugh I'd cross any city for. Keep it loud.",
+  },
+  {
+    url: `${CDN}/couple4.webp`,
+    caption: "home",
+    note: "Not a place. Just wherever you are standing.",
+  },
 ];
 
 export const isDemoPhoto = (url: string): boolean => url.startsWith(`${CDN}/`);
@@ -136,9 +157,9 @@ export const DEMO_DATA: DedicationData = {
     },
     {
       kind: "song",
-      youtubeId: "BddP6PYo2gs",
-      title: "Kesariya",
-      artist: "Arijit Singh",
+      youtubeId: "2Vv-BfVoq4g",
+      title: "Perfect",
+      artist: "Ed Sheeran",
       dedication: "This one goes out to Meera in Bengaluru, from Arjun.",
     },
     {
@@ -150,9 +171,9 @@ export const DEMO_DATA: DedicationData = {
     },
     {
       kind: "song",
-      youtubeId: "2Vv-BfVoq4g",
-      title: "Perfect",
-      artist: "Ed Sheeran",
+      youtubeId: "450p7goxZqg",
+      title: "All of Me",
+      artist: "John Legend",
       dedication: "Still going out to Meera. Still from Arjun.",
     },
   ],
@@ -309,8 +330,18 @@ const coerceEditorSegment = (raw: Record<string, unknown>): Segment | null => {
 const coercePhoto = (raw: Record<string, unknown>): Photo | null => {
   const url = strOr(raw.url, "").trim();
   if (!url) return null;
+  const photo: Photo = { url };
   const caption = strOr(raw.caption, "").slice(0, MAX_PHOTO_CAPTION_LEN);
-  return caption ? { url, caption } : { url };
+  if (caption) photo.caption = caption;
+  const note = strOr(raw.note, "").slice(0, MAX_PHOTO_NOTE_LEN);
+  if (note) photo.note = note;
+  const x = num(raw.cropX, -1);
+  const y = num(raw.cropY, -1);
+  const sc = num(raw.scale, -1);
+  if (x >= 0) photo.cropX = Math.min(100, x);
+  if (y >= 0) photo.cropY = Math.min(100, y);
+  if (sc >= 100) photo.scale = Math.min(300, sc);
+  return photo;
 };
 
 export function dbToDedicationData(raw: unknown): DedicationData {

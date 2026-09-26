@@ -57,42 +57,51 @@ import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chatur
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
 //
-// The six below lead deliberately — the strongest, most-wanted pages, and a
-// spread rather than four birthday cards in a row. Love You Forever and My
-// Darling were sitting at positions 42 and 43, several scrolls down, which is
-// effectively unpublished.
-//
-// Everything after them keeps the order it already had.
+// Newest first. The two couple templates that were just rebuilt (the radio and
+// the 60-second hold) lead, then the rest of the August 2026 batch, newest
+// first, then the long-running favourites. Dated festival templates sit at the
+// very end once their festival has passed — a rakhi card in late September is
+// a page nobody is shopping for. Move one back to the top only in the fortnight
+// before its date.
 const allConfigs = [
-  // ── SEASONAL, leading deliberately ────────────────────────────────────────
-  // Ganesh Chaturthi is 14 Sep 2026 and is the nearest dated festival, so it
-  // takes the first slot ahead of the rakhi pair — whose date (28 Aug) is behind
-  // it. Same rule as the note below: a dated festival template is worth the top
-  // slot only while its date is still ahead, and this one drops back down among
-  // the others after the visarjan on the 24th.
-  ganeshChaturthi,
+  // ── new & just rebuilt ────────────────────────────────────────────────────
+  dedication,
+  holdMyHand,
 
-  // Raksha Bandhan is 28 Aug 2026. A dated festival template is worth the top
-  // slot only while the date is ahead of it — after the 28th this is a page
-  // nobody is shopping for, and it should drop back down among the others.
-  // Move it below `apologyDashboard` once the festival has passed.
-  rakshaBandhan,
-  // Its pair, adjacent on purpose. The two halves of one festival, and someone
-  // arriving for "rakhi" wants to be shown both in one glance rather than
-  // discovering the second one four scrolls later and wondering which they were
-  // meant to use. Sister-side second because the brother-side page has the
-  // search history and is the one people arrive looking for; this one moves with
-  // it when the pair drops down after the 28th.
-  rakshaBandhanSister,
+  // ── the August 2026 batch, newest first ───────────────────────────────────
+  profilePro,
+  nutrition,
+  challan,
+  appListing,
+  watch,
+  recharge,
+  product,
+  call,
+  us,
+  streak,
+  searched,
+  capsule,
+  vendingMachine,
+  trainTicket,
+  rewind,
+  photoPuzzle,
+  loveflix,
+  legalNotice,
+  kundliMilan,
+  flags,
+  dateInvitation,
+  courtMarriage,
+  catchGame,
+  proposal,
+  courtOfLove,
 
+  // ── the long-running favourites ───────────────────────────────────────────
   birthdayGf,
   loveGf,
   darling,
   missyouGf,
   bouquetGf,
   apologyDashboard,
-
-  // ── everything below is unchanged, in its existing order ──────────────────
   birthdayFriend,
   birthdayParents,
   birthdayBestfriend,
@@ -100,33 +109,6 @@ const allConfigs = [
   valentineBestfriend,
   sorryGf,
   sorryFriend,
-  courtOfLove,
-  proposal,
-  courtMarriage,
-  holdMyHand,
-  trainTicket,
-  legalNotice,
-  kundliMilan,
-  vendingMachine,
-  catchGame,
-  flags,
-  dateInvitation,
-  photoPuzzle,
-  loveflix,
-  rewind,
-  streak,
-  dedication,
-  searched,
-  capsule,
-  us,
-  product,
-  watch,
-  call,
-  recharge,
-  challan,
-  nutrition,
-  appListing,
-  profilePro,
   missyouBestfriend,
   anniversaryGf,
   anniversaryParents,
@@ -136,6 +118,11 @@ const allConfigs = [
   holi,
   shaadiCard,
   christianWedding,
+
+  // ── dated festivals, past their date ──────────────────────────────────────
+  ganeshChaturthi,
+  rakshaBandhan,
+  rakshaBandhanSister,
 ];
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

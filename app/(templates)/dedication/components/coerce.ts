@@ -112,8 +112,18 @@ function coercePhotos(raw: unknown): Photo[] {
     const r = obj(item);
     const url = strOr(r.url, "").trim();
     if (!isHttps(url)) continue;
+    const photo: Photo = { url };
     const caption = strOr(r.caption, "").trim().slice(0, 80);
-    out.push(caption ? { url, caption } : { url });
+    if (caption) photo.caption = caption;
+    const note = strOr(r.note, "").trim().slice(0, 600);
+    if (note) photo.note = note;
+    const x = num(r.cropX, -1);
+    const y = num(r.cropY, -1);
+    const sc = num(r.scale, -1);
+    if (x >= 0) photo.cropX = Math.min(100, x);
+    if (y >= 0) photo.cropY = Math.min(100, y);
+    if (sc >= 100) photo.scale = Math.min(300, sc);
+    out.push(photo);
     if (out.length >= MAX_PHOTOS) break;
   }
   return out;
