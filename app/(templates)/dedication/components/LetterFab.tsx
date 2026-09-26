@@ -337,8 +337,8 @@ export default function LetterFab({
               >
                 {/* The paper scrolls; its ruled lines scroll with the words. */}
                 <div
-                  className="absolute inset-0 overflow-y-auto"
-                  style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+                  className="ded-letter-scroll absolute inset-0 overflow-y-auto"
+                  style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
                 >
                   <div
                     style={{

@@ -15,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Sixty seconds. One finger. Their face comes into focus the longer you hold.",
   bgGradient: "from-violet-50 via-fuchsia-50 to-white",
-  coverImage: templateMedia("hold-my-hand", "cover-v2.jpg"),
+  coverImage: templateMedia("hold-my-hand", "cover-v2.webp"),
   tabs: [
     { id: "hold", icon: Hand, label: "Hold" },
     { id: "timer", icon: Timer, label: "Timer" },

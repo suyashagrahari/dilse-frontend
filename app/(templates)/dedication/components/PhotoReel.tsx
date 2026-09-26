@@ -270,7 +270,7 @@ export default function PhotoReel({
               {/* its letter */}
               <div className="ded-viewer-note">
                 <div
-                  className="relative"
+                  className="ded-viewer-paper ded-letter-scroll relative"
                   style={{
                     background:
                       "repeating-linear-gradient(180deg, transparent 0 29px, rgba(140,59,42,.10) 29px 30px), #fbf5e8",
@@ -373,6 +373,7 @@ export const REEL_KEYFRAMES = `
   .ded-viewer { flex-direction: row; align-items: center; max-width: 900px; max-height: 88dvh; padding: 24px; gap: 40px; }
   .ded-viewer-photo { flex: 0 0 auto; }
   .ded-viewer-note { flex: 1; margin: 0; }
+  .ded-viewer-paper { max-height: 62dvh; overflow-y: auto; overscroll-behavior: contain; }
 }
 .ded-reel-track { width: max-content; }
 .ded-reel:hover .ded-reel-track, .ded-reel:active .ded-reel-track { animation-play-state: paused; }

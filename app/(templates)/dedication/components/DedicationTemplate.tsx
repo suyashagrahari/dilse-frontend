@@ -47,7 +47,7 @@ import VuMeters from "./VuMeters";
 import { Controls, Marquee, SegmentDots, VOLUME_CSS } from "./BroadcastChrome";
 import Screen from "./Screen";
 import PhotoReel, { REEL_KEYFRAMES } from "./PhotoReel";
-import LoveLetter from "./LoveLetter";
+import LoveLetter, { LETTER_SCROLL_CSS } from "./LoveLetter";
 import LetterFab from "./LetterFab";
 import { ExportableSlip } from "./RequestSlip";
 import SignOffActions from "./SignOffActions";
@@ -135,7 +135,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         padding: "14px 12px 36px",
       }}
     >
-      <style>{KEYFRAMES + VOLUME_CSS + REEL_KEYFRAMES + LAYOUT_CSS}</style>
+      <style>{KEYFRAMES + VOLUME_CSS + REEL_KEYFRAMES + LAYOUT_CSS + LETTER_SCROLL_CSS}</style>
 
       <p
         className="text-center text-[10px] font-bold uppercase mb-3 px-4"

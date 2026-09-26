@@ -121,10 +121,19 @@ export default function LoveLetter({
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
             className="relative overflow-hidden"
-            style={{ ...PAPER_STYLE, perspective: 900 }}
+            style={{ ...PAPER_STYLE, padding: 0, perspective: 900 }}
           >
+            {/* A long letter scrolls inside the paper; the border and the
+                ruled lines stay put / scroll with the words respectively. */}
+            <div
+              className="ded-letter-scroll overflow-y-auto"
+              style={{ maxHeight: "calc(100dvh - 150px)", overscrollBehavior: "contain" }}
+            >
+              <div style={{ background: PAPER_STYLE.background, padding: PAPER_STYLE.padding }}>
+                <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
+              </div>
+            </div>
             <AirmailEdge />
-            <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
           </motion.article>
         )}
       </AnimatePresence>
@@ -150,55 +159,65 @@ export function LetterBody({
     <>
     
 
-    {/* stamp + postmark */}
-    <div className="absolute top-5 right-4 flex items-start gap-1" aria-hidden>
-      <span
-        className="block rounded-full grid place-items-center text-center"
-        style={{
-          width: 58,
-          height: 58,
-          marginTop: 8,
-          marginRight: -14,
-          border: "1.5px solid rgba(140,59,42,.45)",
-          color: "rgba(140,59,42,.6)",
-          fontFamily: DISPLAY_FACE,
-          fontSize: 7,
-          lineHeight: 1.25,
-          letterSpacing: ".08em",
-          transform: "rotate(-14deg)",
-          zIndex: 1,
-        }}
+    {/* Header row: greeting left, stamp right. Nothing is absolutely
+        positioned, so the stamp can never sit on top of the words. */}
+    <div className="flex items-start justify-between gap-3">
+      <p
+        className="min-w-0 flex-1"
+        style={{ fontFamily: SCRIPT, fontSize: 30, color: PALETTE.body, lineHeight: 1.15, paddingTop: 10, wordBreak: "break-word" }}
       >
-        {stationLine}
-      </span>
-      {photo && (
+        Dear {recipient || "you"},
+      </p>
+
+      <div className="relative shrink-0" style={{ width: photo ? 96 : 60, height: 70 }} aria-hidden>
+        {photo && (
+          <span
+            className="absolute block"
+            style={{
+              right: 0,
+              top: 0,
+              width: 52,
+              height: 64,
+              padding: 3,
+              background: "#fff",
+              transform: "rotate(4deg)",
+              boxShadow: "0 3px 8px rgba(0,0,0,.25)",
+              // perforated edge
+              maskImage: "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
+              WebkitMaskImage: "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photo.url} alt="" style={cropStyle(photoCrop(photo))} />
+          </span>
+        )}
+        {/* postmark, overlapping the stamp's left edge the way a real one does */}
         <span
-          className="block"
+          className="absolute grid place-items-center text-center rounded-full"
           style={{
-            width: 50,
-            height: 60,
-            padding: 3,
-            background: "#fff",
-            transform: "rotate(4deg)",
-            boxShadow: "0 3px 8px rgba(0,0,0,.25)",
-            // perforated edge
-            maskImage:
-              "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
-            WebkitMaskImage:
-              "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
+            left: 0,
+            top: 8,
+            width: 56,
+            height: 56,
+            border: "1.5px solid rgba(140,59,42,.45)",
+            color: "rgba(140,59,42,.62)",
+            background: "rgba(251,245,232,.35)",
+            fontFamily: DISPLAY_FACE,
+            fontSize: 7,
+            lineHeight: 1.25,
+            letterSpacing: ".06em",
+            padding: 4,
+            transform: "rotate(-14deg)",
+            zIndex: 1,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.url} alt="" style={cropStyle(photoCrop(photo))} />
+          {stationLine}
         </span>
-      )}
+      </div>
     </div>
 
-    <p style={{ fontFamily: SCRIPT, fontSize: 30, color: PALETTE.body, lineHeight: 1.1, paddingRight: 96 }}>
-      Dear {recipient || "you"},
-    </p>
     <div
-      className="mt-4"
+      className="mt-5"
       style={{
         fontFamily: SCRIPT,
         fontSize: 21,
@@ -220,6 +239,14 @@ export function LetterBody({
     </>
   );
 }
+
+/** Thin, paper-coloured scrollbar for long letters. */
+export const LETTER_SCROLL_CSS = `
+.ded-letter-scroll { scrollbar-width: thin; scrollbar-color: rgba(140,59,42,.35) transparent; }
+.ded-letter-scroll::-webkit-scrollbar { width: 6px; }
+.ded-letter-scroll::-webkit-scrollbar-thumb { background: rgba(140,59,42,.35); border-radius: 3px; }
+.ded-letter-scroll::-webkit-scrollbar-track { background: transparent; }
+`;
 
 /** The ruled cream paper. */
 export const PAPER_STYLE: React.CSSProperties = {

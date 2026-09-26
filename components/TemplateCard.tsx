@@ -81,6 +81,8 @@ const TemplateCard = memo(function TemplateCard({
                   className="object-cover"
                   sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
                   loading={index < 4 ? "eager" : "lazy"}
+                  // The first row is the shop window — fetch it ahead of everything else.
+                  fetchPriority={index < 4 ? "high" : "auto"}
                 />
               </div>
               <div
