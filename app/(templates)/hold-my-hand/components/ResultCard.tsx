@@ -1,22 +1,23 @@
 "use client";
 
 /**
- * The 9:16 result card — the screenshot. Rendered at a fixed pixel size and
- * scaled to fit, so the PNG and the phone show the identical composition.
+ * The 9:16 result card — made to be posted on a story.
  *
- * The node handed to `html-to-image` contains no <video>: the animated hug lives
- * OUTSIDE it (see HoldMyHand.tsx) and only the static sticker is inside, which
- * is same-origin and therefore survives the export.
+ * Their main photo, how long they held on, a playful "grip rating", and the
+ * first line of the letter. Rendered at a fixed pixel size and scaled to fit,
+ * so the PNG and the phone show the identical composition.
+ *
+ * Every image inside the captured node must be same-origin or a data URL, or
+ * html-to-image taints the canvas and the export throws (the CDN sends no CORS
+ * header). Remote photos therefore go through next/image, which re-serves them
+ * from /_next/image on our own origin; uploaded-but-unpublished photos are
+ * already data URLs.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Download, Loader2 } from "lucide-react";
-import { HMH } from "./types";
-import { templateMediaBase } from "@/lib/templateMedia";
-
-/** Animation set for this template — served from S3, never bundled. */
-const ASSET = templateMediaBase("hold-my-hand");
+import { Download, Loader2, Share2 } from "lucide-react";
+import { HMH, LOVE } from "./types";
 
 /** 9:16. Fixed — the card is scaled, never reflowed. */
 export const CARD_W = 330;
@@ -29,80 +30,121 @@ export interface ResultStats {
   skipped: boolean;
 }
 
-/**
- * TODO(percentile): hardcoded stub. Needs a real percentile from the API —
- * something like `GET /hold-my-hand-pages/share/:shareId/percentile` returning
- * the rank of `heldMs`/`releases` against all completed attempts on this page.
- * Percentile framing (not a raw score) is deliberate: it is the most-shared
- * output format there is, and it must not be invented per-render.
- */
-const STUB_PERCENTILE = 12;
+/** A resting heart, roughly. Only used to make the number feel alive. */
+const BPM = 72;
+
+/** The title on the card — funny, never mean. */
+function gripRating(s: ResultStats): { emoji: string; title: string; sub: string } {
+  if (s.skipped) return { emoji: "🫶", title: "took the shortcut", sub: "still counts. it always counts." };
+  if (s.survivedBetrayal) return { emoji: "😈", title: "saw through the trick", sub: "didn't fall for 'you can let go'" };
+  if (s.releases === 0) return { emoji: "💎", title: "unbreakable grip", sub: "didn't let go. not even once." };
+  if (s.releases <= 2) return { emoji: "🔥", title: "steady heart", sub: "wobbled, came right back" };
+  if (s.releases <= 5) return { emoji: "🧸", title: "wobbly but worth it", sub: "kept coming back anyway" };
+  return { emoji: "🌀", title: "chaotic but devoted", sub: "let go a lot. never gave up." };
+}
+
+/** First sentence-ish of the letter, trimmed to fit two lines on the card. */
+function excerpt(letter: string): string {
+  const first = letter.split("\n").map((l) => l.trim()).find((l) => l.length > 30) ?? letter.trim();
+  return first.length > 72 ? `${first.slice(0, 69).trimEnd()}…` : first;
+}
 
 export default function ResultCard({
   stats,
   recipientName,
   senderName,
-  reduced,
+  photoUrl,
+  letter,
+  durationMs,
 }: {
   stats: ResultStats;
   recipientName: string;
   senderName: string;
-  reduced: boolean;
+  photoUrl: string;
+  letter: string;
+  durationMs: number;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const [savedNote, setSavedNote] = useState("");
+  const [busy, setBusy] = useState<"save" | "share" | null>(null);
+  const [note, setNote] = useState("");
+  const [canShareFiles, setCanShareFiles] = useState(false);
 
   // Scale, never reflow.
   useEffect(() => {
-    const fit = () => setScale(Math.min(1, (Math.min(window.innerWidth, 520) - 40) / CARD_W));
+    const fit = () => setScale(Math.min(1.12, (Math.min(window.innerWidth, 520) - 40) / CARD_W));
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
 
-  const seconds = Math.round(stats.heldMs / 1000);
-  const releaseWord = stats.releases === 1 ? "time" : "times";
+  useEffect(() => {
+    try {
+      const probe = new File([""], "probe.png", { type: "image/png" });
+      setCanShareFiles(typeof navigator.canShare === "function" && navigator.canShare({ files: [probe] }));
+    } catch { /* no Web Share — Save only */ }
+  }, []);
+
+  // A skip still shows the full goal: they got the letter either way.
+  const seconds = Math.round((stats.skipped ? durationMs : stats.heldMs) / 1000);
+  const heartbeats = Math.round((seconds * BPM) / 60);
+  const rating = gripRating(stats);
+  const quote = excerpt(letter);
+  const fileName = `held-on-${seconds}s.png`;
+  const isData = photoUrl.startsWith("data:");
+
+  const render = useCallback(async (): Promise<string> => {
+    const node = cardRef.current;
+    if (!node) throw new Error("no card");
+    // Without this the webfonts fall back mid-capture and the PNG looks
+    // nothing like the screen.
+    await document.fonts.ready;
+    const { toPng } = await import("html-to-image");
+    return toPng(node, {
+      pixelRatio: 3,
+      cacheBust: true,
+      backgroundColor: "#22091F",
+      width: CARD_W,
+      height: CARD_H,
+      // The captured node also carries the fit-to-viewport scale(); capture at
+      // true layout size instead — the on-screen scale is presentation only.
+      style: { transform: "none", transformOrigin: "top left" },
+    });
+  }, []);
+
+  const flash = (msg: string) => { setNote(msg); setTimeout(() => setNote(""), 4000); };
 
   const save = useCallback(async () => {
-    const node = cardRef.current;
-    if (!node || saving) return;
-    setSaving(true);
-    setSavedNote("");
+    if (busy) return;
+    setBusy("save");
     try {
-      // Without this the webfonts fall back mid-capture and the PNG looks
-      // nothing like the screen.
-      await document.fonts.ready;
-      const { toPng } = await import("html-to-image");
-      const url = await toPng(node, {
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: HMH.void,
-        width: CARD_W,
-        height: CARD_H,
-        style: {
-          // The captured node is ALSO the node carrying the fit-to-viewport
-          // `scale()`. html-to-image clones computed style, so without this the
-          // clone stays scaled and the card renders shrunk into the top-left of
-          // a CARD_W x CARD_H canvas with dead space around it. Capture at true
-          // layout size instead — the on-screen scale is presentation only.
-          transform: "none",
-          transformOrigin: "top left",
-        },
-      });
+      const url = await render();
       const a = document.createElement("a");
       a.href = url;
-      a.download = `held-for-${seconds}s.png`;
+      a.download = fileName;
       a.click();
-      setSavedNote("Saved to your downloads");
+      flash("Saved — now post it on your story 💌");
     } catch {
-      setSavedNote("Couldn't save — try a screenshot instead");
+      flash("Couldn't save — try a screenshot instead");
     } finally {
-      setSaving(false);
-      setTimeout(() => setSavedNote(""), 4000);
+      setBusy(null);
     }
-  }, [saving, seconds]);
+  }, [busy, render, fileName]);
+
+  const share = useCallback(async () => {
+    if (busy) return;
+    setBusy("share");
+    try {
+      const url = await render();
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], fileName, { type: "image/png" });
+      await navigator.share({ files: [file], text: `held on for ${seconds}s 🤍` });
+    } catch (err) {
+      if ((err as Error)?.name !== "AbortError") flash("Couldn't open share — use Save instead");
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, render, fileName, seconds]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -117,115 +159,132 @@ export default function ResultCard({
             position: "relative",
             overflow: "hidden",
             borderRadius: 28,
-            background:
-              "radial-gradient(120% 80% at 50% 8%, #2A1450 0%, #150B2C 46%, #07050D 100%)",
+            background: "radial-gradient(120% 70% at 50% 0%, #8A2F5C 0%, #4A1440 40%, #22091F 78%)",
             fontFamily: HMH.body,
             color: "#fff",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            padding: "34px 26px 26px",
-            boxShadow: "0 40px 80px -20px rgba(14,14,18,.6)",
+            padding: "26px 22px 20px",
+            boxShadow: "0 40px 80px -24px rgba(0,0,0,.8)",
           }}
         >
-          {/* soft brand blooms */}
-          <span aria-hidden style={{ position: "absolute", top: -70, left: -60, width: 220, height: 220, borderRadius: "50%", background: HMH.indigo, opacity: 0.3, filter: "blur(52px)" }} />
-          <span aria-hidden style={{ position: "absolute", bottom: -60, right: -50, width: 210, height: 210, borderRadius: "50%", background: HMH.pink, opacity: 0.24, filter: "blur(52px)" }} />
+          {/* blooms + tiny hearts */}
+          <span aria-hidden style={{ position: "absolute", top: -80, right: -70, width: 230, height: 230, borderRadius: "50%", background: LOVE.rose, opacity: 0.35, filter: "blur(60px)" }} />
+          <span aria-hidden style={{ position: "absolute", bottom: -90, left: -70, width: 230, height: 230, borderRadius: "50%", background: LOVE.gold, opacity: 0.18, filter: "blur(60px)" }} />
+          {[[26, 70, 12], [288, 110, 16], [40, 250, 10], [292, 300, 11], [18, 420, 14]].map(([x, y, s], i) => (
+            <span key={i} aria-hidden style={{ position: "absolute", left: x, top: y, fontSize: s, color: LOVE.blush, opacity: 0.35 }}>♥</span>
+          ))}
 
-          {/* Static sticker — the animated .webm stays outside this node.
-              This is the ONLY remote asset inside the captured node, so it must
-              go through next/image rather than a raw <img> pointed at S3. The
-              optimizer re-serves it from /_next/image, which is same-origin, so
-              html-to-image can read the pixels and inline them. A direct S3 URL
-              would taint the canvas — the bucket has no CORS rule and the
-              uploader credentials are not allowed to add one — and the whole
-              export would throw. */}
-          <Image
-            src={`${ASSET}/virtual-hug-3.webp`}
-            alt=""
-            width={104}
-            height={93}
-            style={{ position: "relative", zIndex: 1, marginBottom: 10 }}
-          />
-
-          <p style={{ position: "relative", zIndex: 1, fontFamily: HMH.script, fontSize: 26, lineHeight: 1, color: HMH.lime, margin: 0 }}>
-            you didn&apos;t let go
+          <p style={{ position: "relative", fontSize: 9.5, letterSpacing: ".28em", textTransform: "uppercase", color: "rgba(255,255,255,.6)", margin: 0, fontFamily: HMH.display, fontWeight: 600 }}>
+            hold my hand · challenge
           </p>
 
-          <div style={{ position: "relative", zIndex: 1, marginTop: 26, textAlign: "center" }}>
-            <p style={{ fontFamily: HMH.display, fontSize: 46, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.03em", margin: 0 }}>
-              {seconds}s
-            </p>
-            <p style={{ fontSize: 12, letterSpacing: ".16em", textTransform: "uppercase", color: "rgba(255,255,255,.55)", marginTop: 8 }}>
-              held for {seconds} seconds
-            </p>
+          {/* Main photo with a full ring — they made it to 100% */}
+          <div style={{ position: "relative", marginTop: 16, width: 128, height: 128 }}>
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `conic-gradient(${LOVE.gold}, ${LOVE.rose}, #FF9EC6, ${LOVE.gold})`, padding: 4 }}>
+              <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: "#3A1030", border: "3px solid #2A0B24" }}>
+                {photoUrl ? (
+                  isData ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 40%" }} />
+                  ) : (
+                    <Image src={photoUrl} alt="" width={240} height={240} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 40%" }} />
+                  )
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 48 }}>🤍</div>
+                )}
+              </div>
+            </div>
+            <span style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: LOVE.paper, color: LOVE.roseDeep, fontSize: 11, fontWeight: 800, padding: "4px 10px", borderRadius: 999, fontFamily: HMH.display, whiteSpace: "nowrap", boxShadow: "0 6px 14px -4px rgba(0,0,0,.5)" }}>
+              ♥ 100% held
+            </span>
           </div>
 
-          <div style={{ position: "relative", zIndex: 1, width: "100%", marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-            <Row label={`you let go ${stats.releases} ${releaseWord}`} tone="dim" />
-            <Row label={`top ${STUB_PERCENTILE}% of everyone who tried`} tone="hero" />
-            {stats.survivedBetrayal && <Row label="you didn't believe me. good." tone="pink" />}
-            {stats.skipped && <Row label="you took the shortcut. still counts." tone="dim" />}
+          <p style={{ position: "relative", marginTop: 16, fontFamily: HMH.script, fontSize: 25, lineHeight: 1.05, color: LOVE.blush, textAlign: "center" }}>
+            {recipientName ? `${recipientName} didn't let go` : "i didn't let go"}
+          </p>
+
+          <p style={{ position: "relative", marginTop: 8, fontFamily: HMH.display, fontSize: 52, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.04em" }}>
+            {seconds}<span style={{ fontSize: 26, fontWeight: 700, marginLeft: 2 }}>s</span>
+          </p>
+          <p style={{ position: "relative", marginTop: 4, fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "rgba(255,255,255,.6)" }}>
+            hand in hand
+          </p>
+
+          {/* stat tiles */}
+          <div style={{ position: "relative", marginTop: 14, width: "100%", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            <Tile value={`${seconds}s`} label="held on" />
+            <Tile value={String(stats.releases)} label={stats.releases === 1 ? "wobble" : "wobbles"} />
+            <Tile value={`~${heartbeats}`} label="heartbeats" />
           </div>
+
+          {/* grip rating */}
+          <div style={{ position: "relative", marginTop: 10, width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 14, background: "linear-gradient(90deg, rgba(242,194,122,.22), rgba(224,69,123,.18))", border: "1px solid rgba(242,194,122,.35)" }}>
+            <span style={{ fontSize: 22, lineHeight: 1 }}>{rating.emoji}</span>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: LOVE.gold, fontFamily: HMH.display, textTransform: "capitalize" }}>{rating.title}</p>
+              <p style={{ margin: 0, fontSize: 10.5, color: "rgba(255,255,255,.72)" }}>{rating.sub}</p>
+            </div>
+          </div>
+
+          {/* letter excerpt */}
+          {quote && (
+            <div style={{ position: "relative", marginTop: 10, width: "100%", padding: "10px 14px", borderRadius: 14, background: LOVE.paper, color: LOVE.ink }}>
+              <p style={{ margin: 0, fontFamily: HMH.script, fontSize: 16, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                “{quote}”
+              </p>
+            </div>
+          )}
 
           <div style={{ flex: 1 }} />
 
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%" }}>
-            <p style={{ fontFamily: HMH.script, fontSize: 20, color: "rgba(255,255,255,.9)", margin: 0 }}>
+          <div style={{ position: "relative", textAlign: "center", width: "100%" }}>
+            <p style={{ fontFamily: HMH.script, fontSize: 18, color: "rgba(255,255,255,.92)", margin: 0 }}>
               {recipientName ? `for ${recipientName}` : "for you"}
               {senderName ? ` — from ${senderName}` : ""}
             </p>
-            <p style={{ marginTop: 14, fontSize: 10, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.35)" }}>
-              SubhSandesh · Hold My Hand
+            <p style={{ marginTop: 6, fontSize: 9, letterSpacing: ".24em", textTransform: "uppercase", color: "rgba(255,255,255,.45)", fontFamily: HMH.display }}>
+              subhsandesh.in · can you hold on?
             </p>
           </div>
         </div>
       </div>
 
-      {/* Animated payoff lives OUTSIDE the captured node. */}
-      {!reduced && (
-        <video
-          src={`${ASSET}/virtual-hug.webm`}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-24 h-auto opacity-90"
-          aria-hidden
-        />
-      )}
-
-      <button
-        onClick={save}
-        disabled={saving}
-        className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold disabled:opacity-60"
-        style={{ background: HMH.lime, color: HMH.ink, fontFamily: HMH.display }}
-      >
-        {saving ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-        {saving ? "Saving…" : "Save this"}
-      </button>
-      {savedNote && <p className="text-xs" style={{ color: "rgba(255,255,255,.55)" }}>{savedNote}</p>}
+      <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {canShareFiles && (
+          <button
+            onClick={share}
+            disabled={!!busy}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold disabled:opacity-60"
+            style={{ background: `linear-gradient(135deg, #F58529, #DD2A7B 50%, #8134AF)`, color: "#fff", fontFamily: HMH.display, boxShadow: "0 12px 28px -10px rgba(221,42,123,.7)" }}
+          >
+            {busy === "share" ? <Loader2 size={15} className="animate-spin" /> : <Share2 size={15} />}
+            Share to story
+          </button>
+        )}
+        <button
+          onClick={save}
+          disabled={!!busy}
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold disabled:opacity-60"
+          style={canShareFiles
+            ? { background: "rgba(255,255,255,.12)", color: "#fff", border: "1px solid rgba(255,255,255,.22)", fontFamily: HMH.display }
+            : { background: LOVE.paper, color: LOVE.roseDeep, fontFamily: HMH.display }}
+        >
+          {busy === "save" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          {busy === "save" ? "Saving…" : "Save image"}
+        </button>
+      </div>
+      {note && <p className="text-xs" style={{ color: "rgba(255,255,255,.65)" }}>{note}</p>}
     </div>
   );
 }
 
-function Row({ label, tone }: { label: string; tone: "dim" | "hero" | "pink" }) {
-  const color = tone === "hero" ? HMH.lime : tone === "pink" ? HMH.pink : "rgba(255,255,255,.72)";
+function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div
-      style={{
-        width: "100%",
-        borderRadius: 14,
-        padding: "11px 14px",
-        background: "rgba(255,255,255,.06)",
-        border: "1px solid rgba(255,255,255,.10)",
-        fontSize: tone === "hero" ? 14 : 13,
-        fontWeight: tone === "hero" ? 700 : 500,
-        color,
-        textAlign: "center",
-      }}
-    >
-      {label}
+    <div style={{ borderRadius: 12, padding: "8px 4px", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.12)", textAlign: "center" }}>
+      <p style={{ margin: 0, fontFamily: HMH.display, fontSize: 17, fontWeight: 800, lineHeight: 1.1 }}>{value}</p>
+      <p style={{ margin: "2px 0 0", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,.6)" }}>{label}</p>
     </div>
   );
 }

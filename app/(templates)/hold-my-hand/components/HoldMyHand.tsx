@@ -15,11 +15,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Hand, Volume2, VolumeX, SkipForward } from "lucide-react";
 
 import ParticleBurst from "./ParticleBurst";
-import ResultCard, { type ResultStats } from "./ResultCard";
+import { type ResultStats } from "./ResultCard";
+import LetterReveal from "./LetterReveal";
 import { useHoldEngine, type FrameState, type WinSummary } from "./useHoldEngine";
 import { HMH, effectiveHoldLines, fmtSecs, fmtWhole, type HoldData } from "./types";
 import { STAGES, stageIndexFor, releaseMoment, preloadStage } from "./moments";
-import MemoryCards from "./MemoryCards";
 import { templateMediaBase } from "@/lib/templateMedia";
 
 /** Animation set for this template — served from S3, never bundled. */
@@ -68,6 +68,18 @@ const GHOST_SPOTS = [
   { top: "84%", left: "32%", rotate: -2 },
   { top: "24%", left: "44%", rotate: -4 },
   { top: "72%", left: "46%", rotate: 4 },
+];
+
+/** Deterministic floating hearts. */
+const FLOATERS = [
+  { left: "6%", size: 12, opacity: 0.35, dur: 16, delay: 0 },
+  { left: "18%", size: 18, opacity: 0.22, dur: 21, delay: 4 },
+  { left: "31%", size: 10, opacity: 0.3, dur: 14, delay: 9 },
+  { left: "47%", size: 14, opacity: 0.18, dur: 19, delay: 2 },
+  { left: "62%", size: 11, opacity: 0.32, dur: 15, delay: 7 },
+  { left: "74%", size: 20, opacity: 0.2, dur: 23, delay: 11 },
+  { left: "86%", size: 13, opacity: 0.3, dur: 17, delay: 5 },
+  { left: "94%", size: 9, opacity: 0.28, dur: 13, delay: 13 },
 ];
 
 export interface HoldMyHandProps {
@@ -120,7 +132,6 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
 
   const [stats, setStats] = useState<ResultStats | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [letterStep, setLetterStep] = useState(0);
 
   const lines = useMemo(() => effectiveHoldLines(data), [data]);
   const releaseLineFor = useCallback(
@@ -155,14 +166,16 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       // Spec formula, plus a saturation/contrast ramp so the last 20% reads as
       // light arriving on a face rather than a slider finishing its travel.
       photoRef.current.style.filter =
-        `grayscale(${inv.toFixed(3)}) blur(${(8 * inv).toFixed(2)}px) ` +
-        `brightness(${(0.55 + 0.45 * p).toFixed(3)}) ` +
+        `grayscale(${(0.2 * inv).toFixed(3)}) blur(${(4 * inv).toFixed(2)}px) ` +
+        `brightness(${(0.78 + 0.22 * p).toFixed(3)}) ` +
         `saturate(${(0.5 + 0.8 * p).toFixed(3)}) contrast(${(0.86 + 0.32 * p).toFixed(3)})`;
       // Slow dolly-in. Also keeps the 8px blur from showing the circle's edge.
       photoRef.current.style.transform = `scale(${(1.16 - 0.16 * p).toFixed(4)})`;
     }
     if (scrimRef.current) {
-      scrimRef.current.style.opacity = Math.pow(inv, 1.15).toFixed(3);
+      // Capped below 1 so the face is already there, softly, before the first
+      // touch — an invitation, not a black hole.
+      scrimRef.current.style.opacity = (0.4 * Math.pow(inv, 1.15)).toFixed(3);
     }
     if (photoWrapRef.current) {
       // The portrait beats on its own, always — this is the "heart" of the
@@ -209,6 +222,8 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
 
   const { holding, releaseCount, won, activeLine, ghostsShown, baitLive, coarseMs } = engine;
   const hasStarted = holding || releaseCount > 0 || coarseMs > 0;
+  /** They let go before the end — the crying sticker and its line take over. */
+  const released = hasStarted && !holding && !won && releaseCount > 0;
   hapticsRef.current = engine.hasVibrate;
 
   // ── Kill pull-to-refresh and page scroll for the duration of the hold ──────
@@ -223,17 +238,6 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       body.style.overflow = prevOverflow;
     };
   }, [revealed]);
-
-  // ── Letter reveal, line by line ────────────────────────────────────────────
-  const letterLines = useMemo(
-    () => data.letter.split("\n").map((l) => l.trim()).filter(Boolean),
-    [data.letter],
-  );
-  useEffect(() => {
-    if (!revealed || letterStep >= letterLines.length) return;
-    const t = setTimeout(() => setLetterStep((s) => s + 1), reduced ? 120 : 600);
-    return () => clearTimeout(t);
-  }, [revealed, letterStep, letterLines.length, reduced]);
 
   // Reduced motion skips the burst entirely.
   useEffect(() => {
@@ -269,74 +273,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
   // The payoff
   // ═══════════════════════════════════════════════════════════════════════════
   if (revealed) {
-    return (
-      <main
-        className="relative w-full overflow-x-hidden"
-        style={{
-          minHeight: "100dvh",
-          // The letter opens in the same golden dawn the hold ended in, rather
-          // than snapping back to the indigo night they started in.
-          background: STAGES[STAGES.length - 1].bg,
-          fontFamily: HMH.body,
-          color: "#fff",
-        }}
-      >
-        {brandBadge}
-        <div className="mx-auto w-full max-w-md md:max-w-2xl px-6 pt-20 pb-16 flex flex-col items-center">
-          <p className="text-center" style={{ fontFamily: HMH.script, fontSize: 30, color: HMH.lime, lineHeight: 1.1 }}>
-            {data.recipientName ? `${data.recipientName},` : "you held on."}
-          </p>
-
-          <div className="mt-8 w-full space-y-4">
-            {letterLines.map((line, i) => (
-              <p
-                key={i}
-                className="transition-all duration-700"
-                style={{
-                  fontSize: 15,
-                  lineHeight: 1.75,
-                  color: "rgba(255,255,255,.86)",
-                  opacity: i < letterStep ? 1 : 0,
-                  transform: i < letterStep ? "translateY(0)" : "translateY(10px)",
-                }}
-              >
-                {line}
-              </p>
-            ))}
-          </div>
-
-          {data.senderName && letterStep >= letterLines.length && (
-            <p className="self-end mt-6" style={{ fontFamily: HMH.script, fontSize: 24, color: "rgba(255,255,255,.9)" }}>
-              — {data.senderName}
-            </p>
-          )}
-
-          {/* Their photographs, under the letter they just earned. */}
-          <MemoryCards memories={data.memories} reduced={reduced} accent={STAGES[STAGES.length - 1].accent} />
-
-          <div className="mt-12 w-full flex justify-center">
-            {stats && (
-              <ResultCard
-                stats={stats}
-                recipientName={data.recipientName}
-                senderName={data.senderName}
-                reduced={reduced}
-              />
-            )}
-          </div>
-
-          {mode === "live" && (
-            <Link
-              href="/templates"
-              className="mt-10 text-xs no-underline"
-              style={{ color: "rgba(255,255,255,.5)", fontFamily: HMH.display, letterSpacing: ".1em" }}
-            >
-              make one of these →
-            </Link>
-          )}
-        </div>
-      </main>
-    );
+    return <LetterReveal data={data} stats={stats} reduced={reduced} mode={mode} brandBadge={brandBadge} />;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -366,6 +303,9 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
         fontFamily: HMH.body,
         color: "#fff",
         cursor: won ? "default" : "pointer",
+        // Portrait radius. The vh term keeps the circle, the sticker above it
+        // and the line under it on screen on short phones and laptop windows.
+        ["--hmh-r" as string]: "min(35vw, 170px, 21vh)",
       }}
     >
       {/*
@@ -385,9 +325,9 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
         // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={gifRef}
-          key={stage.gif}
-          src={stage.gif}
-          alt={stage.alt}
+          key={released ? `r-${releaseCount}` : stage.gif}
+          src={released ? releaseMoment(releaseCount).gif : stage.gif}
+          alt={released ? releaseMoment(releaseCount).alt : stage.alt}
           className="absolute pointer-events-none"
           style={{
             left: "50%",
@@ -395,46 +335,43 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
             // Sits just above the portrait on every screen: the circle is
             // min(70vw,340px) and vertically centred, so half of it plus a
             // gap puts this clear of the frame without overlapping the timer.
-            bottom: "calc(50% + min(35vw, 170px) + 14px)",
+            bottom: "calc(50% + var(--hmh-r) + 14px)",
             width: "min(38vw, 150px)",
             maxHeight: "22vh",
             objectFit: "contain",
-            // These animations are drawn on white. Left bare on a dark page
-            // that reads as a broken image box, so it is framed as a sticker
-            // on purpose — rounded, hairline border, soft drop shadow.
-            borderRadius: 18,
-            border: "1px solid rgba(255,255,255,.22)",
-            boxShadow: "0 18px 40px -14px rgba(0,0,0,.75)",
-            opacity: hasStarted ? 1 : 0.88,
+            // Shown as it is — no frame, no border. A soft radius only, so
+            // the white-backed ones read as a sticker rather than a hard box.
+            borderRadius: 16,
+            opacity: hasStarted ? 1 : 0.92,
             transition: "opacity 600ms ease",
             willChange: "transform",
           }}
         />
       )}
 
-      {/* A warm line when the world changes, under the timer. */}
-      <AnimatePresence mode="wait">
-        {hasStarted && !won && !activeLine && (
-          <motion.p
-            key={`whisper-${stageIdx}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 0.75, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
-            className="absolute left-0 right-0 text-center px-10 pointer-events-none"
-            style={{
-              top: "calc(50% + min(35vw, 170px) + 74px)",
-              fontFamily: HMH.script,
-              fontSize: 19,
-              lineHeight: 1.3,
-              color: stage.accent,
-              textShadow: "0 2px 16px rgba(0,0,0,.55)",
-            }}
-          >
-            {stage.whisper}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {/* Slow floating hearts — the room is alive before anybody touches it. */}
+      {!reduced && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          {FLOATERS.map((f, i) => (
+            <span
+              key={i}
+              className="hmh-float absolute"
+              style={{
+                left: f.left,
+                bottom: "-8%",
+                fontSize: f.size,
+                opacity: f.opacity,
+                color: stage.accent,
+                transition: "color 2200ms ease",
+                animationDuration: `${f.dur}s`,
+                animationDelay: `${f.delay}s`,
+              }}
+            >
+              ♥
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Ghost fragments — behind the photo. Draining takes them away again. */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -464,13 +401,20 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
 
       {/* Photo + ring */}
       <div className="absolute inset-0 grid place-items-center pointer-events-none">
-        <div className="relative" style={{ width: "min(70vw, 340px)", aspectRatio: "1 / 1" }}>
+        <div className="relative" style={{ width: "calc(var(--hmh-r) * 2)", aspectRatio: "1 / 1" }}>
           <span
             ref={haloRef}
             aria-hidden
             className="absolute pointer-events-none"
             style={{ inset: "-24%", borderRadius: "50%", filter: "blur(18px)" }}
           />
+
+          {!hasStarted && !reduced && (
+            <>
+              <span aria-hidden className="hmh-ping absolute rounded-full pointer-events-none" style={{ inset: "4%" }} />
+              <span aria-hidden className="hmh-ping absolute rounded-full pointer-events-none" style={{ inset: "4%", animationDelay: "1.2s" }} />
+            </>
+          )}
 
           <svg viewBox={`0 0 ${RING_VB} ${RING_VB}`} className="absolute inset-0 w-full h-full -rotate-90">
             <circle cx={RING_VB / 2} cy={RING_VB / 2} r={RING_R} fill="none" stroke="rgba(255,255,255,.09)" strokeWidth={4} />
@@ -489,7 +433,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
             className={`absolute rounded-full overflow-hidden ${won ? "hmh-dissolve" : ""}`}
             style={{ inset: "9%", willChange: "transform" }}
           >
-            <div ref={photoRef} className="absolute inset-0" style={{ willChange: "filter, transform", transform: "scale(1.16)" }}>
+            <div ref={photoRef} className="absolute inset-0" style={{ willChange: "filter, transform", transform: "scale(1.16)", filter: "grayscale(.2) blur(4px) brightness(.78)" }}>
               {showHeart ? <HeartFallback /> : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -498,6 +442,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
                   onError={() => setPhotoBroken(true)}
                   draggable={false}
                   className="w-full h-full object-cover"
+                  style={{ objectPosition: "50% 40%" }}
                 />
               )}
             </div>
@@ -508,9 +453,31 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
               className="absolute inset-0 pointer-events-none"
               style={{
                 background: "radial-gradient(circle at 50% 44%, rgba(7,5,13,.22) 0%, rgba(7,5,13,.80) 58%, rgba(7,5,13,.97) 100%)",
-                opacity: 1,
+                opacity: 0.4,
               }}
             />
+            {/* "hold here" — sits on the face until they have understood it */}
+            <AnimatePresence>
+              {!hasStarted && (
+                <motion.span
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                  className="absolute inset-0 grid place-items-center pointer-events-none"
+                >
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2"
+                    style={{
+                      background: "rgba(255,255,255,.16)",
+                      border: "1px solid rgba(255,255,255,.3)",
+                      backdropFilter: "blur(6px)",
+                      WebkitBackdropFilter: "blur(6px)",
+                      fontFamily: HMH.display, fontSize: 13, fontWeight: 600, letterSpacing: ".02em",
+                    }}
+                  >
+                    <Hand size={14} /> hold here
+                  </span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Sits outside the photo box so nothing clips at the emission ring. */}
@@ -525,7 +492,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       {/* Timer + progress semantics */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-1 pointer-events-none"
-        style={{ top: "calc(50% + min(35vw, 170px) + 26px)" }}
+        style={{ top: "calc(50% + var(--hmh-r) + 26px)" }}
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={Math.round(data.durationMs / 1000)}
@@ -540,10 +507,18 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
         </span>
       </div>
 
-      {/* The line. Hold copy, release copy and the punishment all land here. */}
-      <div className="absolute left-0 right-0 px-8 flex justify-center pointer-events-none" style={{ bottom: "20%" }}>
+      {/*
+        One slot under the timer for every line on this screen: the sender's
+        timed line wins, then the let-go line, then the stage's whisper, then
+        the instruction. One slot means nothing ever stacks on top of the
+        bottom buttons, on any screen size.
+      */}
+      <div
+        className="absolute left-0 right-0 px-8 flex justify-center pointer-events-none"
+        style={{ top: "calc(50% + var(--hmh-r) + 78px)" }}
+      >
         <AnimatePresence mode="wait">
-          {activeLine && (
+          {activeLine ? (
             <motion.p
               key={activeLine.id}
               initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
@@ -553,101 +528,63 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
               className="text-center"
               style={{
                 fontFamily: activeLine.kind === "hold" ? HMH.body : HMH.script,
-                fontSize: activeLine.kind === "hold" ? 17 : 26,
+                fontSize: activeLine.kind === "hold" ? 17 : 25,
                 lineHeight: 1.35,
-                maxWidth: 330,
+                maxWidth: 340,
                 color:
                   activeLine.kind === "punish" ? HMH.pink
                   : activeLine.kind === "release" ? "rgba(255,255,255,.94)"
-                  : "rgba(255,255,255,.86)",
+                  : "rgba(255,255,255,.88)",
                 textShadow: "0 2px 18px rgba(0,0,0,.7)",
               }}
             >
               {activeLine.text}
             </motion.p>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* The instruction — only until they have understood it */}
-      <AnimatePresence>
-        {!hasStarted && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute left-0 right-0 px-8 flex flex-col items-center gap-3 pointer-events-none text-center"
-            style={{ bottom: "9%" }}
-          >
-            {data.hands === 2 && !reduced && (
-              <video
-                src={`${ASSET}/holding-hands.webm`}
-                autoPlay loop muted playsInline aria-hidden
-                className="w-20 h-auto opacity-80"
-              />
-            )}
-            <p className="inline-flex items-center gap-2" style={{ fontFamily: HMH.display, fontSize: 15, fontWeight: 600, letterSpacing: ".02em" }}>
-              <Hand size={16} />
-              {data.hands === 2 ? "press and hold with two fingers" : "press and hold"}
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.5)", maxWidth: 300, lineHeight: 1.5 }}>
-              {data.hands === 2
-                ? "Two touches at once — opposite ends of the screen, or hand one side to somebody. On a laptop: hold Space and click."
-                : `Don't let go for ${fmtWhole(data.durationMs)} seconds. Let go and it drains — three times faster than it filled.`}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/*
-        They let go before the end.
-
-        A still image of somebody reaching out used to sit here. It is now the
-        crying animation for however many times they have released — panda,
-        bear, "don't be sad", cat — with the line that goes with it. The set
-        escalates but never scolds: the feeling to leave them with is "come
-        back", not "you failed", because this is a gift and nobody should be
-        told off by one.
-      */}
-      <AnimatePresence>
-        {hasStarted && !holding && !won && !reduced && (
-          <motion.div
-            key="released"
-            initial={{ opacity: 0, y: 14, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 320, damping: 24 }}
-            className="absolute left-0 right-0 flex flex-col items-center pointer-events-none px-8"
-            style={{ bottom: "4%" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={releaseMoment(releaseCount).gif}
-              alt={releaseMoment(releaseCount).alt}
-              style={{
-                width: "min(28vw, 112px)",
-                maxHeight: "17vh",
-                objectFit: "contain",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,.2)",
-                boxShadow: "0 16px 34px -12px rgba(0,0,0,.7)",
-              }}
-            />
-            {!activeLine && (
-            <p
-              className="mt-2 text-center"
-              style={{
-                fontFamily: HMH.script,
-                fontSize: 21,
-                lineHeight: 1.25,
-                color: "rgba(255,255,255,.92)",
-                textShadow: "0 2px 18px rgba(0,0,0,.6)",
-              }}
+          ) : released ? (
+            <motion.p
+              key={`released-${releaseCount}`}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="text-center"
+              style={{ fontFamily: HMH.script, fontSize: 24, lineHeight: 1.3, color: "rgba(255,255,255,.94)", textShadow: "0 2px 18px rgba(0,0,0,.6)", maxWidth: 340 }}
             >
               {releaseMoment(releaseCount).line}
-            </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.p>
+          ) : hasStarted && !won ? (
+            <motion.p
+              key={`whisper-${stageIdx}`}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 0.85, y: 0 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-center"
+              style={{ fontFamily: HMH.script, fontSize: 21, lineHeight: 1.3, color: stage.accent, textShadow: "0 2px 16px rgba(0,0,0,.55)", maxWidth: 340 }}
+            >
+              {stage.whisper}
+            </motion.p>
+          ) : !hasStarted ? (
+            <motion.div
+              key="instruction"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-2 text-center"
+            >
+              {data.hands === 2 && !reduced && (
+                <video
+                  src={`${ASSET}/holding-hands.webm`}
+                  autoPlay loop muted playsInline aria-hidden
+                  className="w-16 h-auto opacity-80"
+                />
+              )}
+              <p style={{ fontFamily: HMH.script, fontSize: 22, lineHeight: 1.2, color: "#FFD1E0" }}>
+                {data.recipientName ? `${data.recipientName}, hold my hand?` : "hold my hand?"}
+              </p>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,.55)", maxWidth: 300, lineHeight: 1.55 }}>
+                {data.hands === 2
+                  ? "Two fingers at once — or hand one side to somebody. On a laptop: hold Space and click."
+                  : `Press anywhere and don't let go for ${fmtWhole(data.durationMs)} seconds. A letter is waiting at the end.`}
+              </p>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
 
       {/* The bait, in evil mode. */}
       <AnimatePresence>
@@ -716,6 +653,20 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
           0%   { opacity: 1; transform: scale(1); }
           55%  { opacity: 1; transform: scale(1.14); }
           100% { opacity: 0; transform: scale(1.35); }
+        }
+        .hmh-ping {
+          border: 2px solid rgba(255, 190, 215, .55);
+          animation: hmh-ping 2.4s cubic-bezier(.2,.7,.3,1) infinite;
+        }
+        @keyframes hmh-ping {
+          0%   { transform: scale(1);    opacity: .8; }
+          100% { transform: scale(1.28); opacity: 0; }
+        }
+        .hmh-float { animation-name: hmh-float; animation-iteration-count: infinite; animation-timing-function: linear; }
+        @keyframes hmh-float {
+          0%   { transform: translateY(0) translateX(0); }
+          50%  { transform: translateY(-58vh) translateX(14px); }
+          100% { transform: translateY(-118vh) translateX(-8px); }
         }
         @media (prefers-reduced-motion: reduce) {
           .hmh-dissolve { animation: none; opacity: 0; }
