@@ -1,7 +1,3 @@
-import { templateMediaBase } from "@/lib/templateMedia";
-
-/** Animation set for this template — served from S3, never bundled. */
-const ASSET = templateMediaBase("hold-my-hand");
 // ─── Hold My Hand — shared type contract ─────────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer and the server payload. Field names here === server model field names
@@ -38,8 +34,39 @@ export interface Memory {
 
 /** More than six turns a keepsake into a gallery, and the letter stops landing. */
 export const MAX_MEMORIES = 6;
-/** Long enough for a real memory, short enough to stay a caption. */
-export const MEMORY_NOTE_MAX = 220;
+/** Each photo opens into its own little letter — long enough for a real paragraph. */
+export const MEMORY_NOTE_MAX = 600;
+
+/**
+ * The default face: the Darling hero — two people holding hands under cherry
+ * blossom. It is the literal picture of this template, and it is already on the
+ * CDN for every other love template, so the demo costs no new bytes.
+ */
+export const DEFAULT_PHOTO = "https://cdn.subhsandesh.in/gifts-media/assets/hero-bg.webp";
+
+/** Demo gallery. Same couple art the rest of the app already uses. */
+const DEMO_MEMORIES: Memory[] = [
+  {
+    imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/couple1.webp",
+    note: "the evening we walked until the sky ran out of colour. i remember thinking — if every day ended like this, i'd never ask for anything else.",
+  },
+  {
+    imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp",
+    note: "our table by the window. you laughed so hard at your own joke that the waiter laughed too. i still don't get the joke. i still think about that laugh.",
+  },
+  {
+    imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/couple3.webp",
+    note: "spring, and you had petals in your hair the whole afternoon. i didn't tell you. selfish of me — i just wanted to keep looking.",
+  },
+  {
+    imageUrl: "https://cdn.subhsandesh.in/gifts-media/assets/couple4.webp",
+    note: "one blanket, too many stars, and you falling asleep mid-sentence on my shoulder. best night. no contest.",
+  },
+];
+
+/** True for the sample art above, so the form can say "replace me". */
+export const isDemoImage = (url: string): boolean =>
+  url === DEFAULT_PHOTO || DEMO_MEMORIES.some((m) => m.imageUrl === url);
 
 export interface HoldData {
   /** Who is holding on. Drives every second-person line. */
@@ -89,6 +116,23 @@ export const HMH = {
   script: "var(--font-script), cursive",
 } as const;
 
+/**
+ * The payoff palette — a dusky rose night with cream paper and a little gold.
+ * It picks up the pink of the default photo, so the letter feels like the same
+ * evening the hold ended in rather than a different app.
+ */
+export const LOVE = {
+  bg: "radial-gradient(130% 70% at 50% 0%, #7A2A52 0%, #43123A 38%, #22091F 72%, #140611 100%)",
+  paper: "#FFF8EF",
+  paperEdge: "#F3E6D6",
+  ink: "#3B2330",
+  inkSoft: "#6E5360",
+  rose: "#E0457B",
+  roseDeep: "#B8235A",
+  blush: "#FFD1E0",
+  gold: "#F2C27A",
+} as const;
+
 /** The bait shown at `durationMs - 5000` in evil mode when the sender wrote none. */
 export const BAIT_FALLBACK = "okay, you can let go now.";
 /** How long before the end the betrayal is armed. */
@@ -110,7 +154,7 @@ export const DURATION_PRESETS: { label: string; ms: number }[] = [
 
 export const DEMO_DATA: HoldData = {
   recipientName: "",
-  photoUrl: `${ASSET}/demo-portrait.svg`,
+  photoUrl: DEFAULT_PHOTO,
   durationMs: 60000,
   mode: "kind",
   hands: 1,
@@ -154,7 +198,7 @@ export const DEMO_DATA: HoldData = {
   letter:
     "you held on 🤍\n\ni didn't make this to test you. i made it because i wanted one minute where the world couldn't interrupt us — and this was the only way i could think of to ask for it.\n\na minute is nothing. you gave it to me anyway. that's the part i'll keep.\n\nthank you for not letting go.",
   senderName: "Aarav",
-  memories: [],
+  memories: DEMO_MEMORIES,
 };
 
 /** Whitelisted keys that make up the flat wire payload (= server model content fields). */
