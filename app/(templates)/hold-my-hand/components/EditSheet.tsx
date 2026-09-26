@@ -3,9 +3,13 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, Hand, Skull, Heart, ImagePlus,
+  X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, Hand, Skull, Heart, ImagePlus, Crop as CropIcon, RefreshCw,
 } from "lucide-react";
-import { DURATION_PRESETS, HMH, LOVE, MAX_MEMORIES, MEMORY_NOTE_MAX, isDemoImage, type HoldData, type EditMode } from "./types";
+import {
+  CROP_DEFAULT, DURATION_PRESETS, HMH, LOVE, MAX_MEMORIES, MEMORY_NOTE_MAX,
+  cropStyle, isDemoImage, mainCrop, memoryCrop, type Crop, type HoldData, type EditMode,
+} from "./types";
+import PhotoAdjuster from "./PhotoAdjuster";
 
 const INPUT_CLS =
   "w-full px-4 py-3 rounded-xl bg-black/[.04] border border-black/10 focus:outline-none focus:border-[#6C5CE7] text-sm transition-all";
@@ -141,6 +145,27 @@ export default memo(function EditSheet({
   const photoRef = useRef<HTMLInputElement>(null);
   const memoryRef = useRef<HTMLInputElement>(null);
 
+  /** Which photo the adjuster is framing: "main", a gallery index, or none. */
+  const [adjusting, setAdjusting] = useState<"main" | number | null>(null);
+  /** Gallery slot a "change photo" upload replaces (null = add a new one). */
+  const replaceIdx = useRef<number | null>(null);
+
+  const setMainCrop = (c: Crop) => {
+    updateMf("photoCropX", c.x);
+    updateMf("photoCropY", c.y);
+    updateMf("photoScale", c.scale);
+  };
+  const setMainPhoto = (src: string) => {
+    updateMf("photoUrl", src);
+    setMainCrop({ ...CROP_DEFAULT });
+    setAdjusting("main");
+  };
+  const setMemoryCrop = (i: number, c: Crop) =>
+    updateMf("memories", (mf.memories ?? []).map((m, idx) => (idx === i ? { ...m, cropX: c.x, cropY: c.y, scale: c.scale } : m)));
+  const replaceMemoryPhoto = (i: number, src: string) =>
+    updateMf("memories", (mf.memories ?? []).map((m, idx) => (idx === i ? { ...m, imageUrl: src, ...toMemCrop(CROP_DEFAULT) } : m)));
+  const toMemCrop = (c: Crop) => ({ cropX: c.x, cropY: c.y, scale: c.scale });
+
   const updateHoldLine = (i: number, patch: Partial<{ atMs: number; text: string }>) =>
     updateMf("holdLines", mf.holdLines.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   const addHoldLine = () =>
@@ -157,14 +182,18 @@ export default memo(function EditSheet({
   // Photo first, note second: a card with no picture is dropped by the server,
   // so adding one starts by choosing the photograph rather than by leaving an
   // empty frame on the page.
-  const addMemory = (src: string) =>
-    updateMf("memories", [...(mf.memories ?? []), { imageUrl: src, note: "" }].slice(0, MAX_MEMORIES));
+  const addMemory = (src: string) => {
+    const list = [...(mf.memories ?? []), { imageUrl: src, note: "", ...toMemCrop(CROP_DEFAULT) }].slice(0, MAX_MEMORIES);
+    updateMf("memories", list);
+    setAdjusting(list.length - 1);
+  };
   const updateMemoryNote = (i: number, note: string) =>
     updateMf("memories", (mf.memories ?? []).map((m, idx) => (idx === i ? { ...m, note } : m)));
   const removeMemory = (i: number) =>
     updateMf("memories", (mf.memories ?? []).filter((_, idx) => idx !== i));
 
   return (
+    <>
     <AnimatePresence>
       {visible && (
         <>
@@ -206,28 +235,35 @@ export default memo(function EditSheet({
                 <Field label="Main photo" hint="The face that slowly comes into focus while they hold. It is also the stamp on the letter and the big photo on the share card they post. No photo → a heart is used.">
                   <div className="flex items-center gap-4">
                     <div
-                      onClick={() => photoRef.current?.click()}
+                      onClick={() => (mf.photoUrl ? setAdjusting("main") : photoRef.current?.click())}
                       className="relative w-24 h-24 rounded-full border-2 border-dashed cursor-pointer overflow-hidden grid place-items-center shrink-0"
                       style={{ borderColor: mf.photoUrl ? "transparent" : HMH.border, boxShadow: mf.photoUrl ? `0 0 0 3px ${LOVE.blush}` : undefined }}
                     >
                       {mf.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mf.photoUrl} alt="" className="w-full h-full object-cover" style={{ objectPosition: "50% 40%" }} />
+                        <img src={mf.photoUrl} alt="" style={cropStyle(mainCrop(mf))} />
                       ) : (
                         <Camera size={20} style={{ color: HMH.muted }} />
                       )}
                       <input
                         ref={photoRef} type="file" accept="image/*" className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], (src) => updateMf("photoUrl", src)); e.target.value = ""; }}
+                        onChange={(e) => { if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], setMainPhoto); e.target.value = ""; }}
                       />
                     </div>
-                    <div className="flex flex-col items-start gap-1.5">
-                      <button onClick={() => photoRef.current?.click()} className="text-xs font-semibold rounded-full px-3.5 py-1.5" style={{ background: HMH.ink, color: "#fff" }}>
-                        {mf.photoUrl ? "Change photo" : "Upload photo"}
-                      </button>
-                      {mf.photoUrl && (
-                        <button onClick={() => updateMf("photoUrl", "")} className="text-xs rounded-full px-3 py-1.5 border" style={{ borderColor: HMH.border, color: HMH.muted }}>Remove</button>
-                      )}
+                    <div className="flex flex-col items-start gap-1.5 min-w-0">
+                      <div className="flex flex-wrap gap-1.5">
+                        {mf.photoUrl && (
+                          <button onClick={() => setAdjusting("main")} className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3.5 py-1.5" style={{ background: LOVE.rose, color: "#fff" }}>
+                            <CropIcon size={12} /> Adjust
+                          </button>
+                        )}
+                        <button onClick={() => photoRef.current?.click()} className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3.5 py-1.5" style={{ background: HMH.ink, color: "#fff" }}>
+                          <RefreshCw size={12} /> {mf.photoUrl ? "Change" : "Upload photo"}
+                        </button>
+                        {mf.photoUrl && (
+                          <button onClick={() => updateMf("photoUrl", "")} className="text-xs rounded-full px-3 py-1.5 border" style={{ borderColor: HMH.border, color: HMH.muted }}>Remove</button>
+                        )}
+                      </div>
                       {isDemoImage(mf.photoUrl) && (
                         <span className="text-[11px]" style={{ color: LOVE.roseDeep }}>Sample photo — tap to use yours. It&apos;s also the photo on their share card.</span>
                       )}
@@ -257,10 +293,33 @@ export default memo(function EditSheet({
                         className="rounded-2xl overflow-hidden border flex"
                         style={{ borderColor: HMH.border, background: "#fff" }}
                       >
-                        <div className="relative w-28 sm:w-32 shrink-0 self-stretch" style={{ minHeight: 140, background: "#F3F1EC" }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={m.imageUrl} alt="" className="w-full h-full object-cover" />
+                        <div className="relative w-32 sm:w-36 shrink-0 self-stretch overflow-hidden" style={{ minHeight: 160, background: "#F3F1EC" }}>
+                          <button
+                            type="button"
+                            onClick={() => setAdjusting(i)}
+                            aria-label={`Adjust photo ${i + 1}`}
+                            className="absolute inset-0 overflow-hidden"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={m.imageUrl} alt="" style={cropStyle(memoryCrop(m))} />
+                          </button>
                           {isDemoImage(m.imageUrl) && <SampleChip />}
+                          <div className="absolute left-1.5 right-1.5 bottom-1.5 flex gap-1">
+                            <button
+                              onClick={() => setAdjusting(i)}
+                              className="flex-1 inline-flex items-center justify-center gap-1 rounded-full py-1 text-[10px] font-bold"
+                              style={{ background: "rgba(255,255,255,.94)", color: LOVE.roseDeep }}
+                            >
+                              <CropIcon size={11} /> Adjust
+                            </button>
+                            <button
+                              onClick={() => { replaceIdx.current = i; memoryRef.current?.click(); }}
+                              className="flex-1 inline-flex items-center justify-center gap-1 rounded-full py-1 text-[10px] font-bold"
+                              style={{ background: "rgba(14,14,18,.78)", color: "#fff" }}
+                            >
+                              <RefreshCw size={11} /> Change
+                            </button>
+                          </div>
                           <button
                             onClick={() => removeMemory(i)}
                             aria-label="Remove this photo"
@@ -292,7 +351,7 @@ export default memo(function EditSheet({
 
                     {(mf.memories ?? []).length < MAX_MEMORIES && (
                       <button
-                        onClick={() => memoryRef.current?.click()}
+                        onClick={() => { replaceIdx.current = null; memoryRef.current?.click(); }}
                         className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-8 sm:min-h-[160px] transition-colors hover:bg-white"
                         style={{ borderColor: LOVE.blush, color: LOVE.roseDeep, background: "#FFF8FA" }}
                       >
@@ -307,7 +366,15 @@ export default memo(function EditSheet({
                       accept="image/*"
                       hidden
                       onChange={(e) => {
-                        if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], addMemory);
+                        const idx = replaceIdx.current;
+                        replaceIdx.current = null;
+                        if (e.target.files?.[0]) {
+                          fileToDataUrl(e.target.files[0], (src) => {
+                            if (idx === null) { addMemory(src); return; }
+                            replaceMemoryPhoto(idx, src);
+                            setAdjusting(idx);
+                          });
+                        }
                         e.target.value = "";
                       }}
                     />
@@ -423,6 +490,22 @@ export default memo(function EditSheet({
         </>
       )}
     </AnimatePresence>
+      {visible && (
+        <PhotoAdjuster
+          open={adjusting !== null && (adjusting === "main" ? !!mf.photoUrl : !!mf.memories?.[adjusting])}
+          src={adjusting === "main" ? mf.photoUrl : (typeof adjusting === "number" ? mf.memories?.[adjusting]?.imageUrl ?? "" : "")}
+          crop={adjusting === "main" ? mainCrop(mf) : (typeof adjusting === "number" && mf.memories?.[adjusting] ? memoryCrop(mf.memories[adjusting]) : { ...CROP_DEFAULT })}
+          shape={adjusting === "main" ? "circle" : "portrait"}
+          title={adjusting === "main" ? "Adjust the main photo" : `Adjust photo ${typeof adjusting === "number" ? adjusting + 1 : ""}`}
+          onChange={(c) => (adjusting === "main" ? setMainCrop(c) : typeof adjusting === "number" && setMemoryCrop(adjusting, c))}
+          onClose={() => setAdjusting(null)}
+          onReplace={() => {
+            if (adjusting === "main") photoRef.current?.click();
+            else if (typeof adjusting === "number") { replaceIdx.current = adjusting; memoryRef.current?.click(); }
+          }}
+        />
+      )}
+    </>
   );
 });
 

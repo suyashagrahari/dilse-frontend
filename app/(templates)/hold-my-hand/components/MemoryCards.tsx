@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { HMH, LOVE, type Memory } from "./types";
+import { HMH, LOVE, cropStyle, memoryCrop, type Memory } from "./types";
 import SectionTitle from "./SectionTitle";
 
 /** A gentle alternating tilt, so the grid reads as photographs on a table. */
@@ -96,7 +96,7 @@ export default function MemoryCards({ memories, reduced }: { memories: Memory[] 
                 loading="lazy"
                 decoding="async"
                 draggable={false}
-                className="w-full h-full object-cover"
+                style={cropStyle(memoryCrop(m))}
               />
             </div>
             <div className="flex items-center justify-center gap-1 py-2.5 sm:py-3" style={{ fontFamily: HMH.script, fontSize: 17, color: LOVE.roseDeep }}>
@@ -131,8 +131,10 @@ export default function MemoryCards({ memories, reduced }: { memories: Memory[] 
               style={{ background: LOVE.paper, boxShadow: "0 40px 90px -30px rgba(0,0,0,.9)" }}
             >
               <div className="md:w-1/2 shrink-0 bg-black/5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={open.imageUrl} alt="" className="w-full h-full object-cover" style={{ aspectRatio: "4 / 5", maxHeight: "60dvh" }} />
+                <div className="w-full h-full overflow-hidden" style={{ aspectRatio: "4 / 5", maxHeight: "60dvh" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={open.imageUrl} alt="" style={cropStyle(memoryCrop(open))} />
+                </div>
               </div>
               <div
                 className="md:w-1/2 p-6 sm:p-8 flex flex-col md:overflow-y-auto"

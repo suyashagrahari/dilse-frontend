@@ -16,7 +16,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import MemoryCards from "./MemoryCards";
 import ResultCard, { type ResultStats } from "./ResultCard";
 import SectionTitle from "./SectionTitle";
-import { HMH, LOVE, type HoldData } from "./types";
+import { HMH, LOVE, cropStyle, mainCrop, type HoldData } from "./types";
 
 export default function LetterReveal({
   data,
@@ -94,8 +94,7 @@ export default function LetterReveal({
 
               <motion.button
                 onClick={open}
-                animate={reduced || phase === "opening" ? undefined : { scale: [1, 1.05, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity }}
+                whileTap={{ scale: 0.96 }}
                 className="mt-2 rounded-full px-6 py-3 text-sm font-bold"
                 style={{
                   background: `linear-gradient(135deg, ${LOVE.rose}, ${LOVE.roseDeep})`,
@@ -132,8 +131,10 @@ export default function LetterReveal({
                     outline: `2px dashed ${LOVE.paperEdge}`, outlineOffset: -4,
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={data.photoUrl} alt="" className="w-full h-full object-cover" style={{ objectPosition: "50% 40%" }} />
+                  <span className="block w-full h-full overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.photoUrl} alt="" style={cropStyle(mainCrop(data))} />
+                  </span>
                 </div>
               )}
 
@@ -195,6 +196,7 @@ export default function LetterReveal({
                   recipientName={data.recipientName}
                   senderName={data.senderName}
                   photoUrl={data.photoUrl}
+                  photoCrop={mainCrop(data)}
                   letter={data.letter}
                   durationMs={data.durationMs}
                 />
@@ -234,20 +236,25 @@ function Envelope({
       type="button"
       onClick={onOpen}
       aria-label="Open the letter"
-      animate={opening || reduced ? undefined : { y: [0, -8, 0], rotate: [-1.5, 1.5, -1.5] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      // Still, on purpose — a bobbing letter reads as unsteady. It lifts a
+      // touch on hover/tap instead, so it still feels like it wants opening.
+      whileHover={opening || reduced ? undefined : { y: -4 }}
+      whileTap={opening ? undefined : { scale: 0.98 }}
       className="relative my-10"
       style={{ width: "min(84vw, 380px)", aspectRatio: "1.5 / 1", perspective: 900 }}
     >
       {/* back */}
-      <span className="absolute inset-0 rounded-[14px]" style={{ background: "linear-gradient(160deg, #F2B6C9, #E48AA8)" }} />
+      <span className="absolute inset-0 rounded-[14px]" style={{ background: "linear-gradient(160deg, #EBA3BA, #D9789A)" }} />
 
       {/* paper inside */}
       <motion.span
         className="absolute rounded-[10px] flex items-start justify-center pt-4"
         style={{ left: "7%", right: "7%", top: "8%", height: "84%", background: LOVE.paper, boxShadow: "0 4px 12px rgba(0,0,0,.12)", zIndex: 2 }}
-        animate={opening ? { y: "-58%" } : { y: 0 }}
-        transition={{ delay: 0.45, duration: 0.6, ease: [0.2, 0.8, 0.3, 1] }}
+        // Hidden while sealed: the gaps between flap and pocket should read as
+        // the envelope's side folds, not as strips of paper.
+        initial={{ opacity: 0 }}
+        animate={opening ? { y: "-58%", opacity: 1 } : { y: 0, opacity: 0 }}
+        transition={{ delay: 0.45, duration: 0.6, ease: [0.2, 0.8, 0.3, 1], opacity: { delay: 0.2, duration: 0.2 } }}
       >
         <span style={{ fontFamily: HMH.script, fontSize: 20, color: LOVE.roseDeep }}>
           {to ? `for ${to} 🤍` : "for you 🤍"}

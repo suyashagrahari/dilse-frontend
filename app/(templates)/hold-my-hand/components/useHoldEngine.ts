@@ -148,11 +148,18 @@ export function useHoldEngine(opts: HoldEngineOptions) {
       if (!Ctor) return;
       const ctx = new Ctor();
       const master = ctx.createGain();
-      master.gain.value = 0; // silent until the tap-to-unmute pill opens it
+      // On by default. This runs inside their first pointerdown, which is the
+      // user gesture autoplay policy asks for, so the heartbeat starts the
+      // moment they hold — nobody should have to find a button first. The
+      // pill stays as the way to turn it off.
+      master.gain.value = 0.5;
       master.connect(ctx.destination);
       audioCtxRef.current = ctx;
       masterRef.current = master;
+      audioOnRef.current = true;
+      setAudioOn(true);
       setAudioArmed(true);
+      void ctx.resume().catch(() => {});
     } catch {
       /* no WebAudio — the visual pulse carries the beat alone */
     }
@@ -186,11 +193,24 @@ export function useHoldEngine(opts: HoldEngineOptions) {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(gain, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    // Phone speakers cannot reproduce 40-60Hz at all, so on a phone the
+    // thump alone is silence. A short, higher "knock" rides on top of it —
+    // that is the part a phone actually plays.
+    const knock = ctx.createOscillator();
+    const kg = ctx.createGain();
+    knock.type = "triangle";
+    knock.frequency.setValueAtTime(180, t);
+    knock.frequency.exponentialRampToValueAtTime(95, t + 0.09);
+    kg.gain.setValueAtTime(0.0001, t);
+    kg.gain.exponentialRampToValueAtTime(gain * 0.55, t + 0.006);
+    kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    knock.connect(kg);
+    kg.connect(master);
     osc.connect(g);
     sub.connect(g);
     g.connect(master);
-    osc.start(t); sub.start(t);
-    osc.stop(t + 0.26); sub.stop(t + 0.26);
+    osc.start(t); sub.start(t); knock.start(t);
+    osc.stop(t + 0.26); sub.stop(t + 0.26); knock.stop(t + 0.16);
   }, []);
 
   // ── Wake lock — the screen dimming mid-hold is its own kind of betrayal ────
