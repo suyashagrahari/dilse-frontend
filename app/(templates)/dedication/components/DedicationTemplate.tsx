@@ -49,6 +49,7 @@ import { Controls, Marquee, SegmentDots, VOLUME_CSS } from "./BroadcastChrome";
 import Screen from "./Screen";
 import PhotoReel, { REEL_KEYFRAMES } from "./PhotoReel";
 import LoveLetter from "./LoveLetter";
+import LetterFab from "./LetterFab";
 import { ExportableSlip } from "./RequestSlip";
 import SignOffActions from "./SignOffActions";
 
@@ -123,6 +124,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
   const signoff = snap.phase === "signoff";
   const seg = snap.index >= 0 ? data.segments[snap.index] : undefined;
   const hasLetter = Boolean(data.letter.trim());
+  const stationLine = `${data.station.name} · ${data.station.frequency} MHz`;
 
   return (
     <div
@@ -372,7 +374,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
       )}
       </div>
 
-      {/* ══ The love letter — beside the radio on desktop, under it on phones ══ */}
+      {/* ══ The love letter — beside the radio on desktop (phones: LetterFab) ══ */}
       {hasLetter && (
         <div className="ded-letter-col w-full mx-auto" style={{ maxWidth: 500 }}>
           <LoveLetter
@@ -380,7 +382,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
             recipient={data.recipient.name}
             sender={data.sender.name}
             photo={data.photos[0]}
-            stationLine={`${data.station.name} · ${data.station.frequency} MHz`}
+            stationLine={stationLine}
             tuned={!tuning}
             reduced={reduced}
           />
@@ -451,6 +453,20 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         )}
       </AnimatePresence>
 
+      {/* ══ Phones: the letter waits in a floating envelope ══════════════ */}
+      {hasLetter && (
+        <LetterFab
+          letter={data.letter}
+          recipient={data.recipient.name}
+          sender={data.sender.name}
+          photo={data.photos[0]}
+          stationLine={stationLine}
+          tuned={!tuning}
+          hidden={signoff || Boolean(snap.dedicationCard || snap.errorCard)}
+          reduced={reduced}
+        />
+      )}
+
       {/* ══ Sign-off ══════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {signoff && (
@@ -496,10 +512,12 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
 
 /** Radio + letter side by side from 1024px; stacked on phones and tablets. */
 const LAYOUT_CSS = `
+.ded-letter-col { display: none; }
 .ded-layout { display: grid; grid-template-columns: minmax(0, 500px); gap: 32px; justify-content: center; align-items: start; }
 @media (min-width: 1024px) {
   .ded-layout.ded-has-letter { grid-template-columns: minmax(0, 500px) minmax(0, 440px); gap: 48px; }
-  .ded-letter-col { position: sticky; top: 80px; }
+  .ded-letter-col { display: block; position: sticky; top: 80px; }
+  .ded-letter-fab { display: none !important; }
   /* Cards float over the radio column, not the gap between the columns. */
   .ded-card-pos.ded-card-left { right: auto; left: calc(50% - 494px); width: 500px; }
 }

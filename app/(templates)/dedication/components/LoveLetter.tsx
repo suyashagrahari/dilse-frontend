@@ -7,6 +7,7 @@
 // itself the moment the station locks, or earlier with a tap. The first photo
 // from the reel is the stamp; the station is the postmark.
 
+import type React from "react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BODY_FACE, DISPLAY_FACE, PALETTE, type Photo } from "./types";
@@ -117,83 +118,9 @@ export default function LoveLetter({
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
             className="relative overflow-hidden"
-            style={{
-              borderRadius: 6,
-              background: `repeating-linear-gradient(180deg, transparent 0 29px, rgba(140,59,42,.10) 29px 30px), ${PAPER}`,
-              boxShadow: "0 30px 60px -28px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.04)",
-              padding: "34px 22px 26px",
-              perspective: 900,
-            }}
+            style={{ ...PAPER_STYLE, perspective: 900 }}
           >
-            <AirmailEdge />
-
-            {/* stamp + postmark */}
-            <div className="absolute top-5 right-4 flex items-start gap-1" aria-hidden>
-              <span
-                className="block rounded-full grid place-items-center text-center"
-                style={{
-                  width: 58,
-                  height: 58,
-                  marginTop: 8,
-                  marginRight: -14,
-                  border: "1.5px solid rgba(140,59,42,.45)",
-                  color: "rgba(140,59,42,.6)",
-                  fontFamily: DISPLAY_FACE,
-                  fontSize: 7,
-                  lineHeight: 1.25,
-                  letterSpacing: ".08em",
-                  transform: "rotate(-14deg)",
-                  zIndex: 1,
-                }}
-              >
-                {stationLine}
-              </span>
-              {photo && (
-                <span
-                  className="block"
-                  style={{
-                    width: 50,
-                    height: 60,
-                    padding: 3,
-                    background: "#fff",
-                    transform: "rotate(4deg)",
-                    boxShadow: "0 3px 8px rgba(0,0,0,.25)",
-                    // perforated edge
-                    maskImage:
-                      "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
-                    WebkitMaskImage:
-                      "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                </span>
-              )}
-            </div>
-
-            <p style={{ fontFamily: SCRIPT, fontSize: 30, color: PALETTE.body, lineHeight: 1.1, paddingRight: 96 }}>
-              Dear {recipient || "you"},
-            </p>
-            <div
-              className="mt-4"
-              style={{
-                fontFamily: SCRIPT,
-                fontSize: 21,
-                lineHeight: "30px",
-                color: INK,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {stripSalutation(text, recipient)}
-            </div>
-            {sender && !endsWithSignature(text, sender) && (
-              <p className="mt-5 text-right" style={{ fontFamily: SCRIPT, fontSize: 24, color: PALETTE.body }}>
-                forever on your frequency,
-                <br />
-                {sender}
-              </p>
-            )}
+            <LetterBody text={text} recipient={recipient} sender={sender} photo={photo} stationLine={stationLine} />
           </motion.article>
         )}
       </AnimatePresence>
@@ -201,8 +128,105 @@ export default function LoveLetter({
   );
 }
 
+/** Everything written on the paper — shared by the inline letter and the phone pop-up. */
+export function LetterBody({
+  text,
+  recipient,
+  sender,
+  photo,
+  stationLine,
+}: {
+  text: string;
+  recipient: string;
+  sender: string;
+  photo?: Photo;
+  stationLine: string;
+}) {
+  return (
+    <>
+    <AirmailEdge />
+
+    {/* stamp + postmark */}
+    <div className="absolute top-5 right-4 flex items-start gap-1" aria-hidden>
+      <span
+        className="block rounded-full grid place-items-center text-center"
+        style={{
+          width: 58,
+          height: 58,
+          marginTop: 8,
+          marginRight: -14,
+          border: "1.5px solid rgba(140,59,42,.45)",
+          color: "rgba(140,59,42,.6)",
+          fontFamily: DISPLAY_FACE,
+          fontSize: 7,
+          lineHeight: 1.25,
+          letterSpacing: ".08em",
+          transform: "rotate(-14deg)",
+          zIndex: 1,
+        }}
+      >
+        {stationLine}
+      </span>
+      {photo && (
+        <span
+          className="block"
+          style={{
+            width: 50,
+            height: 60,
+            padding: 3,
+            background: "#fff",
+            transform: "rotate(4deg)",
+            boxShadow: "0 3px 8px rgba(0,0,0,.25)",
+            // perforated edge
+            maskImage:
+              "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
+            WebkitMaskImage:
+              "radial-gradient(circle at 3px 3px, transparent 1.6px, #000 1.8px) -3px -3px / 6px 6px",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo.url} alt="" className="w-full h-full object-cover" />
+        </span>
+      )}
+    </div>
+
+    <p style={{ fontFamily: SCRIPT, fontSize: 30, color: PALETTE.body, lineHeight: 1.1, paddingRight: 96 }}>
+      Dear {recipient || "you"},
+    </p>
+    <div
+      className="mt-4"
+      style={{
+        fontFamily: SCRIPT,
+        fontSize: 21,
+        lineHeight: "30px",
+        color: INK,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+      }}
+    >
+      {stripSalutation(text, recipient)}
+    </div>
+    {sender && !endsWithSignature(text, sender) && (
+      <p className="mt-5 text-right" style={{ fontFamily: SCRIPT, fontSize: 24, color: PALETTE.body }}>
+        forever on your frequency,
+        <br />
+        {sender}
+      </p>
+    )}
+    </>
+  );
+}
+
+/** The ruled cream paper. */
+export const PAPER_STYLE: React.CSSProperties = {
+  borderRadius: 6,
+  background: `repeating-linear-gradient(180deg, transparent 0 29px, rgba(140,59,42,.10) 29px 30px), ${PAPER}`,
+  boxShadow: "0 30px 60px -28px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.04)",
+  padding: "34px 22px 26px",
+};
+
 /** The red-and-blue par avion border. */
-function AirmailEdge() {
+export function AirmailEdge() {
   return (
     <span
       aria-hidden
