@@ -461,7 +461,8 @@ export function useHoldEngine(opts: HoldEngineOptions) {
     // Leaving the app is letting go.
     const onVis = () => { if (document.visibilityState === "hidden") releaseAll(); };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat) return;
+      // After the win the page is a letter: Space scrolls it, as it should.
+      if (e.code !== "Space" || e.repeat || wonRef.current) return;
       const t = e.target as HTMLElement | null;
       if (t && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName)) return;
       e.preventDefault(); // stop the page scrolling out from under the hold

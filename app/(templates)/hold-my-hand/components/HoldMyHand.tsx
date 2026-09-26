@@ -250,15 +250,22 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
   hapticsRef.current = engine.hasVibrate;
 
   // ── Kill pull-to-refresh and page scroll for the duration of the hold ──────
+  //
+  // Only while the hold surface is up. The moment the letter is revealed the
+  // page MUST scroll, so that branch clears every lock outright rather than
+  // restoring a remembered value — a remembered value can itself be a lock
+  // (left by a modal, or by a previous mount), and on iPhone a stuck
+  // `overflow: hidden` / `overscroll-behavior: none` is a page that will not
+  // scroll at all.
   useEffect(() => {
-    const body = document.body;
-    const prevOverscroll = body.style.overscrollBehavior;
-    const prevOverflow = body.style.overflow;
-    body.style.overscrollBehavior = "none";
-    if (!revealed) body.style.overflow = "hidden";
+    const els = [document.documentElement, document.body];
+    if (revealed) {
+      for (const el of els) { el.style.overflow = ""; el.style.overscrollBehavior = ""; }
+      return;
+    }
+    for (const el of els) { el.style.overflow = "hidden"; el.style.overscrollBehavior = "none"; }
     return () => {
-      body.style.overscrollBehavior = prevOverscroll;
-      body.style.overflow = prevOverflow;
+      for (const el of els) { el.style.overflow = ""; el.style.overscrollBehavior = ""; }
     };
   }, [revealed]);
 

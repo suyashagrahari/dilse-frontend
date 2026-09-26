@@ -10,7 +10,7 @@
  * little letter), and the card they can post.
  */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import MemoryCards from "./MemoryCards";
@@ -46,8 +46,18 @@ export default function LetterReveal({
     return () => clearTimeout(t);
   }, [phase, step, lines.length, reduced]);
 
-  const open = () => {
+  /**
+   * On a phone the finger is still on the glass when the hold ends, and the
+   * envelope appears right under it — so lifting that finger lands a "tap" on
+   * the envelope and it opened by itself. It now opens only for a press that
+   * STARTED on it (or a keyboard activation, which has `detail === 0`).
+   */
+  const pressedRef = useRef(false);
+  const arm = () => { pressedRef.current = true; };
+
+  const open = (e?: MouseEvent) => {
     if (phase !== "sealed") return;
+    if (e && e.detail !== 0 && !pressedRef.current) return;
     if (reduced) { setPhase("open"); return; }
     setPhase("opening");
     setTimeout(() => setPhase("open"), 1100);
@@ -58,13 +68,18 @@ export default function LetterReveal({
 
   return (
     <main
-      className="relative w-full overflow-x-hidden"
-      style={{ minHeight: "100dvh", background: LOVE.bg, fontFamily: HMH.body, color: "#fff" }}
+      className="relative w-full"
+      // `clip`, not `hidden`: hidden turns this element into its own scroll
+      // container, and on iPhone Safari a vertical swipe that starts inside a
+      // nested scroller can get stuck there instead of scrolling the page.
+      style={{ minHeight: "100dvh", background: LOVE.bg, fontFamily: HMH.body, color: "#fff", overflowX: "clip" }}
     >
       {brandBadge}
 
-      {/* Soft glow + slow sparkles, so the page never feels like a blank sheet */}
-      <span aria-hidden className="pointer-events-none absolute left-1/2 -translate-x-1/2" style={{ top: -120, width: 520, height: 520, borderRadius: "50%", background: LOVE.rose, opacity: 0.22, filter: "blur(90px)" }} />
+      {/* Soft glow, in its own clipped box so it can never widen the page */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden" style={{ height: 520 }}>
+        <span className="absolute left-1/2 -translate-x-1/2" style={{ top: -120, width: 520, height: 520, borderRadius: "50%", background: LOVE.rose, opacity: 0.22, filter: "blur(90px)" }} />
+      </div>
 
       <div className="relative mx-auto w-full max-w-[560px] lg:max-w-[640px] px-5 sm:px-8 pt-24 sm:pt-28 pb-16 flex flex-col items-center">
         <AnimatePresence mode="wait">
@@ -88,11 +103,13 @@ export default function LetterReveal({
               <Envelope
                 opening={phase === "opening"}
                 onOpen={open}
+                onArm={arm}
                 to={data.recipientName}
                 reduced={reduced}
               />
 
               <motion.button
+                onPointerDown={arm}
                 onClick={open}
                 whileTap={{ scale: 0.96 }}
                 className="mt-2 rounded-full px-6 py-3 text-sm font-bold"
@@ -223,17 +240,20 @@ export default function LetterReveal({
 function Envelope({
   opening,
   onOpen,
+  onArm,
   to,
   reduced,
 }: {
   opening: boolean;
-  onOpen: () => void;
+  onOpen: (e: MouseEvent) => void;
+  onArm: () => void;
   to: string;
   reduced: boolean;
 }) {
   return (
     <motion.button
       type="button"
+      onPointerDown={onArm}
       onClick={onOpen}
       aria-label="Open the letter"
       // Still, on purpose — a bobbing letter reads as unsteady. It lifts a
