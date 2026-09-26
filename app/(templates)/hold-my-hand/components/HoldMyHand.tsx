@@ -18,7 +18,7 @@ import ParticleBurst from "./ParticleBurst";
 import { type ResultStats } from "./ResultCard";
 import LetterReveal from "./LetterReveal";
 import { useHoldEngine, type FrameState, type WinSummary } from "./useHoldEngine";
-import { HMH, effectiveHoldLines, fmtSecs, fmtWhole, type HoldData } from "./types";
+import { HMH, cropStyle, effectiveHoldLines, fmtSecs, fmtWhole, mainCrop, type HoldData } from "./types";
 import { STAGES, stageIndexFor, releaseMoment, preloadStage } from "./moments";
 import { templateMediaBase } from "@/lib/templateMedia";
 
@@ -68,6 +68,19 @@ const GHOST_SPOTS = [
   { top: "84%", left: "32%", rotate: -2 },
   { top: "24%", left: "44%", rotate: -4 },
   { top: "72%", left: "46%", rotate: 4 },
+];
+
+/**
+ * Phone spots. A phone is too narrow for fragments beside the sticker — the
+ * sticker covers the middle third and the text ended up behind it — so on a
+ * phone they sit in the two free bands: under the top bar, above the sticker,
+ * and between the line slot and the bottom buttons.
+ */
+const GHOST_SPOTS_PHONE = [
+  { top: "8.5%", left: "5%", rotate: -4 },
+  { top: "8.5%", right: "5%", rotate: 4 },
+  { bottom: "11%", left: "6%", rotate: 3 },
+  { bottom: "11%", right: "6%", rotate: -3 },
 ];
 
 /** Deterministic floating hearts. */
@@ -128,6 +141,16 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
   const stage = STAGES[stageIdx];
 
   const [photoBroken, setPhotoBroken] = useState(false);
+
+  // Phone layout for the ghost fragments (see GHOST_SPOTS_PHONE).
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const apply = () => setNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   const showHeart = !data.photoUrl || photoBroken;
 
   const [stats, setStats] = useState<ResultStats | null>(null);
@@ -279,7 +302,8 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
   // ═══════════════════════════════════════════════════════════════════════════
   // The hold surface
   // ═══════════════════════════════════════════════════════════════════════════
-  const ghostFragments = data.ghostFragments.slice(0, GHOST_SPOTS.length);
+  const spots = narrow ? GHOST_SPOTS_PHONE : GHOST_SPOTS;
+  const ghostFragments = data.ghostFragments.slice(0, spots.length);
 
   return (
     <section
@@ -374,9 +398,10 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
       )}
 
       {/* Ghost fragments — behind the photo. Draining takes them away again. */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+      {/* z-index 2: always above the sticker, so a fragment is never hidden behind it */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 2 }} aria-hidden>
         {ghostFragments.map((frag, i) => {
-          const { rotate, ...pos } = GHOST_SPOTS[i];
+          const { rotate, ...pos } = spots[i];
           const on = i < ghostsShown;
           return (
             <span
@@ -385,11 +410,13 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
               style={{
                 ...pos,
                 transform: `rotate(${rotate}deg)`,
-                maxWidth: "38vw",
+                maxWidth: narrow ? "42vw" : "38vw",
+                textAlign: "right" in pos ? "right" : "left",
                 fontFamily: HMH.script,
-                fontSize: 17,
+                fontSize: narrow ? 15 : 17,
                 lineHeight: 1.25,
-                color: "rgba(255,255,255,.30)",
+                color: narrow ? "rgba(255,255,255,.42)" : "rgba(255,255,255,.30)",
+                textShadow: "0 2px 10px rgba(0,0,0,.55)",
                 opacity: on ? 1 : 0,
               }}
             >
@@ -441,8 +468,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
                   alt=""
                   onError={() => setPhotoBroken(true)}
                   draggable={false}
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: "50% 40%" }}
+                  style={cropStyle(mainCrop(data))}
                 />
               )}
             </div>
@@ -619,7 +645,7 @@ export default function HoldMyHand({ data, mode, paused = false }: HoldMyHandPro
           }}
         >
           {engine.audioOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
-          {engine.audioOn ? "heartbeat on" : engine.hasVibrate ? "hear it" : "no buzz on iOS — hear it"}
+          {engine.audioOn ? "heartbeat on" : "heartbeat off"}
         </button>
       )}
 

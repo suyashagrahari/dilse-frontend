@@ -1,3 +1,4 @@
+import type React from "react";
 // ─── Hold My Hand — shared type contract ─────────────────────────────────────
 // Single source of truth for the data shape shared by the editor, the published
 // viewer and the server payload. Field names here === server model field names
@@ -30,7 +31,52 @@ export interface Toast {
 export interface Memory {
   imageUrl: string;
   note: string;
+  /** Framing — see `Crop`. Optional so old drafts and pages still load. */
+  cropX?: number;
+  cropY?: number;
+  scale?: number;
 }
+
+/**
+ * How the sender framed a photo: where it sits (object-position, 0-100 on each
+ * axis) and how far it is zoomed (100 = just fills the frame, up to 300).
+ * Same model the Darling template uses.
+ */
+export interface Crop {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export const CROP_DEFAULT: Crop = { x: 50, y: 50, scale: 100 };
+export const CROP_MAX_SCALE = 300;
+
+export function clampCrop(c: Partial<Crop> | null | undefined): Crop {
+  const n = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : d);
+  return {
+    x: Math.min(100, Math.max(0, n(c?.x, 50))),
+    y: Math.min(100, Math.max(0, n(c?.y, 50))),
+    scale: Math.min(CROP_MAX_SCALE, Math.max(100, n(c?.scale, 100))),
+  };
+}
+
+/** Inline style for an <img> filling its frame with the given framing. */
+export function cropStyle(c: Partial<Crop> | null | undefined): React.CSSProperties {
+  const k = clampCrop(c);
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${k.x}% ${k.y}%`,
+    transform: k.scale === 100 ? undefined : `scale(${k.scale / 100})`,
+    transformOrigin: `${k.x}% ${k.y}%`,
+  };
+}
+
+export const mainCrop = (d: Pick<HoldData, "photoCropX" | "photoCropY" | "photoScale">): Crop =>
+  clampCrop({ x: d.photoCropX, y: d.photoCropY, scale: d.photoScale });
+
+export const memoryCrop = (m: Memory): Crop => clampCrop({ x: m.cropX, y: m.cropY, scale: m.scale });
 
 /** More than six turns a keepsake into a gallery, and the letter stops landing. */
 export const MAX_MEMORIES = 6;
@@ -73,6 +119,10 @@ export interface HoldData {
   recipientName: string;
   /** The face that comes into focus. Data URL or same-origin path. "" → heart fallback. */
   photoUrl: string;
+  /** Framing of the main photo (see `Crop`). */
+  photoCropX: number;
+  photoCropY: number;
+  photoScale: number;
   /** How long they must hold, in ms. */
   durationMs: number;
   /** `evil` arms the betrayal 5s before the end. */
@@ -155,6 +205,10 @@ export const DURATION_PRESETS: { label: string; ms: number }[] = [
 export const DEMO_DATA: HoldData = {
   recipientName: "",
   photoUrl: DEFAULT_PHOTO,
+  // The couple sits a little above centre in the Darling art.
+  photoCropX: 50,
+  photoCropY: 40,
+  photoScale: 100,
   durationMs: 60000,
   mode: "kind",
   hands: 1,
@@ -205,6 +259,9 @@ export const DEMO_DATA: HoldData = {
 export const HOLD_CONTENT_KEYS: (keyof HoldData)[] = [
   "recipientName",
   "photoUrl",
+  "photoCropX",
+  "photoCropY",
+  "photoScale",
   "durationMs",
   "mode",
   "hands",
@@ -253,6 +310,20 @@ export function dbToHoldMyHandData(db: Record<string, unknown> | null | undefine
     recipientName: pickStr("recipientName"),
     // An empty photo is a legitimate choice (heart fallback), so `??` — not `||`.
     photoUrl: typeof src.photoUrl === "string" ? src.photoUrl : DEMO_DATA.photoUrl,
+    ...(() => {
+      const c = clampCrop({
+        x: typeof src.photoCropX === "number" ? src.photoCropX : undefined,
+        y: typeof src.photoCropY === "number" ? src.photoCropY : undefined,
+        scale: typeof src.photoScale === "number" ? src.photoScale : undefined,
+      });
+      // A page saved before framing existed keeps the demo's framing only
+      // if it still shows the demo photo.
+      const isDemo = typeof src.photoUrl !== "string" || src.photoUrl === DEFAULT_PHOTO;
+      const hasCrop = typeof src.photoCropX === "number";
+      return hasCrop || !isDemo
+        ? { photoCropX: c.x, photoCropY: c.y, photoScale: c.scale }
+        : { photoCropX: DEMO_DATA.photoCropX, photoCropY: DEMO_DATA.photoCropY, photoScale: DEMO_DATA.photoScale };
+    })(),
     durationMs: clampDuration(src.durationMs),
     mode: src.mode === "evil" ? "evil" : "kind",
     hands: Number(src.hands) === 2 ? 2 : 1,
@@ -265,9 +336,17 @@ export function dbToHoldMyHandData(db: Record<string, unknown> | null | undefine
       ? (src.memories as unknown[])
           .map((m) => {
             const o = (m ?? {}) as Record<string, unknown>;
+            const c = clampCrop({
+              x: typeof o.cropX === "number" ? o.cropX : undefined,
+              y: typeof o.cropY === "number" ? o.cropY : undefined,
+              scale: typeof o.scale === "number" ? o.scale : undefined,
+            });
             return {
               imageUrl: typeof o.imageUrl === "string" ? o.imageUrl : "",
               note: typeof o.note === "string" ? o.note : "",
+              cropX: c.x,
+              cropY: c.y,
+              scale: c.scale,
             };
           })
           // A card with no picture would render an empty frame — drop it. A

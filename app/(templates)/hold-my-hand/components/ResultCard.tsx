@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Download, Loader2, Share2 } from "lucide-react";
-import { HMH, LOVE } from "./types";
+import { HMH, LOVE, cropStyle, type Crop } from "./types";
 
 /** 9:16. Fixed — the card is scaled, never reflowed. */
 export const CARD_W = 330;
@@ -54,6 +54,7 @@ export default function ResultCard({
   recipientName,
   senderName,
   photoUrl,
+  photoCrop,
   letter,
   durationMs,
 }: {
@@ -61,6 +62,7 @@ export default function ResultCard({
   recipientName: string;
   senderName: string;
   photoUrl: string;
+  photoCrop: Crop;
   letter: string;
   durationMs: number;
 }) {
@@ -187,9 +189,9 @@ export default function ResultCard({
                 {photoUrl ? (
                   isData ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 40%" }} />
+                    <img src={photoUrl} alt="" style={cropStyle(photoCrop)} />
                   ) : (
-                    <Image src={photoUrl} alt="" width={240} height={240} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 40%" }} />
+                    <Image src={photoUrl} alt="" width={480} height={480} style={cropStyle(photoCrop)} />
                   )
                 ) : (
                   <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 48 }}>🤍</div>
