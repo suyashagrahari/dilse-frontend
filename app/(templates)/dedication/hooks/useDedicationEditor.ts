@@ -25,7 +25,17 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { DEMO_DATA, dbToDedicationData, dedicationDataToBody, type DedicationData, type EditMode } from "../components/showData";
+import {
+  DEMO_DATA,
+  MAX_CLIPS,
+  MAX_LETTER_LEN,
+  MAX_PHOTOS,
+  dbToDedicationData,
+  dedicationDataToBody,
+  type DedicationData,
+  type EditMode,
+} from "../components/showData";
+import { resolvePendingClips } from "../components/mediaUploads";
 import { parseYouTubeId, type Segment } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
@@ -55,12 +65,17 @@ export function validateShow(d: DedicationData): ShowProblem | null {
   for (let i = 0; i < d.segments.length; i++) {
     const s = d.segments[i];
     if (s.kind === "song") {
-      if (!s.youtubeId) return { message: `Segment ${i + 1} has no song link yet.` };
+      if (!s.youtubeId) return { message: `Segment ${i + 1} has no song yet — pick one from the library or paste a link.` };
       if (!parseYouTubeId(s.youtubeId)) return { message: `Segment ${i + 1}'s link isn't a YouTube video.` };
       if (!s.dedication.trim()) return { message: `Segment ${i + 1} needs a dedication — that's the card.` };
+    } else if (s.kind === "clip") {
+      if (!s.videoUrl) return { message: `Segment ${i + 1} is a video slot with no video — upload one or remove it.` };
     } else if (!s.audioUrl && !(s.caption ?? "").trim()) {
       return { message: `Segment ${i + 1} is empty — record a voice intro or write a caption.` };
     }
+  }
+  if (d.segments.filter((s) => s.kind === "clip").length > MAX_CLIPS) {
+    return { message: `Up to ${MAX_CLIPS} videos per show.` };
   }
   return null;
 }
@@ -82,6 +97,16 @@ function cleanShow(d: DedicationData): DedicationData {
           ...(s.endSeconds ? { endSeconds: s.endSeconds } : {}),
         };
       }
+      if (s.kind === "clip") {
+        if (!s.videoUrl) return null;
+        return {
+          kind: "clip",
+          videoUrl: s.videoUrl,
+          title: s.title.trim(),
+          dedication: s.dedication.trim(),
+          ...(s.posterUrl ? { posterUrl: s.posterUrl } : {}),
+        };
+      }
       const caption = (s.caption ?? "").trim();
       if (!s.audioUrl && !caption) return null;
       return { kind: "voice", audioUrl: s.audioUrl, durationMs: s.durationMs, caption };
@@ -97,6 +122,11 @@ function cleanShow(d: DedicationData): DedicationData {
     recipientCity: d.recipientCity.trim(),
     segments,
     signOff: d.signOff.trim() || DEMO_DATA.signOff,
+    photos: (d.photos ?? [])
+      .filter((p) => p.url)
+      .slice(0, MAX_PHOTOS)
+      .map((p) => (p.caption?.trim() ? { url: p.url, caption: p.caption.trim() } : { url: p.url })),
+    letter: (d.letter ?? "").trim().slice(0, MAX_LETTER_LEN),
   };
 }
 
@@ -121,6 +151,8 @@ export function useDedicationEditor() {
   const [showAuth, setShowAuth] = useState(false);
   const saving = false; // save-to-preview is local and synchronous; kept for EditSheet API parity
   const [publishing, setPublishing] = useState(false);
+  /** "Uploading video 1/2 · 40%" while clips go up during publish. */
+  const [publishStage, setPublishStage] = useState<string | null>(null);
   const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -209,16 +241,19 @@ export function useDedicationEditor() {
     setEditMode("preview");
     (async () => {
       try {
+        const ready = await resolvePendingClips(data, accessToken, setPublishStage);
+        setPublishStage(null);
         const res = await fetch(BASE, {
           method: "POST",
           headers: headers(),
-          body: JSON.stringify(dedicationDataToBody(data, password)),
+          body: JSON.stringify(dedicationDataToBody(ready, password)),
         });
         const result = await res.json();
         if (!result.success) throw new Error("Save failed");
         const savedId = result.data._id as string;
         setPageId(savedId);
-        setContent(data);
+        setContent(ready);
+        setMf({ ...ready });
         setIsPersonalized(true);
 
         // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
@@ -245,11 +280,16 @@ export function useDedicationEditor() {
           });
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
         }
-      } catch {
+      } catch (err) {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "save_error" });
-        pushToast({ type: "info", title: "Save failed", message: "Please try again" });
+        pushToast({
+          type: "info",
+          title: "Save failed",
+          message: err instanceof Error && err.message !== "Save failed" ? err.message : "Please try again",
+        });
       } finally {
         publishInFlightRef.current = false;
+        setPublishStage(null);
         setPublishing(false);
       }
     })();
@@ -320,15 +360,17 @@ export function useDedicationEditor() {
       has_password: Boolean(pagePassword),
       segments: cleaned.segments.length,
       songs: cleaned.segments.filter((s) => s.kind === "song").length,
+      clips: cleaned.segments.filter((s) => s.kind === "clip").length,
+      photos: cleaned.photos.length,
     });
     pushToast({ type: "success", title: "Saved!", message: "Tune it in once, then publish 📻" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
 
-  const create = useCallback(async (): Promise<string | null> => {
+  const create = useCallback(async (data: DedicationData = content): Promise<string | null> => {
     const res = await fetch(BASE, {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify(dedicationDataToBody(content, pagePassword)),
+      body: JSON.stringify(dedicationDataToBody(data, pagePassword)),
     });
     const result = await res.json();
     if (!result.success) return null;
@@ -337,11 +379,11 @@ export function useDedicationEditor() {
   }, [content, pagePassword, headers]);
 
   const update = useCallback(
-    async (id: string) => {
+    async (id: string, data: DedicationData = content) => {
       await fetch(`${BASE}/${id}`, {
         method: "PUT",
         headers: headers(),
-        body: JSON.stringify(dedicationDataToBody(content, pagePassword)),
+        body: JSON.stringify(dedicationDataToBody(data, pagePassword)),
       });
     },
     [content, pagePassword, headers],
@@ -436,9 +478,15 @@ export function useDedicationEditor() {
 
     setPublishing(true);
     try {
+      const ready = await resolvePendingClips(content, accessToken, setPublishStage);
+      setPublishStage(null);
+      if (ready !== content) {
+        setContent(ready);
+        setMf({ ...ready });
+      }
       let id = pageId;
-      if (!id) id = await create();
-      else await update(id);
+      if (!id) id = await create(ready);
+      else await update(id, ready);
       if (!id) throw new Error("Save failed");
 
       // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
@@ -465,10 +513,15 @@ export function useDedicationEditor() {
         });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
       }
-    } catch {
+    } catch (err) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "network_error" });
-      pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
+      pushToast({
+        type: "info",
+        title: "Publish failed",
+        message: err instanceof Error && err.message !== "Save failed" ? err.message : "Please try again",
+      });
     } finally {
+      setPublishStage(null);
       setPublishing(false);
     }
   }, [content, pagePassword, isAuthenticated, accessToken, pageId, create, update, headers, pushToast, persistStory]);
@@ -516,6 +569,8 @@ export function useDedicationEditor() {
     showAuth,
     saving,
     publishing,
+    publishStage,
+    accessToken,
     copied,
     previewVersion,
 

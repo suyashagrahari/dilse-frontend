@@ -24,6 +24,8 @@ import { list, num, obj, str, strOr } from "@/lib/wire";
 import {
   DIAL,
   parseYouTubeId,
+  type ClipSegment,
+  type Photo,
   type RadioShow,
   type Segment,
   type SongSegment,
@@ -57,6 +59,8 @@ export interface DedicationData {
   recipientCity: string;
   segments: Segment[];
   signOff: string;
+  photos: Photo[];
+  letter: string;
 }
 
 /** The allow-list copied into the POST/PUT body. */
@@ -69,6 +73,8 @@ export const BODY_KEYS = [
   "recipientCity",
   "segments",
   "signOff",
+  "photos",
+  "letter",
 ] as const satisfies readonly (keyof DedicationData)[];
 
 /** A show longer than this stops being radio and starts being a podcast. */
@@ -77,6 +83,34 @@ export const MAX_CAPTION_LEN = 160;
 export const MAX_DEDICATION_LEN = 140;
 export const MAX_NAME_LEN = 24;
 export const MAX_SIGNOFF_LEN = 180;
+/** Uploaded videos. The server transcodes each one down after upload. */
+export const MAX_CLIPS = 3;
+export const MAX_CLIP_BYTES = 10 * 1024 * 1024;
+export const MAX_PHOTOS = 12;
+export const MAX_PHOTO_CAPTION_LEN = 60;
+export const MAX_LETTER_LEN = 1500;
+
+const CDN = "https://cdn.subhsandesh.in/gifts-media/assets";
+/** The Darling couple photographs — the demo reel. */
+export const DEMO_PHOTOS: Photo[] = [
+  { url: `${CDN}/couple1.webp`, caption: "the first date" },
+  { url: `${CDN}/couple2.webp`, caption: "that sunset" },
+  { url: `${CDN}/hero-bg.webp`, caption: "us, always" },
+  { url: `${CDN}/couple3.webp`, caption: "your laugh" },
+  { url: `${CDN}/couple4.webp`, caption: "home" },
+];
+
+export const isDemoPhoto = (url: string): boolean => url.startsWith(`${CDN}/`);
+
+const DEMO_LETTER = `Meera,
+
+I never know how to say these things out loud, so I built you a radio instead.
+
+Every song on this station is a day I thought of you — the airport drive, the rain on your balcony, the way you pretend you don't sing along. You make ordinary evenings feel like a dedication.
+
+So here's mine, on our frequency: I'm yours. Today, and on every station after this one.
+
+— Arjun`;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Demo
@@ -90,6 +124,8 @@ export const DEMO_DATA: DedicationData = {
   recipientName: "Meera",
   recipientCity: "Bengaluru",
   signOff: "same frequency, same time, whenever you want. goodnight, Bengaluru.",
+  photos: DEMO_PHOTOS,
+  letter: DEMO_LETTER,
   segments: [
     {
       kind: "voice",
@@ -100,9 +136,9 @@ export const DEMO_DATA: DedicationData = {
     },
     {
       kind: "song",
-      youtubeId: "",
-      title: "your song goes here",
-      artist: "paste a YouTube link in the booth",
+      youtubeId: "BddP6PYo2gs",
+      title: "Kesariya",
+      artist: "Arijit Singh",
       dedication: "This one goes out to Meera in Bengaluru, from Arjun.",
     },
     {
@@ -114,9 +150,9 @@ export const DEMO_DATA: DedicationData = {
     },
     {
       kind: "song",
-      youtubeId: "",
-      title: "and another one",
-      artist: "your pick",
+      youtubeId: "2Vv-BfVoq4g",
+      title: "Perfect",
+      artist: "Ed Sheeran",
       dedication: "Still going out to Meera. Still from Arjun.",
     },
   ],
@@ -131,6 +167,8 @@ export const BLANK_DATA: DedicationData = {
   recipientName: "",
   recipientCity: "",
   signOff: "",
+  photos: [],
+  letter: "",
   segments: [
     { kind: "voice", audioUrl: "", durationMs: 8000, caption: "" },
     { kind: "song", youtubeId: "", title: "", artist: "", dedication: "" },
@@ -149,6 +187,13 @@ export const blankSong = (): SongSegment => ({
   youtubeId: "",
   title: "",
   artist: "",
+  dedication: "",
+});
+
+export const blankClip = (): ClipSegment => ({
+  kind: "clip",
+  videoUrl: "",
+  title: "",
   dedication: "",
 });
 
@@ -181,6 +226,8 @@ export const toShow = (d: DedicationData): RadioShow => ({
   recipient: { name: d.recipientName, city: d.recipientCity },
   segments: d.segments,
   signOff: d.signOff,
+  photos: d.photos ?? [],
+  letter: d.letter ?? "",
 });
 
 /** True when at least one segment carries a playable YouTube id. */
@@ -235,6 +282,17 @@ const coerceEditorSegment = (raw: Record<string, unknown>): Segment | null => {
     if (end > 0) seg.endSeconds = Math.floor(end);
     return seg;
   }
+  if (raw.kind === "clip") {
+    const clip: ClipSegment = {
+      kind: "clip",
+      videoUrl: strOr(raw.videoUrl, ""),
+      title: strOr(raw.title, ""),
+      dedication: strOr(raw.dedication, ""),
+    };
+    const poster = strOr(raw.posterUrl, "");
+    if (poster) clip.posterUrl = poster;
+    return clip;
+  }
   if (raw.kind === "voice") {
     return {
       kind: "voice",
@@ -248,17 +306,33 @@ const coerceEditorSegment = (raw: Record<string, unknown>): Segment | null => {
   return null;
 };
 
+const coercePhoto = (raw: Record<string, unknown>): Photo | null => {
+  const url = strOr(raw.url, "").trim();
+  if (!url) return null;
+  const caption = strOr(raw.caption, "").slice(0, MAX_PHOTO_CAPTION_LEN);
+  return caption ? { url, caption } : { url };
+};
+
 export function dbToDedicationData(raw: unknown): DedicationData {
   const d = obj(raw);
+  // The server stores nested station/sender/recipient; drafts hold the flat
+  // form model. Read both.
+  const station = obj(d.station);
+  const sender = obj(d.sender);
+  const recipient = obj(d.recipient);
   return {
-    stationName: str(d.stationName, DEMO_DATA.stationName),
-    stationFrequency: str(d.stationFrequency, DEMO_DATA.stationFrequency),
-    senderName: strOr(d.senderName, ""),
-    senderCity: strOr(d.senderCity, ""),
-    recipientName: strOr(d.recipientName, ""),
-    recipientCity: strOr(d.recipientCity, ""),
+    stationName: str(d.stationName, str(station.name, DEMO_DATA.stationName)),
+    stationFrequency: str(d.stationFrequency, str(station.frequency, DEMO_DATA.stationFrequency)),
+    senderName: strOr(d.senderName, strOr(sender.name, "")),
+    senderCity: strOr(d.senderCity, strOr(sender.city, "")),
+    recipientName: strOr(d.recipientName, strOr(recipient.name, "")),
+    recipientCity: strOr(d.recipientCity, strOr(recipient.city, "")),
     segments: list<Segment>(d.segments, coerceEditorSegment, DEMO_DATA.segments).slice(0, MAX_SEGMENTS),
     signOff: strOr(d.signOff, DEMO_DATA.signOff),
+    photos: Array.isArray(d.photos)
+      ? list<Photo>(d.photos, coercePhoto, []).slice(0, MAX_PHOTOS)
+      : DEMO_DATA.photos,
+    letter: typeof d.letter === "string" ? d.letter.slice(0, MAX_LETTER_LEN) : DEMO_DATA.letter,
   };
 }
 

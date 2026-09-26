@@ -53,7 +53,27 @@ export interface SongSegment {
   dedication: string;
 }
 
-export type Segment = VoiceSegment | SongSegment;
+/**
+ * A video the sender uploaded themselves (max 3, 10MB each before the server
+ * transcodes it to a small mp4). Played on the radio's screen with its sound.
+ */
+export interface ClipSegment {
+  kind: "clip";
+  /** https URL after upload; a `blob:` URL only while held in the editor. */
+  videoUrl: string;
+  posterUrl?: string;
+  title: string;
+  dedication: string;
+}
+
+export type Segment = VoiceSegment | SongSegment | ClipSegment;
+export type SegmentKind = Segment["kind"];
+
+/** One card in the photo reel. */
+export interface Photo {
+  url: string;
+  caption?: string;
+}
 
 export interface RadioShow {
   station: Station;
@@ -62,6 +82,10 @@ export interface RadioShow {
   segments: Segment[];
   /** The final text card, over a dimming radio face. */
   signOff: string;
+  /** The reel of little photo cards that drifts across the radio face. */
+  photos: Photo[];
+  /** The love letter printed under the radio. */
+  letter: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

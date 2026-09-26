@@ -15,7 +15,15 @@
 // time costs the show its pacing.
 
 import { num, obj, str, strOr } from "@/lib/wire";
-import { parseYouTubeId, type RadioShow, type Segment, type SongSegment, type VoiceSegment } from "./types";
+import {
+  parseYouTubeId,
+  type ClipSegment,
+  type Photo,
+  type RadioShow,
+  type Segment,
+  type SongSegment,
+  type VoiceSegment,
+} from "./types";
 
 /** Matches `MAX_SEGMENTS` in showData; duplicated so the viewer needs one import. */
 const MAX_SEGMENTS = 8;
@@ -69,12 +77,46 @@ function coerceSong(raw: Record<string, unknown>): SongSegment | null {
   return seg;
 }
 
+const MAX_CLIPS = 3;
+const MAX_PHOTOS = 12;
+const isHttps = (u: string): boolean => /^https:\/\//.test(u);
+
+/** An uploaded video. Only an https URL can play for a recipient. */
+function coerceClip(raw: Record<string, unknown>): ClipSegment | null {
+  const videoUrl = strOr(raw.videoUrl, "").trim();
+  if (!isHttps(videoUrl)) return null;
+  const clip: ClipSegment = {
+    kind: "clip",
+    videoUrl,
+    title: strOr(raw.title, "").slice(0, 120),
+    dedication: strOr(raw.dedication, "").slice(0, 400),
+  };
+  const poster = strOr(raw.posterUrl, "").trim();
+  if (isHttps(poster)) clip.posterUrl = poster;
+  return clip;
+}
+
 /** Coerce one raw segment. Unknown `kind` values and dead songs return null. */
 export function coerceSegment(raw: unknown): Segment | null {
   const r = obj(raw);
   if (r.kind === "voice") return coerceVoice(r);
   if (r.kind === "song") return coerceSong(r);
+  if (r.kind === "clip") return coerceClip(r);
   return null;
+}
+
+function coercePhotos(raw: unknown): Photo[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Photo[] = [];
+  for (const item of raw) {
+    const r = obj(item);
+    const url = strOr(r.url, "").trim();
+    if (!isHttps(url)) continue;
+    const caption = strOr(r.caption, "").trim().slice(0, 80);
+    out.push(caption ? { url, caption } : { url });
+    if (out.length >= MAX_PHOTOS) break;
+  }
+  return out;
 }
 
 /**
@@ -101,9 +143,11 @@ export function dbToRadioShow(raw: Record<string, unknown>): RadioShow {
   const recipientCity = strOr(d.recipientCity, strOr(recipient.city, "")).slice(0, 60);
 
   const rawSegments = Array.isArray(d.segments) ? d.segments : [];
+  let clips = 0;
   const segments = rawSegments
     .map(coerceSegment)
     .filter((s): s is Segment => s !== null)
+    .filter((s) => s.kind !== "clip" || ++clips <= MAX_CLIPS)
     .slice(0, MAX_SEGMENTS);
 
   const signOff = strOr(d.signOff, DEFAULT_SIGNOFF).slice(0, 400) || DEFAULT_SIGNOFF;
@@ -118,5 +162,7 @@ export function dbToRadioShow(raw: Record<string, unknown>): RadioShow {
     recipient: { name: recipientName, city: recipientCity },
     segments,
     signOff,
+    photos: coercePhotos(d.photos),
+    letter: strOr(d.letter, "").slice(0, 2000),
   };
 }

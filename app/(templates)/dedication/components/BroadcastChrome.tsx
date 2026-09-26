@@ -290,7 +290,7 @@ export function SegmentDots({
 }: {
   passed: boolean[];
   current: number;
-  kinds: Array<"voice" | "song">;
+  kinds: Array<"voice" | "song" | "clip">;
 }) {
   return (
     <div className="flex items-center justify-center gap-1.5" role="list" aria-label="Show progress">
@@ -301,7 +301,7 @@ export function SegmentDots({
           <span
             key={i}
             role="listitem"
-            aria-label={`${kind === "voice" ? "Voice" : "Song"} segment ${i + 1}${done ? ", played" : now ? ", on air" : ""}`}
+            aria-label={`${kind === "voice" ? "Voice" : kind === "clip" ? "Video" : "Song"} segment ${i + 1}${done ? ", played" : now ? ", on air" : ""}`}
             style={{
               width: now ? 16 : 7,
               height: 7,

@@ -80,6 +80,8 @@ function DedicationPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
         saving={e.saving}
+        accessToken={e.accessToken}
+        notify={(title, message) => e.pushToast({ type: "info", title, message })}
       />
 
       {/* Sits over the sheet above, so the first thing a sender sees after
@@ -96,7 +98,7 @@ function DedicationPageInner() {
           >
             <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: "#fff" }}>
               <Loader2 size={28} className="animate-spin" style={{ color: ACCENT }} />
-              <p className="font-semibold" style={{ color: ACCENT }}>Going on air…</p>
+              <p className="font-semibold" style={{ color: ACCENT }}>{e.publishStage ?? "Going on air…"}</p>
             </div>
           </motion.div>
         )}

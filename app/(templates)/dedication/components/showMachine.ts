@@ -37,6 +37,7 @@ import {
 } from "./types";
 import { RadioAudio } from "./radioAudio";
 import { YtController } from "./ytPlayer";
+import { ClipController } from "./clipPlayer";
 
 export const LIVE_MARQUEE = "LIVE — DEDICATION";
 
@@ -44,7 +45,7 @@ export interface ShowSnapshot {
   phase: ShowPhase;
   /** -1 before the first segment. */
   index: number;
-  kind: "voice" | "song" | null;
+  kind: "voice" | "song" | "clip" | null;
   /** User play/pause. False also while the tab is backgrounded. */
   playing: boolean;
   /** ON AIR lamp. Voice segments only. */
@@ -53,6 +54,10 @@ export interface ShowSnapshot {
   bridging: boolean;
   /** A song segment owns the airwaves — the player panel must be visible. */
   songActive: boolean;
+  /** One of the sender's own videos owns the screen and the speaker. */
+  clipActive: boolean;
+  /** The browser refused to start the clip with sound — show "tap to play". */
+  clipBlocked: boolean;
   /** 0..100. */
   volume: number;
   marquee: string;
@@ -78,6 +83,8 @@ const EMPTY: ShowSnapshot = {
   onAir: false,
   bridging: false,
   songActive: false,
+  clipActive: false,
+  clipBlocked: false,
   volume: 85,
   marquee: LIVE_MARQUEE,
   caption: "",
@@ -153,6 +160,7 @@ export class ShowMachine {
 
   readonly audio = new RadioAudio();
   private yt: YtController;
+  readonly clip = new ClipController();
 
   private show: RadioShow;
   private targetFreq: number;
@@ -251,6 +259,16 @@ export class ShowMachine {
     this.playerHost = el;
   };
 
+  /** React ref callback for the screen's <video>. */
+  attachClipEl = (el: HTMLVideoElement | null): void => {
+    this.clip.attach(el);
+  };
+
+  private firstClipUrl(): string | null {
+    for (const s of this.show.segments) if (s.kind === "clip" && s.videoUrl) return s.videoUrl;
+    return null;
+  }
+
   get hasSongs(): boolean {
     return this.show.segments.some((s) => s.kind === "song" && Boolean(s.youtubeId));
   }
@@ -322,6 +340,12 @@ export class ShowMachine {
       this.note("info: no song segments — YouTube player not initialised");
     }
 
+    // 4b ─ the sender's own videos. Played (muted) inside the gesture so the
+    //      element may later start with sound. Not part of UNLOCK_ORDER: a
+    //      show with no clips legitimately skips it.
+    const firstClip = this.firstClipUrl();
+    if (firstClip) this.clip.prime(firstClip);
+
     // 5 ─ start-voice-element. Either the real first voice, or 60ms of
     //     generated silence to satisfy the element's own autoplay gate so
     //     LATER voice segments can start without a gesture.
@@ -379,6 +403,17 @@ export class ShowMachine {
 
     this.patch({ bridging: true, dedicationCard: null });
 
+    if (prev === "clip") {
+      this.clip.fadeOut(TIMING.fadeDownMs / 2);
+      this.patch({ clipActive: false, clipBlocked: false });
+      this.segTimer.set(TIMING.fadeDownMs / 2, () => {
+        const staticMs = STATIC.songToVoiceMs;
+        this.audio.interstitial(staticMs);
+        this.segTimer.set(staticMs, run);
+      });
+      return;
+    }
+
     if (prev === "song") {
       // Fade the song out before any static, so the bridge is a fade into
       // noise rather than noise landing on top of a song.
@@ -407,6 +442,7 @@ export class ShowMachine {
     this.prefetchNext(index);
 
     if (seg.kind === "voice") this.runVoice(index, seg);
+    else if (seg.kind === "clip") this.runClip(index, seg);
     else this.runSong(index, seg);
   }
 
@@ -420,6 +456,8 @@ export class ShowMachine {
     this.patch({
       onAir: true,
       songActive: false,
+      clipActive: false,
+      clipBlocked: false,
       caption: seg.caption ?? "",
       marquee: LIVE_MARQUEE,
       dedicationCard: null,
@@ -452,10 +490,54 @@ export class ShowMachine {
     );
   }
 
+  private runClip(index: number, seg: Extract<Segment, { kind: "clip" }>): void {
+    this.patch({
+      onAir: false,
+      songActive: false,
+      clipActive: true,
+      clipBlocked: false,
+      caption: "",
+      marquee: seg.title ? `${seg.title} — A LITTLE VIDEO FOR YOU` : "A LITTLE VIDEO FOR YOU",
+    });
+    this.showDedicationCard(seg.dedication);
+    // The YouTube player stays warm underneath, silent.
+    this.yt.setVolume(0);
+    if (!seg.videoUrl) {
+      this.segTimer.set(TIMING.dedicationHoldMs + 1500, () => this.complete(index));
+      return;
+    }
+    this.clip.play(seg.videoUrl, this.snap.volume / 100, {
+      onEnded: () => {
+        if (this.snap.index === index) this.complete(index);
+      },
+      onError: (why) => {
+        if (this.snap.index !== index) return;
+        this.note(`warn: clip ${index} skipped — ${why}`);
+        this.patch({ errorCard: "that video didn't make it — skipping ahead" });
+        this.recordFailure(index, "audio-load");
+        this.segTimer.set(2200, () => this.complete(index));
+      },
+      onBlocked: () => {
+        if (this.snap.index === index) this.patch({ clipBlocked: true });
+      },
+      onPlaying: () => {
+        if (this.snap.index === index && this.snap.clipBlocked) this.patch({ clipBlocked: false });
+      },
+    });
+  }
+
+  /** The screen's "tap to play" — a fresh gesture for a refused clip. */
+  playBlockedClip(): void {
+    this.clip.resumeFromGesture();
+    this.patch({ clipBlocked: false });
+  }
+
   private runSong(index: number, seg: Extract<Segment, { kind: "song" }>): void {
     this.patch({
       onAir: false,
       songActive: true,
+      clipActive: false,
+      clipBlocked: false,
       caption: "",
       marquee: [seg.title, seg.artist].filter(Boolean).join(" — ") || LIVE_MARQUEE,
     });
@@ -565,8 +647,17 @@ export class ShowMachine {
 
   private finish(): void {
     this.clearSegment();
+    this.clip.stop();
     this.yt.ramp(this.snap.volume, 0, TIMING.fadeDownMs);
-    this.patch({ bridging: true, songActive: false, onAir: false, dedicationCard: null, marquee: LIVE_MARQUEE });
+    this.patch({
+      bridging: true,
+      songActive: false,
+      clipActive: false,
+      clipBlocked: false,
+      onAir: false,
+      dedicationCard: null,
+      marquee: LIVE_MARQUEE,
+    });
     this.segTimer.set(TIMING.fadeDownMs, () => {
       this.audio.interstitial(900);
       this.segTimer.set(700, () => {
@@ -585,6 +676,7 @@ export class ShowMachine {
       this.cardTimer.freeze();
       this.audio.pauseVoice();
       this.yt.pause();
+      if (this.snap.clipActive) this.clip.pause();
       this.patch({ playing: false });
     } else {
       // A tap on the play knob is a fresh gesture, which is exactly what iOS
@@ -594,6 +686,7 @@ export class ShowMachine {
       this.cardTimer.thaw();
       this.audio.resumeVoice();
       this.yt.play();
+      if (this.snap.clipActive) this.clip.resume();
       this.patch({ playing: true });
     }
   }
@@ -605,6 +698,7 @@ export class ShowMachine {
     // Only push to the player while a song actually owns the airwaves —
     // otherwise this would un-mute the video underneath a voice segment.
     if (this.snap.songActive && !this.snap.bridging) this.yt.setVolume(vol);
+    if (this.snap.clipActive) this.clip.setVolume(vol / 100);
   }
 
   skipForward(): void {
@@ -657,6 +751,7 @@ export class ShowMachine {
     this.destroyed = true;
     this.clearSegment();
     this.yt.destroy();
+    this.clip.destroy();
     this.audio.destroy();
     if (this.visibilityHandler && typeof document !== "undefined") {
       document.removeEventListener("visibilitychange", this.visibilityHandler);

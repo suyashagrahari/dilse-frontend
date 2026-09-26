@@ -45,7 +45,10 @@ import { ShowMachine } from "./showMachine";
 import { loadYouTubeApi } from "./ytPlayer";
 import Tuner from "./Tuner";
 import VuMeters from "./VuMeters";
-import { Controls, Marquee, PlayerPanel, SegmentDots, VOLUME_CSS } from "./BroadcastChrome";
+import { Controls, Marquee, SegmentDots, VOLUME_CSS } from "./BroadcastChrome";
+import Screen from "./Screen";
+import PhotoReel, { REEL_KEYFRAMES } from "./PhotoReel";
+import LoveLetter from "./LoveLetter";
 import { ExportableSlip } from "./RequestSlip";
 import SignOffActions from "./SignOffActions";
 
@@ -118,24 +121,37 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
 
   const tuning = snap.phase === "tuning";
   const signoff = snap.phase === "signoff";
+  const seg = snap.index >= 0 ? data.segments[snap.index] : undefined;
+  const hasLetter = Boolean(data.letter.trim());
 
   return (
     <div
       className="relative w-full flex flex-col items-center"
       style={{
         minHeight: "100dvh",
-        background: "radial-gradient(120% 70% at 50% 0%, #241009 0%, #0d0604 60%, #070302 100%)",
-        padding: "18px 12px 28px",
+        background:
+          "radial-gradient(60% 40% at 50% 8%, rgba(240,166,60,.13) 0%, rgba(240,166,60,0) 70%), radial-gradient(120% 70% at 50% 0%, #2a120a 0%, #0d0604 60%, #070302 100%)",
+        padding: "14px 12px 36px",
       }}
     >
-      <style>{KEYFRAMES + VOLUME_CSS}</style>
+      <style>{KEYFRAMES + VOLUME_CSS + REEL_KEYFRAMES + LAYOUT_CSS}</style>
 
-      {/* ══ THE CHASSIS. Never unmounts. ══════════════════════════════════ */}
+      <p
+        className="text-center text-[10px] font-bold uppercase mb-3 px-4"
+        style={{ fontFamily: BODY_FACE, letterSpacing: ".34em", color: "rgba(232,220,192,.55)" }}
+      >
+        tonight&apos;s dedication{data.recipient.name ? ` · for ${data.recipient.name}` : ""}
+      </p>
+
       <div
-        className="relative w-full rounded-[20px] overflow-hidden"
+        className={`ded-layout w-full${hasLetter ? " ded-has-letter" : ""}`}
+      >
+      {/* ══ THE CHASSIS. Never unmounts. ══════════════════════════════════ */}
+      <div className="w-full mx-auto" style={{ maxWidth: 500 }}>
+      <div
+        className="relative w-full rounded-[22px] overflow-hidden"
         style={{
-          maxWidth: 420,
-          padding: 12,
+          padding: "14px 14px 16px",
           opacity: signoff ? 0.3 : 1,
           filter: signoff ? "saturate(.5)" : "none",
           transition: reduced ? "none" : "opacity 900ms ease, filter 900ms ease",
@@ -244,24 +260,51 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
           </div>
         </div>
 
-        {/* ── Grille + the player panel ──────────────────────────────── */}
-        <div className="relative flex items-stretch gap-2 mb-2.5">
-          <div className="flex-1 rounded-[6px] min-w-0" style={{ height: 80, ...grilleBackground() }} />
-          {/* COMPLIANCE: the official player, visible, bezelled, never hidden. */}
-          <PlayerPanel onHost={machine.attachPlayerHost} idleLabel={tuning ? "no signal" : "tuning…"} />
-        </div>
-
-        {/* ── VU meters ──────────────────────────────────────────────── */}
-        <div className="relative mb-1.5">
-          <VuMeters machine={machine} reduced={reduced} />
-        </div>
+        {/* ── The photo reel — little cards drifting past a film window ── */}
+        {data.photos.length > 0 && (
+          <div className="relative mb-3">
+            <PhotoReel photos={data.photos} lit={!tuning && !signoff} reduced={reduced} />
+          </div>
+        )}
 
         {/* ── NOW PLAYING ────────────────────────────────────────────── */}
         <div
-          className="relative rounded-[5px] mb-3 py-1"
+          className="relative rounded-[6px] mb-3 py-1.5"
           style={{ background: "rgba(0,0,0,.5)", boxShadow: "inset 0 1px 4px rgba(0,0,0,.7)" }}
         >
           <Marquee text={tuning ? "TUNE IN — FIND THE STATION" : snap.marquee} reduced={reduced} />
+        </div>
+
+        {/* ── The screen. COMPLIANCE: the official player, full size, visible. ── */}
+        <div className="relative mb-3">
+          <Screen
+            onHost={machine.attachPlayerHost}
+            onClipEl={machine.attachClipEl}
+            onPlayBlocked={() => machine.playBlockedClip()}
+            photos={data.photos}
+            phase={snap.phase}
+            kind={snap.kind}
+            songActive={snap.songActive}
+            clipActive={snap.clipActive}
+            clipBlocked={snap.clipBlocked}
+            bridging={snap.bridging}
+            songHasVideo={seg?.kind === "song" && Boolean(seg.youtubeId)}
+            songTitle={seg?.kind === "song" ? seg.title : ""}
+            songArtist={seg?.kind === "song" ? seg.artist : ""}
+            clipPoster={seg?.kind === "clip" ? seg.posterUrl : undefined}
+            senderName={data.sender.name}
+            caption={snap.caption}
+            reduced={reduced}
+          />
+        </div>
+
+        {/* ── Speaker + VU meters ────────────────────────────────────── */}
+        <div className="relative mb-2 flex items-stretch gap-2">
+          <div className="w-10 sm:w-14 rounded-[6px] shrink-0" style={grilleBackground()} aria-hidden />
+          <div className="flex-1 min-w-0">
+            <VuMeters machine={machine} reduced={reduced} />
+          </div>
+          <div className="w-10 sm:w-14 rounded-[6px] shrink-0" style={grilleBackground()} aria-hidden />
         </div>
 
         {/* ── The lower zone ─────────────────────────────────────────── */}
@@ -292,30 +335,57 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         </div>
       </div>
 
-      {/* ══ Subtitles. For someone who cannot use sound right now. ════════ */}
-      <div className="w-full mt-3" style={{ maxWidth: 420, minHeight: 54 }}>
-        <AnimatePresence mode="wait">
-          {snap.caption && !signoff && (
-            <motion.p
-              key={snap.caption}
-              initial={reduced ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduced ? undefined : { opacity: 0 }}
-              className="text-center text-[13px] leading-relaxed px-3"
-              style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.86)" }}
-            >
-              {snap.caption}
-            </motion.p>
-          )}
-        </AnimatePresence>
-        {snap.suspended && !tuning && !signoff && (
-          <p
-            className="text-center text-[10px] mt-1"
-            style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.4)" }}
+      {snap.suspended && !tuning && !signoff && (
+        <p className="text-center text-[10px] mt-3" style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.4)" }}>
+          paused — the show waits for you
+        </p>
+      )}
+
+      {/* Keyboard users who never touch the dial. Same handler, same gesture rules. */}
+      {tuning && (
+        <div className="flex flex-col items-center">
+          <button
+            type="button"
+            onClick={handleLock}
+            className="mt-4 rounded-full px-6 text-[13px] font-bold"
+            style={{
+              minHeight: TAP_TARGET_PX,
+              fontFamily: BODY_FACE,
+              background: "linear-gradient(180deg, rgba(240,166,60,.22), rgba(240,166,60,.1))",
+              color: PALETTE.amber,
+              border: "1px solid rgba(240,166,60,.4)",
+              boxShadow: "0 10px 24px -12px rgba(240,166,60,.6)",
+            }}
           >
-            paused — the show waits for you
-          </p>
-        )}
+            ▶ skip the dial — just play it
+          </button>
+          {mode === "demo" && (
+            <p
+              className="text-center text-[10px] mt-3 px-6"
+              style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.38)", maxWidth: 380 }}
+            >
+              The static is generated live in your browser. Tap Create to add your photos, videos, songs, voice
+              and a love letter.
+            </p>
+          )}
+        </div>
+      )}
+      </div>
+
+      {/* ══ The love letter — beside the radio on desktop, under it on phones ══ */}
+      {hasLetter && (
+        <div className="ded-letter-col w-full mx-auto" style={{ maxWidth: 500 }}>
+          <LoveLetter
+            letter={data.letter}
+            recipient={data.recipient.name}
+            sender={data.sender.name}
+            photo={data.photos[0]}
+            stationLine={`${data.station.name} · ${data.station.frequency} MHz`}
+            tuned={!tuning}
+            reduced={reduced}
+          />
+        </div>
+      )}
       </div>
 
       {/* ══ The dedication card. The screenshot moment. ═══════════════════ */}
@@ -327,7 +397,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: "110%" }}
             transition={{ duration: TIMING.dedicationSlideMs / 1000, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
+            className={`ded-card-pos fixed left-0 right-0 z-[60] px-4 pointer-events-none${hasLetter ? " ded-card-left" : ""}`}
             style={{ bottom: "8%" }}
           >
             <div
@@ -361,7 +431,7 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
+            className={`ded-card-pos fixed left-0 right-0 z-[60] px-4 pointer-events-none${hasLetter ? " ded-card-left" : ""}`}
             style={{ bottom: "8%" }}
           >
             <div
@@ -420,35 +490,17 @@ export default function DedicationTemplate({ data, mode, shareId }: DedicationTe
         )}
       </AnimatePresence>
 
-      {/* ══ Demo footer ═══════════════════════════════════════════════════ */}
-      {mode === "demo" && tuning && (
-        <p
-          className="text-center text-[10px] mt-4 px-6"
-          style={{ fontFamily: BODY_FACE, color: "rgba(232,220,192,.34)", maxWidth: 380 }}
-        >
-          The static is generated live in your browser — there is no audio file. Tap Create to record your own
-          intros and pick the songs.
-        </p>
-      )}
-
-      {/* A hidden control that keeps the show reachable for keyboard users who
-          never touch the dial. Same handler, same gesture rules. */}
-      {tuning && (
-        <button
-          type="button"
-          onClick={handleLock}
-          className="mt-4 rounded-full px-5 text-[12px] font-bold"
-          style={{
-            minHeight: TAP_TARGET_PX,
-            fontFamily: BODY_FACE,
-            background: "rgba(240,166,60,.14)",
-            color: PALETTE.amber,
-            border: "1px solid rgba(240,166,60,.35)",
-          }}
-        >
-          skip the dial — just play it
-        </button>
-      )}
     </div>
   );
 }
+
+/** Radio + letter side by side from 1024px; stacked on phones and tablets. */
+const LAYOUT_CSS = `
+.ded-layout { display: grid; grid-template-columns: minmax(0, 500px); gap: 32px; justify-content: center; align-items: start; }
+@media (min-width: 1024px) {
+  .ded-layout.ded-has-letter { grid-template-columns: minmax(0, 500px) minmax(0, 440px); gap: 48px; }
+  .ded-letter-col { position: sticky; top: 80px; }
+  /* Cards float over the radio column, not the gap between the columns. */
+  .ded-card-pos.ded-card-left { right: auto; left: calc(50% - 494px); width: 500px; }
+}
+`;
