@@ -5,11 +5,60 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, Hand, Skull, Heart, ImagePlus,
 } from "lucide-react";
-import { DURATION_PRESETS, HMH, MAX_MEMORIES, MEMORY_NOTE_MAX, type HoldData, type EditMode } from "./types";
+import { DURATION_PRESETS, HMH, LOVE, MAX_MEMORIES, MEMORY_NOTE_MAX, isDemoImage, type HoldData, type EditMode } from "./types";
 
 const INPUT_CLS =
   "w-full px-4 py-3 rounded-xl bg-black/[.04] border border-black/10 focus:outline-none focus:border-[#6C5CE7] text-sm transition-all";
-const INPUT_SM = "w-full px-3 py-2 rounded-lg bg-black/[.04] border border-black/10 focus:outline-none text-sm";
+const INPUT_SM = "w-full px-3 py-2 rounded-lg bg-black/[.04] border border-black/10 focus:outline-none focus:border-[#6C5CE7] text-sm";
+
+/**
+ * A textarea that grows with what is typed. Every line in this form is a
+ * sentence somebody means, so none of them get a one-line box that hides half
+ * of it.
+ */
+function AutoText({
+  value, onChange, placeholder, minRows = 2, maxLength, className = INPUT_SM, style,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  minRows?: number;
+  maxLength?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      rows={minRows}
+      maxLength={maxLength}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={className + " resize-none leading-relaxed block"}
+      style={{ overflow: "hidden", ...style }}
+    />
+  );
+}
+
+/** "Sample" chip on the demo art, so nobody publishes our couple by accident. */
+function SampleChip() {
+  return (
+    <span
+      className="absolute left-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+      style={{ background: "rgba(255,255,255,.92)", color: LOVE.roseDeep }}
+    >
+      sample
+    </span>
+  );
+}
 
 interface Props {
   editMode: EditMode;
@@ -130,14 +179,14 @@ export default memo(function EditSheet({
             className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-auto lg:flex lg:items-center lg:justify-center lg:inset-0 lg:bg-transparent"
           >
             <div
-              className="w-full max-w-2xl max-h-[84vh] lg:max-h-[90vh] overflow-y-auto rounded-t-3xl lg:rounded-[28px] shadow-2xl mx-auto"
+              className="w-full max-w-2xl lg:max-w-3xl max-h-[88dvh] lg:max-h-[90vh] overflow-y-auto rounded-t-3xl lg:rounded-[28px] shadow-2xl mx-auto"
               style={{ background: HMH.bg, color: HMH.ink, fontFamily: HMH.body }}
             >
               <div className="flex justify-center pt-3 pb-1 sticky top-0 z-10" style={{ background: HMH.bg }}>
                 <div className="w-10 h-1 rounded-full" style={{ background: HMH.border }} />
               </div>
 
-              <div className="px-5 pb-10 pt-2 space-y-5">
+              <div className="px-5 sm:px-7 pb-10 pt-2 space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold flex items-center gap-2" style={{ fontFamily: HMH.display }}>
                     <PenLine size={16} style={{ color: HMH.indigo }} /> Build the hold
@@ -154,16 +203,16 @@ export default memo(function EditSheet({
                   </Field>
                 </div>
 
-                <Field label="Their photo" hint="The face that comes into focus as they hold. Loss aversion is far stronger when the thing being lost is a person. No photo → a heart is used.">
-                  <div className="flex items-center gap-3">
+                <Field label="Main photo" hint="The face that slowly comes into focus while they hold. It is also the stamp on the letter and the big photo on the share card they post. No photo → a heart is used.">
+                  <div className="flex items-center gap-4">
                     <div
                       onClick={() => photoRef.current?.click()}
-                      className="w-20 h-20 rounded-full border-2 border-dashed cursor-pointer overflow-hidden grid place-items-center shrink-0"
-                      style={{ borderColor: HMH.border }}
+                      className="relative w-24 h-24 rounded-full border-2 border-dashed cursor-pointer overflow-hidden grid place-items-center shrink-0"
+                      style={{ borderColor: mf.photoUrl ? "transparent" : HMH.border, boxShadow: mf.photoUrl ? `0 0 0 3px ${LOVE.blush}` : undefined }}
                     >
                       {mf.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mf.photoUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={mf.photoUrl} alt="" className="w-full h-full object-cover" style={{ objectPosition: "50% 40%" }} />
                       ) : (
                         <Camera size={20} style={{ color: HMH.muted }} />
                       )}
@@ -172,9 +221,96 @@ export default memo(function EditSheet({
                         onChange={(e) => { if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], (src) => updateMf("photoUrl", src)); e.target.value = ""; }}
                       />
                     </div>
-                    {mf.photoUrl && (
-                      <button onClick={() => updateMf("photoUrl", "")} className="text-xs rounded-full px-3 py-1.5 border" style={{ borderColor: HMH.border, color: HMH.muted }}>Remove</button>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <button onClick={() => photoRef.current?.click()} className="text-xs font-semibold rounded-full px-3.5 py-1.5" style={{ background: HMH.ink, color: "#fff" }}>
+                        {mf.photoUrl ? "Change photo" : "Upload photo"}
+                      </button>
+                      {mf.photoUrl && (
+                        <button onClick={() => updateMf("photoUrl", "")} className="text-xs rounded-full px-3 py-1.5 border" style={{ borderColor: HMH.border, color: HMH.muted }}>Remove</button>
+                      )}
+                      {isDemoImage(mf.photoUrl) && (
+                        <span className="text-[11px]" style={{ color: LOVE.roseDeep }}>Sample photo — tap to use yours. It&apos;s also the photo on their share card.</span>
+                      )}
+                    </div>
+                  </div>
+                </Field>
+
+                <Field label="The main letter" hint="Sealed in an envelope until they hold on to 100%. They tap to open it, then it appears one paragraph at a time. Press Enter for a new paragraph.">
+                  <AutoText
+                    value={mf.letter}
+                    onChange={(v) => updateMf("letter", v)}
+                    minRows={8}
+                    placeholder="what you actually wanted to say…"
+                    className="w-full px-4 py-3.5 rounded-xl bg-[#FFF8EF] border border-black/10 focus:outline-none focus:border-[#E0457B] text-[15px]"
+                  />
+                </Field>
+
+                {/* Gallery */}
+                <Field
+                  label={`Gallery — photos of you two (${(mf.memories ?? []).length}/${MAX_MEMORIES})`}
+                  hint="Shown as polaroids under the main letter. Tapping a photo opens it with the little letter you write here — the photo says when, the letter says why you kept it."
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(mf.memories ?? []).map((m, i) => (
+                      <div
+                        key={i}
+                        className="rounded-2xl overflow-hidden border flex"
+                        style={{ borderColor: HMH.border, background: "#fff" }}
+                      >
+                        <div className="relative w-28 sm:w-32 shrink-0 self-stretch" style={{ minHeight: 140, background: "#F3F1EC" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={m.imageUrl} alt="" className="w-full h-full object-cover" />
+                          {isDemoImage(m.imageUrl) && <SampleChip />}
+                          <button
+                            onClick={() => removeMemory(i)}
+                            aria-label="Remove this photo"
+                            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center"
+                            style={{ background: "rgba(0,0,0,.62)", color: "#fff" }}
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        <div className="flex-1 min-w-0 p-2.5 flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: LOVE.roseDeep }}>
+                            💌 letter for photo {i + 1}
+                          </span>
+                          <AutoText
+                            value={m.note}
+                            onChange={(v) => updateMemoryNote(i, v.slice(0, MEMORY_NOTE_MAX))}
+                            placeholder="the day we… why this one matters to you"
+                            minRows={4}
+                            maxLength={MEMORY_NOTE_MAX}
+                            className="w-full px-2.5 py-2 rounded-lg bg-[#FFF8EF] border border-black/5 focus:outline-none focus:border-[#E0457B] text-sm"
+                            style={{ fontFamily: HMH.body }}
+                          />
+                          <span className="mt-1 self-end text-[10px]" style={{ color: HMH.muted }}>
+                            {m.note.length}/{MEMORY_NOTE_MAX}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {(mf.memories ?? []).length < MAX_MEMORIES && (
+                      <button
+                        onClick={() => memoryRef.current?.click()}
+                        className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-8 sm:min-h-[160px] transition-colors hover:bg-white"
+                        style={{ borderColor: LOVE.blush, color: LOVE.roseDeep, background: "#FFF8FA" }}
+                      >
+                        <ImagePlus size={22} />
+                        <span className="text-sm font-semibold">Add a photo</span>
+                        <span className="text-[11px]" style={{ color: HMH.muted }}>then write the little letter it opens into</span>
+                      </button>
                     )}
+                    <input
+                      ref={memoryRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], addMemory);
+                        e.target.value = "";
+                      }}
+                    />
                   </div>
                 </Field>
 
@@ -212,7 +348,7 @@ export default memo(function EditSheet({
                 <Field label="Lines while they hold" hint="Each appears once progress reaches its timestamp, then fades. Drain back below it and it can fire again.">
                   <div className="space-y-2">
                     {mf.holdLines.map((l, i) => (
-                      <div key={i} className="flex items-center gap-2">
+                      <div key={i} className="flex items-start gap-2">
                         <div className="relative shrink-0">
                           <input
                             type="number" min={0} max={Math.round(mf.durationMs / 1000)}
@@ -222,7 +358,9 @@ export default memo(function EditSheet({
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: HMH.muted }}>s</span>
                         </div>
-                        <input value={l.text} onChange={(e) => updateHoldLine(i, { text: e.target.value })} placeholder="don't." className={INPUT_SM + " flex-1"} />
+                        <div className="flex-1 min-w-0">
+                          <AutoText value={l.text} onChange={(v) => updateHoldLine(i, { text: v })} placeholder="something sweet to say at this second…" minRows={1} />
+                        </div>
                         <button onClick={() => removeHoldLine(i)} className="w-9 h-9 rounded-lg border grid place-items-center shrink-0" style={{ borderColor: HMH.border, color: HMH.muted }}><Trash2 size={14} /></button>
                       </div>
                     ))}
@@ -234,9 +372,11 @@ export default memo(function EditSheet({
                 <Field label="Lines when they let go" hint="Shown in order — the 1st time they let go, the 2nd, and so on. These carry more weight than the hold lines. Write more than you think you need.">
                   <div className="space-y-2">
                     {mf.releaseLines.map((s, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-7 text-xs text-center shrink-0" style={{ color: HMH.muted }}>{i + 1}.</span>
-                        <input value={s} onChange={(e) => updateList("releaseLines", i, e.target.value)} placeholder="come back." className={INPUT_SM + " flex-1"} />
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="w-7 pt-2.5 text-xs text-center shrink-0" style={{ color: HMH.muted }}>{i + 1}.</span>
+                        <div className="flex-1 min-w-0">
+                          <AutoText value={s} onChange={(v) => updateList("releaseLines", i, v)} placeholder="come back? 🥺" minRows={1} />
+                        </div>
                         <button onClick={() => removeFromList("releaseLines", i)} className="w-9 h-9 rounded-lg border grid place-items-center shrink-0" style={{ borderColor: HMH.border, color: HMH.muted }}><Trash2 size={14} /></button>
                       </div>
                     ))}
@@ -244,84 +384,19 @@ export default memo(function EditSheet({
                   </div>
                 </Field>
 
-                {/* Ghosts */}
-                <Field
-                  label={`Photos of you two (${(mf.memories ?? []).length}/${MAX_MEMORIES})`}
-                  hint="Shown under the letter, after they have held on. Add a line under each one — the photo says when, the line says why you kept it."
-                >
-                  <div className="grid grid-cols-2 gap-3">
-                    {(mf.memories ?? []).map((m, i) => (
-                      <div
-                        key={i}
-                        className="rounded-2xl overflow-hidden border"
-                        style={{ borderColor: HMH.border, background: "#fff" }}
-                      >
-                        <div className="relative" style={{ aspectRatio: "4 / 5", background: "#F3F1EC" }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={m.imageUrl} alt="" className="w-full h-full object-cover" />
-                          <button
-                            onClick={() => removeMemory(i)}
-                            aria-label="Remove this photo"
-                            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center"
-                            style={{ background: "rgba(0,0,0,.62)", color: "#fff" }}
-                          >
-                            <X size={13} />
-                          </button>
-                        </div>
-                        <textarea
-                          value={m.note}
-                          onChange={(e) => updateMemoryNote(i, e.target.value.slice(0, MEMORY_NOTE_MAX))}
-                          placeholder="the day we…"
-                          rows={2}
-                          className={INPUT_SM + " w-full resize-none border-0 rounded-none"}
-                        />
-                      </div>
-                    ))}
-
-                    {(mf.memories ?? []).length < MAX_MEMORIES && (
-                      <button
-                        onClick={() => memoryRef.current?.click()}
-                        className="rounded-2xl border border-dashed flex flex-col items-center justify-center gap-1.5"
-                        style={{ aspectRatio: "4 / 5", borderColor: HMH.border, color: HMH.muted, background: "#FBFAF7" }}
-                      >
-                        <ImagePlus size={20} />
-                        <span className="text-xs font-semibold">Add photo</span>
-                      </button>
-                    )}
-                    <input
-                      ref={memoryRef}
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], addMemory);
-                        e.target.value = "";
-                      }}
-                    />
-                  </div>
-                </Field>
-
                 <Field label="Ghost fragments" hint="One surfaces behind the photo every 12 seconds of progress. Draining takes them away again — that is what makes letting go hurt.">
                   <div className="space-y-2">
                     {mf.ghostFragments.map((s, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-9 text-[10px] text-center shrink-0" style={{ color: HMH.muted }}>{(i + 1) * 12}s</span>
-                        <input value={s} onChange={(e) => updateList("ghostFragments", i, e.target.value)} placeholder="a fragment of the letter…" className={INPUT_SM + " flex-1"} />
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="w-9 pt-2.5 text-[10px] text-center shrink-0" style={{ color: HMH.muted }}>{(i + 1) * 12}s</span>
+                        <div className="flex-1 min-w-0">
+                          <AutoText value={s} onChange={(v) => updateList("ghostFragments", i, v)} placeholder="a fragment of the letter…" minRows={1} />
+                        </div>
                         <button onClick={() => removeFromList("ghostFragments", i)} className="w-9 h-9 rounded-lg border grid place-items-center shrink-0" style={{ borderColor: HMH.border, color: HMH.muted }}><Trash2 size={14} /></button>
                       </div>
                     ))}
                     <button onClick={() => addToList("ghostFragments")} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: HMH.indigo }}><Plus size={14} /> Add fragment</button>
                   </div>
-                </Field>
-
-                <Field label="The letter" hint="Revealed only at 100%, one line at a time. Blank lines separate paragraphs.">
-                  <textarea
-                    value={mf.letter}
-                    onChange={(e) => updateMf("letter", e.target.value)}
-                    rows={7}
-                    placeholder="what you actually wanted to say…"
-                    className={INPUT_CLS + " resize-none"}
-                  />
                 </Field>
 
                 <Field label="Password (optional)" hint="If set, the shared link asks for this before opening.">
