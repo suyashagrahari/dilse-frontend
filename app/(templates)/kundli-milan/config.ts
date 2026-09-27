@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Kundli Milan — Cosmic Love Match",
   description:
     "A cute, funny, totally unscientific kundli match for the two of you. The stars scan your birthdays, count up a sky-high guna score and decode 8 hilarious gunas — then your photos (each with a little letter), GIFs, silly remedies, a love letter and a certificate you can save.",
-  coverImage: templateMedia("kundli-milan", "cover-v2.webp"),
+  coverImage: templateMedia("kundli-milan", "cover-v3.webp"),
   emoji: "🔮",
   color: "from-orange-500 to-amber-700",
   previewText: "36 gunas matched. The stars have signed off 🔮",
