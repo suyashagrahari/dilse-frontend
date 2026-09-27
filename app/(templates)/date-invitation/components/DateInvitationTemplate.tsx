@@ -67,7 +67,9 @@ import {
   type RsvpState,
 } from "./types";
 import { headerView } from "./viewModel";
-import { INK, PAPER, PAPER_EDGE, UI } from "./dateTheme";
+import { GROTESK, MOON, NIGHT } from "./dateTheme";
+import { DATE_FONT_VARS } from "./fonts";
+import { DemoNudge, NIGHT_CSS, NightSky } from "./NightKit";
 import useReducedMotion from "./useReducedMotion";
 import { useWeather } from "./useWeather";
 
@@ -76,7 +78,6 @@ import CountdownScreen from "./CountdownScreen";
 import LiveItinerary from "./LiveItinerary";
 import AfterScreen from "./AfterScreen";
 import { DeclinedScreen, ExpiredScreen, RescheduleScreen } from "./ClosingScreens";
-import DevPhaseControl from "./DevPhaseControl";
 
 const DAY = 86_400_000;
 
@@ -315,17 +316,33 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
     [isDemo, startMs, stopCount, data.stops],
   );
 
+  // The demo preview offers the natural next step instead of a phase bar.
+  const nudge: { label: string; emoji: string; to: Phase } | null = !isDemo
+    ? null
+    : phase === "countdown"
+      ? { label: "peek at date night", emoji: "⏩", to: "live" }
+      : phase === "invitation"
+        ? null
+        : phase === "live"
+          ? null
+          : { label: "replay from the invite", emoji: "↺", to: "invitation" };
+
   return (
     <div
+      className={DATE_FONT_VARS}
       style={{
         minHeight: "100dvh",
-        background: PAPER,
-        color: INK,
+        background: NIGHT,
+        color: MOON,
         position: "relative",
-        // Clear of the dev bar in demo mode and of nothing in live mode.
-        paddingBottom: isDemo ? 64 : 0,
+        isolation: "isolate",
+        overflowX: "clip",
+        paddingBottom: nudge ? 76 : 0,
       }}
     >
+      <style>{NIGHT_CSS}</style>
+      <NightSky reduceMotion={reduceMotion} />
+
       {/* The recipient's route back to us, and the only chrome on a live page. */}
       {mode === "live" && (
         <Link
@@ -333,16 +350,17 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
           aria-label="SubhSandesh — make your own"
           className="fixed right-3 top-3 z-[95] inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
           style={{
-            background: "rgba(253,250,243,0.94)",
-            border: `1px solid ${PAPER_EDGE}`,
-            boxShadow: "0 4px 14px rgba(58,44,32,0.14)",
+            background: "rgba(18,8,31,0.6)",
+            border: "1px solid rgba(255,255,255,0.16)",
+            boxShadow: "0 8px 20px -10px rgba(0,0,0,0.6)",
             textDecoration: "none",
-            backdropFilter: "blur(6px)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.webp" alt="" width={18} height={18} style={{ width: 18, height: 18 }} />
-          <span className="text-[11px] font-semibold" style={{ color: INK, fontFamily: UI }}>
+          <span className="text-[11px] font-semibold" style={{ color: MOON, fontFamily: GROTESK }}>
             SubhSandesh
           </span>
         </Link>
@@ -390,7 +408,7 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
       {phase === "reschedule" && <RescheduleScreen view={view} proposedDate={proposedDate} />}
       {phase === "expired" && <ExpiredScreen view={view} />}
 
-      {isDemo && <DevPhaseControl phase={phase} onJump={onJump} />}
+      {nudge && <DemoNudge label={nudge.label} emoji={nudge.emoji} onClick={() => onJump(nudge.to)} />}
     </div>
   );
 }

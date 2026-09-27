@@ -13,7 +13,7 @@
 
 import React, { useRef, useState } from "react";
 
-import { ACCENT, INK, INK_FAINT, INK_SOFT, PAPER, PAPER_EDGE, SERIF, UI } from "./dateTheme";
+import { ACCENT, GROTESK, INK, INK_FAINT, INK_SOFT, PAPER_EDGE } from "./dateTheme";
 
 /** The wire format keeps 12 (`dbToDateInviteData` slices there). Match it. */
 export const MAX_PHOTOS = 12;
@@ -96,28 +96,31 @@ export default function PhotoStrip({ photos, onAddPhotos }: PhotoStripProps) {
   const remove = (url: string) => setHidden((h) => (h.includes(url) ? h : [...h, url]));
 
   return (
-    <section className="mt-8">
+    <section className="mt-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3
-          className="text-[10.5px] uppercase tracking-[0.3em]"
-          style={{ color: INK_SOFT, fontFamily: UI }}
-        >
-          Photos
+        <h3 className="text-[18px] font-extrabold" style={{ color: INK, fontFamily: GROTESK, letterSpacing: "-0.01em" }}>
+          photo dump 📷
         </h3>
         {visible.length > 0 && (
-          <span className="text-[12px]" style={{ color: INK_FAINT, fontFamily: SERIF }}>
+          <span className="text-[12px] font-semibold" style={{ color: INK_FAINT, fontFamily: GROTESK }}>
             {visible.length} of {MAX_PHOTOS}
           </span>
         )}
       </div>
 
       {visible.length > 0 && (
-        <ul className="mt-3 grid list-none grid-cols-3 gap-2 p-0">
+        <ul className="mt-4 grid list-none grid-cols-3 gap-3 p-1">
           {visible.map((url, i) => (
             <li
               key={`${i}-${url.slice(-24)}`}
-              className="relative overflow-hidden rounded-[3px]"
-              style={{ aspectRatio: "1 / 1", background: PAPER_EDGE, border: `1px solid ${PAPER_EDGE}` }}
+              className="relative overflow-hidden rounded-[14px]"
+              style={{
+                aspectRatio: "1 / 1",
+                background: PAPER_EDGE,
+                border: "4px solid #fff",
+                boxShadow: "0 8px 18px -10px rgba(36,31,27,.55)",
+                transform: `rotate(${[-2.5, 1.8, -1.2, 2.4, -1.8, 1.2][i % 6]}deg)`,
+              }}
             >
               {/* Local data URLs. next/image would want a loader and a domain. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -138,7 +141,7 @@ export default function PhotoStrip({ photos, onAddPhotos }: PhotoStripProps) {
                   color: INK,
                   background: "rgba(253,250,243,0.94)",
                   border: `1px solid ${PAPER_EDGE}`,
-                  fontFamily: UI,
+                  fontFamily: GROTESK,
                 }}
               >
                 &times;
@@ -163,25 +166,25 @@ export default function PhotoStrip({ photos, onAddPhotos }: PhotoStripProps) {
         type="button"
         disabled={busy || remaining === 0}
         onClick={() => inputRef.current?.click()}
-        className="mt-3 w-full rounded-[4px] px-5 text-[13px] font-semibold uppercase tracking-[0.22em] transition-transform active:scale-[0.985] disabled:opacity-55"
+        className="mt-4 w-full rounded-full px-5 text-[15px] font-bold transition-transform active:scale-[0.985] disabled:opacity-55"
         style={{
           minHeight: 52,
-          color: remaining === 0 ? INK_SOFT : ACCENT,
-          background: PAPER,
-          border: `1.5px solid ${remaining === 0 ? PAPER_EDGE : ACCENT}`,
-          fontFamily: UI,
+          color: remaining === 0 ? INK_SOFT : INK,
+          background: "#fff",
+          border: `2px dashed ${remaining === 0 ? PAPER_EDGE : ACCENT}`,
+          fontFamily: GROTESK,
         }}
       >
-        {busy ? "reading…" : remaining === 0 ? "that's twelve" : "add photos"}
+        {busy ? "reading…" : remaining === 0 ? "that's twelve" : "＋ add photos from tonight"}
       </button>
 
       {notice && (
-        <p className="mt-2 text-[12.5px] leading-[1.5]" style={{ color: INK_SOFT, fontFamily: SERIF }}>
+        <p className="mt-2 text-[12.5px] leading-[1.5]" style={{ color: INK_SOFT, fontFamily: GROTESK }}>
           {notice}
         </p>
       )}
 
-      <p className="mt-2 text-[12px] leading-[1.5]" style={{ color: INK_FAINT, fontFamily: SERIF }}>
+      <p className="mt-2 text-center text-[12px] leading-[1.5]" style={{ color: INK_FAINT, fontFamily: GROTESK }}>
         These stay on this device for now.
       </p>
     </section>

@@ -6,9 +6,9 @@
 // nothing else.
 //
 // This is the artefact that leaves the product: it lands in a camera roll and a
-// group chat, so it has to look like the invitation's own paper, finished. A
-// keepsake of a real evening — not a stats card. No badges, no gradients as
-// decoration, no emoji, no score panels.
+// group chat — and at 9:16 it is story-sized. It carries the night-sky look of
+// the redesign: the names big, the route as numbered stickers, the time
+// together on a candy strip.
 //
 // RULES, each of which has already cost a silently-wrong export once:
 //
@@ -18,14 +18,11 @@
 //    container and scales; the card itself is viewport-blind. The only things
 //    that change the card's internal metrics are the DATA (how many stops, how
 //    long the names are), which is identical for both of them.
-//  - Fonts: SERIF and MONO from `dateTheme` ONLY inside the captured node. Both
-//    are self-hosted with `display:"swap"`, so `await document.fonts.ready`
-//    inside `exportNodeToPng` genuinely waits for them. DISPLAY (Playfair) is
-//    registered `display:"optional"` — the browser is allowed to decline it
-//    outright, which would silently fall back and the PNG would not match the
-//    screen. So DISPLAY is not imported here at all, and neither is UI: the
-//    panel chrome around the card is deliberately outside the captured node,
-//    but it uses SERIF too so the whole block reads as one piece of paper.
+//  - Fonts: GROTESK and ITALIC from `dateTheme` ONLY inside the captured node.
+//    Both are self-hosted by next/font with `display:"swap"` (see fonts.ts), so
+//    `await document.fonts.ready` inside `exportNodeToPng` genuinely waits for
+//    them. DISPLAY (Playfair) is registered `display:"optional"` — the browser
+//    may decline it outright — so it is not imported here at all.
 //  - No <video> (serialises blank). No cross-origin <img> (taints the canvas
 //    and the whole export throws). Everything below is DOM, CSS and inline SVG.
 //  - No `Math.random()` anywhere in the render path — the ornament is fixed
@@ -47,14 +44,14 @@ import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
 
 import {
   ACCENT,
-  ACCENT_EDGE,
-  INK,
-  INK_FAINT,
+  GRAD,
+  GROTESK,
   INK_SOFT,
-  MONO,
-  PAPER,
-  PAPER_EDGE,
-  SERIF,
+  ITALIC,
+  LIME,
+  MOON,
+  NIGHT,
+  POP,
   TAP,
   fmtDateLong,
   fmtTime,
@@ -121,54 +118,6 @@ function nameSize(name: string): number {
   return 16;
 }
 
-// ─── Ornament (inline SVG line art — no fills, no gradients) ─────────────────
-
-/** One corner curl with a dot at the elbow. Rotated for the other three. */
-function CornerCurl({ rotate }: { rotate: number }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 22 22"
-      fill="none"
-      aria-hidden
-      style={{ display: "block", transform: `rotate(${rotate}deg)` }}
-    >
-      <path d="M0.6 21.4C0.6 10.1 10.1 0.6 21.4 0.6" stroke={INK_FAINT} strokeWidth="0.8" />
-      <path d="M5.6 21.4C5.6 12.9 12.9 5.6 21.4 5.6" stroke={PAPER_EDGE} strokeWidth="0.8" />
-      <circle cx="7.6" cy="7.6" r="1.15" fill={ACCENT} />
-    </svg>
-  );
-}
-
-/** A short rule broken by a hollow accent diamond. */
-function OrnamentRule({ width = 128 }: { width?: number }) {
-  const mid = width / 2;
-  return (
-    <svg width={width} height="9" viewBox={`0 0 ${width} 9`} fill="none" aria-hidden style={{ display: "block" }}>
-      <line x1="0" y1="4.5" x2={mid - 9} y2="4.5" stroke={PAPER_EDGE} strokeWidth="1" />
-      <line x1={mid + 9} y1="4.5" x2={width} y2="4.5" stroke={PAPER_EDGE} strokeWidth="1" />
-      <path
-        d={`M${mid} 1.2L${mid + 3.3} 4.5L${mid} 7.8L${mid - 3.3} 4.5Z`}
-        stroke={ACCENT}
-        strokeWidth="0.9"
-        fill="none"
-      />
-    </svg>
-  );
-}
-
-const EYEBROW: React.CSSProperties = {
-  fontFamily: SERIF,
-  fontSize: 8.5,
-  letterSpacing: "0.34em",
-  textTransform: "uppercase",
-  lineHeight: 1,
-  margin: 0,
-};
-
-// ─── The card ────────────────────────────────────────────────────────────────
-
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   { senderName, recipientName, dateLabel, routeNames, totalTime, closingLine, routeTimes },
   ref,
@@ -177,11 +126,10 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
   const n = stops.length;
 
   // Data-driven density so 1 stop and 6 stops both sit correctly in the same
-  // fixed box. Six two-line rows at these metrics measure 277px against 305px
-  // of available column, so nothing is ever clipped.
-  const rowGap = n <= 3 ? 20 : n <= 4 ? 15 : 11;
-  const stopSize = n <= 4 ? 15 : 14;
-  const stopCap = n <= 4 ? 62 : 56;
+  // fixed box.
+  const rowGap = n <= 3 ? 14 : n <= 4 ? 10 : 7;
+  const stopSize = n <= 4 ? 15 : 13.5;
+  const stopCap = n <= 4 ? 56 : 48;
 
   const sender = clampText(senderName || "—", 40);
   const recipient = clampText(recipientName || "—", 40);
@@ -197,97 +145,69 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
         boxSizing: "border-box",
         position: "relative",
         overflow: "hidden",
-        background: PAPER,
-        padding: "40px 34px 34px",
+        // Gradients only — no CSS filters, which some serialisers drop.
+        background: `radial-gradient(70% 45% at 0% 0%, rgba(255,79,139,.55), transparent 70%), radial-gradient(70% 45% at 100% 38%, rgba(181,155,255,.45), transparent 70%), radial-gradient(80% 40% at 30% 100%, rgba(255,154,60,.38), transparent 70%), ${NIGHT}`,
+        padding: "38px 30px 28px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         textAlign: "center",
-        fontFamily: SERIF,
-        color: INK,
+        fontFamily: GROTESK,
+        color: MOON,
       }}
     >
-      {/* Double frame + four corner curls. Line art only. */}
-      <span aria-hidden style={{ position: "absolute", inset: 14, border: `1px solid ${PAPER_EDGE}` }} />
-      <span aria-hidden style={{ position: "absolute", inset: 18, border: `1px solid ${ACCENT_EDGE}` }} />
-      <span aria-hidden style={{ position: "absolute", left: 23, top: 23 }}>
-        <CornerCurl rotate={0} />
-      </span>
-      <span aria-hidden style={{ position: "absolute", right: 23, top: 23 }}>
-        <CornerCurl rotate={90} />
-      </span>
-      <span aria-hidden style={{ position: "absolute", right: 23, bottom: 23 }}>
-        <CornerCurl rotate={180} />
-      </span>
-      <span aria-hidden style={{ position: "absolute", left: 23, bottom: 23 }}>
-        <CornerCurl rotate={270} />
-      </span>
+      {/* Stars: fixed positions, so the screen and the file always match. */}
+      {STARS.map(([x, y, r], i) => (
+        <span
+          key={i}
+          aria-hidden
+          style={{ position: "absolute", left: x, top: y, width: r, height: r, borderRadius: 99, background: "#fff", opacity: 0.55 }}
+        />
+      ))}
 
       {/* ── Head ─────────────────────────────────────────────────────────── */}
-      <p style={{ ...EYEBROW, color: INK_FAINT }}>The evening of</p>
-
-      <p
+      <span
         style={{
-          margin: "10px 0 0",
-          fontFamily: SERIF,
-          fontSize: 14.5,
-          lineHeight: 1.3,
-          letterSpacing: "0.02em",
-          color: INK,
+          display: "inline-block",
+          padding: "5px 12px",
+          borderRadius: 999,
+          background: LIME,
+          color: "#1a0d26",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+          transform: "rotate(-3deg)",
         }}
       >
+        date night ✓
+      </span>
+      <p style={{ margin: "12px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 17, lineHeight: 1.2, color: "rgba(255,246,251,.75)" }}>
         {dateLabel}
       </p>
 
-      <div style={{ marginTop: 14, width: "100%" }}>
-        <p
-          style={{
-            margin: 0,
-            fontFamily: SERIF,
-            fontSize: nameSize(sender),
-            lineHeight: 1.18,
-            color: INK,
-            ...lineClamp(2),
-          }}
-        >
+      <div style={{ marginTop: 10, width: "100%" }}>
+        <p style={{ margin: 0, fontSize: nameSize(sender) + 8, fontWeight: 800, lineHeight: 1.02, letterSpacing: "-0.035em", ...lineClamp(2) }}>
           {sender}
         </p>
-        <p
-          style={{
-            margin: "3px 0",
-            fontFamily: SERIF,
-            fontSize: 15,
-            fontStyle: "italic",
-            lineHeight: 1,
-            color: ACCENT,
-          }}
-        >
-          &amp;
-        </p>
-        <p
-          style={{
-            margin: 0,
-            fontFamily: SERIF,
-            fontSize: nameSize(recipient),
-            lineHeight: 1.18,
-            color: INK,
-            ...lineClamp(2),
-          }}
-        >
+        <p style={{ margin: "2px 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 26, lineHeight: 1, color: POP }}>&amp;</p>
+        <p style={{ margin: 0, fontSize: nameSize(recipient) + 8, fontWeight: 800, lineHeight: 1.02, letterSpacing: "-0.035em", ...lineClamp(2) }}>
           {recipient}
         </p>
-      </div>
-
-      <div style={{ marginTop: 16, marginBottom: 16 }}>
-        <OrnamentRule />
       </div>
 
       {/* ── The route ────────────────────────────────────────────────────── */}
       <div
         style={{
+          marginTop: 18,
           flex: 1,
           minHeight: 0,
           width: "100%",
+          boxSizing: "border-box",
+          borderRadius: 22,
+          background: "rgba(255,255,255,.08)",
+          border: "1px solid rgba(255,255,255,.16)",
+          padding: "16px 16px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -296,17 +216,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
         }}
       >
         {n === 0 ? (
-          <p
-            style={{
-              margin: 0,
-              textAlign: "center",
-              fontFamily: SERIF,
-              fontStyle: "italic",
-              fontSize: 13,
-              lineHeight: 1.6,
-              color: INK_SOFT,
-            }}
-          >
+          <p style={{ margin: 0, textAlign: "center", fontFamily: ITALIC, fontStyle: "italic", fontSize: 16, lineHeight: 1.5, color: "rgba(255,246,251,.75)" }}>
             The whole evening, start to finish.
           </p>
         ) : (
@@ -314,67 +224,35 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
             const last = i === n - 1;
             const time = (routeTimes?.[i] || "").trim();
             return (
-              <div
-                key={`${i}-${name}`}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  paddingBottom: last ? 0 : rowGap,
-                  position: "relative",
-                }}
-              >
-                {/* Node column: the thin vertical rule passes behind the dot. */}
-                <div style={{ width: 18, flexShrink: 0, alignSelf: "stretch", position: "relative" }}>
+              <div key={`${i}-${name}`} style={{ display: "flex", alignItems: "flex-start", paddingBottom: last ? 0 : rowGap, position: "relative" }}>
+                <div style={{ width: 30, flexShrink: 0, alignSelf: "stretch", position: "relative" }}>
                   {!last && (
-                    <span
-                      aria-hidden
-                      style={{ position: "absolute", left: 3.5, top: 15, bottom: -5, width: 1, background: PAPER_EDGE }}
-                    />
+                    <span aria-hidden style={{ position: "absolute", left: 10, top: 22, bottom: -2, width: 2, background: "rgba(216,255,92,.45)" }} />
                   )}
                   <span
-                    aria-hidden
                     style={{
                       position: "absolute",
                       left: 0,
-                      top: 5,
-                      width: 8,
-                      height: 8,
+                      top: 0,
+                      width: 22,
+                      height: 22,
                       borderRadius: 999,
-                      background: ACCENT,
-                      boxShadow: `0 0 0 3px ${PAPER}`,
-                    }}
-                  />
-                </div>
-
-                <p
-                  style={{
-                    margin: 0,
-                    flex: 1,
-                    minWidth: 0,
-                    fontFamily: SERIF,
-                    fontSize: stopSize,
-                    lineHeight: 1.32,
-                    color: INK,
-                    ...lineClamp(2),
-                  }}
-                >
-                  {clampText(name, stopCap)}
-                </p>
-
-                {time && (
-                  <span
-                    style={{
-                      marginLeft: 10,
-                      flexShrink: 0,
-                      paddingTop: 3,
-                      fontFamily: MONO,
-                      fontSize: 10,
-                      lineHeight: 1.3,
-                      letterSpacing: "0.01em",
-                      color: INK_SOFT,
-                      whiteSpace: "nowrap",
+                      background: LIME,
+                      color: "#1a0d26",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      lineHeight: "22px",
+                      textAlign: "center",
                     }}
                   >
+                    {i + 1}
+                  </span>
+                </div>
+                <p style={{ margin: 0, flex: 1, minWidth: 0, fontSize: stopSize, fontWeight: 700, lineHeight: 1.3, paddingTop: 2, ...lineClamp(2) }}>
+                  {clampText(name, stopCap)}
+                </p>
+                {time && (
+                  <span style={{ marginLeft: 8, flexShrink: 0, paddingTop: 4, fontSize: 10.5, fontWeight: 600, color: "rgba(255,246,251,.6)", whiteSpace: "nowrap" }}>
                     {time}
                   </span>
                 )}
@@ -385,45 +263,54 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function ShareCard(
       </div>
 
       {/* ── Foot ─────────────────────────────────────────────────────────── */}
-      <span
-        aria-hidden
-        style={{ width: "100%", height: 1, background: PAPER_EDGE, marginTop: 16, marginBottom: 14, flexShrink: 0 }}
-      />
-
-      <p style={{ ...EYEBROW, color: INK_SOFT }}>Time together</p>
-      <p
+      <div
         style={{
-          margin: "6px 0 0",
-          fontFamily: SERIF,
-          fontSize: 23,
-          lineHeight: 1.15,
-          color: INK,
+          marginTop: 16,
+          width: "100%",
+          boxSizing: "border-box",
+          borderRadius: 20,
+          background: GRAD,
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
         }}
       >
-        {totalTime}
-      </p>
+        <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>time together</span>
+        <span style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>{totalTime}</span>
+      </div>
 
       {closing && (
         <p
           style={{
             margin: "14px 0 0",
-            maxWidth: 288,
-            fontFamily: SERIF,
+            maxWidth: 320,
+            fontFamily: ITALIC,
             fontStyle: "italic",
-            fontSize: 12.5,
-            lineHeight: 1.55,
-            color: INK_SOFT,
+            fontSize: 16,
+            lineHeight: 1.35,
+            color: MOON,
+            flexShrink: 0,
             ...lineClamp(3),
           }}
         >
-          {closing}
+          &ldquo;{closing}&rdquo;
         </p>
       )}
 
-      <p style={{ ...EYEBROW, color: INK_FAINT, marginTop: "auto", paddingTop: 16 }}>SubhSandesh</p>
+      <p style={{ margin: "auto 0 0", paddingTop: 12, fontSize: 10, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,246,251,.45)" }}>
+        made on subhsandesh
+      </p>
     </div>
   );
 });
+
+/** Fixed star field for the card: [left, top, size]. */
+const STARS: [number, number, number][] = [
+  [30, 60, 2], [360, 40, 1.5], [300, 120, 2], [60, 200, 1.5], [380, 260, 2], [20, 420, 1.5],
+  [370, 470, 1.5], [200, 20, 1.5], [120, 110, 1], [250, 300, 1], [90, 600, 1.5], [340, 640, 2],
+];
 
 export default ShareCard;
 
@@ -503,7 +390,7 @@ export function ShareCardPanel({
       width: SHARE_W,
       height: SHARE_H,
       filename: `the-invitation-${fileSlug(data.recipientName, "evening")}`,
-      backgroundColor: PAPER,
+      backgroundColor: NIGHT,
       pixelRatio: 3,
     });
     setBusy(false);
@@ -511,7 +398,7 @@ export function ShareCardPanel({
   }, [data.recipientName]);
 
   return (
-    <div style={{ width: "100%", fontFamily: SERIF }}>
+    <div style={{ width: "100%", fontFamily: GROTESK }}>
       {/* Measured box. `overflow: hidden` guards the first paint, before the
           layout effect has had a chance to measure. */}
       <div ref={boxRef} style={{ width: "100%", overflow: "hidden" }}>
@@ -524,7 +411,9 @@ export function ShareCardPanel({
             height: SHARE_H * scale,
             margin: "0 auto",
             position: "relative",
-            boxShadow: "0 18px 44px -22px rgba(58,44,32,0.34), 0 2px 6px rgba(58,44,32,0.06)",
+            borderRadius: 18 * scale,
+            overflow: "hidden",
+            boxShadow: "0 24px 50px -24px rgba(18,8,31,.7)",
           }}
         >
           <div
@@ -559,24 +448,25 @@ export function ShareCardPanel({
           type="button"
           onClick={handleSave}
           disabled={busy}
+          className="di-cta"
           style={{
-            minHeight: TAP,
+            minHeight: 54,
             minWidth: TAP,
-            padding: "0 26px",
-            border: `1px solid ${ACCENT_EDGE}`,
-            borderRadius: 3,
-            background: PAPER,
-            color: ACCENT,
-            fontFamily: SERIF,
-            fontSize: 13.5,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
+            padding: "0 28px",
+            border: "none",
+            borderRadius: 999,
+            background: GRAD,
+            color: "#fff",
+            fontFamily: GROTESK,
+            fontSize: 16,
+            fontWeight: 800,
             cursor: busy ? "default" : "pointer",
             opacity: busy ? 0.65 : 1,
+            boxShadow: "0 14px 30px -14px rgba(255,79,139,.9)",
             WebkitTapHighlightColor: "transparent",
           }}
         >
-          {busy ? "[ saving… ]" : "[ save the card ]"}
+          {busy ? "saving…" : "save the card ⬇️"}
         </button>
 
         {/* Non-blocking, inline. A failed export degrades to "take a
@@ -587,8 +477,8 @@ export function ShareCardPanel({
           style={{
             margin: "10px 0 0",
             minHeight: 16,
-            fontFamily: SERIF,
-            fontSize: 12,
+            fontFamily: GROTESK,
+            fontSize: 12.5,
             lineHeight: 1.35,
             textAlign: "center",
             color: result && !result.ok ? ACCENT : INK_SOFT,
