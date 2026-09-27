@@ -51,6 +51,11 @@ export interface InvitationCardProps {
   /** `isoDate` is the counter-proposal, ISO 8601. Moves to the reschedule phase. */
   onReschedule: (isoDate: string) => void;
   reduceMotion: boolean;
+  /**
+   * "guest" — the recipient, who answers. "host" — the sender opening their
+   * own link, who waits. "demo" — the preview, which behaves like the guest.
+   */
+  viewer: "guest" | "host" | "demo";
 }
 
 /** Long enough for the hearts to land; never shorter than the frozen seal time. */
@@ -150,6 +155,7 @@ export default function InvitationCard({
   onDecline,
   onReschedule,
   reduceMotion,
+  viewer,
 }: InvitationCardProps) {
   // The yes is a one-shot. `stamping` latches true and never goes back.
   const [stamping, setStamping] = useState(false);
@@ -484,95 +490,129 @@ export default function InvitationCard({
 
         {/* ── The stub: the answer ─────────────────────────────────────────── */}
         <section className="di-stub">
-          <Eyebrow color={MOON_FAINT}>rsvp · tap one</Eyebrow>
-          <p style={{ margin: "8px 0 18px", fontFamily: GROTESK, fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-            so&hellip; are you in? <span className={reduceMotion ? "" : "di-float"} style={{ display: "inline-block" }}>👀</span>
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <CandyButton onClick={handleAccept} disabled={busy} ariaLabel="Accept">
-              yes, I&rsquo;m in <span aria-hidden>💘</span>
-            </CandyButton>
-
-            <GhostButton
-              onClick={picking ? () => setPicking(false) : openPicker}
-              disabled={busy}
-              ariaExpanded={picking}
-              ariaLabel="Suggest another day"
-            >
-              <span aria-hidden>📅</span> can we do another day?
-            </GhostButton>
-
-            {picking && (
+          {viewer === "host" ? (
+            <div>
+              <Eyebrow color={MOON_FAINT}>host view · only you see this</Eyebrow>
+              <p style={{ margin: "8px 0 12px", fontFamily: GROTESK, fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                waiting for {view.recipientName} to answer{" "}
+                <span className={reduceMotion ? "" : "di-float"} style={{ display: "inline-block" }}>👀</span>
+              </p>
+              <p style={{ margin: 0, fontFamily: GROTESK, fontSize: 14.5, lineHeight: 1.55, color: MOON_SOFT }}>
+                Only {view.recipientName} can say yes. The moment they do, this page flips to the countdown and we&rsquo;ll email you. 💌
+              </p>
               <div
-                className={reduceMotion ? "" : "di-pop-in"}
                 style={{
-                  borderRadius: 20,
-                  background: "rgba(255,255,255,.07)",
-                  border: "1px solid rgba(255,255,255,.16)",
-                  padding: 14,
+                  marginTop: 16,
                   display: "flex",
-                  flexDirection: "column",
+                  alignItems: "center",
                   gap: 10,
+                  padding: "12px 14px",
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,.07)",
+                  border: "1px dashed rgba(255,255,255,.22)",
+                  fontFamily: GROTESK,
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  color: MOON,
                 }}
               >
-                <label htmlFor="di-reschedule-date">
-                  <Eyebrow color={MOON_FAINT}>a day that works</Eyebrow>
-                </label>
-                {/* Native picker. No date library — the OS one is better on a phone. */}
-                <input
-                  id="di-reschedule-date"
-                  type="date"
-                  value={pick}
-                  min={minDate || undefined}
-                  onChange={(e) => setPick(e.target.value)}
-                  style={{
-                    minHeight: TAP,
-                    width: "100%",
-                    padding: "10px 14px",
-                    background: PAPER,
-                    color: INK,
-                    border: "none",
-                    borderRadius: 14,
-                    fontFamily: GROTESK,
-                    fontWeight: 700,
-                    fontSize: 16,
-                    colorScheme: "light",
-                  }}
-                />
-                <p style={{ margin: 0, fontFamily: GROTESK, fontSize: 13, lineHeight: 1.5, color: MOON_SOFT }}>
-                  Same time{timeText ? <> ({timeText})</> : null}. {view.senderName} gets the suggestion.
-                </p>
-                <CandyButton onClick={confirmReschedule} disabled={!pick} ariaLabel="Send this day" style={{ minHeight: 50, fontSize: 15 }}>
-                  send this day <span aria-hidden>✈️</span>
-                </CandyButton>
+                <span className={reduceMotion ? "" : "di-live-dot"} style={{ width: 9, height: 9, borderRadius: "50%", background: "#ff4f8b", flexShrink: 0 }} />
+                live — checking for an answer every few seconds
               </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleDecline}
-              disabled={busy}
-              aria-label="Not this time"
-              className="di-ghost"
-              style={{
-                minHeight: TAP,
-                width: "100%",
-                background: "transparent",
-                border: "none",
-                borderRadius: 999,
-                color: MOON_FAINT,
-                fontFamily: GROTESK,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: busy ? "default" : "pointer",
-                textDecoration: "underline",
-                textUnderlineOffset: 4,
-              }}
-            >
-              not this time
-            </button>
-          </div>
+            </div>
+          ) : (
+            <>
+          <Eyebrow color={MOON_FAINT}>rsvp · tap one</Eyebrow>
+            <p style={{ margin: "8px 0 18px", fontFamily: GROTESK, fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+              so&hellip; are you in? <span className={reduceMotion ? "" : "di-float"} style={{ display: "inline-block" }}>👀</span>
+            </p>
+  
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <CandyButton onClick={handleAccept} disabled={busy} ariaLabel="Accept">
+                yes, I&rsquo;m in <span aria-hidden>💘</span>
+              </CandyButton>
+  
+              <GhostButton
+                onClick={picking ? () => setPicking(false) : openPicker}
+                disabled={busy}
+                ariaExpanded={picking}
+                ariaLabel="Suggest another day"
+              >
+                <span aria-hidden>📅</span> can we do another day?
+              </GhostButton>
+  
+              {picking && (
+                <div
+                  className={reduceMotion ? "" : "di-pop-in"}
+                  style={{
+                    borderRadius: 20,
+                    background: "rgba(255,255,255,.07)",
+                    border: "1px solid rgba(255,255,255,.16)",
+                    padding: 14,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  <label htmlFor="di-reschedule-date">
+                    <Eyebrow color={MOON_FAINT}>a day that works</Eyebrow>
+                  </label>
+                  {/* Native picker. No date library — the OS one is better on a phone. */}
+                  <input
+                    id="di-reschedule-date"
+                    type="date"
+                    value={pick}
+                    min={minDate || undefined}
+                    onChange={(e) => setPick(e.target.value)}
+                    style={{
+                      minHeight: TAP,
+                      width: "100%",
+                      padding: "10px 14px",
+                      background: PAPER,
+                      color: INK,
+                      border: "none",
+                      borderRadius: 14,
+                      fontFamily: GROTESK,
+                      fontWeight: 700,
+                      fontSize: 16,
+                      colorScheme: "light",
+                    }}
+                  />
+                  <p style={{ margin: 0, fontFamily: GROTESK, fontSize: 13, lineHeight: 1.5, color: MOON_SOFT }}>
+                    Same time{timeText ? <> ({timeText})</> : null}. {view.senderName} gets the suggestion.
+                  </p>
+                  <CandyButton onClick={confirmReschedule} disabled={!pick} ariaLabel="Send this day" style={{ minHeight: 50, fontSize: 15 }}>
+                    send this day <span aria-hidden>✈️</span>
+                  </CandyButton>
+                </div>
+              )}
+  
+              <button
+                type="button"
+                onClick={handleDecline}
+                disabled={busy}
+                aria-label="Not this time"
+                className="di-ghost"
+                style={{
+                  minHeight: TAP,
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: 999,
+                  color: MOON_FAINT,
+                  fontFamily: GROTESK,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: busy ? "default" : "pointer",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 4,
+                }}
+              >
+                not this time
+              </button>
+            </div>
+            </>
+          )}
 
           {/* Barcode, because every good ticket has one. */}
           <div aria-hidden style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, opacity: 0.55 }}>
