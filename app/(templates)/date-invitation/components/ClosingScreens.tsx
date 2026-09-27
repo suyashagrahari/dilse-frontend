@@ -20,105 +20,85 @@
 
 import type { ReactNode } from "react";
 
-import { CornerFlourishes, Rule } from "./Ornaments";
-import {
-  ACCENT,
-  CARD_MAX_W,
-  CARD_RADIUS,
-  CARD_SHADOW,
-  DISPLAY,
-  INK,
-  INK_SOFT,
-  PAPER,
-  PAPER_EDGE,
-  SERIF,
-  fmtDateLong,
-} from "./dateTheme";
+import { GRAD, GROTESK, ITALIC, MOON, MOON_SOFT, fmtDateLong } from "./dateTheme";
+import { Eyebrow, Glass } from "./NightKit";
 import type { InviteHeaderView } from "./viewModel";
 
 /**
- * The shared paper. One shell, three screens, so a closing screen can never
- * drift out of the same physical stock as the invitation it followed.
+ * The shared shell. One frosted card on the same night sky, three screens, so
+ * a closing screen never drifts out of the world of the invitation.
  */
 function ClosingCard({
   eyebrow,
   headline,
+  emoji,
   children,
   label,
 }: {
-  /** Small letter-spaced caps above the headline. Quiet by default. */
   eyebrow: string;
   headline: string;
+  emoji: string;
   children: ReactNode;
   label: string;
 }) {
   return (
-    <div className="flex min-h-[100dvh] w-full items-center justify-center px-4 py-12" style={{ background: PAPER }}>
-      <article
-        aria-label={label}
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: CARD_MAX_W,
-          background: PAPER,
-          border: `1px solid ${PAPER_EDGE}`,
-          borderRadius: CARD_RADIUS,
-          boxShadow: CARD_SHADOW,
-          padding: "40px 24px 38px",
-          textAlign: "center",
-        }}
-      >
-        <CornerFlourishes inset={9} size={30} />
-
-        <p
-          style={{
-            margin: 0,
-            fontFamily: DISPLAY,
-            fontSize: 10.5,
-            letterSpacing: "0.36em",
-            textIndent: "0.36em",
-            textTransform: "uppercase",
-            color: INK_SOFT,
-          }}
-        >
-          {eyebrow}
-        </p>
-
-        <h1
-          style={{
-            margin: "12px 0 0",
-            fontFamily: DISPLAY,
-            fontSize: "clamp(26px, 8vw, 34px)",
-            fontWeight: 500,
-            lineHeight: 1.18,
-            color: INK,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {headline}
-        </h1>
-
-        <div style={{ margin: "22px 0 20px" }}>
-          <Rule width={80} />
-        </div>
-
-        {children}
-      </article>
+    <div
+      className="relative z-[1] flex min-h-[100dvh] w-full items-center justify-center px-4"
+      style={{ paddingTop: 96, paddingBottom: 96 }}
+    >
+      <Glass style={{ width: "100%", maxWidth: 480, padding: "40px 26px 34px", textAlign: "center", borderRadius: 30 }}>
+        <article aria-label={label}>
+          <span
+            aria-hidden
+            className="di-float"
+            style={{
+              display: "inline-grid",
+              placeItems: "center",
+              width: 68,
+              height: 68,
+              borderRadius: 22,
+              background: GRAD,
+              fontSize: 32,
+              transform: "rotate(-6deg)",
+              boxShadow: "0 18px 36px -16px rgba(255,79,139,.9)",
+            }}
+          >
+            {emoji}
+          </span>
+          <Eyebrow style={{ marginTop: 22 }}>{eyebrow}</Eyebrow>
+          <h1
+            style={{
+              margin: "10px 0 18px",
+              fontFamily: GROTESK,
+              fontWeight: 800,
+              fontSize: "clamp(32px, 9vw, 46px)",
+              lineHeight: 1.02,
+              letterSpacing: "-0.035em",
+              color: MOON,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {headline}
+          </h1>
+          {children}
+        </article>
+      </Glass>
     </div>
   );
 }
 
-/** Body copy. SERIF, generous line height, centred, readable at arm's length. */
+/** Body copy on the sky. */
 function Line({ children, soft = false, italic = false }: { children: ReactNode; soft?: boolean; italic?: boolean }) {
   return (
     <p
       style={{
-        margin: "0 0 12px",
-        fontFamily: SERIF,
+        margin: "0 0 10px",
+        fontFamily: italic ? ITALIC : GROTESK,
         fontStyle: italic ? "italic" : "normal",
-        fontSize: soft ? 15 : 16.5,
-        lineHeight: 1.68,
-        color: soft ? INK_SOFT : INK,
+        fontSize: italic ? 20 : 16,
+        fontWeight: italic ? 400 : 500,
+        lineHeight: 1.55,
+        color: soft ? MOON_SOFT : MOON,
       }}
     >
       {children}
@@ -134,7 +114,7 @@ function Line({ children, soft = false, italic = false }: { children: ReactNode;
  */
 export function DeclinedScreen({ view }: { view: InviteHeaderView }) {
   return (
-    <ClosingCard eyebrow="Answered" headline={view.recipientName} label="Your answer">
+    <ClosingCard eyebrow="answered" emoji="🌙" headline={view.recipientName} label="Your answer">
       <Line>Thank you for answering. That&rsquo;s all this page needed.</Line>
       <Line soft italic>
         Nothing is pending. Take care of yourself.
@@ -162,7 +142,8 @@ export function RescheduleScreen({
 
   return (
     <ClosingCard
-      eyebrow="Sent"
+      eyebrow="sent ✈️"
+      emoji="📅"
       headline={when || "A different day"}
       label={`A different day suggested to ${view.senderName}`}
     >
@@ -174,7 +155,7 @@ export function RescheduleScreen({
         )}
       </Line>
       <Line>
-        Waiting for <span style={{ color: ACCENT }}>{view.senderName}</span> to confirm.
+        Waiting for <span style={{ color: "#ffb3cc", fontWeight: 700 }}>{view.senderName}</span> to confirm.
       </Line>
       <Line soft italic>
         No rush on either side.
@@ -190,7 +171,7 @@ export function ExpiredScreen({ view }: { view: InviteHeaderView }) {
   const when = fmtDateLong(view.startsAt);
 
   return (
-    <ClosingCard eyebrow="From" headline={view.senderName} label="This invitation has passed">
+    <ClosingCard eyebrow="from" emoji="🕰️" headline={view.senderName} label="This invitation has passed">
       <Line>This one passed.</Line>
       <Line soft>
         {when ? <>The invitation was for {when}.</> : <>The day it was for has already gone by.</>}

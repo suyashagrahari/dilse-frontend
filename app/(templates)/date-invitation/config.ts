@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "An invitation they have to answer. Say yes and it becomes a countdown — then, on the day, the plan unlocks one stop at a time while you're actually out.",
   coverImage:
-    templateMedia("date-invitation", "cover.jpg"),
+    templateMedia("date-invitation", "cover-v2.webp"),
   emoji: "💌",
   color: "from-rose-400 to-amber-500",
   previewText: "you are invited. location: you'll find out 💌",
