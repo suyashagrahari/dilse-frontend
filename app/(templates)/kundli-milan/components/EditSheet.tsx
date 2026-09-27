@@ -219,7 +219,7 @@ function EditSheetInner({
                   data={mf}
                   update={(k, v) => updateMf(k, v)}
                   gifTags={["love", "yes", "funny"]}
-                  copy={{ letterTitle: "Your love letter", letterNote: "Opens from a sealed envelope on the report", letterHint: "Ananya,\n\nThe stars gave us 34 out of 36. I would have argued for 36…\n\n— Rohan" }}
+                  copy={{ letterTitle: "Your love letter", letterNote: "Opens from a sealed envelope on the report", lockQuestion: "Ananya, do you accept the stars' decision? 🔮", lockAnswer: "I accept 💖", letterHint: "Ananya,\n\nThe stars gave us 34 out of 36. I would have argued for 36…\n\n— Rohan" }}
                 />
 
                 <Section emoji="🙏" title="Pandit ji's funny bits" note="All optional — blanks use our lines" />

@@ -24,6 +24,10 @@ export interface LoveKitData {
   letter: string;
   /** A theme id from the template's own theme list; "" = the default. */
   theme: string;
+  /** The question that unlocks the main letter; "" = the template's default. */
+  lockQuestion: string;
+  /** The label of the button that answers it; "" = the template's default. */
+  lockAnswer: string;
 }
 
 export const MAX_PHOTOS = 8;
@@ -31,8 +35,10 @@ export const MAX_GIFS = 3;
 export const MAX_CAPTION_LEN = 60;
 export const MAX_NOTE_LEN = 400;
 export const MAX_LETTER_LEN = 1500;
+export const MAX_LOCK_QUESTION_LEN = 140;
+export const MAX_LOCK_ANSWER_LEN = 40;
 
-export const LOVE_KIT_KEYS = ["photos", "gifs", "letter", "theme"] as const;
+export const LOVE_KIT_KEYS = ["photos", "gifs", "letter", "theme", "lockQuestion", "lockAnswer"] as const;
 
 const CDN = "https://cdn.subhsandesh.in/gifts-media";
 export const DEMO_PHOTO_CDN = `${CDN}/assets`;
@@ -127,5 +133,7 @@ export function parseLoveKit(src: Record<string, unknown>, demo: LoveKitData, th
     gifs: parseLoveGifs(src.gifs, demo.gifs),
     letter: parseLoveLetter(src.letter, demo.letter),
     theme: parseTheme(src.theme, themeIds, demo.theme),
+    lockQuestion: typeof src.lockQuestion === "string" ? src.lockQuestion.slice(0, MAX_LOCK_QUESTION_LEN) : demo.lockQuestion,
+    lockAnswer: typeof src.lockAnswer === "string" ? src.lockAnswer.slice(0, MAX_LOCK_ANSWER_LEN) : demo.lockAnswer,
   };
 }

@@ -80,6 +80,10 @@ export interface NoticeData {
   letter: string;
   /** Colour theme id — one of LEGAL_THEMES. */
   theme: string;
+  /** The question that unlocks the letter ("" = our default). */
+  lockQuestion: string;
+  /** The answer button's label ("" = our default). */
+  lockAnswer: string;
 }
 
 // ─── Formatting helpers — the house style IS the realism ─────────────────────
@@ -337,6 +341,8 @@ export const DEMO_DATA: NoticeData = {
   letter:
     "Rohan,\n\nOff the record — and my advocate has advised me against this — none of these demands are actually why I'm sending this.\n\nI'm sending it because you're the only person I'd bother drafting four recitals for. The hoodie can stay. (It cannot. Return it.)\n\nCase adjourned until our next date. Which you are planning.\n\n— Ananya",
   theme: "nightcourt",
+  lockQuestion: "",
+  lockAnswer: "",
 };
 
 // ─── Wire mapping ────────────────────────────────────────────────────────────
@@ -370,6 +376,8 @@ export function legalNoticeDataToBody(data: NoticeData, password?: string): Reco
     gifs: data.gifs,
     letter: data.letter,
     theme: data.theme,
+    lockQuestion: data.lockQuestion,
+    lockAnswer: data.lockAnswer,
   };
   if (password !== undefined) body.password = password;
   return body;

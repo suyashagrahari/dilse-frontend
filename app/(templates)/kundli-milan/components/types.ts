@@ -68,6 +68,10 @@ export interface KundliData {
   letter: string;
   /** Colour theme id — one of KUNDLI_THEMES. */
   theme: string;
+  /** The question that unlocks the letter ("" = our default). */
+  lockQuestion: string;
+  /** The answer button's label ("" = our default). */
+  lockAnswer: string;
 }
 
 /** Same shape as the Dedication photo, so its framing tools work unchanged. */
@@ -437,13 +441,15 @@ export const DEMO_DATA: KundliData = {
   letter:
     "Ananya,\n\nThe stars gave us a ridiculous score. Honestly, I would have argued for full marks.\n\nI knew it on the auto ride back from Marine Drive, when you fell asleep on my shoulder mid-sentence and I didn't move for forty minutes.\n\nNo kundli needed. Just you, every single day.\n\n— Rohan",
   theme: "cosmic",
+  lockQuestion: "",
+  lockAnswer: "",
 };
 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 export const KUNDLI_MILAN_CONTENT_KEYS: (keyof KundliData)[] = [
   "groom", "bride", "issuedOn", "customReadings", "remedies", "astrologerName",
-  "photos", "gifs", "letter", "theme",
+  "photos", "gifs", "letter", "theme", "lockQuestion", "lockAnswer",
 ];
 
 export function kundliMilanDataToBody(data: KundliData, password?: string): Record<string, unknown> {

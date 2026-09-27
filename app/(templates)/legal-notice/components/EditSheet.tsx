@@ -257,6 +257,8 @@ function EditSheetInner({
                     letterTitle: "Off-the-record letter",
                     letterNote: "The real message under all the legalese. It opens from a sealed envelope.",
                     letterHint: "Off the record — none of these demands are actually why I'm sending this…",
+                    lockQuestion: "Rohan, do you accept these terms and conditions? ⚖️",
+                    lockAnswer: "I accept, counsel 💖",
                   }}
                 />
 

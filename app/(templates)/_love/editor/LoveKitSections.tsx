@@ -10,7 +10,7 @@
 import type { ReactNode } from "react";
 
 import type { LoveTheme } from "../theme";
-import { MAX_LETTER_LEN, type GifTag, type LoveKitData } from "../types";
+import { MAX_LETTER_LEN, MAX_LOCK_ANSWER_LEN, MAX_LOCK_QUESTION_LEN, type GifTag, type LoveKitData } from "../types";
 import GifPicker from "./GifPicker";
 import PhotosEditor from "./PhotosEditor";
 import ThemePicker from "./ThemePicker";
@@ -61,6 +61,9 @@ export function MemoriesSections({
     letterTitle?: string;
     letterNote?: string;
     letterHint?: string;
+    /** The template's default lock question / answer, shown as placeholders. */
+    lockQuestion?: string;
+    lockAnswer?: string;
   };
 }) {
   return (
@@ -77,7 +80,7 @@ export function MemoriesSections({
         <GifPicker gifs={data.gifs} onChange={(v) => update("gifs", v)} tags={gifTags} />
       </FormSection>
 
-      <FormSection emoji="💌" title={copy.letterTitle ?? "Your main letter"} note={copy.letterNote ?? "The big one. It opens from a sealed envelope."}>
+      <FormSection emoji="💌" title={copy.letterTitle ?? "Your main letter"} note={copy.letterNote ?? "The big one — locked in an envelope until they answer your question."}>
         <textarea
           value={data.letter}
           onChange={(e) => update("letter", e.target.value.slice(0, MAX_LETTER_LEN))}
@@ -90,6 +93,28 @@ export function MemoriesSections({
         <p className="text-right text-[10px] text-muted-foreground tabular-nums -mt-2">
           {data.letter.length}/{MAX_LETTER_LEN}
         </p>
+        <div className="rounded-2xl border border-border/60 bg-muted/20 p-3.5 space-y-2.5">
+          <p className="text-[13px] font-bold">🔒 Lock it with a question</p>
+          <p className="text-[11.5px] text-muted-foreground -mt-1.5 leading-snug">
+            They have to answer before the envelope opens. The &ldquo;no&rdquo; button runs away 😈
+          </p>
+          <input
+            value={data.lockQuestion}
+            onChange={(e) => update("lockQuestion", e.target.value.slice(0, MAX_LOCK_QUESTION_LEN))}
+            placeholder={copy.lockQuestion ?? "Promise you'll read this with a smile?"}
+            aria-label="Lock question"
+            className="w-full px-3 py-2.5 rounded-xl bg-background border border-border/60 focus:outline-none"
+            style={{ fontSize: 16 }}
+          />
+          <input
+            value={data.lockAnswer}
+            onChange={(e) => update("lockAnswer", e.target.value.slice(0, MAX_LOCK_ANSWER_LEN))}
+            placeholder={copy.lockAnswer ?? "yes, obviously 💖"}
+            aria-label="Answer button"
+            className="w-full px-3 py-2.5 rounded-xl bg-background border border-border/60 focus:outline-none"
+            style={{ fontSize: 16 }}
+          />
+        </div>
       </FormSection>
     </>
   );
