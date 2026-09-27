@@ -506,7 +506,7 @@ function Served({ data, onOpen, reduced, live }: { data: NoticeData; onOpen: () 
       <h1 style={{ margin: "28px 0 0", fontWeight: 800, fontSize: "clamp(40px, 11vw, 76px)", lineHeight: 0.95, letterSpacing: "-0.045em" }}>
         you&apos;ve been
         <br />
-        <GradText>served 💌</GradText>
+        <GradText>served</GradText> <span aria-hidden>💌</span>
       </h1>
       <p style={{ margin: "12px 0 0", maxWidth: 380, fontSize: 15, lineHeight: 1.5, color: V.soft }}>
         In the matter of one (1) relationship. You are called upon to respond to each demand. Resistance is cute but futile.
