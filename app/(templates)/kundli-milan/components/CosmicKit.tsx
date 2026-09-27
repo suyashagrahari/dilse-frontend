@@ -137,8 +137,8 @@ export function ZodiacRing({
   return (
     <div style={{ position: "relative", width: size, height: size }}>
       <svg viewBox="0 0 100 100" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} aria-hidden>
-        <circle cx="50" cy="50" r="49" fill="none" stroke={stroke} strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="40" fill="none" stroke={stroke} strokeWidth="0.35" strokeDasharray="1 2" />
+        <circle cx="50" cy="50" r="49" fill="none" style={{ stroke }} strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="40" fill="none" style={{ stroke }} strokeWidth="0.35" strokeDasharray="1 2" />
         {ZODIAC.map((_, i) => {
           const a = (i / 12) * Math.PI * 2;
           return (
@@ -148,7 +148,7 @@ export function ZodiacRing({
               y1={r3(50 + Math.sin(a) * 40)}
               x2={r3(50 + Math.cos(a) * 49)}
               y2={r3(50 + Math.sin(a) * 49)}
-              stroke={stroke}
+              style={{ stroke }}
               strokeWidth="0.35"
             />
           );
@@ -204,7 +204,7 @@ export function PhotoOrb({
         borderRadius: "50%",
         overflow: "hidden",
         border: `3px solid ${ring}`,
-        background: "linear-gradient(135deg,#ff4f8b,#7c5cff)",
+        background: "linear-gradient(135deg, var(--lv-a1, #ff4f8b), var(--lv-a2, #7c5cff))",
         boxShadow: "0 18px 40px -16px rgba(0,0,0,.8)",
         flexShrink: 0,
       }}

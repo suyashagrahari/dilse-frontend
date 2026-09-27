@@ -68,7 +68,7 @@ function KundliMilanPageInner() {
       {/* Live preview, seeded with DEMO_DATA until the form is filled. Keyed on
           previewVersion so every save replays the computation sequence from the
           top — that reveal is the template, and a cached report is not. */}
-      <KundliMilanTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+      <KundliMilanTemplate key={e.previewVersion} data={e.displayData} mode="demo" onThemeChange={e.shareUrl ? undefined : e.setTheme} />
 
       <EditSheet
         editMode={e.editMode}

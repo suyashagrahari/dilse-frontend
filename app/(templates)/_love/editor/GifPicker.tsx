@@ -8,7 +8,7 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 
-import { GIF_LIBRARY, MAX_GIFS } from "./types";
+import { GIF_LIBRARY, MAX_GIFS, gifsFor, type GifTag } from "../types";
 
 const ACCENT = "#d0245f";
 
@@ -21,7 +21,8 @@ export function normaliseGifUrl(input: string): string {
   return s;
 }
 
-export default function GifPicker({ gifs, onChange }: { gifs: string[]; onChange: (next: string[]) => void }) {
+export default function GifPicker({ gifs, onChange, tags = [] }: { gifs: string[]; onChange: (next: string[]) => void; tags?: GifTag[] }) {
+  const library = tags.length ? gifsFor(tags) : GIF_LIBRARY;
   const [link, setLink] = useState("");
   const [err, setErr] = useState("");
   const full = gifs.length >= MAX_GIFS;
@@ -51,10 +52,10 @@ export default function GifPicker({ gifs, onChange }: { gifs: string[]; onChange
   return (
     <div>
       <p className="text-[12px] text-muted-foreground mb-2">
-        Pick up to {MAX_GIFS} — they float on the page as your relationship&apos;s mood board. ({gifs.length}/{MAX_GIFS})
+        Pick up to {MAX_GIFS} — they become your page&apos;s mood board and stickers. ({gifs.length}/{MAX_GIFS})
       </p>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-        {GIF_LIBRARY.map((g) => {
+        {library.map((g) => {
           const on = gifs.includes(g.url);
           return (
             <button

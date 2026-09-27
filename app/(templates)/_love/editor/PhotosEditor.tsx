@@ -13,16 +13,20 @@ import { ArrowDown, ArrowUp, ImagePlus, Loader2, Move, RefreshCw, Trash2 } from 
 import PhotoAdjuster from "../../dedication/components/PhotoAdjuster";
 import { compressImage } from "../../dedication/components/mediaUploads";
 import { CROP_DEFAULT, cropStyle, photoCrop, type Crop } from "../../dedication/components/types";
-import { MAX_CAPTION_LEN, MAX_NOTE_LEN, MAX_PHOTOS, type KundliPhoto } from "./types";
+import { MAX_CAPTION_LEN, MAX_NOTE_LEN, MAX_PHOTOS, type LovePhoto } from "../types";
 
 const ACCENT = "#d0245f";
 
 export default function PhotosEditor({
   photos,
   onChange,
+  captionHint = "caption — e.g. the first sunset",
+  noteHint = "You said the sky looked like mango lassi…",
 }: {
-  photos: KundliPhoto[];
-  onChange: (next: KundliPhoto[]) => void;
+  photos: LovePhoto[];
+  onChange: (next: LovePhoto[]) => void;
+  captionHint?: string;
+  noteHint?: string;
 }) {
   const addRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
@@ -31,7 +35,7 @@ export default function PhotosEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const patch = (i: number, p: Partial<KundliPhoto>) => onChange(photos.map((ph, idx) => (idx === i ? { ...ph, ...p } : ph)));
+  const patch = (i: number, p: Partial<LovePhoto>) => onChange(photos.map((ph, idx) => (idx === i ? { ...ph, ...p } : ph)));
   const move = (i: number, d: number) => {
     const j = i + d;
     if (j < 0 || j >= photos.length) return;
@@ -47,7 +51,7 @@ export default function PhotosEditor({
     setBusy(true);
     const room = MAX_PHOTOS - photos.length;
     const picked = Array.from(files).slice(0, room);
-    const added: KundliPhoto[] = [];
+    const added: LovePhoto[] = [];
     for (const f of picked) {
       try {
         added.push({ url: await compressImage(f), ...CROP_DEFAULT_PHOTO });
@@ -124,7 +128,7 @@ export default function PhotosEditor({
             <input
               value={p.caption ?? ""}
               onChange={(e) => patch(i, { caption: e.target.value.slice(0, MAX_CAPTION_LEN) })}
-              placeholder="caption — e.g. the first sunset"
+              placeholder={captionHint}
               aria-label={`Caption for photo ${i + 1}`}
               className="w-full px-3 py-2 rounded-lg border text-sm outline-none bg-white"
               style={{ borderColor: "#f1d9e2", fontSize: 16 }}
@@ -134,7 +138,7 @@ export default function PhotosEditor({
               <textarea
                 value={p.note ?? ""}
                 onChange={(e) => patch(i, { note: e.target.value.slice(0, MAX_NOTE_LEN) })}
-                placeholder="You said the sky looked like mango lassi…"
+                placeholder={noteHint}
                 aria-label={`Letter for photo ${i + 1}`}
                 rows={3}
                 className="mt-1 w-full px-3 py-2 rounded-lg border text-sm outline-none bg-white resize-y"

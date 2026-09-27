@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-/** True only after the first client paint — used to keep clocks out of SSR. */
+const noopSubscribe = () => () => {};
+
+/** True only on the client (false during SSR and hydration) — keeps clocks and locale dates out of SSR. */
 export function useMounted(): boolean {
-  const [m, setM] = useState(false);
-  useEffect(() => setM(true), []);
-  return m;
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
 }
 
 /** Live `prefers-reduced-motion`. Drives the split-flap and the station pulse. */
@@ -50,9 +50,12 @@ export function useCountdown(targetIso: string): Countdown {
   const [now, setNow] = useState(0);
 
   useEffect(() => {
-    setNow(Date.now());
+    const first = setTimeout(() => setNow(Date.now()), 0);
     const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [targetIso]);
 
   const target = Date.parse(targetIso);

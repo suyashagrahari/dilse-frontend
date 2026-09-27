@@ -3,6 +3,9 @@
 // viewer and the server payload. Field names here === server model field names
 // === wire-format keys (flat payload). Keep them in sync.
 
+import { DEMO_PHOTOS, parseLoveKit, type LovePhoto } from "../../_love/types";
+import { COURT_THEME_IDS } from "./themes";
+
 export type EditMode = null | "manual" | "preview";
 
 export interface Toast {
@@ -60,6 +63,14 @@ export interface CertificateData {
   /** Rendered as the clerk's margin annotation beside the dot-leader block. */
   objectionCount: number;
   certificateState: CertificateState;
+  /** Love kit: photos (each framed, with a little letter). photos[0] is the certificate portrait. */
+  photos: LovePhoto[];
+  /** Up to three GIF links. */
+  gifs: string[];
+  /** The main letter, opened from a sealed envelope. */
+  letter: string;
+  /** Colour theme id — one of COURT_THEMES. */
+  theme: string;
 }
 
 /** The Marriage Officer's hand. Deliberately fixed — a registrar signs the same way every time. */
@@ -96,7 +107,25 @@ export const DEMO_DATA: CertificateData = {
   registrarSignaturePath: REGISTRAR_SIGNATURE,
   objectionCount: 4,
   certificateState: "registered",
+  photos: [
+    { ...DEMO_PHOTOS[3], caption: "the day we signed", note: "Two signatures, one very confused clerk, and me grinning like I'd won the lottery. I had." },
+    { ...DEMO_PHOTOS[0], caption: "exhibit A: the first sunset", note: "Evidence that I was already done for. Your honour, I plead guilty." },
+    { ...DEMO_PHOTOS[1], caption: "our first 'date'", note: "You stole my fries and then my heart. In that order. Case closed." },
+    { ...DEMO_PHOTOS[2], caption: "cherry blossom era", note: "The day I decided I wanted every season with you." },
+  ],
+  gifs: [
+    "https://cdn.subhsandesh.in/gifts-media/assets/court-of-love/judge-gavel.gif",
+    "https://cdn.subhsandesh.in/gifts-media/assets/court-of-love/penguin-hug.gif",
+    "https://cdn.subhsandesh.in/gifts-media/assets/proposal/ask-ring.gif",
+  ],
+  letter:
+    "Ananya,\n\nThe registrar stamped it today. I stamped it the night you laughed at my terrible joke in the rain and didn't let go of my hand.\n\nFour people objected. The court overruled all of them, and honestly, so did my heart.\n\nThank you for choosing the version of me that forgets the milk and remembers every word you say.\n\nOfficially, legally-ish, forever yours.\n\n— Rohan",
+  theme: "midnight",
 };
+
+/** The portrait on the certificate: the first photo, or the legacy single photo. */
+export const portraitOf = (d: Pick<CertificateData, "photos" | "photoUrl">): string | null =>
+  d.photos[0]?.url || d.photoUrl || null;
 
 /** Always exactly three witness columns — unsigned slots are part of the design. */
 export const WITNESS_SLOTS = 3;
@@ -178,6 +207,10 @@ export const COURT_MARRIAGE_CONTENT_KEYS: (keyof CertificateData)[] = [
   "registrarSignaturePath",
   "objectionCount",
   "certificateState",
+  "photos",
+  "gifs",
+  "letter",
+  "theme",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */
@@ -229,11 +262,22 @@ export function dbToCourtMarriageData(db: Record<string, unknown> | null | undef
   );
 
   const state = s("certificateState", DEMO_DATA.certificateState) as CertificateState;
+  const photoUrl = typeof src.photoUrl === "string" && src.photoUrl.trim() ? src.photoUrl : null;
+
+  // A real record that predates the love kit has none of these fields; it must
+  // not inherit the demo couple's photos or letter. Its old single photo
+  // becomes its first (portrait) photo.
+  const loveKit = parseLoveKit(src, {
+    photos: photoUrl ? [{ url: photoUrl, caption: "us" }] : [],
+    gifs: [],
+    letter: "",
+    theme: DEMO_DATA.theme,
+  }, COURT_THEME_IDS);
 
   return {
     partyA: party(src.partyA, DEMO_DATA.partyA),
     partyB: party(src.partyB, DEMO_DATA.partyB),
-    photoUrl: typeof src.photoUrl === "string" && src.photoUrl.trim() ? src.photoUrl : null,
+    photoUrl,
     certificateNo: s("certificateNo", DEMO_DATA.certificateNo),
     registeredOn: s("registeredOn", DEMO_DATA.registeredOn),
     knownSinceDays: num(src.knownSinceDays, DEMO_DATA.knownSinceDays),
@@ -242,5 +286,6 @@ export function dbToCourtMarriageData(db: Record<string, unknown> | null | undef
     registrarSignaturePath: s("registrarSignaturePath", REGISTRAR_SIGNATURE) || REGISTRAR_SIGNATURE,
     objectionCount: num(src.objectionCount, DEMO_DATA.objectionCount),
     certificateState: CERTIFICATE_STATES.includes(state) ? state : "registered",
+    ...loveKit,
   };
 }

@@ -21,10 +21,9 @@ import {
   KOOTA_ORDER,
 } from "./types";
 import { MAX_REMEDIES, MIN_REMEDIES, dobError, tobError } from "../hooks/useKundliMilanEditor";
-import PhotosEditor from "./PhotosEditor";
 import { FUN_KOOTA } from "./GunaCards";
-import GifPicker from "./GifPicker";
-import { MAX_LETTER_LEN } from "./types";
+import { MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
+import { KUNDLI_THEMES } from "./themes";
 
 /** A section header with a little emoji badge — the form reads as steps. */
 function Section({ emoji, title, note }: { emoji: string; title: string; note?: string }) {
@@ -195,6 +194,8 @@ function EditSheetInner({
                   </button>
                 </div>
 
+                <ThemeSection themes={KUNDLI_THEMES} value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+
                 {/* Two people. Birth data is the only input the engine reads —
                     names and places are printed but never scored, so a nickname
                     can never change the result. */}
@@ -214,27 +215,12 @@ function EditSheetInner({
                   />
                 </div>
 
-                <Section emoji="📸" title="Photos & little letters" note="Tap a photo to zoom and move it. Each one can carry its own letter." />
-                <PhotosEditor photos={mf.photos} onChange={(next) => updateMf("photos", next)} />
-
-                <Section emoji="🎞️" title="GIFs" note="Your relationship's mood board" />
-                <GifPicker gifs={mf.gifs} onChange={(next) => updateMf("gifs", next)} />
-
-                <Section emoji="💌" title="Your love letter" note="Opens from an envelope at the very end" />
-                <div>
-                  <textarea
-                    value={mf.letter}
-                    onChange={(e) => updateMf("letter", e.target.value.slice(0, MAX_LETTER_LEN))}
-                    rows={6}
-                    placeholder={"Ananya,\n\nThe stars gave us 34 out of 36. I would have argued for 36…\n\n— Rohan"}
-                    aria-label="Love letter"
-                    className={INPUT + " resize-y leading-relaxed"}
-                    style={{ minHeight: 150, fontSize: 16 }}
-                  />
-                  <p className="text-right text-[10px] text-muted-foreground tabular-nums mt-1">
-                    {mf.letter.length}/{MAX_LETTER_LEN}
-                  </p>
-                </div>
+                <MemoriesSections
+                  data={mf}
+                  update={(k, v) => updateMf(k, v)}
+                  gifTags={["love", "yes", "funny"]}
+                  copy={{ letterTitle: "Your love letter", letterNote: "Opens from a sealed envelope on the report", letterHint: "Ananya,\n\nThe stars gave us 34 out of 36. I would have argued for 36…\n\n— Rohan" }}
+                />
 
                 <Section emoji="🙏" title="Pandit ji's funny bits" note="All optional — blanks use our lines" />
                 <Field label="Certificate date" hint="printed on the certificate">

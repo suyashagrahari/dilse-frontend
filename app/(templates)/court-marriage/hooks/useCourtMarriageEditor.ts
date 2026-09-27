@@ -123,10 +123,12 @@ export function useCourtMarriageEditor() {
 
     const draft = readDraft();
     if (draft?.data) {
-      setMf(draft.data);
+      // Drafts saved before the love kit existed lack photos/gifs/letter/theme.
+      const d: CertificateData = { ...DEMO_DATA, ...draft.data };
+      setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(draft.data);
+        setContent(d);
         setIsPersonalized(true);
         setEditMode("preview");
       }
@@ -203,8 +205,32 @@ export function useCourtMarriageEditor() {
     [],
   );
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    // A fresh form keeps the demo's funny registry wording as a starting point,
+    // but never the demo couple's photos or letter — and it keeps the vibe they
+    // were just previewing.
+    setMf(
+      isPersonalized
+        ? { ...content }
+        : { ...DEMO_DATA, photos: [], gifs: [], letter: "", theme: content.theme },
+    );
     // The starter goes first, but only while there is a schema to fill from and
     // only until the sender has said no once. Everything else opens the form
     // exactly as it did before.
@@ -390,7 +416,7 @@ export function useCourtMarriageEditor() {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, justPublished, copied, fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
