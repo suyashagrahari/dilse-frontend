@@ -11,7 +11,8 @@
 // prefers-reduced-motion.
 
 import Link from "next/link";
-import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { DATE_FONT_VARS } from "../date-invitation/components/fonts";
 import { V, themeVars, type LoveTheme } from "./theme";
@@ -47,7 +48,6 @@ export const LOVE_CSS = `
 @keyframes lv-slap { 0% { opacity: 0; transform: rotate(-14deg) scale(2.2) } 60% { opacity: 1; transform: rotate(-9deg) scale(.92) } 100% { opacity: 1; transform: rotate(-8deg) scale(1) } }
 @keyframes lv-burst { 0% { opacity: 1; transform: translate(0,0) scale(.4) rotate(0) } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(var(--rot)) } }
 @keyframes lv-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lv-a1) 70%, transparent) } 70% { box-shadow: 0 0 0 12px transparent } 100% { box-shadow: 0 0 0 0 transparent } }
-@media (max-width: 480px) { .lv-dock-label { display: none; } }
 .lv-root { transition: background-color .45s ease, color .45s ease; }
 .lv-root *, .lv-root *::before, .lv-root *::after { transition-property: background-color, border-color, color, fill, stroke; transition-duration: .35s; transition-timing-function: ease; }
 .lv-float { animation: lv-float 6s ease-in-out infinite; }
@@ -421,94 +421,74 @@ export function BrandBadge() {
  * bottom. Tapping one re-themes the page instantly (and, once they have made
  * the page their own, it is the theme that gets published).
  */
+const noopSubscribe = () => () => {};
+
 export function ThemeDock({ themes, value, onChange }: { themes: readonly LoveTheme[]; value: string; onChange: (id: string) => void }) {
-  return (
+  const current = themes.find((t) => t.id === value) ?? themes[0];
+  const [open, setOpen] = useState(false);
+  // Portalled to <body> so it sits above the preview's full-width top bar,
+  // which would otherwise swallow taps in the middle of the screen.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const swatch = (t: LoveTheme) => `conic-gradient(${t.swatch[0]} 0 33%, ${t.swatch[1]} 0 66%, ${t.swatch[2]} 0)`;
+  if (!hydrated) return null;
+  return createPortal(
     <div
       style={{
+        // Top centre, between the preview's Back and Create buttons — the one
+        // spot no chapter ever uses. Opens downward.
         position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
-        zIndex: 110,
+        left: "50%",
+        top: "calc(12px + env(safe-area-inset-top, 0px))",
+        transform: "translateX(-50%)",
+        zIndex: 125,
         display: "flex",
-        justifyContent: "center",
-        pointerEvents: "none",
-        padding: "0 12px",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        padding: 6,
+        borderRadius: 999,
+        background: "rgba(18,10,30,.72)",
+        border: "1px solid rgba(255,255,255,.18)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        boxShadow: "0 18px 40px -16px rgba(0,0,0,.7)",
+        fontFamily: GROTESK,
       }}
     >
-      <div
-        role="radiogroup"
-        aria-label="Colour theme"
-        className="lv-pop"
-        style={{
-          pointerEvents: "auto",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: 6,
-          borderRadius: 999,
-          background: "rgba(18,10,30,.72)",
-          border: "1px solid rgba(255,255,255,.18)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          boxShadow: "0 18px 40px -16px rgba(0,0,0,.7)",
-          maxWidth: "100%",
-          overflowX: "auto",
-        }}
+      {/* Collapsed: one swatch button. Open: every theme, stacked. */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={`Colour theme: ${current.name}. ${open ? "Close" : "Change"}`}
+        className="lv-focus"
+        style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid rgba(255,255,255,.9)", background: swatch(current), display: "grid", placeItems: "center", fontSize: 15, cursor: "pointer", padding: 0 }}
       >
-        <span className="lv-dock-label" style={{ padding: "0 6px 0 10px", fontFamily: GROTESK, fontSize: 11, fontWeight: 800, letterSpacing: ".16em", textTransform: "uppercase", color: "rgba(255,255,255,.6)", whiteSpace: "nowrap" }}>
-          🎨 vibe
-        </span>
-        {themes.map((t) => {
-          const on = t.id === value;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              aria-label={`${t.name} theme`}
-              onClick={() => onChange(t.id)}
-              className="lv-focus"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                minHeight: 40,
-                padding: on ? "0 14px 0 5px" : 5,
-                borderRadius: 999,
-                border: "none",
-                cursor: "pointer",
-                background: on ? "#fff" : "transparent",
-                color: "#1a0d26",
-                fontFamily: GROTESK,
-                fontWeight: 800,
-                fontSize: 13,
-                whiteSpace: "nowrap",
-                transition: "background-color .2s ease, padding .2s ease",
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: "50%",
-                  background: `conic-gradient(${t.swatch[0]} 0 33%, ${t.swatch[1]} 0 66%, ${t.swatch[2]} 0)`,
-                  border: "2px solid rgba(255,255,255,.85)",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: 14,
-                  flexShrink: 0,
-                }}
+        {open ? "✕" : "🎨"}
+      </button>
+      {open && (
+        <div role="radiogroup" aria-label="Colour theme" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {themes.map((t) => {
+            const on = t.id === current.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                aria-label={`${t.name} theme`}
+                title={t.name}
+                onClick={() => onChange(t.id)}
+                className="lv-focus lv-pop"
+                style={{ width: 38, height: 38, borderRadius: "50%", padding: 0, cursor: "pointer", border: on ? "3px solid #fff" : "2px solid rgba(255,255,255,.45)", background: swatch(t), display: "grid", placeItems: "center", fontSize: 15 }}
               >
                 {on ? t.emoji : ""}
-              </span>
-              {on && t.name}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>,
+    document.body,
   );
 }

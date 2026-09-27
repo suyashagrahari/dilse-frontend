@@ -282,6 +282,8 @@ export default memo(function EditSheet({
                     letterTitle: "The letter on the berth",
                     letterNote: "Drop the railway voice here and just say it. It opens from a sealed envelope.",
                     letterHint: "I know a ticket is a strange way to say this…",
+                    lockQuestion: "Will you board this train with me? 🚆",
+                    lockAnswer: "all aboard 💖",
                   }}
                 />
 

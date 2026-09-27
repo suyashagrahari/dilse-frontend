@@ -8,10 +8,11 @@
 //             two parties and a portrait taped to the file.
 //   ceremony  a live court log — ID check, objections read out and slapped
 //             OVERRULED, witnesses' ink drawing in, the registrar's stamp.
-//   result    the REGISTERED reveal, then ONE screen of tappable tiles —
-//             photos (each with a little letter), the sealed letter, the GIFs,
-//             the objections, the register and the official certificate PNG —
-//             each opening in a sheet, so nothing is a long scroll away.
+//   result    a full-screen story (_love/Story): the REGISTERED reveal → the
+//             recipient overrules every objection → signs the register →
+//             flips through "Exhibit A" (photos with their little letters) →
+//             unlocks the vows by answering the question → the certificate to
+//             save. Each GIF appears once, as a reaction at one moment.
 //
 // Colours come from the chosen theme (./themes) as CSS variables.
 
@@ -31,16 +32,15 @@ import {
   LOVE_CSS,
   LoveSky,
   LoveThemeContext,
-  SectionHead,
   Sticker,
-  Tape,
   ThemeDock,
 } from "../../_love/LoveKit";
-import MemoryHub, { type HubTile } from "../../_love/MemoryHub";
-import { loveTiles } from "../../_love/Memories";
+import LoveStory, { ChapterHead, GifMoment, type Chapter, type StoryApi } from "../../_love/Story";
+import PhotoDeck from "../../_love/PhotoDeck";
+import LockedLetter from "../../_love/LockedLetter";
 import { V, pickTheme, themeVars } from "../../_love/theme";
 import type { LovePhoto } from "../../_love/types";
-import { CASE_CSS, Ceremony, ObjectionsList, Register, Signature, Stamp, firstName, objectionsFor, registeredLabel } from "./CaseFile";
+import { CASE_CSS, Ceremony, ObjectionCourt, RegisterSigning, Stamp, firstName, registeredLabel } from "./CaseFile";
 import CertificateSheet from "./CertificateSheet";
 import { COURT_THEMES } from "./themes";
 import { type CertificateData, padWitnesses, portraitOf } from "./types";
@@ -104,54 +104,102 @@ export default function CourtMarriageTemplate({
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   };
 
-  const tiles: HubTile[] = [
-    ...loveTiles({
-      photos: data.photos,
-      gifs: data.gifs,
-      letter: data.letter,
-      from: a,
-      to: b,
-      reduceMotion,
-      labels: {
-        photos: "Exhibit A: us",
-        photosSub: `${data.photos.length} photos · each with a little note`,
-        letter: "Sealed letter",
-        letterSub: `for ${b} · break the seal`,
-        gifs: "Court footage",
-        gifsSub: `${data.gifs.length} GIF${data.gifs.length === 1 ? "" : "s"} submitted as evidence`,
-      },
-    }),
+  // Each GIF is used once, at one moment: the stamp landing, the end of the
+  // photos, the vows unlocking.
+  const gif = (i: number) => data.gifs[i];
+  const hasPhotos = data.photos.length > 0;
+  const hasLetter = data.letter.trim().length > 0;
+
+  const chapters: Chapter[] = [
+    {
+      id: "registered",
+      emoji: "🏛️",
+      title: registered ? "it's official" : "almost official",
+      render: (api) => (
+        <RegisteredReveal
+          data={data}
+          a={a}
+          b={b}
+          portrait={portrait}
+          registered={registered}
+          signed={signed}
+          gif={gif(0)}
+          reduceMotion={reduceMotion}
+          onLanded={api.complete}
+        />
+      ),
+    },
     {
       id: "objections",
       emoji: "🙅",
-      title: "Objections",
-      sub: `${data.objectionCount} received · 0 upheld`,
-      tone: "paper",
-      art: <ObjectionArt count={data.objectionCount} />,
-      sheetTitle: "Objections on record",
-      content: () => <ObjectionsList count={data.objectionCount} reduceMotion={reduceMotion} />,
+      title: "the objections",
+      render: (api) => (
+        <>
+          <ChapterHead kicker="the court hears objections" title="Overrule them all 🔨" note="tap each objection to slam the gavel" />
+          <ObjectionCourt count={data.objectionCount} reduceMotion={reduceMotion} onAllOverruled={() => api.done(1800)} />
+        </>
+      ),
     },
     {
       id: "register",
       emoji: "✍️",
-      title: "The register",
-      sub: `${signed}/3 witnesses signed · ${data.fields.length} entries`,
-      size: "wide",
-      tone: "glass",
-      art: <RegisterArt data={data} />,
-      sheetTitle: "The register & witnesses",
-      content: () => <Register data={data} reduceMotion={reduceMotion} />,
+      title: "the register",
+      render: (api) => (
+        <>
+          <ChapterHead kicker={`register entry · ${data.certificateNo || "RH/0001"}`} title="Sign the register ✍️" note="the witnesses have signed — now it's your turn" />
+          <RegisterSigning data={data} signer={b} reduceMotion={reduceMotion} onSigned={() => api.done(2200)} />
+        </>
+      ),
     },
+    ...(hasPhotos
+      ? [
+          {
+            id: "photos",
+            emoji: "📸",
+            title: "exhibit A: us",
+            render: (api: StoryApi) => <PhotosChapter photos={data.photos} gif={gif(1)} reduceMotion={reduceMotion} onDone={() => api.done(2600)} />,
+          },
+        ]
+      : []),
+    ...(hasLetter
+      ? [
+          {
+            id: "vows",
+            emoji: "💌",
+            title: "the vows",
+            gated: true,
+            render: (api: StoryApi) => (
+              <LockedLetter
+                letter={data.letter}
+                from={a}
+                to={b}
+                question={data.lockQuestion.trim() || `${b}, do you take ${a} as your forever person? 💍`}
+                answer={data.lockAnswer.trim() || "I do 💍"}
+                gif={gif(2)}
+                gifCaption="objection? none. 🥹"
+                reduceMotion={reduceMotion}
+                onOpened={api.complete}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       id: "certificate",
       emoji: "📜",
-      title: "Official certificate",
-      sub: "stamped & sealed · save it as a picture",
-      size: "wide",
-      tone: "candy",
-      art: <CertificateArt no={data.certificateNo} registered={registered} />,
-      sheetTitle: "Your certificate",
-      content: () => <CertificateSheet data={data} />,
+      title: "the certificate",
+      render: () => (
+        <>
+          <ChapterHead kicker="office of the registrar of hearts" title="Your certificate 📜" note="save it, frame it, send it to the family group" />
+          <CertificateSheet data={data} />
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <GhostButton onClick={replay} style={{ width: "auto", minWidth: 220 }}>
+              ↺ replay the ceremony
+            </GhostButton>
+            <p style={{ margin: 0, fontSize: 12, color: V.faint, textAlign: "center" }}>Office of the Registrar of Hearts · by the power vested in absolutely nobody ✨</p>
+          </div>
+        </>
+      ),
     },
   ];
 
@@ -199,7 +247,6 @@ export default function CourtMarriageTemplate({
             {portrait && (
               <div className={reduceMotion ? "" : "lv-float"} style={{ position: "relative", marginTop: 22 }}>
                 <Polaroid photo={portrait} width="min(46vw, 190px)" tilt={-4} />
-                {data.gifs[0] && <GifSticker src={data.gifs[0]} style={{ right: -48, bottom: -14, width: 78 }} />}
               </div>
             )}
 
@@ -221,7 +268,7 @@ export default function CourtMarriageTemplate({
         )}
 
         {stage === "ceremony" && (
-          <main className="cm-wrap" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 88, paddingBottom: mode === "live" ? 40 : 110 }}>
+          <main className="cm-wrap" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 88, paddingBottom: 110 }}>
             <Ceremony data={data} reduceMotion={reduceMotion} onDone={finish} />
             <div style={{ marginTop: 16, textAlign: "center" }}>
               <button type="button" onClick={finish} className="lv-focus" style={{ background: "none", border: "none", color: V.soft, fontFamily: GROTESK, fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 10, textDecoration: "underline", textUnderlineOffset: 3 }}>
@@ -231,67 +278,106 @@ export default function CourtMarriageTemplate({
           </main>
         )}
 
-        {stage === "result" && (
-          <main className="cm-wrap" style={{ paddingTop: 84, paddingBottom: mode === "live" ? 56 : 110 }}>
-            <section className="cm-hero">
-              {/* The portrait with the stamp slammed across its corner. */}
-              <div style={{ position: "relative", display: "grid", placeItems: "center", paddingTop: 8 }}>
-                {!reduceMotion && <HeartBurst glyphs={["💍", "✨", "💖", "📜", "🕊️"]} />}
-                <div style={{ position: "relative" }}>
-                  {portrait ? (
-                    <Polaroid photo={portrait} width="min(62vw, 270px)" tilt={-3} caption={`${a} & ${b}`} />
-                  ) : (
-                    <div style={{ width: "min(62vw, 270px)", aspectRatio: "4 / 5", borderRadius: 16, background: V.grad, display: "grid", placeItems: "center", fontSize: 72, transform: "rotate(-3deg)", boxShadow: `0 26px 50px -24px ${V.shadow}` }}>💍</div>
-                  )}
-                  <span style={{ position: "absolute", left: -18, bottom: 34, zIndex: 2 }}>
-                    <Stamp label={registered ? "registered" : "pending"} sub={registered ? "registrar of hearts ✓" : "awaiting witnesses"} slap={!reduceMotion} tone={registered ? "a1" : "a3"} size={1.05} tilt={-14} />
-                  </span>
-                  {data.gifs[0] && <GifSticker src={data.gifs[0]} style={{ right: -34, top: -26, width: 96 }} />}
-                </div>
-              </div>
-
-              <div className={reduceMotion ? "" : "lv-pop"} style={{ textAlign: "center" }}>
-                <Sticker>{registered ? "✓ duly registered" : "⏳ awaiting witnesses"}</Sticker>
-                <h1 style={{ margin: "14px 0 0", fontWeight: 800, fontSize: "clamp(36px, 9vw, 64px)", lineHeight: 0.98, letterSpacing: "-0.04em", overflowWrap: "anywhere" }}>
-                  {a} <GradText>&amp;</GradText> {b}
-                </h1>
-                <p style={{ margin: "10px auto 0", maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: "clamp(19px, 4.6vw, 23px)", lineHeight: 1.3, color: V.soft }}>
-                  {registered
-                    ? "are hereby declared officially, legally-ish, un-returnably married. No refunds. No exchanges."
-                    : "are this close to official — the register is open, one more witness and it's done."}
-                </p>
-                <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                  <Stat label="certificate" value={data.certificateNo || "—"} />
-                  <Stat label="registered" value={registeredLabel(data.registeredOn)} />
-                  <Stat label="known for" value={`${data.knownSinceDays} days`} />
-                  <Stat label="objections" value={`${data.objectionCount} → 0 upheld`} />
-                  <Stat label="witnesses" value={`${signed}/3 signed`} />
-                </div>
-              </div>
-            </section>
-
-            <div style={{ margin: "40px 0 0" }}>
-              <Tape
-                words={["duly registered", `${objectionsFor(data.objectionCount).length ? "objections overruled" : "zero objections"}`, "witnessed & sealed", "no refunds", "valid for everything that matters"]}
-                reduceMotion={reduceMotion}
-              />
-            </div>
-
-            <section style={{ marginTop: 44 }}>
-              <SectionHead eyebrow="the case file" title="Tap anything to open it" emoji="👇" />
-              <MemoryHub tiles={tiles} reduceMotion={reduceMotion} />
-            </section>
-
-            <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <GhostButton onClick={replay} style={{ width: "auto", minWidth: 220 }}>
-                ↺ replay the ceremony
-              </GhostButton>
-              <p style={{ margin: 0, fontSize: 12, color: V.faint, textAlign: "center" }}>Office of the Registrar of Hearts · by the power vested in absolutely nobody ✨</p>
-            </div>
-          </main>
-        )}
+        {stage === "result" && <LoveStory chapters={chapters} reduceMotion={reduceMotion} />}
       </div>
     </LoveThemeContext.Provider>
+  );
+}
+
+// ─── Story chapters ──────────────────────────────────────────────────────────
+
+function RegisteredReveal({
+  data,
+  a,
+  b,
+  portrait,
+  registered,
+  signed,
+  gif,
+  reduceMotion,
+  onLanded,
+}: {
+  data: CertificateData;
+  a: string;
+  b: string;
+  portrait: LovePhoto | null;
+  registered: boolean;
+  signed: number;
+  gif?: string;
+  reduceMotion: boolean;
+  onLanded: () => void;
+}) {
+  const [landed, setLanded] = useState(reduceMotion);
+  useEffect(() => {
+    const t = window.setTimeout(
+      () => {
+        setLanded(true);
+        onLanded();
+      },
+      reduceMotion ? 0 : 1500,
+    );
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <section className="cm-hero">
+      {/* The portrait with the stamp slammed across its corner. */}
+      <div style={{ position: "relative", display: "grid", placeItems: "center", paddingTop: 8 }}>
+        {!reduceMotion && <HeartBurst glyphs={["💍", "✨", "💖", "📜", "🕊️"]} />}
+        <div style={{ position: "relative" }}>
+          {portrait ? (
+            <Polaroid photo={portrait} width="min(56vw, 250px)" tilt={-3} caption={`${a} & ${b}`} />
+          ) : (
+            <div style={{ width: "min(56vw, 250px)", aspectRatio: "4 / 5", borderRadius: 16, background: V.grad, display: "grid", placeItems: "center", fontSize: 72, transform: "rotate(-3deg)", boxShadow: `0 26px 50px -24px ${V.shadow}` }}>💍</div>
+          )}
+          <span style={{ position: "absolute", left: -18, bottom: 34, zIndex: 2 }}>
+            <Stamp label={registered ? "registered" : "pending"} sub={registered ? "registrar of hearts ✓" : "awaiting witnesses"} slap={!reduceMotion} tone={registered ? "a1" : "a3"} size={1.05} tilt={-14} />
+          </span>
+        </div>
+      </div>
+
+      <div className={reduceMotion ? "" : "lv-pop"} style={{ textAlign: "center" }}>
+        <Sticker>{registered ? "✓ duly registered" : "⏳ awaiting witnesses"}</Sticker>
+        <h1 style={{ margin: "14px 0 0", fontWeight: 800, fontSize: "clamp(34px, 9vw, 64px)", lineHeight: 0.98, letterSpacing: "-0.04em", overflowWrap: "anywhere" }}>
+          {a} <GradText>&amp;</GradText> {b}
+        </h1>
+        <p style={{ margin: "10px auto 0", maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: "clamp(19px, 4.6vw, 23px)", lineHeight: 1.3, color: V.soft }}>
+          {registered
+            ? "are hereby declared officially, legally-ish, un-returnably married. No refunds. No exchanges."
+            : "are this close to official — the register is open, one more witness and it's done."}
+        </p>
+        <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+          <Stat label="certificate" value={data.certificateNo || "—"} />
+          <Stat label="registered" value={registeredLabel(data.registeredOn)} />
+          <Stat label="known for" value={`${data.knownSinceDays} days`} />
+          <Stat label="witnesses" value={`${signed}/3 signed`} />
+        </div>
+        <div style={{ marginTop: 16, minHeight: gif ? 130 : 0 }}>
+          <GifMoment src={gif} caption={registered ? "stamped. sealed. yours. 💍" : "almost there 🥹"} show={landed} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PhotosChapter({ photos, gif, reduceMotion, onDone }: { photos: LovePhoto[]; gif?: string; reduceMotion: boolean; onDone: () => void }) {
+  const [all, setAll] = useState(false);
+  return (
+    <>
+      <ChapterHead kicker="evidence submitted to the court" title="Exhibit A: us 📸" />
+      <PhotoDeck
+        photos={photos}
+        reduceMotion={reduceMotion}
+        backLabel="evidence, your honour"
+        onAllSeen={() => {
+          setAll(true);
+          onDone();
+        }}
+      />
+      <div style={{ marginTop: 14, minHeight: 20 }}>
+        <GifMoment src={gif} caption="the court is convinced 🥹" show={all} size={96} />
+      </div>
+    </>
   );
 }
 
@@ -307,18 +393,6 @@ function Polaroid({ photo, width, tilt = 0, caption }: { photo: LovePhoto; width
       </div>
       {caption && <p style={{ margin: "8px 2px 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 19, lineHeight: 1.1, color: "#241f1b", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{caption}</p>}
     </div>
-  );
-}
-
-function GifSticker({ src, style }: { src: string; style: React.CSSProperties }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt=""
-      className="lv-wiggle"
-      style={{ position: "absolute", zIndex: 3, aspectRatio: "1 / 1", objectFit: "contain", borderRadius: 18, background: "#fff", border: "4px solid #fff", boxShadow: `0 16px 30px -14px ${V.shadow}`, ...style }}
-    />
   );
 }
 
@@ -341,53 +415,6 @@ function Stat({ label, value }: { label: string; value: string }) {
     <span style={{ display: "inline-flex", flexDirection: "column", padding: "8px 14px", borderRadius: 16, background: V.glass, border: `1px solid ${V.edge}`, textAlign: "left", maxWidth: "100%" }}>
       <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".18em", textTransform: "uppercase", color: V.faint }}>{label}</span>
       <span style={{ fontSize: 15, fontWeight: 800, overflowWrap: "anywhere" }}>{value}</span>
-    </span>
-  );
-}
-
-// ─── Tile arts ───────────────────────────────────────────────────────────────
-
-function ObjectionArt({ count }: { count: number }) {
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", paddingBottom: 48 }}>
-      <span style={{ position: "relative", display: "grid", placeItems: "center" }}>
-        <span style={{ fontSize: 44, lineHeight: 1 }}>🙅</span>
-        <span style={{ position: "absolute", top: 34 }}>
-          <Stamp label="overruled" size={0.62} tilt={-12} />
-        </span>
-        <span style={{ position: "absolute", top: -12, right: -34, minWidth: 30, height: 30, padding: "0 8px", borderRadius: 99, background: V.grad, color: "#fff", fontWeight: 800, fontSize: 14, display: "grid", placeItems: "center" }}>{count}</span>
-      </span>
-    </span>
-  );
-}
-
-function RegisterArt({ data }: { data: CertificateData }) {
-  const w = padWitnesses(data.witnesses);
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: "18px 18px 62px", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14, alignItems: "end", color: V.ink }}>
-      {w.map((x, i) => (
-        <span key={i} style={{ borderBottom: `1.5px solid ${V.edge}` }}>
-          <Signature d={x.name.trim() ? x.signaturePath : ""} draw={false} height={34} />
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function CertificateArt({ no, registered }: { no: string; registered: boolean }) {
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", paddingBottom: 48 }}>
-      <span style={{ position: "relative", width: "min(46%, 150px)", aspectRatio: "3 / 4", background: "#faf6ed", borderRadius: 6, transform: "rotate(-5deg)", boxShadow: "0 16px 30px -14px rgba(0,0,0,.5)", padding: 10, display: "flex", flexDirection: "column", gap: 5 }}>
-        <span style={{ height: 6, width: "70%", borderRadius: 3, background: "#2f2c24", opacity: 0.8, alignSelf: "center" }} />
-        <span style={{ height: 4, width: "50%", borderRadius: 2, background: "#6d6858", opacity: 0.6, alignSelf: "center" }} />
-        {[0, 1, 2, 3].map((i) => (
-          <span key={i} style={{ height: 3, width: `${88 - i * 9}%`, borderRadius: 2, background: "#6d6858", opacity: 0.35 }} />
-        ))}
-        <span style={{ marginTop: "auto", fontFamily: "var(--font-courier-prime), monospace", fontSize: 8, color: "#2f2c24" }}>{no}</span>
-        <span style={{ position: "absolute", right: -14, bottom: 8, width: 44, height: 44, borderRadius: "50%", border: "2.5px double #b3263a", color: "#b3263a", display: "grid", placeItems: "center", fontSize: 8, fontWeight: 800, transform: "rotate(-16deg)", background: "rgba(250,246,237,.6)" }}>
-          {registered ? "OK ✓" : "…"}
-        </span>
-      </span>
     </span>
   );
 }

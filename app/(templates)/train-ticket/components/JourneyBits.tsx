@@ -1,15 +1,16 @@
 "use client";
 
-// ─── What the ticket's own hub tiles open ────────────────────────────────────
+// ─── The ticket's own story pieces ───────────────────────────────────────────
 //
-//   JourneyRoute   the relationship as a running-status timeline: passed stops
-//                  ticked, the current one pulsing, upcoming ones dashed, the
-//                  delay notice, and the hug waiting at Terminus.
+//   JourneyRide    the relationship as a ride: a little train moves station to
+//                  station each time "next station" is tapped, each stop's note
+//                  unfolding as it's reached; Terminus brings the hug and the
+//                  delay notice.
 //   FareReceipt    the fare lines as a receipt, plus the forwardable SMS copy.
 //   FinePrint      the terms & conditions, finally readable.
-//   RouteArt       the tile preview: a tiny line with station dots.
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { templateMediaBase } from "@/lib/templateMedia";
 import { Eyebrow, Glass, GROTESK, ITALIC, Sticker } from "../../_love/LoveKit";
@@ -21,108 +22,145 @@ import { type TicketData, buildSmsCopy } from "./types";
 
 const ASSET = templateMediaBase("train-ticket");
 
-export function JourneyRoute({ data }: { data: TicketData }) {
+export function JourneyRide({ data, reduceMotion, onArrive }: { data: TicketData; reduceMotion: boolean; onArrive: () => void }) {
   const { elapsed: departed } = useCountdown(data.departureAt);
-  const stops = data.stations;
-  return (
-    <div style={{ maxWidth: 620, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <Loop src={`${ASSET}/bunnyonatrain.webm`} width={96} />
-        <div style={{ minWidth: 0 }}>
-          <Eyebrow color={V.a1}>spot your train</Eyebrow>
-          <p style={{ margin: "4px 0 0", fontWeight: 800, fontSize: 18, lineHeight: 1.2 }}>
-            {data.trainNo} · {data.trainName}
-          </p>
-          <p style={{ margin: "2px 0 0", fontSize: 13, color: V.soft }}>
-            {data.from.name} → {data.to.name}
-          </p>
-        </div>
-      </div>
+  const stops = data.stations.length ? data.stations : [{ name: data.to.name, label: "", at: "", detail: "", status: "upcoming" as const }];
+  const last = stops.length - 1;
+  const [at, setAt] = useState(0);
+  const arrived = at >= last;
+  const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
 
+  const advance = () => {
+    if (arrived) return;
+    const next = at + 1;
+    setAt(next);
+    if (next >= last) onArrive();
+    window.setTimeout(() => rowRefs.current[next]?.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" }), 80);
+  };
+
+  return (
+    <div style={{ width: "100%", maxWidth: 620, margin: "0 auto" }}>
       <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {stops.map((s, i) => {
-          const passed = s.status === "passed";
-          const current = s.status === "current";
-          const last = i === stops.length - 1;
+          const passed = i < at;
+          const here = i === at;
+          const reached = i <= at;
           return (
-            <li key={i} style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr)", gap: 12 }}>
+            <li key={i} ref={(el) => { rowRefs.current[i] = el; }} style={{ display: "grid", gridTemplateColumns: "40px minmax(0,1fr)", gap: 12 }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <span
-                  className={current ? "lv-pulse" : ""}
                   style={{
-                    width: current ? 30 : 24,
-                    height: current ? 30 : 24,
-                    marginTop: current ? 4 : 7,
+                    position: "relative",
+                    width: 30,
+                    height: 30,
+                    marginTop: 6,
                     borderRadius: "50%",
                     display: "grid",
                     placeItems: "center",
-                    fontSize: current ? 15 : 12,
+                    fontSize: 13,
                     fontWeight: 800,
-                    background: passed ? V.chip : current ? V.grad : "transparent",
-                    color: passed ? V.chipInk : "#fff",
-                    border: passed || current ? "none" : `2px dashed ${V.faint}`,
+                    background: passed ? V.chip : here ? "transparent" : "transparent",
+                    color: V.chipInk,
+                    border: passed || here ? "none" : `2px dashed ${V.faint}`,
                     flexShrink: 0,
                   }}
                 >
-                  {passed ? "✓" : current ? "🚆" : ""}
+                  {passed ? "✓" : ""}
+                  {here && (
+                    <motion.span
+                      layoutId="tt-train"
+                      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 20 }}
+                      className="lv-pulse"
+                      style={{ position: "absolute", inset: -4, borderRadius: "50%", background: V.grad, display: "grid", placeItems: "center", fontSize: 20 }}
+                    >
+                      🚆
+                    </motion.span>
+                  )}
                 </span>
-                {!last && (
+                {i < last && (
                   <span
                     aria-hidden
                     style={{
                       flex: 1,
-                      width: 3,
-                      minHeight: 28,
-                      margin: "4px 0",
-                      borderRadius: 3,
+                      width: 4,
+                      minHeight: 26,
+                      margin: "6px 0",
+                      borderRadius: 4,
                       background: passed ? V.chip : `repeating-linear-gradient(${V.faint} 0 6px, transparent 6px 12px)`,
+                      transition: "background .4s ease",
                     }}
                   />
                 )}
               </div>
-              <div style={{ paddingBottom: last ? 0 : 16 }}>
-                <div
+              <div style={{ paddingBottom: i === last ? 0 : 14 }}>
+                <motion.div
+                  initial={false}
+                  animate={{ opacity: reached ? 1 : 0.45, scale: here ? 1 : 0.98 }}
                   style={{
                     padding: "10px 14px",
                     borderRadius: 18,
-                    background: current ? V.grad : V.glass,
-                    color: current ? "#fff" : V.ink,
-                    border: current ? "none" : `1px ${passed ? "solid" : "dashed"} ${V.edge}`,
+                    background: here ? V.grad : V.glass,
+                    color: here ? "#fff" : V.ink,
+                    border: here ? "none" : `1px ${reached ? "solid" : "dashed"} ${V.edge}`,
+                    transformOrigin: "left center",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                     <b style={{ fontSize: 16 }}>
                       {s.name || "Unnamed stop"}
-                      {s.label && <span style={{ fontWeight: 600, fontSize: 12.5, opacity: 0.8 }}> ({s.label})</span>}
+                      {s.label && reached && <span style={{ fontWeight: 600, fontSize: 12.5, opacity: 0.85 }}> ({s.label})</span>}
                     </b>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.85 }}>{current ? "📍 you are here" : passed ? "departed" : "upcoming"}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.85 }}>{here ? (i === last ? "🏁 arrived" : "📍 you are here") : passed ? "departed" : "upcoming"}</span>
                   </div>
-                  {s.detail && <p style={{ margin: "3px 0 0", fontSize: 13, opacity: 0.85 }}>{s.detail}</p>}
-                </div>
-                {last && (
-                  <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ padding: 4, borderRadius: 18, background: "#fff", flexShrink: 0 }}>
-                      <Loop src={`${ASSET}/hug.webm`} width={110} />
-                    </span>
-                    <p style={{ margin: 0, fontFamily: ITALIC, fontStyle: "italic", fontSize: 21, lineHeight: 1.25 }}>no ETA. no rush. just us, finally.</p>
-                  </div>
-                )}
+                  <AnimatePresence initial={false}>
+                    {reached && s.detail && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 0.9, height: "auto" }}
+                        style={{ margin: "3px 0 0", fontSize: 13, overflow: "hidden" }}
+                      >
+                        {s.detail}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </div>
             </li>
           );
         })}
       </ol>
 
-      {(data.delay.amount || data.delay.reason) && (
-        <Glass style={{ marginTop: 18, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-          <Loop src={`${ASSET}/cryingpuddle.webm`} width={64} />
-          <div style={{ minWidth: 0 }}>
-            <b style={{ fontSize: 15 }}>{departed ? `Arrived. Late by ${data.delay.amount || "some time"}.` : `Running late by ${data.delay.amount || "some time"}.`}</b>
-            <p style={{ margin: "2px 0 0", fontSize: 13, color: V.soft }}>
-              Reason: {data.delay.reason || "circumstances beyond our control"}. Delay compensation is not admissible. We looked into it.
-            </p>
+      {!arrived ? (
+        <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
+          <button
+            type="button"
+            onClick={advance}
+            className="lv-cta lv-focus"
+            style={{ minHeight: 52, padding: "0 24px", borderRadius: 999, border: "none", background: V.grad, color: "#fff", fontFamily: GROTESK, fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: `0 14px 28px -14px ${V.shadow}` }}
+          >
+            {at + 1 >= last ? `arrive at ${stops[last].name || "Terminus"} 🏁` : "next station 🚆"}
+          </button>
+        </div>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
+            <span style={{ padding: 4, borderRadius: 18, background: "#fff", flexShrink: 0 }}>
+              <Loop src={`${ASSET}/hug.webm`} width={104} />
+            </span>
+            <p style={{ margin: 0, fontFamily: ITALIC, fontStyle: "italic", fontSize: 21, lineHeight: 1.25, maxWidth: 280 }}>no ETA. no rush. just us, finally.</p>
           </div>
-        </Glass>
+          {(data.delay.amount || data.delay.reason) && (
+            <Glass style={{ marginTop: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+              <Loop src={`${ASSET}/cryingpuddle.webm`} width={56} />
+              <div style={{ minWidth: 0 }}>
+                <b style={{ fontSize: 14.5 }}>{departed ? `Arrived. Late by ${data.delay.amount || "some time"}.` : `Running late by ${data.delay.amount || "some time"}.`}</b>
+                <p style={{ margin: "2px 0 0", fontSize: 12.5, color: V.soft }}>
+                  Reason: {data.delay.reason || "circumstances beyond our control"}. Delay compensation is not admissible. We looked into it.
+                </p>
+              </div>
+            </Glass>
+          )}
+        </motion.div>
       )}
     </div>
   );
@@ -198,39 +236,5 @@ export function FinePrint({ lines }: { lines: string[] }) {
         ))}
       </ol>
     </div>
-  );
-}
-
-/** A tiny route line with the stations as dots — the route tile's preview. */
-export function RouteArt({ data }: { data: TicketData }) {
-  const stops = data.stations.slice(0, 7);
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: "18px 18px 62px", display: "flex", alignItems: "center" }}>
-      <span style={{ position: "relative", flex: 1, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ position: "absolute", left: 8, right: 8, top: "50%", height: 4, marginTop: -2, borderRadius: 4, background: `repeating-linear-gradient(90deg, ${V.faint} 0 8px, transparent 8px 14px)` }} />
-        {stops.map((s, i) => {
-          const passed = s.status === "passed";
-          const current = s.status === "current";
-          return (
-            <span
-              key={i}
-              style={{
-                position: "relative",
-                width: current ? 34 : 18,
-                height: current ? 34 : 18,
-                borderRadius: "50%",
-                display: "grid",
-                placeItems: "center",
-                fontSize: 15,
-                background: passed ? V.chip : current ? V.grad : V.base,
-                border: passed || current ? "none" : `2px dashed ${V.faint}`,
-              }}
-            >
-              {current ? "🚆" : ""}
-            </span>
-          );
-        })}
-      </span>
-    </span>
   );
 }

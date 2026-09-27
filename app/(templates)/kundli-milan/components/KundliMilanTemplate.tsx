@@ -16,6 +16,7 @@
 // always warm (28–36/36), never a real reading.
 
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { templateMediaBase } from "@/lib/templateMedia";
 import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
@@ -33,13 +34,12 @@ import {
   LOVE_CSS,
   LoveThemeContext,
   LoveSky,
-  SectionHead,
   Sticker,
-  Tape,
   ThemeDock,
 } from "../../_love/LoveKit";
-import MemoryHub, { EmojiArt, type HubTile } from "../../_love/MemoryHub";
-import { loveTiles } from "../../_love/Memories";
+import LoveStory, { ChapterHead, GifMoment, type Chapter, type StoryApi } from "../../_love/Story";
+import PhotoDeck from "../../_love/PhotoDeck";
+import LockedLetter from "../../_love/LockedLetter";
 import { V, pickTheme, themeVars } from "../../_love/theme";
 import {
   COSMIC_CSS,
@@ -48,7 +48,7 @@ import {
   firstName,
   initials,
 } from "./CosmicKit";
-import GunaCards, { FUN_KOOTA } from "./GunaCards";
+import { FUN_KOOTA } from "./GunaCards";
 import { Certificate } from "./Finale";
 import { KUNDLI_THEMES } from "./themes";
 import {
@@ -83,6 +83,7 @@ function funGrade(total: number): { label: string; emoji: string } {
 const LAYOUT_CSS = `
 .km-wrap { position: relative; z-index: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 .km-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: center; }
+.km-deck { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; max-width: 560px; margin: 0 auto; }
 @media (min-width: 960px) { .km-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 40px; } }
 `;
 
@@ -132,88 +133,109 @@ export default function KundliMilanTemplate({
     return () => window.clearTimeout(id);
   }, [stage, reduceMotion]);
 
-  const tiles: HubTile[] = [
-    ...loveTiles({
-      photos: data.photos,
-      gifs: data.gifs,
-      letter: data.letter,
-      from: a,
-      to: b,
-      reduceMotion,
-      labels: {
-        photos: "Proof you're cute",
-        photosSub: `${data.photos.length} photos · tap for their little letters`,
-        gifs: "Mood board",
-      },
-    }),
+  // Each GIF is used once, at one moment: the verdict, the end of the photos,
+  // the letter unlocking.
+  const gif = (i: number) => data.gifs[i];
+  const hasPhotos = data.photos.length > 0;
+  const hasLetter = data.letter.trim().length > 0;
+
+  const chapters: Chapter[] = [
     {
-      id: "remedies",
-      emoji: "💊",
-      title: "Remedies",
-      sub: `${data.remedies.length} cosmic prescriptions`,
-      tone: "paper",
-      art: <RemedyArt />,
-      sheetTitle: "Pandit ji prescribes",
-      content: () => (
-        <Remedies remedies={data.remedies} astrologer={data.astrologerName} />
+      id: "verdict",
+      emoji: "🔮",
+      title: "the verdict",
+      render: (api) => (
+        <Verdict
+          a={a}
+          b={b}
+          total={report.total}
+          grade={grade}
+          verdict={funVerdict(report.total, a, b)}
+          gif={gif(0)}
+          reduceMotion={reduceMotion}
+          onDone={api.complete}
+        />
       ),
     },
     {
       id: "gunas",
-      emoji: "🔮",
-      title: "The 8 gunas, decoded",
-      sub: "remote control rights, tantrum meter & more",
-      size: "wide",
-      tone: "glass",
-      art: <GunaArt report={report} />,
-      wide: true,
-      content: () => (
+      emoji: "🪐",
+      title: "the 8 gunas",
+      render: (api) => (
         <>
-          <GunaCards
-            kootas={report.kootas}
-            aName={a}
-            bName={b}
-            reduceMotion={reduceMotion}
-          />
-          <Glass
-            style={{
-              marginTop: 14,
-              padding: "16px 18px",
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
-            <span style={{ fontSize: 30 }} aria-hidden>
-              🪐
-            </span>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>
-              <b>Mangal Dosha report:</b>{" "}
-              <span style={{ color: V.soft }}>{report.mangalDosha}</span>
-            </p>
-          </Glass>
+          <ChapterHead kicker="the 8 gunas, decoded" title="Flip your gunas ✨" note="tap each card to see what the stars really think" />
+          <GunaDeck report={report} a={a} b={b} reduceMotion={reduceMotion} onAllRevealed={() => api.done(2600)} />
         </>
       ),
     },
     {
+      id: "remedies",
+      emoji: "💊",
+      title: "the remedies",
+      render: (api) => (
+        <>
+          <ChapterHead kicker="pandit ji prescribes" title="Accept your remedies 🙏" note="tap each one to sign the prescription" />
+          <RemedyChecklist remedies={data.remedies} astrologer={data.astrologerName} onAllAccepted={() => api.done(1800)} />
+        </>
+      ),
+    },
+    ...(hasPhotos
+      ? [
+          {
+            id: "photos",
+            emoji: "📸",
+            title: "proof you're cute",
+            render: (api: StoryApi) => <PhotosChapter photos={data.photos} gif={gif(1)} reduceMotion={reduceMotion} onDone={() => api.done(2600)} />,
+          },
+        ]
+      : []),
+    ...(hasLetter
+      ? [
+          {
+            id: "letter",
+            emoji: "💌",
+            title: "a sealed letter",
+            gated: true,
+            render: (api: StoryApi) => (
+              <LockedLetter
+                letter={data.letter}
+                from={a}
+                to={b}
+                question={data.lockQuestion.trim() || `${b}, do you accept the stars' decision? 🔮`}
+                answer={data.lockAnswer.trim() || "I accept 💖"}
+                gif={gif(2)}
+                gifCaption="the stars knew 🥹"
+                reduceMotion={reduceMotion}
+                onOpened={api.complete}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
       id: "certificate",
       emoji: "📜",
-      title: "Your certificate",
-      sub: "official-ish · save it as a picture",
-      size: "wide",
-      tone: "candy",
-      art: <EmojiArt emoji="📜" label={`${report.total}/36`} />,
-      content: () => (
-        <Certificate
-          theme={theme}
-          aName={a}
-          bName={b}
-          total={report.total}
-          grade={`${grade.label} ${grade.emoji}`}
-          issuedLabel={issuedLabel(data.issuedOn)}
-          astrologer={data.astrologerName}
-          photo={data.photos[0]}
-        />
+      title: "make it official",
+      render: () => (
+        <>
+          <ChapterHead kicker="the grand finale" title="Your certificate 📜" note="save it, frame it, send it to the group chat" />
+          <Certificate
+            theme={theme}
+            aName={a}
+            bName={b}
+            total={report.total}
+            grade={`${grade.label} ${grade.emoji}`}
+            issuedLabel={issuedLabel(data.issuedOn)}
+            astrologer={data.astrologerName}
+            photo={data.photos[0]}
+          />
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <GhostButton onClick={replay} style={{ width: "auto", minWidth: 220 }}>
+              ↺ consult the stars again
+            </GhostButton>
+            <p style={{ margin: 0, fontSize: 12, color: V.faint }}>For fun and love only. No astrologers were harmed. ✨</p>
+          </div>
+        </>
       ),
     },
   ];
@@ -291,331 +313,227 @@ export default function KundliMilanTemplate({
           />
         )}
 
-        {stage === "result" && (
-          <main
-            className="km-wrap"
-            style={{
-              paddingTop: 84,
-              paddingBottom: mode === "demo" ? 110 : 56,
-            }}
-          >
-            {/* ── The reveal ─────────────────────────────────────────────── */}
-            <section className="km-hero-grid">
-              <div
-                style={{
-                  position: "relative",
-                  display: "grid",
-                  placeItems: "center",
-                }}
-              >
-                {!reduceMotion && <HeartBurst />}
-                <ScoreRing total={report.total} reduceMotion={reduceMotion} />
-                {data.gifs[0] && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={data.gifs[0]}
-                    alt=""
-                    className={reduceMotion ? "" : "lv-float"}
-                    style={{
-                      position: "absolute",
-                      right: "max(0px, calc(50% - 190px))",
-                      bottom: -6,
-                      width: 92,
-                      height: 92,
-                      objectFit: "contain",
-                      borderRadius: 20,
-                      background: "#fff",
-                      border: "4px solid #fff",
-                      boxShadow: `0 16px 30px -14px ${V.shadow}`,
-                      transform: "rotate(8deg)",
-                    }}
-                  />
-                )}
-              </div>
-              <div
-                className={reduceMotion ? "" : "lv-pop"}
-                style={{ textAlign: "center" }}
-              >
-                <Sticker>✓ the stars have spoken</Sticker>
-                <h1
-                  style={{
-                    margin: "14px 0 0",
-                    fontWeight: 800,
-                    fontSize: "clamp(36px, 9vw, 64px)",
-                    lineHeight: 0.98,
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  {a} <GradText>&amp;</GradText> {b}
-                </h1>
-                <p
-                  style={{
-                    margin: "10px 0 0",
-                    fontSize: "clamp(20px, 5vw, 28px)",
-                    fontWeight: 800,
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {grade.label} <span aria-hidden>{grade.emoji}</span>
-                </p>
-                <p
-                  style={{
-                    margin: "10px auto 0",
-                    maxWidth: 520,
-                    fontFamily: ITALIC,
-                    fontStyle: "italic",
-                    fontSize: 20,
-                    lineHeight: 1.35,
-                    color: V.soft,
-                  }}
-                >
-                  {funVerdict(report.total, a, b)}
-                </p>
-                <div
-                  style={{
-                    marginTop: 14,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    justifyContent: "center",
-                  }}
-                >
-                  <Stat
-                    label="match"
-                    value={`${Math.round((report.total / 36) * 100)}%`}
-                  />
-                  <Stat label="mangal dosha" value="cancelled ✓" />
-                  <Stat label="pandit ji" value="approved 🙏" />
-                </div>
-              </div>
-            </section>
-
-            <div style={{ margin: "34px 0 0" }}>
-              <Tape
-                words={[
-                  "36 gunas checked",
-                  "no refunds",
-                  "the universe said yes",
-                  "zero red flags (mostly)",
-                ]}
-                reduceMotion={reduceMotion}
-              />
-            </div>
-
-            {/* ── Everything else, one tap away ─────────────────────────── */}
-            <section style={{ marginTop: 44 }}>
-              <SectionHead
-                eyebrow="the full report"
-                title="Tap anything to open it"
-                emoji="👇"
-              />
-              <MemoryHub tiles={tiles} reduceMotion={reduceMotion} />
-            </section>
-
-            <div
-              style={{
-                marginTop: 40,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              <GhostButton
-                onClick={replay}
-                style={{ width: "auto", minWidth: 220 }}
-              >
-                ↺ consult the stars again
-              </GhostButton>
-              <p style={{ margin: 0, fontSize: 12, color: V.faint }}>
-                For fun and love only. No astrologers were harmed. ✨
-              </p>
-            </div>
-          </main>
-        )}
+        {stage === "result" && <LoveStory chapters={chapters} reduceMotion={reduceMotion} />}
       </div>
     </LoveThemeContext.Provider>
   );
 }
 
-// ─── Hub bits ────────────────────────────────────────────────────────────────
+// ─── Story chapters ──────────────────────────────────────────────────────────
 
-function RemedyArt() {
-  return (
-    <span
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "grid",
-        placeItems: "center",
-        paddingBottom: 44,
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`${ASSET}/remedy-chai.webp`}
-        alt=""
-        className="km-wobble"
-        style={{
-          width: "62%",
-          maxWidth: 110,
-          aspectRatio: "1 / 1",
-          objectFit: "contain",
-        }}
-      />
-    </span>
-  );
-}
-
-function GunaArt({ report }: { report: KundliReport }) {
-  return (
-    <span
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: "14px 14px 58px",
-        display: "grid",
-        gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
-        gap: 6,
-        alignItems: "end",
-      }}
-    >
-      {report.kootas.map((k) => (
-        <span
-          key={k.name}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 4,
-            height: "100%",
-            justifyContent: "flex-end",
-          }}
-        >
-          <span
-            style={{
-              width: "100%",
-              maxWidth: 26,
-              borderRadius: 8,
-              height: `${Math.max(18, Math.round((k.obtained / k.max) * 100))}%`,
-              background: FUN_KOOTA[k.name].tint,
-              opacity: 0.9,
-            }}
-          />
-          <span style={{ fontSize: 16, lineHeight: 1 }}>
-            {FUN_KOOTA[k.name].emoji}
-          </span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function Remedies({
-  remedies,
-  astrologer,
+function Verdict({
+  a,
+  b,
+  total,
+  grade,
+  verdict,
+  gif,
+  reduceMotion,
+  onDone,
 }: {
-  remedies: string[];
-  astrologer: string;
+  a: string;
+  b: string;
+  total: number;
+  grade: { label: string; emoji: string };
+  verdict: string;
+  gif?: string;
+  reduceMotion: boolean;
+  onDone: () => void;
 }) {
+  const [landed, setLanded] = useState(reduceMotion);
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setLanded(true);
+      onDone();
+    }, reduceMotion ? 0 : 1900);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
-    <div
-      style={{
-        position: "relative",
-        maxWidth: 600,
-        margin: "30px auto 0",
-        background: V.paper,
-        color: V.paperInk,
-        borderRadius: 24,
-        padding: "24px 20px 20px",
-        boxShadow: `0 30px 60px -30px ${V.shadow}`,
-      }}
-    >
+    <div className="km-hero-grid">
+      <div style={{ position: "relative", display: "grid", placeItems: "center" }}>
+        {!reduceMotion && <HeartBurst />}
+        <ScoreRing total={total} reduceMotion={reduceMotion} />
+      </div>
+      <div className={reduceMotion ? "" : "lv-pop"} style={{ textAlign: "center" }}>
+        <Sticker>✓ the stars have spoken</Sticker>
+        <h1 style={{ margin: "14px 0 0", fontWeight: 800, fontSize: "clamp(36px, 9vw, 64px)", lineHeight: 0.98, letterSpacing: "-0.04em" }}>
+          {a} <GradText>&amp;</GradText> {b}
+        </h1>
+        <p style={{ margin: "10px 0 0", fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 800, letterSpacing: "-0.02em" }}>
+          {grade.label} <span aria-hidden>{grade.emoji}</span>
+        </p>
+        <p style={{ margin: "10px auto 0", maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, lineHeight: 1.35, color: V.soft }}>{verdict}</p>
+        <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+          <Stat label="match" value={`${Math.round((total / 36) * 100)}%`} />
+          <Stat label="mangal dosha" value="cancelled ✓" />
+          <Stat label="pandit ji" value="approved 🙏" />
+        </div>
+        <div style={{ marginTop: 18, minHeight: 130 }}>
+          <GifMoment src={gif} caption="the universe approves 💫" show={landed} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Eight face-down cards; each flips to its score and reading. */
+function GunaDeck({ report, a, b, reduceMotion, onAllRevealed }: { report: KundliReport; a: string; b: string; reduceMotion: boolean; onAllRevealed: () => void }) {
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const [focus, setFocus] = useState<string | null>(null);
+  const total = report.kootas.length;
+  const flip = (name: string) => {
+    setFocus(name);
+    setOpen((s) => {
+      if (s.has(name)) return s;
+      const next = new Set(s).add(name);
+      if (next.size === total) window.setTimeout(onAllRevealed, 0);
+      return next;
+    });
+  };
+  const focused = report.kootas.find((k) => k.name === focus);
+  const allOpen = open.size === total;
+  return (
+    <div>
+      <div className="km-deck">
+        {report.kootas.map((k, i) => {
+          const fun = FUN_KOOTA[k.name];
+          const on = open.has(k.name);
+          return (
+            <button
+              key={k.name}
+              type="button"
+              onClick={() => flip(k.name)}
+              aria-label={on ? `${fun.title}: ${k.obtained} of ${k.max}` : `Reveal ${fun.title}`}
+              className="lv-focus"
+              style={{ position: "relative", aspectRatio: "3 / 4", border: "none", padding: 0, background: "transparent", cursor: "pointer", perspective: 800 }}
+            >
+              <motion.span
+                initial={false}
+                animate={{ rotateY: on ? 180 : 0 }}
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 200, damping: 20, delay: 0 }}
+                style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d", display: "block" }}
+              >
+                <span style={{ ...face, background: V.grad, color: "#fff" }}>
+                  <span style={{ fontSize: 30 }}>{["🔮", "🪐", "⭐", "🌙"][i % 4]}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".16em", textTransform: "uppercase", opacity: 0.9 }}>tap</span>
+                </span>
+                <span style={{ ...face, transform: "rotateY(180deg)", background: V.paper, color: V.paperInk }}>
+                  <span style={{ fontSize: 26 }}>{fun.emoji}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, lineHeight: 1.1, textAlign: "center" }}>{fun.title}</span>
+                  <span style={{ marginTop: 2, padding: "2px 9px", borderRadius: 999, background: fun.tint, color: "#1a0d26", fontSize: 13, fontWeight: 800 }}>
+                    {k.obtained}/{k.max}
+                  </span>
+                </span>
+              </motion.span>
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 16, minHeight: 118 }} aria-live="polite">
+        <AnimatePresence mode="wait">
+          {focused ? (
+            <motion.div key={focused.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <Glass style={{ padding: "14px 16px", maxWidth: 620, margin: "0 auto" }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: ".18em", textTransform: "uppercase", color: V.a1 }}>
+                  {FUN_KOOTA[focused.name].emoji} {FUN_KOOTA[focused.name].title} · {a}: {focused.groomAttr} · {b}: {focused.brideAttr}
+                </p>
+                <p style={{ margin: "6px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, lineHeight: 1.3 }}>&ldquo;{focused.reading}&rdquo;</p>
+              </Glass>
+            </motion.div>
+          ) : (
+            <motion.p key="hint" style={{ margin: 0, textAlign: "center", color: V.soft, fontWeight: 700 }}>
+              {open.size}/{total} revealed
+            </motion.p>
+          )}
+        </AnimatePresence>
+        {allOpen && (
+          <motion.p initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ margin: "12px 0 0", textAlign: "center", fontWeight: 800 }}>
+            🪐 <span style={{ color: V.soft, fontWeight: 600 }}>{report.mangalDosha}</span>
+          </motion.p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const face = {
+  position: "absolute",
+  inset: 0,
+  borderRadius: 18,
+  backfaceVisibility: "hidden",
+  WebkitBackfaceVisibility: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  padding: 8,
+  fontFamily: GROTESK,
+  boxShadow: "0 14px 28px -16px rgba(0,0,0,.6)",
+} as const;
+
+/** The prescription: tap each remedy to sign it. */
+function RemedyChecklist({ remedies, astrologer, onAllAccepted }: { remedies: string[]; astrologer: string; onAllAccepted: () => void }) {
+  const [ok, setOk] = useState<Set<number>>(() => new Set());
+  const accept = (i: number) =>
+    setOk((s) => {
+      if (s.has(i)) return s;
+      const next = new Set(s).add(i);
+      if (next.size === remedies.length) window.setTimeout(onAllAccepted, 0);
+      return next;
+    });
+  return (
+    <div style={{ position: "relative", width: "100%", maxWidth: 600, margin: "26px auto 0", background: V.paper, color: V.paperInk, borderRadius: 24, padding: "24px 18px 20px", boxShadow: `0 30px 60px -30px ${V.shadow}` }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`${ASSET}/remedy-chai.webp`}
-        alt=""
-        width={92}
-        height={92}
-        className="km-wobble"
-        style={{
-          position: "absolute",
-          right: 10,
-          top: -40,
-          width: 92,
-          height: 92,
-          objectFit: "contain",
+      <img src={`${ASSET}/remedy-chai.webp`} alt="" width={92} height={92} className="km-wobble" style={{ position: "absolute", right: 10, top: -44, width: 92, height: 92, objectFit: "contain" }} />
+      <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: V.a1 }}>Rx · take daily, forever</p>
+      <ol style={{ margin: "12px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
+        {remedies.map((r, i) => {
+          const on = ok.has(i);
+          return (
+            <li key={i}>
+              <button
+                type="button"
+                onClick={() => accept(i)}
+                aria-pressed={on}
+                className="lv-focus"
+                style={{ position: "relative", width: "100%", display: "flex", gap: 12, alignItems: "flex-start", textAlign: "left", padding: "10px 12px", borderRadius: 16, border: `1.5px dashed ${on ? "transparent" : "rgba(0,0,0,.18)"}`, background: on ? "color-mix(in srgb, var(--lv-a1) 12%, transparent)" : "transparent", color: V.paperInk, cursor: "pointer", fontFamily: GROTESK }}
+              >
+                <span style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 10, background: on ? V.grad : "rgba(0,0,0,.08)", color: on ? "#fff" : V.paperInk, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13 }}>{on ? "✓" : i + 1}</span>
+                <span style={{ fontSize: 16, lineHeight: 1.45, fontWeight: 600, paddingTop: 3 }}>{r}</span>
+                {on && (
+                  <span className="lv-slap" style={{ position: "absolute", right: 10, top: 8, padding: "2px 8px", border: `2px solid ${V.a1}`, borderRadius: 6, color: V.a1, fontSize: 11, fontWeight: 800, letterSpacing: ".1em" }}>
+                    ACCEPTED
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      <p style={{ margin: "16px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 17, color: V.paperSoft }}>— {astrologer}</p>
+    </div>
+  );
+}
+
+function PhotosChapter({ photos, gif, reduceMotion, onDone }: { photos: KundliMilanTemplateProps["data"]["photos"]; gif?: string; reduceMotion: boolean; onDone: () => void }) {
+  const [all, setAll] = useState(false);
+  return (
+    <>
+      <ChapterHead kicker="evidence submitted to the universe" title="Proof you're cute 📸" />
+      <PhotoDeck
+        photos={photos}
+        reduceMotion={reduceMotion}
+        onAllSeen={() => {
+          setAll(true);
+          onDone();
         }}
       />
-      <p
-        style={{
-          margin: 0,
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: ".2em",
-          textTransform: "uppercase",
-          color: V.a1,
-        }}
-      >
-        Rx · take daily, forever
-      </p>
-      <ol
-        style={{
-          margin: "12px 0 0",
-          padding: 0,
-          listStyle: "none",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        {remedies.map((r, i) => (
-          <li
-            key={i}
-            style={{ display: "flex", gap: 12, alignItems: "flex-start" }}
-          >
-            <span
-              style={{
-                flexShrink: 0,
-                width: 28,
-                height: 28,
-                borderRadius: 10,
-                background: V.grad,
-                color: "#fff",
-                display: "grid",
-                placeItems: "center",
-                fontWeight: 800,
-                fontSize: 13,
-              }}
-            >
-              {i + 1}
-            </span>
-            <span
-              style={{
-                fontSize: 16,
-                lineHeight: 1.45,
-                fontWeight: 600,
-                paddingTop: 3,
-              }}
-            >
-              {r}
-            </span>
-          </li>
-        ))}
-      </ol>
-      <p
-        style={{
-          margin: "16px 0 0",
-          fontFamily: ITALIC,
-          fontStyle: "italic",
-          fontSize: 17,
-          color: V.paperSoft,
-        }}
-      >
-        — {astrologer}
-      </p>
-    </div>
+      <div style={{ marginTop: 14, minHeight: 20 }}>
+        <GifMoment src={gif} caption="that's us 🥹" show={all} size={96} />
+      </div>
+    </>
   );
 }
 

@@ -244,7 +244,9 @@ export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pa
                     noteHint: "Your honour, I was done for the moment she laughed…",
                     gifsTitle: "Court footage (GIFs)",
                     letterTitle: "Your sealed letter",
-                    letterNote: "The big one. It opens from a sealed envelope after the stamp.",
+                    letterNote: "The vows — locked in an envelope until they answer your question.",
+                    lockQuestion: `${mf.partyB.name.trim().split(/\s+/)[0] || "Ananya"}, do you take ${mf.partyA.name.trim().split(/\s+/)[0] || "Rohan"} as your forever person? 💍`,
+                    lockAnswer: "I do 💍",
                     letterHint: "Ananya,\n\nThe registrar stamped it today. I stamped it the night you…\n\n— Rohan",
                   }}
                 />
