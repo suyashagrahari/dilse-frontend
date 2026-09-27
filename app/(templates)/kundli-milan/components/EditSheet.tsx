@@ -21,8 +21,27 @@ import {
   KOOTA_ORDER,
 } from "./types";
 import { MAX_REMEDIES, MIN_REMEDIES, dobError, tobError } from "../hooks/useKundliMilanEditor";
+import PhotosEditor from "./PhotosEditor";
+import { FUN_KOOTA } from "./GunaCards";
+import GifPicker from "./GifPicker";
+import { MAX_LETTER_LEN } from "./types";
 
-const ACCENT = "#6C5CE7";
+/** A section header with a little emoji badge — the form reads as steps. */
+function Section({ emoji, title, note }: { emoji: string; title: string; note?: string }) {
+  return (
+    <div className="flex items-center gap-2.5 pt-2">
+      <span className="w-9 h-9 rounded-xl grid place-items-center text-lg shrink-0" style={{ background: "linear-gradient(135deg,#ffe3ec,#efe6ff)" }} aria-hidden>
+        {emoji}
+      </span>
+      <div className="min-w-0">
+        <h4 className="text-[15px] font-bold leading-tight">{title}</h4>
+        {note && <p className="text-[11.5px] text-muted-foreground leading-snug">{note}</p>}
+      </div>
+    </div>
+  );
+}
+
+const ACCENT = "#d0245f";
 const INPUT = "w-full px-3.5 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none text-sm";
 const INPUT_SM = "w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:outline-none text-sm";
 const ERR_CLS = "text-[11px] mt-1 text-red-500";
@@ -110,7 +129,7 @@ function PersonBlock({
         />
         {tErr
           ? <p className={ERR_CLS}>{tErr}</p>
-          : <p className="text-[10px] text-muted-foreground mt-1">Blank prints “time not stated”.</p>}
+          : <p className="text-[10px] text-muted-foreground mt-1">Don’t know it? Leave it blank.</p>}
       </Field>
 
       <Field label="Place of birth">
@@ -169,7 +188,7 @@ function EditSheetInner({
               <div className="px-5 pb-8 pt-2 space-y-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold flex items-center gap-2">
-                    <Stars size={17} style={{ color: ACCENT }} /> Submit the kundlis
+                    <Stars size={17} style={{ color: ACCENT }} /> Make your cosmic match
                   </h3>
                   <button onClick={() => setEditMode("preview")} className="p-1 text-muted-foreground" aria-label="Close">
                     <X size={20} />
@@ -179,22 +198,46 @@ function EditSheetInner({
                 {/* Two people. Birth data is the only input the engine reads —
                     names and places are printed but never scored, so a nickname
                     can never change the result. */}
+                <Section emoji="🔮" title="The two of you" note="Birthdays power the (totally fake) match score" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <PersonBlock
-                    title="VARA"
+                    title="YOU"
                     sub="Person one"
                     person={mf.groom}
                     onChange={(patch) => setPerson("groom", patch)}
                   />
                   <PersonBlock
-                    title="VADHU"
+                    title="YOUR PERSON"
                     sub="Person two"
                     person={mf.bride}
                     onChange={(patch) => setPerson("bride", patch)}
                   />
                 </div>
 
-                <Field label="Report dated" hint="printed on the header">
+                <Section emoji="📸" title="Photos & little letters" note="Tap a photo to zoom and move it. Each one can carry its own letter." />
+                <PhotosEditor photos={mf.photos} onChange={(next) => updateMf("photos", next)} />
+
+                <Section emoji="🎞️" title="GIFs" note="Your relationship's mood board" />
+                <GifPicker gifs={mf.gifs} onChange={(next) => updateMf("gifs", next)} />
+
+                <Section emoji="💌" title="Your love letter" note="Opens from an envelope at the very end" />
+                <div>
+                  <textarea
+                    value={mf.letter}
+                    onChange={(e) => updateMf("letter", e.target.value.slice(0, MAX_LETTER_LEN))}
+                    rows={6}
+                    placeholder={"Ananya,\n\nThe stars gave us 34 out of 36. I would have argued for 36…\n\n— Rohan"}
+                    aria-label="Love letter"
+                    className={INPUT + " resize-y leading-relaxed"}
+                    style={{ minHeight: 150, fontSize: 16 }}
+                  />
+                  <p className="text-right text-[10px] text-muted-foreground tabular-nums mt-1">
+                    {mf.letter.length}/{MAX_LETTER_LEN}
+                  </p>
+                </div>
+
+                <Section emoji="🙏" title="Pandit ji's funny bits" note="All optional — blanks use our lines" />
+                <Field label="Certificate date" hint="printed on the certificate">
                   <input
                     type="date"
                     value={mf.issuedOn}
@@ -205,7 +248,11 @@ function EditSheetInner({
 
                 {/* Custom readings — the personality slots. All eight optional;
                     a blank one falls back to the engine's own line. */}
-                <div>
+                <details className="rounded-2xl border border-border/60 p-3.5 bg-muted/20">
+                  <summary className="cursor-pointer text-sm font-semibold select-none">
+                    ✍️ Write your own guna lines ({filledReadings}/8)
+                  </summary>
+                  <div className="mt-3">
                   <Field
                     label={`Your own readings (${filledReadings}/8)`}
                     hint="all optional — blank uses ours"
@@ -214,9 +261,9 @@ function EditSheetInner({
                       {KOOTA_ORDER.map((k) => (
                         <div key={k}>
                           <div className="flex items-baseline gap-2 mb-1">
-                            <span className="text-xs font-semibold">{KOOTA_LABELS[k].en}</span>
+                            <span className="text-xs font-semibold">{FUN_KOOTA[k].emoji} {FUN_KOOTA[k].title}</span>
                             <span className="text-[10px] text-muted-foreground">
-                              {KOOTA_LABELS[k].governs} · {KOOTA_MAX[k]} guna{KOOTA_MAX[k] > 1 ? "s" : ""}
+                              {KOOTA_LABELS[k].en} · {KOOTA_MAX[k]} guna{KOOTA_MAX[k] > 1 ? "s" : ""}
                             </span>
                           </div>
                           <input
@@ -230,10 +277,11 @@ function EditSheetInner({
                     </div>
                   </Field>
                   <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
-                    One line each, printed under its row in the Ashtakoota table. Keep them fond —
+                    One line each, shown on its guna card. Keep them fond —
                     this is a joke about the two of you, not a verdict on either of you.
                   </p>
-                </div>
+                  </div>
+                </details>
 
                 {/* Remedies */}
                 <div>
@@ -300,7 +348,7 @@ function EditSheetInner({
                   style={{ background: ACCENT }}
                 >
                   <span className="inline-flex items-center gap-2">
-                    <PenLine size={15} /> Milan karein — run the match
+                    <PenLine size={15} /> Save & see the match 🔮
                   </span>
                 </button>
                 <p className="text-center text-[11px] text-muted-foreground">

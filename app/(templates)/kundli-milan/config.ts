@@ -6,15 +6,15 @@ export const config: TemplatePageConfig = {
   slug: "kundli-milan",
   type: "wedding",
   category: "gf",
-  title: "Kundli Milan Report",
+  title: "Kundli Milan — Cosmic Love Match",
   description:
-    "A full 36-guna Ashtakoota compatibility report for the two of you. Eight kootas, real nakshatras, actual yoni animals. Astrologically meaningless. Statistically hilarious.",
-  coverImage: templateMedia("kundli-milan", "cover.jpg"),
+    "A cute, funny, totally unscientific kundli match for the two of you. The stars scan your birthdays, count up a sky-high guna score and decode 8 hilarious gunas — then your photos (each with a little letter), GIFs, silly remedies, a love letter and a certificate you can save.",
+  coverImage: templateMedia("kundli-milan", "cover-v2.webp"),
   emoji: "🔮",
   color: "from-orange-500 to-amber-700",
   previewText: "36 gunas matched. The stars have signed off 🔮",
   bodyText:
-    "Issued by the Office of the Registrar of Hearts. Ayanamsa: Lahiri. Validity: none whatsoever.",
+    "Consulted: the stars, a confused pigeon and Pandit ji. Validity: none. Romance: maximum.",
   bgGradient: "from-orange-50 via-amber-50 to-white",
   tabs: [
     { id: "birth", icon: Stars, label: "Birth" },

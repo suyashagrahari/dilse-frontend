@@ -65,6 +65,8 @@ import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chatur
 // before its date.
 const allConfigs = [
   // ── new & just rebuilt ────────────────────────────────────────────────────
+  kundliMilan,
+  dateInvitation,
   dedication,
   holdMyHand,
 
@@ -87,9 +89,7 @@ const allConfigs = [
   photoPuzzle,
   loveflix,
   legalNotice,
-  kundliMilan,
   flags,
-  dateInvitation,
   courtMarriage,
   catchGame,
   proposal,
