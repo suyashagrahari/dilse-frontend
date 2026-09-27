@@ -11,6 +11,18 @@
 
 import { hash32, seededInt, seededPick, seededPickExcluding, seededUnit } from "@/lib/seededRandom";
 import { bodyFromKeys, dotDate, list, num, obj, oneOf, str, strList, strOr, type Raw } from "@/lib/wire";
+import {
+  DEMO_PHOTOS,
+  GIF_LIBRARY,
+  MAX_CAPTION_LEN,
+  MAX_GIFS,
+  MAX_LETTER_LEN,
+  MAX_NOTE_LEN,
+  MAX_PHOTOS,
+  parseLoveKit,
+  type LovePhoto,
+} from "../../_love/types";
+import { KUNDLI_THEME_IDS } from "./themes";
 
 export type EditMode = null | "manual" | "preview";
 
@@ -54,46 +66,16 @@ export interface KundliData {
   gifs: string[];
   /** The love letter that opens at the end. */
   letter: string;
+  /** Colour theme id — one of KUNDLI_THEMES. */
+  theme: string;
 }
 
 /** Same shape as the Dedication photo, so its framing tools work unchanged. */
-export interface KundliPhoto {
-  url: string;
-  caption?: string;
-  note?: string;
-  cropX?: number;
-  cropY?: number;
-  scale?: number;
-}
+export type KundliPhoto = LovePhoto;
 
-export const MAX_PHOTOS = 8;
-export const MAX_GIFS = 3;
-export const MAX_CAPTION_LEN = 60;
-export const MAX_NOTE_LEN = 400;
-export const MAX_LETTER_LEN = 1500;
+export { GIF_LIBRARY, MAX_CAPTION_LEN, MAX_GIFS, MAX_LETTER_LEN, MAX_NOTE_LEN, MAX_PHOTOS };
 
 const GIF_CDN = "https://cdn.subhsandesh.in/gifts-media";
-
-/** Hand-picked cute GIFs, all hosted on our own CDN so they never disappear. */
-export const GIF_LIBRARY: { url: string; label: string }[] = [
-  { url: `${GIF_CDN}/assets/court-of-love/penguin-hug.gif`, label: "penguin hug" },
-  { url: `${GIF_CDN}/assets/court-of-love/love-this-much.gif`, label: "love you this much" },
-  { url: `${GIF_CDN}/assets/court-of-love/aww-bear.gif`, label: "aww" },
-  { url: `${GIF_CDN}/assets/court-of-love/hearts.gif`, label: "hearts" },
-  { url: `${GIF_CDN}/assets/court-of-love/love-heart.gif`, label: "big heart" },
-  { url: `${GIF_CDN}/assets/court-of-love/you-are-amazing.gif`, label: "you're amazing" },
-  { url: `${GIF_CDN}/assets/proposal/ask-ring.gif`, label: "the ring" },
-  { url: `${GIF_CDN}/assets/proposal/ask-rose.gif`, label: "a rose" },
-  { url: `${GIF_CDN}/assets/proposal/ask-bouquet.gif`, label: "bouquet" },
-  { url: `${GIF_CDN}/templates/train-ticket/dancing.gif`, label: "happy dance" },
-  { url: `${GIF_CDN}/templates/legal-notice/head-pat.gif`, label: "head pat" },
-  { url: `${GIF_CDN}/templates/train-ticket/bunnyonatrain.gif`, label: "on my way" },
-  { url: `${GIF_CDN}/templates/hold-my-hand/cute-bear-evil-laugh.gif`, label: "evil laugh" },
-  { url: `${GIF_CDN}/assets/court-of-love/win-medal.gif`, label: "we won" },
-  { url: `${GIF_CDN}/assets/court-of-love/judge-gavel.gif`, label: "approved" },
-];
-
-const DEMO_PHOTO_CDN = "https://cdn.subhsandesh.in/gifts-media/assets";
 
 // ─── The eight kootas ────────────────────────────────────────────────────────
 // Canonical order and max values. Real Ashtakoota Milan sums to exactly 36 and
@@ -426,6 +408,8 @@ export interface KundliMilanTemplateProps {
   mode: "demo" | "live";
   shareId?: string;
   hasPassword?: boolean;
+  /** Demo only: the floating theme dock calls this. */
+  onThemeChange?: (id: string) => void;
 }
 
 // ─── Demo data ───────────────────────────────────────────────────────────────
@@ -442,10 +426,8 @@ export const DEMO_DATA: KundliData = {
   ],
   astrologerName: "Pt. Chandrakant Vyas-Sharma",
   photos: [
-    { url: `${DEMO_PHOTO_CDN}/couple1.webp`, caption: "the first sunset", note: "You said the sky looked like mango lassi. I have not stopped thinking about it.", cropX: 50, cropY: 45, scale: 100 },
-    { url: `${DEMO_PHOTO_CDN}/couple2.webp`, caption: "date night, round 1", note: "You stole my fries and then my heart. In that order.", cropX: 50, cropY: 40, scale: 100 },
-    { url: `${DEMO_PHOTO_CDN}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees were jealous of your smile that day.", cropX: 50, cropY: 50, scale: 100 },
-    { url: `${DEMO_PHOTO_CDN}/couple4.webp`, caption: "us, forever", note: "Stars say 34/36. My heart says 36/36. Recount requested.", cropX: 50, cropY: 50, scale: 100 },
+    ...DEMO_PHOTOS.slice(0, 3),
+    { ...DEMO_PHOTOS[3], note: "Stars say 34/36. My heart says 36/36. Recount requested." },
   ],
   gifs: [
     `${GIF_CDN}/assets/court-of-love/penguin-hug.gif`,
@@ -454,13 +436,14 @@ export const DEMO_DATA: KundliData = {
   ],
   letter:
     "Ananya,\n\nThe stars gave us a ridiculous score. Honestly, I would have argued for full marks.\n\nI knew it on the auto ride back from Marine Drive, when you fell asleep on my shoulder mid-sentence and I didn't move for forty minutes.\n\nNo kundli needed. Just you, every single day.\n\n— Rohan",
+  theme: "cosmic",
 };
 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 export const KUNDLI_MILAN_CONTENT_KEYS: (keyof KundliData)[] = [
   "groom", "bride", "issuedOn", "customReadings", "remedies", "astrologerName",
-  "photos", "gifs", "letter",
+  "photos", "gifs", "letter", "theme",
 ];
 
 export function kundliMilanDataToBody(data: KundliData, password?: string): Record<string, unknown> {
@@ -492,26 +475,7 @@ export function dbToKundliMilanData(db: Raw | null | undefined): KundliData {
     customReadings,
     remedies: strList(src.remedies, DEMO_DATA.remedies).slice(0, 4),
     astrologerName: str(src.astrologerName, DEMO_DATA.astrologerName),
-    photos: Array.isArray(src.photos)
-      ? list<KundliPhoto>(src.photos, (o) => {
-          const url = str(o.url, "");
-          if (!/^(https:\/\/|data:image\/)/.test(url)) return null;
-          const p: KundliPhoto = { url };
-          const caption = strOr(o.caption, "");
-          const note = strOr(o.note, "");
-          if (caption) p.caption = caption.slice(0, MAX_CAPTION_LEN);
-          if (note) p.note = note.slice(0, MAX_NOTE_LEN);
-          for (const k of ["cropX", "cropY", "scale"] as const) {
-            const n = Number(o[k]);
-            if (Number.isFinite(n)) p[k] = n;
-          }
-          return p;
-        }, []).slice(0, MAX_PHOTOS)
-      : DEMO_DATA.photos,
-    gifs: Array.isArray(src.gifs)
-      ? strList(src.gifs, []).filter((g) => /^https:\/\//.test(g)).slice(0, MAX_GIFS)
-      : DEMO_DATA.gifs,
-    letter: typeof src.letter === "string" ? src.letter.slice(0, MAX_LETTER_LEN) : DEMO_DATA.letter,
+    ...parseLoveKit(src, DEMO_DATA, KUNDLI_THEME_IDS),
   };
 }
 

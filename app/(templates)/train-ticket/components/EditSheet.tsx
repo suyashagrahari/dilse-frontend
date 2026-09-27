@@ -2,10 +2,12 @@
 
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PenLine, Eye, Trash2, Plus, Lock, Loader2, TrainFront } from "lucide-react";
+import { X, Eye, Trash2, Plus, Lock, Loader2, TrainFront } from "lucide-react";
 import type { EditMode, FareLine, Gender, Passenger, Station, TicketData } from "./types";
+import { FormSection, MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
+import { TRAIN_THEMES } from "./themes";
 
-const INK = "#2b2b2b";
+const INK = "#d0245f";
 const INPUT = "w-full px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 focus:outline-none text-sm";
 const INPUT_SM = "w-full px-2.5 py-2 rounded-lg bg-muted/50 border border-border/50 focus:outline-none text-sm";
 
@@ -109,12 +111,15 @@ export default memo(function EditSheet({
               <div className="px-5 pb-8 pt-2 space-y-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold flex items-center gap-2">
-                    <PenLine size={16} style={{ color: INK }} /> Book your ticket
+                    <TrainFront size={17} style={{ color: INK }} /> Book your love ticket 🎫
                   </h3>
-                  <button onClick={() => setEditMode("preview")} className="p-1 text-muted-foreground"><X size={20} /></button>
+                  <button onClick={() => setEditMode("preview")} className="p-1 text-muted-foreground" aria-label="Close"><X size={20} /></button>
                 </div>
 
+                <ThemeSection themes={TRAIN_THEMES} value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+
                 {/* ── reservation ─────────────────────────────────────────── */}
+                <FormSection emoji="🎫" title="Your ticket" note="Where this train is going — make the stations mean something." />
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="PNR *" hint="Make it mean something — an anniversary reads as a real 10-digit PNR.">
                     <input value={mf.pnr} onChange={(e) => updateMf("pnr", e.target.value)} placeholder="4402 8891" className={INPUT} />
@@ -143,6 +148,7 @@ export default memo(function EditSheet({
                   </Field>
                 </div>
 
+                <FormSection emoji="⏰" title="When you meet" note="The departure drives the live countdown on the boarding pass." />
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Departure (IST)" hint="The day you actually next meet. This drives the countdown.">
                     <input type="datetime-local" value={isoToLocalInput(mf.departureAt)} onChange={(e) => updateMf("departureAt", localInputToIso(e.target.value))} className={INPUT} />
@@ -153,8 +159,8 @@ export default memo(function EditSheet({
                 </div>
 
                 <Field
-                  label="Chart prepared at (IST)"
-                  hint="THE GATE. Until this moment the status page says CHART NOT PREPARED and the server refuses to send the names or seats at all. Leave it blank and the reveal is available immediately."
+                  label="🔒 Surprise lock — chart prepared at (IST)"
+                  hint="Until this moment the status board says CHART NOT PREPARED and the names, seats, photos and letter stay locked on our server. Leave it blank to reveal immediately."
                 >
                   <input type="datetime-local" value={isoToLocalInput(mf.chartPreparedAt)} onChange={(e) => updateMf("chartPreparedAt", localInputToIso(e.target.value))} className={INPUT} />
                   <button type="button" onClick={() => updateMf("chartPreparedAt", "")} className="text-xs font-semibold mt-2" style={{ color: INK }}>
@@ -168,7 +174,8 @@ export default memo(function EditSheet({
                 </div>
 
                 {/* ── passengers ──────────────────────────────────────────── */}
-                <Field label="Passengers (1–4)" hint='Seats in the same coach print "ADJACENT" under the CNF — that line is the whole payoff, so give them consecutive seat numbers.'>
+                <FormSection emoji="👫" title="Passengers" note="You two (or your whole squad). Names reveal with the CNF." />
+                <Field label="Passengers (1–4) *" hint='Seats in the same coach print "ADJACENT" under the CNF — that line is the whole payoff, so give them consecutive seat numbers.'>
                   <div className="space-y-3">
                     {mf.passengers.map((p, i) => (
                       <div key={i} className="p-3 rounded-xl border border-border/40 bg-muted/20 space-y-2">
@@ -199,20 +206,8 @@ export default memo(function EditSheet({
                   </div>
                 </Field>
 
-                {/* ── fare ────────────────────────────────────────────────── */}
-                <Field label="Fare lines" hint='Values are prose, not money — "2 years of waiting", "worth it", "PRICELESS". One straight-faced ₹0.00 line sells the rest.'>
-                  <div className="space-y-2">
-                    {mf.fare.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <input value={f.label} onChange={(e) => patchFare(i, { label: e.target.value })} placeholder="Label" className={INPUT_SM + " flex-1"} />
-                        <input value={f.value} onChange={(e) => patchFare(i, { value: e.target.value })} placeholder="Value" className={INPUT_SM + " flex-1"} />
-                        <button onClick={() => removeFare(i)} className="w-9 h-9 rounded-lg border border-border/50 grid place-items-center text-muted-foreground shrink-0"><Trash2 size={14} /></button>
-                      </div>
-                    ))}
-                    <button onClick={addFare} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: INK }}><Plus size={14} /> Add fare line</button>
-                  </div>
-                </Field>
-
+                {/* ── route ── (moved above fare) */}
+                <FormSection emoji="🗺️" title="The journey of us" note="Your relationship as stations — passed, where you are now, and what's next." />
                 {/* ── route ───────────────────────────────────────────────── */}
                 <Field label="Running status — your route" hint="Your relationship as a list of stops. Passed / current / upcoming controls the node and the line below it.">
                   <div className="space-y-3">
@@ -240,7 +235,26 @@ export default memo(function EditSheet({
                   <Field label="Reason"><input value={mf.delay.reason} onChange={(e) => updateMf("delay", { ...mf.delay, reason: e.target.value })} placeholder="circumstances beyond our control" className={INPUT} /></Field>
                 </div>
 
+
+                {/* ── fare ────────────────────────────────────────────────── */}
+                <FormSection emoji="🧾" title="Fare & fine print" note="Prose, not money. The sillier the better." />
+                <Field label="Fare lines" hint='Values are prose, not money — "2 years of waiting", "worth it", "PRICELESS". One straight-faced ₹0.00 line sells the rest.'>
+                  <div className="space-y-2">
+                    {mf.fare.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input value={f.label} onChange={(e) => patchFare(i, { label: e.target.value })} placeholder="Label" className={INPUT_SM + " flex-1"} />
+                        <input value={f.value} onChange={(e) => patchFare(i, { value: e.target.value })} placeholder="Value" className={INPUT_SM + " flex-1"} />
+                        <button onClick={() => removeFare(i)} className="w-9 h-9 rounded-lg border border-border/50 grid place-items-center text-muted-foreground shrink-0"><Trash2 size={14} /></button>
+                      </div>
+                    ))}
+                    <button onClick={addFare} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: INK }}><Plus size={14} /> Add fare line</button>
+                  </div>
+                </Field>
+
                 {/* ── fine print ──────────────────────────────────────────── */}
+                <details className="rounded-2xl border border-border/60 p-3.5 bg-muted/20">
+                  <summary className="cursor-pointer text-sm font-semibold select-none">📜 Fine print ({mf.finePrint.length} clauses)</summary>
+                  <div className="mt-3">
                 <Field label="Fine print" hint="Maximum bureaucratic register, complete sincerity. It prints at 6.5px and is deliberately hard to read — that contrast is the joke and the payload.">
                   <div className="space-y-2">
                     {mf.finePrint.map((l, i) => (
@@ -253,10 +267,23 @@ export default memo(function EditSheet({
                   </div>
                 </Field>
 
-                {/* ── letter ──────────────────────────────────────────────── */}
-                <Field label="The letter" hint="Shown under the slip in plain, readable serif. Drop the bureaucratic voice entirely here — the tonal shift is the whole point.">
-                  <textarea value={mf.letter} onChange={(e) => updateMf("letter", e.target.value)} rows={6} placeholder="Say it straight…" className={INPUT + " resize-none"} />
-                </Field>
+                  </div>
+                </details>
+
+                <MemoriesSections
+                  data={mf}
+                  update={(k, v) => updateMf(k, v)}
+                  gifTags={["travel", "miss", "love"]}
+                  copy={{
+                    photosTitle: "Window-seat memories",
+                    photosNote: "Up to 8 photos — the stops you've made together. Tap one to zoom & reposition, then add a tiny note.",
+                    captionHint: "caption — e.g. Pehli Mulaqat",
+                    noteHint: "You were late. I was early. We've been like that ever since…",
+                    letterTitle: "The letter on the berth",
+                    letterNote: "Drop the railway voice here and just say it. It opens from a sealed envelope.",
+                    letterHint: "I know a ticket is a strange way to say this…",
+                  }}
+                />
 
                 <Field label="Password (optional)" hint="If set, the shared link asks for this before the PNR page opens.">
                   <div className="relative">
@@ -268,10 +295,10 @@ export default memo(function EditSheet({
                 <button
                   onClick={onSave}
                   disabled={saving || !mf.pnr.trim()}
-                  className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-3.5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ background: INK }}
                 >
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save & Preview</>}
+                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save & check the PNR 🚆</>}
                 </button>
                 <p className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1">
                   <TrainFront size={11} /> Publish from the preview to get your shareable link

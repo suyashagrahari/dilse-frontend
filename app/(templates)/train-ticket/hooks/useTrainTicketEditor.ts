@@ -8,6 +8,8 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { type TicketData, type EditMode, DEMO_DATA, trainTicketDataToBody, dbToTrainTicketData } from "../components/types";
+import { TRAIN_THEMES } from "../components/themes";
+import { pickTheme } from "../../_love/theme";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -125,10 +127,12 @@ export function useTrainTicketEditor() {
 
     const draft = readDraft();
     if (draft?.data) {
-      setMf(draft.data);
+      // Drafts saved before the love kit existed have no photos/gifs/theme.
+      const d: TicketData = { ...DEMO_DATA, ...draft.data };
+      setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(draft.data);
+        setContent(d);
         setIsPersonalized(true);
         setEditMode("preview");
         bumpPreview();
@@ -203,8 +207,39 @@ export function useTrainTicketEditor() {
 
   const updateMf = useCallback((key: keyof TicketData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    // A fresh form keeps the train, route and fare jokes as a starting point but
+    // never the demo couple's names, photos, GIFs or letter — and it keeps the
+    // vibe they were just previewing.
+    setMf(
+      isPersonalized
+        ? { ...content }
+        : {
+            ...DEMO_DATA,
+            passengers: DEMO_DATA.passengers.map((p) => ({ ...p, name: "" })),
+            photos: [],
+            gifs: [],
+            letter: "",
+            theme: content.theme,
+          },
+    );
     // The starter goes first, but only while there is a schema to fill from and
     // only until the sender has said no once. Everything else opens the form
     // exactly as it did before.
@@ -392,10 +427,10 @@ export function useTrainTicketEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "Check your PNR status 🎫",
-      accent: "#334155",
+      accent: pickTheme(TRAIN_THEMES, content.theme).colors.a1,
       slug: "train-ticket",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, content.theme]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -407,7 +442,7 @@ export function useTrainTicketEditor() {
 
     fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

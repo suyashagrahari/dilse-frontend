@@ -8,7 +8,7 @@ export const config: TemplatePageConfig = {
   category: "gf",
   title: "Legal Notice",
   description:
-    "File a formal legal notice against your person. They must respond to every demand — accept or contest. Seven days to comply, or it escalates to their mother.",
+    "Serve your person a (very unserious) legal notice from the lawyer of love. They accept or object to every demand live on the page, flip through your photos as Exhibit A, B, C (each with a little note), your courtroom GIFs and an off-the-record love letter. Four themes. Seven days to comply, or it escalates to their mother.",
   emoji: "⚖️",
   color: "from-blue-600 to-indigo-800",
   previewText: "You have been served ⚖️",

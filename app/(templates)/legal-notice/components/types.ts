@@ -6,6 +6,9 @@
 // on a Mongoose schema next to `password` and `viewCount`. The two mapping
 // functions at the bottom are the only place that seam exists.
 
+import { DEMO_PHOTOS, parseLoveKit, type LovePhoto } from "../../_love/types";
+import { LEGAL_THEME_IDS } from "./themes";
+
 export type EditMode = null | "manual" | "preview";
 
 /** How the addressee answered a single demand. */
@@ -69,6 +72,14 @@ export interface NoticeData {
   escalationClause: string;
   finePrint: string[];
   state: NoticeLifecycle;
+  /** Exhibits: their photos, each framed in the editor with a little letter. */
+  photos: LovePhoto[];
+  /** Up to three GIF links. */
+  gifs: string[];
+  /** The main letter — the "off the record" note under all the legalese. */
+  letter: string;
+  /** Colour theme id — one of LEGAL_THEMES. */
+  theme: string;
 }
 
 // ─── Formatting helpers — the house style IS the realism ─────────────────────
@@ -279,6 +290,8 @@ export const FINE_PRINT_DEFAULT: string[] = [
   REQUIRED_FINE_PRINT,
 ];
 
+const LOVE_GIF_CDN = "https://cdn.subhsandesh.in/gifts-media";
+
 export const DEMO_DATA: NoticeData = {
   senderName: "Ananya",
   senderCity: "Bengaluru",
@@ -310,6 +323,20 @@ export const DEMO_DATA: NoticeData = {
   escalationClause: ESCALATION_DEFAULT,
   finePrint: FINE_PRINT_DEFAULT,
   state: "served",
+  photos: [
+    { ...DEMO_PHOTOS[0], caption: "Exhibit A: the first sunset", note: "Evidence that you were, at one point, capable of planning a date. The court remembers." },
+    { ...DEMO_PHOTOS[1], caption: "Exhibit B: the fries incident", note: "You stole my fries. Then my heart. Both charges stand. Neither will be dropped." },
+    { ...DEMO_PHOTOS[2], caption: "Exhibit C: cherry blossom era", note: "Submitted to prove you look cute when you actually listen to me." },
+    { ...DEMO_PHOTOS[3], caption: "Exhibit D: us, forever", note: "The court's final ruling: I'd pick you in every timeline. Now reply to my texts." },
+  ],
+  gifs: [
+    `${LOVE_GIF_CDN}/templates/legal-notice/unblinking.gif`,
+    `${LOVE_GIF_CDN}/assets/court-of-love/judge-gavel.gif`,
+    `${LOVE_GIF_CDN}/templates/legal-notice/head-pat.gif`,
+  ],
+  letter:
+    "Rohan,\n\nOff the record — and my advocate has advised me against this — none of these demands are actually why I'm sending this.\n\nI'm sending it because you're the only person I'd bother drafting four recitals for. The hoodie can stay. (It cannot. Return it.)\n\nCase adjourned until our next date. Which you are planning.\n\n— Ananya",
+  theme: "nightcourt",
 };
 
 // ─── Wire mapping ────────────────────────────────────────────────────────────
@@ -339,6 +366,10 @@ export function legalNoticeDataToBody(data: NoticeData, password?: string): Reco
     escalationClause: data.escalationClause,
     finePrint: data.finePrint,
     noticeState: data.state,
+    photos: data.photos,
+    gifs: data.gifs,
+    letter: data.letter,
+    theme: data.theme,
   };
   if (password !== undefined) body.password = password;
   return body;
@@ -397,6 +428,7 @@ export function dbToLegalNoticeData(db: Record<string, unknown> | null | undefin
     state: LIFECYCLES.includes(src.noticeState as NoticeLifecycle)
       ? (src.noticeState as NoticeLifecycle)
       : "served",
+    ...parseLoveKit(src, DEMO_DATA, LEGAL_THEME_IDS),
   };
 }
 

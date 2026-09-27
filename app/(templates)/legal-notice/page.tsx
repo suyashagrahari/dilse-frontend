@@ -9,7 +9,15 @@ import { useLegalNoticeEditor } from "./hooks/useLegalNoticeEditor";
 import LegalNotice from "./components/LegalNotice";
 import EditSheet from "./components/EditSheet";
 
-const ACCENT = "#6C5CE7";
+const ACCENT = "#d0245f";
+/** Frosted glass that reads on every theme, dark or light. */
+const CHROME: React.CSSProperties = {
+  background: "rgba(20,10,30,.55)",
+  color: "#fff6fb",
+  border: "1px solid rgba(255,255,255,.18)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+};
 
 function LegalNoticePageInner() {
   const e = useLegalNoticeEditor();
@@ -25,8 +33,8 @@ function LegalNoticePageInner() {
       <div className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <button
           onClick={e.goBack}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold shadow-sm"
-          style={{ background: "rgba(255,255,255,.92)", color: ACCENT, border: "1px solid #e2ddf8", backdropFilter: "blur(8px)" }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold"
+          style={{ ...CHROME, minHeight: 44 }}
         >
           <ArrowLeft size={15} /> Back
         </button>
@@ -34,8 +42,8 @@ function LegalNoticePageInner() {
         {e.isPersonalized && !e.showShare && (
           <button
             onClick={e.handleEditFromPreview}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-sm"
-            style={{ background: "rgba(255,255,255,.92)", color: ACCENT, border: "1px solid #e2ddf8", backdropFilter: "blur(8px)" }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold"
+            style={{ ...CHROME, minHeight: 44 }}
           >
             <PenLine size={14} /> Edit
           </button>
@@ -43,15 +51,15 @@ function LegalNoticePageInner() {
         <button
           onClick={topAction.onClick}
           disabled={e.publishing}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-60"
-          style={{ background: ACCENT }}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white disabled:opacity-60"
+          style={{ background: "linear-gradient(115deg,#ff3b5c 0%,#ff7a5c 48%,#ffb03c 100%)", minHeight: 44, boxShadow: "0 12px 26px -12px rgba(255,59,92,.9)" }}
         >
           {topAction.icon} {topAction.label}
         </button>
       </div>
 
       {/* Live preview. Keyed so each save starts the demand state fresh. */}
-      <LegalNotice key={e.previewVersion} data={e.displayData} mode="preview" />
+      <LegalNotice key={e.previewVersion} data={e.displayData} mode="preview" onThemeChange={e.shareUrl ? undefined : e.setTheme} />
 
       <EditSheet
         editMode={e.editMode}
@@ -98,7 +106,7 @@ function LegalNoticePageInner() {
 
 export default function LegalNoticePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#e6e3da" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#22091a" }} />}>
       <LegalNoticePageInner />
     </Suspense>
   );

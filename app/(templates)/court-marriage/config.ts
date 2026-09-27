@@ -8,7 +8,7 @@ export const config: TemplatePageConfig = {
   category: "gf",
   title: "Court Marriage Certificate",
   description:
-    "A keepsake court-marriage certificate for two — stamped, sealed, signed by your witnesses. Not legally binding. Emotionally, very binding.",
+    "A cute, funny court marriage at the Office of the Registrar of Hearts — objections read out and overruled, witnesses' ink drawing in, a REGISTERED stamp, your photos (each with a little letter), GIFs, a sealed love letter and a certificate you can save. 4 colour themes. Not legally binding. Emotionally, very binding.",
   emoji: "📜",
   color: "from-amber-500 to-yellow-700",
   previewText: "By the power vested in absolutely nobody 📜",
