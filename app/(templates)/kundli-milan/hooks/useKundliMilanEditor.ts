@@ -269,6 +269,10 @@ export function useKundliMilanEditor() {
             bride: { name: "", dob: "", tob: "", pob: "" },
             issuedOn: isoDay(new Date()),
             customReadings: {},
+            // Their own photos, GIFs and letter — never the demo couple's.
+            photos: [],
+            gifs: [],
+            letter: "",
           },
     );
     // The starter goes first, but only while there is a schema to fill from and
@@ -291,13 +295,13 @@ export function useKundliMilanEditor() {
 
   const handleSave = useCallback(() => {
     if (!mf.groom.name.trim() || !mf.bride.name.trim()) {
-      pushToast({ type: "info", title: "Both names are needed", message: "Vara and Vadhu" });
+      pushToast({ type: "info", title: "Both names are needed", message: "Yours and your person's" });
       return;
     }
     const gErr = dobError(mf.groom);
-    if (gErr) { pushToast({ type: "info", title: "Vara's date of birth", message: gErr }); return; }
+    if (gErr) { pushToast({ type: "info", title: "Your date of birth", message: gErr }); return; }
     const bErr = dobError(mf.bride);
-    if (bErr) { pushToast({ type: "info", title: "Vadhu's date of birth", message: bErr }); return; }
+    if (bErr) { pushToast({ type: "info", title: "Their date of birth", message: bErr }); return; }
     if (tobError(mf.groom) || tobError(mf.bride)) {
       pushToast({ type: "info", title: "Check the time of birth", message: "24-hour HH:MM, or leave it blank" });
       return;
