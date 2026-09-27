@@ -7,6 +7,7 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 import DateInvitationTemplate from "@/app/(templates)/date-invitation/components/DateInvitationTemplate";
 import { dbToDateInviteData } from "@/app/(templates)/date-invitation/components/types";
 import { DATE_FONT_VARS } from "@/app/(templates)/date-invitation/components/fonts";
+import { pageTokenKey } from "@/app/(templates)/date-invitation/components/liveApi";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 const GROTESK = "var(--font-di-grotesk), var(--font-outfit), system-ui, sans-serif";
@@ -35,6 +36,8 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
       const result = await res.json();
       if (result.success && result.verified) {
         sessionStorage.setItem(`date-invitation_unlocked_${shareId}`, "true");
+        // The key for answering and adding photos on a protected page.
+        if (typeof result.token === "string") sessionStorage.setItem(pageTokenKey(shareId), result.token);
         onUnlocked();
       } else { setError("Wrong password. Try again!"); setPw(""); }
     } catch { setError("Something went wrong. Try again!"); }
@@ -145,7 +148,11 @@ export default function DateInvitationViewer({
   const [unlocked, setUnlocked] = useState(() => {
     if (typeof window === "undefined") return !hasPassword;
     if (!hasPassword) return true;
-    return sessionStorage.getItem(`date-invitation_unlocked_${shareId}`) === "true";
+    // An unlock from before tokens existed can read but not answer — ask again.
+    return (
+      sessionStorage.getItem(`date-invitation_unlocked_${shareId}`) === "true" &&
+      !!sessionStorage.getItem(pageTokenKey(shareId))
+    );
   });
 
   if (hasPassword && !unlocked) {

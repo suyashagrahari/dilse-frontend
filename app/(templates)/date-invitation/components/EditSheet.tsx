@@ -30,6 +30,7 @@ import {
   fmtDateTimeLong, fmtDuration, fmtMins, toLocalDateInput,
 } from "./dateTheme";
 import useReducedMotion from "./useReducedMotion";
+import SongPicker from "./SongPicker";
 import {
   LIMITS, MAX_STOPS, MAX_STOP_MINS, MAX_TOTAL_MINS, MIN_STOP_MINS, MIN_TOTAL_MINS,
 } from "../hooks/useDateInvitationEditor";
@@ -816,6 +817,16 @@ export default memo(function EditSheet({
                 </Field>
 
                 {/* ── Meeting point ── */}
+                <SectionTitle note="plays when they open it">Your song 🎵</SectionTitle>
+                <SongPicker
+                  songId={mf.songId}
+                  songTitle={mf.songTitle}
+                  onChange={(id, title) => {
+                    updateMf("songId", id);
+                    updateMf("songTitle", title);
+                  }}
+                />
+
                 <SectionTitle note="revealed after she says yes">Meeting point</SectionTitle>
                 <p className="-mt-3 text-[11.5px]" style={{ color: INK_SOFT, fontFamily: UI }}>
                   Where she goes first. Hidden on the invitation itself, shown once she accepts.

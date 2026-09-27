@@ -63,9 +63,15 @@ import {
   shouldAutoAdvance,
   type DateInviteData,
   type DateInvitationTemplateProps,
+  MAX_MEMORIES,
+  type Memory,
   type Phase,
   type RsvpState,
 } from "./types";
+import { useAppSelector } from "@/store/hooks";
+import { compressPhoto, deleteMemory, fetchLive, sendCheckIn, sendMemory, sendRsvp, type LiveState } from "./liveApi";
+import SongPlayer from "./SongPlayer";
+import type { CheckInMode } from "./StopCard";
 import { headerView } from "./viewModel";
 import { GROTESK, MOON, NIGHT } from "./dateTheme";
 import { DATE_FONT_VARS } from "./fonts";
@@ -80,6 +86,15 @@ import AfterScreen from "./AfterScreen";
 import { DeclinedScreen, ExpiredScreen, RescheduleScreen } from "./ClosingScreens";
 
 const DAY = 86_400_000;
+
+/** "7:12 pm" today, "Sat 7:12 pm" otherwise — for the host banner. */
+function hostTime(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const d = new Date(t);
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+  return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
+}
 
 // ─── The clock, as an external store ─────────────────────────────────────────
 //
@@ -165,9 +180,13 @@ function devJump(
   }
 }
 
-export default function DateInvitationTemplate({ data, mode }: DateInvitationTemplateProps) {
+export default function DateInvitationTemplate({ data, mode, shareId }: DateInvitationTemplateProps) {
   const reduceMotion = useReducedMotion();
   const isDemo = mode === "demo";
+  // A published page with a share id is a shared evening: the server is the
+  // source of truth for the answer, the check-ins and the photos.
+  const isShared = mode === "live" && !!shareId;
+  const { accessToken } = useAppSelector((s) => s.auth);
 
   // ── The clock ──────────────────────────────────────────────────────────────
   //
@@ -197,7 +216,12 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
   const [proposedDate, setProposedDate] = useState(data.proposedDate);
   const [rawCursor, setRawCursor] = useState(data.currentStopIndex);
   const [arrivedAt, setArrivedAt] = useState<string[]>(data.arrivedAt);
-  const [photos, setPhotos] = useState<string[]>(data.photos);
+  const [memories, setMemories] = useState<Memory[]>(data.memories);
+  // Who is looking. "host" = the sender on their own link, "guest" = anyone
+  // else with it. Unknown until the first live read comes back.
+  const [role, setRole] = useState<"host" | "guest" | null>(null);
+  const [rsvpAt, setRsvpAt] = useState("");
+  const [notice, setNotice] = useState("");
 
   const stopCount = data.stops.length;
   // The sender can change the stop list under us while editing the live
@@ -213,9 +237,9 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
       proposedDate,
       currentStopIndex: cursor,
       arrivedAt: data.stops.map((_, i) => arrivedAt[i] ?? ""),
-      photos,
+      memories,
     }),
-    [data, rsvp, proposedDate, cursor, arrivedAt, photos],
+    [data, rsvp, proposedDate, cursor, arrivedAt, memories],
   );
 
   const phase = phaseOf(liveData, nowMs);
@@ -237,14 +261,28 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
     data.startsAt,
   );
 
+  // Fold a server reading of the shared evening into local state. Local state
+  // moves first (so a tap feels instant); the cursor only ever moves forward
+  // unless the server's answer is authoritative (a check-in response).
+  const applyLive = useCallback(
+    (live: LiveState, authoritative = false) => {
+      setRole(live.isOwner ? "host" : "guest");
+      setRsvp(live.rsvp);
+      setRsvpAt(live.rsvpAt);
+      setProposedDate(live.proposedDate);
+      setRawCursor((c) => (authoritative ? live.currentStopIndex : Math.max(c, live.currentStopIndex)));
+      setArrivedAt((a) => data.stops.map((_, i) => live.arrivedAt[i] || a[i] || ""));
+      setMemories(live.memories);
+    },
+    [data.stops],
+  );
+
   // ── Advance ────────────────────────────────────────────────────────────────
   const advance = useCallback(
     (stampIso: string | null) => {
       const from = cursor;
       if (from >= stopCount) return;
       if (from >= 0 && stampIso) {
-        // TODO(server): PATCH /date-invitation-pages/share/:shareId/arrival
-        // { index, at } so the sender sees them move through the evening.
         setArrivedAt((a) => {
           const next = data.stops.map((_, i) => a[i] ?? "");
           next[from] = stampIso;
@@ -256,10 +294,18 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
     [cursor, stopCount, data.stops],
   );
 
-  /** The `[ we're here ]` tap. Unlocks exactly one stop. */
+  /** The `[ we're here ]` tap. Unlocks exactly one stop — on both phones. */
   const onAdvance = useCallback(() => {
+    if (isShared && role !== "host") return;
+    const from = cursor;
     advance(new Date(nowMs).toISOString());
-  }, [advance, nowMs]);
+    if (isShared && shareId) {
+      void sendCheckIn(shareId, accessToken, from).then((r) => {
+        if (r.ok) applyLive(r.data, true);
+        else setNotice(r.error);
+      });
+    }
+  }, [advance, nowMs, isShared, role, cursor, shareId, accessToken, applyLive]);
 
   // Auto-advance: twenty minutes past the NEXT stop's arrival time, a forgotten
   // tap stops costing them the rest of the itinerary. Stamped `""`, which the
@@ -278,22 +324,108 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
     autoRef.current(null);
   }, [phase, liveData, nowMs]);
 
-  // ── RSVP ───────────────────────────────────────────────────────────────────
-  // TODO(server): POST /date-invitation-pages/share/:shareId/rsvp
-  // { state, proposedDate } so the sender is actually told the answer. Until
-  // that exists this is session state: it does not survive a refresh and it
-  // does not reach him. We are not inventing an unauthenticated write endpoint.
-  const onAccept = useCallback(() => setRsvp("accepted"), []);
-  const onDecline = useCallback(() => setRsvp("declined"), []);
-  const onReschedule = useCallback((iso: string) => {
-    setProposedDate(iso);
-    setRsvp("reschedule");
-  }, []);
+  // ── The shared evening ─────────────────────────────────────────────────────
+  //
+  // Both of them poll the page: she sees his check-ins arrive, he sees her
+  // answer land. Local state moves first (so a tap feels instant) and the
+  // server's answer is folded in; the cursor only ever moves forward.
+  const pollMs = phase === "live" ? 5000 : phase === "invitation" || phase === "countdown" ? 8000 : 12000;
+  useEffect(() => {
+    if (!isShared || !shareId) return;
+    let alive = true;
+    const pull = () => {
+      if (document.visibilityState === "hidden") return;
+      void fetchLive(shareId, accessToken).then((r) => {
+        if (alive && r.ok) applyLive(r.data);
+      });
+    };
+    pull();
+    const id = window.setInterval(pull, pollMs);
+    document.addEventListener("visibilitychange", pull);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", pull);
+    };
+  }, [isShared, shareId, accessToken, pollMs, applyLive]);
 
-  // TODO(server): POST the photos to the page so they survive the evening.
-  const onAddPhotos = useCallback((urls: string[]) => {
-    setPhotos((p) => [...p, ...urls].slice(0, 12));
-  }, []);
+  useEffect(() => {
+    if (!notice) return;
+    const id = window.setTimeout(() => setNotice(""), 4200);
+    return () => window.clearTimeout(id);
+  }, [notice]);
+
+  // ── RSVP ───────────────────────────────────────────────────────────────────
+  // Only the recipient answers. On a shared page the answer goes to the server
+  // (which emails the sender); if that fails the screen steps back so she can
+  // try again rather than believing an answer that never arrived.
+  const answer = useCallback(
+    (state: Exclude<RsvpState, "pending">, iso = "") => {
+      if (isShared && role === "host") return;
+      const prev = { rsvp, proposedDate };
+      setRsvp(state);
+      setProposedDate(state === "reschedule" ? iso : "");
+      if (!isShared || !shareId) return;
+      void sendRsvp(shareId, accessToken, state, iso).then((r) => {
+        if (r.ok) applyLive(r.data);
+        else {
+          setRsvp(prev.rsvp);
+          setProposedDate(prev.proposedDate);
+          setNotice(r.error);
+        }
+      });
+    },
+    [isShared, role, rsvp, proposedDate, shareId, accessToken, applyLive],
+  );
+  const onAccept = useCallback(() => answer("accepted"), [answer]);
+  const onDecline = useCallback(() => answer("declined"), [answer]);
+  const onReschedule = useCallback((iso: string) => answer("reschedule", iso), [answer]);
+
+  // ── Photos from the night ──────────────────────────────────────────────────
+  const me: "sender" | "recipient" | null = isDemo ? "recipient" : role === "host" ? "sender" : role === "guest" ? "recipient" : null;
+
+  const onAddMemory = useCallback(
+    async (file: File, stopId: string, title: string): Promise<string | null> => {
+      if (memories.length >= MAX_MEMORIES) return `That's all ${MAX_MEMORIES} photos`;
+      let image: string;
+      try {
+        image = await compressPhoto(file);
+      } catch {
+        return "That photo couldn't be read — try another";
+      }
+      if (!isShared || !shareId) {
+        // Preview: kept on this screen only.
+        setMemories((m) =>
+          [...m, { id: `demo-${Date.now()}`, url: image, stopId, title, by: "recipient" as const, at: new Date().toISOString() }].slice(0, MAX_MEMORIES),
+        );
+        return null;
+      }
+      const r = await sendMemory(shareId, accessToken, image, stopId, title);
+      if (!r.ok) return r.error;
+      applyLive(r.data);
+      return null;
+    },
+    [memories.length, isShared, shareId, accessToken, applyLive],
+  );
+
+  const onRemoveMemory = useCallback(
+    async (id: string) => {
+      if (!isShared || !shareId) {
+        setMemories((m) => m.filter((x) => x.id !== id));
+        return;
+      }
+      const r = await deleteMemory(shareId, accessToken, id);
+      if (r.ok) applyLive(r.data);
+      else setNotice(r.error);
+    },
+    [isShared, shareId, accessToken, applyLive],
+  );
+
+  const checkIn: CheckInMode = {
+    kind: isDemo ? "demo" : role === "host" ? "host" : "guest",
+    hostName: data.senderName || "your date",
+  };
+  const viewer: "guest" | "host" | "demo" = isDemo ? "demo" : role === "host" ? "host" : "guest";
 
   // ── Demo phase jump ────────────────────────────────────────────────────────
   const onJump = useCallback(
@@ -309,7 +441,7 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
           ? data.stops.map((s) => s.arriveAt)
           : data.stops.map(() => ""),
       );
-      if (target !== "after") setPhotos([]);
+      if (target !== "after") setMemories([]);
       resyncClock();
       window.scrollTo({ top: 0, behavior: "auto" });
     },
@@ -366,6 +498,60 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
         </Link>
       )}
 
+      {/* The host's own view of the shared evening: what she answered, and a
+          reminder that the check-in button is theirs alone. */}
+      {isShared && role === "host" && (
+        <div
+          className="fixed left-3 top-3 z-[95] max-w-[62vw] rounded-full px-3.5 py-2"
+          style={{
+            background: rsvp === "accepted" ? "#d8ff5c" : "rgba(18,8,31,0.72)",
+            color: rsvp === "accepted" ? "#1a0d26" : MOON,
+            border: rsvp === "accepted" ? "none" : "1px solid rgba(255,255,255,0.16)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            fontFamily: GROTESK,
+            fontSize: 12.5,
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            boxShadow: "0 8px 20px -10px rgba(0,0,0,0.6)",
+          }}
+          aria-live="polite"
+        >
+          {rsvp === "accepted"
+            ? `💘 ${data.recipientName} said yes${rsvpAt ? ` · ${hostTime(rsvpAt)}` : ""}`
+            : rsvp === "declined"
+              ? `${data.recipientName} answered`
+              : rsvp === "reschedule"
+                ? `📅 ${data.recipientName} suggested another day`
+                : `🎛️ host view · waiting for ${data.recipientName}`}
+        </div>
+      )}
+
+      {notice && (
+        <div
+          role="status"
+          className="fixed left-1/2 z-[150] -translate-x-1/2 rounded-full px-4 py-2.5 text-center"
+          style={{
+            top: 70,
+            maxWidth: "calc(100vw - 32px)",
+            background: "#fff6fb",
+            color: "#1a0d26",
+            fontFamily: GROTESK,
+            fontSize: 13.5,
+            fontWeight: 700,
+            boxShadow: "0 14px 30px -12px rgba(0,0,0,0.7)",
+          }}
+        >
+          {notice}
+        </div>
+      )}
+
+      {data.songId && (
+        <SongPlayer songId={data.songId} title={data.songTitle} lift={nudge ? 64 : 0} reduceMotion={reduceMotion} />
+      )}
+
       {phase === "invitation" && (
         <InvitationCard
           view={view}
@@ -374,11 +560,12 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
           onDecline={onDecline}
           onReschedule={onReschedule}
           reduceMotion={reduceMotion}
+          viewer={viewer}
         />
       )}
 
       {phase === "countdown" && (
-        <CountdownScreen view={view} nowMs={nowMs} weather={weather} reduceMotion={reduceMotion} />
+        <CountdownScreen view={view} nowMs={nowMs} weather={weather} reduceMotion={reduceMotion} viewer={viewer} />
       )}
 
       {phase === "live" && (
@@ -391,6 +578,7 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
           weather={weather}
           onAdvance={onAdvance}
           reduceMotion={reduceMotion}
+          checkIn={checkIn}
         />
       )}
 
@@ -398,8 +586,11 @@ export default function DateInvitationTemplate({ data, mode }: DateInvitationTem
         <AfterScreen
           data={liveData}
           itinerary={itinerary}
-          photos={photos}
-          onAddPhotos={onAddPhotos}
+          memories={memories}
+          maxMemories={MAX_MEMORIES}
+          me={me}
+          onAddMemory={onAddMemory}
+          onRemoveMemory={onRemoveMemory}
           reduceMotion={reduceMotion}
         />
       )}

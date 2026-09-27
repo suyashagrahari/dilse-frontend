@@ -207,7 +207,14 @@ export function useDateInvitationEditor() {
       // Restored VERBATIM, not through `dbToDateInviteData`: a work-in-progress
       // draft legitimately holds half-typed stops with no name yet, and the wire
       // coercer drops exactly those. They get cleaned in `handleSave`, not here.
-      const d = draft.data;
+      // Drafts from before the song and the photo board existed get their
+      // defaults, so the form never holds an undefined field.
+      const d: DateInviteData = {
+        ...draft.data,
+        songId: typeof draft.data.songId === "string" ? draft.data.songId : "",
+        songTitle: typeof draft.data.songTitle === "string" ? draft.data.songTitle : "",
+        memories: Array.isArray(draft.data.memories) ? draft.data.memories : [],
+      };
       setMf(d);
       draftRestoredRef.current = true;
       dirtyRef.current = true;

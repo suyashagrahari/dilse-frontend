@@ -57,6 +57,18 @@ export interface Stop extends GeoPoint {
   surprise: boolean;
 }
 
+/** A photo from the night, pinned to one stop. Server-owned; never sent by the editor. */
+export interface Memory {
+  id: string;
+  url: string;
+  stopId: string;
+  title: string;
+  by: "sender" | "recipient";
+  at: string;
+}
+
+export const MAX_MEMORIES = 4;
+
 export interface DateInviteData {
   senderName: string;
   recipientName: string;
@@ -86,6 +98,11 @@ export interface DateInviteData {
   /** Added afterwards. Data URLs or https URLs. */
   photos: string[];
   closingLine: string;
+  /** YouTube id of their song, or "" for none. Plays when the page opens. */
+  songId: string;
+  songTitle: string;
+  /** Up to four photos from the night, added by either of them afterwards. */
+  memories: Memory[];
 }
 
 // ─── Tuning ──────────────────────────────────────────────────────────────────
@@ -459,6 +476,9 @@ export function buildDemoData(): DateInviteData {
     arrivedAt: ["", "", "", ""],
     photos: [],
     closingLine: "Four hours, four stops, and I'd do the whole thing again tomorrow.",
+    songId: "2Vv-BfVoq4g",
+    songTitle: "Perfect — Ed Sheeran",
+    memories: [],
   };
 }
 
@@ -469,7 +489,7 @@ export const DEMO_DATA: DateInviteData = buildDemoData();
 export const DATE_INVITE_CONTENT_KEYS: (keyof DateInviteData)[] = [
   "senderName", "recipientName", "startsAt", "durationMins", "dressCode",
   "walkingLevel", "note", "meetingPoint", "stops", "rsvp", "proposedDate",
-  "currentStopIndex", "arrivedAt", "photos", "closingLine",
+  "currentStopIndex", "arrivedAt", "photos", "closingLine", "songId", "songTitle",
 ];
 
 export function dateInviteDataToBody(data: DateInviteData, password?: string): Record<string, unknown> {
@@ -533,6 +553,24 @@ export function dbToDateInviteData(db: Raw | null | undefined): DateInviteData {
     arrivedAt: stops.map((_, i) => arrived[i] ?? ""),
     photos: strList(src.photos, []).slice(0, 12),
     closingLine: strOr(src.closingLine, DEMO_DATA.closingLine),
+    songId: /^[A-Za-z0-9_-]{11}$/.test(strOr(src.songId, "")) ? strOr(src.songId, "") : "",
+    songTitle: strOr(src.songTitle, ""),
+    memories: list<Memory>(
+      src.memories,
+      (o) => {
+        const url = str(o.url, "");
+        if (!url) return null;
+        return {
+          id: str(o.id, ""),
+          url,
+          stopId: strOr(o.stopId, ""),
+          title: strOr(o.title, ""),
+          by: o.by === "sender" ? "sender" : "recipient",
+          at: strOr(o.at, ""),
+        };
+      },
+      [],
+    ).slice(0, MAX_MEMORIES),
   };
 }
 
