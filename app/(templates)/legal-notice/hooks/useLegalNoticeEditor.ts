@@ -232,8 +232,27 @@ export function useLegalNoticeEditor() {
 
   const updateMf = useCallback((key: keyof NoticeData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * notice is theirs, what will be published — the form's picker writes the
+   * same field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : seedDates({ ...DEMO_DATA }));
+    // A fresh notice keeps the demo's legalese (that is half the joke) but never
+    // the demo couple's photos or letter — and keeps the vibe they were previewing.
+    setMf(isPersonalized ? { ...content } : seedDates({ ...DEMO_DATA, photos: [], letter: "", theme: content.theme }));
     setEditMode("manual");
   }, [isPersonalized, content]);
 
@@ -428,7 +447,7 @@ export function useLegalNoticeEditor() {
     isPersonalized, showAuth, saving, publishing, copied, previewVersion,
     fill,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

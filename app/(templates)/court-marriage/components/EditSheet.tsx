@@ -1,21 +1,26 @@
 "use client";
 
-import { memo, useRef, useState } from "react";
+// The Create form. Ordinary app chrome, in steps: pick the vibe, the two
+// parties, the registry details, the register entries and witnesses, then the
+// love-kit memories (photos with little letters, GIFs, the sealed letter).
+//
+// Every keystroke autosaves via the controller hook's effect on `mf` — there is
+// no explicit save-draft call here, and there must not be one.
+
+import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PenLine, Eye, Camera, Trash2, Plus, Lock, Loader2, Info, ScrollText } from "lucide-react";
+import { X, Eye, Trash2, Plus, Lock, Loader2, ScrollText, PenLine } from "lucide-react";
+
+import { FormSection, MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
 import type { CertificateData, CertField, EditMode, Party, Witness } from "./types";
 import { padWitnesses, witnessHand } from "./types";
-import { usePrefersReducedMotion } from "./CourtMarriageTemplate";
-import { templateMediaBase } from "@/lib/templateMedia";
+import { COURT_THEMES } from "./themes";
 
-/** Animation set for this template — served from S3, never bundled. */
-const ASSET = templateMediaBase("court-marriage");
-
-const INK = "#4a4436";
-const SEAL = "#3f4c8f";
-const INPUT_CLS =
-  "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none text-sm transition-all";
-const INPUT_SM = "w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:outline-none text-sm";
+const ACCENT = "#d0245f";
+const INPUT = "w-full px-3.5 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none";
+const INPUT_SM = "w-full px-3 py-2.5 rounded-lg bg-muted/50 border border-border/50 focus:outline-none";
+/** 16px so iOS never zooms into a field. */
+const FS = { fontSize: 16 } as const;
 
 interface Props {
   editMode: EditMode;
@@ -28,289 +33,247 @@ interface Props {
   saving: boolean;
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+function Label({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        <span>{label}</span>
-        {hint && (
-          <span className="relative inline-flex items-center">
-            <button
-              type="button"
-              aria-label={hint}
-              aria-expanded={open}
-              onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-              onMouseEnter={() => setOpen(true)}
-              onMouseLeave={() => setOpen(false)}
-              className="inline-grid h-5 w-5 shrink-0 place-items-center rounded-full transition-transform active:scale-90"
-              style={{ background: open ? SEAL : "rgba(63,76,143,.12)", color: open ? "#fff" : SEAL }}
-            >
-              <Info size={12} />
-            </button>
-            <AnimatePresence>
-              {open && (
-                <motion.span
-                  role="tooltip"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className="absolute z-[60] font-medium normal-case tracking-normal"
-                  style={{
-                    top: "calc(100% + 8px)", left: 0, width: "min(240px, 72vw)",
-                    background: "#2b2f45", color: "#fff", fontSize: 11, lineHeight: 1.5,
-                    padding: "8px 11px", borderRadius: 10, boxShadow: "0 12px 30px -8px rgba(20,22,40,.5)",
-                  }}
-                >
-                  {hint}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </span>
-        )}
-      </label>
-      {children}
-    </div>
+    <label className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <span>{children}</span>
+      {hint && <span className="text-[11px] font-normal normal-case tracking-normal text-muted-foreground/80">· {hint}</span>}
+    </label>
   );
 }
 
-function fileToDataUrl(file: File, cb: (src: string) => void, maxMb = 6) {
-  if (file.size > maxMb * 1024 * 1024) {
-    alert(`Image too large. Please use one under ${maxMb}MB.`);
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = (e) => cb(e.target?.result as string);
-  reader.readAsDataURL(file);
-}
-
-export default memo(function EditSheet({
-  editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving,
-}: Props) {
+export default memo(function EditSheet({ editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving }: Props) {
   const visible = editMode === "manual";
-  const photoRef = useRef<HTMLInputElement>(null);
-  const reduced = usePrefersReducedMotion();
 
-  const setParty = (which: "partyA" | "partyB", patch: Partial<Party>) =>
-    updateMf(which, { ...mf[which], ...patch });
+  const setParty = (which: "partyA" | "partyB", patch: Partial<Party>) => updateMf(which, { ...mf[which], ...patch });
 
   const witnesses = padWitnesses(mf.witnesses);
-  const setWitness = (i: number, patch: Partial<Witness>) =>
-    updateMf(
-      "witnesses",
-      witnesses.map((w, idx) => (idx === i ? { ...w, ...patch } : w)),
-    );
+  const setWitness = (i: number, patch: Partial<Witness>) => updateMf("witnesses", witnesses.map((w, idx) => (idx === i ? { ...w, ...patch } : w)));
 
-  const setField = (i: number, patch: Partial<CertField>) =>
-    updateMf("fields", mf.fields.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
+  const setField = (i: number, patch: Partial<CertField>) => updateMf("fields", mf.fields.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
   const addField = () => updateMf("fields", [...mf.fields, { label: "", value: "" }]);
   const removeField = (i: number) => updateMf("fields", mf.fields.filter((_, idx) => idx !== i));
+
+  const namesOk = Boolean(mf.partyA.name.trim() && mf.partyB.name.trim());
 
   return (
     <AnimatePresence>
       {visible && (
         <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditMode("preview")} className="fixed inset-0 z-[60] bg-black/50" />
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setEditMode("preview")}
-            className="fixed inset-0 z-[60] bg-black/50"
-          />
-          <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
-            className="pointer-events-auto fixed bottom-0 left-0 right-0 z-[60] lg:inset-0 lg:flex lg:items-center lg:justify-center lg:bg-transparent"
+            className="pointer-events-none fixed bottom-0 left-0 right-0 z-[60] lg:inset-0 lg:flex lg:items-center lg:justify-center"
           >
-            <div className="mx-auto max-h-[84vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-background shadow-2xl lg:max-h-[90vh] lg:rounded-3xl">
+            <div className="pointer-events-auto mx-auto max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-background shadow-2xl lg:max-h-[90vh] lg:rounded-3xl">
               <div className="sticky top-0 z-10 flex justify-center bg-background pb-1 pt-3">
                 <div className="h-1 w-10 rounded-full bg-border" />
               </div>
 
-              <div className="space-y-5 px-5 pb-8 pt-2">
+              <div className="space-y-6 px-5 pb-8 pt-2">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-lg font-bold">
-                    <ScrollText size={16} style={{ color: SEAL }} /> Register your marriage
+                    <ScrollText size={17} style={{ color: ACCENT }} /> Register your marriage 💍
                   </h3>
-                  <button onClick={() => setEditMode("preview")} className="p-1 text-muted-foreground" aria-label="Close">
+                  <button onClick={() => setEditMode("preview")} className="grid h-10 w-10 place-items-center rounded-full text-muted-foreground" aria-label="Close">
                     <X size={20} />
                   </button>
                 </div>
 
-                {/* Parties */}
-                {(["partyA", "partyB"] as const).map((which, i) => (
-                  <div key={which} className="space-y-3 rounded-2xl border border-border/50 p-3.5">
-                    <div className="text-sm font-bold" style={{ color: SEAL }}>
-                      Party {i === 0 ? "A" : "B"}
+                <ThemeSection themes={COURT_THEMES} value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+
+                <FormSection emoji="💑" title="The two of you" note="Names are required — everything else is optional">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {(["partyA", "partyB"] as const).map((which, i) => (
+                      <div key={which} className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-3.5">
+                        <div className="text-sm font-bold" style={{ color: ACCENT }}>
+                          {i === 0 ? "YOU · party A" : "YOUR PERSON · party B"}
+                        </div>
+                        <div>
+                          <Label>Full name *</Label>
+                          <input
+                            value={mf[which].name}
+                            onChange={(e) => setParty(which, { name: e.target.value })}
+                            placeholder={i === 0 ? "e.g. Rohan Mehta" : "e.g. Ananya Iyer"}
+                            maxLength={40}
+                            aria-invalid={!mf[which].name.trim()}
+                            className={INPUT_SM}
+                            style={FS}
+                          />
+                        </div>
+                        <div className="grid grid-cols-[88px_1fr] gap-2">
+                          <div>
+                            <Label>Age</Label>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              max={120}
+                              value={mf[which].age || ""}
+                              onChange={(e) => setParty(which, { age: Math.max(0, Math.min(120, Number(e.target.value) || 0)) })}
+                              className={INPUT_SM}
+                              style={FS}
+                            />
+                          </div>
+                          <div>
+                            <Label>City</Label>
+                            <input value={mf[which].city} onChange={(e) => setParty(which, { city: e.target.value })} placeholder="e.g. Bengaluru" maxLength={40} className={INPUT_SM} style={FS} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </FormSection>
+
+                <FormSection emoji="🏛️" title="Registry details" note="Printed on the certificate and read out in the ceremony">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Certificate no.</Label>
+                      <input value={mf.certificateNo} onChange={(e) => updateMf("certificateNo", e.target.value)} maxLength={24} className={INPUT_SM} style={FS} />
                     </div>
-                    <Field label={`Full name *`} hint="Printed in capitals inside the certifying paragraph.">
+                    <div>
+                      <Label>Registered on</Label>
+                      <input type="date" value={mf.registeredOn} onChange={(e) => updateMf("registeredOn", e.target.value)} className={INPUT_SM} style={FS} />
+                    </div>
+                    <div>
+                      <Label>Known for (days)</Label>
                       <input
-                        value={mf[which].name}
-                        onChange={(e) => setParty(which, { name: e.target.value })}
-                        placeholder={i === 0 ? "e.g. Ananya Iyer" : "e.g. Rohan Mehta"}
-                        maxLength={40}
-                        className={INPUT_CLS}
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        value={mf.knownSinceDays || ""}
+                        onChange={(e) => {
+                          const days = Math.max(0, Number(e.target.value) || 0);
+                          updateMf("knownSinceDays", days);
+                          // keep the matching printed row honest
+                          updateMf("fields", mf.fields.map((f) => (/known/i.test(f.label) ? { ...f, value: `${days} days` } : f)));
+                        }}
+                        className={INPUT_SM}
+                        style={FS}
                       />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Age">
-                        <input
-                          type="number" inputMode="numeric" min={1} max={120}
-                          value={mf[which].age || ""}
-                          onChange={(e) => setParty(which, { age: Number(e.target.value) || 0 })}
-                          className={INPUT_SM}
-                        />
-                      </Field>
-                      <Field label="City">
-                        <input
-                          value={mf[which].city}
-                          onChange={(e) => setParty(which, { city: e.target.value })}
-                          placeholder="e.g. Bengaluru"
-                          maxLength={40}
-                          className={INPUT_SM}
-                        />
-                      </Field>
+                    </div>
+                    <div>
+                      <Label hint="all overruled">Objections</Label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={99}
+                        value={mf.objectionCount || 0}
+                        onChange={(e) => {
+                          const n = Math.max(0, Math.min(99, Number(e.target.value) || 0));
+                          updateMf("objectionCount", n);
+                          updateMf("fields", mf.fields.map((f) => (/objections received/i.test(f.label) ? { ...f, value: String(n) } : f)));
+                        }}
+                        className={INPUT_SM}
+                        style={FS}
+                      />
                     </div>
                   </div>
-                ))}
-
-                {/* Photo — the photographer keeps the ask light */}
-                <Field label="Joint photograph" hint="One photo of the two of you. Sits top-right with the seal stamped across its corner. Leave it empty and the frame prints as 'affix joint photograph'.">
-                  <div className="flex items-center gap-3">
-                    <div
-                      onClick={() => photoRef.current?.click()}
-                      className="grid h-[70px] w-[58px] shrink-0 cursor-pointer place-items-center overflow-hidden rounded-lg border-2 border-dashed border-border/60"
-                    >
-                      {mf.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mf.photoUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Camera size={18} className="text-muted-foreground" />
-                      )}
-                      <input
-                        ref={photoRef} type="file" accept="image/*" className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) fileToDataUrl(e.target.files[0], (src) => updateMf("photoUrl", src)); e.target.value = ""; }}
-                      />
-                    </div>
-                    {!reduced && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`${ASSET}/photographer.webp`} alt="" width={54} height={54} className="shrink-0 rounded-xl" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] leading-relaxed text-muted-foreground">
-                        Any selfie works. It gets a light sepia so it matches the paper.
-                      </p>
-                      {mf.photoUrl && (
-                        <button onClick={() => updateMf("photoUrl", null)} className="mt-1.5 rounded-full border border-border/50 px-3 py-1 text-xs text-muted-foreground">
-                          Remove
+                  <div className="flex gap-2">
+                    {(["registered", "awaiting_witnesses"] as const).map((st) => {
+                      const on = mf.certificateState === st || (st === "registered" && mf.certificateState === "draft");
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => updateMf("certificateState", st)}
+                          aria-pressed={on}
+                          className="flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-bold"
+                          style={{ borderColor: on ? ACCENT : "#eadfe4", color: on ? ACCENT : undefined, background: on ? "#fff5f8" : undefined }}
+                        >
+                          {st === "registered" ? "✓ Registered" : "⏳ Awaiting witnesses"}
                         </button>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
-                </Field>
+                </FormSection>
 
-                {/* Registry meta */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Certificate no." hint="Also the seed for every ink wobble on the page — change it and the typing shifts.">
-                    <input value={mf.certificateNo} onChange={(e) => updateMf("certificateNo", e.target.value)} maxLength={24} className={INPUT_SM} />
-                  </Field>
-                  <Field label="Registered on">
-                    <input type="date" value={mf.registeredOn} onChange={(e) => updateMf("registeredOn", e.target.value)} className={INPUT_SM} />
-                  </Field>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Known since (days)">
-                    <input
-                      type="number" inputMode="numeric" min={0}
-                      value={mf.knownSinceDays || ""}
-                      onChange={(e) => {
-                        const days = Number(e.target.value) || 0;
-                        updateMf("knownSinceDays", days);
-                        // keep the matching printed row honest
-                        updateMf(
-                          "fields",
-                          mf.fields.map((f) => (/known/i.test(f.label) ? { ...f, value: `${days} days` } : f)),
-                        );
-                      }}
-                      className={INPUT_SM}
-                    />
-                  </Field>
-                  <Field label="Objections received" hint="Printed as the clerk's margin note under the entries.">
-                    <input
-                      type="number" inputMode="numeric" min={0}
-                      value={mf.objectionCount || 0}
-                      onChange={(e) => {
-                        const n = Number(e.target.value) || 0;
-                        updateMf("objectionCount", n);
-                        updateMf(
-                          "fields",
-                          mf.fields.map((f) => (/objections received/i.test(f.label) ? { ...f, value: String(n) } : f)),
-                        );
-                      }}
-                      className={INPUT_SM}
-                    />
-                  </Field>
-                </div>
-
-                {/* Dot-leader entries */}
-                <Field label="Entries" hint="The dotted rows in the middle. 4–6 read best; the value column is fixed so the dots always line up.">
+                <FormSection emoji="📋" title="The register entries" note="The funny dotted rows — 4 to 6 read best">
                   <div className="space-y-2">
                     {mf.fields.map((f, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <input value={f.label} onChange={(e) => setField(i, { label: e.target.value })} placeholder="Label" maxLength={40} className={INPUT_SM + " flex-1"} />
-                        <input value={f.value} onChange={(e) => setField(i, { value: e.target.value })} placeholder="Value" maxLength={24} className={INPUT_SM + " w-24"} />
-                        <button onClick={() => removeField(i)} aria-label="Remove entry" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border/50 text-muted-foreground hover:text-red-400">
-                          <Trash2 size={14} />
+                        <input value={f.label} onChange={(e) => setField(i, { label: e.target.value })} placeholder="e.g. Fights survived" aria-label={`Entry ${i + 1} label`} maxLength={40} className={INPUT_SM + " min-w-0 flex-1"} style={FS} />
+                        <input value={f.value} onChange={(e) => setField(i, { value: e.target.value })} placeholder="27" aria-label={`Entry ${i + 1} value`} maxLength={24} className={INPUT_SM + " w-24 shrink-0"} style={FS} />
+                        <button onClick={() => removeField(i)} aria-label={`Remove entry ${i + 1}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border/50 text-muted-foreground">
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     ))}
                     {mf.fields.length < 6 && (
-                      <button onClick={addField} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: SEAL }}>
+                      <button onClick={addField} className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: ACCENT }}>
                         <Plus size={14} /> Add entry
                       </button>
                     )}
                   </div>
-                </Field>
+                </FormSection>
 
-                {/* Witnesses */}
-                <Field label="Witnesses" hint="Three slots. Name a witness and their signature is drawn in; leave one empty and it prints as a blank ruled line, waiting to be signed.">
+                <FormSection emoji="✍️" title="Witnesses" note="Name one and their signature draws itself in. Leave one blank — it waits to be signed.">
                   <div className="space-y-2">
                     {witnesses.map((w, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <span className="w-4 shrink-0 text-xs font-bold text-muted-foreground">{i + 1}</span>
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-muted text-xs font-bold text-muted-foreground">{i + 1}</span>
                         <input
                           value={w.name}
                           onChange={(e) => {
                             const name = e.target.value;
                             setWitness(i, { name, signaturePath: name.trim() ? witnessHand(i) : "" });
                           }}
-                          placeholder={`Witness ${i + 1} (optional)`}
+                          placeholder={i === 0 ? "e.g. the friend who set you up" : `Witness ${i + 1} (optional)`}
+                          aria-label={`Witness ${i + 1}`}
                           maxLength={30}
                           className={INPUT_SM + " flex-1"}
+                          style={FS}
                         />
                       </div>
                     ))}
                   </div>
-                  <p className="mt-1.5 text-[10px] text-muted-foreground">Empty slots stay blank on the certificate — witnesses can sign later.</p>
-                </Field>
+                </FormSection>
 
-                {/* Password */}
-                <Field label="Password (optional)" hint="If set, the shared link asks for this before the certificate opens.">
+                <MemoriesSections
+                  data={mf}
+                  update={(k, v) => updateMf(k, v as CertificateData[typeof k])}
+                  gifTags={["yes", "legal", "love"]}
+                  copy={{
+                    photosTitle: "Evidence: photos + little letters",
+                    photosNote: "Up to 8. The first one is the portrait on your certificate. Tap a photo to zoom & reposition it.",
+                    captionHint: "caption — e.g. the day we signed",
+                    noteHint: "Your honour, I was done for the moment she laughed…",
+                    gifsTitle: "Court footage (GIFs)",
+                    letterTitle: "Your sealed letter",
+                    letterNote: "The big one. It opens from a sealed envelope after the stamp.",
+                    letterHint: "Ananya,\n\nThe registrar stamped it today. I stamped it the night you…\n\n— Rohan",
+                  }}
+                />
+
+                <FormSection emoji="🔒" title="Password (optional)" note="If set, the link asks for it before the certificate opens">
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input value={pagePassword} onChange={(e) => setPagePassword(e.target.value)} placeholder="Leave empty for no password" className={INPUT_CLS + " pl-10"} />
+                    <input value={pagePassword} onChange={(e) => setPagePassword(e.target.value)} placeholder="Leave empty for no password" className={INPUT + " pl-10"} style={FS} />
                   </div>
-                </Field>
+                </FormSection>
 
                 <button
                   onClick={onSave}
-                  disabled={saving || !mf.partyA.name.trim() || !mf.partyB.name.trim()}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white disabled:opacity-50"
-                  style={{ background: `linear-gradient(135deg, ${SEAL}, #2b3466)`, minHeight: 48 }}
+                  disabled={saving || !namesOk}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white disabled:opacity-50"
+                  style={{ background: "linear-gradient(115deg,#ff4f8b 0%,#ff7a5c 48%,#ffb03c 100%)", minHeight: 52 }}
                 >
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save &amp; preview</>}
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Eye size={16} /> Save &amp; see the ceremony 💍
+                    </>
+                  )}
                 </button>
                 <p className="flex items-center justify-center gap-1 text-center text-[11px] text-muted-foreground">
-                  <PenLine size={10} style={{ color: INK }} /> Publish from the preview to get your shareable link
+                  <PenLine size={10} /> {namesOk ? "Publish from the preview to get your shareable link" : "Add both names to continue"}
                 </p>
               </div>
             </div>

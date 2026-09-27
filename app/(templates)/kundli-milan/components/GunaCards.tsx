@@ -6,8 +6,8 @@
 // actually argues about, an emoji, both people's attribute, a score bar and
 // the reading (the sender's own line, or the engine's).
 
-import { GROTESK, ITALIC, MOON, MOON_FAINT, MOON_SOFT } from "../../date-invitation/components/dateTheme";
-import { GOLD } from "./CosmicKit";
+import { GROTESK, ITALIC } from "../../_love/LoveKit";
+import { V } from "../../_love/theme";
 import type { KootaName, KootaResult } from "./types";
 
 export const FUN_KOOTA: Record<KootaName, { title: string; emoji: string; about: string; tint: string }> = {
@@ -29,7 +29,6 @@ const ANIMAL_EMOJI: Record<string, string> = {
 const CSS = `
 .km-gunas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 @media (min-width: 640px) { .km-gunas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .km-gunas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 `;
 
 export default function GunaCards({
@@ -55,14 +54,14 @@ export default function GunaCards({
         return (
           <article
             key={k.name}
-            className={`km-card ${reduceMotion ? "" : "di-pop-in"}`}
+            className={`km-card ${reduceMotion ? "" : "lv-pop"}`}
             style={{
               animationDelay: `${i * 70}ms`,
               position: "relative",
               borderRadius: 24,
               padding: "18px 16px 16px",
-              background: "rgba(255,255,255,.07)",
-              border: "1px solid rgba(255,255,255,.14)",
+              background: V.glass,
+              border: `1px solid ${V.edge}`,
               backdropFilter: "blur(14px)",
               WebkitBackdropFilter: "blur(14px)",
               overflow: "hidden",
@@ -92,21 +91,21 @@ export default function GunaCards({
                 {k.obtained}/{k.max}
               </span>
             </div>
-            <h3 style={{ margin: "12px 0 0", fontFamily: GROTESK, fontWeight: 800, fontSize: 19, letterSpacing: "-0.02em", color: MOON, lineHeight: 1.15 }}>
+            <h3 style={{ margin: "12px 0 0", fontFamily: GROTESK, fontWeight: 800, fontSize: 19, letterSpacing: "-0.02em", color: V.ink, lineHeight: 1.15 }}>
               {fun.title}
             </h3>
-            <p style={{ margin: "3px 0 0", fontFamily: GROTESK, fontSize: 11, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: MOON_FAINT }}>
+            <p style={{ margin: "3px 0 0", fontFamily: GROTESK, fontSize: 11, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: V.faint }}>
               {k.labelEn} · {fun.about}
             </p>
 
-            <div style={{ marginTop: 12, height: 8, borderRadius: 99, background: "rgba(255,255,255,.12)", overflow: "hidden" }}>
+            <div style={{ marginTop: 12, height: 8, borderRadius: 99, background: "color-mix(in srgb, var(--lv-ink) 12%, transparent)", overflow: "hidden" }}>
               <span
                 style={{
                   display: "block",
                   height: "100%",
                   width: `${pct}%`,
                   borderRadius: 99,
-                  background: `linear-gradient(90deg, ${fun.tint}, ${GOLD})`,
+                  background: `linear-gradient(90deg, ${fun.tint}, var(--lv-a3))`,
                   animation: reduceMotion ? "none" : `km-bar 1.1s cubic-bezier(.2,.9,.3,1) ${300 + i * 90}ms both`,
                 }}
               />
@@ -114,14 +113,14 @@ export default function GunaCards({
 
             <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
               <span style={chip}>
-                <b style={{ color: MOON }}>{aName}:</b> {attrA}
+                <b style={{ color: V.ink }}>{aName}:</b> {attrA}
               </span>
               <span style={chip}>
-                <b style={{ color: MOON }}>{bName}:</b> {attrB}
+                <b style={{ color: V.ink }}>{bName}:</b> {attrB}
               </span>
             </div>
 
-            <p style={{ margin: "12px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 18, lineHeight: 1.35, color: MOON, flex: 1 }}>
+            <p style={{ margin: "12px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 18, lineHeight: 1.35, color: V.ink, flex: 1 }}>
               &ldquo;{k.reading}&rdquo;
             </p>
           </article>
@@ -135,9 +134,9 @@ const chip = {
   fontFamily: GROTESK,
   fontSize: 12,
   fontWeight: 600,
-  color: MOON_SOFT,
-  background: "rgba(255,255,255,.08)",
-  border: "1px solid rgba(255,255,255,.12)",
+  color: V.soft,
+  background: V.glass,
+  border: `1px solid ${V.edge}`,
   borderRadius: 999,
   padding: "4px 10px",
 } as const;

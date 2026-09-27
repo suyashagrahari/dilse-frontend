@@ -8,7 +8,7 @@ export const config: TemplatePageConfig = {
   category: "gf",
   title: "Train Ticket",
   description:
-    "A long-distance love letter disguised as a train ticket. Check the PNR, watch the waitlist clear, then read the running status of your whole relationship.",
+    "A love train ticket they unlock with a PNR check: watch the waitlist flip WL → CNF, then open a boarding pass with a live countdown, your window-seat memories (photos with little notes), GIFs, the journey of us and a sealed letter. Pick your vibe — Midnight Express, Chai Break, Monsoon Ride or Pink Sleeper.",
   emoji: "🚆",
   color: "from-slate-500 to-zinc-700",
   previewText: "WL 47 → CNF ✓",

@@ -7,6 +7,9 @@
 // authority is the fictional "Indian Hearts Railway (IHRCTC)". Nothing here
 // references a real carrier, ticketing portal or state emblem.
 
+import { DEMO_PHOTOS, parseLoveKit, type LovePhoto } from "../../_love/types";
+import { TRAIN_THEME_IDS } from "./themes";
+
 export type EditMode = null | "manual" | "preview";
 
 export type Screen = "pnr" | "ticket" | "route";
@@ -76,8 +79,14 @@ export interface TicketData {
   stations: Station[];
   delay: { amount: string; reason: string };
   finePrint: string[];
-  /** The sincere payload, shown last, under the slip. */
+  /** The sincere payload — the main letter, opened from the memory hub. */
   letter: string;
+  /** Love kit: window-seat memories, each framed with a little letter. */
+  photos: LovePhoto[];
+  /** Up to three GIF links. */
+  gifs: string[];
+  /** Colour theme id — one of TRAIN_THEMES. */
+  theme: string;
 }
 
 /**
@@ -152,6 +161,18 @@ export const DEMO_DATA: TicketData = {
     "The Indian Hearts Railway accepts no liability for tears shed on arrival.",
     "Unreserved passengers may not board. There is exactly one seat next to mine and it has your name printed on it.",
   ],
+  photos: [
+    { ...DEMO_PHOTOS[0], caption: "Kaha Ho Junction", note: "The night we first talked till 2 a.m. I checked the time and pretended I hadn't." },
+    { ...DEMO_PHOTOS[1], caption: "Pehli Mulaqat", note: "You were late. I was early. We have been exactly like that ever since." },
+    { ...DEMO_PHOTOS[2], caption: "the long-distance stretch", note: "Every video call on bad Wi-Fi still counted as a date. I kept the screenshots." },
+    { ...DEMO_PHOTOS[3], caption: "next stop: us", note: "Coach S4, seats 41 and 42. Window seat is yours. Obviously." },
+  ],
+  gifs: [
+    "https://cdn.subhsandesh.in/gifts-media/templates/train-ticket/bunnyonatrain.gif",
+    "https://cdn.subhsandesh.in/gifts-media/missyou-gf/hug-penguin.gif",
+    "https://cdn.subhsandesh.in/gifts-media/templates/train-ticket/dancing.gif",
+  ],
+  theme: "midnight",
   letter:
     "I know a ticket is a strange way to say this.\n\nBut every time I have checked a PNR in the last two years it was because of you — because of a train that would eventually put me in the same room as you. I have refreshed that page more times than I would like to admit.\n\nThis one is confirmed. Coach S4, seats together, and no more waitlist.\n\nSee you on the platform.",
 };
@@ -174,6 +195,9 @@ export const TICKET_CONTENT_KEYS: (keyof TicketData)[] = [
   "delay",
   "finePrint",
   "letter",
+  "photos",
+  "gifs",
+  "theme",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */
@@ -227,7 +251,10 @@ export function dbToTrainTicketData(db: Record<string, unknown> | null | undefin
       reason: typeof delay.reason === "string" ? delay.reason : DEMO_DATA.delay.reason,
     },
     finePrint: arr<string>("finePrint", DEMO_DATA.finePrint),
-    // "" is meaningful (redacted before the chart) so it is NOT replaced.
+    // "" is meaningful (redacted before the chart) so it is NOT replaced —
+    // parseLoveKit keeps an empty string and an empty photo list as they are.
+    ...parseLoveKit(src, DEMO_DATA, TRAIN_THEME_IDS),
+    // The letter predates the kit and allows 4000 chars server-side; keep it whole.
     letter: typeof src.letter === "string" ? src.letter : DEMO_DATA.letter,
   };
 }

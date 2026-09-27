@@ -257,6 +257,23 @@ export function useKundliMilanEditor() {
     [],
   );
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
     // A fresh form starts blank rather than pre-filled with the demo couple:
     // seeing "Rohan Mehta" in your own report is worse than an empty field.
@@ -273,6 +290,8 @@ export function useKundliMilanEditor() {
             photos: [],
             gifs: [],
             letter: "",
+            // …but the vibe they were just previewing carries over.
+            theme: content.theme,
           },
     );
     // The starter goes first, but only while there is a schema to fill from and
@@ -505,7 +524,7 @@ export function useKundliMilanEditor() {
 
     fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

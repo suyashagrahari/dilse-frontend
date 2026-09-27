@@ -9,7 +9,15 @@ import TrainTicket from "./components/TrainTicket";
 import EditSheet from "./components/EditSheet";
 import StoryStarter from "@/components/story/StoryStarter";
 
-const INK = "#1c1c1c";
+const ACCENT = "#d0245f";
+/** Frosted glass over whichever theme is showing. */
+const CHROME: React.CSSProperties = {
+  background: "rgba(18,10,30,.55)",
+  color: "#fff6fb",
+  border: "1px solid rgba(255,255,255,.16)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+};
 
 function TrainTicketPageInner() {
   const e = useTrainTicketEditor();
@@ -26,8 +34,8 @@ function TrainTicketPageInner() {
       <div className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <button
           onClick={e.goBack}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold"
-          style={{ background: "rgba(255,255,255,.92)", color: INK, border: "1px solid #111", backdropFilter: "blur(8px)", minHeight: 40 }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold"
+          style={{ ...CHROME, minHeight: 44 }}
         >
           <ArrowLeft size={15} /> Back
         </button>
@@ -35,8 +43,8 @@ function TrainTicketPageInner() {
         {e.isPersonalized && !e.showShare && (
           <button
             onClick={e.handleEditFromPreview}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold"
-            style={{ background: "rgba(255,255,255,.92)", color: INK, border: "1px solid #111", backdropFilter: "blur(8px)", minHeight: 40 }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold"
+            style={{ ...CHROME, minHeight: 44 }}
           >
             <PenLine size={14} /> Edit
           </button>
@@ -44,8 +52,8 @@ function TrainTicketPageInner() {
         <button
           onClick={topAction.onClick}
           disabled={e.publishing}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
-          style={{ background: INK, border: "1px solid #111", minHeight: 40 }}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white disabled:opacity-60"
+          style={{ background: "linear-gradient(115deg,#ff4f8b 0%,#ff7a5c 48%,#ffb03c 100%)", minHeight: 44, boxShadow: "0 12px 26px -12px rgba(255,79,139,.9)" }}
         >
           {topAction.icon} {topAction.label}
         </button>
@@ -58,6 +66,7 @@ function TrainTicketPageInner() {
         data={e.displayData}
         gate={{ chartPrepared: true, passengerCount: e.displayData.passengers.length }}
         mode="preview"
+        onThemeChange={e.shareUrl ? undefined : e.setTheme}
       />
 
       <EditSheet
@@ -83,12 +92,12 @@ function TrainTicketPageInner() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[300] grid place-items-center"
-            style={{ background: "rgba(28,28,28,.55)", backdropFilter: "blur(6px)" }}
+            style={{ background: "rgba(20,20,24,.55)", backdropFilter: "blur(6px)" }}
           >
-            <div className="flex flex-col items-center gap-3 px-8 py-6" style={{ background: "#f4f3ef", border: "1px solid #111" }}>
-              <Loader2 size={26} className="animate-spin" style={{ color: INK }} />
-              <p className="font-semibold" style={{ color: INK, fontFamily: "var(--font-courier-prime), monospace" }}>
-                Preparing the chart…
+            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl bg-white">
+              <Loader2 size={28} className="animate-spin" style={{ color: ACCENT }} />
+              <p className="font-semibold" style={{ color: ACCENT }}>
+                Preparing the chart… 🚆
               </p>
             </div>
           </motion.div>
@@ -104,7 +113,7 @@ function TrainTicketPageInner() {
 
 export default function TrainTicketPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#e9e8e4" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#0d1030" }} />}>
       <TrainTicketPageInner />
     </Suspense>
   );
