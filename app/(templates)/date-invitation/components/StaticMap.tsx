@@ -33,8 +33,8 @@ import {
   ACCENT,
   ACCENT_EDGE,
   ACCENT_WASH,
-  CARD_RADIUS,
   DONE,
+  GROTESK,
   INK,
   INK_FAINT,
   INK_SOFT,
@@ -254,7 +254,7 @@ export default function StaticMap({ point, seed, height = 140 }: StaticMapProps)
         height,
         width: "100%",
         overflow: "hidden",
-        borderRadius: CARD_RADIUS,
+        borderRadius: 18,
         border: `1px solid ${PAPER_EDGE}`,
         background: PAPER_DEEP,
         boxShadow: "inset 0 1px 4px rgba(58,44,32,0.07)",
@@ -403,10 +403,11 @@ const buttonBase = {
   justifyContent: "center",
   gap: 8,
   padding: "0 18px",
-  borderRadius: CARD_RADIUS,
-  fontFamily: SERIF,
+  borderRadius: 999,
+  fontFamily: GROTESK,
   fontSize: 12.5,
-  letterSpacing: "0.18em",
+  fontWeight: 700,
+  letterSpacing: "0.14em",
   textTransform: "uppercase" as const,
   cursor: "pointer",
   textDecoration: "none",
@@ -475,10 +476,11 @@ export function DirectionsButton({
         onClick={onClick}
         style={{
           ...buttonBase,
-          border: `1.4px solid ${ACCENT}`,
-          color: ACCENT,
-          background: ACCENT_WASH,
-          fontWeight: 700,
+          border: "none",
+          color: "#fff",
+          background: "#241f1b",
+          fontWeight: 800,
+          boxShadow: "0 10px 20px -12px rgba(36,31,27,.8)",
         }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -554,9 +556,10 @@ export function PlaceBlock({
         <p
           style={{
             margin: 0,
-            fontFamily: SERIF,
+            fontFamily: GROTESK,
             fontSize: 10.5,
-            letterSpacing: "0.3em",
+            fontWeight: 800,
+            letterSpacing: "0.2em",
             textTransform: "uppercase",
             color: INK_FAINT,
           }}
@@ -568,10 +571,11 @@ export function PlaceBlock({
       <h3
         style={{
           margin: 0,
-          fontFamily: SERIF,
-          fontSize: 19,
-          lineHeight: 1.32,
-          fontWeight: 600,
+          fontFamily: GROTESK,
+          fontSize: 21,
+          lineHeight: 1.2,
+          fontWeight: 800,
+          letterSpacing: "-0.02em",
           color: INK,
           overflowWrap: "anywhere",
           hyphens: "auto",
@@ -586,9 +590,9 @@ export function PlaceBlock({
         <p
           style={{
             margin: 0,
-            fontFamily: SERIF,
+            fontFamily: GROTESK,
             fontSize: 14,
-            lineHeight: 1.55,
+            lineHeight: 1.5,
             color: INK_SOFT,
             overflowWrap: "anywhere",
           }}

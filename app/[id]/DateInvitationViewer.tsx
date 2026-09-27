@@ -6,10 +6,12 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import DateInvitationTemplate from "@/app/(templates)/date-invitation/components/DateInvitationTemplate";
 import { dbToDateInviteData } from "@/app/(templates)/date-invitation/components/types";
+import { DATE_FONT_VARS } from "@/app/(templates)/date-invitation/components/fonts";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-const ROSE = "#9F1239";
-const ROSE_GRAD = "linear-gradient(135deg,#FB7185,#F59E0B)";
+const GROTESK = "var(--font-di-grotesk), var(--font-outfit), system-ui, sans-serif";
+
+const ROSE_GRAD = "linear-gradient(115deg,#ff4f8b 0%,#ff7a5c 48%,#ffb03c 100%)";
 
 /* ─────────────────────────────────────────
    Password gate — the invitation is whole
@@ -41,8 +43,12 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center px-5"
-      style={{ background: "linear-gradient(180deg,#FFF1F2 0%,#FEF3C7 55%,#FFFBEB 100%)" }}
+      className={`${DATE_FONT_VARS} fixed inset-0 z-[200] flex items-center justify-center px-5`}
+      style={{
+        fontFamily: GROTESK,
+        background:
+          "radial-gradient(60% 45% at 0% 0%, rgba(255,79,139,.5), transparent 70%), radial-gradient(60% 45% at 100% 60%, rgba(181,155,255,.4), transparent 70%), #12081f",
+      }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -50,7 +56,10 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
         transition={{ type: "spring", stiffness: 360, damping: 25 }}
         className="relative w-full max-w-sm z-10"
       >
-        <div className="rounded-3xl overflow-hidden shadow-2xl bg-white" style={{ border: "1px solid #F5D6DE" }}>
+        <div
+          className="rounded-[28px] overflow-hidden shadow-2xl"
+          style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.16)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}
+        >
           <div className="h-1" style={{ background: ROSE_GRAD }} />
           <div className="px-7 pt-8 pb-7">
             <div className="flex flex-col items-center mb-7">
@@ -58,15 +67,15 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: ROSE_GRAD, boxShadow: "0 14px 30px -12px rgba(159,18,57,.6)" }}
+                style={{ background: ROSE_GRAD, boxShadow: "0 14px 30px -12px rgba(255,79,139,.7)" }}
               >
                 <Lock size={28} className="text-white" />
               </motion.div>
               <div className="text-3xl mb-2" aria-hidden>💌</div>
-              <h2 className="text-xl font-bold text-center mb-1" style={{ color: ROSE }}>
+              <h2 className="text-2xl font-extrabold text-center mb-1" style={{ color: "#fff6fb", letterSpacing: "-0.02em" }}>
                 This one&apos;s just for you
               </h2>
-              <p className="text-xs text-center leading-relaxed text-muted-foreground">
+              <p className="text-sm text-center leading-relaxed" style={{ color: "rgba(255,246,251,.65)" }}>
                 Enter the password and<br />the invitation opens
               </p>
             </div>
@@ -80,15 +89,15 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
                 placeholder="Enter password..."
                 autoFocus
                 aria-label="Password"
-                className={`w-full px-4 py-3.5 pr-11 rounded-2xl text-sm outline-none transition-all text-foreground border ${
+                className={`w-full px-4 py-3.5 pr-11 rounded-full text-base outline-none transition-all border text-[#241f1b] ${
                   error ? "border-red-400/60 ring-2 ring-red-400/15" : "focus:ring-2"
                 }`}
-                style={error ? { background: "#FFF7F8" } : { background: "#FFF7F8", borderColor: "#F5D6DE" }}
+                style={error ? { background: "#fdfaf3" } : { background: "#fdfaf3", borderColor: "transparent" }}
               />
               <button
                 type="button" onClick={() => setShowPw((v) => !v)}
                 aria-label={showPw ? "Hide password" : "Show password"}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#675f52] transition-colors"
               >
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -98,7 +107,7 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="flex items-center justify-center gap-1.5 text-xs mb-4 text-red-500"
+                  className="flex items-center justify-center gap-1.5 text-xs mb-4 text-[#ff8fb6]"
                 >
                   <ShieldAlert size={12} /><span>{error}</span>
                 </motion.div>
@@ -109,8 +118,8 @@ function DateInvitationPasswordGate({ shareId, onUnlocked }: { shareId: string; 
               whileTap={{ scale: 0.97 }}
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
-              className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: ROSE_GRAD, boxShadow: "0 14px 30px -14px rgba(159,18,57,.7)" }}
+              className="w-full py-3.5 rounded-full text-base font-extrabold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
+              style={{ background: ROSE_GRAD, boxShadow: "0 14px 30px -14px rgba(255,79,139,.9)" }}
             >
               {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Open it</>}
             </motion.button>

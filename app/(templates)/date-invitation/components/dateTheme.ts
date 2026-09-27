@@ -30,11 +30,11 @@ export const INK_FAINT = "#a89b86";
  * THE accent. One colour, muted oxblood-rose. 8.1:1 on PAPER.
  * Do not introduce a second accent — the restraint is the design.
  */
-export const ACCENT = "#8c2f39";
+export const ACCENT = "#d0245f";
 /** A wash of the accent, for the seal bed and the current-stop card. */
-export const ACCENT_WASH = "#f6e9e7";
+export const ACCENT_WASH = "#ffe8f0";
 /** Accent at rule weight. */
-export const ACCENT_EDGE = "#d9b9b5";
+export const ACCENT_EDGE = "#f4b4ca";
 
 /** The one non-accent signal colour: a passed / done state. Muted moss. */
 export const DONE = "#4e6046";
@@ -72,7 +72,7 @@ export const CARD_MAX_W = 400;
 
 /** Standard card chrome. */
 export const CARD_SHADOW = "0 18px 44px -22px rgba(58,44,32,0.34), 0 2px 6px rgba(58,44,32,0.06)";
-export const CARD_RADIUS = 4; // Paper has corners, not pills.
+export const CARD_RADIUS = 16; // Soft sticker corners — the night-out redesign.
 
 // ── Time formatting ──────────────────────────────────────────────────────────
 //
@@ -146,3 +146,32 @@ export function fmtMins(mins: number): string {
   const r = m % 60;
   return r === 0 ? `${h} hr` : `${h} hr ${r} min`;
 }
+
+// ── The night-out layer ──────────────────────────────────────────────────────
+//
+// The recipient screens sit on a dark night sky with candy-gradient glows; the
+// cards on it stay cream "tickets" and "stickers", so every paper token above
+// still reads correctly inside them (maps, directions, share card, editor).
+
+/** The sky. */
+export const NIGHT = "#12081f";
+export const NIGHT_2 = "#1f0f33";
+/** Text on the sky. */
+export const MOON = "#fff6fb";
+export const MOON_SOFT = "rgba(255,246,251,0.72)";
+export const MOON_FAINT = "rgba(255,246,251,0.46)";
+/** Candy accents. */
+export const POP = "#ff4f8b";
+export const TANG = "#ff9a3c";
+export const LILAC = "#b59bff";
+export const LIME = "#d8ff5c";
+export const GRAD = "linear-gradient(115deg, #ff4f8b 0%, #ff7a5c 48%, #ffb03c 100%)";
+export const GRAD_TEXT = "linear-gradient(100deg, #ff8fb6 0%, #ffb36b 55%, #d8ff5c 100%)";
+/** Frosted glass on the sky. */
+export const GLASS = "rgba(255,255,255,0.07)";
+export const GLASS_EDGE = "rgba(255,255,255,0.14)";
+
+/** Chunky Gen-Z grotesk for headlines and UI on the sky. */
+export const GROTESK = "var(--font-di-grotesk), var(--font-outfit), system-ui, sans-serif";
+/** A soft editorial italic for the romantic lines. */
+export const ITALIC = "var(--font-di-serif), var(--font-playfair), Georgia, serif";

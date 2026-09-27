@@ -27,20 +27,20 @@
 import React, { useEffect, useRef } from "react";
 
 import {
-  ACCENT,
-  DONE,
+  GRAD,
+  GROTESK,
   INK,
-  INK_FAINT,
   INK_SOFT,
-  MONO,
+  ITALIC,
+  LIME,
+  MOON,
+  MOON_FAINT,
+  MOON_SOFT,
   PAPER,
-  PAPER_EDGE,
-  SERIF,
-  UI,
   fmtTime,
 } from "./dateTheme";
-import { CornerFlourishes } from "./Ornaments";
 import { PlaceBlock } from "./StaticMap";
+import { CandyButton, Glass, GradText } from "./NightKit";
 import StopCard from "./StopCard";
 import { sfxUnlock } from "./dateAudio";
 import { WeatherIcon, weatherText, type WeatherView } from "./useWeather";
@@ -69,10 +69,10 @@ export interface LiveItineraryProps {
 }
 
 /** Column width for the timeline nodes. Fixed, so long names cannot shift it. */
-const NODE_COL = 30;
+const NODE_COL = 34;
 const NODE_CENTER = NODE_COL / 2;
 /** Where the connector below a node starts. Clears the largest node (the ring). */
-const CONNECTOR_TOP = 32;
+const CONNECTOR_TOP = 36;
 
 const REVEAL_MS = 320;
 
@@ -84,9 +84,9 @@ const REVEAL_MS = 320;
  */
 const CSS = `
 @keyframes di-ring-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(140,47,57,0.34); }
-  70%  { box-shadow: 0 0 0 11px rgba(140,47,57,0); }
-  100% { box-shadow: 0 0 0 0 rgba(140,47,57,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(255,79,139,0.6); }
+  70%  { box-shadow: 0 0 0 13px rgba(255,79,139,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,79,139,0); }
 }
 @keyframes di-unlock-reveal {
   from { opacity: 0; transform: translateY(9px); }
@@ -94,6 +94,9 @@ const CSS = `
 }
 .di-ring-pulse { animation: di-ring-pulse 2.4s ease-out infinite; }
 .di-unlock-reveal { animation: di-unlock-reveal ${REVEAL_MS}ms ease-out both; }
+.di-live { position: relative; z-index: 1; margin: 0 auto; width: 100%; max-width: 480px; padding: 84px 16px 72px; }
+@media (min-width: 640px) { .di-live { max-width: 600px; padding-top: 100px; } }
+@media (min-width: 960px) { .di-live { max-width: 660px; } }
 @media (prefers-reduced-motion: reduce) {
   .di-ring-pulse, .di-unlock-reveal { animation: none !important; }
 }
@@ -151,25 +154,55 @@ export default function LiveItinerary({
 
   const weatherLine = weatherText(weather);
 
+  // Story-style progress: the meeting point plus every stop.
+  const segments = total + 1;
+  const done = cursor < 0 ? 0 : Math.min(cursor + 1, segments);
+
   return (
-    <div className="mx-auto w-full max-w-[30rem] px-4 pb-16 pt-5">
+    <div className="di-live">
       <style>{CSS}</style>
 
       {/* ── Status ──────────────────────────────────────────────────────────
-          `status` is rendered verbatim. It came from `runningStatus()`, which is
-          already relaxed and already refuses to scold. Nothing in this file adds
-          lateness copy of its own. */}
+          `status` is rendered verbatim. It came from `runningStatus()`, which
+          is already relaxed and already refuses to scold. */}
       <header className="text-center">
-        <p
-          className="text-[10.5px] uppercase tracking-[0.3em]"
-          style={{ color: INK_SOFT, fontFamily: UI }}
+        <span
+          className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+          style={{ background: "rgba(255,79,139,.16)", border: "1px solid rgba(255,79,139,.4)", fontFamily: GROTESK }}
         >
-          {view.recipientName} &amp; {view.senderName}
-        </p>
+          <span
+            className={reduceMotion ? "" : "di-live-dot"}
+            style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff4f8b", display: "inline-block" }}
+          />
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.22em]" style={{ color: "#ffb3cc" }}>
+            live · date night
+          </span>
+        </span>
+        <h1
+          className="mt-3"
+          style={{
+            fontFamily: GROTESK,
+            fontWeight: 800,
+            fontSize: "clamp(32px, 9vw, 52px)",
+            lineHeight: 1,
+            letterSpacing: "-0.035em",
+            color: MOON,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {view.recipientName} <GradText>&amp;</GradText> {view.senderName}
+        </h1>
         {status && (
           <p
-            className="mt-2 text-[16px] leading-[1.5]"
-            style={{ color: INK, fontFamily: SERIF, overflowWrap: "anywhere" }}
+            className="mt-3 inline-block rounded-full px-4 py-2 text-[14.5px] leading-[1.4]"
+            style={{
+              color: MOON,
+              fontFamily: GROTESK,
+              fontWeight: 600,
+              background: "rgba(255,255,255,.08)",
+              border: "1px solid rgba(255,255,255,.14)",
+              overflowWrap: "anywhere",
+            }}
             aria-live="polite"
           >
             {status}
@@ -177,58 +210,65 @@ export default function LiveItinerary({
         )}
         {/* Weather is null mid-date by design. Hidden, never a placeholder. */}
         {weather && weatherLine && (
-          <p
-            className="mt-1.5 inline-flex items-center gap-1.5 text-[13px]"
-            style={{ color: INK_SOFT, fontFamily: SERIF }}
-          >
-            <WeatherIcon code={weather.code} size={15} color={INK_SOFT} />
+          <p className="mt-2 inline-flex items-center gap-1.5 text-[13px]" style={{ color: MOON_SOFT, fontFamily: GROTESK }}>
+            <WeatherIcon code={weather.code} size={15} color={MOON_SOFT} />
             {weatherLine}
           </p>
         )}
-        <hr
-          aria-hidden
-          className="mx-auto mt-4 w-[70px] border-0 border-t"
-          style={{ borderColor: PAPER_EDGE }}
-        />
+
+        {/* Progress, story-style. */}
+        <div aria-hidden className="mt-5 flex gap-1.5">
+          {Array.from({ length: segments }, (_, i) => (
+            <span
+              key={i}
+              className="h-[5px] flex-1 overflow-hidden rounded-full"
+              style={{ background: "rgba(255,255,255,.14)" }}
+            >
+              <span
+                className="block h-full rounded-full"
+                style={{
+                  width: i < done ? "100%" : i === done ? "45%" : "0%",
+                  background: i < done ? LIME : GRAD,
+                  transition: reduceMotion ? "none" : "width .6s cubic-bezier(.2,.9,.3,1)",
+                }}
+              />
+            </span>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: MOON_FAINT, fontFamily: GROTESK }}>
+          {cursor < 0 ? "find each other first" : cursor >= total ? "that's the whole night" : `stop ${cursor + 1} of ${total}`}
+        </p>
       </header>
 
       {/* ── cursor === -1 ───────────────────────────────────────────────────
-          The evening has started and they have not checked in anywhere. This is
-          the state the page is most often *opened* in, so it must never be an
-          empty timeline: the meeting point is shown, with the way forward. */}
+          The evening has started and they have not checked in anywhere. This
+          is the state the page is most often *opened* in, so it must never be
+          an empty timeline: the meeting point is shown, with the way forward. */}
       {cursor < 0 && (
         <div
           key="focus-meet"
           ref={focusRef}
-          className={`relative mt-5 rounded-[4px] px-4 py-5 ${reveal ?? ""}`}
+          className={`relative mt-6 ${reveal ?? ""}`}
           style={{
             background: PAPER,
-            border: `1.5px solid ${PAPER_EDGE}`,
-            boxShadow: "0 10px 30px -20px rgba(58,44,32,0.4)",
+            color: INK,
+            borderRadius: 26,
+            padding: "20px 18px",
+            boxShadow: "0 30px 60px -30px rgba(0,0,0,.75)",
           }}
         >
-          <CornerFlourishes color={INK_FAINT} size={26} inset={8} />
-          <PlaceBlock point={view.meetingPoint} seed="meeting-point" height={150} eyebrow="MEET AT" />
-          <p
-            className="mt-4 text-[15px] leading-[1.65]"
-            style={{ color: INK_SOFT, fontFamily: SERIF }}
-          >
-            Tap below once you&rsquo;ve found each other. The first stop unlocks then.
+          <p className="mb-3 flex items-center gap-2" style={{ fontFamily: GROTESK, fontWeight: 800, fontSize: 18 }}>
+            <span aria-hidden>👋</span> first, find each other
           </p>
-          <button
-            type="button"
-            onClick={handleAdvance}
-            className="mt-4 w-full rounded-[4px] px-5 text-[14px] font-semibold uppercase tracking-[0.24em] transition-transform active:scale-[0.985]"
-            style={{
-              minHeight: 56,
-              color: PAPER,
-              background: ACCENT,
-              border: `1.5px solid ${ACCENT}`,
-              fontFamily: UI,
-            }}
-          >
-            we&rsquo;re here
-          </button>
+          <PlaceBlock point={view.meetingPoint} seed="meeting-point" height={150} eyebrow="MEET AT" />
+          <p className="mt-4 text-[15px] leading-[1.6]" style={{ color: INK_SOFT, fontFamily: GROTESK }}>
+            Tap below once you&rsquo;ve found each other. The first stop unlocks then. 🔓
+          </p>
+          <div className="mt-4">
+            <CandyButton onClick={handleAdvance}>
+              we&rsquo;re here <span aria-hidden>📍</span>
+            </CandyButton>
+          </div>
         </div>
       )}
 
@@ -237,7 +277,7 @@ export default function LiveItinerary({
           so a 90-character name or a 120-character address wraps inside the
           content column and the nodes stay in a straight line. */}
       {total > 0 && (
-        <ol className="mt-6 list-none p-0">
+        <ol className="mt-8 list-none p-0">
           {itinerary.map((stop, i) => {
             const last = i === total - 1;
             const isCurrent = stop.state === "current";
@@ -252,21 +292,23 @@ export default function LiveItinerary({
                       left: NODE_CENTER,
                       top: CONNECTOR_TOP,
                       bottom: -2,
-                      background: stop.state === "passed" ? DONE : PAPER_EDGE,
-                      opacity: stop.state === "passed" ? 0.5 : 1,
+                      width: 2,
+                      marginLeft: -0.5,
+                      background: stop.state === "passed" ? LIME : "rgba(255,255,255,.16)",
+                      opacity: stop.state === "passed" ? 0.6 : 1,
                     }}
                   />
                 )}
 
                 <span
                   aria-hidden
-                  className="relative z-[1] flex shrink-0 items-start justify-center pt-1.5"
+                  className="relative z-[1] flex shrink-0 items-start justify-center pt-1"
                   style={{ width: NODE_COL }}
                 >
                   <Node state={stop.state} reduceMotion={reduceMotion} />
                 </span>
 
-                <div className={`min-w-0 flex-1 ${last ? "pb-2" : "pb-7"}`}>
+                <div className={`min-w-0 flex-1 ${last ? "pb-2" : "pb-5"}`}>
                   {stop.state === "passed" && <PassedRow stop={stop} />}
 
                   {stop.state === "locked" && <LockedRow stop={stop} />}
@@ -298,35 +340,31 @@ function Node({ state, reduceMotion }: { state: StopView["state"]; reduceMotion:
   if (state === "passed") {
     return (
       <span
-        className="block rounded-full"
-        style={{ width: 13, height: 13, background: DONE, border: `1px solid ${DONE}` }}
-      />
+        className="grid place-items-center rounded-full text-[13px] font-black"
+        style={{ width: 26, height: 26, background: LIME, color: "#1a0d26" }}
+      >
+        ✓
+      </span>
     );
   }
   if (state === "current") {
-    // The single sanctioned ambient motion in this template.
+    // The single sanctioned ambient motion on this screen.
     return (
       <span
-        className={`block rounded-full ${reduceMotion ? "" : "di-ring-pulse"}`}
-        style={{
-          width: 20,
-          height: 20,
-          background: PAPER,
-          border: `3px solid ${ACCENT}`,
-        }}
-      />
+        className={`grid place-items-center rounded-full ${reduceMotion ? "" : "di-ring-pulse"}`}
+        style={{ width: 30, height: 30, background: GRAD, border: "3px solid #fff" }}
+      >
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
+      </span>
     );
   }
   return (
     <span
-      className="block rounded-full"
-      style={{
-        width: 11,
-        height: 11,
-        background: PAPER,
-        border: `1.5px solid ${INK_FAINT}`,
-      }}
-    />
+      className="grid place-items-center rounded-full text-[12px]"
+      style={{ width: 26, height: 26, background: "rgba(255,255,255,.08)", border: "1.5px solid rgba(255,255,255,.22)" }}
+    >
+      🔒
+    </span>
   );
 }
 
@@ -336,25 +374,18 @@ function Node({ state, reduceMotion }: { state: StopView["state"]; reduceMotion:
 function PassedRow({ stop }: { stop: Extract<StopView, { state: "passed" }> }) {
   const at = fmtTime(stop.arrivedAt);
   return (
-    <div className="pt-px">
+    <Glass style={{ borderRadius: 18, padding: "12px 14px" }}>
       <p
-        className="text-[16px] leading-[1.4]"
-        style={{ color: INK_SOFT, fontFamily: SERIF, overflowWrap: "anywhere" }}
+        className="text-[16px] font-bold leading-[1.35]"
+        style={{ color: MOON, fontFamily: GROTESK, overflowWrap: "anywhere" }}
       >
         {stop.name}
       </p>
-      {/* No invented timestamp when nobody tapped, and never the word "missed" —
-          they were there, the phone just stayed in a pocket. */}
-      <p className="mt-0.5 text-[13px]" style={{ color: INK_SOFT, fontFamily: SERIF }}>
-        {at ? (
-          <>
-            you were here at <span style={{ fontFamily: MONO }}>{at}</span>
-          </>
-        ) : (
-          "you were here"
-        )}
+      {/* No invented timestamp when nobody tapped, and never the word "missed". */}
+      <p className="mt-0.5 text-[13px]" style={{ color: MOON_SOFT, fontFamily: GROTESK }}>
+        {at ? <>✓ you were here at {at}</> : "✓ you were here"}
       </p>
-    </div>
+    </Glass>
   );
 }
 
@@ -365,19 +396,26 @@ function PassedRow({ stop }: { stop: Extract<StopView, { state: "passed" }> }) {
  */
 function LockedRow({ stop }: { stop: Extract<StopView, { state: "locked" }> }) {
   return (
-    <div className="pt-px">
+    <div
+      style={{
+        borderRadius: 18,
+        padding: "12px 14px",
+        border: "1.5px dashed rgba(255,255,255,.18)",
+        background: "rgba(255,255,255,.03)",
+      }}
+    >
       <p
-        className="text-[16px] leading-[1.4]"
+        className="text-[16px] font-bold leading-[1.35]"
         style={{
-          color: stop.surprise ? INK_FAINT : INK_SOFT,
-          fontFamily: SERIF,
-          letterSpacing: stop.surprise ? "0.12em" : undefined,
+          color: stop.surprise ? MOON_FAINT : MOON_SOFT,
+          fontFamily: GROTESK,
+          letterSpacing: stop.surprise ? "0.2em" : undefined,
           overflowWrap: "anywhere",
         }}
       >
         {stop.label}
       </p>
-      <p className="mt-0.5 text-[13px]" style={{ color: INK_FAINT, fontFamily: SERIF }}>
+      <p className="mt-0.5 text-[13px]" style={{ color: MOON_FAINT, fontFamily: ITALIC, fontStyle: "italic", fontSize: 15 }}>
         unlocks when you get there
       </p>
     </div>

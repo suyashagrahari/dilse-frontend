@@ -2,56 +2,42 @@
 
 // ─── Phase 5 of 7 — `countdown` ──────────────────────────────────────────────
 //
-// AGENT 2. She said yes. The date has not started.
+// She said yes. The date has not started.
 //
 // REVEALED HERE: the meeting point — she has to know where to go — the dress
 // code, the weather, a short list of prep, and the countdown itself.
 //
 // NOT REVEALED, EVER: anything about the stops. `view` is an `InviteHeaderView`
-// and that type has no `stops` property, so this screen cannot leak the plan
-// even by accident: there is nothing to map over, nothing to count, and nothing
-// to stringify into a debug attribute. Acceptance criterion 1 dumps
-// `document.body.innerHTML` during this phase and greps it for every secret
-// stop's name, address and lat/lng — including inside data- attributes,
-// aria-labels, titles and comments. Nothing in this file writes any of those.
+// and that type has no `stops` property, so this screen cannot leak the plan.
 //
 // THE CLOCK: `nowMs` is a prop, ticked once a second by the phase router. This
 // screen starts no interval and never reads `Date.now()`. When the countdown
-// crosses zero the router recomputes `phaseOf` on the same tick and swaps in
-// the itinerary — the transition is a consequence of the clock, not an event
-// this component has to fire.
+// crosses zero the router swaps in the itinerary on the same tick.
 //
-// MOTION: none. Digits changing once a second is already the most animated
-// thing on the page; a pulsing ring next to it would be noise. The only
-// movement in the file is the share sheet sliding up when she asks for it.
+// LAYOUT: phone and tablet stack; from 960px the meet-up card and the prep
+// card sit side by side under the clock.
 
 import { useState } from "react";
 
 import {
-  ACCENT,
-  ACCENT_EDGE,
-  CARD_MAX_W,
-  CARD_RADIUS,
-  CARD_SHADOW,
-  DISPLAY,
+  GROTESK,
   INK,
-  INK_FAINT,
-  INK_SOFT,
-  MONO,
+  ITALIC,
+  MOON,
+  MOON_FAINT,
+  MOON_SOFT,
   PAPER,
-  PAPER_EDGE,
-  SERIF,
-  TAP,
   fmtDateLong,
   fmtDuration,
   fmtTime,
 } from "./dateTheme";
-import { WALKING_COPY, countdownTo, formatCountdown } from "./types";
-import { CornerFlourishes, DotLeaderRow, Rule } from "./Ornaments";
+import { WALKING_COPY, countdownTo } from "./types";
 import { PlaceBlock } from "./StaticMap";
 import SharePlanSheet from "./SharePlanSheet";
-import { WeatherIcon, weatherText, type WeatherView } from "./useWeather";
+import { weatherText, type WeatherView } from "./useWeather";
 import type { InviteHeaderView } from "./viewModel";
+import { weatherEmoji } from "./InvitationCard";
+import { Eyebrow, Glass, GhostButton, GradText, Tape, useHydrated } from "./NightKit";
 
 export interface CountdownScreenProps {
   view: InviteHeaderView;
@@ -61,257 +47,270 @@ export interface CountdownScreenProps {
   reduceMotion: boolean;
 }
 
+const CSS = `
+.di-cd { position: relative; z-index: 1; min-height: 100dvh; padding: 88px 16px 56px; display: flex; flex-direction: column; align-items: center; }
+.di-cd-wrap { width: 100%; max-width: 480px; }
+.di-cd-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.di-cd-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 18px; }
+@media (min-width: 640px) {
+  .di-cd { padding-top: 104px; }
+  .di-cd-wrap { max-width: 600px; }
+  .di-cd-tiles { gap: 14px; }
+}
+@media (min-width: 960px) {
+  .di-cd-wrap { max-width: 1000px; }
+  .di-cd-tiles { max-width: 720px; margin: 0 auto; }
+  .di-cd-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+}
+`;
+
+const PREP = [
+  { emoji: "🥪", text: "Eat something light beforehand — trust me on this one." },
+  { emoji: "🔋", text: "Charge your phone. The rest of the night arrives on it, one stop at a time." },
+  { emoji: "💅", text: "Show up as you. That's the whole dress code, really." },
+];
+
 export default function CountdownScreen({ view, nowMs, weather, reduceMotion }: CountdownScreenProps) {
   const [sharing, setSharing] = useState(false);
+  const [ticked, setTicked] = useState<Record<number, boolean>>({});
 
   const c = countdownTo(view.startsAt, nowMs);
-  const clock = formatCountdown(c);
-
-  const dateLine = fmtDateLong(view.startsAt);
-  const timeLine = fmtTime(view.startsAt);
+  const hydrated = useHydrated();
+  const dateLine = hydrated ? fmtDateLong(view.startsAt) : "";
+  const timeLine = hydrated ? fmtTime(view.startsAt) : "";
   const weatherLine = weatherText(weather);
+  const pad = (n: number) => String(n).padStart(2, "0");
 
-  // "20 days 04:22:11" is sixteen characters; "04:22:11" is eight. The type
-  // scales with the viewport so the longest form still fits on one line at
-  // 320px, and the shortest does not look lost at 430.
-  const clockSize = c.days > 0 ? "clamp(25px, 8.2vw, 38px)" : "clamp(34px, 11.5vw, 52px)";
+  const units = [
+    { v: String(c.days), l: c.days === 1 ? "day" : "days" },
+    { v: pad(c.hours), l: "hrs" },
+    { v: pad(c.mins), l: "min" },
+    { v: pad(c.secs), l: "sec" },
+  ];
+
+  const facts: { emoji: string; label: string; value: string }[] = [
+    ...(view.dressCode ? [{ emoji: "👗", label: "Dress", value: view.dressCode }] : []),
+    { emoji: "👟", label: "Walking", value: WALKING_COPY[view.walkingLevel] },
+    { emoji: "⏱️", label: "Runs", value: fmtDuration(view.durationMins) },
+    // Exists only when there is a forecast — no error text, no dash.
+    ...(weather && weatherLine ? [{ emoji: weatherEmoji(weather.code), label: "Weather", value: weatherLine }] : []),
+  ];
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        justifyContent: "center",
-        padding: "26px 16px 44px",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: CARD_MAX_W }}>
-        <article
-          style={{
-            position: "relative",
-            background: PAPER,
-            border: `1px solid ${PAPER_EDGE}`,
-            borderRadius: CARD_RADIUS,
-            boxShadow: CARD_SHADOW,
-            padding: "34px 22px 28px",
-          }}
-        >
-          <CornerFlourishes />
+    <main className="di-cd">
+      <style>{CSS}</style>
+      <div className="di-cd-wrap">
+        {/* ── The answer, and the date it bought ───────────────────────── */}
+        <header style={{ textAlign: "center" }} className={reduceMotion ? "" : "di-pop-in"}>
+          <span
+            style={{
+              display: "inline-block",
+              padding: "6px 14px",
+              borderRadius: 999,
+              background: "#d8ff5c",
+              color: "#1a0d26",
+              fontFamily: GROTESK,
+              fontWeight: 800,
+              fontSize: 12,
+              letterSpacing: ".16em",
+              textTransform: "uppercase",
+              transform: "rotate(-2deg)",
+            }}
+          >
+            ✓ you said yes
+          </span>
+          <h1
+            style={{
+              margin: "16px 0 0",
+              fontFamily: GROTESK,
+              fontWeight: 800,
+              fontSize: "clamp(40px, 11vw, 80px)",
+              lineHeight: 0.95,
+              letterSpacing: "-0.04em",
+              color: MOON,
+            }}
+          >
+            it&rsquo;s a <GradText>date</GradText>{" "}
+            <span className={reduceMotion ? "" : "di-float"} style={{ display: "inline-block" }}>
+              🥂
+            </span>
+          </h1>
+          <p style={{ margin: "12px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: 22, color: MOON_SOFT }}>
+            {dateLine}
+            {timeLine ? ` · ${timeLine}` : ""}
+          </p>
+        </header>
 
-          {/* ── The answer, and the date it bought ───────────────────────── */}
-          <header style={{ textAlign: "center" }}>
-            <p
+        {/* ── The countdown ──────────────────────────────────────────────
+            aria-live is off: a polite live region would read the clock out
+            loud once a second, forever. The hidden label carries it once. */}
+        <div role="timer" aria-live="off" className="di-cd-tiles" style={{ marginTop: 26 }}>
+          {units.map((u, i) => (
+            <Glass
+              key={u.l}
               style={{
-                margin: 0,
-                fontFamily: SERIF,
-                fontSize: 10.5,
-                letterSpacing: "0.34em",
-                textTransform: "uppercase",
-                color: INK_FAINT,
+                borderRadius: 22,
+                padding: "14px 4px 12px",
+                textAlign: "center",
+                overflow: "hidden",
+                background: i === 3 ? "linear-gradient(160deg, rgba(255,79,139,.35), rgba(255,154,60,.22))" : undefined,
               }}
             >
-              You said yes
-            </p>
-
-            <h1
-              style={{
-                margin: "12px 0 0",
-                fontFamily: DISPLAY,
-                fontSize: 30,
-                lineHeight: 1.2,
-                fontWeight: 500,
-                color: INK,
-                letterSpacing: "0.01em",
-                overflowWrap: "anywhere",
-              }}
-            >
-              {dateLine}
-            </h1>
-
-            {timeLine ? (
-              <p
+              <span
+                key={u.v}
+                className={reduceMotion ? "" : "di-tick"}
                 style={{
-                  margin: "6px 0 0",
-                  fontFamily: MONO,
-                  fontSize: 14,
-                  letterSpacing: "0.1em",
-                  color: INK_SOFT,
+                  display: "block",
+                  fontFamily: GROTESK,
+                  fontWeight: 800,
+                  fontSize: "clamp(30px, 10vw, 64px)",
+                  lineHeight: 1,
+                  letterSpacing: "-0.04em",
+                  fontVariantNumeric: "tabular-nums",
+                  color: MOON,
                 }}
               >
-                {timeLine}
-              </p>
-            ) : null}
+                {u.v}
+              </span>
+              <span style={{ display: "block", marginTop: 6, fontFamily: GROTESK, fontSize: 11, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: MOON_FAINT }}>
+                {u.l}
+              </span>
+            </Glass>
+          ))}
+        </div>
+        <p style={{ margin: "12px 0 0", textAlign: "center", fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, color: MOON_SOFT }}>
+          until I see you ✨
+        </p>
+        <span
+          style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}
+        >
+          {`Counting down to ${dateLine}${timeLine ? ` at ${timeLine}` : ""}.`}
+        </span>
 
-            <div style={{ display: "flex", justifyContent: "center", margin: "20px 0 0" }}>
-              <Rule width={110} />
-            </div>
-
-            {/* ── The countdown ──────────────────────────────────────────── */}
-            {/*
-              aria-live is deliberately off. A polite live region here would
-              read the whole clock out loud once a second, forever. The static
-              label below carries the same information, once.
-            */}
-            <div
-              role="timer"
-              aria-live="off"
-              style={{
-                margin: "22px 0 0",
-                fontFamily: MONO,
-                fontSize: clockSize,
-                lineHeight: 1.05,
-                fontWeight: 700,
-                letterSpacing: "0.01em",
-                color: ACCENT,
-                whiteSpace: "nowrap",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {clock}
-            </div>
-            <p
-              style={{
-                margin: "10px 0 0",
-                fontFamily: SERIF,
-                fontSize: 14.5,
-                fontStyle: "italic",
-                color: INK_SOFT,
-              }}
-            >
-              until I see you
-            </p>
-            <span
-              style={{
-                position: "absolute",
-                width: 1,
-                height: 1,
-                overflow: "hidden",
-                clip: "rect(0 0 0 0)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {`Counting down to ${dateLine}${timeLine ? ` at ${timeLine}` : ""}.`}
-            </span>
-          </header>
-
-          <div style={{ display: "flex", justifyContent: "center", margin: "26px 0 24px" }}>
-            <Rule width={110} />
-          </div>
-
-          {/* ── Where to go. The one location this phase is allowed to know ── */}
-          <PlaceBlock
-            point={view.meetingPoint}
-            seed={`meeting:${view.startsAt}`}
-            eyebrow="Meet at"
-            height={132}
+        <div style={{ margin: "26px 0 8px" }}>
+          <Tape
+            words={["see you soon", "don't be late (jk)", "the plan stays secret", "bring your smile"]}
+            tilt={2}
+            tone="lime"
+            reduceMotion={reduceMotion}
           />
+        </div>
 
-          <div style={{ display: "flex", justifyContent: "center", margin: "26px 0 20px" }}>
-            <Rule width={110} />
-          </div>
-
-          {/* ── Prep. Three facts and one sentence, not a checklist ────────── */}
-          <section>
-            <p
-              style={{
-                margin: "0 0 12px",
-                fontFamily: SERIF,
-                fontSize: 10.5,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: INK_FAINT,
-              }}
-            >
-              Before you come
-            </p>
-
-            {view.dressCode ? <DotLeaderRow label="Dress" value={view.dressCode} /> : null}
-            <DotLeaderRow label="Walking" value={WALKING_COPY[view.walkingLevel]} />
-            <DotLeaderRow label="Running" value={fmtDuration(view.durationMins)} />
-            {/* The forecast row exists only when there is a forecast. A failed
-                fetch leaves `weather` null and this disappears entirely — no
-                error text, no dash, no empty row. */}
-            {weather && weatherLine ? (
-              <DotLeaderRow
-                label="Weather"
-                value={
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <WeatherIcon code={weather.code} size={15} />
-                    {weatherLine}
-                  </span>
-                }
-              />
-            ) : null}
-
-            <p
-              style={{
-                margin: "16px 0 0",
-                fontFamily: SERIF,
-                fontSize: 14.5,
-                lineHeight: 1.68,
-                color: INK,
-              }}
-            >
-              Eat something light beforehand &mdash; trust me on that one. And charge your phone;
-              the rest of the evening arrives on it, one piece at a time.
-            </p>
+        <div className="di-cd-grid">
+          {/* ── Where to go. The one location this phase is allowed to know ── */}
+          <section
+            style={{
+              background: PAPER,
+              color: INK,
+              borderRadius: 26,
+              padding: "20px 18px 20px",
+              boxShadow: "0 30px 60px -30px rgba(0,0,0,.7)",
+              transform: reduceMotion ? undefined : "rotate(-0.6deg)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>📍</span>
+              <span style={{ fontFamily: GROTESK, fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em" }}>
+                meet me here
+              </span>
+            </div>
+            <PlaceBlock point={view.meetingPoint} seed={`meeting:${view.startsAt}`} height={150} />
           </section>
 
-          {/* ── Share the plan ──────────────────────────────────────────────
-              Ordinary and useful, and written that way. No warning triangle,
-              no "for your safety" banner, no reminder that the world is
-              dangerous. It is the thing she would text a friend anyway. */}
-          <div style={{ marginTop: 24, display: "flex", justifyContent: "center" }}>
-            <button
-              type="button"
-              onClick={() => setSharing(true)}
-              style={{
-                minHeight: TAP,
-                minWidth: TAP,
-                width: "100%",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 9,
-                padding: "0 16px",
-                borderRadius: CARD_RADIUS,
-                border: `1px solid ${ACCENT_EDGE}`,
-                background: "transparent",
-                color: ACCENT,
-                fontFamily: SERIF,
-                fontSize: 12.5,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                transition: reduceMotion ? "none" : "background-color 140ms ease-out",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <circle cx="17.5" cy="5.8" r="2.9" stroke="currentColor" strokeWidth="1.6" />
-                <circle cx="6" cy="12" r="2.9" stroke="currentColor" strokeWidth="1.6" />
-                <circle cx="17.5" cy="18.2" r="2.9" stroke="currentColor" strokeWidth="1.6" />
-                <path
-                  d="M8.6 10.7 15 7.1M8.6 13.3 15 16.9"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-              share this plan with a friend
-            </button>
-          </div>
-        </article>
+          {/* ── Prep ───────────────────────────────────────────────────── */}
+          <Glass style={{ padding: "20px 18px" }}>
+            <Eyebrow>before you come</Eyebrow>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+              {facts.map((f) => (
+                <div
+                  key={f.label}
+                  className="di-chip"
+                  style={{ borderRadius: 16, background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.12)", padding: "10px 12px", minWidth: 0 }}
+                >
+                  <div style={{ fontSize: 17 }}>{f.emoji}</div>
+                  <div style={{ marginTop: 4, fontFamily: GROTESK, fontSize: 10, fontWeight: 800, letterSpacing: ".16em", textTransform: "uppercase", color: MOON_FAINT }}>
+                    {f.label}
+                  </div>
+                  <div style={{ marginTop: 2, fontFamily: GROTESK, fontSize: 14, fontWeight: 700, color: MOON, overflowWrap: "anywhere" }}>
+                    {f.value}
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        <p
-          style={{
-            margin: "18px 0 0",
-            textAlign: "center",
-            fontFamily: SERIF,
-            fontSize: 13,
-            color: INK_FAINT,
-          }}
-        >
-          &mdash; {view.senderName}
+            <Eyebrow style={{ marginTop: 20 }}>checklist · tap to tick</Eyebrow>
+            <ul style={{ listStyle: "none", margin: "10px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              {PREP.map((p, i) => {
+                const on = !!ticked[i];
+                return (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setTicked((t) => ({ ...t, [i]: !t[i] }))}
+                      className="di-ghost"
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        textAlign: "left",
+                        padding: "12px 14px",
+                        borderRadius: 16,
+                        border: `1px solid ${on ? "rgba(216,255,92,.5)" : "rgba(255,255,255,.12)"}`,
+                        background: on ? "rgba(216,255,92,.1)" : "rgba(255,255,255,.04)",
+                        color: MOON,
+                        cursor: "pointer",
+                        minHeight: 48,
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          flexShrink: 0,
+                          width: 24,
+                          height: 24,
+                          borderRadius: 8,
+                          display: "grid",
+                          placeItems: "center",
+                          background: on ? "#d8ff5c" : "transparent",
+                          border: on ? "none" : "2px solid rgba(255,255,255,.3)",
+                          color: "#1a0d26",
+                          fontWeight: 900,
+                          fontSize: 14,
+                        }}
+                      >
+                        {on ? "✓" : ""}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: GROTESK,
+                          fontSize: 14.5,
+                          lineHeight: 1.45,
+                          fontWeight: 500,
+                          textDecoration: on ? "line-through" : "none",
+                          opacity: on ? 0.6 : 1,
+                        }}
+                      >
+                        <span aria-hidden style={{ marginRight: 6 }}>{p.emoji}</span>
+                        {p.text}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* ── Share the plan. Ordinary and useful — the thing she'd text a
+                friend anyway. No warning triangle, no safety banner. */}
+            <GhostButton onClick={() => setSharing(true)} style={{ marginTop: 16 }}>
+              <span aria-hidden>🔗</span> share this plan with a friend
+            </GhostButton>
+          </Glass>
+        </div>
+
+        <p style={{ margin: "22px 0 0", textAlign: "center", fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, color: MOON_SOFT }}>
+          — {view.senderName}
         </p>
       </div>
 

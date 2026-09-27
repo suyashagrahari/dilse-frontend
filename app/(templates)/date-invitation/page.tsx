@@ -6,9 +6,9 @@
 // live demo preview fills the viewport, a floating bar sits over it, and one
 // polymorphic button carries the whole flow — Create → Publish → Share.
 //
-// Z-ORDER (the template pins a demo-only phase-jump bar at the bottom of the
+// Z-ORDER (the template pins a demo-only "next step" pill at the bottom of the
 // viewport at z-130, so everything here is placed around it):
-//   100  the template, including its demo phase bar at 130
+//   100  the template, including its demo nudge at 130
 //   120  this top bar          — top-anchored, never overlaps the phase bar
 //   200  the EditSheet scrim, 210 its panel — must cover the phase bar
 //   300  the publishing overlay
@@ -24,17 +24,19 @@ import StoryStarter from "@/components/story/StoryStarter";
 import { useDateInvitationEditor } from "./hooks/useDateInvitationEditor";
 import DateInvitationTemplate from "./components/DateInvitationTemplate";
 import EditSheet from "./components/EditSheet";
+import { DATE_FONT_VARS } from "./components/fonts";
 
-import { ACCENT, ACCENT_EDGE, INK, PAPER, PAPER_EDGE, UI } from "./components/dateTheme";
+import { ACCENT, GRAD, GROTESK, INK, NIGHT, PAPER, PAPER_EDGE, UI } from "./components/dateTheme";
 import { TAP_TARGET_PX as TAP } from "./components/types";
 
-/** Editor chrome sits on the paper, in the invitation's own palette. */
+/** Editor chrome floats on the night sky as frosted glass. */
 const CHROME: React.CSSProperties = {
-  background: "rgba(253,250,243,.92)",
-  color: ACCENT,
-  border: `1px solid ${PAPER_EDGE}`,
-  backdropFilter: "blur(8px)",
-  fontFamily: UI,
+  background: "rgba(18,8,31,.55)",
+  color: "#fff6fb",
+  border: "1px solid rgba(255,255,255,.16)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  fontFamily: GROTESK,
   minHeight: TAP,
 };
 
@@ -49,7 +51,7 @@ function DateInvitationPageInner() {
       : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
 
   return (
-    <div style={{ minHeight: "100dvh", position: "relative", background: PAPER }}>
+    <div className={DATE_FONT_VARS} style={{ minHeight: "100dvh", position: "relative", background: NIGHT }}>
       {/* Floating top bar */}
       <div
         className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2"
@@ -58,7 +60,7 @@ function DateInvitationPageInner() {
         <button
           onClick={e.goBack}
           className="inline-flex items-center gap-1.5 px-3.5 rounded-full text-sm font-semibold"
-          style={{ ...CHROME, boxShadow: "0 6px 18px -10px rgba(58,44,32,.5)" }}
+          style={{ ...CHROME, boxShadow: "0 10px 24px -12px rgba(0,0,0,.6)" }}
         >
           <ArrowLeft size={15} /> Back
         </button>
@@ -67,7 +69,7 @@ function DateInvitationPageInner() {
           <button
             onClick={e.handleEditFromPreview}
             className="inline-flex items-center gap-1.5 px-3.5 rounded-full text-sm font-semibold"
-            style={{ ...CHROME, boxShadow: "0 6px 18px -10px rgba(58,44,32,.5)" }}
+            style={{ ...CHROME, boxShadow: "0 10px 24px -12px rgba(0,0,0,.6)" }}
           >
             <PenLine size={14} /> Edit
           </button>
@@ -78,10 +80,10 @@ function DateInvitationPageInner() {
           className="inline-flex items-center gap-1.5 px-4 rounded-full text-sm font-bold text-white disabled:opacity-60"
           style={{
             minHeight: TAP,
-            background: ACCENT,
-            border: `1px solid ${ACCENT_EDGE}`,
-            fontFamily: UI,
-            boxShadow: "0 8px 22px -12px rgba(140,47,57,.85)",
+            background: GRAD,
+            border: "none",
+            fontFamily: GROTESK,
+            boxShadow: "0 12px 26px -12px rgba(255,79,139,.9)",
           }}
         >
           {topAction.icon} {topAction.label}
@@ -139,7 +141,7 @@ function DateInvitationPageInner() {
 
 export default function DateInvitationPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#fdfaf3" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#12081f" }} />}>
       <DateInvitationPageInner />
     </Suspense>
   );
