@@ -28,9 +28,9 @@ import {
   fmtDateLong,
   fmtTime,
 } from "./dateTheme";
-import PhotoStrip from "./PhotoStrip";
+import Memories from "./Memories";
 import { ShareCardPanel } from "./ShareCard";
-import { totalTimeTogether, type DateInviteData, type StopView } from "./types";
+import { totalTimeTogether, type DateInviteData, type Memory, type StopView } from "./types";
 import { Eyebrow, Glass, GradText } from "./NightKit";
 
 const CSS = `
@@ -49,9 +49,12 @@ export interface AfterScreenProps {
   data: DateInviteData;
   /** From `buildItinerary(data, "after")` — every entry is `passed`. */
   itinerary: StopView[];
-  photos: string[];
-  /** Local file input → data URLs. Previews only. // TODO(server): upload. */
-  onAddPhotos: (dataUrls: string[]) => void;
+  memories: Memory[];
+  maxMemories: number;
+  /** Who is looking, for "add" and "remove mine". null while unknown. */
+  me: "sender" | "recipient" | null;
+  onAddMemory: (file: File, stopId: string, title: string) => Promise<string | null>;
+  onRemoveMemory: (id: string) => Promise<void>;
   reduceMotion: boolean;
 }
 
@@ -59,8 +62,11 @@ export interface AfterScreenProps {
 export default function AfterScreen({
   data,
   itinerary,
-  photos,
-  onAddPhotos,
+  memories,
+  maxMemories,
+  me,
+  onAddMemory,
+  onRemoveMemory,
   reduceMotion,
 }: AfterScreenProps) {
   const total = totalTimeTogether(data);
@@ -165,9 +171,19 @@ export default function AfterScreen({
         </div>
 
         <div className="flex flex-col gap-[18px]">
-          {/* ── Photos ──────────────────────────────────────────────────── */}
+          {/* ── Four photos from the night ──────────────────────────────────────────────────── */}
           <section className="rounded-[26px] px-4 pb-5 pt-1" style={{ background: PAPER, color: INK, boxShadow: "0 30px 60px -30px rgba(0,0,0,.7)" }}>
-            <PhotoStrip photos={photos} onAddPhotos={onAddPhotos} reduceMotion={reduceMotion} />
+            <Memories
+              memories={memories}
+              stops={itinerary.filter((s) => s.state === "passed").map((s) => ({ id: s.id, name: s.state === "passed" ? s.name : "" }))}
+              max={maxMemories}
+              me={me}
+              senderName={data.senderName}
+              recipientName={data.recipientName}
+              onAdd={onAddMemory}
+              onRemove={onRemoveMemory}
+              reduceMotion={reduceMotion}
+            />
           </section>
 
           {/* ── The share card ──────────────────────────────────────────── */}

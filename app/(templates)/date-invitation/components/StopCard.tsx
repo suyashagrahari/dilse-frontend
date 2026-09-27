@@ -29,9 +29,48 @@ export interface StopCardProps {
   /** The `[ we're here ]` tap. Stamps the arrival and unlocks exactly one more. */
   onAdvance: () => void;
   reduceMotion: boolean;
+  /** Only the host checks in. Everyone else sees the stop unlock on its own. */
+  checkIn: CheckInMode;
 }
 
-export default function StopCard({ stop, position, total, onAdvance }: StopCardProps) {
+/**
+ * "host"  — the sender on their own page: the button.
+ * "guest" — the recipient: a waiting chip, the plan moves when the host taps.
+ * "demo"  — the preview: the button, plus a note on who gets it.
+ */
+export type CheckInMode = { kind: "host" | "demo" | "guest"; hostName: string };
+
+export function CheckInAction({ mode, onAdvance, label }: { mode: CheckInMode; onAdvance: () => void; label: string }) {
+  if (mode.kind === "guest") {
+    return (
+      <div
+        className="flex items-center gap-3 rounded-[20px] px-4 py-3"
+        style={{ background: "#f3edff", border: "1px dashed #b59bff", fontFamily: GROTESK }}
+      >
+        <span className="text-[22px]" aria-hidden>
+          📍
+        </span>
+        <p className="text-[14px] font-semibold leading-[1.4]" style={{ color: INK }}>
+          {mode.hostName} checks you in here — the next stop unlocks on your screen by itself ✨
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <CandyButton onClick={onAdvance}>
+        {label} <span aria-hidden>📍</span>
+      </CandyButton>
+      <p className="mt-2 text-center text-[12px] font-semibold" style={{ color: INK_SOFT, fontFamily: GROTESK }}>
+        {mode.kind === "demo"
+          ? `only ${mode.hostName} sees this button — it unlocks the next stop for both of you`
+          : "only you can tap this — it unlocks the next stop on both phones"}
+      </p>
+    </div>
+  );
+}
+
+export default function StopCard({ stop, position, total, onAdvance, checkIn }: StopCardProps) {
   // Constructed, not cast. A CurrentStopView carries these four fields by
   // definition; a LockedStopView could never be passed in here.
   const point: GeoPoint = {
@@ -114,9 +153,7 @@ export default function StopCard({ stop, position, total, onAdvance }: StopCardP
       )}
 
       <div className="mt-5">
-        <CandyButton onClick={onAdvance}>
-          we&rsquo;re here <span aria-hidden>📍</span>
-        </CandyButton>
+        <CheckInAction mode={checkIn} onAdvance={onAdvance} label="we’re here" />
       </div>
     </article>
   );

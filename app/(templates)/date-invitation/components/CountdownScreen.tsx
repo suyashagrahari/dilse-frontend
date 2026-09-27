@@ -45,6 +45,8 @@ export interface CountdownScreenProps {
   nowMs: number;
   weather: WeatherView | null;
   reduceMotion: boolean;
+  /** The host sees "Aditi said yes"; everyone else sees "you said yes". */
+  viewer: "guest" | "host" | "demo";
 }
 
 const CSS = `
@@ -70,7 +72,7 @@ const PREP = [
   { emoji: "💅", text: "Show up as you. That's the whole dress code, really." },
 ];
 
-export default function CountdownScreen({ view, nowMs, weather, reduceMotion }: CountdownScreenProps) {
+export default function CountdownScreen({ view, nowMs, weather, reduceMotion, viewer }: CountdownScreenProps) {
   const [sharing, setSharing] = useState(false);
   const [ticked, setTicked] = useState<Record<number, boolean>>({});
 
@@ -117,7 +119,7 @@ export default function CountdownScreen({ view, nowMs, weather, reduceMotion }: 
               transform: "rotate(-2deg)",
             }}
           >
-            ✓ you said yes
+            ✓ {viewer === "host" ? `${view.recipientName} said yes` : "you said yes"}
           </span>
           <h1
             style={{
@@ -179,7 +181,7 @@ export default function CountdownScreen({ view, nowMs, weather, reduceMotion }: 
           ))}
         </div>
         <p style={{ margin: "12px 0 0", textAlign: "center", fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, color: MOON_SOFT }}>
-          until I see you ✨
+          {viewer === "host" ? `until you see ${view.recipientName} ✨` : "until I see you ✨"}
         </p>
         <span
           style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}

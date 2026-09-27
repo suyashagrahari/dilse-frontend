@@ -40,8 +40,8 @@ import {
   fmtTime,
 } from "./dateTheme";
 import { PlaceBlock } from "./StaticMap";
-import { CandyButton, Glass, GradText } from "./NightKit";
-import StopCard from "./StopCard";
+import { Glass, GradText } from "./NightKit";
+import StopCard, { CheckInAction, type CheckInMode } from "./StopCard";
 import { sfxUnlock } from "./dateAudio";
 import { WeatherIcon, weatherText, type WeatherView } from "./useWeather";
 import type { StopView } from "./types";
@@ -66,6 +66,7 @@ export interface LiveItineraryProps {
   /** The `[ we're here ]` tap. Stamps the arrival and unlocks exactly one more. */
   onAdvance: () => void;
   reduceMotion: boolean;
+  checkIn: CheckInMode;
 }
 
 /** Column width for the timeline nodes. Fixed, so long names cannot shift it. */
@@ -117,6 +118,7 @@ export default function LiveItinerary({
   weather,
   onAdvance,
   reduceMotion,
+  checkIn,
 }: LiveItineraryProps) {
   const total = itinerary.length;
   const key = focusKey(cursor, itinerary);
@@ -262,12 +264,12 @@ export default function LiveItinerary({
           </p>
           <PlaceBlock point={view.meetingPoint} seed="meeting-point" height={150} eyebrow="MEET AT" />
           <p className="mt-4 text-[15px] leading-[1.6]" style={{ color: INK_SOFT, fontFamily: GROTESK }}>
-            Tap below once you&rsquo;ve found each other. The first stop unlocks then. 🔓
+            {checkIn.kind === "guest"
+              ? "Once you've found each other, the first stop unlocks. 🔓"
+              : "Tap below once you've found each other. The first stop unlocks then. 🔓"}
           </p>
           <div className="mt-4">
-            <CandyButton onClick={handleAdvance}>
-              we&rsquo;re here <span aria-hidden>📍</span>
-            </CandyButton>
+            <CheckInAction mode={checkIn} onAdvance={handleAdvance} label="we found each other" />
           </div>
         </div>
       )}
@@ -321,6 +323,7 @@ export default function LiveItinerary({
                         total={total}
                         onAdvance={handleAdvance}
                         reduceMotion={reduceMotion}
+                        checkIn={checkIn}
                       />
                     </div>
                   )}
