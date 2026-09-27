@@ -6,24 +6,23 @@
 //
 //   served    (landing) a stamp slaps down — "YOU'VE BEEN SERVED" — with the
 //             stare GIF, and one button to open the notice.
-//   notice    the hero: who is serving whom, the live lifecycle stamp
-//             (SERVED → RESPONDED → CASE CLOSED / FINAL NOTICE), the
-//             compliance countdown and one loud "respond to the demands" CTA.
-//             Everything else is ONE screen of tappable tiles — the demands
-//             deck, the exhibits (photos with little letters), the "off the
-//             record" letter, the courtroom GIFs, the facts of the case and the
-//             certified copy — each opening in a sheet.
+//   story     then full-screen chapters that move on by themselves once each
+//             is done: the notice (lifecycle stamp + countdown) → the facts,
+//             one card at a time → the demands (accept / object) → the evidence
+//             (a photo deck) → the letter, locked behind a question → the
+//             verdict with the certified copy to download. Each sender GIF is
+//             used once, as a reaction at one of those moments.
 //
 // Colours come from the chosen theme (./themes) as CSS variables. The paper
-// document itself (NoticePaper) is untouched and lives in the "certified copy"
-// sheet, because that is the node exported to PNG.
+// document itself (NoticePaper) is untouched and lives in the verdict chapter,
+// because that is the node exported to PNG.
 //
 // Responses: the addressee answers each demand (accept / contest with grounds /
 // mark complied). A response paints instantly and is POSTed to
 // `/legal-notice-pages/share/:shareId/respond` on the served page; the preview
 // keeps it local.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -44,14 +43,13 @@ import {
   LOVE_CSS,
   LoveSky,
   LoveThemeContext,
-  SectionHead,
   Sticker,
-  Tape,
   ThemeDock,
   ThemeScope,
 } from "../../_love/LoveKit";
-import MemoryHub, { LoveSheet, type HubTile } from "../../_love/MemoryHub";
-import { loveTiles } from "../../_love/Memories";
+import LoveStory, { ChapterHead, GifMoment, type Chapter, type StoryApi } from "../../_love/Story";
+import PhotoDeck from "../../_love/PhotoDeck";
+import LockedLetter from "../../_love/LockedLetter";
 import { V, pickTheme, themeVars } from "../../_love/theme";
 import NoticePaper, { DOC_W, type RespondFn } from "./NoticePaper";
 import { LEGAL_THEMES } from "./themes";
@@ -72,6 +70,8 @@ const ASSET = templateMediaBase("legal-notice");
 const GIF_CDN = "https://cdn.subhsandesh.in/gifts-media";
 const STARE_GIF = `${GIF_CDN}/templates/legal-notice/unblinking.gif`;
 const PAT_GIF = `${GIF_CDN}/templates/legal-notice/head-pat.gif`;
+/** The landing's own GIF — the lawyer drafting. Never one of the sender's. */
+const DRAFTING_GIF = `${GIF_CDN}/templates/legal-notice/focus-typing.gif`;
 
 /**
  * The paper's ink marks (used inside NoticePaper). Base rules are the FINAL
@@ -146,7 +146,6 @@ export default function LegalNotice({ data, mode, shareId, onThemeChange }: Lega
   }, []);
 
   const [opened, setOpened] = useState(false);
-  const [deckOpen, setDeckOpen] = useState(false);
   const [drawing, setDrawing] = useState<Set<string>>(() => new Set());
   const [flash, setFlash] = useState<Flash>(null);
   const [fearing, setFearing] = useState(false);
@@ -262,55 +261,113 @@ export default function LegalNotice({ data, mode, shareId, onThemeChange }: Lega
   const from = data.senderName || "Your person";
   const to = data.addresseeName || "you";
 
-  const tiles: HubTile[] = [
-    ...loveTiles({
-      photos: data.photos,
-      gifs: data.gifs,
-      letter: data.letter,
-      from,
-      to,
-      reduceMotion: reduced,
-      labels: {
-        photos: "The evidence",
-        photosSub: `${data.photos.length} exhibit${data.photos.length === 1 ? "" : "s"} · each with a note`,
-        letter: "Off the record",
-        letterSub: `a note from ${from} · tap to open`,
-        gifs: "Courtroom GIFs",
-        gifsSub: "admissible. adorable.",
-      },
-    }),
+  // Each GIF is used once, at one moment: the notice lands, the evidence is
+  // accepted, the letter unlocks.
+  const gif = (i: number) => data.gifs[i];
+  const hasPhotos = data.photos.length > 0;
+  const hasLetter = data.letter.trim().length > 0;
+
+  const chapters: Chapter[] = [
+    {
+      id: "notice",
+      emoji: "📨",
+      title: "you've been served",
+      kicker: "the notice",
+      render: (api) => (
+        <NoticeChapter
+          data={view}
+          from={from}
+          to={to}
+          answered={answered}
+          summary={summary}
+          lifecycle={lifecycle}
+          isFinal={isFinal}
+          remaining={remaining}
+          celebrate={celebrate}
+          gif={gif(0)}
+          reduced={reduced}
+          onLanded={api.complete}
+        />
+      ),
+    },
     {
       id: "facts",
       emoji: "📜",
-      title: "The facts",
-      sub: `${data.recitals.length} undisputed facts`,
-      tone: "paper",
-      art: <FactsArt count={data.recitals.length} />,
-      sheetTitle: "Facts of the case",
-      content: () => <Facts data={view} isFinal={isFinal} />,
+      title: "the facts",
+      render: (api) => <FactsChapter data={view} isFinal={isFinal} reduced={reduced} onDone={() => api.done(3400)} />,
     },
     {
       id: "demands",
       emoji: "✍️",
-      title: "The demands",
-      sub: `${answered} of ${demands.length} answered · ${summary.satisfied} done`,
-      size: "wide",
-      tone: "candy",
-      art: <DemandsArt demands={demands} />,
-      wide: true,
-      sheetTitle: `Demands for ${to}`,
-      content: () => <DemandDeck demands={demands} onRespond={respond} lifecycle={lifecycle} remaining={remaining} />,
+      title: "the demands",
+      render: (api) => (
+        <DemandsChapter demands={demands} to={to} onRespond={respond} lifecycle={lifecycle} remaining={remaining} onAllAnswered={() => api.done(3000)} onAlreadyAnswered={api.complete} />
+      ),
     },
+    ...(hasPhotos
+      ? [
+          {
+            id: "evidence",
+            emoji: "📸",
+            title: "the evidence",
+            render: (api: StoryApi) => <EvidenceChapter photos={data.photos} gif={gif(1)} reduced={reduced} onDone={() => api.done(2800)} />,
+          },
+        ]
+      : []),
+    ...(hasLetter
+      ? [
+          {
+            id: "letter",
+            emoji: "💌",
+            title: "off the record",
+            gated: true,
+            render: (api: StoryApi) => (
+              <>
+                <ChapterHead kicker="off the record" title="One more thing, counsel…" />
+                <LockedLetter
+                  letter={data.letter}
+                  from={from}
+                  to={to}
+                  question={data.lockQuestion.trim() || `${to}, do you accept these terms and conditions? ⚖️`}
+                  answer={data.lockAnswer.trim() || "I accept, counsel 💖"}
+                  gif={gif(2)}
+                  gifCaption="motion granted 🥹"
+                  reduceMotion={reduced}
+                  onOpened={api.complete}
+                />
+              </>
+            ),
+          },
+        ]
+      : []),
     {
-      id: "copy",
-      emoji: "🖨️",
-      title: "Certified copy",
-      sub: "the full notice on paper · save as PNG",
-      size: "wide",
-      tone: "glass",
-      art: <CopyArt refNo={data.refNo} />,
-      sheetTitle: "Certified copy",
-      content: () => <CertifiedCopy view={view} nowMs={nowMs} drawing={drawing} onRespond={respond} />,
+      id: "verdict",
+      emoji: "⚖️",
+      title: "the verdict",
+      render: () => (
+        <>
+          <ChapterHead
+            kicker="the verdict"
+            title={lifecycle === "complied" ? "Case closed 💖" : isFinal ? "Final notice 😱" : "Certified copy 🖨️"}
+            note={
+              lifecycle === "complied"
+                ? "All demands resolved. Love wins. Save it for the family WhatsApp group."
+                : isFinal
+                  ? "The stipulated period has lapsed. Your mother has been informed."
+                  : "Save the notice, stamped with your answers. The court keeps a copy too."
+            }
+          />
+          <CertifiedCopy view={view} nowMs={nowMs} drawing={drawing} onRespond={respond} />
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <GhostButton onClick={() => setOpened(false)} style={{ width: "auto", minWidth: 220 }}>
+              ↺ get served again
+            </GhostButton>
+            <p style={{ margin: 0, fontSize: 12, color: V.faint, textAlign: "center", maxWidth: 360 }}>
+              This notice has no legal effect and is not a substitute for a conversation. 💌
+            </p>
+          </div>
+        </>
+      ),
     },
   ];
 
@@ -335,110 +392,7 @@ export default function LegalNotice({ data, mode, shareId, onThemeChange }: Lega
         {live && <BrandBadge />}
         {!live && onThemeChange && <ThemeDock themes={LEGAL_THEMES} value={theme.id} onChange={onThemeChange} />}
 
-        {!opened ? (
-          <Served data={data} onOpen={() => setOpened(true)} reduced={reduced} live={live} />
-        ) : (
-          <main className="ln-wrap" style={{ paddingTop: 84, paddingBottom: live ? 56 : 110 }}>
-            {/* ── Hero ─────────────────────────────────────────────────── */}
-            <section className="ln-hero">
-              <div className={reduced ? "" : "lv-pop"}>
-                <Sticker>⚖️ legal notice · {data.refNo || "LN/2026"}</Sticker>
-                <h1
-                  style={{
-                    margin: "16px 0 0",
-                    fontWeight: 800,
-                    fontSize: "clamp(38px, 9.5vw, 72px)",
-                    lineHeight: 0.95,
-                    letterSpacing: "-0.045em",
-                  }}
-                >
-                  {to},
-                  <br />
-                  <GradText>you&apos;ve been served.</GradText>
-                </h1>
-                <p style={{ margin: "14px 0 0", maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: 21, lineHeight: 1.35, color: V.soft }}>
-                  On behalf of {from}, through the lawyer of love, in the matter of one (1) extremely serious relationship.
-                </p>
-
-                <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  <Stat label="answered" value={`${answered}/${demands.length}`} />
-                  <Stat label="done" value={`${summary.satisfied}/${summary.satisfiable}`} />
-                  <Stat label="objections" value={String(summary.contested)} />
-                  {data.relationshipSince && <Stat label="together since" value={fmtDate(data.relationshipSince)} />}
-                </div>
-
-                <Glass style={{ marginTop: 16, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                  <span aria-hidden className={reduced ? "" : "lv-pulse"} style={{ width: 12, height: 12, borderRadius: "50%", background: isFinal ? V.a1 : V.chip, flexShrink: 0 }} />
-                  <span style={{ minWidth: 0 }}>
-                    <Eyebrow>compliance deadline{view.complianceDeadline ? ` · ${fmtDate(view.complianceDeadline)}` : ""}</Eyebrow>
-                    <span style={{ display: "block", marginTop: 3, fontWeight: 800, fontSize: 17, fontVariantNumeric: "tabular-nums" }}>
-                      {lifecycle === "complied" ? "case closed — all demands resolved 💖" : isFinal ? "period lapsed — escalated to your mother 😱" : remaining ?? "…"}
-                    </span>
-                  </span>
-                </Glass>
-
-                <div style={{ marginTop: 18, maxWidth: 420 }}>
-                  <CandyButton onClick={() => setDeckOpen(true)}>
-                    {answered === demands.length && demands.length > 0 ? "review your answers ✍️" : "respond to the demands ✍️"}
-                  </CandyButton>
-                </div>
-              </div>
-
-              <div style={{ position: "relative", display: "grid", placeItems: "center", minHeight: 260 }}>
-                {celebrate && !reduced && <HeartBurst glyphs={["💖", "⚖️", "✨", "🩷", "💘"]} />}
-                <LifecycleStamp key={lifecycle} lifecycle={lifecycle} reduced={reduced} />
-                {data.gifs[0] && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={data.gifs[0]}
-                    alt=""
-                    className={reduced ? "" : "lv-float"}
-                    style={{
-                      position: "absolute",
-                      left: "max(0px, calc(50% - 200px))",
-                      bottom: 0,
-                      width: 104,
-                      height: 104,
-                      objectFit: "contain",
-                      borderRadius: 22,
-                      background: "#fff",
-                      border: "4px solid #fff",
-                      boxShadow: `0 16px 30px -14px ${V.shadow}`,
-                      transform: "rotate(-8deg)",
-                    }}
-                  />
-                )}
-              </div>
-            </section>
-
-            <div style={{ margin: "36px 0 0" }}>
-              <Tape
-                words={["objection overruled", "without prejudice", "hoodie to be returned", "no refunds on feelings", "case adjourned till our next date"]}
-                reduceMotion={reduced}
-              />
-            </div>
-
-            {/* ── Everything else, one tap away ──────────────────────────── */}
-            <section style={{ marginTop: 44 }}>
-              <SectionHead eyebrow="the case file" title="Tap anything to open it" emoji="👇" />
-              <MemoryHub tiles={tiles} reduceMotion={reduced} />
-            </section>
-
-            <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <GhostButton onClick={() => setOpened(false)} style={{ width: "auto", minWidth: 220 }}>
-                ↺ get served again
-              </GhostButton>
-              <p style={{ margin: 0, fontSize: 12, color: V.faint, textAlign: "center", maxWidth: 360 }}>
-                This notice has no legal effect and is not a substitute for a conversation. 💌
-              </p>
-            </div>
-          </main>
-        )}
-
-        {/* The demands deck, from the hero CTA. */}
-        <LoveSheet open={deckOpen} title={`Demands for ${to}`} emoji="✍️" wide onClose={() => setDeckOpen(false)} reduceMotion={reduced}>
-          <DemandDeck demands={demands} onRespond={respond} lifecycle={lifecycle} remaining={remaining} />
-        </LoveSheet>
+        {!opened ? <Served data={data} onOpen={() => setOpened(true)} reduced={reduced} live={live} /> : <LoveStory chapters={chapters} reduceMotion={reduced} />}
 
         <Overlays flash={flash} fearing={fearing} celebrate={celebrate} reduced={reduced} />
       </div>
@@ -446,10 +400,258 @@ export default function LegalNotice({ data, mode, shareId, onThemeChange }: Lega
   );
 }
 
+// ─── Chapter 1: the notice ───────────────────────────────────────────────────
+
+function NoticeChapter({
+  data,
+  from,
+  to,
+  answered,
+  summary,
+  lifecycle,
+  isFinal,
+  remaining,
+  celebrate,
+  gif,
+  reduced,
+  onLanded,
+}: {
+  data: NoticeData;
+  from: string;
+  to: string;
+  answered: number;
+  summary: ReturnType<typeof complianceSummary>;
+  lifecycle: ReturnType<typeof deriveLifecycle>;
+  isFinal: boolean;
+  remaining: string | null;
+  celebrate: boolean;
+  gif?: string;
+  reduced: boolean;
+  onLanded: () => void;
+}) {
+  // The stamp slaps down, then the GIF reacts.
+  const [landed, setLanded] = useState(reduced);
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setLanded(true);
+      onLanded();
+    }, reduced ? 0 : 1300);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <section className="ln-hero">
+      <div className={reduced ? "" : "lv-pop"}>
+        <Sticker>⚖️ legal notice · {data.refNo || "LN/2026"}</Sticker>
+        <h1 style={{ margin: "16px 0 0", fontWeight: 800, fontSize: "clamp(36px, 9vw, 70px)", lineHeight: 0.95, letterSpacing: "-0.045em" }}>
+          {to},
+          <br />
+          <GradText>you&apos;ve been served.</GradText>
+        </h1>
+        <p style={{ margin: "14px 0 0", maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: 20, lineHeight: 1.35, color: V.soft }}>
+          On behalf of {from}, through the lawyer of love, in the matter of one (1) extremely serious relationship.
+        </p>
+        <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Stat label="demands" value={String(data.demands.length)} />
+          <Stat label="answered" value={`${answered}/${data.demands.length}`} />
+          <Stat label="objections" value={String(summary.contested)} />
+          {data.relationshipSince && <Stat label="together since" value={fmtDate(data.relationshipSince)} />}
+        </div>
+        <Glass style={{ marginTop: 14, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+          <span aria-hidden className={reduced ? "" : "lv-pulse"} style={{ width: 12, height: 12, borderRadius: "50%", background: isFinal ? V.a1 : V.chip, flexShrink: 0 }} />
+          <span style={{ minWidth: 0 }}>
+            <Eyebrow>compliance deadline{data.complianceDeadline ? ` · ${fmtDate(data.complianceDeadline)}` : ""}</Eyebrow>
+            <span style={{ display: "block", marginTop: 3, fontWeight: 800, fontSize: 17, fontVariantNumeric: "tabular-nums" }}>
+              {lifecycle === "complied" ? "case closed — all demands resolved 💖" : isFinal ? "period lapsed — escalated to your mother 😱" : remaining ?? "…"}
+            </span>
+          </span>
+        </Glass>
+      </div>
+
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+        {celebrate && !reduced && <HeartBurst glyphs={["💖", "⚖️", "✨", "🩷", "💘"]} />}
+        <LifecycleStamp key={lifecycle} lifecycle={lifecycle} reduced={reduced} />
+        <div style={{ minHeight: gif ? 120 : 0 }}>
+          <GifMoment src={gif} caption="the court is watching 👀" show={landed} size={104} side="left" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Chapter 2: the facts, one at a time ─────────────────────────────────────
+
+function FactsChapter({ data, isFinal, reduced, onDone }: { data: NoticeData; isFinal: boolean; reduced: boolean; onDone: () => void }) {
+  const facts = data.recitals.filter((r) => r.trim());
+  const n = facts.length;
+  const [i, setI] = useState(0);
+  const [stamped, setStamped] = useState(false);
+  const [finished, setFinished] = useState(n === 0);
+  const timer = useRef<number | null>(null);
+  useEffect(() => () => void (timer.current && window.clearTimeout(timer.current)), []);
+  useEffect(() => {
+    if (n === 0) onDone();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const agree = () => {
+    if (stamped || finished) return;
+    setStamped(true);
+    timer.current = window.setTimeout(
+      () => {
+        setStamped(false);
+        if (i + 1 >= n) {
+          setFinished(true);
+          onDone();
+        } else setI(i + 1);
+      },
+      reduced ? 150 : 850,
+    );
+  };
+
+  return (
+    <div style={{ width: "100%", maxWidth: 620, margin: "0 auto" }}>
+      <ChapterHead kicker={`facts of the case · under instructions from ${data.senderName || "my client"}`} title="Do you dispute these? 🧐" note={finished ? undefined : "tap “undisputed” — you know they're true"} />
+
+      {!finished ? (
+        <>
+          <div style={{ position: "relative", minHeight: 250 }}>
+            {/* The pile behind the current fact */}
+            {[2, 1].map((d) =>
+              i + d < n ? (
+                <span key={d} aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 24, background: V.paper, opacity: 0.5 - d * 0.12, transform: `translateY(${d * 10}px) rotate(${d % 2 ? 2.5 : -2.5}deg) scale(${1 - d * 0.03})` }} />
+              ) : null,
+            )}
+            <AnimatePresence mode="wait">
+              <motion.article
+                key={i}
+                initial={reduced ? { opacity: 0 } : { opacity: 0, x: 60, rotate: 4 }}
+                animate={{ opacity: 1, x: 0, rotate: -1 }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, x: -80, rotate: -8 }}
+                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                style={{ position: "relative", minHeight: 250, borderRadius: 24, padding: "22px 22px 20px", background: V.paper, color: V.paperInk, boxShadow: `0 30px 60px -30px ${V.shadow}`, display: "flex", flexDirection: "column" }}
+              >
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: ".22em", textTransform: "uppercase", color: V.a1 }}>
+                  fact no. {i + 1} of {n}
+                </p>
+                <p style={{ margin: "14px 0 0", fontFamily: ITALIC, fontStyle: "italic", fontSize: "clamp(22px, 5.4vw, 28px)", lineHeight: 1.3, overflowWrap: "anywhere" }}>{numeralize(facts[i])}</p>
+                {stamped && (
+                  <span
+                    className="lv-slap"
+                    aria-hidden
+                    style={{ position: "absolute", right: 16, bottom: 18, padding: "6px 14px", border: `3px solid ${V.a1}`, color: V.a1, borderRadius: 10, fontWeight: 800, fontSize: 18, letterSpacing: ".14em", background: "color-mix(in srgb, var(--lv-paper) 70%, transparent)" }}
+                  >
+                    UNDISPUTED
+                  </span>
+                )}
+              </motion.article>
+            </AnimatePresence>
+          </div>
+          <div style={{ marginTop: 22, display: "flex", justifyContent: "center" }}>
+            <CandyButton onClick={agree} disabled={stamped} style={{ width: "auto", minWidth: 240 }}>
+              undisputed ✓
+            </CandyButton>
+          </div>
+          <p style={{ margin: "10px 0 0", textAlign: "center", fontSize: 12.5, color: V.faint }}>(there is no “disputed” button. the court has seen the evidence.)</p>
+        </>
+      ) : (
+        <motion.div initial={reduced ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Glass style={{ padding: "16px 18px" }}>
+            <Eyebrow color={isFinal ? V.a1 : V.soft}>{isFinal ? "escalation — in effect" : "all facts admitted · escalation clause"}</Eyebrow>
+            <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>{numeralize(isFinal ? escalatedClause(data.complianceDeadline) : data.escalationClause)}</p>
+          </Glass>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+            {data.finePrint.map((l, k) => (
+              <span key={k} style={{ fontSize: 12, padding: "6px 11px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, color: V.soft }}>
+                {l}
+              </span>
+            ))}
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: V.soft, textAlign: "center" }}>
+            {data.advocateName ? `Adv. ${data.advocateName}` : "The advocate"}
+            {data.advocateEnrollment ? ` · ${data.advocateEnrollment}` : ""}
+          </p>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// ─── Chapter 3: the demands ──────────────────────────────────────────────────
+
+function DemandsChapter({
+  demands,
+  to,
+  onRespond,
+  lifecycle,
+  remaining,
+  onAllAnswered,
+  onAlreadyAnswered,
+}: {
+  demands: Demand[];
+  to: string;
+  onRespond: RespondFn;
+  lifecycle: ReturnType<typeof deriveLifecycle>;
+  remaining: string | null;
+  onAllAnswered: () => void;
+  onAlreadyAnswered: () => void;
+}) {
+  // Answered = every demand accepted or contested WITH grounds (the grounds
+  // commit on blur, so the story never moves on while they are still typing).
+  const complete = demands.length > 0 && demands.every((d) => d.response === "accepted" || (d.response === "contested" && d.grounds.trim()));
+  // First render: a notice that was already answered (a revisit) only unlocks
+  // "next". Afterwards, the moment it becomes complete, the story moves on.
+  const prev = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prev.current === null) {
+      if (complete || demands.length === 0) onAlreadyAnswered();
+    } else if (complete && !prev.current) {
+      onAllAnswered();
+    }
+    prev.current = complete;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [complete]);
+  return (
+    <div style={{ width: "100%" }}>
+      <ChapterHead kicker={`demands for ${to}`} title="Accept or object ✍️" />
+      <DemandDeck demands={demands} onRespond={onRespond} lifecycle={lifecycle} remaining={remaining} />
+    </div>
+  );
+}
+
+// ─── Chapter 4: the evidence ─────────────────────────────────────────────────
+
+const EXHIBIT = "ABCDEFGH";
+
+function EvidenceChapter({ photos, gif, reduced, onDone }: { photos: NoticeData["photos"]; gif?: string; reduced: boolean; onDone: () => void }) {
+  const [all, setAll] = useState(false);
+  const exhibits = useMemo(
+    () => photos.map((p, i) => ({ ...p, caption: /^exhibit/i.test(p.caption ?? "") ? p.caption : `Exhibit ${EXHIBIT[i] ?? i + 1}${p.caption ? `: ${p.caption}` : ""}` })),
+    [photos],
+  );
+  return (
+    <>
+      <ChapterHead kicker="the evidence" title="Exhibits for the court 📸" />
+      <PhotoDeck
+        photos={exhibits}
+        reduceMotion={reduced}
+        backLabel="counsel's note"
+        onAllSeen={() => {
+          setAll(true);
+          onDone();
+        }}
+      />
+      <div style={{ marginTop: 14, minHeight: gif ? 100 : 0 }}>
+        <GifMoment src={gif} caption="evidence accepted, your honour 🥹" show={all} size={96} />
+      </div>
+    </>
+  );
+}
+
 // ─── Served (landing) ────────────────────────────────────────────────────────
 
 function Served({ data, onOpen, reduced, live }: { data: NoticeData; onOpen: () => void; reduced: boolean; live: boolean }) {
-  const gif = data.gifs.find((g) => /unblinking|stare|gavel/.test(g)) ?? STARE_GIF;
+  const gif = DRAFTING_GIF;
   return (
     <main
       className="ln-wrap"
@@ -536,7 +738,7 @@ function LifecycleStamp({ lifecycle, reduced }: { lifecycle: ReturnType<typeof d
       role="status"
       aria-label={`Notice status: ${cfg.big.toLowerCase()}`}
       style={{
-        width: "min(76vw, 300px)",
+        width: "min(60vw, 290px)",
         aspectRatio: "1 / 1",
         borderRadius: "50%",
         border: `5px solid ${V.a1}`,
@@ -550,12 +752,12 @@ function LifecycleStamp({ lifecycle, reduced }: { lifecycle: ReturnType<typeof d
         boxShadow: `0 0 60px -10px color-mix(in srgb, var(--lv-a1) 45%, transparent)`,
       }}
     >
-      <div style={{ padding: "0 26px" }}>
-        <div style={{ fontSize: 44, lineHeight: 1 }} aria-hidden>
+      <div style={{ padding: "0 22px" }}>
+        <div style={{ fontSize: "clamp(32px, 9vw, 44px)", lineHeight: 1 }} aria-hidden>
           {cfg.emoji}
         </div>
         <div style={{ marginTop: 6, fontSize: 11, fontWeight: 800, letterSpacing: ".3em", textTransform: "uppercase" }}>{cfg.top}</div>
-        <div style={{ marginTop: 2, fontSize: "clamp(28px, 8vw, 40px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 0.95 }}>{cfg.big}</div>
+        <div style={{ marginTop: 2, fontSize: "clamp(24px, 7vw, 40px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 0.95 }}>{cfg.big}</div>
         <div style={{ marginTop: 6, fontFamily: ITALIC, fontStyle: "italic", fontSize: 17, color: V.soft }}>{cfg.sub}</div>
       </div>
     </div>
@@ -764,51 +966,6 @@ function Choice({ on, danger, onClick, label, children }: { on: boolean; danger?
   );
 }
 
-// ─── Facts of the case ───────────────────────────────────────────────────────
-
-function Facts({ data, isFinal }: { data: NoticeData; isFinal: boolean }) {
-  return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ borderRadius: 22, padding: "20px 20px 16px", background: V.paper, color: V.paperInk, boxShadow: `0 24px 48px -28px ${V.shadow}` }}>
-        <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: V.a1 }}>
-          under instructions from {data.senderName || "my client"}
-        </p>
-        <ol style={{ margin: "12px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
-          {data.recitals.map((r, i) => (
-            <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 9, background: V.grad, color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 12 }}>
-                {i + 1}
-              </span>
-              <span style={{ fontFamily: ITALIC, fontStyle: "italic", fontSize: 19, lineHeight: 1.4 }}>{numeralize(r)}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <Glass style={{ padding: "16px 18px" }}>
-        <Eyebrow color={isFinal ? V.a1 : V.soft}>{isFinal ? "escalation — in effect" : "escalation clause"}</Eyebrow>
-        <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
-          {numeralize(isFinal ? escalatedClause(data.complianceDeadline) : data.escalationClause)}
-        </p>
-      </Glass>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {data.finePrint.map((l, i) => (
-          <span key={i} style={{ fontSize: 12, padding: "6px 11px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, color: V.soft }}>
-            {l}
-          </span>
-        ))}
-      </div>
-
-      <p style={{ margin: 0, fontSize: 13, color: V.soft, textAlign: "center" }}>
-        {data.advocateName ? `Adv. ${data.advocateName}` : "The advocate"}
-        {data.advocateEnrollment ? ` · ${data.advocateEnrollment}` : ""}
-        {data.advocateChamber ? ` · ${data.advocateChamber}` : ""}
-      </p>
-    </div>
-  );
-}
-
 // ─── Certified copy (the paper, exportable) ──────────────────────────────────
 
 function CertifiedCopy({
@@ -891,65 +1048,6 @@ function CertifiedCopy({
   );
 }
 
-// ─── Tile arts ───────────────────────────────────────────────────────────────
-
-function DemandsArt({ demands }: { demands: Demand[] }) {
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: "14px 14px 62px", display: "flex", flexDirection: "column", gap: 6, overflow: "hidden" }}>
-      {demands.slice(0, 3).map((d) => (
-        <span
-          key={d.id}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "6px 10px",
-            borderRadius: 12,
-            background: "rgba(255,255,255,.9)",
-            color: "#241a14",
-            fontSize: 13,
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-          }}
-        >
-          <span>{d.complied ? "💖" : d.response === "accepted" ? "✅" : d.response === "contested" ? "✋" : "⏳"}</span>
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", textDecoration: d.complied ? "line-through" : "none" }}>{d.text}</span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function FactsArt({ count }: { count: number }) {
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", paddingBottom: 48 }}>
-      <span style={{ position: "relative", width: "58%", maxWidth: 110, aspectRatio: "3 / 4", borderRadius: 8, background: "#fff", boxShadow: "0 12px 22px -12px rgba(0,0,0,.45)", transform: "rotate(-4deg)", padding: "10px 9px" }}>
-        {[80, 95, 70, 88, 60].map((w, i) => (
-          <span key={i} style={{ display: "block", height: 5, width: `${w}%`, borderRadius: 3, background: "#d8cfc2", marginTop: i ? 7 : 0 }} />
-        ))}
-        <span style={{ position: "absolute", right: -12, bottom: -10, width: 40, height: 40, borderRadius: "50%", background: V.grad, color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 15 }}>{count}</span>
-      </span>
-    </span>
-  );
-}
-
-function CopyArt({ refNo }: { refNo: string }) {
-  return (
-    <span aria-hidden style={{ position: "absolute", inset: "14px 14px 58px", display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
-      <span style={{ width: 88, height: "100%", maxHeight: 108, borderRadius: 6, background: "#fdfcf8", boxShadow: "0 12px 22px -12px rgba(0,0,0,.5)", transform: "rotate(-3deg)", padding: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-        <span style={{ height: 12, borderRadius: 2, background: "#e8eef2" }} />
-        {[90, 70, 85, 60, 78].map((w, i) => (
-          <span key={i} style={{ height: 4, width: `${w}%`, borderRadius: 2, background: "#cfc8bb" }} />
-        ))}
-      </span>
-      <span style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", color: V.a1, border: `2.5px solid ${V.a1}`, borderRadius: 10, padding: "6px 10px", transform: "rotate(-8deg)" }}>
-        {refNo || "certified"}
-      </span>
-    </span>
-  );
-}
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <span style={{ display: "inline-flex", flexDirection: "column", padding: "8px 14px", borderRadius: 16, background: V.glass, border: `1px solid ${V.edge}`, textAlign: "left" }}>
@@ -961,8 +1059,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 // ─── Toasts + overlays (portalled above the sheets) ──────────────────────────
 
+const noopSubscribe = () => () => {};
+
 function Overlays({ flash, fearing, celebrate, reduced }: { flash: Flash; fearing: boolean; celebrate: boolean; reduced: boolean }) {
-  if (typeof document === "undefined") return null;
+  // No portal on the server or the first client render, so hydration matches.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  if (!hydrated) return null;
   const toast = flash
     ? {
         accepted: { gif: PAT_GIF, text: "Demand accepted. Noted for the record ✓" },
@@ -983,7 +1085,7 @@ function Overlays({ flash, fearing, celebrate, reduced }: { flash: Flash; fearin
             style={{
               position: "fixed",
               left: "50%",
-              bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
+              bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
               x: "-50%",
               zIndex: 200,
               display: "flex",

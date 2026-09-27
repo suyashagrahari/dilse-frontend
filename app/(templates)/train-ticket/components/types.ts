@@ -87,6 +87,10 @@ export interface TicketData {
   gifs: string[];
   /** Colour theme id — one of TRAIN_THEMES. */
   theme: string;
+  /** The question that unlocks the letter ("" = our default). */
+  lockQuestion: string;
+  /** The answer button's label ("" = our default). */
+  lockAnswer: string;
 }
 
 /**
@@ -173,6 +177,8 @@ export const DEMO_DATA: TicketData = {
     "https://cdn.subhsandesh.in/gifts-media/templates/train-ticket/dancing.gif",
   ],
   theme: "midnight",
+  lockQuestion: "",
+  lockAnswer: "",
   letter:
     "I know a ticket is a strange way to say this.\n\nBut every time I have checked a PNR in the last two years it was because of you — because of a train that would eventually put me in the same room as you. I have refreshed that page more times than I would like to admit.\n\nThis one is confirmed. Coach S4, seats together, and no more waitlist.\n\nSee you on the platform.",
 };
@@ -198,6 +204,8 @@ export const TICKET_CONTENT_KEYS: (keyof TicketData)[] = [
   "photos",
   "gifs",
   "theme",
+  "lockQuestion",
+  "lockAnswer",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */

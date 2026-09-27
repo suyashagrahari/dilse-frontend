@@ -37,7 +37,7 @@ const PASS_CSS = `
 }
 `;
 
-export default function BoardingPass({ data, theme, gif }: { data: TicketData; theme: LoveTheme; gif?: string }) {
+export default function BoardingPass({ data, theme, gif, hideSave }: { data: TicketData; theme: LoveTheme; gif?: string; hideSave?: boolean }) {
   const c = theme.colors;
   const mounted = useMounted();
   const countdown = useCountdown(data.departureAt);
@@ -178,6 +178,7 @@ export default function BoardingPass({ data, theme, gif }: { data: TicketData; t
         />
       )}
 
+      {!hideSave && (
       <div style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
         <CandyButton onClick={() => void save()} disabled={saving} style={{ width: "auto", minWidth: 230 }}>
           {saving ? "printing…" : "save my ticket ⬇️"}
@@ -186,6 +187,7 @@ export default function BoardingPass({ data, theme, gif }: { data: TicketData; t
           {msg}
         </p>
       </div>
+      )}
     </div>
   );
 }

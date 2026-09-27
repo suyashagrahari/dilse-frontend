@@ -71,6 +71,10 @@ export interface CertificateData {
   letter: string;
   /** Colour theme id — one of COURT_THEMES. */
   theme: string;
+  /** The question that unlocks the letter ("" = our default). */
+  lockQuestion: string;
+  /** The answer button's label ("" = our default). */
+  lockAnswer: string;
 }
 
 /** The Marriage Officer's hand. Deliberately fixed — a registrar signs the same way every time. */
@@ -121,6 +125,8 @@ export const DEMO_DATA: CertificateData = {
   letter:
     "Ananya,\n\nThe registrar stamped it today. I stamped it the night you laughed at my terrible joke in the rain and didn't let go of my hand.\n\nFour people objected. The court overruled all of them, and honestly, so did my heart.\n\nThank you for choosing the version of me that forgets the milk and remembers every word you say.\n\nOfficially, legally-ish, forever yours.\n\n— Rohan",
   theme: "midnight",
+  lockQuestion: "",
+  lockAnswer: "",
 };
 
 /** The portrait on the certificate: the first photo, or the legacy single photo. */
@@ -211,6 +217,8 @@ export const COURT_MARRIAGE_CONTENT_KEYS: (keyof CertificateData)[] = [
   "gifs",
   "letter",
   "theme",
+  "lockQuestion",
+  "lockAnswer",
 ];
 
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */
@@ -272,6 +280,8 @@ export function dbToCourtMarriageData(db: Record<string, unknown> | null | undef
     gifs: [],
     letter: "",
     theme: DEMO_DATA.theme,
+    lockQuestion: "",
+    lockAnswer: "",
   }, COURT_THEME_IDS);
 
   return {
