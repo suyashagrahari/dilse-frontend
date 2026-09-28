@@ -8,13 +8,24 @@ import { isSuperAdmin } from "@/lib/roles";
 import {
   Search, Users, Crown, UserCheck, User as UserIcon, MessageSquare,
   ChevronLeft, ChevronRight, Eye, FileText, Calendar, Mail,
-  X, ExternalLink, BarChart3, Trash2, Loader2,
+  X, ExternalLink, BarChart3, Trash2, Loader2, Star, LayoutTemplate, CalendarDays,
 } from "lucide-react";
 
 interface UserItem {
   _id:string; name:string; email:string; avatar?:string; provider:string;
   role:string; status?:string; statusReason?:string; points:number; isVerified:boolean; createdAt:string;
+  feedback?:{count:number;avg:number;templates:number}|null;
+  templatePages?:number; templateLastAt?:string;
 }
+interface TplCount { type:string; label:string; users:number; pages:number }
+type DateMode = ""|"today"|"yesterday"|"week"|"custom";
+
+// Days are Indian days: "today" at 11pm IST is still today, not tomorrow in UTC.
+const istDay=(offset=0)=>{
+  const d=new Date(Date.now()+offset*86400000);
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+};
+const prettyDay=(ymd:string)=>new Date(`${ymd}T12:00:00+05:30`).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
 interface UserDetailData {
   user: UserItem & { totalPointsEarned:number; referralCode:string; subdomain?:string; updatedAt:string };
   pages: { _id:string; templateType:string; templateLabel:string; shareId?:string; isPublished:boolean; viewCount?:number; installCount?:number; createdAt:string }[];
@@ -47,6 +58,22 @@ export default function AdminUsersPage(){
   const [rc,setRc]=useState<string|null>(null);
   const [pageConfirm,setPageConfirm]=useState<string|null>(null);
   const [pageDeleting,setPageDeleting]=useState<string|null>(null);
+  const [dateMode,setDateMode]=useState<DateMode>("");
+  const [customDay,setCustomDay]=useState("");
+  const [tpl,setTpl]=useState("");
+  const [tplCounts,setTplCounts]=useState<TplCount[]>([]);
+  const [tplSummary,setTplSummary]=useState<{label:string;pages:number}|null>(null);
+
+  // The day range the chips and the calendar describe, as ?from=&to=.
+  const range=((): {from:string;to:string}|null=>{
+    if(dateMode==="today")return {from:istDay(),to:istDay()};
+    if(dateMode==="yesterday")return {from:istDay(-1),to:istDay(-1)};
+    if(dateMode==="week")return {from:istDay(-6),to:istDay()};
+    if(dateMode==="custom"&&customDay)return {from:customDay,to:customDay};
+    return null;
+  })();
+  const rangeFrom=range?.from??"", rangeTo=range?.to??"";
+  const rangeLabel=!range?"":dateMode==="today"?"today":dateMode==="yesterday"?"yesterday":dateMode==="week"?"in the last 7 days":`on ${prettyDay(range.from)}`;
 
   const hdr=useCallback(()=>({Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"}),[accessToken]);
 
@@ -56,13 +83,36 @@ export default function AdminUsersPage(){
     try{
       const p=new URLSearchParams({page:String(page),limit:"20"});
       if(search)p.set("search",search); if(rf)p.set("role",rf); if(sf)p.set("status",sf);
+      if(rangeFrom){p.set("from",rangeFrom);p.set("to",rangeTo);}
+      if(tpl)p.set("template",tpl);
       const res=await fetch(`${API_URL}/admin/users?${p}`,{headers:hdr()});
       const data=await res.json();
-      if(data.success){setUsers(data.data.users);setPg(data.data.pagination);}
+      if(data.success){setUsers(data.data.users);setPg(data.data.pagination);setTplSummary(data.data.template??null);}
     }finally{setLoading(false);}
-  },[accessToken,search,rf,sf,hdr]);
+  },[accessToken,search,rf,sf,rangeFrom,rangeTo,tpl,hdr]);
 
   useEffect(()=>{fetchUsers(1);},[fetchUsers]);
+
+  // Template picker counts follow the chosen day, so "Kundli Milan · 4" means
+  // four people made one in that range.
+  useEffect(()=>{
+    if(!accessToken)return;
+    const p=new URLSearchParams();
+    if(rangeFrom){p.set("from",rangeFrom);p.set("to",rangeTo);}
+    let live=true;
+    fetch(`${API_URL}/admin/users/template-counts?${p}`,{headers:hdr()})
+      .then(r=>r.json()).then(d=>{if(live&&d.success)setTplCounts(d.data);}).catch(()=>{});
+    return()=>{live=false;};
+  },[accessToken,rangeFrom,rangeTo,hdr]);
+
+  const chip=(on:boolean,c=g)=>({
+    flex:"none" as const,height:32,padding:"0 12px",borderRadius:99,fontSize:11.5,fontWeight:700,cursor:"pointer",
+    display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap" as const,
+    border:on?`1.5px solid ${c}`:`1px solid ${cB}`,
+    background:on?`${c}1c`:"rgba(255,255,255,0.6)",
+    color:on?(c===g?gD:c):t2,
+  });
+  const activeTpl=tplCounts.find(t=>t.type===tpl);
 
   const openUser=(id:string)=>{
     if(superAdmin){router.push(`/admin/users/${id}`);return;}
@@ -148,7 +198,11 @@ export default function AdminUsersPage(){
         @media(min-width:1024px){.u-body{padding:0 40px 60px}}
         .uc{background:rgba(255,255,255,0.65);border:1px solid ${cB};border-radius:14px;backdrop-filter:blur(8px)}
         @media(min-width:768px){.uc{border-radius:16px}}
-        .uCard:hover{box-shadow:0 10px 26px -14px rgba(61,12,17,.35);transform:translateY(-1px)}
+        .uCard{position:relative;overflow:hidden;min-width:0}
+        .uCard:hover{box-shadow:0 14px 30px -16px rgba(61,12,17,.4);transform:translateY(-2px)}
+        .u-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+        .u-row::-webkit-scrollbar{display:none}
+        .u-lbl{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${tM};margin-right:2px}
       `}</style>
 
       <div className="uw">
@@ -169,39 +223,69 @@ export default function AdminUsersPage(){
             </div>
           </div>
           {/* Search */}
-          <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
-            <div style={{flex:1,minWidth:180,display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.6)",border:`1px solid ${cB}`,borderRadius:11,padding:"0 12px"}}>
-              <Search size={14} color={tM}/>
-              <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchUsers(1)}
-                placeholder="Search by name or email..."
-                style={{flex:1,background:"transparent",border:"none",outline:"none",color:t1,fontSize:12,padding:"10px 0"}}/>
-              {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:tM,padding:2}}><X size={13}/></button>}
-            </div>
-            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {["","normal","member","admin","superadmin"].map(r=>(
-                <button key={r} onClick={()=>setRf(r)} style={{
-                  padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize",
-                  border:rf===r?`1.5px solid ${g}`:`1px solid ${cB}`,
-                  background:rf===r?`${g}15`:"rgba(255,255,255,0.5)",
-                  color:rf===r?gD:tM,
-                }}>{r||"All"}</button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {["","active","suspended","banned"].map(st=>(
-                <button key={st} onClick={()=>setSf(st)} style={{
-                  padding:"6px 12px",borderRadius:8,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize",
-                  border:sf===st?`1.5px solid ${SC[st]||g}`:`1px solid ${cB}`,
-                  background:sf===st?`${SC[st]||g}15`:"rgba(255,255,255,0.5)",
-                  color:sf===st?(SC[st]||gD):tM,
-                }}>{st||"Any status"}</button>
-              ))}
-            </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.7)",border:`1px solid ${cB}`,borderRadius:12,padding:"0 12px",marginBottom:10}}>
+            <Search size={14} color={tM}/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchUsers(1)}
+              placeholder="Search by name or email..."
+              style={{flex:1,minWidth:0,background:"transparent",border:"none",outline:"none",color:t1,fontSize:13,padding:"11px 0"}}/>
+            {search&&<button onClick={()=>setSearch("")} aria-label="Clear search" style={{background:"none",border:"none",cursor:"pointer",color:tM,padding:2}}><X size={13}/></button>}
           </div>
-          {/* Count + divider */}
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-            <span style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,0.55)",border:`1px solid ${cB}`,fontSize:11,fontWeight:700,color:t2}}>
-              <Users size={12} color={g}/> {pg.total} users
+
+          {/* When: chips for the usual days, the calendar for any other */}
+          <div className="u-row">
+            <span className="u-lbl"><CalendarDays size={12}/> When</span>
+            {([["","All time"],["today","Today"],["yesterday","Yesterday"],["week","Last 7 days"]] as [DateMode,string][]).map(([k,l])=>(
+              <button key={k||"all"} type="button" onClick={()=>setDateMode(k)} style={chip(dateMode===k)}>{l}</button>
+            ))}
+            <label style={{...chip(dateMode==="custom"),position:"relative"}}>
+              <Calendar size={12}/>{dateMode==="custom"&&customDay?prettyDay(customDay):"Pick a day"}
+              <input type="date" max={istDay()} value={customDay}
+                onChange={e=>{setCustomDay(e.target.value);setDateMode(e.target.value?"custom":"");}}
+                aria-label="Pick a day"
+                style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%"}}/>
+            </label>
+          </div>
+
+          {/* Which template they made */}
+          <div className="u-row" style={{flexWrap:"wrap"}}>
+            <span className="u-lbl"><LayoutTemplate size={12}/> Template</span>
+            <select value={tpl} onChange={e=>setTpl(e.target.value)} aria-label="Filter by template"
+              style={{flex:"1 1 200px",minWidth:0,maxWidth:360,height:34,padding:"0 10px",borderRadius:10,fontSize:12.5,fontWeight:700,color:t1,
+                background:tpl?`${g}14`:"rgba(255,255,255,0.7)",border:tpl?`1.5px solid ${g}`:`1px solid ${cB}`}}>
+              <option value="">Any template</option>
+              {tplCounts.map(t=>(
+                <option key={t.type} value={t.type} disabled={!t.users&&t.type!==tpl}>
+                  {t.label} · {t.users} {t.users===1?"user":"users"}
+                </option>
+              ))}
+            </select>
+            {(tpl||dateMode)&&(
+              <button type="button" onClick={()=>{setTpl("");setDateMode("");setCustomDay("");}} style={chip(false)}><X size={12}/> Clear</button>
+            )}
+          </div>
+
+          {/* Role + status */}
+          <div className="u-row">
+            {["","normal","member","admin","superadmin"].map(r=>(
+              <button key={r} onClick={()=>setRf(r)} style={{...chip(rf===r),textTransform:"capitalize"}}>{r||"All roles"}</button>
+            ))}
+            <span style={{flex:"none",width:1,height:20,background:cB}}/>
+            {["","active","suspended","banned"].map(st=>(
+              <button key={st} onClick={()=>setSf(st)} style={{...chip(sf===st,SC[st]||g),textTransform:"capitalize"}}>{st||"Any status"}</button>
+            ))}
+          </div>
+
+          {/* What the filters add up to */}
+          <div style={{margin:"4px 0 12px",padding:"10px 12px",borderRadius:12,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",
+            background:tpl||range?`linear-gradient(120deg,${bg},#6b1a22)`:"rgba(255,255,255,0.55)",
+            color:tpl||range?"#f5ede6":t2,border:tpl||range?"none":`1px solid ${cB}`}}>
+            <span style={{fontSize:22,fontWeight:800,lineHeight:1,color:tpl||range?"#ffd98a":t1}}>{loading?"…":pg.total}</span>
+            <span style={{fontSize:12.5,fontWeight:600,lineHeight:1.35,minWidth:0,flex:"1 1 180px"}}>
+              {tpl
+                ? <>{pg.total===1?"person":"people"} created <b>{tplSummary?.label||activeTpl?.label||tpl}</b>{rangeLabel?` ${rangeLabel}`:""}{tplSummary?` · ${tplSummary.pages} ${tplSummary.pages===1?"page":"pages"}`:""}</>
+                : range
+                  ? <>{pg.total===1?"person":"people"} signed up {rangeLabel}</>
+                  : <>users in total</>}
             </span>
           </div>
           <div style={{height:1,background:cB}}/>
@@ -231,35 +315,68 @@ export default function AdminUsersPage(){
                   gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,290px),1fr))",
                   gap: 10, padding: 12,
                 }}>
-                  {users.map(u=>(
+                  {users.map(u=>{
+                    const fb=u.feedback;
+                    const tone=!fb?null:fb.avg>=4?"#1e7a4b":fb.avg>=3?"#b7791f":"#b3261e";
+                    return(
                     <div key={u._id} onClick={()=>openUser(u._id)} className="uCard" style={{
-                      border:`1px solid ${cB}`, borderRadius:14, background:"#fffdfb",
-                      padding:13, cursor:"pointer", transition:"box-shadow .15s, transform .15s",
+                      border:`1px solid ${cB}`, borderRadius:16, background:"#fffdfb",
+                      padding:"14px 14px 12px", cursor:"pointer", transition:"box-shadow .18s, transform .18s",
                     }}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        {u.avatar?<img src={u.avatar} alt="" style={{width:38,height:38,borderRadius:11,objectFit:"cover",flexShrink:0}}/>:
-                        <div style={{width:38,height:38,borderRadius:11,flexShrink:0,background:`${g}1f`,color:gD,display:"grid",placeItems:"center",fontSize:15,fontWeight:800}}>{u.name[0]?.toUpperCase()}</div>}
+                      {/* Role-coloured wash across the top */}
+                      <span aria-hidden style={{position:"absolute",left:0,right:0,top:0,height:54,background:`linear-gradient(120deg,${RC[u.role]||g}26,${g}10 60%,transparent)`}}/>
+                      <div style={{position:"relative",display:"flex",alignItems:"center",gap:11}}>
+                        {u.avatar?<img src={u.avatar} alt="" style={{width:44,height:44,borderRadius:14,objectFit:"cover",flexShrink:0,border:"2px solid #fff",boxShadow:"0 4px 12px -4px rgba(61,12,17,.3)"}}/>:
+                        <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:`linear-gradient(135deg,${g},${gD})`,color:"#fff",display:"grid",placeItems:"center",fontSize:17,fontWeight:800,border:"2px solid #fff",boxShadow:"0 4px 12px -4px rgba(61,12,17,.3)"}}>{u.name[0]?.toUpperCase()}</div>}
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13.5,fontWeight:800,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</div>
-                          <div style={{fontSize:11,color:tM,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+                          <div style={{fontSize:14,fontWeight:800,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</div>
+                          <div style={{fontSize:11.5,color:tM,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
                         </div>
                       </div>
 
-                      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:9}}>
+                      <div style={{position:"relative",display:"flex",flexWrap:"wrap",gap:4,marginTop:10}}>
                         <Badge role={u.role}/><StatusPill status={u.status}/>
                         <span style={{fontSize:10,fontWeight:600,padding:"3px 7px",borderRadius:7,background:"#f6f1ea",color:t2,textTransform:"capitalize"}}>{u.provider}</span>
                         {!u.isVerified&&<span style={{fontSize:10,fontWeight:700,padding:"3px 7px",borderRadius:7,background:"#fff4f4",color:"#b3261e"}}>unverified</span>}
                       </div>
 
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6,marginTop:11,paddingTop:10,borderTop:`1px solid ${cB}`}}>
+                      {/* Feedback: did they rate, and how warmly on average */}
+                      <div style={{marginTop:10,padding:"8px 10px",borderRadius:11,display:"flex",alignItems:"center",gap:8,
+                        background:fb?`${tone}10`:"#f8f4ef",border:`1px solid ${fb?`${tone}33`:cB}`}}>
+                        {fb?(
+                          <>
+                            <span style={{display:"inline-flex",gap:1,flex:"none"}}>
+                              {[1,2,3,4,5].map(n=>(
+                                <Star key={n} size={12} fill={n<=Math.round(fb.avg)?"#e0a526":"none"} color={n<=Math.round(fb.avg)?"#e0a526":"rgba(61,12,17,.2)"}/>
+                              ))}
+                            </span>
+                            <b style={{fontSize:13,color:tone!}}>{fb.avg.toFixed(1)}</b>
+                            <span style={{fontSize:11,color:t2,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              avg · {fb.count} {fb.count===1?"rating":"ratings"}{fb.templates>1?` · ${fb.templates} templates`:""}
+                            </span>
+                          </>
+                        ):(
+                          <span style={{fontSize:11.5,color:tM,fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}>
+                            <MessageSquare size={12}/> No feedback yet
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{display:"grid",gridTemplateColumns:tpl?"repeat(3,minmax(0,1fr))":"repeat(2,minmax(0,1fr))",gap:6,marginTop:10}}>
                         <div>
                           <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Points</div>
-                          <div style={{fontSize:12.5,fontWeight:800,color:gD,marginTop:1}}>{u.points}</div>
+                          <div style={{fontSize:13,fontWeight:800,color:gD,marginTop:1}}>{u.points}</div>
                         </div>
                         <div>
                           <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Joined</div>
-                          <div style={{fontSize:12.5,fontWeight:700,color:t1,marginTop:1}}>{new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
+                          <div style={{fontSize:12.5,fontWeight:700,color:t1,marginTop:1,whiteSpace:"nowrap"}}>{new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
                         </div>
+                        {tpl&&(
+                          <div>
+                            <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Made</div>
+                            <div style={{fontSize:12.5,fontWeight:800,color:bg,marginTop:1,whiteSpace:"nowrap"}}>{u.templatePages??0}× {u.templateLastAt?`· ${new Date(u.templateLastAt).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}`:""}</div>
+                          </div>
+                        )}
                       </div>
 
                       <div style={{marginTop:10,paddingTop:9,borderTop:`1px solid ${cB}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
@@ -267,13 +384,14 @@ export default function AdminUsersPage(){
                           style={{padding:"5px 7px",borderRadius:8,fontSize:10.5,fontWeight:700,cursor:"pointer",background:"#fff",color:t1,border:`1px solid ${cB}`}}>
                           <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
                         </select>
-                        <span style={{display:"inline-flex",alignItems:"center",gap:3,color:bg,fontWeight:700,fontSize:11.5}}>
+                        <span style={{display:"inline-flex",alignItems:"center",gap:4,color:"#f5ede6",background:bg,padding:"5px 11px",borderRadius:99,fontWeight:700,fontSize:11.5}}>
                           Open <Eye size={13}/>
                         </span>
                       </div>
                     </div>
-                  ))}
-                  {!users.length&&<p style={{gridColumn:"1/-1",textAlign:"center",color:tM,fontSize:12,padding:30}}>No users found</p>}
+                    );
+                  })}
+                  {!users.length&&<p style={{gridColumn:"1/-1",textAlign:"center",color:tM,fontSize:12.5,padding:30}}>{tpl||range?"Nobody matches these filters — try another day or template.":"No users found"}</p>}
                 </div>
 
                 {/* Pagination */}
