@@ -82,6 +82,33 @@ export default function AboutUsPage() {
           <span className="auSpark s2" aria-hidden="true">♥</span>
           <span className="auSpark s3" aria-hidden="true">✦</span>
 
+          {/* The founder himself, up front in the hero rather than in a card
+              further down: the page is a founder's message, so the face goes
+              next to the words. */}
+          <div className="auFace">
+            <div className="auPortrait">
+              <Image
+                src="https://cdn.subhsandesh.in/gifts-media/aboutUs/144600880.webp"
+                alt="Suyash Agrahari"
+                fill
+                sizes="(max-width: 900px) 104px, 240px"
+                style={{ objectFit: "cover" }}
+                priority
+              />
+            </div>
+            <div className="auFaceText">
+              <p className="auFaceName">Suyash Agrahari</p>
+              <p className="auFaceRole">Founder, SubhSandesh</p>
+              <div className="auSocials">
+                {SOCIALS.map(({ href, label, Icon }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}>
+                    <Icon size={15} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="auHeroCopy">
             <p className="auBadge">
               <span className="auBadgeDot" aria-hidden="true" />
@@ -113,7 +140,7 @@ export default function AboutUsPage() {
           </div>
         </section>
 
-        {/* ── Story + founder card ─────────────────────────────────────────── */}
+        {/* ── Story ────────────────────────────────────────────────────────── */}
         <div className="auGrid">
           <article className="auCard auStory auReveal" style={{ animationDelay: "80ms" }}>
             <p className="auEyebrow">Our story</p>
@@ -135,30 +162,6 @@ export default function AboutUsPage() {
             </p>
           </article>
 
-          <aside className="auCard auFounder auReveal" style={{ animationDelay: "160ms" }} aria-label="Founder">
-            <div className="auPhoto">
-              <Image
-                src="https://cdn.subhsandesh.in/gifts-media/aboutUs/144600880.webp"
-                alt="Suyash Agrahari"
-                fill
-                sizes="(max-width: 768px) 120px, 280px"
-                style={{ objectFit: "cover" }}
-                priority
-              />
-            </div>
-            <div className="auFounderText">
-              <h2 className="auFounderName">Suyash Agrahari</h2>
-              <p className="auFounderRole">Founder, SubhSandesh</p>
-              <p className="auEyebrow auConnect">Connect With Me</p>
-              <div className="auSocials">
-                {SOCIALS.map(({ href, label, Icon }) => (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}>
-                    <Icon size={17} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </aside>
         </div>
 
         {/* ── What we make ─────────────────────────────────────────────────── */}
@@ -235,7 +238,7 @@ export default function AboutUsPage() {
         }
         @media (min-width: 600px) { .auHero { padding: 30px 28px 24px } }
         @media (min-width: 900px) {
-          .auHero { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; gap: 32px; padding: 36px 38px }
+          .auHero { grid-template-columns: 220px minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: 30px; padding: 32px 34px }
         }
         .auShine {
           position: absolute; top: -60px; bottom: -60px; width: 80px; pointer-events: none;
@@ -318,7 +321,7 @@ export default function AboutUsPage() {
 
         .auGrid { display: grid; gap: 14px; min-width: 0 }
         @media (min-width: 600px) { .auGrid { gap: 18px } }
-        @media (min-width: 860px) { .auGrid { grid-template-columns: minmax(0, 1fr) 300px; align-items: stretch } }
+
 
         .auStory { padding: 18px 16px }
         @media (min-width: 600px) { .auStory { padding: 24px 26px } }
@@ -329,24 +332,32 @@ export default function AboutUsPage() {
 
         /* Founder: a compact row on phones (photo + name + socials), a portrait
            card beside the story from 860. */
-        .auFounder { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px }
-        @media (min-width: 860px) { .auFounder { grid-template-columns: minmax(0, 1fr); align-content: start; text-align: center; padding: 12px 12px 18px } }
-        .auPhoto { position: relative; width: 100%; aspect-ratio: 1; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 3px #fffdfb, 0 0 0 4.5px rgba(201,168,76,0.55) }
-        .auPhoto img { transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1) }
-        @media (hover: hover) { .auFounder:hover .auPhoto img { transform: scale(1.05) } }
-        .auFounderText { position: relative; z-index: 1; min-width: 0 }
-        .auFounderName { margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 21px; font-weight: 800; color: ${BRAND.text} }
-        .auFounderRole { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: #7a5555 }
-        .auConnect { margin-top: 10px }
-        .auSocials { display: flex; flex-wrap: wrap; gap: 7px }
-        @media (min-width: 860px) { .auSocials { justify-content: center } }
-        .auSocials a {
-          display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%;
-          color: ${BRAND.text}; background: rgba(61,12,17,0.05); border: 1px solid rgba(61,12,17,0.14); text-decoration: none;
-          transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease, color 200ms ease, border-color 200ms ease;
+        /* Face block: portrait beside name + socials on a phone, a tall
+           framed portrait with the name under it on desktop. */
+        .auFace { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; min-width: 0 }
+        @media (min-width: 900px) { .auFace { flex-direction: column; align-items: stretch; text-align: center; gap: 12px } }
+        .auPortrait {
+          position: relative; flex: none; width: 96px; height: 96px; border-radius: 22px; overflow: hidden;
+          box-shadow: 0 0 0 3px #3d0c11, 0 0 0 5px #c9a84c, 0 18px 36px -12px rgba(0,0,0,0.6), 0 0 40px rgba(255,210,120,0.25);
+          transform: rotate(-3deg); animation: auFloat 6s ease-in-out infinite;
         }
-        .auSocials a:hover { transform: translateY(-3px); background: ${BRAND.gradient}; color: #ffe3a3; border-color: transparent }
-        .auSocials a:focus-visible { outline: 2px solid ${BRAND.gold}; outline-offset: 2px }
+        @media (min-width: 600px) { .auPortrait { width: 116px; height: 116px } }
+        @media (min-width: 900px) { .auPortrait { width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 26px } }
+        .auPortrait img { transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1) }
+        @media (hover: hover) { .auFace:hover .auPortrait img { transform: scale(1.06) } }
+        @keyframes auFloat { 0%,100% { transform: rotate(-3deg) translateY(0) } 50% { transform: rotate(-1deg) translateY(-6px) } }
+        .auFaceText { min-width: 0 }
+        .auFaceName { margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 800; color: #fff6e6; line-height: 1.1 }
+        .auFaceRole { margin: 3px 0 9px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #ffe3a3; opacity: .85 }
+        .auSocials { display: flex; flex-wrap: wrap; gap: 6px }
+        @media (min-width: 900px) { .auSocials { justify-content: center } }
+        .auSocials a {
+          display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;
+          color: #ffe3a3; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,236,190,0.22); text-decoration: none;
+          transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+        }
+        .auSocials a:hover { transform: translateY(-3px); background: linear-gradient(135deg, #ffe3a3, #c9a84c); color: #3d0c11; border-color: transparent }
+        .auSocials a:focus-visible { outline: 2px solid #ffe3a3; outline-offset: 2px }
 
         /* ── Sections ─────────────────────────────────────────────────────── */
         .auSection { display: grid; gap: 10px; min-width: 0 }
@@ -399,7 +410,8 @@ export default function AboutUsPage() {
         @media (prefers-reduced-motion: reduce) {
           .auHero, .auMission, .auReveal { animation: none !important }
           .auShine, .auSpark, .auBadgeDot { animation: none }
-          .auCard, .auCard::before, .auIc, .auSocials a, .auPhoto img { transition: none }
+          .auCard, .auCard::before, .auIc, .auSocials a, .auPortrait img { transition: none }
+          .auPortrait { animation: none }
         }
       `}</style>
     </main>
