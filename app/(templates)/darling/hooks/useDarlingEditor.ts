@@ -13,6 +13,7 @@ import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { useResumeDraft } from "@/lib/draft/resume";
+import { clearScratch } from "@/lib/draft/localScratch";
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "darling";
@@ -65,6 +66,9 @@ export function useDarlingEditor() {
 
   const [mf, setMf] = useState<ContentData>({ ...DEMO_CONTENT });
   const [manualStep, setManualStep] = useState(0);
+  /** A half-filled form is sitting in storage (saved as the user typed). */
+  const [hasWipDraft, setHasWipDraft] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   // ── AI story fill ──────────────────────────────────────────────────────────
   // Completely inert when the server has no schema for this slug: `schema`
@@ -174,6 +178,8 @@ export function useDarlingEditor() {
           setMf(draft.data);
           setIsPersonalized(true);
           if (draft.password) setPagePassword(draft.password);
+        } else if (draft?.data && !draft.completed) {
+          setHasWipDraft(true);
         }
       }
     } catch {}
@@ -270,6 +276,7 @@ export function useDarlingEditor() {
         "darling_draft",
         JSON.stringify({ data: mf, step: manualStep, completed: false }),
       );
+      setHasWipDraft(true);
     } catch {}
   }, [mf, manualStep, editMode]);
 
@@ -721,6 +728,52 @@ export function useDarlingEditor() {
     });
   }, [shareUrl, pagePassword]);
 
+  // ── Start over ────────────────────────────────────────────────────────────
+  //
+  // Everything this browser holds for the template goes: the form buffer and
+  // prefill (sessionStorage), any `darling_*` key left in localStorage, and the
+  // signed-out scratch in IndexedDB that `useDraft` would otherwise put straight
+  // back on screen at the next refresh. A draft already saved to the account
+  // stays in the profile; this only forgets it here.
+  //
+  // `isPersonalized` drops first, which disables `useDraft`, so the unmount and
+  // tab-hide saves cannot write the old content back behind us.
+  const clearLocalData = useCallback(async () => {
+    setClearing(true);
+    setIsPersonalized(false);
+    for (const store of [sessionStorage, localStorage]) {
+      try {
+        const keys: string[] = [];
+        for (let i = 0; i < store.length; i++) {
+          const k = store.key(i);
+          if (k && k.startsWith("darling_") && !k.startsWith("darling_unlocked_")) keys.push(k);
+        }
+        keys.forEach((k) => store.removeItem(k));
+      } catch {}
+    }
+    await clearScratch(TEMPLATE);
+
+    pendingPublishRef.current = null;
+    fromPreviewRef.current = false;
+    preEditContentRef.current = DEMO_CONTENT;
+    setContent(DEMO_CONTENT);
+    setMf({ ...DEMO_CONTENT });
+    setManualStep(0);
+    setPendingContent(null);
+    setPagePassword("");
+    setShowPwValue(false);
+    setPageId(null);
+    setShareUrl(null);
+    setEditMode(null);
+    setStoryStarted(false);
+    setHasWipDraft(false);
+    setTab("home");
+    setClearing(false);
+    // A reopened page (?id= / ?edit=) would load itself again on the next render.
+    if (searchParams.get("id") || searchParams.get("edit")) router.replace("/darling");
+    pushToast({ type: "success", title: "All cleared", message: "Start fresh whenever you like ♡" });
+  }, [router, searchParams, pushToast]);
+
   // Extract shareId from shareUrl (last path segment)
   const shareId = shareUrl ? shareUrl.split("/").pop() ?? null : null;
 
@@ -743,6 +796,8 @@ export function useDarlingEditor() {
     handlePublish, handleCopy, handleShare,
     pushToast, gameResponsesFromDB, quizAttemptsFromDB,
 
+    clearLocalData, clearing,
+    canClear: !shareUrl && !publishing && (isPersonalized || hasWipDraft),
     showPublish: isPersonalized && !shareUrl && !publishing,
     showShare: !!shareUrl,
     shareLabel: copied ? "Copied!" : "Share",

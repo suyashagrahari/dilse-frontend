@@ -2,7 +2,7 @@
 
 import { Suspense, lazy, useMemo, useState, type CSSProperties } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Camera, Mail, Music2, Sparkles } from "lucide-react";
+import { Camera, Mail, Music2, Sparkles, Trash2 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 
@@ -17,6 +17,7 @@ import PasswordSheet from "./components/PasswordSheet";
 import PublishingOverlay from "./components/PublishingOverlay";
 import DarlingBg from "./components/DarlingBg";
 import DarlingBackgroundMusic from "./components/BackgroundMusic";
+import ClearDataSheet from "./components/ClearDataSheet";
 
 const GallerySection = lazy(() => import("./components/GallerySection"));
 const MusicSection = lazy(() => import("./components/MusicSection"));
@@ -40,8 +41,12 @@ function SectionLoader() {
 function DarlingPageInner() {
   const editor = useDarlingEditor();
   const [playlistActive, setPlaylistActive] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const isPreview = editor.editMode === "preview";
+  // After a refresh the restored draft is no longer in "preview" mode, but it
+  // is still the user's page — keep Edit next to Publish for it.
+  const showEditRow = isPreview || (editor.isPersonalized && !editor.showShare);
 
   const topAction = editor.showShare
     ? { label: "Share", onClick: editor.handleShare }
@@ -247,7 +252,27 @@ function DarlingPageInner() {
             ) : null}
           </div>
 
-          {isPreview ? (
+          {editor.canClear && (
+            <button
+              onClick={() => setConfirmClear(true)}
+              aria-label="Clear my draft"
+              title="Clear my draft"
+              style={{
+                width: 28, height: 28, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                borderRadius: 50,
+                border: "1px solid rgba(255,255,255,0.16)",
+                background: "rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.8)",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <Trash2 size={13} strokeWidth={2.2} />
+            </button>
+          )}
+
+          {showEditRow ? (
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
               <button
                 onClick={editor.handleEditFromPreview}
@@ -321,7 +346,8 @@ function DarlingPageInner() {
         onTabChange={editor.handleTabChange}
         coupleNames={{ person1: editor.content.senderName, person2: editor.content.recipientName }}
         onBack={editor.goBack}
-        onEdit={isPreview ? editor.handleEditFromPreview : editor.handleStartCreate}
+        onEdit={showEditRow ? editor.handleEditFromPreview : editor.handleStartCreate}
+        onClear={editor.canClear ? () => setConfirmClear(true) : undefined}
         showPublish={editor.showPublish}
         showShare={editor.showShare}
         shareLabel={editor.shareLabel}
@@ -433,6 +459,16 @@ function DarlingPageInner() {
       />
 
       <PublishingOverlay visible={editor.publishing} />
+
+      <ClearDataSheet
+        open={confirmClear}
+        clearing={editor.clearing}
+        onCancel={() => setConfirmClear(false)}
+        onConfirm={async () => {
+          await editor.clearLocalData();
+          setConfirmClear(false);
+        }}
+      />
 
 
       <AnimatePresence>
