@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "@/lib/config";
 import { C } from "./types";
-import { Card, Empty, Skeleton, Pill, fmt } from "./ui";
+import { Card, Empty, Skeleton, Pill, fmt, fmtAgo } from "./ui";
 
 interface Entry {
   _id: string; action: string; actorEmail: string; createdAt: string;
@@ -43,31 +43,33 @@ export default function ActivityTab({ userId, hdr }: { userId: string; hdr: () =
   useEffect(() => { load(); }, [load]);
 
   return (
-    <Card title="Admin activity on this account">
+    <Card title="Admin activity on this account" note={loading ? undefined : `${entries.length} entr${entries.length === 1 ? "y" : "ies"}`}>
       {loading ? (
         <><Skeleton h={54} /><Skeleton h={54} /><Skeleton h={54} /></>
       ) : entries.length === 0 ? (
         <Empty>Nothing recorded yet.</Empty>
       ) : (
-        <div style={{ display: "grid", gap: 2 }}>
-          {entries.map((e) => {
+        // A timeline: one rail, a dot per entry coloured by how heavy it was.
+        <div style={{ position: "relative", display: "grid", gap: 2, paddingLeft: 4 }}>
+          <span aria-hidden style={{ position: "absolute", left: 7.5, top: 10, bottom: 10, width: 1, background: `linear-gradient(${C.gold}66, ${C.border})` }} />
+          {entries.map((e, i) => {
             const tone = TONE[e.action] || C.muted;
             return (
-              <div key={e._id} style={{ display: "flex", gap: 11, padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
-                <span style={{ width: 8, height: 8, borderRadius: 999, background: tone, marginTop: 6, flexShrink: 0 }} />
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <div key={e._id} style={{ display: "flex", gap: 11, padding: "8px 0", animation: "saRise .3s cubic-bezier(.22,1,.36,1) both", animationDelay: `${Math.min(i, 14) * 25}ms` }}>
+                <span style={{ position: "relative", width: 8, height: 8, borderRadius: 999, background: tone, marginTop: 5, flexShrink: 0, boxShadow: `0 0 0 3px ${tone}22` }} />
+                <div className="sa-mini" style={{ minWidth: 0, flex: 1, padding: "8px 10px", animation: "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                     <Pill text={e.action.replace(/[._]/g, " ")} color={tone} />
-                    <span style={{ fontSize: 11.5, color: C.muted }}>{fmt(e.createdAt)}</span>
+                    <span style={{ fontSize: 11, color: C.muted }} title={fmt(e.createdAt)}>{fmtAgo(e.createdAt)}</span>
                   </div>
-                  <div style={{ fontSize: 12.5, color: C.muted, marginTop: 5 }}>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4, overflowWrap: "anywhere" }}>
                     by {e.actorEmail}{e.targetTemplateType ? ` · ${e.targetTemplateType}` : ""}
                   </div>
                   {e.reason && (
-                    <div style={{ fontSize: 12.5, marginTop: 4, fontStyle: "italic", color: C.text }}>“{e.reason}”</div>
+                    <div style={{ fontSize: 12.5, marginTop: 3, fontStyle: "italic", color: C.text, overflowWrap: "anywhere" }}>“{e.reason}”</div>
                   )}
                   {e.changes && Object.keys(e.changes).length > 0 && (
-                    <div className="sa-mono" style={{ fontSize: 11.5, color: C.muted, marginTop: 5, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <div className="sa-mono" style={{ fontSize: 11.5, color: C.muted, marginTop: 4, display: "flex", gap: 10, flexWrap: "wrap", overflowWrap: "anywhere" }}>
                       {Object.entries(e.changes).map(([k, v]) => (
                         <span key={k}>{k}: {String(v.from)} → <strong style={{ color: C.text }}>{String(v.to)}</strong></span>
                       ))}

@@ -66,30 +66,33 @@ export default function DangerTab({
 
   return (
     <>
-      <Card title="Account status">
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <span style={{ fontSize: 13, color: C.muted }}>Currently</span>
-          <Pill text={status} color={STATUS_COLOR[status] || C.muted} />
-        </div>
-        <p style={{ fontSize: 12.5, color: C.muted, margin: "0 0 14px", lineHeight: 1.65 }}>
+      <style>{`
+        .sa-dz-f { display: grid; gap: 8px; margin-bottom: 10px; grid-template-columns: minmax(0,1fr); }
+        @media (min-width: 760px) { .sa-dz-f { grid-template-columns: minmax(0,1fr) 180px; } }
+        .sa-dz-b { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+        .sa-dz-b > .sa-btn { min-height: 38px; }
+        @media (min-width: 760px) { .sa-dz-b { display: flex; } }
+      `}</style>
+      <Card title="Account status" tone="danger" action={<Pill text={status} color={STATUS_COLOR[status] || C.muted} />}>
+        <p style={{ fontSize: 12.5, color: C.muted, margin: "0 0 11px", lineHeight: 1.6 }}>
           <strong style={{ color: C.text }}>Suspend</strong> blocks sign-in but leaves published pages reachable —
           recipients holding those links did nothing wrong.{" "}
           <strong style={{ color: C.text }}>Ban</strong> also hides every published page.
           Both sign the user out of every device immediately, and both are reversible.
         </p>
-        <div style={{ display: "grid", gap: 9, marginBottom: 12 }}>
+        <div className="sa-dz-f">
           <input className="sa-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required to suspend or ban)" />
           <input className="sa-input" type="date" value={until} onChange={(e) => setUntil(e.target.value)} title="Optional: auto-expire a suspension" />
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="sa-dz-b">
           <Btn variant="accent" onClick={() => ask("suspended")} disabled={busy || status === "suspended"}>Suspend</Btn>
           <Btn variant="danger" onClick={() => ask("banned")} disabled={busy || status === "banned"}>Ban</Btn>
           <Btn variant="ghost" onClick={() => ask("active")} disabled={busy || status === "active"}>Reinstate</Btn>
         </div>
       </Card>
 
-      <Card title="Sessions">
-        <p style={{ fontSize: 12.5, color: C.muted, margin: "0 0 14px", lineHeight: 1.65 }}>
+      <Card title="Sessions" tone="danger" delay={0.05}>
+        <p style={{ fontSize: 12.5, color: C.muted, margin: "0 0 11px", lineHeight: 1.6 }}>
           Signs the user out of every device at once. They can sign back in immediately —
           use it when a token may have been exposed rather than as a punishment.
         </p>

@@ -2,11 +2,13 @@
 
 // ─── The small pieces the drafts screen is built from ────────────────────────
 //
-// Chips, bars and the two functions that turn machine values into English.
+// Chips, bars, the warning banner and the two functions that turn machine values into English.
 // Extracted so the row and the detail panel render the SAME progress bar and
 // the SAME reason chip — when they were inline in one 1,050-line file they had
 // already started to differ by a pixel and a font weight.
 
+import { motion } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { REASON_META } from "./types";
 
@@ -57,15 +59,17 @@ export function Progress({ value, width = 46 }: { value: number; width?: number 
           overflow: "hidden", display: "block",
         }}
       >
-        <span
+        <motion.span
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.max(2, Math.min(100, value))}%` }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            display: "block",
-            width: `${Math.max(2, Math.min(100, value))}%`, height: "100%", borderRadius: 99,
+            display: "block", height: "100%", borderRadius: 99,
             background: value >= 70 ? BRAND.ok : value >= 30 ? BRAND.gold : BRAND.danger,
           }}
         />
       </span>
-      <span style={{ fontSize: 10.5, color: BRAND.faint, minWidth: 26 }}>{value}%</span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: BRAND.faint, minWidth: 26 }}>{value}%</span>
     </span>
   );
 }
@@ -140,28 +144,22 @@ export function MissingFields({
   );
 }
 
-/** A labelled number in the summary strip. */
-export function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div>
-      <p style={{ margin: 0, fontSize: 19, fontWeight: 800, color, lineHeight: 1.15 }}>{value}</p>
-      <p style={{ margin: "1px 0 0", fontSize: 10.5, color: BRAND.faint, whiteSpace: "nowrap" }}>
-        {label}
-      </p>
-    </div>
-  );
-}
-
 /** The red banner shape both errors and the SES warning use. */
 export function Warn({ children }: { children: React.ReactNode }) {
   return (
-    <div
+    <motion.div
+      role="alert"
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
       style={{
-        display: "flex", gap: 8, alignItems: "flex-start", padding: "10px 12px", borderRadius: 12,
-        background: "rgba(161,53,64,0.08)", border: "1px solid rgba(161,53,64,0.22)",
+        display: "flex", gap: 8, alignItems: "flex-start", padding: "9px 12px", borderRadius: 13,
+        background: "rgba(161,53,64,0.08)", border: "1px solid rgba(161,53,64,0.22)", minWidth: 0,
       }}
     >
-      <span style={{ fontSize: 12.5, color: BRAND.text, lineHeight: 1.5 }}>{children}</span>
-    </div>
+      <AlertTriangle size={14} style={{ color: BRAND.danger, flex: "none", marginTop: 2 }} />
+      <span style={{ fontSize: 12.5, color: BRAND.text, lineHeight: 1.5, minWidth: 0, overflowWrap: "anywhere" }}>
+        {children}
+      </span>
+    </motion.div>
   );
 }

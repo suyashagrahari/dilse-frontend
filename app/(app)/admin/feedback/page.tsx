@@ -31,17 +31,14 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft, Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock, StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle, UserRound, PenLine,
+  Loader2, Star, Sparkles, Send, Trash2, X, Mail, Clock, StickyNote, ExternalLink, Check, ChevronLeft, ChevronRight, AlertTriangle, UserRound, PenLine,
 } from "lucide-react";
 import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
+import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Num, Tag, fmtNum, rise } from "../adminKit";
 
-const t1 = "#2a0a0e";
-const t2 = "#7f5f5f";
-const tM = "#9a7070";
-const g = "#c9a84c";
-const bg = "#3d0c11";
-const cB = "rgba(61,12,17,0.08)";
+const g = A.gold;
 const OK = "#1f7a4d";
 const OFF = "#b3261e";
 
@@ -101,7 +98,7 @@ const FILTERS = [
 ] as const;
 
 /** Read-only star row, for a list where nothing is being chosen. */
-function Stars({ value, size = 13 }: { value: number; size?: number }) {
+function Stars({ value, size = 13, empty = "rgba(61,12,17,0.18)" }: { value: number; size?: number; empty?: string }) {
   return (
     <span style={{ display: "inline-flex", gap: 1, flex: "none" }} aria-label={`${value} out of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -110,7 +107,7 @@ function Stars({ value, size = 13 }: { value: number; size?: number }) {
           size={size}
           strokeWidth={1.9}
           style={{
-            color: n <= value ? g : "rgba(61,12,17,0.18)",
+            color: n <= value ? g : empty,
             fill: n <= value ? g : "transparent",
           }}
         />
@@ -351,15 +348,25 @@ export default function AdminFeedbackPage() {
   }, [stats]);
 
   if (!allowed) {
-    return (
-      <div style={{ minHeight: "60vh", display: "grid", placeItems: "center", background: "#f5ede6" }}>
-        <Loader2 size={22} className="animate-spin" style={{ color: g }} />
-      </div>
-    );
+    return <Loading h={360} />;
   }
 
+  const starOptions = [
+    { value: 0, label: "Any rating" },
+    ...[5, 4, 3, 2, 1].map((n) => ({ value: n, label: <>{n}<Star size={11} style={{ fill: "currentColor" }} /></>, count: stats?.starCounts[String(n)] || 0 })),
+  ];
+  const filterOptions = FILTERS.map((f) => ({
+    value: f.key as string,
+    label: f.label,
+    count: !stats ? undefined : f.key === "new" ? stats.newCount : f.key === "replied" ? stats.repliedCount : f.key === "with-comment" ? stats.withComment : undefined,
+  }));
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f5ede6", paddingBottom: 90, overflowX: "clip" }}>
+    <AdminPage
+      title="Feedback"
+      icon={<Star size={18} />}
+      subtitle={<>What creators said right after publishing. Replies go out from <strong>support@subhsandesh.in</strong> — generate a draft, read it, then send.</>}
+    >
       <style>{`
         /* Two columns on a laptop, one on a phone: the detail panel is a
            full-screen sheet there rather than a squeezed sidebar. */
@@ -368,107 +375,85 @@ export default function AdminFeedbackPage() {
            cards off a phone screen. */
         .af-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; }
         .af-grid > * { min-width: 0; }
-        .af-card:hover { box-shadow: 0 10px 24px -14px rgba(61,12,17,0.35); }
+        .af-hero { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 14px 18px; align-items: center; }
+        .af-hero-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
+          padding-top: 12px; border-top: 1px solid rgba(255,236,190,.14); }
+        .af-bar { flex: 1; height: 7px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+        .af-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0; }
+        .af-row2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; min-width: 0; }
+        .af-row2 > .adk-chips { flex: 1 1 auto; }
         @media (min-width: 900px) {
           .af-grid { grid-template-columns: minmax(0,1fr) minmax(0,440px); align-items: start; }
-          .af-detail { position: sticky; top: 16px; }
+          .af-hero { grid-template-columns: auto minmax(0,1fr) auto; gap: 24px; }
+          .af-hero-stats { grid-column: auto; padding-top: 0; border-top: none; padding-left: 22px; border-left: 1px solid rgba(255,236,190,.14); gap: 22px; }
+          .af-detail { position: sticky; top: calc(var(--adm-top) + 8px);
+            max-height: calc(100vh - var(--adm-top) - 16px); overflow-y: auto; border-radius: 16px; scrollbar-width: thin; }
         }
-        /* Filter pills scroll rather than wrap into ragged rows. */
-        .af-filters { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-        .af-filters::-webkit-scrollbar { display: none; }
-        .af-filters > button { flex: none; }
         @media (max-width: 899px) {
           .af-detail {
             /* 189, not 60: BottomNav is z-[79] and 82px tall, so the old
                value put this panel and its Send button under the nav. */
             position: fixed; inset: 0; z-index: 189; overflow-y: auto;
             background: #f5ede6;
-            padding: 14px 14px calc(82px + env(safe-area-inset-bottom, 0px) + 24px);
+            padding: 12px 12px calc(82px + env(safe-area-inset-bottom, 0px) + 24px);
           }
         }
+        .af-kicker { margin: 0 0 7px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: ${A.muted}; }
+        .af-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: ${A.goldDeep}; text-decoration: none; min-width: 0; }
+        .af-link:hover { text-decoration: underline; }
+        .af-preset { padding: 5px 9px; border-radius: 99px; border: 1px solid ${A.edge}; background: #fff; color: ${A.soft}; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .15s, border-color .15s; }
+        .af-preset:hover { transform: translateY(-1px); border-color: ${A.gold}; }
       `}</style>
 
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "18px 14px 0" }}>
-        <Link
-          href="/admin/analytics"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: t2, textDecoration: "none", marginBottom: 14 }}
-        >
-          <ArrowLeft size={14} /> Admin
-        </Link>
-
-        <h1 style={{ margin: 0, fontSize: 23, fontWeight: 800, color: t1, letterSpacing: "-0.01em" }}>
-          Feedback
-        </h1>
-        <p style={{ margin: "5px 0 0", fontSize: 13, lineHeight: "19px", color: t2 }}>
-          What creators said right after publishing. Replies go out from{" "}
-          <strong>support@subhsandesh.in</strong> — generate a draft, read it, then send.
-        </p>
-
+      <div style={{ overflowX: "clip" }}>
         {/* ── Summary ─────────────────────────────────────────────────────── */}
         {stats && (
-          <div
-            style={{
-              marginTop: 16, padding: 14, borderRadius: 14, background: "#fffdfb",
-              border: `1px solid ${cB}`, display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center",
-            }}
-          >
-            <div style={{ flex: "none" }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ fontSize: 30, fontWeight: 800, color: t1, lineHeight: 1 }}>
-                  {stats.count ? stats.avg.toFixed(1) : "—"}
-                </span>
-                <span style={{ fontSize: 12, color: tM }}>/ 5</span>
-              </div>
-              <div style={{ marginTop: 5 }}>
-                <Stars value={Math.round(stats.avg)} size={12} />
-              </div>
-              <p style={{ margin: "5px 0 0", fontSize: 11.5, color: tM }}>
-                {stats.count} {stats.count === 1 ? "rating" : "ratings"}
-              </p>
-            </div>
-
-            {/* Histogram: which star, how many. Bars rather than numbers,
-                because the shape of the distribution is the finding. */}
-            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-              {[5, 4, 3, 2, 1].map((star) => {
-                const n = stats.starCounts[String(star)] || 0;
-                return (
-                  <div key={star} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
-                    <span style={{ fontSize: 11, color: tM, width: 26, textAlign: "right", flex: "none" }}>
-                      {star}★
-                    </span>
-                    <div style={{ flex: 1, height: 7, borderRadius: 99, background: "rgba(61,12,17,0.06)", overflow: "hidden" }}>
-                      <div
-                        style={{
-                          width: `${(n / histogramMax) * 100}%`,
-                          height: "100%",
-                          borderRadius: 99,
-                          background: star >= 4 ? g : star === 3 ? "#c98a4c" : OFF,
-                          transition: "width 300ms ease",
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: 11, color: tM, width: 24, flex: "none" }}>{n}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div style={{ flex: "none", display: "flex", gap: 16 }}>
-              {[
-                { label: "New", value: stats.newCount, color: OFF },
-                { label: "Replied", value: stats.repliedCount, color: OK },
-                { label: "With words", value: stats.withComment, color: t2 },
-              ].map((s) => (
-                <div key={s.label}>
-                  <p style={{ margin: 0, fontSize: 19, fontWeight: 800, color: s.color, lineHeight: 1.1 }}>
-                    {s.value}
-                  </p>
-                  <p style={{ margin: "2px 0 0", fontSize: 11, color: tM }}>{s.label}</p>
+          <Hero>
+            <div className="af-hero">
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                  <span style={{ fontSize: 44, fontWeight: 800, lineHeight: 1, color: "#ffe3a3", fontFamily: "'Playfair Display',serif" }}>
+                    {stats.count ? stats.avg.toFixed(1) : "—"}
+                  </span>
+                  <span style={{ fontSize: 12, opacity: 0.7 }}>/ 5</span>
                 </div>
-              ))}
+                <div style={{ marginTop: 6 }}>
+                  <Stars value={Math.round(stats.avg)} size={13} empty="rgba(255,236,190,0.22)" />
+                </div>
+                <p style={{ margin: "5px 0 0", fontSize: 10.5, fontWeight: 700, opacity: 0.72, letterSpacing: ".03em" }}>
+                  <Num value={stats.count} /> {stats.count === 1 ? "rating" : "ratings"}
+                </p>
+              </div>
+
+              {/* Histogram: which star, how many. Bars rather than numbers,
+                  because the shape of the distribution is the finding. */}
+              <div style={{ minWidth: 0 }}>
+                {[5, 4, 3, 2, 1].map((s, i) => {
+                  const n = stats.starCounts[String(s)] || 0;
+                  return (
+                    <div key={s} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, opacity: 0.75, width: 22, textAlign: "right", flex: "none" }}>{s}★</span>
+                      <div className="af-bar">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(n / histogramMax) * 100}%` }}
+                          transition={{ duration: 0.7, delay: 0.15 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ height: "100%", borderRadius: 99, background: s >= 4 ? A.gold : s === 3 ? "#d99a5c" : "#e0605a" }}
+                        />
+                      </div>
+                      <span style={{ fontSize: 10.5, opacity: 0.8, width: 26, flex: "none" }}>{fmtNum(n)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="af-hero-stats">
+                <HeroStat label="New" value={stats.newCount} tone={stats.newCount ? "#ffb4a8" : undefined} />
+                <HeroStat label="Replied" value={stats.repliedCount} tone="#a8e6c1" />
+                <HeroStat label="With words" value={stats.withComment} />
+              </div>
             </div>
-          </div>
+          </Hero>
         )}
 
         {/* ── Filters ─────────────────────────────────────────────────────── */}
@@ -481,15 +466,12 @@ export default function AdminFeedbackPage() {
           numbers for that template's own — which is the question being asked
           when somebody opens this: "how is THIS one doing?"
         */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14, minWidth: 0 }}>
+        <div className="af-tools">
           <select
             value={slug}
             onChange={(e) => { setSlug(e.target.value); void load(1); }}
-            style={{
-              height: 36, padding: "0 10px", borderRadius: 10,
-              border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
-              fontSize: 13, fontWeight: 600, flex: "1 1 200px", minWidth: 0, maxWidth: 320,
-            }}
+            className="adk-input"
+            style={{ height: 36, padding: "0 10px", fontWeight: 600, flex: "1 1 200px", minWidth: 0, maxWidth: 320, width: "auto" }}
           >
             <option value="">All templates ({stats?.count ?? 0})</option>
             {templates.map((t) => (
@@ -498,85 +480,53 @@ export default function AdminFeedbackPage() {
               </option>
             ))}
           </select>
-
-          <select
+          <ChipGroup
+            id="af-star"
             value={star}
-            onChange={(e) => { setStar(Number(e.target.value)); void load(1); }}
-            style={{
-              height: 36, padding: "0 10px", borderRadius: 10,
-              border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
-              fontSize: 13, fontWeight: 600, flex: "0 1 auto", minWidth: 0,
-            }}
-          >
-            <option value={0}>Any rating</option>
-            {[5, 4, 3, 2, 1].map((n) => (
-              <option key={n} value={n}>{n} star{n > 1 ? "s" : ""} only</option>
-            ))}
-          </select>
-
+            onChange={(v) => { setStar(v); void load(1); }}
+            options={starOptions}
+            style={{ flex: "1 1 260px" }}
+          />
           {(slug || star > 0) && (
-            <button
-              type="button"
-              onClick={() => { setSlug(""); setStar(0); void load(1); }}
-              style={{
-                height: 36, padding: "0 12px", borderRadius: 10,
-                border: `1px solid ${cB}`, background: "#fffdfb", color: t2,
-                fontSize: 12, fontWeight: 700,
-              }}
-            >
-              Clear
+            <button type="button" className="adk-btn" onClick={() => { setSlug(""); setStar(0); void load(1); }} style={{ height: 32 }}>
+              <X size={13} /> Clear
             </button>
           )}
         </div>
 
         {/* What this template alone is scoring. */}
-        {slug && (() => {
-          const t = templates.find((x) => x.slug === slug);
-          if (!t) return null;
-          return (
-            <div
-              style={{
-                marginTop: 10, padding: "11px 14px", borderRadius: 12,
-                border: `1px solid ${cB}`, background: "#fffdfb",
-                display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-              }}
-            >
-              <span style={{ fontWeight: 800, color: t1, fontSize: 14 }}>{t.label || t.slug}</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                <Stars value={Math.round(t.avg)} size={13} />
-                <b style={{ color: t1, fontSize: 14 }}>{t.avg}</b>
-                <span style={{ color: t2, fontSize: 12 }}>average</span>
-              </span>
-              <span style={{ color: t2, fontSize: 12 }}>
-                from {t.count} {t.count === 1 ? "rating" : "ratings"}
-              </span>
-            </div>
-          );
-        })()}
-
-        <div className="af-filters" style={{ marginTop: 14, marginBottom: 12 }}>
-          {FILTERS.map((f) => {
-            const on = filter === f.key;
+        <AnimatePresence>
+          {slug && (() => {
+            const t = templates.find((x) => x.slug === slug);
+            if (!t) return null;
             return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setFilter(f.key)}
-                style={{
-                  height: 36, padding: "0 13px", borderRadius: 99,
-                  border: `1px solid ${on ? bg : cB}`,
-                  background: on ? bg : "#fffdfb",
-                  color: on ? "#f5ede6" : t2,
-                  fontSize: 12.5, fontWeight: 700, cursor: "pointer",
-                }}
+              <motion.div
+                key={t.slug}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="adk-panel"
+                style={{ marginBottom: 8, padding: "10px 13px", display: "flex", alignItems: "center", gap: "6px 14px", flexWrap: "wrap" }}
               >
-                {f.label}
-              </button>
+                <span style={{ fontWeight: 800, color: A.ink, fontSize: 13.5, minWidth: 0, overflowWrap: "anywhere" }}>{t.label || t.slug}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <Stars value={Math.round(t.avg)} size={13} />
+                  <b style={{ color: A.ink, fontSize: 14 }}>{t.avg}</b>
+                  <span style={{ color: A.soft, fontSize: 12 }}>average</span>
+                </span>
+                <span style={{ color: A.soft, fontSize: 12 }}>
+                  from {t.count} {t.count === 1 ? "rating" : "ratings"}
+                </span>
+              </motion.div>
             );
-          })}
+          })()}
+        </AnimatePresence>
+
+        <div className="af-row2">
+          <ChipGroup id="af-status" value={filter} onChange={setFilter} options={filterOptions} />
           {/* Oldest first is the un-replied backlog in the order it arrived. */}
-          <div style={{ marginLeft: "auto", paddingLeft: 6, display: "flex", alignItems: "center" }}>
-            <SortToggle value={sort} onChange={setSort} />
+          <div style={{ flex: "none" }}>
+            <SortToggle value={sort} onChange={setSort} size="sm" />
           </div>
         </div>
 
@@ -589,7 +539,7 @@ export default function AdminFeedbackPage() {
             }}
           >
             <AlertTriangle size={15} style={{ color: OFF, flex: "none", marginTop: 1 }} />
-            <span style={{ fontSize: 12.5, color: t1 }}>{error}</span>
+            <span style={{ fontSize: 12.5, color: A.ink, overflowWrap: "anywhere" }}>{error}</span>
           </div>
         )}
 
@@ -597,29 +547,16 @@ export default function AdminFeedbackPage() {
           {/* ── The list ───────────────────────────────────────────────────── */}
           <div>
             {loading ? (
-              <div style={{ padding: 40, display: "grid", placeItems: "center" }}>
-                <Loader2 size={20} className="animate-spin" style={{ color: g }} />
-              </div>
+              <Loading label="Loading feedback…" />
             ) : items.length === 0 ? (
-              <div
-                style={{
-                  padding: "44px 20px", textAlign: "center", borderRadius: 14,
-                  background: "#fffdfb", border: `1px solid ${cB}`,
-                }}
-              >
-                <Star size={26} style={{ color: "rgba(61,12,17,0.18)" }} />
-                <p style={{ margin: "10px 0 0", fontSize: 14, fontWeight: 700, color: t1 }}>
-                  Nothing here yet
-                </p>
-                <p style={{ margin: "4px 0 0", fontSize: 12.5, color: tM }}>
-                  {filter === "all"
-                    ? "Ratings appear the moment somebody publishes a page."
-                    : "No feedback matches this filter."}
-                </p>
-              </div>
+              <EmptyState
+                icon={<Star size={22} />}
+                title="Nothing here yet"
+                note={filter === "all" ? "Ratings appear the moment somebody publishes a page." : "No feedback matches this filter."}
+              />
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 8 }}>
-                {items.map((item) => {
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 7 }}>
+                {items.map((item, idx) => {
                   const isOpen = sel?._id === item._id;
                   return (
                     // ── WHY THE ROW IS WRAPPED ──────────────────────────────
@@ -634,45 +571,30 @@ export default function AdminFeedbackPage() {
                     // As siblings, both are real controls: the button opens the
                     // feedback, the link opens the account, and neither needs
                     // to know about the other.
-                    <div key={item._id} style={{ position: "relative" }}>
+                    <motion.div key={item._id} {...rise(idx)} style={{ position: "relative", minWidth: 0 }}>
                     <button
                       type="button"
                       onClick={() => void open(item)}
-                      className="af-card"
-                      style={{
-                        textAlign: "left", padding: "12px 13px 11px 16px", borderRadius: 14,
-                        background: "#fffdfb", position: "relative", overflow: "hidden",
-                        border: `1px solid ${isOpen ? bg : cB}`,
-                        boxShadow: isOpen ? "0 6px 18px -8px rgba(61,12,17,0.25)" : "none",
-                        cursor: "pointer", display: "block", width: "100%", minWidth: 0,
-                        transition: "box-shadow .15s",
-                      }}
+                      className="adk-card"
+                      data-on={isOpen ? "1" : "0"}
+                      style={{ padding: "10px 12px 10px 16px" }}
                     >
                       {/* Rating stripe down the left edge: green, amber, red. */}
                       <span aria-hidden style={{
                         position: "absolute", left: 0, top: 0, bottom: 0, width: 4,
                         background: item.rating >= 4 ? OK : item.rating === 3 ? "#c98a4c" : OFF,
                       }} />
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, minWidth: 0, paddingRight: item.profileUserId ? 76 : 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, minWidth: 0, paddingRight: item.profileUserId ? 76 : 0 }}>
                         <Stars value={item.rating} />
-                        {item.status === "new" && (
-                          <span
-                            style={{
-                              width: 7, height: 7, borderRadius: "50%", background: OFF, flex: "none",
-                            }}
-                            aria-label="Unread"
-                          />
-                        )}
+                        {item.status === "new" && <Tag tone={OFF} solid style={{ padding: "2px 7px", fontSize: 9.5 }}>NEW</Tag>}
                         {item.status === "replied" && (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5, color: OK, fontWeight: 700 }}>
-                            <Check size={11} /> Replied
-                          </span>
+                          <Tag tone={OK} style={{ padding: "2px 7px" }}><Check size={10} /> Replied</Tag>
                         )}
                       </div>
 
                       <p
                         style={{
-                          margin: 0, fontSize: 13, lineHeight: "19px", color: item.comment ? t1 : tM,
+                          margin: 0, fontSize: 13, lineHeight: "19px", color: item.comment ? A.ink : A.muted,
                           fontStyle: item.comment ? "normal" : "italic",
                           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                           overflow: "hidden", overflowWrap: "anywhere",
@@ -688,21 +610,21 @@ export default function AdminFeedbackPage() {
                         matters now that the list can be filtered by it — so it
                         is pinned to the right where it lines up down the page.
                       */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 7, minWidth: 0 }}>
                         <span style={{
                           width: 20, height: 20, borderRadius: 6, flex: "none",
-                          background: "rgba(201,168,76,0.18)", color: "#8b5a2b",
+                          background: "rgba(201,168,76,0.18)", color: A.goldDeep,
                           display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800,
                         }}>
                           {(item.userName || item.userEmail || "?").trim().charAt(0).toUpperCase()}
                         </span>
                         <span style={{
-                          fontSize: 11.5, fontWeight: 700, color: t1, flex: "0 1 auto", minWidth: 0,
+                          fontSize: 11.5, fontWeight: 700, color: A.ink, flex: "0 1 auto", minWidth: 0,
                           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                         }}>
                           {item.userName || item.userEmail}
                         </span>
-                        <span style={{ fontSize: 10.5, color: tM, flex: "none", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: 10.5, color: A.muted, flex: "none", whiteSpace: "nowrap" }}>
                           · {when(item.createdAt)}
                         </span>
                         {item.templateLabel && (
@@ -710,7 +632,7 @@ export default function AdminFeedbackPage() {
                             style={{
                               marginLeft: "auto", flex: "0 1 auto", minWidth: 0,
                               fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 99,
-                              background: "rgba(201,168,76,0.16)", color: "#8b5a2b",
+                              background: "rgba(201,168,76,0.16)", color: A.goldDeep,
                               maxWidth: "50%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             }}
                           >
@@ -727,18 +649,18 @@ export default function AdminFeedbackPage() {
                         title={`Open ${item.userName || item.userEmail}'s profile`}
                         aria-label="Open this person's profile"
                         style={{
-                          position: "absolute", top: 8, right: 8,
+                          position: "absolute", top: 7, right: 8,
                           display: "inline-flex", alignItems: "center", gap: 4,
                           minHeight: 26, padding: "4px 9px", borderRadius: 99,
-                          border: `1px solid ${cB}`, background: "#fff",
-                          fontSize: 10.5, fontWeight: 800, color: "#8b5a2b",
+                          border: `1px solid ${A.edge}`, background: "#fff",
+                          fontSize: 10.5, fontWeight: 800, color: A.goldDeep,
                           textDecoration: "none",
                         }}
                       >
                         <UserRound size={11} /> profile
                       </Link>
                     )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -746,33 +668,14 @@ export default function AdminFeedbackPage() {
 
             {/* Pagination */}
             {pg.totalPages > 1 && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 14 }}>
-                <button
-                  type="button"
-                  disabled={pg.page <= 1}
-                  onClick={() => void load(pg.page - 1)}
-                  style={{
-                    width: 38, height: 38, borderRadius: 12, border: `1px solid ${cB}`,
-                    background: "#fffdfb", color: pg.page <= 1 ? tM : t1,
-                    display: "grid", placeItems: "center", cursor: pg.page <= 1 ? "default" : "pointer",
-                  }}
-                >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 12 }}>
+                <button type="button" className="adk-btn" aria-label="Previous page" disabled={pg.page <= 1} onClick={() => void load(pg.page - 1)} style={{ width: 36, padding: 0 }}>
                   <ChevronLeft size={16} />
                 </button>
-                <span style={{ fontSize: 12.5, color: t2 }}>
+                <span style={{ fontSize: 12.5, color: A.soft, fontWeight: 700 }}>
                   Page {pg.page} of {pg.totalPages}
                 </span>
-                <button
-                  type="button"
-                  disabled={pg.page >= pg.totalPages}
-                  onClick={() => void load(pg.page + 1)}
-                  style={{
-                    width: 38, height: 38, borderRadius: 12, border: `1px solid ${cB}`,
-                    background: "#fffdfb", color: pg.page >= pg.totalPages ? tM : t1,
-                    display: "grid", placeItems: "center",
-                    cursor: pg.page >= pg.totalPages ? "default" : "pointer",
-                  }}
-                >
+                <button type="button" className="adk-btn" aria-label="Next page" disabled={pg.page >= pg.totalPages} onClick={() => void load(pg.page + 1)} style={{ width: 36, padding: 0 }}>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -781,71 +684,58 @@ export default function AdminFeedbackPage() {
 
           {/* ── The detail panel and composer ──────────────────────────────── */}
           {sel && (
-            <div className="af-detail">
-              <div style={{ background: "#fffdfb", border: `1px solid ${cB}`, borderRadius: 16, padding: 14 }}>
+            <motion.div
+              key={sel._id}
+              className="af-detail"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div style={{ background: A.paper, border: `1px solid ${A.edge}`, borderRadius: 16, padding: 14, position: "relative", overflow: "hidden" }}>
+                <span aria-hidden style={{
+                  position: "absolute", left: 0, right: 0, top: 0, height: 3,
+                  background: sel.rating >= 4 ? OK : sel.rating === 3 ? "#c98a4c" : OFF,
+                }} />
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Stars value={sel.rating} size={15} />
-                    <p style={{ margin: "7px 0 0", fontSize: 14, fontWeight: 800, color: t1 }}>
+                    <p style={{ margin: "7px 0 0", fontSize: 15, fontWeight: 800, color: A.ink, overflowWrap: "anywhere" }}>
                       {sel.userName || "—"}
                     </p>
-                    {/* Spelled out here rather than shown as a bare icon: this
-                        panel is where you decide what to say to somebody, and
-                        their history is the thing worth a full-width link. */}
-                    {sel.profileUserId && (
-                      <Link
-                        href={`/admin/users/${sel.profileUserId}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#8b5a2b", textDecoration: "none", marginTop: 3 }}
-                      >
-                        <UserRound size={12} /> Open their profile
-                      </Link>
-                    )}
-                    <a
-                      href={`mailto:${sel.userEmail}`}
-                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#8b5a2b", textDecoration: "none", marginTop: 2, minWidth: 0, overflowWrap: "anywhere" }}
-                    >
-                      <Mail size={12} style={{ flex: "none" }} /> {sel.userEmail}
-                    </a>
-                    <p style={{ margin: "6px 0 0", fontSize: 11.5, lineHeight: "16px", color: tM, display: "flex", alignItems: "flex-start", gap: 5, overflowWrap: "anywhere" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 12px", marginTop: 3, minWidth: 0 }}>
+                      {/* Spelled out here rather than shown as a bare icon: this
+                          panel is where you decide what to say to somebody, and
+                          their history is the thing worth a full-width link. */}
+                      {sel.profileUserId && (
+                        <Link href={`/admin/users/${sel.profileUserId}`} className="af-link">
+                          <UserRound size={12} /> Open their profile
+                        </Link>
+                      )}
+                      <a href={`mailto:${sel.userEmail}`} className="af-link" style={{ fontWeight: 600, overflowWrap: "anywhere" }}>
+                        <Mail size={12} style={{ flex: "none" }} /> {sel.userEmail}
+                      </a>
+                    </div>
+                    <p style={{ margin: "6px 0 0", fontSize: 11.5, lineHeight: "16px", color: A.muted, display: "flex", alignItems: "flex-start", gap: 5, overflowWrap: "anywhere" }}>
                       <Clock size={11} style={{ flex: "none", marginTop: 2.5 }} /> {when(sel.createdAt)}
                       {sel.templateLabel ? ` · ${sel.templateLabel}` : ""}
                     </p>
                     {sel.pageUrl && (
-                      <a
-                        href={sel.pageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "#8b5a2b", textDecoration: "none", marginTop: 4 }}
-                      >
+                      <a href={sel.pageUrl} target="_blank" rel="noopener noreferrer" className="af-link" style={{ fontSize: 11.5, marginTop: 4 }}>
                         <ExternalLink size={11} /> Open the page they made
                       </a>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setSel(null)}
-                    aria-label="Close"
-                    style={{
-                      width: 34, height: 34, borderRadius: 11, border: `1px solid ${cB}`,
-                      background: "#fff", color: t2, display: "grid", placeItems: "center",
-                      cursor: "pointer", flex: "none",
-                    }}
-                  >
+                  <button type="button" className="adk-btn" onClick={() => setSel(null)} aria-label="Close" style={{ width: 34, height: 34, padding: 0, flex: "none" }}>
                     <X size={15} />
                   </button>
                 </div>
 
                 {/* Their words, quoted */}
-                <div
-                  style={{
-                    padding: 12, borderRadius: 12, background: "#f7eee5",
-                    borderLeft: `3px solid ${g}`, marginBottom: 14,
-                  }}
-                >
+                <div style={{ padding: 12, borderRadius: 12, background: "#f7eee5", borderLeft: `3px solid ${A.gold}`, marginBottom: 14 }}>
                   <p
                     style={{
                       margin: 0, fontSize: 13.5, lineHeight: "21px",
-                      color: sel.comment ? t1 : tM,
+                      color: sel.comment ? A.ink : A.muted,
                       fontStyle: sel.comment ? "normal" : "italic",
                       whiteSpace: "pre-wrap", overflowWrap: "anywhere",
                     }}
@@ -857,9 +747,7 @@ export default function AdminFeedbackPage() {
                 {/* Replies already sent */}
                 {sel.replies?.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
-                    <p style={{ margin: "0 0 7px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM }}>
-                      Sent
-                    </p>
+                    <p className="af-kicker">Sent</p>
                     {sel.replies.map((r, i) => (
                       <div
                         key={i}
@@ -868,13 +756,13 @@ export default function AdminFeedbackPage() {
                           border: "1px solid rgba(31,122,77,0.16)", marginBottom: 7,
                         }}
                       >
-                        <p style={{ margin: "0 0 5px", fontSize: 12.5, fontWeight: 700, color: t1, overflowWrap: "anywhere" }}>
+                        <p style={{ margin: "0 0 5px", fontSize: 12.5, fontWeight: 700, color: A.ink, overflowWrap: "anywhere" }}>
                           {r.subject}
                         </p>
-                        <p style={{ margin: 0, fontSize: 12.5, lineHeight: "19px", color: t2, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                        <p style={{ margin: 0, fontSize: 12.5, lineHeight: "19px", color: A.soft, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                           {r.body}
                         </p>
-                        <p style={{ margin: "7px 0 0", fontSize: 10.5, color: tM, overflowWrap: "anywhere" }}>
+                        <p style={{ margin: "7px 0 0", fontSize: 10.5, color: A.muted, overflowWrap: "anywhere" }}>
                           {when(r.sentAt)}
                           {r.sentByEmail ? ` · ${r.sentByEmail}` : ""}
                           {r.aiAssisted ? " · from a draft" : ""}
@@ -885,9 +773,7 @@ export default function AdminFeedbackPage() {
                 )}
 
                 {/* ── The composer ─────────────────────────────────────────── */}
-                <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM }}>
-                  {sel.replies?.length ? "Write again" : "Reply"}
-                </p>
+                <p className="af-kicker">{sel.replies?.length ? "Write again" : "Reply"}</p>
 
                 {/*
                   Two ways to generate, one control.
@@ -906,148 +792,128 @@ export default function AdminFeedbackPage() {
                 <div style={{ display: "flex", gap: 7, marginBottom: guideOpen ? 8 : 10 }}>
                   <button
                     type="button"
+                    className="adk-btn"
+                    data-v="gold"
                     onClick={() => void generate()}
                     disabled={drafting}
-                    style={{
-                      flex: 1, minHeight: 44, borderRadius: 12,
-                      border: `1px solid ${g}`, background: "rgba(201,168,76,0.14)",
-                      color: "#8b5a2b", fontSize: 13.5, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                      cursor: drafting ? "default" : "pointer",
-                    }}
+                    style={{ flex: 1, minWidth: 0, height: 44, fontSize: 13.5 }}
                   >
                     {drafting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                    {drafting ? "Writing…" : guidance.trim() ? "Generate with your note" : sel.replies?.length ? "Generate another" : "Generate reply"}
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {drafting ? "Writing…" : guidance.trim() ? "Generate with your note" : sel.replies?.length ? "Generate another" : "Generate reply"}
+                    </span>
                   </button>
                   <button
                     type="button"
+                    className="adk-btn"
+                    data-v={guidance.trim() ? "gold" : undefined}
                     onClick={() => setGuideOpen((v) => !v)}
                     aria-expanded={guideOpen}
                     title="Tell the AI what this email should do"
-                    style={{
-                      flex: "none", minHeight: 44, padding: "0 12px", borderRadius: 12,
-                      border: `1px solid ${guidance.trim() ? g : cB}`,
-                      background: guidance.trim() ? "rgba(201,168,76,0.14)" : "#fff",
-                      color: guidance.trim() ? "#8b5a2b" : t2,
-                      fontSize: 12.5, fontWeight: 700,
-                      display: "flex", alignItems: "center", gap: 5, cursor: "pointer",
-                    }}
+                    style={{ flex: "none", height: 44, padding: "0 12px" }}
                   >
                     <PenLine size={14} />
                     {guidance.trim() ? "Note added" : "Steer it"}
                   </button>
                 </div>
 
-                {guideOpen && (
-                  <div style={{
-                    marginBottom: 10, padding: 10, borderRadius: 12,
-                    border: `1px solid ${cB}`, background: "#fffdfb",
-                  }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 7 }}>
-                      {[
-                        ["Why so low?", `Ask plainly why they gave ${sel.rating} star${sel.rating === 1 ? "" : "s"} and what specifically went wrong for them.`],
-                        ["What'd make it 5?", "Ask the one change that would have made this a five-star experience for them."],
-                        ["Own the problem", "Acknowledge the exact problem they hit, take responsibility for it, and ask for the page link so we can look at it."],
-                        ["What were they doing?", "Ask what they were trying to do when it went wrong, on which device, and at which step."],
-                      ].map(([label, text]) => (
-                        <button
-                          key={label}
-                          type="button"
-                          onClick={() => setGuidance((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))}
-                          style={{
-                            padding: "5px 9px", borderRadius: 99, border: `1px solid ${cB}`,
-                            background: "#fff", color: t2, fontSize: 11, fontWeight: 700, cursor: "pointer",
-                          }}
-                        >
-                          + {label}
-                        </button>
-                      ))}
-                    </div>
+                <AnimatePresence initial={false}>
+                  {guideOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.22 }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div style={{ marginBottom: 10, padding: 10, borderRadius: 12, border: `1px solid ${A.edge}`, background: "#fff8ef" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 7 }}>
+                          {[
+                            ["Why so low?", `Ask plainly why they gave ${sel.rating} star${sel.rating === 1 ? "" : "s"} and what specifically went wrong for them.`],
+                            ["What'd make it 5?", "Ask the one change that would have made this a five-star experience for them."],
+                            ["Own the problem", "Acknowledge the exact problem they hit, take responsibility for it, and ask for the page link so we can look at it."],
+                            ["What were they doing?", "Ask what they were trying to do when it went wrong, on which device, and at which step."],
+                          ].map(([label, text]) => (
+                            <button
+                              key={label}
+                              type="button"
+                              className="af-preset"
+                              onClick={() => setGuidance((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))}
+                            >
+                              + {label}
+                            </button>
+                          ))}
+                        </div>
 
-                    <textarea
-                      value={guidance}
-                      onChange={(e) => setGuidance(e.target.value.slice(0, 600))}
-                      rows={3}
-                      placeholder="e.g. Ask why it was 2 stars, what broke, and what would fix it. Mention we are a small team and we read every reply."
-                      style={{
-                        width: "100%", padding: "9px 11px", borderRadius: 10,
-                        border: `1px solid ${cB}`, background: "#fff",
-                        fontSize: 13, lineHeight: "19px", color: t1,
-                        outline: "none", resize: "vertical", minHeight: 76,
-                      }}
-                    />
+                        <textarea
+                          value={guidance}
+                          onChange={(e) => setGuidance(e.target.value.slice(0, 600))}
+                          rows={3}
+                          className="adk-input"
+                          placeholder="e.g. Ask why it was 2 stars, what broke, and what would fix it. Mention we are a small team and we read every reply."
+                          style={{ fontSize: 13, lineHeight: "19px", resize: "vertical", minHeight: 76, fontFamily: "inherit" }}
+                        />
 
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, gap: 8 }}>
-                      <span style={{ fontSize: 10.5, color: tM, lineHeight: "14px" }}>
-                        Their template and what else they&apos;ve made is sent as context. Money, dates and
-                        promised fixes stay off-limits.
-                      </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
-                        <span style={{ fontSize: 10.5, color: guidance.length > 540 ? "#b3261e" : tM }}>
-                          {guidance.length}/600
-                        </span>
-                        {guidance && (
-                          <button
-                            type="button"
-                            onClick={() => setGuidance("")}
-                            style={{ background: "none", border: "none", color: tM, fontSize: 11, fontWeight: 700, cursor: "pointer", padding: 0 }}
-                          >
-                            Clear
-                          </button>
-                        )}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, gap: 8 }}>
+                          <span style={{ fontSize: 10.5, color: A.muted, lineHeight: "14px" }}>
+                            Their template and what else they&apos;ve made is sent as context. Money, dates and
+                            promised fixes stay off-limits.
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+                            <span style={{ fontSize: 10.5, color: guidance.length > 540 ? OFF : A.muted }}>
+                              {guidance.length}/600
+                            </span>
+                            {guidance && (
+                              <button
+                                type="button"
+                                onClick={() => setGuidance("")}
+                                style={{ background: "none", border: "none", color: A.muted, fontSize: 11, fontWeight: 700, cursor: "pointer", padding: 0 }}
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <input
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Subject"
-                  style={{
-                    width: "100%", height: 44, padding: "0 12px", marginBottom: 8,
-                    borderRadius: 12, border: `1px solid ${cB}`, background: "#fff",
-                    fontSize: 16, color: t1, outline: "none",
-                  }}
+                  className="adk-input"
+                  style={{ height: 44, marginBottom: 8, fontSize: 16 }}
                 />
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="What we send them. Edit anything before it goes."
                   rows={9}
-                  style={{
-                    width: "100%", padding: 12, borderRadius: 12, resize: "vertical",
-                    border: `1px solid ${cB}`, background: "#fff", fontSize: 16,
-                    lineHeight: "23px", color: t1, outline: "none", fontFamily: "inherit",
-                  }}
+                  className="adk-input"
+                  style={{ padding: 12, resize: "vertical", fontSize: 16, lineHeight: "23px", fontFamily: "inherit" }}
                 />
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
                   <button
                     type="button"
+                    className="adk-btn"
+                    data-v="primary"
                     onClick={() => void send()}
                     disabled={!canSend}
-                    style={{
-                      flex: 1, minHeight: 46, borderRadius: 12, border: "none",
-                      background: canSend ? "linear-gradient(135deg,#3d0c11,#5a1620)" : "rgba(61,12,17,0.12)",
-                      color: canSend ? "#fff" : tM,
-                      fontSize: 14.5, fontWeight: 800,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                      cursor: canSend ? "pointer" : "default",
-                    }}
+                    style={{ flex: 1, height: 46, fontSize: 14.5 }}
                   >
                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                     {sending ? "Sending" : "Send from support@"}
                   </button>
                   <button
                     type="button"
+                    className="adk-btn"
+                    data-v="danger"
                     onClick={() => void remove(sel)}
                     aria-label="Delete this feedback"
-                    style={{
-                      width: 46, height: 46, borderRadius: 12, border: `1px solid rgba(179,38,30,0.25)`,
-                      background: "rgba(179,38,30,0.06)", color: OFF,
-                      display: "grid", placeItems: "center", cursor: "pointer", flex: "none",
-                    }}
+                    style={{ width: 46, height: 46, padding: 0, flex: "none" }}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -1059,17 +925,15 @@ export default function AdminFeedbackPage() {
                   </p>
                 )}
                 {aiAssisted && (
-                  <p style={{ margin: "8px 0 0", fontSize: 11.5, color: tM, lineHeight: 1.5 }}>
+                  <p style={{ margin: "8px 0 0", fontSize: 11.5, color: A.muted, lineHeight: 1.5 }}>
                     This started as a generated draft. Read it — it can be confidently wrong, and
                     it must never promise a refund, a date or a fix.
                   </p>
                 )}
 
                 {/* Internal notes: never emailed, and said so on the label. */}
-                <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${cB}` }}>
-                  <label
-                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: tM, marginBottom: 7 }}
-                  >
+                <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${A.edge}` }}>
+                  <label className="af-kicker" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <StickyNote size={12} /> Internal notes — never emailed
                   </label>
                   <textarea
@@ -1077,45 +941,43 @@ export default function AdminFeedbackPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     rows={2}
                     placeholder="For the team"
-                    style={{
-                      width: "100%", padding: 10, borderRadius: 12, resize: "vertical",
-                      border: `1px solid ${cB}`, background: "#f7eee5", fontSize: 16,
-                      color: t1, outline: "none", fontFamily: "inherit",
-                    }}
+                    className="adk-input"
+                    style={{ padding: 10, resize: "vertical", background: "#f7eee5", fontSize: 16, fontFamily: "inherit" }}
                   />
                   <button
                     type="button"
+                    className="adk-btn"
                     onClick={() => void saveNotes()}
                     disabled={savingNotes || notes === (sel.adminNotes || "")}
-                    style={{
-                      marginTop: 7, minHeight: 36, padding: "0 14px", borderRadius: 10,
-                      border: `1px solid ${cB}`, background: "#fff", color: t1,
-                      fontSize: 12.5, fontWeight: 700,
-                      cursor: savingNotes || notes === (sel.adminNotes || "") ? "default" : "pointer",
-                      opacity: notes === (sel.adminNotes || "") ? 0.5 : 1,
-                    }}
+                    style={{ marginTop: 7 }}
                   >
                     {savingNotes ? "Saving…" : "Save notes"}
                   </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
-      {toast && (
-        <div
-          style={{
-            position: "fixed", bottom: 84, left: "50%", transform: "translateX(-50%)",
-            zIndex: 80, padding: "11px 18px", borderRadius: 99, background: bg,
-            color: "#f5ede6", fontSize: 13, fontWeight: 600,
-            boxShadow: "0 10px 30px -10px rgba(26,5,7,0.6)", maxWidth: "90vw", textAlign: "center",
-          }}
-        >
-          {toast}
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 12, x: "-50%" }}
+            style={{
+              // Above the phone sheet (189), which is where Send is pressed.
+              position: "fixed", bottom: "calc(82px + env(safe-area-inset-bottom, 0px) + 14px)", left: "50%",
+              zIndex: 200, padding: "11px 18px", borderRadius: 99, background: A.maroon,
+              color: "#f5ede6", fontSize: 13, fontWeight: 600,
+              boxShadow: "0 10px 30px -10px rgba(26,5,7,0.6)", maxWidth: "90vw", textAlign: "center",
+            }}
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </AdminPage>
   );
 }

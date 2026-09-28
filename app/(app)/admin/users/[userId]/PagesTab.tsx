@@ -138,7 +138,9 @@ export default function PagesTab({
   return (
     <>
       <Card
-        title={`Templates — ${data.pages.length} total · ${live} live · ${locked} locked`}
+        title="Templates"
+        note={`${data.pages.length} total · ${live} live · ${locked} locked`}
+        stack
         action={
           <div className="sa-search">
             <Search size={14} color={C.muted} style={{ flexShrink: 0 }} />
@@ -159,9 +161,10 @@ export default function PagesTab({
           </Empty>
         ) : (
           <div className="sa-tpl-grid">
-            {pages.map((p) => (
+            {pages.map((p, i) => (
               <TemplateCard
                 key={p._id}
+                index={i}
                 page={p}
                 hdr={hdr}
                 revealed={revealed[p._id]}
