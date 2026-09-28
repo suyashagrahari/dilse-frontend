@@ -19,6 +19,15 @@
 
 import { obj, str, strOr, num, clampNum, type Raw } from "@/lib/wire";
 import {
+  MAX_LOCK_ANSWER_LEN,
+  MAX_LOCK_QUESTION_LEN,
+  parseLoveGifs,
+  parseLoveLetter,
+  parseLovePhotos,
+  parseTheme,
+} from "../../_love/types";
+import { CAPSULE_THEME_IDS, DEFAULT_THEME_ID } from "./themes";
+import {
   LIMITS,
   PAYLOAD_VERSION,
   migrate,
@@ -149,6 +158,15 @@ export function dbToCapsule(raw: Record<string, unknown>): Capsule {
     predictions: asPredictions(src.predictions),
     status: asStatus(src.status),
     ...(strOr(src.openedAt, "") ? { openedAt: strOr(src.openedAt, "") } : {}),
+    // A capsule sealed before keepsakes existed has none of these keys. Its
+    // fallbacks are EMPTY, never the demo's — a stranger's photos turning up
+    // inside somebody's real capsule is the worst thing this could render.
+    photos: parseLovePhotos(src.photos, []),
+    gifs: parseLoveGifs(src.gifs, []),
+    letter: parseLoveLetter(src.letter, ""),
+    theme: parseTheme(src.theme, CAPSULE_THEME_IDS, DEFAULT_THEME_ID),
+    lockQuestion: strOr(src.lockQuestion, "").slice(0, MAX_LOCK_QUESTION_LEN),
+    lockAnswer: strOr(src.lockAnswer, "").slice(0, MAX_LOCK_ANSWER_LEN),
   };
 }
 
@@ -186,11 +204,24 @@ function sealedViewFrom(src: Raw): SealedCapsuleView {
     timezone: asTimezone(src.timezone),
     stake: strOr(src.stake, "").slice(0, LIMITS.stake),
     counts: { a: Math.max(0, Math.trunc(a)), b: Math.max(0, Math.trunc(b)) },
+    theme: parseTheme(src.theme, CAPSULE_THEME_IDS, DEFAULT_THEME_ID),
+    keepsakes: sealedKeepsakes(src),
   };
 
   const amendUntil = strOr(src.amendUntil, "");
   if (amendUntil) view.amendUntil = amendUntil;
   return view;
+}
+
+/**
+ * How much is inside, from the server's tally. Numbers and a boolean only —
+ * like `counts`, this never reads a URL, caption, note or letter, and the view
+ * has nowhere to put one.
+ */
+function sealedKeepsakes(src: Raw): SealedCapsuleView["keepsakes"] {
+  const k = obj(src.keepsakes);
+  const n = (v: unknown) => Math.max(0, Math.min(50, Math.trunc(num(v, 0))));
+  return { photos: n(k.photos), gifs: n(k.gifs), letter: k.letter === true };
 }
 
 /**
@@ -214,7 +245,7 @@ export function dbToCapsuleView(raw: Record<string, unknown>): CapsuleView {
 
 // ─── Editor → wire ───────────────────────────────────────────────────────────
 
-/** The nine content fields the server allow-lists. Nothing else is sent. */
+/** The content fields the server allow-lists (capsule + keepsakes). Nothing else is sent. */
 export function capsuleToBody(c: Capsule, password?: string): Record<string, unknown> {
   return {
     version: c.version,
@@ -227,6 +258,12 @@ export function capsuleToBody(c: Capsule, password?: string): Record<string, unk
     predictions: c.predictions,
     status: c.status,
     ...(c.openedAt ? { openedAt: c.openedAt } : {}),
+    photos: c.photos,
+    gifs: c.gifs,
+    letter: c.letter,
+    theme: c.theme,
+    lockQuestion: c.lockQuestion,
+    lockAnswer: c.lockAnswer,
     ...(password ? { password } : {}),
   };
 }
@@ -255,6 +292,8 @@ export function projectSealed(c: Capsule, amendUntil?: string): SealedCapsuleVie
     timezone: c.timezone,
     stake: c.stake,
     counts: { a, b },
+    theme: c.theme,
+    keepsakes: { photos: c.photos.length, gifs: c.gifs.length, letter: c.letter.trim().length > 0 },
   };
   if (amendUntil) view.amendUntil = amendUntil;
   return view;
