@@ -13,6 +13,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
+import { GallerySkeleton } from "@/components/skeleton/Skeletons";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -644,25 +645,11 @@ export default function TemplatesPage() {
   }, []);
 
   if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-bg)" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--app-accent)", borderTopColor: "transparent" }} />
-          <p className="text-sm" style={{ color: "var(--app-text-faint)" }}>Loading templates...</p>
-        </div>
-      </div>
-    );
+    return <GallerySkeleton label="Loading templates" />;
   }
 
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--app-bg)" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--app-accent)", borderTopColor: "transparent" }} />
-          <p className="text-sm" style={{ color: "var(--app-text-faint)" }}>Loading templates...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<GallerySkeleton label="Loading templates" />}>
       <TemplatesContent />
     </Suspense>
   );

@@ -43,6 +43,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { verifyTemplateVisibility } from "@/lib/templateVisibility";
+import { TemplateSkeleton } from "@/components/skeleton/Skeletons";
 
 /**
  * Routes inside `(templates)` that are NOT a template builder.
@@ -90,31 +91,7 @@ export function TemplateAvailabilityGate({ children }: { children: React.ReactNo
   // Only reached when the slug IS hidden, so a visitor with no token and nobody
   // on a public template never sees this: `resolved` is true for them
   // immediately. See `useTemplateAccess`.
-  if (!resolved || !confirmed) {
-    return (
-      <main
-        style={{
-          minHeight: "100dvh",
-          display: "grid",
-          placeItems: "center",
-          background: "linear-gradient(170deg, #fbf6f1 0%, #f5ede6 100%)",
-        }}
-        aria-busy="true"
-      >
-        <span
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: 999,
-            border: "2.5px solid rgba(61,12,17,0.14)",
-            borderTopColor: "#c9a84c",
-            animation: "spin 0.7s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </main>
-    );
-  }
+  if (!resolved || !confirmed) return <TemplateSkeleton />;
 
   return (
     <main
