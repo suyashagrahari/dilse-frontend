@@ -14,6 +14,7 @@ import {
   Users, Eye, FileText, TrendingUp, TrendingDown, BarChart3,
   Smartphone, Crown, Mail, CalendarDays, Sparkles, Globe2, Layers,
 } from "lucide-react";
+import { AdminSkeleton } from "@/components/skeleton/Skeletons";
 
 interface Series { date: string; count: number }
 interface OverviewData {
@@ -138,15 +139,7 @@ export default function AdminAnalyticsPage() {
     }).finally(()=>setLoadedKey(`${rFrom}|${rTo}`));
   },[accessToken,rFrom,rTo,h]);
 
-  if(loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{background:"#f5ede6"}}>
-      <div className="text-center">
-        <div style={{width:36,height:36,border:"3px solid rgba(61,12,17,0.1)",borderTopColor:g,borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto 10px"}}/>
-        <p style={{color:tM,fontSize:12}}>Loading analytics...</p>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    </div>
-  );
+  if(loading) return <AdminSkeleton />;
 
   const avgU = ov?.last7?.avgUsers ?? 0;
   const todayU = ov?.users.today ?? 0;

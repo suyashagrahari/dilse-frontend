@@ -23,6 +23,7 @@ import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { openShareSheet } from "@/lib/share/shareBus";
 import MyStorySection from "@/components/profile/MyStorySection";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
+import { ProfileSkeleton } from "@/components/skeleton/Skeletons";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -528,6 +529,10 @@ export default function ProfilePage() {
       {right}
     </div>
   );
+
+  // A stored token means the session is being restored: show the profile's
+  // shape, not a "Sign in" screen that flashes and disappears.
+  if (!isAuthenticated && accessToken) return <ProfileSkeleton />;
 
   /* ── Not authenticated ── */
   if (!isAuthenticated) {
