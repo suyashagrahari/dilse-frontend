@@ -30,7 +30,7 @@ export interface LoveKitData {
   lockAnswer: string;
 }
 
-export const MAX_PHOTOS = 8;
+export const MAX_PHOTOS = 10;
 export const MAX_GIFS = 3;
 export const MAX_CAPTION_LEN = 60;
 export const MAX_NOTE_LEN = 400;
