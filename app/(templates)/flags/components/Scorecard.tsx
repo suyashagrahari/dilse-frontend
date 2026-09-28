@@ -20,7 +20,7 @@ import { GROTESK, ITALIC, MONO } from "./flagsTheme";
 
 /** Logical size of the artifact, before any fit-to-viewport scale. */
 const CARD_W = 360;
-const CARD_H = 548;
+const CARD_H = 590;
 const RING_R = 64;
 const RING_C = 2 * Math.PI * RING_R;
 const COUNT_MS = 1300;
