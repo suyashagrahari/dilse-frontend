@@ -359,11 +359,16 @@ export default function AdminFeedbackPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5ede6", paddingBottom: 90 }}>
+    <div style={{ minHeight: "100vh", background: "#f5ede6", paddingBottom: 90, overflowX: "clip" }}>
       <style>{`
         /* Two columns on a laptop, one on a phone: the detail panel is a
            full-screen sheet there rather than a squeezed sidebar. */
-        .af-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        /* minmax(0,…), not 1fr: a bare 1fr track grows to its widest
+           unbreakable child (a long name, email or URL) and pushes the
+           cards off a phone screen. */
+        .af-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; }
+        .af-grid > * { min-width: 0; }
+        .af-card:hover { box-shadow: 0 10px 24px -14px rgba(61,12,17,0.35); }
         @media (min-width: 900px) {
           .af-grid { grid-template-columns: minmax(0,1fr) minmax(0,440px); align-items: start; }
           .af-detail { position: sticky; top: 16px; }
@@ -424,7 +429,7 @@ export default function AdminFeedbackPage() {
 
             {/* Histogram: which star, how many. Bars rather than numbers,
                 because the shape of the distribution is the finding. */}
-            <div style={{ flex: "1 1 200px", minWidth: 180 }}>
+            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               {[5, 4, 3, 2, 1].map((star) => {
                 const n = stats.starCounts[String(star)] || 0;
                 return (
@@ -476,14 +481,14 @@ export default function AdminFeedbackPage() {
           numbers for that template's own — which is the question being asked
           when somebody opens this: "how is THIS one doing?"
         */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14, minWidth: 0 }}>
           <select
             value={slug}
             onChange={(e) => { setSlug(e.target.value); void load(1); }}
             style={{
               height: 36, padding: "0 10px", borderRadius: 10,
               border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
-              fontSize: 13, fontWeight: 600, maxWidth: 280,
+              fontSize: 13, fontWeight: 600, flex: "1 1 200px", minWidth: 0, maxWidth: 320,
             }}
           >
             <option value="">All templates ({stats?.count ?? 0})</option>
@@ -500,7 +505,7 @@ export default function AdminFeedbackPage() {
             style={{
               height: 36, padding: "0 10px", borderRadius: 10,
               border: `1px solid ${cB}`, background: "#fffdfb", color: t1,
-              fontSize: 13, fontWeight: 600,
+              fontSize: 13, fontWeight: 600, flex: "0 1 auto", minWidth: 0,
             }}
           >
             <option value={0}>Any rating</option>
@@ -613,7 +618,7 @@ export default function AdminFeedbackPage() {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 7 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 8 }}>
                 {items.map((item) => {
                   const isOpen = sel?._id === item._id;
                   return (
@@ -633,15 +638,22 @@ export default function AdminFeedbackPage() {
                     <button
                       type="button"
                       onClick={() => void open(item)}
+                      className="af-card"
                       style={{
-                        textAlign: "left", padding: "11px 12px", borderRadius: 13,
-                        background: "#fffdfb",
+                        textAlign: "left", padding: "12px 13px 11px 16px", borderRadius: 14,
+                        background: "#fffdfb", position: "relative", overflow: "hidden",
                         border: `1px solid ${isOpen ? bg : cB}`,
-                        boxShadow: isOpen ? "0 2px 12px rgba(61,12,17,0.08)" : "none",
-                        cursor: "pointer", display: "block", width: "100%",
+                        boxShadow: isOpen ? "0 6px 18px -8px rgba(61,12,17,0.25)" : "none",
+                        cursor: "pointer", display: "block", width: "100%", minWidth: 0,
+                        transition: "box-shadow .15s",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      {/* Rating stripe down the left edge: green, amber, red. */}
+                      <span aria-hidden style={{
+                        position: "absolute", left: 0, top: 0, bottom: 0, width: 4,
+                        background: item.rating >= 4 ? OK : item.rating === 3 ? "#c98a4c" : OFF,
+                      }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, minWidth: 0, paddingRight: item.profileUserId ? 76 : 0 }}>
                         <Stars value={item.rating} />
                         {item.status === "new" && (
                           <span
@@ -656,9 +668,6 @@ export default function AdminFeedbackPage() {
                             <Check size={11} /> Replied
                           </span>
                         )}
-                        <span style={{ marginLeft: "auto", fontSize: 11, color: tM, flex: "none" }}>
-                          {when(item.createdAt)}
-                        </span>
                       </div>
 
                       <p
@@ -666,7 +675,7 @@ export default function AdminFeedbackPage() {
                           margin: 0, fontSize: 13, lineHeight: "19px", color: item.comment ? t1 : tM,
                           fontStyle: item.comment ? "normal" : "italic",
                           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
+                          overflow: "hidden", overflowWrap: "anywhere",
                         }}
                       >
                         {item.comment || "No words — stars only"}
@@ -688,18 +697,21 @@ export default function AdminFeedbackPage() {
                           {(item.userName || item.userEmail || "?").trim().charAt(0).toUpperCase()}
                         </span>
                         <span style={{
-                          fontSize: 11.5, fontWeight: 700, color: t1,
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "42%",
+                          fontSize: 11.5, fontWeight: 700, color: t1, flex: "0 1 auto", minWidth: 0,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                         }}>
                           {item.userName || item.userEmail}
+                        </span>
+                        <span style={{ fontSize: 10.5, color: tM, flex: "none", whiteSpace: "nowrap" }}>
+                          · {when(item.createdAt)}
                         </span>
                         {item.templateLabel && (
                           <span
                             style={{
-                              marginLeft: "auto", flex: "none",
+                              marginLeft: "auto", flex: "0 1 auto", minWidth: 0,
                               fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 99,
                               background: "rgba(201,168,76,0.16)", color: "#8b5a2b",
-                              maxWidth: "52%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              maxWidth: "50%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             }}
                           >
                             {item.templateLabel}
@@ -790,12 +802,12 @@ export default function AdminFeedbackPage() {
                     )}
                     <a
                       href={`mailto:${sel.userEmail}`}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#8b5a2b", textDecoration: "none", marginTop: 2 }}
+                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#8b5a2b", textDecoration: "none", marginTop: 2, minWidth: 0, overflowWrap: "anywhere" }}
                     >
-                      <Mail size={12} /> {sel.userEmail}
+                      <Mail size={12} style={{ flex: "none" }} /> {sel.userEmail}
                     </a>
-                    <p style={{ margin: "6px 0 0", fontSize: 11.5, color: tM, display: "flex", alignItems: "center", gap: 5 }}>
-                      <Clock size={11} /> {when(sel.createdAt)}
+                    <p style={{ margin: "6px 0 0", fontSize: 11.5, lineHeight: "16px", color: tM, display: "flex", alignItems: "flex-start", gap: 5, overflowWrap: "anywhere" }}>
+                      <Clock size={11} style={{ flex: "none", marginTop: 2.5 }} /> {when(sel.createdAt)}
                       {sel.templateLabel ? ` · ${sel.templateLabel}` : ""}
                     </p>
                     {sel.pageUrl && (
@@ -835,7 +847,7 @@ export default function AdminFeedbackPage() {
                       margin: 0, fontSize: 13.5, lineHeight: "21px",
                       color: sel.comment ? t1 : tM,
                       fontStyle: sel.comment ? "normal" : "italic",
-                      whiteSpace: "pre-wrap",
+                      whiteSpace: "pre-wrap", overflowWrap: "anywhere",
                     }}
                   >
                     {sel.comment || "They left the stars but no words."}
@@ -856,13 +868,13 @@ export default function AdminFeedbackPage() {
                           border: "1px solid rgba(31,122,77,0.16)", marginBottom: 7,
                         }}
                       >
-                        <p style={{ margin: "0 0 5px", fontSize: 12.5, fontWeight: 700, color: t1 }}>
+                        <p style={{ margin: "0 0 5px", fontSize: 12.5, fontWeight: 700, color: t1, overflowWrap: "anywhere" }}>
                           {r.subject}
                         </p>
-                        <p style={{ margin: 0, fontSize: 12.5, lineHeight: "19px", color: t2, whiteSpace: "pre-wrap" }}>
+                        <p style={{ margin: 0, fontSize: 12.5, lineHeight: "19px", color: t2, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                           {r.body}
                         </p>
-                        <p style={{ margin: "7px 0 0", fontSize: 10.5, color: tM }}>
+                        <p style={{ margin: "7px 0 0", fontSize: 10.5, color: tM, overflowWrap: "anywhere" }}>
                           {when(r.sentAt)}
                           {r.sentByEmail ? ` · ${r.sentByEmail}` : ""}
                           {r.aiAssisted ? " · from a draft" : ""}
