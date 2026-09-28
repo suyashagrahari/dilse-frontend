@@ -1,357 +1,424 @@
 "use client";
 
-// ─── The Last Piece ──────────────────────────────────────────────────────────
+// ─── The Last Piece — the recipient's experience ─────────────────────────────
 //
-// AUTHORED BY THE LEAD. This is the orchestrator and the integration point.
-// Sub-agents: you may READ this to see how your component is wired, but you may
-// not edit it. If you need a prop that is not here, ask.
+//   1. hello        — "I turned us into a puzzle", a scrambled preview of the
+//                     board with its bottom-right piece missing ("I kept it").
+//   2. the puzzle   — a real sliding-tile puzzle (3×3 / 4×4 / 5×5, chosen by
+//                     the sender). Solving it flies the last piece into the gap.
+//   3. more pieces  — the memory photos snap together as an interlocking
+//                     jigsaw; tap one to read the memory behind it.
+//   4. the letter   — locked with a question, opens with confetti.
+//   5. the picture  — the whole photo, the stats, the GIFs, the sign-off.
 //
-// THE ONE INVARIANT: `revealedLines` is append-only.
-//
-//   It is written in exactly one place — `handlePlaced` — via `concat`, guarded
-//   on `indexOf === -1`. Nothing in this template splices, pops, filters or
-//   reassigns it to `[]`. A line, once given, has been given. There is no
-//   failure path that takes one back, because there is no failure path.
-//
-// Everything else here is wiring:
-//   engine (canvas)      → the board, the settle, the drop, the seams
-//   tray + drag layer    → the pointer story
-//   letter panel         → the reward
-//   final-piece panel    → the two-people-at-once moment
-//   completion overlay   → the closing line and the card
-//
-// Progress is spoken as "8 of 12 pieces". There is no percentage, no score, no
-// timer and no fail state anywhere in this file, and there must never be one.
+// Everything paints with the Love Kit's theme variables, so the four themes in
+// ./themes recolour it in one style write.
 
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw, Sparkles } from "lucide-react";
 
-import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
-import { setMuted, unlockAudio } from "@/lib/webAudio";
-
-import CompletionOverlay from "./CompletionOverlay";
-import FinalPiecePanel from "./FinalPiecePanel";
-import LetterPanel from "./LetterPanel";
-import PieceTray from "./PieceTray";
-import { useDragController } from "./useDragController";
-import PuzzleBoard from "./PuzzleBoard";
-import ShareCard, { SHARE_H, SHARE_W } from "./ShareCard";
-import { usePuzzleEngine } from "./usePuzzleEngine";
-import { playMelody, sfxNote, sfxPieceClick } from "./puzzleAudio";
-import type { EngineCallbacks, PuzzlePhase } from "./engineContract";
-import { useReducedMotion, useWideScreen } from "./useMediaQuery";
+import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
+import useReducedMotion from "../../date-invitation/components/useReducedMotion";
 import {
-  CHROME,
-  CHROME_BORDER,
-  CHROME_SHADOW,
-  INDIGO,
-  INK,
-  INK_SOFT,
-  OUTFIT,
-  PAGE_BG,
-  PAPER,
-  PAPER_EDGE,
-} from "./puzzleTheme";
+  BrandBadge,
+  CandyButton,
+  Eyebrow,
+  GhostButton,
+  GradText,
+  GROTESK,
+  ITALIC,
+  LOVE_CSS,
+  LoveSky,
+  LoveThemeContext,
+  Sticker,
+  Tape,
+  ThemeDock,
+} from "../../_love/LoveKit";
+import LoveStory, { ChapterHead, GifMoment, type Chapter, type StoryApi } from "../../_love/Story";
+import LockedLetter from "../../_love/LockedLetter";
+import { GifBoard } from "../../_love/Memories";
+import { V, pickTheme, themeVars, type LoveTheme } from "../../_love/theme";
+import MemoryJigsaw from "./MemoryJigsaw";
+import { PhotoLayer, Slice, useImageOk, type PhotoCrop } from "./PhotoSlice";
+import SlidingPuzzle, { fmtTime } from "./SlidingPuzzle";
+import { boardSkin, PUZZLE_THEMES } from "./themes";
+import { emptyId } from "./slidingEngine";
+import { usePuzzleGame, type PuzzleGame } from "./usePuzzleGame";
 import {
-  lineSchedule,
-  melodyNoteAt,
-  normaliseGrid,
+  DEFAULT_LOCK_ANSWER,
+  DEFAULT_LOCK_QUESTION,
+  DIFFICULTY_META,
+  puzzleImage,
   type PhotoPuzzleTemplateProps,
+  type PuzzleData,
 } from "./types";
 
-export default function PhotoPuzzleTemplate({ data, mode, shareId }: PhotoPuzzleTemplateProps) {
-  const reduced = useReducedMotion();
-  const wide = useWideScreen();
+export default function PhotoPuzzleTemplate({ data, mode, shareId, onThemeChange }: PhotoPuzzleTemplateProps) {
+  const reduceMotion = useReducedMotion();
+  const theme = pickTheme(PUZZLE_THEMES, data.theme);
+  const meta = DIFFICULTY_META[data.difficulty];
+  const n = meta.size;
+  const src = puzzleImage(data);
+  const crop: PhotoCrop = { x: data.imageCropX, y: data.imageCropY, scale: data.imageScale };
+  const game = usePuzzleGame(n, meta.shuffle, `${shareId ?? "demo"}:${src}:${data.senderName}:${data.recipientName}`);
 
-  const grid = useMemo(() => normaliseGrid(data.cols, data.rows), [data.cols, data.rows]);
-  const pieceCount = grid.cols * grid.rows;
+  const [storyKey, setStoryKey] = useState(0);
+  const [startAt, setStartAt] = useState(0);
+  const replay = useCallback(() => {
+    game.reshuffle();
+    setStartAt(1);
+    setStoryKey((k) => k + 1);
+  }, [game]);
 
-  // Stable across refreshes and devices, so the cut never changes under her.
-  const seed = shareId || `${data.senderName}|${data.recipientName}|${grid.cols}x${grid.rows}`;
+  const to = data.recipientName.trim() || "you";
+  const from = data.senderName.trim() || "me";
+  const gif = (i: number) => data.gifs[i] ?? data.gifs[0];
+  const hasPhotos = data.photos.length > 0;
+  const hasLetter = data.letter.trim().length > 0;
 
-  /** APPEND-ONLY. Indices into `data.lines`, in reveal order. */
-  const [revealedLines, setRevealedLines] = useState<number[]>([]);
-  const [phase, setPhase] = useState<PuzzlePhase>("loading");
-  const [sealed, setSealed] = useState(false);
-  const [complete, setComplete] = useState(false);
-
-  const [muted, setMutedState] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [snapshot, setSnapshot] = useState("");
-
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const shareRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(
-    () => () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
+  const chapters: Chapter[] = [
+    {
+      id: "hello",
+      emoji: "🧩",
+      title: "hello",
+      render: (api) => <Hello data={data} game={game} src={src} crop={crop} theme={theme} gif={gif(0)} onStart={api.next} reduceMotion={reduceMotion} />,
     },
-    [],
-  );
-
-  const schedule = useMemo(
-    () => lineSchedule(data.lines.length, pieceCount),
-    [data.lines.length, pieceCount],
-  );
-  // Mirrored into refs so `handlePlaced` — which the engine holds for the life
-  // of the rAF loop — never closes over a stale schedule or melody. Synced in
-  // effects rather than during render; effects run in declaration order, so
-  // these land before anything can fire a placement.
-  const scheduleRef = useRef(schedule);
-  const melodyRef = useRef(data.melody);
-  useEffect(() => {
-    scheduleRef.current = schedule;
-  }, [schedule]);
-  useEffect(() => {
-    melodyRef.current = data.melody;
-  }, [data.melody]);
-
-  // ── The reward, in the order the spec gives: click + note, then the line ────
-  const handlePlaced = useCallback((_index: number, ordinal: number) => {
-    sfxPieceClick();
-    sfxNote(melodyNoteAt(melodyRef.current, ordinal));
-    const li = scheduleRef.current[ordinal] ?? -1;
-    if (li < 0) return;
-    // The ONLY write to revealedLines in the entire template. Append or no-op.
-    setRevealedLines((prev) => (prev.indexOf(li) === -1 ? prev.concat(li) : prev));
-  }, []);
-
-  const handleSealed = useCallback(() => {
-    setSealed(true);
-    playMelody(melodyRef.current);
-  }, []);
-
-  const handleComplete = useCallback(() => setComplete(true), []);
-
-  // Recreated every render on purpose — the engine stores this in a ref, so the
-  // rAF loop never closes over a stale callback.
-  const callbacks: EngineCallbacks = {
-    onPlaced: handlePlaced,
-    onPhase: setPhase,
-    onSealed: handleSealed,
-    onComplete: handleComplete,
-  };
-
-  const engine = usePuzzleEngine({
-    cols: grid.cols,
-    rows: grid.rows,
-    imageUrl: data.imageUrl,
-    revealImageUrl: data.revealImageUrl,
-    seed,
-    finalPieceMode: data.finalPieceMode,
-    reducedMotion: reduced,
-    callbacks,
-  });
-
-  // The pointer story. Owned here rather than inside the tray because the tray
-  // renders the floater but the drag itself is a page-level gesture — it
-  // continues over the board, and past the edge of both.
-  const drag = useDragController(engine, {
-    reducedMotion: reduced,
-    onGesture: () => unlockAudio(),
-  });
-
-  // The completed photograph, inlined once, so the exported card is never a
-  // tainted-canvas failure. Grabbed one frame after `complete` — the engine has
-  // to paint the finished board before there is anything worth reading, and a
-  // rAF also keeps this off the commit path.
-  const snapshotRef = useRef("");
-  useEffect(() => {
-    if (!complete || snapshotRef.current) return;
-    const id = requestAnimationFrame(() => {
-      const url = engine.getSnapshotDataUrl();
-      if (url) {
-        snapshotRef.current = url;
-        setSnapshot(url);
-      }
+    {
+      id: "puzzle",
+      emoji: "🧩",
+      title: "the puzzle",
+      gated: true,
+      render: (api) => (
+        <PuzzleChapter api={api} data={data} game={game} src={src} crop={crop} theme={theme} gif={gif(0)} demo={mode === "demo"} reduceMotion={reduceMotion} />
+      ),
+    },
+  ];
+  if (hasPhotos) {
+    chapters.push({
+      id: "memories",
+      emoji: "📸",
+      title: "more pieces",
+      render: (api) => (
+        <section>
+          <ChapterHead kicker="the rest of the box" title={<>more pieces <GradText>of us</GradText></>} note="tap a piece to read the memory behind it" />
+          <MemoryJigsaw photos={data.photos} reduceMotion={reduceMotion} onAllSeen={api.complete} onLetter={hasLetter ? api.next : undefined} hasLetter={hasLetter} seed={shareId ?? from} />
+        </section>
+      ),
     });
-    return () => cancelAnimationFrame(id);
-  }, [complete, engine]);
-
-  // ── Sound ──────────────────────────────────────────────────────────────────
-  const toggleMute = useCallback(() => {
-    const next = !muted;
-    unlockAudio(); // the toggle is itself the user gesture
-    setMuted(next);
-    setMutedState(next);
-  }, [muted]);
-
-  /** Every pointerdown on a piece. Creating the context here, never on load. */
-  const handleGesture = useCallback(() => unlockAudio(), []);
-
-  // ── Card ───────────────────────────────────────────────────────────────────
-  const revealedText = useMemo(
-    () => revealedLines.slice().sort((a, b) => a - b).map((i) => data.lines[i]).filter(Boolean),
-    [revealedLines, data.lines],
-  );
-
-  const handleSave = useCallback(async () => {
-    setSaving(true);
-    const res = await exportNodeToPng(shareRef.current, {
-      width: SHARE_W,
-      height: SHARE_H,
-      filename: `the-last-piece-${fileSlug(data.recipientName, "puzzle")}`,
-      backgroundColor: PAPER,
-    });
-    setSaving(false);
-    setToast(res.message);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2600);
-  }, [data.recipientName]);
-
-  const placedCount = engine.placedOrder.length;
-  const waitingFinal = phase === "waiting-final";
-  const topPad = mode === "demo" ? 58 : 12;
-
-  const letter = (
-    <LetterPanel
-      lines={data.lines}
-      revealed={revealedLines}
-      placedCount={placedCount}
-      totalPieces={pieceCount}
-      senderName={data.senderName}
-      reducedMotion={reduced}
-      placeholder={`${data.senderName} wrote this in ${pieceCount} pieces. Place one and it lands here.`}
-      className={
-        wide
-          ? "w-[21rem] shrink-0 self-stretch"
-          : "min-h-0 w-full flex-1 overflow-hidden"
-      }
-    />
-  );
-
-  if (phase === "error") {
-    return (
-      <div
-        className="flex w-full flex-col items-center justify-center px-6 text-center"
-        style={{ minHeight: "100dvh", background: PAGE_BG }}
-      >
-        <div className="text-4xl" aria-hidden>🧩</div>
-        <p className="mt-4 text-[15px] font-semibold" style={{ color: INK, fontFamily: OUTFIT }}>
-          The photo didn&apos;t come through
-        </p>
-        <p className="mt-2 max-w-[22rem] text-[13px] leading-relaxed" style={{ color: INK_SOFT, fontFamily: OUTFIT }}>
-          {engine.errorMessage ?? "Ask them to send it again — the letter is still waiting."}
-        </p>
-      </div>
-    );
   }
+  if (hasLetter) {
+    chapters.push({
+      id: "letter",
+      emoji: "💌",
+      title: "the last piece",
+      gated: true,
+      render: (api) => (
+        <section>
+          <ChapterHead kicker="the actual last piece" title={<>one more thing, <GradText>{to}</GradText></>} />
+          <LockedLetter
+            letter={data.letter}
+            from={from}
+            to={to}
+            question={data.lockQuestion.trim() || DEFAULT_LOCK_QUESTION}
+            answer={data.lockAnswer.trim() || DEFAULT_LOCK_ANSWER}
+            gif={gif(1)}
+            gifCaption="knew it 🥹"
+            reduceMotion={reduceMotion}
+            onOpened={api.complete}
+          />
+        </section>
+      ),
+    });
+  }
+  chapters.push({
+    id: "picture",
+    emoji: "🖼️",
+    title: "the whole picture",
+    render: () => <Finale data={data} game={game} src={src} crop={crop} live={mode === "live"} onReplay={replay} reduceMotion={reduceMotion} />,
+  });
+
+  const rootStyle = useMemo<CSSProperties>(
+    () => ({
+      ...themeVars(theme),
+      minHeight: "100dvh",
+      position: "relative",
+      isolation: "isolate",
+      overflowX: "clip",
+      color: V.ink,
+      background: theme.colors.base,
+      fontFamily: GROTESK,
+    }),
+    [theme],
+  );
 
   return (
-    <div className="relative w-full" style={{ minHeight: "100dvh", background: PAGE_BG }}>
-      {/* The logo IS the recipient's "create your own" path. */}
-      {mode === "live" && (
-        <Link
-          href="/templates"
-          aria-label="SubhSandesh — make your own"
-          className="fixed right-3 top-3 z-[95] inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
-          style={{
-            background: CHROME,
-            border: CHROME_BORDER,
-            boxShadow: CHROME_SHADOW,
-            textDecoration: "none",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="" width={18} height={18} style={{ width: 18, height: 18 }} />
-          <span className="text-[11px] font-semibold" style={{ color: INK, fontFamily: OUTFIT }}>
-            SubhSandesh
+    <LoveThemeContext.Provider value={theme}>
+      <div className={`${DATE_FONT_VARS} lv-root`} style={rootStyle}>
+        <style>{LOVE_CSS + LAYOUT_CSS}</style>
+        <LoveSky theme={theme} reduceMotion={reduceMotion} />
+        {mode === "live" && <BrandBadge />}
+        {mode === "demo" && onThemeChange && <ThemeDock themes={PUZZLE_THEMES} value={theme.id} onChange={onThemeChange} />}
+        <LoveStory key={storyKey} chapters={chapters} reduceMotion={reduceMotion} startAt={startAt} />
+      </div>
+    </LoveThemeContext.Provider>
+  );
+}
+
+const LAYOUT_CSS = `
+.lp-hello { display: grid; gap: 26px; align-items: center; justify-items: center; text-align: center; }
+.lp-play { display: grid; gap: 18px; justify-items: center; }
+.lp-side { width: 100%; max-width: 520px; display: grid; gap: 12px; justify-items: center; text-align: center; }
+@media (min-width: 900px) {
+  .lp-hello { grid-template-columns: 1.05fr .95fr; text-align: left; justify-items: start; gap: 48px; }
+  .lp-hello-art { justify-self: center; transform: scale(1.22); }
+  .lp-play { grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); align-items: center; gap: 36px; }
+  .lp-side { justify-items: start; text-align: left; }
+}
+`;
+
+// ─── 1 · hello ───────────────────────────────────────────────────────────────
+
+function Hello({
+  data,
+  game,
+  src,
+  crop,
+  theme,
+  gif,
+  onStart,
+  reduceMotion,
+}: {
+  data: PuzzleData;
+  game: PuzzleGame;
+  src: string;
+  crop: PhotoCrop;
+  theme: LoveTheme;
+  gif?: string;
+  onStart: () => void;
+  reduceMotion: boolean;
+}) {
+  const meta = DIFFICULTY_META[data.difficulty];
+  const n = game.n;
+  const ok = useImageOk(src);
+  const skin = boardSkin(theme.id);
+  const size = 252;
+  const t = Math.floor(size / n);
+  const S = t * n;
+  const g = 2;
+  const last = emptyId(n);
+  const to = data.recipientName.trim() || "you";
+  const from = data.senderName.trim() || "me";
+
+  return (
+    <div className="lp-hello">
+      <div style={{ display: "grid", gap: 16, justifyItems: "inherit", maxWidth: 520 }}>
+        <Sticker tilt={-3}>🧩 a puzzle from {from}</Sticker>
+        <h1 style={{ margin: 0, fontFamily: GROTESK, fontWeight: 800, fontSize: "clamp(38px, 10vw, 68px)", lineHeight: 0.95, letterSpacing: "-0.045em", color: V.ink }}>
+          <GradText>{to},</GradText>
+          <br />I cut us into
+          <br />
+          <span style={{ fontFamily: ITALIC, fontStyle: "italic", fontWeight: 400, letterSpacing: "-0.02em" }}>{n * n} little pieces.</span>
+        </h1>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: V.soft, maxWidth: 420 }}>
+          Slide them back where they belong. I kept the <b style={{ color: V.ink }}>last piece</b> — it only shows up once the picture is whole. Then the good stuff unlocks 💌
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "inherit" }}>
+          <span style={{ padding: "7px 13px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, fontWeight: 800, fontSize: 13 }}>
+            {meta.emoji} {meta.label} · {n}×{n}
           </span>
-        </Link>
-      )}
-
-      <div
-        className="mx-auto flex w-full max-w-[26rem] flex-col gap-2 px-3 pb-3 lg:max-w-[62rem] lg:flex-row lg:items-stretch lg:gap-5 lg:px-5"
-        style={{ height: "100dvh", paddingTop: topPad, overscrollBehavior: "none" }}
-      >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-          <div className="flex shrink-0 items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-pressed={!muted}
-              aria-label={muted ? "Turn sound on" : "Turn sound off"}
-              className="inline-flex h-11 min-h-[44px] w-11 items-center justify-center rounded-full text-[14px]"
-              style={{ background: CHROME, border: CHROME_BORDER, color: INDIGO }}
-            >
-              <span aria-hidden>{muted ? "🔇" : "🔊"}</span>
-            </button>
-            <span className="truncate text-[11px]" style={{ color: INK_SOFT, fontFamily: OUTFIT }}>
-              {data.senderName} → {data.recipientName}
-            </span>
-          </div>
-
-          <PuzzleBoard
-            engine={engine}
-            reducedMotion={reduced}
-            className="shrink-0"
-            overlay={
-              waitingFinal ? (
-                <FinalPiecePanel
-                  message={data.finalPieceMessage}
-                  showDebugRelease={mode === "demo"}
-                  onRelease={engine.releaseFinalPiece}
-                  onSelfServe={engine.releaseFinalPiece}
-                  reducedMotion={reduced}
-                />
-              ) : sealed || complete ? (
-                <CompletionOverlay
-                  sealed={sealed}
-                  complete={complete}
-                  closingLine={data.closingLine}
-                  senderName={data.senderName}
-                  recipientName={data.recipientName}
-                  saving={saving}
-                  onSave={handleSave}
-                  reducedMotion={reduced}
-                />
-              ) : null
-            }
-          />
-
-          {!wide && letter}
-
-          <PieceTray
-            engine={engine}
-            drag={drag}
-            reducedMotion={reduced}
-            seed={seed}
-            onGesture={handleGesture}
-            className="shrink-0"
-          />
+          <span style={{ padding: "7px 13px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, fontWeight: 700, fontSize: 13, color: V.soft }}>
+            tap · swipe · arrow keys
+          </span>
         </div>
-
-        {wide && letter}
+        <div style={{ width: "100%", maxWidth: 360, marginTop: 4 }}>
+          <CandyButton onClick={onStart}>
+            <Sparkles size={18} /> start the puzzle
+          </CandyButton>
+        </div>
       </div>
 
-      {/* Off-screen export composition. No <video>, no cross-origin <img>. */}
-      <div aria-hidden style={{ position: "fixed", left: -20000, top: 0, pointerEvents: "none" }}>
-        <ShareCard
-          ref={shareRef}
-          recipientName={data.recipientName}
-          senderName={data.senderName}
-          imageData={snapshot}
-          lines={revealedText}
-          closingLine={data.closingLine}
-        />
-      </div>
-
-      {toast && (
+      <div className="lp-hello-art" style={{ position: "relative", padding: "18px 26px 30px" }}>
         <div
-          role="status"
-          className="fixed bottom-5 left-1/2 z-[96] -translate-x-1/2 rounded-full px-4 py-2 text-[12px]"
-          style={{
-            background: "rgba(30,27,51,0.92)",
-            color: PAPER,
-            border: `1px solid ${PAPER_EDGE}`,
-            fontFamily: OUTFIT,
-            boxShadow: CHROME_SHADOW,
-          }}
+          className={reduceMotion ? undefined : "lv-float"}
+          style={{ position: "relative", padding: 8, borderRadius: 20, background: skin.frame, transform: "rotate(-4deg)", boxShadow: `0 30px 60px -26px ${V.shadow}` }}
         >
-          {toast}
+          <div style={{ position: "relative", width: S, height: S, borderRadius: 12, overflow: "hidden", background: skin.well }}>
+            {game.board.map((id, pos) => {
+              if (id === last) {
+                return (
+                  <span
+                    key="gap"
+                    aria-hidden
+                    style={{ position: "absolute", left: (pos % n) * t + 4, top: Math.floor(pos / n) * t + 4, width: t - 8, height: t - 8, borderRadius: 8, border: "2px dashed rgba(255,255,255,.5)", display: "grid", placeItems: "center", fontSize: 22 }}
+                  >
+                    💗
+                  </span>
+                );
+              }
+              return (
+                <span
+                  key={id}
+                  aria-hidden
+                  style={{ position: "absolute", left: (pos % n) * t + g, top: Math.floor(pos / n) * t + g, width: t - g * 2, height: t - g * 2, borderRadius: 7, overflow: "hidden", boxShadow: skin.tileEdge }}
+                >
+                  <Slice src={src} crop={crop} n={n} t={t} id={id} inset={g} ok={ok} />
+                </span>
+              );
+            })}
+          </div>
         </div>
-      )}
+        {/* The piece the sender kept */}
+        <div
+          className={reduceMotion ? undefined : "lv-wiggle"}
+          style={{ position: "absolute", right: 0, top: 0, width: 74, height: 74, borderRadius: 14, overflow: "hidden", boxShadow: `0 0 0 4px ${V.paper}, 0 18px 30px -12px ${V.shadow}` }}
+        >
+          <div style={{ position: "absolute", left: 0, top: 0, width: t, height: t, transform: `scale(${74 / t})`, transformOrigin: "0 0" }}>
+            <Slice src={src} crop={crop} n={n} t={t} id={last} ok={ok} />
+          </div>
+        </div>
+        <span
+          style={{ position: "absolute", right: -6, top: 82, padding: "6px 11px", borderRadius: 14, background: V.paper, color: V.paperInk, fontWeight: 800, fontSize: 12.5, transform: "rotate(5deg)", boxShadow: `0 10px 20px -10px ${V.shadow}` }}
+        >
+          kept this one 🤫
+        </span>
+        {gif && (
+          <div style={{ position: "absolute", left: -4, bottom: -8 }}>
+            <GifMoment src={gif} size={84} side="left" />
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+// ─── 2 · the puzzle ──────────────────────────────────────────────────────────
+
+function PuzzleChapter({
+  api,
+  data,
+  game,
+  src,
+  crop,
+  theme,
+  gif,
+  demo,
+  reduceMotion,
+}: {
+  api: StoryApi;
+  data: PuzzleData;
+  game: PuzzleGame;
+  src: string;
+  crop: PhotoCrop;
+  theme: LoveTheme;
+  gif?: string;
+  demo: boolean;
+  reduceMotion: boolean;
+}) {
+  const [landed, setLanded] = useState(game.solved);
+  const revealRef = useRef<HTMLDivElement>(null);
+  const complete = api.complete;
+  const onComplete = useCallback(() => {
+    setLanded(true);
+    complete();
+    // On a phone the reveal sits under the board: bring the line + button up.
+    window.setTimeout(() => revealRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" }), 700);
+  }, [complete, reduceMotion]);
+  // A reshuffle after solving puts the game back into play.
+  const [prevSolved, setPrevSolved] = useState(game.solved);
+  if (prevSolved !== game.solved) {
+    setPrevSolved(game.solved);
+    if (!game.solved) setLanded(false);
+  }
+  const elapsed = game.startedAt && game.endedAt ? game.endedAt - game.startedAt : 0;
+
+  return (
+    <div className="lp-play">
+      <div style={{ width: "100%" }}>
+        <SlidingPuzzle game={game} src={src} crop={crop} difficulty={data.difficulty} theme={theme} reduceMotion={reduceMotion} onComplete={onComplete} />
+      </div>
+      <div className="lp-side">
+        {!landed ? (
+          <>
+            <Eyebrow color={V.a1}>chapter · the puzzle</Eyebrow>
+            <h2 style={{ margin: 0, fontFamily: GROTESK, fontWeight: 800, fontSize: "clamp(26px, 6.4vw, 42px)", lineHeight: 1, letterSpacing: "-0.035em" }}>
+              put <GradText>us</GradText> back together
+            </h2>
+            <p style={{ margin: 0, color: V.soft, fontSize: 14.5, lineHeight: 1.5, maxWidth: 380 }}>
+              Tap a tile next to the gap to slide it in — or swipe, or use the arrow keys. Stuck? <b style={{ color: V.ink }}>peek</b> at the photo.
+            </p>
+            {demo && (
+              <button
+                type="button"
+                onClick={game.skip}
+                className="lv-focus"
+                style={{ marginTop: 4, border: "none", background: "transparent", color: V.soft, fontFamily: GROTESK, fontWeight: 700, fontSize: 13, textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer", minHeight: 40 }}
+              >
+                preview only: skip to the reveal →
+              </button>
+            )}
+          </>
+        ) : (
+          <div ref={revealRef} className="lv-pop" style={{ display: "grid", gap: 12, justifyItems: "inherit", scrollMarginBottom: 120 }}>
+            <Sticker tilt={-4}>✓ the last piece is in</Sticker>
+            <p style={{ margin: 0, fontFamily: ITALIC, fontStyle: "italic", fontSize: "clamp(28px, 7vw, 40px)", lineHeight: 1.08, color: V.ink, maxWidth: 440 }}>
+              {data.finalPieceMessage}
+            </p>
+            <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: V.soft }}>
+              {game.assisted ? "solved (with a little help 🫶)" : `solved in ${game.moves} moves · ${fmtTime(elapsed)}`}
+            </p>
+            <div style={{ width: "100%", maxWidth: 360 }}>
+              <CandyButton onClick={api.next}>open the rest of your gift →</CandyButton>
+            </div>
+            <GifMoment src={gif} caption="you did it!!" show size={92} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── 5 · the whole picture ───────────────────────────────────────────────────
+
+function Finale({ data, game, src, crop, live, onReplay, reduceMotion }: { data: PuzzleData; game: PuzzleGame; src: string; crop: PhotoCrop; live: boolean; onReplay: () => void; reduceMotion: boolean }) {
+  const ok = useImageOk(src);
+  const to = data.recipientName.trim() || "you";
+  const from = data.senderName.trim() || "me";
+  const elapsed = game.startedAt && game.endedAt ? game.endedAt - game.startedAt : 0;
+  return (
+    <section style={{ display: "grid", gap: 22, justifyItems: "center", textAlign: "center" }}>
+      <ChapterHead kicker="the whole picture" title={<>{from} <GradText>+</GradText> {to}</>} />
+      <figure style={{ margin: 0, padding: "12px 12px 16px", background: V.paper, borderRadius: 10, transform: "rotate(-2deg)", boxShadow: `0 34px 60px -30px ${V.shadow}`, width: "min(340px, 86vw)" }}>
+        <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", borderRadius: 4 }}>
+          <PhotoLayer src={src} crop={crop} size="100%" ok={ok} />
+        </div>
+        <figcaption style={{ marginTop: 10, fontFamily: ITALIC, fontStyle: "italic", fontSize: 22, color: V.paperInk }}>every piece, finally ✨</figcaption>
+      </figure>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+        {game.solved && (
+          <span style={{ padding: "7px 13px", borderRadius: 999, background: V.chip, color: V.chipInk, fontWeight: 800, fontSize: 13 }}>
+            {game.assisted ? "🫶 solved together" : `🧩 ${game.moves} moves · ⏱ ${fmtTime(elapsed)}`}
+          </span>
+        )}
+        <span style={{ padding: "7px 13px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, fontWeight: 800, fontSize: 13 }}>
+          {DIFFICULTY_META[data.difficulty].emoji} {DIFFICULTY_META[data.difficulty].label}
+        </span>
+      </div>
+      <p style={{ margin: 0, maxWidth: 520, fontFamily: ITALIC, fontStyle: "italic", fontSize: "clamp(26px, 6.4vw, 38px)", lineHeight: 1.1 }}>{data.closingLine}</p>
+      {data.gifs.length > 0 && <GifBoard gifs={data.gifs} captions={["us 🥹", "me rn", "forever"]} />}
+      <div style={{ width: "100%", maxWidth: 380, display: "grid", gap: 10 }}>
+        <GhostButton onClick={onReplay}>
+          <RotateCcw size={16} /> play the puzzle again
+        </GhostButton>
+        {live && (
+          <Link href="/photo-puzzle" style={{ textAlign: "center", fontWeight: 800, fontSize: 14, color: V.a1, textDecoration: "none", padding: 10 }}>
+            make a puzzle for someone 🧩
+          </Link>
+        )}
+      </div>
+      <div style={{ width: "100%", overflow: "hidden", paddingBlock: 10 }}>
+        <Tape words={["the last piece", `${from} + ${to}`, "complete"]} reduceMotion={reduceMotion} />
+      </div>
+    </section>
   );
 }
