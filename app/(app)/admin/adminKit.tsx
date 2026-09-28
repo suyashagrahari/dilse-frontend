@@ -9,7 +9,8 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Info, Loader2, Search, X } from "lucide-react";
+import { Info, Search, X } from "lucide-react";
+import { ListSkeleton } from "@/components/skeleton/Skeletons";
 
 export const A = {
   ink: "#2a0a0e",
@@ -329,13 +330,14 @@ export function SearchBox({ value, onChange, onEnter, placeholder = "Search…",
   );
 }
 
+/**
+ * A list or panel still loading: skeleton rows sized to roughly the space the
+ * content will take (`h`), instead of a spinner. `label` is for screen readers.
+ */
 export function Loading({ label = "Loading…", h = 220 }: { label?: string; h?: number }) {
   return (
-    <div style={{ minHeight: h, display: "grid", placeItems: "center", color: A.muted, fontSize: 12 }}>
-      <div style={{ textAlign: "center" }}>
-        <Loader2 size={22} className="animate-spin" style={{ color: A.gold, margin: "0 auto 8px", display: "block" }} />
-        {label}
-      </div>
+    <div aria-label={label} style={{ minHeight: h }}>
+      <ListSkeleton rows={Math.max(1, Math.min(6, Math.round(h / 95)))} />
     </div>
   );
 }

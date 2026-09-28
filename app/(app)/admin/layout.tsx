@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { isAdmin } from "@/lib/roles";
 import AdminNav, { ADMIN_NAV_CSS } from "./AdminNav";
+import { AdminSkeleton } from "@/components/skeleton/Skeletons";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -38,14 +39,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setChecked(true);
   }, [isAuthenticated, isLoading, user, router]);
 
-  if (!checked) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5ede6" }}>
-        <div style={{ width: 32, height: 32, border: "3px solid rgba(61,12,17,0.12)", borderTopColor: "#c9a84c", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  // The admin screen's own shape while the session is confirmed, rather than a
+  // spinner on an empty page. No navbar yet, so it draws standalone.
+  if (!checked) return <AdminSkeleton standalone />;
 
   // The navbar lives here, not in each page, so it stays put between sections.
   // `.adm-main` pads content below it and paints the shared background.

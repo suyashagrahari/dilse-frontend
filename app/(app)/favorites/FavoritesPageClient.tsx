@@ -10,6 +10,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchFavorites, toggleFavoriteAsync } from "@/store/favoritesSlice";
 import { templateList } from "@/data/template-registry";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
+import { GallerySkeleton } from "@/components/skeleton/Skeletons";
 
 const UI = {
   bg: "#f5ede6",
@@ -142,16 +143,7 @@ export default function FavoritesPage() {
 
   /* ── Loading ── */
   if (loading) {
-    return (
-      <FavoritesShell>
-        <div className="flex items-center justify-center min-h-[55vh]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "#c9a84c", borderTopColor: "transparent" }} />
-            <p className="text-sm" style={{ color: "#2a0a0e" }}>Loading favorites...</p>
-          </div>
-        </div>
-      </FavoritesShell>
-    );
+    return <GallerySkeleton label="Loading your favourites" />;
   }
 
   /* ── Empty ── */
