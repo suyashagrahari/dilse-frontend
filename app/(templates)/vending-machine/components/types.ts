@@ -6,6 +6,17 @@
 
 import { seededInt, seededSpread } from "@/lib/seededRandom";
 import { bodyFromKeys, bool, clampNum, list, num, obj, oneOf, str, strList, strOr, type Raw } from "@/lib/wire";
+import { templateMedia } from "@/lib/templateMedia";
+import {
+  DEMO_PHOTOS,
+  MAX_GIFS,
+  parseLoveGifs,
+  parseLoveLetter,
+  parseLovePhotos,
+  parseTheme,
+  type LovePhoto,
+} from "../../_love/types";
+import { DEFAULT_VEND_THEME, VEND_THEME_IDS } from "./themes";
 
 export type EditMode = null | "manual" | "preview";
 
@@ -43,6 +54,18 @@ export interface VendingData {
   creditPrompts: string[];
   /** Scrolling LED copy, joined with "  ·  ". */
   displayIdleMessages: string[];
+  /**
+   * Love kit: the limited-edition memory cards. Each photo is a collectible
+   * card (M1, M2…) in the card vendor under the machine, framed in the editor,
+   * with a caption (the card's title) and a note printed on its back.
+   */
+  photos: LovePhoto[];
+  /** Up to three GIF/animated-sticker links — the machine's own lead the picker. */
+  gifs: string[];
+  /** The main letter — printed as the secret prize at the foot of the receipt. */
+  letter: string;
+  /** A VEND_THEMES id. */
+  theme: string;
 }
 
 /**
@@ -140,6 +163,40 @@ export interface VendingMachineTemplateProps {
   hasPassword?: boolean;
 }
 
+// ─── The machine's own animated stickers ─────────────────────────────────────
+// Already used by the machine itself (credit accepted, the thinking prompt, the
+// coupon, the jam, sold out). They lead the GIF picker and are the demo's
+// stickers. Three are .webm, which an <img> cannot play — every place this
+// template renders a GIF goes through <GifSticker>, which picks <video> for them.
+
+export const MACHINE_GIFS: { url: string; label: string }[] = [
+  { url: templateMedia("vending-machine", "credit-accepted.webp"), label: "credit accepted" },
+  { url: templateMedia("vending-machine", "prompt-thinking.webp"), label: "i'm thinking" },
+  { url: templateMedia("vending-machine", "coupon-reading.webm"), label: "reading it" },
+  { url: templateMedia("vending-machine", "shake-it.webm"), label: "shake it" },
+  { url: templateMedia("vending-machine", "sold-out.webm"), label: "sold out" },
+];
+
+export const isVideoGif = (url: string): boolean => /\.(webm|mp4)(\?|#|$)/i.test(url);
+
+// ─── Memory cards ────────────────────────────────────────────────────────────
+
+/** "M1".."M10" — the card vendor's codes. */
+export const cardCode = (i: number): string => `M${i + 1}`;
+
+/** Every card is rare; the last one in the set is always the 1 of 1. */
+export function cardRarity(i: number, total: number): { label: string; stars: number } {
+  if (i === total - 1 && total > 1) return { label: "1 OF 1", stars: 5 };
+  const tiers = [
+    { label: "RARE", stars: 2 },
+    { label: "SUPER RARE", stars: 3 },
+    { label: "ULTRA RARE", stars: 4 },
+    { label: "HOLO RARE", stars: 3 },
+    { label: "SECRET RARE", stars: 4 },
+  ];
+  return tiers[i % tiers.length];
+}
+
 // ─── Demo data ───────────────────────────────────────────────────────────────
 
 const demoSlot = (
@@ -182,12 +239,24 @@ export const DEMO_DATA: VendingData = {
     "WELCOME", "SELECT ITEM", "PLEASE COLLECT ITEM",
     "THANK YOU", "HAVE A NICE DAY", "I MEAN IT",
   ],
+  photos: [
+    { ...DEMO_PHOTOS[0], caption: "the first sunset", note: "Limited edition, because there was only ever one. You said the sky looked like mango lassi and I stopped looking at the sky." },
+    { ...DEMO_PHOTOS[1], caption: "date night, round 1", note: "You stole my fries and then my heart. In that order. I have been meaning to file a complaint for two years." },
+    { ...DEMO_PHOTOS[2], caption: "cherry blossom era", note: "Even the trees were showing off that day. They lost." },
+    { ...DEMO_PHOTOS[3], caption: "us, no re-rolls", note: "Out of every timeline, I'd pick this one. Every single time. Don't even offer me the others." },
+    { ...DEMO_PHOTOS[0], caption: "same day, zoomed in", note: "I zoomed in on your face. Obviously. Rarest card in the set.", cropX: 58, cropY: 38, scale: 190 },
+  ],
+  gifs: [...MACHINE_GIFS.slice(0, MAX_GIFS).map((g) => g.url)],
+  letter:
+    "Ananya,\n\nEighteen slots weren't enough, so the machine printed the rest.\n\nI know a vending machine is a ridiculous way to say this. But I didn't want to hand it all over at once. I wanted you to punch the codes, shake the stuck one, and watch every single thing drop — because that is roughly what loving you has felt like. Small, loud, a little jammed sometimes, and always worth the wait.\n\nYou are the best thing that ever happened to me on an ordinary Tuesday. I would pay any price, in any currency, including the embarrassing ones.\n\nNo refunds. No returns. No expiry.\n\n— Rohan",
+  theme: DEFAULT_VEND_THEME,
 };
 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 export const VENDING_CONTENT_KEYS: (keyof VendingData)[] = [
   "machineName", "senderName", "recipientName", "slots", "creditPrompts", "displayIdleMessages",
+  "photos", "gifs", "letter", "theme",
 ];
 
 export function vendingDataToBody(data: VendingData, password?: string): Record<string, unknown> {
@@ -230,7 +299,27 @@ export function dbToVendingData(db: Raw | null | undefined): VendingData {
     slots: normalised,
     creditPrompts: strList(src.creditPrompts, DEMO_DATA.creditPrompts),
     displayIdleMessages: strList(src.displayIdleMessages, DEMO_DATA.displayIdleMessages),
+    // Love kit. A page published before the kit existed has none of these:
+    // it gets no memory cards (never the demo couple's photos), the machine's
+    // own stickers, no letter (the receipt prints a fallback prize) and the
+    // original teal machine.
+    photos: parseLovePhotos(src.photos, []),
+    gifs: parseLoveGifs(src.gifs, DEMO_DATA.gifs),
+    letter: parseLoveLetter(src.letter, ""),
+    theme: parseTheme(src.theme, VEND_THEME_IDS, DEFAULT_VEND_THEME),
   };
+}
+
+/** Old drafts (saved before the love kit) lack the kit fields; fill them in. */
+export function withKitDefaults(d: Partial<VendingData>): VendingData {
+  return {
+    ...DEMO_DATA,
+    ...d,
+    photos: Array.isArray(d.photos) ? d.photos : [],
+    gifs: Array.isArray(d.gifs) ? d.gifs : DEMO_DATA.gifs,
+    letter: typeof d.letter === "string" ? d.letter : "",
+    theme: typeof d.theme === "string" && VEND_THEME_IDS.includes(d.theme) ? d.theme : DEFAULT_VEND_THEME,
+  } as VendingData;
 }
 
 export { num, obj, seededInt };

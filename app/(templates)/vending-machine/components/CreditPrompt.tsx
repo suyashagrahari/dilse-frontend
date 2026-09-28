@@ -53,9 +53,11 @@ export default function CreditPrompt({
     <section
       aria-label="Insert credit"
       style={{
-        background: "linear-gradient(180deg,#0f2427 0%,#0a1a1c 100%)",
-        border: "1px solid #061214",
-        padding: "12px 12px 14px",
+        background: `linear-gradient(180deg, ${C.plateHi} 0%, ${C.plateLo} 100%)`,
+        border: `1px solid ${C.edge}`,
+        borderRadius: 22,
+        padding: "14px 14px 16px",
+        boxShadow: "0 20px 40px -22px rgba(0,0,0,.7)",
       }}
     >
       {!reducedMotion && (
@@ -68,7 +70,7 @@ export default function CreditPrompt({
             aria-hidden="true"
             width={84}
             height={84}
-            style={{ width: 84, height: 84, objectFit: "contain" }}
+            style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 18 }}
           />
         </div>
       )}
@@ -94,7 +96,7 @@ export default function CreditPrompt({
           fontFamily: MONO,
           fontSize: 11,
           lineHeight: 1.45,
-          color: "#9fd7c8",
+          color: "rgba(255,255,255,.78)",
           borderLeft: `2px solid ${C.green}`,
           paddingLeft: 8,
         }}
@@ -127,10 +129,10 @@ export default function CreditPrompt({
             padding: "0 10px",
             fontFamily: MONO,
             fontSize: 16,
-            color: "#eaf5f2",
-            background: "#061416",
-            border: "1px solid #26494b",
-            borderRadius: 2,
+            color: "#fff",
+            background: "rgba(0,0,0,.35)",
+            border: "1px solid rgba(255,255,255,.18)",
+            borderRadius: 12,
             outline: "none",
           }}
         />
@@ -144,10 +146,10 @@ export default function CreditPrompt({
             fontFamily: OSWALD,
             fontSize: 13,
             letterSpacing: "0.12em",
-            color: value.trim() ? "#04140f" : "#5a7a76",
-            background: value.trim() ? C.green : "#123033",
-            border: "1px solid #0a1a1c",
-            borderRadius: 2,
+            color: value.trim() ? "#0b0b0b" : "rgba(255,255,255,.4)",
+            background: value.trim() ? C.green : "rgba(255,255,255,.08)",
+            border: "1px solid rgba(0,0,0,.3)",
+            borderRadius: 12,
             cursor: value.trim() ? "pointer" : "default",
             touchAction: "manipulation",
           }}
@@ -168,13 +170,13 @@ export default function CreditPrompt({
           letterSpacing: "0.09em",
         }}
       >
-        <span style={{ color: C.inkDim }}>
+        <span style={{ color: "rgba(255,255,255,.6)" }}>
           {value.length}/{MAX_ANSWER}
         </span>
-        <button type="button" onClick={onSkip} style={{ color: C.inkDim, textDecoration: "underline" }}>
+        <button type="button" onClick={onSkip} style={{ color: "rgba(255,255,255,.7)", textDecoration: "underline", minHeight: 32 }}>
           ANOTHER QUESTION
         </button>
-        <button type="button" onClick={onClose} style={{ color: C.inkDim, textDecoration: "underline" }}>
+        <button type="button" onClick={onClose} style={{ color: "rgba(255,255,255,.7)", textDecoration: "underline", minHeight: 32 }}>
           CLOSE
         </button>
         {freeCreditAvailable && (
@@ -186,7 +188,7 @@ export default function CreditPrompt({
               padding: "6px 9px",
               color: C.amber,
               border: `1px solid ${C.amber}`,
-              borderRadius: 2,
+              borderRadius: 999,
               letterSpacing: "0.1em",
             }}
           >

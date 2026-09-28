@@ -1,9 +1,26 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, PenLine, Eye, Trash2, Plus, Lock, Loader2, Undo2, Wrench, Check } from "lucide-react";
+// ─── Stock the machine — the form ────────────────────────────────────────────
+//
+// One scrolling sheet, read top to bottom as steps: pick the machine, name it,
+// load the limited-edition memory cards (photos with a caption + a note on the
+// back), rewrite the shelves, choose the questions it asks, pick the GIF
+// stickers, and write the letter that prints at the foot of the receipt.
+//
+// A progress rail at the top jumps to each step and shows what is done. Save
+// validates the two things the page cannot live without (both names), says
+// exactly what is missing, scrolls to it and never silently no-ops.
 
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Eye, Trash2, Plus, Lock, Loader2, Undo2, Wrench, Check, AlertCircle, Sparkles } from "lucide-react";
+
+import { FormSection } from "../../_love/editor/LoveKitSections";
+import PhotosEditor from "../../_love/editor/PhotosEditor";
+import GifPicker from "../../_love/editor/GifPicker";
+import { MAX_GIFS, MAX_LETTER_LEN, MAX_PHOTOS } from "../../_love/types";
+import GifSticker from "./GifSticker";
+import { VEND_THEMES, pickVendTheme, type VendTheme } from "./themes";
 import {
   type VendingData,
   type EditMode,
@@ -11,6 +28,7 @@ import {
   type SlotKind,
   COLS,
   DEMO_DATA,
+  MACHINE_GIFS,
   RESERVED_SLOT,
   ROWS,
   SHELF_LABEL_MAX,
@@ -26,14 +44,15 @@ const MUTED = "#5B5B66";
 const BORDER = "#ECEAE3";
 const SURFACE_ALT = "#EFEDFD";
 const AMBER = "#FFB020";
+const ERROR = "#E5484D";
 
 const STENCIL = "var(--font-oswald), system-ui, sans-serif";
 const TYPED = "var(--font-courier-prime), ui-monospace, monospace";
 
 const INPUT_CLS =
-  "w-full px-3.5 py-2.5 rounded-xl bg-black/[.03] border border-[#ECEAE3] focus:outline-none focus:border-[#6C5CE7] text-sm transition-colors";
+  "w-full px-3.5 py-2.5 rounded-xl bg-black/[.03] border border-[#ECEAE3] focus:outline-none focus:border-[#6C5CE7] transition-colors";
 const INPUT_SM =
-  "w-full px-3 py-2 rounded-lg bg-black/[.03] border border-[#ECEAE3] focus:outline-none focus:border-[#6C5CE7] text-sm transition-colors";
+  "w-full px-3 py-2 rounded-lg bg-black/[.03] border border-[#ECEAE3] focus:outline-none focus:border-[#6C5CE7] transition-colors";
 
 const KIND_META: Record<SlotKind, { label: string; glyph: string }> = {
   compliment: { label: "Compliment", glyph: "💬" },
@@ -43,6 +62,7 @@ const KIND_META: Record<SlotKind, { label: string; glyph: string }> = {
 };
 
 const DEMO_BY_CODE = new Map(DEMO_DATA.slots.map((s) => [s.code, s]));
+const MACHINE_GIF_URLS = new Set(MACHINE_GIFS.map((g) => g.url));
 
 /** Has the sender actually put their own words in this slot? */
 const isYours = (s: Slot): boolean => {
@@ -50,6 +70,13 @@ const isYours = (s: Slot): boolean => {
   if (!d) return true;
   return s.label !== d.label || s.payload !== d.payload || s.kind !== d.kind;
 };
+
+const LETTER_STARTERS = [
+  "The first time I saw you, ",
+  "I've never told you this, but ",
+  "My favourite thing about us is ",
+  "No refunds. No returns. No expiry.",
+];
 
 interface Props {
   editMode: EditMode;
@@ -60,25 +87,6 @@ interface Props {
   setPagePassword: (v: string) => void;
   onSave: () => void;
   saving: boolean;
-}
-
-/* ── Section header ───────────────────────────────────────────────────────── */
-function Section({ n, title, blurb, children }: { n: string; title: string; blurb?: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <span
-          className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-          style={{ background: SURFACE_ALT, color: INDIGO, fontFamily: STENCIL, letterSpacing: ".08em" }}
-        >
-          {n}
-        </span>
-        <h4 className="text-sm font-bold" style={{ color: INK }}>{title}</h4>
-      </div>
-      {blurb && <p className="text-[11.5px] leading-relaxed" style={{ color: MUTED }}>{blurb}</p>}
-      {children}
-    </section>
-  );
 }
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -380,12 +388,197 @@ function LineList({
   );
 }
 
+/* ── The machine picker: each theme as a tiny machine in its own skin ──────── */
+function MachineSwatch({ t }: { t: VendTheme }) {
+  const m = t.machine;
+  return (
+    <span className="block relative h-[104px] overflow-hidden" style={{ background: t.colors.bg }} aria-hidden>
+      <span
+        className="absolute left-1/2 top-3 -translate-x-1/2 w-[70px] h-[112px] rounded-[10px] p-[5px]"
+        style={{ background: `linear-gradient(90deg, ${m.bodyDark}, ${m.body} 20%, ${m.bodyLight} 48%, ${m.body} 72%, ${m.bodyDark})`, boxShadow: "0 10px 20px -8px rgba(0,0,0,.45)" }}
+      >
+        <span className="block h-[9px] rounded-[3px] mb-[4px] px-1 text-[6px] leading-[9px] font-bold tracking-[.12em]" style={{ background: m.plateHi, color: m.sign, textShadow: `0 0 4px ${m.signGlow}` }}>
+          ♥ ♥ ♥
+        </span>
+        <span className="grid grid-cols-3 gap-[3px] p-[4px] rounded-[4px]" style={{ background: m.glass }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <span key={i} className="block h-[9px] rounded-[2px]" style={{ background: i % 4 === 0 ? t.colors.a1 : i % 3 === 0 ? t.colors.a3 : "#efe9dc" }} />
+          ))}
+        </span>
+        <span className="block h-[6px] mt-[4px] rounded-[2px]" style={{ background: "#050505", boxShadow: `inset 0 0 0 1px ${m.led}55` }}>
+          <span className="block h-[2px] w-[60%] ml-[3px] mt-[2px] rounded-full" style={{ background: m.led, boxShadow: `0 0 4px ${m.led}` }} />
+        </span>
+        <span className="grid grid-cols-3 gap-[2px] mt-[4px]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span key={i} className="block h-[6px] rounded-[2px]" style={{ background: i === 5 ? m.wornHi : m.keyHi }} />
+          ))}
+        </span>
+      </span>
+      <span className="absolute right-2 bottom-2 text-lg">{t.emoji}</span>
+    </span>
+  );
+}
+
+function MachinePicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const current = pickVendTheme(value).id;
+  return (
+    <div role="radiogroup" aria-label="Machine style" className="grid grid-cols-2 gap-2.5">
+      {VEND_THEMES.map((t) => {
+        const on = t.id === current;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(t.id)}
+            className="relative rounded-2xl overflow-hidden text-left border-2 transition-transform active:scale-[.98]"
+            style={{ borderColor: on ? INDIGO : BORDER, boxShadow: on ? `0 0 0 3px ${INDIGO}22` : undefined }}
+          >
+            <MachineSwatch t={t} />
+            <span className="block px-2.5 py-2 bg-white">
+              <span className="flex items-center justify-between gap-1">
+                <span className="text-[13px] font-bold" style={{ color: INK }}>{t.name}</span>
+                {on && (
+                  <span className="w-5 h-5 rounded-full grid place-items-center text-white shrink-0" style={{ background: INDIGO }}>
+                    <Check size={12} />
+                  </span>
+                )}
+              </span>
+              <span className="block text-[11px] leading-snug mt-0.5" style={{ color: MUTED }}>{t.vibe}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── GIF stickers: the machine's own first, then the shared library ───────── */
+function StickerPicker({ gifs, onChange }: { gifs: string[]; onChange: (next: string[]) => void }) {
+  const full = gifs.length >= MAX_GIFS;
+  const toggle = (url: string) => {
+    if (gifs.includes(url)) onChange(gifs.filter((g) => g !== url));
+    else if (!full) onChange([...gifs, url]);
+  };
+  // The shared picker only ever sees (and edits) the non-machine picks, so its
+  // thumbnails never try to <img> a .webm.
+  const others = gifs.filter((g) => !MACHINE_GIF_URLS.has(g));
+  const mine = gifs.filter((g) => MACHINE_GIF_URLS.has(g));
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] font-bold" style={{ color: INK }}>From this machine</p>
+        <span className="text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full" style={{ background: full ? "#fff4e0" : SURFACE_ALT, color: full ? "#9a5b00" : INDIGO }}>
+          {gifs.length}/{MAX_GIFS} picked
+        </span>
+      </div>
+      <div className="grid grid-cols-5 gap-2">
+        {MACHINE_GIFS.map((g) => {
+          const on = gifs.includes(g.url);
+          return (
+            <button
+              key={g.url}
+              type="button"
+              onClick={() => toggle(g.url)}
+              aria-pressed={on}
+              aria-label={g.label}
+              disabled={!on && full}
+              className="relative rounded-xl overflow-hidden border-2 bg-white disabled:opacity-40"
+              style={{ aspectRatio: "1 / 1", borderColor: on ? PINK : BORDER }}
+            >
+              <GifSticker url={g.url} size="100%" style={{ borderRadius: 0 }} />
+              {on && (
+                <span className="absolute top-1 right-1 w-5 h-5 rounded-full grid place-items-center text-white" style={{ background: PINK }}>
+                  <Check size={12} />
+                </span>
+              )}
+              <span className="absolute inset-x-0 bottom-0 text-[9px] font-semibold text-white py-0.5 truncate px-1" style={{ background: "rgba(0,0,0,.45)" }}>
+                {g.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <details className="rounded-xl border px-3 py-2.5" style={{ borderColor: BORDER }}>
+        <summary className="text-[12.5px] font-bold cursor-pointer select-none" style={{ color: INK }}>
+          More cute GIFs, or paste your own link
+        </summary>
+        <div className="pt-3">
+          <GifPicker
+            gifs={others}
+            tags={["love", "hug", "funny"]}
+            onChange={(next) => onChange([...mine, ...next].slice(0, MAX_GIFS))}
+          />
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/* ── The letter, typed straight onto receipt paper ─────────────────────────── */
+function ReceiptLetter({ value, onChange, sender }: { value: string; onChange: (v: string) => void; sender: string }) {
+  const left = MAX_LETTER_LEN - value.length;
+  return (
+    <div>
+      <div
+        className="relative mx-auto rounded-sm"
+        style={{
+          maxWidth: 420,
+          background: "#fffdf6",
+          boxShadow: "0 10px 24px -14px rgba(0,0,0,.35)",
+          padding: "18px 16px 14px",
+          fontFamily: TYPED,
+          color: "#23201a",
+        }}
+      >
+        <p className="text-center text-[11px] tracking-[.14em]">★ SECRET PRIZE UNLOCKED ★</p>
+        <div className="my-2 border-t border-dashed" style={{ borderColor: "#23201a66" }} />
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value.slice(0, MAX_LETTER_LEN))}
+          placeholder={"Write it like they're reading it at 2am…\n\nThis prints at the very bottom of their receipt, after every card and every slot."}
+          aria-label="Your letter — printed on the receipt"
+          rows={9}
+          className="w-full bg-transparent resize-y focus:outline-none leading-relaxed"
+          style={{ fontSize: 16, minHeight: 190, fontFamily: "var(--font-di-serif), Georgia, serif", fontStyle: "italic" }}
+        />
+        <div className="mt-1 border-t border-dashed pt-2 flex items-center justify-between text-[10.5px]" style={{ borderColor: "#23201a66" }}>
+          <span>— {sender.trim() || "you"}</span>
+          <span className="tabular-nums" style={{ color: left < 100 ? ERROR : "#23201a99" }}>
+            {value.length}/{MAX_LETTER_LEN}
+          </span>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <span className="text-[11px] font-semibold mr-1 self-center" style={{ color: MUTED }}>Stuck? Start with:</span>
+        {LETTER_STARTERS.map((line) => (
+          <button
+            key={line}
+            type="button"
+            onClick={() => onChange((value.trim() ? `${value.trimEnd()}\n\n` : "") + line)}
+            className="text-[11.5px] font-semibold px-2.5 py-1.5 rounded-full border"
+            style={{ borderColor: BORDER, color: INK, background: "#fff" }}
+          >
+            {line.length > 26 ? `${line.slice(0, 25)}…` : line}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type SectionId = "vibe" | "names" | "cards" | "shelves" | "prompts" | "gifs" | "letter" | "extras";
+
 /* ── The sheet ────────────────────────────────────────────────────────────── */
 export default memo(function EditSheet({
   editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving,
 }: Props) {
   const visible = editMode !== null && editMode !== "preview";
   const [openCode, setOpenCode] = useState<string | null>(null);
+  const [tried, setTried] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const refs = useRef<Partial<Record<SectionId, HTMLElement | null>>>({});
 
   const byCode = useMemo(() => new Map(mf.slots.map((s) => [s.code, s])), [mf.slots]);
   const jam = useMemo(() => mf.slots.find((s) => s.sticks && s.code !== RESERVED_SLOT) ?? null, [mf.slots]);
@@ -423,6 +616,42 @@ export default memo(function EditSheet({
   const openSlot = openCode ? byCode.get(openCode) ?? null : null;
   const signPreview = mf.displayIdleMessages.filter((m) => m.trim()).join("  ·  ");
 
+  const missingSender = !mf.senderName.trim();
+  const missingRecipient = !mf.recipientName.trim();
+  const missing = [missingSender && "your name", missingRecipient && "their name"].filter(Boolean) as string[];
+  const photoCount = mf.photos.length;
+  const letterLen = mf.letter.trim().length;
+
+  const jump = useCallback((id: SectionId) => {
+    const el = refs.current[id];
+    const box = scrollRef.current;
+    if (!el || !box) return;
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 64;
+    box.scrollTo({ top, behavior: "smooth" });
+  }, []);
+
+  const save = useCallback(() => {
+    if (missing.length) {
+      setTried(true);
+      jump("names");
+      return;
+    }
+    onSave();
+  }, [missing.length, jump, onSave]);
+
+  const steps: { id: SectionId; label: string; done: boolean; bad?: boolean; note?: string }[] = [
+    { id: "vibe", label: "🎨 Machine", done: true },
+    { id: "names", label: "🏷️ Names", done: missing.length === 0, bad: tried && missing.length > 0 },
+    { id: "cards", label: "📸 Cards", done: photoCount > 0, note: `${photoCount}/${MAX_PHOTOS}` },
+    { id: "shelves", label: "🎰 Shelves", done: yoursCount > 0, note: `${yoursCount}/17` },
+    { id: "gifs", label: "🎞️ Stickers", done: mf.gifs.length > 0, note: `${mf.gifs.length}/${MAX_GIFS}` },
+    { id: "letter", label: "🧾 Receipt", done: letterLen > 0 },
+  ];
+
+  const sec = (id: SectionId) => (el: HTMLElement | null) => {
+    refs.current[id] = el;
+  };
+
   return (
     <AnimatePresence>
       {visible && (
@@ -435,226 +664,324 @@ export default memo(function EditSheet({
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
-            className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-auto lg:flex lg:items-center lg:justify-center lg:inset-0 lg:bg-transparent"
+            className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-none lg:flex lg:items-center lg:justify-center lg:inset-0"
           >
             <div
-              className="w-full max-w-2xl max-h-[86vh] lg:max-h-[90vh] overflow-y-auto rounded-t-3xl lg:rounded-3xl shadow-2xl mx-auto"
-              style={{ background: "#FAFAF7", color: INK }}
+              ref={scrollRef}
+              className="pointer-events-auto w-full max-w-2xl max-h-[88vh] lg:max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-t-3xl lg:rounded-3xl shadow-2xl mx-auto"
+              style={{ background: "#FAFAF7", color: INK, overscrollBehavior: "contain" }}
             >
-              <div className="flex justify-center pt-3 pb-1 sticky top-0 z-10" style={{ background: "#FAFAF7" }}>
-                <div className="w-10 h-1 rounded-full" style={{ background: BORDER }} />
-              </div>
-
-              <div className="px-4 sm:px-5 pb-8 pt-2 space-y-7">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <PenLine size={16} style={{ color: INDIGO }} /> Stock the machine
-                  </h3>
-                  <button onClick={() => setEditMode("preview")} className="p-2 -mr-2" style={{ color: MUTED }} aria-label="Close">
+              {/* sticky header: handle, title, progress rail */}
+              <div className="sticky top-0 z-20 px-4 sm:px-5 pt-3 pb-2.5" style={{ background: "rgba(250,250,247,.97)", borderBottom: `1px solid ${BORDER}` }}>
+                <div className="flex justify-center pb-2">
+                  <div className="w-10 h-1 rounded-full" style={{ background: BORDER }} />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-[19px] font-extrabold leading-tight tracking-tight">Stock your machine 🎰</h3>
+                    <p className="text-[12px]" style={{ color: MUTED }}>Every step changes the preview behind this sheet.</p>
+                  </div>
+                  <button onClick={() => setEditMode("preview")} className="w-11 h-11 -mr-2 grid place-items-center rounded-full shrink-0" style={{ color: MUTED }} aria-label="Close">
                     <X size={20} />
                   </button>
                 </div>
-
-                {/* 01 — the machine itself */}
-                <Section n="01" title="The machine">
-                  <div>
-                    <Label>Name on the front</Label>
-                    <input
-                      value={mf.machineName}
-                      onChange={(e) => updateMf("machineName", e.target.value)}
-                      placeholder="AFFECTION DISPENSER"
-                      className={INPUT_CLS}
-                      style={{ fontFamily: STENCIL, letterSpacing: ".08em", textTransform: "uppercase" }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <Label>You *</Label>
-                      <input
-                        value={mf.senderName}
-                        onChange={(e) => updateMf("senderName", e.target.value)}
-                        placeholder="e.g. Rohan"
-                        className={INPUT_CLS}
-                      />
-                    </div>
-                    <div>
-                      <Label>Them</Label>
-                      <input
-                        value={mf.recipientName}
-                        onChange={(e) => updateMf("recipientName", e.target.value)}
-                        placeholder="e.g. Ananya"
-                        className={INPUT_CLS}
-                      />
-                    </div>
-                  </div>
-                </Section>
-
-                {/* 02 — the shelves */}
-                <Section
-                  n="02"
-                  title="The shelves"
-                  blurb="Already loaded with ours. Tap any slot to put your words in it — change three, change all seventeen, it works either way."
-                >
-                  {/* progress, not a checklist */}
-                  <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: MUTED }}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ background: AMBER }} />
-                      <strong style={{ color: INK }}>{yoursCount}</strong> of 17 in your words
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Lock size={10} /> A1 is yours
-                    </span>
-                    {jam && (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Wrench size={10} style={{ color: PINK }} /> {jam.code} jams
-                      </span>
-                    )}
-                  </div>
-
-                  {/* the glass: three shelves, six slots each */}
-                  <div className="rounded-xl p-2.5 space-y-2.5" style={{ background: "#0f1314", border: "1px solid #2f3436" }}>
-                    {ROWS.map((row) => (
-                      <div key={row}>
-                        <div className="grid grid-cols-6 gap-1">
-                          {COLS.map((col) => {
-                            const code = `${row}${col}`;
-                            const s = byCode.get(code);
-                            if (!s) return <div key={code} />;
-                            return (
-                              <SlotChip
-                                key={code}
-                                slot={s}
-                                open={openCode === code}
-                                yours={isYours(s)}
-                                onClick={() => setOpenCode((c) => (c === code ? null : code))}
-                              />
-                            );
-                          })}
-                        </div>
-                        <div className="h-[3px] mt-1 rounded-[1px]" style={{ background: "#2f3436" }} />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* one editor, in place, under the shelves */}
-                  <AnimatePresence initial={false} mode="wait">
-                    {openSlot && (
-                      <motion.div
-                        key={openSlot.code}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-2.5">
-                          <SlotEditor
-                            slot={openSlot}
-                            onPatch={(patch) => patchSlot(openSlot.code, patch)}
-                            onMakeJam={() => setJam(openSlot.code)}
-                            onReset={() => resetSlot(openSlot.code)}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {!openSlot && (
-                    <p className="text-[11px] text-center py-1" style={{ color: MUTED }}>
-                      Tap a slot above to open it.
-                    </p>
-                  )}
-
-                  {/* the jam, restated where it can be seen without hunting */}
-                  <div
-                    className="rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-                    style={{ background: "#fff0f7", border: `1px solid ${PINK}33` }}
-                  >
-                    <Wrench size={14} style={{ color: PINK }} className="shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11.5px] font-bold" style={{ color: PINK }}>
-                        {jam ? `${jam.code} is the one that jams` : "No slot jams yet"}
-                      </p>
-                      <p className="text-[10.5px] truncate" style={{ color: MUTED }}>
-                        {jam ? jam.label || "—" : "Open a slot and pick one — it's the best moment in here."}
-                      </p>
-                    </div>
-                    {jam && (
-                      <button
-                        type="button"
-                        onClick={() => setOpenCode(jam.code)}
-                        className="text-[11px] font-semibold px-2.5 py-2 rounded-lg shrink-0"
-                        style={{ color: PINK, border: `1px solid ${PINK}44` }}
-                      >
-                        Open
-                      </button>
-                    )}
-                  </div>
-                </Section>
-
-                {/* 03 — credit prompts */}
-                <Section
-                  n="03"
-                  title="What it asks for"
-                  blurb="The machine doesn't take coins. It asks a question, and their answer is the payment. Their answers come back to you, and nobody else."
-                >
-                  <LineList
-                    values={mf.creditPrompts}
-                    onChange={(next) => updateMf("creditPrompts", next)}
-                    placeholder="ONE THING YOU LOVE ABOUT HIM"
-                    addLabel="Add a question"
-                    prefix=">"
-                    uppercase
-                    max={80}
-                  />
-                </Section>
-
-                {/* 04 — idle sign */}
-                <Section n="04" title="The scrolling sign" blurb="What the little amber display says when nothing is happening.">
-                  <LineList
-                    values={mf.displayIdleMessages}
-                    onChange={(next) => updateMf("displayIdleMessages", next)}
-                    placeholder="HAVE A NICE DAY"
-                    addLabel="Add a message"
-                    uppercase
-                    max={40}
-                  />
-                  <div
-                    className="rounded-[2px] px-2.5 py-2 overflow-hidden"
-                    style={{ background: "#0b0b0b", border: "1px solid #2f3436" }}
-                  >
-                    <p
-                      className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis"
-                      style={{ color: "#ffa500", fontFamily: STENCIL, letterSpacing: ".18em" }}
+                <div className="mt-2.5 -mx-4 sm:-mx-5 px-4 sm:px-5 flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                  {steps.map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => jump(st.id)}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11.5px] font-semibold border whitespace-nowrap"
+                      style={{
+                        borderColor: st.bad ? ERROR : st.done ? `${INDIGO}55` : BORDER,
+                        background: st.bad ? "#fdecec" : st.done ? SURFACE_ALT : "#fff",
+                        color: st.bad ? ERROR : st.done ? INDIGO : MUTED,
+                      }}
                     >
-                      {signPreview || "—"}
-                    </p>
-                  </div>
-                </Section>
+                      {st.label}
+                      {st.note && <span className="tabular-nums opacity-80">{st.note}</span>}
+                      {st.done && !st.note && <Check size={11} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                {/* 05 — password */}
-                <Section n="05" title="Lock the link (optional)">
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: MUTED }} />
-                    <input
-                      value={pagePassword}
-                      onChange={(e) => setPagePassword(e.target.value)}
-                      placeholder="Leave empty for no password"
-                      className={INPUT_CLS + " pl-10"}
+              <div className="px-4 sm:px-5 pb-6 pt-4 space-y-8">
+                {tried && missing.length > 0 && (
+                  <div role="alert" className="rounded-2xl px-3.5 py-3 flex gap-2.5 items-start" style={{ background: "#fdecec", border: `1px solid ${ERROR}44` }}>
+                    <AlertCircle size={17} className="shrink-0 mt-0.5" style={{ color: ERROR }} />
+                    <div className="text-[12.5px] leading-snug">
+                      <p className="font-bold" style={{ color: ERROR }}>Almost! Add {missing.join(" and ")} to save.</p>
+                      <p style={{ color: MUTED }}>They go on the machine, the cards and the receipt.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 1 — the machine */}
+                <div ref={sec("vibe")}>
+                  <FormSection emoji="🎨" title="Pick your machine" note="Four machines, four moods. The whole page re-skins — cabinet, cards, receipt.">
+                    <MachinePicker value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+                  </FormSection>
+                </div>
+
+                {/* 2 — names */}
+                <div ref={sec("names")}>
+                  <FormSection emoji="🏷️" title="Whose machine is this?" note="Your name signs every card and the receipt. Theirs is the customer.">
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <label className="block">
+                        <Label>Your name *</Label>
+                        <input
+                          value={mf.senderName}
+                          onChange={(e) => updateMf("senderName", e.target.value.slice(0, 80))}
+                          placeholder="e.g. Rohan"
+                          aria-invalid={tried && missingSender}
+                          className={INPUT_CLS}
+                          style={tried && missingSender ? { borderColor: ERROR, background: "#fff6f6" } : undefined}
+                        />
+                        {tried && missingSender && <span className="block text-[11px] mt-1 font-semibold" style={{ color: ERROR }}>Who stocked it?</span>}
+                      </label>
+                      <label className="block">
+                        <Label>Their name *</Label>
+                        <input
+                          value={mf.recipientName}
+                          onChange={(e) => updateMf("recipientName", e.target.value.slice(0, 80))}
+                          placeholder="e.g. Ananya"
+                          aria-invalid={tried && missingRecipient}
+                          className={INPUT_CLS}
+                          style={tried && missingRecipient ? { borderColor: ERROR, background: "#fff6f6" } : undefined}
+                        />
+                        {tried && missingRecipient && <span className="block text-[11px] mt-1 font-semibold" style={{ color: ERROR }}>Who&apos;s it for?</span>}
+                      </label>
+                    </div>
+                    <label className="block">
+                      <Label>Name on the front of the machine</Label>
+                      <input
+                        value={mf.machineName}
+                        onChange={(e) => updateMf("machineName", e.target.value.slice(0, 60))}
+                        placeholder="AFFECTION DISPENSER"
+                        className={INPUT_CLS}
+                        style={{ fontFamily: STENCIL, letterSpacing: ".08em", textTransform: "uppercase" }}
+                      />
+                      <span className="block text-[10.5px] mt-1" style={{ color: MUTED }}>Deadpan works best — HUG DISPENSER, SNACC UNIT, REGRET VENDOR CO.</span>
+                    </label>
+                  </FormSection>
+                </div>
+
+                {/* 3 — memory cards */}
+                <div ref={sec("cards")}>
+                  <FormSection
+                    emoji="📸"
+                    title="Limited-edition memory cards"
+                    note={`Each photo becomes a 1-of-1 collectible card (M1–M${MAX_PHOTOS}) that drops out of the Card-O-Matic. 5–10 is the sweet spot.`}
+                  >
+                    <div className="rounded-2xl p-3 flex gap-3 items-center" style={{ background: "linear-gradient(115deg,#fff0f7,#efedfd)" }}>
+                      <Sparkles size={18} style={{ color: PINK }} className="shrink-0" />
+                      <p className="text-[11.5px] leading-snug" style={{ color: INK }}>
+                        <strong>Caption</strong> = the card&apos;s name on the front. <strong>Note</strong> = the memory printed on the back.
+                        Tap a photo to crop &amp; zoom, or swap it.
+                      </p>
+                    </div>
+                    <PhotosEditor
+                      photos={mf.photos}
+                      onChange={(v) => updateMf("photos", v)}
+                      captionHint="card name — e.g. the 2am maggi"
+                      noteHint="The back of the card: what happened, what you felt, what you never said…"
                     />
-                  </div>
-                </Section>
+                    {photoCount === 0 && (
+                      <p className="text-[11.5px] text-center" style={{ color: MUTED }}>
+                        No cards yet — the page still works, but the cards are the best bit. 💖
+                      </p>
+                    )}
+                  </FormSection>
+                </div>
 
+                {/* 4 — the shelves */}
+                <div ref={sec("shelves")}>
+                  <FormSection
+                    emoji="🎰"
+                    title="The shelves"
+                    note="Already loaded with ours. Tap any slot to put your words in it — change three or all seventeen."
+                  >
+                    <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: MUTED }}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ background: AMBER }} />
+                        <strong style={{ color: INK }}>{yoursCount}</strong> of 17 in your words
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Lock size={10} /> A1 is yours
+                      </span>
+                      {jam && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Wrench size={10} style={{ color: PINK }} /> {jam.code} jams
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl p-2.5 space-y-2.5" style={{ background: "#0f1314", border: "1px solid #2f3436" }}>
+                      {ROWS.map((row) => (
+                        <div key={row}>
+                          <div className="grid grid-cols-6 gap-1">
+                            {COLS.map((col) => {
+                              const code = `${row}${col}`;
+                              const s = byCode.get(code);
+                              if (!s) return <div key={code} />;
+                              return (
+                                <SlotChip
+                                  key={code}
+                                  slot={s}
+                                  open={openCode === code}
+                                  yours={isYours(s)}
+                                  onClick={() => setOpenCode((c) => (c === code ? null : code))}
+                                />
+                              );
+                            })}
+                          </div>
+                          <div className="h-[3px] mt-1 rounded-[1px]" style={{ background: "#2f3436" }} />
+                        </div>
+                      ))}
+                    </div>
+
+                    <AnimatePresence initial={false} mode="wait">
+                      {openSlot && (
+                        <motion.div
+                          key={openSlot.code}
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-1">
+                            <SlotEditor
+                              slot={openSlot}
+                              onPatch={(patch) => patchSlot(openSlot.code, patch)}
+                              onMakeJam={() => setJam(openSlot.code)}
+                              onReset={() => resetSlot(openSlot.code)}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {!openSlot && (
+                      <p className="text-[11px] text-center py-1" style={{ color: MUTED }}>
+                        Tap a slot above to open it.
+                      </p>
+                    )}
+
+                    <div className="rounded-xl px-3 py-2.5 flex items-center gap-2.5" style={{ background: "#fff0f7", border: `1px solid ${PINK}33` }}>
+                      <Wrench size={14} style={{ color: PINK }} className="shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11.5px] font-bold" style={{ color: PINK }}>
+                          {jam ? `${jam.code} is the one that jams` : "No slot jams yet"}
+                        </p>
+                        <p className="text-[10.5px] truncate" style={{ color: MUTED }}>
+                          {jam ? jam.label || "—" : "Open a slot and pick one — it's the best moment in here."}
+                        </p>
+                      </div>
+                      {jam && (
+                        <button
+                          type="button"
+                          onClick={() => setOpenCode(jam.code)}
+                          className="text-[11px] font-semibold px-3 py-2 rounded-lg shrink-0"
+                          style={{ color: PINK, border: `1px solid ${PINK}44`, minHeight: 36 }}
+                        >
+                          Open
+                        </button>
+                      )}
+                    </div>
+                  </FormSection>
+                </div>
+
+                {/* 5 — credit prompts */}
+                <div ref={sec("prompts")}>
+                  <FormSection
+                    emoji="🪙"
+                    title="What it asks for"
+                    note="It doesn't take coins — it asks a question, and their answer is the payment. Answers come back to you and nobody else."
+                  >
+                    <LineList
+                      values={mf.creditPrompts}
+                      onChange={(next) => updateMf("creditPrompts", next)}
+                      placeholder="ONE THING YOU LOVE ABOUT HIM"
+                      addLabel="Add a question"
+                      prefix=">"
+                      uppercase
+                      max={80}
+                    />
+                  </FormSection>
+                </div>
+
+                {/* 6 — GIF stickers */}
+                <div ref={sec("gifs")}>
+                  <FormSection emoji="🎞️" title="GIF stickers" note="Up to 3. They get taped onto the backs of the cards and onto the receipt.">
+                    <StickerPicker gifs={mf.gifs} onChange={(v) => updateMf("gifs", v)} />
+                  </FormSection>
+                </div>
+
+                {/* 7 — the letter */}
+                <div ref={sec("letter")}>
+                  <FormSection emoji="🧾" title="The secret prize" note="Your main letter. It prints at the foot of their receipt, after every card — the last thing the machine gives them.">
+                    <ReceiptLetter value={mf.letter} onChange={(v) => updateMf("letter", v)} sender={mf.senderName} />
+                    {letterLen === 0 && (
+                      <p className="text-[11px]" style={{ color: MUTED }}>
+                        Leave it empty and the receipt prints a hug coupon instead. (But write it. You know you want to.)
+                      </p>
+                    )}
+                  </FormSection>
+                </div>
+
+                {/* 8 — extras */}
+                <div ref={sec("extras")}>
+                  <FormSection emoji="📟" title="Extras" note="The scrolling sign and an optional password.">
+                    <details className="rounded-xl border px-3 py-2.5" style={{ borderColor: BORDER }}>
+                      <summary className="text-[12.5px] font-bold cursor-pointer select-none" style={{ color: INK }}>
+                        The scrolling sign
+                      </summary>
+                      <div className="pt-3 space-y-2.5">
+                        <LineList
+                          values={mf.displayIdleMessages}
+                          onChange={(next) => updateMf("displayIdleMessages", next)}
+                          placeholder="HAVE A NICE DAY"
+                          addLabel="Add a message"
+                          uppercase
+                          max={40}
+                        />
+                        <div className="rounded-[4px] px-2.5 py-2 overflow-hidden" style={{ background: "#0b0b0b", border: "1px solid #2f3436" }}>
+                          <p className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: "#ffa500", fontFamily: STENCIL, letterSpacing: ".18em" }}>
+                            {signPreview || "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </details>
+                    <div>
+                      <Label>Lock the link (optional)</Label>
+                      <div className="relative">
+                        <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: MUTED }} />
+                        <input
+                          value={pagePassword}
+                          onChange={(e) => setPagePassword(e.target.value)}
+                          placeholder="Leave empty for no password"
+                          className={INPUT_CLS + " pl-10"}
+                        />
+                      </div>
+                    </div>
+                  </FormSection>
+                </div>
+              </div>
+
+              {/* sticky save */}
+              <div className="sticky bottom-0 z-20 px-4 sm:px-5 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))]" style={{ background: "linear-gradient(180deg, rgba(250,250,247,0), #FAFAF7 30%)" }}>
                 <button
-                  onClick={onSave}
-                  disabled={saving || !mf.senderName.trim()}
-                  className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                  style={{ background: LIME, color: INK }}
+                  onClick={save}
+                  disabled={saving}
+                  className="w-full py-3.5 rounded-2xl font-extrabold text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                  style={{ background: LIME, color: INK, minHeight: 52 }}
                 >
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save &amp; try it</>}
+                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save &amp; try your machine</>}
                 </button>
-                <p className="text-center text-[11px] flex items-center justify-center gap-1" style={{ color: MUTED }}>
-                  <Check size={10} /> Publish from the preview to get your link
+                <p className="text-center text-[11px] mt-1.5 flex items-center justify-center gap-1" style={{ color: MUTED }}>
+                  <Check size={10} /> {photoCount} card{photoCount === 1 ? "" : "s"} · {letterLen ? "letter ✓" : "no letter yet"} · {pickVendTheme(mf.theme).name} — publish from the preview
                 </p>
               </div>
             </div>

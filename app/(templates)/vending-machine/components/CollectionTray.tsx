@@ -44,7 +44,7 @@ export default function CollectionTray({
         height: TRAY_H,
         perspective: 260,
         background: "linear-gradient(180deg,#0a1719 0%,#050e0f 62%,#0a1719 100%)",
-        border: "1px solid #061214",
+        border: "1px solid var(--vm-edge)",
         boxShadow: "inset 0 6px 14px rgba(0,0,0,.9), inset 0 -2px 0 rgba(255,255,255,.04)",
         overflow: "hidden",
       }}
@@ -159,8 +159,8 @@ export default function CollectionTray({
             transformOrigin: "50% 0%",
             transformStyle: "preserve-3d",
             background:
-              "linear-gradient(180deg, rgba(28,52,54,.94) 0%, rgba(16,34,36,.86) 60%, rgba(10,24,26,.72) 100%)",
-            borderBottom: "1px solid #0a1a1c",
+              "linear-gradient(180deg, color-mix(in srgb, var(--vm-body-darker) 94%, transparent) 0%, color-mix(in srgb, var(--vm-body-darker) 80%, #000 6%) 60%, color-mix(in srgb, var(--vm-body-darker) 62%, transparent) 100%)",
+            borderBottom: "1px solid var(--vm-edge)",
             boxShadow: "0 4px 10px rgba(0,0,0,.65)",
             zIndex: 6,
           } as React.CSSProperties
@@ -189,7 +189,8 @@ export default function CollectionTray({
             fontFamily: OSWALD,
             fontSize: 7,
             letterSpacing: "0.28em",
-            color: "rgba(217,230,227,.5)",
+            color: "#fff",
+            opacity: 0.6,
           }}
         >
           PUSH

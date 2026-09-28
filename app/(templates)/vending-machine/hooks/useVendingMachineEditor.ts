@@ -7,7 +7,8 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { type VendingData, type EditMode, DEMO_DATA, vendingDataToBody, dbToVendingData } from "../components/types";
+import { type VendingData, type EditMode, DEMO_DATA, vendingDataToBody, dbToVendingData, withKitDefaults } from "../components/types";
+import { pickVendTheme } from "../components/themes";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -141,10 +142,12 @@ export function useVendingMachineEditor() {
     // the preview so the machine is already stocked with their slots.
     const draft = readDraft();
     if (draft?.data) {
-      setMf(draft.data);
+      // Drafts saved before the love kit existed have no photos/gifs/letter/theme.
+      const d = withKitDefaults(draft.data);
+      setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(normalise(draft.data));
+        setContent(normalise(d));
         setIsPersonalized(true);
         setEditMode("preview");
         bumpPreview();
@@ -226,10 +229,39 @@ export function useVendingMachineEditor() {
     [],
   );
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
+    // A fresh form keeps the machine's eighteen slots as a starting point (they
+    // are meant to be rewritten in place) and the machine's own GIF stickers,
+    // but never the demo couple's names, photos or letter — and it keeps the
+    // vibe they were just previewing.
     setMf(isPersonalized
       ? { ...content, slots: content.slots.map((s) => ({ ...s })) }
-      : { ...DEMO_DATA, slots: DEMO_DATA.slots.map((s) => ({ ...s })) });
+      : {
+          ...DEMO_DATA,
+          senderName: "",
+          recipientName: "",
+          slots: DEMO_DATA.slots.map((s) => ({ ...s })),
+          photos: [],
+          letter: "",
+          theme: content.theme,
+        });
     // The starter goes first, but only while there is a schema to fill from and
     // only until the sender has said no once. Everything else opens the form
     // exactly as it did before.
@@ -248,9 +280,13 @@ export function useVendingMachineEditor() {
     setEditMode("manual");
   }, [content]);
 
-  // Save (locally) & jump to preview
+  // Save (locally) & jump to preview. The sheet itself shows exactly what is
+  // missing and scrolls to it; this is the backstop.
   const handleSave = useCallback(() => {
-    if (!mf.senderName.trim()) { pushToast({ type: "info", title: "Put your name on the machine first" }); return; }
+    if (!mf.senderName.trim() || !mf.recipientName.trim()) {
+      pushToast({ type: "info", title: "Names first 🎰", message: "The machine needs to know who it's from and who it's for" });
+      return;
+    }
     const next = normalise(mf);
     setContent(next);
     setIsPersonalized(true);
@@ -420,11 +456,11 @@ export function useVendingMachineEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "There's a machine here. Punch a code. 🎰",
-      accent: "#0f766e",
+      accent: pickVendTheme(content.theme).colors.a1,
       senderName: content.senderName,
       slug: "vending-machine",
     });
-  }, [shareUrl, content.senderName, pagePassword]);
+  }, [shareUrl, content.senderName, content.theme, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -436,7 +472,7 @@ export function useVendingMachineEditor() {
 
     fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf, setMf,
+    setEditMode, setPagePassword, updateMf, setMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

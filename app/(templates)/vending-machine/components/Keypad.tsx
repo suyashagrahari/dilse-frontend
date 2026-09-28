@@ -60,8 +60,8 @@ export default function Keypad({ onKey, disabled = false }: KeypadProps) {
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: KEY_GAP,
         padding: 7,
-        background: "linear-gradient(180deg,#173437 0%,#0f2528 100%)",
-        border: "1px solid #0a1a1c",
+        background: `linear-gradient(180deg, ${C.well} 0%, ${C.well2} 100%)`,
+        border: `1px solid ${C.edge}`,
         boxShadow: "inset 0 2px 6px rgba(0,0,0,.65)",
         opacity: disabled ? 0.62 : 1,
       }}
@@ -98,15 +98,15 @@ export default function Keypad({ onKey, disabled = false }: KeypadProps) {
               fontWeight: 600,
               fontSize: wide ? 12 : 20,
               letterSpacing: wide ? "0.1em" : "0.04em",
-              color: worn ? "#f2f7f5" : C.ink,
+              color: C.keyInk,
               background: worn
-                ? "linear-gradient(180deg,#3d5f60 0%,#2a4749 60%,#22393b 100%)"
-                : "linear-gradient(180deg,#2d4a4c 0%,#1e3739 62%,#182c2e 100%)",
-              border: "1px solid #08171a",
+                ? `linear-gradient(180deg, ${C.wornHi} 0%, ${C.wornLo} 100%)`
+                : `linear-gradient(180deg, ${C.keyHi} 0%, ${C.keyLo} 100%)`,
+              border: `1px solid ${C.edge}`,
               borderRadius: 2,
               boxShadow:
                 "inset 0 1px 0 rgba(255,255,255,.14), inset 0 -2px 4px rgba(0,0,0,.5), 0 1px 0 rgba(0,0,0,.5)",
-              textShadow: "0 1px 0 rgba(0,0,0,.6)",
+              textShadow: C.keyShadow,
               cursor: disabled ? "default" : "pointer",
               touchAction: "manipulation",
               userSelect: "none",
