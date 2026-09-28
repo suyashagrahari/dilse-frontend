@@ -251,12 +251,6 @@ export default function AdminDraftsPage() {
           .ad-controls .adk-search input { font-size: 16px; }
         }
 
-        .ad-hero-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px 14px; align-items: end; }
-        .ad-hero-grid > :first-child { grid-column: 1 / -1; }
-        @media (min-width: 640px) {
-          .ad-hero-grid { grid-template-columns: minmax(0,1.4fr) repeat(3, minmax(0,1fr)); }
-          .ad-hero-grid > :first-child { grid-column: auto; }
-        }
         .ad-controls { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; margin-bottom: 10px; }
         .ad-controls > .adk-search { grid-column: 1 / -1; }
         @media (min-width: 720px) {
@@ -285,22 +279,10 @@ export default function AdminDraftsPage() {
         @media (prefers-reduced-motion: reduce) { .ad-row, .ad-row-btn { transition: none } .ad-row:hover { transform: none } }
       `}</style>
 
-      {/* SES not configured is not a subtle failure — say it before anybody
-          writes an email that cannot be sent. */}
-      {!sesOn && (
-        <div style={{ marginBottom: 10 }}>
-          <Warn>
-            <strong>SES is not configured on this deployment.</strong> Drafts and reasons work, and
-            you can write emails, but sending is disabled until <code>SES_ACCESS_KEY_ID</code> and{" "}
-            <code>SES_SECRET_ACCESS_KEY</code> are set.
-          </Warn>
-        </div>
-      )}
-
       {/* ── Summary ─────────────────────────────────────────────────────── */}
       {stats && (
         <Hero>
-          <div className="ad-hero-grid">
+          <div className="adk-hero-grid">
             <HeroStat big label="Unpublished drafts" value={stats.totalDrafts} />
             <HeroStat label="Stopped by price" value={stats.priceBlocked} tone="#ffb4a8" />
             <HeroStat label="Free, unfinished" value={stats.freeStalled} tone="#ffe3a3" />
@@ -335,6 +317,18 @@ export default function AdminDraftsPage() {
             </div>
           ) : null}
         </Hero>
+      )}
+
+      {/* SES not configured is not a subtle failure — say it before anybody
+          writes an email that cannot be sent. */}
+      {!sesOn && (
+        <div style={{ marginBottom: 10 }}>
+          <Warn>
+            <strong>SES is not configured on this deployment.</strong> Drafts and reasons work, and
+            you can write emails, but sending is disabled until <code>SES_ACCESS_KEY_ID</code> and{" "}
+            <code>SES_SECRET_ACCESS_KEY</code> are set.
+          </Warn>
+        </div>
       )}
 
       {/* ── Controls ────────────────────────────────────────────────────── */}

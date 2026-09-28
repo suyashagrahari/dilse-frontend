@@ -7,9 +7,9 @@
 // chip picker and a soft fade-up on entry. The navbar and page background come
 // from the layout (`AdminNav`); a page renders `<AdminPage>` and fills it.
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { motion } from "framer-motion";
-import { Loader2, Search, X } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Info, Loader2, Search, X } from "lucide-react";
 
 export const A = {
   ink: "#2a0a0e",
@@ -56,9 +56,16 @@ export function Num({ value, style }: { value: number; style?: CSSProperties }) 
   return <span style={style}>{fmtNum(useCountUp(value))}</span>;
 }
 
+// What a page is and what it is for. `AdminPage` provides it; the maroon
+// `Hero` reads it and shows the title with an ⓘ that opens the description,
+// so the explanation is one tap away instead of a paragraph above every page.
+interface PageMeta { title: ReactNode; subtitle?: ReactNode; icon?: ReactNode; actions?: ReactNode }
+const PageMetaCtx = createContext<PageMeta | null>(null);
+
 /**
- * The page frame: max width, gutters, and the title block. `actions` sit to the
- * right of the title on desktop and wrap under it on a phone.
+ * The page frame: max width and gutters. The title, description and actions
+ * are not drawn here — they appear in the page's maroon `Hero` header. A page
+ * without a Hero passes `head` to get a slim header strip instead.
  */
 export function AdminPage({
   title,
@@ -67,6 +74,7 @@ export function AdminPage({
   actions,
   children,
   width = 1280,
+  head = false,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -74,34 +82,63 @@ export function AdminPage({
   actions?: ReactNode;
   children: ReactNode;
   width?: number;
+  head?: boolean;
 }) {
   return (
-    <div className="adk-page" style={{ maxWidth: width }}>
-      <style>{ADMIN_KIT_CSS}</style>
-      <motion.header
-        className="adk-head"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {icon && (
-          <motion.span
-            className="adk-head-ic"
-            initial={{ scale: 0.6, rotate: -12, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.05 }}
-          >
-            {icon}
-          </motion.span>
-        )}
-        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-          <h1 className="adk-title">{title}</h1>
-          {subtitle && <p className="adk-sub">{subtitle}</p>}
+    <PageMetaCtx.Provider value={{ title, subtitle, icon, actions }}>
+      <div className="adk-page" style={{ maxWidth: width }}>
+        <style>{ADMIN_KIT_CSS}</style>
+        {head && <Hero compact />}
+        {children}
+      </div>
+    </PageMetaCtx.Provider>
+  );
+}
+
+/**
+ * The header row of a maroon card: icon, page title, actions and the ⓘ that
+ * expands the page description. `Hero` renders it from the page's meta; custom
+ * maroon cards (analytics, the profile) render it themselves.
+ */
+export function HeroHead({ title, subtitle, icon, actions }: PageMeta) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="adk-hh">
+        {icon && <span className="adk-hh-ic">{icon}</span>}
+        <h1 className="adk-hh-title">{title}</h1>
+        <div className="adk-hh-right">
+          {actions}
+          {subtitle && (
+            <button
+              type="button"
+              className="adk-hh-info"
+              data-on={open ? "1" : "0"}
+              aria-expanded={open}
+              aria-label={open ? "Hide what this page is" : "What is this page?"}
+              title="What is this page?"
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <X size={14} /> : <Info size={15} />}
+            </button>
+          )}
         </div>
-        {actions && <div className="adk-actions">{actions}</div>}
-      </motion.header>
-      {children}
-    </div>
+      </div>
+      <AnimatePresence initial={false}>
+        {open && subtitle && (
+          <motion.div
+            key="about"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="adk-hh-about">{subtitle}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -148,32 +185,47 @@ export function Panel({
   );
 }
 
-/** The maroon strip for a page's headline numbers. */
-export function Hero({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+/**
+ * The maroon card at the top of a page: the page header (title + ⓘ) and its
+ * headline numbers. Put `HeroStat`s in `<div className="adk-hero-grid">`.
+ */
+export function Hero({ children, style, compact }: { children?: ReactNode; style?: CSSProperties; compact?: boolean }) {
+  const meta = useContext(PageMetaCtx);
   return (
     <motion.div
       className="adk-hero"
+      data-compact={compact ? "1" : "0"}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       style={style}
     >
       <span aria-hidden className="adk-hero-shine" />
-      <div style={{ position: "relative" }}>{children}</div>
+      <span aria-hidden className="adk-hero-orb" />
+      <div style={{ position: "relative" }}>
+        {meta && <HeroHead {...meta} />}
+        {children}
+      </div>
     </motion.div>
   );
 }
 
-/** One number inside a Hero. */
+/** One number tile inside a Hero's `.adk-hero-grid`. */
 export function HeroStat({ label, value, sub, big, tone }: { label: string; value: number | string; sub?: ReactNode; big?: boolean; tone?: string }) {
   return (
-    <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: big ? 40 : 22, fontWeight: 800, lineHeight: 1, color: tone || (big ? "#ffe3a3" : "#fff"), fontFamily: big ? "'Playfair Display',serif" : undefined }}>
+    <motion.div
+      className="adk-hs"
+      data-big={big ? "1" : "0"}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: big ? 0.05 : 0.12 }}
+    >
+      <div className="adk-hs-label">{label}</div>
+      <div className="adk-hs-val" style={tone ? { color: tone } : undefined}>
         {typeof value === "number" ? <Num value={value} /> : value}
       </div>
-      <div style={{ fontSize: 10.5, fontWeight: 700, opacity: 0.72, marginTop: 4, letterSpacing: ".03em" }}>{label}</div>
-      {sub && <div style={{ fontSize: 10.5, marginTop: 3, opacity: 0.85 }}>{sub}</div>}
-    </div>
+      {sub && <div className="adk-hs-sub">{sub}</div>}
+    </motion.div>
   );
 }
 
@@ -326,18 +378,45 @@ export const ADMIN_KIT_CSS = `
   @keyframes adk-shine { from { transform: translateX(-120%) rotate(12deg); } to { transform: translateX(320%) rotate(12deg); } }
   .adk-page { margin: 0 auto; padding: 12px 12px 110px; }
   @media (min-width: 768px) { .adk-page { padding: 18px 24px 64px; } }
-  .adk-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 14px; }
-  .adk-head-ic { width: 40px; height: 40px; flex: none; border-radius: 13px; display: grid; place-items: center; color: #ffe3a3;
-    background: radial-gradient(120% 120% at 0% 0%, #6b1a22, #3d0c11); box-shadow: 0 10px 22px -12px rgba(61,12,17,.8); }
-  .adk-title { margin: 0; font-size: clamp(20px, 4.6vw, 26px); font-weight: 800; color: ${A.ink}; letter-spacing: -0.02em; font-family: 'Playfair Display', serif; line-height: 1.1; }
-  .adk-sub { margin: 3px 0 0; font-size: 12.5px; line-height: 1.45; color: ${A.soft}; }
   .adk-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .adk-panel { background: ${A.card}; border: 1px solid ${A.edge}; border-radius: 16px; backdrop-filter: blur(8px); min-width: 0; }
   .adk-panel-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; min-width: 0; }
   .adk-panel-title { margin: 0; font-size: 13.5px; font-weight: 800; color: ${A.ink}; white-space: nowrap; }
   .adk-panel-note { font-size: 11px; color: ${A.muted}; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .adk-hero { position: relative; overflow: hidden; border-radius: 20px; padding: 16px; color: #f5ede6; margin-bottom: 12px;
+  .adk-hero { position: relative; overflow: hidden; border-radius: 20px; padding: 14px; color: #f5ede6; margin-bottom: 12px;
     background: radial-gradient(120% 140% at 0% 0%, #6b1a22 0%, #3d0c11 55%, #240609 100%); box-shadow: 0 18px 40px -22px rgba(61,12,17,.8); }
+  @media (min-width: 768px) { .adk-hero { padding: 16px 18px; } }
+  .adk-hero[data-compact="1"] { padding: 10px 12px; }
+  .adk-hero[data-compact="1"] .adk-hh { margin-bottom: 0; }
+  .adk-hero-orb { position: absolute; right: -60px; top: -80px; width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,.22), transparent 65%); pointer-events: none; }
+  .adk-hh { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; min-width: 0; }
+  .adk-hh-ic { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; color: #3d0c11;
+    background: linear-gradient(135deg, #ffe3a3, #c9a84c); box-shadow: 0 6px 14px -6px rgba(0,0,0,.5); }
+  .adk-hh-ic svg { width: 16px; height: 16px; }
+  .adk-hh-title { margin: 0; flex: 1; min-width: 0; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; line-height: 1.15;
+    color: #fff6e6; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .adk-hh-right { flex: none; display: flex; align-items: center; gap: 6px; }
+  .adk-hh-right .adk-btn { height: 30px; padding: 0 10px; font-size: 11.5px; border-radius: 9px; background: rgba(255,255,255,.1); color: #fff6e6; border: 1px solid rgba(255,236,190,.2); }
+  .adk-hh-right .adk-btn[data-v="gold"] { background: linear-gradient(135deg, #ffe3a3, #c9a84c); color: #3d0c11; border: none; }
+  .adk-hh-info { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #ffe3a3;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,236,190,.25); transition: background .2s, transform .2s; }
+  .adk-hh-info:hover { background: rgba(255,236,190,.16); transform: scale(1.06); }
+  .adk-hh-info[data-on="1"] { background: #ffe3a3; color: #3d0c11; }
+  .adk-hh-about { margin: -2px 0 12px; padding: 10px 12px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; color: #f5e6d6;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,236,190,.14); }
+  .adk-hh-about strong, .adk-hh-about b { color: #ffe3a3; }
+  .adk-hero-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  @media (min-width: 760px) { .adk-hero-grid { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+  .adk-hs { min-width: 0; padding: 10px 12px; border-radius: 13px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,236,190,.12);
+    display: flex; flex-direction: column; gap: 4px; transition: background .2s, transform .2s; }
+  .adk-hs:hover { background: rgba(255,255,255,.1); transform: translateY(-1px); }
+  .adk-hs[data-big="1"] { background: linear-gradient(135deg, rgba(255,227,163,.18), rgba(201,168,76,.08)); border-color: rgba(255,227,163,.3); }
+  .adk-hs-label { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,236,210,.7);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .adk-hs-val { font-size: 24px; font-weight: 800; line-height: 1; color: #fff; font-family: 'Playfair Display', serif; }
+  .adk-hs[data-big="1"] .adk-hs-val { color: #ffe3a3; font-size: 28px; }
+  .adk-hs-sub { font-size: 10.5px; line-height: 1.35; color: rgba(255,236,210,.78); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .adk-hero-shine { position: absolute; top: -40px; bottom: -40px; width: 60px; background: linear-gradient(90deg, transparent, rgba(255,236,190,.14), transparent); animation: adk-shine 5s ease-in-out infinite; }
   .adk-stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
   @media (min-width: 900px) { .adk-stats { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; } }
@@ -366,11 +445,17 @@ export const ADMIN_KIT_CSS = `
   .adk-empty-ic { width: 46px; height: 46px; margin: 0 auto; border-radius: 15px; display: grid; place-items: center; color: ${A.gold}; background: rgba(201,168,76,.14); }
   .adk-grid2 { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
   @media (min-width: 900px) { .adk-grid2 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
-  .adk-card { position: relative; overflow: hidden; display: block; width: 100%; text-align: left; font: inherit; background: ${A.paper}; border: 1px solid ${A.edge}; border-radius: 14px;
-    padding: 11px 12px; transition: transform .18s, box-shadow .18s, border-color .18s; min-width: 0; }
+  /* List card: warm paper, soft maroon shadow, gold hairline + sheen on hover. */
+  .adk-card { position: relative; overflow: hidden; display: block; width: 100%; text-align: left; font: inherit; min-width: 0;
+    background: linear-gradient(180deg, #fffdfb, #fff7ef); border: 1px solid ${A.edge}; border-radius: 15px; padding: 11px 12px;
+    box-shadow: 0 1px 0 rgba(61,12,17,.03), 0 8px 18px -14px rgba(61,12,17,.35);
+    transition: transform .18s, box-shadow .18s, border-color .18s; }
+  .adk-card::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,236,190,.35), transparent); transform: skewX(-12deg); opacity: 0; transition: none; }
   button.adk-card, a.adk-card { cursor: pointer; }
-  button.adk-card:hover, a.adk-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px -16px rgba(61,12,17,.45); border-color: rgba(201,168,76,.55); }
-  .adk-card[data-on="1"] { border-color: ${A.maroon}; box-shadow: 0 8px 20px -12px rgba(61,12,17,.5); }
+  button.adk-card:hover, a.adk-card:hover, .adk-card[data-hover="1"]:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -16px rgba(61,12,17,.5); border-color: rgba(201,168,76,.6); }
+  button.adk-card:hover::after, a.adk-card:hover::after { opacity: 1; left: 120%; transition: left .7s ease, opacity .2s; }
+  .adk-card[data-on="1"] { border-color: ${A.maroon}; box-shadow: 0 0 0 1.5px ${A.maroon} inset, 0 14px 28px -16px rgba(61,12,17,.55); }
   .adk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 11px; font-size: 12.5px; font-weight: 800; cursor: pointer;
     border: 1px solid ${A.edge}; background: #fff; color: ${A.ink}; transition: transform .15s, box-shadow .15s, opacity .15s; white-space: nowrap; }
   .adk-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 18px -12px rgba(61,12,17,.5); }
