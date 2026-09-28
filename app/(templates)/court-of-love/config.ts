@@ -8,19 +8,19 @@ export const config: TemplatePageConfig = {
   category: "gf",
   title: "The Court of Love",
   description:
-    "Put them on trial in the cutest way — 10 funny questions, a penguin judge, and a signed stamp paper if they win the case.",
+    "Put them on trial in the cutest way — 10 funny questions, a penguin judge, your photos as Exhibit A, B, C, a wax-sealed final judgement, and a signed stamp paper if they win.",
   emoji: "⚖️",
   color: "from-violet-500 to-pink-500",
   previewText: "You have been summoned to The Court of Love ⚖️",
   bodyText:
-    "Ten questions. One penguin judge. Win the case and take home a signed ₹100 stamp paper certifying you're the best partner.",
+    "Ten questions. One penguin judge. Your memories filed as evidence, a sealed judgement read after the gavel — and a signed ₹100 stamp paper for the winner.",
   bgGradient: "from-violet-50 via-pink-50 to-white",
   coverImage: templateMedia("court-of-love", "cover.jpg"),
   tabs: [
     { id: "summons", icon: Scale, label: "Summons" },
     { id: "session", icon: Gavel, label: "Session" },
     { id: "hearings", icon: HelpCircle, label: "Questions" },
-    { id: "verdict", icon: Heart, label: "Verdict" },
+    { id: "verdict", icon: Heart, label: "Verdict & evidence" },
     { id: "stamp", icon: Stamp, label: "Stamp Paper" },
   ],
   navActiveColor: "text-violet-600",
@@ -34,7 +34,7 @@ export const config: TemplatePageConfig = {
     },
     letter: {
       headerEmoji: "💌",
-      title: "The Sealed Letter",
+      title: "The Final Judgement",
       greeting: "To the accused,",
       decorEmojis: ["⚖️", "💗", "📜"],
     },

@@ -9,9 +9,11 @@ import { useVendingMachineEditor } from "./hooks/useVendingMachineEditor";
 import VendingMachineTemplate from "./components/VendingMachineTemplate";
 import EditSheet from "./components/EditSheet";
 import StoryStarter from "@/components/story/StoryStarter";
+import { ThemeDock } from "../_love/LoveKit";
+import { VEND_THEMES, pickVendTheme } from "./components/themes";
 
-/* Chrome sits over a dark, worn machine, so the pills are dark glass and the
-   one primary action is the SubhSandesh lime CTA. */
+/* Chrome floats over every theme (two of them light), so the pills are dark
+   glass and the one primary action is the SubhSandesh lime CTA. */
 const LIME = "#C6FF3D";
 const INK = "#0E0E12";
 const PAGE_BG = "#12181a";
@@ -25,6 +27,7 @@ const PILL: React.CSSProperties = {
 
 function VendingMachinePageInner() {
   const e = useVendingMachineEditor();
+  const theme = pickVendTheme(e.displayData.theme);
 
   // Three booleans drive one button: Create → Publish → Share.
   const topAction = e.showShare
@@ -34,7 +37,7 @@ function VendingMachinePageInner() {
       : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
 
   return (
-    <div style={{ minHeight: "100dvh", position: "relative", background: PAGE_BG }}>
+    <div style={{ minHeight: "100dvh", position: "relative", background: theme.colors.base }}>
       {/* Floating top bar */}
       <div
         className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2"
@@ -70,6 +73,11 @@ function VendingMachinePageInner() {
       {/* Live demo preview. Keyed so every save/publish restocks the machine:
           credit back to ₹0.00, tray emptied, sold-out flags reset. */}
       <VendingMachineTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+
+      {/* Live theme switcher — hidden while the form is open (the form has its own picker). */}
+      {e.editMode !== "manual" && (
+        <ThemeDock themes={VEND_THEMES} value={e.content.theme} onChange={e.setTheme} />
+      )}
 
       {/* Edit sheet */}
       <EditSheet

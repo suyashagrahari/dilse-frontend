@@ -62,26 +62,46 @@ export const MIN_SCALE = MIN_TAP_PX / KEY_H; // 0.846…
 export const MAX_SCALE = 1.35;
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
-// Body colour, amber display, green credit, one red. Nothing else.
+// Body colour, LED display, credit green, one alert red. Every value is a
+// handle onto the active theme's machine skin (themes.ts → machineVars), so
+// nothing here knows which machine it is painting.
 
 export const C = {
-  body: "#2d5c5c",
-  bodyDark: "#1d4144",
-  bodyDarker: "#132e31",
-  bodyLight: "#3d7370",
-  edge: "#0d1f21",
-  ink: "#d9e6e3",
-  inkDim: "#8fa8a5",
-  glass: "#08191b",
-  shelf: "#16292b",
-  amber: "#ffa500",
-  amberDim: "rgba(255,165,0,0.09)",
-  green: "#3dff8b",
-  greenDim: "rgba(61,255,139,0.10)",
-  red: "#c0392b",
+  body: "var(--vm-body)",
+  bodyDark: "var(--vm-body-dark)",
+  bodyDarker: "var(--vm-body-darker)",
+  bodyLight: "var(--vm-body-light)",
+  edge: "var(--vm-edge)",
+  ink: "var(--vm-ink)",
+  inkDim: "var(--vm-ink-dim)",
+  glass: "var(--vm-glass)",
+  glassHi: "var(--vm-glass-hi)",
+  well: "var(--vm-well)",
+  well2: "var(--vm-well-2)",
+  plateHi: "var(--vm-plate-hi)",
+  plateLo: "var(--vm-plate-lo)",
+  keyHi: "var(--vm-key-hi)",
+  keyLo: "var(--vm-key-lo)",
+  keyInk: "var(--vm-key-ink)",
+  keyShadow: "var(--vm-key-shadow)",
+  wornHi: "var(--vm-worn-hi)",
+  wornLo: "var(--vm-worn-lo)",
+  sign: "var(--vm-sign)",
+  signGlow: "var(--vm-sign-glow)",
+  amber: "var(--vm-led)",
+  amberDim: "var(--vm-led-dim)",
+  green: "var(--vm-credit)",
+  red: "var(--vm-alert)",
   paper: "#faf7ee",
   paperInk: "#22201b",
 } as const;
+
+/** `color-mix` shorthand — a theme colour at a given opacity. */
+export const alpha = (color: string, pct: number): string =>
+  `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
+/** Pixel face for codes, rarity and printer labels. */
+export const PIXEL = "var(--font-vm-pixel), 'Courier New', monospace";
 
 export const OSWALD = "var(--font-oswald), 'Oswald', 'Arial Narrow', sans-serif";
 export const MONO = "var(--font-courier-prime), 'Courier New', monospace";

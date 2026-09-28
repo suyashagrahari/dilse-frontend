@@ -2,53 +2,45 @@
 
 // ─── PaymentFlow — settle the challan ────────────────────────────────────────
 //
-// Order summary → mode of payment → 4.5s of processing → a stamped receipt.
-// The sequence, its cadence, its back-guard and the tonal break at the end are
-// lifted wholesale from the recharge template's Payment/Processing/Receipt
-// screens; only the chrome changes, from a telecom app to office stationery.
+// Statement of dues → mode of payment → 4.5s of processing → a stamped receipt,
+// then the sincere message and the way on to the CCTV evidence.
 //
 // ── THE ONE RULE THAT BREAKS THE PAGE ────────────────────────────────────────
 //
 // `data.totalFine` is FREE TEXT. It is "one date". Nothing here calls Number(),
 // parseFloat(), toFixed(), toLocaleString() or Intl.NumberFormat on it, and
 // nothing sums `offences[].fine` into it. The total is a string that is COPIED
-// from the summary to the receipt, character for character. `Number("one date")`
-// is NaN, and "Amount ..... NaN" is the single bug that stops the joke working.
+// from the summary to the receipt, character for character.
 //
 // ── EDGE CASES THIS FILE OWNS ────────────────────────────────────────────────
 //
-//   RAPID TAPS. `startedRef` latches on the first PAY NOW. Ten taps in 200ms
-//   start one processing sequence, not ten — a ref, not state, because two taps
-//   inside one React batch would both read the same stale state value.
+//   RAPID TAPS. `startedRef` latches on the first PAY NOW — a ref, not state,
+//   because two taps inside one React batch would both read the same state.
 //
 //   BACK DURING PROCESSING. A guard entry is pushed onto the history stack when
 //   processing mounts; the pop is caught, the screen says so, and the entry is
-//   pushed straight back. It is deliberately LEFT on the stack afterwards, so a
-//   back press from the receipt is swallowed by that entry instead of unwinding
-//   into the payment sheet and re-running a settlement that already happened.
+//   pushed straight back. It is deliberately LEFT on the stack afterwards.
 //
 //   BACKGROUNDING. The timer pauses on `visibilitychange` and resumes on the
-//   line it was on. Returning to "Almost there…" three lines late reads as a
-//   hang.
+//   line it was on.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CH } from "./theme";
+
+import { CandyButton, GhostButton, GROTESK } from "../../_love/LoveKit";
+import { V } from "../../_love/theme";
 import { Stamp } from "./Stamp";
+import { CH, chInk } from "./theme";
 import type { ChallanData } from "./types";
+import { Caption, NextStep, PaperCard, SerifMessage, Spinner, useReducedMotion, type NextAction } from "./flowKit";
 
-/* ── Local tone, all derived from the two theme constants ─────────────────── */
+const RULE = chInk(22);
+const HAIRLINE = chInk(13);
 
-const RULE = "rgba(17,17,17,0.22)";
-const HAIRLINE = "rgba(17,17,17,0.13)";
-const SOFT = "rgba(17,17,17,0.62)";
-const FAINT = "rgba(17,17,17,0.42)";
-const WASH = "rgba(17,17,17,0.035)";
-
-/** 900ms apiece, five lines, 4.5 seconds. Matches recharge. Do not shorten. */
+/** 900ms apiece, five lines, 4.5 seconds. Do not shorten. */
 const STEP_MS = 900;
 
 const LINES = [
-  "Connecting to treasury…",
+  "Connecting to the treasury of feelings…",
   "Verifying challan…",
   "Do not press back or refresh",
   "Processing settlement…",
@@ -57,61 +49,21 @@ const LINES = [
 
 type Step = "summary" | "processing" | "receipt";
 
-/* ── Motion ───────────────────────────────────────────────────────────────── */
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const on = () => setReduced(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return reduced;
-}
-
-/* ── Receipt serial ───────────────────────────────────────────────────────────
- *
- * "TXN14032026004402" — TXN, then the issue date as ddmmyyyy, then six digits
- * derived from the challan number. Every part is computed from `data`, so the
- * server and the client render the same string and the receipt does not change
- * its own serial on a re-render. No Date.now(), no Math.random().
+/**
+ * "TXN14032026004402" — TXN, the issue date as ddmmyyyy (read textually, so no
+ * timezone can move it), then six digits derived from the challan number.
  */
 function transactionId(data: ChallanData): string {
-  const d = new Date(data.issuedAt);
-  const valid = !Number.isNaN(d.getTime());
-  const dd = valid ? String(d.getDate()).padStart(2, "0") : "01";
-  const mm = valid ? String(d.getMonth() + 1).padStart(2, "0") : "01";
-  const yyyy = valid ? String(d.getFullYear()) : "2026";
-
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(data.issuedAt || "");
+  const date = m ? `${m[3]}${m[2]}${m[1]}` : "01012026";
   let h = 7;
   const src = `${data.challanNo}|${data.accused.vehicleNo}`;
   for (let i = 0; i < src.length; i += 1) h = (h * 33 + src.charCodeAt(i)) % 1000000;
-  return `TXN${dd}${mm}${yyyy}${String(h).padStart(6, "0")}`;
+  return `TXN${date}${String(h).padStart(6, "0")}`;
 }
 
-/* ── Primitives ───────────────────────────────────────────────────────────── */
-
-/**
- * A dot-leader row. `wrap` exists for exactly one field: Amount. Its value is
- * free text of unknown length, so it is allowed to run onto a second line
- * rather than be truncated — an ellipsis on the total would eat the punchline.
- */
-function DotRow({
-  label,
-  value,
-  strong,
-  wrap,
-  valueColor,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  wrap?: boolean;
-  valueColor?: string;
-}) {
+/** A dot-leader row. `wrap` exists for Amount: free text, never truncated. */
+function DotRow({ label, value, strong, wrap, valueColor }: { label: string; value: string; strong?: boolean; wrap?: boolean; valueColor?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
       <span
@@ -119,9 +71,9 @@ function DotRow({
           flex: "0 1 auto",
           minWidth: 0,
           fontFamily: CH.mono,
-          fontSize: 11.5,
+          fontSize: 12,
           letterSpacing: "0.03em",
-          color: strong ? CH.ink : SOFT,
+          color: strong ? CH.ink : CH.faint,
           fontWeight: strong ? 700 : 400,
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -130,23 +82,14 @@ function DotRow({
       >
         {label}
       </span>
-      <span
-        aria-hidden="true"
-        style={{
-          flex: "1 1 auto",
-          minWidth: 12,
-          alignSelf: "flex-end",
-          marginBottom: 3.5,
-          borderBottom: `1px dotted ${RULE}`,
-        }}
-      />
+      <span aria-hidden="true" style={{ flex: "1 1 auto", minWidth: 12, alignSelf: "flex-end", marginBottom: 3.5, borderBottom: `1px dotted ${RULE}` }} />
       <span
         style={{
           flex: "0 1 auto",
           maxWidth: wrap ? "62%" : "60%",
           textAlign: "right",
           fontFamily: CH.mono,
-          fontSize: strong ? 12.5 : 11.5,
+          fontSize: strong ? 14 : 12,
           fontWeight: strong ? 700 : 500,
           color: valueColor ?? CH.ink,
           whiteSpace: wrap ? "normal" : "nowrap",
@@ -161,49 +104,6 @@ function DotRow({
   );
 }
 
-function Caption({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      style={{
-        margin: "0 0 9px",
-        fontFamily: CH.mono,
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.16em",
-        color: FAINT,
-        textTransform: "uppercase",
-      }}
-    >
-      {children}
-    </p>
-  );
-}
-
-/** The sincere payload. Serif, outside every box, with room to breathe. */
-function SerifMessage({ lines }: { lines: string[] }) {
-  const clean = lines.filter((l) => l && l.trim().length > 0);
-  if (clean.length === 0) return null;
-  return (
-    <div style={{ padding: "40px 26px 10px" }}>
-      {clean.map((line, i) => (
-        <p
-          key={`${i}-${line.slice(0, 16)}`}
-          style={{
-            margin: i === 0 ? 0 : "22px 0 0",
-            fontFamily: CH.serif,
-            fontSize: 17,
-            lineHeight: 1.78,
-            color: CH.ink,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {line}
-        </p>
-      ))}
-    </div>
-  );
-}
-
 /* ── Screens ──────────────────────────────────────────────────────────────── */
 
 function Summary({
@@ -211,154 +111,99 @@ function Summary({
   methodId,
   onMethod,
   onPay,
+  onBack,
   locked,
 }: {
   data: ChallanData;
   methodId: string;
   onMethod: (id: string) => void;
   onPay: () => void;
+  onBack: () => void;
   locked: boolean;
 }) {
   const methods = data.settlement?.methods ?? [];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
-      <div style={{ flex: "1 1 auto", padding: "20px 18px 18px", display: "flex", flexDirection: "column", gap: 20 }}>
-        <section aria-label="Order summary">
-          <Caption>Statement of dues</Caption>
-          <div style={{ border: `1px solid ${RULE}`, background: WASH, padding: "14px 14px 15px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-              <DotRow label="Challan No" value={data.challanNo} />
-              <DotRow label="Issued To" value={data.accused.name} />
-              <DotRow label="Vehicle" value={data.accused.vehicleNo} />
-              <DotRow label="Offences" value={String(data.offences?.length ?? 0)} />
-            </div>
-            <div style={{ borderTop: `1px solid ${RULE}`, marginTop: 13, paddingTop: 13 }}>
-              {/* Copied from the data. Never computed, never summed. */}
-              <DotRow label="Total Payable" value={data.totalFine} strong wrap />
-            </div>
-          </div>
-        </section>
+    <div className="lv-pop" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <header style={{ textAlign: "center" }}>
+        <p style={{ margin: 0, fontFamily: GROTESK, fontSize: 12, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: V.a1 }}>settle challan</p>
+        <h2 style={{ margin: "6px 0 0", fontFamily: GROTESK, fontWeight: 800, fontSize: "clamp(28px, 7vw, 40px)", lineHeight: 1, letterSpacing: "-0.04em", color: V.ink }}>
+          Pay up, cutie 💸
+        </h2>
+      </header>
 
-        {methods.length > 0 ? (
-          <section aria-label="Mode of payment">
-            <Caption>Select mode of payment</Caption>
-            <div role="radiogroup" aria-label="Mode of payment" style={{ border: `1px solid ${RULE}` }}>
-              {methods.map((m, i) => {
-                const on = m.id === methodId;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => onMethod(m.id)}
-                    style={{
-                      width: "100%",
-                      minHeight: 56,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "10px 13px",
-                      background: on ? WASH : "transparent",
-                      border: "none",
-                      borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
-                      textAlign: "left",
-                      cursor: "pointer",
-                    }}
+      <PaperCard>
+        <Caption>Statement of dues</Caption>
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          <DotRow label="Challan No" value={data.challanNo} />
+          <DotRow label="Issued To" value={data.accused.name} />
+          <DotRow label="Vehicle" value={data.accused.vehicleNo} />
+          <DotRow label="Offences" value={String(data.offences?.length ?? 0)} />
+        </div>
+        <div style={{ borderTop: `1.5px dashed ${RULE}`, marginTop: 14, paddingTop: 14 }}>
+          {/* Copied from the data. Never computed, never summed. */}
+          <DotRow label="Total Payable" value={data.totalFine} strong wrap />
+        </div>
+      </PaperCard>
+
+      {methods.length > 0 ? (
+        <PaperCard>
+          <Caption>Select mode of payment</Caption>
+          <div role="radiogroup" aria-label="Mode of payment" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {methods.map((m) => {
+              const on = m.id === methodId;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onMethod(m.id)}
+                  className="lv-focus"
+                  style={{
+                    width: "100%",
+                    minHeight: 60,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 13px",
+                    borderRadius: 16,
+                    background: on ? `color-mix(in srgb, ${V.a1} 9%, transparent)` : "transparent",
+                    border: `1.5px solid ${on ? V.a1 : HAIRLINE}`,
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{ flex: "0 0 auto", width: 20, height: 20, borderRadius: 10, border: `2px solid ${on ? V.a1 : RULE}`, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
                   >
-                    {/* A drawn radio, not a native one — the whole page is ink
-                        on paper and a system control breaks the illusion. */}
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        flex: "0 0 auto",
-                        width: 17,
-                        height: 17,
-                        borderRadius: 9,
-                        border: `1.5px solid ${on ? CH.ink : RULE}`,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {on ? <span style={{ width: 8, height: 8, borderRadius: 4, background: CH.ink }} /> : null}
-                    </span>
-                    <span style={{ flex: "1 1 auto", minWidth: 0 }}>
-                      <span
-                        style={{
-                          display: "block",
-                          fontFamily: CH.mono,
-                          fontSize: 13,
-                          fontWeight: on ? 700 : 500,
-                          color: CH.ink,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {m.label}
-                      </span>
-                      {m.sub ? (
-                        <span
-                          style={{
-                            display: "block",
-                            marginTop: 2,
-                            fontFamily: CH.serif,
-                            fontSize: 12,
-                            fontStyle: "italic",
-                            lineHeight: 1.45,
-                            color: SOFT,
-                            overflowWrap: "anywhere",
-                          }}
-                        >
-                          {m.sub}
-                        </span>
-                      ) : null}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
+                    {on ? <span style={{ width: 10, height: 10, borderRadius: 5, background: V.a1 }} /> : null}
+                  </span>
+                  <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+                    <span style={{ display: "block", fontFamily: GROTESK, fontSize: 15.5, fontWeight: 800, color: CH.ink, overflowWrap: "anywhere" }}>{m.label}</span>
+                    {m.sub ? (
+                      <span style={{ display: "block", marginTop: 2, fontFamily: CH.serif, fontSize: 13, fontStyle: "italic", lineHeight: 1.45, color: CH.faint, overflowWrap: "anywhere" }}>{m.sub}</span>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ margin: "12px 0 0", fontFamily: CH.mono, fontSize: 11, lineHeight: 1.6, color: CH.faint }}>
+            No receipt of payment shall be admissible anywhere except between the two of you.
+          </p>
+        </PaperCard>
+      ) : null}
 
-        <p style={{ margin: 0, fontFamily: CH.mono, fontSize: 10.5, lineHeight: 1.6, color: FAINT }}>
-          No receipt of payment shall be admissible anywhere except between the two of you.
-        </p>
+      <div style={{ position: "sticky", bottom: 0, paddingTop: 6, paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))", display: "flex", flexDirection: "column", gap: 8 }}>
+        <CandyButton onClick={onPay} disabled={locked} ariaLabel="Pay now">
+          💸 Pay now
+        </CandyButton>
       </div>
-
-      <div
-        style={{
-          position: "sticky",
-          bottom: 0,
-          background: CH.paper,
-          borderTop: `1px solid ${RULE}`,
-          padding: "12px 18px",
-          paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
-        }}
-      >
-        <button
-          type="button"
-          onClick={onPay}
-          disabled={locked}
-          aria-disabled={locked}
-          style={{
-            width: "100%",
-            height: 50,
-            minHeight: 50,
-            border: `1.5px solid ${CH.ink}`,
-            background: CH.ink,
-            color: CH.paper,
-            fontFamily: CH.mono,
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: "0.16em",
-            opacity: locked ? 0.55 : 1,
-            cursor: locked ? "default" : "pointer",
-          }}
-        >
-          [ PAY NOW ]
-        </button>
-      </div>
+      <GhostButton onClick={onBack} style={{ width: "auto", alignSelf: "center", minWidth: 200 }}>
+        ← back to the notice
+      </GhostButton>
     </div>
   );
 }
@@ -374,8 +219,7 @@ function Processing({ onDone }: { onDone: () => void }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // One guard entry, pushed once, re-pushed on every pop so the second and
-  // third presses are caught too. Left on the stack when this unmounts.
+  // One guard entry, pushed once, re-pushed on every pop. Left on the stack.
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.history.pushState({ chGuard: true }, "", window.location.href);
@@ -399,162 +243,75 @@ function Processing({ onDone }: { onDone: () => void }) {
   }, [step, paused, finish]);
 
   return (
-    <div
-      style={{
-        minHeight: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "80px 30px",
-        textAlign: "center",
-      }}
-    >
-      <style>{`
-@keyframes ch-spin { to { transform: rotate(360deg); } }
-.ch-spin { animation: ch-spin 900ms linear infinite; transform-origin: 50% 50%; }
-@media (prefers-reduced-motion: reduce) { .ch-spin { animation: none !important; } }
-`}</style>
-
-      <svg width={46} height={46} viewBox="0 0 46 46" aria-hidden="true" focusable="false">
-        <circle cx="23" cy="23" r="19" fill="none" stroke={RULE} strokeWidth="3" />
-        <circle
-          className="ch-spin"
-          cx="23"
-          cy="23"
-          r="19"
-          fill="none"
-          stroke={CH.ink}
-          strokeWidth="3"
-          strokeLinecap="butt"
-          strokeDasharray="30 90"
-        />
-      </svg>
-
-      <p
-        role="status"
-        aria-live="polite"
-        style={{
-          margin: "24px 0 0",
-          fontFamily: CH.mono,
-          fontSize: 13,
-          letterSpacing: "0.04em",
-          color: CH.ink,
-          minHeight: 20,
-        }}
-      >
+    <div style={{ minHeight: "60dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", textAlign: "center" }}>
+      <Spinner />
+      <p role="status" aria-live="polite" style={{ margin: "24px 0 0", fontFamily: CH.mono, fontSize: 14, letterSpacing: "0.03em", color: V.ink, minHeight: 20 }}>
         {LINES[step]}
       </p>
-
-      {scolded ? (
-        <p style={{ margin: "10px 0 0", fontFamily: CH.mono, fontSize: 12.5, fontWeight: 700, color: CH.red }}>
-          I said do not.
-        </p>
-      ) : null}
-
-      <p style={{ margin: "10px 0 0", fontFamily: CH.mono, fontSize: 10.5, lineHeight: 1.6, color: FAINT }}>
-        This may take a moment. Please keep this page open.
-      </p>
+      <div style={{ marginTop: 16, width: 200, height: 6, borderRadius: 99, background: `color-mix(in srgb, ${V.ink} 12%, transparent)`, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${((step + 1) / LINES.length) * 100}%`, background: V.grad, borderRadius: 99, transition: "width .8s ease" }} />
+      </div>
+      {scolded ? <p style={{ margin: "12px 0 0", fontFamily: GROTESK, fontSize: 15, fontWeight: 800, color: V.a1 }}>I said do not. 😤</p> : null}
+      <p style={{ margin: "12px 0 0", fontFamily: CH.mono, fontSize: 11, lineHeight: 1.6, color: V.faint }}>This may take a moment. Please keep this page open.</p>
     </div>
   );
 }
 
-function Receipt({ data, animateStamp }: { data: ChallanData; animateStamp: boolean }) {
+function Receipt({ data, animateStamp, gif, next }: { data: ChallanData; animateStamp: boolean; gif?: string; next: NextAction | null }) {
   const txn = useMemo(() => transactionId(data), [data]);
 
   return (
     <div>
-      <div style={{ padding: "22px 18px 0" }}>
-        {/* The stamped document. `position: relative` so the mark can sit on
-            top of the rows instead of beside them — a stamp that misses the
-            paper is a sticker. */}
-        <div style={{ position: "relative", border: `1px solid ${RULE}`, background: CH.paper, padding: "16px 15px 18px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
-            <span
-              style={{
-                fontFamily: CH.mono,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.16em",
-                color: FAINT,
-              }}
-            >
-              RECEIPT OF SETTLEMENT
-            </span>
-            <span
-              style={{
-                fontFamily: CH.mono,
-                fontSize: 9.5,
-                color: FAINT,
-                textAlign: "right",
-                overflowWrap: "anywhere",
-              }}
-            >
-              {data.authority.department}
-            </span>
-          </div>
-
-          <div style={{ height: 1, background: RULE, margin: "13px 0 14px" }} />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <DotRow label="Transaction ID" value={txn} />
-            <DotRow label="Challan No" value={data.challanNo} />
-            {/* Free text. Printed exactly as given. */}
-            <DotRow label="Amount" value={data.totalFine} wrap />
-            <DotRow label="Status" value="PAID ✓" valueColor={CH.green} strong />
-          </div>
-
-          <div style={{ height: 1, background: RULE, margin: "14px 0 0" }} />
-
-          <p
-            style={{
-              margin: "12px 0 0",
-              fontFamily: CH.mono,
-              fontSize: 9.5,
-              lineHeight: 1.6,
-              color: FAINT,
-              overflowWrap: "anywhere",
-            }}
-          >
-            Settled in full. No further action is required of you, {data.accused.name}.
-          </p>
-
-          {/* Overlaid on the document, not tucked under it. */}
-          <div
-            style={{
-              position: "absolute",
-              right: 10,
-              bottom: 6,
-              display: "flex",
-              justifyContent: "flex-end",
-              pointerEvents: "none",
-            }}
-          >
-            <Stamp text="PAID" tone="green" animate={animateStamp} rotate={-6} />
-          </div>
+      <PaperCard style={{ position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+          <span style={{ fontFamily: CH.mono, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", color: CH.faint }}>RECEIPT OF SETTLEMENT</span>
+          <span style={{ fontFamily: CH.mono, fontSize: 10, color: CH.faint, textAlign: "right", overflowWrap: "anywhere" }}>{data.authority.department}</span>
         </div>
-      </div>
+        <div style={{ height: 1, background: RULE, margin: "13px 0 14px" }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <DotRow label="Transaction ID" value={txn} />
+          <DotRow label="Challan No" value={data.challanNo} />
+          {/* Free text. Printed exactly as given. */}
+          <DotRow label="Amount" value={data.totalFine} wrap />
+          <DotRow label="Status" value="PAID ✓" valueColor={CH.green} strong />
+        </div>
+        <div style={{ height: 1, background: RULE, margin: "14px 0 0" }} />
+        <p style={{ margin: "12px 0 0", maxWidth: "62%", fontFamily: CH.mono, fontSize: 10.5, lineHeight: 1.6, color: CH.faint, overflowWrap: "anywhere" }}>
+          Settled in full. No further action is required of you, {data.accused.name}.
+        </p>
+        <div style={{ position: "absolute", right: 12, bottom: 8, pointerEvents: "none" }}>
+          <Stamp text="PAID" tone="green" animate={animateStamp} rotate={-8} />
+        </div>
+      </PaperCard>
 
       <SerifMessage lines={data.paidMessage ?? []} />
-
-      <div style={{ height: 32 }} />
+      <NextStep gif={gif} gifCaption="caught paying up on camera 👀" next={next} delay={animateStamp ? 900 : 0} />
     </div>
   );
 }
 
 /* ── The flow ─────────────────────────────────────────────────────────────── */
 
-export function PaymentFlow({ data, onDone }: { data: ChallanData; onDone: () => void }) {
+export function PaymentFlow({
+  data,
+  onDone,
+  onBack,
+  next,
+  gif,
+}: {
+  data: ChallanData;
+  /** Fired once, when the receipt is on screen. */
+  onDone: () => void;
+  onBack: () => void;
+  /** The way on from the receipt (the CCTV evidence, the court order, or a replay). */
+  next: NextAction | null;
+  gif?: string;
+}) {
   const methods = data.settlement?.methods ?? [];
   const [step, setStep] = useState<Step>("summary");
   const [methodId, setMethodId] = useState<string>(methods[0]?.id ?? "");
   const reduced = useReducedMotion();
 
-  // The rapid-tap latch. A ref rather than state: two taps dispatched inside a
-  // single React batch would both read the same stale state value and both
-  // pass the check, which is exactly the bug this guards.
-  // `locked` mirrors it for the button's disabled state, because a ref must not
-  // be read during render.
   const startedRef = useRef(false);
   const doneRef = useRef(false);
   const [locked, setLocked] = useState(false);
@@ -568,21 +325,21 @@ export function PaymentFlow({ data, onDone }: { data: ChallanData; onDone: () =>
 
   const settled = useCallback(() => setStep("receipt"), []);
 
-  // `onDone` fires once, when the receipt is on screen — never on a re-render,
-  // and never twice if the parent re-renders us with a new callback identity.
   useEffect(() => {
     if (step !== "receipt" || doneRef.current) return;
     doneRef.current = true;
     onDone();
   }, [step, onDone]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
+
   return (
-    <div style={{ background: CH.paper, color: CH.ink, minHeight: "100%" }}>
-      {step === "summary" ? (
-        <Summary data={data} methodId={methodId} onMethod={setMethodId} onPay={pay} locked={locked} />
-      ) : null}
+    <div className="ch-wrap" style={{ maxWidth: 540 }}>
+      {step === "summary" ? <Summary data={data} methodId={methodId} onMethod={setMethodId} onPay={pay} onBack={onBack} locked={locked} /> : null}
       {step === "processing" ? <Processing onDone={settled} /> : null}
-      {step === "receipt" ? <Receipt data={data} animateStamp={!reduced} /> : null}
+      {step === "receipt" ? <Receipt data={data} animateStamp={!reduced} gif={gif} next={next} /> : null}
     </div>
   );
 }

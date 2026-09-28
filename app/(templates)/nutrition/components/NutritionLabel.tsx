@@ -37,7 +37,9 @@ import {
 
 /* ── constants ───────────────────────────────────────────────────────────── */
 
-const INK = "#000";
+/** Themed: the panel is printed in the packaging's own ink on its own paper. */
+const INK = "var(--lv-paper-ink, #000)";
+const PAPER = "var(--lv-paper, #fff)";
 
 /** The real label is Helvetica. Arial is the primary fallback, not a nicety. */
 const FONT = "Helvetica, Arial, sans-serif";
@@ -103,6 +105,13 @@ function condensedAvailable(): boolean {
   }
 }
 
+let condensedCache: boolean | null = null;
+const condensedOnce = (): boolean => {
+  if (condensedCache === null) condensedCache = condensedAvailable();
+  return condensedCache;
+};
+const noopSubscribe = () => () => {};
+
 /* ── the one interaction ─────────────────────────────────────────────────── */
 
 /**
@@ -128,16 +137,13 @@ function Expandable({
     if (!el) return;
 
     // Never animate the initial paint — a label that unfurls on load has just
-    // told everybody where the secret is.
+    // told everybody where the secret is. (Initial state already matches.)
     if (first.current) {
       first.current = false;
-      setHeight(open ? "auto" : 0);
       return;
     }
-    if (instant) {
-      setHeight(open ? "auto" : 0);
-      return;
-    }
+    // Instant mode renders straight from `open` below; nothing to animate.
+    if (instant) return;
     if (open) {
       setHeight(el.scrollHeight);
       const t = window.setTimeout(() => setHeight("auto"), EXPAND_MS);
@@ -159,7 +165,7 @@ function Expandable({
       ref={ref}
       style={{
         overflow: "hidden",
-        height: height === "auto" ? "auto" : height,
+        height: instant ? (open ? "auto" : 0) : height === "auto" ? "auto" : height,
         transition: instant ? "none" : `height ${EXPAND_MS}ms ease`,
       }}
     >
@@ -296,10 +302,9 @@ export function NutritionLabel({
   const reduced = useReducedMotion();
   const instant = capture || reduced;
 
-  const [squeeze, setSqueeze] = useState(true);
-  useEffect(() => {
-    if (condensedAvailable()) setSqueeze(false);
-  }, []);
+  // Squeeze unless the machine really has the condensed cut. Server snapshot
+  // squeezes too, so hydration is stable.
+  const squeeze = !useSyncExternalStore(noopSubscribe, condensedOnce, () => false);
 
   const nutrients: Nutrient[] = data.nutrients ?? [];
   const vitamins: Vitamin[] = data.vitamins ?? [];
@@ -344,7 +349,7 @@ export function NutritionLabel({
         style={{
           width: LABEL_WIDTH,
           boxSizing: "border-box",
-          background: "#fff",
+          background: PAPER,
           border: `1px solid ${INK}`,
           padding: 6,
           textAlign: "left",

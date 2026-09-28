@@ -31,6 +31,7 @@ import {
   CH,
   CH_BANDING,
   CH_LEADER,
+  chInk,
   chDate,
   chDateTime,
   chJitter,
@@ -320,9 +321,13 @@ export function ChallanNotice({
             background: CH.paper,
             backgroundImage: CH_BANDING,
             color: CH.ink,
-            border: "1px solid #d9d5c9",
+            border: `1px solid ${chInk(14)}`,
+            borderRadius: 8,
+            boxShadow: "0 34px 70px -34px var(--lv-shadow, rgba(0,0,0,.4))",
           }}
         >
+          {/* The department's livery: a siren stripe across the head of the sheet. */}
+          <span aria-hidden className="ch-stripe" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 6, zIndex: 4 }} />
           {/* Two staple holes, punched through the top-left corner. */}
           <span
             aria-hidden
@@ -389,7 +394,7 @@ export function ChallanNotice({
               <div
                 style={{
                   fontFamily: CH.serif, fontSize: 8.2, letterSpacing: 2.4,
-                  textTransform: "uppercase", marginTop: 3, color: "#2a2a2a", lineHeight: 1.4,
+                  textTransform: "uppercase", marginTop: 3, color: CH.faint, lineHeight: 1.4,
                 }}
               >
                 {data.authority.department} &middot; {data.authority.state}
@@ -397,7 +402,7 @@ export function ChallanNotice({
               <div
                 style={{
                   fontFamily: CH.deva, fontSize: 9.5, letterSpacing: 0.6,
-                  marginTop: 4, color: "#333333", lineHeight: 1.5,
+                  marginTop: 4, color: CH.faint, lineHeight: 1.5,
                 }}
               >
                 {data.authority.motto}
@@ -446,7 +451,7 @@ export function ChallanNotice({
                 >
                   Photographic Evidence
                 </div>
-                <div style={{ fontFamily: CH.serif, fontSize: 9, lineHeight: 1.55, color: "#2b2b2b" }}>
+                <div style={{ fontFamily: CH.serif, fontSize: 9, lineHeight: 1.55, color: CH.faint }}>
                   Frame captured by an unattended enforcement camera and retained on record.
                   The party concerned is not required to agree with it.
                 </div>
@@ -458,8 +463,20 @@ export function ChallanNotice({
                 <div style={{ display: "flex", alignItems: "baseline", marginTop: 3 }}>
                   <span style={{ fontFamily: CH.serif, fontSize: 8.4 }}>Frames</span>
                   <span aria-hidden style={CH_LEADER} />
-                  <span style={{ fontFamily: CH.mono, fontSize: 9 }}>01 / 01</span>
+                  <span style={{ fontFamily: CH.mono, fontSize: 9 }}>
+                    01 / {String(1 + (data.photos?.length ?? 0)).padStart(2, "0")}
+                  </span>
                 </div>
+                {data.photos?.length ? (
+                  <div
+                    style={{
+                      marginTop: 8, padding: "5px 6px", border: `1px dashed ${CH.red}`, borderRadius: 4,
+                      fontFamily: CH.mono, fontSize: 8.4, lineHeight: 1.45, color: CH.red,
+                    }}
+                  >
+                    ● {data.photos.length} more CCTV frame{data.photos.length === 1 ? "" : "s"} on file. Released after settlement.
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -565,7 +582,7 @@ export function ChallanNotice({
                 >
                   {overdue ? "Notice of Consequence — Period Expired" : "Notice of Consequence"}
                 </div>
-                <div style={{ fontFamily: CH.serif, fontSize: 10, lineHeight: 1.55, color: "#3a1c1a" }}>
+                <div style={{ fontFamily: CH.serif, fontSize: 10, lineHeight: 1.55, color: CH.ink }}>
                   {overdue ? (
                     <>
                       This challan was not settled within the period stated. The matter has been
@@ -587,7 +604,7 @@ export function ChallanNotice({
                   flex: "none",
                   width: 112,
                   border: `1px solid ${CH.red}`,
-                  background: "rgba(255,255,255,.6)",
+                  background: CH.paper,
                   padding: "6px 5px",
                   textAlign: "center",
                   display: "flex",
@@ -648,7 +665,7 @@ export function ChallanNotice({
                   fontSize: 6.5,
                   lineHeight: 1.6,
                   letterSpacing: 0.1,
-                  color: "#3d3d3d",
+                  color: CH.faint,
                   marginTop: 4,
                   textAlign: "justify",
                 }}
@@ -667,9 +684,9 @@ export function ChallanNotice({
                   flex: 1,
                   minHeight: CH.btnH,
                   border: `1px solid ${CH.green}`,
-                  borderRadius: 0,
+                  borderRadius: 12,
                   background: CH.green,
-                  color: CH.paper,
+                  color: "#ffffff",
                   fontFamily: CH.mono,
                   fontSize: 13,
                   fontWeight: 700,
@@ -679,7 +696,7 @@ export function ChallanNotice({
                   boxShadow: "none",
                 }}
               >
-                [ PAY NOW ]
+                💸 PAY NOW
               </button>
               <button
                 type="button"
@@ -688,8 +705,8 @@ export function ChallanNotice({
                 style={{
                   flex: 1,
                   minHeight: CH.btnH,
-                  border: `1px solid ${CH.edge}`,
-                  borderRadius: 0,
+                  border: `1.5px solid ${CH.edge}`,
+                  borderRadius: 12,
                   background: "transparent",
                   color: CH.ink,
                   fontFamily: CH.mono,
@@ -701,7 +718,7 @@ export function ChallanNotice({
                   boxShadow: "none",
                 }}
               >
-                [ CONTEST THIS ]
+                ⚖️ CONTEST
               </button>
             </div>
           </div>

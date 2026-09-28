@@ -1,107 +1,66 @@
 "use client";
 
+// ─── The Court of Love — the trial ───────────────────────────────────────────
+//
+//   summons     the oath; the "No" button dodges three times, then gives up
+//   session     gavel bang — court is in session
+//   hearing ×N  one question per card, read out by the clerk
+//   reaction    a GIF "court cam" print + a handwritten line after each answer
+//   recess      a cheer before the final question
+//   verdict     GUILTY (of being loved) — or a retrial
+//   evidence    the Exhibits: the sender's photos as evidence in a case file,
+//               each opening to its memory note as sworn testimony
+//   judgement   the main letter, sealed in wax, read after one last question
+//   certificate the ₹100 stamp paper to keep
+//
+// The colours come from the chosen courtroom (./themes) as love-kit CSS
+// variables; every surface paints with `V.*`.
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Gavel, Share2, Download, FileText, RotateCcw, Loader2, Check, X } from "lucide-react";
+import { Share2, Download, FileText, RotateCcw, Loader2, Check, X } from "lucide-react";
 
+import { BrandBadge, LOVE_CSS, LoveSky, LoveThemeContext, ThemeDock } from "../../_love/LoveKit";
+import { V, pickTheme, themeVars } from "../../_love/theme";
 import CourtGif, { preloadAsset } from "./CourtGif";
 import StampPaperCertificate from "./StampPaperCertificate";
+import { EvidenceFolder } from "./Exhibits";
+import Judgement from "./Judgement";
+import { COURT_FONT_VARS } from "./fonts";
+import { COURT_THEMES } from "./themes";
 import {
-  ASSETS,
-  WRONG_REACTIONS,
-  REACTION_SIZE,
-  REACTION_DWELL,
-  type Reaction,
-  reactionFor,
-  encouragementFor,
-} from "./assets";
+  COURT_CSS,
+  GavelButton,
+  HAND,
+  MONO,
+  PAPER_RULE,
+  Paper,
+  PaperGhost,
+  Polaroid,
+  SANS,
+  SERIF,
+  STAMP_INK,
+  Stamp,
+  Typed,
+} from "./courtKit";
+import { ASSETS, WRONG_REACTIONS, REACTION_SIZE, REACTION_DWELL, type Reaction, reactionFor, encouragementFor } from "./assets";
 import { caseNumber, dirFor, isCorrect, PASS_RATIO, type CourtOfLoveData } from "./types";
 
-/* ── SubhSandesh theme tokens (see the subhsandesh-theme skill) ────────────── */
-const BG = "#FAFAF7";
-const SURFACE = "#FFFFFF";
-const TEXT = "#0E0E12";
-const MUTED = "#5B5B66";
-const BORDER = "#ECEAE3";
-const INDIGO = "#6C5CE7";
-const PINK = "#F72585";
-const LIME = "#C6FF3D";
-const GREEN = "#3AA76D";
+type Phase = "summons" | "session" | "hearing" | "reaction" | "recess" | "verdict" | "evidence" | "judgement" | "certificate";
 
-const HEAD = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
-const BODY = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
-const SCRIPT = "var(--font-caveat), ui-rounded, cursive";
+/** Shared enter/exit for every screen. */
+const screen = {
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -14 },
+  transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] as const },
+};
 
-const CARD_SHADOW = "0 8px 24px rgba(14,14,18,.06)";
+/* ── Small pieces ──────────────────────────────────────────────────────────── */
 
-type Phase =
-  | "summons"
-  | "session"
-  | "hearing"
-  | "reaction"
-  /** A cheer-them-on beat before the final cross-examination. */
-  | "recess"
-  | "verdict"
-  | "letter"
-  | "certificate";
-
-/* ── Small shared pieces ───────────────────────────────────────────────────── */
-
-/** Soft corner glows that give the cream canvas depth. */
-function CanvasGlow() {
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: "fixed",
-        inset: 0,
-        pointerEvents: "none",
-        zIndex: 0,
-        backgroundImage: `
-          radial-gradient(60% 44% at 6% 2%, rgba(108,92,231,.16), transparent 62%),
-          radial-gradient(52% 40% at 96% 8%, rgba(247,37,133,.13), transparent 60%),
-          radial-gradient(60% 44% at 50% 104%, rgba(198,255,61,.20), transparent 62%)
-        `,
-      }}
-    />
-  );
-}
-
-/** The recipient's route to making their own — required on every live viewer. */
-function BrandBadge() {
-  return (
-    <Link
-      href="/templates"
-      aria-label="Create your own on SubhSandesh"
-      style={{
-        position: "fixed",
-        top: "calc(env(safe-area-inset-top, 0px) + 10px)",
-        right: 12,
-        zIndex: 60,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 7,
-        padding: "6px 12px 6px 7px",
-        borderRadius: 999,
-        background: "rgba(255,255,255,.86)",
-        border: `1px solid ${BORDER}`,
-        boxShadow: CARD_SHADOW,
-        backdropFilter: "blur(14px)",
-        textDecoration: "none",
-      }}
-    >
-      <Image src="/logo.webp" alt="" width={20} height={20} style={{ borderRadius: 6 }} />
-      <span style={{ fontFamily: HEAD, fontSize: 12, fontWeight: 700, color: TEXT, letterSpacing: -0.1 }}>
-        SubhSandesh
-      </span>
-    </Link>
-  );
-}
-
-/** One pip per question, filled in as the quiz proceeds. Count comes from the data. */
-function ProgressPips({ total, done }: { total: number; done: number }) {
+/** Segmented progress — one bar per question, the current one lit. */
+function HearingBar({ total, done }: { total: number; done: number }) {
   return (
     <div
       role="progressbar"
@@ -109,20 +68,19 @@ function ProgressPips({ total, done }: { total: number; done: number }) {
       aria-valuemax={total}
       aria-valuenow={done}
       aria-label={`Question ${Math.min(done + 1, total)} of ${total}`}
-      style={{ display: "flex", gap: 7, justifyContent: "center", alignItems: "center" }}
+      style={{ display: "flex", gap: 4, width: "100%" }}
     >
       {Array.from({ length: total }).map((_, i) => (
-        <motion.span
+        <span
           key={i}
-          initial={false}
-          animate={{ scale: i === done ? 1.18 : 1 }}
-          transition={{ type: "spring", stiffness: 420, damping: 22 }}
           style={{
-            width: i === done ? 22 : 9,
-            height: 9,
-            borderRadius: 999,
-            background: i < done ? INDIGO : i === done ? PINK : "#E2DFF6",
-            display: "inline-block",
+            flex: 1,
+            height: 5,
+            borderRadius: 99,
+            background: i < done ? V.a1 : i === done ? V.chip : V.edge,
+            opacity: i === done ? 1 : i < done ? 0.85 : 1,
+            boxShadow: i === done ? `0 0 12px ${V.a1}` : undefined,
+            transition: "background-color .3s ease",
           }}
         />
       ))}
@@ -130,120 +88,15 @@ function ProgressPips({ total, done }: { total: number; done: number }) {
   );
 }
 
-/** A tilted white sticker card — the template's primary surface. */
-function StickerCard({
-  children,
-  tilt = -1.2,
-  className = "",
-  style,
-  onClick,
-}: {
-  children: React.ReactNode;
-  tilt?: number;
-  className?: string;
-  style?: React.CSSProperties;
-  onClick?: () => void;
-}) {
+/** One docket line on the summons: LABEL ········ value. */
+function DocketRow({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={className}
-      onClick={onClick}
-      style={{
-        background: SURFACE,
-        border: `1px solid ${BORDER}`,
-        borderRadius: 28,
-        boxShadow: CARD_SHADOW,
-        transform: `rotate(${tilt}deg)`,
-        padding: "22px 18px",
-        ...style,
-      }}
-    >
-      {children}
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, fontFamily: MONO, fontSize: 12.5, lineHeight: 1.9 }}>
+      <span style={{ color: V.paperSoft, letterSpacing: "0.1em", textTransform: "uppercase", flexShrink: 0 }}>{label}</span>
+      <span aria-hidden style={{ flex: 1, borderBottom: `1.5px dotted ${PAPER_RULE}`, transform: "translateY(-4px)", minWidth: 12 }} />
+      <span style={{ color: V.paperInk, fontWeight: 700, textAlign: "right", overflowWrap: "anywhere", minWidth: 0 }}>{value}</span>
     </div>
   );
-}
-
-function LimeButton({
-  children,
-  onClick,
-  disabled,
-  full = true,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  full?: boolean;
-}) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        width: full ? "100%" : undefined,
-        padding: "14px 22px",
-        borderRadius: 999,
-        background: LIME,
-        color: TEXT,
-        fontFamily: HEAD,
-        fontWeight: 700,
-        fontSize: 15,
-        border: "none",
-        boxShadow: "0 6px 18px rgba(198,255,61,.42)",
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        minHeight: 48,
-      }}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
-/* ── Typewriter ────────────────────────────────────────────────────────────── */
-
-function useTypewriter(text: string, active: boolean, speed = 26, forceComplete = false) {
-  const reduce = useReducedMotion();
-  // Anyone who asked for less motion gets the whole letter at once — a
-  // character-by-character reveal is exactly what they opted out of. Same for
-  // anyone who taps to skip ahead.
-  const instant = reduce || !active || forceComplete;
-
-  // Text and progress live in one state object so switching text resets the
-  // count in the same update, with no synchronous setState inside the effect.
-  const [progress, setProgress] = useState<{ text: string; count: number }>({ text, count: 0 });
-  const timerRef = useRef<number | null>(null);
-
-  const count = progress.text === text ? progress.count : 0;
-  const done = instant || count >= text.length;
-
-  useEffect(() => {
-    if (instant) return;
-    const timer = window.setInterval(() => {
-      setProgress((p) => {
-        if (p.text !== text) return { text, count: 1 };
-        // Same reference once complete → React bails out instead of re-rendering.
-        if (p.count >= text.length) return p;
-        return { text, count: p.count + 1 };
-      });
-    }, speed);
-    timerRef.current = timer;
-    return () => window.clearInterval(timer);
-  }, [text, speed, instant]);
-
-  // Stop ticking the moment the letter is fully revealed.
-  useEffect(() => {
-    if (done && timerRef.current !== null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, [done]);
-
-  return { shown: instant ? (active ? text : "") : text.slice(0, count), done };
 }
 
 /* ── Screens ───────────────────────────────────────────────────────────────── */
@@ -252,20 +105,10 @@ function useTypewriter(text: string, active: boolean, speed = 26, forceComplete 
  * The oath screen. The "No" button dodges the pointer — but only three times.
  *
  * A permanently un-clickable button is a cute demo and a terrible experience: on
- * touch devices it reads as a broken page, and it traps anyone who genuinely
- * wants to back out. After three dodges it settles down, becomes tappable, and
- * answers with a joke. It also never dodges on keyboard focus, so tab-and-enter
- * always works.
+ * touch devices it reads as a broken page. After three dodges it settles down,
+ * becomes tappable, and answers with a joke. It never dodges on keyboard focus.
  */
-function SummonsScreen({
-  data,
-  caseNo,
-  onAccept,
-}: {
-  data: CourtOfLoveData;
-  caseNo: string;
-  onAccept: () => void;
-}) {
+function SummonsScreen({ data, caseNo, onAccept }: { data: CourtOfLoveData; caseNo: string; onAccept: () => void }) {
   const reduce = useReducedMotion();
   const [dodges, setDodges] = useState(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -277,164 +120,113 @@ function SummonsScreen({
   const dodge = useCallback(() => {
     if (caught || reduce) return;
     setDodges((d) => d + 1);
-    // Keep the jump inside a small box so the button never lands off-screen.
-    setOffset({ x: (Math.random() - 0.5) * 130, y: (Math.random() - 0.5) * 70 });
+    // A small box, so the button never lands off-screen on a 360px phone.
+    setOffset({ x: (Math.random() - 0.5) * 110, y: -20 - Math.random() * 40 });
   }, [caught, reduce]);
 
-  const accused = data.accusedName?.trim() || "You";
-  // Counted, not written out. This line said "Five hearings" while the quiz was
-  // ten questions long, because the number lived in prose instead of in the data.
+  const accusedName = data.accusedName?.trim();
+  const plaintiff = data.plaintiffName?.trim() || "Someone who loves you";
   const questionCount = data.questions.length;
+  const toWin = Math.ceil(questionCount * PASS_RATIO);
+  const exhibits = data.photos.length;
 
   return (
-    <motion.div
-      key="summons"
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -14 }}
-      transition={{ duration: 0.42 }}
-      style={{ width: "100%", maxWidth: 440 }}
-    >
-      <div style={{ textAlign: "center", marginBottom: 14 }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 13px",
-            borderRadius: 999,
-            background: "rgba(108,92,231,.10)",
-            border: `1px solid rgba(108,92,231,.22)`,
-            fontFamily: BODY,
-            fontSize: 11,
-            fontWeight: 600,
-            color: INDIGO,
-            letterSpacing: 0.3,
-          }}
-        >
-          <Gavel size={12} /> CASE NO. {caseNo}
-        </div>
+    <motion.div key="summons" {...screen} style={{ width: "100%", maxWidth: 460 }}>
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <Typed color={V.a1} size={11.5}>
+          Court of Love · No. {caseNo}
+        </Typed>
       </div>
 
-      <StickerCard tilt={-1.4}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
-          <CourtGif
-            src={ASSETS.scales}
-            alt="Two penguins sitting perfectly balanced on the golden scales of justice"
-            size={200}
-            priority
-          />
+      <Paper tilt={-1} style={{ padding: "20px 20px 22px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <Typed size={11} color={V.paperSoft}>
+            ⚖ Summons
+          </Typed>
+          <Stamp r={7} size={12} delay={500}>
+            urgent 💌
+          </Stamp>
         </div>
 
-        <p
-          style={{
-            fontFamily: SCRIPT,
-            fontSize: 21,
-            color: PINK,
-            textAlign: "center",
-            margin: "0 0 8px",
-            lineHeight: 1.15,
-          }}
-        >
-          before this Court, all lovers are equal
-        </p>
+        <div style={{ display: "flex", justifyContent: "center", margin: "6px 0 4px" }}>
+          <CourtGif src={ASSETS.scales} alt="Two penguins sitting perfectly balanced on the golden scales of justice" size={184} priority />
+        </div>
 
         <h1
+          dir="auto"
           style={{
-            fontFamily: HEAD,
-            fontSize: 25,
-            lineHeight: 1.2,
-            fontWeight: 700,
-            color: TEXT,
-            textAlign: "center",
             margin: "0 0 10px",
-            letterSpacing: -0.5,
+            fontFamily: SERIF,
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "clamp(31px, 8.6vw, 42px)",
+            lineHeight: 1,
+            letterSpacing: "-0.02em",
+            color: V.paperInk,
+            textAlign: "center",
+            overflowWrap: "anywhere",
           }}
         >
           {data.headline?.trim() || "You have been summoned to The Court of Love"}
         </h1>
-
-        <p
-          style={{
-            fontFamily: BODY,
-            fontSize: 14,
-            lineHeight: 1.62,
-            color: MUTED,
-            textAlign: "center",
-            margin: "0 0 4px",
-          }}
-        >
-          <strong style={{ color: TEXT }}>{accused}</strong>, you stand accused of being
-          loved a great deal. {questionCount} question{questionCount === 1 ? "" : "s"}. Answer
-          honestly.
+        <p style={{ margin: "0 0 14px", fontFamily: SANS, fontSize: 15, lineHeight: 1.5, color: V.paperSoft, textAlign: "center" }}>
+          {accusedName ? (
+            <>
+              <strong style={{ color: V.paperInk }}>{accusedName}</strong>, you
+            </>
+          ) : (
+            "You"
+          )}{" "}
+          stand accused of being loved a concerning amount.
         </p>
 
-        <div
-          style={{
-            marginTop: 16,
-            padding: "13px 15px",
-            borderRadius: 20,
-            background: "#F3F1EA",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          <p style={{ fontFamily: BODY, fontSize: 13.5, lineHeight: 1.6, color: TEXT, margin: 0 }}>
-            {data.oathText?.trim() ||
-              "Do you swear to answer every question with your whole heart?"}
+        <div style={{ padding: "8px 14px", borderRadius: 12, border: `1px solid ${PAPER_RULE}`, background: "color-mix(in srgb, var(--lv-paper-ink) 3%, transparent)" }}>
+          <DocketRow label="Filed by" value={plaintiff} />
+          <DocketRow label="Hearings" value={`${questionCount} question${questionCount === 1 ? "" : "s"}`} />
+          <DocketRow label="To win" value={`${toWin} right`} />
+          {exhibits > 0 && <DocketRow label="Evidence" value={`${exhibits} exhibit${exhibits === 1 ? "" : "s"} 📸`} />}
+        </div>
+
+        <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 12, border: `1.5px dashed color-mix(in srgb, var(--lv-a1) 45%, ${PAPER_RULE})` }}>
+          <Typed size={10} color={STAMP_INK}>
+            The oath
+          </Typed>
+          <p dir="auto" style={{ margin: "6px 0 0", fontFamily: SERIF, fontSize: 19, lineHeight: 1.3, color: V.paperInk }}>
+            {data.oathText?.trim() || "Do you swear to answer every question with your whole heart?"}
           </p>
         </div>
-      </StickerCard>
+      </Paper>
 
       {/* Oath buttons */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: 22,
-          minHeight: 96,
-        }}
-      >
-        <motion.button
-          onClick={onAccept}
-          whileTap={{ scale: 0.96 }}
-          animate={reduce ? {} : { scale: [1, 1 + dodges * 0.05 + 0.04, 1] }}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center", marginTop: 24, minHeight: 64 }}>
+        <motion.div
+          animate={reduce ? {} : { scale: [1, 1.035 + dodges * 0.03, 1] }}
           transition={reduce ? {} : { duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
-          style={{
-            padding: "15px 26px",
-            borderRadius: 999,
-            background: LIME,
-            color: TEXT,
-            fontFamily: HEAD,
-            fontWeight: 700,
-            fontSize: 16,
-            border: "none",
-            boxShadow: "0 8px 22px rgba(198,255,61,.5)",
-            cursor: "pointer",
-            minHeight: 50,
-          }}
         >
-          Yes, I swear 🫱
-        </motion.button>
+          <GavelButton onClick={onAccept} full={false} style={{ padding: "15px 28px" }}>
+            Yes, I swear ✋
+          </GavelButton>
+        </motion.div>
 
         <motion.button
+          type="button"
           onMouseEnter={dodge}
           onTouchStart={dodge}
           onClick={() => (caught ? setJoke(true) : dodge())}
-          animate={{ x: offset.x, y: offset.y, scale: caught ? 1 : Math.max(0.5, 1 - dodges * 0.16) }}
+          animate={{ x: offset.x, y: offset.y, scale: caught ? 1 : Math.max(0.6, 1 - dodges * 0.13) }}
           transition={{ type: "spring", stiffness: 500, damping: 18 }}
+          className="lv-focus"
           style={{
-            padding: "13px 20px",
+            padding: "13px 22px",
             borderRadius: 999,
-            background: SURFACE,
-            color: MUTED,
-            fontFamily: HEAD,
-            fontWeight: 600,
-            fontSize: 14,
-            border: `1px solid ${BORDER}`,
+            background: "transparent",
+            color: V.ink,
+            fontFamily: SANS,
+            fontWeight: 700,
+            fontSize: 15,
+            border: `1.5px solid ${V.edge}`,
             cursor: "pointer",
-            minHeight: 44,
+            minHeight: 50,
           }}
         >
           No
@@ -443,34 +235,18 @@ function SummonsScreen({
 
       <AnimatePresence>
         {joke && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            style={{ textAlign: "center", marginTop: 4 }}
-          >
-            <p style={{ fontFamily: SCRIPT, fontSize: 20, color: INDIGO, margin: "0 0 10px" }}>
-              Objection overruled 😏 you&apos;re already here.
-            </p>
-            <LimeButton onClick={onAccept} full={false}>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ textAlign: "center", marginTop: 6 }}>
+            <p style={{ fontFamily: HAND, fontSize: 24, color: V.ink, margin: "0 0 10px" }}>Objection overruled 😏 you&apos;re already here.</p>
+            <GavelButton onClick={onAccept} full={false}>
               Fine, let&apos;s go ⚖️
-            </LimeButton>
+            </GavelButton>
           </motion.div>
         )}
       </AnimatePresence>
 
       {!joke && (
-        <p
-          style={{
-            fontFamily: BODY,
-            fontSize: 11.5,
-            color: MUTED,
-            textAlign: "center",
-            marginTop: 10,
-            opacity: 0.75,
-          }}
-        >
-          {caught ? "…the No button gave up." : "Good luck clicking No."}
+        <p style={{ fontFamily: HAND, fontSize: 19, color: V.soft, textAlign: "center", margin: "6px 0 0" }}>
+          {caught ? "…the No button gave up." : "good luck clicking No."}
         </p>
       )}
     </motion.div>
@@ -482,40 +258,26 @@ function SessionScreen({ onDone }: { onDone: () => void }) {
   const reduce = useReducedMotion();
 
   useEffect(() => {
-    const t = window.setTimeout(onDone, reduce ? 900 : 2400);
+    const t = window.setTimeout(onDone, reduce ? 900 : 2600);
     return () => window.clearTimeout(t);
   }, [onDone, reduce]);
 
   return (
-    <motion.div
-      key="session"
-      initial={{ opacity: 0, scale: 0.94 }}
-      animate={reduce ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1, x: [0, -7, 7, -4, 4, 0] }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.6 }}
-      style={{ width: "100%", maxWidth: 400, textAlign: "center" }}
-    >
-      <CourtGif
-        src={ASSETS.gavel}
-        alt="A penguin judge banging a gavel at the podium"
-        size={250}
-        priority
-      />
-      <h2
-        style={{
-          fontFamily: HEAD,
-          fontSize: 27,
-          fontWeight: 700,
-          color: TEXT,
-          margin: "12px 0 6px",
-          letterSpacing: -0.6,
-        }}
-      >
-        Court is now in session
-      </h2>
-      <p style={{ fontFamily: SCRIPT, fontSize: 22, color: PINK, margin: 0 }}>
-        all rise… okay, you can stay seated
-      </p>
+    <motion.div key="session" {...screen} style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
+      <div style={{ position: "relative", display: "inline-block" }}>
+        <div
+          className="col-thud"
+          style={{ width: 240, height: 240, borderRadius: "50%", background: V.paper, border: `6px solid ${V.chip}`, boxShadow: `0 30px 60px -26px ${V.shadow}`, display: "grid", placeItems: "center", overflow: "hidden", animationDelay: ".5s" }}
+        >
+          <CourtGif src={ASSETS.gavel} alt="A penguin judge banging a gavel at the podium" size={210} priority />
+        </div>
+        <span className="col-bang" style={{ position: "absolute", right: -18, top: 6, animationDelay: ".45s" }}>
+          <span style={{ display: "inline-block", padding: "6px 12px", background: V.chip, color: V.chipInk, fontFamily: SANS, fontWeight: 900, fontSize: 20, letterSpacing: "0.04em", borderRadius: 10, boxShadow: `0 10px 24px -10px ${V.shadow}` }}>BANG!</span>
+        </span>
+      </div>
+      <h2 style={{ margin: "22px 0 6px", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(34px, 9vw, 48px)", lineHeight: 1, color: V.ink }}>Order! Order!</h2>
+      <p style={{ margin: 0, fontFamily: SANS, fontWeight: 700, fontSize: 16, color: V.ink }}>Court is now in session.</p>
+      <p style={{ margin: "4px 0 0", fontFamily: HAND, fontSize: 23, color: V.soft }}>all rise… okay, you can stay seated</p>
     </motion.div>
   );
 }
@@ -536,137 +298,116 @@ function HearingScreen({
   options: string[];
   onAnswer: (chosen: number) => void;
 }) {
-  const [locked, setLocked] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
 
-  // Guard against a double-tap registering two answers and skipping a hearing.
+  // Lock on the first tap (a double-tap must not skip a hearing), show the
+  // pick for a beat, then move on.
   const choose = (i: number) => {
-    if (locked) return;
-    setLocked(true);
-    onAnswer(i);
+    if (picked !== null) return;
+    setPicked(i);
+    window.setTimeout(() => onAnswer(i), 380);
   };
 
   return (
     <motion.div
       key={`hearing-${index}`}
-      initial={{ opacity: 0, x: 44 }}
+      initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -44 }}
-      transition={{ duration: 0.34, ease: "easeOut" }}
-      style={{ width: "100%", maxWidth: 440 }}
+      exit={{ opacity: 0, x: -40 }}
+      transition={{ duration: 0.32, ease: "easeOut" }}
+      style={{ width: "100%", maxWidth: 480 }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <ProgressPips total={total} done={index} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <Typed color={V.ink} size={11.5}>
+          Hearing {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+        </Typed>
+        <Typed color={V.soft} size={11}>
+          {exhibit || "The Court asks"}
+        </Typed>
+      </div>
+      <div style={{ marginBottom: 18 }}>
+        <HearingBar total={total} done={index} />
       </div>
 
-      <StickerCard tilt={index % 2 === 0 ? -1.1 : 1.1}>
+      <Paper tilt={index % 2 === 0 ? -0.8 : 0.8} style={{ padding: "18px 16px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
-          {/* The clerk GIF has an opaque pink backdrop — clip it so it reads as an avatar. */}
-          <div
-            style={{
-              flexShrink: 0,
-              width: 54,
-              height: 54,
-              borderRadius: 16,
-              overflow: "hidden",
-              border: `1px solid ${BORDER}`,
-            }}
-          >
-            <CourtGif src={ASSETS.clerk} alt="" size={54} />
+          {/* The clerk GIF has an opaque backdrop — clip it into a round avatar. */}
+          <div style={{ flexShrink: 0, width: 50, height: 50, borderRadius: "50%", overflow: "hidden", border: `2px solid ${V.chip}`, lineHeight: 0 }}>
+            <CourtGif src={ASSETS.clerk} alt="" size={50} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontFamily: BODY,
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: 1.3,
-                color: INDIGO,
-                textTransform: "uppercase",
-              }}
-            >
-              {exhibit || `Question ${index + 1}`}
-            </div>
-            <div style={{ fontFamily: BODY, fontSize: 11, color: MUTED }}>
-              Question {index + 1} of {total}
-            </div>
+            <Typed size={10} color={STAMP_INK}>
+              The clerk reads
+            </Typed>
+            <p style={{ margin: "1px 0 0", fontFamily: HAND, fontSize: 19, lineHeight: 1, color: V.paperSoft }}>question {index + 1}, your honour —</p>
           </div>
         </div>
 
-        <h2
-          style={{
-            fontFamily: HEAD,
-            fontSize: 20,
-            lineHeight: 1.34,
-            fontWeight: 700,
-            color: TEXT,
-            margin: "0 0 16px",
-            letterSpacing: -0.3,
-          }}
-        >
+        <h2 dir="auto" style={{ margin: "0 0 16px", fontFamily: SANS, fontSize: 21, lineHeight: 1.28, fontWeight: 800, letterSpacing: "-0.02em", color: V.paperInk, overflowWrap: "anywhere" }}>
           {question}
         </h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-          {options.map((opt, i) => (
-            <motion.button
-              key={i}
-              onClick={() => choose(i)}
-              disabled={locked}
-              whileTap={{ scale: 0.985 }}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                padding: "14px 15px",
-                borderRadius: 18,
-                background: "#F3F1EA",
-                border: `1px solid ${BORDER}`,
-                fontFamily: BODY,
-                fontSize: 14.5,
-                lineHeight: 1.45,
-                color: TEXT,
-                cursor: locked ? "default" : "pointer",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 11,
-                minHeight: 50,
-              }}
-            >
-              <span
-                aria-hidden="true"
+          {options.map((opt, i) => {
+            const on = picked === i;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => choose(i)}
+                disabled={picked !== null}
+                className="col-opt lv-focus"
+                dir="auto"
                 style={{
-                  flexShrink: 0,
-                  width: 23,
-                  height: 23,
-                  borderRadius: 999,
-                  background: SURFACE,
-                  border: `1px solid ${BORDER}`,
-                  display: "grid",
-                  placeItems: "center",
-                  fontFamily: HEAD,
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  color: INDIGO,
+                  width: "100%",
+                  textAlign: "start",
+                  padding: "13px 14px",
+                  borderRadius: 16,
+                  background: on ? V.chip : "color-mix(in srgb, var(--lv-paper-ink) 4%, var(--lv-paper))",
+                  border: `1.5px solid ${on ? V.chip : PAPER_RULE}`,
+                  fontFamily: SANS,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  lineHeight: 1.4,
+                  color: on ? V.chipInk : V.paperInk,
+                  cursor: picked !== null ? "default" : "pointer",
+                  opacity: picked !== null && !on ? 0.55 : 1,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 11,
+                  minHeight: 52,
                 }}
               >
-                {String.fromCharCode(65 + i)}
-              </span>
-              <span>{opt}</span>
-            </motion.button>
-          ))}
+                <span
+                  aria-hidden
+                  style={{
+                    flexShrink: 0,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    background: on ? "rgba(255,255,255,.25)" : V.paper,
+                    border: `1.5px solid ${on ? "transparent" : PAPER_RULE}`,
+                    display: "grid",
+                    placeItems: "center",
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: on ? V.chipInk : STAMP_INK,
+                  }}
+                >
+                  {on ? "✓" : String.fromCharCode(65 + i)}
+                </span>
+                <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{opt}</span>
+              </button>
+            );
+          })}
         </div>
-      </StickerCard>
+      </Paper>
     </motion.div>
   );
 }
 
-/**
- * A ring that drains over the dwell time with the seconds remaining inside it.
- * Across a ten-second hold a bare pause would read as "the app froze"; a visible
- * count makes it obviously deliberate, finite, and skippable.
- *
- * Remounted per reaction (its parent is keyed by slot), so the initial state is
- * always correct without resetting anything from an effect.
- */
+/** A ring that drains over the dwell time with the seconds remaining inside it. */
 function DwellCountdown({ ms, label }: { ms: number; label: string }) {
   const reduce = useReducedMotion();
   const [left, setLeft] = useState(() => Math.ceil(ms / 1000));
@@ -680,14 +421,14 @@ function DwellCountdown({ ms, label }: { ms: number; label: string }) {
     <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
       <span style={{ position: "relative", width: 26, height: 26, flexShrink: 0 }}>
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-          <circle cx="13" cy="13" r="11.4" fill="none" stroke="#E2DFF6" strokeWidth="2.2" />
+          <circle cx="13" cy="13" r="11.4" fill="none" stroke={V.edge} strokeWidth="2.2" />
           {!reduce && (
             <motion.circle
               cx="13"
               cy="13"
               r="11.4"
               fill="none"
-              stroke={INDIGO}
+              stroke={V.a1}
               strokeWidth="2.2"
               strokeLinecap="round"
               initial={{ pathLength: 1 }}
@@ -697,35 +438,19 @@ function DwellCountdown({ ms, label }: { ms: number; label: string }) {
             />
           )}
         </svg>
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "grid",
-            placeItems: "center",
-            fontFamily: HEAD,
-            fontSize: 10.5,
-            fontWeight: 700,
-            color: INDIGO,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
+        <span aria-hidden="true" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontFamily: MONO, fontSize: 10.5, fontWeight: 700, color: V.ink }}>
           {left}
         </span>
       </span>
-      <span style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, opacity: 0.85 }}>{label}</span>
+      <span style={{ fontFamily: MONO, fontSize: 11.5, color: V.soft, letterSpacing: "0.04em" }}>{label}</span>
     </div>
   );
 }
 
 /**
- * The reaction between questions — a GIF plus a handwritten line.
- *
- * `kind` distinguishes the three roles the art plays: celebrating a right
- * answer, comforting a wrong one, and cheering the accused on at the recess.
- * Each reaction carries its own dwell time because most of these GIFs have
- * words drawn into them and loop in well under a second.
+ * The reaction between questions — the GIF as a taped "court cam" print, plus
+ * a handwritten line. Framing it in paper means a GIF with an opaque backdrop
+ * reads as a photo print, not a stray rectangle, on every theme.
  */
 function ReactionScreen({
   reaction,
@@ -738,27 +463,17 @@ function ReactionScreen({
   reaction: Reaction;
   kind: "correct" | "wrong" | "recess";
   note: string;
-  /** Stable per-appearance key so the ring restarts and React remounts cleanly. */
   slot: string;
   onContinue: () => void;
   continueLabel: string;
 }) {
-  // Reduced motion means less animation, not less reading time — the words drawn
-  // into this art take just as long to read either way, so the dwell is the same.
   const dwell = reaction.dwell ?? REACTION_DWELL;
 
-  const badge =
-    kind === "correct"
-      // Plain words, for the same reason the questions are: "Sustained" and
-      // "Overruled" are the two terms in the whole courtroom vocabulary that
-      // actually carry information here — right or wrong — and they were the
-      // two least likely to be understood.
-      ? { text: "✓ Correct", fg: GREEN, bg: "rgba(58,167,109,.13)", bd: "rgba(58,167,109,.3)" }
-      : kind === "wrong"
-        ? { text: "✗ Not quite", fg: PINK, bg: "rgba(247,37,133,.11)", bd: "rgba(247,37,133,.26)" }
-        : { text: "⏸ Quick break", fg: INDIGO, bg: "rgba(108,92,231,.1)", bd: "rgba(108,92,231,.24)" };
+  // Plain words on the stamp: "Correct" and "Not quite" are the only two terms
+  // here that carry information, so they are never swapped for legalese.
+  const stamp = kind === "correct" ? "✓ correct" : kind === "wrong" ? "✗ not quite" : "⏸ quick recess";
+  const caption = kind === "correct" ? "the court is pleased" : kind === "wrong" ? "the court forgives you" : "one to go…";
 
-  // Auto-advance, but the whole screen is a tap target so nobody has to wait.
   useEffect(() => {
     const t = window.setTimeout(onContinue, dwell);
     return () => window.clearTimeout(t);
@@ -774,212 +489,109 @@ function ReactionScreen({
       onClick={onContinue}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onContinue(); }}
-      aria-label={`${badge.text}. ${note} Activate to continue.`}
-      style={{ width: "100%", maxWidth: 400, textAlign: "center", cursor: "pointer" }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onContinue();
+      }}
+      aria-label={`${stamp}. ${note} Activate to continue.`}
+      style={{ width: "100%", maxWidth: 420, textAlign: "center", cursor: "pointer" }}
     >
-      <div
-        aria-hidden="true"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 7,
-          padding: "6px 15px",
-          borderRadius: 999,
-          background: badge.bg,
-          border: `1px solid ${badge.bd}`,
-          fontFamily: HEAD,
-          fontSize: 12.5,
-          fontWeight: 700,
-          color: badge.fg,
-          marginBottom: 12,
-          letterSpacing: 0.2,
-        }}
-      >
-        {badge.text}
-      </div>
-
-      {/* No card. The art sits straight on the page like a sticker dropped into
-          a chat, which is the register this whole screen is going for — a white
-          panel around a silhouetted character just boxes in something that was
-          already the right shape.
-
-          This only works because every asset in the reaction pools is
-          silhouetted; the three that were solid rectangles were replaced rather
-          than framed around. See the note at the top of `assets.ts` before
-          adding any new art here. */}
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          justifyContent: "center",
-          padding: 4,
-        }}
-      >
-        {/* Explicit dismiss. The whole screen also advances on tap, but over a
-            ten-second hold people look for a real close button — so give them one
-            instead of making them guess that tapping the art works.
-
-            It keeps its own chip background: without the card behind it, the
-            bare icon would sit on whatever the art happens to be. */}
+      <div style={{ position: "relative", display: "inline-block", width: Math.min((reaction.size ?? REACTION_SIZE) + 20, 300), maxWidth: "100%" }}>
+        <Polaroid tilt={kind === "wrong" ? 2 : -2} caption={caption}>
+          <CourtGif src={reaction.src} alt={reaction.alt} size={reaction.size ?? REACTION_SIZE} priority />
+        </Polaroid>
+        <span style={{ position: "absolute", left: -10, bottom: 44, zIndex: 3 }}>
+          <Stamp r={-9} size={16} style={{ background: "color-mix(in srgb, var(--lv-paper) 88%, transparent)" }}>
+            {stamp}
+          </Stamp>
+        </span>
         <button
-          onClick={(e) => { e.stopPropagation(); onContinue(); }}
-          aria-label="Close and continue"
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            zIndex: 2,
-            width: 32,
-            height: 32,
-            borderRadius: 999,
-            display: "grid",
-            placeItems: "center",
-            background: "rgba(255,255,255,.86)",
-            border: `1px solid ${BORDER}`,
-            color: MUTED,
-            cursor: "pointer",
-            backdropFilter: "blur(6px)",
-            boxShadow: "0 2px 8px rgba(14,14,18,.10)",
+          onClick={(e) => {
+            e.stopPropagation();
+            onContinue();
           }}
+          aria-label="Close and continue"
+          className="lv-focus"
+          style={{ position: "absolute", top: -12, right: -12, zIndex: 4, width: 36, height: 36, borderRadius: 999, display: "grid", placeItems: "center", background: V.paper, border: `1px solid ${PAPER_RULE}`, color: V.paperInk, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,.18)" }}
         >
           <X size={16} />
         </button>
-
-        <CourtGif src={reaction.src} alt={reaction.alt} size={reaction.size ?? REACTION_SIZE} priority />
       </div>
 
-      <p
-        style={{
-          fontFamily: SCRIPT,
-          fontSize: 24,
-          lineHeight: 1.3,
-          color: kind === "correct" ? GREEN : INDIGO,
-          margin: "16px auto 0",
-          maxWidth: 330,
-        }}
-      >
+      <p dir="auto" style={{ fontFamily: HAND, fontSize: 27, lineHeight: 1.2, color: V.ink, margin: "22px auto 0", maxWidth: 360 }}>
         {note}
       </p>
 
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 16 }}>
         <DwellCountdown ms={dwell} label={`tap to ${continueLabel} →`} />
       </div>
     </motion.div>
   );
 }
 
-/** The verdict — won or retrial. */
+/** The verdict — guilty (of being loved), or a retrial. */
 function VerdictScreen({
   passed,
   score,
   total,
+  nextLabel,
   onNext,
   onRetry,
 }: {
   passed: boolean;
   score: number;
   total: number;
+  nextLabel: string;
   onNext: () => void;
   onRetry: () => void;
 }) {
   // The verdict clip spends its first seconds drawing out "THE COURT HAS DECIDED
-  // I LOVE YOU MORE / THERE WILL BE NO APPEALS". Showing the CTA immediately
-  // invites a tap straight past the line the whole trial was building to, so it
-  // fades in once the message has landed. The clip keeps looping either way, so
-  // this delays the button — it never traps anyone.
-  // Matches the reaction dwell: this clip's message is the longest of the lot.
+  // I LOVE YOU MORE / THERE WILL BE NO APPEALS", so the CTA waits for it — the
+  // clip loops either way, so this delays the button, it never traps anyone.
   const [ctaReady, setCtaReady] = useState(!passed);
   useEffect(() => {
     if (ctaReady) return;
-    const t = window.setTimeout(() => setCtaReady(true), REACTION_DWELL);
+    const t = window.setTimeout(() => setCtaReady(true), 7000);
     return () => window.clearTimeout(t);
   }, [ctaReady]);
 
   return (
-    <motion.div
-      key={`verdict-${passed}`}
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.45 }}
-      style={{ width: "100%", maxWidth: 420, textAlign: "center" }}
-    >
-      <div
-        aria-live="polite"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 7,
-          padding: "6px 15px",
-          borderRadius: 999,
-          background: "rgba(108,92,231,.1)",
-          border: `1px solid rgba(108,92,231,.24)`,
-          fontFamily: BODY,
-          fontSize: 11.5,
-          fontWeight: 700,
-          color: INDIGO,
-          letterSpacing: 1,
-          marginBottom: 14,
-        }}
-      >
-        <Gavel size={12} /> VERDICT · {score}/{total}
+    <motion.div key={`verdict-${passed}`} {...screen} style={{ width: "100%", maxWidth: 440, textAlign: "center" }}>
+      <div aria-live="polite" style={{ marginBottom: 14 }}>
+        <Typed color={V.a1} size={11.5}>
+          The verdict · {score}/{total}
+        </Typed>
       </div>
 
       {passed ? (
         <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              borderRadius: 24,
-              overflow: "hidden",
-              border: `1px solid ${BORDER}`,
-              boxShadow: CARD_SHADOW,
-              background: SURFACE,
-            }}
-          >
-            <CourtGif
-              src={ASSETS.verdict}
-              alt="A cartoon cat judge banging a gavel beside the words: the court has decided I love you more"
-              size={420}
-              priority
-            />
+          <div style={{ position: "relative" }}>
+            <Paper tilt={-1} style={{ padding: 10, overflow: "hidden" }}>
+              <div style={{ borderRadius: 10, overflow: "hidden", lineHeight: 0, background: "#fff" }}>
+                <CourtGif src={ASSETS.verdict} alt="A cartoon cat judge banging a gavel beside the words: the court has decided I love you more" size={420} priority />
+              </div>
+            </Paper>
+            <span style={{ position: "absolute", right: -6, top: -18, zIndex: 2 }}>
+              <Stamp r={9} size={28} delay={900} style={{ background: "color-mix(in srgb, var(--lv-paper) 90%, transparent)" }}>
+                guilty
+              </Stamp>
+            </span>
           </div>
-          <h2
-            style={{
-              fontFamily: HEAD,
-              fontSize: 26,
-              fontWeight: 700,
-              color: TEXT,
-              margin: "16px 0 6px",
-              letterSpacing: -0.6,
-            }}
-          >
-            Case won. 💗
+          <h2 style={{ margin: "26px 0 6px", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(32px, 8.6vw, 46px)", lineHeight: 1, color: V.ink }}>
+            Guilty… of being loved.
           </h2>
-          <p style={{ fontFamily: BODY, fontSize: 14, lineHeight: 1.6, color: MUTED, margin: "0 0 20px" }}>
-            The Court finds you guilty of being loved beyond all reasonable doubt.
+          <p style={{ margin: "0 0 22px", fontFamily: SANS, fontSize: 15, lineHeight: 1.55, color: V.soft }}>
+            Beyond all reasonable doubt. {score === total ? "A perfect score — suspicious, honestly." : "The Court is satisfied."}
           </p>
-          <div style={{ minHeight: 48 }}>
+          <div style={{ minHeight: 56 }}>
             <AnimatePresence mode="wait">
               {ctaReady ? (
-                <motion.div
-                  key="cta"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <LimeButton onClick={onNext}>Read the sealed letter 💌</LimeButton>
+                <motion.div key="cta" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                  <GavelButton onClick={onNext} glow>
+                    {nextLabel}
+                  </GavelButton>
                 </motion.div>
               ) : (
-                <motion.p
-                  key="hint"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{ fontFamily: SCRIPT, fontSize: 21, color: PINK, margin: 0 }}
-                >
+                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontFamily: HAND, fontSize: 23, color: V.soft, margin: 0 }}>
                   the Court is still speaking…
                 </motion.p>
               )}
@@ -988,178 +600,26 @@ function VerdictScreen({
         </>
       ) : (
         <>
-          <CourtGif
-            src={WRONG_REACTIONS[0].src}
-            alt={WRONG_REACTIONS[0].alt}
-            size={WRONG_REACTIONS[0].size ?? REACTION_SIZE}
-            priority
-          />
-          <h2
-            style={{
-              fontFamily: HEAD,
-              fontSize: 25,
-              fontWeight: 700,
-              color: TEXT,
-              margin: "14px 0 6px",
-              letterSpacing: -0.5,
-            }}
-          >
-            Retrial granted
-          </h2>
-          <p style={{ fontFamily: SCRIPT, fontSize: 23, color: INDIGO, margin: "0 0 8px" }}>
-            insufficient evidence… but this Court believes in second chances
-          </p>
-          <p style={{ fontFamily: BODY, fontSize: 13.5, lineHeight: 1.6, color: MUTED, margin: "0 0 20px" }}>
+          <div style={{ position: "relative", width: 260, maxWidth: "100%", margin: "0 auto" }}>
+            <Polaroid tilt={2} caption="it's okay, come here">
+              <CourtGif src={WRONG_REACTIONS[0].src} alt={WRONG_REACTIONS[0].alt} size={WRONG_REACTIONS[0].size ?? REACTION_SIZE} priority />
+            </Polaroid>
+            <span style={{ position: "absolute", left: -8, top: 18, zIndex: 3 }}>
+              <Stamp r={-10} size={18} style={{ background: "color-mix(in srgb, var(--lv-paper) 88%, transparent)" }}>
+                retrial
+              </Stamp>
+            </span>
+          </div>
+          <h2 style={{ margin: "22px 0 6px", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(30px, 8vw, 42px)", lineHeight: 1, color: V.ink }}>Retrial granted</h2>
+          <p style={{ fontFamily: HAND, fontSize: 24, color: V.ink, margin: "0 0 8px" }}>insufficient evidence… but this Court believes in second chances</p>
+          <p style={{ fontFamily: SANS, fontSize: 14.5, lineHeight: 1.6, color: V.soft, margin: "0 0 20px" }}>
             You scored {score} of {total}. You need {Math.ceil(total * PASS_RATIO)} to win the case.
           </p>
-          <LimeButton onClick={onRetry}>
-            <RotateCcw size={15} /> Appeal the verdict
-          </LimeButton>
+          <GavelButton onClick={onRetry}>
+            <RotateCcw size={16} /> Appeal the verdict
+          </GavelButton>
         </>
       )}
-    </motion.div>
-  );
-}
-
-/** The typewriter love letter. */
-function LetterScreen({ data, onNext }: { data: CourtOfLoveData; onNext: () => void }) {
-  const letter = data.secretLetter?.trim() || "The Court rests. I love you — no further evidence required.";
-  const [skipped, setSkipped] = useState(false);
-  const { shown, done } = useTypewriter(letter, true, 26, skipped);
-
-  return (
-    <motion.div
-      key="letter"
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.45 }}
-      style={{ width: "100%", maxWidth: 440 }}
-    >
-      {/* Tapping the letter finishes it instantly — a long note should never hold
-          an impatient reader hostage to the animation. */}
-      <StickerCard
-        tilt={1}
-        onClick={() => setSkipped(true)}
-        style={{ cursor: done ? "default" : "pointer" }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <div
-            style={{
-              fontFamily: BODY,
-              fontSize: 10.5,
-              fontWeight: 700,
-              letterSpacing: 1.5,
-              color: INDIGO,
-              textTransform: "uppercase",
-            }}
-          >
-            Sealed exhibit · read aloud
-          </div>
-        </div>
-
-        <p
-          style={{
-            fontFamily: BODY,
-            fontSize: 15,
-            lineHeight: 1.78,
-            color: TEXT,
-            margin: 0,
-            whiteSpace: "pre-wrap",
-            minHeight: 150,
-          }}
-        >
-          {shown}
-          {!done && (
-            <motion.span
-              aria-hidden="true"
-              animate={{ opacity: [1, 0] }}
-              transition={{ duration: 0.6, repeat: Infinity }}
-              style={{ color: PINK }}
-            >
-              ▌
-            </motion.span>
-          )}
-        </p>
-
-        {/* Held back until the letter has finished typing, so "I LOVE YOU THIS
-            MUCH" lands as the closing beat instead of competing with the words
-            still appearing above it. */}
-        <AnimatePresence>
-          {done && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.25 }}
-              style={{ display: "flex", justifyContent: "center", marginTop: 12 }}
-            >
-              {/* This GIF's backdrop is off-white, which shows as a grey block on
-                  the card's pure white. Framing it makes that edge deliberate. */}
-              <div
-                style={{
-                  borderRadius: 20,
-                  overflow: "hidden",
-                  border: `1px solid ${BORDER}`,
-                  background: "#FCFCFA",
-                  padding: 6,
-                  lineHeight: 0,
-                }}
-              >
-                <CourtGif
-                  src={ASSETS.loveThisMuch}
-                  alt="A cartoon dinosaur stretching its arms wide beside the words “I love you this much”"
-                  size={230}
-                  priority
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <p
-          style={{
-            fontFamily: SCRIPT,
-            fontSize: 23,
-            color: PINK,
-            textAlign: "center",
-            margin: "6px 0 0",
-          }}
-        >
-          — {data.signatureName?.trim() || data.plaintiffName?.trim() || "yours, always"}
-        </p>
-      </StickerCard>
-
-      <div style={{ marginTop: 20, minHeight: 48 }}>
-        <AnimatePresence mode="wait">
-          {done ? (
-            <motion.div
-              key="collect"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.55 }}
-            >
-              <LimeButton onClick={onNext}>Collect your stamp paper 📜</LimeButton>
-            </motion.div>
-          ) : (
-            <motion.p
-              key="typing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{
-                fontFamily: BODY,
-                fontSize: 11.5,
-                color: MUTED,
-                textAlign: "center",
-                margin: 0,
-                opacity: 0.8,
-              }}
-            >
-              tap the letter to read it all at once
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </div>
     </motion.div>
   );
 }
@@ -1170,16 +630,24 @@ export default function CourtOfLove({
   data,
   mode,
   shareId,
+  onThemeChange,
 }: {
   data: CourtOfLoveData;
   /** "preview" = inside the editor; "live" = the recipient's published page. */
   mode: "preview" | "live";
   shareId?: string;
+  /** Preview only: the floating theme dock calls this. */
+  onThemeChange?: (id: string) => void;
 }) {
-  const reduce = useReducedMotion();
-  // Memoised so the answer callback isn't rebuilt on every render.
+  const reduce = useReducedMotion() ?? false;
+  const theme = pickTheme(COURT_THEMES, data.theme);
   const questions = useMemo(() => data.questions ?? [], [data.questions]);
   const total = questions.length;
+  const photos = useMemo(() => data.photos ?? [], [data.photos]);
+  const gifs = data.gifs ?? [];
+  const hasLetter = Boolean(data.letter?.trim());
+  const plaintiff = data.plaintiffName?.trim() || "The Plaintiff";
+  const accused = data.accusedName?.trim() || "You";
 
   const [phase, setPhase] = useState<Phase>("summons");
   const [index, setIndex] = useState(0);
@@ -1192,32 +660,37 @@ export default function CourtOfLove({
   const [flash, setFlash] = useState("");
 
   const caseNo = useMemo(() => caseNumber(shareId), [shareId]);
-  const dateStr = useMemo(
-    () => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-    [],
-  );
+  const dateStr = useMemo(() => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }), []);
 
   const passed = total > 0 && score / total >= PASS_RATIO;
 
-  // Warm the next screen's animation one step ahead, so a transition never waits
-  // on a network fetch. Nothing is fetched that the trial won't reach.
+  // After the verdict: evidence (if any photos) → judgement (if a letter) → certificate.
+  const afterVerdict: Phase = photos.length ? "evidence" : hasLetter ? "judgement" : "certificate";
+  const afterEvidence: Phase = hasLetter ? "judgement" : "certificate";
+  const labelFor = (p: Phase) => (p === "evidence" ? "Review the evidence 📁" : p === "judgement" ? "Hear the final judgement ⚖️" : "Collect your stamp paper 📜");
+
+  // Every phase change starts at the top of the page — a long screen (the
+  // evidence folder, the judgement) must never open scrolled halfway down.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  }, [phase, reduce]);
+
+  // Warm the next screen's animation one step ahead.
   useEffect(() => {
     if (phase === "summons") {
       preloadAsset(ASSETS.gavel);
     } else if (phase === "session") {
       preloadAsset(ASSETS.clerk);
     } else if (phase === "hearing") {
-      // Either reaction could be next and both are small, so warm both — the
-      // reaction screen must never open on a half-loaded GIF.
       preloadAsset(reactionFor(true, index).src);
       preloadAsset(reactionFor(false, index).src);
       if (index + 2 === total && total >= 3) preloadAsset(encouragementFor(score, index + 1).src);
       if (index === total - 1) preloadAsset(ASSETS.verdict);
     } else if (phase === "verdict" && passed) {
+      photos.slice(0, 4).forEach((p) => preloadAsset(p.url));
       preloadAsset(ASSETS.win);
-      preloadAsset(ASSETS.loveThisMuch);
     }
-  }, [phase, index, total, passed, score]);
+  }, [phase, index, total, passed, score, photos]);
 
   const answer = useCallback(
     (chosen: number) => {
@@ -1233,10 +706,14 @@ export default function CourtOfLove({
   );
 
   const afterReaction = useCallback(() => {
-    if (index + 1 >= total) { setPhase("verdict"); return; }
-    // One hearing left → take a recess and cheer them on. Only worth it in a
-    // trial long enough to have a middle (3+ hearings).
-    if (index + 2 === total && total >= 3) { setPhase("recess"); return; }
+    if (index + 1 >= total) {
+      setPhase("verdict");
+      return;
+    }
+    if (index + 2 === total && total >= 3) {
+      setPhase("recess");
+      return;
+    }
     setIndex((i) => i + 1);
     setPhase("hearing");
   }, [index, total]);
@@ -1252,33 +729,35 @@ export default function CourtOfLove({
     setPhase("hearing");
   }, []);
 
+  const replay = useCallback(() => {
+    setIndex(0);
+    setScore(0);
+    setPhase("summons");
+  }, []);
+
   // Confetti for the winning verdict, and again when the certificate lands.
   useEffect(() => {
     if (reduce) return;
     if (!(phase === "verdict" && passed) && phase !== "certificate") return;
     let cancelled = false;
+    const c = theme.colors;
     (async () => {
       try {
         const confetti = (await import("canvas-confetti")).default;
         if (cancelled) return;
         const shoot = (x: number) =>
-          confetti({
-            particleCount: 46,
-            spread: 74,
-            startVelocity: 42,
-            origin: { x, y: 0.62 },
-            colors: [INDIGO, PINK, LIME, "#FFB020", "#FFFFFF"],
-            disableForReducedMotion: true,
-          });
+          confetti({ particleCount: 46, spread: 74, startVelocity: 42, origin: { x, y: 0.62 }, colors: [c.a1, c.a2, c.a3, c.chip, "#FFFFFF"], disableForReducedMotion: true });
         shoot(0.22);
         window.setTimeout(() => !cancelled && shoot(0.78), 220);
         window.setTimeout(() => !cancelled && shoot(0.5), 440);
       } catch {
-        // Confetti is decorative; a chunk-load failure must not break the verdict.
+        // Decorative; a chunk-load failure must not break the verdict.
       }
     })();
-    return () => { cancelled = true; };
-  }, [phase, passed, reduce]);
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, passed, reduce, theme]);
 
   const say = useCallback((msg: string) => {
     setFlash(msg);
@@ -1290,11 +769,7 @@ export default function CourtOfLove({
     setBusy("share");
     try {
       const { shareCertificatePng } = await import("./certificateExport");
-      const result = await shareCertificatePng(
-        certRef.current,
-        caseNo,
-        mode === "live" && shareId ? window.location.href : null,
-      );
+      const result = await shareCertificatePng(certRef.current, caseNo, mode === "live" && shareId ? window.location.href : null);
       if (result === "downloaded") say("Sharing isn't available here — saved the image instead 📥");
       else if (result === "shared") say("Shared! 💗");
     } catch {
@@ -1332,242 +807,209 @@ export default function CourtOfLove({
     }
   }, [caseNo, say]);
 
-  // A page saved with every question blank would otherwise render an empty trial.
-  if (total === 0) {
-    return (
-      <div style={{ minHeight: "100dvh", background: BG, display: "grid", placeItems: "center", padding: 24 }}>
-        <p style={{ fontFamily: BODY, color: MUTED, textAlign: "center" }}>
-          This case file has no questions yet.
-        </p>
-      </div>
-    );
-  }
+  const wide = phase === "evidence";
 
   return (
-    <div
-      // The case may have been written in any language the sender types in.
-      // `lang` lets the browser pick correct fonts, hyphenation and screen-reader
-      // pronunciation; `dir` flips the layout for Urdu, Arabic and Hebrew.
-      lang={data.language || "en"}
-      dir={dirFor(data.language)}
-      style={{
-        minHeight: "100dvh",
-        background: BG,
-        position: "relative",
-        overflowX: "clip",
-        fontFamily: BODY,
-        color: TEXT,
-      }}
-    >
-      <CanvasGlow />
-      {mode === "live" && <BrandBadge />}
-
+    <LoveThemeContext.Provider value={theme}>
       <div
+        // `lang` lets the browser pick correct fonts and pronunciation for a case
+        // written in any language; `dir` flips the layout for Urdu/Arabic/Hebrew.
+        lang={data.language || "en"}
+        dir={dirFor(data.language)}
+        className={`${COURT_FONT_VARS} lv-root`}
         style={{
-          position: "relative",
-          zIndex: 1,
+          ...themeVars(theme),
           minHeight: "100dvh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          // Clears the editor's floating top bar and the live page's brand badge.
-          padding: "calc(env(safe-area-inset-top, 0px) + 72px) 18px calc(env(safe-area-inset-bottom, 0px) + 36px)",
+          position: "relative",
+          isolation: "isolate",
+          overflowX: "clip",
+          background: theme.colors.base,
+          fontFamily: SANS,
+          color: V.ink,
         }}
       >
-        <AnimatePresence mode="wait">
-          {phase === "summons" && (
-            <SummonsScreen data={data} caseNo={caseNo} onAccept={() => setPhase("session")} />
-          )}
+        <style>{LOVE_CSS + COURT_CSS}</style>
+        <LoveSky theme={theme} reduceMotion={reduce} />
+        {mode === "live" && <BrandBadge />}
+        {mode === "preview" && onThemeChange && <ThemeDock themes={COURT_THEMES} value={theme.id} onChange={onThemeChange} />}
 
-          {phase === "session" && <SessionScreen onDone={() => setPhase("hearing")} />}
-
-          {phase === "hearing" && questions[index] && (
-            <HearingScreen
-              index={index}
-              total={total}
-              exhibit={questions[index].exhibit}
-              question={questions[index].question}
-              options={questions[index].options}
-              onAnswer={answer}
-            />
-          )}
-
-          {phase === "reaction" && (
-            <ReactionScreen
-              reaction={reactionFor(lastCorrect, index)}
-              kind={lastCorrect ? "correct" : "wrong"}
-              note={lastNote}
-              slot={`h${index}-${lastCorrect ? "y" : "n"}`}
-              onContinue={afterReaction}
-              continueLabel={index + 1 >= total ? "hear the verdict" : "continue"}
-            />
-          )}
-
-          {phase === "recess" && (
-            <ReactionScreen
-              reaction={encouragementFor(score, index + 1)}
-              kind="recess"
-              note="One question left. You've got this."
-              slot="recess"
-              onContinue={afterRecess}
-              continueLabel="face the final question"
-            />
-          )}
-
-          {phase === "verdict" && (
-            <VerdictScreen
-              passed={passed}
-              score={score}
-              total={total}
-              onNext={() => setPhase("letter")}
-              onRetry={retry}
-            />
-          )}
-
-          {phase === "letter" && <LetterScreen data={data} onNext={() => setPhase("certificate")} />}
-
-          {phase === "certificate" && (
-            <motion.div
-              key="certificate"
-              initial={{ opacity: 0, y: 26 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              style={{ width: "100%", maxWidth: 460 }}
-            >
-              <div style={{ textAlign: "center", marginBottom: 14 }}>
-                <CourtGif
-                  src={ASSETS.win}
-                  alt="A penguin on the winner's podium wearing a gold medal, surrounded by confetti"
-                  size={150}
-                  priority
-                />
-                <h2
-                  style={{
-                    fontFamily: HEAD,
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: TEXT,
-                    margin: "4px 0 2px",
-                    letterSpacing: -0.5,
-                  }}
-                >
-                  You won the case
-                </h2>
-                <p style={{ fontFamily: SCRIPT, fontSize: 21, color: PINK, margin: 0 }}>
-                  duly signed, sealed &amp; stamped
-                </p>
-              </div>
-
-              <StampPaperCertificate
-                ref={certRef}
-                data={data}
-                score={score}
-                total={total}
-                caseNo={caseNo}
-                dateStr={dateStr}
-              />
-
-              <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-                <LimeButton onClick={doShare} disabled={busy !== null}>
-                  {busy === "share" ? <Loader2 size={15} className="animate-spin" /> : <Share2 size={15} />}
-                  {busy === "share" ? "Preparing…" : "Share your award"}
-                </LimeButton>
-
-                <div style={{ display: "flex", gap: 10 }}>
-                  {[
-                    { key: "png" as const, icon: <Download size={14} />, label: "PNG", onClick: doPng },
-                    { key: "pdf" as const, icon: <FileText size={14} />, label: "PDF", onClick: doPdf },
-                  ].map((b) => (
-                    <motion.button
-                      key={b.key}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={b.onClick}
-                      disabled={busy !== null}
-                      style={{
-                        flex: 1,
-                        padding: "12px 14px",
-                        borderRadius: 999,
-                        background: SURFACE,
-                        border: `1px solid ${BORDER}`,
-                        fontFamily: HEAD,
-                        fontWeight: 700,
-                        fontSize: 13.5,
-                        color: TEXT,
-                        cursor: busy ? "default" : "pointer",
-                        opacity: busy ? 0.6 : 1,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 7,
-                        minHeight: 46,
-                      }}
-                    >
-                      {busy === b.key ? <Loader2 size={14} className="animate-spin" /> : b.icon}
-                      {b.label}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              {mode === "live" && (
-                <div style={{ textAlign: "center", marginTop: 22 }}>
-                  <Link
-                    href="/templates"
-                    style={{
-                      fontFamily: BODY,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: INDIGO,
-                      textDecoration: "none",
-                      borderBottom: `1px solid rgba(108,92,231,.35)`,
-                      paddingBottom: 1,
-                    }}
-                  >
-                    Make one for someone you love →
-                  </Link>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* status flash */}
-      <AnimatePresence>
-        {flash && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            role="status"
-            aria-live="polite"
+        {total === 0 ? (
+          <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "grid", placeItems: "center", padding: 24 }}>
+            <p style={{ fontFamily: SANS, color: V.soft, textAlign: "center" }}>This case file has no questions yet.</p>
+          </div>
+        ) : (
+          <div
             style={{
-              position: "fixed",
-              left: "50%",
-              transform: "translateX(-50%)",
-              bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
-              zIndex: 200,
-              padding: "11px 18px",
-              borderRadius: 999,
-              background: SURFACE,
-              border: `1px solid ${BORDER}`,
-              boxShadow: "0 12px 30px rgba(14,14,18,.14)",
-              fontFamily: BODY,
-              fontSize: 13,
-              fontWeight: 600,
-              color: TEXT,
-              display: "inline-flex",
+              position: "relative",
+              zIndex: 1,
+              minHeight: "100dvh",
+              display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              gap: 8,
-              maxWidth: "90vw",
+              justifyContent: wide || phase === "judgement" || phase === "certificate" ? "flex-start" : "center",
+              // Clears the editor's floating top bar and the live page's brand badge.
+              padding: "calc(env(safe-area-inset-top, 0px) + 78px) 16px calc(env(safe-area-inset-bottom, 0px) + 44px)",
             }}
           >
-            <Check size={14} style={{ color: GREEN, flexShrink: 0 }} />
-            {flash}
-          </motion.div>
+            <AnimatePresence mode="wait">
+              {phase === "summons" && <SummonsScreen key="summons" data={data} caseNo={caseNo} onAccept={() => setPhase("session")} />}
+
+              {phase === "session" && <SessionScreen key="session" onDone={() => setPhase("hearing")} />}
+
+              {phase === "hearing" && questions[index] && (
+                <HearingScreen
+                  key={`hearing-${index}`}
+                  index={index}
+                  total={total}
+                  exhibit={questions[index].exhibit}
+                  question={questions[index].question}
+                  options={questions[index].options}
+                  onAnswer={answer}
+                />
+              )}
+
+              {phase === "reaction" && (
+                <ReactionScreen
+                  key={`reaction-h${index}`}
+                  reaction={reactionFor(lastCorrect, index)}
+                  kind={lastCorrect ? "correct" : "wrong"}
+                  note={lastNote}
+                  slot={`h${index}-${lastCorrect ? "y" : "n"}`}
+                  onContinue={afterReaction}
+                  continueLabel={index + 1 >= total ? "hear the verdict" : "continue"}
+                />
+              )}
+
+              {phase === "recess" && (
+                <ReactionScreen
+                  key="recess"
+                  reaction={encouragementFor(score, index + 1)}
+                  kind="recess"
+                  note="One question left. You've got this."
+                  slot="recess"
+                  onContinue={afterRecess}
+                  continueLabel="face the final question"
+                />
+              )}
+
+              {phase === "verdict" && (
+                <VerdictScreen
+                  key={`verdict-${passed}`}
+                  passed={passed}
+                  score={score}
+                  total={total}
+                  nextLabel={labelFor(afterVerdict)}
+                  onNext={() => setPhase(afterVerdict)}
+                  onRetry={retry}
+                />
+              )}
+
+              {phase === "evidence" && (
+                <motion.div key="evidence" {...screen} style={{ width: "100%", maxWidth: 980 }}>
+                  <EvidenceFolder
+                    photos={photos}
+                    plaintiff={plaintiff}
+                    accused={accused}
+                    gif={gifs[0]}
+                    onDone={() => setPhase(afterEvidence)}
+                    doneLabel={labelFor(afterEvidence)}
+                  />
+                </motion.div>
+              )}
+
+              {phase === "judgement" && (
+                <motion.div key="judgement" {...screen} style={{ width: "100%", maxWidth: 520 }}>
+                  <Judgement
+                    letter={data.letter}
+                    plaintiff={plaintiff}
+                    accused={accused}
+                    signature={data.signatureName?.trim() || data.plaintiffName?.trim() || "yours, always"}
+                    caseNo={caseNo}
+                    question={data.lockQuestion}
+                    answer={data.lockAnswer}
+                    sealGif={gifs[1] ?? gifs[0]}
+                    stampGif={gifs[2]}
+                    reduceMotion={reduce}
+                    onDone={() => setPhase("certificate")}
+                    doneLabel={labelFor("certificate")}
+                  />
+                </motion.div>
+              )}
+
+              {phase === "certificate" && (
+                <motion.div key="certificate" {...screen} style={{ width: "100%", maxWidth: 480 }}>
+                  <div style={{ textAlign: "center", marginBottom: 18 }}>
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 12 }}>
+                      <div style={{ width: 112 }}>
+                        <Polaroid tilt={-5} tape={false} caption="champ 🏅">
+                          <CourtGif src={ASSETS.win} alt="A penguin on the winner's podium wearing a gold medal" size={92} priority />
+                        </Polaroid>
+                      </div>
+                      <Stamp r={8} size={17} color={V.a1}>
+                        case closed 💅
+                      </Stamp>
+                    </div>
+                    <h2 style={{ margin: "4px 0 2px", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(32px, 8.6vw, 44px)", lineHeight: 1, color: V.ink }}>You won the case</h2>
+                    <p style={{ fontFamily: HAND, fontSize: 23, color: V.soft, margin: 0 }}>duly signed, sealed &amp; stamped</p>
+                  </div>
+
+                  <StampPaperCertificate ref={certRef} data={data} score={score} total={total} caseNo={caseNo} dateStr={dateStr} />
+
+                  <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <GavelButton onClick={doShare} disabled={busy !== null}>
+                      {busy === "share" ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+                      {busy === "share" ? "Preparing…" : "Share your award"}
+                    </GavelButton>
+
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {[
+                        { key: "png" as const, icon: <Download size={15} />, label: "Save PNG", onClick: doPng },
+                        { key: "pdf" as const, icon: <FileText size={15} />, label: "Save PDF", onClick: doPdf },
+                      ].map((b) => (
+                        <PaperGhost key={b.key} onClick={b.onClick} disabled={busy !== null}>
+                          {busy === b.key ? <Loader2 size={15} className="animate-spin" /> : b.icon}
+                          {b.label}
+                        </PaperGhost>
+                      ))}
+                    </div>
+                    <button type="button" onClick={replay} className="lv-focus" style={{ margin: "6px auto 0", background: "none", border: "none", color: V.soft, fontFamily: MONO, fontSize: 12.5, letterSpacing: "0.06em", cursor: "pointer", padding: 8, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <RotateCcw size={13} /> replay the trial
+                    </button>
+                  </div>
+
+                  {mode === "live" && (
+                    <div style={{ textAlign: "center", marginTop: 14 }}>
+                      <Link href="/court-of-love" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: V.ink, textDecoration: "none", borderBottom: `1.5px solid ${V.a1}`, paddingBottom: 2 }}>
+                        Put someone you love on trial →
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+
+        {/* status flash — centred with a wrapper, because framer-motion owns the
+            inner element's transform and would drop a translateX(-50%). */}
+        <div style={{ position: "fixed", left: 0, right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)", zIndex: 200, display: "flex", justifyContent: "center", pointerEvents: "none", padding: "0 16px" }}>
+          <AnimatePresence>
+            {flash && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                role="status"
+                aria-live="polite"
+                style={{ padding: "11px 18px", borderRadius: 999, background: V.paper, color: V.paperInk, border: `1px solid ${PAPER_RULE}`, boxShadow: "0 12px 30px rgba(0,0,0,.2)", fontFamily: SANS, fontSize: 13.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8, maxWidth: "100%" }}
+              >
+                <Check size={14} style={{ color: STAMP_INK, flexShrink: 0 }} />
+                {flash}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </LoveThemeContext.Provider>
   );
 }

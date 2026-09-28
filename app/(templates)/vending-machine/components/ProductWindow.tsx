@@ -53,7 +53,7 @@ export function ProductFace({ slot, tilt }: { slot: Slot; tilt: number }) {
           height: 7,
           flex: "0 0 auto",
           background: C.bodyDarker,
-          color: "#cfe0dd",
+          color: "#fff",
           fontFamily: OSWALD,
           fontSize: 4.4,
           letterSpacing: "0.12em",
@@ -103,8 +103,8 @@ export default function ProductWindow({ slots, hiddenCode, activeCode, coilMs }:
         position: "relative",
         height: WINDOW_H + FRAME * 2,
         padding: FRAME,
-        background: "linear-gradient(180deg,#0f2427 0%,#163033 50%,#0c1e21 100%)",
-        border: "1px solid #061214",
+        background: `linear-gradient(180deg, ${C.well2} 0%, ${C.well} 50%, ${C.well2} 100%)`,
+        border: `1px solid ${C.edge}`,
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.5)",
       }}
     >
@@ -113,7 +113,7 @@ export default function ProductWindow({ slots, hiddenCode, activeCode, coilMs }:
           position: "relative",
           height: WINDOW_H,
           padding: WINDOW_PAD,
-          background: `radial-gradient(120% 80% at 50% 0%, #14282b 0%, ${C.glass} 78%)`,
+          background: `radial-gradient(120% 80% at 50% 0%, ${C.glassHi} 0%, ${C.glass} 78%)`,
           overflow: "hidden",
         }}
       >

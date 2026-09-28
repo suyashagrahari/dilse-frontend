@@ -7,7 +7,16 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { type CourtOfLoveData, type EditMode, DEMO_DATA, courtOfLoveDataToBody, dbToCourtOfLoveData } from "../components/types";
+import {
+  type CourtOfLoveData,
+  type EditMode,
+  DEMO_DATA,
+  MAX_JUDGEMENT_LEN,
+  courtOfLoveDataToBody,
+  dbToCourtOfLoveData,
+} from "../components/types";
+import { COURT_THEMES } from "../components/themes";
+import { pickTheme } from "../../_love/theme";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -25,10 +34,31 @@ const TEMPLATE = "court-of-love";
 const draftStore = (): Storage | null => {
   try { return window.localStorage; } catch { try { return window.sessionStorage; } catch { return null; } }
 };
-const saveDraft = (payload: unknown) => {
-  try { draftStore()?.setItem(DRAFT_KEY, JSON.stringify(payload)); } catch {}
+const saveDraft = (payload: { data: CourtOfLoveData } & Record<string, unknown>) => {
+  const store = draftStore();
+  if (!store) return;
+  try {
+    store.setItem(DRAFT_KEY, JSON.stringify(payload));
+  } catch {
+    // Quota. Ten freshly-picked photos are held as data URLs until the page is
+    // saved to the server, and that can outgrow localStorage. Losing the whole
+    // draft — names, questions, the judgement — over the photos is the worst
+    // trade, so keep everything else and drop only the not-yet-uploaded images.
+    try {
+      const photos = payload.data.photos.filter((p) => !p.url.startsWith("data:"));
+      store.setItem(DRAFT_KEY, JSON.stringify({ ...payload, data: { ...payload.data, photos } }));
+    } catch {}
+  }
 };
+/**
+ * The server row this draft already lives in. Kept beside the draft so a
+ * refresh between Save and Publish updates that row instead of creating a
+ * second one — the auto-draft makes the row at Save, and without this the
+ * publish after a reload POSTed a duplicate into the sender's profile.
+ */
+const PAGE_ID_KEY = "court_of_love_page_id";
 const clearDraft = () => {
+  try { window.localStorage.removeItem(PAGE_ID_KEY); } catch {}
   try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
   try { window.sessionStorage.removeItem(DRAFT_KEY); } catch {}
 };
@@ -43,6 +73,9 @@ const readDraft = (): {
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 };
+
+/** The fields the form refuses to save without. */
+export type CourtFieldError = "plaintiffName" | "accusedName" | "letter";
 
 /** Matches MIN_STORY_CHARS on the server; keeps the button honest before we call. */
 const MIN_STORY_CHARS = 20;
@@ -60,6 +93,8 @@ export function useCourtOfLoveEditor() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
+  /** Inline errors shown under the fields after a Save that was missing them. */
+  const [errors, setErrors] = useState<Partial<Record<CourtFieldError, string>>>({});
   // Bumped whenever a *new* preview should be shown → remounts the trial so it
   // restarts at the summons screen with the latest questions.
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -169,11 +204,20 @@ export function useCourtOfLoveEditor() {
     // back; if it was saved from the preview ("completed"), we also reopen the preview.
     const draft = readDraft();
     if (draft?.story) setStory(draft.story);
+    if (draft?.data && isAuthenticated) {
+      try {
+        const held = window.localStorage.getItem(PAGE_ID_KEY);
+        if (held) setPageId(held);
+      } catch {}
+    }
     if (draft?.data) {
-      setMf(draft.data);
+      // Normalised, so a draft saved before the love kit (no photos/theme, a
+      // `secretLetter` instead of `letter`) comes back in today's shape.
+      const d = dbToCourtOfLoveData(draft.data as unknown as Record<string, unknown>);
+      setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(draft.data);
+        setContent(d);
         setIsPersonalized(true);
         setEditMode("preview");
         bumpPreview();
@@ -255,9 +299,27 @@ export function useCourtOfLoveEditor() {
 
   const displayData = editMode === "manual" || editMode === "choose" ? mf : content;
 
-  const updateMf = useCallback(
-    (key: keyof CourtOfLoveData, val: unknown) => setMf((p) => ({ ...p, [key]: val })),
-    [],
+  const updateMf = useCallback(<K extends keyof CourtOfLoveData>(key: K, val: CourtOfLoveData[K]) => {
+    setMf((p) => ({ ...p, [key]: val }));
+    // Typing into a field that was flagged clears its flag.
+    setErrors((e) => (key in e ? Object.fromEntries(Object.entries(e).filter(([k]) => k !== key)) : e));
+  }, []);
+
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
   );
 
   /** Patch one field of one hearing without disturbing the others. */
@@ -319,6 +381,7 @@ export function useCourtOfLoveEditor() {
           headline?: string;
           oathText?: string;
           secretLetter?: string;
+          letter?: string;
           certificateTitle?: string;
           questions?: CourtOfLoveData["questions"];
         };
@@ -329,7 +392,8 @@ export function useCourtOfLoveEditor() {
           // already tweaked a field doesn't silently lose it to a blank.
           headline: d.headline?.trim() || prev.headline,
           oathText: d.oathText?.trim() || prev.oathText,
-          secretLetter: d.secretLetter?.trim() || prev.secretLetter,
+          // The generator still calls it `secretLetter`; here it is the judgement.
+          letter: (d.letter?.trim() || d.secretLetter?.trim() || prev.letter).slice(0, MAX_JUDGEMENT_LEN),
           certificateTitle: d.certificateTitle?.trim() || prev.certificateTitle,
           questions: Array.isArray(d.questions) && d.questions.length ? d.questions : prev.questions,
           language: d.language?.trim() || prev.language,
@@ -381,7 +445,24 @@ export function useCourtOfLoveEditor() {
   }, [isAuthenticated, accessToken]);
 
   const handleEditClick = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
+    // A fresh case file keeps the demo's questions as a starting point (they
+    // are true of most couples and every one is editable) and the courtroom
+    // they were just previewing — but never the demo couple's names, photos or
+    // judgement. Those are the parts that have to be theirs.
+    setMf(
+      isPersonalized
+        ? { ...content }
+        : {
+            ...DEMO_DATA,
+            plaintiffName: "",
+            accusedName: "",
+            signatureName: "",
+            photos: [],
+            letter: "",
+            theme: content.theme,
+          },
+    );
+    setErrors({});
     setEditMode("manual");
   }, [isPersonalized, content]);
 
@@ -391,17 +472,32 @@ export function useCourtOfLoveEditor() {
   }, [content]);
 
   // Save (locally) & jump to preview
-  const handleSave = useCallback(() => {
-    if (!mf.plaintiffName.trim()) { pushToast({ type: "info", title: "Add your name first" }); return; }
-    if (!mf.accusedName.trim()) { pushToast({ type: "info", title: "Who's on trial?", message: "Add their name" }); return; }
+  const handleSave = useCallback((): CourtFieldError | null => {
+    const missing: Partial<Record<CourtFieldError, string>> = {};
+    if (!mf.plaintiffName.trim()) missing.plaintiffName = "Add your name — it goes on the summons and the stamp paper.";
+    if (!mf.accusedName.trim()) missing.accusedName = "Who's on trial? Add their name.";
+    if (!mf.letter.trim()) missing.letter = "Write the Final Judgement — it's the whole point 💌";
+    const keys = Object.keys(missing) as CourtFieldError[];
+    if (keys.length) {
+      setErrors(missing);
+      const words: Record<CourtFieldError, string> = { plaintiffName: "your name", accusedName: "their name", letter: "the judgement" };
+      pushToast({
+        type: "info",
+        title: keys.length === 1 ? "One thing missing" : `${keys.length} things missing`,
+        message: `Add ${keys.map((k) => words[k]).join(", ")} to file the case`,
+      });
+      return keys[0];
+    }
+    setErrors({});
     setContent(mf);
     setIsPersonalized(true);
     setEditMode("preview");
     bumpPreview(); // fresh preview: the trial restarts from the summons screen
-    saveDraft({ data: mf, password: pagePassword, completed: true });
+    saveDraft({ data: mf, password: pagePassword, completed: true, story });
     track(EVENTS.PAGE_SAVED, { template: TEMPLATE, has_password: Boolean(pagePassword) });
-    pushToast({ type: "success", title: "Saved!", message: "Play it through, then publish ⚖️" });
-  }, [mf, pagePassword, pushToast, bumpPreview]);
+    pushToast({ type: "success", title: "Case filed (locally) ⚖️", message: "Play the trial through, then publish" });
+    return null;
+  }, [mf, pagePassword, pushToast, bumpPreview, story]);
 
   const create = useCallback(async (): Promise<string | null> => {
     const res = await fetch(BASE, {
@@ -415,13 +511,21 @@ export function useCourtOfLoveEditor() {
     return result.data._id as string;
   }, [content, pagePassword, headers]);
 
-  const update = useCallback(async (id: string) => {
-    await fetch(`${BASE}/${id}`, {
+  /** PUT to an existing row; if it has gone (deleted elsewhere), create a fresh one. */
+  const update = useCallback(async (id: string): Promise<string | null> => {
+    const res = await fetch(`${BASE}/${id}`, {
       method: "PUT",
       headers: headers(),
       body: JSON.stringify(courtOfLoveDataToBody(content, pagePassword)),
     });
-  }, [content, pagePassword, headers]);
+    if (res.status === 404) return create();
+    return id;
+  }, [content, pagePassword, headers, create]);
+
+  useEffect(() => {
+    if (!pageId || shareUrl) return;
+    try { window.localStorage.setItem(PAGE_ID_KEY, pageId); } catch {}
+  }, [pageId, shareUrl]);
 
   // ── Auto-draft ────────────────────────────────────────────────────────────
   //
@@ -517,7 +621,7 @@ export function useCourtOfLoveEditor() {
     try {
       let id = pageId;
       if (!id) id = await create();
-      else await update(id);
+      else id = await update(id);
       if (!id) throw new Error("Save failed");
 
       // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
@@ -577,10 +681,10 @@ export function useCourtOfLoveEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "You've been summoned to The Court of Love ⚖️",
-      accent: "#7c3aed",
+      accent: pickTheme(COURT_THEMES, content.theme).colors.a1,
       slug: "court-of-love",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, content.theme]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -598,7 +702,8 @@ export function useCourtOfLoveEditor() {
     savedStory: fill.contextSummary,
     savedStoryLabel: fill.contextLabel,
 
-    setEditMode, setPagePassword, updateMf, updateQuestion, updateOption,
+    errors,
+    setEditMode, setPagePassword, updateMf, setTheme, updateQuestion, updateOption,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

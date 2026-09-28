@@ -12,7 +12,6 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { DOT_CELL, DOT_COLS, DOT_ROWS, glyphFor, normaliseForDots } from "./dotFont";
-import { C } from "./machine";
 
 const BASE_PITCH = 3.2;
 const MIN_PITCH = 1.85;
@@ -25,7 +24,7 @@ interface Painted {
   h: number;
 }
 
-function paint(text: string, pitch: number): Painted | null {
+function paint(text: string, pitch: number, lit: string, dim: string): Painted | null {
   if (typeof document === "undefined" || text.length === 0) return null;
 
   const dpr = Math.min(4, Math.max(2, (window.devicePixelRatio || 1) * 1.5));
@@ -44,7 +43,7 @@ function paint(text: string, pitch: number): Painted | null {
   const glyphs = text.split("").map(glyphFor);
 
   // Pass 1 — the dark grid, every cell including the inter-character gutter.
-  g.fillStyle = C.amberDim;
+  g.fillStyle = dim;
   for (let ci = 0; ci < glyphs.length; ci++) {
     for (let col = 0; col < DOT_CELL; col++) {
       for (let row = 0; row < DOT_ROWS; row++) {
@@ -56,8 +55,8 @@ function paint(text: string, pitch: number): Painted | null {
   }
 
   // Pass 2 — the lit dots, with a little bloom.
-  g.fillStyle = C.amber;
-  g.shadowColor = C.amber;
+  g.fillStyle = lit;
+  g.shadowColor = lit;
   g.shadowBlur = pitch * 1.1;
   for (let ci = 0; ci < glyphs.length; ci++) {
     const glyph = glyphs[ci];
@@ -83,6 +82,9 @@ export interface DotMatrixDisplayProps {
   flash?: boolean;
   width: number;
   height: number;
+  /** The LED colour. A real colour, not a CSS variable — it is painted to a canvas. */
+  color?: string;
+  dimColor?: string;
 }
 
 export default function DotMatrixDisplay({
@@ -91,6 +93,8 @@ export default function DotMatrixDisplay({
   flash = false,
   width,
   height,
+  color = "#ffa500",
+  dimColor = "rgba(255,165,0,0.09)",
 }: DotMatrixDisplayProps) {
   const maxPitch = Math.min(BASE_PITCH, height / DOT_ROWS);
 
@@ -125,7 +129,7 @@ export default function DotMatrixDisplay({
   useEffect(() => {
     const el = layerRef.current;
     if (!el) return;
-    const img = paint(plan.content, plan.pitch);
+    const img = paint(plan.content, plan.pitch, color, dimColor);
     if (!img) return;
     el.style.backgroundImage = `url(${img.url})`;
     el.style.backgroundSize = `${img.w}px ${img.h}px`;
@@ -139,7 +143,7 @@ export default function DotMatrixDisplay({
       el.style.backgroundRepeat = "no-repeat";
       el.style.backgroundPositionX = "center";
     }
-  }, [plan.content, plan.pitch, plan.scroll]);
+  }, [plan.content, plan.pitch, plan.scroll, color, dimColor]);
 
   return (
     <div

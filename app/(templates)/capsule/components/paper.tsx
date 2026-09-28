@@ -150,9 +150,9 @@ export function WaxSeal({
     >
       <defs>
         <radialGradient id={`wax-${uid}`} cx="38%" cy="32%" r="72%">
-          <stop offset="0%" stopColor="#a8382c" />
-          <stop offset="55%" stopColor={PALETTE.wax} />
-          <stop offset="100%" stopColor={PALETTE.waxDeep} />
+          <stop offset="0%" style={{ stopColor: PALETTE.waxHi }} />
+          <stop offset="55%" style={{ stopColor: PALETTE.wax }} />
+          <stop offset="100%" style={{ stopColor: PALETTE.waxDeep }} />
         </radialGradient>
         <filter id={`waxgrain-${uid}`}>
           <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves={3} seed={hash32(seed) % 500} />
@@ -170,7 +170,7 @@ export function WaxSeal({
       </defs>
 
       {glow && (
-        <ellipse cx="50" cy="50" rx="52" ry="52" fill={PALETTE.wax} opacity="0.18" style={{ filter: "blur(6px)" }} />
+        <ellipse cx="50" cy="50" rx="52" ry="52" opacity="0.28" style={{ fill: PALETTE.waxHi, filter: "blur(6px)" }} />
       )}
 
       {(["l", "r"] as const).map((half) => (
@@ -189,16 +189,15 @@ export function WaxSeal({
           }}
         >
           <path d={outer} fill={`url(#wax-${uid})`} />
-          <path d={outer} fill="#000" opacity="0.5" filter={`url(#waxgrain-${uid})`} />
-          <path d={inner} fill="none" stroke={PALETTE.waxDeep} strokeWidth="1.6" opacity="0.75" />
+          <path d={outer} fill="#000" opacity="0.35" filter={`url(#waxgrain-${uid})`} />
+          <path d={inner} fill="none" strokeWidth="1.6" opacity="0.75" style={{ stroke: PALETTE.waxDeep }} />
           {initials && (
             <text
               x="50"
               y="57"
               textAnchor="middle"
-              fill={PALETTE.waxDeep}
               opacity="0.8"
-              style={{ fontFamily: MONO, fontSize: 22, letterSpacing: 1 }}
+              style={{ fill: PALETTE.waxDeep, fontFamily: MONO, fontSize: 22, letterSpacing: 1 }}
             >
               {initials.slice(0, 2).toUpperCase()}
             </text>
@@ -210,7 +209,7 @@ export function WaxSeal({
         <path
           d={crack}
           fill="none"
-          stroke={PALETTE.waxDeep}
+          style={{ stroke: PALETTE.waxDeep }}
           strokeWidth={state === "split" ? 1.6 : 0.9}
           opacity={state === "split" ? 0.9 : 0.55}
           strokeLinecap="round"

@@ -15,14 +15,14 @@ import type { CSSProperties } from "react";
 /** The single source of colour, type and geometry for the whole template. */
 export const CH = {
   /** Paper stock. Slightly warm so the black reads as toner, not as #000 on #fff. */
-  paper: "#fdfbf6",
-  ink: "#111111",
+  paper: "var(--lv-paper, #fdfbf6)",
+  ink: "var(--lv-paper-ink, #111111)",
   /** The one red. Threat block, overdue overprint, the "1 challan found." line. */
-  red: "#B3261E",
+  red: "var(--ch-red, #B3261E)",
   /** The one green. Settlement only. */
-  green: "#2F7A4F",
+  green: "var(--ch-green, #2F7A4F)",
   /** Every rule and box edge in the document. */
-  edge: "#111111",
+  edge: "var(--lv-paper-ink, #111111)",
 
   /** Pre-printed form text. */
   serif: "var(--font-tinos), 'Times New Roman', Times, serif",
@@ -32,13 +32,13 @@ export const CH = {
   deva: "var(--font-tiro-devanagari), var(--font-tinos), 'Times New Roman', serif",
 
   /** Muted ink for sub-lines and dot leaders. */
-  faint: "#5a5a5a",
+  faint: "var(--lv-paper-soft, #5a5a5a)",
   /** Alternating table row fill. A tint of ink, never a grey of its own. */
-  band: "rgba(17,17,17,.045)",
+  band: "color-mix(in srgb, var(--lv-paper-ink, #111) 4.5%, transparent)",
   /** Table header fill. */
-  head: "rgba(17,17,17,.085)",
+  head: "color-mix(in srgb, var(--lv-paper-ink, #111) 8.5%, transparent)",
   /** Threat block ground. */
-  tint: "#FEF2F2",
+  tint: "color-mix(in srgb, var(--ch-red, #B3261E) 7%, var(--lv-paper, #fff))",
   /** Camera OSD yellow. Lives INSIDE the evidence photo only — it is the
    *  detection overlay a road camera burns in, not a colour of the document. */
   detect: "#E3C012",
@@ -54,6 +54,9 @@ export const CH = {
    *  realistic scale (~0.76 on a 320px viewport) they still clear 44px. */
   btnH: 58,
 } as const;
+
+/** A tint of the paper ink — rules, hairlines and washes that follow the theme. */
+export const chInk = (pct: number): string => `color-mix(in srgb, var(--lv-paper-ink, #111) ${pct}%, transparent)`;
 
 /* ── Deterministic derivations ───────────────────────────────────────────────
    Everything below is a pure function of the challan number. No Math.random
@@ -161,7 +164,7 @@ export function chRupees(n: number): string {
 
 /** Faint horizontal dot-matrix banding, the way a cheap printer lays down rows. */
 export const CH_BANDING =
-  "repeating-linear-gradient(to bottom, rgba(17,17,17,.028) 0px, rgba(17,17,17,.028) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 4px)";
+  "repeating-linear-gradient(to bottom, color-mix(in srgb, var(--lv-paper-ink, #111) 2.8%, transparent) 0px, color-mix(in srgb, var(--lv-paper-ink, #111) 2.8%, transparent) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 4px)";
 
 /** Scanline ground for the evidence frame. 2px period, 4% ink. */
 export const CH_SCANLINES =
@@ -190,6 +193,6 @@ export const chValue = (size = 10.5): CSSProperties => ({
 export const CH_LEADER: CSSProperties = {
   flex: 1,
   margin: "0 5px",
-  borderBottom: "1px dotted rgba(17,17,17,.42)",
+  borderBottom: `1px dotted ${chInk(42)}`,
   transform: "translateY(-2px)",
 };
