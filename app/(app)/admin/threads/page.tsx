@@ -333,18 +333,20 @@ export default function AdminThreadsPage() {
            (a long address or subject) and pushes the list off a phone. */
         .th-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; }
         .th-grid > * { min-width: 0; }
-        .th-hero { display: grid; grid-template-columns: minmax(0,1.3fr) repeat(3, minmax(0,1fr)); gap: 12px; align-items: end; }
-        @media (max-width: 560px) {
-          .th-hero { grid-template-columns: repeat(3, minmax(0,1fr)); }
-          .th-hero > :first-child { grid-column: 1 / -1; }
-        }
         .th-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; min-width: 0; }
         .th-tools > .adk-chips { flex: 1 1 auto; }
-        .th-row { position: relative; width: 100%; text-align: left; border: none; background: transparent; padding: 10px 12px 10px 14px;
-          cursor: pointer; display: flex; gap: 10px; align-items: flex-start; min-width: 0; font: inherit; transition: background .15s; }
-        .th-row:hover { background: rgba(201,168,76,0.07); }
-        .th-row[data-on="1"] { background: rgba(201,168,76,0.12); }
-        .th-row[data-on="1"]::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: ${A.maroon}; }
+        /* Each conversation is its own card: a stripe in the kind's colour,
+           a gold wash while it waits on us, a maroon ring when open. */
+        .th-card { position: relative; overflow: hidden; border-radius: 15px; border: 1px solid ${A.edge};
+          background: linear-gradient(180deg, #fffdfb, #fff7ef); box-shadow: 0 1px 0 rgba(61,12,17,.03), 0 8px 18px -14px rgba(61,12,17,.35);
+          transition: transform .18s, box-shadow .18s, border-color .18s; }
+        .th-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--k); opacity: .85; }
+        .th-card:hover { transform: translateY(-2px); border-color: rgba(201,168,76,.55); box-shadow: 0 14px 28px -16px rgba(61,12,17,.5); }
+        .th-card[data-unread="1"] { background: linear-gradient(120deg, rgba(255,227,163,.28), #fffdfb 55%); border-color: rgba(201,168,76,.45); }
+        .th-card[data-on="1"] { border-color: ${A.maroon}; box-shadow: 0 0 0 1.5px ${A.maroon} inset, 0 14px 28px -16px rgba(61,12,17,.55); }
+        .th-card[data-on="1"]::before { background: ${A.maroon}; opacity: 1; }
+        .th-row { position: relative; width: 100%; text-align: left; border: none; background: transparent; padding: 12px 12px 12px 16px;
+          cursor: pointer; display: flex; gap: 11px; align-items: flex-start; min-width: 0; font: inherit; }
         .th-detail {
           /* 189: above the site BottomNav (z-79, 82px) so Send is reachable. */
           position: fixed; inset: 0; z-index: 189;
@@ -362,7 +364,7 @@ export default function AdminThreadsPage() {
         {/* Counters. Unread is over EVERYTHING, not the filter — a badge that
             changes when you filter is telling you about your filter. */}
         <Hero>
-          <div className="th-hero">
+          <div className="adk-hero-grid">
             <HeroStat
               big
               label="Need a reply"
@@ -430,12 +432,7 @@ export default function AdminThreadsPage() {
               note="Conversations appear once a follow-up is sent from Drafts, a reply is sent from Feedback, or somebody writes in."
             />
           ) : (
-            <motion.div
-              className="adk-panel"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{ overflow: "hidden", background: A.paper }}
-            >
+            <div style={{ display: "grid", gap: 8 }}>
               {rows.map((r, i) => {
                 const meta = KIND_META[r.kind] || KIND_META.inbound;
                 const last = r.messages?.[r.messages.length - 1];
@@ -445,7 +442,11 @@ export default function AdminThreadsPage() {
                   // <a> inside a <button> is invalid HTML and browsers disagree
                   // on what a click, a Tab and a screen reader do with it;
                   // stopPropagation fixes the mouse and none of the rest.
-                  <motion.div key={r.id} {...rise(i)} style={{ position: "relative", borderTop: i === 0 ? "none" : `1px solid ${A.edge}` }}>
+                  <motion.div
+                    key={r.id} {...rise(i)} className="th-card"
+                    data-on={sel?.id === r.id ? "1" : "0"} data-unread={r.unread ? "1" : "0"}
+                    style={{ ["--k" as string]: meta.color }}
+                  >
                   <button
                     type="button" className="th-row" data-on={sel?.id === r.id ? "1" : "0"} onClick={() => void open(r)}
                   >
@@ -505,7 +506,7 @@ export default function AdminThreadsPage() {
                   </motion.div>
                 );
               })}
-            </motion.div>
+            </div>
           )}
 
           {/* ── Detail + composer ────────────────────────────────────────── */}

@@ -144,8 +144,6 @@ export default function AdminContactsPage() {
       <style>{`
         .c-layout { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; align-items: start; }
         @media (min-width: 1024px) { .c-layout { grid-template-columns: minmax(0,1fr) minmax(0,440px); } }
-        .c-hero { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 12px; align-items: end; }
-        @media (min-width: 640px) { .c-hero { grid-template-columns: repeat(4,minmax(0,1fr)); } }
         .c-list { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
         .c-card { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
         .c-card[data-unread="1"] { background: #fff; border-color: rgba(201,168,76,.45); }
@@ -165,7 +163,7 @@ export default function AdminContactsPage() {
       `}</style>
 
       <Hero>
-        <div className="c-hero">
+        <div className="adk-hero-grid">
           <HeroStat big label={filter === "all" ? "Inquiries" : filter === "unread" ? "Unread shown" : "Read shown"} value={pg.total} />
           <HeroStat label="Unread" value={unread} tone={unread ? "#ffb4a8" : undefined} />
           <HeroStat label="Replied · page" value={replied} sub={`${awaiting} awaiting`} />

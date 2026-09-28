@@ -341,7 +341,7 @@ export default function AdminPricingPage() {
       <style>{AP_CSS}</style>
 
       <Hero>
-        <div className="ap-hero">
+        <div className="adk-hero-grid">
           <HeroStat big label="PAID TEMPLATES" value={paidCount} sub={paidCount ? `avg ${formatINR(avgPrice)} per page` : "everything is free"} />
           <HeroStat label="FREE" value={freeCount} tone="#bff0d2" />
           <HeroStat label="ON DISCOUNT" value={discounted} sub={pointsPriced ? `${pointsPriced} take points` : undefined} />
@@ -622,12 +622,6 @@ export default function AdminPricingPage() {
 
 const AP_CSS = `
   .animate-spin { animation: spin 0.9s linear infinite; }
-  .ap-hero { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px 14px; align-items: end; }
-  .ap-hero > :first-child { grid-column: 1 / -1; }
-  @media (min-width: 720px) {
-    .ap-hero { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,1fr)); }
-    .ap-hero > :first-child { grid-column: auto; }
-  }
   .ap-bar { margin-top: 12px; height: 6px; border-radius: 99px; background: rgba(191,240,210,.22); overflow: hidden; }
   .ap-bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c9a84c, #ffe3a3); }
   .ap-host { display: flex; align-items: flex-start; gap: 7px; margin-top: 11px; font-size: 11.5px; line-height: 1.45; opacity: .9; }
