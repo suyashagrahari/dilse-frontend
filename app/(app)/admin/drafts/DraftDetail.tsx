@@ -29,6 +29,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { API_URL } from "@/lib/config";
 import { BRAND } from "@/lib/brand";
 import ConversationThread from "@/components/admin/ConversationThread";
@@ -36,15 +37,11 @@ import SenderPicker from "@/components/admin/SenderPicker";
 import {
   Loader2, Sparkles, Send, X, Mail, Clock, ExternalLink, UserRound, ShieldCheck,
 } from "lucide-react";
+import { A } from "../adminKit";
 import type { Detail } from "./types";
 import { MissingFields, Progress, ReasonChip, Warn, replyAddressOf } from "./parts";
 
-const CARD: React.CSSProperties = {
-  background: BRAND.surface,
-  border: `1px solid ${BRAND.border}`,
-  borderRadius: BRAND.radiusLg,
-  padding: 14,
-};
+const CARD: React.CSSProperties = { padding: 14 };
 
 const LABEL: React.CSSProperties = {
   margin: "0 0 7px", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em",
@@ -52,10 +49,12 @@ const LABEL: React.CSSProperties = {
 };
 
 /** A small square control: close, and anything else that earns only an icon. */
-const iconBtn: React.CSSProperties = {
-  width: 34, height: 34, borderRadius: 11, border: `1px solid ${BRAND.border}`,
-  background: BRAND.bgAlt, color: BRAND.muted, display: "grid", placeItems: "center",
-  cursor: "pointer", flex: "none",
+const iconBtn: React.CSSProperties = { width: 34, height: 34, padding: 0, flex: "none" };
+
+/** One of the header's small links. */
+const headLink: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 700,
+  color: A.goldDeep, textDecoration: "none", minWidth: 0,
 };
 
 export default function DraftDetail({
@@ -208,30 +207,59 @@ export default function DraftDetail({
   };
 
   return (
-    <div style={CARD}>
-      {/* ── Who and what ─────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
+    <div className="adk-panel" style={CARD}>
+      {/* ── Who and what ─────────────────────────────────────────────────────
+          A maroon strip that sticks to the top of the panel (and of the phone
+          sheet), so Close is always one tap away however far down the
+          composer somebody has scrolled. */}
+      <div
+        style={{
+          position: "sticky", top: 0, zIndex: 2, margin: "-14px -14px 12px", padding: "12px 12px 12px 14px",
+          borderRadius: "16px 16px 0 0", color: "#f5ede6", display: "flex", alignItems: "flex-start", gap: 8,
+          background: "radial-gradient(120% 140% at 0% 0%, #6b1a22 0%, #3d0c11 60%, #240609 100%)",
+        }}
+      >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: BRAND.text }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#ffe3a3", fontFamily: "'Playfair Display', serif", overflowWrap: "anywhere" }}>
               {sel.templateLabel}
             </span>
-            <ReasonChip reason={sel.verdict.reason} />
+            <span style={{ background: "#fffdfb", borderRadius: 99, display: "inline-flex" }}>
+              <ReasonChip reason={sel.verdict.reason} small />
+            </span>
           </div>
 
-          <p style={{ margin: "7px 0 0", fontSize: 13, fontWeight: 700, color: BRAND.text }}>
+          <p
+            style={{
+              margin: "5px 0 0", fontSize: 13, fontWeight: 700, color: "#fff",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+          >
             {sel.user.name || "—"}
+            <span style={{ fontWeight: 600, fontSize: 11, opacity: 0.7, marginLeft: 8 }}>
+              <Clock size={10} style={{ verticalAlign: "-1px", marginRight: 3 }} />
+              idle {sel.daysIdle} day{sel.daysIdle === 1 ? "" : "s"}
+            </span>
           </p>
+        </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+        <button type="button" onClick={onClose} aria-label="Close" className="adk-btn" style={iconBtn}>
+          <X size={15} />
+        </button>
+      </div>
+
+      <div style={{ marginBottom: 12, minWidth: 0 }}>
+        <div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", minWidth: 0 }}>
             <a
               href={`mailto:${sel.user.email}`}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12,
-                color: BRAND.accent, textDecoration: "none",
-              }}
+              title={sel.user.email}
+              style={{ ...headLink, maxWidth: "100%" }}
             >
-              <Mail size={12} /> {sel.user.email}
+              <Mail size={12} style={{ flex: "none" }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
+                {sel.user.email}
+              </span>
             </a>
 
             {/* ── The profile link ─────────────────────────────────────────
@@ -240,13 +268,7 @@ export default function DraftDetail({
                 reads as this panel being broken rather than as the account
                 being gone. */}
             {sel.profileUserId && (
-              <Link
-                href={`/admin/users/${sel.profileUserId}`}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12,
-                  fontWeight: 700, color: BRAND.accent, textDecoration: "none",
-                }}
-              >
+              <Link href={`/admin/users/${sel.profileUserId}`} style={headLink}>
                 <UserRound size={12} /> Their profile
               </Link>
             )}
@@ -257,39 +279,23 @@ export default function DraftDetail({
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Opens the template itself, not their draft"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12,
-                  color: BRAND.accent, textDecoration: "none",
-                }}
+                style={headLink}
               >
                 <ExternalLink size={12} /> See the template
               </a>
             )}
           </div>
-
-          <p
-            style={{
-              margin: "6px 0 0", fontSize: 11.5, color: BRAND.faint,
-              display: "flex", alignItems: "center", gap: 5,
-            }}
-          >
-            <Clock size={11} /> idle {sel.daysIdle} day{sel.daysIdle === 1 ? "" : "s"}
-          </p>
         </div>
-
-        <button type="button" onClick={onClose} aria-label="Close" style={iconBtn}>
-          <X size={15} />
-        </button>
       </div>
 
       {/* ── What we know. Shape only — deliberately not their words. ─────── */}
       <div
         style={{
-          padding: 12, borderRadius: BRAND.radius, background: BRAND.surfaceAlt,
-          borderLeft: `3px solid ${BRAND.gold}`, marginBottom: 12,
+          padding: 11, borderRadius: 12, background: "rgba(201,168,76,0.09)",
+          borderLeft: `3px solid ${A.gold}`, marginBottom: 12, minWidth: 0,
         }}
       >
-        <p style={{ margin: 0, fontSize: 13, lineHeight: "20px", color: BRAND.text }}>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: "20px", color: A.ink, overflowWrap: "anywhere" }}>
           {sel.verdict.detail}
         </p>
 
@@ -338,8 +344,8 @@ export default function DraftDetail({
         // survives, the thread does not.
         <div
           style={{
-            marginBottom: 12, padding: 10, borderRadius: BRAND.radius,
-            background: "rgba(61,12,17,0.04)", border: `1px solid ${BRAND.border}`,
+            marginBottom: 12, padding: 10, borderRadius: 12, minWidth: 0,
+            background: "rgba(61,12,17,0.04)", border: `1px solid ${A.edge}`, overflowWrap: "anywhere",
           }}
         >
           <p style={{ margin: "0 0 4px", fontSize: 10.5, color: BRAND.faint, fontWeight: 700 }}>
@@ -372,8 +378,8 @@ export default function DraftDetail({
             role="radiogroup"
             aria-label="Where this message goes"
             style={{
-              display: "flex", gap: 4, padding: 3, borderRadius: 11,
-              background: "rgba(61,12,17,0.05)", border: `1px solid ${BRAND.border}`,
+              display: "flex", gap: 4, padding: 3, borderRadius: 12,
+              background: "rgba(61,12,17,0.05)", border: `1px solid ${A.edge}`,
             }}
           >
             {([
@@ -390,15 +396,21 @@ export default function DraftDetail({
                   title={opt.hint}
                   onClick={() => setThreadMode(opt.key)}
                   style={{
-                    flex: 1, minHeight: 34, borderRadius: 9, border: "none",
-                    background: on ? BRAND.surface : "transparent",
-                    boxShadow: on ? "0 1px 4px rgba(61,12,17,0.10)" : "none",
-                    color: on ? BRAND.text : BRAND.muted,
+                    position: "relative", flex: 1, minHeight: 34, borderRadius: 9, border: "none",
+                    background: "transparent",
+                    color: on ? "#fff6e6" : A.soft,
                     fontSize: 12.5, fontWeight: on ? 800 : 600, cursor: "pointer",
-                    touchAction: "manipulation",
+                    touchAction: "manipulation", transition: "color .2s",
                   }}
                 >
-                  {opt.label}
+                  {on && (
+                    <motion.span
+                      layoutId="ad-thread-mode"
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                      style={{ position: "absolute", inset: 0, borderRadius: 9, background: A.maroon }}
+                    />
+                  )}
+                  <span style={{ position: "relative" }}>{opt.label}</span>
                 </button>
               );
             })}
@@ -425,13 +437,8 @@ export default function DraftDetail({
 
       <button
         type="button" onClick={() => void generate()} disabled={drafting}
-        style={{
-          width: "100%", minHeight: 44, borderRadius: BRAND.radius, marginBottom: 10,
-          border: `1px solid ${BRAND.gold}`, background: "rgba(201,168,76,0.14)",
-          color: BRAND.accent, fontSize: 13.5, fontWeight: 700, display: "flex",
-          alignItems: "center", justifyContent: "center", gap: 7,
-          cursor: drafting ? "default" : "pointer",
-        }}
+        className="adk-btn" data-v="gold"
+        style={{ width: "100%", height: 42, marginBottom: 8, fontSize: 13.5 }}
       >
         {drafting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
         {drafting ? "Writing…" : "Generate email"}
@@ -445,12 +452,11 @@ export default function DraftDetail({
         readOnly={usingThread}
         placeholder="Subject"
         title={usingThread ? "Fixed while replying in the same thread — changing it would split the conversation" : undefined}
+        className="adk-input"
         style={{
-          width: "100%", height: 44, padding: "0 12px",
-          marginBottom: usingThread ? 3 : 8, borderRadius: BRAND.radius,
-          border: `1px solid ${BRAND.border}`,
-          background: usingThread ? "rgba(61,12,17,0.04)" : BRAND.surface,
-          fontSize: 16, color: usingThread ? BRAND.muted : BRAND.text, outline: "none",
+          height: 42, marginBottom: usingThread ? 3 : 8,
+          background: usingThread ? "rgba(61,12,17,0.04)" : "#fff",
+          fontSize: 16, color: usingThread ? A.soft : A.ink,
           cursor: usingThread ? "default" : "text",
         }}
       />
@@ -465,18 +471,15 @@ export default function DraftDetail({
         onChange={(e) => setBody(e.target.value)}
         placeholder="What we send them. Edit anything before it goes."
         rows={9}
-        style={{
-          width: "100%", padding: 12, borderRadius: BRAND.radius, resize: "vertical",
-          border: `1px solid ${BRAND.border}`, background: BRAND.surface, fontSize: 16,
-          lineHeight: "23px", color: BRAND.text, outline: "none", fontFamily: "inherit",
-        }}
+        className="adk-input"
+        style={{ padding: 12, resize: "vertical", fontSize: 16, lineHeight: "23px", fontFamily: "inherit" }}
       />
 
       {needsForce ? (
         <div
           style={{
-            marginTop: 10, padding: 11, borderRadius: BRAND.radius,
-            background: "rgba(201,168,76,0.14)", border: `1px solid ${BRAND.gold}`,
+            marginTop: 10, padding: 11, borderRadius: 12,
+            background: "rgba(201,168,76,0.14)", border: `1px solid ${A.gold}`,
           }}
         >
           <p style={{ margin: "0 0 9px", fontSize: 12.5, color: BRAND.text, lineHeight: 1.5 }}>
@@ -485,23 +488,16 @@ export default function DraftDetail({
           <div style={{ display: "flex", gap: 8 }}>
             <button
               type="button" onClick={() => void send(true)} disabled={sending}
-              style={{
-                flex: 1, minHeight: 42, borderRadius: 10, border: "none",
-                background: BRAND.accentStrong, color: "#fff", fontSize: 13.5, fontWeight: 800,
-                cursor: sending ? "default" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              }}
+              className="adk-btn" data-v="primary"
+              style={{ flex: 1, height: 42, fontSize: 13.5 }}
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               Send anyway
             </button>
             <button
               type="button" onClick={() => setNeedsForce(null)}
-              style={{
-                minHeight: 42, padding: "0 16px", borderRadius: 10,
-                border: `1px solid ${BRAND.border}`, background: BRAND.surface,
-                color: BRAND.muted, fontSize: 13, fontWeight: 700, cursor: "pointer",
-              }}
+              className="adk-btn"
+              style={{ height: 42, padding: "0 16px" }}
             >
               Cancel
             </button>
@@ -512,14 +508,11 @@ export default function DraftDetail({
           <button
             type="button" onClick={() => void send(false)} disabled={!canSend || !sel.sesConfigured}
             title={sel.sesConfigured ? undefined : "SES is not configured on this deployment"}
+            className="adk-btn" data-v={canSend && sel.sesConfigured ? "primary" : undefined}
             style={{
-              width: "100%", minHeight: 46, borderRadius: BRAND.radius, marginTop: 10,
-              border: "none",
-              background: canSend && sel.sesConfigured ? BRAND.gradient : "rgba(61,12,17,0.12)",
-              color: canSend && sel.sesConfigured ? "#fff" : BRAND.faint,
-              fontSize: 14.5, fontWeight: 800, display: "flex", alignItems: "center",
-              justifyContent: "center", gap: 7,
-              cursor: canSend && sel.sesConfigured ? "pointer" : "default",
+              width: "100%", height: 46, marginTop: 10, fontSize: 14.5,
+              background: canSend && sel.sesConfigured ? undefined : "rgba(61,12,17,0.08)",
+              color: canSend && sel.sesConfigured ? undefined : A.muted,
               touchAction: "manipulation",
             }}
           >
@@ -542,7 +535,7 @@ export default function DraftDetail({
             <ShieldCheck size={12} style={{ flex: "none" }} />
             <span>
               Leaves as{" "}
-              <strong style={{ color: BRAND.muted, fontWeight: 700 }}>{chosenAddress}</strong>
+              <strong style={{ color: BRAND.muted, fontWeight: 700, overflowWrap: "anywhere" }}>{chosenAddress}</strong>
               {sel.inbound?.configured
                 ? // Honest per route: the SES webhook lands in seconds, the
                   // mailbox poller on its interval.

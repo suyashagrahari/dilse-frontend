@@ -17,45 +17,55 @@
 // in a positioned wrapper: the button opens the draft, the link opens the
 // account, and neither needs to know about the other. The button carries extra
 // right padding when the link is there so long text never runs underneath it.
+//
+// The hover lift is on the WRAPPER (`.ad-row` in page.tsx), not the button, so
+// the link rides up with the card instead of sliding out from under the cursor
+// on its way to being clicked.
 
 import Link from "next/link";
-import { BRAND } from "@/lib/brand";
+import { motion } from "framer-motion";
 import { Check, Clock, IndianRupee, UserRound } from "lucide-react";
+import { A, rise } from "../adminKit";
 import type { Row } from "./types";
+import { REASON_META } from "./types";
 import { MissingFields, Progress, ReasonChip, when } from "./parts";
 
 export default function DraftRowCard({
   row,
   isOpen,
   onOpen,
+  index = 0,
 }: {
   row: Row;
   isOpen: boolean;
   onOpen: () => void;
+  /** Position in the list, for the entry stagger. */
+  index?: number;
 }) {
+  const accent = REASON_META[row.reason]?.color || A.muted;
   return (
-    <div className="ad-row">
+    <motion.div className="ad-row" {...rise(index)} style={{ ["--ad-acc" as string]: accent }}>
       <button
         type="button"
-        className="ad-row-btn"
+        className="adk-card ad-row-btn"
+        data-on={isOpen ? "1" : "0"}
         onClick={onOpen}
-        style={{
-          padding: row.profileUserId ? "11px 92px 11px 12px" : "11px 12px",
-          border: `1px solid ${isOpen ? BRAND.accentStrong : BRAND.border}`,
-          boxShadow: isOpen ? "0 2px 12px rgba(61,12,17,0.08)" : "none",
-        }}
+        style={{ padding: row.profileUserId ? "10px 86px 10px 14px" : "10px 12px 10px 14px" }}
       >
+        {/* The reason's colour, as a stripe down the left edge. */}
+        <span aria-hidden className="ad-row-stripe" />
+
         {/* Line 1 — what it is and why it stopped. */}
-        <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, fontWeight: 800, color: BRAND.text }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: A.ink, minWidth: 0, overflowWrap: "anywhere" }}>
             {row.templateLabel}
           </span>
-          <ReasonChip reason={row.reason} />
+          <ReasonChip reason={row.reason} small />
           {row.isPaid && (
             <span
               style={{
                 display: "inline-flex", alignItems: "center", fontSize: 10.5,
-                fontWeight: 700, color: BRAND.accent,
+                fontWeight: 800, color: A.goldDeep,
               }}
             >
               <IndianRupee size={10} />
@@ -66,7 +76,7 @@ export default function DraftRowCard({
             <span
               style={{
                 display: "inline-flex", alignItems: "center", gap: 3,
-                fontSize: 10.5, color: BRAND.ok, fontWeight: 700,
+                fontSize: 10.5, color: A.ok, fontWeight: 800,
               }}
             >
               <Check size={11} /> contacted
@@ -74,35 +84,48 @@ export default function DraftRowCard({
           )}
         </span>
 
-        {/* Line 2 — who. */}
-        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: BRAND.text }}>
+        {/* Line 2 — who. The email ellipsizes rather than wrapping the card. */}
+        <span style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: 11.5, fontWeight: 700, color: A.ink, flex: "0 1 auto", minWidth: 0,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45%",
+            }}
+          >
             {row.userName || "—"}
           </span>
-          <span style={{ fontSize: 11.5, color: BRAND.faint, minWidth: 0, overflowWrap: "anywhere" }}>
+          <span
+            title={row.userEmail}
+            style={{
+              fontSize: 11.5, color: A.muted, flex: "1 1 auto", minWidth: 0,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+          >
             {row.userEmail}
           </span>
           <span
             style={{
               display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5,
-              color: BRAND.faint,
+              color: A.muted, flex: "none", whiteSpace: "nowrap",
             }}
           >
             <Clock size={10} /> {when(row.createdAt)}
           </span>
         </span>
 
-        {/* Line 3 — how far they got. */}
-        <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 7 }}>
+        {/* Line 3 — how far they got, and what they never filled in. One
+            wrapping row: side by side on a wide list, stacked on a phone. */}
+        <span
+          style={{
+            display: "flex", alignItems: "center", gap: "5px 10px", flexWrap: "wrap",
+            marginTop: 6, minWidth: 0,
+          }}
+        >
           <Progress value={row.completeness} />
-          <span style={{ fontSize: 10.5, color: BRAND.faint }}>
+          <span style={{ fontSize: 10.5, color: A.muted, whiteSpace: "nowrap" }}>
             {row.wordCount}w · {row.photoCount} photo{row.photoCount === 1 ? "" : "s"} · idle{" "}
             {row.daysIdle}d
           </span>
-        </span>
-
-        {/* Line 4 — and what they never filled in. */}
-        <span style={{ display: "block", marginTop: 7 }}>
           <MissingFields fields={row.missingFields} total={row.missingCount} />
         </span>
       </button>
@@ -115,17 +138,11 @@ export default function DraftRowCard({
           href={`/admin/users/${row.profileUserId}`}
           title={`Open ${row.userName || row.userEmail}'s profile`}
           aria-label="Open this person's profile"
-          style={{
-            position: "absolute", top: 9, right: 9,
-            display: "inline-flex", alignItems: "center", gap: 4,
-            minHeight: 26, padding: "4px 9px", borderRadius: 99,
-            border: `1px solid ${BRAND.border}`, background: BRAND.bgAlt,
-            fontSize: 10.5, fontWeight: 800, color: BRAND.accent, textDecoration: "none",
-          }}
+          className="ad-row-profile"
         >
           <UserRound size={11} /> profile
         </Link>
       )}
-    </div>
+    </motion.div>
   );
 }
