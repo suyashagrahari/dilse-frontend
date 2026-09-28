@@ -39,7 +39,8 @@ export default function FrontOfPack({
   const shot = photo ?? (legacyPhotoUrl ? { url: legacyPhotoUrl } : undefined);
   const claims = CLAIMS.map((c) => (c === "∞ cal" ? `${calories || "∞"} cal` : c));
   // A long first name has to fit a 320px carton without wrapping mid-word.
-  const nameSize = first.length > 9 ? "clamp(40px, 13vw, 68px)" : "clamp(54px, 17vw, 92px)";
+  // Sized to the name so it never breaks mid-word inside the ~300px carton.
+  const nameSize = `${Math.max(30, Math.min(88, Math.floor(300 / (Math.max(first.length, 3) * 0.66))))}px`;
 
   return (
     <section aria-label={`${name}, front of pack`} className="nf-hero">
