@@ -12,6 +12,24 @@
 
 import type { ChallanData } from "./types";
 import { templateMedia } from "@/lib/templateMedia";
+import { DEMO_PHOTOS, parseLoveKit, type LoveKitData } from "../../_love/types";
+import { CHALLAN_THEME_IDS } from "./themes";
+
+const GIF_CDN = "https://cdn.subhsandesh.in/gifts-media";
+
+/**
+ * The reaction GIFs, one per moment: the camera "staring" when the case is
+ * settled, the officer typing up the report after the evidence, the hug under the court
+ * order. All three are on our own CDN.
+ */
+export const CHALLAN_DEMO_GIFS = [
+  `${GIF_CDN}/templates/legal-notice/unblinking.gif`,
+  `${GIF_CDN}/templates/legal-notice/focus-typing.gif`,
+  `${GIF_CDN}/assets/court-of-love/penguin-hug.gif`,
+];
+
+/** A love kit with nothing in it — what an old page or a fresh form starts from. */
+export const EMPTY_KIT: LoveKitData = { photos: [], gifs: [], letter: "", theme: "", lockQuestion: "", lockAnswer: "" };
 
 export type EditMode = null | "choose" | "manual" | "preview";
 
@@ -97,7 +115,53 @@ export const DEMO_CHALLAN: ChallanData = {
     "You could have written anything in that box. I'd have withdrawn it anyway — that was the whole point of giving you the box.",
     "Come over. Bring nothing. The matter is closed.",
   ],
+  // ── Love kit: the CCTV evidence, the reactions, the court order ──
+  photos: [
+    { ...DEMO_PHOTOS[0], caption: "Sunset Point, 6:48 PM", note: "Subject stopped mid-sentence to point at the sky and said it looked like mango lassi. Officer has not recovered. Officer may never recover." },
+    { ...DEMO_PHOTOS[1], caption: "Table 4, date night", note: "Suspect stole fries from the plate opposite, then the heart of the person holding the plate. Both offences clearly on camera. No remorse shown." },
+    { ...DEMO_PHOTOS[2], caption: "Cubbon Park signal", note: "Unauthorised smiling in a public park. Cherry trees visibly jealous. Witnesses: four pigeons, all of them on her side." },
+    { ...DEMO_PHOTOS[3], caption: "Her balcony, 11:40 PM", note: "Loitering in my future without a permit. Officer recommends no action. Officer recommends forever, actually." },
+  ],
+  gifs: CHALLAN_DEMO_GIFS,
+  letter:
+    "Meera,\n\nHaving reviewed every frame of the footage, this officer has one remark for the record, and it has nothing to do with traffic.\n\nYou drove into my life at 11:40 on a Tuesday with momos nobody ordered, parked in my head, and never once looked for the exit. I checked. There isn't one.\n\nSo the challan stands, but the fine is waived. The only sentence this court hands down is a long one: you, me, and every bad movie you insist on finishing.\n\nCase closed. Forever pending.\n\n— K.",
+  theme: "patrol",
+  lockQuestion: "",
+  lockAnswer: "",
 };
+
+/**
+ * What a fresh Create form starts from: the demo's paperwork and jokes as a
+ * scaffold, but never the demo couple's name, address, photos, GIFs or letter —
+ * and it keeps the vibe they were just previewing.
+ */
+export function challanStarter(theme: string): ChallanData {
+  return {
+    ...DEMO_CHALLAN,
+    accused: { ...DEMO_CHALLAN.accused, name: "", address: "" },
+    photos: [],
+    gifs: [],
+    letter: "",
+    lockQuestion: "",
+    lockAnswer: "",
+    theme,
+  };
+}
+
+/** A required field the form has not got yet. `section` is the form anchor to scroll to. */
+export interface MissingField {
+  section: "accused" | "offences" | "fine";
+  label: string;
+}
+
+/** Everything that has to be there before the notice can be served. */
+export function challanMissing(d: ChallanData): MissingField[] {
+  const out: MissingField[] = [];
+  if (!d.accused.name.trim()) out.push({ section: "accused", label: "who it's for (their name)" });
+  if (!d.offences.some((o) => o.description.trim())) out.push({ section: "offences", label: "at least one offence" });
+  if (!d.totalFine.trim()) out.push({ section: "fine", label: "the total fine" });
+  return out;
+}
 
 /* ── Wire mapping ──────────────────────────────────────────────────────────── */
 
@@ -118,6 +182,12 @@ export function challanDataToBody(data: ChallanData, password?: string): Record<
     settlement: data.settlement,
     paidMessage: data.paidMessage,
     contestMessage: data.contestMessage,
+    photos: data.photos,
+    gifs: data.gifs,
+    letter: data.letter,
+    theme: data.theme,
+    lockQuestion: data.lockQuestion,
+    lockAnswer: data.lockAnswer,
     ...(password ? { password } : {}),
   };
 }
@@ -170,6 +240,9 @@ export function dbToChallanData(db: Record<string, unknown> | null | undefined):
     },
     paidMessage: arr<string>(d.paidMessage, DEMO_CHALLAN.paidMessage),
     contestMessage: arr<string>(d.contestMessage, DEMO_CHALLAN.contestMessage),
+    // Pages made before the love kit have none of these; they fall back to an
+    // empty kit (no photos, no letter, the default theme), never the demo couple.
+    ...parseLoveKit(d, EMPTY_KIT, CHALLAN_THEME_IDS),
   };
 }
 

@@ -20,7 +20,7 @@ import { ChallanTemplate } from "./components/ChallanTemplate";
 import EditSheet from "./components/EditSheet";
 import ShareCard, { SHARE_W, SHARE_H } from "./components/ShareCard";
 
-import { CH } from "./components/theme";
+import { CHALLAN_THEMES } from "./components/themes";
 
 /* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
 
@@ -58,18 +58,22 @@ function IconLink() {
 
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 
+/** Frosted glass over whichever theme is showing. */
 const barBtn: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
   minHeight: 44,
   height: 44,
-  padding: "0 14px",
-  background: "#FFFFFF",
-  border: `1px solid ${CH.portalEdge}`,
-  color: CH.ink,
-  fontFamily: CH.serif,
-  fontSize: 13,
+  padding: "0 15px",
+  borderRadius: 999,
+  background: "rgba(14,12,26,.58)",
+  border: "1px solid rgba(255,255,255,.18)",
+  color: "#fff",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  fontFamily: "var(--font-di-grotesk), 'Bricolage Grotesque', system-ui, sans-serif",
+  fontSize: 14,
   fontWeight: 700,
   cursor: "pointer",
 };
@@ -88,7 +92,7 @@ function ChallanPageInner() {
       width: SHARE_W,
       height: SHARE_H,
       filename: `challan-${e.content.challanNo.replace(/[^\w]+/g, "-").toLowerCase()}`,
-      backgroundColor: CH.paper,
+      backgroundColor: CHALLAN_THEMES.find((t) => t.id === e.content.theme)?.colors.paper ?? CHALLAN_THEMES[0].colors.paper,
       pixelRatio: 3,
     });
     e.pushToast({ type: result.ok ? "success" : "info", title: result.message });
@@ -102,7 +106,7 @@ function ChallanPageInner() {
       : { label: "Create", onClick: e.handleStartCreate, icon: <IconPen /> };
 
   return (
-    <div style={{ minHeight: "100dvh", background: CH.portalBg, position: "relative" }}>
+    <div style={{ minHeight: "100dvh", background: CHALLAN_THEMES[0].colors.base, position: "relative" }}>
       <div
         className="fixed top-0 left-0 right-0 z-[120] flex items-center gap-2 px-3"
         style={{ paddingTop: "calc(8px + env(safe-area-inset-top, 0px))", paddingBottom: 8 }}
@@ -127,9 +131,10 @@ function ChallanPageInner() {
           disabled={e.publishing}
           style={{
             ...barBtn,
-            background: CH.ink,
-            borderColor: CH.ink,
-            color: CH.paper,
+            background: "linear-gradient(115deg,#ff2e55 0%,#b04dff 55%,#2e7bff 100%)",
+            border: "none",
+            fontWeight: 800,
+            boxShadow: "0 12px 26px -12px rgba(255,46,85,.9)",
             opacity: e.publishing ? 0.6 : 1,
           }}
         >
@@ -139,7 +144,7 @@ function ChallanPageInner() {
 
       {/* Keyed so each save/publish restarts the flow at the lookup portal —
           the sender should see what the recipient sees, from the top. */}
-      <ChallanTemplate key={e.previewVersion} data={e.displayData} />
+      <ChallanTemplate key={e.previewVersion} data={e.displayData} onThemeChange={e.shareUrl ? undefined : e.setTheme} />
 
       <EditSheet
         editMode={e.editMode}
@@ -167,7 +172,7 @@ function ChallanPageInner() {
 
 export default function ChallanPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: CH.portalBg }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: CHALLAN_THEMES[0].colors.base }} />}>
       <ChallanPageInner />
     </Suspense>
   );

@@ -19,6 +19,8 @@
 // Those terms are deliberately absent from this file too, so that a grep for any
 // of them across the template returns nothing at all.
 
+import type { LoveKitData } from "../../_love/types";
+
 /** The invented issuing body. Every field here is fiction and must read as such. */
 export interface ChallanAuthority {
   /** "Department of Heart Traffic" */
@@ -80,7 +82,13 @@ export interface ChallanSettlementMethod {
   sub?: string;
 }
 
-export interface ChallanData {
+/**
+ * The love kit rides along: `photos` are the CCTV "evidence frames" (each with
+ * a location-tag caption and an officer's observation note), `gifs` are the
+ * reaction moments, `letter` is the court order's "Officer's personal remarks"
+ * that the stamp slams onto at the very end, and `theme` picks the department.
+ */
+export interface ChallanData extends LoveKitData {
   authority: ChallanAuthority;
   /** "KA01/2026/0447". Also seeds the deterministic Courier character jitter. */
   challanNo: string;
@@ -130,7 +138,9 @@ export type ChallanScreen =
   | "receipt"
   | "contest"
   | "forwarding"
-  | "verdict";
+  | "verdict"
+  | "evidence"
+  | "order";
 
 /** The mandatory disclaimer. Rendered legibly on screen AND in the exported PNG. */
 export const CHALLAN_DISCLAIMER =

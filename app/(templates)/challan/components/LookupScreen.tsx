@@ -2,10 +2,11 @@
 
 // ─── Screen 1 — the lookup ───────────────────────────────────────────────────
 //
-// Thirty seconds of deliberately ugly portal. This screen has one job: to be so
-// unmistakably a government web form that the notice on the other side of it is
-// already believed before it is read. Every instinct to soften it — a radius, a
-// shadow, a nicer grey — costs the whole template. Leave it ugly.
+// The e-challan portal of the (entirely invented) Department of Heart Traffic.
+// It keeps every beat of the portal joke — search by challan or vehicle number,
+// a skewed captcha that accepts anything, a "server" that takes a second and a
+// half, and the one red line: "1 challan found." — but it is dressed in the
+// theme the sender picked, so the page feels like a gift from the first frame.
 //
 // The captcha is decorative. Any input is accepted, including none: gating a
 // joke behind a puzzle the user can fail is a worse joke.
@@ -13,14 +14,20 @@
 // No storage of any kind lives in this screen.
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+
+import { CandyButton, Eyebrow, GradText, GROTESK, ITALIC } from "../../_love/LoveKit";
+import { V } from "../../_love/theme";
 import { CH, chCaptcha, chWobble } from "./theme";
 
 type Phase = "idle" | "fetching" | "found";
 
 /** How long the "server" takes. Long enough to be believed, short enough to sit through. */
-const FETCH_MS = 1400;
+const FETCH_MS = 1600;
 /** The beat that lets the red "1 challan found." line be read before the hand-off. */
-const HANDOFF_MS = 900;
+const HANDOFF_MS = 1100;
+
+/** What the portal pretends to be doing while it "fetches". */
+const SCAN_LINES = ["Connecting to Heart Traffic servers…", "Scanning 1,204 cameras…", "Matching number plate…"];
 
 /* ── The skewed captcha ──────────────────────────────────────────────────────
    Drawn, never an image request and never a font the browser might not have.
@@ -35,11 +42,11 @@ function Captcha({ text }: { text: string }) {
   return (
     <svg
       width={132}
-      height={40}
-      viewBox="0 0 132 40"
+      height={44}
+      viewBox="0 0 132 44"
       role="img"
       aria-label={`Verification code, ${chars.join(" ")}`}
-      style={{ display: "block", background: "#ffffff", border: `1px solid ${CH.portalEdge}` }}
+      style={{ display: "block", background: "#ffffff", borderRadius: 12, border: `1.5px solid ${V.edge}`, flex: "none" }}
     >
       <defs>
         <pattern id={`ch-cap-${uid}`} width={6} height={6} patternUnits="userSpaceOnUse">
@@ -47,29 +54,22 @@ function Captcha({ text }: { text: string }) {
           <circle cx={4} cy={4} r={0.5} fill="rgba(0,0,0,.11)" />
         </pattern>
       </defs>
-      <rect width={132} height={40} fill={`url(#ch-cap-${uid})`} />
-
-      {/* Two struck-through noise curves, the way every portal draws them. */}
+      <rect width={132} height={44} rx={12} fill={`url(#ch-cap-${uid})`} />
       <path
-        d={`M2 ${26 + chWobble(text, 91, 6)} Q 44 ${10 + chWobble(text, 92, 8)} 66 ${
-          22 + chWobble(text, 93, 6)
-        } T 130 ${18 + chWobble(text, 94, 7)}`}
+        d={`M2 ${28 + chWobble(text, 91, 6)} Q 44 ${12 + chWobble(text, 92, 8)} 66 ${24 + chWobble(text, 93, 6)} T 130 ${20 + chWobble(text, 94, 7)}`}
         fill="none"
         stroke="rgba(0,0,0,.34)"
         strokeWidth={1}
       />
       <path
-        d={`M2 ${14 + chWobble(text, 95, 5)} Q 50 ${30 + chWobble(text, 96, 7)} 88 ${
-          16 + chWobble(text, 97, 6)
-        } T 130 ${26 + chWobble(text, 98, 5)}`}
+        d={`M2 ${16 + chWobble(text, 95, 5)} Q 50 ${32 + chWobble(text, 96, 7)} 88 ${18 + chWobble(text, 97, 6)} T 130 ${28 + chWobble(text, 98, 5)}`}
         fill="none"
         stroke="rgba(0,0,0,.22)"
         strokeWidth={1}
       />
-
       {chars.map((c, i) => {
         const x = stepX * (i + 1);
-        const y = 28 + chWobble(text, i, 3.4);
+        const y = 30 + chWobble(text, i, 3.4);
         const rot = chWobble(text, i + 40, 17);
         const skew = chWobble(text, i + 70, 13);
         return (
@@ -79,13 +79,7 @@ function Captcha({ text }: { text: string }) {
             y={y}
             textAnchor="middle"
             transform={`rotate(${rot.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)}) skewX(${skew.toFixed(2)})`}
-            style={{
-              fontFamily: CH.mono,
-              fontSize: 21,
-              fontWeight: 700,
-              fill: "#2a2a2a",
-              letterSpacing: 1,
-            }}
+            style={{ fontFamily: CH.mono, fontSize: 21, fontWeight: 700, fill: "#2a2a2a", letterSpacing: 1 }}
           >
             {c}
           </text>
@@ -95,35 +89,13 @@ function Captcha({ text }: { text: string }) {
   );
 }
 
-/* ── The spinner ─────────────────────────────────────────────────────────────
-   A 1px ring with one heavy quadrant. One-shot in spirit: it exists only for
-   the 1.4s of the fetch and is never seen again. Reduced motion stops it dead
-   and the adjacent text carries the state instead. */
-
-function Spinner() {
-  return (
-    <span
-      aria-hidden
-      className="ch-lk-spin"
-      style={{
-        display: "inline-block",
-        width: 14,
-        height: 14,
-        border: "2px solid rgba(0,0,0,.18)",
-        borderTopColor: "#333333",
-        borderRadius: "50%",
-        verticalAlign: "-2px",
-      }}
-    />
-  );
-}
-
-export function LookupScreen({ challanNo, onFound }: { challanNo: string; onFound: () => void }) {
+export function LookupScreen({ challanNo, vehicleNo, onFound }: { challanNo: string; vehicleNo: string; onFound: () => void }) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const [phase, setPhase] = useState<Phase>("idle");
   const [mode, setMode] = useState<"challan" | "vehicle">("challan");
   const [value, setValue] = useState(challanNo);
   const [captchaInput, setCaptchaInput] = useState("");
+  const [scan, setScan] = useState(0);
   const [lastNo, setLastNo] = useState(challanNo);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const foundRef = useRef(onFound);
@@ -131,15 +103,11 @@ export function LookupScreen({ challanNo, onFound }: { challanNo: string; onFoun
   const captcha = useMemo(() => chCaptcha(challanNo), [challanNo]);
 
   // The prop is the source of truth until the user starts typing over it.
-  // Adjusted during render, not in an effect, so the field never flashes the
-  // previous challan number.
   if (lastNo !== challanNo) {
     setLastNo(challanNo);
     setValue(challanNo);
   }
 
-  // The callback is read from a ref so the pending timer never fires a stale
-  // one, and so re-rendering with a new handler does not restart the fetch.
   useEffect(() => {
     foundRef.current = onFound;
   }, [onFound]);
@@ -152,10 +120,19 @@ export function LookupScreen({ challanNo, onFound }: { challanNo: string; onFoun
     };
   }, []);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function pickMode(m: "challan" | "vehicle") {
+    if (phase !== "idle") return;
+    setMode(m);
+    setValue(m === "challan" ? challanNo : vehicleNo);
+  }
+
+  function go() {
     if (phase !== "idle") return;
     setPhase("fetching");
+    const step = FETCH_MS / SCAN_LINES.length;
+    SCAN_LINES.forEach((_, i) => {
+      if (i > 0) timers.current.push(setTimeout(() => setScan(i), step * i));
+    });
     timers.current.push(
       setTimeout(() => {
         setPhase("found");
@@ -166,110 +143,88 @@ export function LookupScreen({ challanNo, onFound }: { challanNo: string; onFoun
 
   const busy = phase !== "idle";
 
-  const fieldLabel: React.CSSProperties = {
-    fontFamily: CH.serif,
-    fontSize: 12,
-    color: "#222222",
-    letterSpacing: 0.2,
-  };
+  const label: React.CSSProperties = { fontFamily: GROTESK, fontSize: 12, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: V.soft };
 
   return (
-    <div
-      style={{
-        background: CH.portalBg,
-        minHeight: "100%",
-        padding: "26px 12px 40px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-      }}
-    >
-      <style>{`
-        @keyframes ch-lk-rot { to { transform: rotate(360deg); } }
-        .ch-lk-spin { animation: ch-lk-rot .8s linear infinite; }
-        @media (prefers-reduced-motion: reduce) { .ch-lk-spin { animation: none; } }
-      `}</style>
-
-      <div style={{ width: "100%", maxWidth: 380 }}>
-        {/* Portal strip. Invented body, invented service name — nothing here
-            imitates a real transport department or its wordmark. */}
-        <div
-          style={{
-            border: `1px solid ${CH.portalEdge}`,
-            borderBottom: "none",
-            background: "#dfe4e2",
-            padding: "8px 10px",
-            fontFamily: CH.serif,
-            fontSize: 10.5,
-            letterSpacing: 1.4,
-            color: "#33413c",
-            textTransform: "uppercase",
-          }}
+    <div className="ch-wrap" style={{ maxWidth: 460, paddingTop: 8 }}>
+      <header className="lv-pop" style={{ textAlign: "center", marginBottom: 18 }}>
+        <span
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, background: V.glass, border: `1px solid ${V.edge}`, fontSize: 12, fontWeight: 700, color: V.soft }}
         >
-          Department of Heart Traffic &mdash; Online Services
+          <span className="ch-siren-dot" aria-hidden />
+          Dept. of Heart Traffic · e-Challan portal
+        </span>
+        <h1 style={{ margin: "14px 0 0", fontFamily: GROTESK, fontWeight: 800, fontSize: "clamp(34px, 9vw, 52px)", lineHeight: 0.98, letterSpacing: "-0.045em", color: V.ink }}>
+          Check your <GradText>challan</GradText> status
+        </h1>
+        <p style={{ margin: "10px auto 0", maxWidth: 340, fontFamily: ITALIC, fontStyle: "italic", fontSize: 19, lineHeight: 1.3, color: V.soft }}>
+          a camera caught something. let&apos;s see what you did.
+        </p>
+      </header>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          go();
+        }}
+        style={{ background: V.glass, border: `1px solid ${V.edge}`, borderRadius: 26, padding: "18px 16px 16px", boxShadow: `0 30px 60px -34px ${V.shadow}` }}
+      >
+        {/* Search by — a segmented control, not two radio dots. */}
+        <div role="radiogroup" aria-label="Search by" style={{ display: "flex", padding: 4, borderRadius: 999, background: `color-mix(in srgb, ${V.ink} 7%, transparent)`, gap: 4 }}>
+          {(
+            [
+              ["challan", "Challan no."],
+              ["vehicle", "Vehicle no."],
+            ] as const
+          ).map(([id, text]) => {
+            const on = mode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                disabled={busy}
+                onClick={() => pickMode(id)}
+                className="lv-focus"
+                style={{
+                  flex: 1,
+                  minHeight: 42,
+                  borderRadius: 999,
+                  border: "none",
+                  cursor: busy ? "default" : "pointer",
+                  background: on ? V.paper : "transparent",
+                  color: on ? V.paperInk : V.soft,
+                  fontFamily: GROTESK,
+                  fontWeight: 800,
+                  fontSize: 14,
+                  boxShadow: on ? `0 6px 16px -10px ${V.shadow}` : "none",
+                }}
+              >
+                {text}
+              </button>
+            );
+          })}
         </div>
 
-        <form
-          onSubmit={submit}
+        {/* The number, typed onto a plate. */}
+        <label htmlFor={`ch-no-${uid}`} style={{ ...label, display: "block", margin: "16px 0 7px" }}>
+          {mode === "challan" ? "Challan number" : "Vehicle number"} <span style={{ color: V.a1 }}>*</span>
+        </label>
+        <div
           style={{
-            border: `1px solid ${CH.portalEdge}`,
-            background: "#ffffff",
-            padding: "16px 14px 18px",
+            display: "flex",
+            alignItems: "stretch",
+            borderRadius: 14,
+            overflow: "hidden",
+            border: "2.5px solid #111",
+            background: mode === "vehicle" ? "#ffe45c" : "#ffffff",
+            boxShadow: "inset 0 -3px 0 rgba(0,0,0,.08)",
           }}
         >
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: CH.serif,
-              fontSize: 17,
-              fontWeight: 700,
-              color: "#1b1b1b",
-              letterSpacing: 0.2,
-            }}
-          >
-            Check Challan Status
-          </h2>
-          <div
-            style={{
-              height: 1,
-              background: CH.portalEdge,
-              margin: "9px 0 13px",
-            }}
-          />
-
-          <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
-            <legend style={{ ...fieldLabel, padding: 0, marginBottom: 7 }}>Search by</legend>
-            <div style={{ display: "flex", gap: 18, marginBottom: 14 }}>
-              {(
-                [
-                  ["challan", "Challan Number"],
-                  ["vehicle", "Vehicle Number"],
-                ] as const
-              ).map(([id, label]) => (
-                <label
-                  key={id}
-                  htmlFor={`ch-mode-${id}-${uid}`}
-                  style={{ ...fieldLabel, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-                >
-                  <input
-                    id={`ch-mode-${id}-${uid}`}
-                    type="radio"
-                    name={`ch-mode-${uid}`}
-                    checked={mode === id}
-                    disabled={busy}
-                    onChange={() => setMode(id)}
-                    style={{ width: 14, height: 14, margin: 0, accentColor: "#3a5a4a" }}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          <label htmlFor={`ch-no-${uid}`} style={{ ...fieldLabel, display: "block", marginBottom: 5 }}>
-            {mode === "challan" ? "Challan Number" : "Vehicle Number"}{" "}
-            <span style={{ color: CH.red }}>*</span>
-          </label>
+          <span aria-hidden style={{ flex: "none", width: 34, display: "grid", placeItems: "center", background: "#1d3fb8", color: "#fff", fontSize: 14 }}>
+            ♥
+          </span>
           <input
             id={`ch-no-${uid}`}
             value={value}
@@ -277,122 +232,67 @@ export function LookupScreen({ challanNo, onFound }: { challanNo: string; onFoun
             onChange={(e) => setValue(e.target.value)}
             autoComplete="off"
             spellCheck={false}
+            style={{ flex: 1, minWidth: 0, height: 52, padding: "0 12px", border: "none", background: "transparent", fontFamily: CH.mono, fontSize: 19, fontWeight: 700, letterSpacing: 1.5, color: "#111", textTransform: "uppercase", outline: "none" }}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", marginTop: 16 }}>
+          <div style={{ flex: "none" }}>
+            <div style={{ ...label, marginBottom: 7 }}>Enter the code</div>
+            <Captcha text={captcha} />
+          </div>
+          <input
+            aria-label="Verification code"
+            value={captchaInput}
+            disabled={busy}
+            placeholder="any code works"
+            onChange={(e) => setCaptchaInput(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
             style={{
-              width: "100%",
-              height: 38,
-              padding: "0 9px",
-              border: `1px solid ${CH.portalEdge}`,
-              borderRadius: 0,
-              background: busy ? "#f3f3f3" : "#ffffff",
+              flex: 1,
+              minWidth: 0,
+              height: 44,
+              padding: "0 12px",
+              borderRadius: 12,
+              border: `1.5px solid ${V.edge}`,
+              background: "rgba(255,255,255,.92)",
               fontFamily: CH.mono,
-              fontSize: 14,
-              letterSpacing: 1,
-              color: "#111111",
-              outlineOffset: 1,
+              fontSize: 16,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              color: "#111",
             }}
           />
-
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", marginTop: 14 }}>
-            <div style={{ flex: "none" }}>
-              <div style={{ ...fieldLabel, marginBottom: 5 }}>Enter the code</div>
-              <Captcha text={captcha} />
-            </div>
-            <input
-              aria-label="Verification code"
-              value={captchaInput}
-              disabled={busy}
-              onChange={(e) => setCaptchaInput(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                height: 40,
-                padding: "0 9px",
-                border: `1px solid ${CH.portalEdge}`,
-                borderRadius: 0,
-                background: busy ? "#f3f3f3" : "#ffffff",
-                fontFamily: CH.mono,
-                fontSize: 14,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                color: "#111111",
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={busy}
-            style={{
-              marginTop: 18,
-              width: "100%",
-              minHeight: 44,
-              border: `1px solid ${CH.portalEdge}`,
-              borderRadius: 0,
-              background: busy ? "#eeeeee" : CH.portalGrey,
-              color: busy ? "#8b8b8b" : "#1b1b1b",
-              fontFamily: CH.mono,
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: 1.6,
-              cursor: busy ? "default" : "pointer",
-              boxShadow: "none",
-            }}
-          >
-            [ GET DETAILS ]
-          </button>
-
-          {/* Status. One region, so a screen reader is told what the sighted
-              user is watching happen. */}
-          <div role="status" aria-live="polite" style={{ minHeight: 22, marginTop: 13 }}>
-            {phase === "fetching" && (
-              <span
-                style={{
-                  fontFamily: CH.serif,
-                  fontSize: 12.5,
-                  color: "#333333",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <Spinner />
-                Fetching from server&hellip;
-              </span>
-            )}
-            {phase === "found" && (
-              <span
-                style={{
-                  fontFamily: CH.serif,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: CH.red,
-                  letterSpacing: 0.2,
-                }}
-              >
-                1 challan found.
-              </span>
-            )}
-          </div>
-        </form>
-
-        <div
-          style={{
-            border: `1px solid ${CH.portalEdge}`,
-            borderTop: "none",
-            background: "#f6f6f4",
-            padding: "7px 10px",
-            fontFamily: CH.serif,
-            fontSize: 9,
-            lineHeight: 1.5,
-            color: "#5c5c5c",
-          }}
-        >
-          For best results use a supported browser. This service is a parody and issues no
-          real notices.
         </div>
-      </div>
+
+        <div style={{ marginTop: 18 }}>
+          <CandyButton onClick={go} disabled={busy} ariaLabel="Get challan details">
+            {phase === "idle" ? "🔍 Get details" : phase === "fetching" ? "Fetching…" : "🚨 Found"}
+          </CandyButton>
+        </div>
+
+        {/* Status. One region, so a screen reader hears what a sighted user watches. */}
+        <div role="status" aria-live="polite" style={{ minHeight: 54, marginTop: 14, textAlign: "center" }}>
+          {phase === "fetching" && (
+            <div>
+              <div style={{ height: 6, borderRadius: 99, background: `color-mix(in srgb, ${V.ink} 10%, transparent)`, overflow: "hidden" }}>
+                <div className="ch-scanbar" style={{ height: "100%", borderRadius: 99, background: V.grad, animationDuration: `${FETCH_MS}ms` }} />
+              </div>
+              <p style={{ margin: "10px 0 0", fontFamily: CH.mono, fontSize: 13, color: V.soft }}>{SCAN_LINES[scan]}</p>
+            </div>
+          )}
+          {phase === "found" && (
+            <p className="lv-slap" style={{ display: "inline-block", margin: "4px 0 0", padding: "8px 16px", borderRadius: 12, border: "2.5px solid var(--ch-red)", color: "var(--ch-red)", background: V.paper, fontFamily: GROTESK, fontSize: 17, fontWeight: 800, letterSpacing: ".04em" }}>
+              🚨 1 challan found.
+            </p>
+          )}
+        </div>
+      </form>
+
+      <Eyebrow color={V.faint} style={{ textAlign: "center", marginTop: 16, fontSize: 10, letterSpacing: ".16em", lineHeight: 1.6 }}>
+        parody portal · issues no real notices · the feelings are real
+      </Eyebrow>
     </div>
   );
 }
