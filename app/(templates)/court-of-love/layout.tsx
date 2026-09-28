@@ -28,7 +28,7 @@ const inter = Inter({
 const SLUG = "court-of-love";
 const TITLE = "Court of Love — A Romantic Trivia Quiz for Your Partner";
 const DESCRIPTION =
-  "Put your partner on trial in the cutest way: 10 funny questions, a gavel-banging penguin judge, GIF reactions after every answer, a secret letter, and a signed ₹100 stamp paper certifying they won the case. Free, mobile-first, shareable on WhatsApp & Instagram.";
+  "Put your partner on trial in the cutest way: 10 funny questions, a gavel-banging penguin judge, GIF reactions after every answer, your photos filed as Exhibit A, B, C with a memory on each, a wax-sealed final judgement letter, and a signed ₹100 stamp paper certifying they won the case. Free, mobile-first, shareable on WhatsApp & Instagram.";
 const OG_TITLE = "⚖️ The Court of Love";
 
 export const metadata: Metadata = {
@@ -82,7 +82,9 @@ const jsonLd = {
       featureList: [
         "10 editable multiple-choice questions",
         "Animated GIF reaction after every answer",
-        "Typewriter secret letter on a winning verdict",
+        "Up to 10 photos filed as evidence, each with a memory note",
+        "Wax-sealed final judgement letter read after the verdict",
+        "Four courtroom themes: Supreme Court, Pink Court, Night Court, Old Parchment",
         "Signed ₹100 stamp paper certificate",
         "Share as an image, or download as PNG and PDF",
         "Optional password lock on the shared page",
@@ -96,7 +98,7 @@ const jsonLd = {
           name: "How do I make a love quiz for my girlfriend or boyfriend?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Open the Court of Love page, tap Create, and fill in your name and your partner's name. Five romantic courtroom questions come pre-written — edit any question, its four options, and which one is correct. Save to play through it yourself, then Publish to get a private link you can send on WhatsApp or Instagram.",
+            text: "Open the Court of Love page, tap Create, and fill in your name and your partner's name. Ten courtroom questions come pre-written — edit any question, its four options, and which one is correct. Add up to 10 photos as evidence, write your final judgement letter and pick a courtroom theme. Save to play through it yourself, then Publish to get a private link you can send on WhatsApp or Instagram.",
           },
         },
         {
@@ -112,7 +114,7 @@ const jsonLd = {
           name: "What happens if my partner gets the answers wrong?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Nothing harsh. A wrong answer shows a funny, gentle GIF reaction such as 'koi baat nahi'. If they score below 80% the Court grants a retrial and they can appeal the verdict as many times as they like, so they never get locked out of your letter.",
+            text: "Nothing harsh. A wrong answer shows a gentle GIF reaction, like two penguins hugging. If they score below 80% the Court grants a retrial and they can appeal the verdict as many times as they like, so they never get locked out of your letter.",
           },
         },
         {
@@ -128,7 +130,7 @@ const jsonLd = {
           name: "What does my partner get if they win the case?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Scoring 80% or higher reveals the verdict animation, then your secret letter typed out one character at a time, then a signed ₹100 stamp paper certifying them as your Certified Best Partner. It carries their name, the case number, their score and the date, and they can share it as an image or download it as a PNG or PDF.",
+            text: "Scoring 80% or higher reveals the verdict, then your photos as evidence (tap each for your memory), then your final judgement letter under a wax seal, then a signed ₹100 stamp paper certifying them as your Certified Best Partner. It carries their name, the case number, their score and the date, and they can share it as an image or download it as a PNG or PDF.",
           },
         },
       ],

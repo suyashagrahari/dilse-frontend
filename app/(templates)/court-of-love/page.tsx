@@ -7,24 +7,25 @@ import AuthModal from "@/components/AuthModal";
 import { useCourtOfLoveEditor } from "./hooks/useCourtOfLoveEditor";
 import CourtOfLove from "./components/CourtOfLove";
 import EditSheet from "./components/EditSheet";
+import { COURT_THEMES } from "./components/themes";
+import { pickTheme } from "../_love/theme";
 
 const TEXT = "#0E0E12";
 const SURFACE = "#FFFFFF";
 const BORDER = "#ECEAE3";
-const INDIGO = "#6C5CE7";
-const LIME = "#C6FF3D";
+const INDIGO = "#7A1F16";
 const HEAD = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
 
 const pill: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
-  padding: "9px 14px",
+  padding: "9px 13px",
   borderRadius: 999,
   background: "rgba(255,255,255,.9)",
   color: TEXT,
   border: `1px solid ${BORDER}`,
-  backdropFilter: "blur(14px)",
+  backdropFilter: "blur(10px)",
   fontFamily: HEAD,
   fontSize: 13.5,
   fontWeight: 600,
@@ -35,6 +36,9 @@ const pill: React.CSSProperties = {
 
 function CourtOfLovePageInner() {
   const e = useCourtOfLoveEditor();
+  // The main action wears the courtroom's wax/foil colour, so it belongs to
+  // whichever theme is on screen instead of fighting it.
+  const theme = pickTheme(COURT_THEMES, e.displayData.theme);
 
   const topAction = e.showShare
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
@@ -44,6 +48,9 @@ function CourtOfLovePageInner() {
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative" }}>
+      {/* Below 420px Edit collapses to its icon so Back · theme dock · Edit ·
+          Publish never collide on a phone. */}
+      <style>{`@media (max-width: 419px) { .col-edit-label { display: none; } }`}</style>
       {/* Floating top bar */}
       <div
         className="fixed left-0 right-0 z-[120] px-3 flex items-center gap-2"
@@ -54,8 +61,8 @@ function CourtOfLovePageInner() {
         </button>
         <div className="flex-1" />
         {e.isPersonalized && !e.showShare && (
-          <button onClick={e.handleEditFromPreview} style={pill}>
-            <PenLine size={14} /> Edit
+          <button onClick={e.handleEditFromPreview} style={pill} aria-label="Edit">
+            <PenLine size={14} /> <span className="col-edit-label">Edit</span>
           </button>
         )}
         <button
@@ -63,10 +70,11 @@ function CourtOfLovePageInner() {
           disabled={e.publishing}
           style={{
             ...pill,
-            background: LIME,
+            background: theme.colors.chip,
+            color: theme.colors.chipInk,
             border: "none",
             fontWeight: 700,
-            boxShadow: "0 8px 22px rgba(198,255,61,.45)",
+            boxShadow: "0 8px 22px rgba(0,0,0,.22)",
             opacity: e.publishing ? 0.6 : 1,
           }}
         >
@@ -75,13 +83,14 @@ function CourtOfLovePageInner() {
       </div>
 
       {/* Live preview — keyed so each save restarts the trial from the summons. */}
-      <CourtOfLove key={e.previewVersion} data={e.displayData} mode="preview" />
+      <CourtOfLove key={e.previewVersion} data={e.displayData} mode="preview" onThemeChange={e.setTheme} />
 
       <EditSheet
         editMode={e.editMode}
         setEditMode={e.setEditMode}
         mf={e.mf}
         updateMf={e.updateMf}
+        errors={e.errors}
         updateQuestion={e.updateQuestion}
         updateOption={e.updateOption}
         pagePassword={e.pagePassword}
@@ -130,7 +139,7 @@ function CourtOfLovePageInner() {
 
 export default function CourtOfLovePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#FAFAF7" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#2a0c07" }} />}>
       <CourtOfLovePageInner />
     </Suspense>
   );
