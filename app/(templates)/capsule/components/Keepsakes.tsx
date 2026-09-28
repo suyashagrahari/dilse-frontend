@@ -23,7 +23,7 @@ import type { LovePhoto } from "../../_love/types";
 import { cropStyle, photoCrop } from "../../dedication/components/types";
 import { HAND, MONO, PALETTE, SERIF, UI, fmtSealDate, type Capsule } from "./types";
 import { PaperTexture, WaxShards, WaxSeal } from "./paper";
-import { useCapsuleTheme } from "./themes";
+import { useCapsuleTheme } from "./themeContext";
 import { Frame, Kicker, TapButton, ThemedPortal } from "./ui";
 import { useStepTimer } from "./useTick";
 import { seededSpread, seededUnit } from "@/lib/seededRandom";

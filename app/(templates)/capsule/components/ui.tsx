@@ -10,7 +10,8 @@ import { LoveSky, LoveThemeContext } from "../../_love/LoveKit";
 import { MONO, PALETTE, SERIF, TAP_TARGET_PX, UI } from "./types";
 import { PaperTexture } from "./paper";
 import { capsuleHand } from "./fonts";
-import { CapsuleThemeContext, capsuleTheme, capsuleThemeVars, useCapsuleTheme } from "./themes";
+import { capsuleTheme, capsuleThemeVars } from "./themes";
+import { CapsuleThemeContext, useCapsuleTheme } from "./themeContext";
 
 /**
  * Mounts one theme: its custom properties, the three type families, and the

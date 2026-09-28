@@ -1572,9 +1572,9 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   // THE LAST PIECE — PHOTO JIGSAW WITH A LETTER
   // ═══════════════════════════════════════════════════════════════════════════
   "photo-puzzle": {
-    title: "The Last Piece — Photo Jigsaw Letter for Someone You Love (Free)",
+    title: "The Last Piece — Photo Sliding Puzzle & Love Letter for Someone You Love (Free)",
     description:
-      "A photo jigsaw where every piece they place reveals a line of your letter and plays a note. Nothing can be placed wrong, there is no timer and no score — and the final piece is not in the box. You have it, and you release it while they watch. Free and mobile-first.",
+      "Turn your photo into a real sliding puzzle — easy 3×3, medium 4×4 or hard 5×5. They slide the tiles back into place, the last piece flies in, and your memories and love letter unlock. Add up to 10 photos with notes, GIFs and a theme. Free and mobile-first.",
     category: "Love",
     emoji: "🧩",
     aggregateRating: { ratingValue: 4.9, reviewCount: 187 },
@@ -1592,14 +1592,13 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
     ],
 
     faqs: [
-      { question: "How do I make a photo puzzle for someone?", answer: "Open The Last Piece template on SubhSandesh and tap Create. Upload the photo you want them to assemble, choose the grid size, write one line of your letter for each piece, then publish to get a private link. It takes about two minutes." },
+      { question: "How do I make a photo puzzle for someone?", answer: "Open The Last Piece template on SubhSandesh and tap Create. Upload the photo you want them to solve, crop it square, pick easy (3×3), medium (4×4) or hard (5×5), add your memories and letter, then publish to get a private link. It takes about two minutes." },
       { question: "Is it free?", answer: "Yes — creating, publishing and sharing your photo puzzle is completely free." },
-      { question: "Can they lose or get it wrong?", answer: "No. There is no score, no timer and no failure state. A piece released in the wrong place simply slides back to the tray, quietly. The puzzle is a pace, not a test." },
-      { question: "What is the last piece about?", answer: "One interior piece is held back so the hole sits in the middle of the photo where it cannot be ignored. They finish everything else and then have to ask you for it — you release it live, from your side, and it drops into place while they watch." },
-      { question: "What if I am asleep when they finish?", answer: "Nobody is left holding an incomplete gift. If you have not released the last piece after about ten minutes, a quiet self-serve link appears so they can finish it themselves." },
-      { question: "How many pieces can the puzzle have?", answer: "Up to sixteen. That ceiling is deliberate — a twenty-four piece jigsaw on a phone screen stops being a gift and starts being data entry, and most people quit part way." },
-      { question: "What do the notes do?", answer: "Each placement plays one note of a short melody you choose, so assembling the photo plays a phrase. If the melody is shorter than the number of pieces it simply repeats." },
-      { question: "Can I add a different photo for the reveal?", answer: "Yes — add an optional reveal image and it cross-dissolves in once the puzzle is complete. Leave it blank to skip the reveal entirely." },
+      { question: "How does the puzzle work?", answer: "It is a real sliding puzzle. Your photo is cut into tiles with one gap; they tap, swipe or use the arrow keys to slide tiles into the gap until the picture is whole again. Every shuffle is guaranteed solvable." },
+      { question: "What if they get stuck?", answer: "They can peek at the full photo anytime, turn on number hints on medium and hard, or reshuffle. After a while a gentle “finish it for me” button appears, so nobody is left with an unfinished gift." },
+      { question: "What is the last piece about?", answer: "One piece waits outside the board while they play. The moment the puzzle is solved it flies into the gap, the seams disappear and your memories and letter unlock." },
+      { question: "Can I add more photos and a letter?", answer: "Yes — add up to 10 memory photos, each with its own crop, caption and note, plus GIFs and a main letter that opens after a question only they can answer." },
+      { question: "Can I choose a theme?", answer: "Yes — pick from Cozy Table, Pastel Dream, Midnight Glow and Cherry Blossom. You can switch themes live in the preview before publishing." },
       { question: "Can I password-protect it?", answer: "Yes — set an optional password when you create the page. Passwords are stored hashed and are never shown on the page." },
       { question: "Can I edit it after sending the link?", answer: "Yes — edit and republish anytime. The same link always shows the latest version." },
     ],

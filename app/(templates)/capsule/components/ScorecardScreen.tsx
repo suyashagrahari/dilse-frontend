@@ -25,7 +25,7 @@ import {
 } from "./types";
 import { DotRow, Frame, Kicker, Mono, Rule, TapButton } from "./ui";
 import { PaperTexture, paperFill, wornEdgeStyle } from "./paper";
-import { useCapsuleTheme } from "./themes";
+import { useCapsuleTheme } from "./themeContext";
 import ShareCard, { SHARE_H, SHARE_W } from "./ShareCard";
 import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
 import { arpeggio, unlockAudio } from "@/lib/webAudio";

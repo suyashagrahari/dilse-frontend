@@ -16,7 +16,7 @@
 // which feeds the `PALETTE` custom properties in types.ts. The theme is the
 // OUTSIDE of the capsule: public on the sealed view, editable forever.
 
-import { createContext, useContext, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { pickTheme, themeVars, type LoveTheme } from "../../_love/theme";
 
 export interface CapsuleTheme extends LoveTheme {
@@ -268,8 +268,6 @@ export function capsuleThemeVars(t: CapsuleTheme): CSSProperties {
   } as CSSProperties;
 }
 
-export const CapsuleThemeContext = createContext<CapsuleTheme>(CAPSULE_THEMES[0]);
-export const useCapsuleTheme = (): CapsuleTheme => useContext(CapsuleThemeContext);
 
 /**
  * The form is always written on light paper — the love-kit editor pieces

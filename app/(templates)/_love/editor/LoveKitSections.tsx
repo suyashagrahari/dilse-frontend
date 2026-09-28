@@ -71,7 +71,7 @@ export function MemoriesSections({
       <FormSection
         emoji="📸"
         title={copy.photosTitle ?? "Your photos + little letters"}
-        note={copy.photosNote ?? "Up to 8. Tap a photo to zoom & reposition it, then write a tiny note that opens with it."}
+        note={copy.photosNote ?? "Up to 10. Tap a photo to zoom & reposition it, then write a tiny note that opens with it."}
       >
         <PhotosEditor photos={data.photos} onChange={(v) => update("photos", v)} captionHint={copy.captionHint} noteHint={copy.noteHint} />
       </FormSection>
@@ -80,7 +80,7 @@ export function MemoriesSections({
         <GifPicker gifs={data.gifs} onChange={(v) => update("gifs", v)} tags={gifTags} />
       </FormSection>
 
-      <FormSection emoji="💌" title={copy.letterTitle ?? "Your main letter"} note={copy.letterNote ?? "The big one — locked in an envelope until they answer your question."}>
+      <FormSection emoji="💌" title={copy.letterTitle ?? "Your main letter"} note={copy.letterNote ?? "The big one — it stays locked until they answer your question."}>
         <textarea
           value={data.letter}
           onChange={(e) => update("letter", e.target.value.slice(0, MAX_LETTER_LEN))}
@@ -96,7 +96,7 @@ export function MemoriesSections({
         <div className="rounded-2xl border border-border/60 bg-muted/20 p-3.5 space-y-2.5">
           <p className="text-[13px] font-bold">🔒 Lock it with a question</p>
           <p className="text-[11.5px] text-muted-foreground -mt-1.5 leading-snug">
-            They have to answer before the envelope opens. The &ldquo;no&rdquo; button runs away 😈
+            They have to answer before your letter opens. The &ldquo;no&rdquo; button runs away 😈
           </p>
           <input
             value={data.lockQuestion}
