@@ -34,7 +34,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
-  Coins, LogIn, ChevronRight, Repeat,
+  Coins, LogIn, ChevronRight, Repeat, Heart,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { roleAtLeast } from "@/lib/roles";
@@ -176,8 +176,9 @@ export default function MoreDrawer({
     // is the only entry that helps someone finish the thing they came to make.
     { label: "Product Guides", icon: <GraduationCap size={17} />, href: "/guides" },
     { label: "Profile", icon: <User size={17} />, href: "/profile" },
+    // Moved here from the bottom bar, whose slot now holds the Love Wall.
+    { label: "Favorites", icon: <Heart size={17} />, href: "/favorites" },
     { label: "Blog", icon: <BookOpen size={17} />, href: "/blog" },
-    { label: "Feedback", icon: <Star size={17} />, href: "/feedback" },
     { label: "Refer & Earn", icon: <Gift size={17} />, href: "/profile#referral" },
   ];
 
