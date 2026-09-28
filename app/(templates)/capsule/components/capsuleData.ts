@@ -5,6 +5,8 @@
 // the stored shape.
 
 import { seededShuffle } from "@/lib/seededRandom";
+import { DEMO_PHOTOS, DEMO_PHOTO_CDN, GIF_LIBRARY, gifsFor, type LovePhoto } from "../../_love/types";
+import { DEFAULT_THEME_ID } from "./themes";
 import {
   COPY,
   CONFIDENCE_LABELS,
@@ -50,6 +52,14 @@ export interface CapsuleDraft {
   /** ISO, set at the moment of sealing. "" while still writing. */
   sealedOn: string;
   status: CapsuleStatus;
+  // ── The keepsakes — sealed inside with the predictions ────────────────────
+  photos: LovePhoto[];
+  gifs: string[];
+  letter: string;
+  /** The outside of the capsule. Never locks. */
+  theme: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
 
 /** Which partner is at the keyboard. Each sees only their own predictions. */
@@ -204,6 +214,12 @@ export function draftToCapsule(d: CapsuleDraft, sealedOn: string): Capsule {
     },
     predictions,
     status: d.status === "writing" ? "sealed" : d.status,
+    photos: d.photos.map((p) => ({ ...p })),
+    gifs: [...d.gifs],
+    letter: d.letter.trim(),
+    theme: d.theme,
+    lockQuestion: d.lockQuestion.trim(),
+    lockAnswer: d.lockAnswer.trim(),
   };
 }
 
@@ -224,6 +240,12 @@ export function capsuleToDraft(c: Capsule): CapsuleDraft {
     predictions: c.predictions.map((p) => ({ ...p })),
     sealedOn: c.sealedOn,
     status: c.status,
+    photos: (c.photos ?? []).map((p) => ({ ...p })),
+    gifs: [...(c.gifs ?? [])],
+    letter: c.letter ?? "",
+    theme: c.theme || DEFAULT_THEME_ID,
+    lockQuestion: c.lockQuestion ?? "",
+    lockAnswer: c.lockAnswer ?? "",
   };
 }
 
@@ -282,6 +304,45 @@ export const DEMO_PREDICTIONS: Prediction[] = [
   demoPrediction("b4", "b", "we finally repaint the kitchen a colour we regret", 1, true),
 ];
 
+/**
+ * GIFs for the capsule. The template shipped with none of its own, so it leads
+ * with the library's waiting / miss-you / hug ones — the mood of a year spent
+ * not opening something.
+ */
+const gifUrl = (label: string) => GIF_LIBRARY.find((g) => g.label === label)?.url ?? "";
+export const CAPSULE_GIF_TAGS = ["miss"] as const;
+export const CAPSULE_GIFS = (() => {
+  const lead = ["waiting for you", "squeeze", "love you this much"];
+  const first = lead.map((l) => GIF_LIBRARY.find((g) => g.label === l)).filter(Boolean) as typeof GIF_LIBRARY;
+  return [...first, ...gifsFor([...CAPSULE_GIF_TAGS]).filter((g) => !lead.includes(g.label))];
+})();
+/** Shown on the waiting screen — the template's own, never the sender's (theirs are sealed). */
+export const WAITING_GIF = gifUrl("waiting for you");
+
+/**
+ * The keepsakes in the demo. Captions and notes are written like the backs of
+ * real photos — a date-ish line on the front, the thing you'd never say out
+ * loud on the back.
+ */
+export const DEMO_KEEPSAKES: LovePhoto[] = [
+  { ...DEMO_PHOTOS[0], caption: "the balcony, march", note: "You made me promise we'd put this photo in here. I said it was cheesy. I'm the one who picked it." },
+  { ...DEMO_PHOTOS[1], caption: "dinner we couldn't afford", note: "We split a dessert and then ordered a second one. This is the most us photo that exists." },
+  { url: `${DEMO_PHOTO_CDN}/marriage/couple-hero.webp`, caption: "the long walk home", note: "The auto never came, so we walked 4 km and it was the best part of the night.", cropX: 50, cropY: 40, scale: 100 },
+  { ...DEMO_PHOTOS[2], caption: "cherry blossom attempt", note: "Two hours of travel for ten minutes of flowers. Worth it. Don't tell anyone I said that." },
+  { ...DEMO_PHOTOS[3], caption: "sunday, nothing planned", note: "Future us: I hope you still have days like this. Nowhere to be, nothing to prove." },
+  { url: `${DEMO_PHOTO_CDN}/Aniversary/aniversary.webp`, caption: "one year in", note: "If you're reading this, a whole other year happened. I hope it was a good one.", cropX: 50, cropY: 45, scale: 100 },
+];
+
+export const DEMO_LETTER = `Meera,
+
+Right now it is 1 a.m., the thermostat is set to a number neither of us agreed on, and you are asleep with the laptop still open.
+
+I wanted to write down what this year looked like from here, before we forget. The flat that is still "technically" yours. The notice you handed in and told nobody about except me. The tea we kept making even on the bad days.
+
+When you open this, I hope you laugh at how sure we were about everything. I hope the plant on the balcony made it. And whatever the year turned into, I hope you remember that this — right now — was a good time to be alive.
+
+— Arjun`;
+
 export const DEMO_CAPSULE: Capsule = {
   version: PAYLOAD_VERSION,
   pair: {
@@ -298,6 +359,12 @@ export const DEMO_CAPSULE: Capsule = {
   },
   predictions: DEMO_PREDICTIONS,
   status: "sealed",
+  photos: DEMO_KEEPSAKES,
+  gifs: [gifUrl("waiting for you"), gifUrl("squeeze")].filter(Boolean),
+  letter: DEMO_LETTER,
+  theme: DEFAULT_THEME_ID,
+  lockQuestion: "last thing in here. ready?",
+  lockAnswer: "break the seal",
 };
 
 export const DEMO_DRAFT: CapsuleDraft = {
@@ -315,6 +382,12 @@ export const DEMO_DRAFT: CapsuleDraft = {
   predictions: DEMO_PREDICTIONS.map((p) => ({ ...p })),
   sealedOn: DEMO_SEALED_ON,
   status: "sealed",
+  photos: DEMO_KEEPSAKES.map((p) => ({ ...p })),
+  gifs: [...DEMO_CAPSULE.gifs],
+  letter: DEMO_LETTER,
+  theme: DEFAULT_THEME_ID,
+  lockQuestion: DEMO_CAPSULE.lockQuestion,
+  lockAnswer: DEMO_CAPSULE.lockAnswer,
 };
 
 /** An empty draft, for a real pair starting from nothing. */
@@ -337,13 +410,19 @@ export function blankDraft(timezone: string, todayIso: string): CapsuleDraft {
     ],
     sealedOn: "",
     status: "writing",
+    photos: [],
+    gifs: [],
+    letter: "",
+    theme: DEFAULT_THEME_ID,
+    lockQuestion: "",
+    lockAnswer: "",
   };
 }
 
 /** Carried forward by `COPY.sealAnother` — a new capsule keeps the old stake. */
 export function nextCapsuleDraft(prev: CapsuleDraft, todayIso: string): CapsuleDraft {
   const fresh = blankDraft(prev.timezone, todayIso);
-  return { ...fresh, nameA: prev.nameA, nameB: prev.nameB, stake: prev.stake };
+  return { ...fresh, nameA: prev.nameA, nameB: prev.nameB, stake: prev.stake, theme: prev.theme };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -423,6 +502,29 @@ export const TEMPLATE_STRINGS: string[] = [
   "skip to opening date",
   "partner joins",
   "debug",
+  // The keepsakes and the letter.
+  "at the bottom of the capsule",
+  "things kept inside",
+  "tap one to turn it over",
+  "turn it over",
+  "kept since",
+  "one more thing",
+  "a letter, sealed at the very bottom",
+  "last thing in here. ready?",
+  "break the seal",
+  "read last",
+  "keep digging",
+  "there's more inside",
+  "keepsakes",
+  "moving pictures",
+  "a letter, to be read last",
+  "what's inside",
+  "we're both here",
+  "back to the scorecard",
+  "play opening day",
+  "jump to the keepsakes",
+  "back to sealed",
+  "the wait",
 ];
 
 /** Returns the offending strings. An empty array is the pass condition. */

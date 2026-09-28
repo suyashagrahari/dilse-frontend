@@ -20,6 +20,8 @@
 //      later may be opened alone, or by people who have separated. Every string
 //      in COPY is written to survive that, and `assertNeutralCopy` checks it.
 
+import type { LovePhoto } from "../../_love/types";
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Versioning — a capsule must outlive its schema
 // ═══════════════════════════════════════════════════════════════════════════
@@ -91,6 +93,21 @@ export interface Capsule {
   predictions: Prediction[];
   status: CapsuleStatus;
   openedAt?: string;
+  // ── The keepsakes (love kit) ──────────────────────────────────────────────
+  // Found INSIDE the capsule when it opens. Sealed exactly like `predictions`:
+  // absent from `SealedCapsuleView`, withheld by the server until `opensOn`.
+  // Additive and optional on the wire — a v1 capsule sealed before these
+  // existed simply has none, and opens exactly as it always would have.
+  /** Polaroids / film frames / pressed-flower cards, each with a note on the back. */
+  photos: LovePhoto[];
+  gifs: string[];
+  /** The letter to the future, sealed at the very bottom. Read last. */
+  letter: string;
+  /** The OUTSIDE of the capsule. Public — it is on the sealed view too. */
+  theme: string;
+  /** Pressed around the letter's wax seal, and the button that breaks it. */
+  lockQuestion: string;
+  lockAnswer: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -115,6 +132,10 @@ export interface SealedCapsuleView {
   timezone: string;
   stake: string;
   counts: { a: number; b: number };
+  /** The outside colour of the capsule. Public by design. */
+  theme: string;
+  /** How much is inside. Numbers only — a count cannot leak a photo. */
+  keepsakes: { photos: number; gifs: number; letter: boolean };
   /** Whether the 24h amend window is still open, and for how much longer. */
   amendUntil?: string;
 }
@@ -437,28 +458,47 @@ export const TAP_TARGET_PX = 48;
 // Palette — aged paper and wax
 // ═══════════════════════════════════════════════════════════════════════════
 
+//
+// Every value is a CSS custom property with the original Rust & Brass colour
+// as its fallback. The theme (components/themes.ts) mounts the properties on
+// the template root, so switching theme recolours every screen in one style
+// write and no component needs to know which theme is active. Never
+// concatenate a hex alpha onto these — they are `var()` strings.
+
 export const PALETTE = {
-  paper: "#f9f5eb",
-  paperDeep: "#f2ebdb",
-  edge: "#ddd2ba",
-  ink: "#221d18",
-  inkSoft: "#655d50",
-  inkFaint: "#a1978440",
-  /** The one wax red. */
-  wax: "#8f2d24",
-  waxDeep: "#6d211a",
-  /** Disputed. Amber, and deliberately the warmest colour on the card. */
-  amber: "#b57a1e",
-  amberWash: "#f7ecd6",
+  paper: "var(--cp-paper, #f9f1e3)",
+  paperDeep: "var(--cp-paper-deep, #efe1c9)",
+  edge: "var(--cp-edge, #d9c39f)",
+  ink: "var(--cp-ink, #2b1d13)",
+  inkSoft: "var(--cp-ink-soft, #6f5a45)",
+  inkFaint: "var(--cp-ink-faint, #a8906f80)",
+  /** The one wax colour. */
+  wax: "var(--cp-wax, #9c3b1e)",
+  waxDeep: "var(--cp-wax-deep, #6e2512)",
+  waxHi: "var(--cp-wax-hi, #c4552d)",
+  /** Disputed. Deliberately the warmest colour on the card. */
+  amber: "var(--cp-amber, #b27a22)",
+  amberWash: "var(--cp-amber-wash, #f6e6c6)",
   /** A resolved-right stamp. Muted, never a success green. */
-  right: "#4c6b4a",
+  right: "var(--cp-right, #56703f)",
+  /** Translucent fill for quiet buttons and inset panels. */
+  quiet: "var(--cp-quiet, rgba(255,250,240,.6))",
+  /** The canister: highlight, body, shadow. */
+  metalHi: "var(--cp-metal-hi, #f3d58a)",
+  metal: "var(--cp-metal, #b8893a)",
+  metalLo: "var(--cp-metal-lo, #6e4a1c)",
+  /** The page behind everything. */
+  page: "var(--cp-page, #efe4d2)",
 } as const;
 
-/** Prediction text. */
-export const SERIF = "var(--font-tinos), Georgia, 'Times New Roman', serif";
-/** Dates, confidence labels, scores. Nothing else. */
+/** Prediction text and every emotional line. */
+export const SERIF = "var(--font-di-serif), var(--font-tinos), Georgia, 'Times New Roman', serif";
+/** Dates, confidence labels, scores. The typewriter in the capsule. */
 export const MONO = "var(--font-courier-prime), ui-monospace, 'SF Mono', Menlo, monospace";
-export const UI = "var(--font-outfit), system-ui, sans-serif";
+/** Buttons, headings, chrome. */
+export const UI = "var(--font-di-grotesk), var(--font-outfit), system-ui, sans-serif";
+/** The backs of the keepsakes. Handwriting. */
+export const HAND = "var(--font-cp-hand), 'Caveat', 'Bradley Hand', cursive";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Copy — audited, and written to survive a breakup

@@ -43,7 +43,7 @@ import {
   type CapsuleDraft,
   type Seat,
 } from "../components/capsuleData";
-import { capsuleToBody, projectSealed } from "../components/coerce";
+import { capsuleToBody, dbToCapsule, projectSealed } from "../components/coerce";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -52,6 +52,8 @@ import { useResumeDraft } from "@/lib/draft/resume";
 import { persistDraft } from "@/lib/draft/persistDraft";
 
 const BASE = `${API_URL}/capsule-pages`;
+
+const RESUME_DEFAULTS: Capsule = { ...DEMO_CAPSULE, photos: [], gifs: [], letter: "", theme: "", lockQuestion: "", lockAnswer: "" };
 const TEMPLATE = "capsule";
 
 export interface Toast {
@@ -176,12 +178,24 @@ export function useCapsuleEditor() {
               a: { ...c.pair.a, name: draft.nameA.trim().slice(0, LIMITS.name) },
               b: { ...c.pair.b, name: draft.nameB.trim().slice(0, LIMITS.name) },
             },
+            // The theme is the outside of the capsule, like the names.
+            theme: draft.theme,
           }
         : c,
     );
     setSheetOpen(false);
     setPreviewVersion((v) => v + 1);
-  }, [draft.nameA, draft.nameB]);
+  }, [draft.nameA, draft.nameB, draft.theme]);
+
+  /**
+   * The theme dock and the form's picker. The outside of the capsule never
+   * locks, so this writes straight through to the sealed capsule too — the
+   * preview recolours at once and the next save carries it.
+   */
+  const setTheme = useCallback((id: string) => {
+    setDraft((d) => ({ ...d, theme: id }));
+    setCapsule((c) => (c && c.theme !== id ? { ...c, theme: id } : c));
+  }, []);
 
   const openWriteSheet = useCallback(() => {
     setSheetOpen(true);
@@ -231,8 +245,24 @@ export function useCapsuleEditor() {
    */
   const exposedDraft = useMemo(() => {
     if (!capsule || amendable) return draft;
-    return { ...draft, predictions: draft.predictions.map((p) => ({ ...p, text: "" })) };
+    // Everything inside the capsule goes, not just the prediction text: the
+    // photos, their notes, the GIFs and the letter are sealed in with them.
+    return {
+      ...draft,
+      predictions: draft.predictions.map((p) => ({ ...p, text: "" })),
+      photos: [],
+      gifs: [],
+      letter: "",
+      lockQuestion: "",
+      lockAnswer: "",
+    };
   }, [draft, capsule, amendable]);
+
+  /** Counts only — what the locked sheet may say about what is inside. */
+  const lockedCounts = useMemo(
+    () => (capsule ? { photos: capsule.photos.length, gifs: capsule.gifs.length, letter: capsule.letter.trim().length > 0 } : undefined),
+    [capsule],
+  );
 
   // ── AI story fill — THE OUTSIDE OF THE CAPSULE ONLY ────────────────────────
   //
@@ -262,6 +292,10 @@ export function useCapsuleEditor() {
   // direction to fail in.
   const [fillDemo] = useState<CapsuleDraft>(() => blankDraft(deviceTimezone(), new Date().toISOString()));
 
+  // The letter is the one field from inside the capsule the fill may DRAFT
+  // (see server/src/config/aiFill/capsule.ts for why): it is the sender's own
+  // voice, written before the seal, in a field they read and rewrite. It is
+  // lifted by name like the other four, and only when the model wrote one.
   const applyStoryFill = useCallback(
     (next: CapsuleDraft) => {
       updateDraft({
@@ -269,6 +303,7 @@ export function useCapsuleEditor() {
         nameB: next.nameB,
         opensOnDate: next.opensOnDate,
         stake: next.stake,
+        ...(typeof next.letter === "string" && next.letter.trim() ? { letter: next.letter } : {}),
       });
     },
     [updateDraft],
@@ -321,10 +356,13 @@ export function useCapsuleEditor() {
     base: BASE,
     editId: searchParams.get("edit"),
     accessToken,
-    defaults: DEMO_CAPSULE,
+    // Keepsake keys default EMPTY, never to the demo's: a saved capsule from
+    // before keepsakes existed must not come back with a stranger's photos.
+    defaults: RESUME_DEFAULTS,
     onLoaded: (data, id) => {
-      setCapsule(data);
-      setDraft(capsuleToDraft(data));
+      const c = dbToCapsule(data as unknown as Record<string, unknown>);
+      setCapsule(c);
+      setDraft(capsuleToDraft(c));
       setPageId(id);
     },
   });
@@ -365,7 +403,7 @@ export function useCapsuleEditor() {
           })
         : Promise.resolve(null),
     onAdopted: (d) => {
-      setCapsule(d);
+      setCapsule(d ? dbToCapsule(d as unknown as Record<string, unknown>) : d);
       // Re-seat the preview for the same reason as the other thirty: the
       // wrapper is keyed on `previewVersion` in page.tsx so `CapsuleTemplate`
       // re-seeds, and a restore that only sets state leaves the key still.
@@ -490,6 +528,8 @@ export function useCapsuleEditor() {
   return {
     draft: exposedDraft,
     updateDraft,
+    setTheme,
+    lockedCounts,
     seat,
     setSeat,
     sheetOpen,

@@ -19,6 +19,7 @@ import {
   PALETTE,
   SERIF,
   TAP_TARGET_PX,
+  UI,
   fmtSealDate,
   findTwins,
   resolve,
@@ -113,7 +114,7 @@ function PredictionCard({
           column holds it in four lines with room to spare. */}
       <p
         className="relative mt-3"
-        style={{ fontFamily: SERIF, fontSize: 18, lineHeight: 1.45, color: PALETTE.ink, wordBreak: "break-word" }}
+        style={{ fontFamily: SERIF, fontSize: 22, lineHeight: 1.32, color: PALETTE.ink, wordBreak: "break-word" }}
       >
         {p.text}
       </p>
@@ -157,7 +158,7 @@ function VoteRow({
     return (
       <div
         className="flex items-center justify-between px-3"
-        style={{ minHeight: TAP_TARGET_PX, border: `1px solid ${PALETTE.edge}`, borderRadius: 5, background: "rgba(255,255,255,.35)" }}
+        style={{ minHeight: TAP_TARGET_PX, border: `1px solid ${PALETTE.edge}`, borderRadius: 999, background: PALETTE.quiet }}
       >
         <Mono size={11}>{name.toUpperCase()}</Mono>
         <Mono size={11} colour={PALETTE.inkSoft}>
@@ -175,37 +176,37 @@ function VoteRow({
         type="button"
         onClick={() => onVote("right")}
         aria-label={`${name}: right`}
-        className="flex-1 rounded-[5px]"
+        className="cp-press flex-1 rounded-full"
         style={{
           minHeight: TAP_TARGET_PX,
-          fontFamily: MONO,
-          fontSize: 13,
-          letterSpacing: 1,
+          fontFamily: UI,
+          fontWeight: 800,
+          fontSize: 15,
           touchAction: "manipulation",
           color: PALETTE.right,
-          background: "rgba(255,255,255,.55)",
-          border: `1px solid ${PALETTE.right}`,
+          background: PALETTE.quiet,
+          border: `1.5px solid ${PALETTE.right}`,
         }}
       >
-        [ right ]
+        ✓ right
       </button>
       <button
         type="button"
         onClick={() => onVote("wrong")}
         aria-label={`${name}: wrong`}
-        className="flex-1 rounded-[5px]"
+        className="cp-press flex-1 rounded-full"
         style={{
           minHeight: TAP_TARGET_PX,
-          fontFamily: MONO,
-          fontSize: 13,
-          letterSpacing: 1,
+          fontFamily: UI,
+          fontWeight: 800,
+          fontSize: 15,
           touchAction: "manipulation",
           color: PALETTE.wax,
-          background: "rgba(255,255,255,.55)",
-          border: `1px solid ${PALETTE.wax}`,
+          background: PALETTE.quiet,
+          border: `1.5px solid ${PALETTE.wax}`,
         }}
       >
-        [ wrong ]
+        ✗ wrong
       </button>
     </div>
   );
@@ -318,7 +319,7 @@ export default function JudgingScreen({
                 color: PALETTE.amber,
                 background: PALETTE.amberWash,
                 border: `1px solid ${PALETTE.amber}`,
-                borderRadius: 6,
+                borderRadius: 16,
               }}
             >
               {COPY.disputed}
