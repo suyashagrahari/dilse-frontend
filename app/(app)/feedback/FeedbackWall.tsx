@@ -216,7 +216,7 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
         <div className="fbHeroCopy">
           <p className="fbBadge">
             <span className="fbBadgeDot" aria-hidden="true" />
-            Real reviews from real creators
+            The Love Wall · real reviews from real creators
           </p>
           <h1 className="fbTitle">
             What creators <em>say</em>
