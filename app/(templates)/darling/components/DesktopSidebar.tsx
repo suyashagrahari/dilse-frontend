@@ -21,6 +21,8 @@ interface Props {
   coupleNames: { person1: string; person2: string };
   onBack: () => void;
   onEdit?: () => void;
+  /** Wipe this browser's unpublished draft. Omitted when there is nothing to clear. */
+  onClear?: () => void;
   showPublish?: boolean;
   showShare?: boolean;
   shareLabel?: string;
@@ -30,7 +32,7 @@ interface Props {
 
 export default function DesktopSidebar({
   tab, onTabChange, coupleNames, onBack,
-  onEdit, showPublish, showShare, shareLabel, onPublish, onShare,
+  onEdit, onClear, showPublish, showShare, shareLabel, onPublish, onShare,
 }: Props) {
   return (
     <aside
@@ -152,6 +154,17 @@ export default function DesktopSidebar({
             cursor: "pointer",
           }}>
             ✉ {shareLabel || "Share"}
+          </button>
+        )}
+        {onClear && (
+          <button onClick={onClear} style={{
+            padding: "7px 0", borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.04)",
+            fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)",
+            cursor: "pointer",
+          }}>
+            Clear my draft
           </button>
         )}
         <button onClick={onBack} style={{
