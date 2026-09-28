@@ -118,8 +118,6 @@ export default function AdminRecurringPage() {
       width={1180}
     >
       <style>{`
-        .rc-hero { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 12px; align-items: end; }
-        @media (min-width: 720px) { .rc-hero { grid-template-columns: 1.3fr repeat(3,minmax(0,1fr)); } }
         .rc-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: 12px; }
         .rc-ctrl { display: flex; flex-direction: column; gap: 8px; }
         .rc-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -134,7 +132,7 @@ export default function AdminRecurringPage() {
           thing you see on a phone and the list starts above the fold.
         */
         <Hero>
-          <div className="rc-hero">
+          <div className="adk-hero-grid">
             <HeroStat big label="Came back" value={summary.recurring} sub={`${summary.oneTime} made one and stopped`} />
             <HeroStat label="Creators" value={summary.creators} sub="made at least one page" />
             <HeroStat label="Return rate" value={`${summary.recurringRate}%`} sub="of everyone who created" tone="#ffe3a3" />

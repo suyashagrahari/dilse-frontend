@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { C, STATUS_COLOR, type ProfileData } from "./types";
 import { ProfileStyles, Skeleton, Empty, Pill, Btn, Dialog, fmtAgo } from "./ui";
-import { AdminPage, Num } from "../../adminKit";
+import { AdminPage, Num, HeroHead } from "../../adminKit";
 import { ROLE_META, RoleIcon, ProviderIcon } from "../../adminIcons";
 import OverviewTab from "./OverviewTab";
 import PagesTab from "./PagesTab";
@@ -29,6 +29,8 @@ const TAB_ICON: Record<Tab, typeof UserCog> = {
   Overview: LayoutDashboard, Pages: LayoutGrid, Drafts: FileText, Points: Coins,
   Access: KeyRound, Activity: History, "Danger Zone": TriangleAlert,
 };
+
+const ABOUT = "Everything about one account — pages, points, access and the audit trail. Role changes live on the Overview tab; suspensions and deletions behind Danger Zone.";
 
 export default function AdminUserProfilePage() {
   return (
@@ -124,6 +126,13 @@ function ProfileInner() {
     }
   };
 
+  // Back to the list only; switching admin sections is the navbar's job.
+  const backBtn = (
+    <button onClick={() => router.push("/admin/users")} className="adk-btn">
+      <ArrowLeft size={13} /> All users
+    </button>
+  );
+
   const body = () => {
     if (!superAdmin) {
       return (
@@ -154,6 +163,9 @@ function ProfileInner() {
           <span aria-hidden className="adk-hero-shine" />
           <span aria-hidden className="sa-hero-glow" />
 
+          <div style={{ position: "relative" }}>
+            <HeroHead title="User profile" subtitle={ABOUT} icon={<UserRound size={16} />} actions={backBtn} />
+          </div>
           <div className="sa-hero-top">
             <motion.div
               className="sa-avatar-w"
@@ -310,18 +322,9 @@ function ProfileInner() {
   };
 
   return (
-    <AdminPage
-      title="User profile"
-      subtitle="Everything about one account — pages, points, access and the audit trail."
-      icon={<UserRound size={18} />}
-      width={1180}
-      actions={
-        // Back to the list only; switching admin sections is the navbar's job.
-        <button onClick={() => router.push("/admin/users")} className="adk-btn">
-          <ArrowLeft size={14} /> All users
-        </button>
-      }
-    >
+    // Until the profile loads there is no maroon card to carry the header, so
+    // the frame draws a slim one.
+    <AdminPage title="User profile" subtitle={ABOUT} icon={<UserRound size={16} />} width={1180} actions={backBtn} head={!data}>
       <ProfileStyles />
       <div className="sa-root">{body()}</div>
     </AdminPage>

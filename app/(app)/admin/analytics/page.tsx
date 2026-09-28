@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { GoogleG } from "../adminIcons";
+import { ADMIN_KIT_CSS, HeroHead } from "../adminKit";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -163,6 +164,7 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div>
+      <style>{ADMIN_KIT_CSS}</style>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes an-pulse{0%{box-shadow:0 0 0 0 rgba(125,220,150,.7)}70%{box-shadow:0 0 0 8px rgba(125,220,150,0)}100%{box-shadow:0 0 0 0 rgba(125,220,150,0)}}
@@ -188,6 +190,10 @@ export default function AdminAnalyticsPage() {
           style={{position:"relative",overflow:"hidden",borderRadius:20,padding:"16px 16px 14px",marginBottom:12,color:"#f5ede6",
             background:"radial-gradient(120% 140% at 0% 0%,#6b1a22 0%,#3d0c11 55%,#240609 100%)",boxShadow:"0 18px 40px -22px rgba(61,12,17,.8)"}}>
           <span aria-hidden style={{position:"absolute",top:-40,bottom:-40,width:60,background:"linear-gradient(90deg,transparent,rgba(255,236,190,.14),transparent)",animation:"an-shine 5s ease-in-out infinite"}}/>
+          <div style={{position:"relative"}}>
+            <HeroHead title="Analytics" icon={<BarChart3 size={16}/>}
+              subtitle={<>How SubhSandesh is doing. The strip is always <b>today</b> (since 12 AM IST) against the average of the last 7 full days. The period buttons below — today, yesterday, 7/30/90 days, overall or any day you pick — drive every number, chart and table under them. Days run midnight to midnight, India time.</>}/>
+          </div>
           <div className="an-pulse" style={{position:"relative"}}>
             <div style={{display:"flex",flexWrap:"wrap",alignItems:"flex-end",gap:"10px 22px"}}>
               <div>

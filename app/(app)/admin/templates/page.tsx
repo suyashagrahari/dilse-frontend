@@ -235,7 +235,7 @@ export default function AdminTemplatesPage() {
       <style>{TV_CSS}</style>
 
       <Hero>
-        <div className="tv-hero">
+        <div className="adk-hero-grid">
           <HeroStat big label="LIVE IN GALLERY" value={liveCount} sub={`${livePct}% of ${CATALOGUE.length} templates`} />
           <HeroStat label="HIDDEN" value={hiddenCount} tone="#ffb4a8" />
           <HeroStat label="PINNED BY ADMIN" value={decidedCount} sub={`${CATALOGUE.length - decidedCount} on default`} />
@@ -403,12 +403,6 @@ export default function AdminTemplatesPage() {
 
 const TV_CSS = `
   .animate-spin { animation: spin 0.9s linear infinite; }
-  .tv-hero { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px 14px; align-items: end; }
-  .tv-hero > :first-child { grid-column: 1 / -1; }
-  @media (min-width: 720px) {
-    .tv-hero { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,1fr)); }
-    .tv-hero > :first-child { grid-column: auto; }
-  }
   .tv-bar { margin-top: 12px; height: 6px; border-radius: 99px; background: rgba(255,120,110,.28); overflow: hidden; }
   .tv-bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c9a84c, #ffe3a3); }
   .tv-host { display: flex; align-items: flex-start; gap: 7px; margin-top: 11px; font-size: 11.5px; line-height: 1.45; opacity: .9; }

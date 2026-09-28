@@ -321,12 +321,6 @@ export default function AdminEarlyAccessPage() {
           phone as often as from a desk. Scoped to `ea-` so nothing leaks. */}
       <style>{`
         .animate-spin { animation: spin 0.9s linear infinite; }
-        .ea-hero { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px 14px; align-items: end; }
-        .ea-hero > :first-child { grid-column: 1 / -1; }
-        @media (min-width: 720px) {
-          .ea-hero { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,1fr)); }
-          .ea-hero > :first-child { grid-column: auto; }
-        }
         .ea-host { display: flex; align-items: flex-start; gap: 7px; margin-top: 11px; font-size: 11.5px; line-height: 1.45; opacity: .9; }
         .ea-note { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; padding: 9px 12px; border-radius: 12px;
           background: rgba(201,168,76,.1); border: 1px solid rgba(201,168,76,.35); font-size: 12px; line-height: 17px; color: ${t2}; }
@@ -417,7 +411,7 @@ export default function AdminEarlyAccessPage() {
       `}</style>
 
       <Hero>
-        <div className="ea-hero">
+        <div className="adk-hero-grid">
           <HeroStat big label="PEOPLE WITH EARLY ACCESS" value={totalGrants} sub={`across ${grantedCount} template${grantedCount === 1 ? "" : "s"}`} />
           <HeroStat label="HIDDEN TEMPLATES" value={hiddenCount} tone="#ffe3a3" />
           <HeroStat label="HIDDEN, NO GRANTS" value={hiddenUngranted} />
