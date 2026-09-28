@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Calendar, Heart, Sparkles, Edit3, Check, X, Lock, LogOut,
-  Eye, EyeOff, Loader2, ChevronRight, ChevronDown, Shield,
-  ExternalLink, Cake, Gift, Users, BarChart3, Copy, KeyRound, Globe,
+  Eye, EyeOff, Loader2, ChevronDown, Shield,
+  ExternalLink, Cake, Gift, Users, Copy, KeyRound, Globe,
   AtSign, Link2, Share2, Star, TrendingUp, ArrowUpRight, ArrowDownRight,
   Trash2, AlertTriangle, BookHeart,
 } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import { GoogleG } from "@/app/(app)/admin/adminIcons";
+import { PROFILE_CSS } from "./profileStyles";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateProfile, changePassword, logoutUser, checkAuth, setSubdomain as setSubdomainAction } from "@/store/authSlice";
 import PagePasswordControl from "@/components/profile/PagePasswordControl";
@@ -135,16 +138,17 @@ function ProfileShell({ children }: { children: React.ReactNode }) {
     >
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.34, transform: "scaleY(-1)", filter: CORNER_FILTER }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.34, transform: "scale(-1,-1)", filter: CORNER_FILTER }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.3, filter: CORNER_FILTER }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER }} />
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.3, transform: "scaleX(-1)", filter: CORNER_FILTER }} />
       </div>
       <LuxuryMobileTopBrand />
       <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+      <style>{PROFILE_CSS}</style>
     </div>
   );
 }
@@ -174,20 +178,28 @@ type ProfilePanel = "personal-link" | "account" | "my-story" | "creations" | "re
 interface ReferralInfo { points: number; totalPointsEarned: number; referralCode: string; referralCount: number; }
 interface PointTx { _id: string; type: string; delta: number; balance: number; meta: Record<string, string>; createdAt: string; }
 
-/* ── Reusable row component ── */
-function Row({ icon, label, value, accent = "green" }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent?: "green" | "blue" | "violet" | "amber" }) {
-  const colors: Record<string, string> = { green: "var(--app-accent-a08)", blue: "rgba(59,130,246,0.1)", violet: "rgba(139,92,246,0.1)", amber: "rgba(245,158,11,0.1)" };
-  return (
-    <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: colors[accent] }}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium" style={{ color: "var(--app-text)" }}>{label}</p>
-        <p className="text-xs truncate" style={{ color: "var(--app-text-muted)" }}>{value}</p>
-      </div>
-    </div>
-  );
+/* ── Count-up number for the hero stats ──
+   Eases from the last value to the new one, so a stat that arrives after the
+   fetch rolls up instead of snapping. Reduced motion jumps straight there. */
+function CountUp({ value }: { value: number }) {
+  const [n, setN] = useState(0);
+  const from = useRef(0);
+  useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const ms = reduce ? 0 : 900;
+    const a = from.current;
+    const start = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = ms ? Math.min(1, (t - start) / ms) : 1;
+      setN(Math.round(a + (value - a) * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(step);
+      else from.current = value;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{n.toLocaleString("en-IN")}</>;
 }
 
 export default function ProfilePage() {
@@ -234,7 +246,7 @@ export default function ProfilePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedReceived, setExpandedReceived] = useState<string | null>(null);
   const [visiblePw, setVisiblePw] = useState<Set<string>>(new Set());
-  const [activePanel, setActivePanel] = useState<ProfilePanel>("personal-link");
+  const [activePanel, setActivePanel] = useState<ProfilePanel>("creations"); // pages first: it is what people come back for
   // No share state here: the sheet is raised through the bus and mounted once
   // by the app layout. See `lib/share/shareBus`.
 
@@ -505,37 +517,43 @@ export default function ProfilePage() {
   const templateSlug = (type: string) => templateMeta(type).editor.replace(/^\//, "");
   const editorRoute = (type: string) => templateMeta(type).editor;
 
-  const cardStyle = { background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)", borderRadius: "1rem" };
-  const sectionLabel = (text: string) => (
-    <p className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2 px-1 flex items-center gap-1.5" style={{ color: "var(--app-accent)" }}>{text}</p>
+  const sectionHead = (icon: React.ReactNode, title: string, sub?: React.ReactNode, right?: React.ReactNode) => (
+    <div className="pfHead">
+      <span className="pfHeadIc">{icon}</span>
+      <div className="pfHeadTx">
+        <h2>{title}</h2>
+        {sub && <p>{sub}</p>}
+      </div>
+      {right}
+    </div>
   );
 
   /* ── Not authenticated ── */
   if (!isAuthenticated) {
     return (
       <ProfileShell>
-        <div className="flex items-center justify-center px-4 mt-24 md:mt-28">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl">
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)" }}>
-              <User size={32} style={{ color: "#c9a84c" }} />
-            </div>
-            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.28em] mb-3" style={{ color: "var(--app-accent)" }}>
-              Profile Access
-            </p>
-            <h2
-              className="leading-[0.95] tracking-[-0.03em] text-[38px] md:text-[64px] mb-3"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, color: "#2a0a0e" }}
-            >
-              Sign In <em style={{ color: "#c9a84c", fontStyle: "italic" }}>to Continue.</em>
-            </h2>
-            <p className="text-sm md:text-base mb-8 max-w-xl mx-auto" style={{ color: "#7a5555" }}>
+        <div className="pfWrap pfWrapGate">
+          <section className="pfHero pfGate">
+            <span className="pfShine" aria-hidden="true" />
+            <span className="pfOrb" aria-hidden="true" />
+            <span className="pfSpark s1" aria-hidden="true">✦</span>
+            <span className="pfSpark s2" aria-hidden="true">♥</span>
+            <span className="pfSpark s3" aria-hidden="true">✦</span>
+            <div className="pfGateIc"><User size={28} /></div>
+            <p className="pfKicker">Profile Access</p>
+            <h1 className="pfGateTitle">Sign In <em>to Continue.</em></h1>
+            <p className="pfLead">
               Log in to manage your profile, view your dashboard, and personalize templates.
             </p>
-            <button onClick={() => setShowAuth(true)} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-105"
-              style={{ background: "#3d0c11", color: "#f5ede6" }}>
-              Sign In
+            <ul className="pfGateList">
+              <li><Sparkles size={13} /> Your pages &amp; drafts</li>
+              <li><Star size={13} /> Points &amp; referrals</li>
+              <li><AtSign size={13} /> Your personal link</li>
+            </ul>
+            <button onClick={() => setShowAuth(true)} className="pfBtnGold">
+              <Lock size={15} /> Sign In
             </button>
-          </motion.div>
+          </section>
         </div>
         <AnimatePresence>
           {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => setShowAuth(false)} />}
@@ -546,429 +564,419 @@ export default function ProfilePage() {
 
   /* ── Authenticated ── */
 
-  /* shared sub-components (inline, no duplication) */
-  const AvatarBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center">
-      <div className="relative mb-5">
-        {user?.avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatar} alt={user.name} className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover"
-            style={{ boxShadow: "0 0 0 3px var(--app-bg), 0 0 0 5px var(--app-accent-a25), 0 0 30px var(--app-accent-a12)" }} />
-        ) : (
-          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, var(--app-accent), #00ff88)", boxShadow: "0 0 0 3px var(--app-bg), 0 0 0 5px var(--app-accent-a25), 0 0 30px var(--app-accent-a12)" }}>
-            <span className="text-2xl md:text-3xl font-black" style={{ color: "var(--app-accent-fg)" }}>{getInitials(user?.name || "U")}</span>
-          </div>
-        )}
-        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-[3px] flex items-center justify-center" style={{ background: "var(--app-accent)", borderColor: "var(--app-bg)" }}>
-          <Check size={11} color="#000" strokeWidth={3} />
-        </div>
-      </div>
-
-      {editingName ? (
-        <div className="flex items-center gap-2 mb-1">
-          <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
-            className="text-xl font-bold text-center rounded-xl px-3 py-1.5 focus:outline-none w-48"
-            style={{ background: "var(--app-input-bg)", border: "1px solid var(--app-accent-a35)", color: "var(--app-text)" }}
-            autoFocus />
-          <button onClick={handleSaveName} disabled={nameLoading}
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-            {nameLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-          </button>
-          <button onClick={() => setEditingName(false)}
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-            <X size={14} />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl md:text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif", color: "#2a0a0e" }}>{user?.name}</h1>
-          <button onClick={() => { setNameInput(user?.name || ""); setEditingName(true); }}
-            className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: "var(--app-surface)", color: "var(--app-text-faint)" }}>
-            <Edit3 size={12} />
-          </button>
-        </div>
-      )}
-
-      {user?.subdomain && (
-        <div className="flex items-center gap-1.5 mb-1.5 px-3 py-1 rounded-full" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-accent-a20)" }}>
-          <AtSign size={11} style={{ color: "var(--app-accent)" }} />
-          <span className="text-xs font-bold" style={{ color: "var(--app-accent)" }}>{user.subdomain}</span>
-        </div>
-      )}
-      <p className="text-sm flex items-center gap-1.5 mb-2" style={{ color: "var(--app-text-muted)" }}>
-        <Mail size={12} /> {user?.email}
-      </p>
-      {user?.provider === "google" && (
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full" style={{ background: "var(--app-surface)", color: "var(--app-text-muted)", border: "1px solid var(--app-border)" }}>
-          <svg viewBox="0 0 24 24" width="12" height="12">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-          </svg>
-          Connected with Google
-        </span>
-      )}
-    </motion.div>
-  );
-
-  const StatsBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-      className="grid grid-cols-3 gap-3">
-      {[
-        { icon: <Heart size={20} style={{ color: "#f43f5e" }} />, value: statsLoading ? "…" : stats?.favoritesCount ?? 0, label: "Favorites" },
-        { icon: <Sparkles size={20} style={{ color: "var(--app-accent)" }} />, value: statsLoading ? "…" : stats?.generatedCount ?? 0, label: "Generated" },
-        { icon: <Calendar size={20} style={{ color: "#60a5fa" }} />, value: statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today", label: "Member", small: true },
-      ].map(({ icon, value, label, small }) => (
-        <div key={label} className="rounded-2xl p-4 pt-5 pb-4 text-center flex flex-col items-center" style={cardStyle}>
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style={{ background: "var(--app-surface)" }}>
-            {icon}
-          </div>
-          <p className={`font-black leading-tight ${small ? "text-sm" : "text-2xl"}`} style={{ color: "var(--app-text)" }}>{value}</p>
-          <p className="text-[9px] uppercase tracking-widest mt-1.5 font-semibold" style={{ color: "var(--app-text-faint)" }}>{label}</p>
-        </div>
-      ))}
-    </motion.div>
-  );
-
-  const subdomainStatusColor = subdomainStatus === "available" ? "#22c55e" : subdomainStatus === "taken" || subdomainStatus === "invalid" ? "#f87171" : "var(--app-text-faint)";
-
-  const SubdomainBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-      {sectionLabel("My Personal Link")}
-      <div className="rounded-2xl overflow-hidden" style={cardStyle}>
-        {!editingSubdomain ? (
-          <div>
-            {user?.subdomain ? (
-              <div className="p-4 space-y-3">
-                {/* Current subdomain display */}
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
-                    <AtSign size={15} style={{ color: "var(--app-accent)" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--app-text-faint)" }}>Your Handle</p>
-                    <p className="text-base font-black" style={{ color: "#c9a84c", fontFamily: "'Playfair Display', serif" }}>@{user.subdomain}</p>
-                  </div>
-                  <button onClick={() => { setSubdomainInput(user.subdomain || ""); setEditingSubdomain(true); }}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                    style={{ background: "var(--app-surface)", color: "var(--app-text-faint)" }}>
-                    <Edit3 size={13} />
-                  </button>
-                </div>
-
-                {/* URL preview */}
-                <div className="rounded-xl p-3" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a15)" }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--app-accent)" }}>Your Share Links</p>
-                  <div className="flex items-center gap-2">
-                    <Link2 size={11} style={{ color: "var(--app-accent)" }} className="shrink-0" />
-                    <p className="text-[11px] font-mono truncate flex-1" style={{ color: "var(--app-text-muted)" }}>
-                      {ROOT_DOMAIN
-                        ? <><span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{user.subdomain}</span>.{ROOT_DOMAIN}/<span style={{ color: "var(--app-text-faint)" }}>page-id</span></>
-                        : <>{SITE_URL}/{user.subdomain}/<span style={{ color: "var(--app-text-faint)" }}>page-id</span></>
-                      }
-                    </p>
-                    <button
-                      onClick={() => {
-                        const base = ROOT_DOMAIN ? `https://${user.subdomain}.${ROOT_DOMAIN}/` : `${SITE_URL}/u/${user.subdomain}/`;
-                        navigator.clipboard.writeText(base);
-                        setSubdomainCopied(true);
-                        setTimeout(() => setSubdomainCopied(false), 2000);
-                      }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all hover:scale-110"
-                      style={{ background: "var(--app-accent-a10)", color: "var(--app-accent)" }}>
-                      {subdomainCopied ? <Check size={11} /> : <Copy size={11} />}
-                    </button>
-                  </div>
-                </div>
-
-                <p className="text-[10px] text-center" style={{ color: "var(--app-text-ultra-faint)" }}>
-                  All your shared pages use this personalized link
-                </p>
-              </div>
-            ) : (
-              <button onClick={() => { setSubdomainInput(""); setEditingSubdomain(true); }}
-                className="app-row-hover w-full flex items-center gap-3 px-4 py-4 text-left transition-colors">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)" }}>
-                  <AtSign size={16} style={{ color: "var(--app-accent)" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold" style={{ color: "var(--app-text)" }}>Claim Your Personal Link</p>
-                  <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>e.g. dilse.app/<span style={{ color: "var(--app-accent)" }}>yourname</span>/page</p>
-                </div>
-                <div className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                  Claim
-                </div>
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              <AtSign size={14} style={{ color: "var(--app-accent)" }} />
-              <p className="text-sm font-bold" style={{ color: "var(--app-text)" }}>
-                {user?.subdomain ? "Change Your Handle" : "Choose Your Handle"}
-              </p>
-            </div>
-
-            {/* Input */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                <span className="text-sm font-bold" style={{ color: "var(--app-text-faint)" }}>@</span>
-              </div>
-              <input
-                type="text"
-                value={subdomainInput}
-                onChange={(e) => setSubdomainInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                placeholder="yourname"
-                maxLength={30}
-                autoFocus
-                className="app-input w-full pl-8 pr-4 py-3 rounded-xl text-sm focus:outline-none transition-all font-mono"
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--app-accent-a35)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--app-input-border)"; }}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveSubdomain()}
-              />
-            </div>
-
-            {/* URL preview while typing */}
-            {subdomainInput && (
-              <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--app-surface)", border: "1px solid var(--app-border-faint)" }}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--app-text-faint)" }}>Preview</p>
-                <p className="text-[11px] font-mono truncate" style={{ color: "var(--app-text-muted)" }}>
-                  {ROOT_DOMAIN
-                    ? <><span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{subdomainInput}</span>.{ROOT_DOMAIN}/page-id</>
-                    : <>{SITE_URL}/<span style={{ color: "var(--app-accent)", fontWeight: 700 }}>{subdomainInput}</span>/page-id</>
-                  }
-                </p>
-              </div>
-            )}
-
-            {/* Status message */}
-            <AnimatePresence mode="wait">
-              {subdomainInput && subdomainStatus !== "idle" && (
-                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg"
-                  style={{ background: subdomainStatus === "available" ? "rgba(34,197,94,0.08)" : subdomainStatus === "checking" ? "var(--app-surface)" : "rgba(248,113,113,0.08)", color: subdomainStatusColor }}>
-                  {subdomainStatus === "checking" ? <Loader2 size={11} className="animate-spin shrink-0" /> :
-                   subdomainStatus === "available" ? <Check size={11} className="shrink-0" /> :
-                   <X size={11} className="shrink-0" />}
-                  {subdomainStatus === "checking" ? "Checking availability…" : subdomainStatusMsg}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Rules */}
-            <p className="text-[10px]" style={{ color: "var(--app-text-ultra-faint)" }}>
-              3–30 chars · lowercase letters, numbers, hyphens · no leading/trailing hyphens
-            </p>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button onClick={handleSaveSubdomain}
-                disabled={subdomainLoading || subdomainStatus !== "available" || !subdomainInput}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                {subdomainLoading ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save Handle</>}
-              </button>
-              <button onClick={() => { setEditingSubdomain(false); setSubdomainInput(""); setSubdomainStatus("idle"); }}
-                className="px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
-                style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  const AccountBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-      {sectionLabel("Account")}
-      <div className="overflow-hidden rounded-2xl" style={cardStyle}>
-        <Row icon={<Mail size={16} style={{ color: "#60a5fa" }} />} label="Email" value={user?.email} accent="blue" />
-        <Row icon={<Shield size={16} style={{ color: "#a78bfa" }} />} label="Sign-in method" value={user?.provider} accent="violet" />
-        {/* Shown for Google accounts too, as "Set Password". There is no
-            /forgot-password route in this app, so this is the ONLY way a
-            Google-only account can ever gain a password — and the only way
-            back for an account whose unverified-era password was cleared when
-            Google sign-in verified it. */}
-        {(user?.provider === "local" || user?.provider === "google") && (
-          <div>
-            <button onClick={() => { setShowPasswordSection(!showPasswordSection); setPwMessage(null); setCurrentPw(""); setNewPw(""); }}
-              className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 transition-colors">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
-                <Lock size={16} style={{ color: "#f59e0b" }} />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium" style={{ color: "var(--app-text)" }}>
-                  {hasNoPassword ? "Set Password" : "Change Password"}
-                </p>
-                <p className="text-xs" style={{ color: "var(--app-text-faint)" }}>
-                  {hasNoPassword
-                    ? "Add a password so you can sign in without Google"
-                    : "Update your account password"}
-                </p>
-              </div>
-              <ChevronRight size={15} className={`transition-transform ${showPasswordSection ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
-            </button>
-            <AnimatePresence>
-              {showPasswordSection && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="px-4 pb-4 space-y-3">
-                    {[...(hasNoPassword
-                        ? []
-                        : [{ val: currentPw, set: setCurrentPw, show: showCurrentPw, toggle: setShowCurrentPw, placeholder: "Current password", onEnter: undefined }]),
-                      { val: newPw, set: setNewPw, show: showNewPw, toggle: setShowNewPw, placeholder: "New password (min 6 chars)", onEnter: handleChangePassword }
-                    ].map(({ val, set, show, toggle, placeholder, onEnter }) => (
-                      <div key={placeholder} className="relative">
-                        <input type={show ? "text" : "password"} value={val} onChange={(e) => set(e.target.value)}
-                          placeholder={placeholder} onKeyDown={onEnter ? (e) => e.key === "Enter" && onEnter() : undefined}
-                          className="app-input w-full px-4 pr-10 py-3 rounded-xl text-sm focus:outline-none transition-all"
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--app-accent-a35)"; }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--app-input-border)"; }} />
-                        <button type="button" onClick={() => toggle(!show)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--app-text-faint)" }}>
-                          {show ? <EyeOff size={15} /> : <Eye size={15} />}
-                        </button>
-                      </div>
-                    ))}
-                    {pwMessage && (
-                      <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                        className="text-xs px-3 py-2 rounded-lg"
-                        style={{ background: pwMessage.type === "success" ? "var(--app-accent-a08)" : "rgba(239,68,68,0.08)", color: pwMessage.type === "success" ? "var(--app-accent)" : "#f87171" }}>
-                        {pwMessage.text}
-                      </motion.p>
-                    )}
-                    <button onClick={handleChangePassword} disabled={pwLoading || !currentPw || !newPw || newPw.length < 6}
-                      className="w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                      style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                      {pwLoading ? <><Loader2 size={14} className="animate-spin" /> Updating…</> : "Update Password"}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  const LogoutBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-      <button onClick={handleLogout} disabled={logoutLoading}
-        className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all hover:bg-red-500/5"
-        style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(239,68,68,0.1)" }}>
-          {logoutLoading ? <Loader2 size={16} className="text-red-400 animate-spin" /> : <LogOut size={16} className="text-red-400" />}
-        </div>
-        <p className="text-sm font-bold text-red-400">{logoutLoading ? "Logging out…" : "Log Out"}</p>
-      </button>
-    </motion.div>
-  );
-
   const draftCount = myCreations.filter((p) => !p.isPublished).length;
   const liveCount = myCreations.length - draftCount;
   const visibleCreations = myCreations.filter((p) =>
     creationFilter === "all" ? true : creationFilter === "live" ? p.isPublished : !p.isPublished
   );
+  const totalViews = myCreations.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+  const points = referralInfo?.points ?? user?.points ?? 0;
+
+  const HeroBlock = (
+    <section className="pfHero">
+      <span className="pfShine" aria-hidden="true" />
+      <span className="pfOrb" aria-hidden="true" />
+      <span className="pfSpark s1" aria-hidden="true">✦</span>
+      <span className="pfSpark s2" aria-hidden="true">♥</span>
+      <span className="pfSpark s3" aria-hidden="true">✦</span>
+
+      <div className="pfHeroMain">
+        <div className="pfAvatarWrap">
+          {user?.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar} alt={user.name} className="pfAvatar" />
+          ) : (
+            <div className="pfAvatar pfAvatarInit">{getInitials(user?.name || "U")}</div>
+          )}
+          <span className="pfAvatarBadge" title={user?.provider === "google" ? "Signed in with Google" : "Verified account"}>
+            {user?.provider === "google" ? <GoogleG size={13} /> : <Check size={11} strokeWidth={3} />}
+          </span>
+        </div>
+
+        <div className="pfWho">
+          <p className="pfKicker">Your profile</p>
+          {editingName ? (
+            <div className="pfNameEdit">
+              <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                className="pfNameInput" aria-label="Your name" autoFocus />
+              <button onClick={handleSaveName} disabled={nameLoading} className="pfRound gold" aria-label="Save name">
+                {nameLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              </button>
+              <button onClick={() => setEditingName(false)} className="pfRound glass" aria-label="Cancel">
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <div className="pfNameRow">
+              <h1 className="pfName">{user?.name}</h1>
+              <button onClick={() => { setNameInput(user?.name || ""); setEditingName(true); }}
+                className="pfRound glass sm" aria-label="Edit name" title="Edit name">
+                <Edit3 size={12} />
+              </button>
+            </div>
+          )}
+          <div className="pfMeta">
+            <span className="pfMetaItem"><Mail size={12} /> <span className="pfMetaTx">{user?.email}</span></span>
+            {user?.subdomain && (
+              <span className="pfMetaItem gold"><AtSign size={12} /> <span className="pfMetaTx">{user.subdomain}</span></span>
+            )}
+            <span className="pfMetaItem">
+              <Calendar size={12} /> Member since {statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today"}
+            </span>
+            {user?.provider === "google" && (
+              <span className="pfMetaItem"><GoogleG size={11} /> Connected with Google</span>
+            )}
+          </div>
+        </div>
+
+        <button onClick={handleLogout} disabled={logoutLoading} className="pfLogout" aria-label="Log out" title="Log out">
+          {logoutLoading ? <Loader2 size={15} className="animate-spin" /> : <LogOut size={15} />}
+          <span>{logoutLoading ? "Logging out…" : "Log Out"}</span>
+        </button>
+      </div>
+
+      <div className="pfStats">
+        {[
+          { icon: <Sparkles size={14} />, label: "Pages", value: myCreations.length, sub: `${liveCount} live · ${draftCount} draft${draftCount === 1 ? "" : "s"}`, loading: false },
+          { icon: <Eye size={14} />, label: "Views", value: totalViews, sub: "on your pages", loading: false },
+          { icon: <Star size={14} />, label: "Points", value: points, sub: `${referralInfo?.referralCount ?? 0} friends referred`, loading: false },
+          { icon: <Heart size={14} />, label: "Favorites", value: stats?.favoritesCount ?? 0, sub: `${stats?.generatedCount ?? 0} generated`, loading: statsLoading },
+        ].map((s, i) => (
+          <div key={s.label} className="pfStat" style={{ animationDelay: `${120 + i * 70}ms` }}>
+            <span className="pfStatIc">{s.icon}</span>
+            <p className="pfStatNum">{s.loading ? "…" : <CountUp value={s.value} />}</p>
+            <p className="pfStatLabel">{s.label}</p>
+            <p className="pfStatSub">{s.loading ? " " : s.sub}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  const subdomainStatusClass = subdomainStatus === "available" ? "ok" : subdomainStatus === "taken" || subdomainStatus === "invalid" ? "bad" : "wait";
+
+  const SubdomainBlock = (
+    <div className="pfCard pfNarrow">
+      {sectionHead(<AtSign size={16} />, "My Personal Link", "Every page you share uses this handle")}
+      {!editingSubdomain ? (
+        user?.subdomain ? (
+          <div className="pfBody">
+            <div className="pfHandleRow">
+              <div className="pfHandle">
+                <span className="pfTinyLabel">Your Handle</span>
+                <span className="pfHandleName">@{user.subdomain}</span>
+              </div>
+              <button onClick={() => { setSubdomainInput(user.subdomain || ""); setEditingSubdomain(true); }}
+                className="pfBtnGhost sm"><Edit3 size={13} /> Change</button>
+            </div>
+
+            {/* URL preview */}
+            <div className="pfUrlBox">
+              <span className="pfTinyLabel gold">Your Share Links</span>
+              <div className="pfUrlRow">
+                <Link2 size={12} className="shrink-0" />
+                <p className="pfMono">
+                  {ROOT_DOMAIN
+                    ? <><b>{user.subdomain}</b>.{ROOT_DOMAIN}/<i>page-id</i></>
+                    : <>{SITE_URL}/{user.subdomain}/<i>page-id</i></>
+                  }
+                </p>
+                <button
+                  onClick={() => {
+                    const base = ROOT_DOMAIN ? `https://${user.subdomain}.${ROOT_DOMAIN}/` : `${SITE_URL}/u/${user.subdomain}/`;
+                    navigator.clipboard.writeText(base);
+                    setSubdomainCopied(true);
+                    setTimeout(() => setSubdomainCopied(false), 2000);
+                  }}
+                  className={`pfIconBtn${subdomainCopied ? " is-done" : ""}`} aria-label="Copy link" title="Copy link">
+                  {subdomainCopied ? <Check size={13} /> : <Copy size={13} />}
+                </button>
+              </div>
+            </div>
+            <p className="pfNote">All your shared pages use this personalized link</p>
+          </div>
+        ) : (
+          <button onClick={() => { setSubdomainInput(""); setEditingSubdomain(true); }} className="pfClaim">
+            <span className="pfClaimIc"><AtSign size={18} /></span>
+            <span className="pfClaimTx">
+              <b>Claim Your Personal Link</b>
+              <span>e.g. dilse.app/<em>yourname</em>/page</span>
+            </span>
+            <span className="pfClaimPill">Claim</span>
+          </button>
+        )
+      ) : (
+        <div className="pfBody">
+          <p className="pfFormTitle">{user?.subdomain ? "Change Your Handle" : "Choose Your Handle"}</p>
+
+          {/* Input */}
+          <div className="pfField">
+            <span className="pfFieldPre">@</span>
+            <input
+              type="text"
+              value={subdomainInput}
+              onChange={(e) => setSubdomainInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+              placeholder="yourname"
+              maxLength={30}
+              autoFocus
+              aria-label="Handle"
+              className="pfInput pfInputPre pfMonoInput"
+              onKeyDown={(e) => e.key === "Enter" && handleSaveSubdomain()}
+            />
+          </div>
+
+          {/* URL preview while typing */}
+          {subdomainInput && (
+            <div className="pfUrlBox soft">
+              <span className="pfTinyLabel">Preview</span>
+              <p className="pfMono">
+                {ROOT_DOMAIN
+                  ? <><b>{subdomainInput}</b>.{ROOT_DOMAIN}/page-id</>
+                  : <>{SITE_URL}/<b>{subdomainInput}</b>/page-id</>
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Status message */}
+          <AnimatePresence mode="wait">
+            {subdomainInput && subdomainStatus !== "idle" && (
+              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className={`pfStatusMsg ${subdomainStatusClass}`}>
+                {subdomainStatus === "checking" ? <Loader2 size={12} className="animate-spin shrink-0" /> :
+                 subdomainStatus === "available" ? <Check size={12} className="shrink-0" /> :
+                 <X size={12} className="shrink-0" />}
+                {subdomainStatus === "checking" ? "Checking availability…" : subdomainStatusMsg}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Rules */}
+          <p className="pfNote left">3–30 chars · lowercase letters, numbers, hyphens · no leading/trailing hyphens</p>
+
+          {/* Actions */}
+          <div className="pfBtnRow">
+            <button onClick={handleSaveSubdomain}
+              disabled={subdomainLoading || subdomainStatus !== "available" || !subdomainInput}
+              className="pfBtn grow">
+              {subdomainLoading ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save Handle</>}
+            </button>
+            <button onClick={() => { setEditingSubdomain(false); setSubdomainInput(""); setSubdomainStatus("idle"); }}
+              className="pfBtnGhost">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const AccountBlock = (
+    <div className="pfAccountGrid">
+      <div className="pfCard">
+        {sectionHead(<Shield size={16} />, "Account", "How you sign in")}
+        <div className="pfRows">
+          <div className="pfRow">
+            <span className="pfRowIc"><Mail size={15} /></span>
+            <div className="pfRowTx"><b>Email</b><span>{user?.email}</span></div>
+          </div>
+          <div className="pfRow">
+            <span className="pfRowIc">{user?.provider === "google" ? <GoogleG size={15} /> : <Shield size={15} />}</span>
+            <div className="pfRowTx"><b>Sign-in method</b><span className="cap">{user?.provider}</span></div>
+          </div>
+          <div className="pfRow">
+            <span className="pfRowIc"><Calendar size={15} /></span>
+            <div className="pfRowTx"><b>Member since</b><span>{statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today"}</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shown for Google accounts too, as "Set Password". There is no
+          /forgot-password route in this app, so this is the ONLY way a
+          Google-only account can ever gain a password — and the only way
+          back for an account whose unverified-era password was cleared when
+          Google sign-in verified it. */}
+      {(user?.provider === "local" || user?.provider === "google") && (
+        <div className="pfCard">
+          <button onClick={() => { setShowPasswordSection(!showPasswordSection); setPwMessage(null); setCurrentPw(""); setNewPw(""); }}
+            className="pfHead pfHeadBtn" aria-expanded={showPasswordSection}>
+            <span className="pfHeadIc"><Lock size={16} /></span>
+            <span className="pfHeadTx">
+              <span className="h">{hasNoPassword ? "Set Password" : "Change Password"}</span>
+              <span className="s">
+                {hasNoPassword
+                  ? "Add a password so you can sign in without Google"
+                  : "Update your account password"}
+              </span>
+            </span>
+            <ChevronDown size={17} className={`pfChev${showPasswordSection ? " is-open" : ""}`} />
+          </button>
+          <AnimatePresence initial={false}>
+            {showPasswordSection && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className="pfBody">
+                  {[...(hasNoPassword
+                      ? []
+                      : [{ val: currentPw, set: setCurrentPw, show: showCurrentPw, toggle: setShowCurrentPw, placeholder: "Current password", onEnter: undefined }]),
+                    { val: newPw, set: setNewPw, show: showNewPw, toggle: setShowNewPw, placeholder: "New password (min 6 chars)", onEnter: handleChangePassword }
+                  ].map(({ val, set, show, toggle, placeholder, onEnter }) => (
+                    <div key={placeholder} className="pfField">
+                      <input type={show ? "text" : "password"} value={val} onChange={(e) => set(e.target.value)}
+                        placeholder={placeholder} aria-label={placeholder}
+                        onKeyDown={onEnter ? (e) => e.key === "Enter" && onEnter() : undefined}
+                        className="pfInput pfInputPost" />
+                      <button type="button" onClick={() => toggle(!show)} className="pfFieldPost"
+                        aria-label={show ? "Hide password" : "Show password"}>
+                        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  ))}
+                  {pwMessage && (
+                    <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                      className={`pfStatusMsg ${pwMessage.type === "success" ? "ok" : "bad"}`}>
+                      {pwMessage.text}
+                    </motion.p>
+                  )}
+                  {/* A Google account has no current password to type, so the
+                      button must not wait for one (handleChangePassword already
+                      skips that requirement for exactly this case). */}
+                  <button onClick={handleChangePassword} disabled={pwLoading || (!hasNoPassword && !currentPw) || !newPw || newPw.length < 6}
+                    className="pfBtn full">
+                    {pwLoading ? <><Loader2 size={14} className="animate-spin" /> Updating…</> : <><KeyRound size={14} /> {hasNoPassword ? "Set Password" : "Update Password"}</>}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
 
   /**
-   * One chip.
+   * One segment.
    *
-   * Chips for empty buckets are hidden rather than disabled: a "Drafts 0" chip
-   * that cannot be pressed is a dead control, and offering the filter at all
-   * only makes sense once there is something to filter.
+   * Segments for empty buckets are hidden rather than disabled: a "Drafts 0"
+   * chip that cannot be pressed is a dead control, and offering the filter at
+   * all only makes sense once there is something to filter.
    */
   const filterChip = (id: "all" | "draft" | "live", label: string, count: number) =>
     count === 0 && id !== "all" ? null : (
       <button
         key={id}
+        type="button"
         onClick={() => { setCreationFilter(id); setExpandedCard(null); setDeleteConfirmId(null); }}
-        className="text-[12px] font-bold rounded-full px-3 py-1.5 transition-colors"
-        style={{
-          background: creationFilter === id ? "var(--app-accent)" : "var(--app-accent-a08)",
-          color: creationFilter === id ? "#fff" : "var(--app-text-faint)",
-          border: "1px solid var(--app-border-faint)",
-        }}
+        className={creationFilter === id ? "is-on" : ""}
         aria-pressed={creationFilter === id}
       >
-        {label} {count}
+        {creationFilter === id && (
+          <motion.span layoutId="pf-filter-pill" className="pfSegPill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+        )}
+        <span className="pfSegLabel">{label} <b>{count}</b></span>
       </button>
     );
 
+  const newCreationBtn = (
+    <button onClick={() => router.push("/templates")} className="pfBtn sm">
+      <Sparkles size={14} /> <span>New Creation</span>
+    </button>
+  );
+
   const CreationsBlock = myCreations.length > 0 ? (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-      {sectionLabel("My Creations")}
-      {/* Only worth showing once there are both kinds to choose between. */}
-      {draftCount > 0 && liveCount > 0 && (
-        <div className="flex items-center gap-2 mb-2.5 px-0.5">
-          {filterChip("all", "All", myCreations.length)}
-          {filterChip("draft", "Drafts", draftCount)}
-          {filterChip("live", "Live", liveCount)}
-        </div>
-      )}
-      <div className="overflow-hidden rounded-2xl" style={cardStyle}>
-        <div className="max-h-[72vh] overflow-y-auto">
-        {visibleCreations.map((page) => {
+    <div>
+      <div className="pfPanelBar">
+        {sectionHead(<Sparkles size={16} />, "My Creations", `${myCreations.length} page${myCreations.length === 1 ? "" : "s"} · most recent first`, newCreationBtn)}
+        {/* Only worth showing once there are both kinds to choose between. */}
+        {draftCount > 0 && liveCount > 0 && (
+          <div className="pfSeg" role="group" aria-label="Filter pages">
+            {filterChip("all", "All", myCreations.length)}
+            {filterChip("draft", "Drafts", draftCount)}
+            {filterChip("live", "Live", liveCount)}
+          </div>
+        )}
+      </div>
+      <div className="pfGrid">
+        {visibleCreations.map((page, i) => {
           const shareLink = getShareLink(page.shareId);
           const isExpanded = expandedCard === page._id;
+          const toggle = () => { setExpandedCard(isExpanded ? null : page._id); setDeleteConfirmId(null); };
           return (
-            <div key={page._id} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-              {/* ── Header row (click to expand) ── */}
-              <div onClick={() => { setExpandedCard(isExpanded ? null : page._id); setDeleteConfirmId(null); }}
-                className="app-row-hover cursor-pointer flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 transition-colors">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a08)", border: "1px solid var(--app-border-faint)" }}>
-                    {page.templateType === "valentine" ? <Gift size={18} style={{ color: "#f43f5e" }} /> :
-                     page.templateType === "holi" ? <Sparkles size={18} style={{ color: "#a78bfa" }} /> :
-                     page.templateType === "birthday" || page.templateType === "birthday-gf" ? <Cake size={18} style={{ color: "var(--app-accent)" }} /> :
-                     <span className="text-lg">{templateEmoji(page.templateType)}</span>}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] sm:text-[16px] font-bold truncate tracking-tight" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} For {page.recipientName}</h3>
-                    <p className="text-[11px] sm:text-[12.5px] font-medium truncate mt-0.5" style={{ color: "var(--app-text-faint)" }}>
-                      {templateLabel(page.templateType)} · {page.isPublished ? "Published" : "Draft"} · {formatShortDate(page.updatedAt)}
-                    </p>
-                  </div>
+            <article key={page._id} className={`pfPage${isExpanded ? " is-open" : ""}${page.isPublished ? " is-live" : ""}`}
+              style={{ animationDelay: `${Math.min(i, 8) * 55}ms` }}>
+              {/* ── Header (click to expand) ── */}
+              <div className="pfPageTop" role="button" tabIndex={0} aria-expanded={isExpanded} onClick={toggle}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } }}>
+                <span className="pfEmoji">
+                  {page.templateType === "valentine" ? <Gift size={19} style={{ color: "#e11d48" }} /> :
+                   page.templateType === "holi" ? <Sparkles size={19} style={{ color: "#8b5cf6" }} /> :
+                   page.templateType === "birthday" || page.templateType === "birthday-gf" ? <Cake size={19} style={{ color: BRAND.accent }} /> :
+                   <span>{templateEmoji(page.templateType)}</span>}
+                </span>
+                <div className="pfPageTx">
+                  <h3>For {page.recipientName}</h3>
+                  <p>{templateLabel(page.templateType)} · {formatShortDate(page.updatedAt)}</p>
                 </div>
-
-                {/* Always-visible Edit | Delete pill + chevron */}
-                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center rounded-full" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
-                    <button title="Edit" onClick={(e) => { e.stopPropagation(); router.push(`${editorRoute(page.templateType)}?edit=${page._id}`); }}
-                      className="pl-3 pr-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-l-full flex items-center gap-1.5 transition-colors hover:bg-[var(--app-accent-a08)]"
-                      style={{ color: "var(--app-text)" }}>
-                      <Edit3 size={14} style={{ color: "var(--app-text-muted)" }} /> <span className="hidden sm:inline">Edit</span>
-                    </button>
-                    <div className="w-px h-4 sm:h-5" style={{ background: "var(--app-border-faint)" }} />
-                    <button title={page.isPublished ? "Delete" : "Discard"} onClick={(e) => { e.stopPropagation(); setExpandedCard(page._id); setDeleteConfirmId(page._id); }}
-                      className="pl-2.5 pr-3 sm:px-3.5 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-r-full flex items-center gap-1.5 transition-colors hover:bg-[rgba(220,38,38,0.07)]"
-                      style={{ color: "#dc2626" }}>
-                      {/* "Discard" for a draft: it names an action with no audience,
-                          which is what discarding an unpublished page is. */}
-                      <Trash2 size={14} /> <span className="hidden sm:inline">{page.isPublished ? "Delete" : "Discard"}</span>
-                    </button>
-                  </div>
-                  <ChevronDown size={18} className={`transition-transform duration-300 shrink-0 ${isExpanded ? "rotate-180" : ""}`} style={{ color: "var(--app-text-faint)" }} />
-                </div>
+                <span className={`pfStatus ${page.isPublished ? "is-live" : "is-draft"}`}>
+                  {page.isPublished ? <><i aria-hidden="true" /> Live</> : "Draft"}
+                </span>
               </div>
 
-              <AnimatePresence>
+              <div className="pfPageStats">
+                <span><Eye size={12} /> {page.viewCount ?? 0} views</span>
+                <span><Users size={12} /> {page.installCount} installs</span>
+                {page.hasPassword && <span><Lock size={12} /> Locked</span>}
+              </div>
+
+              <div className="pfActions">
+                <button title="Edit" onClick={() => router.push(`${editorRoute(page.templateType)}?edit=${page._id}`)} className="pfAct main">
+                  <Edit3 size={13} /> Edit
+                </button>
+                {page.isPublished && (
+                  <>
+                    <button title="Copy link" aria-label="Copy link" onClick={() => copyToClipboard(shareLink, page._id, "link")}
+                      className={`pfAct ic${copiedLink === page._id ? " is-done" : ""}`}>
+                      {copiedLink === page._id ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                    <button title="Share" aria-label="Share" onClick={() => {
+                      openSocialShare({
+                        url: shareLink,
+                        title: `${templateLabel(page.templateType)} page`,
+                        message: `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
+                        slug: templateSlug(page.templateType),
+                        recipientName: page.recipientName,
+                        senderName: page.senderName,
+                        password: page.passwordRaw,
+                      });
+                    }} className="pfAct ic">
+                      <Share2 size={14} />
+                    </button>
+                    <button title="Open in new tab" aria-label="Open in new tab" onClick={() => window.open(getShareLink(page.shareId), "_blank")} className="pfAct ic">
+                      <ExternalLink size={14} />
+                    </button>
+                  </>
+                )}
+                <span className="pfActGap" />
+                <button title="Password & details" aria-label="Password & details" aria-expanded={isExpanded} onClick={toggle} className={`pfAct ic${isExpanded ? " is-on" : ""}`}>
+                  <KeyRound size={14} />
+                </button>
+                <button title={page.isPublished ? "Delete" : "Discard"} aria-label={page.isPublished ? "Delete" : "Discard"}
+                  onClick={() => { setExpandedCard(page._id); setDeleteConfirmId(page._id); }} className="pfAct ic danger">
+                  {/* "Discard" for a draft: it names an action with no audience,
+                      which is what discarding an unpublished page is. */}
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
+              <AnimatePresence initial={false}>
                 {isExpanded && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                    <div className="px-3.5 pb-4 sm:px-6 sm:pb-6 pt-1 space-y-3 sm:space-y-4" style={{ borderTop: "1px solid var(--app-border-faint)" }}>
-                      {/* Delete confirmation banner (triggered from header Delete) */}
+                    <div className="pfPageMore">
+                      {/* Delete confirmation banner (triggered from the Delete action) */}
                       {deleteConfirmId === page._id && (
-                        <div className="mt-3 sm:mt-4 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}>
-                          <div className="flex items-start gap-2 sm:gap-2.5">
-                            <AlertTriangle size={15} style={{ color: "#dc2626" }} className="shrink-0 mt-0.5" />
+                        <div className="pfDanger">
+                          <div className="pfDangerHead">
+                            <AlertTriangle size={15} className="shrink-0" />
                             <div className="min-w-0">
                               {/* ── The warning has to match what is actually at stake ──────
                                   Every abandoned build is now a draft, so most rows in this
@@ -978,292 +986,172 @@ export default function ProfilePage() {
                                   overstates its case is one people learn to click through —
                                   including on the published card where every word of it IS
                                   true. */}
-                              <p className="text-[12px] sm:text-sm font-bold" style={{ color: "#dc2626" }}>
+                              <p className="pfDangerTitle">
                                 {page.isPublished ? "Permanently delete this card?" : "Discard this draft?"}
                               </p>
-                              <p className="text-[10.5px] sm:text-xs mt-0.5 leading-relaxed" style={{ color: "var(--app-text-muted)" }}>
+                              <p className="pfDangerTx">
                                 {page.isPublished ? (
-                                  <>This is <span style={{ color: "#dc2626", fontWeight: 700 }}>permanent and cannot be undone</span>. The card and all its content, photos and settings will be erased. The shared link will stop working for you and everyone you sent it to, and <span style={{ color: "#dc2626", fontWeight: 700 }}>it can never be recovered or published again</span> — you would have to build a brand-new card from scratch.</>
+                                  <>This is <b>permanent and cannot be undone</b>. The card and all its content, photos and settings will be erased. The shared link will stop working for you and everyone you sent it to, and <b>it can never be recovered or published again</b> — you would have to build a brand-new card from scratch.</>
                                 ) : (
-                                  <>This draft was never published, so nobody has a link to it. Its content and photos will be erased and <span style={{ color: "#dc2626", fontWeight: 700 }}>cannot be recovered</span> — you would have to start this one again.</>
+                                  <>This draft was never published, so nobody has a link to it. Its content and photos will be erased and <b>cannot be recovered</b> — you would have to start this one again.</>
                                 )}
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }} disabled={deletingId === page._id}
-                              className="flex-1 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[12px] sm:text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                              style={{ background: "var(--app-surface)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)" }}>
+                          <div className="pfBtnRow">
+                            <button onClick={() => setDeleteConfirmId(null)} disabled={deletingId === page._id} className="pfBtnGhost grow">
                               Cancel
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteCreation(page); }} disabled={deletingId === page._id}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[12px] sm:text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
-                              style={{ background: "#dc2626" }}>
+                            <button onClick={() => handleDeleteCreation(page)} disabled={deletingId === page._id} className="pfBtnDanger grow">
                               {deletingId === page._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                               {deletingId === page._id ? "Deleting…" : "Delete forever"}
                             </button>
                           </div>
                         </div>
                       )}
-
-                      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 pt-3 sm:pt-4">
-                        {/* Installs */}
-                        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 md:p-5 flex items-center gap-2.5 md:gap-4 transition-colors" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
-                          <div className="w-9 h-9 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 relative z-10" style={{ background: "var(--app-accent-a10)", border: "1px solid var(--app-border-faint)" }}>
-                            <Users size={16} className="md:hidden" style={{ color: "var(--app-accent)" }} /><Users size={22} className="hidden md:block" style={{ color: "var(--app-accent)" }} />
-                          </div>
-                          <div className="relative z-10 min-w-0">
-                            <p className="text-[8.5px] md:text-[11px] font-extrabold uppercase tracking-[0.14em] md:tracking-[0.18em] mb-0.5 md:mb-1" style={{ color: "var(--app-text-faint)" }}>Installs</p>
-                            <p className="text-xl md:text-[32px] font-black leading-none" style={{ color: "var(--app-text)" }}>{page.installCount}</p>
-                          </div>
-                          <TrendingUp className="absolute right-2 bottom-1.5 md:right-3 md:bottom-2 z-0 pointer-events-none w-9 h-9 md:w-[54px] md:h-[54px]" style={{ color: "var(--app-accent)", opacity: 0.09 }} />
-                        </div>
-                        {/* Status */}
-                        <div className="rounded-xl sm:rounded-2xl p-3 md:p-5 flex items-center gap-2.5 md:gap-4 transition-colors" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
-                          <div className="w-9 h-9 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: page.isPublished ? "rgba(34,197,94,0.1)" : "var(--app-accent-a08)", border: `1px solid ${page.isPublished ? "rgba(34,197,94,0.18)" : "var(--app-border-faint)"}` }}>
-                            {page.isPublished ? (
-                              <span className="relative flex items-center justify-center">
-                                <span className="absolute w-5 h-5 md:w-6 md:h-6 rounded-full animate-ping" style={{ background: "rgba(34,197,94,0.25)" }} />
-                                <span className="relative w-2.5 h-2.5 md:w-3 md:h-3 rounded-full" style={{ background: "#22c55e" }} />
-                              </span>
-                            ) : (<><BarChart3 size={16} className="md:hidden" style={{ color: "var(--app-text-faint)" }} /><BarChart3 size={22} className="hidden md:block" style={{ color: "var(--app-text-faint)" }} /></>)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[8.5px] md:text-[11px] font-extrabold uppercase tracking-[0.14em] md:tracking-[0.18em] mb-0.5 md:mb-1" style={{ color: "var(--app-text-faint)" }}>Status</p>
-                            <p className="text-lg md:text-[32px] font-black leading-none" style={{ color: page.isPublished ? "#16a34a" : "var(--app-text)" }}>{page.isPublished ? "Live" : "Draft"}</p>
-                          </div>
-                        </div>
-                      </div>
-                      {page.isPublished && (
-                        <div className="space-y-2">
-                          <div className="rounded-xl sm:rounded-2xl p-3 md:p-4 flex items-center justify-between gap-2.5" style={{ background: "linear-gradient(135deg, var(--app-surface) 0%, var(--app-bg) 100%)", border: "1px solid var(--app-border-faint)" }}>
-                            <div className="flex items-center gap-2 md:gap-3.5 min-w-0 flex-1">
-                              <div className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
-                                <Link2 size={15} className="md:hidden" style={{ color: "var(--app-accent)" }} /><Link2 size={19} className="hidden md:block" style={{ color: "var(--app-accent)" }} />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-[8.5px] md:text-[10px] uppercase tracking-[0.12em] md:tracking-[0.2em] font-extrabold mb-0.5 md:mb-1 whitespace-nowrap" style={{ color: "var(--app-text-faint)" }}>Shareable Link</p>
-                                <p className="text-[12px] md:text-sm font-semibold flex items-center gap-1.5 md:gap-2 whitespace-nowrap" style={{ color: "var(--app-text-muted)" }}>
-                                  Ready to share <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: "#22c55e" }} />
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                              <button title="Copy link" onClick={(e) => { e.stopPropagation(); copyToClipboard(shareLink, page._id, "link"); }}
-                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
-                                style={{ background: "rgba(255,255,255,0.9)", color: copiedLink === page._id ? "#16a34a" : "var(--app-accent)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
-                                {copiedLink === page._id ? <Check size={15} /> : <Copy size={15} />}
-                              </button>
-                              <button title="Share" onClick={(e) => {
-                                e.stopPropagation();
-                                openSocialShare({
-                                  url: shareLink,
-                                  title: `${templateLabel(page.templateType)} page`,
-                                  message: `${page.senderName || "Someone"} shared a ${templateLabel(page.templateType)} page${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
-                                  slug: templateSlug(page.templateType),
-                                  recipientName: page.recipientName,
-                                  senderName: page.senderName,
-                                  password: page.passwordRaw,
-                                });
-                              }}
-                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
-                                style={{ background: "rgba(255,255,255,0.9)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
-                                <Share2 size={15} />
-                              </button>
-                              <button title="Open in new tab" onClick={(e) => { e.stopPropagation(); window.open(getShareLink(page.shareId), "_blank"); }}
-                                className="w-8 h-8 md:w-[46px] md:h-[46px] rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 transition-all hover:scale-105 hover:-translate-y-0.5"
-                                style={{ background: "rgba(255,255,255,0.9)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-faint)", boxShadow: "0 1px 4px -1px rgba(0,0,0,0.06)" }}>
-                                <ExternalLink size={15} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        )}
-                      {/* Outside the isPublished block on purpose: the password is set
+                      {/* Outside any isPublished check on purpose: the password is set
                           in the builder at create time, so a DRAFT can already carry one —
                           and a draft is exactly when you would want to fix it before
                           sending the link. Nothing about being unpublished makes a
                           page's password unmanageable. */}
-                      <div className="mt-2">
-                        <PagePasswordControl
-                          templateType={page.templateType}
-                          pageId={page._id}
-                          hasPassword={page.hasPassword}
-                          passwordRaw={page.passwordRaw}
-                          onChanged={(next) =>
-                            setMyCreations((prev) =>
-                              prev.map((p) => (p._id === page._id ? { ...p, ...next } : p))
-                            )
-                          }
-                        />
-                      </div>
+                      <PagePasswordControl
+                        templateType={page.templateType}
+                        pageId={page._id}
+                        hasPassword={page.hasPassword}
+                        passwordRaw={page.passwordRaw}
+                        onChanged={(next) =>
+                          setMyCreations((prev) =>
+                            prev.map((p) => (p._id === page._id ? { ...p, ...next } : p))
+                          )
+                        }
+                      />
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </article>
           );
         })}
-        </div>
       </div>
-    </motion.div>
+    </div>
   ) : null;
 
   const ReceivedBlock = receivedPages.length > 0 ? (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-      {sectionLabel("Shared With You")}
-      <div className="overflow-hidden rounded-2xl" style={cardStyle}>
-        {receivedPages.map((page) => {
+    <div>
+      {sectionHead(<Users size={16} />, "Shared With You", `${receivedPages.length} page${receivedPages.length === 1 ? "" : "s"} people made for you`)}
+      <div className="pfGrid">
+        {receivedPages.map((page, i) => {
           const link = getShareLink(page.shareId);
           const isOpen = expandedReceived === page.shareId;
           const pwKey = `recv-${page.shareId}`;
           return (
-            <div key={page.shareId} style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-              <button onClick={() => setExpandedReceived(isOpen ? null : page.shareId)}
-                className="app-row-hover w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors">
+            <article key={page.shareId} className={`pfPage${isOpen ? " is-open" : ""}`} style={{ animationDelay: `${Math.min(i, 8) * 55}ms` }}>
+              <button onClick={() => setExpandedReceived(isOpen ? null : page.shareId)} className="pfPageTop pfPageTopBtn" aria-expanded={isOpen}>
                 {page.senderAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={page.senderAvatar} alt={page.senderName} className="w-9 h-9 rounded-full object-cover shrink-0" style={{ border: "1px solid var(--app-border)" }} />
+                  <img src={page.senderAvatar} alt={page.senderName} className="pfSender" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[10px] font-black" style={{ background: "var(--app-accent)", color: "var(--app-accent-fg)" }}>
-                    {getInitials(page.senderName)}
-                  </div>
+                  <span className="pfSender pfSenderInit">{getInitials(page.senderName)}</span>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: "var(--app-text)" }}>{templateEmoji(page.templateType)} From {page.senderName}</p>
-                  <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>
-                    {templateLabel(page.templateType)} for {page.recipientName} · {formatShortDate(page.createdAt)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {page.hasPassword && (
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: page.passwordVerified ? "var(--app-accent-a10)" : "rgba(245,158,11,0.1)" }}>
-                      {page.passwordVerified ? <Check size={11} style={{ color: "var(--app-accent)" }} /> : <Lock size={11} style={{ color: "#f59e0b" }} />}
-                    </div>
-                  )}
-                  <ChevronRight size={14} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} style={{ color: "var(--app-text-faint)" }} />
-                </div>
+                <span className="pfPageTx">
+                  <span className="h">{templateEmoji(page.templateType)} From {page.senderName}</span>
+                  <span className="s">{templateLabel(page.templateType)} for {page.recipientName} · {formatShortDate(page.createdAt)}</span>
+                </span>
+                {page.hasPassword && (
+                  <span className={`pfLockBadge${page.passwordVerified ? " is-ok" : ""}`} title={page.passwordVerified ? "Unlocked" : "Locked"}>
+                    {page.passwordVerified ? <Check size={11} /> : <Lock size={11} />}
+                  </span>
+                )}
+                <ChevronDown size={16} className={`pfChev${isOpen ? " is-open" : ""}`} />
               </button>
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                    <div className="px-4 pb-4 space-y-2.5">
-                      <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--app-surface)" }}>
-                        <Globe size={12} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
-                        <p className="text-[11px] truncate flex-1 font-mono" style={{ color: "var(--app-text-muted)" }}>{link}</p>
-                        <button onClick={(e) => { e.stopPropagation(); copyToClipboard(link, page.shareId + "-recv", "link"); }}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: "var(--app-surface)", color: "var(--app-text-muted)" }}>
-                          {copiedLink === page.shareId + "-recv" ? <Check size={12} style={{ color: "var(--app-accent)" }} /> : <Copy size={12} />}
+                    <div className="pfPageMore">
+                      <div className="pfUrlRow boxed">
+                        <Globe size={12} className="shrink-0" />
+                        <p className="pfMono">{link}</p>
+                        <button onClick={() => copyToClipboard(link, page.shareId + "-recv", "link")}
+                          className={`pfIconBtn${copiedLink === page.shareId + "-recv" ? " is-done" : ""}`} aria-label="Copy link" title="Copy link">
+                          {copiedLink === page.shareId + "-recv" ? <Check size={12} /> : <Copy size={12} />}
                         </button>
-                              <button onClick={(e) => {
-                                e.stopPropagation();
-                                openSocialShare({
-                                  url: link,
-                                  title: `${templateLabel(page.templateType)} greeting`,
-                                  message: `${page.senderName || "Someone"} sent a ${templateLabel(page.templateType)} greeting${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
-                                  slug: templateSlug(page.templateType),
-                                  recipientName: page.recipientName,
-                                  senderName: page.senderName,
-                                  // Only ever populated once this reader has
-                                  // unlocked the page themselves, so forwarding
-                                  // it passes on nothing they were not given.
-                                  password: page.passwordRaw,
-                                });
-                              }}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                                style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                                <Share2 size={12} />
-                              </button>
-                        <button onClick={(e) => { e.stopPropagation(); window.open(`/${page.shareId}`, "_blank"); }}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
+                        <button onClick={() => {
+                          openSocialShare({
+                            url: link,
+                            title: `${templateLabel(page.templateType)} greeting`,
+                            message: `${page.senderName || "Someone"} sent a ${templateLabel(page.templateType)} greeting${page.recipientName ? ` for ${page.recipientName}` : ""} on SubhSandesh!`,
+                            slug: templateSlug(page.templateType),
+                            recipientName: page.recipientName,
+                            senderName: page.senderName,
+                            // Only ever populated once this reader has
+                            // unlocked the page themselves, so forwarding
+                            // it passes on nothing they were not given.
+                            password: page.passwordRaw,
+                          });
+                        }} className="pfIconBtn" aria-label="Share" title="Share">
+                          <Share2 size={12} />
+                        </button>
+                        <button onClick={() => window.open(`/${page.shareId}`, "_blank")} className="pfIconBtn" aria-label="Open in new tab" title="Open in new tab">
                           <ExternalLink size={12} />
                         </button>
-
                       </div>
                       {page.hasPassword && page.passwordVerified && page.passwordRaw && (
-                        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a15)" }}>
-                          <KeyRound size={12} style={{ color: "var(--app-accent)" }} className="shrink-0" />
+                        <div className="pfUrlRow boxed gold">
+                          <KeyRound size={12} className="shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-medium mb-0.5" style={{ color: "var(--app-accent)" }}>Password</p>
-                            <p className="text-xs font-mono font-semibold truncate" style={{ color: "var(--app-text)" }}>{visiblePw.has(pwKey) ? page.passwordRaw : "••••••••"}</p>
+                            <span className="pfTinyLabel gold">Password</span>
+                            <p className="pfMono strong">{visiblePw.has(pwKey) ? page.passwordRaw : "••••••••"}</p>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={(e) => {
-                              e.stopPropagation();
-                              setVisiblePw((p) => {
-                                const n = new Set(p);
-                                if (n.has(pwKey)) n.delete(pwKey);
-                                else n.add(pwKey);
-                                return n;
-                              });
-                            }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                              {visiblePw.has(pwKey) ? <EyeOff size={12} /> : <Eye size={12} />}
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); copyToClipboard(page.passwordRaw!, page.shareId + "-rpw", "pw"); }}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--app-accent-a08)", color: "var(--app-accent)" }}>
-                              {copiedPw === page.shareId + "-rpw" ? <Check size={12} /> : <Copy size={12} />}
-                            </button>
-                          </div>
+                          <button onClick={() => {
+                            setVisiblePw((p) => {
+                              const n = new Set(p);
+                              if (n.has(pwKey)) n.delete(pwKey);
+                              else n.add(pwKey);
+                              return n;
+                            });
+                          }} className="pfIconBtn" aria-label={visiblePw.has(pwKey) ? "Hide password" : "Show password"}>
+                            {visiblePw.has(pwKey) ? <EyeOff size={12} /> : <Eye size={12} />}
+                          </button>
+                          <button onClick={() => copyToClipboard(page.passwordRaw!, page.shareId + "-rpw", "pw")}
+                            className={`pfIconBtn${copiedPw === page.shareId + "-rpw" ? " is-done" : ""}`} aria-label="Copy password">
+                            {copiedPw === page.shareId + "-rpw" ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
                         </div>
                       )}
                       {page.hasPassword && !page.passwordVerified && (
-                        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
-                          <Lock size={12} style={{ color: "#f59e0b" }} className="shrink-0" />
-                          <p className="text-[11px]" style={{ color: "rgba(245,158,11,0.8)" }}>Enter the correct password on the page to unlock</p>
+                        <div className="pfStatusMsg warn">
+                          <Lock size={12} className="shrink-0" />
+                          Enter the correct password on the page to unlock
                         </div>
                       )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </article>
           );
         })}
       </div>
-    </motion.div>
+    </div>
   ) : null;
 
   const EmptyReceivedBlock = (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-      {sectionLabel("Shared With You")}
-      <div
-        className="rounded-2xl p-6 text-center flex flex-col items-center gap-2.5"
-        style={cardStyle}
-      >
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center"
-          style={{ background: "var(--app-accent-a08)" }}
-        >
-          <Users size={20} style={{ color: "var(--app-accent)" }} />
-        </div>
-        <p className="font-bold text-sm md:text-base" style={{ color: "var(--app-text)" }}>
-          No shared pages yet
-        </p>
-        <p className="text-xs md:text-sm" style={{ color: "var(--app-text-muted)" }}>
-          Pages shared with you will appear here.
-        </p>
-      </div>
-    </motion.div>
+    <div className="pfEmpty">
+      <span className="pfEmptyIc"><Users size={22} /></span>
+      <p className="pfEmptyTitle">No shared pages yet</p>
+      <p className="pfEmptySub">Pages shared with you will appear here.</p>
+    </div>
   );
 
   const EmptyCreationsBlock = (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-      className="rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3 min-h-[240px]"
-      style={cardStyle}>
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--app-accent-a08)" }}>
-        <Sparkles size={24} style={{ color: "var(--app-accent)" }} />
-      </div>
-      <p className="font-bold text-base" style={{ color: "var(--app-text)" }}>No creations yet</p>
-      <p className="text-sm" style={{ color: "var(--app-text-muted)" }}>Start building your first personalized gift page</p>
-      <button onClick={() => router.push("/templates")}
-        className="mt-1 px-6 py-2.5 rounded-full text-sm font-bold"
-        style={{ background: "#3d0c11", color: "#f5ede6" }}>
-        Browse Templates
+    <div className="pfEmpty">
+      <span className="pfEmptyIc"><Sparkles size={22} /></span>
+      <p className="pfEmptyTitle">No creations yet</p>
+      <p className="pfEmptySub">Start building your first personalized gift page</p>
+      <button onClick={() => router.push("/templates")} className="pfBtn" style={{ marginTop: 14 }}>
+        <Sparkles size={14} /> Browse Templates
       </button>
-    </motion.div>
+    </div>
   );
 
   const refCode = referralInfo?.referralCode ?? user?.referralCode ?? "";
@@ -1291,235 +1179,162 @@ export default function ProfilePage() {
   };
 
   const ReferralBlock = (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-      {sectionLabel("Points & Referrals")}
-
-      {/* Points balance card */}
-      <div className="rounded-2xl p-5 mb-4" style={{ background: "linear-gradient(135deg, #3d0c11 0%, #5a1520 60%, #3d0c11 100%)", border: "1px solid rgba(242,207,116,0.3)" }}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1" style={{ color: "rgba(242,207,116,0.7)" }}>Your Points</p>
-            <div className="flex items-end gap-2">
-              <p className="text-5xl font-black" style={{ color: "#f2cf74", fontFamily: "'Playfair Display', serif", lineHeight: 1 }}>
-                {referralInfo?.points ?? user?.points ?? 0}
-              </p>
-              <p className="text-sm font-bold pb-1" style={{ color: "rgba(242,207,116,0.6)" }}>pts</p>
+    <div className="pfReferGrid">
+      <div className="pfReferMain">
+        {/* Points balance card */}
+        <div className="pfPoints">
+          <span className="pfShine" aria-hidden="true" />
+          <div className="pfPointsTop">
+            <div>
+              <span className="pfTinyLabel onDark">Your Points</span>
+              <p className="pfPointsNum"><CountUp value={points} /><small>pts</small></p>
             </div>
+            <span className="pfPointsIc"><Star size={24} /></span>
           </div>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(242,207,116,0.15)", border: "1px solid rgba(242,207,116,0.25)" }}>
-            <Star size={26} style={{ color: "#f2cf74" }} />
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 pt-3" style={{ borderTop: "1px solid rgba(242,207,116,0.15)" }}>
-          <TrendingUp size={12} style={{ color: "rgba(242,207,116,0.6)" }} />
-          <p className="text-[11px]" style={{ color: "rgba(242,207,116,0.6)" }}>
-            Total earned: <span style={{ color: "#f2cf74", fontWeight: 700 }}>{referralInfo?.totalPointsEarned ?? 0} pts</span>
+          <p className="pfPointsFoot">
+            <TrendingUp size={12} /> Total earned: <b>{referralInfo?.totalPointsEarned ?? 0} pts</b>
           </p>
         </div>
-      </div>
 
-      {/* Referral link card */}
-      <div className="rounded-2xl overflow-hidden mb-4" style={cardStyle}>
-        <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--app-accent-a10)" }}>
-              <Gift size={16} style={{ color: "var(--app-accent)" }} />
+        {/* Referral link card */}
+        <div className="pfCard">
+          {sectionHead(<Gift size={16} />, "Refer a Friend", <>Both of you get <b className="pfGoldTx">100 points</b> when they sign up</>)}
+          <div className="pfBody">
+            {/* Referral code badge */}
+            <div className="pfCode">
+              <span className="pfTinyLabel gold">Your Code</span>
+              <span className="pfCodeVal">{referralInfo?.referralCode ?? user?.referralCode ?? "..."}</span>
             </div>
-            <div>
-              <p className="text-sm font-bold" style={{ color: "var(--app-text)" }}>Refer a Friend</p>
-              <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>Both of you get <span style={{ color: "var(--app-accent)", fontWeight: 700 }}>100 points</span> when they sign up</p>
+
+            {/* Referral link with copy */}
+            <div className="pfUrlRow boxed">
+              <Link2 size={12} className="shrink-0" />
+              <p className="pfMono">{myReferralLink}</p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(myReferralLink); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }}
+                className={`pfIconBtn${referralCopied ? " is-done" : ""}`} aria-label="Copy referral link" title="Copy referral link"
+              >
+                {referralCopied ? <Check size={12} /> : <Copy size={12} />}
+              </button>
             </div>
-          </div>
 
-          {/* Referral code badge */}
-          <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: "var(--app-accent-a06)", border: "1px solid var(--app-accent-a20)" }}>
-            <p className="text-xs font-bold uppercase tracking-widest flex-1" style={{ color: "var(--app-accent)" }}>
-              Your Code: <span style={{ fontSize: 14, letterSpacing: "0.3em" }}>{referralInfo?.referralCode ?? user?.referralCode ?? "..."}</span>
-            </p>
-          </div>
-
-          {/* Referral link with copy */}
-          <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid var(--app-border)" }}>
-            <Link2 size={11} style={{ color: "var(--app-text-faint)" }} className="shrink-0" />
-            <p className="text-[11px] font-mono truncate flex-1" style={{ color: "var(--app-text-muted)" }}>
-              {myReferralLink}
-            </p>
+            {/* Share button */}
             <button
-              onClick={() => { navigator.clipboard.writeText(myReferralLink); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }}
-              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all hover:scale-110"
-              style={{ background: referralCopied ? "var(--app-accent)" : "var(--app-surface)", color: referralCopied ? "#1a0507" : "var(--app-text-faint)" }}
+              onClick={() =>
+                openSocialShare({
+                  url: myReferralLink,
+                  title: "Join me on SubhSandesh",
+                  message: `🎁 Join SubhSandesh and get 100 bonus points! Use my referral link to sign up and create beautiful celebration pages.`,
+                })
+              }
+              className="pfBtn full"
             >
-              {referralCopied ? <Check size={12} /> : <Copy size={12} />}
+              <Share2 size={15} />
+              Share Referral Link
             </button>
           </div>
 
-          {/* Share button */}
-          <button
-            onClick={() =>
-              openSocialShare({
-                url: myReferralLink,
-                title: "Join me on SubhSandesh",
-                message: `🎁 Join SubhSandesh and get 100 bonus points! Use my referral link to sign up and create beautiful celebration pages.`,
-              })
-            }
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
-            style={{ background: "#3d0c11", color: "#f5ede6", boxShadow: "0 6px 18px rgba(61,12,17,0.25)" }}
-          >
-            <Share2 size={15} />
-            Share Referral Link
-          </button>
-        </div>
-
-        {/* Stats row */}
-        <div className="flex divide-x" style={{ borderTop: "1px solid var(--app-border-faint)", divideColor: "var(--app-border-faint)" } as React.CSSProperties}>
-          <div className="flex-1 py-3 text-center">
-            <p className="text-xl font-black" style={{ color: "var(--app-text)" }}>{referralInfo?.referralCount ?? 0}</p>
-            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--app-text-faint)" }}>Friends Referred</p>
-          </div>
-          <div className="flex-1 py-3 text-center">
-            <p className="text-xl font-black" style={{ color: "var(--app-accent)" }}>{(referralInfo?.referralCount ?? 0) * 100}</p>
-            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--app-text-faint)" }}>Points Earned</p>
+          {/* Stats row */}
+          <div className="pfMiniStats">
+            <div>
+              <p className="pfMiniNum">{referralInfo?.referralCount ?? 0}</p>
+              <p className="pfMiniLabel">Friends Referred</p>
+            </div>
+            <div>
+              <p className="pfMiniNum gold">{(referralInfo?.referralCount ?? 0) * 100}</p>
+              <p className="pfMiniLabel">Points Earned</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Points history */}
-      {pointsTxs.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={cardStyle}>
-          <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--app-accent)" }}>Points History</p>
+      {pointsTxs.length > 0 ? (
+        <div className="pfCard pfHistory">
+          {sectionHead(<TrendingUp size={16} />, "Points History", "Your last 10 movements")}
+          <div className="pfRows">
+            {pointsTxs.slice(0, 10).map((tx) => (
+              <div key={tx._id} className="pfRow">
+                <span className={`pfRowIc ${tx.delta > 0 ? "up" : "down"}`}>
+                  {tx.delta > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                </span>
+                <div className="pfRowTx">
+                  <b>{txLabel(tx.type)}</b>
+                  {tx.meta?.referrerName && <span>via {tx.meta.referrerName}</span>}
+                  {tx.meta?.refereeName && <span>{tx.meta.refereeName}</span>}
+                  <span>{formatShortDate(tx.createdAt)}</span>
+                </div>
+                <p className={`pfDelta ${tx.delta > 0 ? "up" : "down"}`}>
+                  {tx.delta > 0 ? "+" : ""}{tx.delta}
+                </p>
+              </div>
+            ))}
           </div>
-          {pointsTxs.slice(0, 10).map((tx) => (
-            <div key={tx._id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--app-border-faint)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: tx.delta > 0 ? "rgba(34,197,94,0.1)" : "rgba(248,113,113,0.1)" }}>
-                {tx.delta > 0
-                  ? <ArrowUpRight size={14} style={{ color: "#22c55e" }} />
-                  : <ArrowDownRight size={14} style={{ color: "#f87171" }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate" style={{ color: "var(--app-text)" }}>{txLabel(tx.type)}</p>
-                {tx.meta?.referrerName && <p className="text-[10px] truncate" style={{ color: "var(--app-text-faint)" }}>via {tx.meta.referrerName}</p>}
-                {tx.meta?.refereeName && <p className="text-[10px] truncate" style={{ color: "var(--app-text-faint)" }}>{tx.meta.refereeName}</p>}
-                <p className="text-[10px]" style={{ color: "var(--app-text-faint)" }}>{formatShortDate(tx.createdAt)}</p>
-              </div>
-              <p className="text-sm font-black shrink-0" style={{ color: tx.delta > 0 ? "#22c55e" : "#f87171" }}>
-                {tx.delta > 0 ? "+" : ""}{tx.delta}
-              </p>
-            </div>
-          ))}
+        </div>
+      ) : (
+        <div className="pfEmpty">
+          <span className="pfEmptyIc"><Star size={22} /></span>
+          <p className="pfEmptyTitle">No points yet</p>
+          <p className="pfEmptySub">Share your referral link to start earning 100 points per friend.</p>
         </div>
       )}
-
-      {pointsTxs.length === 0 && (
-        <div className="rounded-2xl p-8 text-center" style={cardStyle}>
-          <Star size={28} className="mx-auto mb-3" style={{ color: "var(--app-accent)", opacity: 0.5 }} />
-          <p className="text-sm font-semibold mb-1" style={{ color: "var(--app-text)" }}>No points yet</p>
-          <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>Share your referral link to start earning 100 points per friend.</p>
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
+
+  const tabs: { id: ProfilePanel; icon: React.ReactNode; label: string; count?: number }[] = [
+    { id: "creations", icon: <Sparkles size={15} />, label: "My Pages", count: myCreations.length },
+    { id: "received", icon: <Users size={15} />, label: "Shared", count: receivedPages.length },
+    { id: "referral", icon: <Gift size={15} />, label: "Refer & Earn" },
+    { id: "personal-link", icon: <AtSign size={15} />, label: "My Link" },
+    { id: "account", icon: <Shield size={15} />, label: "Account" },
+    { id: "my-story", icon: <BookHeart size={15} />, label: "My Story" },
+  ];
 
   const activePanelContent =
     activePanel === "personal-link" ? SubdomainBlock :
     activePanel === "account" ? AccountBlock :
-    activePanel === "my-story" ? <MyStorySection /> :
+    activePanel === "my-story" ? <div className="pfNarrow wide"><MyStorySection /></div> :
     activePanel === "creations" ? (CreationsBlock ?? EmptyCreationsBlock) :
     activePanel === "referral" ? ReferralBlock :
     (ReceivedBlock ?? EmptyReceivedBlock);
 
   return (
     <ProfileShell>
-      <div className="md:max-w-7xl md:mx-auto md:px-6 lg:px-8 md:pt-24 md:pb-10">
-        {/* Desktop: Sidebar navigation + active panel */}
-        <div className="hidden md:flex md:gap-12 md:items-start">
-          <div className="w-[340px] shrink-0 sticky top-28 space-y-5">
-            <div className="rounded-3xl p-6" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)" }}>
-              {AvatarBlock}
-            </div>
+      <div className="pfWrap">
+        {HeroBlock}
 
-            {StatsBlock}
+        <nav id="referral" className="pfTabs" role="tablist" aria-label="Profile sections">
+          {tabs.map((t) => {
+            const active = activePanel === t.id;
+            return (
+              <button key={t.id} type="button" role="tab" aria-selected={active}
+                className={active ? "is-on" : ""} onClick={() => setActivePanel(t.id)}>
+                {active && (
+                  <motion.span layoutId="pf-tab-pill" className="pfTabPill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                )}
+                <span className="pfTabIn">
+                  {t.icon}
+                  <span className="pfTabLabel">{t.label}</span>
+                  {t.count ? <b>{t.count}</b> : null}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
 
-            <div className="rounded-2xl p-2" style={cardStyle}>
-              {([
-                { id: "personal-link" as ProfilePanel, icon: <AtSign size={15} />, label: "Personal Link", hint: "Handle and share URL" },
-                { id: "account" as ProfilePanel, icon: <Shield size={15} />, label: "Account Settings", hint: "Email and password" },
-                { id: "my-story" as ProfilePanel, icon: <BookHeart size={15} />, label: "My Story", hint: "Private notes we fill your forms from" },
-                { id: "creations" as ProfilePanel, icon: <Sparkles size={15} />, label: "My Creations", hint: `${myCreations.length} item${myCreations.length === 1 ? "" : "s"}` },
-                { id: "received" as ProfilePanel, icon: <Users size={15} />, label: "Shared With You", hint: `${receivedPages.length} item${receivedPages.length === 1 ? "" : "s"}` },
-                { id: "referral" as ProfilePanel, icon: <Gift size={15} />, label: "Refer & Earn", hint: `${referralInfo?.points ?? user?.points ?? 0} pts · ${referralInfo?.referralCount ?? 0} friends` },
-              ]).map((item) => {
-                const active = activePanel === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActivePanel(item.id)}
-                    className="w-full text-left rounded-xl px-3.5 py-3 mb-1 last:mb-0 transition-all"
-                    style={{
-                      background: active ? "var(--app-accent-a08)" : "transparent",
-                      border: `1px solid ${active ? "var(--app-accent-a20)" : "transparent"}`,
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{
-                          background: active ? "var(--app-accent-a15)" : "var(--app-surface)",
-                          color: active ? "var(--app-accent)" : "var(--app-text-faint)",
-                        }}
-                      >
-                        {item.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: active ? "var(--app-text)" : "var(--app-text-muted)" }}>
-                          {item.label}
-                        </p>
-                        <p className="text-[11px] truncate" style={{ color: "var(--app-text-faint)" }}>
-                          {item.hint}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {LogoutBlock}
-          </div>
-
-          <div className="flex-1 min-w-0 space-y-5">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activePanel}
+            role="tabpanel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="pfPanel"
+          >
             {activePanelContent}
-            {activePanel === "creations" && (
-              <div className="hidden md:flex justify-end pt-1">
-                <button
-                  onClick={() => router.push("/templates")}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all hover:scale-105"
-                  style={{ background: "#3d0c11", color: "#f5ede6", boxShadow: "0 10px 24px rgba(61,12,17,0.2)" }}
-                >
-                  <Sparkles size={15} /> New Creation
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile: stacked layout */}
-        <div className="md:hidden">
-          <div className="px-5 pt-4 pb-5">
-            <div className="rounded-3xl p-6" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(61,12,17,0.1)" }}>
-              {AvatarBlock}
-            </div>
-          </div>
-
-          <div className="px-5 pt-4 pb-5">{StatsBlock}</div>
-          <div className="px-5 pb-5">{SubdomainBlock}</div>
-          <div id="referral" className="px-5 pb-5">{ReferralBlock}</div>
-          <div className="px-5 pb-5">{AccountBlock}</div>
-          <div className="px-5 pb-5"><MyStorySection /></div>
-          <div className="px-5 pb-5">{CreationsBlock ?? EmptyCreationsBlock}</div>
-          <div className="px-5 pb-5">{ReceivedBlock ?? EmptyReceivedBlock}</div>
-          <div className="px-5 pb-5">{LogoutBlock}</div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </ProfileShell>
   );
