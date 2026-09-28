@@ -220,6 +220,12 @@ export function useWeddingEditor() {
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const fromPreviewRef = useRef(false);
   const pendingPublishRef = useRef<{ data: WeddingData; password: string } | null>(null);
+  // Set when the post-sign-in effect takes the pending publish. The effect runs
+  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
+  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
+  // read that as "nothing to publish" and open the write-it / AI chooser over
+  // the page that was publishing.
+  const resumedPublishRef = useRef(false);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -244,6 +250,7 @@ export function useWeddingEditor() {
 
     const { data, password: pw } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
@@ -289,6 +296,7 @@ export function useWeddingEditor() {
             ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
             : (pubResult.data.shareUrl as string);
           setShareUrl(normalizedShareUrl);
+          setEditMode(null); // published — no editor sheet stays open over it
           setShareId(publishedShareId);
           try { sessionStorage.removeItem("wedding_draft"); } catch {}
           pushToast({
@@ -377,7 +385,9 @@ export function useWeddingEditor() {
 
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    if (!pendingPublishRef.current) {
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) {
       setEditMode("choose");
     }
     // if pendingPublishRef.current exists, auto-publish useEffect fires
@@ -727,6 +737,7 @@ export function useWeddingEditor() {
     // Auth gate at publish time only
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      resumedPublishRef.current = false;
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -764,6 +775,7 @@ export function useWeddingEditor() {
           ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
           : (pubResult.data.shareUrl as string);
         setShareUrl(normalizedShareUrl);
+        setEditMode(null); // published — no editor sheet stays open over it
         setShareId(publishedShareId);
         setEditMode(null);
         try { sessionStorage.removeItem("wedding_draft"); } catch {}

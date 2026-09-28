@@ -72,6 +72,12 @@ export function useBirthdayEditor() {
 
   // Holds draft data when user tries to publish without being authenticated
   const pendingPublishRef = useRef<{ data: BirthdayData; password: string } | null>(null);
+  // Set when the post-sign-in effect takes the pending publish. The effect runs
+  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
+  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
+  // read that as "nothing to publish" and open the write-it / AI chooser over
+  // the page that was publishing.
+  const resumedPublishRef = useRef(false);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -167,6 +173,7 @@ export function useBirthdayEditor() {
 
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
@@ -228,6 +235,7 @@ export function useBirthdayEditor() {
         if (pubResult.success) {
           const url = pubResult.data.shareUrl as string;
           setShareUrl(url);
+          setEditMode(null); // published — no editor sheet stays open over it
           try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
           pushToast({
             type: "publish",
@@ -282,7 +290,9 @@ export function useBirthdayEditor() {
     setShowAuth(false);
     // If no pending draft, open the edit sheet as normal
     // If there IS a pending draft, the useEffect handles save+publish automatically
-    if (!pendingPublishRef.current) {
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) {
       setEditMode("choose");
     }
   }, []);
@@ -544,6 +554,7 @@ export function useBirthdayEditor() {
     // Not authenticated: store draft and show auth modal
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      resumedPublishRef.current = false;
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -594,6 +605,7 @@ export function useBirthdayEditor() {
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        setEditMode(null); // published — no editor sheet stays open over it
         try { sessionStorage.removeItem("birthday_gf_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
         pushToast({

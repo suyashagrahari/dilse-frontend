@@ -91,6 +91,12 @@ export function useLoveEditor() {
 
   // Holds draft data when user tries to publish without being authenticated
   const pendingPublishRef = useRef<{ data: ContentData; password: string } | null>(null);
+  // Set when the post-sign-in effect takes the pending publish. The effect runs
+  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
+  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
+  // read that as "nothing to publish" and open the write-it / AI chooser over
+  // the page that was publishing.
+  const resumedPublishRef = useRef(false);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -182,6 +188,7 @@ export function useLoveEditor() {
 
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
@@ -239,6 +246,7 @@ export function useLoveEditor() {
         if (pubResult.success) {
           const url = pubResult.data.shareUrl as string;
           setShareUrl(url);
+          setEditMode(null); // published — no editor sheet stays open over it
           await persistStory();
           try { sessionStorage.removeItem("love_gf_draft"); } catch {}
           pushToast({
@@ -293,7 +301,9 @@ export function useLoveEditor() {
 
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    if (!pendingPublishRef.current) {
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) {
       setEditMode("choose");
     }
   }, []);
@@ -619,6 +629,7 @@ export function useLoveEditor() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      resumedPublishRef.current = false;
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -664,6 +675,7 @@ export function useLoveEditor() {
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        setEditMode(null); // published — no editor sheet stays open over it
         await persistStory();
         setEditMode(null);
         try { sessionStorage.removeItem("love_gf_draft"); } catch {}
