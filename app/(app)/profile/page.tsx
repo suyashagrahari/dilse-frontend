@@ -399,7 +399,9 @@ export default function ProfilePage() {
     setLogoutLoading(false); router.push("/");
   };
 
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  // The exact day they joined, in India time: "28 Sept 2026".
+  const formatJoinDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
   const formatShortDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   const getShareLink = (shareId: string) => {
@@ -515,7 +517,6 @@ export default function ProfilePage() {
   // keep in step. An unmapped type resolves to the fallback's "/templates",
   // which no accent is registered under — the sheet falls back to house pink.
   const templateSlug = (type: string) => templateMeta(type).editor.replace(/^\//, "");
-  const editorRoute = (type: string) => templateMeta(type).editor;
 
   const sectionHead = (icon: React.ReactNode, title: string, sub?: React.ReactNode, right?: React.ReactNode) => (
     <div className="pfHead">
@@ -616,24 +617,24 @@ export default function ProfilePage() {
               </button>
             </div>
           )}
-          <div className="pfMeta">
-            <span className="pfMetaItem"><Mail size={12} /> <span className="pfMetaTx">{user?.email}</span></span>
-            {user?.subdomain && (
-              <span className="pfMetaItem gold"><AtSign size={12} /> <span className="pfMetaTx">{user.subdomain}</span></span>
-            )}
-            <span className="pfMetaItem">
-              <Calendar size={12} /> Member since {statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today"}
-            </span>
-            {user?.provider === "google" && (
-              <span className="pfMetaItem"><GoogleG size={11} /> Connected with Google</span>
-            )}
-          </div>
         </div>
 
         <button onClick={handleLogout} disabled={logoutLoading} className="pfLogout" aria-label="Log out" title="Log out">
           {logoutLoading ? <Loader2 size={15} className="animate-spin" /> : <LogOut size={15} />}
-          <span>{logoutLoading ? "Logging out…" : "Log Out"}</span>
         </button>
+
+        {/* Full width under the name: email, handle and the day they joined.
+            Google sign-in is the "G" on the avatar, not another chip. */}
+        <div className="pfMeta">
+          <span className="pfMetaItem wide"><Mail size={12} /> <span className="pfMetaTx">{user?.email}</span></span>
+          <span className="pfMetaItem">
+            <Calendar size={12} /> Member since{" "}
+            <b>{statsLoading ? "…" : stats?.memberSince ? formatJoinDate(stats.memberSince) : "today"}</b>
+          </span>
+          {user?.subdomain && (
+            <span className="pfMetaItem gold"><AtSign size={12} /> <span className="pfMetaTx">{user.subdomain}</span></span>
+          )}
+        </div>
       </div>
 
       <div className="pfStats">
@@ -787,7 +788,7 @@ export default function ProfilePage() {
           </div>
           <div className="pfRow">
             <span className="pfRowIc"><Calendar size={15} /></span>
-            <div className="pfRowTx"><b>Member since</b><span>{statsLoading ? "…" : stats?.memberSince ? formatDate(stats.memberSince) : "Today"}</span></div>
+            <div className="pfRowTx"><b>Member since</b><span>{statsLoading ? "…" : stats?.memberSince ? formatJoinDate(stats.memberSince) : "Today"}</span></div>
           </div>
         </div>
       </div>
@@ -929,8 +930,16 @@ export default function ProfilePage() {
               </div>
 
               <div className="pfActions">
-                <button title="Edit" onClick={() => router.push(`${editorRoute(page.templateType)}?edit=${page._id}`)} className="pfAct main">
-                  <Edit3 size={13} /> Edit
+                {/* Password is the card's main action: add one, or see and change
+                    the one it has. It opens the password panel below. */}
+                <button
+                  title={page.hasPassword ? "See or change the password" : "Add a password"}
+                  aria-expanded={isExpanded && deleteConfirmId !== page._id}
+                  onClick={() => { setDeleteConfirmId(null); setExpandedCard(isExpanded && deleteConfirmId !== page._id ? null : page._id); }}
+                  className={`pfAct main${page.hasPassword ? " is-locked" : ""}`}
+                >
+                  {page.hasPassword ? <Lock size={13} /> : <KeyRound size={13} />}
+                  {page.hasPassword ? "Password" : "Add password"}
                 </button>
                 {page.isPublished && (
                   <>
@@ -957,9 +966,6 @@ export default function ProfilePage() {
                   </>
                 )}
                 <span className="pfActGap" />
-                <button title="Password & details" aria-label="Password & details" aria-expanded={isExpanded} onClick={toggle} className={`pfAct ic${isExpanded ? " is-on" : ""}`}>
-                  <KeyRound size={14} />
-                </button>
                 <button title={page.isPublished ? "Delete" : "Discard"} aria-label={page.isPublished ? "Delete" : "Discard"}
                   onClick={() => { setExpandedCard(page._id); setDeleteConfirmId(page._id); }} className="pfAct ic danger">
                   {/* "Discard" for a draft: it names an action with no audience,
@@ -1284,7 +1290,7 @@ export default function ProfilePage() {
   const tabs: { id: ProfilePanel; icon: React.ReactNode; label: string; count?: number }[] = [
     { id: "creations", icon: <Sparkles size={15} />, label: "My Pages", count: myCreations.length },
     { id: "received", icon: <Users size={15} />, label: "Shared", count: receivedPages.length },
-    { id: "referral", icon: <Gift size={15} />, label: "Refer & Earn" },
+    { id: "referral", icon: <Gift size={15} />, label: "Refer" },
     { id: "personal-link", icon: <AtSign size={15} />, label: "My Link" },
     { id: "account", icon: <Shield size={15} />, label: "Account" },
     { id: "my-story", icon: <BookHeart size={15} />, label: "My Story" },
