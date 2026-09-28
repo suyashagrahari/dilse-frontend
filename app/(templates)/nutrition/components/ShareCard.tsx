@@ -111,7 +111,7 @@ export default function ShareCard({
           position: "relative",
           width: SHARE_W,
           height: SHARE_H,
-          background: "#FFFFFF",
+          background: "var(--lv-base, #FFFFFF)",
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
@@ -182,7 +182,7 @@ export default function ShareCard({
               fontSize: 9,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
-              color: MUTED,
+              color: "var(--lv-faint, " + MUTED + ")",
               whiteSpace: "nowrap",
             }}
           >

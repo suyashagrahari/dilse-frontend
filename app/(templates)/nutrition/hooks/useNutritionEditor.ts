@@ -25,7 +25,8 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
-import { DEMO_NUTRITION, nutritionDataToBody, dbToNutritionData, type EditMode } from "../components/demo";
+import { DEMO_NUTRITION, blankNutrition, nutritionDataToBody, dbToNutritionData, type EditMode } from "../components/demo";
+import { pickNutritionTheme } from "../components/themes";
 import type { NutritionData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
@@ -53,6 +54,22 @@ const readDraft = (): { data?: NutritionData; password?: string; completed?: boo
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 };
+
+/**
+ * Drafts saved before the love kit existed have no photos / GIFs / letter /
+ * theme. They must never inherit the demo couple's photos, and their old
+ * `message` paragraphs become the letter.
+ */
+const normaliseDraft = (d: Partial<NutritionData>): NutritionData => ({
+  ...DEMO_NUTRITION,
+  ...d,
+  photos: Array.isArray(d.photos) ? d.photos : [],
+  gifs: Array.isArray(d.gifs) ? d.gifs : DEMO_NUTRITION.gifs,
+  letter: typeof d.letter === "string" ? d.letter : (Array.isArray(d.message) ? d.message.join("\n\n") : ""),
+  theme: typeof d.theme === "string" ? d.theme : DEMO_NUTRITION.theme,
+  lockQuestion: typeof d.lockQuestion === "string" ? d.lockQuestion : "",
+  lockAnswer: typeof d.lockAnswer === "string" ? d.lockAnswer : "",
+});
 
 export function useNutritionEditor() {
   const router = useRouter();
@@ -132,10 +149,11 @@ export function useNutritionEditor() {
     }
     const draft = readDraft();
     if (draft?.data) {
-      setMf(draft.data);
+      const d = normaliseDraft(draft.data);
+      setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(draft.data);
+        setContent(d);
         setIsPersonalized(true);
         setEditMode("preview");
         bumpPreview();
@@ -204,9 +222,30 @@ export function useNutritionEditor() {
 
   const updateMf = useCallback((key: keyof NutritionData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
-  /** Seeds the form exactly as opening it does, without opening it. */
+  /**
+   * The preview's packaging dock. Re-themes what they are looking at and, once
+   * the page is theirs, what will be published — the form's picker writes the
+   * same field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
+  /**
+   * Seeds the form exactly as opening it does, without opening it. A fresh form
+   * keeps the label's jokes as a starting point but never the demo couple's
+   * name, photos or letter — and keeps the packaging they were previewing.
+   */
   const seedManualForm = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_NUTRITION });
+    setMf(isPersonalized ? { ...content } : blankNutrition(content.theme));
   }, [isPersonalized, content]);
 
   const handleEditClick = useCallback(() => {
@@ -238,6 +277,7 @@ export function useNutritionEditor() {
 
   const handleSave = useCallback(() => {
     if (!mf.productName.trim()) { pushToast({ type: "info", title: "Name the product first" }); return; }
+    if (!mf.letter.trim()) { pushToast({ type: "info", title: "Write the note inside the wrapper" }); return; }
     setContent(mf);
     setIsPersonalized(true);
     setEditMode("preview");
@@ -400,10 +440,10 @@ export function useNutritionEditor() {
       password: pagePassword,
       title: "Nutrition Facts",
       text,
-      accent: "#44403c",
+      accent: pickNutritionTheme(content.theme).colors.a1,
       slug: "nutrition",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, content.theme]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -413,7 +453,7 @@ export function useNutritionEditor() {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
-    setEditMode, setPagePassword, updateMf, setMf,
+    setEditMode, setPagePassword, updateMf, setMf, setTheme,
     storyFill, storyStarted, handleStartCreate, handleStoryManual,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
