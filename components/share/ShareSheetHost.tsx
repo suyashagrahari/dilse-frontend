@@ -16,17 +16,22 @@
 // a creation came from, and should not have to carry a colour table of its own.
 
 import { shareAccent } from "@/lib/share/accents";
+import { withUserSubdomain } from "@/lib/subdomain";
+import { useAppSelector } from "@/store/hooks";
 import { closeShareSheet, useSharePayload } from "@/lib/share/shareBus";
 import { ShareSheet } from "./ShareSheet";
 
 export function ShareSheetHost() {
   const payload = useSharePayload();
+  // A creator who picked their subdomain after the publish resumed holds a
+  // link issued without it; show the one with their name on it.
+  const subdomain = useAppSelector((s) => s.auth.user?.subdomain);
 
   return (
     <ShareSheet
       open={payload !== null}
       onClose={closeShareSheet}
-      shareUrl={payload?.url ?? null}
+      shareUrl={withUserSubdomain(payload?.url, subdomain)}
       title={payload?.title}
       text={payload?.text}
       cardTitle={payload?.cardTitle}

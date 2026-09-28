@@ -2,6 +2,7 @@ import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import PaywallHost from "@/components/PaywallHost";
 import FeedbackHost from "@/components/FeedbackHost";
 import WelcomeHost from "@/components/WelcomeHost";
+import SubdomainOnboardingHost from "@/components/subdomain/SubdomainOnboardingHost";
 import ToastHost from "@/components/toast/ToastHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
@@ -52,6 +53,10 @@ export default async function TemplatesLayout({
           faster greeting that will never be shown. */}
       <WelcomeHost preload />
       <ToastHost />
+      {/* "Claim your love link" — asked once, right after sign-in, of anyone
+          without a subdomain. Listens to the store, so it covers the sign-in a
+          Publish click raises too. */}
+      <SubdomainOnboardingHost />
     </TemplateVisibilityProvider>
   );
 }
