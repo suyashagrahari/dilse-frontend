@@ -27,16 +27,17 @@
 // happened. Swipe-to-close is here to compensate — a left-flick dismisses it, so
 // getting out never requires reaching for a specific target.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
-  Coins, LogIn, ChevronRight, Repeat, Heart,
+  Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import AuthModal from "@/components/AuthModal";
 import { roleAtLeast } from "@/lib/roles";
 
 /** Nav chrome palette — the same maroon and gold the bottom bar wears. */
@@ -147,6 +148,14 @@ export default function MoreDrawer({
   open: boolean;
   onClose: () => void;
 }) {
+  // Signing in happens in the AuthModal, not on a page: there is no /auth
+  // route (only /auth/google-bridge), so the old link here was a 404. The
+  // drawer closes first so the modal is never stacked under it.
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
+  const openAuth = (mode: "login" | "register") => {
+    onClose();
+    setAuthMode(mode);
+  };
   const pathname = usePathname() || "/";
   const reduceMotion = useReducedMotion();
   const { user, isAuthenticated } = useAppSelector((s) => s.auth);
@@ -223,6 +232,7 @@ export default function MoreDrawer({
   };
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <>
@@ -315,21 +325,38 @@ export default function MoreDrawer({
                     </div>
                   </>
                 ) : (
-                  <Link
-                    href="/auth"
-                    onClick={onClose}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10, flex: 1,
-                      minHeight: 44, padding: "0 12px", borderRadius: 13,
-                      textDecoration: "none",
-                      background: "rgba(214,174,84,0.16)",
-                      border: `1px solid ${GOLD_LINE}`,
-                      color: GOLD, fontSize: 14, fontWeight: 750,
-                    }}
-                  >
-                    <LogIn size={17} />
-                    Sign in
-                  </Link>
+                  <div style={{ display: "flex", gap: 8, flex: 1, minWidth: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => openAuth("login")}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 7, flex: 1, minWidth: 0,
+                        minHeight: 44, padding: "0 10px", borderRadius: 13, cursor: "pointer",
+                        background: "rgba(214,174,84,0.16)",
+                        border: `1px solid ${GOLD_LINE}`,
+                        color: GOLD, fontSize: 14, fontWeight: 750,
+                        WebkitTapHighlightColor: "transparent",
+                      }}
+                    >
+                      <LogIn size={16} />
+                      Sign in
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openAuth("register")}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 7, flex: 1, minWidth: 0,
+                        minHeight: 44, padding: "0 10px", borderRadius: 13, cursor: "pointer",
+                        background: "linear-gradient(135deg,#f2cf74,#c9a84c)",
+                        border: "none",
+                        color: "#3d0c11", fontSize: 14, fontWeight: 800,
+                        WebkitTapHighlightColor: "transparent",
+                      }}
+                    >
+                      <UserPlus size={16} />
+                      Sign up
+                    </button>
+                  </div>
                 )}
 
                 <button
@@ -413,5 +440,14 @@ export default function MoreDrawer({
         </>
       )}
     </AnimatePresence>
+    {authMode && (
+      <AuthModal
+        key={authMode}
+        defaultMode={authMode}
+        onClose={() => setAuthMode(null)}
+        onSuccess={() => setAuthMode(null)}
+      />
+    )}
+    </>
   );
 }
