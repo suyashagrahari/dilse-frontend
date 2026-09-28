@@ -89,6 +89,12 @@ export function useReceptionEditor() {
   const preEditContentRef = useRef<ReceptionData>(DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const pendingPublishRef = useRef<{ data: ReceptionData; password: string } | null>(null);
+  // Set when the post-sign-in effect takes the pending publish. The effect runs
+  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
+  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
+  // read that as "nothing to publish" and open the write-it / AI chooser over
+  // the page that was publishing.
+  const resumedPublishRef = useRef(false);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -150,7 +156,9 @@ export function useReceptionEditor() {
 
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    if (!pendingPublishRef.current) {
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) {
       setEditMode("choose");
     }
     // if pendingPublishRef.current exists, the auto-publish useEffect will fire
@@ -497,6 +505,7 @@ export function useReceptionEditor() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      resumedPublishRef.current = false;
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -540,6 +549,7 @@ export function useReceptionEditor() {
       if (pubResult.success) {
         const url = pubResult.data.shareUrl as string;
         setShareUrl(url);
+        setEditMode(null); // published — no editor sheet stays open over it
         setEditMode(null);
         try { sessionStorage.removeItem("reception_draft"); } catch {}
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
@@ -563,6 +573,7 @@ export function useReceptionEditor() {
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     const authHeaders = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
@@ -601,6 +612,7 @@ export function useReceptionEditor() {
         if (pubResult.success) {
           const url = pubResult.data.shareUrl as string;
           setShareUrl(url);
+          setEditMode(null); // published — no editor sheet stays open over it
           setEditMode(null);
           try { sessionStorage.removeItem("reception_draft"); } catch {}
           pushToast({ type: "publish", title: "Published!", message: "Tap Share to send it" });
