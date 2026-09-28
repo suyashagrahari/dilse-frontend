@@ -46,14 +46,14 @@ export const PROFILE_CSS = `
 
 .pfHeroMain {
   position: relative; z-index: 1; min-width: 0;
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 14px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 13px;
 }
 .pfAvatarWrap { position: relative; flex: none; animation: pfPop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both }
 .pfAvatar {
-  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: block;
+  width: 58px; height: 58px; border-radius: 50%; object-fit: cover; display: block;
   box-shadow: 0 0 0 3px #3d0c11, 0 0 0 5px ${BRAND.gold}, 0 10px 30px -6px rgba(255,210,120,0.45);
 }
-@media (min-width: 600px) { .pfAvatar { width: 84px; height: 84px } }
+@media (min-width: 600px) { .pfAvatar { width: 70px; height: 70px } }
 .pfAvatarInit {
   display: grid; place-items: center;
   background: linear-gradient(135deg, #ffe3a3, ${BRAND.gold} 55%, ${BRAND.goldDeep});
@@ -69,13 +69,14 @@ export const PROFILE_CSS = `
 
 .pfWho { min-width: 0 }
 .pfKicker {
-  margin: 0 0 4px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: #ffe3a3; opacity: 0.85;
+  margin: 0 0 3px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: #ffe3a3; opacity: 0.85;
 }
 .pfNameRow { display: flex; align-items: center; gap: 8px; min-width: 0 }
 .pfName {
   margin: 0; min-width: 0; overflow-wrap: anywhere;
   font-family: 'Playfair Display', Georgia, serif; font-weight: 800; letter-spacing: -0.01em;
-  font-size: clamp(22px, 5.6vw, 34px); line-height: 1.08; color: #fff6e6;
+  font-size: clamp(21px, 5.4vw, 30px); line-height: 1.1; color: #fff6e6;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .pfNameEdit { display: flex; align-items: center; gap: 6px; min-width: 0 }
 .pfNameInput {
@@ -94,7 +95,12 @@ export const PROFILE_CSS = `
 .pfRound:hover { transform: scale(1.08) }
 .pfRound:disabled { opacity: 0.6 }
 
-.pfMeta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-width: 0 }
+/* The meta row spans the whole hero under avatar + name, so the chips line
+   up with the avatar's left edge instead of hanging in a narrow column. */
+.pfMeta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0 }
+.pfMetaItem.wide { flex: 1 1 100% }
+@media (min-width: 520px) { .pfMetaItem.wide { flex: 0 1 auto } }
+.pfMetaItem b { color: #ffe3a3; font-weight: 800 }
 .pfMetaItem {
   display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%;
   padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
@@ -109,11 +115,10 @@ export const PROFILE_CSS = `
   background: rgba(255,255,255,0.07); border: 1px solid rgba(255,236,190,0.18); color: #f5e6d6;
   font-size: 12px; font-weight: 700; white-space: nowrap; transition: background 160ms ease, color 160ms ease;
 }
-.pfLogout span { display: none }
-@media (min-width: 480px) { .pfLogout { padding: 0 13px } .pfLogout span { display: inline } }
+.pfLogout { width: 36px; padding: 0; justify-content: center; align-self: start }
 .pfLogout:hover { background: rgba(255,120,120,0.16); color: #fff }
 .pfLogout:disabled { opacity: 0.6 }
-@media (min-width: 960px) { .pfHeroMain { grid-template-columns: auto minmax(0, 1fr) } .pfLogout { position: absolute; top: 0; right: 0 } .pfWho { padding-right: 110px } }
+
 
 /* Stats: glass tiles on maroon. */
 .pfStats {
@@ -204,6 +209,9 @@ export const PROFILE_CSS = `
   font-size: 10.5px; font-weight: 800; background: rgba(61,12,17,0.08); color: ${BRAND.accentStrong};
 }
 .pfTabs button.is-on .pfTabIn b { background: rgba(255,227,163,0.2); color: #ffe3a3 }
+/* On a phone the 3-across tabs are too narrow for "My Pages" plus a count;
+   the count is in the hero already, so it goes first. */
+@media (max-width: 479px) { .pfTabIn b { display: none } }
 @media (max-width: 380px) { .pfTabIn b { display: none } }
 
 .pfPanel { min-width: 0 }
@@ -445,6 +453,8 @@ export const PROFILE_CSS = `
 .pfAct.main { padding: 0 13px; border: none; color: #fff6e6; background: ${BRAND.gradient}; box-shadow: 0 8px 16px -10px rgba(61,12,17,0.8) }
 .pfAct.main svg { color: #ffe3a3 }
 .pfAct.main:hover { color: #fff }
+.pfAct.main.is-locked { background: linear-gradient(135deg, #ffe3a3, ${BRAND.gold}); color: #3d0c11 }
+.pfAct.main.is-locked svg { color: #3d0c11 }
 .pfAct.is-on { background: rgba(201,168,76,0.14); border-color: rgba(201,168,76,0.5); color: ${BRAND.accent} }
 .pfAct.is-done { color: ${BRAND.ok}; border-color: rgba(58,167,109,0.4); background: rgba(58,167,109,0.08) }
 .pfAct.danger { color: ${BRAND.danger} }
