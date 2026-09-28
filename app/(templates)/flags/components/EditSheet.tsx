@@ -35,24 +35,29 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, PenLine, Eye, Lock, Loader2, Plus, Trash2, ChevronDown, AlertTriangle,
-  Check, ArrowLeft, ArrowRight, ArrowUp, Camera, Info,
+  X, Eye, Lock, Loader2, Plus, Trash2, ChevronDown, AlertTriangle,
+  Check, ArrowLeft, ArrowRight, ArrowUp, Info,
 } from "lucide-react";
 import {
   type FlagsData, type FlagCard, type EditMode, type SwipeChoice,
-  SWIPE_CHOICES, CHOICE_LABEL, CHOICE_COLOR,
+  SWIPE_CHOICES, CHOICE_LABEL, CHOICE_COLOR, CHOICE_EMOJI,
 } from "./types";
+import { pickTheme } from "../../_love/theme";
+import { FormSection, MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
+import type { LoveKitData } from "../../_love/types";
+import { FLAGS_THEMES } from "./themes";
+import { missingFields } from "../hooks/useFlagsEditor";
 
-const ACCENT = "#6C5CE7";
-const ACCENT_SOFT = "#efedfd";
-const ACCENT_LINE = "#e2ddf8";
+// The form follows the vibe they picked: every accent below is the theme's
+// first gradient stop, set once as --fl-acc on the sheet root.
+const ACCENT = "var(--fl-acc)";
+const ACCENT_SOFT = "color-mix(in srgb, var(--fl-acc) 12%, white)";
+const ACCENT_LINE = "color-mix(in srgb, var(--fl-acc) 26%, white)";
 
 const STATEMENT_MAX = 70;
 
 const INPUT_CLS =
-  "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none focus:border-[#6C5CE7] text-sm transition-colors";
-const INPUT_SM =
-  "w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 focus:outline-none focus:border-[#6C5CE7] text-sm transition-colors";
+  "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none focus:border-[color:var(--fl-acc)] text-sm transition-colors";
 
 interface Props {
   editMode: EditMode;
@@ -102,8 +107,8 @@ function brief(choice: SwipeChoice, truth: SwipeChoice): string {
       : "They let you off. Tell them they shouldn't have.";
   }
   return agreed
-    ? "They hedged, and honestly so do you. Say why it's genuinely complicated."
-    : "They sat on the fence. Tell them it isn't complicated.";
+    ? "They called it beige — and honestly, it is. Say why it's complicated."
+    : "They called it beige. Tell them it's not that complicated.";
 }
 
 const isFlagComplete = (c: FlagCard): boolean =>
@@ -307,7 +312,7 @@ function CardEditor({
                   type="checkbox"
                   checked={card.kind === "sincere"}
                   onChange={toggleSincere}
-                  className="mt-0.5 w-4 h-4 shrink-0 accent-[#6C5CE7]"
+                  className="mt-0.5 w-4 h-4 shrink-0 accent-[color:var(--fl-acc)]"
                 />
                 <span>
                   <span className="text-xs font-semibold">Make this one sincere</span>
@@ -334,7 +339,7 @@ function CardEditor({
                               className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider"
                               style={{ color: CHOICE_COLOR[d.choice] }}
                             >
-                              {d.arrow} {CHOICE_LABEL[d.choice]}
+                              {d.arrow} {CHOICE_LABEL[d.choice]} {CHOICE_EMOJI[d.choice]}
                               <span className="font-medium normal-case tracking-normal text-muted-foreground">
                                 ({d.gesture})
                               </span>
@@ -413,16 +418,27 @@ function CardEditor({
 
 // ─── The sheet ───────────────────────────────────────────────────────────────
 
+const STEPS = [
+  { id: "vibe", emoji: "🎨", label: "Vibe" },
+  { id: "you", emoji: "🙋", label: "You" },
+  { id: "cards", emoji: "🚩", label: "Cards" },
+  { id: "pics", emoji: "📸", label: "Pics & letter" },
+  { id: "finish", emoji: "🔒", label: "Finish" },
+] as const;
+type StepId = (typeof STEPS)[number]["id"];
+
 export default memo(function EditSheet({
   editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving, draftSavedAt,
 }: Props) {
   const visible = editMode === "manual";
+  const theme = pickTheme(FLAGS_THEMES, mf.theme);
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [tried, setTried] = useState(false);
   const seqRef = useRef(0);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const stepRefs = useRef<Partial<Record<StepId, HTMLElement | null>>>({});
 
   const cards = mf.cards;
 
@@ -432,22 +448,38 @@ export default memo(function EditSheet({
     [cards],
   );
   const blankStatements = useMemo(() => cards.filter((c) => !c.statement.trim()).length, [cards]);
-  const pct = cards.length > 0 ? Math.round((ready / cards.length) * 100) : 0;
+  const missing = useMemo(() => missingFields(mf), [mf]);
+  const miss = (k: "name" | "recipient" | "cards" | "letter") => tried && missing.some((m) => m.key === k);
+
+  const stepDone: Record<StepId, boolean> = {
+    vibe: true,
+    you: !!mf.sender.name.trim() && !!mf.recipientName.trim(),
+    cards: ready > 0 && gaps.length === 0,
+    pics: mf.photos.length > 0 && !!mf.letter.trim(),
+    finish: !!mf.finalCard.trim(),
+  };
+  const doneCount = Object.values(stepDone).filter(Boolean).length;
+  const pct = Math.round((doneCount / STEPS.length) * 100);
 
   // Reopening the sheet lands on the first unfinished card rather than the top.
-  // Coming back to a half-written deck and having to hunt for where you stopped
-  // is its own small reason to give up.
   useEffect(() => {
     if (!visible) return;
+    setTried(false);
     setOpenId((prev) => prev ?? (cards.find((c) => !isFlagComplete(c))?.id ?? null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const scrollTo = useCallback((id: string) => {
-    // rAF so the accordion has laid out before we measure it.
     requestAnimationFrame(() => {
       rowRefs.current[id]?.scrollIntoView({ block: "center", behavior: "smooth" });
     });
+  }, []);
+
+  const jumpStep = useCallback((id: StepId) => {
+    const el = stepRefs.current[id];
+    const box = scrollRef.current;
+    if (!el || !box) return;
+    box.scrollTo({ top: el.offsetTop - 132, behavior: "smooth" });
   }, []);
 
   const patchCard = useCallback(
@@ -480,7 +512,6 @@ export default memo(function EditSheet({
     scrollTo(id);
   }, [cards, updateMf, scrollTo]);
 
-  /** Jump to the next card that still needs work; if the deck is done, collapse. */
   const gotoNextUnfinished = useCallback(
     (fromId: string) => {
       const i = cards.findIndex((c) => c.id === fromId);
@@ -501,13 +532,21 @@ export default memo(function EditSheet({
   }, [gaps, cards, scrollTo]);
 
   const setSender = (patch: Partial<FlagsData["sender"]>) => updateMf("sender", { ...mf.sender, ...patch });
+  const updateKit = <K extends keyof LoveKitData>(key: K, val: LoveKitData[K]) => updateMf(key, val);
 
-  const onPhoto = (file: File) => {
-    if (file.size > 3 * 1024 * 1024) { alert("Image too large. Please use one under 3MB."); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => setSender({ photoUrl: String(ev.target?.result ?? "") });
-    reader.readAsDataURL(file);
+  const save = () => {
+    setTried(true);
+    const first = missing[0];
+    if (first) {
+      const step: StepId = first.key === "name" || first.key === "recipient" ? "you" : first.key === "cards" ? "cards" : "pics";
+      jumpStep(step);
+    }
+    onSave();
   };
+
+  const err = (on: boolean) => (on ? { borderColor: "#e11d48", boxShadow: "0 0 0 3px rgba(225,29,72,.12)" } : undefined);
+  const ErrText = ({ on, children }: { on: boolean; children: React.ReactNode }) =>
+    on ? <p className="text-[11px] font-semibold mt-1" style={{ color: "#e11d48" }}>{children}</p> : null;
 
   return (
     <AnimatePresence>
@@ -521,131 +560,142 @@ export default memo(function EditSheet({
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
-            className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-auto lg:flex lg:items-center lg:justify-center lg:inset-0 lg:bg-transparent"
+            className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-none lg:flex lg:items-center lg:justify-center lg:inset-0"
+            data-flags-sheet
+            style={{ ["--fl-acc" as string]: theme.colors.a1 }}
           >
             <div
               ref={scrollRef}
-              className="w-full max-w-2xl max-h-[86vh] lg:max-h-[92vh] overflow-y-auto bg-background rounded-t-3xl lg:rounded-3xl shadow-2xl mx-auto"
+              data-sheet-scroll
+              className="pointer-events-auto w-full max-w-2xl max-h-[88dvh] lg:max-h-[92vh] overflow-y-auto overflow-x-hidden bg-background rounded-t-[28px] lg:rounded-[28px] shadow-2xl mx-auto overscroll-contain"
             >
-              {/* Sticky head: handle, title, and the finish line. */}
+              {/* Sticky head: handle, title, the finish line and the step chips. */}
               <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b" style={{ borderColor: ACCENT_LINE }}>
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-10 h-1 rounded-full bg-border" />
                 </div>
                 <div className="px-5 pb-3 pt-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-bold flex items-center gap-2">
-                      <PenLine size={15} style={{ color: ACCENT }} /> Build your profile
-                    </h3>
-                    <button onClick={() => setEditMode("preview")} className="p-1 text-muted-foreground" aria-label="Close"><X size={20} /></button>
+                  <div className="flex items-center justify-between mb-2 gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-[17px] font-extrabold leading-tight flex items-center gap-2">
+                        Build your profile <span aria-hidden>🚩💚</span>
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                        {draftSavedAt ? <><Check size={11} style={{ color: CHOICE_COLOR.green }} /> Autosaved — close it anytime, it&apos;ll be here.</> : "Everything you type saves automatically."}
+                      </p>
+                    </div>
+                    <button onClick={() => setEditMode("preview")} className="w-10 h-10 grid place-items-center rounded-full hover:bg-muted text-muted-foreground shrink-0" aria-label="Close"><X size={20} /></button>
                   </div>
 
-                  {/* The finish line. A long form is survivable; a form of unknown
-                      length is what makes people close the tab. */}
                   <div className="flex items-center gap-2.5">
-                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: ACCENT_SOFT }}>
-                      <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${pct}%`, background: ACCENT }} />
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: ACCENT_SOFT }}>
+                      <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${theme.colors.a1}, ${theme.colors.a2}, ${theme.colors.a3})` }} />
                     </div>
-                    <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: ACCENT }}>
-                      {ready} of {cards.length} cards ready
+                    <span className="text-[11px] font-bold tabular-nums shrink-0" style={{ color: ACCENT }}>
+                      {doneCount}/{STEPS.length} steps
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                    {draftSavedAt ? <><Check size={10} style={{ color: CHOICE_COLOR.green }} /> Saved — you can close this and come back.</> : "Everything you type is saved automatically."}
-                  </p>
+
+                  <div className="flex gap-1.5 mt-2.5 overflow-x-auto -mx-5 px-5 pb-0.5" style={{ scrollbarWidth: "none" }}>
+                    {STEPS.map((st, k) => {
+                      const done = stepDone[st.id];
+                      const bad = tried && !done && st.id !== "finish";
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => jumpStep(st.id)}
+                          className="shrink-0 inline-flex items-center gap-1.5 rounded-full pl-2 pr-3 min-h-[34px] text-[12px] font-bold border transition-colors"
+                          style={{
+                            borderColor: bad ? "#fecdd3" : done ? ACCENT_LINE : "#ece8e1",
+                            background: bad ? "#fff1f2" : done ? ACCENT_SOFT : "transparent",
+                            color: bad ? "#be123c" : "inherit",
+                          }}
+                        >
+                          <span className="w-5 h-5 rounded-full grid place-items-center text-[10px] text-white" style={{ background: done ? ACCENT : bad ? "#e11d48" : "#cfc9bf" }}>
+                            {done ? <Check size={11} /> : k + 1}
+                          </span>
+                          {st.emoji} {st.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="px-5 pb-8 pt-4 space-y-5">
-                {/* ── Profile ───────────────────────────────────────────── */}
-                <section className="space-y-3.5">
-                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your profile</h4>
+              <div className="px-5 pb-10 pt-4 space-y-8">
+                {/* ── 1. Vibe ───────────────────────────────────────────── */}
+                <div ref={(el) => { stepRefs.current.vibe = el; }}>
+                  <ThemeSection themes={FLAGS_THEMES} value={theme.id} onChange={(id) => updateMf("theme", id)} />
+                </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <Field label="Your name *">
-                        <input value={mf.sender.name} onChange={(e) => setSender({ name: e.target.value })} placeholder="e.g. Rohan" className={INPUT_CLS} />
+                {/* ── 2. You ────────────────────────────────────────────── */}
+                <div ref={(el) => { stepRefs.current.you = el; }}>
+                  <FormSection emoji="🙋" title="Your dating profile" note="The first screen they see — make it very you.">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <Field label="Your name *">
+                          <input value={mf.sender.name} onChange={(e) => setSender({ name: e.target.value.slice(0, 80) })} placeholder="e.g. Rohan" className={INPUT_CLS} style={{ fontSize: 16, ...err(miss("name")) }} aria-invalid={miss("name")} />
+                        </Field>
+                        <ErrText on={miss("name")}>Add your name — it goes on the profile.</ErrText>
+                      </div>
+                      <Field label="Age">
+                        <input
+                          type="number" inputMode="numeric" min={13} max={120}
+                          value={mf.sender.age}
+                          onChange={(e) => setSender({ age: Number(e.target.value) || 0 })}
+                          className={INPUT_CLS}
+                          style={{ fontSize: 16 }}
+                        />
                       </Field>
                     </div>
-                    <Field label="Age">
-                      <input
-                        type="number" inputMode="numeric" min={13} max={120}
-                        value={mf.sender.age}
-                        onChange={(e) => setSender({ age: Number(e.target.value) || 0 })}
-                        className={INPUT_CLS}
-                      />
+
+                    <Field label="Bio" hint="Sell yourself badly. That's the bit.">
+                      <textarea value={mf.sender.tagline} onChange={(e) => setSender({ tagline: e.target.value.slice(0, 240) })} rows={2} placeholder="6'1&quot; because apparently that matters. bad at texting, elite at showing up." className={INPUT_CLS + " resize-none"} style={{ fontSize: 16 }} />
+                      <p className="text-right text-[10px] text-muted-foreground tabular-nums mt-0.5">{mf.sender.tagline.length}/240</p>
                     </Field>
-                  </div>
 
-                  <Field label="Tagline" hint="The line under your name. Sell yourself badly.">
-                    <textarea value={mf.sender.tagline} onChange={(e) => setSender({ tagline: e.target.value })} rows={2} placeholder="Bad at texting, good at showing up." className={INPUT_CLS + " resize-none"} />
-                  </Field>
-
-                  <Field label="Photo" hint="Optional — without one you get a plain card with your initial.">
-                    <div className="flex items-center gap-3">
-                      <div
-                        onClick={() => photoInputRef.current?.click()}
-                        className="w-16 h-20 rounded-xl border-2 border-dashed border-border/60 cursor-pointer overflow-hidden grid place-items-center shrink-0"
-                      >
-                        {mf.sender.photoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={mf.sender.photoUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <Camera size={18} className="text-muted-foreground" />
-                        )}
-                        <input
-                          ref={photoInputRef} type="file" accept="image/*" className="hidden"
-                          onChange={(e) => { if (e.target.files?.[0]) onPhoto(e.target.files[0]); e.target.value = ""; }}
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <input
-                          value={mf.sender.photoUrl.startsWith("data:") ? "" : mf.sender.photoUrl}
-                          onChange={(e) => setSender({ photoUrl: e.target.value })}
-                          placeholder={mf.sender.photoUrl.startsWith("data:") ? "Photo uploaded" : "…or paste an image URL"}
-                          className={INPUT_SM}
-                        />
-                        {mf.sender.photoUrl && (
-                          <button onClick={() => setSender({ photoUrl: "" })} className="text-[11px] text-muted-foreground underline">Remove photo</button>
-                        )}
-                      </div>
+                    <div>
+                      <Field label="Their name *" hint="The one doing the swiping.">
+                        <input value={mf.recipientName} onChange={(e) => updateMf("recipientName", e.target.value.slice(0, 80))} placeholder="e.g. Ananya" className={INPUT_CLS} style={{ fontSize: 16, ...err(miss("recipient")) }} aria-invalid={miss("recipient")} />
+                      </Field>
+                      <ErrText on={miss("recipient")}>Who&apos;s swiping? Their name goes on the verdict.</ErrText>
                     </div>
-                  </Field>
 
-                  <Field label="Their name" hint="Who's swiping.">
-                    <input value={mf.recipientName} onChange={(e) => updateMf("recipientName", e.target.value)} placeholder="e.g. Ananya" className={INPUT_CLS} />
-                  </Field>
-                </section>
+                    {mf.sender.photoUrl && mf.photos.length === 0 && (
+                      <p className="text-[11px] text-muted-foreground rounded-xl bg-muted/40 px-3 py-2">
+                        Your old profile photo is still used. Add pics in step 4 to get the full photo carousel.
+                      </p>
+                    )}
+                  </FormSection>
+                </div>
 
-                {/* ── The deck ──────────────────────────────────────────── */}
-                <section className="space-y-2.5">
-                  <div className="flex items-baseline justify-between">
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">The cards</h4>
-                    <span className="text-[10px] text-muted-foreground">tap a card to open it</span>
-                  </div>
+                {/* ── 3. The deck ───────────────────────────────────────── */}
+                <div ref={(el) => { stepRefs.current.cards = el; }} className="space-y-2.5">
+                  <FormSection emoji="🚩" title={`Your flags — ${ready}/${cards.length} ready`} note="One statement about you + a reply for each way they can swipe. Five good cards beat eleven rushed ones.">
+                    <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
+                      {DIRECTIONS.map((d) => (
+                        <span key={d.choice} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: CHOICE_COLOR[d.choice] + "14", color: CHOICE_COLOR[d.choice] }}>
+                          {d.glyph} {CHOICE_EMOJI[d.choice]} {CHOICE_LABEL[d.choice].toLowerCase()}
+                        </span>
+                      ))}
+                    </div>
+                  </FormSection>
 
-                  {/* Said out loud, because "eleven cards" is the number that
-                      makes people quit and a shorter deck is a real finish. */}
-                  <p className="text-[11px] text-muted-foreground leading-snug">
-                    Each card is one statement about you and three answers — one for each way they can swipe.
-                    <strong className="text-foreground font-semibold"> Five good cards beat eleven rushed ones.</strong>{" "}
-                    Delete any you don&apos;t want.
-                  </p>
+                  {miss("cards") && <ErrText on>Write at least one card — the deck needs something to swipe on.</ErrText>}
 
-                  {/* The only warning that matters: an empty response is invisible
-                      until the recipient swipes that way and gets a blank card. */}
                   {gaps.length > 0 && (
                     <div className="rounded-xl px-3 py-2.5 flex items-start gap-2" style={{ background: "#fdf6e8", border: "1px solid #f0d9b8" }}>
                       <AlertTriangle size={14} className="mt-0.5 shrink-0" style={{ color: "#a9750f" }} />
                       <div className="flex-1">
                         <p className="text-xs font-semibold" style={{ color: "#8a5f0c" }}>
-                          {gaps.length} card{gaps.length === 1 ? "" : "s"} missing an answer
+                          {gaps.length} card{gaps.length === 1 ? "" : "s"} missing a reply
                         </p>
                         <p className="text-[11px] leading-snug" style={{ color: "#a9750f" }}>
-                          Swipe that direction and the card flips to nothing.
+                          Swipe that way and the card flips to nothing.
                         </p>
                       </div>
-                      <button onClick={jumpToFirstGap} className="text-[11px] font-bold shrink-0 self-center underline" style={{ color: "#8a5f0c" }}>
+                      <button onClick={jumpToFirstGap} className="text-[11px] font-bold shrink-0 self-center underline min-h-[32px]" style={{ color: "#8a5f0c" }}>
                         Fix it
                       </button>
                     </div>
@@ -669,9 +719,7 @@ export default memo(function EditSheet({
                   </div>
 
                   {cards.length === 0 && (
-                    <p className="text-xs text-muted-foreground italic py-2">
-                      No cards yet. Add at least one.
-                    </p>
+                    <p className="text-xs text-muted-foreground italic py-2">No cards yet — add one below. 👇</p>
                   )}
                   {blankStatements > 0 && (
                     <p className="text-[11px]" style={{ color: "#a9750f" }}>
@@ -681,48 +729,90 @@ export default memo(function EditSheet({
 
                   <button
                     onClick={addCard}
-                    className="w-full min-h-[44px] rounded-xl border-2 border-dashed inline-flex items-center justify-center gap-1.5 text-sm font-semibold"
+                    disabled={cards.length >= 24}
+                    className="w-full min-h-[48px] rounded-2xl border-2 border-dashed inline-flex items-center justify-center gap-1.5 text-sm font-bold disabled:opacity-40"
                     style={{ borderColor: ACCENT_LINE, color: ACCENT }}
                   >
-                    <Plus size={15} /> Add a card
+                    <Plus size={15} /> Add a flag
                   </button>
-                </section>
+                </div>
 
-                {/* ── The last card ─────────────────────────────────────── */}
-                <section className="space-y-2">
-                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">The last card</h4>
-                  <Field label="One more thing" hint="No game, no swipe. Just the sentence you end on.">
-                    <textarea
-                      value={mf.finalCard}
-                      onChange={(e) => updateMf("finalCard", e.target.value)}
-                      rows={3}
-                      placeholder="You just spent eleven cards judging me. Thanks for staying."
-                      className={INPUT_CLS + " resize-none"}
-                    />
-                  </Field>
-                </section>
+                {/* ── 4. Pics, GIFs, letter ─────────────────────────────── */}
+                <div ref={(el) => { stepRefs.current.pics = el; }} className="space-y-6">
+                  {mf.photos.length === 0 && (
+                    <div className="rounded-2xl px-3.5 py-3 text-[12px] leading-snug" style={{ background: ACCENT_SOFT, color: "inherit" }}>
+                      <b>💡 Your pics become your dating profile.</b> Add 5–10 of you two — each one gets a flag sticker, and its note shows as a prompt card like <i>&ldquo;the moment I knew…&rdquo;</i>.
+                    </div>
+                  )}
+                  <MemoriesSections
+                    data={mf}
+                    update={updateKit}
+                    gifTags={["funny", "love", "yes"]}
+                    copy={{
+                      photosTitle: `Your pics = your profile (${mf.photos.length}/10)`,
+                      photosNote: "Tap a photo to crop & zoom it, swap it, move it. The caption sits on the photo; the note becomes a prompt card.",
+                      captionHint: "caption — e.g. golden hour, first date",
+                      noteHint: "the moment I knew… (shows as a prompt card)",
+                      gifsTitle: "GIFs — 1st on the verdict, 2nd with the letter, 3rd on the sincere card",
+                      letterTitle: "Your match letter 💚 *",
+                      letterNote: "The payoff. It opens on the final “It's a match” screen, after they answer your question.",
+                      letterHint: "Write it like they're reading it at 2am… red flags and all, I'd swipe right on you every time.",
+                      lockQuestion: "swipe right on me for another year?",
+                      lockAnswer: "obviously 💚",
+                    }}
+                  />
+                  <ErrText on={miss("letter")}>Your match letter is empty — it&apos;s the whole payoff.</ErrText>
+                </div>
 
-                {/* ── Password ──────────────────────────────────────────── */}
-                <Field label="Password (optional)" hint="If set, the link asks for it before opening.">
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input value={pagePassword} onChange={(e) => setPagePassword(e.target.value)} placeholder="Leave empty for no password" className={INPUT_CLS + " pl-10"} />
+                {/* ── 5. Finish ─────────────────────────────────────────── */}
+                <div ref={(el) => { stepRefs.current.finish = el; }}>
+                  <FormSection emoji="🔒" title="Last line + privacy" note="Almost done.">
+                    <Field label="Your opening line on the match screen" hint="Shows as a chat bubble from you.">
+                      <textarea
+                        value={mf.finalCard}
+                        onChange={(e) => updateMf("finalCard", e.target.value.slice(0, 1000))}
+                        rows={3}
+                        placeholder="You just spent eleven cards judging me and still gave me a 96. Thanks for staying."
+                        className={INPUT_CLS + " resize-none"}
+                        style={{ fontSize: 16 }}
+                      />
+                    </Field>
+
+                    <Field label="Password (optional)" hint="If set, the link asks for it first.">
+                      <div className="relative">
+                        <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input value={pagePassword} onChange={(e) => setPagePassword(e.target.value)} placeholder="Leave empty for no password" className={INPUT_CLS + " pl-10"} style={{ fontSize: 16 }} />
+                      </div>
+                    </Field>
+                  </FormSection>
+                </div>
+
+                {tried && missing.length > 0 && (
+                  <div className="rounded-2xl px-3.5 py-3" style={{ background: "#fff1f2", border: "1px solid #fecdd3" }}>
+                    <p className="text-[13px] font-bold" style={{ color: "#be123c" }}>Almost there — still missing:</p>
+                    <ul className="mt-1 space-y-0.5">
+                      {missing.map((m) => (
+                        <li key={m.key} className="text-[12px]" style={{ color: "#9f1239" }}>• {m.label} — {m.hint.toLowerCase()}</li>
+                      ))}
+                    </ul>
                   </div>
-                </Field>
+                )}
 
-                <button
-                  onClick={onSave}
-                  disabled={saving || !mf.sender.name.trim()}
-                  className="w-full min-h-[52px] rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                  style={{ background: ACCENT }}
-                >
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save &amp; preview</>}
-                </button>
-                <p className="text-center text-[11px] text-muted-foreground">
-                  {gaps.length > 0
-                    ? `You can preview with ${gaps.length} gap${gaps.length === 1 ? "" : "s"} — they'll show as blank card backs.`
-                    : "Swipe through it yourself, then publish to get your link."}
-                </p>
+                <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-4 bg-gradient-to-t from-background via-background to-transparent">
+                  <button
+                    onClick={save}
+                    disabled={saving}
+                    className="w-full min-h-[56px] rounded-full text-white font-extrabold text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                    style={{ background: `linear-gradient(115deg, ${theme.colors.a1}, ${theme.colors.a2} 55%, ${theme.colors.a3})` }}
+                  >
+                    {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save &amp; preview my profile</>}
+                  </button>
+                  <p className="text-center text-[11px] text-muted-foreground mt-2">
+                    {gaps.length > 0
+                      ? `You can preview with ${gaps.length} gap${gaps.length === 1 ? "" : "s"} — they'll show as blank replies.`
+                      : "Swipe through it yourself, then publish to get your link."}
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>

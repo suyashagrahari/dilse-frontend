@@ -13,6 +13,8 @@ import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
 import { useToast } from "@/lib/toast/useToast";
 import { persistDraft } from "@/lib/draft/persistDraft";
+import { pickTheme } from "../../_love/theme";
+import { FLAGS_THEMES } from "../components/themes";
 
 const DRAFT_KEY = "flags_draft";
 const BASE = `${API_URL}/flags-pages`;
@@ -228,9 +230,26 @@ export function useFlagsEditor() {
 
   const updateMf = useCallback((key: keyof FlagsData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
     if (isPersonalized) setMf(structuredCloneish(content));
-    else if (!restoredDraftRef.current) setMf(structuredCloneish(DEMO_DATA));
+    else if (!restoredDraftRef.current) setMf(freshForm(content.theme));
     // else: an in-progress draft is already in `mf` — reopen it untouched.
     // The starter goes first, but only while there is a schema to fill from and
     // only until the sender has said no once. Every other path opens the form
@@ -252,9 +271,11 @@ export function useFlagsEditor() {
 
   // Save (locally) & jump to the preview.
   const handleSave = useCallback(() => {
-    if (!mf.sender.name.trim()) { pushToast({ type: "info", title: "Add your name first" }); return; }
-    const usable = mf.cards.filter((c) => c.statement.trim()).length;
-    if (usable === 0) { pushToast({ type: "info", title: "Write at least one card" }); return; }
+    const missing = missingFields(mf);
+    if (missing.length > 0) {
+      pushToast({ type: "info", title: `Still missing: ${missing[0].label}`, message: missing.length > 1 ? `+${missing.length - 1} more — they're marked in red` : missing[0].hint });
+      return;
+    }
 
     setContent(mf);
     setIsPersonalized(true);
@@ -439,10 +460,10 @@ export function useFlagsEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "1 profile near you.",
-      accent: "#be123c",
+      accent: pickTheme(FLAGS_THEMES, content.theme).colors.a1,
       slug: "flags",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, content.theme]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -455,7 +476,7 @@ export function useFlagsEditor() {
 
     fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
@@ -465,18 +486,39 @@ export function useFlagsEditor() {
   };
 }
 
+/** What still has to be filled before Save — shared with the form's red marks. */
+export function missingFields(d: FlagsData): { key: "name" | "recipient" | "cards" | "letter"; label: string; hint: string }[] {
+  const out: { key: "name" | "recipient" | "cards" | "letter"; label: string; hint: string }[] = [];
+  if (!d.sender.name.trim()) out.push({ key: "name", label: "your name", hint: "It's the first thing they see on the profile" });
+  if (!d.recipientName.trim()) out.push({ key: "recipient", label: "their name", hint: "It goes on the verdict and the letter" });
+  if (!d.cards.some((c) => c.statement.trim())) out.push({ key: "cards", label: "at least one card", hint: "The deck needs something to swipe on" });
+  if (!d.letter.trim()) out.push({ key: "letter", label: "your match letter", hint: "It opens on the 'It's a match' screen" });
+  return out;
+}
+
+/**
+ * A new form: the example deck to rewrite (editing beats a blank page), but
+ * never the demo couple's names, photos or letter — and the vibe they were
+ * just previewing.
+ */
+function freshForm(theme: string): FlagsData {
+  const d = structuredCloneish(DEMO_DATA);
+  return { ...d, sender: { ...d.sender, name: "", photoUrl: "" }, recipientName: "", photos: [], letter: "", theme };
+}
+
 /**
  * Deep-ish clone of the form data.
  *
- * `{ ...DEMO_DATA }` is not enough here: `cards[i].responses` and `sender` are
- * nested objects, and a shallow copy would let the editor mutate the shared
- * DEMO_DATA constant — after which "reset to the example" no longer resets.
+ * `{ ...DEMO_DATA }` is not enough here: `cards[i].responses`, `sender` and the
+ * photos are nested objects, and a shallow copy would let the editor mutate the
+ * shared DEMO_DATA constant — after which "reset to the example" no longer resets.
  */
 function structuredCloneish(d: FlagsData): FlagsData {
   return {
+    ...d,
     sender: { ...d.sender },
-    recipientName: d.recipientName,
     cards: d.cards.map((c) => ({ ...c, responses: { ...c.responses } })),
-    finalCard: d.finalCard,
+    photos: d.photos.map((p) => ({ ...p })),
+    gifs: [...d.gifs],
   };
 }
