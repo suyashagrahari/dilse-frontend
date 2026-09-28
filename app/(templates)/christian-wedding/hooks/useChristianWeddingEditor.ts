@@ -200,6 +200,12 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   const preEditContentRef = useRef<ShaadiData>(CHRISTIAN_DEMO_DATA);
   const previewSourceRef = useRef<"manual" | "ai-edit" | null>(null);
   const pendingPublishRef = useRef<{ data: ShaadiData; password: string } | null>(null);
+  // Set when the post-sign-in effect takes the pending publish. The effect runs
+  // on the auth flip, BEFORE AuthModal's onSuccess, so by the time
+  // closeAuthSuccess looks, pendingPublishRef is already empty and it used to
+  // read that as "nothing to publish" and open the write-it / AI chooser over
+  // the page that was publishing.
+  const resumedPublishRef = useRef(false);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -284,7 +290,9 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
   }, []);
   const closeAuthSuccess = useCallback(() => {
     setShowAuth(false);
-    if (!pendingPublishRef.current) {
+    const resumed = resumedPublishRef.current;
+    resumedPublishRef.current = false;
+    if (!pendingPublishRef.current && !resumed) {
       setEditMode("choose");
     }
   }, []);
@@ -623,6 +631,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
     if (!isAuthenticated || !accessToken) {
       track(EVENTS.AUTH_REQUIRED, { template: TEMPLATE });
+      resumedPublishRef.current = false;
       pendingPublishRef.current = { data: content, password: pagePassword };
       setShowAuth(true);
       return;
@@ -665,6 +674,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
           ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
           : (pj.data.shareUrl as string);
         setShareUrl(normalizedShareUrl);
+        setEditMode(null); // published — no editor sheet stays open over it
         setShareId(publishedShareId);
         setIsPersonalized(true);
         setEditMode(null);
@@ -688,6 +698,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
     if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
     const { data, password: pw } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     setShowAuth(false);
     (async () => {
       setPublishing(true);
@@ -718,6 +729,7 @@ export function useChristianWeddingEditor(options: UseChristianWeddingEditorOpti
             ? `${SITE_URL.replace(/\/$/, "")}/${publishedShareId}`
             : (pj.data.shareUrl as string);
           setShareUrl(normalizedShareUrl);
+          setEditMode(null); // published — no editor sheet stays open over it
           setShareId(publishedShareId);
           setIsPersonalized(true);
           setEditMode(null);
