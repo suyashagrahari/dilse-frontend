@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import {
-  BarChart3, Users, MessageSquare, ChevronLeft, ChevronRight,
+  MessageSquare, ChevronLeft, ChevronRight,
   X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff, Send,
 } from "lucide-react";
 import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
+import { A, AdminPage, Hero, HeroStat, ChipGroup, Loading, EmptyState, Tag, rise } from "../adminKit";
 
 interface IReply { body: string; sentAt: string; }
 interface ContactItem {
@@ -26,7 +27,6 @@ const gD = "#8b5a2b";
 const bg = "#3d0c11";
 
 export default function AdminContactsPage() {
-  const router = useRouter();
   const { accessToken } = useAppSelector((s) => s.auth);
   const [items, setItems] = useState<ContactItem[]>([]);
   const [pg, setPg] = useState<Pg>({ page: 1, limit: 20, total: 0, totalPages: 0 });
@@ -131,145 +131,142 @@ export default function AdminContactsPage() {
     return `${Math.floor(s / 86400)}d ago`;
   };
 
+  const replied = items.filter((i) => (i.replies?.length ?? 0) > 0).length;
+  const withNotes = items.filter((i) => !!i.adminNotes).length;
+  const awaiting = items.filter((i) => !(i.replies?.length)).length;
+
   return (
-    <div className="min-h-screen md:pt-[88px]" style={{ background: "linear-gradient(180deg,#faf3ee 0%,#f5ede6 50%,#efe3d3 100%)" }}>
+    <AdminPage
+      title="Contact inquiries"
+      subtitle="Messages from the contact form — read, reply by email, keep private notes."
+      icon={<MessageSquare size={18} />}
+    >
       <style>{`
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .cw{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh)}
-        @media(min-width:768px){.cw{height:calc(100vh - 88px)}}
-        .c-sticky{flex-shrink:0;padding:16px 14px 0;position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#faf3ee 0%,#f5ede6 100%)}
-        @media(min-width:768px){.c-sticky{padding:24px 24px 0}}
-        @media(min-width:1024px){.c-sticky{padding:24px 40px 0}}
-        .c-body{flex:1;overflow-y:auto;padding:0 14px 110px;-webkit-overflow-scrolling:touch}
-        @media(min-width:768px){.c-body{padding:0 24px 60px}}
-        @media(min-width:1024px){.c-body{padding:0 40px 60px}}
-        .cc{background:rgba(255,255,255,0.65);border:1px solid ${cB};border-radius:14px;backdrop-filter:blur(8px)}
-        @media(min-width:768px){.cc{border-radius:16px}}
-        .ci:hover{background:rgba(201,168,76,0.05)!important}
+        .c-layout { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; align-items: start; }
+        @media (min-width: 1024px) { .c-layout { grid-template-columns: minmax(0,1fr) minmax(0,440px); } }
+        .c-hero { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 12px; align-items: end; }
+        @media (min-width: 640px) { .c-hero { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+        .c-list { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+        .c-card { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+        .c-card[data-unread="1"] { background: #fff; border-color: rgba(201,168,76,.45); }
+        .c-card[data-unread="1"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: ${g}; }
+        .c-act { width: 30px; height: 30px; padding: 0; border-radius: 9px; }
+        .c-side { display: none; min-width: 0; }
+        .c-side[data-open="1"] { display: block; position: fixed; inset: 0; z-index: 190; overflow-y: auto; overscroll-behavior: contain;
+          background: linear-gradient(180deg,#fffdfb 0%,#f5ede6 100%); padding: 14px 14px calc(28px + env(safe-area-inset-bottom)); }
+        @media (min-width: 1024px) {
+          .c-side, .c-side[data-open="1"] { display: block; position: sticky; top: calc(var(--adm-top) + 8px); inset: auto; z-index: 1;
+            max-height: calc(100dvh - var(--adm-top) - 24px); overflow-y: auto; padding: 16px; border-radius: 18px;
+            background: ${A.card}; border: 1px solid ${cB}; backdrop-filter: blur(8px); }
+        }
+        .c-ph { display: grid; place-items: center; min-height: 260px; text-align: center; color: ${tM}; font-size: 12.5px; }
+        .c-sec { font-size: 10px; font-weight: 800; color: ${tM}; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 8px; display: flex; align-items: center; gap: 5px; }
+        .c-ta { resize: vertical; font-family: inherit; line-height: 1.5; }
       `}</style>
 
-      <div className="cw">
-        {/* Sticky header */}
-        <div className="c-sticky">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.6)", border: `1px solid ${cB}`, borderRadius: 12, padding: 3, gap: 2 }}>
-              <button onClick={() => router.push("/admin/analytics")} style={{ padding: "7px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: "transparent", color: t2 }}>
-                <BarChart3 size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />Analytics
-              </button>
-              <button onClick={() => router.push("/admin/users")} style={{ padding: "7px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: "transparent", color: t2 }}>
-                <Users size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />Users
-              </button>
-              <button style={{ padding: "7px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: bg, color: "#f5ede6", position: "relative" }}>
-                <MessageSquare size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />Contacts
-                {unread > 0 && (
-                  <span style={{ position: "absolute", top: -4, right: -4, width: 18, height: 18, borderRadius: 9, background: "#dc2626", color: "#fff", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{unread}</span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 12, flexWrap: "wrap" }}>
-            {[
-              { key: "all", label: "All" },
-              { key: "unread", label: `Unread${unread ? ` (${unread})` : ""}` },
-              { key: "read", label: "Read" },
-            ].map((f) => (
-              <button key={f.key} onClick={() => setFilter(f.key)} style={{
-                padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
-                border: filter === f.key ? `1.5px solid ${g}` : `1px solid ${cB}`,
-                background: filter === f.key ? `${g}15` : "rgba(255,255,255,0.5)",
-                color: filter === f.key ? gD : tM,
-              }}>{f.label}</button>
-            ))}
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <SortToggle value={sort} onChange={setSort} size="sm" />
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: "rgba(255,255,255,0.55)", border: `1px solid ${cB}`, fontSize: 11, fontWeight: 700, color: t2 }}>
-              <MessageSquare size={12} color={g} /> {pg.total} total
-            </span>
-            </div>
-          </div>
-          <div style={{ height: 1, background: cB }} />
+      <Hero>
+        <div className="c-hero">
+          <HeroStat big label={filter === "all" ? "Inquiries" : filter === "unread" ? "Unread shown" : "Read shown"} value={pg.total} />
+          <HeroStat label="Unread" value={unread} tone={unread ? "#ffb4a8" : undefined} />
+          <HeroStat label="Replied · page" value={replied} sub={`${awaiting} awaiting`} />
+          <HeroStat label="With notes · page" value={withNotes} />
         </div>
+      </Hero>
 
-        {/* Scrollable list */}
-        <div className="c-body">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, minWidth: 0 }}>
+        <ChipGroup
+          id="c-filter"
+          value={filter}
+          onChange={setFilter}
+          style={{ flex: "1 1 auto" }}
+          options={[
+            { value: "all", label: "All" },
+            { value: "unread", label: "Unread", count: unread },
+            { value: "read", label: "Read" },
+          ]}
+        />
+        <div style={{ flex: "none" }}><SortToggle value={sort} onChange={setSort} size="sm" /></div>
+      </div>
+
+      <div className="c-layout">
+        <div style={{ minWidth: 0 }}>
           {loading ? (
-            <div style={{ padding: 40, textAlign: "center" }}>
-              <div style={{ width: 28, height: 28, border: `2px solid rgba(61,12,17,0.08)`, borderTopColor: g, borderRadius: "50%", animation: "spin .8s linear infinite", margin: "0 auto" }} />
-            </div>
+            <Loading label="Loading inquiries…" />
+          ) : !items.length ? (
+            <EmptyState icon={<MessageSquare size={20} />} title="No inquiries found" note={filter !== "all" ? "Try another filter." : undefined} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
-              {items.map((item) => (
-                <div
-                  key={item._id}
-                  className="ci"
-                  onClick={() => openDetail(item)}
-                  style={{
-                    padding: "14px 16px", borderRadius: 14, cursor: "pointer", transition: "background 0.15s",
-                    background: item.isRead ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.8)",
-                    border: item.isRead ? `1px solid ${cB}` : `1px solid ${g}40`,
-                    boxShadow: item.isRead ? "none" : `0 2px 8px ${g}10`,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    {/* Unread dot */}
-                    <div style={{ paddingTop: 4, flexShrink: 0 }}>
-                      {item.isRead
-                        ? <Check size={14} color={tM} />
-                        : <Circle size={14} fill={g} color={g} />
-                      }
+            <div className="c-list">
+              {items.map((item, i) => {
+                const nReplies = item.replies?.length ?? 0;
+                return (
+                  <motion.div
+                    key={item._id}
+                    {...rise(i)}
+                    role="button"
+                    tabIndex={0}
+                    className="adk-card c-card"
+                    data-unread={item.isRead ? "0" : "1"}
+                    data-on={sel?._id === item._id ? "1" : "0"}
+                    onClick={() => openDetail(item)}
+                    onKeyDown={(e) => { if (e.key === "Enter") openDetail(item); }}
+                    whileHover={{ y: -2 }}
+                  >
+                    {/* Initial, with the unread dot pinned to it */}
+                    <div style={{ position: "relative", flex: "none" }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", fontSize: 14, fontWeight: 800,
+                        background: item.isRead ? "#f6f1ea" : `linear-gradient(135deg,${g},${gD})`, color: item.isRead ? gD : "#fff",
+                      }}>{(item.name[0] || "?").toUpperCase()}</div>
+                      <span style={{ position: "absolute", right: -3, bottom: -3, width: 16, height: 16, borderRadius: "50%", background: "#fff", display: "grid", placeItems: "center", boxShadow: "0 1px 4px rgba(61,12,17,.25)" }}>
+                        {item.isRead ? <Check size={10} color={tM} /> : <Circle size={9} fill={g} color={g} />}
+                      </span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: t1 }}>{item.name}</span>
-                        <span style={{ fontSize: 10, color: tM }}>{timeAgo(item.createdAt)}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: item.isRead ? 700 : 800, color: t1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+                        <span style={{ flex: "none", fontSize: 10.5, color: tM, fontWeight: 600 }}>{timeAgo(item.createdAt)}</span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: t2 }}>
-                          <Mail size={10} /> {item.email}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, marginTop: 1 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: t2, minWidth: 0, overflow: "hidden" }}>
+                          <Mail size={10} style={{ flex: "none" }} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.email}</span>
                         </span>
                         {item.phone && (
-                          <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: tM }}>
+                          <span style={{ flex: "none", display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: tM }}>
                             <Phone size={10} /> {item.phone}
                           </span>
                         )}
                       </div>
-                      <p style={{ fontSize: 12, color: t2, margin: 0, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <p style={{ fontSize: 12, color: t2, margin: "5px 0 0", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>
                         {item.message}
                       </p>
-                      {item.adminNotes && (
-                        <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: gD }}>
-                          <StickyNote size={10} /> Has notes
+                      {(nReplies > 0 || item.adminNotes) && (
+                        <div style={{ display: "flex", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
+                          {nReplies > 0 && <Tag tone={A.ok}><Send size={9} /> {nReplies} {nReplies === 1 ? "reply" : "replies"}</Tag>}
+                          {item.adminNotes && <Tag><StickyNote size={9} /> Has notes</Tag>}
                         </div>
                       )}
                     </div>
                     {/* Quick actions */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => toggleRead(item)} title={item.isRead ? "Mark unread" : "Mark read"}
-                        style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${cB}`, background: "rgba(255,255,255,0.6)", color: tM, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <button className="adk-btn c-act" onClick={() => toggleRead(item)} title={item.isRead ? "Mark unread" : "Mark read"} aria-label={item.isRead ? "Mark unread" : "Mark read"}>
                         {item.isRead ? <EyeOff size={12} /> : <Eye size={12} />}
                       </button>
-                      <button onClick={() => deleteItem(item._id)} title="Delete"
-                        style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid rgba(220,38,38,0.15)", background: "rgba(220,38,38,0.04)", color: "#dc2626", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <button className="adk-btn c-act" data-v="danger" onClick={() => deleteItem(item._id)} title="Delete" aria-label="Delete">
                         <Trash2 size={12} />
                       </button>
                     </div>
-                  </div>
-                </div>
-              ))}
-              {!items.length && <p style={{ textAlign: "center", color: tM, fontSize: 12, padding: 40 }}>No inquiries found</p>}
+                  </motion.div>
+                );
+              })}
 
               {/* Pagination */}
               {pg.totalPages > 1 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: 12 }}>
-                  <button onClick={() => fetchItems(pg.page - 1)} disabled={pg.page <= 1}
-                    style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${cB}`, background: "transparent", color: pg.page <= 1 ? "rgba(61,12,17,0.15)" : t1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "10px 0 4px" }}>
+                  <button className="adk-btn" onClick={() => fetchItems(pg.page - 1)} disabled={pg.page <= 1} aria-label="Previous page" style={{ width: 36, padding: 0 }}>
                     <ChevronLeft size={15} />
                   </button>
-                  <span style={{ fontSize: 11, color: tM, fontWeight: 600 }}>{pg.page} / {pg.totalPages}</span>
-                  <button onClick={() => fetchItems(pg.page + 1)} disabled={pg.page >= pg.totalPages}
-                    style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${cB}`, background: "transparent", color: pg.page >= pg.totalPages ? "rgba(61,12,17,0.15)" : t1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 12, color: tM, fontWeight: 700 }}>{pg.page} / {pg.totalPages}</span>
+                  <button className="adk-btn" onClick={() => fetchItems(pg.page + 1)} disabled={pg.page >= pg.totalPages} aria-label="Next page" style={{ width: 36, padding: 0 }}>
                     <ChevronRight size={15} />
                   </button>
                 </div>
@@ -277,148 +274,118 @@ export default function AdminContactsPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Detail Modal — always centered */}
-      {sel && (
-        <>
-          <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(42,10,14,0.22)", zIndex: 100, backdropFilter: "blur(4px)" }} />
-          <div style={{
-            position: "fixed", zIndex: 101, top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            width: "min(92vw,540px)", maxHeight: "85vh", overflowY: "auto",
-            background: "linear-gradient(180deg,#faf3ee 0%,#f5ede6 100%)",
-            border: `1px solid ${cB}`, borderRadius: 20, padding: "22px 18px 28px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
-          }}>
-            <button onClick={() => setSel(null)} style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: 8, border: `1px solid ${cB}`, background: "rgba(255,255,255,0.6)", color: t1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <X size={15} />
-            </button>
-
-            {/* Header */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <h2 style={{ fontSize: 17, fontWeight: 800, color: t1, margin: 0, fontFamily: "'Playfair Display',serif" }}>{sel.name}</h2>
-                <span style={{
-                  padding: "2px 8px", borderRadius: 5, fontSize: 9, fontWeight: 700,
-                  background: sel.isRead ? `${tM}12` : `${g}15`, color: sel.isRead ? tM : gD,
-                  border: `1px solid ${sel.isRead ? `${tM}25` : `${g}30`}`,
-                }}>{sel.isRead ? "READ" : "UNREAD"}</span>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, fontSize: 11, color: t2 }}>
-                <a href={`mailto:${sel.email}`} style={{ display: "flex", alignItems: "center", gap: 3, color: t2, textDecoration: "none" }}><Mail size={11} color={tM} /> {sel.email}</a>
-                {sel.phone && <a href={`tel:${sel.phone}`} style={{ display: "flex", alignItems: "center", gap: 3, color: tM, textDecoration: "none" }}><Phone size={11} color={tM} /> {sel.phone}</a>}
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} color={tM} /> {new Date(sel.createdAt).toLocaleString()}</span>
-              </div>
-            </div>
-
-            {/* Conversation thread */}
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: tM, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Conversation</p>
-
-              {/* User message */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start" }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${g}20`, border: `1px solid ${g}40`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: gD }}>
-                  {sel.name[0].toUpperCase()}
+        {/* Detail — sticky beside the list on desktop, a full-screen sheet on a phone */}
+        <aside className="c-side" data-open={sel ? "1" : "0"}>
+          <AnimatePresence mode="wait">
+            {!sel ? (
+              <motion.div key="ph" className="c-ph" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div>
+                  <div className="adk-empty-ic" style={{ marginBottom: 10 }}><MessageSquare size={20} /></div>
+                  Pick an inquiry to read and reply.
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>{sel.name} &bull; {new Date(sel.createdAt).toLocaleString()}</p>
-                  <div style={{ padding: "10px 12px", borderRadius: "4px 12px 12px 12px", background: "rgba(255,255,255,0.7)", border: `1px solid ${cB}` }}>
-                    <p style={{ fontSize: 13, color: t1, lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{sel.message}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin replies */}
-              {(sel.replies ?? []).map((r, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start", flexDirection: "row-reverse" }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${bg}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: "#f5ede6" }}>
-                    S
-                  </div>
-                  <div style={{ flex: 1, textAlign: "right" }}>
-                    <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>Support &bull; {new Date(r.sentAt).toLocaleString()}</p>
-                    <div style={{ padding: "10px 12px", borderRadius: "12px 4px 12px 12px", background: `${bg}`, display: "inline-block", textAlign: "left", maxWidth: "85%" }}>
-                      <p style={{ fontSize: 13, color: "#f5ede6", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{r.body}</p>
+              </motion.div>
+            ) : (
+              <motion.div key={sel._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14 }}>
+                  <button className="adk-btn" onClick={() => setSel(null)} aria-label="Close" style={{ width: 34, height: 34, padding: 0, flex: "none" }}>
+                    <X size={15} />
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                      <h2 style={{ fontSize: 18, fontWeight: 800, color: t1, margin: 0, fontFamily: "'Playfair Display',serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sel.name}</h2>
+                      <Tag tone={sel.isRead ? tM : gD}>{sel.isRead ? "READ" : "UNREAD"}</Tag>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 10px", fontSize: 11.5, color: t2, marginTop: 4, minWidth: 0 }}>
+                      <a href={`mailto:${sel.email}`} style={{ display: "flex", alignItems: "center", gap: 3, color: t2, textDecoration: "none", minWidth: 0, overflowWrap: "anywhere" }}><Mail size={11} color={tM} style={{ flex: "none" }} /> {sel.email}</a>
+                      {sel.phone && <a href={`tel:${sel.phone}`} style={{ display: "flex", alignItems: "center", gap: 3, color: tM, textDecoration: "none" }}><Phone size={11} color={tM} /> {sel.phone}</a>}
+                      <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} color={tM} /> {new Date(sel.createdAt).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Reply composer */}
-            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.45)", border: `1px solid ${cB}` }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: t2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-                <Send size={11} color={gD} /> Reply via Email (from support@subhsandesh.in)
-              </label>
-              <textarea
-                value={replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
-                placeholder={`Write your reply to ${sel.name}...`}
-                rows={3}
-                style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 12, lineHeight: 1.5,
-                  border: `1px solid ${cB}`, background: "rgba(255,255,255,0.7)", color: t1,
-                  outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
-                }}
-              />
-              <button
-                onClick={sendReply}
-                disabled={replying || !replyBody.trim()}
-                style={{
-                  marginTop: 8, padding: "8px 20px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: replying || !replyBody.trim() ? "not-allowed" : "pointer",
-                  border: "none", background: replying || !replyBody.trim() ? `${tM}30` : bg, color: replying || !replyBody.trim() ? tM : "#f5ede6",
-                  display: "flex", alignItems: "center", gap: 5, transition: "all 0.15s",
-                }}>
-                <Send size={11} /> {replying ? "Sending..." : "Send Reply"}
-              </button>
-            </div>
+                {/* Conversation thread */}
+                <div style={{ marginBottom: 14 }}>
+                  <p className="c-sec">Conversation</p>
 
-            {/* Admin notes */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: tM, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-                <StickyNote size={11} color={gD} /> Private Notes (not sent)
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add private notes about this inquiry..."
-                rows={2}
-                style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 12, lineHeight: 1.5,
-                  border: `1px solid ${cB}`, background: "rgba(255,255,255,0.6)", color: t1,
-                  outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
-                }}
-              />
-              <button onClick={saveNotes} disabled={saving}
-                style={{
-                  marginTop: 8, padding: "7px 18px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
-                  border: `1px solid ${g}40`, background: `${g}12`, color: gD,
-                }}>
-                {saving ? "Saving..." : "Save Notes"}
-              </button>
-            </div>
+                  {/* User message */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${g}20`, border: `1px solid ${g}40`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: gD }}>
+                      {(sel.name[0] || "?").toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>{sel.name} &bull; {new Date(sel.createdAt).toLocaleString()}</p>
+                      <div style={{ padding: "10px 12px", borderRadius: "4px 14px 14px 14px", background: "#fff", border: `1px solid ${cB}` }}>
+                        <p style={{ fontSize: 13, color: t1, lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{sel.message}</p>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => toggleRead(sel)}
-                style={{
-                  flex: 1, padding: "9px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer",
-                  border: `1px solid ${cB}`, background: "rgba(255,255,255,0.6)", color: t2,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                }}>
-                {sel.isRead ? <><EyeOff size={13} /> Mark Unread</> : <><Eye size={13} /> Mark Read</>}
-              </button>
-              <button onClick={() => deleteItem(sel._id)}
-                style={{
-                  padding: "9px 18px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer",
-                  border: "1px solid rgba(220,38,38,0.2)", background: "rgba(220,38,38,0.06)", color: "#dc2626",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                }}>
-                <Trash2 size={13} /> Delete
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+                  {/* Admin replies */}
+                  {(sel.replies ?? []).map((r, i) => (
+                    <motion.div key={i} {...rise(i)} style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start", flexDirection: "row-reverse" }}>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", background: bg, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: "#ffe3a3" }}>
+                        S
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+                        <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 700, color: tM }}>Support &bull; {new Date(r.sentAt).toLocaleString()}</p>
+                        <div style={{ padding: "10px 12px", borderRadius: "14px 4px 14px 14px", background: `linear-gradient(135deg,${A.maroon2},${bg})`, display: "inline-block", textAlign: "left", maxWidth: "88%" }}>
+                          <p style={{ fontSize: 13, color: "#f5ede6", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{r.body}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Reply composer */}
+                <div style={{ marginBottom: 14, padding: 12, borderRadius: 14, background: "rgba(255,255,255,0.7)", border: `1px solid ${cB}` }}>
+                  <label className="c-sec" style={{ color: t2 }}>
+                    <Send size={11} color={gD} /> Reply via Email (from support@subhsandesh.in)
+                  </label>
+                  <textarea
+                    className="adk-input c-ta"
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)}
+                    placeholder={`Write your reply to ${sel.name}...`}
+                    rows={3}
+                  />
+                  <button className="adk-btn" data-v="primary" onClick={sendReply} disabled={replying || !replyBody.trim()} style={{ marginTop: 8 }}>
+                    <Send size={12} /> {replying ? "Sending..." : "Send Reply"}
+                  </button>
+                </div>
+
+                {/* Admin notes */}
+                <div style={{ marginBottom: 14 }}>
+                  <label className="c-sec">
+                    <StickyNote size={11} color={gD} /> Private Notes (not sent)
+                  </label>
+                  <textarea
+                    className="adk-input c-ta"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add private notes about this inquiry..."
+                    rows={2}
+                  />
+                  <button className="adk-btn" data-v="gold" onClick={saveNotes} disabled={saving} style={{ marginTop: 8 }}>
+                    {saving ? "Saving..." : "Save Notes"}
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="adk-btn" onClick={() => toggleRead(sel)} style={{ flex: 1 }}>
+                    {sel.isRead ? <><EyeOff size={13} /> Mark Unread</> : <><Eye size={13} /> Mark Read</>}
+                  </button>
+                  <button className="adk-btn" data-v="danger" onClick={() => deleteItem(sel._id)}>
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </aside>
+      </div>
+    </AdminPage>
   );
 }

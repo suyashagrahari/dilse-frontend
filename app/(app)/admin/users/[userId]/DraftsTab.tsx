@@ -69,10 +69,11 @@ export default function DraftsTab({
 
   return (
     <Card
-      title={
+      title="Unfinished drafts"
+      note={
         loading
-          ? "Unfinished drafts"
-          : `Unfinished drafts — ${rows.length} total${blocked ? ` · ${blocked} stopped by price` : ""}${contacted ? ` · ${contacted} contacted` : ""}`
+          ? undefined
+          : `${rows.length} total${blocked ? ` · ${blocked} stopped by price` : ""}${contacted ? ` · ${contacted} contacted` : ""}`
       }
       action={
         rows.length > 0 ? (
@@ -103,16 +104,14 @@ export default function DraftsTab({
         </Empty>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
-          {rows.map((row) => (
+          {rows.map((row, i) => (
             <div
               key={`${row.templateType}:${row.pageId}`}
-              style={{
-                padding: 12, borderRadius: BRAND.radius, background: BRAND.bgAlt,
-                border: `1px solid ${BRAND.border}`,
-              }}
+              className="sa-mini"
+              style={{ padding: "10px 11px", animationDelay: `${Math.min(i, 12) * 30}ms` }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: BRAND.text }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: BRAND.text, overflowWrap: "anywhere" }}>
                   {row.templateLabel}
                 </span>
                 <ReasonChip reason={row.reason} />
@@ -153,13 +152,13 @@ export default function DraftsTab({
                 )}
               </div>
 
-              <p style={{ margin: "6px 0 0", fontSize: 12.5, lineHeight: "18px", color: BRAND.muted }}>
+              <p style={{ margin: "5px 0 0", fontSize: 12.5, lineHeight: "18px", color: BRAND.muted, overflowWrap: "anywhere" }}>
                 {row.reasonDetail}
               </p>
 
               <div
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8,
+                  display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 7,
                 }}
               >
                 <Progress value={row.completeness} />
@@ -174,7 +173,7 @@ export default function DraftsTab({
                 </span>
               </div>
 
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 7 }}>
                 <MissingFields fields={row.missingFields} total={row.missingCount} max={6} />
               </div>
             </div>

@@ -21,7 +21,7 @@ import { useToast } from "@/lib/toast/useToast";
  * record forty reads the admin never made.
  */
 export default function TemplateCard({
-  page, hdr, revealed, onReveal, onSetPassword, onDelete, onEdit, busy,
+  page, hdr, revealed, onReveal, onSetPassword, onDelete, onEdit, busy, index = 0,
 }: {
   page: ProfilePage;
   hdr: () => Record<string, string>;
@@ -31,6 +31,8 @@ export default function TemplateCard({
   onDelete: (p: ProfilePage) => void;
   onEdit: (p: ProfilePage, content: Record<string, unknown>) => void;
   busy: boolean;
+  /** Position in the grid, for the staggered entry. */
+  index?: number;
 }) {
   const { pushToast } = useToast();
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
@@ -59,7 +61,7 @@ export default function TemplateCard({
   };
 
   return (
-    <div className="sa-tpl">
+    <div className="sa-tpl" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
       <div className="sa-tpl-h">
         <h4 className="sa-tpl-name">{page.templateLabel}</h4>
         <Pill text={page.isPublished ? "Live" : "Draft"} color={page.isPublished ? C.ok : C.muted} />

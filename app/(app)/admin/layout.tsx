@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { isAdmin } from "@/lib/roles";
+import AdminNav, { ADMIN_NAV_CSS } from "./AdminNav";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -46,5 +47,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  return <>{children}</>;
+  // The navbar lives here, not in each page, so it stays put between sections.
+  // `.adm-main` pads content below it and paints the shared background.
+  return (
+    <>
+      <style>{ADMIN_NAV_CSS}</style>
+      <AdminNav />
+      <div className="adm-main">{children}</div>
+    </>
+  );
 }

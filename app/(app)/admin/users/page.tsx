@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Search, Users, Crown, UserCheck, User as UserIcon, MessageSquare,
+  Users, Crown, UserCheck, User as UserIcon,
   ChevronLeft, ChevronRight, Eye, FileText, Calendar, Mail,
-  X, ExternalLink, BarChart3, Trash2, Loader2, Star, LayoutTemplate, CalendarDays, Clock3, Coins,
+  X, ExternalLink, Trash2, Loader2, Star, LayoutTemplate, CalendarDays, Clock3, Coins,
 } from "lucide-react";
 import { ROLE_META, RoleIcon, ProviderIcon } from "../adminIcons";
+import { AdminPage, Panel, Hero, ChipGroup, SearchBox, Loading, EmptyState, Tag, Num, rise } from "../adminKit";
 
 const ago=(d:Date)=>{
   const m=Math.max(0,Math.round((Date.now()-d.getTime())/60000));
@@ -114,12 +116,12 @@ export default function AdminUsersPage(){
     return()=>{live=false;};
   },[accessToken,rangeFrom,rangeTo,hdr]);
 
-  const chip=(on:boolean,c=g)=>({
-    flex:"none" as const,height:32,padding:"0 12px",borderRadius:99,fontSize:11.5,fontWeight:700,cursor:"pointer",
+  const chip=(on:boolean)=>({
+    flex:"none" as const,height:32,padding:"0 12px",borderRadius:99,fontSize:12,fontWeight:700,cursor:"pointer",
     display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap" as const,
-    border:on?`1.5px solid ${c}`:`1px solid ${cB}`,
-    background:on?`${c}1c`:"rgba(255,255,255,0.6)",
-    color:on?(c===g?gD:c):t2,
+    border:on?"1px solid transparent":`1px solid ${cB}`,
+    background:on?bg:"rgba(255,255,255,0.72)",
+    color:on?"#fff6e6":t2,
   });
   const activeTpl=tplCounts.find(t=>t.type===tpl);
 
@@ -193,77 +195,80 @@ export default function AdminUsersPage(){
     );
   };
 
+  const filtered=!!(tpl||range);
+  const closeSel=()=>{if(!dLoading){setSel(null);setPageConfirm(null);}};
+
   return(
-    <div className="min-h-screen md:pt-[88px]" style={{background:"linear-gradient(180deg,#faf3ee 0%,#f5ede6 50%,#efe3d3 100%)"}}>
+    <AdminPage title="Users" subtitle="Everyone who signed up — filter by day, template, role or status." icon={<Users size={18}/>}>
       <style>{`
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .uw{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 0px)}
-        @media(min-width:768px){.uw{height:calc(100vh - 88px)}}
-        .u-sticky{flex-shrink:0;padding:16px 14px 0;position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#faf3ee 0%,#f5ede6 100%)}
-        @media(min-width:768px){.u-sticky{padding:24px 24px 0}}
-        @media(min-width:1024px){.u-sticky{padding:24px 40px 0}}
-        .u-body{flex:1;overflow-y:auto;padding:0 14px 110px;-webkit-overflow-scrolling:touch}
-        @media(min-width:768px){.u-body{padding:0 24px 60px}}
-        @media(min-width:1024px){.u-body{padding:0 40px 60px}}
-        .uc{background:rgba(255,255,255,0.65);border:1px solid ${cB};border-radius:14px;backdrop-filter:blur(8px)}
-        @media(min-width:768px){.uc{border-radius:16px}}
-        .uCard{position:relative;overflow:hidden;min-width:0;display:block}
-        .uCard:hover{box-shadow:0 12px 26px -16px rgba(61,12,17,.45);transform:translateY(-2px);border-color:rgba(201,168,76,.55)!important}
         .uCard:active{transform:scale(.99)}
         .uCard:focus-visible{outline:2px solid ${g};outline-offset:2px}
         @keyframes uIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-        .u-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-        .u-row::-webkit-scrollbar{display:none}
+        .u-row{display:flex;align-items:center;gap:6px;min-width:0}
         .u-lbl{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${tM};margin-right:2px}
+        .u-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
+        .u-filters{display:flex;flex-direction:column;gap:8px}
+        .u-ov{position:fixed;inset:0;z-index:189;background:rgba(42,10,14,.32);backdrop-filter:blur(4px)}
+        .u-wrap{position:fixed;inset:0;z-index:190;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+        @media(min-width:640px){.u-wrap{align-items:center;padding:16px}}
+        .u-modal{position:relative;pointer-events:auto;width:100%;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;
+          background:linear-gradient(180deg,#fffdfb 0%,#f7efe6 100%);border:1px solid ${cB};border-radius:22px 22px 0 0;
+          padding:18px 14px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -20px rgba(42,10,14,.45)}
+        @media(min-width:640px){.u-modal{width:min(92vw,540px);max-height:86vh;border-radius:22px;padding:20px 18px 22px;box-shadow:0 30px 70px -24px rgba(42,10,14,.5)}}
+        .u-mstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+        .u-mstat{padding:9px 10px;border-radius:12px;background:#fff;border:1px solid ${cB};min-width:0}
+        .u-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin-bottom:14px;font-size:11.5px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.6);border:1px solid ${cB}}
       `}</style>
 
-      <div className="uw">
-        {/* ── Sticky: tabs + search + filters ── */}
-        <div className="u-sticky">
-          {/* Tab switcher */}
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
-            <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,0.6)",border:`1px solid ${cB}`,borderRadius:12,padding:3,gap:2}}>
-              <button onClick={()=>router.push("/admin/analytics")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
-                <BarChart3 size={13} style={{verticalAlign:"middle",marginRight:5}}/>Analytics
-              </button>
-              <button style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:bg,color:"#f5ede6",letterSpacing:"0.02em"}}>
-                <Users size={13} style={{verticalAlign:"middle",marginRight:5}}/>Users
-              </button>
-              <button onClick={()=>router.push("/admin/contacts")} style={{padding:"7px 16px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",background:"transparent",color:t2,letterSpacing:"0.02em"}}>
-                <MessageSquare size={13} style={{verticalAlign:"middle",marginRight:5}}/>Contacts
-              </button>
-            </div>
+      {/* What the filters add up to */}
+      <Hero style={{padding:"13px 16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+          <div style={{fontSize:34,fontWeight:800,lineHeight:1,color:"#ffe3a3",fontFamily:"'Playfair Display',serif"}}>
+            {loading&&!pg.total?"…":<Num value={pg.total}/>}
           </div>
-          {/* Search */}
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.7)",border:`1px solid ${cB}`,borderRadius:12,padding:"0 12px",marginBottom:10}}>
-            <Search size={14} color={tM}/>
-            <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&fetchUsers(1)}
-              placeholder="Search by name or email..."
-              style={{flex:1,minWidth:0,background:"transparent",border:"none",outline:"none",color:t1,fontSize:13,padding:"11px 0"}}/>
-            {search&&<button onClick={()=>setSearch("")} aria-label="Clear search" style={{background:"none",border:"none",cursor:"pointer",color:tM,padding:2}}><X size={13}/></button>}
+          <div style={{fontSize:13,fontWeight:600,lineHeight:1.4,minWidth:0,flex:"1 1 180px",overflowWrap:"anywhere"}}>
+            {tpl
+              ? <>{pg.total===1?"person":"people"} created <b style={{color:"#ffe3a3"}}>{tplSummary?.label||activeTpl?.label||tpl}</b>{rangeLabel?` ${rangeLabel}`:""}{tplSummary?` · ${tplSummary.pages} ${tplSummary.pages===1?"page":"pages"}`:""}</>
+              : range
+                ? <>{pg.total===1?"person":"people"} signed up {rangeLabel}</>
+                : <>users in total</>}
           </div>
+          {filtered&&(
+            <button type="button" onClick={()=>{setTpl("");setDateMode("");setCustomDay("");}}
+              style={{flex:"none",display:"inline-flex",alignItems:"center",gap:4,height:30,padding:"0 11px",borderRadius:99,fontSize:11.5,fontWeight:800,cursor:"pointer",
+                background:"rgba(255,255,255,.12)",color:"#fff6e6",border:"1px solid rgba(255,227,163,.35)"}}>
+              <X size={12}/> Clear
+            </button>
+          )}
+        </div>
+      </Hero>
+
+      <Panel pad={12} delay={0.05} style={{marginBottom:12}}>
+        <div className="u-filters">
+          <SearchBox value={search} onChange={setSearch} onEnter={()=>fetchUsers(1)} placeholder="Search by name or email..."/>
 
           {/* When: chips for the usual days, the calendar for any other */}
           <div className="u-row">
             <span className="u-lbl"><CalendarDays size={12}/> When</span>
-            {([["","All time"],["today","Today"],["yesterday","Yesterday"],["week","Last 7 days"]] as [DateMode,string][]).map(([k,l])=>(
-              <button key={k||"all"} type="button" onClick={()=>setDateMode(k)} style={chip(dateMode===k)}>{l}</button>
-            ))}
-            <label style={{...chip(dateMode==="custom"),position:"relative"}}>
-              <Calendar size={12}/>{dateMode==="custom"&&customDay?prettyDay(customDay):"Pick a day"}
-              <input type="date" max={istDay()} value={customDay}
-                onChange={e=>{setCustomDay(e.target.value);setDateMode(e.target.value?"custom":"");}}
-                aria-label="Pick a day"
-                style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%"}}/>
-            </label>
+            <div className="adk-chips" style={{flex:1}}>
+              <ChipGroup<DateMode> id="u-when" value={dateMode} onChange={setDateMode} style={{overflow:"visible",padding:0,flex:"none"}}
+                options={[{value:"",label:"All time"},{value:"today",label:"Today"},{value:"yesterday",label:"Yesterday"},{value:"week",label:"Last 7 days"}]}/>
+              <label style={{...chip(dateMode==="custom"),position:"relative"}}>
+                <Calendar size={12}/>{dateMode==="custom"&&customDay?prettyDay(customDay):"Pick a day"}
+                <input type="date" max={istDay()} value={customDay}
+                  onChange={e=>{setCustomDay(e.target.value);setDateMode(e.target.value?"custom":"");}}
+                  aria-label="Pick a day"
+                  style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%"}}/>
+              </label>
+            </div>
           </div>
 
           {/* Which template they made */}
-          <div className="u-row" style={{flexWrap:"wrap"}}>
+          <div className="u-row">
             <span className="u-lbl"><LayoutTemplate size={12}/> Template</span>
-            <select value={tpl} onChange={e=>setTpl(e.target.value)} aria-label="Filter by template"
-              style={{flex:"1 1 200px",minWidth:0,maxWidth:360,height:34,padding:"0 10px",borderRadius:10,fontSize:12.5,fontWeight:700,color:t1,
-                background:tpl?`${g}14`:"rgba(255,255,255,0.7)",border:tpl?`1.5px solid ${g}`:`1px solid ${cB}`}}>
+            <select value={tpl} onChange={e=>setTpl(e.target.value)} aria-label="Filter by template" className="adk-input"
+              style={{flex:"1 1 200px",minWidth:0,maxWidth:380,height:34,padding:"0 10px",fontSize:12.5,fontWeight:700,
+                background:tpl?`${g}14`:"#fff",borderColor:tpl?g:undefined}}>
               <option value="">Any template</option>
               {tplCounts.map(t=>(
                 <option key={t.type} value={t.type} disabled={!t.users&&t.type!==tpl}>
@@ -271,62 +276,35 @@ export default function AdminUsersPage(){
                 </option>
               ))}
             </select>
-            {(tpl||dateMode)&&(
-              <button type="button" onClick={()=>{setTpl("");setDateMode("");setCustomDay("");}} style={chip(false)}><X size={12}/> Clear</button>
-            )}
           </div>
 
           {/* Role + status */}
-          <div className="u-row">
-            {["","normal","member","admin","superadmin"].map(r=>(
-              <button key={r} onClick={()=>setRf(r)} style={{...chip(rf===r),textTransform:"capitalize"}}>{r||"All roles"}</button>
-            ))}
+          <div className="adk-chips" style={{alignItems:"center"}}>
+            <ChipGroup id="u-role" value={rf} onChange={setRf} style={{overflow:"visible",padding:0,flex:"none"}}
+              options={["","normal","member","admin","superadmin"].map(r=>({value:r,label:r?<span style={{textTransform:"capitalize"}}>{r}</span>:"All roles",tone:r?RC[r]:undefined}))}/>
             <span style={{flex:"none",width:1,height:20,background:cB}}/>
-            {["","active","suspended","banned"].map(st=>(
-              <button key={st} onClick={()=>setSf(st)} style={{...chip(sf===st,SC[st]||g),textTransform:"capitalize"}}>{st||"Any status"}</button>
-            ))}
+            <ChipGroup id="u-status" value={sf} onChange={setSf} style={{overflow:"visible",padding:0,flex:"none"}}
+              options={["","active","suspended","banned"].map(st=>({value:st,label:st?<span style={{textTransform:"capitalize"}}>{st}</span>:"Any status",tone:SC[st]}))}/>
           </div>
-
-          {/* What the filters add up to */}
-          <div style={{margin:"4px 0 12px",padding:"10px 12px",borderRadius:12,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",
-            background:tpl||range?`linear-gradient(120deg,${bg},#6b1a22)`:"rgba(255,255,255,0.55)",
-            color:tpl||range?"#f5ede6":t2,border:tpl||range?"none":`1px solid ${cB}`}}>
-            <span style={{fontSize:22,fontWeight:800,lineHeight:1,color:tpl||range?"#ffd98a":t1}}>{loading?"…":pg.total}</span>
-            <span style={{fontSize:12.5,fontWeight:600,lineHeight:1.35,minWidth:0,flex:"1 1 180px"}}>
-              {tpl
-                ? <>{pg.total===1?"person":"people"} created <b>{tplSummary?.label||activeTpl?.label||tpl}</b>{rangeLabel?` ${rangeLabel}`:""}{tplSummary?` · ${tplSummary.pages} ${tplSummary.pages===1?"page":"pages"}`:""}</>
-                : range
-                  ? <>{pg.total===1?"person":"people"} signed up {rangeLabel}</>
-                  : <>users in total</>}
-            </span>
-          </div>
-          <div style={{height:1,background:cB}}/>
         </div>
+      </Panel>
 
-        {/* ── Scrollable user list ── */}
-        <div className="u-body">
-          <div className="uc" style={{padding:0,overflow:"hidden",marginTop:14}}>
-            {loading?(
-              <div style={{padding:40,textAlign:"center"}}>
-                <div style={{width:28,height:28,border:`2px solid rgba(61,12,17,0.08)`,borderTopColor:g,borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}}/>
-              </div>
-            ):(
-              <>
-                {/*
-                  One card grid at every width.
+      {loading?<Loading label="Loading users…"/>:(
+        <>
+          {/*
+            One card grid at every width.
 
-                  This used to be a desktop <table> plus a separate mobile
-                  list — two markups to keep in step, and the table squeezed
-                  role, provider, points and joined date into columns narrow
-                  enough to truncate. Cards show the same fields with room to
-                  read them, and the grid reflows to one column on a phone
-                  without a horizontal scrollbar.
-                */}
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))",
-                  gap: 8, padding: 10,
-                }}>
+            This used to be a desktop <table> plus a separate mobile
+            list — two markups to keep in step, and the table squeezed
+            role, provider, points and joined date into columns narrow
+            enough to truncate. Cards show the same fields with room to
+            read them, and the grid reflows to one column on a phone
+            without a horizontal scrollbar.
+          */}
+          {!users.length?(
+            <EmptyState icon={<Users size={20}/>} title={filtered?"Nobody matches these filters":"No users found"} note={filtered?"Try another day or template.":undefined}/>
+          ):(
+            <div className="u-grid">
                   {users.map((u,i)=>{
                     const fb=u.feedback;
                     const tone=!fb?tM:fb.avg>=4?"#1e7a4b":fb.avg>=3?"#b7791f":"#b3261e";
@@ -336,13 +314,9 @@ export default function AdminUsersPage(){
                     // The whole card is the way in: a super admin lands on the
                     // profile (where the role is changed), an admin gets the
                     // quick-look modal.
-                    <button key={u._id} type="button" onClick={()=>openUser(u._id)} className="uCard"
+                    <button key={u._id} type="button" onClick={()=>openUser(u._id)} className="adk-card uCard"
                       aria-label={`Open ${u.name}'s profile`}
-                      style={{
-                        textAlign:"left",width:"100%",border:`1px solid ${cB}`,borderRadius:14,background:"#fffdfb",
-                        padding:"10px 11px",cursor:"pointer",transition:"box-shadow .18s, transform .18s, border-color .18s",
-                        animation:`uIn .35s ${Math.min(i,12)*0.03}s both`,
-                      }}>
+                      style={{padding:"10px 11px",animation:`uIn .35s ${Math.min(i,12)*0.03}s both`}}>
                       <span aria-hidden style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:rm.color,opacity:.85}}/>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
                         {/* Avatar, with how they sign in pinned to its corner */}
@@ -394,131 +368,121 @@ export default function AdminUsersPage(){
                     </button>
                     );
                   })}
-                  {!users.length&&<p style={{gridColumn:"1/-1",textAlign:"center",color:tM,fontSize:12.5,padding:30}}>{tpl||range?"Nobody matches these filters — try another day or template.":"No users found"}</p>}
-                </div>
+            </div>
+          )}
 
-                {/* Pagination */}
-                {pg.totalPages>1&&(
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:12,borderTop:`1px solid ${cB}`}}>
-                    <button onClick={()=>fetchUsers(pg.page-1)} disabled={pg.page<=1}
-                      style={{width:30,height:30,borderRadius:8,border:`1px solid ${cB}`,background:"transparent",color:pg.page<=1?"rgba(61,12,17,0.15)":t1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <ChevronLeft size={15}/>
-                    </button>
-                    <span style={{fontSize:11,color:tM,fontWeight:600}}>{pg.page} / {pg.totalPages}</span>
-                    <button onClick={()=>fetchUsers(pg.page+1)} disabled={pg.page>=pg.totalPages}
-                      style={{width:30,height:30,borderRadius:8,border:`1px solid ${cB}`,background:"transparent",color:pg.page>=pg.totalPages?"rgba(61,12,17,0.15)":t1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <ChevronRight size={15}/>
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Centered Detail Modal ── */}
-      {(sel||dLoading)&&(
-        <>
-          <div onClick={()=>{if(!dLoading){setSel(null);setPageConfirm(null);}}} style={{position:"fixed",inset:0,background:"rgba(42,10,14,0.22)",zIndex:100,backdropFilter:"blur(4px)"}}/>
-          <div style={{
-            position:"fixed",zIndex:101,
-            top:"50%",left:"50%",transform:"translate(-50%,-50%)",
-            width:"min(92vw, 520px)",maxHeight:"85vh",overflowY:"auto",
-            background:"linear-gradient(180deg,#faf3ee 0%,#f5ede6 100%)",
-            border:`1px solid ${cB}`,borderRadius:20,padding:"22px 18px 28px",
-            boxShadow:"0 20px 60px rgba(0,0,0,0.12)",
-          }}>
-            {dLoading?(
-              <div style={{padding:40,textAlign:"center"}}>
-                <div style={{width:28,height:28,border:`2px solid rgba(61,12,17,0.08)`,borderTopColor:g,borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}}/>
-              </div>
-            ):sel?(
-              <>
-                <button onClick={()=>{setSel(null);setPageConfirm(null);}} style={{position:"absolute",top:14,right:14,width:30,height:30,borderRadius:8,border:`1px solid ${cB}`,background:"rgba(255,255,255,0.6)",color:t1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><X size={15}/></button>
-
-                {/* User header */}
-                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-                  {sel.user.avatar?<img src={sel.user.avatar} alt="" style={{width:48,height:48,borderRadius:12,objectFit:"cover",border:`2px solid ${cB}`}}/>:
-                  <div style={{width:48,height:48,borderRadius:12,background:`${g}15`,display:"flex",alignItems:"center",justifyContent:"center",color:gD,fontSize:20,fontWeight:700,border:`2px solid ${cB}`}}>{sel.user.name[0]?.toUpperCase()}</div>}
-                  <div style={{flex:1,minWidth:0}}>
-                    <h2 style={{fontSize:17,fontWeight:800,color:t1,margin:0,fontFamily:"'Playfair Display',serif"}}>{sel.user.name}</h2>
-                    <div style={{display:"flex",alignItems:"center",gap:4,marginTop:3}}>
-                      <Mail size={10} color={tM}/>
-                      <span style={{fontSize:11,color:t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sel.user.email}</span>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5,flexWrap:"wrap"}}>
-                      <Badge role={sel.user.role}/>
-                      <select value={sel.user.role} onChange={e=>changeRole(sel.user._id,e.target.value)} disabled={rc===sel.user._id}
-                        style={{padding:"3px 6px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",background:"rgba(255,255,255,0.8)",color:t1,border:`1px solid ${cB}`}}>
-                        <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
-                  {[
-                    {icon:<FileText size={14}/>,label:"Pages",value:String(sel.stats.totalPagesCreated),color:g},
-                    {icon:<Eye size={14}/>,label:"Views",value:String(sel.stats.totalViews),color:gD},
-                    {icon:<Calendar size={14}/>,label:"Joined",value:new Date(sel.user.createdAt).toLocaleDateString(),color:"#a0522d"},
-                  ].map(s=>(
-                    <div key={s.label} style={{padding:10,borderRadius:11,background:"rgba(255,255,255,0.55)",border:`1px solid ${cB}`}}>
-                      <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
-                        <span style={{color:s.color}}>{s.icon}</span>
-                        <span style={{fontSize:9,color:tM,fontWeight:600,letterSpacing:"0.04em"}}>{s.label}</span>
-                      </div>
-                      <div style={{fontSize:17,fontWeight:800,color:t1}}>{s.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Info grid */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:16,fontSize:11}}>
-                  <div style={{color:tM}}>Provider: <span style={{color:t1,fontWeight:600,textTransform:"capitalize"}}>{sel.user.provider}</span></div>
-                  <div style={{color:tM}}>Points: <span style={{color:gD,fontWeight:700}}>{sel.user.points}</span></div>
-                  <div style={{color:tM}}>Referral: <span style={{color:t1,fontWeight:600}}>{sel.user.referralCode||"—"}</span></div>
-                  <div style={{color:tM}}>Verified: <span style={{color:sel.user.isVerified?"#16a34a":"#dc2626",fontWeight:600}}>{sel.user.isVerified?"Yes":"No"}</span></div>
-                </div>
-
-                {/* Pages */}
-                <h3 style={{fontSize:13,fontWeight:700,color:t1,marginBottom:8}}>Pages ({sel.pages.length})</h3>
-                {!sel.pages.length?<p style={{fontSize:11,color:tM,textAlign:"center",padding:16}}>No pages created</p>:(
-                  <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
-                    {sel.pages.map(p=>(
-                      <div key={p._id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,flexWrap:"wrap",background:"rgba(255,255,255,0.45)",border:`1px solid ${cB}`}}>
-                        <span style={{padding:"2px 7px",borderRadius:5,fontSize:8,fontWeight:700,background:`${g}12`,color:gD,border:`1px solid ${g}25`,textTransform:"uppercase",letterSpacing:"0.04em"}}>{p.templateLabel}</span>
-                        <span style={{fontSize:10,color:p.isPublished?"#16a34a":tM,fontWeight:600}}>{p.isPublished?"Published":"Draft"}</span>
-                        {p.shareId&&<a href={`/${p.shareId}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{color:tM}}><ExternalLink size={11}/></a>}
-                        <span style={{marginLeft:"auto",fontSize:9,color:tM}}>{p.viewCount??0} views</span>
-                        <span style={{fontSize:9,color:tM}}>{new Date(p.createdAt).toLocaleDateString()}</span>
-                        {pageConfirm===p._id?(
-                          <div style={{display:"flex",alignItems:"center",gap:6,width:"100%",marginTop:6,paddingTop:6,borderTop:`1px solid ${cB}`}}>
-                            <span style={{flex:1,fontSize:9.5,color:"#b91c1c",fontWeight:600}}>Delete permanently? The shared link stops working for everyone and can&apos;t be recovered.</span>
-                            <button onClick={()=>setPageConfirm(null)} disabled={pageDeleting===p._id}
-                              style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",background:"rgba(255,255,255,0.8)",color:t2,border:`1px solid ${cB}`}}>Cancel</button>
-                            <button onClick={()=>deletePage(p._id,p.templateType)} disabled={pageDeleting===p._id}
-                              style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,cursor:"pointer",background:"#dc2626",color:"#fff",border:"none",opacity:pageDeleting===p._id?0.6:1}}>
-                              {pageDeleting===p._id?<Loader2 size={11} style={{animation:"spin .8s linear infinite"}}/>:<Trash2 size={11}/>}
-                              {pageDeleting===p._id?"Deleting…":"Delete"}
-                            </button>
-                          </div>
-                        ):(
-                          <button onClick={()=>setPageConfirm(p._id)} title="Delete this page"
-                            style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:6,cursor:"pointer",background:"rgba(220,38,38,0.08)",color:"#dc2626",border:"1px solid rgba(220,38,38,0.2)"}}>
-                            <Trash2 size={12}/>
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ):null}
-          </div>
+          {/* Pagination */}
+          {pg.totalPages>1&&(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"14px 0 4px"}}>
+              <button className="adk-btn" onClick={()=>fetchUsers(pg.page-1)} disabled={pg.page<=1} aria-label="Previous page" style={{width:36,padding:0}}>
+                <ChevronLeft size={15}/>
+              </button>
+              <span style={{fontSize:12,color:tM,fontWeight:700}}>{pg.page} / {pg.totalPages}</span>
+              <button className="adk-btn" onClick={()=>fetchUsers(pg.page+1)} disabled={pg.page>=pg.totalPages} aria-label="Next page" style={{width:36,padding:0}}>
+                <ChevronRight size={15}/>
+              </button>
+            </div>
+          )}
         </>
       )}
-    </div>
+
+      {/* ── Detail modal (admins; a super admin goes to the full profile) ── */}
+      <AnimatePresence>
+        {(sel||dLoading)&&<motion.div key="ov" className="u-ov" onClick={closeSel} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}/>}
+        {(sel||dLoading)&&(
+            <div key="wrap" className="u-wrap">
+            <motion.div className="u-modal" role="dialog" aria-modal="true"
+              initial={{opacity:0,y:40}} animate={{opacity:1,y:0}} exit={{opacity:0,y:40}} transition={{duration:.28,ease:[0.22,1,0.36,1]}}>
+              {dLoading?<Loading h={160}/>:sel?(
+                <>
+                  <button onClick={()=>{setSel(null);setPageConfirm(null);}} aria-label="Close" className="adk-btn" style={{position:"absolute",top:12,right:12,width:32,height:32,padding:0}}><X size={15}/></button>
+
+                  {/* User header */}
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14,paddingRight:40}}>
+                    {sel.user.avatar?<img src={sel.user.avatar} alt="" style={{width:52,height:52,borderRadius:15,objectFit:"cover",flex:"none",boxShadow:"0 8px 18px -10px rgba(61,12,17,.6)"}}/>:
+                    <div style={{width:52,height:52,borderRadius:15,flex:"none",background:`linear-gradient(135deg,${g},${gD})`,display:"grid",placeItems:"center",color:"#fff",fontSize:21,fontWeight:800,boxShadow:"0 8px 18px -10px rgba(61,12,17,.6)"}}>{sel.user.name[0]?.toUpperCase()}</div>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <h2 style={{fontSize:18,fontWeight:800,color:t1,margin:0,fontFamily:"'Playfair Display',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sel.user.name}</h2>
+                      <div style={{display:"flex",alignItems:"center",gap:4,marginTop:3,minWidth:0}}>
+                        <Mail size={11} color={tM} style={{flex:"none"}}/>
+                        <span style={{fontSize:11.5,color:t2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sel.user.email}</span>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                        <Badge role={sel.user.role}/>
+                        <select value={sel.user.role} onChange={e=>changeRole(sel.user._id,e.target.value)} disabled={rc===sel.user._id} aria-label="Change role"
+                          style={{height:26,padding:"0 8px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",background:"#fff",color:t1,border:`1px solid ${cB}`}}>
+                          <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
+                        </select>
+                        {rc===sel.user._id&&<Loader2 size={13} color={g} style={{animation:"spin .8s linear infinite"}}/>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="u-mstats">
+                    {[
+                      {icon:<FileText size={13}/>,label:"Pages",value:<Num value={sel.stats.totalPagesCreated}/>,color:g},
+                      {icon:<Eye size={13}/>,label:"Views",value:<Num value={sel.stats.totalViews}/>,color:gD},
+                      {icon:<Calendar size={13}/>,label:"Joined",value:new Date(sel.user.createdAt).toLocaleDateString(),color:"#a0522d"},
+                    ].map((s,i)=>(
+                      <motion.div key={s.label} className="u-mstat" {...rise(i)}>
+                        <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                          <span style={{color:s.color,display:"grid"}}>{s.icon}</span>
+                          <span style={{fontSize:10,color:tM,fontWeight:700,letterSpacing:"0.04em"}}>{s.label}</span>
+                        </div>
+                        <div style={{fontSize:s.label==="Joined"?13:19,fontWeight:800,color:t1,fontFamily:s.label==="Joined"?undefined:"'Playfair Display',serif",lineHeight:1.15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.value}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Info grid */}
+                  <div className="u-info">
+                    <div style={{color:tM,minWidth:0}}>Provider: <span style={{color:t1,fontWeight:700,textTransform:"capitalize"}}>{sel.user.provider}</span></div>
+                    <div style={{color:tM,minWidth:0}}>Points: <span style={{color:gD,fontWeight:800}}>{sel.user.points}</span></div>
+                    <div style={{color:tM,minWidth:0,overflowWrap:"anywhere"}}>Referral: <span style={{color:t1,fontWeight:700}}>{sel.user.referralCode||"—"}</span></div>
+                    <div style={{color:tM,minWidth:0}}>Verified: <span style={{color:sel.user.isVerified?"#1e7a4b":"#b3261e",fontWeight:700}}>{sel.user.isVerified?"Yes":"No"}</span></div>
+                  </div>
+
+                  {/* Pages */}
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+                    <FileText size={13} color={g}/>
+                    <h3 style={{fontSize:13.5,fontWeight:800,color:t1,margin:0}}>Pages</h3>
+                    <Tag>{sel.pages.length}</Tag>
+                  </div>
+                  {!sel.pages.length?<p style={{fontSize:12,color:tM,textAlign:"center",padding:16,margin:0,borderRadius:12,border:"1px dashed rgba(61,12,17,.14)"}}>No pages created</p>:(
+                    <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:260,overflowY:"auto"}}>
+                      {sel.pages.map((p,i)=>(
+                        <motion.div key={p._id} {...rise(i)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:11,flexWrap:"wrap",background:"#fff",border:`1px solid ${cB}`,minWidth:0}}>
+                          <Tag style={{maxWidth:"55%",overflow:"hidden",textOverflow:"ellipsis"}}>{p.templateLabel}</Tag>
+                          <span style={{fontSize:10.5,color:p.isPublished?"#1e7a4b":tM,fontWeight:700}}>{p.isPublished?"Published":"Draft"}</span>
+                          {p.shareId&&<a href={`/${p.shareId}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} aria-label="Open shared page" style={{color:gD,display:"grid"}}><ExternalLink size={12}/></a>}
+                          <span style={{marginLeft:"auto",fontSize:10,color:tM,fontWeight:600}}>{p.viewCount??0} views</span>
+                          <span style={{fontSize:10,color:tM}}>{new Date(p.createdAt).toLocaleDateString()}</span>
+                          {pageConfirm===p._id?(
+                            <div style={{display:"flex",alignItems:"center",gap:6,width:"100%",marginTop:6,paddingTop:6,borderTop:`1px dashed ${cB}`,flexWrap:"wrap"}}>
+                              <span style={{flex:"1 1 180px",fontSize:10.5,color:"#b3261e",fontWeight:600,lineHeight:1.4}}>Delete permanently? The shared link stops working for everyone and can&apos;t be recovered.</span>
+                              <button className="adk-btn" onClick={()=>setPageConfirm(null)} disabled={pageDeleting===p._id} style={{height:28,padding:"0 10px",fontSize:11}}>Cancel</button>
+                              <button className="adk-btn" onClick={()=>deletePage(p._id,p.templateType)} disabled={pageDeleting===p._id}
+                                style={{height:28,padding:"0 10px",fontSize:11,background:"#b3261e",color:"#fff",border:"none"}}>
+                                {pageDeleting===p._id?<Loader2 size={11} style={{animation:"spin .8s linear infinite"}}/>:<Trash2 size={11}/>}
+                                {pageDeleting===p._id?"Deleting…":"Delete"}
+                              </button>
+                            </div>
+                          ):(
+                            <button onClick={()=>setPageConfirm(p._id)} title="Delete this page" aria-label="Delete this page" className="adk-btn" data-v="danger" style={{width:26,height:26,padding:0,borderRadius:8}}>
+                              <Trash2 size={12}/>
+                            </button>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ):null}
+            </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
+    </AdminPage>
   );
 }

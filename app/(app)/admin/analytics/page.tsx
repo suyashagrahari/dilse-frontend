@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
-import { isSuperAdmin } from "@/lib/roles";
 import { GoogleG } from "../adminIcons";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  Users, Eye, FileText, TrendingUp, TrendingDown, BarChart3, MessageSquare, Star,
+  Users, Eye, FileText, TrendingUp, TrendingDown, BarChart3,
   Smartphone, Crown, Mail, CalendarDays, Sparkles, Globe2, Layers,
 } from "lucide-react";
 
@@ -91,8 +89,7 @@ function Num({ value, style }: { value: number; style?: React.CSSProperties }) {
 }
 
 export default function AdminAnalyticsPage() {
-  const router = useRouter();
-  const { accessToken, user } = useAppSelector((s) => s.auth);
+  const { accessToken } = useAppSelector((s) => s.auth);
   const [ov, setOv] = useState<OverviewData|null>(null);
   const [ug, setUg] = useState<Series[]>([]);
   const [vc, setVc] = useState<Series[]>([]);
@@ -164,21 +161,14 @@ export default function AdminAnalyticsPage() {
   const provTotal = (ov?.providerDistribution ?? []).reduce((a, b) => a + b.count, 0) || 1;
   const roleTotal = (ov?.roleDistribution ?? []).reduce((a, b) => a + b.count, 0) || 1;
 
-  const tab = (label: string, icon: React.ReactNode, href: string | null) => (
-    <button key={label} onClick={href ? () => router.push(href) : undefined} style={{flex:"none",padding:"7px 13px",borderRadius:10,fontSize:12,fontWeight:700,cursor:"pointer",border:"none",
-      background:href?"transparent":bg,color:href?t2:"#f5ede6",display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
-      {icon}{label}
-    </button>
-  );
-
   return (
-    <div className="min-h-screen md:pt-[88px]" style={{background:"linear-gradient(180deg,#faf3ee 0%,#f5ede6 50%,#efe3d3 100%)"}}>
+    <div>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes an-pulse{0%{box-shadow:0 0 0 0 rgba(125,220,150,.7)}70%{box-shadow:0 0 0 8px rgba(125,220,150,0)}100%{box-shadow:0 0 0 0 rgba(125,220,150,0)}}
         @keyframes an-shine{from{transform:translateX(-120%) rotate(12deg)}to{transform:translateX(320%) rotate(12deg)}}
-        .an-wrap{max-width:1280px;margin:0 auto;padding:14px 12px 110px}
-        @media(min-width:768px){.an-wrap{padding:22px 24px 60px}}
+        .an-wrap{max-width:1280px;margin:0 auto;padding:12px 12px 110px}
+        @media(min-width:768px){.an-wrap{padding:18px 24px 60px}}
         .an-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
         .an-scroll::-webkit-scrollbar{display:none}
         .ac{background:rgba(255,255,255,0.7);border:1px solid ${cB};border-radius:16px;padding:14px;backdrop-filter:blur(8px);min-width:0}
@@ -193,16 +183,6 @@ export default function AdminAnalyticsPage() {
       `}</style>
 
       <div className="an-wrap">
-        {/* Tabs */}
-        <div className="an-scroll" style={{background:"rgba(255,255,255,0.6)",border:`1px solid ${cB}`,borderRadius:12,padding:3,marginBottom:12,width:"fit-content",maxWidth:"100%"}}>
-          {tab("Analytics", <BarChart3 size={13}/>, null)}
-          {tab("Users", <Users size={13}/>, "/admin/users")}
-          {tab("Contacts", <MessageSquare size={13}/>, "/admin/contacts")}
-          {isSuperAdmin(user?.role) && tab("Feedback", <Star size={13}/>, "/admin/feedback")}
-          {isSuperAdmin(user?.role) && tab("Drafts", <FileText size={13}/>, "/admin/drafts")}
-          {isSuperAdmin(user?.role) && tab("Conversations", <Mail size={13}/>, "/admin/threads")}
-        </div>
-
         {/* ── Pulse: today, live ─────────────────────────────────────────── */}
         <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:.45}}
           style={{position:"relative",overflow:"hidden",borderRadius:20,padding:"16px 16px 14px",marginBottom:12,color:"#f5ede6",

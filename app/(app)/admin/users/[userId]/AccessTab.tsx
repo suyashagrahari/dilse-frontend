@@ -84,6 +84,7 @@ export default function AccessTab({
   return (
     <Card
       title="Early access"
+      note={loading || error ? undefined : `${grants.length} grant${grants.length === 1 ? "" : "s"}`}
       action={
         <Link
           href="/admin/early-access"
@@ -93,7 +94,7 @@ export default function AccessTab({
         </Link>
       }
     >
-      <p style={{ margin: "0 0 12px", fontSize: 12.5, lineHeight: "18px", color: C.muted }}>
+      <p style={{ margin: "0 0 10px", fontSize: 12.5, lineHeight: "18px", color: C.muted }}>
         Templates this person can use while they are hidden from everyone else. A
         grant also lets them publish a paid template without being charged.
       </p>
@@ -117,26 +118,28 @@ export default function AccessTab({
         <Empty>No early access. This user sees only what everyone else sees.</Empty>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {grants.map((gr) => (
+          {grants.map((gr, i) => (
             <div
               key={gr.slug}
+              className="sa-mini"
               style={{
                 display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 11px", borderRadius: 12,
-                background: C.surface, border: `1px solid ${C.border}`,
+                padding: "9px 10px", animationDelay: `${Math.min(i, 12) * 30}ms`,
               }}
             >
-              <KeyRound size={15} style={{ color: C.accent, flex: "none" }} />
+              <span style={{ width: 30, height: 30, borderRadius: 9, flex: "none", display: "grid", placeItems: "center", background: "rgba(201,168,76,.15)" }}>
+                <KeyRound size={14} style={{ color: C.accent }} />
+              </span>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div
                   style={{
                     fontSize: 13, fontWeight: 700, color: C.text,
-                    fontFamily: "ui-monospace, monospace",
+                    fontFamily: "ui-monospace, monospace", overflowWrap: "anywhere",
                   }}
                 >
                   {gr.slug}
                 </div>
-                <div style={{ fontSize: 11, color: C.faint, marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: C.faint, marginTop: 2, overflowWrap: "anywhere" }}>
                   {gr.grantedByEmail ? `by ${gr.grantedByEmail}` : ""}
                   {gr.createdAt ? ` · ${new Date(gr.createdAt).toLocaleDateString("en-IN")}` : ""}
                   {gr.note ? ` · ${gr.note}` : ""}
@@ -157,8 +160,8 @@ export default function AccessTab({
                 title="Revoke"
                 aria-label={`Revoke access to ${gr.slug}`}
                 style={{
-                  width: 40, height: 40, borderRadius: 11, flex: "none",
-                  background: C.surface, border: `1px solid ${C.border}`, color: C.danger,
+                  width: 36, height: 36, borderRadius: 10, flex: "none",
+                  background: "rgba(179,38,30,.07)", border: "1px solid rgba(179,38,30,.22)", color: C.danger,
                   cursor: busy === gr.slug ? "default" : "pointer",
                   display: "grid", placeItems: "center",
                 }}

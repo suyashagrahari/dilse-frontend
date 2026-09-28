@@ -35,14 +35,18 @@ export default function PointsTab({
 
   return (
     <>
-      <div className="sa-stats" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
-        <Stat label="Balance" value={data.user.points} tone={C.accent} />
-        <Stat label="Lifetime earned" value={data.user.totalPointsEarned} />
-        <Stat label="Ledger rows" value={data.points.length} />
+      <style>{`
+        .sa-pts-f { display: grid; gap: 8px; grid-template-columns: minmax(0,1fr); margin-bottom: 9px; }
+        @media (min-width: 760px) { .sa-pts-f { grid-template-columns: 140px minmax(0,1fr) auto; } }
+      `}</style>
+      <div className="sa-stats" style={{ gridTemplateColumns: "repeat(3,minmax(0,1fr))" }}>
+        <Stat i={0} label="Balance" value={data.user.points} tone={C.accent} />
+        <Stat i={1} label="Lifetime earned" value={data.user.totalPointsEarned} tone={C.goldDeep} />
+        <Stat i={2} label="Ledger rows" value={data.points.length} />
       </div>
 
       <Card title="Adjust balance">
-        <div style={{ display: "grid", gap: 9, gridTemplateColumns: "1fr", marginBottom: 10 }}>
+        <div className="sa-pts-f">
           <input className="sa-input" value={delta} onChange={(e) => setDelta(e.target.value)} placeholder="+50 or -25" inputMode="numeric" />
           <input className="sa-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" onKeyDown={(e) => e.key === "Enter" && apply()} />
           <Btn variant="primary" onClick={apply} disabled={busy}>{busy ? "Applying…" : "Apply adjustment"}</Btn>
@@ -53,7 +57,7 @@ export default function PointsTab({
         </p>
       </Card>
 
-      <Card title="Ledger">
+      <Card title="Ledger" note={`${data.points.length} rows`} delay={0.05}>
         {data.points.length === 0 ? (
           <Empty>No transactions.</Empty>
         ) : (
@@ -68,15 +72,15 @@ export default function PointsTab({
                       <td>{t.type}</td>
                       <td style={{ color: t.delta >= 0 ? C.ok : C.danger, fontWeight: 700 }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</td>
                       <td style={{ color: C.muted }}>{t.balance}</td>
-                      <td style={{ color: C.muted }}>{String(t.meta?.reason || "")}</td>
+                      <td style={{ color: C.muted, overflowWrap: "anywhere" }}>{String(t.meta?.reason || "")}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <div className="sa-only-sm sa-cards">
-              {data.points.map((t) => (
-                <div key={t._id} className="sa-mini">
+              {data.points.map((t, i) => (
+                <div key={t._id} className="sa-mini" style={{ animationDelay: `${Math.min(i, 12) * 25}ms` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                     <strong style={{ fontSize: 13 }}>{t.type}</strong>
                     <strong style={{ color: t.delta >= 0 ? C.ok : C.danger }}>{t.delta >= 0 ? `+${t.delta}` : t.delta}</strong>
