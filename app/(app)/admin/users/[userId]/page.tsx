@@ -184,7 +184,7 @@ function ProfileInner() {
           ))}
         </div>
 
-        {tab === "Overview" && <OverviewTab data={data} />}
+        {tab === "Overview" && <OverviewTab data={data} hdr={hdr} reload={load} />}
         {tab === "Pages" && <PagesTab data={data} hdr={hdr} reload={load} />}
         {tab === "Drafts" && (
           <DraftsTab userId={String(userId)} userEmail={user.email} hdr={hdr} />

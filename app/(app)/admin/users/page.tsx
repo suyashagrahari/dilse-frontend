@@ -8,8 +8,17 @@ import { isSuperAdmin } from "@/lib/roles";
 import {
   Search, Users, Crown, UserCheck, User as UserIcon, MessageSquare,
   ChevronLeft, ChevronRight, Eye, FileText, Calendar, Mail,
-  X, ExternalLink, BarChart3, Trash2, Loader2, Star, LayoutTemplate, CalendarDays,
+  X, ExternalLink, BarChart3, Trash2, Loader2, Star, LayoutTemplate, CalendarDays, Clock3, Coins,
 } from "lucide-react";
+import { ROLE_META, RoleIcon, ProviderIcon } from "../adminIcons";
+
+const ago=(d:Date)=>{
+  const m=Math.max(0,Math.round((Date.now()-d.getTime())/60000));
+  if(m<1)return "just now"; if(m<60)return `${m}m ago`;
+  const h=Math.round(m/60); if(h<24)return `${h}h ago`;
+  const dd=Math.round(h/24); if(dd<30)return `${dd}d ago`;
+  const mo=Math.round(dd/30); return mo<12?`${mo}mo ago`:`${Math.round(mo/12)}y ago`;
+};
 
 interface UserItem {
   _id:string; name:string; email:string; avatar?:string; provider:string;
@@ -198,8 +207,11 @@ export default function AdminUsersPage(){
         @media(min-width:1024px){.u-body{padding:0 40px 60px}}
         .uc{background:rgba(255,255,255,0.65);border:1px solid ${cB};border-radius:14px;backdrop-filter:blur(8px)}
         @media(min-width:768px){.uc{border-radius:16px}}
-        .uCard{position:relative;overflow:hidden;min-width:0}
-        .uCard:hover{box-shadow:0 14px 30px -16px rgba(61,12,17,.4);transform:translateY(-2px)}
+        .uCard{position:relative;overflow:hidden;min-width:0;display:block}
+        .uCard:hover{box-shadow:0 12px 26px -16px rgba(61,12,17,.45);transform:translateY(-2px);border-color:rgba(201,168,76,.55)!important}
+        .uCard:active{transform:scale(.99)}
+        .uCard:focus-visible{outline:2px solid ${g};outline-offset:2px}
+        @keyframes uIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
         .u-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
         .u-row::-webkit-scrollbar{display:none}
         .u-lbl{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${tM};margin-right:2px}
@@ -312,83 +324,74 @@ export default function AdminUsersPage(){
                 */}
                 <div style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,290px),1fr))",
-                  gap: 10, padding: 12,
+                  gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))",
+                  gap: 8, padding: 10,
                 }}>
-                  {users.map(u=>{
+                  {users.map((u,i)=>{
                     const fb=u.feedback;
-                    const tone=!fb?null:fb.avg>=4?"#1e7a4b":fb.avg>=3?"#b7791f":"#b3261e";
+                    const tone=!fb?tM:fb.avg>=4?"#1e7a4b":fb.avg>=3?"#b7791f":"#b3261e";
+                    const rm=ROLE_META[u.role]||ROLE_META.normal;
+                    const joined=new Date(u.createdAt);
                     return(
-                    <div key={u._id} onClick={()=>openUser(u._id)} className="uCard" style={{
-                      border:`1px solid ${cB}`, borderRadius:16, background:"#fffdfb",
-                      padding:"14px 14px 12px", cursor:"pointer", transition:"box-shadow .18s, transform .18s",
-                    }}>
-                      {/* Role-coloured wash across the top */}
-                      <span aria-hidden style={{position:"absolute",left:0,right:0,top:0,height:54,background:`linear-gradient(120deg,${RC[u.role]||g}26,${g}10 60%,transparent)`}}/>
-                      <div style={{position:"relative",display:"flex",alignItems:"center",gap:11}}>
-                        {u.avatar?<img src={u.avatar} alt="" style={{width:44,height:44,borderRadius:14,objectFit:"cover",flexShrink:0,border:"2px solid #fff",boxShadow:"0 4px 12px -4px rgba(61,12,17,.3)"}}/>:
-                        <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:`linear-gradient(135deg,${g},${gD})`,color:"#fff",display:"grid",placeItems:"center",fontSize:17,fontWeight:800,border:"2px solid #fff",boxShadow:"0 4px 12px -4px rgba(61,12,17,.3)"}}>{u.name[0]?.toUpperCase()}</div>}
+                    // The whole card is the way in: a super admin lands on the
+                    // profile (where the role is changed), an admin gets the
+                    // quick-look modal.
+                    <button key={u._id} type="button" onClick={()=>openUser(u._id)} className="uCard"
+                      aria-label={`Open ${u.name}'s profile`}
+                      style={{
+                        textAlign:"left",width:"100%",border:`1px solid ${cB}`,borderRadius:14,background:"#fffdfb",
+                        padding:"10px 11px",cursor:"pointer",transition:"box-shadow .18s, transform .18s, border-color .18s",
+                        animation:`uIn .35s ${Math.min(i,12)*0.03}s both`,
+                      }}>
+                      <span aria-hidden style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:rm.color,opacity:.85}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        {/* Avatar, with how they sign in pinned to its corner */}
+                        <div style={{position:"relative",flex:"none"}}>
+                          {u.avatar?<img src={u.avatar} alt="" style={{width:40,height:40,borderRadius:12,objectFit:"cover",display:"block"}}/>:
+                          <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${g},${gD})`,color:"#fff",display:"grid",placeItems:"center",fontSize:16,fontWeight:800}}>{u.name[0]?.toUpperCase()}</div>}
+                          <span title={u.provider==="google"?"Signed up with Google":"Signed up with email"} style={{position:"absolute",right:-4,bottom:-4,width:18,height:18,borderRadius:"50%",background:"#fff",display:"grid",placeItems:"center",boxShadow:"0 1px 4px rgba(61,12,17,.25)"}}>
+                            <ProviderIcon provider={u.provider} size={10}/>
+                          </span>
+                        </div>
+
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:14,fontWeight:800,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</div>
-                          <div style={{fontSize:11.5,color:tM,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+                          <div style={{display:"flex",alignItems:"center",gap:5,minWidth:0}}>
+                            <span title={rm.label} style={{flex:"none",width:18,height:18,borderRadius:6,display:"grid",placeItems:"center",background:`${rm.color}16`}}>
+                              <RoleIcon role={u.role} size={11}/>
+                            </span>
+                            <span style={{fontSize:13.5,fontWeight:800,color:t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
+                            {!u.isVerified&&<span title="Email not verified" style={{flex:"none",width:6,height:6,borderRadius:"50%",background:"#d97706"}}/>}
+                            <StatusPill status={u.status}/>
+                          </div>
+                          <div style={{fontSize:11,color:tM,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>{u.email}</div>
+                        </div>
+
+                        {/* Their average rating across everything they rated */}
+                        <div title={fb?`${fb.count} rating${fb.count>1?"s":""}${fb.templates>1?` across ${fb.templates} templates`:""}`:"No feedback yet"}
+                          style={{flex:"none",textAlign:"center",padding:"4px 7px",borderRadius:10,minWidth:44,
+                            background:fb?`${tone}12`:"#f6f1ea",border:`1px solid ${fb?`${tone}30`:cB}`}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,fontSize:13,fontWeight:800,color:fb?tone:"rgba(61,12,17,.28)",lineHeight:1.1}}>
+                            <Star size={11} fill={fb?"#e0a526":"none"} color={fb?"#e0a526":"rgba(61,12,17,.28)"}/>{fb?fb.avg.toFixed(1):"–"}
+                          </div>
+                          <div style={{fontSize:8.5,fontWeight:700,color:tM,marginTop:1,whiteSpace:"nowrap"}}>{fb?`${fb.count} rated`:"no rating"}</div>
                         </div>
                       </div>
 
-                      <div style={{position:"relative",display:"flex",flexWrap:"wrap",gap:4,marginTop:10}}>
-                        <Badge role={u.role}/><StatusPill status={u.status}/>
-                        <span style={{fontSize:10,fontWeight:600,padding:"3px 7px",borderRadius:7,background:"#f6f1ea",color:t2,textTransform:"capitalize"}}>{u.provider}</span>
-                        {!u.isVerified&&<span style={{fontSize:10,fontWeight:700,padding:"3px 7px",borderRadius:7,background:"#fff4f4",color:"#b3261e"}}>unverified</span>}
-                      </div>
-
-                      {/* Feedback: did they rate, and how warmly on average */}
-                      <div style={{marginTop:10,padding:"8px 10px",borderRadius:11,display:"flex",alignItems:"center",gap:8,
-                        background:fb?`${tone}10`:"#f8f4ef",border:`1px solid ${fb?`${tone}33`:cB}`}}>
-                        {fb?(
-                          <>
-                            <span style={{display:"inline-flex",gap:1,flex:"none"}}>
-                              {[1,2,3,4,5].map(n=>(
-                                <Star key={n} size={12} fill={n<=Math.round(fb.avg)?"#e0a526":"none"} color={n<=Math.round(fb.avg)?"#e0a526":"rgba(61,12,17,.2)"}/>
-                              ))}
-                            </span>
-                            <b style={{fontSize:13,color:tone!}}>{fb.avg.toFixed(1)}</b>
-                            <span style={{fontSize:11,color:t2,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                              avg · {fb.count} {fb.count===1?"rating":"ratings"}{fb.templates>1?` · ${fb.templates} templates`:""}
-                            </span>
-                          </>
-                        ):(
-                          <span style={{fontSize:11.5,color:tM,fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}>
-                            <MessageSquare size={12}/> No feedback yet
+                      <div style={{display:"flex",alignItems:"center",gap:"4px 10px",flexWrap:"wrap",marginTop:8,paddingTop:7,borderTop:`1px dashed ${cB}`,fontSize:10.5,color:t2,fontWeight:600}}>
+                        <span title="Joined SubhSandesh" style={{display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+                          <Clock3 size={11} color={gD}/>
+                          {joined.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"})}, {joined.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",timeZone:"Asia/Kolkata"})}
+                          <span style={{color:tM,fontWeight:500}}>· {ago(joined)}</span>
+                        </span>
+                        <span style={{display:"inline-flex",alignItems:"center",gap:3,whiteSpace:"nowrap",color:gD}}><Coins size={11}/>{u.points}</span>
+                        {tpl&&(
+                          <span style={{display:"inline-flex",alignItems:"center",gap:3,whiteSpace:"nowrap",color:bg,fontWeight:800}}>
+                            <LayoutTemplate size={11}/>{u.templatePages??0}×{u.templateLastAt?` · ${new Date(u.templateLastAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",timeZone:"Asia/Kolkata"})}`:""}
                           </span>
                         )}
+                        <ChevronRight size={14} color={tM} style={{marginLeft:"auto"}}/>
                       </div>
-
-                      <div style={{display:"grid",gridTemplateColumns:tpl?"repeat(3,minmax(0,1fr))":"repeat(2,minmax(0,1fr))",gap:6,marginTop:10}}>
-                        <div>
-                          <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Points</div>
-                          <div style={{fontSize:13,fontWeight:800,color:gD,marginTop:1}}>{u.points}</div>
-                        </div>
-                        <div>
-                          <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Joined</div>
-                          <div style={{fontSize:12.5,fontWeight:700,color:t1,marginTop:1,whiteSpace:"nowrap"}}>{new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
-                        </div>
-                        {tpl&&(
-                          <div>
-                            <div style={{fontSize:9,color:tM,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>Made</div>
-                            <div style={{fontSize:12.5,fontWeight:800,color:bg,marginTop:1,whiteSpace:"nowrap"}}>{u.templatePages??0}× {u.templateLastAt?`· ${new Date(u.templateLastAt).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}`:""}</div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{marginTop:10,paddingTop:9,borderTop:`1px solid ${cB}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                        <select value={u.role} onClick={e=>e.stopPropagation()} onChange={e=>changeRole(u._id,e.target.value)} disabled={rc===u._id}
-                          style={{padding:"5px 7px",borderRadius:8,fontSize:10.5,fontWeight:700,cursor:"pointer",background:"#fff",color:t1,border:`1px solid ${cB}`}}>
-                          <option value="normal">Normal</option><option value="member">Member</option><option value="admin">Admin</option>
-                        </select>
-                        <span style={{display:"inline-flex",alignItems:"center",gap:4,color:"#f5ede6",background:bg,padding:"5px 11px",borderRadius:99,fontWeight:700,fontSize:11.5}}>
-                          Open <Eye size={13}/>
-                        </span>
-                      </div>
-                    </div>
+                    </button>
                     );
                   })}
                   {!users.length&&<p style={{gridColumn:"1/-1",textAlign:"center",color:tM,fontSize:12.5,padding:30}}>{tpl||range?"Nobody matches these filters — try another day or template.":"No users found"}</p>}
