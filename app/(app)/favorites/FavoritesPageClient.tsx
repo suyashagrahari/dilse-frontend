@@ -3,7 +3,7 @@
 import { useEffect, useCallback, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Bookmark } from "lucide-react";
-import TemplateCard from "@/components/TemplateCard";
+import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
 import Link from "next/link";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -176,6 +176,7 @@ export default function FavoritesPage() {
       {/* Grid */}
       <div className="px-4 pb-12 max-w-5xl mx-auto">
         <AnimatePresence mode="popLayout">
+          <style>{TEMPLATE_CARD_CSS}</style>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {favorited.map((template, i) => (
               <TemplateCard
