@@ -6,7 +6,8 @@
 //
 // ── THE ORDER THINGS APPEAR IN ──────────────────────────────────────────────
 //
-// Summary, then filters, then the wall. The summary is first because it is the
+// One maroon hero — who wrote these beside the summary — then the filters,
+// then the wall. The summary is first because it is the
 // only part that answers the question most people arrive with — "is this any
 // good?" — in one glance, and because a filter bar above a number nobody has
 // seen yet is chrome in front of the content.
@@ -51,10 +52,10 @@
 //
 // Measured, not assumed: one column to 680, two to 1010, three above that, and
 // the container stops at 1240 so three is the ceiling however wide the monitor
-// is. A 320px floor rather than 280 is a deliberate typographic choice — 280
-// gave four columns of 285px at 1280, and 285px is a cramped measure for a
-// paragraph somebody wrote by hand. The summary flips from stacked to side by
-// side at 600, and the filter row is sized to stay on ONE line at 360px.
+// is — a narrower column is a cramped measure for a paragraph somebody wrote by
+// hand. The wall is a masonry (CSS columns) so short and long quotes pack
+// without holes. The hero flips from stacked to side by side at 900, and the
+// filter row is sized to stay on ONE line at 360px.
 //
 // All of it lives in the stylesheet below, never inline: an inline style
 // outranks every media query, which is the trap documented at length in
@@ -63,7 +64,8 @@
 // reduced-motion block neutralises by removing the animation itself.
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { User } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, Heart, MessageSquareQuote, Quote, Sparkles, User } from "lucide-react";
 
 import { BRAND } from "@/lib/brand";
 import {
@@ -199,70 +201,108 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
 
   return (
     <div className="fbWrap">
-      {/* ── Summary ──────────────────────────────────────────────────────── */}
-      <section className="fbSummary" aria-label="Rating summary">
-        <div className="fbScore">
-          <div className="fbBig">{stats.total ? stats.average.toFixed(1) : "—"}</div>
-          {/* A column on a phone so the score reads as one horizontal unit and
-              gives the bars back about sixty vertical pixels above the fold. */}
-          <div className="fbScoreMeta">
-            <Stars value={Math.round(stats.average)} size={19} />
-            <p className="fbScoreNote">
-              {stats.total === 0
-                ? "No ratings yet"
-                : `${stats.total.toLocaleString("en-IN")} ${stats.total === 1 ? "rating" : "ratings"}`}
-            </p>
-          </div>
+      {/* ── Hero: who wrote these, and the summary ─────────────────────────
+          One maroon card instead of a centred headline over a separate white
+          summary box: the claim ("real people, unedited") and the evidence
+          (the average and every star, low ones included) sit side by side,
+          which is the whole argument of the page in one glance. */}
+      <section className="fbHero" aria-label="Rating summary">
+        <span className="fbHeroShine" aria-hidden="true" />
+        <span className="fbHeroOrb" aria-hidden="true" />
+        <span className="fbHeroSpark s1" aria-hidden="true">✦</span>
+        <span className="fbHeroSpark s2" aria-hidden="true">♥</span>
+        <span className="fbHeroSpark s3" aria-hidden="true">✦</span>
+
+        <div className="fbHeroCopy">
+          <p className="fbBadge">
+            <span className="fbBadgeDot" aria-hidden="true" />
+            Real reviews from real creators
+          </p>
+          <h1 className="fbTitle">
+            What creators <em>say</em>
+          </h1>
+          <p className="fbLead">
+            Every review here was written by somebody who actually made a page and sent it to someone
+            they love. We don&rsquo;t edit them, and we don&rsquo;t hide the low ones.
+          </p>
+          <ul className="fbTrust">
+            <li><Check size={13} strokeWidth={3} aria-hidden="true" /> Real creators</li>
+            <li><Check size={13} strokeWidth={3} aria-hidden="true" /> Unedited</li>
+            <li><Check size={13} strokeWidth={3} aria-hidden="true" /> No sign-in needed</li>
+          </ul>
         </div>
 
-        <div className="fbBars">
-          {[5, 4, 3, 2, 1].map((n) => {
-            const count = stats.counts[String(n)] ?? 0;
-            const active = rating === String(n);
-            return (
-              <button
-                key={n}
-                type="button"
-                className={`fbBar${active ? " is-active" : ""}`}
-                aria-pressed={active}
-                aria-label={`${n} star ratings: ${count}`}
-                // Tapping the active row clears it, so the bars are the whole
-                // rating filter and there is nothing to get stuck in.
-                onClick={() => void apply({ rating: active ? "all" : String(n) })}
-                disabled={count === 0 && !active}
-              >
-                <span className="fbBarLabel">
-                  {n} <span aria-hidden="true">★</span>
-                </span>
-                <span className="fbBarTrack">
-                  <span className="fbBarFill" style={{ width: `${(count / peak) * 100}%` }} />
-                </span>
-                <span className="fbBarCount">{count}</span>
-              </button>
-            );
-          })}
+        <div className="fbScoreCard">
+          <div className="fbScore">
+            <div className="fbBig">
+              {stats.total ? stats.average.toFixed(1) : "—"}
+              <span className="fbBigOf">/5</span>
+            </div>
+            <div className="fbScoreMeta">
+              <Stars value={Math.round(stats.average)} size={20} />
+              <p className="fbScoreNote">
+                {stats.total === 0
+                  ? "No ratings yet"
+                  : `from ${stats.total.toLocaleString("en-IN")} ${stats.total === 1 ? "rating" : "ratings"}`}
+              </p>
+            </div>
+          </div>
+
+          <div className="fbBars">
+            {[5, 4, 3, 2, 1].map((n, i) => {
+              const count = stats.counts[String(n)] ?? 0;
+              const active = rating === String(n);
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  className={`fbBar${active ? " is-active" : ""}`}
+                  aria-pressed={active}
+                  aria-label={`${n} star ratings: ${count}`}
+                  // Tapping the active row clears it, so the bars are the whole
+                  // rating filter and there is nothing to get stuck in.
+                  onClick={() => void apply({ rating: active ? "all" : String(n) })}
+                  disabled={count === 0 && !active}
+                >
+                  <span className="fbBarLabel">
+                    {n} <span aria-hidden="true">★</span>
+                  </span>
+                  <span className="fbBarTrack">
+                    <span
+                      className="fbBarFill"
+                      style={{ width: `${(count / peak) * 100}%`, animationDelay: `${120 + i * 70}ms` }}
+                    />
+                  </span>
+                  <span className="fbBarCount">{count}</span>
+                </button>
+              );
+            })}
+            <p className="fbBarsHint">Tap a row to see only those reviews</p>
+          </div>
         </div>
       </section>
 
       {/* ── Filters ──────────────────────────────────────────────────────── */}
       <div className="fbControls">
         <div className="fbSeg" role="group" aria-label="Sort">
-          <button
-            type="button"
-            className={sort === "recent" ? "is-on" : ""}
-            aria-pressed={sort === "recent"}
-            onClick={() => void apply({ sort: "recent" })}
-          >
-            Recent
-          </button>
-          <button
-            type="button"
-            className={sort === "rating" ? "is-on" : ""}
-            aria-pressed={sort === "rating"}
-            onClick={() => void apply({ sort: "rating" })}
-          >
-            Top rated
-          </button>
+          {(["recent", "rating"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              className={sort === k ? "is-on" : ""}
+              aria-pressed={sort === k}
+              onClick={() => void apply({ sort: k })}
+            >
+              {sort === k && (
+                <motion.span
+                  layoutId="fb-seg-pill"
+                  className="fbSegPill"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                />
+              )}
+              <span className="fbSegLabel">{k === "recent" ? "Recent" : "Top rated"}</span>
+            </button>
+          ))}
         </div>
 
         <button
@@ -272,8 +312,8 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
           aria-label="Show only feedback that includes written words"
           onClick={() => void apply({ words: !words })}
         >
-          <span className="fbTick" aria-hidden="true">
-            ✓
+          <span className="fbSwitch" aria-hidden="true">
+            <span className="fbKnob" />
           </span>
           With words
         </button>
@@ -291,6 +331,11 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
         )}
 
         <span className="fbCount" aria-live="polite">
+          {busy ? (
+            <span className="fbSpin" aria-hidden="true" />
+          ) : (
+            <MessageSquareQuote size={13} aria-hidden="true" />
+          )}
           {busy ? "Loading…" : `${page.matched.toLocaleString("en-IN")} shown`}
         </span>
       </div>
@@ -309,6 +354,9 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
         </div>
       ) : items.length === 0 ? (
         <div className="fbEmpty">
+          <span className="fbEmptyIc" aria-hidden="true">
+            <Sparkles size={22} />
+          </span>
           <p className="fbEmptyTitle">Nothing here yet</p>
           <p className="fbEmptySub">
             {filtered
@@ -318,7 +366,7 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
         </div>
       ) : (
         <>
-          <ul className="fbGrid">
+          <ul className={`fbGrid${busy ? " is-busy" : ""}`}>
             {items.map((it, i) => (
               <li
                 key={it.id}
@@ -327,15 +375,29 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
                 // leave a gap to explain away; the card is simply shorter and
                 // a shade flatter, which reads as a rating rather than as a
                 // review that failed to load.
-                className={`fbCard${it.comment ? "" : " is-quiet"}`}
+                className={`fbCard${it.comment ? "" : " is-quiet"}${it.rating === 5 ? " is-loved" : ""}`}
                 style={{ animationDelay: `${Math.min(i, STAGGER_CAP) * STAGGER_MS}ms` }}
               >
                 <div className="fbCardTop">
-                  <Stars value={it.rating} />
-                  <span className="fbWhen">{whenever(it.createdAt)}</span>
+                  <span className="fbRate">
+                    <Stars value={it.rating} />
+                    <b>{it.rating}.0</b>
+                  </span>
+                  {it.rating === 5 ? (
+                    <span className="fbLoved">
+                      <Heart size={11} fill="currentColor" aria-hidden="true" /> Loved it
+                    </span>
+                  ) : (
+                    <span className="fbWhen">{whenever(it.createdAt)}</span>
+                  )}
                 </div>
 
-                {it.comment && <blockquote className="fbQuote">{it.comment}</blockquote>}
+                {it.comment && (
+                  <blockquote className="fbQuote">
+                    <Quote className="fbQuoteMark" size={18} aria-hidden="true" />
+                    {it.comment}
+                  </blockquote>
+                )}
 
                 <div className="fbWho">
                   {/* A "?" over a bright colour reads as an error. Somebody
@@ -349,7 +411,10 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
                   >
                     {it.name ? it.name.charAt(0).toUpperCase() : <User size={14} strokeWidth={2.4} />}
                   </span>
-                  <span className="fbName">{it.name || "A creator"}</span>
+                  <span className="fbWhoText">
+                    <span className="fbName">{it.name || "A creator"}</span>
+                    {it.rating === 5 && <span className="fbWhoWhen">{whenever(it.createdAt)}</span>}
+                  </span>
                   {it.template && <span className="fbChip">{it.template}</span>}
                 </div>
               </li>
@@ -359,6 +424,7 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
           {page.hasMore && (
             <div className="fbMoreRow">
               <button type="button" className="fbMore" onClick={loadMore} disabled={more}>
+                {more ? <span className="fbSpin" aria-hidden="true" /> : <Sparkles size={15} aria-hidden="true" />}
                 {more ? "Loading…" : "Show more reviews"}
               </button>
             </div>
@@ -371,380 +437,307 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
            and floats above the page on phones — without this the last row of
            cards sits underneath it and looks cut off. It drops back at 1024,
            where the nav is the top bar instead. */
-        .fbWrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 16px 132px }
-        @media (min-width: 600px) { .fbWrap { padding: 0 24px 132px } }
-        @media (min-width: 1024px) { .fbWrap { padding: 0 32px 88px } }
+        .fbWrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 14px 14px 132px }
+        @media (min-width: 600px) { .fbWrap { padding: 22px 24px 132px } }
+        /* 768, not 1024: the desktop nav is a fixed pill drawn OVER the page
+           from Tailwind's md breakpoint, and its lower edge sits at 74px. */
+        @media (min-width: 768px) { .fbWrap { padding-top: 92px } }
+        @media (min-width: 1024px) { .fbWrap { padding: 92px 32px 88px } }
 
-        /* ── Summary ───────────────────────────────────────────────────────
-           Stacked on a phone, side by side from 600. The score column is
-           fixed-ish so the bars get every remaining pixel — they are the part
-           that carries information at a glance. */
-        .fbSummary {
+        /* ── Hero ──────────────────────────────────────────────────────────
+           Stacked on a phone; copy and score side by side from 900. */
+        .fbHero {
+          position: relative;
+          overflow: hidden;
           display: grid;
           gap: 18px;
-          padding: 18px;
-          border-radius: 20px;
-          background: ${BRAND.surface};
-          border: 1px solid ${BRAND.border};
-          box-shadow: ${BRAND.shadow};
+          padding: 20px 16px 16px;
+          border-radius: 24px;
+          color: #f5ede6;
+          background: radial-gradient(120% 140% at 0% 0%, #6b1a22 0%, #3d0c11 55%, #240609 100%);
+          box-shadow: ${BRAND.shadowElevated};
+          animation: fbRise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        @media (min-width: 600px) {
-          .fbSummary {
-            grid-template-columns: minmax(150px, 210px) 1fr;
-            align-items: center;
-            gap: 32px;
-            padding: 26px 30px;
-          }
+        @media (min-width: 600px) { .fbHero { padding: 28px 28px 24px } }
+        @media (min-width: 900px) {
+          .fbHero { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; gap: 32px; padding: 34px 36px }
         }
+        .fbHeroShine {
+          position: absolute; top: -60px; bottom: -60px; width: 80px; pointer-events: none;
+          background: linear-gradient(90deg, transparent, rgba(255,236,190,0.14), transparent);
+          animation: fbShine 6s ease-in-out infinite;
+        }
+        @keyframes fbShine { from { transform: translateX(-160%) rotate(12deg) } to { transform: translateX(1600%) rotate(12deg) } }
+        .fbHeroOrb {
+          position: absolute; right: -90px; top: -110px; width: 320px; height: 320px; border-radius: 50%; pointer-events: none;
+          background: radial-gradient(circle, rgba(201,168,76,0.26), transparent 65%);
+        }
+        .fbHeroSpark { position: absolute; color: #ffe3a3; opacity: 0.5; pointer-events: none; animation: fbFloat 5s ease-in-out infinite }
+        .fbHeroSpark.s1 { top: 18px; right: 22px; font-size: 14px }
+        .fbHeroSpark.s2 { bottom: 20px; left: 46%; font-size: 12px; color: #ffb3c4; animation-delay: 1.2s }
+        .fbHeroSpark.s3 { top: 46%; left: 10px; font-size: 10px; animation-delay: 2.4s }
+        @keyframes fbFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
 
-        /* Phone: number and stars share a line. Desktop: the classic stacked
-           score column, which has the room for it. */
-        .fbScore {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
+        .fbHeroCopy { position: relative; min-width: 0; text-align: left }
+        .fbBadge {
+          display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px;
+          padding: 6px 13px 6px 10px; border-radius: 999px;
+          background: rgba(255,227,163,0.12); border: 1px solid rgba(255,227,163,0.3);
+          font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; color: #ffe3a3;
         }
-        .fbScoreMeta { text-align: left }
+        .fbBadgeDot {
+          width: 7px; height: 7px; flex: none; border-radius: 50%; background: #7ddc96;
+          animation: fbPulse 2400ms ease-out infinite;
+        }
+        @keyframes fbPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(125,220,150,0.6) }
+          70%  { box-shadow: 0 0 0 7px rgba(125,220,150,0) }
+          100% { box-shadow: 0 0 0 0 rgba(125,220,150,0) }
+        }
+        .fbTitle {
+          margin: 0; font-family: 'Playfair Display', Georgia, serif;
+          font-size: clamp(30px, 7vw, 50px); line-height: 1.04; font-weight: 800; letter-spacing: -0.02em; color: #fff6e6;
+        }
+        .fbTitle em { font-style: italic; color: #ffe3a3 }
+        .fbLead { margin: 12px 0 0; max-width: 52ch; font-size: 14px; line-height: 1.6; color: rgba(255,236,210,0.82) }
+        @media (min-width: 600px) { .fbLead { font-size: 15px } }
+        .fbTrust { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0 }
+        .fbTrust li {
+          display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+          padding: 5px 11px 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700;
+          background: rgba(255,255,255,0.07); border: 1px solid rgba(255,236,190,0.16); color: #f5e6d6;
+        }
+        .fbTrust li svg { color: #7ddc96 }
+
+        /* The score card: glass on maroon. */
+        .fbScoreCard {
+          position: relative; min-width: 0; display: grid; gap: 14px;
+          padding: 16px; border-radius: 18px;
+          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,236,190,0.16);
+          backdrop-filter: blur(6px);
+        }
+        @media (min-width: 600px) { .fbScoreCard { grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 22px; padding: 20px 22px } }
+        .fbScore { display: flex; align-items: center; gap: 14px }
         @media (min-width: 600px) {
-          .fbScore {
-            display: block;
-            text-align: center;
-            border-right: 1px solid ${BRAND.border};
-            padding-right: 28px;
-          }
-          .fbScoreMeta { text-align: center }
+          .fbScore { display: block; text-align: center; padding-right: 22px; border-right: 1px solid rgba(255,236,190,0.16) }
         }
         .fbBig {
-          font-size: 44px;
-          line-height: 1;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          color: ${BRAND.text};
+          font-family: 'Playfair Display', Georgia, serif; font-size: 50px; line-height: 1; font-weight: 800;
+          letter-spacing: -0.02em; color: #ffe3a3; text-shadow: 0 6px 24px rgba(255,210,120,0.35);
         }
-        @media (min-width: 600px) { .fbBig { font-size: 54px } }
-        .fbScoreNote { margin: 6px 0 0; font-size: 13px; color: ${BRAND.muted} }
+        .fbBigOf { font-size: 16px; font-weight: 700; color: rgba(255,236,210,0.6); margin-left: 3px; font-family: inherit }
+        @media (min-width: 600px) { .fbBig { font-size: 58px } }
+        .fbScoreMeta { min-width: 0 }
+        .fbScoreNote { margin: 6px 0 0; font-size: 12.5px; color: rgba(255,236,210,0.72) }
 
         .fbStars { letter-spacing: 1.5px; white-space: nowrap; display: inline-block }
         .fbStars .on { color: ${BRAND.gold}; text-shadow: 0 1px 1px rgba(168,130,58,0.28) }
         .fbStars .off { color: rgba(61,12,17,0.16) }
+        .fbHero .fbStars .on { color: #ffd66b; text-shadow: 0 0 10px rgba(255,214,107,0.45) }
+        .fbHero .fbStars .off { color: rgba(255,236,190,0.22) }
 
         /* ── Distribution, which is also the rating filter ─────────────── */
-        /* Capped, and left-aligned against the score column. Allowed to take
-           the full remaining width, a 1680px monitor draws a metre-long 5-star
-           bar, which reads as decoration rather than data. */
-        .fbBars { display: flex; flex-direction: column; gap: 4px; max-width: 560px }
-        @media (min-width: 600px) { .fbBars { gap: 6px } }
+        .fbBars { display: flex; flex-direction: column; gap: 3px; min-width: 0 }
         .fbBar {
-          display: grid;
-          grid-template-columns: 34px 1fr 32px;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-          padding: 3px 6px;
-          border: 1px solid transparent;
-          border-radius: 10px;
-          background: none;
-          cursor: pointer;
-          font: inherit;
-          color: ${BRAND.muted};
-          text-align: left;
-          transition: background 140ms ease, border-color 140ms ease;
+          display: grid; grid-template-columns: 30px minmax(0,1fr) 30px; align-items: center; gap: 10px;
+          width: 100%; padding: 4px 6px; border: 1px solid transparent; border-radius: 10px;
+          background: none; cursor: pointer; font: inherit; color: rgba(255,236,210,0.75); text-align: left;
+          transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
         }
-        @media (min-width: 600px) { .fbBar { grid-template-columns: 38px 1fr 40px; gap: 12px } }
-        .fbBar:hover:not(:disabled) { background: ${BRAND.surfaceAlt} }
-        .fbBar:disabled { cursor: default; opacity: 0.55 }
-        .fbBar.is-active { border-color: ${BRAND.gold}; background: ${BRAND.surfaceAlt} }
-        .fbBar:focus-visible { outline: 2px solid ${BRAND.gold}; outline-offset: 2px }
-        .fbBarLabel { font-size: 13px; font-variant-numeric: tabular-nums; color: ${BRAND.text} }
-        .fbBarLabel span { color: ${BRAND.gold} }
-        .fbBarTrack {
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(61,12,17,0.07);
-          overflow: hidden;
-        }
+        .fbBar:hover:not(:disabled) { background: rgba(255,255,255,0.07); transform: translateX(2px) }
+        .fbBar:disabled { cursor: default; opacity: 0.45 }
+        .fbBar.is-active { border-color: rgba(255,227,163,0.7); background: rgba(255,227,163,0.12) }
+        .fbBar:focus-visible { outline: 2px solid #ffe3a3; outline-offset: 2px }
+        .fbBarLabel { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: #fff6e6 }
+        .fbBarLabel span { color: #ffd66b }
+        .fbBarTrack { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden }
         .fbBarFill {
-          display: block;
-          height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, ${BRAND.gold}, ${BRAND.goldDeep});
+          display: block; height: 100%; border-radius: inherit;
+          background: linear-gradient(90deg, #c9a84c, #ffe3a3);
+          box-shadow: 0 0 12px rgba(255,214,107,0.35);
+          transform-origin: left;
+          animation: fbGrow 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
           transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .fbBarCount { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums }
+        @keyframes fbGrow { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+        .fbBarCount { font-size: 12px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums }
+        .fbBarsHint { margin: 4px 6px 0; font-size: 10.5px; color: rgba(255,236,210,0.5) }
 
         /* ── Controls ──────────────────────────────────────────────────────
-           ONE line on a phone, deliberately: the previous version wrapped the
-           "with words" chip onto a second row under the segmented control,
-           which put two stacked pill rows and a count between the summary and
-           the first card. Sized so segment + chip + count is ~300px and fits
-           inside a 360px viewport's 328px of content width; below 400px the
-           count drops out first, because it is the only part the cards
-           underneath already tell you. */
-        .fbControls {
-          display: flex;
-          flex-wrap: nowrap;
-          align-items: center;
-          gap: 8px;
-          margin: 16px 0 14px;
-        }
-        @media (min-width: 600px) {
-          .fbControls { flex-wrap: wrap; gap: 10px; margin: 22px 0 18px }
-        }
+           ONE line on a phone: sort + switch + count fit a 360px viewport;
+           below 400px the count drops out first, because the cards underneath
+           already tell you. */
+        .fbControls { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin: 16px 0 14px }
+        @media (min-width: 600px) { .fbControls { flex-wrap: wrap; gap: 10px; margin: 22px 0 18px } }
         .fbSeg {
-          display: inline-flex;
-          flex: none;
-          padding: 3px;
-          border-radius: 999px;
-          background: ${BRAND.surfaceAlt};
-          border: 1px solid ${BRAND.border};
+          display: inline-flex; flex: none; padding: 3px; border-radius: 999px;
+          background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; box-shadow: ${BRAND.shadow};
         }
         .fbSeg button {
-          border: none;
-          background: none;
-          font: inherit;
-          font-size: 12.5px;
-          font-weight: 600;
-          color: ${BRAND.muted};
-          padding: 6px 12px;
-          border-radius: 999px;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: background 160ms ease, color 160ms ease;
+          position: relative; border: none; background: none; font: inherit; font-size: 12.5px; font-weight: 700;
+          color: ${BRAND.muted}; padding: 7px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+          transition: color 180ms ease;
         }
-        @media (min-width: 600px) { .fbSeg button { font-size: 13px; padding: 7px 15px } }
-        .fbSeg button.is-on {
-          background: ${BRAND.surface};
-          color: ${BRAND.text};
-          box-shadow: ${BRAND.shadow};
-        }
+        @media (min-width: 600px) { .fbSeg button { font-size: 13px; padding: 8px 16px } }
+        .fbSeg button.is-on { color: #fff6e6 }
+        .fbSegPill { position: absolute; inset: 0; border-radius: 999px; background: ${BRAND.gradient}; box-shadow: 0 6px 14px -6px rgba(61,12,17,0.7) }
+        .fbSegLabel { position: relative; z-index: 1 }
         .fbSeg button:focus-visible { outline: 2px solid ${BRAND.gold}; outline-offset: 2px }
 
         .fbToggle, .fbClear, .fbMore {
-          font: inherit;
-          font-size: 12.5px;
-          font-weight: 600;
-          padding: 7px 13px;
-          border-radius: 999px;
-          cursor: pointer;
-          border: 1px solid ${BRAND.border};
-          background: ${BRAND.surface};
-          color: ${BRAND.muted};
-          white-space: nowrap;
-          transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+          font: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 13px 7px 8px; border-radius: 999px; cursor: pointer;
+          border: 1px solid ${BRAND.border}; background: ${BRAND.surface}; color: ${BRAND.muted}; white-space: nowrap;
+          box-shadow: ${BRAND.shadow};
+          transition: border-color 160ms ease, color 160ms ease, background 160ms ease, transform 160ms ease;
         }
-        @media (min-width: 600px) {
-          .fbToggle, .fbClear, .fbMore { font-size: 13px; padding: 8px 16px }
+        @media (min-width: 600px) { .fbToggle, .fbClear, .fbMore { font-size: 13px; padding: 8px 16px 8px 9px } }
+        .fbToggle { display: inline-flex; align-items: center; gap: 8px; flex: none }
+        /* The switch is the state: knob right and maroon when words-only is on. */
+        .fbSwitch {
+          position: relative; width: 30px; height: 18px; flex: none; border-radius: 99px;
+          background: rgba(61,12,17,0.14); transition: background 200ms ease;
         }
-        .fbToggle { display: inline-flex; align-items: center; gap: 6px; flex: none }
-        /* The tick is the state, not decoration: it collapses to nothing when
-           the filter is off, so the chip never claims to be on while showing
-           everything. */
-        .fbTick {
-          display: inline-block;
-          width: 0;
-          overflow: hidden;
-          color: ${BRAND.gold};
-          font-weight: 800;
-          transition: width 160ms ease, opacity 160ms ease;
-          opacity: 0;
+        .fbKnob {
+          position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .fbToggle.is-on .fbTick { width: 10px; opacity: 1 }
-        .fbToggle:hover, .fbClear:hover, .fbMore:hover { border-color: ${BRAND.borderStrong}; color: ${BRAND.text} }
-        .fbToggle.is-on {
-          border-color: ${BRAND.gold};
-          color: ${BRAND.text};
-          background: ${BRAND.surfaceAlt};
-        }
-        .fbClear { display: none; border-color: transparent; background: none }
+        .fbToggle.is-on { border-color: rgba(201,168,76,0.55); color: ${BRAND.text} }
+        .fbToggle.is-on .fbSwitch { background: ${BRAND.gradient} }
+        .fbToggle.is-on .fbKnob { transform: translateX(12px); background: #ffe3a3 }
+        .fbToggle:hover, .fbClear:hover, .fbMore:hover { border-color: ${BRAND.borderStrong}; color: ${BRAND.text}; transform: translateY(-1px) }
+        .fbClear { display: none; border-color: transparent; background: none; box-shadow: none; padding-left: 12px }
         @media (min-width: 600px) { .fbClear { display: inline-block } }
-        .fbToggle:focus-visible, .fbClear:focus-visible, .fbMore:focus-visible {
-          outline: 2px solid ${BRAND.gold}; outline-offset: 2px;
-        }
+        .fbToggle:focus-visible, .fbClear:focus-visible, .fbMore:focus-visible { outline: 2px solid ${BRAND.gold}; outline-offset: 2px }
 
-        .fbCount {
-          margin-left: auto;
-          font-size: 12px;
-          color: ${BRAND.faint};
-          white-space: nowrap;
-        }
+        .fbCount { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: ${BRAND.faint}; white-space: nowrap }
         @media (max-width: 399px) { .fbCount { display: none } }
-        @media (min-width: 600px) { .fbCount { font-size: 12.5px } }
+        .fbSpin {
+          width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(61,12,17,0.15); border-top-color: ${BRAND.gold};
+          animation: fbSpin 800ms linear infinite; display: inline-block;
+        }
+        @keyframes fbSpin { to { transform: rotate(360deg) } }
 
         /* ── The wall ──────────────────────────────────────────────────────
-           auto-fill with a 320px floor: 1 column to 680, 2 to 1010, 3 above,
-           capped at 3 by the container. One rule instead of a breakpoint
-           ladder that would need keeping in sync with the summary's.
-           align-items: start so a short card does not stretch to match a long
-           neighbour. */
-        .fbGrid {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: grid;
-          gap: 12px;
-          grid-template-columns: 1fr;
-          align-items: start;
-        }
-        @media (min-width: 600px) {
-          .fbGrid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px }
-        }
+           A masonry of quotes: CSS columns, so a two-line review does not leave
+           a hole beside a ten-line one. 1 column on a phone, 2 from 680, 3
+           from 1010, capped at 3 by the container. */
+        .fbGrid { list-style: none; margin: 0; padding: 0; columns: 1; column-gap: 14px; transition: opacity 200ms ease }
+        .fbGrid.is-busy { opacity: 0.55 }
+        @media (min-width: 680px) { .fbGrid { columns: 2; column-gap: 16px } }
+        @media (min-width: 1010px) { .fbGrid { columns: 3 } }
 
         /* ── The card ──────────────────────────────────────────────────────
-           Three things carry the polish and none of them cost layout: a
-           closing quote mark sunk into the bottom corner, a gold hairline that
-           draws itself across the top on hover, and a staggered rise on
-           entry. The lift is behind "hover: hover" so a phone tap does not
-           leave a card stuck in its hover state. */
+           Warm paper, a gold quote mark, a maroon-to-gold hairline that draws
+           itself on hover, a sheen sweep and a staggered rise on entry. The
+           lift is behind "hover: hover" so a phone tap does not stick. */
         .fbCard {
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          padding: 16px 17px 15px;
-          border-radius: 18px;
-          background: ${BRAND.surface};
+          position: relative; overflow: hidden; break-inside: avoid; display: flex; flex-direction: column; gap: 11px;
+          margin: 0 0 14px; padding: 16px 16px 14px; border-radius: 20px;
+          background: linear-gradient(180deg, #fffdfb 0%, #fff6ee 100%);
           border: 1px solid ${BRAND.border};
-          box-shadow: ${BRAND.shadow};
-          animation: fbRise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
-          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
-                      box-shadow 240ms ease, border-color 240ms ease;
+          box-shadow: 0 1px 0 rgba(61,12,17,0.03), 0 10px 24px -18px rgba(61,12,17,0.4);
+          animation: fbRise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, border-color 260ms ease;
         }
-        @media (min-width: 600px) { .fbCard { padding: 18px 19px 16px } }
-
+        @media (min-width: 680px) { .fbCard { margin-bottom: 16px; padding: 18px 18px 15px } }
         .fbCard::before {
-          content: "”";
-          position: absolute;
-          right: 8px;
-          bottom: -34px;
-          font-family: Georgia, "Times New Roman", serif;
-          font-size: 104px;
-          line-height: 1;
-          color: rgba(201,168,76,0.14);
-          pointer-events: none;
-          transition: color 260ms ease, transform 260ms ease;
+          content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+          background: linear-gradient(90deg, #3d0c11, #c9a84c, #ffe3a3);
+          transform: scaleX(0); transform-origin: left; transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .fbCard.is-quiet::before, .fbSkeleton::before { content: none }
-
         .fbCard::after {
-          content: "";
-          position: absolute;
-          left: 0; right: 0; top: 0;
-          height: 3px;
-          background: linear-gradient(90deg, ${BRAND.gold}, rgba(201,168,76,0));
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+          content: ""; position: absolute; top: 0; bottom: 0; left: -45%; width: 35%; pointer-events: none;
+          background: linear-gradient(100deg, transparent, rgba(255,236,190,0.45), transparent); transform: skewX(-14deg); opacity: 0;
         }
-
+        /* 5★: a warm gold edge, so the loved ones glow a little. */
+        .fbCard.is-loved { border-color: rgba(201,168,76,0.32); background: linear-gradient(180deg, #fffdf8 0%, #fff3e2 100%) }
         @media (hover: hover) {
-          .fbCard:hover {
-            transform: translateY(-4px);
-            border-color: rgba(201,168,76,0.45);
-            box-shadow: 0 16px 34px -16px rgba(61,12,17,0.34);
-          }
-          .fbCard:hover::after { transform: scaleX(1) }
-          .fbCard:hover::before { color: rgba(201,168,76,0.24); transform: translateY(-3px) }
-          .fbCard:hover .fbAvatar { transform: scale(1.09) }
+          .fbCard:hover { transform: translateY(-5px); border-color: rgba(201,168,76,0.6); box-shadow: 0 22px 40px -20px rgba(61,12,17,0.5) }
+          .fbCard:hover::before { transform: scaleX(1) }
+          .fbCard:hover::after { opacity: 1; left: 130%; transition: left 800ms ease, opacity 200ms ease }
+          .fbCard:hover .fbAvatar { transform: scale(1.1) rotate(-6deg) }
+          .fbCard:hover .fbQuoteMark { transform: scale(1.15) rotate(-8deg) }
         }
+        @keyframes fbRise { from { opacity: 0; transform: translateY(16px) scale(0.98) } to { opacity: 1; transform: none } }
 
-        @keyframes fbRise {
-          from { opacity: 0; transform: translateY(14px) }
-          to   { opacity: 1; transform: none }
-        }
+        /* A rating with no words: shorter, flatter, no quote. */
+        .fbCard.is-quiet { gap: 12px; padding: 14px 16px; background: linear-gradient(180deg, ${BRAND.surface} 0%, ${BRAND.surfaceAlt} 100%) }
 
-        /* A rating with no words: shorter, a shade warmer, no quote mark. */
-        .fbCard.is-quiet {
-          gap: 12px;
-          padding: 14px 16px;
-          background: linear-gradient(180deg, ${BRAND.surface} 0%, ${BRAND.surfaceAlt} 100%);
+        .fbCardTop { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px }
+        .fbRate { display: inline-flex; align-items: center; gap: 7px }
+        .fbRate b { font-size: 11.5px; font-weight: 800; color: #8b5a2b; padding: 2px 7px; border-radius: 99px; background: rgba(201,168,76,0.14) }
+        .fbWhen { font-size: 11.5px; color: ${BRAND.faint}; white-space: nowrap }
+        .fbLoved {
+          display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; white-space: nowrap;
+          font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; color: #fff6e6; background: ${BRAND.gradient};
+          box-shadow: 0 4px 10px -4px rgba(61,12,17,0.6);
         }
-
-        .fbCardTop {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-        }
-        .fbWhen { font-size: 12px; color: ${BRAND.faint}; white-space: nowrap }
+        .fbLoved svg { color: #ff8fa8 }
 
         .fbQuote {
-          position: relative;
-          z-index: 1;
-          margin: 0;
-          font-size: 14.5px;
-          line-height: 1.6;
-          font-weight: 500;
-          color: ${BRAND.text};
+          position: relative; z-index: 1; margin: 0; padding-left: 26px;
+          font-size: 14.5px; line-height: 1.62; font-weight: 500; color: ${BRAND.text};
           /* Long words and pasted links cannot widen the card past its column. */
           overflow-wrap: anywhere;
         }
-        @media (min-width: 600px) { .fbQuote { font-size: 15px } }
+        @media (min-width: 680px) { .fbQuote { font-size: 15px } }
+        .fbQuoteMark {
+          position: absolute; left: 0; top: 2px; color: ${BRAND.gold}; fill: rgba(201,168,76,0.22);
+          transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
 
         .fbWho {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-          margin-top: 2px;
+          position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+          margin-top: 2px; padding-top: 11px; border-top: 1px dashed ${BRAND.border};
         }
+        .fbCard.is-quiet .fbWho { border-top: none; padding-top: 0 }
         .fbAvatar {
-          width: 27px; height: 27px;
-          flex: none;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          color: #fff;
-          font-size: 12px;
-          font-weight: 700;
-          box-shadow: 0 0 0 2px ${BRAND.surface}, 0 0 0 3px rgba(201,168,76,0.30);
-          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+          width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+          color: #fff; font-size: 12.5px; font-weight: 800;
+          box-shadow: 0 0 0 2px #fffdfb, 0 0 0 3.5px rgba(201,168,76,0.55);
+          transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
         }
         .fbAvatar.is-anon { background: rgba(61,12,17,0.14); color: ${BRAND.muted} }
-        .fbName { font-size: 13px; font-weight: 700; color: ${BRAND.text} }
+        .fbWhoText { display: flex; flex-direction: column; min-width: 0; line-height: 1.2 }
+        .fbName { font-size: 13px; font-weight: 800; color: ${BRAND.text} }
+        .fbWhoWhen { font-size: 11px; color: ${BRAND.faint}; margin-top: 1px }
         .fbChip {
-          font-size: 11px;
-          padding: 3px 9px;
-          border-radius: 999px;
-          background: ${BRAND.surfaceAlt};
-          color: ${BRAND.muted};
-          border: 1px solid ${BRAND.border};
+          margin-left: auto; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+          background: rgba(61,12,17,0.06); color: #5a1520; border: 1px solid rgba(61,12,17,0.1);
         }
 
         /* ── Skeleton, empty, more ─────────────────────────────────────── */
         .fbSkeleton { gap: 12px; animation: none }
+        .fbSkeleton::before, .fbSkeleton::after { content: none }
         .fbSkLine {
-          height: 11px;
-          border-radius: 6px;
+          height: 11px; border-radius: 6px;
           background: linear-gradient(90deg, rgba(61,12,17,0.06), rgba(61,12,17,0.11), rgba(61,12,17,0.06));
-          background-size: 200% 100%;
-          animation: fbShimmer 1250ms linear infinite;
+          background-size: 200% 100%; animation: fbShimmer 1250ms linear infinite;
         }
         @keyframes fbShimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 
         .fbEmpty {
-          text-align: center;
-          padding: 56px 20px;
-          border-radius: 16px;
-          background: ${BRAND.surface};
-          border: 1px dashed ${BRAND.borderStrong};
+          text-align: center; padding: 50px 20px; border-radius: 20px;
+          background: linear-gradient(180deg, #fffdfb, #fff6ee); border: 1px dashed ${BRAND.borderStrong};
         }
-        .fbEmptyTitle { margin: 0; font-size: 16px; font-weight: 700; color: ${BRAND.text} }
+        .fbEmptyIc { width: 50px; height: 50px; margin: 0 auto 10px; border-radius: 16px; display: grid; place-items: center; color: #ffe3a3; background: ${BRAND.gradient} }
+        .fbEmptyTitle { margin: 0; font-size: 16px; font-weight: 800; color: ${BRAND.text} }
         .fbEmptySub { margin: 6px 0 0; font-size: 13.5px; color: ${BRAND.muted} }
 
-        .fbMoreRow { display: flex; justify-content: center; margin-top: 26px }
-        .fbMore { padding: 11px 26px }
+        .fbMoreRow { display: flex; justify-content: center; margin-top: 18px }
+        .fbMore {
+          display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none;
+          color: #fff6e6; background: ${BRAND.gradient}; box-shadow: 0 12px 26px -12px rgba(61,12,17,0.7);
+        }
+        .fbMore:hover { color: #fff; transform: translateY(-2px) }
+        .fbMore svg { color: #ffe3a3 }
+        .fbMore .fbSpin { border-color: rgba(255,255,255,0.25); border-top-color: #ffe3a3 }
 
         @media (prefers-reduced-motion: reduce) {
-          .fbBarFill, .fbCard, .fbAvatar, .fbTick { transition: none }
-          .fbCard { animation: none }
-          .fbSkLine { animation: none }
-          .fbCard::after { transition: none }
+          .fbHero, .fbCard, .fbBarFill { animation: none }
+          .fbHeroShine, .fbHeroSpark, .fbBadgeDot, .fbSkLine { animation: none }
+          .fbCard, .fbAvatar, .fbKnob, .fbSwitch, .fbQuoteMark, .fbCard::before { transition: none }
         }
       `}</style>
     </div>
