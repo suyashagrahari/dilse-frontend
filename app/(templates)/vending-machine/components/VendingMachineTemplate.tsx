@@ -18,7 +18,6 @@
 // Nothing is random. Tilt, tumble and surface wear all come from the seeded
 // helpers so the machine looks identical on every reload and in every export.
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { exportNodeToPng, fileSlug } from "@/lib/exportPng";
@@ -78,6 +77,14 @@ import {
   scuffsFor,
 } from "./machine";
 import "./vending.css";
+import { V, themeVars } from "../../_love/theme";
+import { BrandBadge, GROTESK, ITALIC, LOVE_CSS, LoveSky, LoveThemeContext, GradText } from "../../_love/LoveKit";
+import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
+import { VM_FONT_VARS } from "./fonts";
+import { machineVars, pickVendTheme } from "./themes";
+import { alpha, PIXEL } from "./machine";
+import MemoryVendor from "./MemoryVendor";
+import ReceiptPrinter from "./ReceiptPrinter";
 
 const TIP_DEG = 85;
 const STUCK_DEG = 62;
@@ -108,6 +115,13 @@ function useReducedMotion(): boolean {
 export default function VendingMachineTemplate({ data, mode }: VendingMachineTemplateProps) {
   const reducedMotion = useReducedMotion();
   const live = mode === "live";
+  const theme = pickVendTheme(data.theme);
+  const rootVars = useMemo(() => ({ ...themeVars(theme), ...machineVars(theme) }), [theme]);
+
+  // Memory cards collected this session → unlocks the receipt printer.
+  const [collected, setCollected] = useState<number[]>([]);
+  useEffect(() => setCollected([]), [data.photos]);
+  const collectCard = useCallback((i: number) => setCollected((c) => (c.includes(i) ? c : [...c, i])), []);
 
   // ── machine state ─────────────────────────────────────────────────────────
   const [slots, setSlots] = useState<Slot[]>(data.slots);
@@ -614,67 +628,70 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
     fontFamily: OSWALD,
     fontSize: 8,
     letterSpacing: "0.14em",
-    color: C.ink,
-    background: "linear-gradient(180deg,#2d4a4c 0%,#1b3234 100%)",
-    border: "1px solid #08171a",
+    color: C.keyInk,
+    background: `linear-gradient(180deg, ${C.keyHi} 0%, ${C.keyLo} 100%)`,
+    border: `1px solid ${C.edge}`,
     borderRadius: 2,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(0,0,0,.5)",
     touchAction: "manipulation",
   };
 
   // ──────────────────────────────────────────────────────────────────────────
+  const photos = data.photos;
+  const hasCards = photos.length > 0;
+
   return (
+    <LoveThemeContext.Provider value={theme}>
     <div
-      className="vm-root"
+      className={`vm-root lv-root ${VM_FONT_VARS} ${DATE_FONT_VARS}`}
       style={{
+        ...rootVars,
+        position: "relative",
         minHeight: "100dvh",
-        background: "radial-gradient(120% 80% at 50% 0%, #12282b 0%, #071214 60%, #04090a 100%)",
-        padding: "14px 8px 48px",
+        color: V.ink,
+        fontFamily: GROTESK,
+        overflowX: "clip",
       }}
       onPointerDownCapture={ensureAudio}
     >
+      <style>{LOVE_CSS}</style>
+      <LoveSky theme={theme} reduceMotion={reducedMotion} />
+
       {/*
         The thunk is the product. It is also muted by default, because autoplay
         policy forbids sound before a gesture and because a gift link opened on
-        a bus should not blare.
-        Left to a toggle on the service rail, almost nobody flips it, and the
-        best moment in the template never happens. So ask once, in the machine's
-        own voice, with both answers equally available — an explicit choice
-        rather than either a silent default or an ambush.
-        Session state only; no storage, per the two-key rule.
+        a bus should not blare. Ask once, in the machine's own voice, with both
+        answers equally available. Session state only; no storage.
       */}
       {!touchedSound && (
         <div
           role="group"
           aria-label="Sound"
+          className="vm-sound-ask"
           style={{
             position: "fixed",
-            left: 0,
-            right: 0,
-            bottom: 0,
+            left: "50%",
+            bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+            transform: "translateX(-50%)",
             zIndex: 95,
+            width: "min(calc(100vw - 24px), 420px)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
             gap: 10,
-            flexWrap: "wrap",
-            padding: "10px 12px calc(10px + env(safe-area-inset-bottom, 0px))",
-            background: C.bodyDarker,
-            borderTop: `1px solid ${C.amber}`,
-            fontFamily: OSWALD,
+            padding: "8px 8px 8px 16px",
+            borderRadius: 999,
+            background: `linear-gradient(180deg, ${C.plateHi}, ${C.plateLo})`,
+            border: `1px solid ${alpha(C.sign, 30)}`,
+            boxShadow: `0 18px 40px -18px ${V.shadow}`,
           }}
         >
-          <span
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: C.inkDim,
-            }}
-          >
-            This machine makes noise
+          <span style={{ fontFamily: PIXEL, fontSize: 10.5, letterSpacing: ".06em", color: C.sign, lineHeight: 1.35 }}>
+            🔊 this machine
+            <br />
+            makes noise
           </span>
-          <span style={{ display: "flex", gap: 8 }}>
+          <span style={{ display: "flex", gap: 6 }}>
             <button
               type="button"
               onClick={() => {
@@ -684,71 +701,80 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                 setTouchedSound(true);
                 sfxCoin();
               }}
+              className="lv-focus"
               style={{
                 minHeight: 44,
-                padding: "0 18px",
-                background: C.amber,
-                color: C.edge,
-                border: "none",
-                borderRadius: 2,
-                fontFamily: OSWALD,
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: "0.12em",
+                padding: "0 16px",
+                background: V.grad,
+                color: "#fff",
+                borderRadius: 999,
+                fontFamily: GROTESK,
+                fontSize: 13.5,
+                fontWeight: 800,
                 cursor: "pointer",
               }}
             >
-              SOUND ON
+              Sound on
             </button>
             <button
               type="button"
-              onClick={() => {
-                setTouchedSound(true);
-              }}
+              onClick={() => setTouchedSound(true)}
+              className="lv-focus"
               style={{
                 minHeight: 44,
                 padding: "0 14px",
-                background: "transparent",
-                color: C.inkDim,
-                border: `1px solid ${C.bodyLight}`,
-                borderRadius: 2,
-                fontFamily: OSWALD,
-                fontSize: 12,
-                letterSpacing: "0.1em",
+                color: C.sign,
+                border: `1px solid ${alpha(C.sign, 35)}`,
+                borderRadius: 999,
+                fontFamily: GROTESK,
+                fontSize: 13,
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >
-              STAY QUIET
+              Stay quiet
             </button>
           </span>
         </div>
       )}
 
-      {live && (
-        <Link
-          href="/templates"
-          style={{
-            position: "fixed",
-            top: "calc(10px + env(safe-area-inset-top, 0px))",
-            right: 10,
-            zIndex: 90,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 10px 5px 6px",
-            background: "rgba(255,255,255,.92)",
-            border: "1px solid #cfccc4",
-            borderRadius: 2,
-            textDecoration: "none",
-          }}
-        >
-          <Image src="/logo.webp" alt="SubhSandesh" width={18} height={18} style={{ display: "block" }} />
-          <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: "0.08em", color: "#111" }}>
-            SubhSandesh
-          </span>
-        </Link>
-      )}
+      {live && <BrandBadge />}
 
+      <div className="vm-page" style={{ position: "relative", zIndex: 1 }}>
+        {/* ── intro ─────────────────────────────────────────────────────── */}
+        <header className="vm-intro" style={{ textAlign: "center" }}>
+          <p style={{ margin: 0, fontFamily: PIXEL, fontSize: 10.5, letterSpacing: ".14em", color: V.soft }}>
+            INSERT FEELINGS ✦ RECEIVE LOVE
+          </p>
+          <h1
+            style={{
+              margin: "6px 0 0",
+              fontFamily: GROTESK,
+              fontWeight: 800,
+              fontSize: "clamp(30px, 8.4vw, 46px)",
+              lineHeight: 1,
+              letterSpacing: "-0.04em",
+              color: V.ink,
+              overflowWrap: "anywhere",
+            }}
+          >
+            for{" "}
+            <GradText style={{ fontFamily: ITALIC, fontStyle: "italic", fontWeight: 400, letterSpacing: "-0.015em", paddingRight: 4 }}>
+              {data.recipientName || "you"}
+            </GradText>
+          </h1>
+          <p style={{ margin: "8px auto 0", maxWidth: 360, fontSize: 13.5, lineHeight: 1.45, color: V.soft }}>
+            {data.senderName || "Someone"} stocked a machine with {hasCards ? `17 little things, ${photos.length} limited-edition memor${photos.length === 1 ? "y" : "ies"}` : "17 little things"} and one receipt.
+          </p>
+          <ol className="vm-steps" aria-label="How it works">
+            <li><span>1</span> punch a code</li>
+            {hasCards && <li><span>2</span> pull the cards</li>}
+            <li><span>{hasCards ? 3 : 2}</span> print the prize</li>
+          </ol>
+        </header>
+
+        <div className="vm-layout">
+        <div className="vm-col-machine">
       {/* ── the object ───────────────────────────────────────────────────── */}
       <div
         ref={outerRef}
@@ -774,7 +800,7 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
               transformOrigin: "top center",
               padding: BODY_PAD,
               background: `linear-gradient(90deg, ${C.bodyDark} 0%, ${C.body} 14%, ${C.bodyLight} 42%, ${C.body} 66%, ${C.bodyDark} 100%)`,
-              border: "1px solid #0a1c1e",
+              border: `1px solid ${C.edge}`,
               boxShadow: "0 18px 44px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1)",
             }}
           >
@@ -804,8 +830,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                 {/* header */}
                 <div
                   style={{
-                    background: "linear-gradient(180deg,#0e2326 0%,#173437 55%,#0b1e21 100%)",
-                    border: "1px solid #061214",
+                    background: `linear-gradient(180deg, ${C.plateLo} 0%, ${C.plateHi} 55%, ${C.plateLo} 100%)`,
+                    border: `1px solid ${C.edge}`,
                     padding: "8px 10px 6px",
                     marginBottom: 8,
                     boxShadow: "inset 0 1px 0 rgba(255,255,255,.08)",
@@ -819,9 +845,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                       fontSize: 25,
                       lineHeight: 1.05,
                       letterSpacing: "0.16em",
-                      color: "#ffe9bd",
+                      color: C.sign,
                       textTransform: "uppercase",
-                      textShadow: "0 0 12px rgba(255,165,0,.35), 0 1px 0 rgba(0,0,0,.6)",
+                      textShadow: `0 0 12px ${C.signGlow}, 0 0 3px ${C.signGlow}, 0 1px 0 rgba(0,0,0,.6)`,
                       overflowWrap: "anywhere",
                     }}
                   >
@@ -859,6 +885,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                     flash={displayFlash}
                     width={DISPLAY_INNER_W}
                     height={DISPLAY_INNER_H}
+                    color={theme.machine.led}
+                    dimColor={theme.machine.ledDim}
                   />
                 </div>
 
@@ -881,7 +909,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                       fontFamily: OSWALD,
                       fontSize: 9,
                       letterSpacing: "0.28em",
-                      color: "rgba(61,255,139,.55)",
+                      color: C.green,
+                      opacity: 0.6,
                     }}
                   >
                     CREDIT
@@ -893,7 +922,7 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                       fontSize: 17,
                       letterSpacing: "0.16em",
                       color: C.green,
-                      textShadow: "0 0 8px rgba(61,255,139,.5)",
+                      textShadow: `0 0 8px ${C.green}`,
                     }}
                   >
                     ₹{creditShown.toFixed(2)}
@@ -914,8 +943,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                     alignItems: "center",
                     gap: 10,
                     padding: "0 10px",
-                    background: "linear-gradient(180deg,#1c393b 0%,#12292b 100%)",
-                    border: "1px solid #08171a",
+                    background: `linear-gradient(180deg, ${C.well} 0%, ${C.well2} 100%)`,
+                    border: `1px solid ${C.edge}`,
                     boxShadow: "inset 0 1px 0 rgba(255,255,255,.08)",
                     opacity: allSoldOut ? 0.5 : 1,
                     cursor: allSoldOut ? "default" : "pointer",
@@ -927,8 +956,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                       fontFamily: OSWALD,
                       fontSize: 10,
                       letterSpacing: "0.24em",
-                      color: "rgba(217,230,227,.75)",
-                      textShadow: "0 1px 0 rgba(255,255,255,.12)",
+                      color: C.ink,
+                      opacity: 0.8,
                     }}
                   >
                     INSERT
@@ -939,7 +968,7 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                       flex: 1,
                       height: 7,
                       background: "linear-gradient(180deg,#000 0%,#0a1416 60%,#16292b 100%)",
-                      border: "1px solid #061214",
+                      border: `1px solid ${C.edge}`,
                       borderRadius: 1,
                       boxShadow: "inset 0 2px 3px rgba(0,0,0,.95), 0 1px 0 rgba(255,255,255,.08)",
                     }}
@@ -995,8 +1024,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: muted ? C.inkDim : C.amber,
-                    borderColor: !touchedSound ? "rgba(255,165,0,.55)" : "#08171a",
+                    color: muted ? C.keyInk : C.red,
+                    borderColor: !touchedSound ? C.amber : undefined,
                   }}
                 >
                   <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
@@ -1021,9 +1050,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                     justifyContent: "center",
                     opacity: stuck ? 1 : 0.42,
                     background: stuck
-                      ? "linear-gradient(180deg,#7a3b32 0%,#552a24 100%)"
-                      : "linear-gradient(180deg,#2d4a4c 0%,#1b3234 100%)",
-                    color: stuck ? "#ffe4dd" : C.inkDim,
+                      ? `linear-gradient(180deg, ${C.red} 0%, color-mix(in srgb, ${C.red} 70%, #000) 100%)`
+                      : `linear-gradient(180deg, ${C.keyHi} 0%, ${C.keyLo} 100%)`,
+                    color: stuck ? "#fff" : C.keyInk,
                   }}
                 >
                   <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10 }}>
@@ -1055,7 +1084,8 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                     fontFamily: OSWALD,
                     fontSize: 7,
                     letterSpacing: "0.28em",
-                    color: "rgba(217,230,227,.32)",
+                    color: C.ink,
+                    opacity: 0.35,
                     paddingBottom: 6,
                   }}
                 >
@@ -1145,9 +1175,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
               alignItems: "center",
               gap: 10,
               padding: "8px 12px",
-              background: "rgba(61,255,139,.08)",
-              border: `1px solid ${C.green}`,
-              borderRadius: 2,
+              background: V.glass,
+              border: `1px solid ${V.edge}`,
+              borderRadius: 18,
             }}
           >
             {!reducedMotion && (
@@ -1156,13 +1186,13 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                 src={templateMedia("vending-machine", "credit-accepted.webp")}
                 alt=""
                 aria-hidden="true"
-                width={44}
-                height={44}
-                style={{ width: 44, height: 44, objectFit: "contain" }}
+                width={48}
+                height={48}
+                style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 12 }}
               />
             )}
-            <span style={{ fontFamily: OSWALD, fontSize: 12, letterSpacing: "0.14em", color: C.green }}>
-              CREDIT ACCEPTED
+            <span style={{ fontFamily: PIXEL, fontSize: 12, letterSpacing: "0.08em", color: V.ink }}>
+              CREDIT ACCEPTED ✦ PUNCH A CODE
             </span>
           </div>
         )}
@@ -1174,9 +1204,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
               alignItems: "center",
               gap: 12,
               padding: "10px 12px",
-              background: "rgba(192,57,43,.1)",
-              border: `1px solid ${C.red}`,
-              borderRadius: 2,
+              background: V.glass,
+              border: `1.5px solid ${C.red}`,
+              borderRadius: 18,
             }}
           >
             {!reducedMotion && (
@@ -1197,12 +1227,12 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                   fontFamily: OSWALD,
                   fontSize: 13,
                   letterSpacing: "0.12em",
-                  color: "#ffd9d2",
+                  color: V.ink,
                 }}
               >
                 IT&apos;S STUCK. SHAKE IT. ({vend.shakes}/{VEND.shakesRequired})
               </p>
-              <p style={{ margin: "3px 0 8px", fontFamily: MONO, fontSize: 11, color: "#c9b2ae" }}>
+              <p style={{ margin: "3px 0 8px", fontFamily: GROTESK, fontSize: 12, color: V.soft }}>
                 {needsButton
                   ? "No motion sensor here — use the button."
                   : "Shake your phone, or press the button."}
@@ -1221,9 +1251,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                   letterSpacing: "0.2em",
                   color: "#fff",
                   background: C.red,
-                  border: "1px solid #7d2317",
-                  borderRadius: 2,
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,.18), 0 2px 0 #5d1a11",
+                  border: "none",
+                  borderRadius: 999,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.25)",
                   touchAction: "manipulation",
                 }}
               >
@@ -1278,8 +1308,9 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
               alignItems: "center",
               gap: 12,
               padding: "12px",
-              border: "1px solid #22403f",
-              borderRadius: 2,
+              border: `1px solid ${V.edge}`,
+              background: V.glass,
+              borderRadius: 18,
             }}
           >
             {!reducedMotion && (
@@ -1300,13 +1331,13 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
                   fontFamily: OSWALD,
                   fontSize: 14,
                   letterSpacing: "0.14em",
-                  color: C.amber,
+                  color: V.ink,
                 }}
               >
                 {ALL_GONE}
               </p>
-              <p style={{ margin: "4px 0 0", fontFamily: MONO, fontSize: 11, color: C.inkDim }}>
-                {data.recipientName}, that&apos;s all eighteen. Tap anything in the tray to read it again.
+              <p style={{ margin: "4px 0 0", fontFamily: GROTESK, fontSize: 12.5, color: V.soft }}>
+                {data.recipientName}, that&apos;s the whole machine. Tap anything in the tray to read it again{hasCards ? " — and don't forget the cards." : "."}
               </p>
             </div>
           </div>
@@ -1315,15 +1346,68 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
         <p
           style={{
             margin: 0,
-            fontFamily: MONO,
-            fontSize: 10.5,
+            fontFamily: GROTESK,
+            fontSize: 12,
             lineHeight: 1.5,
-            color: "rgba(143,168,165,.75)",
+            color: V.faint,
             textAlign: "center",
           }}
         >
           Punch a row (A/B/C), then a number, then ENTER. Credit comes from answering the machine.
         </p>
+      </div>
+        </div>
+
+        {/* ── the story column: memory cards, then the receipt ─────────── */}
+        <div className="vm-col-story">
+          {hasCards && (
+            <MemoryVendor
+              photos={photos}
+              gifs={data.gifs}
+              senderName={data.senderName}
+              recipientName={data.recipientName}
+              ledColor={theme.machine.led}
+              ledDim={theme.machine.ledDim}
+              pulledOn={issued}
+              reducedMotion={reducedMotion}
+              collected={collected}
+              onCollect={collectCard}
+            />
+          )}
+          <ReceiptPrinter
+            machineName={data.machineName}
+            senderName={data.senderName}
+            recipientName={data.recipientName}
+            letter={data.letter}
+            photos={photos}
+            slots={slots}
+            gifs={data.gifs}
+            collectedCount={collected.length}
+            issued={issued}
+            ledColor={theme.machine.led}
+            ledDim={theme.machine.ledDim}
+            reducedMotion={reducedMotion}
+          />
+          {live && (
+            <Link
+              href="/templates"
+              className="lv-focus"
+              style={{
+                display: "block",
+                margin: "8px auto 0",
+                textAlign: "center",
+                fontFamily: GROTESK,
+                fontSize: 13,
+                fontWeight: 700,
+                color: V.soft,
+                textDecoration: "none",
+              }}
+            >
+              Stock a machine for someone ↗
+            </Link>
+          )}
+        </div>
+        </div>
       </div>
 
       {/* A screen-reader route through the machine that does not depend on any
@@ -1342,5 +1426,6 @@ export default function VendingMachineTemplate({ data, mode }: VendingMachineTem
         <Coil code="warm" w={SLOT_W - 4} h={COIL_H} />
       </div>
     </div>
+    </LoveThemeContext.Provider>
   );
 }

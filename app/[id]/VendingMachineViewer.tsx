@@ -6,17 +6,20 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import VendingMachineTemplate from "@/app/(templates)/vending-machine/components/VendingMachineTemplate";
 import { dbToVendingData, MACHINE_MODEL, MACHINE_SERIAL } from "@/app/(templates)/vending-machine/components/types";
+import { pickVendTheme } from "@/app/(templates)/vending-machine/components/themes";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 const STENCIL = "var(--font-oswald), system-ui, sans-serif";
 const TYPED = "var(--font-courier-prime), ui-monospace, monospace";
-const AMBER = "#ffa500";
-const BODY = "#2d5c5c";
 
 /* ─────────────────────────────────────────
-   Password gate — a service panel on the machine, not a modal
+   Password gate — a service panel on the machine, not a modal, in the skin
+   of the machine the sender picked
 ───────────────────────────────────────── */
-function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
+function VendingPasswordGate({ shareId, themeId, onUnlocked }: { shareId: string; themeId: unknown; onUnlocked: () => void }) {
+  const theme = pickVendTheme(typeof themeId === "string" ? themeId : "");
+  const m = theme.machine;
+  const AMBER = m.led;
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +44,7 @@ function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnloc
   }, [pw, shareId, onUnlocked]);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center px-5" style={{ background: "#12181a" }}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center px-5" style={{ background: theme.colors.bg }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -51,15 +54,15 @@ function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnloc
         <div
           className="overflow-hidden"
           style={{
-            borderRadius: 2,
-            border: "1px solid #0d1a1a",
-            background: `linear-gradient(180deg, ${BODY} 0%, #244c4c 42%, #1d4040 100%)`,
+            borderRadius: 24,
+            border: `1px solid ${m.edge}`,
+            background: `linear-gradient(180deg, ${m.plateHi} 0%, ${m.plateLo} 100%)`,
             boxShadow: "0 24px 60px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08)",
           }}
         >
           {/* header plate */}
           <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(0,0,0,.35)" }}>
-            <p style={{ fontFamily: STENCIL, letterSpacing: ".22em", fontSize: 15, color: "#e7efe9" }}>
+            <p style={{ fontFamily: STENCIL, letterSpacing: ".22em", fontSize: 15, color: m.sign, textShadow: `0 0 10px ${m.signGlow}` }}>
               SERVICE PANEL
             </p>
             <p style={{ fontFamily: STENCIL, letterSpacing: ".14em", fontSize: 9, color: "rgba(231,239,233,.55)", marginTop: 2 }}>
@@ -72,7 +75,7 @@ function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnloc
             <div
               className="px-3 py-2 mb-4"
               style={{
-                borderRadius: 2,
+                borderRadius: 10,
                 background: "#0b0b0b",
                 border: "1px solid rgba(0,0,0,.6)",
                 boxShadow: "inset 0 2px 6px rgba(0,0,0,.8)",
@@ -98,7 +101,7 @@ function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnloc
                 aria-label="Access code"
                 className="w-full px-3.5 py-3.5 pr-11 outline-none text-sm"
                 style={{
-                  borderRadius: 2,
+                  borderRadius: 12,
                   fontFamily: TYPED,
                   letterSpacing: ".24em",
                   background: "#101615",
@@ -124,12 +127,12 @@ function VendingPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnloc
               className="w-full flex items-center justify-center gap-2 disabled:opacity-40 active:translate-y-[1px] transition-transform"
               style={{
                 minHeight: 48,
-                borderRadius: 2,
+                borderRadius: 999,
                 fontFamily: STENCIL,
                 letterSpacing: ".18em",
                 fontSize: 14,
-                color: "#12181a",
-                background: "linear-gradient(180deg,#d8dcd6,#a9b0a8)",
+                color: "#fff",
+                background: `linear-gradient(115deg, ${theme.colors.a1}, ${theme.colors.a2} 55%, ${theme.colors.a3})`,
                 border: "1px solid rgba(0,0,0,.45)",
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,.7), 0 2px 0 rgba(0,0,0,.35)",
               }}
@@ -174,7 +177,7 @@ export default function VendingMachineViewer({
   });
 
   if (hasPassword && !unlocked) {
-    return <VendingPasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
+    return <VendingPasswordGate shareId={shareId} themeId={rawData.theme} onUnlocked={() => setUnlocked(true)} />;
   }
 
   // dbToVendingData is the only place that knows A1 never vends and that at most

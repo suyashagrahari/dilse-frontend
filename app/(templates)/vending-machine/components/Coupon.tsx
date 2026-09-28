@@ -84,7 +84,7 @@ export default function Coupon({
             muted
             playsInline
             aria-hidden="true"
-            style={{ width: 108, height: 108, objectFit: "contain" }}
+            style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 20, boxShadow: "0 10px 24px -12px rgba(0,0,0,.5)" }}
           />
         </div>
       )}
@@ -264,10 +264,10 @@ export default function Coupon({
             fontFamily: OSWALD,
             fontSize: 12,
             letterSpacing: "0.12em",
-            color: redeemed ? "#7d8f8c" : "#fff",
-            background: redeemed ? "transparent" : C.red,
-            border: `1px solid ${redeemed ? "#33514f" : "#7d2317"}`,
-            borderRadius: 2,
+            color: redeemed ? "var(--lv-faint)" : "#fff",
+            background: redeemed ? "transparent" : "linear-gradient(115deg, var(--lv-a1), var(--lv-a2))",
+            border: redeemed ? "1px solid var(--lv-edge)" : "none",
+            borderRadius: 999,
             cursor: redeemed ? "default" : "pointer",
             touchAction: "manipulation",
           }}
@@ -284,9 +284,10 @@ export default function Coupon({
             fontFamily: OSWALD,
             fontSize: 12,
             letterSpacing: "0.12em",
-            color: C.ink,
-            border: "1px solid #33514f",
-            borderRadius: 2,
+            color: "var(--lv-ink)",
+            background: "var(--lv-glass)",
+            border: "1px solid var(--lv-edge)",
+            borderRadius: 999,
             touchAction: "manipulation",
           }}
         >
@@ -301,9 +302,9 @@ export default function Coupon({
             fontFamily: OSWALD,
             fontSize: 12,
             letterSpacing: "0.12em",
-            color: C.inkDim,
-            border: "1px solid #22403f",
-            borderRadius: 2,
+            color: "var(--lv-soft)",
+            border: "1px solid var(--lv-edge)",
+            borderRadius: 999,
             touchAction: "manipulation",
           }}
         >
