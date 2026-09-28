@@ -90,7 +90,15 @@ function SubdomainPicker({
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [taken, setTaken] = useState<Record<string, boolean>>({});
+  // Free names from the server, in suggestion order. Each taken idea arrives
+  // already swapped for its first free numbered variant, so every chip works.
+  const [freeIdeas, setFreeIdeas] = useState<{ name: string; from: string }[] | null>(null);
+  // The server's free alternative for a typed name that is taken.
+  const [alternative, setAlternative] = useState<string | null>(null);
+  // Until they type, the field follows the first free suggestion.
+  const [touched, setTouched] = useState(false);
+  // Bumped to force a fresh availability check (after a lost race on save).
+  const [recheck, setRecheck] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const headers = useMemo(
@@ -102,7 +110,7 @@ function SubdomainPicker({
     [token]
   );
 
-  const suggestions = useMemo(() => suggestSubdomains(userName, partner), [userName, partner]);
+  const ideas = useMemo(() => suggestSubdomains(userName, partner), [userName, partner]);
 
   // Lock the page behind the modal.
   useEffect(() => {
@@ -120,6 +128,7 @@ function SubdomainPicker({
   useEffect(() => {
     let live = true;
     const t = window.setTimeout(async () => {
+      if (live) setAlternative(null);
       if (!value) { if (live) { setStatus("idle"); setReason(""); } return; }
       if (localError) { if (live) { setStatus("invalid"); setReason(localError); } return; }
       if (live) setStatus("checking");
@@ -128,33 +137,35 @@ function SubdomainPicker({
         const data = await res.json();
         if (!live) return;
         if (data.available) { setStatus("available"); setReason(""); }
-        else { setStatus("taken"); setReason(data.reason || "Already taken"); }
+        else { setStatus("taken"); setReason(data.reason || "Already taken"); setAlternative(data.alternative || null); }
       } catch {
         if (live) { setStatus("idle"); setReason(""); }
       }
     }, value && !localError ? 380 : 0);
     return () => { live = false; window.clearTimeout(t); };
-  }, [value, localError, headers]);
+  }, [value, localError, headers, recheck]);
 
-  // Mark suggestions somebody already owns, so a tap never lands on a dead end.
+  // One request for every idea: the server answers with names that are free,
+  // swapping a taken idea for its first free numbered variant. Re-run after a
+  // lost race too, so the chip that just got taken is swapped out.
   useEffect(() => {
     let live = true;
     const t = window.setTimeout(async () => {
-      const results = await Promise.all(
-        suggestions.map(async (name) => {
-          try {
-            const res = await fetch(`${API_URL}/auth/subdomain/check?name=${encodeURIComponent(name)}`, { headers });
-            const data = await res.json();
-            return [name, !data.available] as const;
-          } catch {
-            return [name, false] as const;
-          }
-        })
-      );
-      if (live) setTaken((prev) => ({ ...prev, ...Object.fromEntries(results) }));
-    }, 450);
+      try {
+        const res = await fetch(`${API_URL}/auth/subdomain/suggest?names=${encodeURIComponent(ideas.join(","))}`, { headers });
+        const data = await res.json();
+        if (!live || !data.success) return;
+        const list: { name: string; from: string }[] = data.data || [];
+        setFreeIdeas(list);
+        if (!touched && list[0]) setValue(list[0].name);
+      } catch {
+        if (live) setFreeIdeas(ideas.map((n) => ({ name: n, from: n })));
+      }
+    }, 300);
     return () => { live = false; window.clearTimeout(t); };
-  }, [suggestions, headers]);
+  }, [ideas, headers, touched, recheck]);
+
+  const pick = (name: string) => { setTouched(true); setSaveError(""); setValue(name); inputRef.current?.focus(); };
 
   const save = async () => {
     if (status !== "available" || saving) return;
@@ -164,8 +175,11 @@ function SubdomainPicker({
       await dispatch(setSubdomain(value)).unwrap();
       onSaved(value);
     } catch (e) {
+      // Most often somebody claimed it a moment ago. Re-check so the server's
+      // free alternative shows up as a one-tap fix.
       setSaveError(typeof e === "string" ? e : "Couldn't save that name — try again.");
       setStatus("taken");
+      setRecheck((n) => n + 1);
     } finally {
       setSaving(false);
     }
@@ -253,7 +267,7 @@ function SubdomainPicker({
                 id="sd-name"
                 ref={inputRef}
                 value={value}
-                onChange={(e) => { setSaveError(""); setValue(sanitizeSubdomain(e.target.value)); }}
+                onChange={(e) => { setTouched(true); setSaveError(""); setValue(sanitizeSubdomain(e.target.value)); }}
                 onKeyDown={(e) => e.key === "Enter" && void save()}
                 placeholder="aarav-loves-riya"
                 autoComplete="off"
@@ -274,6 +288,21 @@ function SubdomainPicker({
                 status === "checking" ? "Checking…" :
                 reason || `Letters, numbers and hyphens · ${value.length}/${SUBDOMAIN_MAX}`)}
             </p>
+            <AnimatePresence initial={false}>
+              {status === "taken" && alternative && alternative !== value && (
+                <motion.button
+                  key={alternative}
+                  type="button"
+                  className="sdAlt"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => pick(alternative)}
+                >
+                  <Sparkles size={13} /> Use <b>{alternative}</b> instead — it&rsquo;s free
+                </motion.button>
+              )}
+            </AnimatePresence>
 
             {/* Their name makes the suggestions personal. Optional. */}
             <div className="sdPartner">
@@ -289,25 +318,23 @@ function SubdomainPicker({
 
             <p className="sdLabel sdIdeas">Try one of these</p>
             <div className="sdChips">
-              {suggestions.map((sug, i) => {
-                const isTaken = taken[sug];
-                return (
-                  <motion.button
-                    key={sug}
-                    type="button"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className={`sdChip${sug === value ? " is-on" : ""}${isTaken ? " is-taken" : ""}`}
-                    disabled={isTaken}
-                    title={isTaken ? "Already taken" : `Use ${sug}`}
-                    onClick={() => { setSaveError(""); setValue(sug); inputRef.current?.focus(); }}
-                  >
-                    {sug}
-                    {isTaken && <span className="sdChipTaken">taken</span>}
-                  </motion.button>
-                );
-              })}
+              {freeIdeas === null
+                ? ideas.map((n) => <span key={n} className="sdChip is-ghost" aria-hidden="true">{n}</span>)
+                : freeIdeas.map(({ name, from }, i) => (
+                    <motion.button
+                      key={name}
+                      type="button"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className={`sdChip${name === value ? " is-on" : ""}`}
+                      title={name !== from ? `${from} is taken — ${name} is free` : `Use ${name}`}
+                      onClick={() => pick(name)}
+                    >
+                      {name}
+                      {name !== from && <span className="sdChipNew">free</span>}
+                    </motion.button>
+                  ))}
             </div>
 
             <p className="sdNote">
@@ -406,8 +433,15 @@ function SubdomainPicker({
           border: 1px solid rgba(201,168,76,0.4); transition: transform .15s, background .2s, color .2s, box-shadow .2s }
         .sdChip:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 16px -10px rgba(61,12,17,0.5) }
         .sdChip.is-on { color: #fff6e6; background: linear-gradient(135deg, #5a1520, #3d0c11); border-color: transparent }
-        .sdChip.is-taken { opacity: .45; cursor: not-allowed; text-decoration: line-through }
-        .sdChipTaken { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; color: #b3261e }
+        .sdChip.is-ghost { color: transparent; background: linear-gradient(90deg, #f6ece2, #fbf4ec, #f6ece2); background-size: 200% 100%;
+          border-color: rgba(201,168,76,0.2); animation: sdShimmer 1.2s linear infinite; cursor: default }
+        @keyframes sdShimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+        .sdChipNew { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 1px 5px; border-radius: 99px; background: rgba(58,167,109,0.14); color: #2f8a57 }
+        .sdChip.is-on .sdChipNew { background: rgba(255,255,255,0.18); color: #bff0d2 }
+        .sdAlt { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 7px 12px; border-radius: 99px; cursor: pointer;
+          font-size: 12.5px; font-weight: 700; color: #2f8a57; background: rgba(58,167,109,0.1); border: 1px solid rgba(58,167,109,0.35) }
+        .sdAlt b { color: #1e6b43 }
+        .sdAlt:hover { background: rgba(58,167,109,0.18) }
 
         .sdNote { display: flex; align-items: center; gap: 6px; margin: 14px 0 0; padding: 9px 11px; border-radius: 12px; font-size: 12px; color: #6f4c4c;
           background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25) }
