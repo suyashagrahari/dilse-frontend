@@ -3,7 +3,6 @@
 import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import { EVENTS } from "@/lib/analytics/events";
@@ -38,21 +37,23 @@ const TemplateCard = memo(function TemplateCard({
   const pricing = pricingFor(template.slug);
 
   return (
-    <motion.div
-      layout
-      key={template.slug}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ delay: index * 0.03, type: "spring", stiffness: 300, damping: 25 }}
-    >
+    // ── WHY NO FRAMER-MOTION HERE ──────────────────────────────────────────────
+    //
+    // The gallery renders fifty of these. Each used to carry a `layout` motion
+    // wrapper, a whileHover that animated box-shadow, and three live
+    // backdrop-filter blurs — about 150 blur layers the GPU re-composited on
+    // every scroll frame, which is what made the page feel heavy on a phone.
+    // The entrance and hover are now CSS on transform/opacity only, the tints
+    // are solid, and `content-visibility: auto` lets the browser skip drawing
+    // cards that are off-screen. See TEMPLATE_CARD_CSS below.
+    <div className="tplCard" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
       {/* onClick only records the click; navigation is still handled entirely by
           Link. The favourite button's handler calls stopPropagation (see
           handleFavorite in app/(app)/templates/page.tsx), so favouriting a card
           does not reach this and is not miscounted as an open. */}
       <Link
         href={`/${template.slug}`}
-        className="block group"
+        className="block group tplLink"
         onClick={() =>
           track(EVENTS.TEMPLATE_CARD_CLICKED, {
             template: template.slug,
@@ -61,12 +62,7 @@ const TemplateCard = memo(function TemplateCard({
           })
         }
       >
-        <motion.div
-          className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden transition-all duration-300"
-          style={{ border: "1px solid rgba(61,12,17,0.15)" }}
-          whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 60px rgba(61,12,17,0.2), 0 0 0 1.5px rgba(201,168,76,0.5)" }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <div className="tplInner relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden">
           {/* Background */}
           <div className="absolute inset-0" style={{ background: "var(--app-card-img-bg)" }} />
 
@@ -78,7 +74,7 @@ const TemplateCard = memo(function TemplateCard({
                   src={template.coverImage}
                   alt={template.title}
                   fill
-                  className="object-cover"
+                  className="object-cover tplImg"
                   sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
                   loading={index < 4 ? "eager" : "lazy"}
                   // The first row is the shop window — fetch it ahead of everything else.
@@ -89,7 +85,7 @@ const TemplateCard = memo(function TemplateCard({
                 className="absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.82))",
+                    "linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0.02) 38%, rgba(0,0,0,0.82))",
                 }}
               />
             </>
@@ -101,8 +97,8 @@ const TemplateCard = memo(function TemplateCard({
             style={{ background: "linear-gradient(to right, var(--app-accent), transparent)" }}
           />
 
-          {/* Guide badge — top-right, opposite the premium ribbon so the two
-              never collide on a template that is both.
+          {/* Guide badge — top-left, in the corner the old emoji tile used to
+              take, so it never collides with the favourite heart on the right.
 
               This is the only discovery path from the gallery into the guides,
               and it earns its place: someone scanning fifty cards for one they
@@ -111,16 +107,15 @@ const TemplateCard = memo(function TemplateCard({
               card still goes to the template, because that is what someone
               clicking a template card means to do. */}
           {hasGuide && (
-            <div className="absolute top-0 right-0 z-20">
+            <div className="absolute top-0 left-0 z-20">
               <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-bl-xl rounded-tr-2xl text-[9px] font-black uppercase tracking-widest"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-br-xl rounded-tl-2xl text-[9px] font-black uppercase tracking-widest"
                 style={{
-                  background: "rgba(26,5,8,0.72)",
-                  backdropFilter: "blur(6px)",
+                  background: "rgba(26,5,8,0.82)",
                   color: "#f2cf74",
                   border: "1px solid rgba(242,207,116,0.42)",
                   borderTop: "none",
-                  borderRight: "none",
+                  borderLeft: "none",
                 }}
               >
                 <PlayCircle size={9} />
@@ -131,20 +126,9 @@ const TemplateCard = memo(function TemplateCard({
 
           {/* Card content */}
           <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
-            {/* Top row: emoji icon + favorite button */}
-            <div className="flex items-start justify-between">
-              <motion.div
-                className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: "rgba(0,0,0,0.35)",
-                  backdropFilter: "blur(8px)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                }}
-                whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="text-xl md:text-2xl">{template.emoji}</span>
-              </motion.div>
+            {/* Top row: favourite only — the per-template emoji tile added
+                nothing the cover image does not already say. */}
+            <div className="flex items-start justify-end">
               <FavoriteButton
                 isFavorited={isFav}
                 onClick={(e) => onFavorite(e, template.slug)}
@@ -155,11 +139,7 @@ const TemplateCard = memo(function TemplateCard({
             <div>
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
-                style={{
-                  background: "rgba(201,168,76,0.18)",
-                  color: "#c9a84c",
-                  backdropFilter: "blur(4px)",
-                }}
+                style={{ background: "rgba(26,5,8,0.55)", color: "#e7c979", border: "1px solid rgba(201,168,76,0.35)" }}
               >
                 {template.type}
               </span>
@@ -168,7 +148,7 @@ const TemplateCard = memo(function TemplateCard({
               </h3>
               <p
                 className="text-[11px] md:text-xs leading-relaxed line-clamp-2"
-                style={{ color: "rgba(255,255,255,0.45)" }}
+                style={{ color: "rgba(255,255,255,0.62)" }}
               >
                 {template.description}
               </p>
@@ -197,10 +177,38 @@ const TemplateCard = memo(function TemplateCard({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </Link>
-    </motion.div>
+    </div>
   );
 });
+
+/**
+ * Gallery card styles, rendered once by the page (not per card).
+ * Transform/opacity only; the hover shadow lives on a pseudo-element whose
+ * opacity changes, so no box-shadow is ever animated.
+ */
+export const TEMPLATE_CARD_CSS = `
+.tplCard { content-visibility: auto; contain-intrinsic-size: auto 240px; animation: tplIn .5s cubic-bezier(.22,1,.36,1) backwards; }
+@media (min-width: 768px) { .tplCard { contain-intrinsic-size: auto 330px; } }
+@media (min-width: 1024px) { .tplCard { contain-intrinsic-size: auto 380px; } }
+@keyframes tplIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.tplLink { position: relative; border-radius: 1rem; -webkit-tap-highlight-color: transparent; }
+@media (min-width: 768px) { .tplLink { border-radius: 1.5rem; } }
+.tplInner { border: 1px solid rgba(61,12,17,0.15); transform: translateZ(0); transition: transform .28s cubic-bezier(.22,1,.36,1), border-color .28s ease; }
+.tplLink::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  box-shadow: 0 20px 44px -18px rgba(61,12,17,0.45), 0 0 0 1.5px rgba(201,168,76,0.55); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); }
+.tplImg { transition: transform .6s cubic-bezier(.22,1,.36,1); }
+@media (hover: hover) {
+  .tplLink:hover .tplInner { transform: translateY(-6px); border-color: rgba(201,168,76,0.5); }
+  .tplLink:hover::after { opacity: 1; transform: translateY(-6px); }
+  .tplLink:hover .tplImg { transform: scale(1.05); }
+}
+.tplLink:active .tplInner { transform: scale(0.985); }
+@media (prefers-reduced-motion: reduce) {
+  .tplCard { animation: none; }
+  .tplInner, .tplImg, .tplLink::after { transition: none; }
+}
+`;
 
 export default TemplateCard;
