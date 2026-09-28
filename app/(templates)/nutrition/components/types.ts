@@ -8,6 +8,8 @@
 // weights are exported from this file rather than typed as literals in the
 // renderer so there is exactly one place to get them wrong.
 
+import type { LovePhoto } from "../../_love/types";
+
 /**
  * The four rule weights, in the positions a real panel uses them.
  *
@@ -112,7 +114,29 @@ export interface NutritionData {
    * emotional payload of this template. It must NOT be styled to match the label.
    */
   message: string[];
+  /** Legacy single product shot. New pages use `photos[0]` as the front of pack. */
   photoUrl?: string;
   /** "Distributed by: <sender>, Bengaluru" — 7px, under the barcode. */
   distributedBy?: string;
+
+  // ── Love kit ────────────────────────────────────────────────────────────
+  /**
+   * "Servings" — up to 10 photos, each framed in the editor with a caption and
+   * a memory note. The first one is the product shot on the front of pack.
+   */
+  photos: LovePhoto[];
+  /** Up to three GIFs — printed as "Side effects may include…". */
+  gifs: string[];
+  /**
+   * The main letter — "Directions for use", folded inside the wrapper and torn
+   * open at the very end. Supersedes `message`, which is kept in step on the
+   * wire (paragraphs) so older readers of the row still get the sincere part.
+   */
+  letter: string;
+  /** Packaging id — one of NUTRITION_THEMES. */
+  theme: string;
+  /** The question printed on the wrapper before it tears open ("" = default). */
+  lockQuestion: string;
+  /** The label of the button that tears it open ("" = default). */
+  lockAnswer: string;
 }
