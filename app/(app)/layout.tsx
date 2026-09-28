@@ -10,6 +10,7 @@ import AppSplash from "@/components/AppSplash";
 import { ShareSheetHost } from "@/components/share/ShareSheetHost";
 import FeedbackHost from "@/components/FeedbackHost";
 import WelcomeHost from "@/components/WelcomeHost";
+import SubdomainOnboardingHost from "@/components/subdomain/SubdomainOnboardingHost";
 import ToastHost from "@/components/toast/ToastHost";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
@@ -52,6 +53,7 @@ export default function AppLayout({
             is not simply left out. */}
         <WelcomeHost />
         <ToastHost />
+        <SubdomainOnboardingHost />
       </AppLayoutShell>
     </TemplateSearchProvider>
   );
