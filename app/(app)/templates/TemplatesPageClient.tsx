@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
-import TemplateCard from "@/components/TemplateCard";
+import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
 import ApologyTemplateCard from "@/components/ApologyTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
@@ -314,28 +314,28 @@ function TemplatesContent() {
           src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
-          style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER }}
+          style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER, willChange: "transform" }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
-          style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER }}
+          style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER, willChange: "transform" }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
-          style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER }}
+          style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER, willChange: "transform" }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
           alt=""
           aria-hidden="true"
-          style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER }}
+          style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER, willChange: "transform" }}
         />
         <div style={{ position: "absolute", top: "12%", right: "10%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle,rgba(201,168,76,0.14) 0%,transparent 72%)" }} />
         <div style={{ position: "absolute", bottom: "20%", left: "6%", width: 290, height: 290, borderRadius: "50%", background: "radial-gradient(circle,rgba(61,12,17,0.08) 0%,transparent 74%)" }} />
@@ -366,9 +366,10 @@ function TemplatesContent() {
             minWidth: 240,
             minHeight: 58,
             padding: "2px 12px",
-            background: "rgba(245,237,230,0.92)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
+            // Opaque rather than blurred: a backdrop-filter here re-blurs the
+            // scrolling cards underneath on every frame, the costliest single
+            // thing on this page on a phone.
+            background: "rgba(245,237,230,0.97)",
             border: "1px solid rgba(61,12,17,0.12)",
             boxShadow: "0 6px 24px rgba(61,12,17,0.12)",
           }}
@@ -519,7 +520,8 @@ function TemplatesContent() {
 
         {/* Ready templates */}
         {readyTemplates.length > 0 && (
-          <AnimatePresence mode="popLayout">
+          <>
+            <style>{TEMPLATE_CARD_CSS}</style>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {readyTemplates.map((template, i) =>
                 template.slug === "apology-dashboard" ? (
@@ -541,7 +543,7 @@ function TemplatesContent() {
                 )
               )}
             </div>
-          </AnimatePresence>
+          </>
         )}
 
         {/* Coming Soon */}
@@ -568,15 +570,12 @@ function TemplatesContent() {
               {/* Bottom accent line */}
               <div className="w-16 h-[3px] rounded-full mt-5" style={{ background: "var(--app-accent-a35)" }} />
             </motion.div>
-            <AnimatePresence mode="popLayout">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            <style>{TEMPLATE_CARD_CSS}</style>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 {comingSoonTemplates.map((template, i) => {
                   const comingSoonImg = COMING_SOON_IMAGES[template.slug];
                   return (
-                    <motion.div key={template.slug} layout
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ delay: i * 0.03, type: "spring", stiffness: 300, damping: 25 }}>
+                    <div key={template.slug} className="tplCard" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                       <div className="relative">
                         <div className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden" style={{ border: "1px solid var(--app-border)" }}>
                           <div className="absolute inset-0" style={{ background: "transparent" }} />
@@ -587,10 +586,7 @@ function TemplatesContent() {
                           )}
                           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85))" }} />
                           <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center"
-                              style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                              <span className="text-xl md:text-2xl">{template.emoji}</span>
-                            </div>
+                            <span />
                             <div>
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
                                 style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
@@ -603,16 +599,15 @@ function TemplatesContent() {
                         </div>
                         <div className="absolute inset-0 rounded-2xl md:rounded-3xl flex items-center justify-center z-20 pointer-events-none">
                           <span className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
-                            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(10px)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            style={{ background: "rgba(0,0,0,0.72)", color: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.18)" }}>
                             Coming Soon
                           </span>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
-              </div>
-            </AnimatePresence>
+            </div>
           </>
         )}
 
