@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ellipsis, Heart, Home, LayoutTemplate, ScrollText } from "lucide-react";
+import { Ellipsis, Home, LayoutTemplate, MessageSquareHeart, ScrollText } from "lucide-react";
 import MoreDrawer from "@/components/MoreDrawer";
 
 export default function BottomNav() {
@@ -29,11 +29,15 @@ export default function BottomNav() {
   const activeSlot = (() => {
     if (moreOpen) return 4;
     if (pathname.startsWith("/templates")) return 0;
-    if (pathname.startsWith("/favorites") || pathname.startsWith("/saves")) return 1;
+    // The second slot is the Love Wall — what creators say about SubhSandesh.
+    // Favorites moved into the More drawer, where the rest of "your stuff" is.
+    if (pathname.startsWith("/feedback")) return 1;
     if (pathname === "/") return 2;
     if (pathname.startsWith("/manifesto")) return 3;
     if (
       pathname.startsWith("/profile") ||
+      pathname.startsWith("/favorites") ||
+      pathname.startsWith("/saves") ||
       pathname.startsWith("/guides") ||
       pathname.startsWith("/blog") ||
       pathname.startsWith("/about-us") ||
@@ -51,7 +55,7 @@ export default function BottomNav() {
 
   const bubbleIcon = [
     <LayoutTemplate key="b-template" size={23} strokeWidth={2.1} />,
-    <Heart key="b-favorite" size={23} strokeWidth={2.1} />,
+    <MessageSquareHeart key="b-lovewall" size={23} strokeWidth={2.1} />,
     <Home key="b-home" size={23} strokeWidth={2.1} />,
     <ScrollText key="b-manifesto" size={23} strokeWidth={2.1} />,
     <Ellipsis key="b-more" size={23} strokeWidth={2.1}  />,
@@ -155,10 +159,10 @@ export default function BottomNav() {
             icon={<LayoutTemplate size={20} color={activeSlot === 0 ? activeColor : mutedColor} strokeWidth={1.9} />}
           />
           <TabItem
-            href="/favorites"
-            label="FAVORITE"
+            href="/feedback"
+            label="LOVE WALL"
             slot={1}
-            icon={<Heart size={20} color={activeSlot === 1 ? activeColor : mutedColor} strokeWidth={1.9} />}
+            icon={<MessageSquareHeart size={20} color={activeSlot === 1 ? activeColor : mutedColor} strokeWidth={1.9} />}
           />
 
           <TabItem
