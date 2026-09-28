@@ -636,7 +636,7 @@ export default function FeedbackWall({ initial, initialWords = true }: FeedbackW
           background: linear-gradient(180deg, #fffdfb 0%, #fff6ee 100%);
           border: 1px solid ${BRAND.border};
           box-shadow: 0 1px 0 rgba(61,12,17,0.03), 0 10px 24px -18px rgba(61,12,17,0.4);
-          animation: fbRise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: fbRise 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
           transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, border-color 260ms ease;
         }
         @media (min-width: 680px) { .fbCard { margin-bottom: 16px; padding: 18px 18px 15px } }
