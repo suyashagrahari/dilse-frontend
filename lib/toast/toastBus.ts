@@ -43,6 +43,7 @@
 import { useSyncExternalStore } from "react";
 
 import { greetThenRun } from "@/lib/welcome/welcomeBus";
+import { requestSubdomain } from "@/lib/subdomainRequest";
 
 export type ToastType = "success" | "info" | "publish" | "error";
 
@@ -154,6 +155,10 @@ export function pushToast(input: ToastInput): number {
   // unchanged: the caller still gets a usable handle synchronously.
   if (type === "publish") {
     greetThenRun(() => show(id, input, type));
+    // A page was just made: if its creator has no subdomain yet, this is when
+    // the picker asks for one. After the toast is queued and guarded, so the
+    // announcement can never be lost to it.
+    try { requestSubdomain(); } catch { /* never block the toast */ }
     return id;
   }
 

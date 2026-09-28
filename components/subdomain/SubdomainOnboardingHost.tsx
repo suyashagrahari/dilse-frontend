@@ -1,22 +1,23 @@
 "use client";
 
-// ─── First-login subdomain picker ────────────────────────────────────────────
+// ─── The subdomain picker ────────────────────────────────────────────────────
 //
 // Every page a creator publishes lives at `{their-name}.subhsandesh.in/{id}`,
-// so the name is asked for once, right after they sign in — however they got
-// there: the header's Sign in, or the AuthModal a Publish click raised halfway
-// through building a page. It is mandatory: no close button, no Escape, no
-// click-outside. The only other way out is "Not you? Log out".
+// so the name is asked for when they MAKE a page — the moment it is published
+// (see lib/subdomainRequest.ts) — and only if they have none yet. Simply
+// arriving, browsing or signing in never raises it. Once raised it is
+// mandatory: no close button, no Escape, no click-outside; the only other way
+// out is "Not you? Log out".
 //
-// ── WHY IT IS A HOST AND NOT A STEP INSIDE AuthModal ────────────────────────
+// ── WHY IT HANGS OFF THE PUBLISH, NOT OFF EACH EDITOR ──────────────────────
 //
-// Signing in flips `isAuthenticated`, and every editor's deferred publish
-// resumes on that flip — forty-odd hooks, none of which could be made to wait
-// for a modal without touching each of them. So this listens to the store
-// instead: whenever a signed-in user has no subdomain, it appears, on every
-// route group, over everything. A publish that resumes underneath it simply
-// finishes; the share sheet then rewrites the link onto the name picked here
-// (see `withUserSubdomain`), so the creator still sends their pretty link.
+// Forty-four editors publish, each its own way (some after an AuthModal whose
+// deferred publish resumes on the sign-in flip). The one thing they all share
+// is the publish toast, so that is what raises the request, and this host —
+// mounted once per route group — shows the picker over everything. The link
+// the publish returned may predate the name; the share sheet rewrites it onto
+// the name picked here (see `withUserSubdomain`), so the creator still sends
+// their pretty link.
 //
 // Not shown during an impersonation session: the server blocks subdomain
 // changes there, and a super admin viewing as somebody must not pick one for
@@ -29,6 +30,7 @@ import { Check, Heart, Loader2, Lock, LogOut, PenLine, Sparkles, X } from "lucid
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser, setSubdomain } from "@/store/authSlice";
 import { getImpersonation } from "@/lib/impersonation";
+import { clearSubdomainRequest, useSubdomainRequested } from "@/lib/subdomainRequest";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import {
   LINK_DOMAIN,
@@ -47,13 +49,22 @@ const useHydrated = () => useSyncExternalStore(noop, () => true, () => false);
 export default function SubdomainOnboardingHost() {
   const hydrated = useHydrated();
   const { isAuthenticated, user, accessToken } = useAppSelector((s) => s.auth);
+  const requested = useSubdomainRequested();
+  // A publish by somebody who already has a name must not leave a request
+  // behind for whoever signs in next in this tab. (Not keyed on "signed out":
+  // right after a reload the session is still being restored, and that would
+  // drop a real request.)
+  useEffect(() => {
+    if (requested && user?.subdomain) clearSubdomainRequest();
+  }, [requested, user?.subdomain]);
   // Kept open for the success beat after the name is saved, even though the
   // store then says the user has a subdomain.
   const [celebrating, setCelebrating] = useState<string | null>(null);
 
   if (!hydrated || !isAuthenticated || !user || !accessToken) return null;
   if (getImpersonation()) return null;
-  if (user.subdomain && !celebrating) return null;
+  // Only when a page was just made (or during the success beat after saving).
+  if (!celebrating && (!requested || user.subdomain)) return null;
 
   return (
     <SubdomainPicker
@@ -62,6 +73,7 @@ export default function SubdomainOnboardingHost() {
       token={accessToken}
       celebrating={celebrating}
       onSaved={(name) => {
+        clearSubdomainRequest();
         setCelebrating(name);
         window.setTimeout(() => setCelebrating(null), 2600);
       }}
@@ -347,7 +359,7 @@ function SubdomainPicker({
               {saving ? "Saving…" : "Claim my link"}
             </button>
 
-            <button type="button" className="sdOut" onClick={() => void dispatch(logoutUser())}>
+            <button type="button" className="sdOut" onClick={() => { clearSubdomainRequest(); void dispatch(logoutUser()); }}>
               <LogOut size={12} /> Not you? Log out
             </button>
           </div>
