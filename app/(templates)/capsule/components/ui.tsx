@@ -2,15 +2,61 @@
 
 // ─── Capsule — shared chrome ─────────────────────────────────────────────────
 
+import { useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { useReducedMotion } from "framer-motion";
+import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
+import { LoveSky, LoveThemeContext } from "../../_love/LoveKit";
 import { MONO, PALETTE, SERIF, TAP_TARGET_PX, UI } from "./types";
-import { PaperTexture, paperFill } from "./paper";
+import { PaperTexture } from "./paper";
+import { capsuleHand } from "./fonts";
+import { capsuleTheme, capsuleThemeVars } from "./themes";
+import { CapsuleThemeContext, useCapsuleTheme } from "./themeContext";
 
-/** The 380px portrait page. Everything sits on paper. */
-export function Frame({ children, seed = "capsule" }: { children: React.ReactNode; seed?: string }) {
+/**
+ * Mounts one theme: its custom properties, the three type families, and the
+ * context the love-kit pieces read. Wraps the editor page AND the template, so
+ * the preview chrome and the published page are painted by the same theme.
+ */
+export function CapsuleScope({
+  themeId,
+  children,
+  className,
+  style,
+}: {
+  themeId: string | undefined | null;
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const theme = capsuleTheme(themeId);
   return (
-    <div className="relative min-h-[100dvh] w-full" style={{ ...paperFill(seed), color: PALETTE.ink }}>
-      <PaperTexture seed={`${seed}-page`} opacity={0.05} baseFrequency={0.75} />
-      <div className="relative mx-auto w-full" style={{ maxWidth: 380 }}>
+    <CapsuleThemeContext.Provider value={theme}>
+      <LoveThemeContext.Provider value={theme}>
+        <div
+          className={`${DATE_FONT_VARS} ${capsuleHand.variable} lv-root ${className ?? ""}`}
+          data-capsule-theme={theme.id}
+          style={{ ...capsuleThemeVars(theme), color: PALETTE.ink, ...style }}
+        >
+          {children}
+        </div>
+      </LoveThemeContext.Provider>
+    </CapsuleThemeContext.Provider>
+  );
+}
+
+/**
+ * The page. The theme's sky sits fixed behind it; everything else is a
+ * centred column — 440px for the ceremony screens, wider for the keepsakes.
+ */
+export function Frame({ children, seed = "capsule", wide = false }: { children: React.ReactNode; seed?: string; wide?: boolean }) {
+  const theme = useCapsuleTheme();
+  const reduce = useReducedMotion() ?? false;
+  return (
+    <div className="relative min-h-[100dvh] w-full" style={{ color: PALETTE.ink, overflowX: "clip", background: "var(--lv-base)" }}>
+      <LoveSky theme={theme} reduceMotion={reduce} />
+      <PaperTexture seed={`${seed}-page`} opacity={theme.dark ? 0.03 : 0.05} baseFrequency={0.75} />
+      <div className="relative mx-auto w-full" style={{ maxWidth: wide ? 760 : 440, zIndex: 1 }}>
         {children}
       </div>
     </div>
@@ -39,9 +85,14 @@ export function TapButton({
   style?: React.CSSProperties;
 }) {
   const palette: Record<string, React.CSSProperties> = {
-    wax: { background: PALETTE.wax, color: PALETTE.paper, border: `1px solid ${PALETTE.waxDeep}` },
+    wax: {
+      background: `linear-gradient(180deg, ${PALETTE.waxHi} -40%, ${PALETTE.wax} 55%, ${PALETTE.waxDeep} 140%)`,
+      color: PALETTE.paper,
+      border: `1px solid ${PALETTE.waxDeep}`,
+      boxShadow: `0 1px 0 rgba(255,255,255,.35) inset, 0 12px 26px -14px ${PALETTE.waxDeep}`,
+    },
     amber: { background: PALETTE.amberWash, color: PALETTE.amber, border: `1px solid ${PALETTE.amber}` },
-    quiet: { background: "rgba(255,255,255,.55)", color: PALETTE.ink, border: `1px solid ${PALETTE.edge}` },
+    quiet: { background: PALETTE.quiet, color: PALETTE.ink, border: `1px solid ${PALETTE.edge}` },
     ghost: { background: "transparent", color: PALETTE.inkSoft, border: "1px solid transparent" },
   };
   return (
@@ -50,14 +101,14 @@ export function TapButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`inline-flex items-center justify-center gap-2 rounded-[6px] px-4 disabled:opacity-45 ${full ? "w-full" : ""}`}
+      className={`cp-press inline-flex items-center justify-center gap-2 rounded-full px-5 disabled:opacity-45 ${full ? "w-full" : ""}`}
       style={{
-        minHeight: TAP_TARGET_PX,
+        minHeight: TAP_TARGET_PX + 4,
         minWidth: TAP_TARGET_PX,
         fontFamily: UI,
         fontSize: 15,
-        fontWeight: 600,
-        letterSpacing: 0.1,
+        fontWeight: 700,
+        letterSpacing: "-0.01em",
         touchAction: "manipulation",
         ...palette[tone],
         ...style,
@@ -132,30 +183,71 @@ export function Rule({ style }: { style?: React.CSSProperties }) {
 }
 
 /**
- * The DEBUG affordances. Deliberately ugly and deliberately labelled — these
- * exist for this session's testing and must never be mistaken for product.
+ * The preview-only time machine: a floating pill in the demo and in the
+ * sender's own preview that jumps to opening day. It can only ever act on
+ * content already in this tab (the demo, or the capsule this tab just wrote) —
+ * a published capsule's contents are on the server, which will not send them
+ * early, so there is nothing for it to reveal there.
  */
-export function DebugBar({ children }: { children: React.ReactNode }) {
+export function PreviewBar({ children, bottom = 16 }: { children: React.ReactNode; bottom?: number }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-2 px-4 py-2"
-      style={{ background: "#1b1b1b", color: "#8de08d", fontFamily: MONO, fontSize: 11 }}
+      className="fixed left-1/2 z-[118] flex max-w-[calc(100vw-24px)] -translate-x-1/2 items-center gap-1.5 rounded-full p-1.5"
+      style={{
+        bottom: `calc(${bottom}px + env(safe-area-inset-bottom, 0px))`,
+        background: "rgba(20,14,30,.82)",
+        border: "1px solid rgba(255,255,255,.16)",
+        boxShadow: "0 18px 40px -16px rgba(0,0,0,.6)",
+        fontFamily: UI,
+      }}
     >
-      <span style={{ opacity: 0.6 }}>DEBUG</span>
       {children}
     </div>
   );
 }
 
-export function DebugButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function PreviewButton({ label, onClick, primary = false, icon }: { label: string; onClick: () => void; primary?: boolean; icon?: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded-sm px-2 py-1"
-      style={{ background: "#2c2c2c", color: "#8de08d", fontFamily: MONO, fontSize: 11, border: "1px solid #3d5c3d" }}
+      className="cp-press inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5"
+      style={{
+        minHeight: 40,
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: "-0.01em",
+        color: primary ? "#1a1320" : "#fff",
+        background: primary ? "linear-gradient(115deg, var(--lv-a3), var(--lv-a2))" : "rgba(255,255,255,.1)",
+        touchAction: "manipulation",
+      }}
     >
-      [{label}]
+      {icon}
+      {label}
     </button>
   );
+}
+
+/** A small uppercase grotesk label — section kickers. */
+export function Kicker({ children, colour = PALETTE.inkSoft, style }: { children: React.ReactNode; colour?: string; style?: React.CSSProperties }) {
+  return (
+    <p style={{ margin: 0, fontFamily: UI, fontSize: 11, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: colour, ...style }}>
+      {children}
+    </p>
+  );
+}
+
+const noop = () => () => {};
+
+/**
+ * Portals an overlay to <body> — out from under the page's stacking contexts,
+ * so nothing (the preview's top bar included) can sit on top of it — and
+ * re-mounts the active theme there, since the custom properties do not follow
+ * a portal.
+ */
+export function ThemedPortal({ children }: { children: React.ReactNode }) {
+  const theme = useCapsuleTheme();
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  if (!hydrated) return null;
+  return createPortal(<CapsuleScope themeId={theme.id}>{children}</CapsuleScope>, document.body);
 }

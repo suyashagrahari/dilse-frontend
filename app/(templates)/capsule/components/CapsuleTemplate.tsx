@@ -14,6 +14,8 @@
 // `SealedCapsuleView`. The clock only draws the countdown and the wear stage.
 
 import { useCallback, useMemo, useState } from "react";
+import { Camera, Play, RotateCcw } from "lucide-react";
+import { BrandBadge } from "../../_love/LoveKit";
 import {
   COPY,
   MONO,
@@ -33,49 +35,73 @@ import OpeningCeremony from "./OpeningCeremony";
 import JudgingScreen from "./JudgingScreen";
 import ScorecardScreen from "./ScorecardScreen";
 import { DeclinedScreen, SoloScreen } from "./SoloScreen";
-import { DebugBar, DebugButton, Frame } from "./ui";
+import KeepsakesScreen, { hasKeepsakes } from "./Keepsakes";
+import { CapsuleScope, Frame, PreviewBar, PreviewButton } from "./ui";
+
+type Phase = OpeningPhase | "keepsakes";
 
 export interface CapsuleTemplateProps {
   view: CapsuleView;
   mode: "demo" | "live";
   shareId?: string;
   hasPassword?: boolean;
+  /** The sender's live theme pick in the editor preview. Wins over the view's. */
+  themeOverride?: string;
+  /** Set by the editor when its own preview bar is showing; the demo bar hides. */
+  hideDemoBar?: boolean;
+  /** Where the opened flow starts. The editor's "jump to the keepsakes" uses it. */
+  startAt?: "ceremony" | "keepsakes";
 }
 
-export default function CapsuleTemplate({ view, mode }: CapsuleTemplateProps) {
+export default function CapsuleTemplate({ view, mode, themeOverride, hideDemoBar, startAt = "ceremony" }: CapsuleTemplateProps) {
   // Demo-only: reveal the gallery fixture as though the date had arrived. The
   // real path cannot do this and must not be able to — the content is on the
   // server and the server will not send it early.
-  const [demoSkipped, setDemoSkipped] = useState(false);
+  const [demoSkipped, setDemoSkipped] = useState<false | "ceremony" | "keepsakes">(false);
 
-  const canDemoSkip =
-    mode === "demo" && view.state === "sealed" && view.sealedOn === DEMO_SEALED_ON && !demoSkipped;
+  const isDemoFixture = mode === "demo" && view.state === "sealed" && view.sealedOn === DEMO_SEALED_ON;
 
   const effective: CapsuleView = useMemo(() => {
-    if (mode === "demo" && demoSkipped && view.state === "sealed" && view.sealedOn === DEMO_SEALED_ON) {
-      return { state: "open", capsule: DEMO_CAPSULE };
+    if (isDemoFixture && demoSkipped) {
+      return { state: "open", capsule: { ...DEMO_CAPSULE, theme: themeOverride || DEMO_CAPSULE.theme } };
     }
     return view;
-  }, [mode, demoSkipped, view]);
+  }, [isDemoFixture, demoSkipped, view, themeOverride]);
 
-  const debug =
-    mode === "demo" && (canDemoSkip || demoSkipped) ? (
-      <DebugBar>
-        {canDemoSkip && <DebugButton label="DEBUG: skip to opening date" onClick={() => setDemoSkipped(true)} />}
-        {demoSkipped && <DebugButton label="DEBUG: re-seal" onClick={() => setDemoSkipped(false)} />}
-      </DebugBar>
+  const themeId = themeOverride || (effective.state === "sealed" ? effective.theme : effective.capsule.theme);
+
+  const demoBar =
+    isDemoFixture && !hideDemoBar ? (
+      <PreviewBar>
+        {demoSkipped ? (
+          <PreviewButton label="back to sealed" icon={<RotateCcw size={14} />} onClick={() => setDemoSkipped(false)} />
+        ) : (
+          <>
+            <PreviewButton primary label="play opening day" icon={<Play size={14} />} onClick={() => setDemoSkipped("ceremony")} />
+            <PreviewButton label="jump to the keepsakes" icon={<Camera size={14} />} onClick={() => setDemoSkipped("keepsakes")} />
+          </>
+        )}
+      </PreviewBar>
     ) : null;
 
+  const start = demoSkipped || startAt;
+
   return (
-    <>
+    <CapsuleScope themeId={themeId}>
       <CapsuleStyles />
-      {debug}
+      {mode === "live" && <BrandBadge />}
       {effective.state === "sealed" ? (
-        <SealedScreen view={effective} />
+        <SealedScreen view={effective} footer={isDemoFixture ? <div style={{ height: 70 }} /> : undefined} />
       ) : (
-        <OpenFlow key={effective.capsule.sealedOn} capsule={effective.capsule} mode={mode} />
+        <OpenFlow
+          key={`${effective.capsule.sealedOn}-${start}`}
+          capsule={effective.capsule}
+          mode={mode}
+          initialPhase={start === "keepsakes" && hasKeepsakes(effective.capsule) ? "keepsakes" : "waiting"}
+        />
       )}
-    </>
+      {demoBar}
+    </CapsuleScope>
   );
 }
 
@@ -91,9 +117,11 @@ export default function CapsuleTemplate({ view, mode }: CapsuleTemplateProps) {
  * No storage fallback is used on purpose: a capsule's contents must not sit in
  * localStorage where any other tab can read them.
  */
-function OpenFlow({ capsule: initial, mode }: { capsule: Capsule; mode: "demo" | "live" }) {
+function OpenFlow({ capsule: initial, mode, initialPhase }: { capsule: Capsule; mode: "demo" | "live"; initialPhase: Phase }) {
   const [capsule, setCapsule] = useState<Capsule>(initial);
-  const [phase, setPhase] = useState<OpeningPhase>("waiting");
+  const [phase, setPhase] = useState<Phase>(initialPhase);
+  /** Where "back" from the keepsakes goes: whichever screen sent them there. */
+  const [cameFrom, setCameFrom] = useState<Phase>(initialPhase === "keepsakes" ? "waiting" : "scorecard");
   const [viewer, setViewer] = useState<Side | null>(null);
 
   const onVote = useCallback((ids: string[], side: Side, verdict: Verdict) => {
@@ -116,6 +144,12 @@ function OpenFlow({ capsule: initial, mode }: { capsule: Capsule; mode: "demo" |
   }, []);
   const toSolo = useCallback(() => setPhase("solo"), []);
   const toDeclined = useCallback(() => setPhase("declined"), []);
+  const toKeepsakes = useCallback((from: Phase) => {
+    setCameFrom(from);
+    setPhase("keepsakes");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  }, []);
+  const more = hasKeepsakes(capsule);
 
   const stake = capsule.stake;
   const sealAnother = useCallback(() => {
@@ -127,19 +161,41 @@ function OpenFlow({ capsule: initial, mode }: { capsule: Capsule; mode: "demo" |
 
   const footer =
     mode === "demo" ? (
-      <p className="mt-8 text-center" style={{ fontFamily: MONO, fontSize: 10, color: PALETTE.inkFaint }}>
+      <p className="mt-8 pb-16 text-center" style={{ fontFamily: MONO, fontSize: 10, color: PALETTE.inkFaint }}>
         demo preview
       </p>
     ) : null;
 
   if (phase === "declined") return <DeclinedScreen footer={footer} />;
 
+  if (phase === "keepsakes") {
+    const back: Record<string, string> = { scorecard: "back to the scorecard", solo: "back to the predictions", waiting: "play the opening ceremony" };
+    return (
+      <KeepsakesScreen
+        capsule={capsule}
+        onBack={back[cameFrom] ? () => setPhase(cameFrom) : undefined}
+        backLabel={back[cameFrom]}
+        footer={footer}
+      />
+    );
+  }
+
   // Opened alone. No scorecard, no stake, no score, no competitive framing —
-  // and no route from here to any of them.
-  if (phase === "solo") return <SoloScreen capsule={capsule} onDecline={toDeclined} footer={footer} />;
+  // and no route from here to any of them. The keepsakes ARE reachable: they
+  // keep no score.
+  if (phase === "solo") {
+    return <SoloScreen capsule={capsule} onDecline={toDeclined} onKeepsakes={more ? () => toKeepsakes("solo") : undefined} footer={footer} />;
+  }
 
   if (phase === "scorecard") {
-    return <ScorecardScreen capsule={capsule} onSealAnother={sealAnother} footer={footer} />;
+    return (
+      <ScorecardScreen
+        capsule={capsule}
+        onSealAnother={sealAnother}
+        onKeepsakes={more ? () => toKeepsakes("scorecard") : undefined}
+        footer={footer}
+      />
+    );
   }
 
   if (phase === "judging") {
@@ -165,6 +221,7 @@ function OpenFlow({ capsule: initial, mode }: { capsule: Capsule; mode: "demo" |
  */
 export function CapsuleUnavailable() {
   return (
+    <CapsuleScope themeId={null}>
     <Frame seed="unavailable">
       <div className="flex min-h-[100dvh] items-center justify-center px-8 text-center">
         <p style={{ fontFamily: MONO, fontSize: 13, color: PALETTE.inkSoft, lineHeight: 1.7 }}>
@@ -172,6 +229,7 @@ export function CapsuleUnavailable() {
         </p>
       </div>
     </Frame>
+    </CapsuleScope>
   );
 }
 

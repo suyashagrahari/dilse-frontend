@@ -2,8 +2,11 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ChevronDown, Check, Lock, Gavel, Loader2, Sparkles, RotateCcw, Languages, BookOpen } from "lucide-react";
-import type { CourtOfLoveData, EditMode, QuizQuestion } from "./types";
+import { X, ChevronDown, Check, Lock, Gavel, Loader2, Sparkles, RotateCcw, Languages, BookOpen, AlertCircle } from "lucide-react";
+import { FormSection, MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
+import { COURT_THEMES } from "./themes";
+import { DEFAULT_LOCK_ANSWER, DEFAULT_LOCK_QUESTION, PASS_RATIO, type CourtOfLoveData, type EditMode, type QuizQuestion } from "./types";
+import type { CourtFieldError } from "../hooks/useCourtOfLoveEditor";
 
 const SURFACE = "#FFFFFF";
 const BG_ALT = "#F3F1EA";
@@ -12,8 +15,8 @@ const MUTED = "#5B5B66";
 const BORDER = "#ECEAE3";
 const INDIGO = "#6C5CE7";
 const PINK = "#F72585";
-const LIME = "#C6FF3D";
 const GREEN = "#3AA76D";
+const ERR = "#E5484D";
 
 const HEAD = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
 const BODY = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
@@ -48,7 +51,15 @@ const SHEET_CSS = `
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
 }
-.col-body { overflow-y: auto; padding: 16px 18px 8px; -webkit-overflow-scrolling: touch; }
+.col-body { overflow-y: auto; padding: 16px 18px 8px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.col-sec { margin-top: 26px; padding-top: 18px; border-top: 1px solid #ECEAE3; margin-bottom: 4px; }
+.col-steps { display: flex; gap: 6px; overflow-x: auto; margin: 10px -18px 0; padding: 0 18px 2px; scrollbar-width: none; }
+.col-steps::-webkit-scrollbar { display: none; }
+.col-step { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px 6px 6px; border-radius: 999px; border: 1px solid #ECEAE3; background: #F7F5EF; font: 600 12px/1 var(--font-inter), system-ui, sans-serif; color: #3b3b44; cursor: pointer; white-space: nowrap; }
+.col-step:hover { border-color: #d8c9a8; }
+.col-step-num { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; background: #fff; border: 1px solid #e3ded2; font-size: 10.5px; font-weight: 700; color: #7a1f16; }
+.col-step[data-done] .col-step-num { background: #3AA76D; border-color: #3AA76D; color: #fff; }
+.col-kit textarea, .col-kit input { font-family: var(--font-inter), system-ui, sans-serif; }
 .col-foot { padding: 12px 18px calc(env(safe-area-inset-bottom, 0px) + 14px); }
 .col-save { width: 100%; }
 
@@ -84,6 +95,7 @@ const SHEET_CSS = `
     column-gap: 14px;
     align-items: start;
   }
+  .col-steps { margin: 12px -26px 0; padding: 0 26px 2px; }
   .col-foot { padding: 14px 26px 18px; display: flex; flex-direction: column; align-items: center; }
   .col-save { width: min(460px, 100%); }
 }
@@ -113,6 +125,26 @@ const field: React.CSSProperties = {
   minHeight: 46,
 };
 
+/** Inline error under a field, announced to screen readers. */
+function FieldError({ id, text }: { id: string; text?: string }) {
+  if (!text) return null;
+  return (
+    <p id={id} role="alert" style={{ fontFamily: BODY, fontSize: 12, fontWeight: 600, color: ERR, margin: "6px 0 0", display: "flex", gap: 5, alignItems: "center" }}>
+      <AlertCircle size={13} /> {text}
+    </p>
+  );
+}
+
+/** Live "12/80" counter, shown once the field is past half full. */
+function Counter({ value, max }: { value: string; max?: number }) {
+  if (!max || value.length < max * 0.5) return null;
+  return (
+    <span style={{ fontFamily: BODY, fontSize: 10.5, color: value.length >= max ? ERR : MUTED, fontVariantNumeric: "tabular-nums" }}>
+      {value.length}/{max}
+    </span>
+  );
+}
+
 function Field({
   labelText,
   value,
@@ -121,6 +153,9 @@ function Field({
   hint,
   maxLength,
   span = false,
+  required = false,
+  error,
+  id,
 }: {
   labelText: string;
   value: string;
@@ -130,19 +165,33 @@ function Field({
   maxLength?: number;
   /** Take the full row on desktop instead of half of it. */
   span?: boolean;
+  required?: boolean;
+  error?: string;
+  id?: string;
 }) {
+  const errId = id ? `${id}-err` : undefined;
   return (
     <div className={span ? "col-span" : undefined} style={{ marginBottom: 15 }}>
-      <label style={label}>{labelText}</label>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+        <label htmlFor={id} style={label}>
+          {labelText}
+          {required && <span style={{ color: PINK, marginLeft: 3 }}>*</span>}
+        </label>
+        <Counter value={value} max={maxLength} />
+      </div>
       <input
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
         dir="auto"
-        style={field}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errId : undefined}
+        style={{ ...field, ...(error ? { border: `1px solid ${ERR}`, boxShadow: `0 0 0 3px ${ERR}22`, background: "#FFF6F7" } : null) }}
       />
-      {hint && (
+      {errId && <FieldError id={errId} text={error} />}
+      {hint && !error && (
         <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, margin: "5px 0 0" }}>{hint}</p>
       )}
     </div>
@@ -171,7 +220,10 @@ function TextArea({
 }) {
   return (
     <div className={span ? "col-span" : undefined} style={{ marginBottom: 15 }}>
-      <label style={label}>{labelText}</label>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+        <label style={label}>{labelText}</label>
+        <Counter value={value} max={maxLength} />
+      </div>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -711,11 +763,22 @@ function StoryBox({
   );
 }
 
+/** The steps of the form, in the order the trial plays them. */
+const STEPS = [
+  { id: "courtroom", emoji: "🏛️", label: "Courtroom" },
+  { id: "parties", emoji: "👩‍⚖️", label: "The parties" },
+  { id: "hearings", emoji: "❓", label: "Hearings" },
+  { id: "evidence", emoji: "📁", label: "Evidence & judgement" },
+  { id: "stamp", emoji: "📜", label: "Stamp paper" },
+] as const;
+type StepId = (typeof STEPS)[number]["id"];
+
 export default function EditSheet({
   editMode,
   setEditMode,
   mf,
   updateMf,
+  errors,
   updateQuestion,
   updateOption,
   pagePassword,
@@ -734,12 +797,14 @@ export default function EditSheet({
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
   mf: CourtOfLoveData;
-  updateMf: (key: keyof CourtOfLoveData, val: unknown) => void;
+  updateMf: <K extends keyof CourtOfLoveData>(key: K, val: CourtOfLoveData[K]) => void;
+  errors: Partial<Record<CourtFieldError, string>>;
   updateQuestion: (i: number, patch: Partial<QuizQuestion>) => void;
   updateOption: (i: number, optIndex: number, value: string) => void;
   pagePassword: string;
   setPagePassword: (v: string) => void;
-  onSave: () => void;
+  /** Returns the first missing field, or null when the case was filed. */
+  onSave: () => CourtFieldError | null;
   saving: boolean;
   story: string;
   setStory: (v: string) => void;
@@ -752,7 +817,41 @@ export default function EditSheet({
   savedStoryLabel: string | null;
 }) {
   const [openQ, setOpenQ] = useState<number | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const open = editMode === "manual" || editMode === "choose";
+
+  const questionsOk = mf.questions.every((q) => q.question.trim() && q.options.every((o) => o.trim()));
+  const done: Record<StepId, boolean> = {
+    courtroom: true,
+    parties: Boolean(mf.plaintiffName.trim() && mf.accusedName.trim()),
+    hearings: questionsOk,
+    evidence: Boolean(mf.letter.trim()),
+    stamp: Boolean((mf.signatureName || mf.plaintiffName).trim() && mf.certificateTitle.trim()),
+  };
+  const doneCount = STEPS.filter((st) => done[st.id]).length;
+  const missing = Object.values(errors).filter(Boolean).length;
+
+  const scrollTo = (el: Element | null) => {
+    const body = bodyRef.current;
+    if (!el || !body) return;
+    const top = (el as HTMLElement).getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 12;
+    body.scrollTo({ top, behavior: "smooth" });
+  };
+  const goStep = (id: StepId) => scrollTo(document.getElementById(`col-step-${id}`));
+
+  const save = () => {
+    const first = onSave();
+    if (!first) return;
+    const target =
+      first === "letter"
+        ? document.querySelector('textarea[aria-label^="The Final Judgement"]')
+        : document.getElementById(`col-f-${first}`);
+    // Scroll to the field's wrapper so its label stays in view, not just the input.
+    scrollTo(target?.parentElement ?? target);
+    window.setTimeout(() => (target as HTMLElement | null)?.focus({ preventScroll: true }), 350);
+  };
+
+  const needed = Math.ceil(mf.questions.length * PASS_RATIO);
 
   return (
     <AnimatePresence>
@@ -764,13 +863,7 @@ export default function EditSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setEditMode(null)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 200,
-              background: "rgba(14,14,18,.42)",
-              backdropFilter: "blur(3px)",
-            }}
+            style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(14,14,18,.5)" }}
           />
           <motion.div
             initial={{ y: "100%" }}
@@ -778,74 +871,43 @@ export default function EditSheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 34 }}
             role="dialog"
-            aria-label="Edit your Court of Love"
+            aria-label="File your Court of Love case"
             className="col-sheet"
             style={{ background: SURFACE, boxShadow: "0 -18px 50px rgba(14,14,18,.18)" }}
           >
             {/* header */}
-            <div
-              style={{
-                padding: "16px 18px 12px",
-                borderBottom: `1px solid ${BORDER}`,
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                flexShrink: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 12,
-                  background: "rgba(108,92,231,.11)",
-                  color: INDIGO,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Gavel size={17} />
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h2
-                  style={{
-                    fontFamily: HEAD,
-                    fontSize: 17,
-                    fontWeight: 700,
-                    color: TEXT,
-                    margin: 0,
-                    letterSpacing: -0.3,
-                  }}
+            <div style={{ padding: "14px 18px 10px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg,#3a120c,#b3261e)", color: "#ffd98e", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <Gavel size={17} />
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontFamily: HEAD, fontSize: 17, fontWeight: 700, color: TEXT, margin: 0, letterSpacing: -0.3 }}>File your case</h2>
+                  <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, margin: 0 }}>
+                    {doneCount}/{STEPS.length} steps ready · saved as you type
+                  </p>
+                </div>
+                <button
+                  onClick={() => setEditMode(null)}
+                  aria-label="Close"
+                  style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 999, background: BG_ALT, border: `1px solid ${BORDER}`, color: MUTED, display: "grid", placeItems: "center", cursor: "pointer" }}
                 >
-                  File your case
-                </h2>
-                <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, margin: 0 }}>
-                  Everything below is pre-filled — change only what you like.
-                </p>
+                  <X size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => setEditMode(null)}
-                aria-label="Close"
-                style={{
-                  flexShrink: 0,
-                  width: 34,
-                  height: 34,
-                  borderRadius: 999,
-                  background: BG_ALT,
-                  border: `1px solid ${BORDER}`,
-                  color: MUTED,
-                  display: "grid",
-                  placeItems: "center",
-                  cursor: "pointer",
-                }}
-              >
-                <X size={16} />
-              </button>
+              {/* Step chips — jump anywhere; a tick once that step is ready. */}
+              <nav aria-label="Form steps" className="col-steps">
+                {STEPS.map((st, n) => (
+                  <button key={st.id} type="button" onClick={() => goStep(st.id)} className="col-step" data-done={done[st.id] || undefined}>
+                    <span className="col-step-num">{done[st.id] ? <Check size={11} strokeWidth={3} /> : n + 1}</span>
+                    {st.label}
+                  </button>
+                ))}
+              </nav>
             </div>
 
             {/* body */}
-            <div className="col-body">
+            <div className="col-body" ref={bodyRef}>
               <div className="col-span">
                 <StoryBox
                   story={story}
@@ -859,65 +921,51 @@ export default function EditSheet({
                 />
               </div>
 
+              <div id="col-step-courtroom" className="col-span col-sec">
+                <ThemeSection themes={COURT_THEMES} value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+              </div>
+
+              <div id="col-step-parties" className="col-span col-sec">
+                <FormSection emoji="👩‍⚖️" title="The parties" note="Who's filing, who's on trial, and the summons they open first." />
+              </div>
               <Field
+                id="col-f-plaintiffName"
+                required
                 labelText="Your name (the plaintiff)"
                 value={mf.plaintiffName}
                 onChange={(v) => updateMf("plaintiffName", v)}
-                placeholder="Aarav"
+                placeholder="e.g. Aarav"
                 maxLength={80}
+                error={errors.plaintiffName}
               />
               <Field
+                id="col-f-accusedName"
+                required
                 labelText="Their name (the accused)"
                 value={mf.accusedName}
                 onChange={(v) => updateMf("accusedName", v)}
-                placeholder="Meera"
+                placeholder="e.g. Meera"
                 maxLength={80}
+                error={errors.accusedName}
               />
-              <TextArea
-                labelText="Headline on the summons"
-                value={mf.headline}
-                onChange={(v) => updateMf("headline", v)}
-                rows={2}
-                maxLength={200}
-              />
-              <TextArea
-                labelText="The oath they swear"
-                value={mf.oathText}
-                onChange={(v) => updateMf("oathText", v)}
-                rows={3}
-                maxLength={400}
-              />
+              <TextArea labelText="Headline on the summons" value={mf.headline} onChange={(v) => updateMf("headline", v)} rows={2} maxLength={200} />
+              <TextArea labelText="The oath they swear" value={mf.oathText} onChange={(v) => updateMf("oathText", v)} rows={3} maxLength={400} hint="End it as a question they can say yes to." />
 
-              <div
-                className="col-span"
-                style={{
-                  margin: "22px 0 12px",
-                  paddingTop: 16,
-                  borderTop: `1px solid ${BORDER}`,
-                }}
-              >
-                <h3
-                  style={{
-                    fontFamily: HEAD,
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: TEXT,
-                    margin: "0 0 3px",
-                  }}
-                >
-                  The questions
-                </h3>
-                <p style={{ fontFamily: BODY, fontSize: 12, color: MUTED, margin: 0, lineHeight: 1.55 }}>
-                  They need {Math.ceil(mf.questions.length * 0.8)} of {mf.questions.length} right to win
-                  the case. Tap a question to edit it.
-                </p>
+              <div id="col-step-hearings" className="col-span col-sec">
+                <FormSection
+                  emoji="❓"
+                  title={`The hearings (${mf.questions.length} questions)`}
+                  note={`They need ${needed} of ${mf.questions.length} right to win. Tap a question to edit it and mark the right answer.`}
+                />
               </div>
-
-              {/* Ten accordions in one column is a long scroll on a wide
-                  screen, so they run two-up here — inside their own grid rather
-                  than as children of the body's, which keeps a question and its
-                  neighbour the same height regardless of which one is open. */}
-              <div className="col-span col-questions">
+              {!questionsOk && (
+                <p className="col-span" style={{ fontFamily: BODY, fontSize: 12, color: "#9a6b00", background: "#FFF6DA", border: "1px solid #F4DE9A", borderRadius: 12, padding: "8px 12px", margin: "10px 0 0" }}>
+                  A question or answer is blank — blank questions are skipped on the page.
+                </p>
+              )}
+              {/* Two-up on desktop, inside their own grid so a question and its
+                  neighbour stay the same height whichever one is open. */}
+              <div className="col-span col-questions" style={{ marginTop: 12 }}>
                 {mf.questions.map((q, i) => (
                   <QuestionAccordion
                     key={i}
@@ -931,31 +979,50 @@ export default function EditSheet({
                 ))}
               </div>
 
-              <div className="col-span" style={{ marginTop: 22, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
-                <TextArea
-                  span
-                  labelText="The sealed letter (shown after they win)"
-                  value={mf.secretLetter}
-                  onChange={(v) => updateMf("secretLetter", v)}
-                  rows={6}
-                  maxLength={3000}
-                  hint="Types out slowly, one character at a time. Make it count."
+              <div id="col-step-evidence" className="col-span col-sec col-kit">
+                <MemoriesSections
+                  data={mf}
+                  update={(k, v) => updateMf(k, v as CourtOfLoveData[typeof k])}
+                  gifTags={["legal", "love", "hug"]}
+                  copy={{
+                    photosTitle: `The Exhibits — your photos (${mf.photos.length}/10)`,
+                    photosNote: "Up to 10. Each becomes Exhibit A, B, C… in the case file. Tap a photo to crop & zoom, then write the memory — they read it as your testimony.",
+                    captionHint: "caption — e.g. the first sunset",
+                    noteHint: "Let the record show… (the memory behind this photo)",
+                    gifsTitle: "GIFs for the courtroom",
+                    letterTitle: "The Final Judgement — your main letter *",
+                    letterNote: "Read out after the verdict and the evidence, sealed in wax. Drop the courtroom voice here and just say it.",
+                    letterHint: "The Court has reviewed the evidence, and honestly? It was never close…",
+                    lockQuestion: DEFAULT_LOCK_QUESTION,
+                    lockAnswer: DEFAULT_LOCK_ANSWER,
+                  }}
                 />
-                <Field
-                  labelText="Signature on the stamp paper"
-                  value={mf.signatureName}
-                  onChange={(v) => updateMf("signatureName", v)}
-                  placeholder="Aarav"
-                  maxLength={80}
-                />
-                <Field
-                  labelText="Certificate title"
-                  value={mf.certificateTitle}
-                  onChange={(v) => updateMf("certificateTitle", v)}
-                  placeholder="Certified Best Partner"
-                  maxLength={120}
-                />
+                <FieldError id="col-f-letter-err" text={errors.letter} />
+                {mf.photos.length === 0 && (
+                  <p style={{ fontFamily: BODY, fontSize: 12, color: MUTED, margin: "8px 0 0" }}>
+                    No photos yet — the trial still works, but the evidence folder is where most people cry. Just saying. 📸
+                  </p>
+                )}
               </div>
+
+              <div id="col-step-stamp" className="col-span col-sec">
+                <FormSection emoji="📜" title="The stamp paper" note="The certificate they keep (and screenshot) when they win." />
+              </div>
+              <Field
+                labelText="Signature on the stamp paper"
+                value={mf.signatureName}
+                onChange={(v) => updateMf("signatureName", v)}
+                placeholder={mf.plaintiffName || "e.g. Aarav"}
+                maxLength={80}
+                hint="Leave blank to sign with your name."
+              />
+              <Field
+                labelText="Certificate title"
+                value={mf.certificateTitle}
+                onChange={(v) => updateMf("certificateTitle", v)}
+                placeholder="Certified Best Partner"
+                maxLength={120}
+              />
 
               <div className="col-span" style={{ marginTop: 6, marginBottom: 8 }}>
                 <label style={label}>
@@ -970,53 +1037,42 @@ export default function EditSheet({
                   autoComplete="new-password"
                   style={field}
                 />
-                <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, margin: "5px 0 0" }}>
-                  Only someone with this password can open the case file.
-                </p>
+                <p style={{ fontFamily: BODY, fontSize: 11.5, color: MUTED, margin: "5px 0 0" }}>Only someone with this password can open the case file.</p>
               </div>
             </div>
 
             {/* footer */}
-            <div
-              className="col-foot"
-              style={{ borderTop: `1px solid ${BORDER}`, flexShrink: 0, background: SURFACE }}
-            >
+            <div className="col-foot" style={{ borderTop: `1px solid ${BORDER}`, flexShrink: 0, background: SURFACE }}>
               <motion.button
                 whileTap={{ scale: 0.98 }}
-                onClick={onSave}
+                onClick={save}
                 disabled={saving}
                 className="col-save"
                 style={{
                   padding: "15px 22px",
                   borderRadius: 999,
-                  background: LIME,
-                  color: TEXT,
+                  background: "linear-gradient(135deg,#3a120c,#7a1f16)",
+                  color: "#FFE3A3",
                   fontFamily: HEAD,
                   fontWeight: 700,
                   fontSize: 15.5,
                   border: "none",
-                  boxShadow: "0 6px 18px rgba(198,255,61,.42)",
+                  boxShadow: "0 10px 24px -8px rgba(58,18,12,.55)",
                   cursor: saving ? "default" : "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 8,
-                  minHeight: 50,
+                  minHeight: 52,
                 }}
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Gavel size={16} />}
                 {saving ? "Saving…" : "Save & preview the trial"}
               </motion.button>
-              <p
-                style={{
-                  fontFamily: BODY,
-                  fontSize: 11,
-                  color: MUTED,
-                  textAlign: "center",
-                  margin: "9px 0 0",
-                }}
-              >
-                Saved automatically as you type — <span style={{ color: PINK }}>you won&apos;t lose it</span>.
+              <p style={{ fontFamily: BODY, fontSize: 11.5, color: missing ? ERR : MUTED, fontWeight: missing ? 600 : 400, textAlign: "center", margin: "8px 0 0" }}>
+                {missing ? `${missing} required field${missing === 1 ? "" : "s"} missing — marked in red above.` : (
+                  <>Saved automatically as you type — <span style={{ color: PINK }}>you won&apos;t lose it</span>.</>
+                )}
               </p>
             </div>
           </motion.div>

@@ -6,16 +6,18 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import PhotoPuzzleTemplate from "@/app/(templates)/photo-puzzle/components/PhotoPuzzleTemplate";
 import { dbToPuzzleData } from "@/app/(templates)/photo-puzzle/components/types";
+import { PUZZLE_THEMES } from "@/app/(templates)/photo-puzzle/components/themes";
+import { pickTheme } from "@/app/(templates)/_love/theme";
 import { API_URL, IS_NGROK } from "@/lib/config";
-
-const INDIGO = "#4338CA";
-const INDIGO_GRAD = "linear-gradient(135deg,#6366F1,#FB7185)";
 
 /* ─────────────────────────────────────────
    Password gate — the puzzle is whole
    behind it; this only asks who's asking.
 ───────────────────────────────────────── */
-function PhotoPuzzlePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
+function PhotoPuzzlePasswordGate({ shareId, themeId, onUnlocked }: { shareId: string; themeId: unknown; onUnlocked: () => void }) {
+  const c = pickTheme(PUZZLE_THEMES, typeof themeId === "string" ? themeId : "").colors;
+  const INDIGO = c.a1;
+  const INDIGO_GRAD = `linear-gradient(135deg, ${c.a1}, ${c.a2})`;
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,7 @@ function PhotoPuzzlePasswordGate({ shareId, onUnlocked }: { shareId: string; onU
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center px-5"
-      style={{ background: "linear-gradient(180deg,#EEF2FF 0%,#FFF1F2 55%,#FFFFFF 100%)" }}
+      style={{ background: c.bg }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -58,7 +60,7 @@ function PhotoPuzzlePasswordGate({ shareId, onUnlocked }: { shareId: string; onU
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: INDIGO_GRAD, boxShadow: "0 14px 30px -12px rgba(67,56,202,.6)" }}
+                style={{ background: INDIGO_GRAD, boxShadow: "0 14px 30px -12px rgba(0,0,0,.35)" }}
               >
                 <Lock size={28} className="text-white" />
               </motion.div>
@@ -67,7 +69,7 @@ function PhotoPuzzlePasswordGate({ shareId, onUnlocked }: { shareId: string; onU
                 This one&apos;s just for you
               </h2>
               <p className="text-xs text-center leading-relaxed text-muted-foreground">
-                Enter the password and<br />the first piece is yours
+                Enter the password and<br />the pieces are yours
               </p>
             </div>
 
@@ -110,7 +112,7 @@ function PhotoPuzzlePasswordGate({ shareId, onUnlocked }: { shareId: string; onU
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: INDIGO_GRAD, boxShadow: "0 14px 30px -14px rgba(67,56,202,.7)" }}
+              style={{ background: INDIGO_GRAD, boxShadow: "0 14px 30px -14px rgba(0,0,0,.4)" }}
             >
               {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Open it</>}
             </motion.button>
@@ -140,10 +142,10 @@ export default function PhotoPuzzleViewer({
   });
 
   if (hasPassword && !unlocked) {
-    return <PhotoPuzzlePasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
+    return <PhotoPuzzlePasswordGate shareId={shareId} themeId={rawData.theme} onUnlocked={() => setUnlocked(true)} />;
   }
 
-  // dbToPuzzleData already normalises the grid and clamps the melody — trust it.
+  // dbToPuzzleData fills every field an older page may lack — trust it.
   const data = dbToPuzzleData(rawData);
 
   return <PhotoPuzzleTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;

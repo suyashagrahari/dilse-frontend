@@ -16,10 +16,11 @@ import { AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useNutritionEditor } from "./hooks/useNutritionEditor";
-import NutritionTemplate, { NF_INK, NF_SANS, NF_SURROUND } from "./components/NutritionTemplate";
+import NutritionTemplate from "./components/NutritionTemplate";
 import EditSheet from "./components/EditSheet";
-
-const BORDER = "#D9D5CC";
+import { pickNutritionTheme } from "./components/themes";
+import { V, themeVars } from "../_love/theme";
+import { GROTESK } from "../_love/LoveKit";
 
 /* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
 
@@ -63,15 +64,16 @@ const barBtn: React.CSSProperties = {
   gap: 6,
   minHeight: 44,
   height: 44,
-  padding: "0 14px",
-  borderRadius: 8,
-  background: "#FFFFFF",
-  border: `1px solid ${BORDER}`,
-  color: NF_INK,
-  fontFamily: NF_SANS,
-  fontSize: 13,
-  fontWeight: 700,
+  padding: "0 15px",
+  borderRadius: 999,
+  background: V.paper,
+  border: `1.5px solid ${V.paperInk}`,
+  color: V.paperInk,
+  fontFamily: GROTESK,
+  fontSize: 13.5,
+  fontWeight: 800,
   cursor: "pointer",
+  boxShadow: `0 10px 24px -14px ${V.shadow}`,
 };
 
 function NutritionPageInner() {
@@ -83,8 +85,10 @@ function NutritionPageInner() {
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <IconLink /> }
       : { label: "Create", onClick: e.handleStartCreate, icon: <IconPen /> };
 
+  const theme = pickNutritionTheme(e.displayData.theme);
+
   return (
-    <div style={{ minHeight: "100dvh", background: NF_SURROUND, position: "relative" }}>
+    <div style={{ ...themeVars(theme), minHeight: "100dvh", background: theme.colors.base, position: "relative" }}>
       <div
         className="fixed top-0 left-0 right-0 z-[120] flex items-center gap-2 px-3"
         style={{ paddingTop: "calc(8px + env(safe-area-inset-top, 0px))", paddingBottom: 8 }}
@@ -104,8 +108,8 @@ function NutritionPageInner() {
           disabled={e.publishing}
           style={{
             ...barBtn,
-            background: NF_INK,
-            borderColor: NF_INK,
+            background: V.grad,
+            borderColor: "transparent",
             color: "#FFFFFF",
             opacity: e.publishing ? 0.6 : 1,
           }}
@@ -117,7 +121,7 @@ function NutritionPageInner() {
       {/* Keyed so each save/publish re-mounts the label with every row closed —
           the tap-to-reveal notes are the one interaction and they should start
           hidden every time the sender reads their work back. */}
-      <NutritionTemplate key={e.previewVersion} data={e.displayData} mode="preview" />
+      <NutritionTemplate key={e.previewVersion} data={e.displayData} mode="preview" onThemeChange={e.setTheme} />
 
       <EditSheet
         editMode={e.editMode}
@@ -128,6 +132,7 @@ function NutritionPageInner() {
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
         saving={e.saving}
+        accent={theme.colors.a1}
       />
 
       {/* Mounted after EditSheet so the panel sits over the form it seeds. */}
@@ -142,7 +147,7 @@ function NutritionPageInner() {
 
 export default function NutritionPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: NF_SURROUND }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#f5f2ea" }} />}>
       <NutritionPageInner />
     </Suspense>
   );

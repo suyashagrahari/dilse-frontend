@@ -13,6 +13,8 @@
 // once. The one exception is the waiting pulse, which is genuinely ambient and
 // is switched off outright.
 
+import { LOVE_CSS } from "../../_love/LoveKit";
+
 const CSS = `
 @keyframes capsule-fold {
   0%   { transform: translateY(0) scaleY(1) rotateX(0deg); opacity: 1; }
@@ -91,7 +93,60 @@ const CSS = `
   transition: none !important;
 }
 
+/* ── Keepsakes, letter, chrome ─────────────────────────────────────────────── */
+@keyframes cp-drop {
+  0%   { transform: translate3d(0,-38px,0) rotate(calc(var(--tilt, 0deg) - 9deg)) scale(.92); opacity: 0; }
+  70%  { transform: translate3d(0,3px,0) rotate(calc(var(--tilt, 0deg) + 1deg)) scale(1.01); opacity: 1; }
+  100% { transform: translate3d(0,0,0) rotate(var(--tilt, 0deg)) scale(1); opacity: 1; }
+}
+@keyframes cp-rise {
+  0%   { transform: translate3d(0,56px,0) scale(.97); opacity: 0; }
+  100% { transform: translate3d(0,0,0) scale(1); opacity: 1; }
+}
+@keyframes cp-flap {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(178deg); }
+}
+@keyframes cp-float {
+  0%, 100% { transform: translate3d(0,0,0) rotate(var(--tilt, 0deg)); }
+  50%      { transform: translate3d(0,-10px,0) rotate(var(--tilt, 0deg)); }
+}
+@keyframes cp-sheen {
+  0%   { transform: translateX(-140%) skewX(-16deg); }
+  55%, 100% { transform: translateX(340%) skewX(-16deg); }
+}
+@keyframes cp-nope {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px) rotate(-1deg); }
+  40% { transform: translateX(6px) rotate(1deg); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes cp-glow {
+  0%, 100% { opacity: .45; transform: scale(1); }
+  50%      { opacity: .85; transform: scale(1.06); }
+}
+.cp-drop   { animation: cp-drop 620ms cubic-bezier(.2,.9,.3,1.15) both; }
+.cp-rise   { animation: cp-rise 700ms cubic-bezier(.2,.8,.25,1) both; }
+.cp-float  { animation: cp-float 6.5s ease-in-out infinite; }
+.cp-nope   { animation: cp-nope 420ms ease-in-out 1; }
+.cp-glow   { animation: cp-glow 3.2s ease-in-out infinite; }
+.cp-sheen  { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: cp-sheen 4.8s ease-in-out 1.2s infinite; }
+.cp-press  { transition: transform .15s ease, filter .2s ease, box-shadow .2s ease !important; }
+.cp-press:hover:not(:disabled)  { transform: translateY(-1px); filter: saturate(1.08); }
+.cp-press:active:not(:disabled) { transform: translateY(1px) scale(.985); }
+.cp-press:focus-visible, .cp-focus:focus-visible { outline: 3px solid var(--lv-a2); outline-offset: 3px; }
+.cp-flip   { transition: transform 700ms cubic-bezier(.2,.8,.2,1) !important; transform-style: preserve-3d; }
+.cp-face   { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.cp-lined  { background-image: repeating-linear-gradient(180deg, transparent 0 29px, rgba(90,110,160,.22) 29px 30px); }
+.cp-scroll::-webkit-scrollbar { display: none; }
+.cp-scroll { scrollbar-width: none; }
+
 @media (prefers-reduced-motion: reduce) {
+  .cp-drop, .cp-rise, .cp-nope { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+  .cp-float, .cp-glow, .cp-sheen { animation: none !important; }
+  .cp-flip { transition: none !important; }
   .capsule-fold, .capsule-press, .capsule-jolt, .capsule-shard, .capsule-unfurl,
   .capsule-tremble, .capsule-stamp, .capsule-card-in, .capsule-count {
     animation-duration: 0.01ms !important;
@@ -102,5 +157,5 @@ const CSS = `
 `;
 
 export default function CapsuleStyles() {
-  return <style dangerouslySetInnerHTML={{ __html: CSS }} />;
+  return <style dangerouslySetInnerHTML={{ __html: LOVE_CSS + CSS }} />;
 }

@@ -32,10 +32,13 @@ import { Frame, Mono, Rule, TapButton } from "./ui";
 export function SoloScreen({
   capsule,
   onDecline,
+  onKeepsakes,
   footer,
 }: {
   capsule: Capsule;
   onDecline: () => void;
+  /** Present when there are keepsakes / a letter under the predictions. */
+  onKeepsakes?: () => void;
   footer?: React.ReactNode;
 }) {
   const ordered = revealOrder(capsule.predictions);
@@ -107,6 +110,17 @@ export function SoloScreen({
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {onKeepsakes && (
+          <div className="mt-9">
+            <p className="mb-3 text-center" style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 19, color: PALETTE.inkSoft }}>
+              there&apos;s more inside, under the predictions.
+            </p>
+            <TapButton full tone="wax" onClick={onKeepsakes}>
+              keep digging ↓
+            </TapButton>
           </div>
         )}
 

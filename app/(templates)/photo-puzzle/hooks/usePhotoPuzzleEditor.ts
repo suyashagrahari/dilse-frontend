@@ -7,7 +7,10 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { type PuzzleData, type EditMode, DEMO_DATA, GRID, normaliseGrid, puzzleDataToBody, dbToPuzzleData } from "../components/types";
+import { type PuzzleData, type EditMode, DEMO_DATA, puzzleDataToBody, dbToPuzzleData, restoreDraft } from "../components/types";
+import { missingFields } from "../components/EditSheet";
+import { PUZZLE_THEMES } from "../components/themes";
+import { pickTheme } from "../../_love/theme";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -19,16 +22,6 @@ const BASE = `${API_URL}/photo-puzzle-pages`;
 
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "photo-puzzle";
-
-/**
- * Validation is deliberately thin. A jigsaw that feels like work is a failed
- * build, and a form that argues with you before you have even seen the puzzle
- * is the same failure one screen earlier. Grid, melody, reveal image and the
- * final-piece message all have working defaults, so the only things we insist
- * on are the two names and enough of a letter to be worth assembling.
- */
-export const MIN_LINES = 2;
-export const MAX_LINES = GRID.maxPieces;
 
 // Draft is persisted to localStorage so a refresh (or an accidental tab close)
 // keeps every line the sender wrote. Falls back to sessionStorage if unavailable.
@@ -49,9 +42,6 @@ const readDraft = (): { data?: PuzzleData; password?: string; completed?: boolea
   } catch { return null; }
 };
 
-/** Lines with something actually written on them. Blank rows are scaffolding. */
-export const writtenLines = (d: PuzzleData) => d.lines.filter((l) => l.trim()).length;
-
 export function usePhotoPuzzleEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,9 +56,8 @@ export function usePhotoPuzzleEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
 
   // ── AI story fill ───────────────────────────────────────────────────────────
-  // Five fields, and that is the whole surface: the two names, the letter, the
-  // final-piece message and the closing line. The photograph, the grid and the
-  // melody are the sender's and the mechanic's, so they are not on the schema.
+  // Five text fields: the two names, the last-piece line, the main letter and
+  // the sign-off. The photos, difficulty and theme are the sender's choices.
   const fill = useStoryFill<PuzzleData>({
     slug: "photo-puzzle",
     demo: DEMO_DATA,
@@ -156,11 +145,11 @@ export function usePhotoPuzzleEditor() {
     // Restore a locally-saved draft on refresh. The typed form data (mf) always
     // comes back; if it was saved from the preview ("completed"), reopen the preview.
     const draft = readDraft();
-    if (draft?.data && Array.isArray(draft.data.lines) && Array.isArray(draft.data.melody)) {
-      // Restored verbatim, NOT through dbToPuzzleData: a work-in-progress draft
-      // legitimately contains blank lines, and the wire coercer would tidy them
-      // away mid-sentence. They only get cleaned on Save.
-      const d = draft.data;
+    const d = restoreDraft(draft?.data);
+    if (draft && d) {
+      // Restored nearly verbatim (NOT through dbToPuzzleData, which would swap
+      // blank work-in-progress fields for the demo's); older drafts get the
+      // newer fields filled from the demo.
       setMf(d);
       hasRestoredDraftRef.current = true;
       if (draft.password) setPagePassword(draft.password);
@@ -242,11 +231,31 @@ export function usePhotoPuzzleEditor() {
 
   const updateMf = useCallback((key: keyof PuzzleData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
+  /**
+   * The preview's theme dock. Re-themes what they are looking at and, once the
+   * page is theirs, what will be published — the form's picker writes the same
+   * field, so the two can never disagree.
+   */
+  const setTheme = useCallback(
+    (id: string) => {
+      setContent((p) => {
+        const next = { ...p, theme: id };
+        if (isPersonalized) saveDraft({ data: next, password: pagePassword, completed: true });
+        return next;
+      });
+      setMf((p) => ({ ...p, theme: id }));
+    },
+    [isPersonalized, pagePassword],
+  );
+
   const handleEditClick = useCallback(() => {
     // See `hasRestoredDraftRef` above. A restored draft is never overwritten by
     // opening the sheet; we only seed from DEMO_DATA on a genuinely fresh start.
+    // A fresh form keeps the demo's GIFs, lines and the vibe they were just
+    // previewing — never the demo couple's names, photo, memories or letter.
     if (isPersonalized) setMf({ ...content });
-    else if (!hasRestoredDraftRef.current) setMf({ ...DEMO_DATA });
+    else if (!hasRestoredDraftRef.current)
+      setMf({ ...DEMO_DATA, theme: content.theme, senderName: "", recipientName: "", imageUrl: "", imageCropX: 50, imageCropY: 50, photos: [], letter: "" });
     // The starter goes first, but only while there is a schema to fill from and
     // only until the sender has said no once. Everything else opens the form
     // exactly as it did before.
@@ -267,37 +276,25 @@ export function usePhotoPuzzleEditor() {
 
   // Save (locally) & jump to preview
   const handleSave = useCallback(() => {
-    if (!mf.senderName.trim()) {
-      pushToast({ type: "info", title: "Sign it with your name", message: "So they know who kept the last piece" });
-      return;
-    }
-    if (!mf.recipientName.trim()) {
-      pushToast({ type: "info", title: "Who is it for?", message: "Add their name and you're set" });
-      return;
-    }
-
-    const written = writtenLines(mf);
-    if (written < MIN_LINES) {
+    const missing = missingFields(mf);
+    if (missing.length) {
       pushToast({
         type: "info",
-        title: written === 0 ? "Write a line or two" : "One more line",
-        message: "Each piece hands over a line — two is plenty to start",
+        title: missing.length === 1 ? `Just ${missing[0].label} left` : "A couple of blanks left",
+        message: `Still needed: ${missing.map((m) => m.label).join(", ")}`,
       });
       return;
     }
 
-    // Blank rows are scaffolding, not letter. Everything else has a default.
-    const grid = normaliseGrid(mf.cols, mf.rows);
     const cleaned: PuzzleData = {
       ...mf,
-      cols: grid.cols,
-      rows: grid.rows,
       senderName: mf.senderName.trim(),
       recipientName: mf.recipientName.trim(),
       imageUrl: mf.imageUrl.trim(),
-      revealImageUrl: mf.revealImageUrl.trim(),
-      lines: mf.lines.map((l) => l.trim()).filter(Boolean).slice(0, MAX_LINES),
-      melody: (mf.melody.length ? mf.melody : DEMO_DATA.melody).slice(0, GRID.maxPieces),
+      photos: mf.photos.map((p) => ({ ...p, caption: p.caption?.trim(), note: p.note?.trim() })),
+      letter: mf.letter.trim(),
+      lockQuestion: mf.lockQuestion.trim(),
+      lockAnswer: mf.lockAnswer.trim(),
       finalPieceMessage: mf.finalPieceMessage.trim() || DEMO_DATA.finalPieceMessage,
       closingLine: mf.closingLine.trim() || DEMO_DATA.closingLine,
     };
@@ -305,13 +302,13 @@ export function usePhotoPuzzleEditor() {
     setContent(cleaned);
     setIsPersonalized(true);
     setEditMode("preview");
-    bumpPreview(); // recut the puzzle with the new grid and photo
+    bumpPreview(); // recut the puzzle with the new size and photo
     saveDraft({ data: mf, password: pagePassword, completed: true });
     track(EVENTS.PAGE_SAVED, {
       template: TEMPLATE,
       has_password: Boolean(pagePassword),
-      lines: cleaned.lines.length,
-      pieces: grid.cols * grid.rows,
+      photos: cleaned.photos.length,
+      difficulty: cleaned.difficulty,
     });
     pushToast({ type: "success", title: "Saved 🧩", message: "Play it once, then publish" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
@@ -400,9 +397,10 @@ export function usePhotoPuzzleEditor() {
     // Recorded before any validation or auth check so this measures *intent*.
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
 
-    if (!content.senderName.trim() || !content.recipientName.trim() || writtenLines(content) < MIN_LINES) {
+    const missing = missingFields(content);
+    if (missing.length) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "letter_incomplete" });
-      pushToast({ type: "info", title: "Almost — a couple of blanks left", message: "Both names and at least two lines" });
+      pushToast({ type: "info", title: "Almost — a couple of blanks left", message: `Still needed: ${missing.map((m) => m.label).join(", ")}` });
       setMf({ ...content });
       setEditMode("manual");
       return;
@@ -475,12 +473,12 @@ export function usePhotoPuzzleEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "I made you something. The last piece is with me. 🧩",
-      accent: "#4f46e5",
+      accent: pickTheme(PUZZLE_THEMES, content.theme).colors.a1,
       recipientName: content.recipientName,
       senderName: content.senderName,
       slug: "photo-puzzle",
     });
-  }, [shareUrl, content.senderName, content.recipientName, pagePassword]);
+  }, [shareUrl, content.senderName, content.recipientName, content.theme, pagePassword]);
 
   const goBack = useCallback(() => router.push("/templates"), [router]);
 
@@ -492,7 +490,7 @@ export function usePhotoPuzzleEditor() {
 
     fill, storyStarter, openManualForm,
 
-    setEditMode, setPagePassword, updateMf,
+    setEditMode, setPagePassword, updateMf, setTheme,
     handleEditClick, handleEditFromPreview, handleSave,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,

@@ -12,23 +12,30 @@
 import { useCallback, useState } from "react";
 import ChallanTemplate from "@/app/(templates)/challan/components/ChallanTemplate";
 import { dbToChallanData } from "@/app/(templates)/challan/components/demo";
-import { CH } from "@/app/(templates)/challan/components/theme";
+import { CHALLAN_THEMES } from "@/app/(templates)/challan/components/themes";
+import { pickTheme } from "@/app/(templates)/_love/theme";
 import { TemplateGate, initialUnlocked } from "./_TemplateGate";
 
-const PALETTE = {
-  surround: CH.portalBg,
-  card: "#FFFFFF",
-  edge: CH.portalEdge,
-  ink: CH.ink,
-  muted: CH.faint,
-  accent: CH.ink,
-  accentInk: CH.paper,
-  accentTint: CH.portalGrey,
-  font: CH.serif,
-  // Square. This template has no rounded corner anywhere in it.
-  radius: 0,
-  danger: CH.red,
-};
+const GROTESK = "var(--font-di-grotesk), 'Bricolage Grotesque', system-ui, sans-serif";
+
+/** The gate wears the department (theme) the sender picked. */
+function gatePalette(themeId: unknown) {
+  const t = pickTheme(CHALLAN_THEMES, typeof themeId === "string" ? themeId : "");
+  const c = t.colors;
+  return {
+    surround: c.base,
+    card: c.paper,
+    edge: `color-mix(in srgb, ${c.paperInk} 16%, transparent)`,
+    ink: c.paperInk,
+    muted: c.paperSoft,
+    accent: c.a1,
+    accentInk: "#ffffff",
+    accentTint: `color-mix(in srgb, ${c.a1} 14%, transparent)`,
+    font: GROTESK,
+    radius: 22,
+    danger: "#e11d48",
+  };
+}
 
 export default function ChallanViewer({
   rawData,
@@ -49,12 +56,12 @@ export default function ChallanViewer({
         onUnlocked={unlock}
         apiBase="challan-pages"
         storageKey="challan"
-        title="This challan is protected"
-        blurb="Enter the password to view the notice."
-        palette={PALETTE}
+        title="A challan is waiting for you"
+        blurb="It's protected. Enter the password to see what you did."
+        palette={gatePalette(rawData.theme)}
         badge={
-          <span style={{ fontFamily: CH.serif, fontSize: 13, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: CH.ink }}>
-            Challan status enquiry
+          <span style={{ fontFamily: GROTESK, fontSize: 12, fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            🚨 Heart Traffic · e-challan
           </span>
         }
       />
@@ -66,5 +73,5 @@ export default function ChallanViewer({
   // never parses `totalFine`.
   const data = dbToChallanData(rawData);
 
-  return <ChallanTemplate data={data} />;
+  return <ChallanTemplate data={data} mode="live" />;
 }

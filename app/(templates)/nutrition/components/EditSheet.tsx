@@ -28,9 +28,16 @@
 // person. It is a textarea, it is labelled in words, and it is never collapsed
 // behind an "advanced" anything.
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { EditMode } from "./demo";
+import { Check, X } from "lucide-react";
+
+import { DATE_FONT_VARS } from "../../date-invitation/components/fonts";
+import { GROTESK } from "../../_love/LoveKit";
+import { FormSection, MemoriesSections, ThemeSection } from "../../_love/editor/LoveKitSections";
+import type { LoveKitData } from "../../_love/types";
+import { DEFAULT_LOCK_ANSWER, DEFAULT_LOCK_QUESTION, type EditMode } from "./demo";
+import { NUTRITION_THEMES } from "./themes";
 import { NUTRIENT_SOFT_MAX, type Nutrient, type NutritionData, type Vitamin } from "./types";
 
 /* ── Tokens ───────────────────────────────────────────────────────────────────
@@ -38,15 +45,14 @@ import { NUTRIENT_SOFT_MAX, type Nutrient, type NutritionData, type Vitamin } fr
    than a brand colour. Nothing here is imported from the label's own token set:
    the form is allowed to be comfortable in ways the panel is not.            */
 
-const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const INK = "#111111";
-const MUTED = "#6B6B6B";
-const FAINT = "#93908A";
-const BORDER = "#D7D3CA";
-const SECTION = "#F2F0EA";
-const ACCENT = "#111111";
-
-const MAX_MESSAGE_LINES = 8;
+const FONT = GROTESK;
+const INK = "#1a1410";
+const MUTED = "#6f665c";
+const FAINT = "#968c80";
+const BORDER = "#e6ddd0";
+const SECTION = "#fbf8f3";
+const ACCENT = "#1a1410";
+const ERROR = "#d92d4b";
 const MAX_INGREDIENTS = 24;
 const MAX_NOT_SIGNIFICANT = 12;
 const MAX_VITAMINS = 10;
@@ -67,12 +73,12 @@ const labelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   minHeight: 44,
-  borderRadius: 8,
-  border: `1px solid ${BORDER}`,
+  borderRadius: 14,
+  border: `1.5px solid ${BORDER}`,
   background: "#FFFFFF",
-  padding: "10px 12px",
+  padding: "10px 13px",
   fontFamily: FONT,
-  fontSize: 14,
+  fontSize: 16,
   color: INK,
   outline: "none",
 };
@@ -91,26 +97,48 @@ function Field({
   onChange,
   placeholder,
   help,
+  required,
+  error,
+  max,
+  id,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   help?: string;
+  required?: boolean;
+  error?: string;
+  max?: number;
+  id?: string;
 }) {
   return (
     <div>
       <label style={labelStyle}>
-        {label}
+        <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+          <span>
+            {label}
+            {required ? <span style={{ color: ERROR }}> *</span> : null}
+          </span>
+          {max ? (
+            <span style={{ fontWeight: 600, letterSpacing: 0, color: value.length > max * 0.9 ? ERROR : FAINT }}>
+              {value.length}/{max}
+            </span>
+          ) : null}
+        </span>
         <input
+          id={id}
           type="text"
           value={value}
+          maxLength={max}
+          aria-invalid={error ? true : undefined}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          style={{ ...inputStyle, ...controlReset }}
+          style={{ ...inputStyle, ...controlReset, borderColor: error ? ERROR : BORDER }}
         />
       </label>
-      {help ? <p style={{ margin: "4px 0 0", fontFamily: FONT, fontSize: 11, lineHeight: 1.5, color: FAINT }}>{help}</p> : null}
+      {error ? <p role="alert" style={{ margin: "5px 0 0", fontFamily: FONT, fontSize: 12, fontWeight: 700, color: ERROR }}>{error}</p> : null}
+      {help ? <p style={{ margin: "4px 0 0", fontFamily: FONT, fontSize: 11.5, lineHeight: 1.5, color: FAINT }}>{help}</p> : null}
     </div>
   );
 }
@@ -192,17 +220,16 @@ function LinesArea({
   );
 }
 
+/** A white card grouping a few fields inside a step. */
 function Section({ title, blurb, children }: { title: string; blurb?: string; children: React.ReactNode }) {
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 20, padding: "14px 14px 16px" }}>
       <div>
-        <h3 style={{ margin: 0, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: INK }}>{title}</h3>
-        {blurb ? (
-          <p style={{ margin: "3px 0 0", fontFamily: FONT, fontSize: 11.5, lineHeight: 1.5, color: MUTED }}>{blurb}</p>
-        ) : null}
+        <h5 style={{ margin: 0, fontFamily: FONT, fontSize: 14, fontWeight: 800, color: INK }}>{title}</h5>
+        {blurb ? <p style={{ margin: "3px 0 0", fontFamily: FONT, fontSize: 12, lineHeight: 1.5, color: MUTED }}>{blurb}</p> : null}
       </div>
       {children}
-    </section>
+    </div>
   );
 }
 
@@ -224,9 +251,9 @@ function SmallButton({
       disabled={disabled}
       style={{
         minHeight: 44,
-        padding: "0 14px",
-        borderRadius: 8,
-        border: `1px solid ${danger ? BORDER : ACCENT}`,
+        padding: "0 16px",
+        borderRadius: 999,
+        border: `1.5px solid ${danger ? BORDER : ACCENT}`,
         background: "#FFFFFF",
         color: danger ? MUTED : ACCENT,
         fontFamily: FONT,
@@ -291,7 +318,7 @@ function NutrientCard({
   onMove: (delta: -1 | 1) => void;
 }) {
   return (
-    <div style={{ background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ background: "#FFFFFF", border: `1.5px solid ${isOpen ? INK : BORDER}`, borderRadius: 16, overflow: "hidden" }}>
       <button
         type="button"
         onClick={onToggle}
@@ -397,6 +424,18 @@ function NutrientCard({
 
 /* ── Sheet ────────────────────────────────────────────────────────────────── */
 
+type StepId = "vibe" | "product" | "label" | "memories" | "fine";
+
+const STEPS: { id: StepId; emoji: string; label: string }[] = [
+  { id: "vibe", emoji: "🎨", label: "Packaging" },
+  { id: "product", emoji: "🏷️", label: "Product" },
+  { id: "label", emoji: "📊", label: "Label" },
+  { id: "memories", emoji: "📸", label: "Servings & note" },
+  { id: "fine", emoji: "🧾", label: "Small print" },
+];
+
+type Errors = Partial<Record<"productName" | "letter", string>>;
+
 export default function EditSheet({
   editMode,
   setEditMode,
@@ -406,6 +445,7 @@ export default function EditSheet({
   setPagePassword,
   onSave,
   saving,
+  accent = "#ff3b2f",
 }: {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
@@ -416,8 +456,19 @@ export default function EditSheet({
   setPagePassword: (v: string) => void;
   onSave: () => void;
   saving: boolean;
+  /** The chosen packaging's accent, for the progress bar and Save. */
+  accent?: string;
 }) {
   const [openRow, setOpenRow] = useState<number | null>(null);
+  const [rawErrors, setErrors] = useState<Errors>({});
+  // An error disappears the moment its field is filled.
+  const errors: Errors = {
+    ...(rawErrors.productName && !mf.productName.trim() ? { productName: rawErrors.productName } : {}),
+    ...(rawErrors.letter && !mf.letter.trim() ? { letter: rawErrors.letter } : {}),
+  };
+  const [active, setActive] = useState<StepId>("vibe");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<Partial<Record<StepId, HTMLElement | null>>>({});
 
   const patchNutrient = useCallback(
     (index: number, patch: Partial<Nutrient>) => {
@@ -462,6 +513,69 @@ export default function EditSheet({
   const open = editMode === "manual";
   const crowded = mf.nutrients.length > NUTRIENT_SOFT_MAX;
   const sentence = notSignificantPreview(mf.notSignificantSource);
+  const firstName = mf.productName.trim().split(/\s+/)[0] || "";
+
+
+  const done: Record<StepId, boolean> = {
+    vibe: Boolean(mf.theme),
+    product: Boolean(mf.productName.trim()),
+    label: mf.nutrients.length > 0,
+    memories: mf.photos.length > 0 && Boolean(mf.letter.trim()),
+    fine: mf.ingredients.length > 0 || Boolean(mf.allergen.trim()),
+  };
+  const doneCount = STEPS.filter((s) => done[s.id]).length;
+
+  const jump = (id: StepId) => {
+    const el = stepRefs.current[id];
+    const box = scrollRef.current;
+    if (!el || !box) return;
+    box.scrollTo({ top: el.offsetTop - 8, behavior: "smooth" });
+  };
+
+  const onScroll = () => {
+    const box = scrollRef.current;
+    if (!box) return;
+    let current: StepId = "vibe";
+    for (const s of STEPS) {
+      const el = stepRefs.current[s.id];
+      if (el && el.offsetTop - 60 <= box.scrollTop) current = s.id;
+    }
+    if (current !== active) setActive(current);
+  };
+
+  const trySave = () => {
+    const next: Errors = {};
+    if (!mf.productName.trim()) next.productName = "Who is this label about? Add their name.";
+    if (!mf.letter.trim()) next.letter = "The note inside the wrapper is empty — it's the best part.";
+    setErrors(next);
+    if (next.productName) return jump("product");
+    if (next.letter) return jump("memories");
+    onSave();
+  };
+
+  const missing = [errors.productName ? "their name" : "", errors.letter ? "the note" : ""].filter(Boolean);
+
+  const kit: LoveKitData = {
+    photos: mf.photos,
+    gifs: mf.gifs,
+    letter: mf.letter,
+    theme: mf.theme,
+    lockQuestion: mf.lockQuestion,
+    lockAnswer: mf.lockAnswer,
+  };
+  const updateKit = <K extends keyof LoveKitData>(key: K, val: LoveKitData[K]) => updateMf(key, val);
+
+  const stepHead = (id: StepId, n: number, title: string, note: string) => (
+    <div ref={(el) => { stepRefs.current[id] = el; }} style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 4 }}>
+      <span style={{ width: 30, height: 30, borderRadius: 999, flex: "0 0 auto", display: "grid", placeItems: "center", background: done[id] ? accent : "#fff", color: done[id] ? "#fff" : INK, border: `1.5px solid ${done[id] ? accent : BORDER}`, fontFamily: FONT, fontWeight: 800, fontSize: 13 }}>
+        {done[id] ? <Check size={15} strokeWidth={3} /> : n}
+      </span>
+      <div style={{ minWidth: 0 }}>
+        <h4 style={{ margin: 0, fontFamily: FONT, fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", color: INK }}>{title}</h4>
+        <p style={{ margin: "1px 0 0", fontFamily: FONT, fontSize: 12, lineHeight: 1.45, color: MUTED }}>{note}</p>
+      </div>
+    </div>
+  );
 
   return (
     <AnimatePresence>
@@ -471,94 +585,106 @@ export default function EditSheet({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200]"
-          style={{ background: "rgba(17,17,17,0.42)" }}
+          className={`fixed inset-0 z-[200] ${DATE_FONT_VARS}`}
+          style={{ background: "rgba(20,14,10,0.46)" }}
           onClick={() => setEditMode(null)}
         >
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "tween", duration: 0.24, ease: "easeOut" }}
+            transition={{ type: "spring", stiffness: 320, damping: 34 }}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-label="Write this label"
+            aria-label="Pack your person"
             style={{
               position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
+              left: 0,
+              right: 0,
+              marginInline: "auto",
               bottom: 0,
               width: "100%",
-              maxWidth: 460,
-              maxHeight: "92dvh",
+              maxWidth: 540,
+              maxHeight: "94dvh",
               background: SECTION,
-              borderTopLeftRadius: 14,
-              borderTopRightRadius: 14,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              fontFamily: FONT,
+              color: INK,
+              boxShadow: "0 -20px 60px -20px rgba(0,0,0,.4)",
             }}
           >
-            <div
-              style={{
-                flex: "0 0 auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "12px 14px",
-                background: "#FFFFFF",
-                borderBottom: `1px solid ${BORDER}`,
-              }}
-            >
-              <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: INK }}>Write this label</span>
-              <button
-                type="button"
-                onClick={() => setEditMode(null)}
-                aria-label="Close"
-                style={{
-                  minHeight: 44,
-                  minWidth: 44,
-                  border: "none",
-                  background: "transparent",
-                  color: MUTED,
-                  fontFamily: FONT,
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
-              >
-                Close
-              </button>
+            {/* ── Header: title, progress, step chips ── */}
+            <div style={{ flex: "0 0 auto", background: "#FFFFFF", borderBottom: `1.5px solid ${BORDER}` }}>
+              <div aria-hidden style={{ width: 44, height: 5, borderRadius: 999, background: BORDER, margin: "8px auto 0" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "8px 12px 0 18px" }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ margin: 0, fontFamily: FONT, fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em", color: INK }}>Pack your person 🥫</h3>
+                  <p style={{ margin: "1px 0 0", fontSize: 12, color: MUTED }}>
+                    {doneCount}/{STEPS.length} done · the pack behind this sheet updates as you type
+                  </p>
+                </div>
+                <button type="button" onClick={() => setEditMode(null)} aria-label="Close" style={{ width: 44, height: 44, flex: "0 0 auto", borderRadius: 999, border: `1.5px solid ${BORDER}`, background: "#fff", color: INK, display: "grid", placeItems: "center", cursor: "pointer" }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div aria-hidden style={{ margin: "10px 18px 0", height: 5, borderRadius: 999, background: "#f1ebe2", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(doneCount / STEPS.length) * 100}%`, background: accent, borderRadius: 999, transition: "width .35s ease" }} />
+              </div>
+              <nav aria-label="Form steps" className="nf-steps" style={{ display: "flex", gap: 6, overflowX: "auto", padding: "10px 14px 12px", scrollbarWidth: "none" }}>
+                {STEPS.map((s) => {
+                  const on = active === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => jump(s.id)}
+                      aria-current={on ? "step" : undefined}
+                      style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 36, padding: "0 12px", borderRadius: 999, cursor: "pointer", fontFamily: FONT, fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap", border: `1.5px solid ${on ? INK : BORDER}`, background: on ? INK : "#fff", color: on ? "#fff" : INK }}
+                    >
+                      <span aria-hidden>{done[s.id] ? "✓" : s.emoji}</span> {s.label}
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
 
+            {/* ── Body ── */}
             <div
-              style={{
-                flex: "1 1 auto",
-                overflowY: "auto",
-                padding: "16px 14px 24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 22,
-              }}
+              ref={scrollRef}
+              onScroll={onScroll}
+              style={{ position: "relative", flex: "1 1 auto", overflowY: "auto", padding: "16px 14px 28px", display: "flex", flexDirection: "column", gap: 18 }}
             >
-              <Section title="The product" blurb="A person, packaged. Their name goes where the brand name goes.">
+              {/* 1 — Packaging */}
+              {stepHead("vibe", 1, "Pick the packaging", "Four product lines. The whole page changes — this is exactly what they'll unwrap.")}
+              <ThemeSection themes={NUTRITION_THEMES} value={mf.theme} onChange={(id) => updateMf("theme", id)} />
+
+              {/* 2 — Product */}
+              {stepHead("product", 2, "The product", "A person, packaged. Their name goes where the brand name goes.")}
+              <Section title="Front of pack" blurb="Printed huge on the carton. Your first serving photo (step 4) sits in the window.">
                 <Field
+                  id="nf-product-name"
                   label="Their name"
+                  required
+                  max={60}
                   value={mf.productName}
                   onChange={(v) => updateMf("productName", v)}
                   placeholder="Meera Sharma"
-                />
-                <Field
-                  label="Photo URL"
-                  value={mf.photoUrl ?? ""}
-                  onChange={(v) => updateMf("photoUrl", v)}
-                  placeholder="Optional"
-                  help="Optional. Leave it blank and the package keeps its plain front."
+                  error={errors.productName}
                 />
               </Section>
-
               <Section title="Serving" blurb="The driest possible way to say there is only one of them.">
-                <Field label="Serving size" value={mf.servingSize} onChange={(v) => updateMf("servingSize", v)} placeholder="1 Meera" />
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                    <Field label="Serving size" value={mf.servingSize} onChange={(v) => updateMf("servingSize", v)} placeholder={`1 ${firstName || "Meera"}`} />
+                  </div>
+                  <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                    <Field label="Calories" value={mf.calories} onChange={(v) => updateMf("calories", v)} placeholder="∞" />
+                  </div>
+                </div>
                 <Field
                   label="Servings per container"
                   value={mf.servingsPerContainer}
@@ -566,24 +692,19 @@ export default function EditSheet({
                   placeholder="1 (there is only one)"
                 />
                 <Field
-                  label="Calories"
-                  value={mf.calories}
-                  onChange={(v) => updateMf("calories", v)}
-                  placeholder="∞"
-                  help="Write anything at all. ∞ is the best answer, and this is never read as a number, so it will print exactly as typed."
-                />
-                <Field
                   label="Line under the calories"
                   value={mf.caloriesNote ?? ""}
                   onChange={(v) => updateMf("caloriesNote", v)}
                   placeholder="worth every one"
-                  help="Tiny italics, bottom right of the calorie block. Optional."
+                  help="Calories can be anything — ∞, 'a lot', 'yes'. It prints exactly as typed."
                 />
               </Section>
 
+              {/* 3 — Label */}
+              {stepHead("label", 3, "The label", "Each row is a trait. Tap a row on the finished label and your note about it unfolds.")}
               <Section
-                title={`What they are made of (${mf.nutrients.length})`}
-                blurb="Each row is a trait. Tapping a row on the finished label reveals your note about it — that note is the whole point, so write it here."
+                title={`What they're made of (${mf.nutrients.length})`}
+                blurb="Write the note — that's the line they'll screenshot. Specific memory beats compliment."
               >
                 {mf.nutrients.map((row, i) => (
                   <NutrientCard
@@ -598,23 +719,27 @@ export default function EditSheet({
                     onMove={(delta) => moveNutrient(i, delta)}
                   />
                 ))}
-                <SmallButton label="Add a trait" onClick={addNutrient} />
+                {mf.nutrients.length === 0 ? (
+                  <p style={{ margin: 0, padding: "14px", borderRadius: 14, border: `1.5px dashed ${BORDER}`, textAlign: "center", fontSize: 13, color: MUTED }}>
+                    No traits yet. Start with the obvious one — &ldquo;Total Loyalty&rdquo;, &ldquo;Stolen Hoodies&rdquo;…
+                  </p>
+                ) : null}
+                <SmallButton label="+ Add a trait" onClick={addNutrient} disabled={mf.nutrients.length >= 15} />
                 {crowded ? (
                   <p style={{ margin: 0, fontFamily: FONT, fontSize: 11.5, lineHeight: 1.5, color: MUTED }}>
-                    That is more than {NUTRIENT_SOFT_MAX} rows. Nothing is dropped, but past about here the panel stops reading
-                    like a label and starts reading like a spreadsheet.
+                    That is more than {NUTRIENT_SOFT_MAX} rows — past here the panel reads like a spreadsheet.
                   </p>
                 ) : null}
               </Section>
 
-              <Section title="Vitamins and minerals" blurb="The short block under the heavy rule. Smaller traits, smaller type.">
+              <Section title="Vitamins & minerals" blurb="The short block under the heavy rule. Smaller traits, smaller type.">
                 <LinesArea
                   key="vitamins"
                   label={`Vitamins (max ${MAX_VITAMINS})`}
                   initial={mf.vitamins.map(vitaminToLine).join("\n")}
-                  rows={5}
-                  placeholder={"Vitamin P (patience): 8%\nIron (in arguments): 90% | never once conceded a point about parking"}
-                  help="One per line, written Trait: value — split on the first colon only. Anything after a | is the tap-note for that row. Leave it empty and the whole block disappears."
+                  rows={4}
+                  placeholder={"Vitamin U: 100%\nIron (Will): 200% | finished the degree everybody told her to drop"}
+                  help="One per line: Trait: value. Anything after a | is the tap-note. Empty = the block disappears."
                   onCommit={(lines) =>
                     updateMf(
                       "vitamins",
@@ -627,14 +752,14 @@ export default function EditSheet({
                 />
               </Section>
 
-              <Section title="Not a significant source of" blurb="The funniest line on the label, set in the dullest type on the label.">
+              <Section title="Not a significant source of" blurb="The funniest line on the label, set in the dullest type.">
                 <LinesArea
                   key="not-significant"
                   label={`Things they simply do not have (max ${MAX_NOT_SIGNIFICANT})`}
                   initial={mf.notSignificantSource.join("\n")}
-                  rows={4}
-                  placeholder={"punctuality\nreplying to texts before Thursday\nany interest in the offside rule"}
-                  help="One per line. Leave it empty and the line is skipped entirely."
+                  rows={3}
+                  placeholder={"punctuality\nreplying before Thursday"}
+                  help="One per line."
                   onCommit={(lines) =>
                     updateMf(
                       "notSignificantSource",
@@ -643,40 +768,61 @@ export default function EditSheet({
                   }
                 />
                 {sentence ? (
-                  <p
-                    style={{
-                      margin: 0,
-                      padding: "9px 11px",
-                      borderRadius: 8,
-                      background: "#FFFFFF",
-                      border: `1px solid ${BORDER}`,
-                      fontFamily: FONT,
-                      fontSize: 11.5,
-                      lineHeight: 1.5,
-                      color: MUTED,
-                    }}
-                  >
+                  <p style={{ margin: 0, padding: "9px 11px", borderRadius: 12, background: SECTION, border: `1px solid ${BORDER}`, fontFamily: 'Helvetica, Arial, sans-serif', fontStyle: "italic", fontSize: 12, lineHeight: 1.5, color: MUTED }}>
                     {sentence}
                   </p>
                 ) : null}
               </Section>
 
-              <Section title="The small print" blurb="Nobody reads this on a real packet. Everybody reads it on this one.">
+              {/* 4 — Servings, side effects, the note */}
+              {stepHead("memories", 4, "Servings & the note inside", "Your photos become sachets in a box; your GIFs are the side effects; the letter is torn open last.")}
+              <div style={{ background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 20, padding: "6px 14px 16px" }}>
+                <MemoriesSections
+                  data={kit}
+                  update={updateKit}
+                  gifTags={["funny", "hug", "yes", "love"]}
+                  copy={{
+                    photosTitle: `Servings — photos + memory notes (${mf.photos.length}/10)`,
+                    photosNote: "Add 5–10. Each photo becomes a sachet: tap it to crop & zoom, then write the memory printed inside. The first one is the product shot.",
+                    captionHint: "batch no. 001 — the first sunset",
+                    noteHint: "You said the sky looked like mango lassi…",
+                    gifsTitle: "Side effects may include… (GIFs)",
+                    letterTitle: "Directions for use — the note inside the wrapper",
+                    letterNote: "The big one. They tear the wrapper open at the very end, after answering your question.",
+                    letterHint: `${firstName || "Meera"},\n\nWrite it like they're reading it at 2am…`,
+                    lockQuestion: DEFAULT_LOCK_QUESTION,
+                    lockAnswer: DEFAULT_LOCK_ANSWER,
+                  }}
+                />
+                {mf.photos.length > 0 && mf.photos.length < 5 ? (
+                  <p style={{ margin: "12px 0 0", padding: "9px 12px", borderRadius: 12, background: SECTION, fontSize: 12, color: MUTED }}>
+                    💡 {mf.photos.length} serving{mf.photos.length === 1 ? "" : "s"} so far — 5 to 10 makes the box feel full.
+                  </p>
+                ) : null}
+                {errors.letter ? (
+                  <p role="alert" style={{ margin: "12px 0 0", padding: "10px 12px", borderRadius: 12, background: "#fff0f3", border: `1.5px solid ${ERROR}`, fontSize: 13, fontWeight: 700, color: ERROR }}>
+                    ✍️ {errors.letter}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* 5 — Small print */}
+              {stepHead("fine", 5, "The small print", "Nobody reads this on a real packet. Everybody reads it on this one.")}
+              <Section title="Ingredients & warnings">
                 <TextArea
                   label="Daily value footnote"
                   value={mf.footnote}
                   onChange={(v) => updateMf("footnote", v)}
                   rows={3}
-                  placeholder="Percent Daily Values are based on one person. Your daily values may be higher or lower depending on how long you have known her."
-                  help="A real packet explains that percentages assume a 2,000 calorie diet. Explain what yours are based on."
+                  placeholder="2,000 calories a day is used for general nutrition advice. One Meera a day is used for everything else."
                 />
                 <LinesArea
                   key="ingredients"
                   label={`Ingredients (max ${MAX_INGREDIENTS})`}
                   initial={mf.ingredients.join("\n")}
-                  rows={6}
+                  rows={5}
                   placeholder={"stubbornness\nunreasonably good playlists\nthe laugh that starts silent"}
-                  help="One per line. They are printed run together in one dense unbroken block, which is exactly how a real ingredients list hides the interesting bits."
+                  help="One per line. Printed run together in one dense block, like the real thing."
                   onCommit={(lines) =>
                     updateMf(
                       "ingredients",
@@ -687,80 +833,61 @@ export default function EditSheet({
                 <Field
                   label="Allergen warning"
                   value={mf.allergen}
+                  max={120}
                   onChange={(v) => updateMf("allergen", v)}
                   placeholder="CONTAINS: sarcasm, strong opinions"
-                  help="Printed in small bold capitals, like the real thing."
                 />
                 <Field
-                  label="Distributed by"
+                  label="Distributed by (your signature)"
                   value={mf.distributedBy ?? ""}
+                  max={120}
                   onChange={(v) => updateMf("distributedBy", v)}
-                  placeholder="Your name, Bengaluru"
-                  help="The seven-pixel line at the very bottom of the packet. This is your signature. Optional."
+                  placeholder="Rohan, with love · Bengaluru"
+                  help="The tiny line under the barcode. Your first name here also signs the note."
                 />
               </Section>
-
-              <Section
-                title="The part you actually meant"
-                blurb="Under the packet, in a serif, at a size a person reads at. Everything above is the setup; this is the thing you are sending."
-              >
-                <LinesArea
-                  key="message"
-                  label={`Message (max ${MAX_MESSAGE_LINES} paragraphs)`}
-                  initial={mf.message.join("\n")}
-                  rows={8}
-                  placeholder={"One paragraph per line.\n\nSay the plain thing. No percentages, no callback to the rows above — the joke has already done its work by the time they get here."}
-                  help="Write it the way you would say it. Do not land another punchline here; the whole label exists to buy you these few honest sentences."
-                  onCommit={(lines) =>
-                    updateMf(
-                      "message",
-                      lines.map((l) => l.trim()).filter(Boolean).slice(0, MAX_MESSAGE_LINES),
-                    )
-                  }
-                />
+              <Section title="🔒 Password (optional)" blurb="Set one and the shared page asks for it before it opens.">
+                <Field label="Password" value={pagePassword} onChange={setPagePassword} placeholder="Leave blank for no gate" />
               </Section>
-
-              <Section title="Password (optional)">
-                <Field
-                  label="Password"
-                  value={pagePassword}
-                  onChange={setPagePassword}
-                  placeholder="Leave blank for no gate"
-                  help="Set one and the shared page asks for it before it opens."
-                />
-              </Section>
+              <FormSection emoji="🎁" title="That's the whole pack" note="Hit Save to see it, then Publish to get your link." />
             </div>
 
+            {/* ── Footer ── */}
             <div
               style={{
                 flex: "0 0 auto",
                 padding: "10px 14px",
                 paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
                 background: "#FFFFFF",
-                borderTop: `1px solid ${BORDER}`,
+                borderTop: `1.5px solid ${BORDER}`,
               }}
             >
+              {missing.length ? (
+                <p role="alert" style={{ margin: "0 0 8px", fontSize: 12.5, fontWeight: 700, color: ERROR, textAlign: "center" }}>
+                  Almost there — still missing {missing.join(" and ")}.
+                </p>
+              ) : null}
               <button
                 type="button"
-                onClick={onSave}
+                onClick={trySave}
                 disabled={saving}
                 style={{
                   width: "100%",
-                  height: 48,
-                  minHeight: 48,
-                  borderRadius: 8,
-                  border: `1px solid ${ACCENT}`,
-                  background: ACCENT,
+                  height: 54,
+                  minHeight: 54,
+                  borderRadius: 999,
+                  border: "none",
+                  background: INK,
                   color: "#FFFFFF",
                   fontFamily: FONT,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  letterSpacing: "0.08em",
+                  fontSize: 16,
+                  fontWeight: 800,
                   opacity: saving ? 0.6 : 1,
                   cursor: saving ? "default" : "pointer",
+                  boxShadow: `0 14px 30px -14px ${accent}`,
                 }}
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? "Saving…" : "Seal the pack & preview ✨"}
               </button>
             </div>
           </motion.div>

@@ -12,7 +12,8 @@
 
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, PenLine, Send, Share2, Loader2, Lock, Play, Camera, RotateCcw } from "lucide-react";
+import { ThemeDock } from "../_love/LoveKit";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useCapsuleEditor } from "./hooks/useCapsuleEditor";
@@ -20,11 +21,11 @@ import CapsuleTemplate from "./components/CapsuleTemplate";
 import EditSheet from "./components/EditSheet";
 import SealCeremony from "./components/SealCeremony";
 import { COPY, MONO, PALETTE, UI, fmtSealDate, type CapsuleView } from "./components/types";
-import { localDateToIso } from "./components/capsuleData";
 import { useNow } from "./components/useTick";
-import { DebugBar, DebugButton } from "./components/ui";
+import { CapsuleScope, PreviewBar, PreviewButton } from "./components/ui";
+import { CAPSULE_THEMES } from "./components/themes";
 
-const CHROME = "rgba(249,245,235,.93)";
+const CHROME = "color-mix(in srgb, var(--cp-paper, #f9f1e3) 92%, transparent)";
 const CHROME_BORDER = `1px solid ${PALETTE.edge}`;
 
 function CapsulePageInner() {
@@ -40,15 +41,25 @@ function CapsulePageInner() {
    */
   // The overridden open date is stamped in the CLICK HANDLER, not in render —
   // `Date.now()` during render is impure and the linter is right about it.
+  //
+  // Offered only while the amend window is open: once it closes, the author is
+  // bound by the seal like everyone else and the preview stays sealed.
   const [debugOpensOn, setDebugOpensOn] = useState<string | null>(null);
-  const debugOpen = debugOpensOn !== null;
+  const [previewStart, setPreviewStart] = useState<"ceremony" | "keepsakes">("ceremony");
+  const debugOpen = debugOpensOn !== null && e.amendable;
 
   const view: CapsuleView = useMemo(() => {
-    if (debugOpensOn && e.capsule) {
+    if (debugOpen && debugOpensOn && e.capsule) {
       return { state: "open", capsule: { ...e.capsule, opensOn: debugOpensOn } };
     }
     return e.view;
-  }, [debugOpensOn, e.capsule, e.view]);
+  }, [debugOpen, debugOpensOn, e.capsule, e.view]);
+
+  const openPreview = useCallback((start: "ceremony" | "keepsakes") => {
+    setPreviewStart(start);
+    setDebugOpensOn(new Date(Date.now() - 60_000).toISOString());
+    window.scrollTo({ top: 0 });
+  }, []);
 
   const sheetMode = !e.capsule ? "write" : e.amendable ? "amend" : "locked";
 
@@ -82,7 +93,7 @@ function CapsulePageInner() {
   }, [e.amendUntil, now]);
 
   return (
-    <div style={{ minHeight: "100dvh", position: "relative", background: PALETTE.paper }}>
+    <CapsuleScope themeId={e.draft.theme} style={{ minHeight: "100dvh", position: "relative" }}>
       {/* The keyframes are injected exactly once, by `CapsuleTemplate` below.
           Two identical <style> nodes are a hydration mismatch in React 19,
           which hoists and dedupes style elements on the client but not on the
@@ -102,58 +113,50 @@ function CapsulePageInner() {
         </button>
         <div className="flex-1" />
 
-        {/* "change mine" exists only while the window is open. */}
-        {e.capsule && e.amendable && !e.showShare && (
-          <button
-            onClick={onEdit}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3.5 py-2 shadow-sm"
-            style={{ background: CHROME, color: PALETTE.amber, border: `1px solid ${PALETTE.amber}`, fontFamily: UI, fontSize: 14, fontWeight: 600 }}
-          >
-            <PenLine size={14} /> change mine
-          </button>
-        )}
-        {/* Locked. The sheet still opens — names never lock — but there is
-            nothing behind it except the two name fields and a flat statement
-            that the rest is final. */}
-        {e.capsule && !e.amendable && (
-          <button
-            onClick={onEdit}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3.5 py-2"
-            style={{ background: CHROME, color: PALETTE.inkSoft, border: CHROME_BORDER, fontFamily: MONO, fontSize: 11 }}
-          >
-            <Lock size={13} /> locked
-          </button>
-        )}
+        {/* The theme dock sits in the gap, top centre (portalled by the kit).
+            "change mine" / "locked" live in the bottom bar with the preview. */}
+        <ThemeDock themes={CAPSULE_THEMES} value={e.draft.theme} onChange={e.setTheme} />
 
         <button
           onClick={topAction.onClick}
           disabled={e.publishing}
           className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-4 py-2 shadow-md disabled:opacity-60"
-          style={{ background: PALETTE.wax, color: PALETTE.paper, fontFamily: UI, fontSize: 14, fontWeight: 700 }}
+          style={{ background: `linear-gradient(180deg, ${PALETTE.waxHi} -40%, ${PALETTE.wax} 60%)`, color: PALETTE.paper, fontFamily: UI, fontSize: 14, fontWeight: 800, border: `1px solid ${PALETTE.waxDeep}` }}
         >
           {topAction.icon} {topAction.label}
         </button>
       </div>
 
-      {/* Session-only debug controls for the capsule written in this tab. */}
-      {e.capsule && (
-        <div className="fixed bottom-0 left-0 right-0 z-[130] mx-auto" style={{ maxWidth: 380 }}>
-          <DebugBar>
-            <DebugButton
-              label={debugOpen ? "DEBUG: back to sealed" : "DEBUG: skip to opening date"}
-              onClick={() => setDebugOpensOn((v) => (v === null ? new Date(Date.now() - 60_000).toISOString() : null))}
-            />
-            <span style={{ opacity: 0.55 }}>
-              opens {fmtSealDate(localDateToIso(e.draft.opensOnDate, e.draft.timezone), e.draft.timezone)}
-            </span>
-          </DebugBar>
-        </div>
+      {/* The sender's own bar, once there is a capsule: preview opening day
+          (while the amend window is open), and change / locked. */}
+      {e.capsule && !e.sheetOpen && !e.ceremony && (
+        <PreviewBar>
+          {debugOpen ? (
+            <>
+              <PreviewButton label="back to sealed" icon={<RotateCcw size={14} />} onClick={() => setDebugOpensOn(null)} />
+              {previewStart === "ceremony" && <PreviewButton label="keepsakes" icon={<Camera size={14} />} onClick={() => openPreview("keepsakes")} />}
+            </>
+          ) : e.amendable ? (
+            <>
+              <PreviewButton primary label="preview opening day" icon={<Play size={14} />} onClick={() => openPreview("ceremony")} />
+              {!e.showShare && <PreviewButton label="change mine" icon={<PenLine size={14} />} onClick={onEdit} />}
+            </>
+          ) : (
+            <PreviewButton label={`locked · opens ${fmtSealDate(e.capsule.opensOn, e.capsule.timezone)}`} icon={<Lock size={13} />} onClick={onEdit} />
+          )}
+        </PreviewBar>
       )}
 
       {/* Clears the fixed top bar. The template itself carries no chrome — the
           share viewer mounts it flush. */}
-      <div key={e.previewVersion} style={{ paddingTop: 56, paddingBottom: e.capsule ? 64 : 0 }}>
-        <CapsuleTemplate view={view} mode="demo" />
+      <div key={`${e.previewVersion}-${debugOpen ? previewStart : "sealed"}`} style={{ paddingTop: 56 }}>
+        <CapsuleTemplate
+          view={view}
+          mode="demo"
+          themeOverride={e.draft.theme}
+          hideDemoBar={Boolean(e.capsule)}
+          startAt={debugOpen ? previewStart : "ceremony"}
+        />
       </div>
 
       {e.ceremony && e.capsule && (
@@ -177,6 +180,7 @@ function CapsulePageInner() {
         sealing={e.sealing}
         sheetMode={sheetMode}
         amendLeftLabel={amendLeftLabel}
+        lockedCounts={e.lockedCounts}
       />
 
       {/* Sits over the sheet above, so the first thing a sender sees after
@@ -212,13 +216,13 @@ function CapsulePageInner() {
       <AnimatePresence>
         {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
       </AnimatePresence>
-    </div>
+    </CapsuleScope>
   );
 }
 
 export default function CapsulePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: PALETTE.paper }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#efe4d2" }} />}>
       <CapsulePageInner />
     </Suspense>
   );

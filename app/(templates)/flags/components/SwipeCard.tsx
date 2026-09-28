@@ -8,22 +8,10 @@
 // no fallback text that could surface regardless of direction, which is the one
 // bug that would turn the whole template into a slideshow.
 
-import { CHOICE_COLOR, CHOICE_LABEL, GESTURE, REVEAL, type FlagCard, type SwipeChoice } from "./types";
-import {
-  EXIT_MS,
-  FLY_OUT_PUSH,
-  HAIRLINE,
-  INK,
-  INK_SOFT,
-  MONO,
-  PAPER,
-  PAPER_WARM,
-  SERIF,
-  STACK_MS,
-  STENCIL,
-  clamp,
-} from "./flagsTheme";
-import InkStamp from "./InkStamp";
+import { V } from "../../_love/theme";
+import { CHOICE_EMOJI, CHOICE_LABEL, FLAG_VAR, GESTURE, REVEAL, type FlagCard, type SwipeChoice } from "./types";
+import { FlagSticker } from "./bits";
+import { EXIT_MS, FLY_OUT_PUSH, GROTESK, ITALIC, MONO, STACK_MS, clamp } from "./flagsTheme";
 import { dragProgress, previewChoice, useSwipeGesture } from "./useSwipeGesture";
 
 export type RevealPhase = "flyout" | "hold" | "return" | "flip" | "settled";
@@ -48,21 +36,22 @@ interface SwipeCardProps {
   height: number;
   reduced: boolean;
   reveal: RevealState | null;
+  /** The sincere card's GIF sticker, if the sender picked one. */
+  gif?: string;
   onCommit: (choice: SwipeChoice, dx: number, dy: number) => void;
   onTap: () => void;
 }
 
 const EASE_OUT = "cubic-bezier(0.22, 0.61, 0.36, 1)";
-const STAMP_ROTATION: Record<SwipeChoice, number> = { red: -12, green: 12, complicated: 0 };
+const STAMP_ROTATION: Record<SwipeChoice, number> = { red: 12, green: -12, complicated: -4 };
+const RADIUS = 30;
 
 function stackTransform(depth: number): { transform: string; opacity: number; zIndex: number } {
-  if (depth < 0) {
-    return { transform: "translateY(calc(100% + 48px)) scale(1)", opacity: 0, zIndex: 40 };
-  }
-  if (depth === 0) return { transform: "translateY(0px) scale(1)", opacity: 1, zIndex: 30 };
-  if (depth === 1) return { transform: "translateY(8px) scale(0.96)", opacity: 1, zIndex: 20 };
-  if (depth === 2) return { transform: "translateY(16px) scale(0.92)", opacity: 0.7, zIndex: 10 };
-  return { transform: "translateY(16px) scale(0.92)", opacity: 0, zIndex: 0 };
+  if (depth < 0) return { transform: "translateY(calc(100% + 60px)) rotate(-4deg)", opacity: 0, zIndex: 40 };
+  if (depth === 0) return { transform: "translateY(0px) scale(1) rotate(0deg)", opacity: 1, zIndex: 30 };
+  if (depth === 1) return { transform: "translateY(12px) scale(0.95) rotate(2.2deg)", opacity: 1, zIndex: 20 };
+  if (depth === 2) return { transform: "translateY(22px) scale(0.9) rotate(-2.4deg)", opacity: 0.75, zIndex: 10 };
+  return { transform: "translateY(22px) scale(0.9)", opacity: 0, zIndex: 0 };
 }
 
 export default function SwipeCard({
@@ -75,6 +64,7 @@ export default function SwipeCard({
   height,
   reduced,
   reveal,
+  gif,
   onCommit,
   onTap,
 }: SwipeCardProps) {
@@ -95,51 +85,46 @@ export default function SwipeCard({
 
   if (reveal) {
     if (reveal.phase === "flyout" || reveal.phase === "hold") {
-      // Beat 1: a further 90px in the committed direction, rotation increasing.
-      const px =
-        reveal.choice === "red" ? -FLY_OUT_PUSH : reveal.choice === "green" ? FLY_OUT_PUSH : 0;
+      const px = reveal.choice === "red" ? -FLY_OUT_PUSH : reveal.choice === "green" ? FLY_OUT_PUSH : 0;
       const py = reveal.choice === "complicated" ? -FLY_OUT_PUSH : 0;
       const x = reveal.from.dx + px;
       const y = reveal.from.dy + py;
-      const rot = reduced
-        ? 0
-        : (x / (width || 1)) * GESTURE.rotationDeg * 1.25 + (reveal.choice === "complicated" ? -2 : 0);
+      const rot = reduced ? 0 : (x / (width || 1)) * GESTURE.rotationDeg * 1.25 + (reveal.choice === "complicated" ? -2 : 0);
       bodyTransform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
-      // Beat 2 is the 120ms HOLD: same transform, no transition, nothing moves.
       bodyTransition = reveal.phase === "flyout" ? `transform ${REVEAL.flyOutMs}ms ${EASE_OUT}` : "none";
     } else {
-      // Beat 3: back to dead centre before the flip.
       bodyTransform = "translate3d(0px, 0px, 0) rotate(0deg)";
       bodyTransition = `transform ${REVEAL.returnMs}ms ${GESTURE.springEasing}`;
     }
   } else {
     const rot = reduced ? 0 : (swipe.dx / (width || 1)) * GESTURE.rotationDeg;
     bodyTransform = `translate3d(${swipe.dx.toFixed(1)}px, ${swipe.dy.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
-    bodyTransition = swipe.active
-      ? "none"
-      : swipe.springing
-        ? `transform ${GESTURE.springBackMs}ms ${GESTURE.springEasing}`
-        : "none";
+    bodyTransition = swipe.active ? "none" : swipe.springing ? `transform ${GESTURE.springBackMs}ms ${GESTURE.springEasing}` : "none";
   }
 
   // ── Live drag feedback ────────────────────────────────────────────────────
   const liveChoice = draggable && swipe.active ? previewChoice(swipe.dx, swipe.dy) : null;
   const progress = dragProgress(swipe.dx, swipe.dy, width, height, liveChoice);
-  const tintOpacity =
-    liveChoice && progress >= GESTURE.tintStartProgress
-      ? Math.min(progress, GESTURE.tintMaxOpacity)
-      : 0;
-  const stampOpacity = liveChoice
-    ? clamp((progress - GESTURE.stampAtProgress) / 0.35, 0, 1)
-    : 0;
+  const tintOpacity = liveChoice && progress >= GESTURE.tintStartProgress ? Math.min(progress * 0.6, 0.34) : 0;
+  const stampOpacity = liveChoice ? clamp((progress - 0.2) / 0.35, 0, 1) : 0;
 
   const flipped = reveal !== null && (reveal.phase === "flip" || reveal.phase === "settled");
   const use3d = !reduced;
   const overruled = reveal !== null && reveal.choice !== card.truth;
 
   const stack = stackTransform(depth);
-  const stock = sincere ? PAPER_WARM : PAPER;
   const response = reveal ? card.responses[reveal.choice] : "";
+  const long = response.length > 140;
+  const glow = liveChoice ? `0 0 0 3px ${FLAG_VAR[liveChoice]}, 0 30px 60px -24px ${FLAG_VAR[liveChoice]}` : `0 26px 60px -30px ${V.shadow}`;
+
+  const face: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    borderRadius: RADIUS,
+    overflow: "hidden",
+    backfaceVisibility: use3d ? "hidden" : "visible",
+    WebkitBackfaceVisibility: use3d ? "hidden" : "visible",
+  };
 
   return (
     <div
@@ -159,119 +144,109 @@ export default function SwipeCard({
     >
       <div
         {...(draggable ? swipe.handlers : {})}
-        // Sincere cards and settled reveals are drag-locked but still tappable.
         onClick={!draggable && interactive ? onTap : undefined}
         style={{
           position: "absolute",
           inset: 0,
-          // The single property that decides whether this feels like a held card
-          // or a spinning sprite: the pivot sits BELOW the card.
           transformOrigin: GESTURE.transformOrigin,
           transform: bodyTransform,
           transition: bodyTransition,
-          perspective: 1200,
+          perspective: 1400,
           touchAction: "none",
           userSelect: "none",
           WebkitUserSelect: "none",
           WebkitTapHighlightColor: "transparent",
-          cursor: draggable ? "grab" : interactive ? "pointer" : "default",
+          cursor: draggable ? (swipe.active ? "grabbing" : "grab") : interactive ? "pointer" : "default",
         }}
       >
-        {/* the two faces */}
         <div
           style={{
             position: "absolute",
             inset: 0,
+            borderRadius: RADIUS,
             transformStyle: use3d ? "preserve-3d" : "flat",
             transform: use3d && flipped ? "rotateY(180deg)" : "rotateY(0deg)",
             transition: use3d ? `transform ${REVEAL.flipMs}ms ${REVEAL.flipEasing}` : "none",
+            boxShadow: depth === 0 ? glow : `0 16px 40px -28px ${V.shadow}`,
           }}
         >
           {/* ── FRONT ───────────────────────────────────────────────────── */}
           <div
             style={{
-              position: "absolute",
-              inset: 0,
+              ...face,
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: "34px 26px",
-              background: stock,
-              border: `1px solid ${INK}`,
-              borderRadius: 2,
-              backfaceVisibility: use3d ? "hidden" : "visible",
-              WebkitBackfaceVisibility: use3d ? "hidden" : "visible",
+              background: sincere ? V.grad : V.paper,
+              border: sincere ? "none" : `1px solid ${V.edge}`,
+              color: sincere ? "#fff" : V.paperInk,
               opacity: use3d ? 1 : flipped ? 0 : 1,
               transition: use3d ? "none" : `opacity ${REVEAL.flipMs}ms ${REVEAL.flipEasing}`,
-              overflow: "hidden",
             }}
           >
-            <p
-              style={{
-                margin: 0,
-                fontFamily: SERIF,
-                fontStyle: sincere ? "italic" : "normal",
-                fontSize: "clamp(18px, 5.4vw, 22px)",
-                lineHeight: 1.42,
-                textAlign: "center",
-                color: INK,
-                letterSpacing: "0.002em",
-              }}
-            >
-              {card.statement}
-            </p>
-
-            {sincere && (
-              <span
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 18,
-                  textAlign: "center",
-                  fontFamily: MONO,
-                  fontSize: 11,
-                  letterSpacing: "0.16em",
-                  color: INK_SOFT,
-                  textTransform: "uppercase",
-                }}
-              >
-                tap to continue
-              </span>
+            {/* soft colour wash in the corner so the card never reads flat */}
+            {!sincere && (
+              <div aria-hidden style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 50% at 100% 0%, color-mix(in srgb, ${V.a2} 16%, transparent), transparent 70%), radial-gradient(70% 40% at 0% 100%, color-mix(in srgb, ${V.a3} 14%, transparent), transparent 70%)`, pointerEvents: "none" }} />
             )}
 
-            {numberLabel && (
-              <span
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 0" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: GROTESK, fontSize: 13, fontWeight: 800, color: sincere ? "rgba(255,255,255,.92)" : V.paperSoft }}>
+                <span aria-hidden style={{ width: 28, height: 28, borderRadius: 99, display: "grid", placeItems: "center", background: sincere ? "rgba(255,255,255,.22)" : V.grad, color: "#fff", fontSize: 13, fontWeight: 900 }}>
+                  {(senderName[0] ?? "?").toUpperCase()}
+                </span>
+                {sincere ? "no swiping this one" : `${senderName.toLowerCase()}'s confession`}
+              </span>
+              {numberLabel && <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: V.paperSoft }}>{numberLabel}</span>}
+            </div>
+
+            <div style={{ position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", padding: "10px 24px" }}>
+              <span aria-hidden style={{ fontFamily: ITALIC, fontSize: 84, lineHeight: 0.6, height: 40, color: sincere ? "rgba(255,255,255,.5)" : V.a1, opacity: sincere ? 1 : 0.9 }}>
+                “
+              </span>
+              <p
                 style={{
-                  position: "absolute",
-                  left: 14,
-                  bottom: 12,
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  letterSpacing: "0.14em",
-                  color: INK_SOFT,
+                  margin: 0,
+                  fontFamily: sincere ? ITALIC : GROTESK,
+                  fontStyle: sincere ? "italic" : "normal",
+                  fontWeight: sincere ? 400 : 800,
+                  fontSize: sincere ? "clamp(26px, 7.4vw, 32px)" : card.statement.length > 48 ? "clamp(25px, 7vw, 30px)" : "clamp(29px, 8.2vw, 36px)",
+                  lineHeight: sincere ? 1.12 : 1.08,
+                  letterSpacing: sincere ? "0" : "-0.03em",
+                  overflowWrap: "anywhere",
                 }}
               >
-                {numberLabel}
-              </span>
+                {card.statement}
+              </p>
+            </div>
+
+            {sincere ? (
+              <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 20px 20px", gap: 10 }}>
+                <span style={{ fontFamily: GROTESK, fontSize: 13, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,.92)" }}>just read it. tap to continue →</span>
+                {gif && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={gif} alt="" style={{ width: 84, height: 84, objectFit: "cover", borderRadius: 20, transform: "rotate(6deg)", boxShadow: "0 12px 26px -10px rgba(0,0,0,.45)", border: "3px solid #fff", flex: "0 0 auto" }} />
+                )}
+              </div>
+            ) : (
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 18px 18px" }}>
+                {(["red", "complicated", "green"] as SwipeChoice[]).map((c) => (
+                  <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 10px", borderRadius: 999, border: `1.5px dashed color-mix(in srgb, ${FLAG_VAR[c]} 60%, transparent)`, fontFamily: GROTESK, fontSize: 11.5, fontWeight: 800, color: FLAG_VAR[c], whiteSpace: "nowrap" }}>
+                    {c === "red" ? "←" : c === "green" ? "" : "↑"} {CHOICE_EMOJI[c]} {c === "complicated" ? "beige" : c}
+                    {c === "green" ? " →" : ""}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
 
           {/* ── BACK ────────────────────────────────────────────────────── */}
           <div
             style={{
-              position: "absolute",
-              inset: 0,
+              ...face,
               display: "flex",
               flexDirection: "column",
-              background: PAPER,
-              border: `1px solid ${INK}`,
-              borderRadius: 2,
-              overflow: "hidden",
+              background: V.paper,
+              border: `1px solid ${V.edge}`,
               transform: use3d ? "rotateY(180deg)" : "none",
-              backfaceVisibility: use3d ? "hidden" : "visible",
-              WebkitBackfaceVisibility: use3d ? "hidden" : "visible",
               opacity: use3d ? 1 : flipped ? 1 : 0,
               transition: use3d ? "none" : `opacity ${REVEAL.flipMs}ms ${REVEAL.flipEasing}`,
               pointerEvents: flipped ? "auto" : "none",
@@ -279,156 +254,86 @@ export default function SwipeCard({
           >
             {reveal && (
               <>
-                <div
-                  style={{
-                    background: CHOICE_COLOR[reveal.choice],
-                    color: PAPER,
-                    fontFamily: STENCIL,
-                    fontWeight: 600,
-                    fontSize: 12,
-                    letterSpacing: "0.2em",
-                    padding: "10px 14px 9px",
-                  }}
-                >
-                  YOU SAID: {CHOICE_LABEL[reveal.choice]}
+                <div style={{ position: "relative", background: FLAG_VAR[reveal.choice], color: "var(--fl-on)", padding: "16px 20px 15px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ fontFamily: GROTESK, fontWeight: 800, fontSize: 15, letterSpacing: "0.02em" }}>
+                    you said: {CHOICE_LABEL[reveal.choice].toLowerCase()} {CHOICE_EMOJI[reveal.choice]}
+                  </span>
+                  {numberLabel && <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, opacity: 0.8 }}>{numberLabel}</span>}
                 </div>
 
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 0,
-                    overflowY: "auto",
-                    overscrollBehavior: "contain",
-                    touchAction: "pan-y",
-                    padding: "22px 22px 26px",
-                  }}
-                >
+                <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", touchAction: "pan-y", padding: "20px 22px 14px", display: "flex", flexDirection: "column", justifyContent: long ? "flex-start" : "center" }}>
+                  <p style={{ margin: "0 0 10px", fontFamily: GROTESK, fontSize: 12, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: V.paperSoft }}>
+                    {senderName.toLowerCase()} replied
+                  </p>
                   <p
                     style={{
                       margin: 0,
-                      fontFamily: SERIF,
-                      fontSize: 18,
-                      lineHeight: 1.5,
-                      color: INK,
-                      textAlign: "left",
+                      fontFamily: ITALIC,
+                      fontStyle: "italic",
+                      fontSize: long ? 22 : "clamp(26px, 7.2vw, 30px)",
+                      lineHeight: 1.16,
+                      color: V.paperInk,
+                      overflowWrap: "anywhere",
                     }}
                   >
-                    {response || "nothing written for that one. which is, itself, an answer."}
+                    {response || "…nothing written for that one. which is, itself, an answer."}
                   </p>
+                </div>
+
+                <div style={{ padding: "12px 18px 18px", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 13px", borderRadius: 999, background: `color-mix(in srgb, ${FLAG_VAR[card.truth]} 16%, transparent)`, border: `1.5px solid ${FLAG_VAR[card.truth]}`, fontFamily: GROTESK, fontSize: 12.5, fontWeight: 800, color: V.paperInk }}>
+                    <span aria-hidden style={{ width: 9, height: 9, borderRadius: 99, background: FLAG_VAR[card.truth] }} />
+                    {senderName.toLowerCase()} says: {CHOICE_LABEL[card.truth].toLowerCase()} {CHOICE_EMOJI[card.truth]}
+                  </span>
                 </div>
 
                 {overruled && (
                   <div
                     style={{
                       position: "absolute",
-                      top: 58,
+                      top: 64,
                       right: 12,
-                      opacity: flipped ? 0.62 : 0,
-                      transform: flipped ? "scale(1)" : "scale(1.18)",
-                      transition: `opacity 180ms linear ${Math.round(REVEAL.flipMs * 0.55)}ms, transform 180ms ${EASE_OUT} ${Math.round(REVEAL.flipMs * 0.55)}ms`,
+                      opacity: flipped ? 1 : 0,
+                      transform: flipped ? "scale(1)" : "scale(1.6)",
+                      transition: `opacity 160ms linear ${Math.round(REVEAL.flipMs * 0.6)}ms, transform 260ms cubic-bezier(.2,.9,.3,1.4) ${Math.round(REVEAL.flipMs * 0.6)}ms`,
                       pointerEvents: "none",
                     }}
                   >
-                    <InkStamp text="OVERRULED" color={CHOICE_COLOR[card.truth]} rotate={-14} fontSize={16} />
+                    <FlagSticker color={FLAG_VAR[card.truth]} rotate={9} size={13}>
+                      overruled 💅
+                    </FlagSticker>
                   </div>
                 )}
-
-                <div
-                  style={{
-                    borderTop: `1px solid ${INK}`,
-                    background: INK,
-                    color: PAPER,
-                    fontFamily: STENCIL,
-                    fontWeight: 500,
-                    fontSize: 11.5,
-                    letterSpacing: "0.18em",
-                    padding: "10px 14px 9px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 999,
-                      background: CHOICE_COLOR[card.truth],
-                      flex: "0 0 auto",
-                    }}
-                  />
-                  {senderName.toUpperCase()} SAYS: {CHOICE_LABEL[card.truth]}
-                </div>
               </>
             )}
           </div>
         </div>
 
-        {/* ── Drag feedback: tint + stamp, above the faces, never rotated ── */}
+        {/* ── Drag feedback: tint + stamp, above the faces ─────────────── */}
         {liveChoice && !sincere && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: 2,
-              pointerEvents: "none",
-              background: CHOICE_COLOR[liveChoice],
-              opacity: tintOpacity,
-            }}
-          />
+          <div aria-hidden style={{ position: "absolute", inset: 0, borderRadius: RADIUS, pointerEvents: "none", background: FLAG_VAR[liveChoice], opacity: tintOpacity }} />
         )}
         {liveChoice && !sincere && stampOpacity > 0 && (
           <div
-            aria-hidden="true"
+            aria-hidden
             style={{
               position: "absolute",
-              top: liveChoice === "complicated" ? "38%" : 26,
-              left: liveChoice === "green" ? 22 : undefined,
-              right: liveChoice === "red" ? 22 : undefined,
-              ...(liveChoice === "complicated" ? { left: 0, right: 0, textAlign: "center" as const } : {}),
+              top: liveChoice === "complicated" ? "auto" : 70,
+              bottom: liveChoice === "complicated" ? 90 : "auto",
+              left: liveChoice === "green" ? 18 : liveChoice === "complicated" ? 0 : undefined,
+              right: liveChoice === "red" ? 18 : liveChoice === "complicated" ? 0 : undefined,
+              textAlign: "center",
+              opacity: stampOpacity,
+              transform: `scale(${0.8 + stampOpacity * 0.2})`,
               pointerEvents: "none",
             }}
           >
-            <InkStamp
-              text={CHOICE_LABEL[liveChoice]}
-              color={CHOICE_COLOR[liveChoice]}
-              rotate={STAMP_ROTATION[liveChoice]}
-              opacity={stampOpacity * 0.88}
-              fontSize={18}
-            />
+            <FlagSticker color={FLAG_VAR[liveChoice]} rotate={STAMP_ROTATION[liveChoice]} size={22}>
+              {CHOICE_LABEL[liveChoice]} {CHOICE_EMOJI[liveChoice]}
+            </FlagSticker>
           </div>
         )}
       </div>
-
-      {/* ── "tap to continue", no button chrome ─────────────────────────── */}
-      {reveal?.showNext && (
-        <button
-          type="button"
-          onClick={onTap}
-          style={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            bottom: -46,
-            minHeight: 44,
-            padding: "0 18px",
-            background: "transparent",
-            border: "none",
-            fontFamily: MONO,
-            fontSize: 11,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: INK_SOFT,
-            cursor: "pointer",
-            borderBottom: `1px solid ${HAIRLINE}`,
-            borderRadius: 0,
-          }}
-        >
-          tap to continue
-        </button>
-      )}
     </div>
   );
 }

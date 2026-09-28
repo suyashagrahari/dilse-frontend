@@ -3,6 +3,18 @@
 // viewer, and the server payload. Field names here === server model field names
 // === wire-format keys (flat payload). Keep them in sync.
 
+import {
+  DEMO_PHOTO_CDN,
+  MAX_LETTER_LEN,
+  parseLoveGifs,
+  parseLovePhotos,
+  parseTheme,
+  MAX_LOCK_ANSWER_LEN,
+  MAX_LOCK_QUESTION_LEN,
+  type LovePhoto,
+} from "../../_love/types";
+import { COURT_THEME_IDS, DEFAULT_COURT_THEME } from "./themes";
+
 export type EditMode = null | "choose" | "manual" | "preview";
 
 export interface Toast {
@@ -57,7 +69,21 @@ export interface CourtOfLoveData {
   headline: string;
   oathText: string;
   questions: QuizQuestion[];
-  secretLetter: string;
+  /**
+   * The Final Judgement — the main letter, read after the verdict and the
+   * evidence, sealed with wax. Replaces the old `secretLetter` (pages published
+   * before the love kit carry only that; `dbToCourtOfLoveData` falls back to it).
+   */
+  letter: string;
+  /** The Exhibits — evidence photos, each with a caption and the sender's testimony. */
+  photos: LovePhoto[];
+  /** Up to three GIFs: the evidence folder's sketch, the seal, the SO ORDERED stamp. */
+  gifs: string[];
+  /** One of COURT_THEMES. */
+  theme: string;
+  /** The Court's last question before the judgement is unsealed ("" = default). */
+  lockQuestion: string;
+  lockAnswer: string;
   signatureName: string;
   certificateTitle: string;
   /**
@@ -102,6 +128,27 @@ export const PASS_RATIO = 0.8;
  * One constant now, used by the reader and the editor both.
  */
 export const MAX_QUESTIONS = 10;
+
+const COURT_GIF = "https://cdn.subhsandesh.in/gifts-media/assets/court-of-love";
+
+/** The Court's own GIFs, used as the demo's evidence sketch, seal and stamp moments. */
+export const DEMO_GIFS: string[] = [
+  `${COURT_GIF}/penguin-hug.gif`,
+  `${COURT_GIF}/love-this-much.gif`,
+  `${COURT_GIF}/judge-gavel.gif`,
+];
+
+/** Demo Exhibits A–D, captioned and testified in the Court's voice. */
+export const DEMO_EXHIBITS: LovePhoto[] = [
+  { url: `${DEMO_PHOTO_CDN}/couple1.webp`, caption: "the first sunset", note: "Let the record show: you said the sky looked like mango lassi. I have not recovered, and I do not intend to.", cropX: 50, cropY: 45, scale: 100 },
+  { url: `${DEMO_PHOTO_CDN}/couple2.webp`, caption: "date night, round 1", note: "The accused stole my fries, then my heart. In that order. I would like it noted that I let both happen.", cropX: 50, cropY: 40, scale: 100 },
+  { url: `${DEMO_PHOTO_CDN}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees were jealous of your smile that day. The defence has no further questions.", cropX: 50, cropY: 50, scale: 100 },
+  { url: `${DEMO_PHOTO_CDN}/couple4.webp`, caption: "us, forever", note: "Out of every timeline, I would pick this one. Every time. Exhibit closed. 🫶", cropX: 50, cropY: 50, scale: 100 },
+];
+
+/** Used when the sender leaves the lock question/answer blank. */
+export const DEFAULT_LOCK_QUESTION = "Before the judgement is read: does the accused accept the verdict of this Court?";
+export const DEFAULT_LOCK_ANSWER = "I do, your honour 💍";
 
 export const DEMO_DATA: CourtOfLoveData = {
   plaintiffName: "Aarav",
@@ -251,8 +298,13 @@ export const DEMO_DATA: CourtOfLoveData = {
       allCorrect: true,
     },
   ],
-  secretLetter:
-    "You didn't actually have to prove anything. I built this entire courtroom just to have an excuse to tell you something silly and true at the same time: on my worst days you are the argument I never want to win, and on my best days you are the reason. The Court rests. I love you — no further evidence required.",
+  letter:
+    "The Court has reviewed the evidence, and honestly? It was never close.\n\nYou didn't actually have to prove anything. I built this entire courtroom just to have an excuse to tell you something silly and true at the same time: on my worst days you are the argument I never want to win, and on my best days you are the reason.\n\nSo here is the judgement, and it is final: you're stuck with me. No appeals, no parole, no early release for good behaviour.\n\nThe Court rests. I love you — no further evidence required.",
+  photos: DEMO_EXHIBITS,
+  gifs: DEMO_GIFS,
+  theme: DEFAULT_COURT_THEME,
+  lockQuestion: "",
+  lockAnswer: "",
   signatureName: "Aarav",
   certificateTitle: "Certified Best Partner",
   language: "en",
@@ -265,7 +317,12 @@ export const COURT_OF_LOVE_CONTENT_KEYS: (keyof CourtOfLoveData)[] = [
   "headline",
   "oathText",
   "questions",
-  "secretLetter",
+  "letter",
+  "photos",
+  "gifs",
+  "theme",
+  "lockQuestion",
+  "lockAnswer",
   "signatureName",
   "certificateTitle",
   "language",
@@ -302,9 +359,17 @@ function normalizeQuestion(raw: unknown, fallback: QuizQuestion): QuizQuestion {
   };
 }
 
-/** DB/share response → UI state (fills any missing field from DEMO_DATA). */
+/**
+ * DB/share response → UI state.
+ *
+ * Text fields fall back to DEMO_DATA so a half-filled page still reads. The
+ * love-kit media deliberately does NOT: a page published before the kit
+ * existed has no photos, and it must show no Exhibits rather than the demo
+ * couple's. Only a null source (the demo itself) gets the demo media.
+ */
 export function dbToCourtOfLoveData(db: Record<string, unknown> | null | undefined): CourtOfLoveData {
-  const src = db ?? {};
+  if (!db) return DEMO_DATA;
+  const src = db;
   const pick = <K extends keyof CourtOfLoveData>(k: K): CourtOfLoveData[K] =>
     (src[k as string] as CourtOfLoveData[K]) ?? DEMO_DATA[k];
 
@@ -323,12 +388,37 @@ export function dbToCourtOfLoveData(db: Record<string, unknown> | null | undefin
     headline: pick("headline"),
     oathText: pick("oathText"),
     questions: questions.length ? questions : DEMO_DATA.questions,
-    secretLetter: pick("secretLetter"),
+    letter: pickLetter(src),
+    photos: parseLovePhotos(src.photos, []),
+    gifs: parseLoveGifs(src.gifs, []),
+    theme: parseTheme(src.theme, COURT_THEME_IDS, DEFAULT_COURT_THEME),
+    lockQuestion: typeof src.lockQuestion === "string" ? src.lockQuestion.slice(0, MAX_LOCK_QUESTION_LEN) : "",
+    lockAnswer: typeof src.lockAnswer === "string" ? src.lockAnswer.slice(0, MAX_LOCK_ANSWER_LEN) : "",
     signatureName: pick("signatureName"),
     certificateTitle: pick("certificateTitle"),
     language: pick("language"),
   };
 }
+
+/**
+ * The judgement text: the love-kit `letter`, else the pre-kit `secretLetter`
+ * (published pages and saved drafts from before the kit), else the demo.
+ * An explicitly empty `letter` on a new page stays empty — no Final Judgement.
+ */
+function pickLetter(src: Record<string, unknown>): string {
+  const letter = typeof src.letter === "string" ? src.letter : null;
+  const legacy = typeof src.secretLetter === "string" ? src.secretLetter : null;
+  if (letter && letter.trim()) return letter;
+  if (legacy && legacy.trim()) return legacy;
+  if (letter !== null) return letter;
+  return DEMO_DATA.letter;
+}
+
+/** Characters the form allows in the judgement (the love-kit letter cap). */
+export const MAX_JUDGEMENT_LEN = MAX_LETTER_LEN;
+
+/** Exhibit letter for photo `i`: A, B, C… */
+export const exhibitLetter = (i: number): string => String.fromCharCode(65 + (i % 26));
 
 /** True when this answer scores. */
 export function isCorrect(q: QuizQuestion, chosenIndex: number): boolean {

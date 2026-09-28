@@ -33,8 +33,9 @@ const FRAME_W = PANEL_W + BOARD_PAD * 2; // 376
 /** Breathing room kept either side of the frame at any viewport width. */
 const GUTTER = 24;
 
-const BOARD = "#F3F1EC";
-const PHOTO = 108;
+const BOARD = "var(--nf-board, #F3F1EC)";
+const BOARD_INK = "var(--nf-board-ink, #000)";
+const PAPER = "var(--lv-paper, #fff)";
 
 const BARCODE_W = 156;
 const BARCODE_H = 34;
@@ -126,18 +127,10 @@ export function PackageFrame({
 
   const [scale, setScale] = useState(1);
   const [innerH, setInnerH] = useState(0);
-  const [photoBroken, setPhotoBroken] = useState(false);
-
-  useEffect(() => {
-    setPhotoBroken(false);
-  }, [data.photoUrl]);
 
   // Capture renders at true size — a PNG of a scaled-down node is a soft PNG.
   useEffect(() => {
-    if (capture) {
-      setScale(1);
-      return;
-    }
+    if (capture) return;
     const host = hostRef.current;
     const inner = innerRef.current;
     if (!host || !inner) return;
@@ -158,7 +151,6 @@ export function PackageFrame({
   }, [capture]);
 
   const barcode = useMemo(() => buildBarcode(data.productName), [data.productName]);
-  const showPhoto = Boolean(data.photoUrl) && !photoBroken;
 
   const frame = (
     <div
@@ -170,7 +162,7 @@ export function PackageFrame({
         padding: BOARD_PAD,
         position: "relative",
         overflow: "hidden",
-        transform: capture ? undefined : `scale(${scale})`,
+        transform: capture ? undefined : `scale(${scale})`, // capture renders at 1
         transformOrigin: "top left",
       }}
     >
@@ -196,31 +188,13 @@ export function PackageFrame({
       </svg>
 
       <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        {showPhoto ? (
-          <img
-            src={data.photoUrl}
-            alt={data.productName}
-            width={PHOTO}
-            height={PHOTO}
-            onError={() => setPhotoBroken(true)}
-            style={{
-              width: PHOTO,
-              height: PHOTO,
-              objectFit: "cover",
-              display: "block",
-              marginBottom: 14,
-              border: "1px solid rgba(0,0,0,0.35)",
-              background: "#fff",
-            }}
-          />
-        ) : null}
 
         {/* The printed panel: off square, softly lit. */}
         <div
           style={{
             width: PANEL_W,
             boxSizing: "border-box",
-            background: "#fff",
+            background: PAPER,
             padding: PANEL_PAD,
             transform: "rotate(-1.5deg)",
             boxShadow: "0 6px 16px rgba(0,0,0,0.16), 0 1px 2px rgba(0,0,0,0.12)",
@@ -238,7 +212,7 @@ export function PackageFrame({
           viewBox={`0 0 ${BARCODE_W} ${BARCODE_H}`}
           style={{ display: "block", marginTop: 18 }}
         >
-          <rect width={BARCODE_W} height={BARCODE_H} fill="#fff" />
+          <rect width={BARCODE_W} height={BARCODE_H} style={{ fill: PAPER }} />
           {barcode.bars.map((b, i) => (
             <rect
               key={i}
@@ -246,7 +220,7 @@ export function PackageFrame({
               y={2}
               width={b.w}
               height={b.tall ? BARCODE_H - 4 : BARCODE_H - 9}
-              fill="#000"
+              style={{ fill: "var(--lv-paper-ink, #000)" }}
             />
           ))}
         </svg>
@@ -257,7 +231,7 @@ export function PackageFrame({
             fontSize: 7,
             letterSpacing: "1.2px",
             lineHeight: 1.2,
-            color: "#000",
+            color: BOARD_INK,
             paddingTop: 3,
           }}
         >
@@ -270,7 +244,8 @@ export function PackageFrame({
               fontFamily: "Helvetica, Arial, sans-serif",
               fontSize: 7,
               lineHeight: 1.3,
-              color: "rgba(0,0,0,0.65)",
+              color: BOARD_INK,
+              opacity: 0.72,
               paddingTop: 8,
               textAlign: "center",
             }}

@@ -19,13 +19,14 @@ import {
   PALETTE,
   SERIF,
   TIMING,
+  UI,
   fmtSealDate,
   type Capsule,
   type Side,
 } from "./types";
 import CapsuleObject from "./CapsuleObject";
-import { WaxShards } from "./paper";
-import { Frame, Mono, TapButton } from "./ui";
+import { PaperTexture, WaxShards, paperFill, wornEdgeStyle } from "./paper";
+import { Frame, Kicker, Mono, TapButton } from "./ui";
 import { useNow, usePoll, useStepTimer } from "./useTick";
 import { tone, sfxThunk, burst, unlockAudio } from "@/lib/webAudio";
 
@@ -118,9 +119,10 @@ export default function OpeningCeremony({
     return (
       <Frame seed="opening-seat">
         <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-6 px-6">
-          <Mono size={11}>IT&apos;S TIME</Mono>
-          <p className="text-center" style={{ fontFamily: SERIF, fontSize: 21, color: PALETTE.ink, lineHeight: 1.4 }}>
-            who&apos;s holding the phone?
+          <CapsuleObject seed={`obj-${capsule.sealedOn}`} wear="ready" initials={initials} width={150} reduced={reduce} />
+          <Kicker colour="var(--lv-a1)" style={{ marginTop: 18 }}>it&apos;s time</Kicker>
+          <p className="text-center" style={{ margin: 0, fontFamily: UI, fontWeight: 800, fontSize: 32, letterSpacing: "-0.04em", color: PALETTE.ink, lineHeight: 1.05 }}>
+            who&apos;s holding <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400 }}>the phone?</span>
           </p>
           <div className="flex w-full flex-col gap-2.5">
             {(["a", "b"] as Side[]).map((s) => (
@@ -158,10 +160,19 @@ export default function OpeningCeremony({
         <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-7 px-6">
           <CapsuleObject seed={`obj-${capsule.sealedOn}`} wear="ready" initials={initials} width={180} reduced={reduce} />
 
-          <p className="capsule-wait text-center" style={{ fontFamily: SERIF, fontSize: 20, color: PALETTE.ink }}>
+          <p className="capsule-wait text-center" style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 26, color: PALETTE.ink }}>
             {COPY.waitingFor(otherName)}
           </p>
           <Mono size={11}>{fmtSealDate(capsule.opensOn, capsule.timezone)}</Mono>
+
+          {/* Both people, one phone — which is how judging works today. The
+              presence poll above is the stub for two phones; until it is real,
+              saying "we're both here" IS the presence signal. */}
+          <div className="flex w-full flex-col gap-2.5">
+            <TapButton full tone="wax" onClick={beginCountdown}>
+              we&apos;re both here — open it
+            </TapButton>
+          </div>
 
           {/* The valve. Fifteen minutes, then a real way out. */}
           {valveOpen && (
@@ -180,18 +191,7 @@ export default function OpeningCeremony({
             {COPY.decline}
           </button>
 
-          {mode === "demo" && (
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
-                onClick={beginCountdown}
-                className="rounded-sm px-2 py-1"
-                style={{ background: "#2c2c2c", color: "#8de08d", fontFamily: MONO, fontSize: 11, border: "1px solid #3d5c3d", minHeight: 34 }}
-              >
-                [DEBUG: partner joins]
-              </button>
-            </div>
-          )}
+          {mode === "demo" && <div style={{ height: 60 }} />}
         </div>
       </Frame>
     );
@@ -205,7 +205,7 @@ export default function OpeningCeremony({
           <p
             key={count}
             className="capsule-count"
-            style={{ fontFamily: MONO, fontSize: 84, color: PALETTE.wax, lineHeight: 1 }}
+            style={{ fontFamily: UI, fontWeight: 800, fontSize: 132, letterSpacing: "-0.06em", lineHeight: 1, background: "linear-gradient(100deg, var(--lv-a1), var(--lv-a2) 55%, var(--lv-a3))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             {count > 0 ? count : "·"}
           </p>
@@ -226,6 +226,8 @@ export default function OpeningCeremony({
               initials={initials}
               splitPx={splitPx}
               reduced={reduce}
+              names={[capsule.pair.a.name, capsule.pair.b.name].filter(Boolean).join(" & ")}
+              dateLabel={fmtSealDate(capsule.opensOn, capsule.timezone)}
             />
             <WaxShards seed={`shards-${capsule.sealedOn}`} reduced={reduce} />
           </div>
@@ -238,9 +240,9 @@ export default function OpeningCeremony({
   return (
     <Frame seed="opening-context">
       <div className="flex min-h-[100dvh] flex-col justify-center gap-7 px-6 py-12">
-        <div className="capsule-unfurl">
-          <Mono size={10}>THEN</Mono>
-          <p className="mt-1" style={{ fontFamily: MONO, fontSize: 12, color: PALETTE.inkSoft }}>
+        <div className="capsule-unfurl text-center">
+          <Kicker colour="var(--lv-a1)">then</Kicker>
+          <p style={{ margin: "6px 0 0", fontFamily: UI, fontWeight: 800, fontSize: 30, letterSpacing: "-0.04em", color: PALETTE.ink }}>
             {fmtSealDate(capsule.sealedOn, capsule.timezone)}
           </p>
         </div>
@@ -254,10 +256,19 @@ export default function OpeningCeremony({
               className="capsule-card-in"
               style={{ animationDelay: reduce ? undefined : `${400 + i * 700}ms`, opacity: reduce ? 1 : 0 }}
             >
-              <Mono size={10}>{(capsule.pair[s].name || "").toUpperCase()}</Mono>
-              <p className="mt-1.5" style={{ fontFamily: SERIF, fontSize: 19, color: PALETTE.ink, lineHeight: 1.5 }}>
-                {COPY.contextLead(ctx.city || "—", ctx.oneLineAboutNow || "—")}
-              </p>
+              <div
+                className="relative overflow-hidden px-5 py-5"
+                style={{ ...paperFill(`ctx-${s}`), ...wornEdgeStyle(`ctx-${s}`), border: `1px solid ${PALETTE.edge}`, transform: `rotate(${i ? 1.2 : -1.2}deg)` }}
+              >
+                <PaperTexture seed={`ctx-g-${s}`} opacity={0.06} />
+                <div className="relative flex items-center justify-between">
+                  <Mono size={10}>{(capsule.pair[s].name || "").toUpperCase()}</Mono>
+                  <span aria-hidden>📍</span>
+                </div>
+                <p className="relative mt-2" style={{ fontFamily: SERIF, fontSize: 21, color: PALETTE.ink, lineHeight: 1.4 }}>
+                  {COPY.contextLead(ctx.city || "—", ctx.oneLineAboutNow || "—")}
+                </p>
+              </div>
             </div>
           );
         })}

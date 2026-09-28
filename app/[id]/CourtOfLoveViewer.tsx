@@ -2,35 +2,25 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Space_Grotesk, Caveat } from "next/font/google";
 import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import CourtOfLove from "@/app/(templates)/court-of-love/components/CourtOfLove";
 import { dbToCourtOfLoveData } from "@/app/(templates)/court-of-love/components/types";
+import { COURT_THEMES } from "@/app/(templates)/court-of-love/components/themes";
+import { COURT_FONT_VARS } from "@/app/(templates)/court-of-love/components/fonts";
+import { COURT_CSS, GavelButton, HAND, MONO, PAPER_RULE, Paper, SANS, SERIF, Typed, WaxSeal } from "@/app/(templates)/court-of-love/components/courtKit";
+import { LOVE_CSS, LoveSky } from "@/app/(templates)/_love/LoveKit";
+import { V, pickTheme, themeVars } from "@/app/(templates)/_love/theme";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-// The shared page lives in the /[id] route group, so it never sees the template
-// layout's fonts — and the root layout doesn't carry these two. Declared here, the
-// same way ChristianWeddingViewer does it. (Inter comes from the root layout.)
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-space-grotesk" });
-const caveat = Caveat({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-caveat" });
-const FONT_VARS = `${spaceGrotesk.variable} ${caveat.variable}`;
-
-const SURFACE = "#FFFFFF";
-const BG_ALT = "#F3F1EA";
-const TEXT = "#0E0E12";
-const MUTED = "#5B5B66";
-const BORDER = "#ECEAE3";
-const PINK = "#F72585";
-const LIME = "#C6FF3D";
-
-const HEAD = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
-const BODY = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
+// The shared page lives in the /[id] route group and never sees the template
+// layout's fonts, so the Court's faces come in here (Inter is the root's).
+const FONT_VARS = COURT_FONT_VARS;
 
 /* ─────────────────────────────────────────
    Password gate — "sealed case file"
 ───────────────────────────────────────── */
-function CourtPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
+function CourtPasswordGate({ shareId, themeId, onUnlocked }: { shareId: string; themeId: string; onUnlocked: () => void }) {
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,199 +54,85 @@ function CourtPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
     }
   }, [pw, shareId, onUnlocked]);
 
+  const theme = pickTheme(COURT_THEMES, themeId);
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 200,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-        background: "#FAFAF7",
-        backgroundImage: `
-          radial-gradient(60% 44% at 6% 2%, rgba(108,92,231,.16), transparent 62%),
-          radial-gradient(52% 40% at 96% 8%, rgba(247,37,133,.13), transparent 60%),
-          radial-gradient(60% 44% at 50% 104%, rgba(198,255,61,.20), transparent 62%)
-        `,
-      }}
+      className="lv-root"
+      style={{ ...themeVars(theme), position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: theme.colors.base, fontFamily: SANS, overflowY: "auto" }}
     >
+      <style>{LOVE_CSS + COURT_CSS}</style>
+      <LoveSky theme={theme} reduceMotion={false} />
       <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: 26 }}
+        initial={{ opacity: 0, scale: 0.92, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 360, damping: 26 }}
-        style={{ width: "100%", maxWidth: 380 }}
+        transition={{ type: "spring", stiffness: 340, damping: 26 }}
+        style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 390 }}
       >
-        <div
-          style={{
-            background: SURFACE,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 28,
-            overflow: "hidden",
-            boxShadow: "0 40px 80px -20px rgba(14,14,18,.38)",
-          }}
-        >
-          <div style={{ height: 4, background: "linear-gradient(90deg,#6C5CE7,#F72585)" }} />
-          <div style={{ padding: "30px 26px 26px" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  width: 62,
-                  height: 62,
-                  borderRadius: 20,
-                  display: "grid",
-                  placeItems: "center",
-                  marginBottom: 14,
-                  background: "linear-gradient(135deg,#6C5CE7,#F72585)",
-                  boxShadow: "0 14px 30px rgba(108,92,231,.34)",
-                }}
-              >
-                <Lock size={26} color="#fff" />
-              </motion.div>
-              <div style={{ fontSize: 26, marginBottom: 8 }}>⚖️</div>
-              <h1
-                style={{
-                  fontFamily: HEAD,
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: TEXT,
-                  textAlign: "center",
-                  margin: "0 0 6px",
-                  letterSpacing: -0.4,
-                }}
-              >
-                This case file is sealed
-              </h1>
-              <p
-                style={{
-                  fontFamily: BODY,
-                  fontSize: 12.5,
-                  lineHeight: 1.6,
-                  color: MUTED,
-                  textAlign: "center",
-                  margin: 0,
-                }}
-              >
-                Enter the password to open
-                <br />
-                The Court of Love
-              </p>
-            </div>
+        <Paper style={{ padding: "28px 22px 22px", textAlign: "center" }}>
+          <div style={{ marginTop: -62, marginBottom: 10 }}>
+            <WaxSeal size={80} glyph="🔒" />
+          </div>
+          <Typed size={10.5} color={V.paperSoft}>
+            In the Court of Love
+          </Typed>
+          <h1 style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 34, lineHeight: 1, color: V.paperInk, margin: "8px 0 6px" }}>This case file is sealed</h1>
+          <p style={{ fontFamily: SANS, fontSize: 14, lineHeight: 1.5, color: V.paperSoft, margin: "0 0 18px" }}>Enter the password they gave you to open it.</p>
 
-            <div style={{ position: "relative", marginBottom: 14 }}>
-              <input
-                type={showPw ? "text" : "password"}
-                value={pw}
-                onChange={(e) => { setPw(e.target.value); setError(""); }}
-                onKeyDown={(e) => { if (e.key === "Enter") handleVerify(); }}
-                placeholder="Enter password…"
-                autoFocus
-                autoComplete="off"
-                style={{
-                  width: "100%",
-                  padding: "14px 44px 14px 15px",
-                  borderRadius: 18,
-                  background: BG_ALT,
-                  border: `1px solid ${error ? "#E5484D" : BORDER}`,
-                  boxShadow: error ? "0 0 0 3px rgba(229,72,77,.13)" : "none",
-                  fontFamily: BODY,
-                  fontSize: 14.5,
-                  color: TEXT,
-                  outline: "none",
-                  minHeight: 48,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                aria-label={showPw ? "Hide password" : "Show password"}
-                style={{
-                  position: "absolute",
-                  right: 13,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  color: MUTED,
-                  cursor: "pointer",
-                  padding: 2,
-                }}
-              >
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  role="alert"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    fontFamily: BODY,
-                    fontSize: 12,
-                    color: "#E5484D",
-                    marginBottom: 14,
-                  }}
-                >
-                  <ShieldAlert size={12} />
-                  <span>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleVerify}
-              disabled={loading || !pw.trim()}
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <input
+              type={showPw ? "text" : "password"}
+              value={pw}
+              onChange={(e) => { setPw(e.target.value); setError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleVerify(); }}
+              placeholder="Password…"
+              aria-label="Password"
+              autoFocus
+              autoComplete="off"
               style={{
                 width: "100%",
-                padding: "14px 20px",
-                borderRadius: 999,
-                background: LIME,
-                color: TEXT,
-                fontFamily: HEAD,
-                fontSize: 15,
-                fontWeight: 700,
-                border: "none",
-                boxShadow: "0 8px 22px rgba(198,255,61,.45)",
-                cursor: loading || !pw.trim() ? "default" : "pointer",
-                opacity: loading || !pw.trim() ? 0.45 : 1,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
+                padding: "14px 46px 14px 16px",
+                borderRadius: 14,
+                background: "color-mix(in srgb, var(--lv-paper-ink) 4%, var(--lv-paper))",
+                border: `1.5px solid ${error ? "#E5484D" : PAPER_RULE}`,
+                boxShadow: error ? "0 0 0 3px rgba(229,72,77,.13)" : "none",
+                fontFamily: MONO,
+                fontSize: 16,
+                color: V.paperInk,
+                outline: "none",
                 minHeight: 50,
               }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? "Hide password" : "Show password"}
+              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: V.paperSoft, cursor: "pointer", padding: 4 }}
             >
-              {loading ? (
-                <><Loader2 size={15} className="animate-spin" /> Verifying…</>
-              ) : (
-                <><Lock size={15} /> Open the case file</>
-              )}
-            </motion.button>
-
-            <p
-              style={{
-                fontFamily: BODY,
-                fontSize: 11,
-                color: MUTED,
-                textAlign: "center",
-                margin: "13px 0 0",
-              }}
-            >
-              Sent to you by someone who <span style={{ color: PINK }}>really</span> likes you.
-            </p>
+              {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
           </div>
-        </div>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                role="alert"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: "#E5484D", marginBottom: 12 }}
+              >
+                <ShieldAlert size={13} />
+                <span>{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <GavelButton onClick={handleVerify} disabled={loading || !pw.trim()}>
+            {loading ? (<><Loader2 size={16} className="animate-spin" /> Verifying…</>) : (<><Lock size={16} /> Open the case file</>)}
+          </GavelButton>
+
+          <p style={{ fontFamily: HAND, fontSize: 20, color: V.paperSoft, margin: "14px 0 0" }}>sent by someone who really, really likes you</p>
+        </Paper>
       </motion.div>
     </div>
   );
@@ -283,7 +159,7 @@ export default function CourtOfLoveViewer({
   if (hasPassword && !unlocked) {
     return (
       <div className={FONT_VARS}>
-        <CourtPasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />
+        <CourtPasswordGate shareId={shareId} themeId={typeof rawData.theme === "string" ? rawData.theme : ""} onUnlocked={() => setUnlocked(true)} />
       </div>
     );
   }

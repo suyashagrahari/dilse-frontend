@@ -2,32 +2,32 @@
 
 // ─── The published nutrition label ───────────────────────────────────────────
 //
-// Password gate, then the package. The gate borrows the label's flat black-on-
-// white and its Helvetica so the unlock reads as part of the same printed
-// artifact.
+// Password gate, then the package. The gate is printed in the packaging the
+// sender picked (Classic / Candy / Kraft / Midnight) and the label's Helvetica,
+// so the unlock reads as part of the same printed artifact.
 
 import { useCallback, useState } from "react";
-import NutritionTemplate, {
-  NF_INK,
-  NF_MUTED,
-  NF_SANS,
-  NF_SURROUND,
-} from "@/app/(templates)/nutrition/components/NutritionTemplate";
+import NutritionTemplate, { NF_SANS } from "@/app/(templates)/nutrition/components/NutritionTemplate";
 import { dbToNutritionData } from "@/app/(templates)/nutrition/components/demo";
+import { pickNutritionTheme } from "@/app/(templates)/nutrition/components/themes";
 import { TemplateGate, initialUnlocked } from "./_TemplateGate";
 
-const PALETTE = {
-  surround: NF_SURROUND,
-  card: "#FFFFFF",
-  edge: "#D9D5CC",
-  ink: NF_INK,
-  muted: NF_MUTED,
-  accent: NF_INK,
-  accentInk: "#FFFFFF",
-  accentTint: "#F1EEE7",
-  font: NF_SANS,
-  radius: 4,
-};
+function gatePalette(themeId: unknown) {
+  const t = pickNutritionTheme(typeof themeId === "string" ? themeId : "");
+  const c = t.colors;
+  return {
+    surround: c.base,
+    card: c.paper,
+    edge: c.edge,
+    ink: c.paperInk,
+    muted: c.paperSoft,
+    accent: c.a1,
+    accentInk: "#FFFFFF",
+    accentTint: t.pack.board,
+    font: NF_SANS,
+    radius: 14,
+  };
+}
 
 export default function NutritionViewer({
   rawData,
@@ -50,9 +50,9 @@ export default function NutritionViewer({
         storageKey="nutrition"
         title="This label is protected"
         blurb="Enter the password to read the panel."
-        palette={PALETTE}
+        palette={gatePalette(rawData.theme)}
         badge={
-          <span style={{ fontFamily: NF_SANS, fontSize: 14, fontWeight: 800, letterSpacing: "-0.4px", color: NF_INK }}>
+          <span style={{ fontFamily: NF_SANS, fontSize: 14, fontWeight: 800, letterSpacing: "-0.4px", color: gatePalette(rawData.theme).ink }}>
             Nutrition Facts
           </span>
         }

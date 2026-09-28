@@ -24,6 +24,8 @@
 
 import { EvidenceBox } from "./EvidenceBox";
 import { Stamp } from "./Stamp";
+import { pickTheme, themeVars } from "../../_love/theme";
+import { CHALLAN_THEMES, challanVars } from "./themes";
 import { CH, chDate } from "./theme";
 import { CHALLAN_DISCLAIMER, type ChallanData } from "./types";
 
@@ -48,6 +50,9 @@ export default function ShareCard({
     <div
       ref={attach}
       style={{
+        // The card lives outside the template root, so it brings its own theme.
+        ...themeVars(pickTheme(CHALLAN_THEMES, data.theme)),
+        ...challanVars(pickTheme(CHALLAN_THEMES, data.theme)),
         position: "fixed",
         left: -10000,
         top: 0,
