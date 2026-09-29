@@ -576,6 +576,7 @@ export default function FilmPlayer({
           <div className="wtp-end">
             {upNext && countdown !== null && countdown > 0 ? (
               <div className="wtp-upnext">
+                {endLine ? <p className="wtp-endline is-small">{endLine}</p> : null}
                 <p className="wtp-upnext-k">Up next in {countdown}</p>
                 <div className="wtp-upnext-card">
                   <span className="wtp-upnext-thumb">
@@ -947,6 +948,8 @@ export const FILM_CSS = `
 }
 .wtp-upnext-btns .is-go { background: #fff; color: #0f0f0f; }
 .wtp-endbox { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.wtp.is-ended .wtp-cc { opacity: 0; }
+.wtp-endline.is-small { font-size: 12.5px; color: #FFB3CF; margin-bottom: 6px; }
 .wtp-endline { margin: 0; font-size: clamp(13px, calc(0.6vw + 10px), 17px); color: #fff; max-width: 320px; line-height: 1.35; }
 .wtp-replay {
   display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 20px; border: 0;
