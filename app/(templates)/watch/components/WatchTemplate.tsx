@@ -936,6 +936,10 @@ export default function WatchTemplate({ data, mode, shareId, contribToken, share
         delay={3200}
         teaser={data.herName ? `${data.herName}, you have 1 new letter 💌` : "you have 1 new letter 💌"}
         forceOpen={forceLetter}
+        variant="watch"
+        title={data.video.title || undefined}
+        avatar={data.channel.avatarUrl || undefined}
+        photos={data.photos.map((p) => p.url)}
       />
 
       {/* Off-screen, and the only thing on this page a capture can see. */}

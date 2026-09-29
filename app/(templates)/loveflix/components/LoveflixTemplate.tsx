@@ -176,6 +176,9 @@ export default function LoveflixTemplate({ data, mode, topInset = 0 }: LoveflixT
             sign="yours, every season —"
             zIndex={Z.letter}
             forceOpen={letterOpen > 0}
+            variant="loveflix"
+            avatar={data.senderPhotoUrl || undefined}
+            photos={[data.heroImageUrl, ...data.episodes.map((t) => t.imageUrl)].filter(Boolean)}
           />
         )}
       </div>

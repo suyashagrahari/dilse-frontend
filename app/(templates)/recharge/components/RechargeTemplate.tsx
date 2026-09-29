@@ -216,6 +216,8 @@ export default function RechargeTemplate({
           sign="yours, on every network,"
           zIndex={70}
           forceOpen={forceLetter}
+          variant="recharge"
+          photos={data.photos.map((p) => p.url)}
         />
       ) : null}
     </div>
