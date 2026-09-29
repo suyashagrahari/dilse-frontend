@@ -29,10 +29,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, PenLine, Sparkles, Undo2, X } from "lucide-react";
+import GuidedQuestions from "./GuidedQuestions";
 import StoryComposer from "./StoryComposer";
 import type { StoryCast } from "./casts";
 import StoryReview from "./StoryReview";
-import { STORY_UI, TAP } from "./ui";
+import { STORY_UI, TAP, eyebrowStyle } from "./ui";
 import type { StoryFill } from "./storyFillContract";
 
 /**
@@ -186,9 +187,26 @@ export interface StoryStarterProps {
    * sample story it offers. Omit for the couples default; see `./casts`.
    */
   cast?: StoryCast;
+  /**
+   * Opt in to GUIDED QUESTIONS: instead of the choice screen, the sender is
+   * walked through six small questions (names, relation, how you met, what
+   * you love, a memory, tone + language) and the page is written from the
+   * answers. "Use my story" and the free-text composer stay one tap away.
+   * Default false — every template that does not pass it is unchanged.
+   *
+   * Needs nothing else from the page: the hook's `generateGuided` carries the
+   * answers. Ignored (falls back to the classic screen) if the hook predates it.
+   */
+  guided?: boolean;
 }
 
-export default function StoryStarter({ fill, onManual, title, cast }: StoryStarterProps) {
+export default function StoryStarter({
+  fill,
+  onManual,
+  title,
+  cast,
+  guided = false,
+}: StoryStarterProps) {
   const {
     schema,
     schemaLoading,
@@ -209,7 +227,10 @@ export default function StoryStarter({ fill, onManual, title, cast }: StoryStart
     undoAutoApply,
     dismissAutoApplied,
     dismiss,
+    generateGuided,
   } = fill;
+
+  const useGuided = guided && Boolean(generateGuided) && Boolean(schema);
 
   // No schema for this template (or still loading, or the sender opted out):
   // render nothing at all. The editor behaves exactly as it did before.
@@ -221,7 +242,12 @@ export default function StoryStarter({ fill, onManual, title, cast }: StoryStart
   };
 
   const heading =
-    mode === "done" ? "Here's your first draft" : title || "Let's fill this in";
+    mode === "done"
+      ? "Here's your first draft"
+      : title || (useGuided && mode === "idle" ? "A few quick questions" : "Let's fill this in");
+  // In the guided flow each question is the big line, so the sheet title
+  // steps down to an eyebrow above it.
+  const eyebrowHeading = useGuided && mode === "idle";
 
   return (
     <>
@@ -257,7 +283,11 @@ export default function StoryStarter({ fill, onManual, title, cast }: StoryStart
               <div className="flex items-start gap-2" style={{ marginBottom: 14 }}>
                 <h2
                   id="story-starter-title"
-                  style={{ fontFamily: STORY_UI.serif, fontSize: 21, lineHeight: 1.3, color: STORY_UI.ink }}
+                  style={
+                    eyebrowHeading
+                      ? { ...eyebrowStyle, paddingTop: 14 }
+                      : { fontFamily: STORY_UI.serif, fontSize: 21, lineHeight: 1.3, color: STORY_UI.ink }
+                  }
                 >
                   {heading}
                 </h2>
@@ -281,8 +311,51 @@ export default function StoryStarter({ fill, onManual, title, cast }: StoryStart
                 </button>
               </div>
 
+              {/* ── 1a. Guided questions (opt-in) ── */}
+              {mode === "idle" && useGuided && schema && generateGuided && (
+                <GuidedQuestions
+                  slug={schema.slug}
+                  audience={schema.audience}
+                  knownPeople={people}
+                  generating={generating}
+                  error={error}
+                  onGenerate={generateGuided}
+                  onFreeText={() => setMode("composer")}
+                  onSkip={close}
+                  topSlot={
+                    canUseMyStory ? (
+                      <div className="flex flex-col" style={{ gap: 10 }}>
+                        <HeroAction
+                          title="Use my story"
+                          busyLabel="Using your story…"
+                          subtitle={contextLabel ?? "from your saved story"}
+                          busy={usingStory}
+                          onClick={useMyStory}
+                        />
+                        {!usingStory && error && (
+                          <p
+                            aria-live="polite"
+                            style={{ fontFamily: STORY_UI.font, fontSize: 13, color: STORY_UI.danger }}
+                          >
+                            {error}
+                          </p>
+                        )}
+                        <p
+                          className="flex items-center"
+                          style={{ ...eyebrowStyle, gap: 10, color: STORY_UI.inkFaint }}
+                        >
+                          <span aria-hidden="true" className="flex-1" style={{ height: 1, background: STORY_UI.edge }} />
+                          or answer a few questions
+                          <span aria-hidden="true" className="flex-1" style={{ height: 1, background: STORY_UI.edge }} />
+                        </p>
+                      </div>
+                    ) : null
+                  }
+                />
+              )}
+
               {/* ── 1. The choice ── */}
-              {mode === "idle" && (
+              {mode === "idle" && !useGuided && (
                 <div className="flex flex-col" style={{ gap: 10 }}>
                   <p
                     style={{
@@ -363,7 +436,14 @@ export default function StoryStarter({ fill, onManual, title, cast }: StoryStart
               )}
 
               {/* ── 3. The review ── */}
-              {mode === "done" && <StoryReview fill={fill} onDone={close} />}
+              {mode === "done" && (
+                <StoryReview
+                  fill={fill}
+                  onDone={close}
+                  onRewrite={useGuided ? () => setMode("idle") : undefined}
+                  rewriteLabel={useGuided ? "Change my answers" : undefined}
+                />
+              )}
             </motion.div>
           </motion.div>
         )}
