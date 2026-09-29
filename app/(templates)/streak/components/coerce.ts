@@ -23,6 +23,7 @@ import {
   type Side,
   type StreakData,
 } from "./types";
+import { parseSkin, type StreakPageData } from "./skin";
 
 /** Roughly five and a half years of days. Past this the grid is not a grid. */
 const MAX_CHECKINS = 2000;
@@ -202,45 +203,46 @@ export function dbToStreakData(raw: Record<string, unknown> | null | undefined):
   };
 }
 
+/** Mongo → the full page: the ledger plus the snap-app skin. */
+export function dbToPage(raw: Record<string, unknown> | null | undefined): StreakPageData {
+  return { ...dbToStreakData(raw), ...parseSkin(raw) };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // The outbound direction
 // ═══════════════════════════════════════════════════════════════════════════
 
-export interface StreakBody extends Record<string, unknown> {
-  senderName: string;
-  recipientName: string;
-  pageData: {
-    pair: StreakData["pair"];
-    startedOn: string;
-    timezone: string;
-    checkIns: CheckInDay[];
-    covers: StreakData["covers"];
-    milestones: Milestone[];
-    microLetters: MicroLetter[];
-  };
-  password: string;
-}
-
 /**
- * `StreakData` → the API body.
+ * Page → the API body. FLAT: the controller reads every field off the root.
+ * (An earlier version nested them under `pageData`, which the server never
+ * read, so every save silently stored an empty pair.)
  *
  * Blank letters are dropped rather than sent: an envelope that opens onto an
- * empty page is worse than no envelope, and the "never generate filler" rule
- * for micro-letters is the same rule.
+ * empty page is worse than no envelope.
  */
-export function streakDataToBody(data: StreakData, password: string): StreakBody {
+export function streakDataToBody(data: StreakPageData, password: string): Record<string, unknown> {
   return {
     senderName: data.pair.a.name,
     recipientName: data.pair.b.name,
-    pageData: {
-      pair: data.pair,
-      startedOn: data.startedOn,
-      timezone: data.timezone,
-      checkIns: data.checkIns,
-      covers: data.covers,
-      milestones: data.milestones.filter((m) => m.letter.trim().length > 0),
-      microLetters: data.microLetters.filter((m) => m.line.trim().length > 0),
-    },
+    pair: data.pair,
+    startedOn: data.startedOn,
+    timezone: data.timezone,
+    checkIns: data.checkIns,
+    covers: data.covers,
+    milestones: data.milestones.filter((m) => m.letter.trim().length > 0),
+    microLetters: data.microLetters.filter((m) => m.line.trim().length > 0),
+    handleA: data.handleA,
+    handleB: data.handleB,
+    avatarA: data.avatarA,
+    avatarB: data.avatarB,
+    zodiacA: data.zodiacA,
+    zodiacB: data.zodiacB,
+    mapPlace: data.mapPlace,
+    chats: data.chats,
+    photos: data.photos,
+    letter: data.letter,
+    lockQuestion: data.lockQuestion,
+    lockAnswer: data.lockAnswer,
     password,
   };
 }

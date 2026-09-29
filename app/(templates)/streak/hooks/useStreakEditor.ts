@@ -1,15 +1,8 @@
 // ─── The editor ──────────────────────────────────────────────────────────────
 //
-// Same shape as `useRewindEditor`: demo preview → Create → sheet → Save →
-// auth-deferred Publish → Share. One deliberate difference:
-//
-// NO localStorage, NO sessionStorage, ANYWHERE.
-//
-// The sibling editors persist the work-in-progress draft so a refresh does not
-// eat it. This template may not, so the draft lives in React state under the
-// `streak_draft` key and nothing else. The consequence is real and worth being
-// plain about: a hard refresh before Save loses what the sender typed. There is
-// no mitigation available inside the constraint — see TODO(draft-persistence).
+// demo preview → Create (AI StoryStarter, guided) → sheet → Save → preview →
+// auth-deferred Publish → Share. The work-in-progress form is autosaved to
+// local storage (session storage as a fallback) so a refresh never eats it.
 
 "use client";
 
@@ -20,9 +13,8 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import type { StreakData } from "../components/types";
-import { dbToStreakData, streakDataToBody } from "../components/coerce";
-import { makeDemoData } from "../components/demoData";
+import { dbToPage, streakDataToBody } from "../components/coerce";
+import { makeDemoPage, type StreakPageData } from "../components/skin";
 import { dataToForm, emptyForm, formToData, validateForm, type EditMode, type StreakForm } from "../components/editorTypes";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
@@ -33,14 +25,6 @@ import { persistDraft } from "@/lib/draft/persistDraft";
 const BASE = `${API_URL}/streak-pages`;
 const TEMPLATE = "streak";
 
-/**
- * The draft key. It names a slot in COMPONENT STATE, not a storage entry —
- * kept as a named constant so the intent survives the next person who greps for
- * `streak_draft` expecting to find a `localStorage.setItem`.
- *
- * TODO(draft-persistence): when the no-storage constraint is lifted, this is
- * the one place that needs to learn about a store.
- */
 export const DRAFT_KEY = "streak_draft";
 
 interface Draft {
@@ -49,6 +33,40 @@ interface Draft {
   completed: boolean;
 }
 
+const draftStore = (): Storage | null => {
+  try {
+    return window.localStorage;
+  } catch {
+    try {
+      return window.sessionStorage;
+    } catch {
+      return null;
+    }
+  }
+};
+const saveDraft = (d: Draft) => {
+  try {
+    draftStore()?.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    /* a full or blocked store must never break typing */
+  }
+};
+const clearDraft = () => {
+  try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
+  try { window.sessionStorage.removeItem(DRAFT_KEY); } catch {}
+};
+const readDraft = (): Draft | null => {
+  try {
+    const raw = draftStore()?.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Partial<Draft>;
+    if (!d || typeof d !== "object" || !d.form || typeof d.form !== "object") return null;
+    return { form: { ...emptyForm(), ...d.form }, password: typeof d.password === "string" ? d.password : "", completed: !!d.completed };
+  } catch {
+    return null;
+  }
+};
+
 export function useStreakEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,14 +74,16 @@ export function useStreakEditor() {
 
   // The demo is built once. Rebuilding it on every render would re-seed the
   // canopy and the poem on every keystroke in the sheet.
-  const [demo] = useState<StreakData>(() => makeDemoData());
+  const [demo] = useState<StreakPageData>(() => makeDemoPage());
 
-  const [content, setContent] = useState<StreakData>(demo);
+  const [content, setContent] = useState<StreakPageData>(demo);
   const [mf, setMf] = useState<StreakForm>(() => emptyForm());
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [pagePassword, setPagePassword] = useState("");
   const [pageId, setPageId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  /** The sender's own link (their side's token) — so they can check in too. */
+  const [myUrl, setMyUrl] = useState<string | null>(null);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
   const bumpPreview = useCallback(() => setPreviewVersion((v) => v + 1), []);
@@ -73,12 +93,12 @@ export function useStreakEditor() {
   const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // The draft, in memory, under DRAFT_KEY. A plain object rather than a bare
-  // value so the shape matches what a storage-backed version would hold.
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [restoredDraft, setRestoredDraft] = useState(false);
   const hasWipRef = useRef(false);
+  /** Set once the post-login publish has resumed, so it never runs twice. */
+  const resumedPublishRef = useRef(false);
 
-  const pendingPublishRef = useRef<{ data: StreakData; password: string } | null>(null);
+  const pendingPublishRef = useRef<{ data: StreakPageData; password: string } | null>(null);
   /**
    * True while the auth-deferred publish below is creating the row.
    *
@@ -93,13 +113,8 @@ export function useStreakEditor() {
   // ── AI story fill ──────────────────────────────────────────────────────────
   //
   // THE FORM, NOT THE DATA. Every path in the `streak` schema addresses
-  // `StreakForm` — `nameA`, `letters[n].letter`, `microLines[n]` — so the demo
-  // baseline is `emptyForm()`, the same thing `mf` is seeded from, and NOT the
-  // `StreakData` demo above. Handing it `demo` would make every path miss.
-  //
-  // NO STORAGE. `useStoryFill` and `StoryStarter` hold everything in React
-  // state; nothing added here reads or writes local/sessionStorage, and the
-  // template's no-storage rule is unchanged.
+  // `StreakForm` — `nameA`, `letters[n].letter`, `photos[n].caption` — so the
+  // baseline is `emptyForm()`, the same thing `mf` is seeded from.
   const [fillDemo] = useState<StreakForm>(emptyForm);
 
   /** Anything a fill writes is work in progress — a re-seed must never eat it. */
@@ -131,7 +146,23 @@ export function useStreakEditor() {
   // ── Load an existing page (?edit=<id>) ──────────────────────────────────────
   useEffect(() => {
     const id = searchParams.get("edit") || searchParams.get("id");
-    if (!id || !isAuthenticated || !accessToken) return;
+    if (!id || !isAuthenticated || !accessToken) {
+      if (id) return;
+      // No page to load: bring back whatever was being written before a refresh.
+      const d = readDraft();
+      if (!d) return;
+      hasWipRef.current = true;
+      setMf(d.form);
+      setPagePassword(d.password);
+      setRestoredDraft(true);
+      if (d.completed && d.form.nameA.trim() && d.form.nameB.trim()) {
+        setContent(formToData(d.form));
+        setIsPersonalized(true);
+        setEditMode("preview");
+        bumpPreview();
+      }
+      return;
+    }
     let cancelled = false;
     fetch(`${BASE}/${id}`, { headers: headers() })
       .then((r) => r.json())
@@ -139,7 +170,7 @@ export function useStreakEditor() {
         if (cancelled || !result?.success || !result.data) return;
         // Untrusted input, even from our own API. Everything is clamped and
         // repaired before it can reach a render.
-        const d = dbToStreakData(result.data);
+        const d = dbToPage(result.data);
         setContent(d);
         setMf(dataToForm(d));
         hasWipRef.current = false;
@@ -149,6 +180,7 @@ export function useStreakEditor() {
         bumpPreview();
         if (result.data.isPublished && result.data.shareUrl) {
           setShareUrl(String(result.data.shareUrl));
+          if (result.data.shareUrlA) setMyUrl(String(result.data.shareUrlA));
         }
       })
       .catch(() => {});
@@ -160,9 +192,10 @@ export function useStreakEditor() {
 
   // ── Auto-resume publish after auth ──────────────────────────────────────────
   useEffect(() => {
-    if (!isAuthenticated || !accessToken || !pendingPublishRef.current) return;
+    if (!isAuthenticated || !accessToken || !pendingPublishRef.current || resumedPublishRef.current) return;
     const { data, password } = pendingPublishRef.current;
     pendingPublishRef.current = null;
+    resumedPublishRef.current = true;
     // We own the row from here; adoption stands down (see useDraft).
     publishInFlightRef.current = true;
 
@@ -194,11 +227,13 @@ export function useStreakEditor() {
         const pubResult = await pubRes.json();
         if (pubResult.success) {
           setShareUrl(String(pubResult.data.shareUrl));
+          if (pubResult.data.shareUrlA) setMyUrl(String(pubResult.data.shareUrlA));
           // Never throws, never blocks — the page is already live either way.
           await persistStory();
-          setDrafts({});
+          clearDraft();
+          setEditMode(null);
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 🕯️", message: "Tap Share to send it" });
+          pushToast({ type: "publish", title: "Published 🔥", message: "Tap Share to send them the snap" });
         } else {
           track(EVENTS.PUBLISH_FAILED, {
             template: TEMPLATE,
@@ -212,38 +247,31 @@ export function useStreakEditor() {
         pushToast({ type: "info", title: "Didn't save", message: "Please try again" });
       } finally {
         publishInFlightRef.current = false;
+        resumedPublishRef.current = false;
         setPublishing(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, accessToken]);
 
-  const displayData = editMode === "manual" && isPersonalized ? content : content;
+  // ── Autosave the work in progress ─────────────────────────────────────────
+  useEffect(() => {
+    if (editMode !== "manual") return;
+    if (!hasWipRef.current) return;
+    saveDraft({ form: mf, password: pagePassword, completed: false });
+  }, [mf, pagePassword, editMode]);
 
-  const updateMf = useCallback(
-    <K extends keyof StreakForm>(key: K, val: StreakForm[K]) => {
-      hasWipRef.current = true;
-      setMf((prev) => {
-        const next = { ...prev, [key]: val };
-        // Autosave, on every keystroke, into component state under DRAFT_KEY.
-        setDrafts((d) => ({ ...d, [DRAFT_KEY]: { form: next, password: pagePassword, completed: false } }));
-        return next;
-      });
-    },
-    [pagePassword],
-  );
+  const displayData = content;
 
-  const updatePassword = useCallback(
-    (v: string) => {
-      hasWipRef.current = true;
-      setPagePassword(v);
-      setDrafts((d) => ({
-        ...d,
-        [DRAFT_KEY]: { form: d[DRAFT_KEY]?.form ?? mf, password: v, completed: false },
-      }));
-    },
-    [mf],
-  );
+  const updateMf = useCallback(<K extends keyof StreakForm>(key: K, val: StreakForm[K]) => {
+    hasWipRef.current = true;
+    setMf((prev) => ({ ...prev, [key]: val }));
+  }, []);
+
+  const updatePassword = useCallback((v: string) => {
+    hasWipRef.current = true;
+    setPagePassword(v);
+  }, []);
 
   /** Create tap. A draft in progress is never clobbered by a re-seed. */
   const handleEditClick = useCallback(() => {
@@ -292,14 +320,14 @@ export function useStreakEditor() {
     setIsPersonalized(true);
     setEditMode("preview");
     bumpPreview();
-    setDrafts((d) => ({ ...d, [DRAFT_KEY]: { form: mf, password: pagePassword, completed: true } }));
+    saveDraft({ form: mf, password: pagePassword, completed: true });
     track(EVENTS.PAGE_SAVED, {
       template: TEMPLATE,
       has_password: Boolean(pagePassword),
       letters: next.milestones.length,
       weekly_lines: next.microLetters.length,
     });
-    pushToast({ type: "success", title: "Saved", message: "Have a look, then publish" });
+    pushToast({ type: "success", title: "Saved ✓", message: "Have a look, then publish" });
   }, [mf, content, isPersonalized, pagePassword, pushToast, bumpPreview]);
 
   const create = useCallback(async (): Promise<string | null> => {
@@ -404,7 +432,7 @@ export function useStreakEditor() {
 
     if (!isPersonalized || !content.pair.a.name.trim() || !content.pair.b.name.trim()) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "incomplete" });
-      pushToast({ type: "info", title: "Both names first", message: "They sit above the lights" });
+      pushToast({ type: "info", title: "Add both names first", message: "They go on the chat and the streak" });
       setEditMode("manual");
       return;
     }
@@ -437,11 +465,13 @@ export function useStreakEditor() {
       const pubResult = await pubRes.json();
       if (pubResult.success) {
         setShareUrl(String(pubResult.data.shareUrl));
+        if (pubResult.data.shareUrlA) setMyUrl(String(pubResult.data.shareUrlA));
         // Never throws, never blocks — the page is already live either way.
         await persistStory();
-        setDrafts({});
+        clearDraft();
+        setEditMode(null);
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 🕯️", message: "Tap Share to send it" });
+        pushToast({ type: "publish", title: "Published 🔥", message: "Tap Share to send them the snap" });
       } else {
         track(EVENTS.PUBLISH_FAILED, {
           template: TEMPLATE,
@@ -481,8 +511,8 @@ export function useStreakEditor() {
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
-      title: "one tap a day, the two of us 🕯️",
-      accent: "#b45309",
+      title: "you have a new snap 🔥",
+      accent: "#0EADFF",
       slug: "streak",
     });
   }, [shareUrl, pagePassword]);
@@ -504,7 +534,8 @@ export function useStreakEditor() {
     publishing,
     copied,
     previewVersion,
-    restoredDraft: Boolean(drafts[DRAFT_KEY]) && !isPersonalized,
+    restoredDraft: restoredDraft && !isPersonalized,
+    myUrl,
 
     storyFill,
     storyStarted,
