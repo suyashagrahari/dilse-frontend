@@ -132,6 +132,7 @@ const allConfigs = [
  */
 export const PREMIUM_SLUGS = new Set([
   "loveflix", "us", "app", "watch", "product", "recharge", "call", "catch",
+  "profile-pro", "searched", "streak", "rewind",
 ]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {

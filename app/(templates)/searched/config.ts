@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Searched",
   description:
     "They type their own name into a search box and the internet has opinions. Joke autocomplete, a full results page about them, expandable answers, and a knowledge panel that is entirely too accurate.",
-  coverImage:
-    templateMedia("searched", "cover.jpg"),
+  coverImage: templateMedia("searched", "cover-poster.webp"),
   emoji: "🔍",
   color: "from-violet-600 to-indigo-700",
   previewText: "About 8,47,000 results (0.42 seconds) 🔍",

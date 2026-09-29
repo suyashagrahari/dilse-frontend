@@ -2,179 +2,59 @@
 
 // ─── /profile-pro ────────────────────────────────────────────────────────────
 //
-// A thin renderer over `useProfileEditor`. The page shows the live profile
-// immediately; a floating bar carries Back on the left and one polymorphic
-// button on the right that is Create → Publish → Share. Create opens the AI
-// story panel, not the blank form.
+// The profile owns the whole screen from the very top edge (the app's own top
+// bar on phones, the web nav on desktop); the editor's only chrome is the shared
+// floating EditorDock — Back · Edit · Create → Publish → Share — which floats
+// clear of the profile's tab bar. Create opens the guided AI questions first.
 //
-// TWO LINKS, TWO PURPOSES. Once published, the bar also offers the nudge, which
+// TWO LINKS, TWO PURPOSES. Once published the dock also offers "Invite", which
 // shares the ENDORSE link — a different secret from the share link. The share
 // link is the read capability for the person the page is about; the endorse link
-// is the write capability for the group chat. Sending the wrong one hands the
-// recipient's gift to everybody being asked to endorse it.
+// is the write capability for the group chat.
 
-import { Suspense, useCallback, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { Suspense } from "react";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
-import { exportNodeToPng } from "@/lib/exportPng";
+import EditorDock from "../_love/EditorDock";
 import { useProfileEditor } from "./hooks/useProfileEditor";
 import { ProfileTemplate } from "./components/ProfileTemplate";
 import EditSheet from "./components/EditSheet";
-import ShareCard, { SHARE_W, SHARE_H } from "./components/ShareCard";
-import { PP } from "./components/theme";
-
-/** The column this genre reads best in. Wider and the cards stop looking like cards. */
-const COLUMN = 700;
-
-/* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
-
-function IconBack() {
-  return (
-    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M19 12H5" /><path d="m11 6-6 6 6 6" />
-    </svg>
-  );
-}
-
-function IconPen() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M4 20h4.5L20 8.5a2.1 2.1 0 0 0-3-3L5.5 17V20Z" /><path d="M14.5 6.5 17.5 9.5" />
-    </svg>
-  );
-}
-
-function IconLink() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M10 13.5a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7l-1.4 1.4" />
-      <path d="M14 10.5a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.4-1.4" />
-    </svg>
-  );
-}
-
-
-
-/* ── Toasts ───────────────────────────────────────────────────────────────── */
-
-/* ── Page ─────────────────────────────────────────────────────────────────── */
-
-const barBtn: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  minHeight: 44,
-  height: 44,
-  padding: "0 14px",
-  borderRadius: 8,
-  background: PP.card,
-  border: `1px solid ${PP.edge}`,
-  color: PP.ink,
-  fontFamily: PP.font,
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-};
+import { LI, PP } from "./components/theme";
 
 function ProfileProPageInner() {
   const e = useProfileEditor();
-  const shotRef = useRef<HTMLDivElement | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const attach = useCallback((el: HTMLDivElement | null) => { shotRef.current = el; }, []);
-
-  const saveImage = useCallback(async () => {
-    if (saving) return;
-    setSaving(true);
-    const result = await exportNodeToPng(shotRef.current, {
-      width: SHARE_W,
-      height: SHARE_H,
-      filename: `${(e.content.person.name || "endorsements").toLowerCase().replace(/\s+/g, "-")}-endorsements`,
-      backgroundColor: PP.page,
-      pixelRatio: 3,
-    });
-    e.pushToast({ type: result.ok ? "success" : "info", title: result.message });
-    setSaving(false);
-  }, [saving, e]);
 
   const topAction = e.showShare
-    ? { label: e.shareLabel, onClick: e.handleShare, icon: <IconLink /> }
+    ? { label: e.shareLabel, onClick: e.handleShare }
     : e.showPublish
-      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <IconLink /> }
-      : { label: "Create", onClick: e.handleStartCreate, icon: <IconPen /> };
+      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish }
+      : { label: "Create", onClick: e.handleStartCreate };
+
+  const sheetOpen = e.editMode === "manual" || (e.storyStarted && e.storyFill.mode !== "manual");
 
   return (
     <div style={{ minHeight: "100dvh", background: PP.page, position: "relative" }}>
-      <div
-        className="fixed top-0 left-0 right-0 z-[120] flex items-center gap-2 px-3"
-        style={{
-          paddingTop: "calc(8px + env(safe-area-inset-top, 0px))",
-          paddingBottom: 8,
-          maxWidth: COLUMN,
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      >
-        <button type="button" onClick={e.goBack} style={barBtn}>
-          <IconBack /> Back
-        </button>
-        <div className="flex-1" />
-        {e.isPersonalized && !e.showShare ? (
-          <button type="button" onClick={e.handleEditFromPreview} style={barBtn}>
-            <IconPen /> Edit
-          </button>
-        ) : null}
-        {e.showShare ? (
-          <button type="button" onClick={saveImage} disabled={saving} style={{ ...barBtn, opacity: saving ? 0.6 : 1 }}>
-            {saving ? "Saving…" : "Image"}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          style={{
-            ...barBtn,
-            background: PP.accent,
-            borderColor: PP.accent,
-            color: PP.accentInk,
-            opacity: e.publishing ? 0.6 : 1,
-          }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-      </div>
+      <ProfileTemplate
+        key={e.previewVersion}
+        data={e.displayData}
+        shareId={e.shareId ?? undefined}
+        hideLetter={sheetOpen}
+        instant={e.previewVersion > 0}
+      />
 
-      {/* The nudge. Only once there is a write link to hand out, and it shares the
-          ENDORSE link — never the share link. See the header note. */}
-      {e.endorseUrl ? (
-        <div style={{ maxWidth: COLUMN, margin: "0 auto", padding: "64px 12px 0" }}>
-          <button
-            type="button"
-            onClick={e.handleNudge}
-            style={{
-              width: "100%",
-              minHeight: 44,
-              borderRadius: 8,
-              border: `1px solid ${PP.accent}`,
-              background: PP.card,
-              color: PP.accent,
-              fontFamily: PP.font,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Send their friends the endorsement link
-          </button>
-        </div>
-      ) : null}
-
-      <ProfileTemplate key={e.previewVersion} data={e.displayData} shareId={e.shareId ?? undefined} />
+      <EditorDock
+        tone="light"
+        accent={LI.blue}
+        font={PP.font}
+        onBack={e.goBack}
+        avoidBottom=".pf-tabbar"
+        secondary={[
+          e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview },
+          !!e.endorseUrl && { label: "Invite", onClick: e.handleNudge },
+        ]}
+        primary={{ ...topAction, disabled: e.publishing }}
+      />
 
       <EditSheet
         editMode={e.editMode}
@@ -188,12 +68,29 @@ function ProfileProPageInner() {
       />
 
       {/* Mounted after EditSheet so the panel sits over the form it seeds. */}
-      {e.storyStarted ? <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
+      {e.storyStarted ? (
+        <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} title="Let's build their profile" />
+      ) : null}
 
-      {/* Offscreen, at true size. Never the on-screen node scaled up. */}
-      <ShareCard data={e.content} attach={attach} />
+      <AnimatePresence>
+        {e.publishing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] grid place-items-center"
+            style={{ background: "rgba(0,0,0,.45)" }}
+          >
+            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-2xl" style={{ background: "#fff", fontFamily: PP.font }} aria-live="polite">
+              <span style={{ fontSize: 34 }} className="animate-bounce" aria-hidden>💼</span>
+              <p className="font-semibold" style={{ color: PP.ink }}>Updating their profile…</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-
+      {/* Auth is deferred, not gating: onClose cancels the pending publish,
+          onSuccess just closes and the hook's effect resumes it. */}
       <AnimatePresence>
         {e.showAuth ? <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} /> : null}
       </AnimatePresence>
@@ -203,8 +100,10 @@ function ProfileProPageInner() {
 
 export default function ProfileProPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: PP.page }} />}>
-      <ProfileProPageInner />
-    </Suspense>
+    <MotionConfig reducedMotion="user">
+      <Suspense fallback={<div style={{ minHeight: "100dvh", background: PP.page }} />}>
+        <ProfileProPageInner />
+      </Suspense>
+    </MotionConfig>
   );
 }

@@ -49,15 +49,15 @@ export const other = (side: Side): Side => (side === "a" ? "b" : "a");
 // small — "transcendent" every day is a diary nobody believes.
 
 const WORDS_A = [
-  "quiet", "rain", "coffee", "tired", "warm", "slow", "orange", "steady",
-  "hungry", "sunday", "traffic", "soft", "here", "chai", "late", "easy",
-  "bright", "long", "home", "clean", "still", "loud", "sleepy", "full",
+  "sleepy 😴", "chai ☕", "rain 🌧️", "missing u", "gym 💪", "sunday", "traffic 😤", "soft",
+  "hungry", "golden hour", "momos 🥟", "slay", "tired", "cozy", "you 💛", "late night",
+  "bright", "ugh mondays", "home", "clean girl era", "still", "loud", "full", "giggly",
 ];
 
 const WORDS_B = [
-  "sun", "busy", "green", "calm", "cold", "sweet", "far", "close",
-  "monday", "music", "grey", "light", "tea", "early", "kind", "heavy",
-  "blue", "windy", "quick", "restless", "gentle", "hot", "clear", "small",
+  "sun ☀️", "busy", "chai", "calm", "cold 🥶", "sweet", "far", "close",
+  "monday", "music 🎧", "grey", "light", "maggi 🍜", "early", "kind", "heavy",
+  "blue", "windy", "quick", "thinking of u", "gentle", "hot 🥵", "clear", "cricket 🏏",
 ];
 
 /**
@@ -142,11 +142,13 @@ export function makeDemoData(opts: DemoOptions = {}): StreakData {
   for (let i = 0; i < historyDays; i++) {
     const date = addDays(startedOn, i);
 
-    // Today: only the partner. The viewer's own square is what they're here for.
+    // Today: only the sender. The viewer (side b — the person this page is
+    // for) sees a New Snap waiting, with a sealed line that opens once they
+    // send theirs.
     if (i === historyDays - 1) {
       checkIns.push({
         date,
-        b: demoEntry(date, "b", timezone, "the good kind of tired. tell you tonight"),
+        a: demoEntry(date, "a", timezone, "i miss your stupid face. call me tonight? 🥺"),
       });
       continue;
     }
@@ -162,7 +164,7 @@ export function makeDemoData(opts: DemoOptions = {}): StreakData {
 
     const note =
       i === historyDays - 9
-        ? "i reread the poem on the bus. row 12 got me"
+        ? "i reread all our words on the bus. row 12 got me 🥹"
         : undefined;
     checkIns.push({
       date,

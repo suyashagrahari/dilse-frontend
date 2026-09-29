@@ -5,11 +5,12 @@
 //
 // ── BRAND ────────────────────────────────────────────────────────────────────
 //
-// Nothing here imitates the dominant professional-network product. No two-letter
-// square mark, no wordmark, no corporate blue, and none of that company's or its
-// parent's names anywhere — not in copy, file names, class names, alt text, or
-// these comments. The chrome is the sender's own name with a plain line-art mark
-// and a deep teal accent (#0E6B6B).
+// The LAYOUT is a faithful clone of the professional-network profile format
+// (cover, round photo, headline, Open-to card, Featured, Activity, Experience
+// timeline, Skills, Recommendations…) because that grammar is what makes the gag
+// land. The BRAND is ours: no two-letter square mark, no wordmark, and none of
+// that company's or its parent's names anywhere — not in copy, file names, class
+// names, alt text, or these comments. The mark is a heart in a rounded square.
 //
 // ── THE ONE RULE THAT MATTERS MORE THAN THE UI ───────────────────────────────
 //
@@ -26,6 +27,8 @@
 // the second lane, and it is deliberately heavier. Anything that adds a step to
 // lane one is a regression even when it ships bug-free.
 
+import type { LovePhoto } from "../../_love/types";
+
 export interface ProfilePerson {
   name: string;
   /** "Professional Girlfriend | Serial Overthinker" — 2 lines max. */
@@ -39,6 +42,28 @@ export interface ProfilePerson {
   degreeNote?: string;
   /** "Open to: being right" — renders in an accent-tinted box when present. */
   openTo?: string;
+  /** Framing of the round profile photo (focal point 0–100, zoom 100–300). */
+  photoCropX?: number;
+  photoCropY?: number;
+  photoScale?: number;
+  /** Framing of the cover banner. */
+  bannerCropX?: number;
+  bannerCropY?: number;
+  bannerScale?: number;
+}
+
+/** An Activity post. The picture is `photos[i]` when there is one. */
+export interface ProfilePost {
+  id: string;
+  text: string;
+  /** "2w", "1mo" — the relative stamp under the author line. */
+  ago: string;
+}
+
+export interface ProfileLanguage {
+  name: string;
+  /** "Native or bilingual proficiency" */
+  level: string;
 }
 
 export interface ProfileExperience {
@@ -107,6 +132,8 @@ export interface Recommendation {
 
 export interface ProfileProData {
   person: ProfilePerson;
+  /** Who made the page. Signs the letter, owns the "Message" thread. */
+  senderName: string;
   about: string[];
   experience: ProfileExperience[];
   education: ProfileEducation[];
@@ -115,7 +142,17 @@ export interface ProfileProData {
   certifications?: ProfileCertification[];
   /** Shown to friends on both contributor landings. */
   contributorPrompt: string;
+  /** Memories — the Featured carousel. Each has a caption + little note. */
+  photos: LovePhoto[];
+  posts: ProfilePost[];
+  languages: ProfileLanguage[];
+  /** The main letter — arrives as a message, opens as a recommendation. */
+  letter: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
+
+export type EditMode = null | "choose" | "manual" | "preview";
 
 /** Lane one. ONE field. If this object ever grows, something has gone wrong. */
 export const ENDORSE_LIMITS = {

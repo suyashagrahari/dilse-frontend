@@ -1,101 +1,59 @@
 // ─── /streak ─────────────────────────────────────────────────────────────────
 //
-// The gallery/editor route. Same three-lives top bar every template in this
-// repo uses: Create → Publish → Share, with auth deferred rather than gating.
-//
-// The chrome is deliberately quieter than Rewind's. This is not a story you
-// watch once; it is a thing someone is deciding to open every day, and a
-// gradient button shouting at them on the way in sets the wrong expectation.
+// The gallery/editor route. The parody camera-chat app owns the whole screen;
+// the editor's controls float in the shared EditorDock (Back · Edit ·
+// Create → Publish → Share). Create opens the guided AI StoryStarter over the
+// form. Everything stateful lives in useStreakEditor.
 
 "use client";
 
 import { Suspense } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2 } from "lucide-react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import { useStreakEditor } from "./hooks/useStreakEditor";
 import StreakTemplate from "./components/StreakTemplate";
 import EditSheet from "./components/EditSheet";
-import { PALETTE, SERIF, UI } from "./components/types";
-
-const CHROME = "rgba(250,247,240,0.92)";
-const CHROME_BORDER = `1px solid ${PALETTE.edge}`;
+import EditorDock from "../_love/EditorDock";
+import { FONT } from "./components/snap/tokens";
 
 function StreakPageInner() {
   const e = useStreakEditor();
 
   const topAction = e.showShare
-    ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
-    : e.showPublish
-      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
+    ? { label: e.shareLabel, onClick: e.handleShare }
+    : e.publishing
+      ? { label: "Publishing…", onClick: () => {} }
+      : e.showPublish
+        ? { label: "Publish", onClick: e.publish }
+        : { label: "Create", onClick: e.handleStartCreate };
+
+  const aiOpen = e.storyStarted && e.storyFill.mode !== "manual";
 
   return (
-    <div style={{ minHeight: "100dvh", position: "relative", background: PALETTE.paper }}>
-      <div
-        className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)", pointerEvents: "none" }}
-      >
-        <button
-          onClick={e.goBack}
-          className="inline-flex items-center gap-1.5 px-3 rounded-full"
-          style={{
-            pointerEvents: "auto",
-            minHeight: 44,
-            fontFamily: UI,
-            fontSize: 13.5,
-            background: CHROME,
-            color: PALETTE.inkSoft,
-            border: CHROME_BORDER,
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <ArrowLeft size={15} /> Back
-        </button>
-        <div className="flex-1" />
-        {e.isPersonalized && !e.showShare && (
-          <button
-            onClick={e.handleEditFromPreview}
-            className="inline-flex items-center gap-1.5 px-3.5 rounded-full"
-            style={{
-              pointerEvents: "auto",
-              minHeight: 44,
-              fontFamily: UI,
-              fontSize: 13.5,
-              background: CHROME,
-              color: PALETTE.inkSoft,
-              border: CHROME_BORDER,
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <PenLine size={14} /> Edit
-          </button>
-        )}
-        <button
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          className="inline-flex items-center gap-1.5 px-4 rounded-full disabled:opacity-60"
-          style={{
-            pointerEvents: "auto",
-            minHeight: 44,
-            fontFamily: UI,
-            fontSize: 13.5,
-            background: PALETTE.ink,
-            color: PALETTE.paper,
-            border: "none",
-          }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-      </div>
-
+    <div style={{ minHeight: "100dvh", position: "relative", background: "#000" }}>
       {/* Keyed so a Save re-seats the session on the freshly-written pair. */}
       <StreakTemplate
         key={e.previewVersion}
         data={e.displayData}
         mode="demo"
         shareUrl={e.shareUrl}
+        hideLetter={e.editMode === "manual" || aiOpen}
+      />
+
+      <EditorDock
+        tone="dark"
+        accent="#FFFC00"
+        accentInk="#111"
+        font={FONT}
+        avoidBottom=".snNav, .snCamBottom, .snInputBar, .snViewerReply"
+        avoidLeft=".snRailNav, .snListCol"
+        onBack={e.goBack}
+        secondary={[
+          e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview },
+          e.showShare && !!e.myUrl && { label: "My link", onClick: () => e.handleCopy(e.myUrl ?? undefined) },
+        ]}
+        primary={{ ...topAction, disabled: e.publishing }}
       />
 
       <EditSheet
@@ -110,11 +68,8 @@ function StreakPageInner() {
         restoredDraft={e.restoredDraft}
       />
 
-      {/* Sits over the sheet above, so the first thing a sender sees after
-          Create is the offer to have it written — with the form they get
-          today one tap behind it. Renders nothing without a schema, and adds
-          no storage of any kind. */}
-      {e.storyStarted && <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />}
+      {/* Mounted after the sheet so it sits over the form it seeds. */}
+      {e.storyStarted && <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} />}
 
       <AnimatePresence>
         {e.publishing && (
@@ -123,14 +78,26 @@ function StreakPageInner() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[300] grid place-items-center"
-            style={{ background: "rgba(43,38,32,0.42)", backdropFilter: "blur(5px)" }}
+            style={{ background: "rgba(0,0,0,.6)" }}
           >
             <div
-              className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl"
-              style={{ background: PALETTE.paper }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "16px 22px",
+                borderRadius: 20,
+                background: "#fff",
+                fontFamily: FONT,
+                fontWeight: 800,
+                fontSize: 15,
+                color: "#16191C",
+              }}
+              aria-live="polite"
             >
-              <Loader2 size={26} className="animate-spin" style={{ color: PALETTE.accent }} />
-              <p style={{ fontFamily: SERIF, fontSize: 16, color: PALETTE.ink }}>Lighting it up…</p>
+              <span aria-hidden style={{ fontSize: 24, display: "inline-block", animation: "stkFlick 1s ease-in-out infinite" }}>🔥</span>
+              Sending your streak…
+              <style>{`@keyframes stkFlick { 50% { transform: scale(1.18) rotate(6deg); } }`}</style>
             </div>
           </motion.div>
         )}
@@ -145,8 +112,10 @@ function StreakPageInner() {
 
 export default function StreakPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: PALETTE.paper }} />}>
-      <StreakPageInner />
-    </Suspense>
+    <MotionConfig reducedMotion="user">
+      <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#000" }} />}>
+        <StreakPageInner />
+      </Suspense>
+    </MotionConfig>
   );
 }

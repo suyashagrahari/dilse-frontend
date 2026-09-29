@@ -1,37 +1,25 @@
 "use client";
 
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import {
-  X, PenLine, Eye, Lock, Loader2, Plus, Trash2, Info, ChevronUp, ChevronDown,
-  CalendarDays, Music4, Camera, Link2, AlertTriangle, Sparkles, Users, Quote,
-} from "lucide-react";
-import {
-  type RewindData, type EditMode, type Stat,
-  QUESTIONS, computeArchetype, deriveStats, textOn,
-} from "./types";
-import { MAX_REASONS, MAX_STATS, MAX_PHOTOS, validateStartDate } from "../hooks/useRewindEditor";
+// ─── Rewind — the form ───────────────────────────────────────────────────────
+//
+// One scrolling sheet (bottom sheet on phones, right-hand drawer on wide
+// screens so the app stays visible beside it). Four friendly steps — who and
+// since when, the memories, your songs, the bonus-track letter — and the rest
+// folded under "Fine-tune". Every number in the story is worked out from the
+// date, so there is nothing to count. Save says exactly what is missing.
 
-/* ── Editor chrome. Ordinary product look — the poster typography belongs to the
-      story, not to the form. Fuchsia/indigo so the editor, the password gate and
-      the published page all read as one product. ─────────────────────────── */
-const FUCHSIA = "#A21CAF";
-const FUCHSIA_GRAD = "linear-gradient(135deg,#D946EF,#4F46E5)";
-const INK = "#241B2B";
-const MUTED = "#8A7E93";
-const RULE = "#EBD5F2";
-const DANGER = "#C2410C";
+import { useState, type ReactNode } from "react";
+import PhotosEditor from "../../_love/editor/PhotosEditor";
+import { validateStartDate } from "../hooks/useRewindEditor";
+import { QUESTIONS, REWIND_LIMITS as L, computeArchetype, deriveStats, parseSong, type EditMode, type RewindData, type Stat } from "./types";
 
-/** 16px on every text input: anything smaller makes iOS zoom the page on focus. */
-const INPUT_STYLE: React.CSSProperties = { fontSize: 16 };
-const INPUT_CLS =
-  "w-full px-4 py-3 rounded-xl bg-muted/40 border border-border/50 focus:outline-none focus:border-fuchsia-400/60 transition-all min-h-[44px]";
-const INPUT_SM =
-  "w-full px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50 focus:outline-none transition-all min-h-[44px]";
-
-const MAX_REASON_LEN = 110;
-const MAX_CLOSING_LEN = 140;
-const MAX_NAME_LEN = 24;
+export function missingForSave(d: RewindData): string[] {
+  const out: string[] = [];
+  if (!d.recipientName.trim()) out.push("their name");
+  const dp = validateStartDate(d.startDate);
+  if (dp) out.push(dp.kind === "future" ? "a date that isn't in the future" : "the date it started");
+  return out;
+}
 
 interface Props {
   editMode: EditMode;
@@ -44,746 +32,299 @@ interface Props {
   saving: boolean;
 }
 
-/* ── Small shared bits ─────────────────────────────────────────────────────── */
+const pad = (a: string[], n: number) => [...a, ...Array(Math.max(0, n - a.length)).fill("")].slice(0, n);
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const boxRef = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (ev: PointerEvent) => { if (!boxRef.current?.contains(ev.target as Node)) setOpen(false); };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+export default function EditSheet({ editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving }: Props) {
+  const [lockPicked, setLockPicked] = useState(false);
+  if (editMode !== "manual") return null;
+  const lockOn = lockPicked || !!mf.lockQuestion.trim();
+  const missing = missingForSave(mf);
+  const close = () => setEditMode("preview");
+  const them = mf.recipientName.trim().split(/\s+/)[0] || "them";
 
-  return (
-    <div>
-      <label className="text-xs font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: MUTED }}>
-        <span>{label}</span>
-        {hint && (
-          <span ref={boxRef} className="relative inline-flex items-center">
-            <button
-              type="button"
-              onClick={(ev) => { ev.stopPropagation(); setOpen((v) => !v); }}
-              aria-label={hint}
-              aria-expanded={open}
-              className="inline-grid place-items-center w-6 h-6 rounded-full shrink-0 transition-transform active:scale-90"
-              style={{ background: open ? FUCHSIA : "rgba(162,28,175,.12)", color: open ? "#fff" : FUCHSIA }}
-            >
-              <Info size={12} />
-            </button>
-            <AnimatePresence>
-              {open && (
-                <motion.span
-                  role="tooltip"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute z-[70] normal-case tracking-normal font-medium"
-                  style={{
-                    top: "calc(100% + 8px)", left: 0, width: "min(250px, 74vw)",
-                    background: "#2B1733", color: "#fff", fontSize: 11, lineHeight: 1.5,
-                    padding: "8px 11px", borderRadius: 10, boxShadow: "0 12px 30px -8px rgba(43,23,51,.5)",
-                  }}
-                >
-                  <span aria-hidden style={{ position: "absolute", top: -5, left: 6, width: 10, height: 10, background: "#2B1733", transform: "rotate(45deg)", borderRadius: 2 }} />
-                  {hint}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </span>
-        )}
-      </label>
-      {children}
-    </div>
-  );
-}
+  const stats = deriveStats(mf.startDate);
+  const dateProblem = validateStartDate(mf.startDate);
+  const aura = computeArchetype(mf.answers, mf.startDate);
 
-function Section({
-  icon, title, blurb, right, children,
-}: { icon: React.ReactNode; title: string; blurb: string; right?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl p-3.5" style={{ background: "rgba(252,242,254,.55)", border: `1px solid ${RULE}` }}>
-      <div className="flex items-start justify-between gap-2 mb-2.5">
-        <div className="min-w-0">
-          <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: INK }}>
-            <span style={{ color: FUCHSIA }} aria-hidden>{icon}</span>
-            {title}
-          </h4>
-          <p className="text-[11px] mt-0.5 leading-snug" style={{ color: MUTED }}>{blurb}</p>
-        </div>
-        {right && <div className="shrink-0">{right}</div>}
-      </div>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
-function Counter({ n, max }: { n: number; max: number }) {
-  const near = n > max * 0.85;
-  return (
-    <span className="text-[10px] tabular-nums shrink-0" style={{ color: near ? DANGER : MUTED }}>
-      {n}/{max}
-    </span>
-  );
-}
-
-/** Downscaled to a 1080px long edge before it ever reaches the wire — the photo
- *  slide never draws bigger than that, and a smaller payload publishes faster. */
-function photoToDataUrl(file: File, cb: (src: string) => void, onError: (m: string) => void) {
-  if (!file.type.startsWith("image/")) { onError("That file isn't an image."); return; }
-  if (file.size > 8 * 1024 * 1024) { onError("Photo is over 8MB — try a smaller one."); return; }
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1080;
-      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { cb(String(reader.result)); return; }
-      ctx.drawImage(img, 0, 0, w, h);
-      try { cb(canvas.toDataURL("image/jpeg", 0.82)); } catch { cb(String(reader.result)); }
-    };
-    img.onerror = () => cb(String(reader.result));
-    img.src = String(reader.result);
+  const songs = pad(mf.songs, L.songs).map(splitRaw);
+  const setSong = (i: number, p: Partial<{ title: string; artist: string }>) => {
+    const next = songs.map((s, idx) => (idx === i ? { ...s, ...p } : s)).map((s) => (s.title.trim() || s.artist.trim() ? joinSongRaw(s) : ""));
+    updateMf("songs", trimTail(next));
   };
-  reader.onerror = () => onError("Couldn't read that file.");
-  reader.readAsDataURL(file);
-}
-
-/* ── THE DATE, and the proof that we did the maths ─────────────────────────────
-   One input drives eleven slides. So the form shows the derivation the instant
-   the date lands: the same numbers the recipient will see, in the same order,
-   before the sender has typed anything else. Nothing else in this form sells the
-   template as well as watching it fill in.
-──────────────────────────────────────────────────────────────────────────────*/
-function DerivedPreview({ startDate }: { startDate: string }) {
-  const stats = useMemo(() => {
-    const raw = (startDate ?? "").trim();
-    if (!raw || Number.isNaN(Date.parse(raw))) return null;
-    return deriveStats(raw);
-  }, [startDate]);
-
-  if (!stats || stats.isFuture) return null;
-
-  const n = (v: number) => v.toLocaleString("en-IN");
-  const plural = (v: number, one: string, many = `${one}s`) => `${v} ${v === 1 ? one : many}`;
-
-  const bits: string[] = [
-    plural(stats.days, "day"),
-    `${n(stats.hours)} hours`,
-    ...(stats.winters ? [plural(stats.winters, "winter")] : []),
-    ...(stats.diwalis ? [plural(stats.diwalis, "Diwali", "Diwalis")] : []),
-    ...(stats.holis ? [plural(stats.holis, "Holi", "Holis")] : []),
-    ...(stats.monsoons ? [plural(stats.monsoons, "monsoon")] : []),
-    `started on a ${stats.startWeekday}`,
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="rounded-xl px-3 py-2.5"
-      style={{ background: "#fff", border: `1px solid ${RULE}` }}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: MUTED }}>
-        We worked this out for you
-      </p>
-      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-        {bits.map((b, i) => (
-          <React.Fragment key={b}>
-            {i > 0 && <span aria-hidden style={{ color: RULE }}>·</span>}
-            <span className="text-[12.5px] font-semibold tabular-nums" style={{ color: i === 0 ? FUCHSIA : INK }}>{b}</span>
-          </React.Fragment>
-        ))}
-      </div>
-      <p className="text-[11px] mt-1.5 leading-snug" style={{ color: MUTED }}>
-        {stats.isEarly
-          ? "It's early — the story says so out loud instead of showing a table of zeroes."
-          : `Recounted every time someone opens the link. ${stats.yearPercent}% of this year so far.`}
-      </p>
-    </motion.div>
-  );
-}
-
-/* ── The quiz. Rendered entirely from QUESTIONS — never hardcoded, so the form
-      cannot drift from the frozen data the archetype is computed off. ─────── */
-function Quiz({
-  answers, startDate, onAnswer,
-}: { answers: Record<string, string>; startDate: string; onAnswer: (qid: string, value: string) => void }) {
-  const answered = QUESTIONS.filter((q) => answers[q.id]).length;
-  const archetype = useMemo(() => computeArchetype(answers ?? {}, startDate ?? ""), [answers, startDate]);
-  const fg = textOn(archetype.bg);
+  const setLine = (key: "places" | "genres" | "topReasons", n: number, i: number, v: string) => {
+    const next = pad(mf[key], n).map((x, idx) => (idx === i ? v : x));
+    updateMf(key, trimTail(next));
+  };
+  const jokes: Stat[] = [0, 1, 2].map((i) => mf.stats[i] ?? { key: `s${i + 1}`, label: "", value: "", sub: "" });
+  const setJoke = (i: number, p: Partial<Stat>) => updateMf("stats", jokes.map((j, idx) => (idx === i ? { ...j, ...p } : j)));
 
   return (
     <>
-      <div className="flex gap-1" aria-hidden>
-        {QUESTIONS.map((q) => (
-          <span
-            key={q.id}
-            className="h-1 flex-1 rounded-full transition-colors"
-            style={{ background: answers[q.id] ? FUCHSIA : "#EADDF0" }}
-          />
-        ))}
-      </div>
-
-      {QUESTIONS.map((q, qi) => (
-        <fieldset key={q.id} className="border-0 p-0 m-0">
-          <legend className="text-[12.5px] font-semibold mb-1.5 flex gap-1.5" style={{ color: INK }}>
-            <span className="tabular-nums shrink-0" style={{ color: MUTED }}>{qi + 1}.</span>
-            <span>{q.prompt}</span>
-          </legend>
-          <div className="grid grid-cols-1 gap-1.5">
-            {q.options.map((o) => {
-              const on = answers[q.id] === o.value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => onAnswer(q.id, o.value)}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all active:scale-[0.99] min-h-[48px] flex items-center gap-2"
-                  style={{
-                    background: on ? "rgba(162,28,175,.10)" : "#fff",
-                    border: `1.5px solid ${on ? FUCHSIA : RULE}`,
-                    color: on ? FUCHSIA : INK,
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    className="w-4 h-4 rounded-full shrink-0 grid place-items-center"
-                    style={{ border: `1.5px solid ${on ? FUCHSIA : "#DCC9E4"}`, background: on ? FUCHSIA : "transparent" }}
-                  >
-                    {on && <span style={{ width: 6, height: 6, borderRadius: 999, background: "#fff" }} />}
-                  </span>
-                  <span className="min-w-0">{o.label}</span>
-                </button>
-              );
-            })}
+      <style>{CSS}</style>
+      <div className="reScrim" onClick={close} />
+      <div className="reSheet" role="dialog" aria-modal="true" aria-label="Make your Rewind">
+        <div className="reHead">
+          <span className="reGrab" aria-hidden />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p className="reTitle">Make their Rewind ⏮️</p>
+            <p className="reSub">A name, a date and a few photos. We work out every number — you just pick the songs.</p>
           </div>
-        </fieldset>
-      ))}
-
-      {/* The verdict, live. Watching it change as you answer is the proof that
-          nobody picked it off a list. */}
-      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${RULE}` }}>
-        <div className="px-3.5 py-3" style={{ background: archetype.bg }}>
-          <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: fg, opacity: 0.7 }}>
-            {answered === QUESTIONS.length ? "Your ending" : `Your ending so far · ${answered}/${QUESTIONS.length} answered`}
-          </p>
-          <p className="text-[15px] font-extrabold leading-tight" style={{ color: fg }}>{archetype.name}</p>
-          <p className="text-[11.5px] mt-1 leading-snug" style={{ color: fg, opacity: 0.85 }}>{archetype.line}</p>
+          <button type="button" className="reX" onClick={close} aria-label="Close">✕</button>
         </div>
-        <p className="px-3.5 py-2 text-[11px]" style={{ color: MUTED, background: "#fff" }}>
-          Computed from the answers, not chosen. Change one and watch it move.
-        </p>
+
+        <div className="reBody">
+          {/* 1 — who + when */}
+          <section className="reStep">
+            <p className="reStepN"><b>1</b> Who&apos;s it for, and since when</p>
+            <div className="reRow2">
+              <Field label="Their name" required hint="Opens the story in huge type.">
+                <Text big value={mf.recipientName} max={40} placeholder="Aditi" onChange={(v) => updateMf("recipientName", v)} />
+              </Field>
+              <Field label="Your name" hint="The artist. Signs the letter.">
+                <Text big value={mf.senderName} max={40} placeholder="Rohan" onChange={(v) => updateMf("senderName", v)} />
+              </Field>
+            </div>
+            <Field label="The day it started" required hint="Every number in the story is worked out from this one date.">
+              <input className="reIn is-big" type="date" value={mf.startDate} max={new Date().toISOString().slice(0, 10)} onChange={(e) => updateMf("startDate", e.target.value)} />
+            </Field>
+            {!dateProblem ? (
+              <p className="reDerived">
+                ✨ A <b>{stats.startWeekday}</b>. That&apos;s <b>{(stats.hours * 60).toLocaleString("en-IN")}</b> minutes together
+                {stats.winters > 0 && <> · {stats.winters} winter{stats.winters > 1 ? "s" : ""}</>}
+                {stats.diwalis > 0 && <> · {stats.diwalis} Diwali{stats.diwalis > 1 ? "s" : ""}</>}.
+              </p>
+            ) : (
+              mf.startDate && <p className="reWarn">{dateProblem.message}</p>
+            )}
+          </section>
+
+          {/* 2 — memories */}
+          <section className="reStep">
+            <p className="reStepN"><b>2</b> Your memories — Liked Songs 💚</p>
+            <p className="reHint">
+              5–10 photos. They become the album covers, the &ldquo;top moments&rdquo; card and the Liked Songs list — the caption is the song title,
+              the note is the lyrics. Tap a photo to move &amp; zoom it. <strong>Sample photos?</strong> Tap &ldquo;change photo&rdquo; to swap in yours.
+            </p>
+            <PhotosEditor
+              photos={mf.photos}
+              onChange={(v) => updateMf("photos", v)}
+              captionHint="song title — e.g. the first sunset"
+              noteHint="The lyrics: what you remember about this one…"
+            />
+          </section>
+
+          {/* 3 — songs */}
+          <section className="reStep">
+            <p className="reStepN"><b>3</b> Your songs 🎧</p>
+            <p className="reHint">Your top 5 — the playlist, the &ldquo;top songs&rdquo; card and the player. #1 gets its own spinning-vinyl moment.</p>
+            <div className="reSongs">
+              {songs.map((s, i) => (
+                <div key={i} className="reSong">
+                  <span className="reSongN">{i + 1}</span>
+                  <Text value={s.title} max={60} placeholder={["Kesariya", "Tum Se Hi", "Iktara", "Pehla Nasha", "Raabta"][i]} onChange={(v) => setSong(i, { title: v })} label={`Song ${i + 1} title`} />
+                  <Text value={s.artist} max={50} placeholder="artist" onChange={(v) => setSong(i, { artist: v })} label={`Song ${i + 1} artist`} />
+                </div>
+              ))}
+            </div>
+            <Field label="Playlist name" count={`${mf.playlistName.length}/${L.playlistName}`}>
+              <Text value={mf.playlistName} max={L.playlistName} placeholder="songs that are basically you" onChange={(v) => updateMf("playlistName", v)} />
+            </Field>
+          </section>
+
+          {/* 4 — letter */}
+          <section className="reStep">
+            <p className="reStepN"><b>4</b> The bonus track — your letter 💌</p>
+            <p className="reHint">A hidden track after the summary card. It plays full-screen like synced lyrics, one line lighting up at a time. It also waits as a little icon in the corner.</p>
+            <Field label="Your letter" count={`${mf.letter.length}/${L.letter}`}>
+              <Area rows={8} value={mf.letter} max={L.letter} placeholder={`${them},\n\nThey counted everything this year except the part that matters…`} onChange={(v) => updateMf("letter", v)} />
+            </Field>
+            <label className="reCheck">
+              <input
+                type="checkbox"
+                checked={lockOn}
+                onChange={(e) => {
+                  setLockPicked(e.target.checked);
+                  if (!e.target.checked) { updateMf("lockQuestion", ""); updateMf("lockAnswer", ""); }
+                }}
+              />
+              <span>Lock it behind a question (the &ldquo;Skip&rdquo; button runs away 😈)</span>
+            </label>
+            {lockOn && (
+              <div className="reRow2">
+                <Field label="The question"><Text value={mf.lockQuestion} max={L.lockQuestion} placeholder="Will you rewind this year with me again?" onChange={(v) => updateMf("lockQuestion", v)} /></Field>
+                <Field label="The yes button"><Text value={mf.lockAnswer} max={L.lockAnswer} placeholder="Play it ▶" onChange={(v) => updateMf("lockAnswer", v)} /></Field>
+              </div>
+            )}
+          </section>
+
+          {/* 5 — fine-tune */}
+          <section className="reStep">
+            <p className="reStepN"><b>5</b> Fine-tune (optional)</p>
+            <div className="reFolds">
+              <Fold title="Your couple aura — the verdict" sub={`Currently: ${aura.name}`}>
+                {QUESTIONS.map((q) => (
+                  <div key={q.id} className="reQ">
+                    <p>{q.prompt}</p>
+                    <div className="reOpts">
+                      {q.options.map((o) => (
+                        <button key={o.value} type="button" className={`reOpt ${mf.answers[q.id] === o.value ? "is-on" : ""}`} onClick={() => updateMf("answers", { ...mf.answers, [q.id]: o.value })}>{o.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </Fold>
+              <Fold title="Top genres" sub="#1 gets the whole card. Make them up — that's the fun.">
+                {pad(mf.genres, L.genres).map((g, i) => (
+                  <Text key={i} value={g} max={L.genre} placeholder={["Slow-burn Bollywood", "3 AM Voice Notes", "Chai-core", "Soft Launch Pop"][i]} onChange={(v) => setLine("genres", L.genres, i, v)} label={`Genre ${i + 1}`} />
+                ))}
+              </Fold>
+              <Fold title="Top places" sub="Where you two happened">
+                {pad(mf.places, L.places).map((g, i) => (
+                  <Text key={i} value={g} max={L.place} placeholder={["Your terrace, 1 AM", "The Maggi point", "That café", "Marine Drive", "The auto home"][i]} onChange={(v) => setLine("places", L.places, i, v)} label={`Place ${i + 1}`} />
+                ))}
+              </Fold>
+              <Fold title="On repeat — 5 things about them" sub="A countdown. Save the best one for last.">
+                {pad(mf.topReasons, 5).map((g, i) => (
+                  <Text key={i} value={g} max={120} placeholder="You hand me the left earbud without looking" onChange={(v) => setLine("topReasons", 5, i, v)} label={`Reason ${i + 1}`} />
+                ))}
+              </Fold>
+              <Fold title="The numbers nobody asked for" sub="Three running jokes: a label, a number, a punchline">
+                {jokes.map((j, i) => (
+                  <div key={i} className="reJoke">
+                    <div className="reRow2">
+                      <Text value={j.label} max={40} placeholder="times you said" onChange={(v) => setJoke(i, { label: v })} label="Label" />
+                      <Text value={j.value} max={12} placeholder="47" onChange={(v) => setJoke(i, { value: v })} label="Number" />
+                    </div>
+                    <Text value={j.sub} max={90} placeholder={'"I\'m fine." You were fine twice.'} onChange={(v) => setJoke(i, { sub: v })} label="Punchline" />
+                  </div>
+                ))}
+              </Fold>
+              <Fold title="The fan card & the last line" sub="“Top 0.01% of your fans” and the closing card">
+                <Field label="Under “top 0.01% of fans”"><Text value={mf.fanLine} max={L.fanLine} placeholder="Nobody has replayed Rohan more." onChange={(v) => updateMf("fanLine", v)} /></Field>
+                <Field label="The last line"><Text value={mf.closingLine} max={80} placeholder="Same time next year." onChange={(v) => updateMf("closingLine", v)} /></Field>
+              </Fold>
+              <Fold title="A real song clip" sub="Optional — plays under the story">
+                <Field label="Audio link (https, .mp3)" hint="Leave empty for silence — the story still has its own little sounds.">
+                  <Text value={mf.audioUrl} max={2000} placeholder="https://…/song.mp3" onChange={(v) => updateMf("audioUrl", v.trim())} />
+                </Field>
+              </Fold>
+              <Fold title="Password (optional)" sub="Only people with the password can open it">
+                <Field label="Password" hint="Leave empty for no password."><Text value={pagePassword} max={128} placeholder="e.g. our first song" onChange={setPagePassword} /></Field>
+              </Fold>
+            </div>
+          </section>
+        </div>
+
+        <div className="reFoot">
+          {missing.length > 0 ? <p className="reMissing">Still needed: {missing.join(", ")}</p> : <p className="reReady">Ready to press play ✓</p>}
+          <button type="button" className="reSave" onClick={onSave} disabled={saving || missing.length > 0}>{saving ? "Saving…" : "Save & play it"}</button>
+        </div>
       </div>
     </>
   );
 }
 
-/* ── The sheet ─────────────────────────────────────────────────────────────── */
+// While typing, a song row is stored verbatim as "title — artist" — no
+// trimming, or the space you just typed would vanish mid-word. Save cleans it.
+const SEP = " — ";
+const splitRaw = (line: string) => {
+  const i = line.indexOf(SEP);
+  return i >= 0 ? { title: line.slice(0, i), artist: line.slice(i + SEP.length) } : parseSong(line);
+};
+const joinSongRaw = (s: { title: string; artist: string }) => (s.artist ? `${s.title}${SEP}${s.artist}` : s.title);
+const trimTail = (a: string[]) => {
+  const out = [...a];
+  while (out.length && !out[out.length - 1].trim()) out.pop();
+  return out;
+};
 
-export default memo(function EditSheet({
-  editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving,
-}: Props) {
-  const visible = editMode === "manual";
-  const reduce = useReducedMotion();
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [photoError, setPhotoError] = useState("");
-
-  // Never trust a partially-filled draft: every array/record is read defensively.
-  const reasons = useMemo(() => (Array.isArray(mf.topReasons) ? mf.topReasons : []), [mf.topReasons]);
-  const stats = useMemo<Stat[]>(() => (Array.isArray(mf.stats) ? mf.stats : []), [mf.stats]);
-  const photos = useMemo(() => (Array.isArray(mf.photos) ? mf.photos : []), [mf.photos]);
-  const answers = useMemo(
-    () => (mf.answers && typeof mf.answers === "object" ? mf.answers : {}),
-    [mf.answers],
-  );
-
-  const writtenReasons = reasons.filter((r) => (r ?? "").trim()).length;
-  const dateProblem = validateStartDate(mf.startDate);
-  const ready = mf.recipientName.trim().length > 0 && !dateProblem && writtenReasons >= 1;
-
-  /* reasons */
-  const setReason = useCallback((i: number, v: string) => {
-    updateMf("topReasons", reasons.map((r, idx) => (idx === i ? v.slice(0, MAX_REASON_LEN) : r)));
-  }, [reasons, updateMf]);
-  const addReason = useCallback(() => {
-    if (reasons.length >= MAX_REASONS) return;
-    updateMf("topReasons", [...reasons, ""]);
-  }, [reasons, updateMf]);
-  const removeReason = useCallback((i: number) => {
-    updateMf("topReasons", reasons.filter((_, idx) => idx !== i));
-  }, [reasons, updateMf]);
-  const moveReason = useCallback((i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= reasons.length) return;
-    const next = [...reasons];
-    [next[i], next[j]] = [next[j], next[i]];
-    updateMf("topReasons", next);
-  }, [reasons, updateMf]);
-
-  /* jokes */
-  const patchStat = useCallback((i: number, patch: Partial<Stat>) => {
-    updateMf("stats", stats.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
-  }, [stats, updateMf]);
-  const addStat = useCallback(() => {
-    if (stats.length >= MAX_STATS) return;
-    updateMf("stats", [...stats, { key: `s${Date.now().toString(36)}${stats.length}`, label: "", value: "", sub: "" }]);
-  }, [stats, updateMf]);
-  const removeStat = useCallback((i: number) => {
-    updateMf("stats", stats.filter((_, idx) => idx !== i));
-  }, [stats, updateMf]);
-
-  /* photos */
-  const addPhotoUrl = useCallback(() => {
-    const v = photoUrl.trim();
-    if (!v || photos.length >= MAX_PHOTOS) return;
-    updateMf("photos", [...photos, v]);
-    setPhotoUrl("");
-    setPhotoError("");
-  }, [photoUrl, photos, updateMf]);
-  const addPhotoFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
-    setPhotoError("");
-    const room = MAX_PHOTOS - photos.length;
-    Array.from(files).slice(0, Math.max(0, room)).forEach((f) =>
-      photoToDataUrl(f, (src) => updateMf("photos", [...(Array.isArray(mf.photos) ? mf.photos : []), src]), setPhotoError),
-    );
-  }, [photos.length, mf.photos, updateMf]);
-  const removePhoto = useCallback((i: number) => {
-    updateMf("photos", photos.filter((_, idx) => idx !== i));
-  }, [photos, updateMf]);
-
-  const onAnswer = useCallback((qid: string, value: string) => {
-    updateMf("answers", { ...answers, [qid]: value });
-  }, [answers, updateMf]);
-
-  const sheetInit = reduce ? { opacity: 0 } : { y: "100%" as const };
-  const sheetAnim = reduce ? { opacity: 1 } : { y: 0 };
-  const sheetExit = reduce ? { opacity: 0 } : { y: "100%" as const };
-  const sheetTrans = reduce
-    ? { duration: 0.12 }
-    : { type: "spring" as const, stiffness: 300, damping: 32 };
-
-  // The story underneath listens for taps across the whole viewport. Everything
-  // inside the sheet is form interaction, never a slide advance.
-  const stop = (ev: React.PointerEvent | React.MouseEvent) => ev.stopPropagation();
-
+function Field({ label, hint, required, count, children }: { label: string; hint?: string; required?: boolean; count?: string; children: ReactNode }) {
   return (
-    <AnimatePresence>
-      {visible && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onPointerDown={stop}
-            onClick={(ev) => { stop(ev); setEditMode("preview"); }}
-            className="fixed inset-0 z-[200] bg-black/55"
-          />
-          <motion.div
-            initial={sheetInit} animate={sheetAnim} exit={sheetExit} transition={sheetTrans}
-            onPointerDown={stop}
-            onPointerUp={stop}
-            onClick={stop}
-            className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-auto lg:flex lg:items-center lg:justify-center lg:inset-0 lg:bg-transparent"
-          >
-            <div
-              className="w-full max-w-2xl max-h-[86dvh] lg:max-h-[92dvh] overflow-y-auto bg-background rounded-t-3xl lg:rounded-3xl shadow-2xl mx-auto"
-              style={{ overscrollBehavior: "contain", touchAction: "pan-y" }}
-            >
-              <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-background z-20">
-                <div className="w-10 h-1 rounded-full bg-border" />
-              </div>
-
-              <div className="px-4 sm:px-5 pb-10 pt-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: INK }}>
-                      <PenLine size={16} style={{ color: FUCHSIA }} /> Build their rewind
-                    </h3>
-                    <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
-                      You write five things. We work out the rest.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setEditMode("preview")}
-                    aria-label="Close"
-                    className="p-2 -mr-1 text-muted-foreground min-w-[44px] min-h-[44px] grid place-items-center"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                {/* ── 1 · WHO ── */}
-                <Section icon={<Users size={14} />} title="Who this is for" blurb="Their name opens the story and closes it.">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Your name" hint="Signed at the end. Leave it blank to stay anonymous.">
-                      <input
-                        value={mf.senderName}
-                        onChange={(ev) => updateMf("senderName", ev.target.value.slice(0, MAX_NAME_LEN))}
-                        placeholder="e.g. Rohan"
-                        className={INPUT_CLS}
-                        style={INPUT_STYLE}
-                      />
-                    </Field>
-                    <Field label="Their name *" hint="Set in the biggest type in the deck, so short beats formal.">
-                      <input
-                        value={mf.recipientName}
-                        onChange={(ev) => updateMf("recipientName", ev.target.value.slice(0, MAX_NAME_LEN))}
-                        placeholder="e.g. Aditi"
-                        className={INPUT_CLS}
-                        style={INPUT_STYLE}
-                      />
-                    </Field>
-                  </div>
-                  <div className="flex justify-end -mt-1">
-                    <Counter n={mf.recipientName.length} max={MAX_NAME_LEN} />
-                  </div>
-                </Section>
-
-                {/* ── 2 · THE DATE — the only number they type, and it isn't a number ── */}
-                <Section
-                  icon={<CalendarDays size={14} />}
-                  title="The date it started"
-                  blurb="The one field that matters. Every stat in the story — days, hours, winters, Diwalis, the weekday it began — is counted from here. You never type a total; we count it, fresh, each time the link is opened."
-                >
-                  <input
-                    type="date"
-                    value={mf.startDate ?? ""}
-                    onChange={(ev) => updateMf("startDate", ev.target.value)}
-                    aria-label="The date it started"
-                    aria-invalid={Boolean(dateProblem)}
-                    className={INPUT_CLS}
-                    style={{
-                      ...INPUT_STYLE,
-                      minHeight: 48,
-                      borderColor: dateProblem?.kind === "future" || dateProblem?.kind === "invalid" ? DANGER : undefined,
-                    }}
-                  />
-
-                  {dateProblem ? (
-                    <p
-                      role="alert"
-                      className="flex items-start gap-1.5 text-[11.5px] leading-snug"
-                      style={{ color: dateProblem.kind === "missing" ? MUTED : DANGER }}
-                    >
-                      <AlertTriangle size={13} className="shrink-0 mt-px" />
-                      <span>
-                        {dateProblem.message}
-                        {dateProblem.kind === "future" && " — pick the day it actually began."}
-                      </span>
-                    </p>
-                  ) : (
-                    <DerivedPreview startDate={mf.startDate} />
-                  )}
-                </Section>
-
-                {/* ── 3 · TOP FIVE ── */}
-                <Section
-                  icon={<Quote size={14} />}
-                  title="Top 5 reasons"
-                  blurb="Counted down 5 → 1, one line at a time. This is the slide people screenshot, so be specific: the small thing beats the big word."
-                  right={<span className="text-[11px] font-semibold tabular-nums" style={{ color: writtenReasons ? FUCHSIA : MUTED }}>{writtenReasons}/{MAX_REASONS}</span>}
-                >
-                  {reasons.length === 0 && (
-                    <p className="text-[11.5px]" style={{ color: MUTED }}>Nothing here yet — add the first one.</p>
-                  )}
-                  {reasons.map((r, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span
-                        className="shrink-0 w-7 h-11 grid place-items-center text-[12px] font-extrabold tabular-nums"
-                        style={{ color: FUCHSIA }}
-                        aria-hidden
-                      >
-                        #{i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <textarea
-                          value={r ?? ""}
-                          onChange={(ev) => setReason(i, ev.target.value)}
-                          rows={2}
-                          placeholder={i === 0 ? "You hand me the left earbud without looking" : "another small, specific thing…"}
-                          aria-label={`Reason ${i + 1}`}
-                          className={INPUT_SM + " resize-none"}
-                          style={{ ...INPUT_STYLE, fontSize: 15 }}
-                        />
-                        <div className="flex justify-end mt-0.5">
-                          <Counter n={(r ?? "").length} max={MAX_REASON_LEN} />
-                        </div>
-                      </div>
-                      <div className="shrink-0 flex flex-col gap-1">
-                        <div className="flex gap-1">
-                          <button
-                            type="button" onClick={() => moveReason(i, -1)} disabled={i === 0}
-                            aria-label={`Move reason ${i + 1} up`}
-                            className="w-[22px] h-[22px] rounded-md grid place-items-center disabled:opacity-25"
-                            style={{ border: `1px solid ${RULE}`, color: MUTED }}
-                          >
-                            <ChevronUp size={12} />
-                          </button>
-                          <button
-                            type="button" onClick={() => moveReason(i, 1)} disabled={i === reasons.length - 1}
-                            aria-label={`Move reason ${i + 1} down`}
-                            className="w-[22px] h-[22px] rounded-md grid place-items-center disabled:opacity-25"
-                            style={{ border: `1px solid ${RULE}`, color: MUTED }}
-                          >
-                            <ChevronDown size={12} />
-                          </button>
-                        </div>
-                        <button
-                          type="button" onClick={() => removeReason(i)}
-                          aria-label={`Remove reason ${i + 1}`}
-                          className="w-full h-[22px] rounded-md grid place-items-center"
-                          style={{ border: `1px solid ${RULE}`, color: MUTED }}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {reasons.length < MAX_REASONS && (
-                    <button
-                      type="button" onClick={addReason}
-                      className="w-full py-3 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1.5 min-h-[44px]"
-                      style={{ color: FUCHSIA, border: `1px dashed ${RULE}`, background: "#fff" }}
-                    >
-                      <Plus size={14} /> Add a reason
-                    </button>
-                  )}
-                </Section>
-
-                {/* ── 4 · THE JOKES ── */}
-                <Section
-                  icon={<Sparkles size={14} />}
-                  title="The jokes"
-                  blurb="The only numbers you type. Each one gets a whole slide: a huge figure, a label above it, and a punchline underneath. Made-up counts are funnier than accurate ones."
-                  right={<span className="text-[11px] tabular-nums" style={{ color: MUTED }}>{stats.length}/{MAX_STATS}</span>}
-                >
-                  {stats.map((s, i) => (
-                    <div key={s.key || i} className="relative rounded-xl p-3 space-y-2" style={{ background: "#fff", border: `1px solid ${RULE}` }}>
-                      <div className="flex gap-2">
-                        <div className="flex-1 min-w-0">
-                          <input
-                            value={s.label}
-                            onChange={(ev) => patchStat(i, { label: ev.target.value.slice(0, 40) })}
-                            placeholder="times you said"
-                            aria-label={`Joke ${i + 1} label`}
-                            className={INPUT_SM}
-                            style={INPUT_STYLE}
-                          />
-                        </div>
-                        <div className="w-[92px] shrink-0">
-                          <input
-                            value={s.value}
-                            onChange={(ev) => patchStat(i, { value: ev.target.value.slice(0, 10) })}
-                            placeholder="47"
-                            aria-label={`Joke ${i + 1} number`}
-                            className={INPUT_SM + " text-center font-extrabold tabular-nums"}
-                            style={{ ...INPUT_STYLE, color: FUCHSIA }}
-                          />
-                        </div>
-                      </div>
-                      <input
-                        value={s.sub}
-                        onChange={(ev) => patchStat(i, { sub: ev.target.value.slice(0, 70) })}
-                        placeholder={"\"I'm fine.\" You were fine twice."}
-                        aria-label={`Joke ${i + 1} punchline`}
-                        className={INPUT_SM}
-                        style={INPUT_STYLE}
-                      />
-                      <button
-                        type="button" onClick={() => removeStat(i)}
-                        aria-label={`Remove joke ${i + 1}`}
-                        className="absolute -top-2 -right-2 w-7 h-7 rounded-full grid place-items-center shadow-sm"
-                        style={{ background: "#fff", border: `1px solid ${RULE}`, color: MUTED }}
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  {stats.length < MAX_STATS ? (
-                    <button
-                      type="button" onClick={addStat}
-                      className="w-full py-3 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1.5 min-h-[44px]"
-                      style={{ color: FUCHSIA, border: `1px dashed ${RULE}`, background: "#fff" }}
-                    >
-                      <Plus size={14} /> Add a joke
-                    </button>
-                  ) : (
-                    <p className="text-[11px] text-center" style={{ color: MUTED }}>
-                      {MAX_STATS} is as many as the deck holds without dragging.
-                    </p>
-                  )}
-                </Section>
-
-                {/* ── 5 · THE QUIZ ── */}
-                <Section
-                  icon={<Sparkles size={14} />}
-                  title="Six questions"
-                  blurb="These decide the last slide — your relationship archetype. Nobody picks it; it's scored from what you tap here. Skipping a few is fine."
-                >
-                  <Quiz answers={answers} startDate={mf.startDate} onAnswer={onAnswer} />
-                </Section>
-
-                {/* ── 6 · PHOTOS ── */}
-                <Section
-                  icon={<Camera size={14} />}
-                  title="Photos"
-                  blurb={`Up to ${MAX_PHOTOS}. They stack and fan out on one slide. Skip it and the deck simply skips that slide.`}
-                  right={<span className="text-[11px] tabular-nums" style={{ color: MUTED }}>{photos.length}/{MAX_PHOTOS}</span>}
-                >
-                  <div className="flex flex-wrap gap-2">
-                    {photos.map((src, i) => (
-                      <div key={`${i}-${src.slice(0, 24)}`} className="relative w-[68px] h-[68px] rounded-xl overflow-hidden" style={{ border: `1px solid ${RULE}` }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button" onClick={() => removePhoto(i)}
-                          aria-label={`Remove photo ${i + 1}`}
-                          className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/70 text-white grid place-items-center text-[11px]"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    {photos.length < MAX_PHOTOS && (
-                      <button
-                        type="button" onClick={() => photoInputRef.current?.click()}
-                        aria-label="Upload photos"
-                        className="w-[68px] h-[68px] rounded-xl grid place-items-center"
-                        style={{ border: `1.5px dashed ${RULE}`, color: FUCHSIA, background: "#fff" }}
-                      >
-                        <Plus size={18} />
-                      </button>
-                    )}
-                    <input
-                      ref={photoInputRef} type="file" accept="image/*" multiple className="hidden"
-                      onChange={(ev) => { addPhotoFiles(ev.target.files); ev.target.value = ""; }}
-                    />
-                  </div>
-                  {photos.length < MAX_PHOTOS && (
-                    <div className="flex gap-2">
-                      <div className="relative flex-1 min-w-0">
-                        <Link2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: MUTED }} />
-                        <input
-                          value={photoUrl}
-                          onChange={(ev) => setPhotoUrl(ev.target.value)}
-                          onKeyDown={(ev) => { if (ev.key === "Enter") { ev.preventDefault(); addPhotoUrl(); } }}
-                          placeholder="…or paste an image link"
-                          aria-label="Photo link"
-                          className={INPUT_SM + " pl-9"}
-                          style={INPUT_STYLE}
-                        />
-                      </div>
-                      <button
-                        type="button" onClick={addPhotoUrl} disabled={!photoUrl.trim()}
-                        className="px-4 rounded-lg text-sm font-semibold disabled:opacity-40 min-h-[44px]"
-                        style={{ color: FUCHSIA, border: `1px solid ${RULE}`, background: "#fff" }}
-                      >
-                        Add
-                      </button>
-                    </div>
-                  )}
-                  {photoError && <p role="alert" className="text-[11px]" style={{ color: DANGER }}>{photoError}</p>}
-                </Section>
-
-                {/* ── 7 · THE SONG ── */}
-                <Section
-                  icon={<Music4 size={14} />}
-                  title="The song"
-                  blurb="One slide, one track. Leave the audio link empty and the song slide is removed entirely — no silent placeholder."
-                >
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Title">
-                      <input
-                        value={mf.songTitle}
-                        onChange={(ev) => updateMf("songTitle", ev.target.value.slice(0, 48))}
-                        placeholder="the one you played twice"
-                        className={INPUT_SM}
-                        style={INPUT_STYLE}
-                      />
-                    </Field>
-                    <Field label="Artist / where">
-                      <input
-                        value={mf.songArtist}
-                        onChange={(ev) => updateMf("songArtist", ev.target.value.slice(0, 48))}
-                        placeholder="in the auto, both times"
-                        className={INPUT_SM}
-                        style={INPUT_STYLE}
-                      />
-                    </Field>
-                  </div>
-                  <Field label="Audio link (optional)" hint="A direct link to an mp3/m4a file. Empty means no song slide at all.">
-                    <div className="relative">
-                      <Link2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: MUTED }} />
-                      <input
-                        value={mf.audioUrl}
-                        onChange={(ev) => updateMf("audioUrl", ev.target.value.trim())}
-                        placeholder="https://…  (empty = no song slide)"
-                        className={INPUT_SM + " pl-9"}
-                        style={INPUT_STYLE}
-                      />
-                    </div>
-                  </Field>
-                </Section>
-
-                {/* ── 8 · CLOSING LINE ── */}
-                <Section icon={<PenLine size={14} />} title="The last line" blurb="The final slide, on its own, in big type. Short lands hardest.">
-                  <textarea
-                    value={mf.closingLine}
-                    onChange={(ev) => updateMf("closingLine", ev.target.value.slice(0, MAX_CLOSING_LEN))}
-                    rows={2}
-                    placeholder="Same time next year."
-                    aria-label="Closing line"
-                    className={INPUT_SM + " resize-none"}
-                    style={{ ...INPUT_STYLE, fontSize: 15 }}
-                  />
-                  <div className="flex justify-end -mt-1">
-                    <Counter n={mf.closingLine.length} max={MAX_CLOSING_LEN} />
-                  </div>
-                </Section>
-
-                {/* ── 9 · PASSWORD ── */}
-                <Section icon={<Lock size={14} />} title="Password (optional)" blurb="If set, the shared link asks for it before the story plays.">
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: MUTED }} />
-                    <input
-                      value={pagePassword}
-                      onChange={(ev) => setPagePassword(ev.target.value)}
-                      placeholder="Leave empty for no password"
-                      aria-label="Password"
-                      className={INPUT_CLS + " pl-10"}
-                      style={INPUT_STYLE}
-                    />
-                  </div>
-                </Section>
-
-                <button
-                  onClick={onSave}
-                  disabled={saving || !ready}
-                  className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 min-h-[48px]"
-                  style={{ background: FUCHSIA_GRAD }}
-                >
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Eye size={16} /> Save & play it</>}
-                </button>
-                <p className="text-center text-[11px]" style={{ color: MUTED }}>
-                  {ready
-                    ? "Publish from the preview to get your shareable link"
-                    : "Needs their name, the date it started, and one reason"}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    <label className="reField">
+      <span className="reLabel">{label}{required && <i> *</i>}{count && <small>{count}</small>}</span>
+      {children}
+      {hint && <span className="reFieldHint">{hint}</span>}
+    </label>
   );
-});
+}
+function Text({ value, onChange, max, placeholder, big, label }: { value: string; onChange: (v: string) => void; max: number; placeholder?: string; big?: boolean; label?: string }) {
+  return <input className={`reIn${big ? " is-big" : ""}`} value={value} maxLength={max} placeholder={placeholder} aria-label={label} onChange={(e) => onChange(e.target.value.slice(0, max))} />;
+}
+function Area({ value, onChange, max, rows, placeholder }: { value: string; onChange: (v: string) => void; max: number; rows: number; placeholder?: string }) {
+  return <textarea className="reIn reArea" value={value} rows={rows} maxLength={max} placeholder={placeholder} onChange={(e) => onChange(e.target.value.slice(0, max))} />;
+}
+function Fold({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+  return (
+    <details className="reFold">
+      <summary><span><b>{title}</b>{sub && <small>{sub}</small>}</span><i aria-hidden>⌄</i></summary>
+      <div className="reFoldBody">{children}</div>
+    </details>
+  );
+}
+
+const G = "#1DB954";
+const CSS = `
+.reScrim { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); animation: reFade .2s both; }
+.reSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 201; margin: 0 auto; width: 100%; max-width: 620px; max-height: 92dvh; display: flex; flex-direction: column;
+  border-radius: 24px 24px 0 0; background: #F7F7F5; color: #121212; font-family: var(--font-rw), "Figtree", -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 -24px 60px -20px rgba(0,0,0,.6); animation: reUp .38s cubic-bezier(.2,1,.3,1) both; }
+@media (min-width: 900px) {
+  .reSheet { left: auto; right: 0; top: 0; bottom: 0; max-height: none; height: 100dvh; width: 480px; border-radius: 24px 0 0 24px; animation-name: reIn; }
+  .reGrab { display: none !important; }
+}
+.reHead { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 18px 16px 12px; border-bottom: 1px solid #E6E6E3; }
+.reGrab { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; border-radius: 99px; background: #D5D5D1; }
+.reTitle { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -.03em; }
+.reSub { margin: 3px 0 0; font-size: 13px; color: #5E5E5A; line-height: 1.4; }
+.reX { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #EAEAE7; color: #333; font-size: 15px; cursor: pointer; }
+.reBody { flex: 1; overflow-y: auto; padding: 6px 16px 24px; overscroll-behavior: contain; }
+.reStep { padding: 16px 0 8px; border-bottom: 1px dashed #DDDDD8; display: grid; gap: 12px; }
+.reStep:last-child { border-bottom: 0; }
+.reStepN { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+.reStepN b { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #121212; color: ${G}; font-size: 13px; flex: none; }
+.reHint { margin: -4px 0 0; font-size: 12.5px; line-height: 1.5; color: #5E5E5A; }
+.reHint strong { color: #121212; }
+.reField { display: grid; gap: 6px; min-width: 0; }
+.reLabel { display: flex; align-items: baseline; gap: 4px; font-size: 12.5px; font-weight: 700; color: #3A3A37; }
+.reLabel i { color: #E0245E; font-style: normal; }
+.reLabel small { margin-left: auto; font-size: 11px; font-weight: 500; color: #8C8C87; font-variant-numeric: tabular-nums; }
+.reFieldHint { font-size: 11.5px; color: #7C7C77; line-height: 1.4; }
+.reIn { width: 100%; min-height: 46px; padding: 11px 13px; border-radius: 12px; border: 1.5px solid #DCDCD7; background: #fff; color: #121212; font: inherit; font-size: 16px; outline: none; transition: border-color .15s, box-shadow .15s; box-sizing: border-box; min-width: 0; }
+.reIn:focus { border-color: ${G}; box-shadow: 0 0 0 4px rgba(29,185,84,.16); }
+.reIn.is-big { min-height: 52px; font-size: 18px; font-weight: 700; }
+.reArea { resize: vertical; line-height: 1.5; min-height: 90px; }
+.reRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 400px) { .reRow2 { grid-template-columns: 1fr; } }
+.reDerived { margin: 0; padding: 10px 12px; border-radius: 12px; background: #121212; color: #fff; font-size: 13px; line-height: 1.45; }
+.reDerived b { color: ${G}; }
+.reWarn { margin: 0; font-size: 12.5px; color: #E0245E; font-weight: 700; }
+.reSongs { display: grid; gap: 8px; }
+.reSong { display: grid; grid-template-columns: 22px minmax(0,1.3fr) minmax(0,1fr); gap: 6px; align-items: center; }
+.reSongN { font-weight: 900; font-size: 15px; color: #8C8C87; text-align: center; }
+.reCheck { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.reCheck input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: ${G}; flex: none; }
+.reFolds { display: grid; gap: 8px; }
+.reFold { border: 1.5px solid #E2E2DE; border-radius: 16px; background: #fff; }
+.reFold summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; }
+.reFold summary::-webkit-details-marker { display: none; }
+.reFold summary span { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.reFold summary b { font-size: 14.5px; }
+.reFold summary small { font-size: 12px; color: #7C7C77; }
+.reFold summary i { font-style: normal; font-size: 18px; color: #7C7C77; transition: transform .2s; }
+.reFold[open] summary i { transform: rotate(180deg); }
+.reFoldBody { display: grid; gap: 10px; padding: 0 14px 14px; }
+.reQ p { margin: 4px 0 6px; font-size: 13.5px; font-weight: 700; }
+.reOpts { display: flex; flex-wrap: wrap; gap: 6px; }
+.reOpt { padding: 8px 12px; border-radius: 99px; border: 1.5px solid #DCDCD7; background: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: #121212; }
+.reOpt.is-on { background: #121212; border-color: #121212; color: #fff; }
+.reJoke { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: #F4F4F1; }
+.reFoot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #E6E6E3; background: #fff; display: grid; gap: 8px; }
+.reMissing { margin: 0; font-size: 13px; font-weight: 700; color: #E0245E; }
+.reReady { margin: 0; font-size: 13px; font-weight: 700; color: ${G}; }
+.reSave { min-height: 52px; border-radius: 99px; border: 0; background: ${G}; color: #000; font: inherit; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 12px 26px -12px rgba(29,185,84,.9); }
+.reSave:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+@keyframes reFade { from { opacity: 0; } }
+@keyframes reUp { from { transform: translateY(100%); } }
+@keyframes reIn { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .reScrim, .reSheet { animation: none; } }
+`;

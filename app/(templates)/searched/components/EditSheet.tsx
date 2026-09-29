@@ -1,507 +1,441 @@
+// ─── The editor's form ───────────────────────────────────────────────────────
+//
+// A bottom sheet on phones, a right-hand drawer on wide screens (the page stays
+// visible beside it). Three friendly steps — who, the memories, the letter —
+// and everything the AI writes folded under "Fine-tune". Save stays pinned and
+// says exactly what is missing.
+
 "use client";
 
-import React, { useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Camera, ChevronDown, Eye, FileText, HelpCircle, IdCard, Image as ImageIcon,
-  Link2, ListTree, Lock, Plus, Search, Trash2, X,
-} from "lucide-react";
-import type { PaaItem, SearchData, SearchResult } from "./types";
-import type { EditMode } from "../hooks/useSearchedEditor";
-import {
-  MAX_FACTS, MAX_IMAGES, MAX_PAA, MAX_RELATED, MAX_RESERVE, MAX_RESULTS, MAX_SUGGESTIONS,
-} from "../hooks/useSearchedEditor";
-
-/* ── Editor frame ───────────────────────────────────────────────────────────
- *
- * An ordinary product form, in the template's violet. The greyscale
- * search-page look belongs to the preview underneath — if the form adopted it
- * too, nobody would be able to tell which surface they were editing.
- */
-const VIOLET = "#6D28D9";
-const VIOLET_GRAD = "linear-gradient(135deg,#7C3AED,#4F46E5)";
-const INK = "#1F1B2E";
-const MUTED = "#7A7391";
-const RULE = "#E6E0F5";
-
-/** 16px on every input: anything smaller makes iOS zoom the page on focus. */
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  fontSize: 16,
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: `1px solid ${RULE}`,
-  background: "#fff",
-  color: INK,
-  outline: "none",
-  minHeight: 44,
-};
-
-const smallLabel: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: ".06em",
-  textTransform: "uppercase",
-  color: MUTED,
-  display: "block",
-  marginBottom: 5,
-};
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: "block" }}>
-      <span style={smallLabel}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function Section({
-  icon, title, blurb, children,
-}: { icon: React.ReactNode; title: string; blurb: string; children: React.ReactNode }) {
-  return (
-    <section style={{ border: `1px solid ${RULE}`, borderRadius: 16, padding: 14, background: "rgba(250,248,255,.7)" }}>
-      <h4 style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, fontWeight: 700, color: INK, margin: 0 }}>
-        <span style={{ color: VIOLET, display: "grid", placeItems: "center" }} aria-hidden>{icon}</span>
-        {title}
-      </h4>
-      <p style={{ fontSize: 11.5, color: MUTED, margin: "3px 0 12px", lineHeight: 1.5 }}>{blurb}</p>
-      <div style={{ display: "grid", gap: 12 }}>{children}</div>
-    </section>
-  );
-}
-
-function RowShell({ index, onRemove, children }: { index: number; onRemove?: () => void; children: React.ReactNode }) {
-  return (
-    <div style={{ border: `1px solid ${RULE}`, borderRadius: 12, padding: 11, background: "#fff", display: "grid", gap: 9 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>#{index + 1}</span>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Remove item ${index + 1}`}
-            style={{ border: "none", background: "transparent", color: MUTED, cursor: "pointer", padding: 6, minHeight: 32 }}
-          >
-            <Trash2 size={15} />
-          </button>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function AddButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, padding: "0 14px",
-        borderRadius: 10, border: `1px dashed ${RULE}`, background: "#fff",
-        color: disabled ? MUTED : VIOLET, fontSize: 13, fontWeight: 600,
-        cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.55 : 1,
-      }}
-    >
-      <Plus size={14} /> {label}
-    </button>
-  );
-}
-
-const linesToArray = (v: string): string[] => v.split("\n").map((s) => s.replace(/\s+$/, ""));
-const arrayToLines = (a: string[]): string => a.join("\n");
+import { useState, type ReactNode } from "react";
+import PhotosEditor from "../../_love/editor/PhotosEditor";
+import { MAX_LETTER_LEN, MAX_LOCK_ANSWER_LEN, MAX_LOCK_QUESTION_LEN } from "../../_love/types";
+import { L, type SearchData } from "./types";
+import { missingForSave, type EditMode } from "../hooks/useSearchedEditor";
 
 export interface EditSheetProps {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
   mf: SearchData;
-  updateMf: (next: Partial<SearchData> | ((cur: SearchData) => SearchData)) => void;
-  setRecipientName: (name: string) => void;
+  updateMf: <K extends keyof SearchData>(key: K, val: SearchData[K]) => void;
   pagePassword: string;
   setPagePassword: (v: string) => void;
   onSave: () => void;
 }
 
-export default function EditSheet({
-  editMode, setEditMode, mf, updateMf, setRecipientName, pagePassword, setPagePassword, onSave,
-}: EditSheetProps) {
-  const open = editMode === "manual";
+type FieldDef<T> = { k: keyof T & string; label: string; max: number; area?: boolean; stars?: boolean; placeholder?: string };
 
-  const patchResult = useCallback(
-    (i: number, patch: Partial<SearchResult>) =>
-      updateMf((cur) => ({ ...cur, results: cur.results.map((r, j) => (j === i ? { ...r, ...patch } : r)) })),
-    [updateMf],
-  );
-
-  const patchPaa = useCallback(
-    (key: "paa" | "paaReserve", i: number, patch: Partial<PaaItem>) =>
-      updateMf((cur) => ({ ...cur, [key]: cur[key].map((p, j) => (j === i ? { ...p, ...patch } : p)) })),
-    [updateMf],
-  );
+export default function EditSheet({ editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave }: EditSheetProps) {
+  const [lockPicked, setLockPicked] = useState(false);
+  if (editMode !== "manual") return null;
+  const lockOn = lockPicked || !!mf.lockQuestion.trim();
+  const missing = missingForSave(mf);
+  const close = () => setEditMode("preview");
+  const them = mf.recipient.name.trim().split(/\s+/)[0] || "them";
+  const kp = mf.knowledgePanel;
+  const setKp = (p: Partial<SearchData["knowledgePanel"]>) => updateMf("knowledgePanel", { ...kp, ...p });
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[250]"
-          style={{ background: "rgba(24,18,40,.45)" }}
-          onClick={() => setEditMode(null)}
-        >
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            onClick={(ev) => ev.stopPropagation()}
-            className="absolute inset-x-0 bottom-0 flex flex-col"
-            style={{
-              background: "#fff",
-              borderRadius: "22px 22px 0 0",
-              maxHeight: "92dvh",
-              maxWidth: 620,
-              margin: "0 auto",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "14px 16px", borderBottom: `1px solid ${RULE}`, flex: "0 0 auto",
-              }}
-            >
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: INK, margin: 0 }}>Write the results page</h3>
-                <p style={{ fontSize: 11.5, color: MUTED, margin: "2px 0 0" }}>
-                  The last result should be the letter. Nobody clicks the last one.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditMode(null)}
-                aria-label="Close"
-                style={{ border: "none", background: "transparent", color: MUTED, cursor: "pointer", padding: 8 }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+    <>
+      <style>{CSS}</style>
+      <div className="seScrim" onClick={close} />
+      <div className="seSheet" role="dialog" aria-modal="true" aria-label="Edit your search page">
+        <div className="seHead">
+          <span className="seGrab" aria-hidden />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p className="seTitle">Make them searchable 🔍</p>
+            <p className="seSub">Names, photos, a letter. Every result, fact and joke is already written — tweak anything below.</p>
+          </div>
+          <button type="button" className="seX" onClick={close} aria-label="Close">✕</button>
+        </div>
 
-            <div style={{ overflowY: "auto", padding: 16, display: "grid", gap: 14, flex: 1 }}>
-              <Section icon={<IdCard size={15} />} title="Who it's for" blurb="Their name becomes the wordmark, the search box and the panel. Changing it rewrites the copy.">
-                <Field label="Their name">
-                  <input
-                    style={inputStyle}
-                    value={mf.recipient.name}
-                    maxLength={40}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="Meera Verma"
-                  />
+        <div className="seBody">
+          <section className="seStep">
+            <p className="seStepN"><b>1</b> Who&apos;s being searched</p>
+            <div className="seRow2">
+              <Field label="Their name" required hint="It becomes the doodle, the search box and the panel. Full name reads most real.">
+                <Text big value={mf.recipient.name} max={L.name} placeholder="Meera Verma" onChange={(v) => updateMf("recipient", { name: v })} />
+              </Field>
+              <Field label="Your name" required hint="You're the source behind half the results.">
+                <Text big value={mf.sender.name} max={L.name} placeholder="Arjun" onChange={(v) => updateMf("sender", { name: v })} />
+              </Field>
+            </div>
+          </section>
+
+          <section className="seStep">
+            <p className="seStepN"><b>2</b> Your memories (5–10 photos)</p>
+            <p className="seHint">
+              They fill the doodle balloon, the knowledge-panel collage, the Images pack, the AI Overview sources, videos and places. Tap a photo to move &amp; zoom it;
+              the caption is its image title, the note opens when they tap it. <strong>Sample photos?</strong> Tap &ldquo;change photo&rdquo; to swap in yours.
+            </p>
+            <PhotosEditor photos={mf.photos} onChange={(v) => updateMf("photos", v)} captionHint="image title — e.g. date night, round 1" noteHint="The note that opens with this photo…" />
+          </section>
+
+          <section className="seStep">
+            <p className="seStepN"><b>3</b> The #1 result — your letter 💌</p>
+            <p className="seHint">&ldquo;I&apos;m Feeling Lucky&rdquo; opens it, and it pops in the corner as the top result. An AI Overview writes it out live, word by word.</p>
+            <Field label="Your letter" count={`${mf.letter.length}/${MAX_LETTER_LEN}`}>
+              <Area rows={8} value={mf.letter} max={MAX_LETTER_LEN} placeholder={`${them},\n\nI searched for you once, before I even knew your last name…`} onChange={(v) => updateMf("letter", v)} />
+            </Field>
+            <label className="seCheck">
+              <input
+                type="checkbox"
+                checked={lockOn}
+                onChange={(e) => {
+                  setLockPicked(e.target.checked);
+                  if (!e.target.checked) {
+                    updateMf("lockQuestion", "");
+                    updateMf("lockAnswer", "");
+                  }
+                }}
+              />
+              <span>Ask a question first — shown as a &ldquo;Before you continue&rdquo; cookie banner, and &ldquo;Reject all&rdquo; runs away 😈</span>
+            </label>
+            {lockOn && (
+              <div className="seRow2">
+                <Field label="The question">
+                  <Text value={mf.lockQuestion} max={MAX_LOCK_QUESTION_LEN} placeholder="Do you accept all of my love (and cookies)?" onChange={(v) => updateMf("lockQuestion", v)} />
                 </Field>
-                <Field label="Your name">
-                  <input
-                    style={inputStyle}
-                    value={mf.sender.name}
-                    maxLength={40}
-                    onChange={(e) => updateMf({ sender: { name: e.target.value } })}
-                  />
+                <Field label="The yes button says">
+                  <Text value={mf.lockAnswer} max={MAX_LOCK_ANSWER_LEN} placeholder="Accept all 💗" onChange={(v) => updateMf("lockAnswer", v)} />
                 </Field>
-                <Field label="Photo URL">
-                  <input
-                    style={inputStyle}
-                    value={mf.recipient.photoUrl}
-                    onChange={(e) => updateMf({ recipient: { ...mf.recipient, photoUrl: e.target.value } })}
-                    placeholder="https://…  (blank is fine — the panel draws their initial)"
-                  />
+              </div>
+            )}
+          </section>
+
+          <section className="seStep">
+            <p className="seStepN"><b>4</b> Fine-tune (optional)</p>
+            <div className="seFolds">
+              <Fold title="Autocomplete" sub="The first joke — each line starts with their name">
+                <StrList items={mf.autocomplete} max={L.maxSuggestions} itemMax={L.suggestion} placeholder={`${mf.recipient.name || "Meera"} near me (please)`} onChange={(v) => updateMf("autocomplete", v)} />
+              </Fold>
+
+              <Fold title="Home page & top of results" sub="Doodle title, “Did you mean”, result count">
+                <Field label="Doodle title (shows on hover)">
+                  <Text value={mf.doodleTitle} max={L.doodleTitle} placeholder="Celebrating 3 years of us" onChange={(v) => updateMf("doodleTitle", v)} />
                 </Field>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <Field label="Results count">
-                    <input
-                      style={inputStyle}
-                      value={mf.resultCount}
-                      maxLength={16}
-                      onChange={(e) => updateMf({ resultCount: e.target.value })}
-                      placeholder="8,47,000"
-                    />
+                <Field label="Did you mean:">
+                  <Text value={mf.didYouMean} max={L.didYouMean} placeholder="Arjun's favourite person" onChange={(v) => updateMf("didYouMean", v)} />
+                </Field>
+                <div className="seRow2">
+                  <Field label="About ___ results">
+                    <Text value={mf.resultCount} max={L.resultCount} placeholder="8,47,000" onChange={(v) => updateMf("resultCount", v)} />
                   </Field>
-                  <Field label="Seconds">
-                    <input
-                      style={inputStyle}
-                      value={mf.searchSeconds}
-                      maxLength={6}
-                      onChange={(e) => updateMf({ searchSeconds: e.target.value })}
-                      placeholder="0.42"
-                    />
+                  <Field label="(___ seconds)">
+                    <Text value={mf.searchSeconds} max={L.seconds} placeholder="0.42" onChange={(v) => updateMf("searchSeconds", v)} />
                   </Field>
                 </div>
-                <Field label="Did you mean… (optional)">
-                  <input
-                    style={inputStyle}
-                    value={mf.didYouMean ?? ""}
-                    maxLength={60}
-                    onChange={(e) => updateMf({ didYouMean: e.target.value })}
-                    placeholder="Meera Varma"
-                  />
+              </Fold>
+
+              <Fold title="AI Overview" sub="Streams in at the top of the results">
+                <Field label="Overview" count={`${mf.aiOverview.length}/${L.overview}`}>
+                  <Area rows={5} value={mf.aiOverview} max={L.overview} onChange={(v) => updateMf("aiOverview", v)} />
                 </Field>
-              </Section>
+                <Field label="Key points (Label: text)">
+                  <StrList items={mf.aiPoints} max={L.maxPoints} itemMax={L.point} placeholder="Love language: 2 AM reels" onChange={(v) => updateMf("aiPoints", v)} />
+                </Field>
+              </Fold>
 
-              <Section icon={<Search size={15} />} title="Autocomplete" blurb={`Funniest first. Start each with their name so it completes as they type. Up to ${MAX_SUGGESTIONS}.`}>
-                <textarea
-                  style={{ ...inputStyle, minHeight: 132, lineHeight: 1.6, resize: "vertical" }}
-                  value={arrayToLines(mf.autocomplete)}
-                  onChange={(e) => updateMf({ autocomplete: linesToArray(e.target.value).slice(0, MAX_SUGGESTIONS) })}
-                  placeholder={"Meera Verma is always right\nMeera Verma near me"}
-                />
-              </Section>
-
-              <Section icon={<ListTree size={15} />} title="Results" blurb={`Breadcrumb, title, snippet. Wrap matched words in <b>…</b>. A page body makes the result clickable. Up to ${MAX_RESULTS}.`}>
-                {mf.results.map((r, i) => (
-                  <RowShell
-                    key={r.id || i}
-                    index={i}
-                    onRemove={() => updateMf((cur) => ({ ...cur, results: cur.results.filter((_, j) => j !== i) }))}
-                  >
-                    <Field label="Breadcrumb URL">
-                      <input style={inputStyle} value={r.url} onChange={(e) => patchResult(i, { url: e.target.value })} placeholder="meera-verma.in › about" />
-                    </Field>
-                    <Field label="Title">
-                      <input style={inputStyle} value={r.title} onChange={(e) => patchResult(i, { title: e.target.value })} />
-                    </Field>
-                    <Field label="Snippet">
-                      <textarea
-                        style={{ ...inputStyle, minHeight: 74, resize: "vertical" }}
-                        value={r.snippet}
-                        onChange={(e) => patchResult(i, { snippet: e.target.value })}
-                      />
-                    </Field>
-                    <Field label='Badge (e.g. "Ad") — optional'>
-                      <input style={inputStyle} value={r.badge ?? ""} maxLength={16} onChange={(e) => patchResult(i, { badge: e.target.value })} />
-                    </Field>
-                    <Field label="Page — one paragraph per line. Blank = not clickable.">
-                      <textarea
-                        style={{ ...inputStyle, minHeight: 96, resize: "vertical" }}
-                        value={arrayToLines(r.page?.body ?? [])}
-                        onChange={(e) =>
-                          patchResult(i, {
-                            page: {
-                              title: r.page?.title || r.title,
-                              url: r.page?.url || r.url,
-                              body: linesToArray(e.target.value).filter((l, idx, all) => l.trim() || idx < all.length - 1),
-                              ...(r.page?.imageUrl ? { imageUrl: r.page.imageUrl } : {}),
-                            },
-                          })
-                        }
-                      />
-                    </Field>
-                  </RowShell>
-                ))}
-                <AddButton
-                  label="Add a result"
-                  disabled={mf.results.length >= MAX_RESULTS}
-                  onClick={() =>
-                    updateMf((cur) => ({
-                      ...cur,
-                      results: [...cur.results, { id: `r${Date.now()}`, title: "", url: "", snippet: "" }],
-                    }))
-                  }
-                />
-              </Section>
-
-              <Section icon={<HelpCircle size={15} />} title="People also ask" blurb={`The first ${MAX_PAA} show; the reserve appears two at a time as they open them.`}>
-                {mf.paa.map((p, i) => (
-                  <RowShell key={i} index={i} onRemove={() => updateMf((cur) => ({ ...cur, paa: cur.paa.filter((_, j) => j !== i) }))}>
-                    <Field label="Question">
-                      <input style={inputStyle} value={p.question} onChange={(e) => patchPaa("paa", i, { question: e.target.value })} />
-                    </Field>
-                    <Field label="Answer">
-                      <textarea style={{ ...inputStyle, minHeight: 84, resize: "vertical" }} value={p.answer} onChange={(e) => patchPaa("paa", i, { answer: e.target.value })} />
-                    </Field>
-                    <Field label="Source line — optional">
-                      <input style={inputStyle} value={p.source ?? ""} onChange={(e) => patchPaa("paa", i, { source: e.target.value })} placeholder="arjun.exe › feelings" />
-                    </Field>
-                  </RowShell>
-                ))}
-                <AddButton
-                  label="Add a question"
-                  disabled={mf.paa.length >= MAX_PAA}
-                  onClick={() => updateMf((cur) => ({ ...cur, paa: [...cur.paa, { question: "", answer: "" }] }))}
-                />
-
-                <p style={{ ...smallLabel, marginTop: 4 }}>Held back (appear as they expand)</p>
-                {mf.paaReserve.map((p, i) => (
-                  <RowShell key={i} index={i} onRemove={() => updateMf((cur) => ({ ...cur, paaReserve: cur.paaReserve.filter((_, j) => j !== i) }))}>
-                    <Field label="Question">
-                      <input style={inputStyle} value={p.question} onChange={(e) => patchPaa("paaReserve", i, { question: e.target.value })} />
-                    </Field>
-                    <Field label="Answer">
-                      <textarea style={{ ...inputStyle, minHeight: 74, resize: "vertical" }} value={p.answer} onChange={(e) => patchPaa("paaReserve", i, { answer: e.target.value })} />
-                    </Field>
-                  </RowShell>
-                ))}
-                <AddButton
-                  label="Add a held-back question"
-                  disabled={mf.paaReserve.length >= MAX_RESERVE}
-                  onClick={() => updateMf((cur) => ({ ...cur, paaReserve: [...cur.paaReserve, { question: "", answer: "" }] }))}
-                />
-              </Section>
-
-              <Section icon={<FileText size={15} />} title="Knowledge panel" blurb="The card people screenshot. Facts are label and value — keep the values short.">
+              <Fold title="Knowledge panel" sub="Title card, description, facts, people also search for">
                 <Field label="Subtitle">
-                  <input style={inputStyle} value={mf.knowledgePanel.subtitle} onChange={(e) => updateMf({ knowledgePanel: { ...mf.knowledgePanel, subtitle: e.target.value } })} />
+                  <Text value={kp.subtitle} max={L.subtitle} placeholder="Arjun's favourite human" onChange={(v) => setKp({ subtitle: v })} />
                 </Field>
-                <Field label="Description">
-                  <textarea
-                    style={{ ...inputStyle, minHeight: 92, resize: "vertical" }}
-                    value={mf.knowledgePanel.description}
-                    onChange={(e) => updateMf({ knowledgePanel: { ...mf.knowledgePanel, description: e.target.value } })}
+                <Field label="Description" count={`${kp.description.length}/${L.description}`}>
+                  <Area rows={4} value={kp.description} max={L.description} onChange={(v) => setKp({ description: v })} />
+                </Field>
+                <Field label="Facts">
+                  <Rows
+                    items={kp.facts}
+                    max={L.maxFacts}
+                    blank={{ label: "", value: "" }}
+                    fields={[
+                      { k: "label", label: "Label", max: L.factLabel, placeholder: "Born" },
+                      { k: "value", label: "Value", max: L.factValue, placeholder: "14 March, a Wednesday" },
+                    ]}
+                    onChange={(v) => setKp({ facts: v })}
+                    inline
                   />
                 </Field>
-                {mf.knowledgePanel.facts.map((f, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr auto", gap: 7, alignItems: "center" }}>
-                    <input
-                      style={inputStyle}
-                      value={f.label}
-                      placeholder="Born"
-                      onChange={(e) =>
-                        updateMf((cur) => ({
-                          ...cur,
-                          knowledgePanel: { ...cur.knowledgePanel, facts: cur.knowledgePanel.facts.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) },
-                        }))
-                      }
-                    />
-                    <input
-                      style={inputStyle}
-                      value={f.value}
-                      placeholder="14 March"
-                      onChange={(e) =>
-                        updateMf((cur) => ({
-                          ...cur,
-                          knowledgePanel: { ...cur.knowledgePanel, facts: cur.knowledgePanel.facts.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)) },
-                        }))
-                      }
-                    />
-                    <button
-                      type="button"
-                      aria-label={`Remove fact ${i + 1}`}
-                      onClick={() =>
-                        updateMf((cur) => ({
-                          ...cur,
-                          knowledgePanel: { ...cur.knowledgePanel, facts: cur.knowledgePanel.facts.filter((_, j) => j !== i) },
-                        }))
-                      }
-                      style={{ border: "none", background: "transparent", color: MUTED, cursor: "pointer", padding: 8 }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
-                <AddButton
-                  label="Add a fact"
-                  disabled={mf.knowledgePanel.facts.length >= MAX_FACTS}
-                  onClick={() =>
-                    updateMf((cur) => ({ ...cur, knowledgePanel: { ...cur.knowledgePanel, facts: [...cur.knowledgePanel.facts, { label: "", value: "" }] } }))
-                  }
-                />
-                <Field label="Quote — optional">
-                  <input style={inputStyle} value={mf.knowledgePanel.quote ?? ""} onChange={(e) => updateMf({ knowledgePanel: { ...mf.knowledgePanel, quote: e.target.value } })} />
+                <Field label="People also search for (Name — caption)">
+                  <StrList items={kp.alsoSearchFor} max={L.maxAlso} itemMax={L.alsoSearch} placeholder="Momos — her first love" onChange={(v) => setKp({ alsoSearchFor: v })} />
                 </Field>
-                <Field label="People also search for — one name per line">
-                  <textarea
-                    style={{ ...inputStyle, minHeight: 78, resize: "vertical" }}
-                    value={arrayToLines(mf.knowledgePanel.alsoSearchFor)}
-                    onChange={(e) => updateMf({ knowledgePanel: { ...mf.knowledgePanel, alsoSearchFor: linesToArray(e.target.value) } })}
-                  />
+              </Fold>
+
+              <Fold title="Reviews" sub={`${mf.reviews.length} reviews in the panel`}>
+                <Rows
+                  items={mf.reviews}
+                  max={L.maxReviews}
+                  blank={{ author: "", stars: 5, text: "" }}
+                  fields={[
+                    { k: "author", label: "Who", max: L.reviewAuthor, placeholder: "Her mom" },
+                    { k: "stars", label: "Stars", max: 1, stars: true },
+                    { k: "text", label: "Review", max: L.reviewText, area: true },
+                  ]}
+                  onChange={(v) => updateMf("reviews", v)}
+                />
+              </Fold>
+
+              <Fold title="Results" sub={`${mf.results.length} blue links`}>
+                <Rows
+                  items={mf.results}
+                  max={L.maxResults}
+                  blank={{ id: "", site: "", url: "", title: "", snippet: "" }}
+                  fields={[
+                    { k: "site", label: "Site name", max: L.site, placeholder: "The Daily Blush" },
+                    { k: "url", label: "Breadcrumb", max: L.url, placeholder: "dailyblush.in › local" },
+                    { k: "title", label: "Blue title", max: L.title },
+                    { k: "snippet", label: "Snippet", max: L.snippet, area: true },
+                  ]}
+                  onChange={(v) => updateMf("results", v.map((r, i) => ({ ...r, id: r.id || `r${i + 1}` })))}
+                />
+              </Fold>
+
+              <Fold title="People also ask" sub={`${mf.paa.length} questions — opening one reveals more`}>
+                <Rows
+                  items={mf.paa}
+                  max={L.maxPaa}
+                  blank={{ question: "", answer: "" }}
+                  fields={[
+                    { k: "question", label: "Question", max: L.question },
+                    { k: "answer", label: "Answer", max: L.answer, area: true },
+                  ]}
+                  onChange={(v) => updateMf("paa", v)}
+                />
+              </Fold>
+
+              <Fold title="Top stories" sub="Headlines about them">
+                <Rows
+                  items={mf.topStories}
+                  max={L.maxStories}
+                  blank={{ source: "", time: "1 hour ago", title: "" }}
+                  fields={[
+                    { k: "source", label: "Paper", max: L.storySource, placeholder: "Heartbeat News" },
+                    { k: "time", label: "When", max: L.storyTime, placeholder: "2 hours ago" },
+                    { k: "title", label: "Headline", max: L.storyTitle, area: true },
+                  ]}
+                  onChange={(v) => updateMf("topStories", v)}
+                />
+              </Fold>
+
+              <Fold title="Videos" sub="Thumbnails come from your photos">
+                <Rows
+                  items={mf.videos}
+                  max={L.maxVideos}
+                  blank={{ channel: "", duration: "0:47", title: "" }}
+                  fields={[
+                    { k: "title", label: "Title", max: L.videoTitle },
+                    { k: "channel", label: "Channel", max: L.videoChannel, placeholder: "Us, Unfiltered" },
+                    { k: "duration", label: "Length", max: L.videoDuration, placeholder: "2:13" },
+                  ]}
+                  onChange={(v) => updateMf("videos", v)}
+                />
+              </Fold>
+
+              <Fold title="Places we've been" sub="Pins on the map, with a little memory each">
+                <Rows
+                  items={mf.places}
+                  max={L.maxPlaces}
+                  blank={{ name: "", kind: "", rating: "5.0", note: "" }}
+                  fields={[
+                    { k: "name", label: "Place", max: L.placeName, placeholder: "Sharma Ji Momos" },
+                    { k: "kind", label: "Type · area", max: L.placeKind, placeholder: "Momo stall · Hazratganj" },
+                    { k: "rating", label: "Rating", max: L.placeRating, placeholder: "4.9" },
+                    { k: "note", label: "The memory", max: L.placeNote, area: true },
+                  ]}
+                  onChange={(v) => updateMf("places", v)}
+                />
+              </Fold>
+
+              <Fold title="Related searches" sub="The grey chips at the bottom">
+                <StrList items={mf.relatedSearches} max={L.maxRelated} itemMax={L.related} placeholder="is she single (no)" onChange={(v) => updateMf("relatedSearches", v)} />
+              </Fold>
+
+              <Fold title="Password (optional)" sub="Only people with the password can search">
+                <Field label="Password" hint="Leave empty for no password.">
+                  <Text value={pagePassword} max={128} placeholder="e.g. our first date" onChange={setPagePassword} />
                 </Field>
-              </Section>
-
-              <Section icon={<Link2 size={15} />} title="Related searches" blurb={`Two-column pills at the bottom. Up to ${MAX_RELATED}, one per line.`}>
-                <textarea
-                  style={{ ...inputStyle, minHeight: 108, resize: "vertical" }}
-                  value={arrayToLines(mf.relatedSearches)}
-                  onChange={(e) => updateMf({ relatedSearches: linesToArray(e.target.value).slice(0, MAX_RELATED) })}
-                />
-              </Section>
-
-              <Section icon={<ImageIcon size={15} />} title="Images tab" blurb={`URL and caption. Leave it empty and the tab says so. Up to ${MAX_IMAGES}.`}>
-                {mf.images.map((im, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 7 }}>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <input
-                        style={inputStyle}
-                        value={im.url}
-                        placeholder="https://…"
-                        onChange={(e) => updateMf((cur) => ({ ...cur, images: cur.images.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)) }))}
-                      />
-                      <input
-                        style={{ ...inputStyle, minHeight: 40 }}
-                        value={im.caption ?? ""}
-                        placeholder="caption"
-                        onChange={(e) => updateMf((cur) => ({ ...cur, images: cur.images.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)) }))}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`Remove image ${i + 1}`}
-                      onClick={() => updateMf((cur) => ({ ...cur, images: cur.images.filter((_, j) => j !== i) }))}
-                      style={{ border: "none", background: "transparent", color: MUTED, cursor: "pointer", padding: 8 }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
-                <AddButton
-                  label="Add an image"
-                  disabled={mf.images.length >= MAX_IMAGES}
-                  onClick={() => updateMf((cur) => ({ ...cur, images: [...cur.images, { url: "", caption: "" }] }))}
-                />
-              </Section>
-
-              <Section icon={<Lock size={15} />} title="Password" blurb="Optional. They'll be asked for it before the page opens.">
-                <input
-                  style={inputStyle}
-                  value={pagePassword}
-                  onChange={(e) => setPagePassword(e.target.value)}
-                  placeholder="leave blank for no password"
-                />
-              </Section>
-
-              <p style={{ fontSize: 11.5, color: MUTED, lineHeight: 1.55, margin: 0 }}>
-                <Camera size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
-                Nothing here is saved to this device. Close the tab and the draft is gone — which is the point, given what
-                you are about to write.
-              </p>
+              </Fold>
             </div>
+          </section>
+        </div>
 
-            <div style={{ flex: "0 0 auto", padding: 14, borderTop: `1px solid ${RULE}`, display: "flex", gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => setEditMode("preview")}
-                style={{
-                  minHeight: 46, padding: "0 16px", borderRadius: 12, border: `1px solid ${RULE}`,
-                  background: "#fff", color: INK, fontWeight: 600, fontSize: 14, cursor: "pointer",
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                }}
-              >
-                <Eye size={15} /> Preview
-              </button>
-              <button
-                type="button"
-                onClick={onSave}
-                style={{
-                  flex: 1, minHeight: 46, borderRadius: 12, border: "none", background: VIOLET_GRAD,
-                  color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}
-              >
-                <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} /> Save
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        <div className="seFoot">
+          {missing.length > 0 ? <p className="seMissing">Still needed: {missing.join(", ")}</p> : <p className="seReady">Ready to be searched ✓</p>}
+          <button type="button" className="seSave" onClick={onSave} disabled={missing.length > 0}>
+            Save &amp; preview
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
+
+/* ── small form pieces (module scope, so inputs never remount mid-typing) ─── */
+
+function Field({ label, hint, required, count, children }: { label: string; hint?: string; required?: boolean; count?: string; children: ReactNode }) {
+  return (
+    <label className="seField">
+      <span className="seLabel">
+        {label}
+        {required && <i> *</i>}
+        {count && <small>{count}</small>}
+      </span>
+      {children}
+      {hint && <span className="seFieldHint">{hint}</span>}
+    </label>
+  );
+}
+
+function Text({ value, onChange, max, placeholder, big, label }: { value: string; onChange: (v: string) => void; max: number; placeholder?: string; big?: boolean; label?: string }) {
+  return <input className={`seIn${big ? " is-big" : ""}`} value={value} maxLength={max} placeholder={placeholder} aria-label={label} onChange={(e) => onChange(e.target.value.slice(0, max))} />;
+}
+
+function Area({ value, onChange, max, rows, placeholder, label }: { value: string; onChange: (v: string) => void; max: number; rows: number; placeholder?: string; label?: string }) {
+  return <textarea className="seIn seArea" value={value} rows={rows} maxLength={max} placeholder={placeholder} aria-label={label} onChange={(e) => onChange(e.target.value.slice(0, max))} />;
+}
+
+function Fold({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+  return (
+    <details className="seFold">
+      <summary>
+        <span><b>{title}</b>{sub && <small>{sub}</small>}</span>
+        <i aria-hidden>⌄</i>
+      </summary>
+      <div className="seFoldBody">{children}</div>
+    </details>
+  );
+}
+
+function StrList({ items, onChange, max, itemMax, placeholder }: { items: string[]; onChange: (v: string[]) => void; max: number; itemMax: number; placeholder?: string }) {
+  return (
+    <div className="seList">
+      {items.map((s, i) => (
+        <div key={i} className="seListRow">
+          <Text value={s} max={itemMax} placeholder={placeholder} label={`Line ${i + 1}`} onChange={(v) => onChange(items.map((x, j) => (j === i ? v : x)))} />
+          <button type="button" className="seMini" aria-label="Remove" onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
+        </div>
+      ))}
+      {items.length < max && (
+        <button type="button" className="seAdd" onClick={() => onChange([...items, ""])}>+ Add a line</button>
+      )}
+    </div>
+  );
+}
+
+function Rows<T extends object>({ items, onChange, fields, blank, max, inline }: { items: T[]; onChange: (v: T[]) => void; fields: FieldDef<T>[]; blank: T; max: number; inline?: boolean }) {
+  const set = (i: number, k: keyof T, v: unknown) => onChange(items.map((it, j) => (j === i ? ({ ...it, [k]: v } as T) : it)));
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div className="seList">
+      {items.map((it, i) => (
+        <div key={i} className={`seCard${inline ? " is-inline" : ""}`}>
+          <div className="seCardFields">
+            {fields.map((f) => {
+              const val = (it as Record<string, unknown>)[f.k];
+              if (f.stars) {
+                return (
+                  <label key={f.k} className="seMiniField">
+                    <span>{f.label}</span>
+                    <select className="seIn" value={Number(val) || 5} onChange={(e) => set(i, f.k, Number(e.target.value))}>
+                      {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{"★".repeat(n)}</option>)}
+                    </select>
+                  </label>
+                );
+              }
+              return (
+                <label key={f.k} className={`seMiniField${f.area ? " is-wide" : ""}`}>
+                  {!inline && <span>{f.label}</span>}
+                  {f.area ? (
+                    <Area rows={2} value={String(val ?? "")} max={f.max} label={f.label} placeholder={f.placeholder} onChange={(v) => set(i, f.k, v)} />
+                  ) : (
+                    <Text value={String(val ?? "")} max={f.max} label={f.label} placeholder={f.placeholder ?? f.label} onChange={(v) => set(i, f.k, v)} />
+                  )}
+                </label>
+              );
+            })}
+          </div>
+          <div className="seCardActs">
+            {!inline && <button type="button" className="seMini" aria-label="Move up" onClick={() => move(i, -1)}>↑</button>}
+            {!inline && <button type="button" className="seMini" aria-label="Move down" onClick={() => move(i, 1)}>↓</button>}
+            <button type="button" className="seMini" aria-label="Remove" onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
+          </div>
+        </div>
+      ))}
+      {items.length < max && (
+        <button type="button" className="seAdd" onClick={() => onChange([...items, { ...blank }])}>+ Add</button>
+      )}
+    </div>
+  );
+}
+
+const CSS = `
+.seScrim { position: fixed; inset: 0; z-index: 200; background: rgba(32,33,36,.5); animation: seFade .2s both; }
+.seSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 201; margin: 0 auto; width: 100%; max-width: 640px; max-height: 92dvh; display: flex; flex-direction: column;
+  border-radius: 24px 24px 0 0; background: #f8f9fb; color: #1f1f1f; font-family: Arial, "Helvetica Neue", sans-serif;
+  box-shadow: 0 -24px 60px -20px rgba(0,0,0,.4); animation: seUp .38s cubic-bezier(.2,1,.3,1) both; }
+@media (min-width: 900px) {
+  .seSheet { left: auto; right: 0; top: 0; bottom: 0; max-height: none; height: 100dvh; width: 500px; border-radius: 24px 0 0 24px; animation-name: seIn; }
+  .seGrab { display: none !important; }
+}
+.seHead { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 18px 16px 12px; border-bottom: 1px solid #e3e5e8; }
+.seGrab { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; border-radius: 99px; background: #d4d7db; }
+.seTitle { margin: 0; font: 600 21px/1.25 var(--font-outfit), "Outfit", Arial, sans-serif; }
+.seSub { margin: 3px 0 0; font-size: 13px; color: #5f6368; line-height: 1.4; }
+.seX { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #eceef1; color: #3c4043; font-size: 15px; cursor: pointer; }
+.seBody { flex: 1; overflow-y: auto; padding: 6px 16px 24px; overscroll-behavior: contain; }
+.seStep { padding: 16px 0 8px; border-bottom: 1px dashed #dde0e4; display: grid; gap: 12px; }
+.seStep:last-child { border-bottom: 0; }
+.seStepN { margin: 0; display: flex; align-items: center; gap: 9px; font: 600 16px/1.3 var(--font-outfit), "Outfit", Arial, sans-serif; }
+.seStepN b { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #3F76EE, #E8445E); color: #fff; font-size: 13px; flex: none; }
+.seHint { margin: -4px 0 0; font-size: 12.5px; line-height: 1.5; color: #5f6368; }
+.seHint strong { color: #1f1f1f; }
+.seField { display: grid; gap: 6px; min-width: 0; }
+.seLabel { display: flex; align-items: baseline; gap: 4px; font-size: 12.5px; font-weight: 700; color: #3c4043; }
+.seLabel i { color: #E8445E; font-style: normal; }
+.seLabel small { margin-left: auto; font-size: 11px; font-weight: 500; color: #80868b; font-variant-numeric: tabular-nums; }
+.seFieldHint { font-size: 11.5px; color: #70757a; line-height: 1.4; }
+.seIn { width: 100%; min-height: 46px; padding: 11px 13px; border-radius: 12px; border: 1.5px solid #dadce0; background: #fff; color: #1f1f1f; font: inherit; font-size: 16px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.seIn:focus { border-color: #0b57d0; box-shadow: 0 0 0 4px rgba(11,87,208,.12); }
+.seIn.is-big { min-height: 52px; font-size: 18px; }
+.seArea { resize: vertical; line-height: 1.5; min-height: 70px; }
+.seRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 460px) { .seRow2 { grid-template-columns: 1fr; } }
+.seCheck { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.seCheck input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: #0b57d0; flex: none; }
+.seFolds { display: grid; gap: 8px; }
+.seFold { border: 1.5px solid #e1e3e6; border-radius: 16px; background: #fff; }
+.seFold summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; }
+.seFold summary::-webkit-details-marker { display: none; }
+.seFold summary span { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.seFold summary b { font-size: 14.5px; }
+.seFold summary small { font-size: 12px; color: #70757a; }
+.seFold summary i { font-style: normal; font-size: 18px; color: #70757a; transition: transform .2s; }
+.seFold[open] summary i { transform: rotate(180deg); }
+.seFoldBody { display: grid; gap: 12px; padding: 0 14px 14px; }
+.seList { display: grid; gap: 8px; }
+.seListRow { display: grid; grid-template-columns: 1fr 40px; gap: 6px; align-items: center; }
+.seCard { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px; border-radius: 14px; background: #f3f4f6; }
+.seCard.is-inline { padding: 6px; }
+.seCardFields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
+.seMiniField { display: grid; gap: 4px; min-width: 0; }
+.seMiniField.is-wide { grid-column: 1 / -1; }
+.seMiniField > span { font-size: 11.5px; font-weight: 700; color: #5f6368; }
+.seCardActs { display: grid; gap: 4px; align-content: start; }
+.seMini { width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e1e3e6; background: #fff; color: #70757a; cursor: pointer; }
+.seAdd { min-height: 44px; border-radius: 12px; border: 1.5px dashed #0b57d0; background: #eef3fd; color: #0b57d0; font-weight: 700; font-size: 14px; cursor: pointer; }
+.seFoot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #e3e5e8; background: #fff; display: grid; gap: 8px; }
+.seMissing { margin: 0; font-size: 13px; font-weight: 700; color: #d93025; }
+.seReady { margin: 0; font-size: 13px; font-weight: 700; color: #188038; }
+.seSave { min-height: 52px; border-radius: 26px; border: 0; background: #0b57d0; color: #fff; font: 600 16px/1 var(--font-outfit), "Outfit", Arial, sans-serif; cursor: pointer; box-shadow: 0 10px 24px -12px rgba(11,87,208,.9); }
+.seSave:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+@keyframes seFade { from { opacity: 0; } }
+@keyframes seUp { from { transform: translateY(100%); } }
+@keyframes seIn { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .seScrim, .seSheet { animation: none; } }
+`;

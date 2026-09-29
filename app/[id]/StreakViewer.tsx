@@ -5,8 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import StreakTemplate from "@/app/(templates)/streak/components/StreakTemplate";
-import { dbToStreakData } from "@/app/(templates)/streak/components/coerce";
-import { PALETTE } from "@/app/(templates)/streak/components/types";
+import { dbToPage } from "@/app/(templates)/streak/components/coerce";
+import { AppMark } from "@/app/(templates)/streak/components/snap/icons";
+import { FONT } from "@/app/(templates)/streak/components/snap/tokens";
+
+const PALETTE = { paper: "#FFFC00", paperDeep: "#FFFFFF", edge: "#EDEDED", ink: "#16191C", inkSoft: "#6B6E73", accent: "#0EADFF" };
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 /* ─────────────────────────────────────────
@@ -40,7 +43,7 @@ function StreakPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
   }, [pw, shareId, onUnlocked]);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center px-5" style={{ background: PALETTE.paper }}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center px-5" style={{ background: PALETTE.paper, fontFamily: FONT }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -51,18 +54,14 @@ function StreakPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
           <div className="h-1" style={{ background: PALETTE.accent }} />
           <div className="px-7 pt-8 pb-7">
             <div className="flex flex-col items-center mb-7">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: PALETTE.accent }}
-              >
-                <Lock size={28} className="text-white" />
+              <div className="mb-4" aria-hidden>
+                <AppMark size={64} />
               </div>
-              <div className="text-3xl mb-2" aria-hidden>🕯️</div>
               <h2 className="text-xl font-bold text-center mb-1" style={{ color: PALETTE.ink }}>
-                Something&apos;s waiting for you.
+                You have 1 new snap 🔥
               </h2>
               <p className="text-xs text-center leading-relaxed" style={{ color: PALETTE.inkSoft }}>
-                Enter the password and<br />the lights come on
+                enter the password to open it
               </p>
             </div>
 
@@ -108,7 +107,7 @@ function StreakPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
               style={{ background: PALETTE.accent }}
             >
-              {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Open it</>}
+              {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Open snap</>}
             </motion.button>
           </div>
         </div>
@@ -141,7 +140,7 @@ export default function StreakViewer({
 
   // The coercer clamps and repairs everything — the server payload is untrusted
   // input and this is the one place that decides what a malformed field becomes.
-  const data = dbToStreakData(rawData);
+  const data = dbToPage(rawData);
 
   return <StreakTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;
 }
