@@ -44,11 +44,13 @@ export interface LetterPopProps {
   onOpened?: () => void;
 }
 
+// "no" lives on its own row under "yes" and only ever moves sideways/down, so
+// it can never land on top of the yes button (it used to on a 390px screen).
 const DODGE = [
-  { x: -90, y: -10, t: "are you sure? 🥺" },
-  { x: 80, y: 14, t: "try again 😤" },
-  { x: -70, y: 22, t: "not an option 🙅" },
-  { x: 60, y: -18, t: "nice try 😌" },
+  { x: -96, y: 10, t: "are you sure? 🥺" },
+  { x: 92, y: 26, t: "try again 😤" },
+  { x: -70, y: 34, t: "not an option 🙅" },
+  { x: 76, y: 4, t: "nice try 😌" },
 ];
 
 export default function LetterPop({
@@ -130,7 +132,14 @@ export default function LetterPop({
 
   if (!letter?.trim()) return null;
 
-  const paras = letter.split(/\n{2,}|\n/).map((p) => p.trim()).filter(Boolean);
+  let paras = letter.split(/\n{2,}|\n/).map((p) => p.trim()).filter(Boolean);
+  // Letters that already open with their own greeting ("Meera,", "Dear Meera,",
+  // "Hey you,") keep it, and the component's "Dear <name>," is dropped — the
+  // AI and most senders write one, and two in a row read like a glitch.
+  const ownGreeting = paras.length > 0 && paras[0].length <= 40 && /[,!]$/.test(paras[0])
+    && (/^(dear|hi|hey|hello|my|to)\b/i.test(paras[0]) || (!!to && paras[0].toLowerCase().includes(to.trim().toLowerCase())));
+  const greeting = ownGreeting ? paras[0] : to ? `Dear ${to},` : "";
+  if (ownGreeting) paras = paras.slice(1);
   const vars = { "--lp-a": accent, "--lp-b": accent2, "--lp-paper": paper, "--lp-ink": ink } as CSSProperties;
 
   return (
@@ -198,7 +207,7 @@ export default function LetterPop({
 
             {stage === "open" && (
               <article className="lpPaper">
-                {to && <p className="lpTo">Dear {to},</p>}
+                {greeting && <p className="lpTo">{greeting}</p>}
                 {paras.map((p, i) => (
                   <p key={i} className="lpPara" style={{ animationDelay: `${120 + i * 140}ms` }}>{p}</p>
                 ))}
@@ -238,7 +247,7 @@ const CSS = `
 .lpSeal { font-size: 46px; animation: lpBob 2.4s ease-in-out infinite; }
 .lpKicker { margin: 8px 0 4px; font: 700 11px/1.4 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--lp-a); }
 .lpQ { margin: 4px auto 22px; max-width: 380px; font: italic 400 26px/1.2 var(--font-di-serif), 'Instrument Serif', Georgia, serif; }
-.lpBtns { display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 64px; }
+.lpBtns { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 12px; min-height: 118px; }
 .lpYes { padding: 13px 26px; border-radius: 99px; border: none; cursor: pointer; color: #fff; font: 800 15px system-ui, sans-serif;
   background: linear-gradient(135deg, var(--lp-a), var(--lp-b)); box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--lp-a) 70%, transparent); }
 .lpNo { padding: 11px 18px; border-radius: 99px; border: 1.5px solid rgba(0,0,0,.14); background: transparent; color: var(--lp-ink); cursor: pointer;
