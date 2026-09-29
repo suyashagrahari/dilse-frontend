@@ -8,8 +8,8 @@ import RewindTemplate from "@/app/(templates)/rewind/components/RewindTemplate";
 import { dbToRewindData } from "@/app/(templates)/rewind/components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-const FUCHSIA = "#A21CAF";
-const FUCHSIA_GRAD = "linear-gradient(135deg,#D946EF,#4F46E5)";
+const GREEN = "#1ED760";
+const GREEN_GRAD = "linear-gradient(135deg,#1ED760,#FF4FB4)";
 
 /* ─────────────────────────────────────────
    Password gate — the year is whole behind
@@ -42,7 +42,7 @@ function RewindPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center px-5"
-      style={{ background: "linear-gradient(180deg,#FDF4FF 0%,#EEF2FF 55%,#FFFFFF 100%)" }}
+      style={{ background: "radial-gradient(circle at 50% 20%, #3a1a33 0%, #121212 60%)" }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -50,24 +50,24 @@ function RewindPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
         transition={{ type: "spring", stiffness: 360, damping: 25 }}
         className="relative w-full max-w-sm z-10"
       >
-        <div className="rounded-3xl overflow-hidden shadow-2xl bg-white" style={{ border: "1px solid #EBD5F2" }}>
-          <div className="h-1" style={{ background: FUCHSIA_GRAD }} />
+        <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: "#181818", border: "1px solid #2A2A2A", color: "#fff" }}>
+          <div className="h-1" style={{ background: GREEN_GRAD }} />
           <div className="px-7 pt-8 pb-7">
             <div className="flex flex-col items-center mb-7">
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: FUCHSIA_GRAD, boxShadow: "0 14px 30px -12px rgba(162,28,175,.6)" }}
+                style={{ background: GREEN, color: "#000", boxShadow: "0 14px 30px -12px rgba(30,215,96,.6)" }}
               >
-                <Lock size={28} className="text-white" />
+                <Lock size={28} style={{ color: "#000" }} />
               </motion.div>
-              <div className="text-3xl mb-2" aria-hidden>⏮️</div>
-              <h2 className="text-xl font-bold text-center mb-1" style={{ color: FUCHSIA }}>
-                This one&apos;s just for you
+              <div className="text-3xl mb-2" aria-hidden>🎧</div>
+              <h2 className="text-xl font-bold text-center mb-1" style={{ color: "#fff" }}>
+                Your Rewind is ready
               </h2>
-              <p className="text-xs text-center leading-relaxed text-muted-foreground">
-                Enter the password and<br />we&apos;ll run the numbers
+              <p className="text-xs text-center leading-relaxed" style={{ color: "#B3B3B3" }}>
+                It&apos;s private. Enter the password<br />and press play
               </p>
             </div>
 
@@ -80,10 +80,10 @@ function RewindPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
                 placeholder="Enter password..."
                 autoFocus
                 aria-label="Password"
-                className={`w-full px-4 py-3.5 pr-11 rounded-2xl text-sm outline-none transition-all text-foreground border ${
+                className={`w-full px-4 py-3.5 pr-11 rounded-2xl text-sm outline-none transition-all border ${
                   error ? "border-red-400/60 ring-2 ring-red-400/15" : "focus:ring-2"
                 }`}
-                style={error ? { background: "#FCF7FE" } : { background: "#FCF7FE", borderColor: "#EBD5F2" }}
+                style={error ? { background: "#242424", color: "#fff" } : { background: "#242424", color: "#fff", borderColor: "#333" }}
               />
               <button
                 type="button" onClick={() => setShowPw((v) => !v)}
@@ -109,10 +109,10 @@ function RewindPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlock
               whileTap={{ scale: 0.97 }}
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
-              className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: FUCHSIA_GRAD, boxShadow: "0 14px 30px -14px rgba(162,28,175,.7)" }}
+              className="w-full py-3.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 shadow-lg"
+              style={{ background: GREEN, color: "#000", boxShadow: "0 14px 30px -14px rgba(30,215,96,.7)" }}
             >
-              {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Start the rewind</>}
+              {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Press play</>}
             </motion.button>
           </div>
         </div>
@@ -147,5 +147,5 @@ export default function RewindViewer({
   // and every number on screen derives from `startDate` — trust it.
   const data = dbToRewindData(rawData);
 
-  return <RewindTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;
+  return <RewindTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} autoStory />;
 }
