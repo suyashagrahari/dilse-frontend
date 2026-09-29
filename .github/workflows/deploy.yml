@@ -70,7 +70,10 @@ jobs:
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
 
-      # Persist the Dockerfile's `--mount=type=cache` dirs (npm store + .next/cache)
+      # Persist the Dockerfile's npm cache mount. (.next/cache is deliberately NOT
+      # carried between runs: a stale Turbopack next/font entry in it failed
+      # prod builds again and again — "next/font/google queries have exactly one entry".)
+      # Persist the Dockerfile's `--mount=type=cache` dirs
       # across CI runs so `next build` recompiles incrementally instead of cold.
       # (BuildKit cache mounts are otherwise lost on ephemeral runners.)
       - name: Restore & save build cache mounts
@@ -78,8 +81,7 @@ jobs:
         with:
           cache-map: |
             {
-              "npm-cache": "/root/.npm",
-              "next-cache": "/app/.next/cache"
+              "npm-cache": "/root/.npm"
             }
           skip-extraction: false
 
