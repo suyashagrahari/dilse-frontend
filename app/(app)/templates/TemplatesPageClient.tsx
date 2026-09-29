@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
 import type { TemplateListItem } from "@/types/template-config";
-import { Search, X, Sparkles, SlidersHorizontal, Crown } from "lucide-react";
+import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
 import PremiumTemplateCard, { PREMIUM_CARD_CSS } from "@/components/PremiumTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -16,7 +16,7 @@ import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { GallerySkeleton } from "@/components/skeleton/Skeletons";
 import {
-  LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
+  LUX, PREMIUM_TAB_CSS, PremiumTeaser,
 } from "./PremiumShowcase";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
@@ -248,124 +248,6 @@ function SearchModal({
   );
 }
 
-// ─── Freemium / Premium ──────────────────────────────────────────────────────
-//
-// The gallery is two rooms. Freemium is everything that is not a real-app
-// clone, in the familiar cream look. Premium is the real-app collection in a
-// dark, gold-lit room of its own. The tab is deep-linkable (`?tab=premium`) and
-// remembered per browser; the URL wins over the memory so a shared link always
-// lands where it was pointed.
-
-type GalleryTab = "freemium" | "premium";
-const TAB_KEY = "ss.gallery.tab";
-
-function readInitialTab(fromUrl: string | null): GalleryTab {
-  if (fromUrl === "premium" || fromUrl === "freemium") return fromUrl;
-  try {
-    const saved = window.localStorage.getItem(TAB_KEY);
-    if (saved === "premium" || saved === "freemium") return saved;
-  } catch { /* storage blocked — fall through to the default */ }
-  return "freemium";
-}
-
-const TABS: { id: GalleryTab; label: string; hint: string; Icon: typeof Sparkles }[] = [
-  { id: "freemium", label: "Freemium", hint: "Free to start", Icon: Sparkles },
-  { id: "premium", label: "Premium", hint: "Real-app clones", Icon: Crown },
-];
-
-function GalleryTabs({
-  tab, onChange, counts,
-}: {
-  tab: GalleryTab;
-  onChange: (t: GalleryTab) => void;
-  counts: Record<GalleryTab, number>;
-}) {
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const onKeyDown = (e: React.KeyboardEvent, i: number) => {
-    let next = -1;
-    if (e.key === "ArrowRight") next = (i + 1) % TABS.length;
-    else if (e.key === "ArrowLeft") next = (i - 1 + TABS.length) % TABS.length;
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = TABS.length - 1;
-    if (next < 0) return;
-    e.preventDefault();
-    onChange(TABS[next].id);
-    refs.current[next]?.focus();
-  };
-
-  return (
-    <div className="pgTabsWrap">
-      <div role="tablist" aria-label="Template collections" className={`pgTabs${tab === "premium" ? " isDark" : ""}`}>
-        {TABS.map(({ id, label, hint, Icon }, i) => {
-          const active = tab === id;
-          return (
-            <button
-              key={id}
-              ref={(el) => { refs.current[i] = el; }}
-              role="tab"
-              id={`gallery-tab-${id}`}
-              aria-selected={active}
-              aria-controls="gallery-panel"
-              tabIndex={active ? 0 : -1}
-              onClick={() => onChange(id)}
-              onKeyDown={(e) => onKeyDown(e, i)}
-              className={`pgTab is-${id}${active ? " isActive" : ""}`}
-            >
-              {active && (
-                <motion.span
-                  layoutId="gallery-tab-pill"
-                  className="pgTabPill"
-                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                />
-              )}
-              <span className="pgTabInner">
-                <span className="pgTabTop">
-                  <Icon size={14} aria-hidden />
-                  {label}
-                  <span className="pgTabCount">{counts[id]}</span>
-                </span>
-                <span className="pgTabHint">{hint}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/** Category chips, scoped to the active tab: each shows how many it would leave. */
-function CategoryChips({
-  selected, onSelect, counts, dark,
-}: {
-  selected: string;
-  onSelect: (id: string) => void;
-  counts: Record<string, number>;
-  dark: boolean;
-}) {
-  const shown = categories.filter((c) => c.id === "all" || c.id === selected || (counts[c.id] ?? 0) > 0);
-  if (shown.length <= 2) return null;
-  return (
-    <div className={`pgChips${dark ? " isDark" : ""}`} role="group" aria-label="Filter by category">
-      {shown.map((c) => {
-        const active = selected === c.id;
-        return (
-          <button
-            key={c.id}
-            type="button"
-            className={`pgChip${active ? " isActive" : ""}`}
-            aria-pressed={active}
-            onClick={() => onSelect(active && c.id !== "all" ? "all" : c.id)}
-          >
-            <span aria-hidden>{c.emoji}</span> {c.label}
-            <span className="pgChipCount">{counts[c.id] ?? 0}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: boolean }) {
   return (
     <>
@@ -447,29 +329,20 @@ function TemplatesContent() {
   } = useTemplateSearch();
   const [showSearch, setShowSearch] = useState(false);
 
-  // This component only ever renders after mount (see TemplatesPage below), so
-  // reading localStorage in the initialiser cannot cause a hydration mismatch.
-  const [tab, setTabState] = useState<GalleryTab>(() => readInitialTab(searchParams.get("tab")));
-  const panelTopRef = useRef<HTMLDivElement>(null);
-
-  const setTab = useCallback((next: GalleryTab, opts?: { scroll?: boolean }) => {
-    setTabState(next);
-    try {
-      const url = new URL(window.location.href);
-      if (next === "premium") url.searchParams.set("tab", "premium");
-      else url.searchParams.delete("tab");
-      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
-    } catch { /* history unavailable */ }
-    if (opts?.scroll && panelTopRef.current) {
-      const top = panelTopRef.current.getBoundingClientRect().top + window.scrollY - 100;
-      if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    }
+  const gridRef = useRef<HTMLDivElement>(null);
+  const scrollToPremium = useCallback(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 100), behavior: "smooth" });
   }, []);
 
-  // Remember the room this visitor is in — including one a shared link opened.
+  // Old links (?tab=premium) land on the premium cards, which lead the grid.
   useEffect(() => {
-    try { window.localStorage.setItem(TAB_KEY, tab); } catch { /* storage blocked */ }
-  }, [tab]);
+    if (searchParams.get("tab") !== "premium") return;
+    const t = window.setTimeout(scrollToPremium, 400);
+    return () => window.clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync URL type param on mount
   useEffect(() => {
@@ -478,13 +351,10 @@ function TemplatesContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // "premium" used to be a category chip; the Premium tab replaced it. Anything
-  // still asking for that category is sent to the tab instead.
+  // "premium" used to be a category chip; premium cards now lead the grid.
   useEffect(() => {
-    if (selectedCategory !== "premium") return;
-    setSelectedCategory("all");
-    setTab("premium");
-  }, [selectedCategory, setSelectedCategory, setTab]);
+    if (selectedCategory === "premium") setSelectedCategory("all");
+  }, [selectedCategory, setSelectedCategory]);
 
   const handleFavorite = useCallback((e: React.MouseEvent, slug: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -510,18 +380,10 @@ function TemplatesContent() {
     (selectedType === "all" || t.type === selectedType) && (!q || t.title.toLowerCase().includes(q));
   const matchCategory = (t: TemplateListItem) => selectedCategory === "all" || t.category === selectedCategory;
 
-  const inTab = (t: TemplateListItem, which: GalleryTab) => (which === "premium") === Boolean(t.premium);
-  const tabBase = visible.filter((t) => inTab(t, tab) && matchBase(t));
-  const filtered = tabBase.filter(matchCategory);
-  const otherTab: GalleryTab = tab === "premium" ? "freemium" : "premium";
-  const otherCount = visible.filter((t) => inTab(t, otherTab) && matchBase(t) && matchCategory(t)).length;
-  const tabCounts: Record<GalleryTab, number> = {
-    freemium: tab === "freemium" ? filtered.length : otherCount,
-    premium: tab === "premium" ? filtered.length : otherCount,
-  };
-
-  const chipCounts: Record<string, number> = { all: tabBase.length };
-  for (const t of tabBase) chipCounts[t.category] = (chipCounts[t.category] ?? 0) + 1;
+  // One gallery: the premium collection leads, then everything else.
+  const filtered = visible
+    .filter((t) => matchBase(t) && matchCategory(t))
+    .sort((a, b) => Number(Boolean(b.premium)) - Number(Boolean(a.premium)));
 
   // Keep navbar count in sync
   useEffect(() => { setFilteredCount(filtered.length); }, [filtered.length, setFilteredCount]);
@@ -535,67 +397,33 @@ function TemplatesContent() {
     [visible],
   );
 
-  const isPremium = tab === "premium";
-  const P = isPremium;
+  const P = false;
 
-  // Prevent the wrong colour bleeding in on mobile rubber-band overscroll: the
-  // page behind the page follows the room you are in.
+  // Prevent dark background bleed on mobile rubber-band overscroll.
   useEffect(() => {
     const prevBodyBg = document.body.style.background;
     const prevHtmlBg = document.documentElement.style.background;
+    document.body.style.background = UI.bg;
+    document.documentElement.style.background = UI.bg;
     return () => {
       document.body.style.background = prevBodyBg;
       document.documentElement.style.background = prevHtmlBg;
     };
   }, []);
-  useEffect(() => {
-    const bg = isPremium ? LUX.bg : UI.bg;
-    document.body.style.background = bg;
-    document.documentElement.style.background = bg;
-  }, [isPremium]);
 
   const emptyState = filtered.length === 0 && (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
         style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)" }}>
-        <Search size={24} style={{ color: P ? LUX.gold : UI.accent }} />
+        <Search size={24} style={{ color: UI.accent }} />
       </div>
-      <p className="font-bold mb-1" style={{ color: P ? LUX.ivory : UI.text }}>
-        No {P ? "premium " : ""}templates found
-      </p>
-      <p className="text-sm mb-5" style={{ color: P ? LUX.muted : UI.textFaint }}>
-        {otherCount > 0
-          ? `Nothing here — but ${otherCount} ${otherCount === 1 ? "template matches" : "templates match"} in ${otherTab === "premium" ? "Premium" : "Freemium"}.`
-          : "Try adjusting your filters or search term"}
-      </p>
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {otherCount > 0 && (
-          <button onClick={() => setTab(otherTab, { scroll: true })} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
-            style={P
-              ? { color: "#241505", background: "linear-gradient(135deg,#fbecc0,#e6c77e 50%,#b8893a)" }
-              : { color: "#f7ecd9", background: "#3d0c11" }}>
-            See {otherCount} in {otherTab === "premium" ? "Premium" : "Freemium"} →
-          </button>
-        )}
-        <button onClick={clearFilters} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
-          style={{ color: P ? LUX.gold : UI.accent, border: "1px solid rgba(201,168,76,0.35)", background: "rgba(201,168,76,0.1)" }}>
-          Clear all filters
-        </button>
-      </div>
-    </motion.div>
-  );
-
-  // When a search finds nothing (or little) here but something in the other
-  // room, say so — otherwise the other tab's results are invisible.
-  const crossHint = hasActiveFilters && otherCount > 0 && filtered.length > 0 && (
-    <div className={`pgCross${P ? " isDark" : ""}`}>
-      <span>
-        {otherCount} {otherCount === 1 ? "match" : "matches"} in {otherTab === "premium" ? "Premium" : "Freemium"}
-      </span>
-      <button type="button" onClick={() => setTab(otherTab, { scroll: true })}>
-        Show <span aria-hidden>→</span>
+      <p className="font-bold mb-1" style={{ color: UI.text }}>No templates found</p>
+      <p className="text-sm mb-5" style={{ color: UI.textFaint }}>Try adjusting your filters or search term</p>
+      <button onClick={clearFilters} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
+        style={{ color: UI.accent, border: "1px solid rgba(201,168,76,0.35)", background: "rgba(201,168,76,0.1)" }}>
+        Clear all filters
       </button>
-    </div>
+    </motion.div>
   );
 
   return (
@@ -613,8 +441,6 @@ function TemplatesContent() {
     >
       <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS}</style>
 
-      {/* The Premium room: fades in over the cream page */}
-      <PremiumBackdrop active={isPremium} />
 
       {/* Decorative corners + ambient glows */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
@@ -741,97 +567,55 @@ function TemplatesContent() {
       <div className="md:hidden" style={{ height: 76 }} />
 
       <div className="px-3 pt-4 pb-12 md:px-6 md:pt-6 md:pb-20" style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }} ref={panelTopRef}>
+        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
 
-          <GalleryTabs tab={tab} onChange={(t) => setTab(t)} counts={tabCounts} />
+          {/* Page header */}
+          <header className="mb-7 md:mb-9 text-center">
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3" style={{ color: UI.accent }}>
+              Discover
+            </p>
+            <h1
+              className="leading-[0.96] tracking-[-0.03em] text-[40px] md:text-[68px] lg:text-[84px]"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: UI.text }}
+            >
+              Explore <em style={{ color: UI.accent, fontStyle: "italic" }}>Templates.</em>
+            </h1>
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div style={{ width: 80, height: 1, background: "linear-gradient(to right,transparent,rgba(201,168,76,0.6))" }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: GOLD_FILTER }} />
+              <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
+            </div>
+          </header>
 
-          <div role="tabpanel" id="gallery-panel" aria-labelledby={`gallery-tab-${tab}`}>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={tab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-              >
-                {isPremium ? (
-                  <>
-                    <PremiumHero count={premiumShowcase.length} compact={hasActiveFilters} />
-                    {!hasActiveFilters && premiumShowcase.length > 0 && <PremiumSpotlight items={premiumShowcase} />}
+          {!hasActiveFilters && premiumShowcase.length > 0 && (
+            <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={scrollToPremium} />
+          )}
 
-                    <CategoryChips selected={selectedCategory} onSelect={setSelectedCategory} counts={chipCounts} dark />
-                    {crossHint}
-
-                    {readyTemplates.length > 0 && (
-                      <>
-                        <p className="pxGridHead">
-                          {hasActiveFilters ? `${readyTemplates.length} of ${premiumShowcase.length}` : "The full collection"}
-                        </p>
-                        <div className="pxGrid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-5">
-                          {readyTemplates.map((template, i) => (
-                            <PremiumTemplateCard
-                              key={template.slug}
-                              template={template}
-                              isFav={favSlugs.includes(template.slug)}
-                              index={i}
-                              onFavorite={handleFavorite}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                    {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark />}
-                    {emptyState}
-
-                    <PremiumPerks />
-                  </>
+          <div ref={gridRef}>
+            {readyTemplates.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                {readyTemplates.map((template, i) => template.premium ? (
+                  <PremiumTemplateCard
+                    key={template.slug}
+                    template={template}
+                    isFav={favSlugs.includes(template.slug)}
+                    index={i}
+                    onFavorite={handleFavorite}
+                  />
                 ) : (
-                  <>
-                    {/* Page header */}
-                    <header className="mb-7 md:mb-9 text-center">
-                      <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3" style={{ color: UI.accent }}>
-                        Discover
-                      </p>
-                      <h1
-                        className="leading-[0.96] tracking-[-0.03em] text-[40px] md:text-[68px] lg:text-[84px]"
-                        style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: UI.text }}
-                      >
-                        Explore <em style={{ color: UI.accent, fontStyle: "italic" }}>Templates.</em>
-                      </h1>
-                      <div className="flex items-center justify-center gap-4 mt-4">
-                        <div style={{ width: 80, height: 1, background: "linear-gradient(to right,transparent,rgba(201,168,76,0.6))" }} />
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: GOLD_FILTER }} />
-                        <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
-                      </div>
-                    </header>
-
-                    {!hasActiveFilters && premiumShowcase.length > 0 && (
-                      <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium", { scroll: true })} />
-                    )}
-
-                    <CategoryChips selected={selectedCategory} onSelect={setSelectedCategory} counts={chipCounts} dark={false} />
-                    {crossHint}
-
-                    {readyTemplates.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                        {readyTemplates.map((template, i) => (
-                          <TemplateCard
-                            key={template.slug}
-                            template={template}
-                            isFav={favSlugs.includes(template.slug)}
-                            index={i}
-                            onFavorite={handleFavorite}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark={false} />}
-                    {emptyState}
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                  <TemplateCard
+                    key={template.slug}
+                    template={template}
+                    isFav={favSlugs.includes(template.slug)}
+                    index={i}
+                    onFavorite={handleFavorite}
+                  />
+                ))}
+              </div>
+            )}
+            {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark={false} />}
+            {emptyState}
           </div>
         </div>
       </div>

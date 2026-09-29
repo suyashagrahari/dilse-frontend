@@ -265,27 +265,74 @@ export function PremiumPerks() {
 export function PremiumTeaser({ items, count, onExplore }: { items: TemplateListItem[]; count: number; onExplore: () => void }) {
   const covers = items.filter((t) => t.coverImage).slice(0, 3);
   return (
-    <button type="button" className="pxTeaser" onClick={onExplore} aria-label={`Explore the Premium collection, ${count} templates`}>
-      <span className="pxTeaserSheen" aria-hidden />
-      <span className="pxTeaserCrown" aria-hidden><Crown size={18} /></span>
-      <span className="pxTeaserText">
-        <span className="pxTeaserKicker">New · The Premium Collection</span>
-        <span className="pxTeaserTitle">{count} real apps, cloned to the pixel.</span>
-        <span className="pxTeaserSub">AI writes every word. Themed letters, photos with notes, a private link.</span>
-      </span>
-      <span className="pxTeaserFan" aria-hidden>
+    <section className="pxTz" aria-label="The Premium Collection">
+      <span className="pxTzSheen" aria-hidden />
+      <div className="pxTzBody">
+        <span className="pxTzBadge"><Crown size={13} aria-hidden /> The Premium Collection</span>
+        <h2 className="pxTzTitle">{count} real apps, <em>cloned to the pixel.</em></h2>
+        <p className="pxTzSub">AI writes every word from a few questions. Full-screen themed letters, photos with notes, a private link.</p>
+        <ul className="pxTzPerks" aria-label="Included">
+          <li>Real-app clones</li><li>AI-written</li><li>Themed letters</li>
+        </ul>
+        <button type="button" className="pxTzGo" onClick={onExplore}>
+          Explore premium <ArrowRight size={15} aria-hidden />
+        </button>
+      </div>
+      <div className="pxTzFan" aria-hidden>
         {covers.map((t, i) => (
-          <span key={t.slug} className={`pxFan f${i}`}>
-            <Image src={t.coverImage!} alt="" fill sizes="80px" className="object-cover" />
+          <span key={t.slug} className={`pxTzCard c${i}`}>
+            <Image src={t.coverImage!} alt="" fill sizes="(max-width:768px) 30vw, 180px" className="object-cover" />
           </span>
         ))}
-      </span>
-      <span className="pxTeaserGo">Explore <ArrowRight size={14} aria-hidden /></span>
-    </button>
+      </div>
+    </section>
   );
 }
 
 export const PREMIUM_TAB_CSS = `
+/* ── premium teaser card (cream page) ──────────────────────────────────── */
+.pxTz { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; align-items: center;
+  max-width: 1080px; margin: 0 auto 28px; padding: 22px 20px 0; border-radius: 26px; text-align: left;
+  background: radial-gradient(120% 140% at 100% 0%, #3a1a2e 0%, #1c0c16 55%, #120810 100%);
+  border: 1px solid rgba(230,199,126,.35); box-shadow: 0 24px 50px -28px rgba(61,12,17,.6), inset 0 1px 0 rgba(255,236,190,.12); }
+.pxTzSheen { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.pxTzSheen::before { content: ""; position: absolute; top: -30%; bottom: -30%; width: 28%; left: -40%; transform: skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,232,170,.13), transparent); animation: pxTzSweep 6s ease-in-out infinite; }
+@keyframes pxTzSweep { 0%, 55% { left: -40%; } 90%, 100% { left: 130%; } }
+.pxTzBody { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.pxTzBadge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 99px; color: #2a1906;
+  background: linear-gradient(135deg, #fbecc0, #e6c77e 55%, #b8893a); font: 800 10px/1 'Inter', system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.pxTzTitle { margin: 2px 0 0; color: #fbf3e4; font: 600 26px/1.08 'Playfair Display', serif; letter-spacing: -.01em; }
+.pxTzTitle em { color: #e9c97f; font-style: italic; }
+.pxTzSub { margin: 0; max-width: 520px; color: rgba(251,243,228,.68); font: 400 13.5px/1.5 'Inter', system-ui, sans-serif; }
+.pxTzPerks { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px; padding: 0; list-style: none; }
+.pxTzPerks li { padding: 5px 10px; border-radius: 99px; border: 1px solid rgba(230,199,126,.3); color: #ecd9ac; font: 600 11px/1 'Inter', system-ui, sans-serif; }
+.pxTzGo { display: inline-flex; align-items: center; gap: 7px; padding: 12px 20px; border-radius: 99px; border: none; cursor: pointer; color: #2a1906;
+  background: linear-gradient(135deg, #fbecc0, #e6c77e 50%, #b8893a); font: 800 13.5px/1 'Inter', system-ui, sans-serif;
+  box-shadow: 0 10px 24px -10px rgba(230,199,126,.8); transition: transform .2s ease; }
+.pxTzGo:hover { transform: translateY(-2px); }
+.pxTzGo:focus-visible { outline: 2px solid #e6c77e; outline-offset: 3px; }
+.pxTzFan { position: relative; height: 150px; margin: 0 -4px; }
+.pxTzCard { position: absolute; bottom: -18px; width: 31%; aspect-ratio: 3/4; border-radius: 14px; overflow: hidden;
+  border: 2px solid rgba(230,199,126,.55); box-shadow: 0 16px 30px -14px rgba(0,0,0,.7); transition: transform .35s cubic-bezier(.22,1,.36,1); }
+.pxTzCard.c0 { left: 4%; transform: rotate(-8deg); }
+.pxTzCard.c1 { left: 34.5%; bottom: -8px; z-index: 2; }
+.pxTzCard.c2 { right: 4%; transform: rotate(8deg); }
+@media (min-width: 768px) {
+  .pxTz { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); gap: 28px; padding: 36px 40px 0 44px; border-radius: 30px; }
+  .pxTzBody { padding-bottom: 36px; gap: 12px; }
+  .pxTzTitle { font-size: 38px; }
+  .pxTzSub { font-size: 15px; }
+  .pxTzFan { height: 250px; align-self: end; }
+  .pxTzCard { width: 32%; }
+}
+@media (hover: hover) {
+  .pxTz:hover .pxTzCard.c0 { transform: rotate(-11deg) translateY(-6px); }
+  .pxTz:hover .pxTzCard.c1 { transform: translateY(-10px); }
+  .pxTz:hover .pxTzCard.c2 { transform: rotate(11deg) translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) { .pxTzSheen::before { animation: none; display: none; } .pxTzCard, .pxTzGo { transition: none; } }
+
 /* ── the room ─────────────────────────────────────────────────────────── */
 .pxRoom { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .55s ease;
   background: radial-gradient(120% 70% at 50% -10%, #2a1128 0%, ${LUX.plum} 34%, ${LUX.bg} 70%, ${LUX.bgDeep} 100%); }
@@ -394,46 +441,9 @@ export const PREMIUM_TAB_CSS = `
 @media (min-width: 600px) { .pxPerkGrid { grid-template-columns: 1fr 1fr; gap: 12px; } }
 @media (min-width: 1024px) { .pxPerkGrid { grid-template-columns: repeat(3, 1fr); gap: 16px; } .pxPerk { padding: 22px; } }
 
-/* ── freemium teaser ──────────────────────────────────────────────────── */
-.pxTeaser { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; max-width: 1080px; margin: 0 auto 22px;
-  padding: 14px; border-radius: 20px; text-align: left; cursor: pointer; overflow: hidden; isolation: isolate;
-  background: radial-gradient(90% 140% at 100% 0%, #3a1636 0%, #1a0c18 55%, #0e070b 100%);
-  border: 1px solid rgba(230,199,126,.35); box-shadow: 0 18px 40px -22px rgba(42,10,14,.7);
-  transition: transform .3s cubic-bezier(.22,1,.36,1); }
-.pxTeaser:hover { transform: translateY(-3px); }
-.pxTeaser:active { transform: scale(.99); }
-.pxTeaser:focus-visible { outline: 2px solid #c9a84c; outline-offset: 3px; }
-.pxTeaserSheen { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.pxTeaserSheen::before { content: ""; position: absolute; top: -30%; bottom: -30%; width: 30%; left: -40%; transform: skewX(-18deg);
-  background: linear-gradient(100deg, transparent, rgba(255,240,200,.14), transparent); animation: pxTeaseSweep 5.5s ease-in-out infinite; }
-@keyframes pxTeaseSweep { 0%, 55% { transform: translateX(0) skewX(-18deg); } 100% { transform: translateX(600%) skewX(-18deg); } }
-.pxTeaserCrown { flex-shrink: 0; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: #2a1906;
-  background: linear-gradient(135deg, #fbecc0, #e6c77e 50%, #b8893a); box-shadow: 0 8px 20px -8px rgba(230,199,126,.7); }
-.pxTeaserText { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.pxTeaserKicker { color: ${LUX.gold}; font: 700 9px/1.2 'Inter', system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; }
-.pxTeaserTitle { color: ${LUX.ivory}; font: 600 16px/1.2 'Playfair Display', serif; }
-.pxTeaserSub { display: none; color: ${LUX.muted}; font: 400 12.5px/1.4 'Inter', system-ui, sans-serif; }
-.pxTeaserFan { display: none; position: relative; width: 112px; height: 76px; flex-shrink: 0; }
-.pxFan { position: absolute; top: 4px; width: 50px; height: 67px; border-radius: 8px; overflow: hidden;
-  box-shadow: 0 10px 20px -8px rgba(0,0,0,.8), 0 0 0 1px rgba(230,199,126,.4); }
-.pxFan.f0 { left: 0; transform: rotate(-9deg); }
-.pxFan.f1 { left: 31px; transform: translateY(-3px); z-index: 2; }
-.pxFan.f2 { left: 62px; transform: rotate(9deg); }
-.pxTeaserGo { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 9px 13px; border-radius: 99px;
-  background: linear-gradient(135deg, #fbecc0, #e6c77e 50%, #b8893a); color: #241505; font: 800 12px/1 'Inter', system-ui, sans-serif; }
-@media (min-width: 640px) {
-  .pxTeaser { padding: 18px 22px; gap: 18px; border-radius: 24px; }
-  .pxTeaserTitle { font-size: 21px; }
-  .pxTeaserSub { display: block; }
-  .pxTeaserFan { display: block; }
-  .pxTeaserGo { padding: 11px 18px; font-size: 13px; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .pxRoom { transition: none; }
   .pxDust span { animation: none; opacity: .45; }
-  .pxDeckShine::before, .pxTeaserSheen::before { animation: none; display: none; }
   .pxBarFill { animation: none; transform: scaleX(1); }
-  .pxCta, .pxTeaser, .pxArrows button { transition: none; }
 }
 `;
