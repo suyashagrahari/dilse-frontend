@@ -10,6 +10,7 @@ import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { guideByTemplateHref } from "@/data/guide-registry";
+import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 
 interface TemplateCardProps {
   template: TemplateListItem;
@@ -72,16 +73,32 @@ const TemplateCard = memo(function TemplateCard({
               search engines only. */}
           {template.coverImage && (
             <div className="absolute inset-0">
-              <Image
-                src={template.coverImage}
-                alt={template.title}
-                fill
-                className="object-cover tplImg"
-                sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
-                loading={index < 4 ? "eager" : "lazy"}
-                // The first row is the shop window — fetch it ahead of everything else.
-                fetchPriority={index < 4 ? "high" : "auto"}
-              />
+              {coverSrcSet(template.coverImage) ? (
+                // Pre-sized variants straight from CloudFront (see coverSrcSet):
+                // no trip through the app server's image optimizer.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverSmall(template.coverImage)}
+                  srcSet={coverSrcSet(template.coverImage)}
+                  sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
+                  alt={template.title}
+                  className="absolute inset-0 w-full h-full object-cover tplImg"
+                  loading={index < 4 ? "eager" : "lazy"}
+                  decoding="async"
+                  // The first row is the shop window — fetch it ahead of everything else.
+                  fetchPriority={index < 4 ? "high" : "auto"}
+                />
+              ) : (
+                <Image
+                  src={template.coverImage}
+                  alt={template.title}
+                  fill
+                  className="object-cover tplImg"
+                  sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
+                  loading={index < 4 ? "eager" : "lazy"}
+                  fetchPriority={index < 4 ? "high" : "auto"}
+                />
+              )}
             </div>
           )}
           <span className="sr-only">{template.title} — {template.description}</span>

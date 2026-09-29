@@ -117,3 +117,24 @@ export const guideVideoSet = (slug: string) => ({
   mp4720: guideMedia(slug, `${slug}-720.mp4`),
   poster: guideMedia(slug, `${slug}-poster.webp`),
 });
+
+// ── Pre-sized cover variants ─────────────────────────────────────────────────
+//
+// Every gallery cover also exists on the CDN at 360/540/720px wide, next to the
+// original, as `<name>@<w>w.webp` (3:4, ~20–60 KB). Cards load those straight
+// from CloudFront instead of going through /_next/image, which resized each
+// cover on the app server the first time anyone asked for a width — the slow
+// part of the gallery. A cover without variants simply has no srcset.
+
+export const COVER_WIDTHS = [360, 540, 720] as const;
+
+/** `srcSet` for a CDN cover, or `undefined` if the URL is not a CDN cover. */
+export function coverSrcSet(url: string | undefined): string | undefined {
+  if (!url || !url.startsWith(`${MEDIA_BASE}/`) || !/\.(webp|jpe?g|png)$/i.test(url)) return undefined;
+  return COVER_WIDTHS.map((w) => `${url.replace(/\.(webp|jpe?g|png)$/i, `@${w}w.webp`)} ${w}w`).join(", ");
+}
+
+/** The smallest variant — a sensible `src` fallback alongside `coverSrcSet`. */
+export function coverSmall(url: string): string {
+  return url.replace(/\.(webp|jpe?g|png)$/i, `@${COVER_WIDTHS[1]}w.webp`);
+}
