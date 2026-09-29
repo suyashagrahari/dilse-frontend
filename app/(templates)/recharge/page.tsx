@@ -14,7 +14,7 @@ import StoryStarter from "@/components/story/StoryStarter";
 import { useRechargeEditor } from "./hooks/useRechargeEditor";
 import RechargeTemplate from "./components/RechargeTemplate";
 import EditSheet from "./components/EditSheet";
-import { ACCENT, BORDER, FONT, INK, SURROUND } from "./components/ui";
+import { PINK as ACCENT, LINE as BORDER, FONT, INK, BG as SURROUND } from "./components/ui";
 
 /* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
 
@@ -59,8 +59,9 @@ const barBtn: React.CSSProperties = {
   minHeight: 44,
   height: 44,
   padding: "0 14px",
-  borderRadius: 8,
-  background: "#FFFFFF",
+  borderRadius: 12,
+  background: "rgba(255,255,255,.96)",
+  boxShadow: "0 6px 18px -12px rgba(0,0,0,.35)",
   border: `1px solid ${BORDER}`,
   color: INK,
   fontFamily: FONT,
@@ -124,7 +125,7 @@ function RechargePageInner() {
       />
 
       {/* Mounted after EditSheet so the panel sits over the form it seeds. */}
-      {e.storyStarted ? <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
+      {e.storyStarted ? <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
 
       <AnimatePresence>
         {e.publishing ? (

@@ -1,193 +1,184 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// The app shell and its state machine:
+//
+//   profiles ──tap── sting ──── browse ⇄ details
+//                                  │
+//                                player → finale → credits → browse (+ letter)
+//
+// It owns everything the screens share (My List, likes, what's been watched,
+// the snackbar), the browser-back behaviour inside the player, and the
+// LetterPop that waits in the corner from the catalogue onward.
 
-import BrowseScreen from "./BrowseScreen";
-import CreditsScreen from "./CreditsScreen";
-import DevErrorPanel from "./DevErrorPanel";
-import EpisodePlayer from "./EpisodePlayer";
-import FinaleScreen from "./FinaleScreen";
-import IntroScreen from "./IntroScreen";
-import MuteToggle from "./MuteToggle";
-import ProfileGate from "./ProfileGate";
-import { BG, FONT_BODY, TEXT, Z } from "./theme";
-import { assertBrandSafe, type LoveflixTemplateProps, type PathEntry } from "./types";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import LetterPop from "../../_love/LetterPop";
+import Browse, { type View } from "./Browse";
+import { LfContext, titleKey, type LfApi, type Title } from "./context";
+import DetailsModal from "./DetailsModal";
+import IntroSting from "./IntroSting";
+import Player from "./Player";
+import ProfilePicker from "./ProfilePicker";
+import { LF_CSS } from "./styles";
+import { ACCENT, Z } from "./theme";
+import { assertBrandSafe, type LoveflixTemplateProps } from "./types";
 import { useReducedMotion } from "./useReducedMotion";
-import { useSceneGraph } from "./useSceneGraph";
+import { useCanHover, useViewport } from "./useViewport";
 
-/**
- * The state machine for the whole template.
- *
- * intro → profiles → browse → player → finale → credits → (autoplay) → browse
- *
- * Two things are deliberately owned HERE rather than by any screen:
- *
- *   1. THE VALIDATOR. `useSceneGraph` runs before the player is ever mounted,
- *      so a dead-ended branch surfaces as a named error in a developer panel
- *      instead of a blank screen, and a recipient silently gets the demo
- *      episode instead of a broken page. Nothing downstream has to defend
- *      against a missing scene — by the time `EpisodePlayer` mounts, the graph
- *      it is handed has been proven to terminate.
- *
- *   2. HISTORY. Entering the player pushes a history entry so the hardware/
- *      browser back button returns to browse rather than leaving the site
- *      mid-episode. State survives, because browse is remounted from data and
- *      the path list lives up here.
- */
-export type Phase = "intro" | "profiles" | "browse" | "player" | "finale" | "credits";
+type Phase = "profiles" | "sting" | "browse" | "player";
 
-export default function LoveflixTemplate({ data, mode }: LoveflixTemplateProps) {
-  const reducedMotion = useReducedMotion();
-  const graph = useSceneGraph(data.scenes, data.startSceneId);
+export default function LoveflixTemplate({ data, mode, topInset = 0 }: LoveflixTemplateProps) {
+  const reduced = useReducedMotion();
+  const vp = useViewport();
+  const canHover = useCanHover();
 
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [path, setPath] = useState<PathEntry[]>([]);
-  /** Bumped on replay so the player remounts clean rather than reusing state. */
-  const [runId, setRunId] = useState(0);
+  const [phase, setPhase] = useState<Phase>("profiles");
+  const [view, setView] = useState<View>("home");
+  const [details, setDetails] = useState<Title | null>(null);
+  const [startEp, setStartEp] = useState(0);
+  const [myList, setMyList] = useState<Set<string>>(() => new Set());
+  const [liked, setLiked] = useState<Set<string>>(() => new Set());
+  const [watched, setWatched] = useState<Set<number>>(() => new Set());
+  const [snack, setSnack] = useState<{ id: number; text: string; icon?: string } | null>(null);
+  const [letterOpen, setLetterOpen] = useState(0);
+  const snackTimer = useRef<number | null>(null);
 
-  // Brand safety runs at mount in development and its output is logged. The one
-  // mistake in this template that would be genuinely expensive is shipping
-  // somebody else's trade dress, so it is checked rather than assumed.
-  const brandHits = useMemo(() => assertBrandSafe(data), [data]);
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
-    if (brandHits.length) console.error("[loveflix] brand safety:", brandHits);
-    else console.info("[loveflix] brand safety: clean");
-    if (!graph.report.ok) console.error("[loveflix] scene graph:", graph.report.errors);
-    else if (graph.report.warnings.length) console.warn("[loveflix] scene graph:", graph.report.warnings);
-  }, [brandHits, graph.report]);
+    const hits = assertBrandSafe(data);
+    if (hits.length) console.error("[loveflix] brand safety:", hits);
+  }, [data]);
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
+  // Audio can only start inside a gesture; the first tap anywhere unlocks it.
+  const unlocked = useRef(false);
+  const unlock = useCallback(() => {
+    if (unlocked.current) return;
+    unlocked.current = true;
+    void import("@/lib/webAudio").then((m) => m.unlockAudio());
+  }, []);
 
-  const startEpisode = useCallback(() => {
-    setPath([]);
-    setRunId((n) => n + 1);
+  const toast = useCallback((text: string, icon?: string) => {
+    setSnack((s) => ({ id: (s?.id ?? 0) + 1, text, icon }));
+    if (snackTimer.current) window.clearTimeout(snackTimer.current);
+    snackTimer.current = window.setTimeout(() => setSnack(null), 2800);
+  }, []);
+  useEffect(() => () => { if (snackTimer.current) window.clearTimeout(snackTimer.current); }, []);
+
+  const toggleIn = (set: React.Dispatch<React.SetStateAction<Set<string>>>) => (t: Title) =>
+    set((s) => {
+      const n = new Set(s);
+      const k = titleKey(t);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+
+  const toggleList = useCallback(
+    (t: Title) => {
+      const k = titleKey(t);
+      const adding = !myList.has(k);
+      toggleIn(setMyList)(t);
+      toast(adding ? "Added to My List" : "Removed from My List", adding ? "✓" : "–");
+    },
+    [myList, toast],
+  );
+  const toggleLike = useCallback((t: Title) => toggleIn(setLiked)(t), []);
+
+  const play = useCallback((i = 0) => {
+    unlock();
+    setDetails(null);
+    setStartEp(i);
     setPhase("player");
-  }, []);
+  }, [unlock]);
 
-  const finishEpisode = useCallback((taken: PathEntry[]) => {
-    setPath(taken);
-    setPhase("finale");
-  }, []);
+  const exitPlayer = useCallback((finished: boolean, upTo: number) => {
+    setWatched((w) => {
+      const n = new Set(w);
+      for (let i = 0; i <= upTo; i++) n.add(i);
+      return n;
+    });
+    setPhase("browse");
+    if (finished && data.letter.trim()) setLetterOpen((n) => n + 1);
+  }, [data.letter]);
 
-  const backToBrowse = useCallback(() => setPhase("browse"), []);
-
-  // Browser back mid-episode returns to browse instead of leaving the page.
-  // The marker entry is pushed on entry and consumed by the listener, so a
-  // second back press behaves normally and leaves the site.
+  // Browser back inside the player returns to the catalogue.
   useEffect(() => {
-    if (phase !== "player" && phase !== "finale" && phase !== "credits") return;
-    if (typeof window === "undefined") return;
-
-    window.history.pushState({ loveflixPhase: phase }, "");
+    if (phase !== "player") return;
+    window.history.pushState({ loveflix: "player" }, "");
     const onPop = () => setPhase("browse");
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [phase]);
 
-  // ── Audio ───────────────────────────────────────────────────────────────────
-  // The context can only be created inside a real gesture. Every entry point to
-  // the template routes its first tap through here.
-  const unlockedRef = useRef(false);
-  const handleFirstGesture = useCallback(() => {
-    if (unlockedRef.current) return;
-    unlockedRef.current = true;
-    void import("@/lib/webAudio").then((m) => m.unlockAudio());
-  }, []);
+  const api: LfApi = useMemo(
+    () => ({
+      data,
+      mode,
+      vp,
+      canHover,
+      reduced,
+      toast,
+      openDetails: (t: Title) => {
+        unlock();
+        setDetails(t);
+      },
+      play,
+      myList,
+      toggleList,
+      liked,
+      toggleLike,
+      watched,
+    }),
+    [data, mode, vp, canHover, reduced, toast, unlock, play, myList, toggleList, liked, toggleLike, watched],
+  );
+
+  const phone = vp === "phone";
+  const rootStyle = { "--lf-top": `${topInset}px` } as CSSProperties;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        minHeight: "100dvh",
-        background: BG,
-        color: TEXT,
-        fontFamily: FONT_BODY,
-        overflowX: "hidden",
-      }}
-    >
-      {/* The logo IS the recipient's "create your own" path. */}
-      {mode === "live" && (
-        <Link
-          href="/templates"
-          style={{
-            position: "fixed",
-            top: "calc(10px + env(safe-area-inset-top, 0px))",
-            right: 10,
-            zIndex: Z.brand,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            minHeight: 34,
-            padding: "6px 10px",
-            borderRadius: 999,
-            background: "rgba(22,22,22,0.72)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            backdropFilter: "blur(8px)",
-            color: TEXT,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.02em",
-            textDecoration: "none",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="" width={16} height={16} style={{ width: 16, height: 16 }} />
-          SubhSandesh
-        </Link>
-      )}
+    <LfContext.Provider value={api}>
+      <div className={`lf-root${reduced ? " is-reduced" : ""}`} style={rootStyle} onPointerDown={unlock}>
+        <style>{LF_CSS}</style>
 
-      <MuteToggle offsetRight={mode === "live" ? 132 : 10} onFirstGesture={handleFirstGesture} />
+        {phase === "profiles" && (
+          <ProfilePicker data={data} live={mode === "live"} toast={toast} onFirstGesture={unlock} onPick={() => setPhase("sting")} />
+        )}
+        {phase === "sting" && <IntroSting reduced={reduced} onDone={() => setPhase("browse")} />}
+        {(phase === "browse" || phase === "player") && (
+          <div style={phase === "player" ? { visibility: "hidden", height: 0, overflow: "hidden" } : undefined} aria-hidden={phase === "player"}>
+            <Browse view={view} setView={setView} />
+          </div>
+        )}
+        {phase === "player" && <Player data={data} startIndex={startEp} reduced={reduced} toast={toast} onExit={exitPlayer} />}
+        {details && phase === "browse" && <DetailsModal key={titleKey(details)} t={details} onClose={() => setDetails(null)} />}
 
-      {phase === "intro" && (
-        <IntroScreen
-          reducedMotion={reducedMotion}
-          onFirstGesture={handleFirstGesture}
-          onDone={() => setPhase("profiles")}
-        />
-      )}
+        {snack && (
+          <div key={snack.id} className={`lf-snack${phone && phase === "browse" ? " is-tabs" : ""}`} role="status">
+            {snack.icon && <span className="lf-snack-ic">{snack.icon}</span>}
+            {snack.text}
+          </div>
+        )}
 
-      {phase === "profiles" && (
-        <ProfileGate
-          data={data}
-          reducedMotion={reducedMotion}
-          onFirstGesture={handleFirstGesture}
-          onSelect={backToBrowse}
-        />
-      )}
-
-      {phase === "browse" && (
-        <BrowseScreen data={data} reducedMotion={reducedMotion} onPlay={startEpisode} />
-      )}
-
-      {phase === "player" && (
-        <EpisodePlayer
-          key={runId}
-          data={data}
-          scenes={graph.scenes}
-          startSceneId={graph.startSceneId}
-          denom={graph.denom}
-          reducedMotion={reducedMotion}
-          onFinish={finishEpisode}
-          onExit={backToBrowse}
-        />
-      )}
-
-      {phase === "finale" && (
-        <FinaleScreen
-          data={data}
-          path={path}
-          reducedMotion={reducedMotion}
-          onCredits={() => setPhase("credits")}
-        />
-      )}
-
-      {phase === "credits" && (
-        <CreditsScreen data={data} reducedMotion={reducedMotion} onReplay={backToBrowse} />
-      )}
-
-      <DevErrorPanel report={graph.report} usedFallback={graph.usedFallback} brandHits={brandHits} />
-    </div>
+        {(phase === "browse" || phase === "player") && data.letter.trim() && (
+          <LetterPop
+            letter={data.letter}
+            from={data.senderName}
+            to={data.recipientName}
+            question={data.lockQuestion}
+            answer={data.lockAnswer || undefined}
+            accent={ACCENT}
+            accent2="#FF7A9C"
+            paper="#FFF8F4"
+            ink="#2A1418"
+            bottom={phone ? 76 : 28}
+            right={phone ? 14 : 28}
+            delay={2600}
+            teaser={`a letter from ${data.senderName || "someone"} 💌`}
+            sign="yours, every season —"
+            zIndex={Z.letter}
+            forceOpen={letterOpen > 0}
+          />
+        )}
+      </div>
+    </LfContext.Provider>
   );
 }

@@ -28,21 +28,24 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 export const T = {
   page: "#0F0F0F",
   raised: "#212121",
+  menu: "#282828",
   chip: "#272727",
   chipHi: "#3F3F3F",
   line: "#303030",
   ink: "#F1F1F1",
   inkSoft: "#AAAAAA",
-  accent: "#E0574A",
-  accentSoft: "rgba(224,87,74,0.16)",
+  link: "#3EA6FF",
+  accent: "#FF3E86",
+  accent2: "#FF8FB8",
+  accentSoft: "rgba(255,62,134,0.16)",
   scrim: "rgba(0,0,0,0.82)",
 } as const;
 
 export const FONT =
-  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+  'var(--font-wt-roboto), Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 /** The tonal break at the end of the description. The only serif on the page. */
-export const SERIF = 'Georgia, "Times New Roman", Times, serif';
+export const SERIF = 'var(--font-di-serif), "Instrument Serif", Georgia, "Times New Roman", serif';
 
 /** Everything you can press with a thumb clears this. */
 export const TAP = 36;

@@ -15,9 +15,8 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { DEMO_DATA, dbToRechargeData, rechargeDataToBody, type RechargeData } from "../components/types";
-import { normalizeData } from "../components/ui";
-import type { EditMode } from "../components/EditSheet";
+import { DEMO_DATA, dbToRechargeData, normalizeData, rechargeDataToBody, type RechargeData } from "../components/types";
+import { missingFields, type EditMode } from "../components/EditSheet";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -76,12 +75,10 @@ const readDraft = (): { data?: RechargeData; password?: string; completed?: bool
   }
 };
 
-/** A page needs somebody to be for. Everything else has a house default. */
+/** A page needs somebody to be for, and somebody it is from. Everything else has a house default. */
 function validate(d: RechargeData): string | null {
-  if (!d.subscriber.name.trim()) return "Their name goes under the number in the header.";
-  if (!d.subscriber.number.trim()) return "The number is the biggest thing on the first screen.";
-  if (d.plans.length === 0) return "One plan at least — the grid is the template.";
-  return null;
+  const missing = missingFields(d);
+  return missing.length ? `Add ${missing.join(" and ")} to continue.` : null;
 }
 
 export function useRechargeEditor() {
@@ -123,13 +120,9 @@ export function useRechargeEditor() {
   // null, StoryStarter renders nothing, and `handleStartCreate` falls straight
   // back to the form this editor has always opened.
   //
-  // The fill is normalised on the way in, and that is not optional here. This
-  // template's schema declares the plan grid as a FLAT LIST OF "Label: Value"
-  // STRINGS — that is genuinely the right shape to ask a language model for —
-  // so an unnormalised patch leaves `mf.plans` holding strings where the edit
-  // sheet expects plan objects, and the sheet crashes the moment the sender
-  // taps "I'll fill it in myself". `normalizeData` folds those strings back
-  // into the recommended plan's rows.
+  // The fill is normalised on the way in: it clamps every leaf to the limits
+  // the renderer relies on and repairs ids, so a patch can never leave the
+  // edit sheet holding a shape it cannot draw.
   const applyStoryFill = useCallback((next: RechargeData) => setMf(normalizeData(next)), []);
 
   const storyFill = useStoryFill<RechargeData>({
@@ -489,7 +482,7 @@ export function useRechargeEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "Your plan is about to expire.",
-      accent: "#c026d3",
+      accent: "#F0287A",
       slug: "recharge",
     });
   }, [shareUrl, pagePassword]);

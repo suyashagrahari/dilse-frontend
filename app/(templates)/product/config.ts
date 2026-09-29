@@ -18,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A full listing page for a person: five photos, a delivery promise, 'frequently bought together', and a review block that opens for contributions and stays closed until you approve them.",
   bgGradient: "from-amber-50 via-white to-orange-50",
-  coverImage: templateMedia("product", "cover.webp"),
+  coverImage: templateMedia("product", "cover-poster.webp"),
   tabs: [
     { id: "listing", icon: ShoppingBag, label: "Listing" },
     { id: "gallery", icon: Images, label: "Photos" },

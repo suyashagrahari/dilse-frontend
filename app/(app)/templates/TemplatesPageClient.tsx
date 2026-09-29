@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
+import PremiumTemplateCard, { PREMIUM_CARD_CSS } from "@/components/PremiumTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
@@ -267,7 +268,9 @@ function TemplatesContent() {
     // usually held back because it is not ready to be advertised. See
     // lib/templateVisibility.ts.
     if (hiddenTemplates.has(t.slug)) return false;
-    const matchCategory = selectedCategory === "all" || t.category === selectedCategory;
+    const matchCategory =
+      selectedCategory === "premium" ? Boolean(t.premium)
+      : selectedCategory === "all" || t.category === selectedCategory;
     const matchType = selectedType === "all" || t.type === selectedType;
     const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
     return matchCategory && matchType && matchSearch;
@@ -278,6 +281,12 @@ function TemplatesContent() {
 
   const readyTemplates = filtered.filter((t) => t.coverImage && !FORCE_COMING_SOON.has(t.slug));
   const comingSoonTemplates = filtered.filter((t) => !t.coverImage || FORCE_COMING_SOON.has(t.slug));
+
+  // On the unfiltered view the premium collection gets its own section at the
+  // top, so it is taken out of the main grid rather than shown twice.
+  const premiumTemplates = readyTemplates.filter((t) => t.premium);
+  const showPremiumSection = selectedCategory === "all" && premiumTemplates.length > 0;
+  const gridTemplates = showPremiumSection ? readyTemplates.filter((t) => !t.premium) : readyTemplates;
 
   // Prevent dark background bleed on mobile rubber-band overscroll.
   useEffect(() => {
@@ -517,14 +526,51 @@ function TemplatesContent() {
           </div>
         </motion.div>
 
+        {(readyTemplates.length > 0) && <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + PREMIUM_SECTION_CSS}</style>}
+
+        {/* The premium collection */}
+        {showPremiumSection && (
+          <section className="pmSection" aria-labelledby="premium-heading">
+            <div className="pmHead">
+              <span className="pmCrown" aria-hidden>👑</span>
+              <div>
+                <h2 id="premium-heading" className="pmTitle">The Premium Collection</h2>
+                <p className="pmSub">Real apps, cloned to the pixel — then made to fall in love.</p>
+              </div>
+              <button type="button" className="pmAll" onClick={() => setSelectedCategory("premium")}>
+                See all <span aria-hidden>→</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+              {premiumTemplates.map((template, i) => (
+                <PremiumTemplateCard
+                  key={template.slug}
+                  template={template}
+                  isFav={favSlugs.includes(template.slug)}
+                  index={i}
+                  onFavorite={handleFavorite}
+                />
+              ))}
+            </div>
+            <div className="pmDivider" aria-hidden><span>All templates</span></div>
+          </section>
+        )}
+
         {/* Ready templates */}
-        {readyTemplates.length > 0 && (
+        {gridTemplates.length > 0 && (
           <>
-            <style>{TEMPLATE_CARD_CSS}</style>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               {/* Every card, apology-dashboard included, is now its poster cover —
                   the animated ApologyTemplateCard predates the poster covers. */}
-              {readyTemplates.map((template, i) => (
+              {gridTemplates.map((template, i) => template.premium ? (
+                <PremiumTemplateCard
+                  key={template.slug}
+                  template={template}
+                  isFav={favSlugs.includes(template.slug)}
+                  index={i}
+                  onFavorite={handleFavorite}
+                />
+              ) : (
                 <TemplateCard
                   key={template.slug}
                   template={template}
@@ -640,3 +686,26 @@ export default function TemplatesPage() {
     </Suspense>
   );
 }
+
+/** Premium section chrome: gold heading, crown, divider into the main grid. */
+const PREMIUM_SECTION_CSS = `
+.pmSection { margin: 4px auto 28px; max-width: 1080px; }
+.pmHead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.pmCrown { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; font-size: 22px; border-radius: 14px;
+  background: linear-gradient(135deg, #fff1bf, #e2b44a 50%, #a6751c); box-shadow: 0 8px 20px -8px rgba(120,80,10,.7), inset 0 1px 0 rgba(255,255,255,.7);
+  animation: pmFloat 3.2s ease-in-out infinite; }
+.pmTitle { margin: 0; font: 700 clamp(20px, 3.4vw, 30px)/1.1 'Playfair Display', serif; letter-spacing: -.01em;
+  background: linear-gradient(90deg, #6e470a, #c99a2e 40%, #8a5a10 70%, #c99a2e); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: pmText 6s linear infinite; }
+.pmSub { margin: 3px 0 0; font-size: 12.5px; color: rgba(61,12,17,.62); }
+.pmAll { margin-left: auto; flex-shrink: 0; padding: 8px 14px; border-radius: 99px; border: 1px solid rgba(166,117,28,.45); background: rgba(255,241,191,.5);
+  color: #6e470a; font: 700 12px 'Inter', system-ui, sans-serif; cursor: pointer; transition: background .2s ease; }
+.pmAll:hover { background: rgba(255,241,191,.95); }
+.pmDivider { display: flex; align-items: center; gap: 12px; margin: 30px 0 4px; color: rgba(61,12,17,.5);
+  font: 700 10.5px 'Inter', system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; }
+.pmDivider::before, .pmDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,117,28,.45), transparent); }
+@media (max-width: 480px) { .pmSub { display: none; } .pmCrown { width: 38px; height: 38px; font-size: 19px; } }
+@keyframes pmFloat { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-4px) rotate(4deg); } }
+@keyframes pmText { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .pmCrown, .pmTitle { animation: none; } }
+`;

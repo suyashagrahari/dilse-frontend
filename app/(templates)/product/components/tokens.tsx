@@ -17,30 +17,50 @@
 // anywhere on that path renders "NaN" on the most-looked-at line of the page.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { ProductData, QA, Review, Spec } from "./types";
+import type { BundleItem, PhotoCrop, ProductData, QA, Review, Spec } from "./types";
 
 /* ── Palette ───────────────────────────────────────────────────────────────── */
 
 export const C = {
-  header: "#131A22",
+  header: "#131921",
   subHeader: "#232F3E",
   page: "#FFFFFF",
   section: "#F7F8F8",
   border: "#D5D9D9",
-  star: "#F5A623",
-  priceRed: "#C7431F",
-  ctaYellow: "#FFD866",
-  ctaOrange: "#FFA544",
-  link: "#016E8F",
+  hairline: "#E7E7E7",
+  star: "#FFA41C",
+  starEdge: "#DE7921",
+  priceRed: "#CC0C39",
+  ctaYellow: "#FFD814",
+  ctaYellowEdge: "#FCD200",
+  ctaYellowHover: "#F7CA00",
+  ctaOrange: "#FFA41C",
+  ctaOrangeEdge: "#FF8F00",
+  ctaOrangeHover: "#FA8900",
+  link: "#007185",
+  linkHover: "#C7511F",
   text: "#0F1111",
   secondary: "#565959",
   /** In-stock green. The stock line flips to `priceRed` for the "only 1" joke. */
   green: "#007600",
-  /** Histogram track. Lighter than `border` so the bar reads at 20px. */
+  okGreen: "#067D62",
+  /** Histogram track. */
   track: "#F0F2F2",
   /** The gallery rail's active state. */
   activeEdge: "#E77600",
   activeTint: "#FEF3E7",
+  /** Variant chip selected edge. */
+  chipEdge: "#007185",
+  chipTint: "#EDFDFF",
+  verified: "#C45500",
+  /** The app header gradient on phones. */
+  appA: "#84D8E3",
+  appB: "#A6E6CE",
+  deliverA: "#C9F3EF",
+  deliverB: "#E3F7F3",
+  /** The romance. Used sparingly: hearts, the letter, the success screen. */
+  love: "#E3336B",
+  loveSoft: "#FFE3EC",
 } as const;
 
 export const FONT =
@@ -400,6 +420,51 @@ export function normalizeQa(raw: unknown, defaultBy: string): QA[] {
   return out;
 }
 
+/** `"Name | ₹180 | note"` → a bundle tile. Price and note are optional. */
+export function normalizeBundle(raw: unknown): BundleItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: BundleItem[] = [];
+  for (const entry of raw) {
+    if (typeof entry === "string") {
+      const [name = "", price = "", ...rest] = entry.split("|").map((p) => p.trim());
+      if (!name) continue;
+      const note = rest.join(" | ").trim();
+      out.push({ name, price: price || "Free", imageUrl: "", ...(note ? { note } : {}) });
+      continue;
+    }
+    if (isRecord(entry)) {
+      const name = typeof entry.name === "string" ? entry.name.trim() : "";
+      if (!name) continue;
+      out.push({
+        name,
+        price: typeof entry.price === "string" && entry.price.trim() ? entry.price : "Free",
+        imageUrl: typeof entry.imageUrl === "string" ? entry.imageUrl : "",
+        ...(typeof entry.note === "string" && entry.note.trim() ? { note: entry.note } : {}),
+      });
+    }
+  }
+  return out;
+}
+
+/** The crop for gallery photo `i`, centred when none was set. */
+export function cropAt(data: ProductData, i: number): PhotoCrop {
+  const c = data.subject.crops?.[i];
+  return c ? c : { x: 50, y: 50, scale: 100 };
+}
+
+/** One framing rule for every surface a gallery photo appears on. */
+export function cropCss(c: PhotoCrop): React.CSSProperties {
+  return {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: `${c.x}% ${c.y}%`,
+    transform: c.scale > 100 ? `scale(${c.scale / 100})` : undefined,
+    transformOrigin: `${c.x}% ${c.y}%`,
+    display: "block",
+  };
+}
+
 /**
  * The one place a `ProductData` is made safe to render AND safe to send.
  *
@@ -409,6 +474,8 @@ export function normalizeQa(raw: unknown, defaultBy: string): QA[] {
 export function normalizeProductData(data: ProductData): ProductData {
   const specs = normalizeSpecs(data.specs);
   const qa = normalizeQa(data.qa, data.sender?.firstName ?? "");
+  const bundleIsFlat = Array.isArray(data.bundle) && data.bundle.some((b) => typeof b === "string");
+  if (bundleIsFlat) data = { ...data, bundle: normalizeBundle(data.bundle) };
   if (specs.length === data.specs.length && qa.length === data.qa.length) {
     // Fast path: already objects. Rebuild anyway only if something changed.
     const specsSame = specs.every((s, i) => {

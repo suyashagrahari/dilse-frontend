@@ -8,39 +8,28 @@ import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditSheet from "./components/EditSheet";
 import LoveflixTemplate from "./components/LoveflixTemplate";
-import { ACCENT, ACCENT_GRAD, BG, BG_RAISED, FONT_BODY, FONT_DISPLAY, HAIRLINE, TEXT, Z } from "./components/theme";
-
+import { ACCENT, BG, BG_RAISED, FONT_BODY, FONT_DISPLAY, HAIRLINE, TEXT } from "./components/theme";
 import { useReducedMotion } from "./components/useReducedMotion";
 import { useLoveflixEditor } from "./hooks/useLoveflixEditor";
 
-/* ── Chrome ────────────────────────────────────────────────────────────────────
-   The first thing on screen is a black frame with a wordmark landing on it, so
-   the editor chrome has to belong to that: dark translucent pills, a hairline
-   instead of a shadow, and the accent reserved for the one primary action. Any
-   light surface up here would read as a browser toolbar sitting on top of the
-   thing instead of a control that is part of it.
+/* ── Editor chrome ─────────────────────────────────────────────────────────────
+   A slim black strip above the app, like a browser bar, so the app underneath
+   keeps its own nav, billboard and tab bar exactly where the real thing has
+   them. The template is told how tall the strip is (`topInset`) and starts
+   below it.
 ─────────────────────────────────────────────────────────────────────────────*/
 
-const PILL_BG = "rgba(18,18,18,0.74)";
-const PILL_BORDER = `1px solid ${HAIRLINE}`;
+const BAR_H = 52;
 
-/**
- * The template's own mute control is pinned to the top-right corner, so the bar
- * stops short of the edge rather than stacking on top of it.
- */
-const MUTE_GUTTER = 54;
-
-const pillStyle: React.CSSProperties = {
+const pill: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
-  minHeight: 44,
+  height: 36,
   padding: "0 14px",
   borderRadius: 999,
-  background: PILL_BG,
-  border: PILL_BORDER,
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  background: "rgba(255,255,255,0.08)",
+  border: `1px solid ${HAIRLINE}`,
   color: TEXT,
   fontFamily: FONT_BODY,
   fontSize: 13.5,
@@ -49,17 +38,14 @@ const pillStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const primaryStyle: React.CSSProperties = {
-  ...pillStyle,
+const primary: React.CSSProperties = {
+  ...pill,
   padding: "0 18px",
-  background: ACCENT_GRAD,
-  border: "1px solid rgba(0,0,0,0.25)",
-  color: "#150d05",
-  fontFamily: FONT_DISPLAY,
-  fontSize: 15,
+  background: ACCENT,
+  border: "1px solid rgba(0,0,0,0.2)",
+  color: "#fff",
   fontWeight: 700,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
+  boxShadow: "0 8px 20px -8px rgba(230,46,92,.8)",
 };
 
 function LoveflixPageInner() {
@@ -71,78 +57,69 @@ function LoveflixPageInner() {
     ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={15} /> }
     : e.showPublish
       ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={15} /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={15} /> };
+      : { label: "Create yours", onClick: e.handleEditClick, icon: <PenLine size={15} /> };
 
   return (
     <div style={{ position: "relative", minHeight: "100dvh", background: BG }}>
-      {/* Floating top bar */}
       <div
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
-          zIndex: Z.brand,
+          zIndex: 120,
+          height: BAR_H,
           display: "flex",
           alignItems: "center",
           gap: 8,
-          padding: "10px 12px 0",
-          paddingTop: "calc(10px + env(safe-area-inset-top, 0px))",
-          paddingRight: `calc(${MUTE_GUTTER}px + env(safe-area-inset-right, 0px))`,
-          pointerEvents: "none",
+          padding: "0 12px",
+          background: "#000",
+          borderBottom: `1px solid ${HAIRLINE}`,
         }}
       >
-        <button
-          type="button"
-          onClick={e.goBack}
-          style={{ ...pillStyle, paddingLeft: 12, pointerEvents: "auto" }}
-        >
-          <ArrowLeft size={16} /> Back
+        <button type="button" onClick={e.goBack} style={{ ...pill, paddingLeft: 10 }} aria-label="Back to templates">
+          <ArrowLeft size={16} /> <span className="lf-edbar-label">Back</span>
         </button>
-
+        <span
+          className="lf-edbar-label"
+          style={{ color: "rgba(255,255,255,.55)", fontFamily: FONT_BODY, fontSize: 12.5, marginLeft: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          {e.isPersonalized ? "Your preview — tap around like they will" : "Demo — tap a profile to start"}
+        </span>
         <div style={{ flex: 1 }} />
-
         {e.isPersonalized && !e.showShare && (
-          <button
-            type="button"
-            onClick={e.handleEditFromPreview}
-            style={{ ...pillStyle, pointerEvents: "auto" }}
-          >
+          <button type="button" onClick={e.handleEditFromPreview} style={pill}>
             <PenLine size={15} /> Edit
           </button>
         )}
-
         <button
           type="button"
           onClick={topAction.onClick}
           disabled={e.publishing}
-          style={{ ...primaryStyle, pointerEvents: "auto", opacity: e.publishing ? 0.65 : 1 }}
+          style={{ ...primary, opacity: e.publishing ? 0.65 : 1 }}
         >
           {topAction.icon} {topAction.label}
         </button>
+        <style>{`@media (max-width:520px){.lf-edbar-label{display:none}}`}</style>
       </div>
 
-      {/* Live preview. Keyed so every save restarts the run from the intro with
-          the freshly-written show. */}
-      <LoveflixTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+      {/* Live preview. Keyed so every save restarts the run from the profile picker. */}
+      <LoveflixTemplate key={e.previewVersion} data={e.displayData} mode="demo" topInset={BAR_H} />
 
       <EditSheet
         editMode={e.editMode}
         setEditMode={e.setEditMode}
+        isPersonalized={e.isPersonalized}
         mf={e.mf}
         updateMf={e.updateMf}
         pagePassword={e.pagePassword}
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
-        saving={e.saving}
       />
 
       {/* Shown the first time Create is tapped, and only when the server has a
-          schema for this template. Every way out lands in the EditSheet above,
-          fully editable. */}
-      {e.storyStarter && (
-        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write your show" />
-      )}
+          schema for this template. Every way out lands in the EditSheet. */}
+      {e.storyStarter && <StoryStarter guided fill={e.fill} onManual={e.openManualForm} title="Let's write your show" />}
 
       <AnimatePresence>
         {e.publishing && (
@@ -151,16 +128,7 @@ function LoveflixPageInner() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reduced ? 0.1 : 0.2 }}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 300,
-              display: "grid",
-              placeItems: "center",
-              background: "rgba(0,0,0,0.78)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
-            }}
+            style={{ position: "fixed", inset: 0, zIndex: 300, display: "grid", placeItems: "center", background: "rgba(0,0,0,0.8)" }}
           >
             <div
               style={{
@@ -171,21 +139,11 @@ function LoveflixPageInner() {
                 padding: "26px 30px",
                 borderRadius: 14,
                 background: BG_RAISED,
-                border: PILL_BORDER,
+                border: `1px solid ${HAIRLINE}`,
               }}
             >
               <Loader2 size={26} className={reduced ? undefined : "animate-spin"} style={{ color: ACCENT }} />
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: FONT_DISPLAY,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: TEXT,
-                }}
-              >
+              <p style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 16, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: TEXT }}>
                 Putting it on air…
               </p>
             </div>
@@ -195,9 +153,7 @@ function LoveflixPageInner() {
 
       {/* Auth is deferred, not gating: onClose cancels the pending publish,
           onSuccess just closes and the hook's effect resumes it. */}
-      <AnimatePresence>
-        {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
-      </AnimatePresence>
+      <AnimatePresence>{e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}</AnimatePresence>
     </div>
   );
 }

@@ -1,128 +1,111 @@
 // ─── LoveFlix design tokens ──────────────────────────────────────────────────
-//
-// ONE accent runs through the whole template. Buttons, progress bars, the match
-// percentage, the choice countdown. Nothing else in the UI is allowed colour —
-// everything else is a step on the near-black ramp below.
-//
-// BRAND SAFETY: the recognition in this layout comes from STRUCTURE (profile
-// select, dark rails, oversized rank numerals, autoplay countdowns), never from
-// anybody's colour or mark. The accent is deliberately a warm amber so it can
-// never be mistaken for the streaming red it is not.
 
-import { ACCENT, ACCENT_DIM, BG, BG_RAISED, TEXT, TEXT_DIM } from "./types";
-import { hash32, seededInt } from "@/lib/seededRandom";
+import type { CSSProperties } from "react";
+import { ACCENT, ACCENT_DEEP, BG, BG_CARD, BG_RAISED, MATCH_GREEN, TEXT, TEXT_DIM, TEXT_MUTED, type Crop } from "./types";
 
-export { ACCENT, ACCENT_DIM, BG, BG_RAISED, TEXT, TEXT_DIM };
+export { ACCENT, ACCENT_DEEP, BG, BG_CARD, BG_RAISED, MATCH_GREEN, TEXT, TEXT_DIM, TEXT_MUTED };
 
-/** Two more steps on the ramp, for card bodies and hairlines. */
-export const BG_CARD = "#1c1c1c";
-export const HAIRLINE = "rgba(255,255,255,0.08)";
+export const HAIRLINE = "rgba(255,255,255,0.1)";
 
-/**
- * Condensed display face for titles, the wordmark and the rank numerals.
- * Oswald is already registered on <html> as --font-oswald by the root layout —
- * no font is added by this template.
- */
-export const FONT_DISPLAY = "var(--font-oswald), 'Arial Narrow', 'Helvetica Neue', sans-serif";
+/** Condensed display face for title treatments and numerals (root layout registers it). */
+export const FONT_DISPLAY = "var(--font-oswald), 'Bebas Neue', 'Arial Narrow', sans-serif";
+/** The streaming app's workhorse sans. */
+export const FONT_BODY = "var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif";
+/** For the finale and letter-ish moments. */
+export const FONT_SERIF = "var(--font-playfair), 'Instrument Serif', Georgia, serif";
 
-/** Clean sans for body copy and narration. */
-export const FONT_BODY = "var(--font-inter), system-ui, -apple-system, sans-serif";
-
-/** Cards: 4px radius, no borders. */
-export const CARD_RADIUS = 4;
-
-/** Accent fill used on primary buttons and the committed choice. */
-export const ACCENT_GRAD = `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DIM})`;
-
-/** Layering, so nothing has to guess. */
 export const Z = {
-  rail: 1,
-  hero: 2,
-  chrome: 40,
-  sheet: 60,
+  nav: 40,
+  preview: 50,
+  modal: 60,
+  letter: 70,
   player: 80,
-  interrupt: 90,
-  brand: 110,
-  devPanel: 200,
+  toast: 95,
+  splash: 100,
 } as const;
 
-/** Minimum tap target mandated for every interactive element here. */
-export const TAP = 44;
+/** Same framing rule the editor's adjuster uses, so what they frame is what shows. */
+export const cropStyle = (c: Crop): CSSProperties => ({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: `${c.x}% ${c.y}%`,
+  transform: c.scale > 100 ? `scale(${c.scale / 100})` : undefined,
+  transformOrigin: `${c.x}% ${c.y}%`,
+  display: "block",
+});
 
-// ─── Placeholder art ─────────────────────────────────────────────────────────
-//
-// The demo ships with every image URL empty, so the placeholder IS the default
-// experience for anybody browsing the gallery. It has to look composed, not
-// like a hole where an image failed. Palettes are muted, desaturated and always
-// warm-adjacent so a rail of them reads as one designed catalogue rather than a
-// bag of random gradients.
-
-/** Hand-picked duotone stops. Deliberately narrow in hue so rails feel curated. */
-const PLACEHOLDER_STOPS: readonly [string, string][] = [
-  ["#3a2a20", "#171313"],
-  ["#2b2a3a", "#141418"],
-  ["#203029", "#121614"],
-  ["#3a2430", "#171216"],
-  ["#2a3038", "#131518"],
-  ["#382f22", "#171512"],
-  ["#26303a", "#121517"],
-  ["#332433", "#161217"],
-];
-
-export interface PlaceholderLook {
-  /** The full CSS background stack: duotone + vignette + a soft accent bloom. */
-  background: string;
-  /** Rotation of the diagonal rule overlay, in degrees. */
-  angle: number;
-  /** Position of the accent bloom, as CSS percentages. */
-  bloom: { x: number; y: number };
-}
-
-/**
- * Deterministic from the seed — never `Math.random()`, or the same card would
- * look different on every re-render and the exported PNG would not match the
- * screen.
- */
-export function placeholderLook(seed: string): PlaceholderLook {
-  const i = hash32(seed) % PLACEHOLDER_STOPS.length;
-  const [a, b] = PLACEHOLDER_STOPS[i];
-  const angle = seededInt(seed, "angle", -18, 18);
-  const bloom = {
-    x: seededInt(seed, "bx", 18, 82),
-    y: seededInt(seed, "by", 14, 62),
-  };
-  return {
-    background: [
-      `radial-gradient(120% 90% at ${bloom.x}% ${bloom.y}%, rgba(232,145,58,0.16) 0%, rgba(232,145,58,0) 62%)`,
-      `linear-gradient(${140 + angle}deg, ${a} 0%, ${b} 100%)`,
-    ].join(","),
-    angle,
-    bloom,
-  };
-}
-
-/** Repeating hairline rule overlay — gives the flat gradient a printed texture. */
-export const PLACEHOLDER_RULES =
-  "repeating-linear-gradient(115deg, rgba(255,255,255,0.030) 0px, rgba(255,255,255,0.030) 1px, rgba(255,255,255,0) 1px, rgba(255,255,255,0) 9px)";
-
-/** Bottom-up scrim used over hero art and card captions. */
-export const scrim = (to = "rgba(13,13,13,0.96)") =>
-  `linear-gradient(to top, ${to} 0%, rgba(13,13,13,0.72) 34%, rgba(13,13,13,0.12) 68%, rgba(13,13,13,0) 100%)`;
-
-/** Left-side scrim, so hero copy stays legible over a bright still. */
-export const scrimLeft =
-  "linear-gradient(to right, rgba(13,13,13,0.92) 0%, rgba(13,13,13,0.55) 42%, rgba(13,13,13,0) 78%)";
-
-/** Edge fade applied to every rail so content bleeds off rather than stopping. */
-export const railMask =
-  "linear-gradient(to right, transparent 0px, #000 22px, #000 calc(100% - 28px), transparent 100%)";
-
-/** First grapheme of a name, upper-cased. Falls back rather than rendering "". */
-export const initialOf = (name: string, fallback = "•"): string => {
+/** First grapheme, upper-cased. */
+export const initialOf = (name: string, fallback = "♥"): string => {
   const t = (name || "").trim();
-  if (!t) return fallback;
-  return Array.from(t)[0].toUpperCase();
+  return t ? Array.from(t)[0].toUpperCase() : fallback;
 };
 
-/** Hides the scrollbar on a scroll container in every engine we support. */
-export const HIDE_SCROLLBAR_CLASS = "loveflix-no-bar";
+const hash = (s: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+  return h;
+};
+
+/** Duotones for generated "title art" — moody, cinematic, all warm-adjacent. */
+const ART: [string, string, string][] = [
+  ["#5b0f2a", "#1b0810", "#ff5c8a"],
+  ["#2a1446", "#0d0717", "#b98cff"],
+  ["#0f3440", "#06141a", "#5fd6e0"],
+  ["#4a2a0c", "#170c04", "#ffb35c"],
+  ["#12264d", "#070d1c", "#7fb1ff"],
+  ["#3d0f3a", "#140512", "#ff7ad9"],
+  ["#1d3a26", "#08140c", "#7ee0a1"],
+  ["#4d1414", "#170606", "#ff7a6b"],
+];
+
+export interface ArtLook {
+  bg: string;
+  glow: string;
+  font: "display" | "serif" | "sans";
+}
+
+/** Deterministic look for a generated card, from its title. */
+export const artLook = (seed: string): ArtLook => {
+  const h = hash(seed);
+  const [a, b, glow] = ART[h % ART.length];
+  const ang = 110 + (h % 70);
+  const gx = 20 + ((h >> 3) % 60);
+  const gy = 15 + ((h >> 7) % 50);
+  const fonts: ArtLook["font"][] = ["display", "serif", "sans"];
+  return {
+    bg: `radial-gradient(90% 80% at ${gx}% ${gy}%, ${glow}33 0%, transparent 60%), linear-gradient(${ang}deg, ${a} 0%, ${b} 100%)`,
+    glow,
+    font: fonts[(h >> 11) % 3],
+  };
+};
+
+export const fontFor = (f: ArtLook["font"]) => (f === "display" ? FONT_DISPLAY : f === "serif" ? FONT_SERIF : FONT_BODY);
+
+/** "Oct 14" style label, `k` weeks from today. Stable within a day. */
+export const soonDate = (k: number): { mon: string; day: string } => {
+  const d = new Date();
+  d.setDate(d.getDate() + 5 + k * 11);
+  return {
+    mon: d.toLocaleString("en-US", { month: "short" }).toUpperCase(),
+    day: String(d.getDate()),
+  };
+};
+
+/** Minutes → "47m" / "1h 4m". */
+export const fmtRuntime = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
+
+/** Split subtitles into captions: newline first, sentence breaks as a fallback. */
+export const captionLines = (text: string): string[] => {
+  const byLine = (text || "").split(/\n+/).map((s) => s.trim()).filter(Boolean);
+  const out: string[] = [];
+  for (const line of byLine) {
+    if (line.length <= 60) {
+      out.push(line);
+      continue;
+    }
+    const parts = line.match(/[^.!?…]+[.!?…]+["'”’)]*|[^.!?…]+$/g) ?? [line];
+    for (const p of parts) if (p.trim()) out.push(p.trim());
+  }
+  return out.length ? out : ["…"];
+};

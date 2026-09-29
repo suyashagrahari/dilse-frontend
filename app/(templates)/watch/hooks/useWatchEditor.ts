@@ -22,7 +22,8 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
-import { DEMO_DATA, dbToWatchData, watchDataToBody, type WatchData } from "../components/types";
+import { DEMO_DATA, dbToWatchData, normalizeDraft, retargetNames, watchDataToBody, type WatchData } from "../components/types";
+import { missingWatchFields } from "../components/EditSheet";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -173,10 +174,11 @@ export function useWatchEditor() {
     }
     const draft = readDraft();
     if (draft?.data) {
-      setMf(draft.data);
+      const restored = normalizeDraft(draft.data);
+      setMf(restored);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
-        setContent(draft.data);
+        setContent(restored);
         setIsPersonalized(true);
         setEditMode("preview");
         bumpPreview();
@@ -286,15 +288,18 @@ export function useWatchEditor() {
   }, [content]);
 
   const handleSave = useCallback(() => {
-    if (!mf.video.title.trim()) {
-      pushToast({ type: "info", title: "Give it a title first" });
+    const missing = missingWatchFields(mf);
+    if (missing.length) {
+      pushToast({ type: "info", title: "Almost there", message: `Still needed: ${missing.map((m) => m.label).join(", ")}` });
       return;
     }
-    setContent(mf);
+    const next = retargetNames(mf);
+    setMf(next);
+    setContent(next);
     setIsPersonalized(true);
     setEditMode("preview");
     bumpPreview();
-    saveDraft({ data: mf, password: pagePassword, completed: true });
+    saveDraft({ data: next, password: pagePassword, completed: true });
     pushToast({ type: "success", title: "Saved", message: "Watch it, then send it" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
 
@@ -392,9 +397,10 @@ export function useWatchEditor() {
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
-    if (!content.video.title.trim()) {
-      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_title" });
-      pushToast({ type: "info", title: "Give it a title first", message: "Open Edit and fill it in" });
+    const missing = missingWatchFields(content);
+    if (missing.length) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_fields" });
+      pushToast({ type: "info", title: "Almost there", message: `Still needed: ${missing.map((m) => m.label).join(", ")}` });
       setEditMode("manual");
       setMf({ ...content });
       return;
@@ -485,7 +491,7 @@ export function useWatchEditor() {
       password: pagePassword,
       title: content.video.title,
       text,
-      accent: "#0284c7",
+      accent: "#FF3E86",
       slug: "watch",
     });
   }, [shareUrl, content.video.title, pagePassword]);

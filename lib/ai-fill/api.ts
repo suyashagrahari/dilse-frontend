@@ -122,6 +122,19 @@ export interface FillRequest {
   story?: string;
   useContext?: boolean;
   people?: Partial<StoryPeople>;
+  /**
+   * Structured answers from the guided-questions flow. Optional; a server that
+   * predates them ignores the key. `language` is "en" | "hi-Latn" | "hi" and
+   * overrides the server's detect-the-story's-language rule.
+   */
+  hints?: FillHints;
+}
+
+export interface FillHints {
+  relation?: string;
+  tone?: string;
+  language?: string;
+  occasion?: string;
 }
 
 /**

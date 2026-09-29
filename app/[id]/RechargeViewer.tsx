@@ -9,16 +9,8 @@
 import { useCallback, useState } from "react";
 import RechargeTemplate from "@/app/(templates)/recharge/components/RechargeTemplate";
 import { dbToRechargeData } from "@/app/(templates)/recharge/components/types";
-import {
-  ACCENT,
-  ACCENT_TINT,
-  BORDER,
-  FONT,
-  INK,
-  MUTED,
-  OperatorMark,
-  SURROUND,
-} from "@/app/(templates)/recharge/components/ui";
+import { BERRY, BERRY_2, FONT, INK, LINE, MUTED, PINK, PINK_DEEP } from "@/app/(templates)/recharge/components/ui";
+import { LogoMark } from "@/app/(templates)/recharge/components/icons";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 function IconLock() {
@@ -54,7 +46,7 @@ function RechargePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
         sessionStorage.setItem(`recharge_unlocked_${shareId}`, "true");
         onUnlocked();
       } else {
-        setError("Wrong password. Try again.");
+        setError("Wrong password. Hint: ask them nicely 🥺");
         setPw("");
       }
     } catch {
@@ -68,37 +60,39 @@ function RechargePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
     <div
       style={{
         minHeight: "100dvh",
-        background: SURROUND,
+        background: `radial-gradient(120% 80% at 100% 0%, #B3186F 0%, transparent 55%), linear-gradient(160deg, ${BERRY} 0%, ${BERRY_2} 100%)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 20px",
+        padding: "24px 16px",
+        fontFamily: FONT,
       }}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          background: "#FFFFFF",
-          border: `1px solid ${BORDER}`,
-          borderRadius: 12,
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ background: ACCENT_TINT, padding: "18px 20px", display: "flex", alignItems: "center", gap: 9, color: ACCENT }}>
-          <OperatorMark size={22} />
-          <span style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, color: ACCENT }}>Secure recharge</span>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#fff", marginBottom: 18 }}>
+          <LogoMark size={30} />
+          <span style={{ fontFamily: "var(--font-outfit), Outfit, sans-serif", fontWeight: 800, fontSize: 24, letterSpacing: "-0.04em" }}>
+            dil<span style={{ color: "#FF8CB8" }}>pay</span>
+          </span>
         </div>
-
-        <div style={{ padding: 20 }}>
-          <div style={{ color: ACCENT, marginBottom: 10 }}>
+        <div style={{ background: "#FFFFFF", borderRadius: 24, padding: 24, boxShadow: "0 30px 60px -30px rgba(0,0,0,.6)" }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 16,
+              background: "#FFE8F1",
+              color: PINK_DEEP,
+              display: "grid",
+              placeItems: "center",
+              marginBottom: 14,
+            }}
+          >
             <IconLock />
           </div>
-          <h1 style={{ margin: 0, fontFamily: FONT, fontSize: 17, fontWeight: 700, color: INK }}>
-            This number is protected
-          </h1>
-          <p style={{ margin: "6px 0 16px", fontFamily: FONT, fontSize: 13, lineHeight: 1.55, color: MUTED }}>
-            Enter the password to see the plans.
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: INK, letterSpacing: "-0.02em" }}>A recharge is waiting for you 💗</h1>
+          <p style={{ margin: "6px 0 18px", fontSize: 13.5, lineHeight: 1.5, color: MUTED }}>
+            Someone locked this one. Enter the password they gave you to see your plans.
           </p>
 
           <input
@@ -116,20 +110,21 @@ function RechargePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
             autoFocus
             style={{
               width: "100%",
-              height: 46,
-              borderRadius: 8,
-              border: `1px solid ${error ? "#C0563F" : BORDER}`,
-              background: "#FFFFFF",
-              padding: "0 12px",
+              height: 52,
+              borderRadius: 14,
+              border: `1.5px solid ${error ? "#E5383B" : LINE}`,
+              background: "#FDFCFE",
+              padding: "0 14px",
               fontFamily: FONT,
-              fontSize: 14,
+              fontSize: 16,
               color: INK,
               outline: "none",
+              boxSizing: "border-box",
             }}
           />
 
           {error ? (
-            <p aria-live="polite" style={{ margin: "8px 0 0", fontFamily: FONT, fontSize: 12, color: "#C0563F" }}>
+            <p aria-live="polite" style={{ margin: "8px 0 0", fontSize: 12.5, color: "#E5383B" }}>
               {error}
             </p>
           ) : null}
@@ -141,22 +136,23 @@ function RechargePasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
             style={{
               marginTop: 14,
               width: "100%",
-              height: 48,
-              minHeight: 48,
-              borderRadius: 8,
-              border: `1px solid ${ACCENT}`,
-              background: ACCENT,
+              height: 52,
+              borderRadius: 14,
+              border: 0,
+              background: `linear-gradient(180deg, #FF3F8A, ${PINK_DEEP})`,
               color: "#FFFFFF",
               fontFamily: FONT,
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.1em",
+              fontSize: 15,
+              fontWeight: 800,
               opacity: loading || !pw.trim() ? 0.5 : 1,
               cursor: loading || !pw.trim() ? "default" : "pointer",
             }}
           >
-            {loading ? "VERIFYING…" : "CONTINUE"}
+            {loading ? "Verifying…" : "Unlock my recharge"}
           </button>
+          <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 11.5, color: "#9C96A8" }}>
+            🔒 secured by <span style={{ color: PINK, fontWeight: 700 }}>dilpay</span>
+          </p>
         </div>
       </div>
     </div>

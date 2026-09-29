@@ -33,6 +33,7 @@ import {
   writeField,
 } from "@/lib/ai-fill/applyPatch";
 import {
+  type FillHints,
   fetchStoryProfile,
   loadStorySchema,
   postStoryFill,
@@ -327,6 +328,13 @@ export interface UseStoryFillResult {
   lastLanguage: string | null;
 
   generate: () => void;
+  /**
+   * Generate from the guided-questions flow in one call. Takes the names and
+   * story explicitly — they are composed at press time, so the `people`/`story`
+   * state set in the same tick would still be stale inside `generate`. Both
+   * are also written back to state, so `persistStory` saves what was sent.
+   */
+  generateGuided: (input: { people: StoryPeople; story: string; hints?: FillHints }) => void;
   applyFromContext: () => void;
 
   /** True only when signed in AND the profile has a built context to reuse. */
@@ -701,8 +709,12 @@ export function useStoryFill<T extends object>(
    * Showing the server's list would credit the AI with lines the sender wrote.
    */
   const run = useCallback(
-    async (body: { story?: string; useContext?: boolean }) => {
+    async (
+      body: { story?: string; useContext?: boolean; hints?: FillHints },
+      peopleOverride?: StoryPeople
+    ) => {
       if (!schema || generating || inFlight.current) return;
+      const who = peopleOverride ?? people;
       inFlight.current = true;
 
       setGenerating(true);
@@ -711,7 +723,7 @@ export function useStoryFill<T extends object>(
       // banner up would attribute this fill to something the sender didn't do.
       setAutoApplied(false);
 
-      const res = await postStoryFill({ slug, ...body, people }, accessToken);
+      const res = await postStoryFill({ slug, ...body, people: who }, accessToken);
       inFlight.current = false;
 
       if (!res.ok) {
@@ -726,7 +738,7 @@ export function useStoryFill<T extends object>(
         // `live.current` rather than the destructured option: callers pass an
         // object literal, so a fresh identity every render would either rebuild
         // this callback on every keystroke or fail the exhaustive-deps rule.
-        withTypedNames(res.data.patch, people, schema.audience, live.current.namePaths),
+        withTypedNames(res.data.patch, who, schema.audience, live.current.namePaths),
         { touched: diffTouched(current, demo, schema) }
       );
 
@@ -761,6 +773,20 @@ export function useStoryFill<T extends object>(
     }
     void run({ story: resolved.slice(0, STORY_LIMITS.story) });
   }, [story, people, run]);
+
+  const generateGuided = useCallback(
+    (input: { people: StoryPeople; story: string; hints?: FillHints }) => {
+      const text = input.story.trim().slice(0, STORY_LIMITS.story);
+      if (text.length < STORY_LIMITS.minStory) {
+        setError("Add their name and yours first — that's all it needs to start.");
+        return;
+      }
+      setPeople(input.people);
+      setStory(text);
+      void run({ story: text, hints: input.hints }, input.people);
+    },
+    [run]
+  );
 
   const applyFromContext = useCallback(() => {
     if (!hasProfileContext) return;
@@ -1013,6 +1039,7 @@ export function useStoryFill<T extends object>(
     missingFields,
     lastLanguage,
     generate,
+    generateGuided,
     applyFromContext,
     hasProfileContext,
     contextSummary,
