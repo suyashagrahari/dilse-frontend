@@ -125,8 +125,15 @@ const allConfigs = [
   rakshaBandhanSister,
 ];
 
+/**
+ * The premium collection: the real-app clones. They get their own gallery
+ * section and category chip, and a luxury card instead of the standard one.
+ */
+export const PREMIUM_SLUGS = new Set(["loveflix", "us", "app", "watch", "product", "recharge"]);
+
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
   return {
+    premium: PREMIUM_SLUGS.has(c.slug),
     slug:        c.slug,
     type:        c.type,
     category:    c.category,
@@ -158,6 +165,7 @@ export const templateTypes = [
 
 export const categories = [
   { id: "all", label: "All", emoji: "✨" },
+  { id: "premium", label: "Premium", emoji: "👑" },
   { id: "gf", label: "Girlfriend", emoji: "💕" },
   { id: "friend", label: "Friend", emoji: "🤝" },
   { id: "parents", label: "Parents", emoji: "👨‍👩‍👧" },
