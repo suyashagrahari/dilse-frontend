@@ -1,1314 +1,415 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertTriangle, ArrowDown, ArrowUp, Camera, Check, ChevronDown, Eye,
-  Loader2, Lock, Plus, Trash2, X,
-} from "lucide-react";
+// The form. One scroll, five short sections in the order the recipient meets
+// them (profile → billboard → episodes → Top 10 → letter), extras folded away.
+// Only three things are required — their name, a show title, one episode — and
+// the footer says exactly which of those is still missing.
 
-import {
-  ACCENT, ACCENT_GRAD, BG_CARD, BG_RAISED, CARD_RADIUS, FONT_BODY, FONT_DISPLAY,
-  HAIRLINE, TAP, TEXT, TEXT_DIM,
-} from "./theme";
-import {
-  PLAYER, validateSceneGraph,
-  type Credit, type EditMode, type LoveflixData, type Row, type RowItem, type Scene,
-} from "./types";
-import { useReducedMotion } from "./useReducedMotion";
-import {
-  MAX_CREDITS, MAX_ITEMS_PER_ROW, MAX_MATCH_PERCENT, MAX_PROGRESS, MAX_ROWS,
-  MAX_SCENES, MIN_MATCH_PERCENT, MIN_PROGRESS,
-  MAX_CHOICE_SECONDS, MIN_CHOICE_SECONDS,
-} from "../hooks/useLoveflixEditor";
+import { memo, useEffect, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { Wordmark } from "./Brand";
+import PhotoField from "./PhotoField";
+import { CROP_CENTER, LIMITS, type EditMode, type Episode, type LoveflixData } from "./types";
+import { missingFields } from "../hooks/useLoveflixEditor";
 
-// The prop contract is frozen — the page and the hook are written against it.
 export interface EditSheetProps {
   editMode: EditMode;
   setEditMode: (m: EditMode) => void;
+  isPersonalized: boolean;
   mf: LoveflixData;
   updateMf: (key: keyof LoveflixData, val: unknown) => void;
   pagePassword: string;
   setPagePassword: (v: string) => void;
   onSave: () => void;
-  saving: boolean;
 }
 
-/* ── Surfaces ──────────────────────────────────────────────────────────────────
-   The sheet sits on the same near-black ramp as the template it is editing, so
-   opening it reads as pulling a panel out of the same world rather than dropping
-   a light-mode form on top of it. The accent appears exactly twice: the Save
-   button and the marker on the validator panel. Nothing else here gets colour.
-─────────────────────────────────────────────────────────────────────────────*/
+const blankEpisode = (): Episode => ({ title: "", synopsis: "", subtitle: "", imageUrl: "", crop: CROP_CENTER });
 
-const FIELD_BG = "#0f0f0f";
-const SUBTLE = "rgba(255,255,255,0.05)";
-
-/** Above the floating top bar (110) so the bar cannot sit over the sheet. */
-const Z_SHEET = 140;
-
-const SHEET_CSS = `
-.lfx-in{
-  width:100%;
-  min-height:${TAP}px;
-  padding:11px 12px;
-  background:${FIELD_BG};
-  color:${TEXT};
-  font-family:${FONT_BODY};
-  font-size:16px;
-  line-height:1.4;
-  border:1px solid ${HAIRLINE};
-  border-radius:8px;
-  outline:none;
-  -webkit-appearance:none;
-  appearance:none;
-  transition:border-color .16s ease, box-shadow .16s ease;
+function Section({
+  n,
+  title,
+  hint,
+  done,
+  children,
+  defaultOpen = true,
+}: {
+  n: number | string;
+  title: string;
+  hint?: string;
+  done?: boolean;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`es-sec${open ? " is-open" : ""}`}>
+      <button type="button" className="es-sec-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span className={`es-sec-n${done ? " is-done" : ""}`}>{done ? <Check size={14} strokeWidth={3} /> : n}</span>
+        <span className="es-sec-t">
+          <b>{title}</b>
+          {hint && <span>{hint}</span>}
+        </span>
+        <ChevronDown size={18} className="es-sec-chev" />
+      </button>
+      {open && <div className="es-sec-body">{children}</div>}
+    </section>
+  );
 }
-.lfx-in::placeholder{ color:#5f5f5f; }
-.lfx-in:focus{
-  border-color:rgba(255,255,255,0.34);
-  box-shadow:0 0 0 3px rgba(255,255,255,0.06);
-}
-.lfx-in[type="number"]{ -moz-appearance:textfield; }
-textarea.lfx-in{ resize:vertical; line-height:1.55; }
-select.lfx-in{
-  background-image:linear-gradient(45deg,transparent 50%,#8a8a8a 50%),linear-gradient(135deg,#8a8a8a 50%,transparent 50%);
-  background-position:calc(100% - 16px) calc(50% + 1px),calc(100% - 11px) calc(50% + 1px);
-  background-size:5px 5px,5px 5px;
-  background-repeat:no-repeat;
-  padding-right:32px;
-}
-.lfx-btn{
-  min-height:${TAP}px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  font-family:${FONT_BODY};
-  font-size:13px;
-  font-weight:600;
-  color:${TEXT};
-  background:${SUBTLE};
-  border:1px solid ${HAIRLINE};
-  border-radius:8px;
-  padding:0 12px;
-  cursor:pointer;
-  transition:background .16s ease;
-}
-.lfx-btn:hover:not(:disabled){ background:rgba(255,255,255,0.09); }
-.lfx-btn:disabled{ opacity:.38; cursor:not-allowed; }
-.lfx-icon{
-  width:${TAP}px;
-  height:${TAP}px;
-  display:inline-grid;
-  place-items:center;
-  color:${TEXT_DIM};
-  background:transparent;
-  border:1px solid ${HAIRLINE};
-  border-radius:8px;
-  cursor:pointer;
-  flex:0 0 auto;
-  transition:color .16s ease, background .16s ease;
-}
-.lfx-icon:hover:not(:disabled){ color:${TEXT}; background:${SUBTLE}; }
-.lfx-icon:disabled{ opacity:.3; cursor:not-allowed; }
-.lfx-tab{
-  min-height:${TAP}px;
-  padding:0 14px;
-  flex:0 0 auto;
-  font-family:${FONT_DISPLAY};
-  font-size:14px;
-  font-weight:600;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  color:${TEXT_DIM};
-  background:transparent;
-  border:0;
-  border-bottom:2px solid transparent;
-  cursor:pointer;
-  white-space:nowrap;
-}
-.lfx-tab[data-on="true"]{ color:${TEXT}; border-bottom-color:${TEXT}; }
-.lfx-scroll::-webkit-scrollbar{ width:0; height:0; }
-.lfx-scroll{ scrollbar-width:none; -ms-overflow-style:none; }
-`;
-
-/* ── Primitives ────────────────────────────────────────────────────────────── */
 
 function Field({
-  label, hint, htmlFor, children,
-}: { label: string; hint?: string; htmlFor?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label
-        htmlFor={htmlFor}
-        style={{
-          display: "block", marginBottom: 6, fontFamily: FONT_BODY, fontSize: 11,
-          fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: TEXT_DIM,
-        }}
-      >
-        {label}
-      </label>
-      {children}
-      {hint && (
-        <p style={{ margin: "6px 0 0", fontSize: 11.5, lineHeight: 1.5, color: "#7a7a7a" }}>{hint}</p>
-      )}
-    </div>
-  );
-}
-
-function SectionHead({ title, note, count }: { title: string; note?: string; count?: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
-      <div style={{ minWidth: 0 }}>
-        <h4
-          style={{
-            margin: 0, fontFamily: FONT_DISPLAY, fontSize: 19, fontWeight: 700,
-            letterSpacing: "0.02em", color: TEXT,
-          }}
-        >
-          {title}
-        </h4>
-        {note && <p style={{ margin: "4px 0 0", fontSize: 12, lineHeight: 1.5, color: "#7a7a7a" }}>{note}</p>}
-      </div>
-      {count && (
-        <span style={{ flex: "0 0 auto", fontSize: 11.5, fontWeight: 600, color: TEXT_DIM, fontVariantNumeric: "tabular-nums" }}>
-          {count}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/**
- * Numeric input with a local text buffer, so backspacing the field empty does
- * not immediately snap it to the minimum while the user is still mid-number.
- * The committed value is always clamped to the frozen range.
- */
-function NumberInput({
-  id, value, min, max, onCommit, suffix, ariaLabel,
+  label,
+  value,
+  onChange,
+  max,
+  placeholder,
+  required,
+  multiline,
+  rows = 3,
+  help,
+  big,
 }: {
-  id?: string;
-  value: number;
-  min: number;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
   max: number;
-  onCommit: (n: number) => void;
-  suffix?: string;
-  ariaLabel?: string;
+  placeholder?: string;
+  required?: boolean;
+  multiline?: boolean;
+  rows?: number;
+  help?: string;
+  big?: boolean;
 }) {
-  const [buf, setBuf] = useState(String(value));
-  useEffect(() => { setBuf(String(value)); }, [value]);
-
-  const commit = (raw: string) => {
-    if (raw === "") return;
-    const n = parseInt(raw, 10);
-    if (!Number.isFinite(n)) return;
-    onCommit(Math.min(max, Math.max(min, n)));
-  };
-
+  const near = value.length > max * 0.8;
   return (
-    <div style={{ position: "relative" }}>
-      <input
-        id={id}
-        className="lfx-in"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        aria-label={ariaLabel}
-        value={buf}
-        onChange={(e) => {
-          const raw = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
-          setBuf(raw);
-          commit(raw);
-        }}
-        onBlur={() => {
-          if (buf === "") { onCommit(min); setBuf(String(min)); }
-        }}
-        style={suffix ? { paddingRight: 46 } : undefined}
-      />
-      {suffix && (
-        <span
-          aria-hidden
-          style={{
-            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-            fontSize: 12.5, color: TEXT_DIM, pointerEvents: "none",
-          }}
-        >
-          {suffix}
-        </span>
+    <label className="es-field">
+      <span className="es-label">
+        {label}
+        {required && <i className="es-req">required</i>}
+        {near && <em className="es-count">{value.length}/{max}</em>}
+      </span>
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value.slice(0, max))} placeholder={placeholder} rows={rows} />
+      ) : (
+        <input
+          className={big ? "is-big" : undefined}
+          value={value}
+          onChange={(e) => onChange(e.target.value.slice(0, max))}
+          placeholder={placeholder}
+          aria-required={required}
+        />
       )}
+      {help && <span className="es-help">{help}</span>}
+    </label>
+  );
+}
+
+function More({ label, children }: { label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`es-more${open ? " is-open" : ""}`}>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <ChevronDown size={15} /> {label}
+      </button>
+      {open && <div className="es-more-body">{children}</div>}
     </div>
   );
 }
 
-/** Up / down / delete cluster. Reorder is buttons, not drag — kinder on a phone. */
-function RowTools({
-  onUp, onDown, onRemove, canUp, canDown, canRemove, what,
+function ListInputs({
+  items,
+  onChange,
+  max,
+  each,
+  placeholder,
+  numbered,
+  fixed,
 }: {
-  onUp: () => void; onDown: () => void; onRemove: () => void;
-  canUp: boolean; canDown: boolean; canRemove: boolean; what: string;
+  items: string[];
+  onChange: (next: string[]) => void;
+  max: number;
+  each: number;
+  placeholder: (i: number) => string;
+  numbered?: boolean;
+  fixed?: boolean;
 }) {
-  return (
-    <div style={{ display: "flex", gap: 6 }}>
-      <button type="button" className="lfx-icon" onClick={onUp} disabled={!canUp} aria-label={`Move ${what} up`}>
-        <ArrowUp size={16} />
-      </button>
-      <button type="button" className="lfx-icon" onClick={onDown} disabled={!canDown} aria-label={`Move ${what} down`}>
-        <ArrowDown size={16} />
-      </button>
-      <button type="button" className="lfx-icon" onClick={onRemove} disabled={!canRemove} aria-label={`Delete ${what}`}>
-        <Trash2 size={16} />
-      </button>
-    </div>
-  );
-}
-
-/* ── Helpers ───────────────────────────────────────────────────────────────── */
-
-const move = <T,>(arr: T[], from: number, to: number): T[] => {
-  if (to < 0 || to >= arr.length) return arr;
-  const next = arr.slice();
-  const [item] = next.splice(from, 1);
-  next.splice(to, 0, item);
-  return next;
-};
-
-const blankItem = (): RowItem => ({ title: "", imageUrl: "", caption: "", runtime: "", progress: 0 });
-const blankRow = (): Row => ({ title: "", kind: "cards", items: [blankItem()] });
-
-/**
- * The next free scene id, derived from the ids already in use.
- * Deterministic on purpose — `Math.random()` is banned in this template, and an
- * id that changes between renders would silently orphan every choice aimed at it.
- */
-const nextSceneId = (scenes: Scene[]): string => {
-  const used = new Set(scenes.map((s) => s.id));
-  for (let n = 1; n <= MAX_SCENES + 2; n++) {
-    const id = `s${n}`;
-    if (!used.has(id)) return id;
-  }
-  return `s${scenes.length + 1}`;
-};
-
-/** Somewhere safe for a choice to point when its old target has gone away. */
-const fallbackTarget = (pool: Scene[]): string => (pool.find((s) => s.isFinale) ?? pool[0])?.id ?? "";
-
-/** A short, human label for a scene in the target dropdowns. */
-const sceneLabel = (s: Scene): string => {
-  if (s.isFinale) return `${s.id} — the ending`;
-  const first = (s.text || "").split("\n").find((l) => l.trim())?.trim() ?? "";
-  if (!first) return `${s.id} — (nothing written yet)`;
-  return `${s.id} — ${first.length > 42 ? `${first.slice(0, 42)}…` : first}`;
-};
-
-/**
- * Square, centre-cropped, downscaled to 256px before it ever reaches the wire.
- * A profile tile is drawn at ~110px, so anything bigger is payload for nothing,
- * and a data URL keeps the canvas same-origin for the recap export.
- */
-function photoToDataUrl(file: File, cb: (src: string) => void) {
-  if (!file.type.startsWith("image/")) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const S = 256;
-      const canvas = document.createElement("canvas");
-      canvas.width = S; canvas.height = S;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { cb(String(reader.result)); return; }
-      const side = Math.min(img.width, img.height);
-      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
-      try { cb(canvas.toDataURL("image/jpeg", 0.82)); } catch { cb(String(reader.result)); }
-    };
-    img.onerror = () => cb(String(reader.result));
-    img.src = String(reader.result);
+  const slots = fixed ? Array.from({ length: max }, (_, i) => items[i] ?? "") : items;
+  const set = (i: number, v: string) => {
+    const next = [...slots];
+    next[i] = v.slice(0, each);
+    onChange(next);
   };
-  reader.readAsDataURL(file);
-}
-
-/* ── Photo field ───────────────────────────────────────────────────────────── */
-
-function PhotoField({
-  label, hint, value, initial, onChange,
-}: { label: string; hint: string; value: string; initial: string; onChange: (v: string) => void }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [brokenUrl, setBrokenUrl] = useState("");
-  const usable = value !== brokenUrl && (value.startsWith("data:image") || /^https?:\/\/\S+$/i.test(value));
-  const isUpload = value.startsWith("data:");
-
   return (
-    <Field label={label} hint={hint}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <div
-          style={{
-            width: 60, height: 60, flex: "0 0 auto", borderRadius: CARD_RADIUS, overflow: "hidden",
-            background: BG_CARD, border: `1px solid ${HAIRLINE}`, display: "grid", placeItems: "center",
-            color: TEXT_DIM, fontFamily: FONT_DISPLAY, fontSize: 24, fontWeight: 700,
-          }}
-        >
-          {usable ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={value} alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              onError={() => setBrokenUrl(value)}
-            />
-          ) : (
-            <span aria-hidden>{initial}</span>
+    <div className="es-list">
+      {slots.map((v, i) => (
+        <div key={i} className="es-list-row">
+          {numbered && <span className={`es-list-num${i === 9 ? " is-10" : ""}`}>{i + 1}</span>}
+          <input value={v} onChange={(e) => set(i, e.target.value)} placeholder={placeholder(i)} aria-label={`${numbered ? `#${i + 1}` : `Item ${i + 1}`}`} />
+          {!fixed && (
+            <button type="button" className="es-icon" onClick={() => onChange(slots.filter((_, j) => j !== i))} aria-label="Remove">
+              <X size={15} />
+            </button>
           )}
         </div>
-
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          <input
-            className="lfx-in"
-            aria-label={`${label} — image link`}
-            value={isUpload ? "" : value}
-            onChange={(e) => onChange(e.target.value.trim())}
-            placeholder={isUpload ? "photo uploaded" : "https://…"}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="lfx-btn" onClick={() => fileRef.current?.click()}>
-              <Camera size={14} /> Upload
-            </button>
-            {value && (
-              <button type="button" className="lfx-btn" onClick={() => onChange("")}>Remove</button>
-            )}
-          </div>
-          <input
-            ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) photoToDataUrl(f, onChange);
-              e.target.value = "";
-            }}
-          />
-        </div>
-      </div>
-    </Field>
-  );
-}
-
-/* ── Collapsible card ──────────────────────────────────────────────────────── */
-
-function Card({
-  open, onToggle, heading, sub, tools, children,
-}: {
-  open: boolean; onToggle: () => void; heading: string; sub: string;
-  tools: React.ReactNode; children: React.ReactNode;
-}) {
-  return (
-    <div style={{ background: BG_CARD, border: `1px solid ${HAIRLINE}`, borderRadius: 10, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 8 }}>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          style={{
-            flex: 1, minWidth: 0, minHeight: TAP, display: "flex", alignItems: "center", gap: 8,
-            background: "transparent", border: 0, padding: "0 4px", cursor: "pointer", textAlign: "left",
-          }}
-        >
-          <ChevronDown
-            size={16}
-            aria-hidden
-            style={{ flex: "0 0 auto", color: TEXT_DIM, transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform .18s ease" }}
-          />
-          <span style={{ minWidth: 0 }}>
-            <span
-              style={{
-                display: "block", fontFamily: FONT_BODY, fontSize: 14, fontWeight: 600, color: TEXT,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}
-            >
-              {heading}
-            </span>
-            <span
-              style={{
-                display: "block", fontSize: 11.5, color: "#7a7a7a", marginTop: 1,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}
-            >
-              {sub}
-            </span>
-          </span>
+      ))}
+      {!fixed && slots.length < max && (
+        <button type="button" className="es-add" onClick={() => onChange([...slots, ""])}>
+          <Plus size={15} /> Add one ({slots.length}/{max})
         </button>
-        {tools}
-      </div>
-      {open && (
-        <div style={{ padding: "4px 10px 12px", display: "flex", flexDirection: "column", gap: 12 }}>
-          {children}
-        </div>
       )}
     </div>
   );
 }
 
-/* ── The catalogue ─────────────────────────────────────────────────────────── */
+export default memo(function EditSheet({ editMode, setEditMode, isPersonalized, mf, updateMf, pagePassword, setPagePassword, onSave }: EditSheetProps) {
+  const open = editMode === "manual";
+  const missing = missingFields(mf);
 
-function ItemEditor({
-  item, index, count, onPatch, onMove, onRemove,
-}: {
-  item: RowItem; index: number; count: number;
-  onPatch: (p: Partial<RowItem>) => void;
-  onMove: (to: number) => void;
-  onRemove: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ background: BG_RAISED, border: `1px solid ${HAIRLINE}`, borderRadius: 8, padding: 8 }}>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <input
-          className="lfx-in"
-          value={item.title}
-          onChange={(e) => onPatch({ title: e.target.value })}
-          placeholder="e.g. The Airport"
-          aria-label={`Card ${index + 1} title`}
-        />
-        <button
-          type="button"
-          className="lfx-icon"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label={open ? "Hide card details" : "Show card details"}
-        >
-          <ChevronDown size={16} style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform .18s ease" }} />
-        </button>
-      </div>
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
-      {open && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
-          <Field label="Caption">
-            <input
-              className="lfx-in"
-              value={item.caption}
-              onChange={(e) => onPatch({ caption: e.target.value })}
-              placeholder="e.g. You ran. I have never recovered."
-            />
-          </Field>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <Field label="Runtime">
-              <input
-                className="lfx-in"
-                value={item.runtime}
-                onChange={(e) => onPatch({ runtime: e.target.value })}
-                placeholder="e.g. 8 min"
-              />
-            </Field>
-            <Field label="Progress" hint="0 hides the bar.">
-              <NumberInput
-                value={item.progress}
-                min={MIN_PROGRESS}
-                max={MAX_PROGRESS}
-                suffix="%"
-                ariaLabel={`Card ${index + 1} watch progress`}
-                onCommit={(n) => onPatch({ progress: n })}
-              />
-            </Field>
-          </div>
-          <Field label="Image link" hint="Leave empty and we draw a card for it — that is the default look, and it is meant to be.">
-            <input
-              className="lfx-in"
-              value={item.imageUrl}
-              onChange={(e) => onPatch({ imageUrl: e.target.value.trim() })}
-              placeholder="https://…"
-            />
-          </Field>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <RowTools
-              what={`card ${index + 1}`}
-              onUp={() => onMove(index - 1)}
-              onDown={() => onMove(index + 1)}
-              onRemove={onRemove}
-              canUp={index > 0}
-              canDown={index < count - 1}
-              canRemove={count > 1}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+  if (!open) return null;
 
-function RowEditor({
-  row, index, count, onPatch, onMove, onRemove,
-}: {
-  row: Row; index: number; count: number;
-  onPatch: (p: Partial<Row>) => void;
-  onMove: (to: number) => void;
-  onRemove: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const named = row.items.filter((i) => i.title.trim()).length;
-
-  return (
-    <Card
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-      heading={row.title.trim() || `Row ${index + 1}`}
-      sub={`${row.kind === "top10" ? "Top 10" : "Cards"} · ${named}/${row.items.length} named`}
-      tools={
-        <RowTools
-          what={`row ${index + 1}`}
-          onUp={() => onMove(index - 1)}
-          onDown={() => onMove(index + 1)}
-          onRemove={onRemove}
-          canUp={index > 0}
-          canDown={index < count - 1}
-          canRemove={count > 1}
-        />
-      }
-    >
-      <Field label="Row title">
-        <input
-          className="lfx-in"
-          value={row.title}
-          onChange={(e) => onPatch({ title: e.target.value })}
-          placeholder="e.g. Continue Watching Us"
-        />
-      </Field>
-
-      <Field label="Layout" hint="Top 10 draws a huge outlined number behind each card. Use it once — it is the row people screenshot.">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {(["cards", "top10"] as const).map((k) => {
-            const on = row.kind === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => onPatch({ kind: k })}
-                aria-pressed={on}
-                style={{
-                  minHeight: TAP, borderRadius: 8, cursor: "pointer",
-                  background: on ? "rgba(255,255,255,0.10)" : "transparent",
-                  border: `1px solid ${on ? "rgba(255,255,255,0.32)" : HAIRLINE}`,
-                  color: on ? TEXT : TEXT_DIM, fontFamily: FONT_BODY, fontSize: 13.5, fontWeight: 600,
-                }}
-              >
-                {k === "cards" ? "Wide cards" : "Top 10"}
-              </button>
-            );
-          })}
-        </div>
-      </Field>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <SectionHead title="Cards" count={`${row.items.length}/${MAX_ITEMS_PER_ROW}`} />
-        {row.items.map((it, i) => (
-          <ItemEditor
-            key={`item-${i}`}
-            item={it}
-            index={i}
-            count={row.items.length}
-            onPatch={(p) => onPatch({ items: row.items.map((x, ix) => (ix === i ? { ...x, ...p } : x)) })}
-            onMove={(to) => onPatch({ items: move(row.items, i, to) })}
-            onRemove={() => onPatch({ items: row.items.filter((_, ix) => ix !== i) })}
-          />
-        ))}
-        <button
-          type="button"
-          className="lfx-btn"
-          disabled={row.items.length >= MAX_ITEMS_PER_ROW}
-          onClick={() => onPatch({ items: [...row.items, blankItem()] })}
-        >
-          <Plus size={14} /> Add a card
-        </button>
-      </div>
-    </Card>
-  );
-}
-
-/* ── The episode ───────────────────────────────────────────────────────────── */
-
-function SceneEditor({
-  scene, index, count, allScenes, isStart, onPatch, onMove, onRemove,
-}: {
-  scene: Scene; index: number; count: number; allScenes: Scene[]; isStart: boolean;
-  onPatch: (p: Partial<Scene>) => void;
-  onMove: (to: number) => void;
-  onRemove: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const options = allScenes.filter((s) => s.id !== scene.id);
-  const lines = (scene.text || "").split("\n").filter((l) => l.trim()).length;
-
-  const toggleFinale = (next: boolean) => {
-    if (next) { onPatch({ isFinale: true, choices: [] }); return; }
-    const target = fallbackTarget(options) || scene.id;
-    onPatch({
-      isFinale: false,
-      choices: [{ label: "", nextSceneId: target }, { label: "", nextSceneId: target }],
-    });
+  const close = () => setEditMode(isPersonalized ? "preview" : null);
+  const eps = mf.episodes ?? [];
+  const setEp = (i: number, patch: Partial<Episode>) => updateMf("episodes", eps.map((e, j) => (j === i ? { ...e, ...patch } : e)));
+  const moveEp = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= eps.length) return;
+    const next = [...eps];
+    [next[i], next[j]] = [next[j], next[i]];
+    updateMf("episodes", next);
   };
+  const filledReasons = (mf.reasons ?? []).filter((r) => r.trim()).length;
+  const epDone = eps.some((e) => e.title.trim());
 
   return (
-    <Card
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-      heading={`${scene.id}${isStart ? " · opens the episode" : ""}${scene.isFinale ? " · the ending" : ""}`}
-      sub={
-        scene.text.trim()
-          ? `${lines} line${lines === 1 ? "" : "s"} · ${scene.text.trim().slice(0, 40)}${scene.text.trim().length > 40 ? "…" : ""}`
-          : "nothing written yet"
-      }
-      tools={
-        <RowTools
-          what={`scene ${scene.id}`}
-          onUp={() => onMove(index - 1)}
-          onDown={() => onMove(index + 1)}
-          onRemove={onRemove}
-          canUp={index > 0}
-          canDown={index < count - 1}
-          canRemove={count > 1}
-        />
-      }
-    >
-      <Field label="What happens" hint="One thought per line. Each line fades in on its own, so short lines land harder.">
-        <textarea
-          className="lfx-in"
-          rows={4}
-          value={scene.text}
-          onChange={(e) => onPatch({ text: e.target.value })}
-          placeholder={"It's raining, which is not unusual.\nYou're eleven minutes early. You always are."}
-        />
-      </Field>
-
-      <Field label="Background image" hint="Optional. Empty is fine — we draw the backdrop.">
-        <input
-          className="lfx-in"
-          value={scene.imageUrl}
-          onChange={(e) => onPatch({ imageUrl: e.target.value.trim() })}
-          placeholder="https://…"
-        />
-      </Field>
-
-      <button
-        type="button"
-        onClick={() => toggleFinale(!scene.isFinale)}
-        aria-pressed={scene.isFinale}
-        style={{
-          display: "flex", alignItems: "center", gap: 10, minHeight: TAP, padding: "0 12px",
-          borderRadius: 8, cursor: "pointer", textAlign: "left",
-          background: scene.isFinale ? "rgba(255,255,255,0.10)" : "transparent",
-          border: `1px solid ${scene.isFinale ? "rgba(255,255,255,0.32)" : HAIRLINE}`,
-          color: scene.isFinale ? TEXT : TEXT_DIM,
-        }}
-      >
-        <span
-          aria-hidden
-          style={{
-            width: 18, height: 18, borderRadius: 4, display: "grid", placeItems: "center", flex: "0 0 auto",
-            border: `1px solid ${scene.isFinale ? "rgba(255,255,255,0.5)" : HAIRLINE}`,
-            background: scene.isFinale ? "rgba(255,255,255,0.16)" : "transparent",
-          }}
-        >
-          {scene.isFinale && <Check size={12} />}
-        </span>
-        <span style={{ fontFamily: FONT_BODY, fontSize: 13.5, fontWeight: 600 }}>
-          This is where every path ends
-        </span>
-      </button>
-
-      {!scene.isFinale && (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[0, 1].map((ci) => {
-              const ch = scene.choices[ci] ?? { label: "", nextSceneId: fallbackTarget(options) };
-              const setChoice = (patch: Partial<typeof ch>) => {
-                const base = [0, 1].map((k) => scene.choices[k] ?? { label: "", nextSceneId: fallbackTarget(options) });
-                base[ci] = { ...base[ci], ...patch };
-                onPatch({ choices: base });
-              };
-              return (
-                <div
-                  key={ci}
-                  style={{ background: BG_RAISED, border: `1px solid ${HAIRLINE}`, borderRadius: 8, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}
-                >
-                  <Field label={`Choice ${ci + 1}`}>
-                    <input
-                      className="lfx-in"
-                      value={ch.label}
-                      onChange={(e) => setChoice({ label: e.target.value })}
-                      placeholder={ci === 0 ? "e.g. wait outside anyway" : "e.g. go in and take the corner table"}
-                    />
-                  </Field>
-                  <Field label="Then go to" hint={ci === 0 ? "Pick from the scenes you have written. Both choices are allowed to land in the same place." : undefined}>
-                    <select
-                      className="lfx-in"
-                      value={ch.nextSceneId}
-                      onChange={(e) => setChoice({ nextSceneId: e.target.value })}
-                      aria-label={`Choice ${ci + 1} destination`}
-                    >
-                      {!options.some((s) => s.id === ch.nextSceneId) && (
-                        <option value={ch.nextSceneId}>
-                          {ch.nextSceneId ? `${ch.nextSceneId} — missing` : "— pick a scene —"}
-                        </option>
-                      )}
-                      {options.map((s) => (
-                        <option key={s.id} value={s.id}>{sceneLabel(s)}</option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-              );
-            })}
+    <div className="es-overlay" role="presentation" onClick={close}>
+      <style>{ES_CSS}</style>
+      <aside className="es" role="dialog" aria-modal="true" aria-label="Edit your show" onClick={(e) => e.stopPropagation()}>
+        <header className="es-head">
+          <div>
+            <Wordmark size={20} />
+            <h2>Make your show</h2>
           </div>
+          <button type="button" className="es-x" onClick={close} aria-label="Close">
+            <X size={20} />
+          </button>
+        </header>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <Field label="Seconds to decide" hint={`${MIN_CHOICE_SECONDS}–${MAX_CHOICE_SECONDS}.`}>
-              <NumberInput
-                value={scene.choiceSeconds}
-                min={MIN_CHOICE_SECONDS}
-                max={MAX_CHOICE_SECONDS}
-                suffix="s"
-                ariaLabel={`Seconds to decide on scene ${scene.id}`}
-                onCommit={(n) => onPatch({ choiceSeconds: n })}
-              />
-            </Field>
-            <Field label="If time runs out" hint="Running out is a joke, never a loss.">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {[0, 1].map((k) => {
-                  const on = scene.defaultChoiceIndex === k;
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => onPatch({ defaultChoiceIndex: k })}
-                      aria-pressed={on}
-                      aria-label={`Default to choice ${k + 1}`}
-                      style={{
-                        minHeight: TAP, borderRadius: 8, cursor: "pointer",
-                        background: on ? "rgba(255,255,255,0.10)" : "transparent",
-                        border: `1px solid ${on ? "rgba(255,255,255,0.32)" : HAIRLINE}`,
-                        color: on ? TEXT : TEXT_DIM, fontSize: 13, fontWeight: 600,
-                      }}
-                    >
-                      {k + 1}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-          </div>
-        </>
-      )}
-    </Card>
-  );
-}
+        <div className="es-body">
+          <p className="es-intro">Three things are required. Everything else already has something lovely in it — change what you like.</p>
 
-/* ── The sheet ─────────────────────────────────────────────────────────────── */
-
-type Tab = "cast" | "show" | "catalogue" | "episode" | "ending";
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: "cast", label: "Cast" },
-  { key: "show", label: "Show" },
-  { key: "catalogue", label: "Catalogue" },
-  { key: "episode", label: "Episode" },
-  { key: "ending", label: "Ending" },
-];
-
-export default memo(function EditSheet({
-  editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving,
-}: EditSheetProps) {
-  const visible = editMode === "manual";
-  const reduced = useReducedMotion();
-  const [tab, setTab] = useState<Tab>("cast");
-
-  // Live graph feedback: the sender fixes a dead end while they are still
-  // writing, instead of finding out about it when they press Publish.
-  const report = useMemo(
-    () => validateSceneGraph(mf.scenes, mf.startSceneId),
-    [mf.scenes, mf.startSceneId],
-  );
-
-  /* ── scenes ── */
-  const patchScene = useCallback((i: number, p: Partial<Scene>) => {
-    updateMf("scenes", mf.scenes.map((s, ix) => (ix === i ? { ...s, ...p } : s)));
-  }, [mf.scenes, updateMf]);
-
-  const addScene = useCallback(() => {
-    if (mf.scenes.length >= MAX_SCENES) return;
-    const id = nextSceneId(mf.scenes);
-    const target = fallbackTarget(mf.scenes) || id;
-    updateMf("scenes", [
-      ...mf.scenes,
-      {
-        id,
-        imageUrl: "",
-        text: "",
-        choices: [{ label: "", nextSceneId: target }, { label: "", nextSceneId: target }],
-        choiceSeconds: PLAYER.defaultChoiceSeconds,
-        defaultChoiceIndex: 0,
-        isFinale: false,
-      },
-    ]);
-  }, [mf.scenes, updateMf]);
-
-  // Deleting a scene repoints anything aimed at it, so removing one link never
-  // leaves the rest of the episode pointing at a hole.
-  const removeScene = useCallback((i: number) => {
-    if (mf.scenes.length <= 1) return;
-    const gone = mf.scenes[i].id;
-    const rest = mf.scenes.filter((_, ix) => ix !== i);
-    const target = fallbackTarget(rest);
-    updateMf("scenes", rest.map((s) => ({
-      ...s,
-      choices: s.choices.map((c) => (c.nextSceneId === gone ? { ...c, nextSceneId: target } : c)),
-    })));
-    if (mf.startSceneId === gone) updateMf("startSceneId", rest[0]?.id ?? "");
-  }, [mf.scenes, mf.startSceneId, updateMf]);
-
-  /* ── credits ── */
-  const patchCredit = useCallback((i: number, p: Partial<Credit>) => {
-    updateMf("credits", mf.credits.map((c, ix) => (ix === i ? { ...c, ...p } : c)));
-  }, [mf.credits, updateMf]);
-
-  const initialOfName = (n: string) => (n.trim() ? Array.from(n.trim())[0].toUpperCase() : "•");
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0.1 : 0.2 }}
-            onClick={() => setEditMode("preview")}
-            style={{ position: "fixed", inset: 0, zIndex: Z_SHEET, background: "rgba(0,0,0,0.72)" }}
-          />
-
-          <motion.div
-            initial={reduced ? { opacity: 0 } : { y: "100%" }}
-            animate={reduced ? { opacity: 1 } : { y: 0 }}
-            exit={reduced ? { opacity: 0 } : { y: "100%" }}
-            transition={reduced ? { duration: 0.12 } : { type: "spring", stiffness: 300, damping: 32 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Write the show"
-            style={{
-              position: "fixed", left: 0, right: 0, bottom: 0, zIndex: Z_SHEET,
-              display: "flex", justifyContent: "center", pointerEvents: "none",
-            }}
-          >
-            <style>{SHEET_CSS}</style>
-
-            <div
-              style={{
-                pointerEvents: "auto",
-                width: "100%",
-                maxWidth: 720,
-                maxHeight: "88dvh",
-                display: "flex",
-                flexDirection: "column",
-                background: BG_RAISED,
-                color: TEXT,
-                fontFamily: FONT_BODY,
-                borderTop: `1px solid ${HAIRLINE}`,
-                borderLeft: `1px solid ${HAIRLINE}`,
-                borderRight: `1px solid ${HAIRLINE}`,
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
-                boxShadow: "0 -20px 60px -20px rgba(0,0,0,0.9)",
-              }}
-            >
-              {/* header */}
-              <div style={{ flex: "0 0 auto", padding: "10px 14px 0" }}>
-                <div style={{ display: "flex", justifyContent: "center", paddingBottom: 8 }}>
-                  <span aria-hidden style={{ width: 38, height: 4, borderRadius: 999, background: "rgba(255,255,255,0.18)" }} />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <h3
-                    style={{
-                      flex: 1, margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 700,
-                      letterSpacing: "0.03em", textTransform: "uppercase", color: TEXT,
-                    }}
-                  >
-                    Write the show
-                  </h3>
-                  <button type="button" className="lfx-icon" onClick={() => setEditMode("preview")} aria-label="Close">
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <div
-                  className="lfx-scroll"
-                  style={{
-                    display: "flex", gap: 2, marginTop: 6, overflowX: "auto",
-                    borderBottom: `1px solid ${HAIRLINE}`,
-                  }}
-                >
-                  {TABS.map((t) => (
-                    <button
-                      key={t.key}
-                      type="button"
-                      className="lfx-tab"
-                      data-on={tab === t.key}
-                      onClick={() => setTab(t.key)}
-                      aria-current={tab === t.key ? "page" : undefined}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* body */}
-              <div
-                className="lfx-scroll"
-                style={{ flex: "1 1 auto", overflowY: "auto", padding: "16px 14px 20px", display: "flex", flexDirection: "column", gap: 16 }}
-              >
-                {tab === "cast" && (
-                  <>
-                    <SectionHead title="The two of you" note="Two profile tiles open the show. Theirs unlocks it; yours is locked, on purpose." />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
-                      <Field label="Their name *" htmlFor="lfx-recipient" hint="Whoever is watching this.">
-                        <input
-                          id="lfx-recipient"
-                          className="lfx-in"
-                          value={mf.recipientName}
-                          onChange={(e) => updateMf("recipientName", e.target.value)}
-                          placeholder="e.g. Aditi"
-                        />
-                      </Field>
-                      <PhotoField
-                        label="Their photo"
-                        hint="Square-cropped for you. No photo is fine — their initial is used, and it looks right."
-                        value={mf.recipientPhotoUrl}
-                        initial={initialOfName(mf.recipientName)}
-                        onChange={(v) => updateMf("recipientPhotoUrl", v)}
-                      />
-                      <Field label="Your name" htmlFor="lfx-sender" hint="Yours is the tile that refuses to open.">
-                        <input
-                          id="lfx-sender"
-                          className="lfx-in"
-                          value={mf.senderName}
-                          onChange={(e) => updateMf("senderName", e.target.value)}
-                          placeholder="e.g. Rohan"
-                        />
-                      </Field>
-                      <PhotoField
-                        label="Your photo"
-                        hint="Same deal — optional."
-                        value={mf.senderPhotoUrl}
-                        initial={initialOfName(mf.senderName)}
-                        onChange={(v) => updateMf("senderPhotoUrl", v)}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {tab === "show" && (
-                  <>
-                    <SectionHead title="The show" note="This is the banner across the top of the browse screen." />
-                    <Field label="Title *" htmlFor="lfx-title" hint="Short is better. One or two words fills the banner.">
-                      <input
-                        id="lfx-title"
-                        className="lfx-in"
-                        value={mf.showTitle}
-                        onChange={(e) => updateMf("showTitle", e.target.value)}
-                        placeholder="e.g. US"
-                      />
-                    </Field>
-                    <Field label="Tagline" hint="Two or three lines of the blurb underneath.">
-                      <textarea
-                        className="lfx-in"
-                        rows={3}
-                        value={mf.tagline}
-                        onChange={(e) => updateMf("tagline", e.target.value)}
-                        placeholder="e.g. Two people who were extremely bad at admitting anything."
-                      />
-                    </Field>
-                    <Field label="Banner image" hint="Optional. Left empty, we draw the banner instead.">
-                      <input
-                        className="lfx-in"
-                        value={mf.heroImageUrl}
-                        onChange={(e) => updateMf("heroImageUrl", e.target.value.trim())}
-                        placeholder="https://…"
-                      />
-                    </Field>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <Field label="Match" hint={"Shown as “99% Match”."}>
-                        <NumberInput
-                          value={mf.matchPercent}
-                          min={MIN_MATCH_PERCENT}
-                          max={MAX_MATCH_PERCENT}
-                          suffix="%"
-                          ariaLabel="Match percentage"
-                          onCommit={(n) => updateMf("matchPercent", n)}
-                        />
-                      </Field>
-                      <Field label="Year you met">
-                        <input
-                          className="lfx-in"
-                          inputMode="numeric"
-                          value={mf.metYear}
-                          onChange={(e) => updateMf("metYear", e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
-                          placeholder="e.g. 2023"
-                        />
-                      </Field>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <Field label="Rating" hint="Invent the board.">
-                        <input
-                          className="lfx-in"
-                          value={mf.rating}
-                          onChange={(e) => updateMf("rating", e.target.value)}
-                          placeholder="e.g. Rated A — for Aditi only"
-                        />
-                      </Field>
-                      <Field label="Seasons">
-                        <input
-                          className="lfx-in"
-                          value={mf.seasons}
-                          onChange={(e) => updateMf("seasons", e.target.value)}
-                          placeholder="e.g. 3 Seasons"
-                        />
-                      </Field>
-                    </div>
-                  </>
-                )}
-
-                {tab === "catalogue" && (
-                  <>
-                    <SectionHead
-                      title="The catalogue"
-                      note="Rows of cards they scroll through before they press play. Tap a row to open it."
-                      count={`${mf.rows.length}/${MAX_ROWS}`}
-                    />
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {mf.rows.map((r, i) => (
-                        <RowEditor
-                          key={`row-${i}`}
-                          row={r}
-                          index={i}
-                          count={mf.rows.length}
-                          onPatch={(p) => updateMf("rows", mf.rows.map((x, ix) => (ix === i ? { ...x, ...p } : x)))}
-                          onMove={(to) => updateMf("rows", move(mf.rows, i, to))}
-                          onRemove={() => updateMf("rows", mf.rows.filter((_, ix) => ix !== i))}
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        className="lfx-btn"
-                        disabled={mf.rows.length >= MAX_ROWS}
-                        onClick={() => updateMf("rows", [...mf.rows, blankRow()])}
-                      >
-                        <Plus size={14} /> Add a row
-                      </button>
-                      {mf.rows.length >= MAX_ROWS && (
-                        <p style={{ margin: 0, fontSize: 11.5, color: "#7a7a7a", textAlign: "center" }}>
-                          {MAX_ROWS} rows is as long as the browse screen goes.
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {tab === "episode" && (
-                  <>
-                    <SectionHead
-                      title="The episode"
-                      note="Each scene ends in two choices on a timer. Different routes, same ending — no choice is ever the wrong one."
-                      count={`${mf.scenes.length}/${MAX_SCENES}`}
-                    />
-
-                    <Field label="Opens on" hint="The first scene they see after they press play.">
-                      <select
-                        className="lfx-in"
-                        value={mf.startSceneId}
-                        onChange={(e) => updateMf("startSceneId", e.target.value)}
-                        aria-label="Opening scene"
-                      >
-                        {!mf.scenes.some((s) => s.id === mf.startSceneId) && (
-                          <option value={mf.startSceneId}>
-                            {mf.startSceneId ? `${mf.startSceneId} — missing` : "— pick a scene —"}
-                          </option>
-                        )}
-                        {mf.scenes.map((s) => (
-                          <option key={s.id} value={s.id}>{sceneLabel(s)}</option>
-                        ))}
-                      </select>
-                    </Field>
-
-                    {/* Always rendered, so nothing shifts when a problem appears. */}
-                    <div
-                      style={{
-                        minHeight: 62,
-                        display: "flex",
-                        gap: 10,
-                        padding: "10px 12px",
-                        borderRadius: 8,
-                        background: SUBTLE,
-                        borderLeft: `2px solid ${report.ok ? "rgba(255,255,255,0.2)" : ACCENT}`,
-                      }}
-                      aria-live="polite"
-                    >
-                      <span style={{ flex: "0 0 auto", marginTop: 1, color: report.ok ? TEXT_DIM : ACCENT }}>
-                        {report.ok ? <Check size={15} /> : <AlertTriangle size={15} />}
-                      </span>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: TEXT }}>
-                          {report.ok ? "Every path reaches the ending." : "The episode doesn't join up yet"}
-                        </p>
-                        {report.errors.length > 0 && (
-                          <ul style={{ margin: "6px 0 0", padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 3 }}>
-                            {report.errors.slice(0, 6).map((err, i) => (
-                              <li key={i} style={{ fontSize: 12, lineHeight: 1.5, color: TEXT }}>{err}</li>
-                            ))}
-                          </ul>
-                        )}
-                        {report.warnings.length > 0 && (
-                          <ul style={{ margin: "6px 0 0", padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 3 }}>
-                            {report.warnings.slice(0, 4).map((w, i) => (
-                              <li key={i} style={{ fontSize: 11.5, lineHeight: 1.5, color: "#7a7a7a" }}>{w}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {mf.scenes.map((s, i) => (
-                        <SceneEditor
-                          key={s.id}
-                          scene={s}
-                          index={i}
-                          count={mf.scenes.length}
-                          allScenes={mf.scenes}
-                          isStart={s.id === mf.startSceneId}
-                          onPatch={(p) => patchScene(i, p)}
-                          onMove={(to) => updateMf("scenes", move(mf.scenes, i, to))}
-                          onRemove={() => removeScene(i)}
-                        />
-                      ))}
-                      <button type="button" className="lfx-btn" disabled={mf.scenes.length >= MAX_SCENES} onClick={addScene}>
-                        <Plus size={14} /> Add a scene
-                      </button>
-                      {mf.scenes.length >= MAX_SCENES && (
-                        <p style={{ margin: 0, fontSize: 11.5, color: "#7a7a7a", textAlign: "center" }}>
-                          {MAX_SCENES} scenes is the ceiling. Five to eight per route reads best anyway.
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {tab === "ending" && (
-                  <>
-                    <SectionHead title="The ending" note="Where every route lands, whatever they picked." />
-                    <Field label="The last thing you say" hint="Blank lines are kept — they become the pauses.">
-                      <textarea
-                        className="lfx-in"
-                        rows={6}
-                        value={mf.finaleText}
-                        onChange={(e) => updateMf("finaleText", e.target.value)}
-                        placeholder={"Whatever you picked, we ended up here.\n\nThat's not a bug in the writing."}
-                      />
-                    </Field>
-                    <Field label="One last question (optional)" hint="Leave it empty to skip it. If you write one, a single button appears once the text settles.">
-                      <input
-                        className="lfx-in"
-                        value={mf.finaleQuestion}
-                        onChange={(e) => updateMf("finaleQuestion", e.target.value)}
-                        placeholder="e.g. still here?"
-                      />
-                    </Field>
-
-                    <SectionHead title="End credits" note="They scroll up over black at the very end." count={`${mf.credits.length}/${MAX_CREDITS}`} />
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {mf.credits.map((c, i) => (
-                        <div key={`credit-${i}`} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                          <input
-                            className="lfx-in"
-                            style={{ flex: "1 1 40%" }}
-                            value={c.role}
-                            onChange={(e) => patchCredit(i, { role: e.target.value })}
-                            placeholder="e.g. Directed by"
-                            aria-label={`Credit ${i + 1} role`}
-                          />
-                          <input
-                            className="lfx-in"
-                            style={{ flex: "1 1 60%" }}
-                            value={c.name}
-                            onChange={(e) => patchCredit(i, { name: e.target.value })}
-                            placeholder="e.g. Rohan"
-                            aria-label={`Credit ${i + 1} name`}
-                          />
-                          <button
-                            type="button"
-                            className="lfx-icon"
-                            onClick={() => updateMf("credits", mf.credits.filter((_, ix) => ix !== i))}
-                            aria-label={`Delete credit ${i + 1}`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className="lfx-btn"
-                        disabled={mf.credits.length >= MAX_CREDITS}
-                        onClick={() => updateMf("credits", [...mf.credits, { role: "", name: "" }])}
-                      >
-                        <Plus size={14} /> Add a credit
-                      </button>
-                    </div>
-
-                    <SectionHead title="Password" note="Optional. Set one and the shared link asks for it before anything plays." />
-                    <div style={{ position: "relative" }}>
-                      <Lock
-                        size={15}
-                        aria-hidden
-                        style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: TEXT_DIM }}
-                      />
-                      <input
-                        className="lfx-in"
-                        style={{ paddingLeft: 36 }}
-                        value={pagePassword}
-                        onChange={(e) => setPagePassword(e.target.value)}
-                        placeholder="Leave empty for no password"
-                        aria-label="Page password"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* footer */}
-              <div
-                style={{
-                  flex: "0 0 auto",
-                  padding: "12px 14px calc(14px + env(safe-area-inset-bottom, 0px))",
-                  borderTop: `1px solid ${HAIRLINE}`,
-                  background: BG_RAISED,
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={onSave}
-                  disabled={saving}
-                  style={{
-                    width: "100%", minHeight: 50, display: "inline-flex", alignItems: "center",
-                    justifyContent: "center", gap: 8, borderRadius: 8, border: 0, cursor: "pointer",
-                    background: ACCENT_GRAD, color: "#150d05",
-                    fontFamily: FONT_BODY, fontSize: 15, fontWeight: 800, letterSpacing: "0.01em",
-                    opacity: saving ? 0.6 : 1,
-                  }}
-                >
-                  {saving
-                    ? <><Loader2 size={16} className="animate-spin" /> Saving…</>
-                    : <><Eye size={16} /> Save &amp; watch it</>}
-                </button>
-                <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: 11.5, color: "#7a7a7a" }}>
-                  Publish from the preview to get your shareable link.
-                </p>
-              </div>
+          <Section n={1} title="Who's watching?" hint="Their profile tile — and yours, locked" done={!!mf.recipientName.trim()}>
+            <div className="es-row2">
+              <Field label="Their name" required value={mf.recipientName} onChange={(v) => updateMf("recipientName", v)} max={LIMITS.name} placeholder="Aditi" />
+              <Field label="Your name" value={mf.senderName} onChange={(v) => updateMf("senderName", v)} max={LIMITS.name} placeholder="Rohan" />
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            <div className="es-row2">
+              <PhotoField label="Their profile photo" url={mf.recipientPhotoUrl} crop={mf.recipientCrop} round onChange={(u, c) => { updateMf("recipientPhotoUrl", u); updateMf("recipientCrop", c); }} compact />
+              <PhotoField label="Your profile photo" url={mf.senderPhotoUrl} crop={mf.senderCrop} round onChange={(u, c) => { updateMf("senderPhotoUrl", u); updateMf("senderCrop", c); }} compact />
+            </div>
+            <Field label="A third, joke profile (optional)" value={mf.thirdProfile} onChange={(v) => updateMf("thirdProfile", v)} max={LIMITS.name} placeholder="Our future cat" help="Shows up locked on the profile screen." />
+          </Section>
+
+          <Section n={2} title="Your show" hint="The big billboard they land on" done={!!mf.showTitle.trim()}>
+            <Field label="Show title" required big value={mf.showTitle} onChange={(v) => updateMf("showTitle", v)} max={LIMITS.showTitle} placeholder="Us" />
+            <Field label="The synopsis" multiline rows={3} value={mf.tagline} onChange={(v) => updateMf("tagline", v)} max={LIMITS.tagline} placeholder="Two people who are extremely bad at admitting things…" />
+            <PhotoField label="Billboard photo" url={mf.heroImageUrl} crop={mf.heroCrop} aspect="16 / 9" onChange={(u, c) => { updateMf("heroImageUrl", u); updateMf("heroCrop", c); }} />
+            <More label="Rating, genres, year & match">
+              <div className="es-row2">
+                <Field label="Maturity rating" value={mf.rating} onChange={(v) => updateMf("rating", v)} max={LIMITS.rating} placeholder="18+" />
+                <Field label="Seasons" value={mf.seasons} onChange={(v) => updateMf("seasons", v)} max={LIMITS.seasons} placeholder="3 Seasons" />
+              </div>
+              <Field label="Content warnings" value={mf.ratingReason} onChange={(v) => updateMf("ratingReason", v)} max={LIMITS.ratingReason} placeholder="forehead kisses, 2 AM calls" />
+              <div className="es-row2">
+                <Field label="Year you met" value={mf.metYear} onChange={(v) => updateMf("metYear", v.replace(/\D/g, ""))} max={LIMITS.metYear} placeholder="2023" />
+                <label className="es-field">
+                  <span className="es-label">Match — {mf.matchPercent}%</span>
+                  <input type="range" min={90} max={100} value={mf.matchPercent} onChange={(e) => updateMf("matchPercent", Number(e.target.value))} className="es-range" />
+                </label>
+              </div>
+              <Field
+                label="Genres (comma separated)"
+                value={(mf.genres ?? []).join(", ")}
+                onChange={(v) => updateMf("genres", v.split(",").map((s) => s.trimStart()).slice(0, LIMITS.genres))}
+                max={100}
+                placeholder="Romantic, Slow-burn, Chaotic"
+              />
+            </More>
+          </Section>
+
+          <Section n={3} title="Episodes" hint="Your moments — photo, title, what it says" done={epDone}>
+            {eps.map((e, i) => (
+              <div key={i} className="es-ep">
+                <div className="es-ep-head">
+                  <b>Episode {i + 1}</b>
+                  <div>
+                    <button type="button" className="es-icon" onClick={() => moveEp(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={15} /></button>
+                    <button type="button" className="es-icon" onClick={() => moveEp(i, 1)} disabled={i === eps.length - 1} aria-label="Move down"><ArrowDown size={15} /></button>
+                    <button type="button" className="es-icon" onClick={() => updateMf("episodes", eps.filter((_, j) => j !== i))} aria-label={`Remove episode ${i + 1}`}><Trash2 size={15} /></button>
+                  </div>
+                </div>
+                <div className="es-ep-grid">
+                  <PhotoField label="Photo" url={e.imageUrl} crop={e.crop} aspect="16 / 9" onChange={(u, c) => setEp(i, { imageUrl: u, crop: c })} compact />
+                  <div className="es-ep-fields">
+                    <Field label="Title" required={i === 0} value={e.title} onChange={(v) => setEp(i, { title: v })} max={LIMITS.epTitle} placeholder={i === 0 ? "The Airport" : "The Power Cut"} />
+                    <Field label="Synopsis" multiline rows={2} value={e.synopsis} onChange={(v) => setEp(i, { synopsis: v })} max={LIMITS.synopsis} placeholder="She's late, he's early, and…" />
+                  </div>
+                </div>
+                <Field
+                  label="Subtitles — what plays over it"
+                  multiline
+                  rows={3}
+                  value={e.subtitle}
+                  onChange={(v) => setEp(i, { subtitle: v })}
+                  max={LIMITS.subtitle}
+                  placeholder={"You ran the last fifty metres.\nI pretended I hadn't been waiting."}
+                  help="One line per caption."
+                />
+              </div>
+            ))}
+            {eps.length < LIMITS.episodes && (
+              <button type="button" className="es-add is-big" onClick={() => updateMf("episodes", [...eps, blankEpisode()])}>
+                <Plus size={16} /> Add episode ({eps.length}/{LIMITS.episodes})
+              </button>
+            )}
+          </Section>
+
+          <Section n={4} title="Top 10 reasons" hint="The rail with the giant numbers" done={filledReasons >= 3}>
+            <ListInputs
+              items={mf.reasons ?? []}
+              onChange={(v) => updateMf("reasons", v)}
+              max={LIMITS.reasons}
+              each={LIMITS.reason}
+              numbered
+              fixed
+              placeholder={(i) => (i === 0 ? "You always hand me the left earbud" : i === 1 ? "Your laugh arrives before the punchline" : "another reason…")}
+            />
+          </Section>
+
+          <Section n={5} title="Your letter 💌" hint="Pops up in the corner, sealed" done={!!mf.letter.trim()}>
+            <Field
+              label="The letter"
+              multiline
+              rows={7}
+              value={mf.letter}
+              onChange={(v) => updateMf("letter", v)}
+              max={LIMITS.letter}
+              placeholder="I made you a whole streaming service because a card felt too small…"
+              help={`${mf.letter.length}/${LIMITS.letter} · leave empty for no letter`}
+            />
+            <More label="Lock it with a question">
+              <Field label="Question" value={mf.lockQuestion} onChange={(v) => updateMf("lockQuestion", v)} max={LIMITS.lockQuestion} placeholder="Are you still watching… us?" />
+              <Field label="The yes button" value={mf.lockAnswer} onChange={(v) => updateMf("lockAnswer", v)} max={LIMITS.lockAnswer} placeholder="always 💗" help="The “no” button runs away. Obviously." />
+            </More>
+          </Section>
+
+          <Section n="+" title="Extras" hint="Inside jokes, plans, the finale, a password" defaultOpen={false}>
+            <span className="es-label">Critically Acclaimed Inside Jokes</span>
+            <ListInputs items={mf.insideJokes ?? []} onChange={(v) => updateMf("insideJokes", v)} max={LIMITS.jokes} each={LIMITS.joke} placeholder={() => "The Grey Hoodie: A Custody Battle"} />
+            <span className="es-label" style={{ marginTop: 14 }}>Coming Soon (your plans)</span>
+            <ListInputs items={mf.plans ?? []} onChange={(v) => updateMf("plans", v)} max={LIMITS.plans} each={LIMITS.plan} placeholder={() => "Goa, finally, no phones"} />
+            <Field label="The finale (after the last episode)" multiline rows={4} value={mf.finaleText} onChange={(v) => updateMf("finaleText", v)} max={LIMITS.finaleText} help="Blank line between paragraphs — each one fades in." />
+            <Field label="The button after the finale" value={mf.finaleQuestion} onChange={(v) => updateMf("finaleQuestion", v)} max={LIMITS.finaleQuestion} placeholder="renew for another season?" />
+            <Field label="Password (optional)" value={pagePassword} onChange={setPagePassword} max={64} placeholder="only if you want one" help="They'll need it to open the link." />
+          </Section>
+        </div>
+
+        <footer className="es-foot">
+          {missing.length > 0 ? (
+            <p className="es-missing">Still needs: <b>{missing.join(", ")}</b></p>
+          ) : (
+            <p className="es-ready">✓ Ready to preview</p>
+          )}
+          <button type="button" className="es-save" onClick={onSave}>
+            Save &amp; preview
+          </button>
+        </footer>
+      </aside>
+    </div>
   );
 });
+
+const R = "#E62E5C";
+
+const ES_CSS = `
+.es-overlay{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.6);display:flex;justify-content:flex-end;animation:esFade .2s}
+.es{position:relative;width:min(520px,100%);height:100%;display:flex;flex-direction:column;background:#181818;color:#f2f2f2;font-family:var(--font-inter),'Helvetica Neue',Arial,sans-serif;box-shadow:-20px 0 60px rgba(0,0,0,.5);animation:esIn .32s cubic-bezier(.2,.8,.2,1)}
+.es *{box-sizing:border-box}
+.es-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;padding-top:calc(16px + env(safe-area-inset-top,0px));border-bottom:1px solid rgba(255,255,255,.08)}
+.es-head h2{margin:4px 0 0;font-size:20px;font-weight:700}
+.es-x{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff;border:0;cursor:pointer}
+.es-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 24px}
+.es-intro{margin:0 2px 14px;font-size:13.5px;line-height:1.45;color:#a8a8a8}
+.es-sec{border:1px solid rgba(255,255,255,.08);background:#1f1f1f;border-radius:12px;margin-bottom:12px;overflow:hidden}
+.es-sec-head{display:flex;align-items:center;gap:12px;width:100%;padding:14px;background:none;border:0;color:inherit;cursor:pointer;text-align:left}
+.es-sec-n{width:28px;height:28px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#333;font-size:13px;font-weight:700;transition:background .2s}
+.es-sec-n.is-done{background:#46d369;color:#0b2912}
+.es-sec-t{flex:1;min-width:0}
+.es-sec-t b{display:block;font-size:16px}
+.es-sec-t span{display:block;font-size:12.5px;color:#9a9a9a;margin-top:2px}
+.es-sec-chev{transition:transform .2s;color:#9a9a9a}
+.es-sec.is-open .es-sec-chev{transform:rotate(180deg)}
+.es-sec-body{padding:2px 14px 16px;animation:esFade .2s}
+.es-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.es-field{display:block;margin-bottom:12px;min-width:0}
+.es-label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#cfcfcf;margin-bottom:6px}
+.es-req{font-style:normal;font-size:10px;font-weight:700;color:${R};background:rgba(230,46,92,.14);padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.es-count{margin-left:auto;font-style:normal;font-weight:500;color:#888;font-size:11px}
+.es-field input,.es-field textarea,.es-list input{width:100%;background:#121212;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font:inherit;font-size:16px;padding:12px 13px;outline:none;transition:border-color .15s,box-shadow .15s}
+.es-field textarea{resize:vertical;line-height:1.45;min-height:72px}
+.es-field input.is-big{font-family:var(--font-oswald),'Arial Narrow',sans-serif;font-size:24px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:10px 13px}
+.es-field input:focus,.es-field textarea:focus,.es-list input:focus{border-color:${R};box-shadow:0 0 0 3px rgba(230,46,92,.2)}
+.es-field input::placeholder,.es-field textarea::placeholder,.es-list input::placeholder{color:#5f5f5f}
+.es-help{display:block;font-size:11.5px;color:#8a8a8a;margin-top:5px}
+.es-range{padding:0!important;height:40px;accent-color:${R};background:transparent!important;border:0!important}
+.es-more{margin:4px 0 6px}
+.es-more>button{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#bdbdbd;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:6px 0}
+.es-more>button svg{transition:transform .2s}
+.es-more.is-open>button svg{transform:rotate(180deg)}
+.es-more-body{padding:8px 0 0}
+.es-photo{margin-bottom:12px;min-width:0}
+.es-photo-empty{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed #555;background:#141414;color:#bbb;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
+.es-photo-empty:hover{border-color:${R};color:#fff}
+.es-photo.is-compact .es-photo-empty,.es-photo.is-compact .es-photo-frame{max-width:160px}
+.es-photo-frame{position:relative;display:block;width:100%;overflow:hidden;background:#000;border:0;padding:0;cursor:pointer}
+.es-photo-frame img{position:absolute;inset:0}
+.es-photo-adjust{position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:700}
+.es-photo-acts{display:flex;gap:6px;margin-top:6px}
+.es-photo-acts button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:32px;border-radius:7px;border:1px solid #3a3a3a;background:#222;color:#ddd;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.es-photo-acts button:hover{border-color:#666}
+.es-err{display:block;color:#ff8aa6;font-size:12px;margin-top:4px}
+.es-ep{border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;background:#1a1a1a}
+.es-ep-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.es-ep-head b{font-size:14px}
+.es-ep-head>div{display:flex;gap:4px}
+.es-ep-grid{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px}
+.es-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;border:1px solid #3a3a3a;background:#222;color:#ccc;cursor:pointer}
+.es-icon:disabled{opacity:.35;cursor:default}
+.es-add{display:inline-flex;align-items:center;gap:6px;border:1px dashed #555;background:transparent;color:#ddd;border-radius:8px;padding:10px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.es-add.is-big{width:100%;justify-content:center;min-height:50px;border-color:${R};color:#ff9ab5}
+.es-list{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.es-list-row{display:flex;align-items:center;gap:8px}
+.es-list-num{flex:0 0 34px;font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:26px;line-height:1;text-align:center;color:#181818;-webkit-text-stroke:1.5px #777;letter-spacing:-.08em}
+.es-list-num.is-10{font-size:21px}
+.es-foot{display:flex;align-items:center;gap:12px;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.08);background:#141414}
+.es-missing,.es-ready{flex:1;margin:0;font-size:12.5px;line-height:1.35;color:#bbb}
+.es-missing b{color:#ff9ab5}
+.es-ready{color:#46d369;font-weight:600}
+.es-save{flex-shrink:0;height:50px;padding:0 24px;border-radius:8px;border:0;background:${R};color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px -10px rgba(230,46,92,.8);transition:transform .12s,filter .15s}
+.es-save:hover{filter:brightness(1.08)}.es-save:active{transform:scale(.97)}
+@media (max-width:560px){
+  .es{width:100%}
+  .es-ep-grid{grid-template-columns:1fr}
+  .es-ep-grid .es-photo.is-compact .es-photo-empty,.es-ep-grid .es-photo.is-compact .es-photo-frame{max-width:none}
+}
+@keyframes esFade{from{opacity:0}}
+@keyframes esIn{from{transform:translateX(40px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.es-overlay,.es,.es-sec-body{animation:none}}
+`;

@@ -6,11 +6,12 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import LoveflixTemplate from "@/app/(templates)/loveflix/components/LoveflixTemplate";
 import { dbToLoveflixData, ACCENT, BG, BG_RAISED } from "@/app/(templates)/loveflix/components/types";
+import { Wordmark } from "@/app/(templates)/loveflix/components/Brand";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-// The one accent that runs through the whole template. Deliberately not the
-// streaming red it would otherwise be mistaken for.
-const ACCENT_GRAD = "linear-gradient(135deg,#E8913A,#8a5520)";
+// The template's rose red — deliberately not the streaming red it would
+// otherwise be mistaken for.
+const ACCENT_GRAD = "linear-gradient(135deg,#E62E5C,#B3173F)";
 
 /* ─────────────────────────────────────────
    Password gate — the episode is whole
@@ -59,16 +60,16 @@ function LoveflixPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -12px rgba(232,145,58,.6)" }}
+                style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -12px rgba(230,46,92,.6)" }}
               >
                 <Lock size={28} className="text-white" />
               </motion.div>
-              <div className="text-3xl mb-2" aria-hidden>🎬</div>
+              <div className="mb-3" aria-hidden><Wordmark size={24} /></div>
               <h2 className="text-xl font-bold text-center mb-1" style={{ color: ACCENT }}>
-                One profile. It&apos;s yours.
+                Profile Lock is on 🔒
               </h2>
               <p className="text-xs text-center leading-relaxed" style={{ color: "#a0a0a0" }}>
-                Enter the password and<br />the episode starts
+                Enter the password they gave you<br />and your show starts
               </p>
             </div>
 
@@ -112,7 +113,7 @@ function LoveflixPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -14px rgba(232,145,58,.7)" }}
+              style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -14px rgba(230,46,92,.7)" }}
             >
               {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Press play</>}
             </motion.button>
@@ -145,8 +146,8 @@ export default function LoveflixViewer({
     return <LoveflixPasswordGate shareId={shareId} onUnlocked={() => setUnlocked(true)} />;
   }
 
-  // dbToLoveflixData already clamps the rows, the scenes and the choice counts,
-  // and repairs a start id that no longer resolves — trust it.
+  // dbToLoveflixData clamps everything and maps pages saved before the
+  // redesign (rows + scenes) onto the v2 catalogue — trust it.
   const data = dbToLoveflixData(rawData);
 
   return <LoveflixTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;
