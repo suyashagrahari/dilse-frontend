@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "Your photo, cut into a sliding-tile puzzle (3×3, 4×4 or 5×5). When they solve it, the last piece flies in, confetti pops, and your memories and love letter unlock.",
   coverImage:
-    templateMedia("photo-puzzle", "cover.jpg"),
+    templateMedia("photo-puzzle", "cover-v2.webp"),
   emoji: "🧩",
   color: "from-orange-400 to-rose-500",
   previewText: "I cut us into pieces. put us back together 🧩",
