@@ -1,5 +1,6 @@
 import { Heart, HandHeart, Gamepad2, PenLine, Sparkles } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "apology-dashboard",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "I built this whole little world just to say it. Play, scratch, whack, forgive — take your time.",
   bgGradient: "from-rose-50 via-pink-50 to-white",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/hero-bg.webp",
+  coverImage: templateMedia("apology-dashboard", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Heart, label: "Sorry" },
     { id: "meter", icon: Sparkles, label: "Meter" },

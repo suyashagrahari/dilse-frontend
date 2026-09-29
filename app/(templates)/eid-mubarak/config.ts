@@ -1,5 +1,6 @@
 import { Home, Heart, Music, BookOpen, Gift } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "eid-mubarak",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Wishing you joy, peace, and countless blessings this Eid.",
   bgGradient: "from-slate-950 via-slate-900 to-slate-950",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/Eid/hero_eid.webp",
+  coverImage: templateMedia("eid-mubarak", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "wish", icon: Gift, label: "Wish" },

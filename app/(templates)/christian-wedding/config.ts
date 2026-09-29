@@ -1,5 +1,6 @@
 import { Home, Heart, CalendarDays, Camera, HandHeart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "christian-wedding",
@@ -13,7 +14,7 @@ export const config: TemplatePageConfig = {
   previewText: "Join Us — We’re Getting Married! ✝️",
   bodyText: "Two hearts, one covenant. Join us as we celebrate before God, family, and friends.",
   bgGradient: "from-emerald-50 via-stone-50 to-white",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/christan-wedding/christian-bg.webp",
+  coverImage: templateMedia("christian-wedding", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Home, label: "Card" },
     { id: "couple", icon: Heart, label: "Us" },
