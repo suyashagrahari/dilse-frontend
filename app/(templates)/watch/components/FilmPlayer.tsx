@@ -511,7 +511,13 @@ export default function FilmPlayer({
         ) : null}
 
         {/* The tappable surface */}
-        <div className="wtp-surface" onPointerUp={onSurfaceUp} onDoubleClick={(e) => {
+        <div
+          className="wtp-surface"
+          onPointerUp={onSurfaceUp}
+          // The tap already did its job in pointerup. Cancelling touchend stops the
+          // browser's follow-up click from landing on the controls it just revealed.
+          onTouchEnd={(e) => e.preventDefault()}
+          onDoubleClick={(e) => {
           if (window.matchMedia?.("(pointer: fine)").matches) {
             e.preventDefault();
             toggleFs();
