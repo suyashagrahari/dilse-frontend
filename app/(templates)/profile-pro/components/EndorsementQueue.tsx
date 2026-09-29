@@ -34,7 +34,7 @@
 // contributions. A sender handed a pre-written WhatsApp message gets fifteen.
 // The button is one tap and the words are already in it.
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
 import ModerationQueue from "@/components/contrib/ModerationQueue";
 import { whatsappNudgeUrl } from "@/components/contrib/ContributorShell";
@@ -320,6 +320,8 @@ function endorsementBody(item: Contribution): React.ReactNode {
 
 /* ── The queue ─────────────────────────────────────────────────────────────── */
 
+const noopSubscribe = () => () => {};
+
 export function EndorsementQueue(props: { shareId: string }): React.JSX.Element {
   const { shareId } = props;
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
@@ -329,8 +331,11 @@ export function EndorsementQueue(props: { shareId: string }): React.JSX.Element 
 
   // Built after mount: the origin is not knowable on the server, and rendering
   // half a URL on the first paint would hydrate mismatched.
-  const [origin, setOrigin] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
+  const origin = useSyncExternalStore(
+    noopSubscribe,
+    () => window.location.origin,
+    () => "",
+  );
 
   const endorsements = useStream(shareId, "endorsement", token);
   const recommendations = useStream(shareId, "recommendation", token);

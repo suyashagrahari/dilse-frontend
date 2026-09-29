@@ -32,10 +32,13 @@ import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 import DEMO_PROFILE from "../components/demo";
 import type {
+  EditMode,
   ProfileProData,
   ProfileSkill,
   ProfileCertification,
+  ProfileLanguage,
 } from "../components/types";
+import { dbToProfileData, missingForSave, profileDataToBody, restoreDraft, tidyProfile } from "../components/data";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -48,7 +51,7 @@ const TEMPLATE = "profile-pro";
 const DRAFT_KEY = "profile_pro_draft";
 const BASE = `${API_URL}/profile-pro-pages`;
 
-export type EditMode = null | "choose" | "manual" | "preview";
+export type { EditMode };
 
 export interface Toast {
   id: number;
@@ -59,47 +62,9 @@ export interface Toast {
 
 /* ── Wire mapping ──────────────────────────────────────────────────────────── */
 
-/** Everything the server accepts. `contribToken` and the secrets are its business. */
-export function profileDataToBody(data: ProfileProData, password?: string): Record<string, unknown> {
-  return {
-    person: data.person,
-    about: data.about,
-    experience: data.experience,
-    education: data.education,
-    skills: data.skills,
-    recommendations: data.recommendations,
-    certifications: data.certifications ?? [],
-    contributorPrompt: data.contributorPrompt,
-    ...(password ? { password } : {}),
-  };
-}
-
-const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
-
-export function dbToProfileData(db: Record<string, unknown> | null | undefined): ProfileProData {
-  const d = (db ?? {}) as Record<string, unknown>;
-  const person = (d.person ?? {}) as ProfileProData["person"];
-  return {
-    person: {
-      name: person.name ?? "",
-      headline: person.headline ?? "",
-      location: person.location ?? "",
-      photoUrl: person.photoUrl ?? "",
-      bannerUrl: person.bannerUrl ?? "",
-      // String all the way through. Never Number().
-      connections: person.connections ?? "",
-      degreeNote: person.degreeNote ?? "",
-      openTo: person.openTo ?? "",
-    },
-    about: arr<string>(d.about),
-    experience: arr<ProfileProData["experience"][number]>(d.experience),
-    education: arr<ProfileProData["education"][number]>(d.education),
-    skills: arr<ProfileSkill>(d.skills),
-    recommendations: arr<ProfileProData["recommendations"][number]>(d.recommendations),
-    certifications: arr<ProfileCertification>(d.certifications),
-    contributorPrompt: typeof d.contributorPrompt === "string" ? d.contributorPrompt : "",
-  };
-}
+// The one description of the wire shape lives in components/data.ts. Re-exported
+// here because the published viewer imports `dbToProfileData` from this file.
+export { profileDataToBody, dbToProfileData };
 
 /* ── Draft ─────────────────────────────────────────────────────────────────── */
 
@@ -114,9 +79,26 @@ const clearDraft = () => {
 const readDraft = (): { data?: ProfileProData; password?: string; completed?: boolean } | null => {
   try {
     const raw = draftStore()?.getItem(DRAFT_KEY) ?? window.sessionStorage.getItem(DRAFT_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data?: unknown; password?: string; completed?: boolean };
+    // Drafts saved before photos / posts / the letter existed get those from the demo.
+    const data = restoreDraft(parsed.data) ?? undefined;
+    return { data, password: parsed.password, completed: parsed.completed };
   } catch { return null; }
 };
+
+/** "…\n\nBest, Aarav" → "…" — the reveal prints its own signature. */
+function stripSignOff(letter: string, sender: string): string {
+  const paras = letter.trim().split(/\n{2,}/);
+  const last = paras[paras.length - 1]?.trim() ?? "";
+  const signOff = /^(best|love|yours|with love|regards|warmly|forever|always|xoxo|lots of love)\b[^\n]{0,30}$/i.test(last)
+    || (sender && last.length <= sender.length + 12 && last.toLowerCase().includes(sender.toLowerCase()));
+  return signOff && paras.length > 1 ? paras.slice(0, -1).join("\n\n") : letter;
+}
+
+const DEMO_REC_IDS = new Set(DEMO_PROFILE.recommendations.map((r) => r.id));
+const DEMO_SKILL_IDS = new Set(DEMO_PROFILE.skills.map((s) => s.id));
+const isDemoSkill = (s: ProfileSkill) => DEMO_SKILL_IDS.has(s.id);
 
 const slugifySkill = (label: string, i: number): string =>
   `skill-${i}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
@@ -145,7 +127,8 @@ export function useProfileEditor() {
    */
   const applyFilled = useCallback((filled: ProfileProData) => {
     setMf((prev) => {
-      const next: ProfileProData = { ...prev, ...filled };
+      const next: ProfileProData = { ...prev, ...filled, person: { ...prev.person, ...(filled.person ?? {}) } };
+      const sender = (next.senderName || "").trim();
 
       const rawSkills = filled.skills as unknown;
       if (Array.isArray(rawSkills) && rawSkills.some((s) => typeof s === "string")) {
@@ -155,39 +138,62 @@ export function useProfileEditor() {
             const label = typeof s === "string" ? s.trim() : "";
             const prior = byLabel.get(label.toLowerCase());
             // Counts and ids are earned. Only the label is the model's to change.
-            if (prior) return { ...prior, label };
+            if (prior && prior.endorsements > 0 && !isDemoSkill(prior)) return { ...prior, label };
+            // A new skill starts with the one honest endorsement it has: the sender's.
             return {
               id: slugifySkill(label, i),
               label,
-              endorsements: 0,
-              topEndorsers: [],
+              endorsements: sender ? 1 : 0,
+              topEndorsers: sender ? [sender] : [],
               isTop3: i < 3,
             } as ProfileSkill;
           })
           .filter((s) => s.label.length > 0);
       }
 
+      const splitColon = (line: string): [string, string] => {
+        const idx = line.indexOf(":");
+        return idx === -1 ? [line.trim(), ""] : [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
+      };
+
       const rawCerts = filled.certifications as unknown;
       if (Array.isArray(rawCerts) && rawCerts.some((c) => typeof c === "string")) {
         next.certifications = (rawCerts as unknown[])
-          .map((c) => {
-            const line = typeof c === "string" ? c.trim() : "";
-            const idx = line.indexOf(":");
-            if (idx === -1) return { name: line, issuer: "", date: "" } as ProfileCertification;
-            return {
-              name: line.slice(0, idx).trim(),
-              issuer: line.slice(idx + 1).trim(),
-              date: "",
-            } as ProfileCertification;
+          .map((c, i) => {
+            const [name, issuer] = splitColon(typeof c === "string" ? c : "");
+            return { name, issuer, date: prev.certifications?.[i]?.date || "No expiry" } as ProfileCertification;
           })
           .filter((c) => c.name.length > 0);
       }
 
-      // References are contributed by real people through the moderation queue.
-      // Whatever the model did or did not say about them, they are not its call.
-      next.recommendations = prev.recommendations;
+      const rawLangs = filled.languages as unknown;
+      if (Array.isArray(rawLangs) && rawLangs.some((c) => typeof c === "string")) {
+        next.languages = (rawLangs as unknown[])
+          .map((c) => {
+            const [name, level] = splitColon(typeof c === "string" ? c : "");
+            return { name, level } as ProfileLanguage;
+          })
+          .filter((c) => c.name.length > 0);
+      }
 
-      return next;
+      // Experience rows the model wrote bullets for keep their shape.
+      // The model writes role / company / dates / bullets; the chapter's city
+      // follows the person's so no demo city is left behind.
+      const city = (next.person.location || "").split(",")[0].trim();
+      next.experience = (next.experience ?? []).map((e) => ({
+        ...e,
+        bullets: Array.isArray(e.bullets) ? e.bullets : [],
+        location: filled.experience && city ? city : e.location,
+      }));
+
+      // The page signs the letter itself; drop a sign-off the model added anyway.
+      if (typeof filled.letter === "string") next.letter = stripSignOff(filled.letter, sender);
+
+      // References are contributed by real people through the moderation queue.
+      // The demo's are about the demo person — on a fresh page they go.
+      next.recommendations = prev.recommendations.filter((r) => !DEMO_REC_IDS.has(r.id));
+
+      return tidyProfile(next);
     });
   }, []);
 
@@ -330,7 +336,9 @@ export function useProfileEditor() {
 
   /** Seeds the form exactly as opening it does, without opening it. */
   const seedManualForm = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_PROFILE });
+    // A fresh page starts without the demo's references — they are about the
+    // demo person, and real ones arrive from friends through the queue.
+    setMf(isPersonalized ? { ...content } : { ...DEMO_PROFILE, recommendations: [] });
   }, [isPersonalized, content]);
 
   const handleEditClick = useCallback(() => {
@@ -357,13 +365,16 @@ export function useProfileEditor() {
   }, [content]);
 
   const handleSave = useCallback(() => {
-    if (!mf.person.name.trim()) { pushToast({ type: "info", title: "Add their name first" }); return; }
-    setContent(mf);
+    const missing = missingForSave(mf);
+    if (missing.length) { pushToast({ type: "info", title: `Still needed: ${missing.join(", ")}` }); return; }
+    const cleaned = tidyProfile(mf);
+    setContent(cleaned);
     setIsPersonalized(true);
     setEditMode("preview");
     bumpPreview();
     saveDraft({ data: mf, password: pagePassword, completed: true });
-    pushToast({ type: "success", title: "Saved", message: "Read it back, then publish" });
+    track(EVENTS.PAGE_SAVED, { template: TEMPLATE, has_password: Boolean(pagePassword), photos: cleaned.photos.length });
+    pushToast({ type: "success", title: "Saved 💙", message: "Read it back, then publish" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
 
   const create = useCallback(async (): Promise<string | null> => {
@@ -449,9 +460,9 @@ export function useProfileEditor() {
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
-    if (!content.person.name.trim()) {
-      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_name" });
-      pushToast({ type: "info", title: "Add their name first", message: "Open Edit and add their name" });
+    if (missingForSave(content).length) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_fields" });
+      pushToast({ type: "info", title: "Almost there", message: `Still needed: ${missingForSave(content).join(", ")}` });
       setEditMode("manual");
       setMf({ ...content });
       return;
@@ -516,16 +527,17 @@ export function useProfileEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    const text = `${content.person.name || "She"} has been endorsed.`;
+    const text = `${content.person.name || "You"}, you have a new message 💼💙`;
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
-      title: "Endorsements",
+      title: "You've been endorsed 💼💙",
       text,
-      accent: "#0f766e",
+      accent: "#0A66C2",
+      senderName: content.senderName,
       slug: "profile-pro",
     });
-  }, [shareUrl, content.person.name, pagePassword]);
+  }, [shareUrl, content.person.name, content.senderName, pagePassword]);
 
   /**
    * The friends' link — a DIFFERENT secret from `shareUrl`.
