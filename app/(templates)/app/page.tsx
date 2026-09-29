@@ -9,13 +9,11 @@
 //
 // Everything stateful lives in the hook. Nothing in this file fetches.
 //
-// ── THE COLUMN ───────────────────────────────────────────────────────────────
+// ── THE CHROME ───────────────────────────────────────────────────────────────
 //
-// The listing is portrait and stays portrait. `AppTemplate` letterboxes itself
-// into a centred 420px column on a neutral surround and never reflows wide, so
-// this file's only job is to keep its own chrome — the floating bar, the sheet,
-// the toasts — inside that same column rather than pinned to the browser edges.
-// A listing that stretches to 1400px is not a listing, it is a table.
+// The listing is responsive (phone / tablet / desktop layouts of the store), so
+// the floating bar spans the viewport: Back on the left, the actions on the
+// right. `chromeTop` on the template reserves room for it.
 
 import { Suspense, useCallback, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
@@ -30,11 +28,8 @@ import EditSheet from "./components/EditSheet";
 import ShareCardPanel from "./components/ShareCard";
 import { AP, AP_TAP } from "./components/theme";
 
-/** The letterbox width. Must match `AppTemplate`'s own column. */
-const COLUMN = 420;
-/** The neutral the column floats on. Must match `AppTemplate`'s surround. */
-const SURROUND = "#E8E6EF";
-const INK = "#16141F";
+const SURROUND = "#FFFFFF";
+const INK = "#1C1C1E";
 
 /* ── Bits ──────────────────────────────────────────────────────────────────── */
 
@@ -82,7 +77,7 @@ function AppPageInner() {
     fontSize: 13.5,
     fontWeight: 700,
     cursor: "pointer",
-    boxShadow: "0 2px 10px rgba(22,20,31,0.14)",
+    boxShadow: "0 4px 14px -4px rgba(0,0,0,0.22), 0 0 0 0.5px rgba(0,0,0,0.06)",
     touchAction: "manipulation",
   };
 
@@ -95,10 +90,24 @@ function AppPageInner() {
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative", background: SURROUND, fontFamily: AP.font }}>
-      {/* Floating top bar — inside the column, never at the browser edges. */}
+      {/* A white band under the floating bar, so the listing never scrolls
+          visibly behind Back / Create. Same height as `chromeTop`. */}
       <div
-        className="fixed left-1/2 -translate-x-1/2 z-[120] px-3 flex items-center gap-2 w-full"
-        style={{ top: 12, maxWidth: COLUMN, paddingTop: "env(safe-area-inset-top, 0px)" }}
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          top: 0,
+          zIndex: 119,
+          height: "calc(62px + env(safe-area-inset-top, 0px))",
+          background: "rgba(255,255,255,0.97)",
+        }}
+      />
+      {/* Floating top bar — spans the viewport; the listing is responsive. */}
+      <div
+        className="fixed left-0 right-0 z-[120] px-3 sm:px-5 flex items-center gap-2"
+        style={{ top: 10, paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <button type="button" onClick={e.goBack} style={barBtn}>
           <BackGlyph /> Back
@@ -140,7 +149,7 @@ function AppPageInner() {
         key={e.previewVersion}
         data={e.displayData}
         shareId={e.shareId ?? undefined}
-        chromeTop={64}
+        chromeTop={62}
       />
 
       <EditSheet
@@ -191,7 +200,7 @@ function AppPageInner() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, flex: 1 }}>Her listing, and her reviews</h2>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, flex: 1 }}>Her listing, and her reviews 💗</h2>
                 <button
                   type="button"
                   onClick={closePanel}

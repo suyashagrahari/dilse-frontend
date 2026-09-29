@@ -5,22 +5,18 @@
 //
 // ── BRAND ────────────────────────────────────────────────────────────────────
 //
-// Nothing here imitates either of the two dominant mobile software storefronts.
-// No storefront wordmark, no triangle mark, no rounded-square download glyph, no
-// vendor typeface, and none of their names or platform names anywhere — not in
-// copy, file names, class names, alt text, or these comments. The chrome is a
-// "<sender> Store" pill with a plain line-art mark, and the accent is a deep
-// indigo (#4B3FA7) that belongs to no storefront.
+// The LAYOUT is a faithful clone of a phone storefront's product page (and its
+// desktop/tablet web counterpart): icon, GET pill with the real press/progress
+// ring, the facts strip, marketing screenshots, ratings, privacy cards and the
+// information table. What it never copies is a mark: no storefront wordmark,
+// no vendor logo, no vendor or platform names in copy, alt text or comments.
+// The chrome is "<seller>'s Store" and the tint is a warm system pink.
 //
-// ── WHAT CARRIES THIS TEMPLATE ───────────────────────────────────────────────
+// ── THE ROMANCE LIVES IN THE COPY ────────────────────────────────────────────
 //
-// Two things, and everything else is assembly over the product template's
-// review flow, star widget, and moderation queue:
-//
-//   1. The STATS STRIP vertical rhythm. Label caps on top, figure beneath,
-//      sub-label under that, hairline dividers between cells.
-//   2. The VERSION HISTORY, which is the comedic centrepiece and an expanding
-//      inline panel — not a footnote and not a separate page.
+// Played completely straight at first glance. Version history = relationship
+// milestones, reviews = her friends, in-app purchases = hugs, privacy = the
+// things he quietly keeps track of. OPEN, once installed, opens the letter.
 
 export interface AppMeta {
   /** "Meera" */
@@ -39,6 +35,22 @@ export interface AppMeta {
   languages: string;
   /** "Free (emotionally expensive)" — free text, never parsed as currency. */
   price: string;
+  /** The sender's own name. The "Seller" row, and who signs the letter. */
+  seller: string;
+  /** "Works with me only." — the Compatibility row. */
+  compatibility: string;
+  /** Framing of the icon photo (focal point 0–100, zoom 100–300). */
+  iconCropX?: number;
+  iconCropY?: number;
+  iconScale?: number;
+}
+
+/** The privacy "nutrition label" cards — short category names. */
+export interface AppPrivacy {
+  /** "Data Used to Track You" */
+  tracked: string[];
+  /** "Data Linked to You" */
+  linked: string[];
 }
 
 /**
@@ -63,6 +75,9 @@ export interface AppRating {
 export interface AppScreenshot {
   imageUrl: string;
   caption: string;
+  cropX?: number;
+  cropY?: number;
+  scale?: number;
 }
 
 export interface AppDescription {
@@ -130,6 +145,15 @@ export interface AppData {
   reviews: AppReview[];
   /** Shown to friends on the contributor landing. */
   contributorPrompt: string;
+  /** In-app purchases, one per line: "Forehead kiss · ₹0". */
+  iap: string[];
+  privacy: AppPrivacy;
+  /** The main letter that waits in the bottom-right corner. */
+  letter: string;
+  /** Optional "answer me first" question before the letter opens. */
+  lockQuestion: string;
+  /** Label of the yes button on that question. */
+  lockAnswer: string;
 }
 
 /** Contributor form caps. Exactly four fields — stars, title, body, name. */

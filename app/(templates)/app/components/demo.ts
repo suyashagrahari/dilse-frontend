@@ -22,7 +22,6 @@
 // wire. "1 human", "Free (emotionally expensive)" and "8,472". Nothing here
 // parses them.
 
-import { templateMedia } from "@/lib/templateMedia";
 import {
   APP_REVIEW_LIMITS,
   type AppData,
@@ -55,13 +54,18 @@ const DEMO_META: AppMeta = {
   // fires on a broken or missing URL — it is just no longer what the demo
   // leads with, because an initials tile on the most-looked-at line of a
   // listing reads as unfinished rather than as a design choice.
-  iconUrl: templateMedia("app", "icon.webp"),
+  iconUrl: "https://cdn.subhsandesh.in/gifts-media/assets/couple2.webp",
+  iconCropX: 74,
+  iconCropY: 42,
+  iconScale: 210,
   developer: "Sharma Family Enterprises",
   ageRating: "4+",
   category: "Utilities",
   size: "1 human",
   languages: "English, Hindi, Sarcasm",
   price: "Free (emotionally expensive)",
+  seller: "Karan",
+  compatibility: "Works with me only.",
 };
 
 /**
@@ -78,7 +82,7 @@ const DEMO_META: AppMeta = {
 const DEMO_REVIEWS: AppReview[] = [
   {
     id: "rv1",
-    author: "Priya N.",
+    author: "priya_since_2014",
     stars: 5,
     title: "Ten years of daily use, zero crashes",
     body:
@@ -87,14 +91,14 @@ const DEMO_REVIEWS: AppReview[] = [
     version: "3.2",
     developerResponse: {
       text:
-        "Thanks for the report. The lag is expected behaviour and will not be fixed. Re: availability — correct, and that is by design. Closing this as working as intended.",
+        "Thanks for the report. The lag is expected behaviour and will not be fixed. Re: availability — correct, and that is by design. Closing this as the best thing that ever happened to me.",
       ago: "1d ago",
     },
     status: "published",
   },
   {
     id: "rv2",
-    author: "Rahul M.",
+    author: "rahul.exe",
     stars: 5,
     title: "Battery life is genuinely absurd",
     body:
@@ -105,164 +109,65 @@ const DEMO_REVIEWS: AppReview[] = [
   },
   {
     id: "rv3",
-    author: "Ananya K.",
+    author: "ananya ☕",
     stars: 4,
-    title: "Great, but the 3.0 update changed things",
+    title: "Talks through every film",
     body:
-      "Does exactly one thing and does it perfectly. Wish the documentation were clearer about the mood system. Otherwise no notes.",
+      "Every film. Has never once been wrong about what happens next, which is somehow worse than being wrong. Minus one star for spoilers, plus infinity for the commentary.",
     ago: "1w ago",
     version: "3.0",
     developerResponse: {
-      text: "The mood system is documented. The documentation is her face.",
+      text: "Escalated internally. I was told the films are predictable and I am the one with the bug. Ticket closed by her.",
       ago: "6d ago",
     },
     status: "published",
   },
   {
     id: "rv4",
-    author: "Sneha B.",
+    author: "kabir_from_hostel_b",
     stars: 5,
-    title: "Does one thing perfectly",
+    title: "Best in category, not close",
     body:
-      "The one thing is remembering. Birthdays, orders, the exact sentence you said in 2022 that you were hoping nobody had logged.",
-    ago: "1w ago",
+      "I have met the alternatives. There are no alternatives. She once drove forty minutes to bring him a charger he had not asked for.",
+    ago: "2w ago",
+    version: "2.0",
     status: "published",
   },
+  // Pending — what the sender's moderation queue looks like before approving.
   {
     id: "rv5",
-    author: "Vikram T.",
-    stars: 3,
-    title: "Update broke my sleep schedule",
-    body:
-      "Talks through films. Every film. Has never once been wrong about what happens next, which is somehow worse than being wrong.",
-    ago: "2w ago",
-    version: "3.2",
-    developerResponse: {
-      text:
-        "Escalated internally. Was told, and I quote, that the films are predictable and I am the one with the bug. Ticket closed by her.",
-      ago: "12d ago",
-    },
-    status: "published",
-  },
-  {
-    id: "rv6",
-    author: "Meghna R.",
+    author: "dev a.",
     stars: 5,
-    title: "Worth every rupee (there are none)",
-    body: "Free to install, impossible to uninstall. Have not tried. Would not know where to start.",
-    ago: "2w ago",
-    status: "published",
-  },
-  {
-    id: "rv7",
-    author: "Arjun D.",
-    stars: 4,
-    title: "Minor sync issues across time zones",
-    body:
-      "Held up fine over nine months and two cities. Some latency. No data loss, which is the only metric that matters.",
-    ago: "3w ago",
-    version: "2.4",
-    status: "published",
-  },
-  {
-    id: "rv8",
-    author: "Ishita P.",
-    stars: 5,
-    title: "Best in category, and it is not close",
-    body: "I have met the alternatives. There are no alternatives.",
-    ago: "3w ago",
-    status: "published",
-  },
-  {
-    id: "rv9",
-    author: "Kabir S.",
-    stars: 5,
-    title: "Would not switch",
-    body:
-      "Ten out of ten. Docked nothing. She once drove forty minutes to bring me a charger I had not asked for.",
-    ago: "1mo ago",
-    version: "2.1",
-    status: "published",
-  },
-  {
-    id: "rv10",
-    author: "Nandini G.",
-    stars: 5,
-    title: "Ships with excellent documentation",
-    body:
-      "Tells you exactly what she wants and then checks that you heard it. Revolutionary feature. Nobody else has shipped this.",
-    ago: "1mo ago",
-    developerResponse: {
-      text: "We are aware this is not standard in the category. We have no plans to align with the category.",
-      ago: "1mo ago",
-    },
-    status: "published",
-  },
-  // Pending — these are what the sender's moderation queue has to show.
-  {
-    id: "rv11",
-    author: "Dev A.",
-    stars: 5,
-    title: "Still testing but promising",
-    body: "Two years in and I am still finding features. Last week: she can whistle. Nobody told me.",
+    title: "Still finding features",
+    body: "Two years in and he is still finding features. Last week: she can whistle. Nobody told any of us.",
     ago: "3h ago",
-    version: "3.2",
-    status: "pending",
-  },
-  {
-    id: "rv12",
-    author: "Tanvi J.",
-    stars: 4,
-    title: "One small request",
-    body:
-      "Please add an option to stop her winning every argument by simply being right. Everything else is perfect.",
-    ago: "9h ago",
     version: "3.2",
     status: "pending",
   },
 ];
 
 /**
- * Ten published reviews: 0×1★, 0×2★, 1×3★, 2×4★, 7×5★.
- *
- * Ten is not an accident — the percentages have to land on whole numbers that
- * sum to 100 (0, 0, 10, 20, 70) and a total of eight or nine does not.
- * `average` is 4.6, the true mean, and it is left as a fraction on purpose: the
- * star widget fills to the exact amount, and a 4.6 drawn as five full stars is
- * the fastest way to make the page read as a mock-up.
+ * Four published reviews: 3×5★ and 1×4★ → 4.8. The histogram is recomputed from
+ * the published reviews at render, so this only matters for old callers.
  */
 const DEMO_RATING: AppRating = {
-  average: 4.6,
+  average: 4.8,
   count: "8,472",
-  distribution: [0, 0, 1, 2, 7],
+  distribution: [0, 0, 0, 1, 3],
 };
 
 /**
- * Captions carry these, not artwork. The template ships no screenshot assets,
- * so `imageUrl` is empty and the rail draws its captioned placeholder frames —
- * which is also the honest thing to hand a sender who has not uploaded anything
- * yet.
+ * The screenshot rail holds the couple's own photos. Each one is drawn as a
+ * marketing screenshot: a short bold headline on a soft gradient, and the photo
+ * on a phone screen underneath. Captions are headlines, not sentences.
  */
-/**
- * The shot rail is where the couple's own photographs go.
- *
- * These four are placeholders, not artwork to keep: each is a warm gradient
- * with a two-figure silhouette and an "Add your photo" pill, so the slot reads
- * as an invitation rather than as a finished screen. The sender replaces every
- * one of them from the edit sheet, which already has an upload row per shot.
- *
- * They are DELIBERATELY not mock phone screens. A rail of invented app UI looks
- * complete, and a sender who thinks it is complete never puts a photo of the
- * two of them into the one part of this page that is meant to hold one.
- *
- * Captions stay in the flat listing register — the joke is the mismatch between
- * that voice and a photograph of somebody's girlfriend.
- */
+const COUPLE = (n: number) => `https://cdn.subhsandesh.in/gifts-media/assets/couple${n}.webp`;
+
 const DEMO_SCREENSHOTS: AppScreenshot[] = [
-  { imageUrl: templateMedia("app", "photo-1.webp"), caption: "First launch — 6:40am, already awake, already talking" },
-  { imageUrl: templateMedia("app", "photo-2.webp"), caption: "Daily active use — every day since, no exceptions" },
-  { imageUrl: templateMedia("app", "photo-3.webp"), caption: "Background activity — runs continuously, never sleeps" },
-  { imageUrl: templateMedia("app", "photo-4.webp"), caption: "Storage — 90% occupied, and I am not deleting any of it" },
+  { imageUrl: COUPLE(2), caption: "Date nights, fully optimised", cropX: 52, cropY: 50, scale: 100 },
+  { imageUrl: COUPLE(1), caption: "Runs in the background of every thought", cropX: 52, cropY: 60, scale: 110 },
+  { imageUrl: COUPLE(4), caption: "Shares the blanket. Mostly.", cropX: 45, cropY: 60, scale: 100 },
+  { imageUrl: COUPLE(3), caption: "Long-term support included", cropX: 62, cropY: 55, scale: 110 },
 ];
 
 const DEMO_DESCRIPTION: AppDescription = {
@@ -309,37 +214,25 @@ const DEMO_VERSIONS: AppVersion[] = [
     size: "1 human (breaking changes)",
     notes: [
       "MAJOR: moved in. Everything downstream of this is a breaking change and every bit of it was worth it.",
-      "Added support for arguing about a documentary neither of us finished.",
+      "Added a second toothbrush. And a third pillow nobody asked for.",
       "Removed the phrase “let’s see how it goes” from all responses.",
-    ],
-  },
-  {
-    version: "2.4",
-    date: "19 January 2026",
-    size: "1 human",
-    notes: [
-      "Improved handling of long silences. She now correctly identifies which kind it is.",
-      "Fixed an issue where she laughed at her own joke before finishing it. Reopened. Closed as won’t fix.",
-    ],
-  },
-  {
-    version: "2.1",
-    date: "8 September 2025",
-    size: "1 human",
-    notes: [
-      "Added a second toothbrush.",
-      "Optimised memory usage on old arguments. Most now resolve in under an hour.",
     ],
   },
   {
     version: "2.0",
     date: "14 February 2025",
     size: "1 human",
-    notes: ["Said it back.", "Minor stability improvements."],
+    notes: ["Said it back.", "Improved handling of long silences — she now knows which kind it is."],
   },
   {
     version: "1.5",
     date: "2 November 2024",
+    size: "1 human",
+    notes: ["First road trip. Navigation disabled, playlist enabled."],
+  },
+  {
+    version: "1.1",
+    date: "20 April 2024",
     size: "1 human",
     notes: ["Bug fixes. Added a shared calendar."],
   },
@@ -347,7 +240,7 @@ const DEMO_VERSIONS: AppVersion[] = [
     version: "1.0",
     date: "4 March 2024",
     size: "1 human",
-    // The straight man for all six entries above. Do not lengthen this.
+    // The straight man for every entry above. Do not lengthen this.
     notes: ["Initial release."],
   },
 ];
@@ -379,6 +272,21 @@ export const DEMO_APP: AppData = {
   info: DEMO_INFO,
   reviews: DEMO_REVIEWS,
   contributorPrompt: "Karan is collecting reviews of Meera. One line is plenty — she reads all of them.",
+  iap: [
+    "Forehead kiss · Free",
+    "Extra-tight hug · Free",
+    "Unlimited cuddles (lifetime) · ₹0",
+    "Last bite of the fries · 1 kiss",
+    "“You were right” · Priceless",
+  ],
+  privacy: {
+    tracked: ["Location (home safe?)", "Coffee order", "Mood swings"],
+    linked: ["My hoodie", "The last slice", "Every playlist", "My whole heart"],
+  },
+  letter:
+    "Meera,\n\nI made you a listing because I ran out of ways to say it normally. Every line above is a joke and every joke is true — you really do wake up already talking, and I really have stopped wanting quiet mornings.\n\nThank you for version 1.0, for every update since, and for never once shipping without telling me. I read the changelog every day. It is still my favourite thing to read.\n\nNo uninstall option. I checked. I would not use it.",
+  lockQuestion: "Will you install me back? 🥺",
+  lockAnswer: "Already did 💗",
 };
 
 /* ── Aggregate helpers ─────────────────────────────────────────────────────── */
@@ -441,10 +349,14 @@ const starsOf = (v: unknown): AppStar =>
  * renderer here draws as its text fallback.
  */
 const imageUrl = (v: unknown): string => {
-  const s = strOr(v, 2000);
-  if (!s) return "";
-  if (/^https?:\/\//i.test(s) || /^data:image\//i.test(s)) return s;
-  return "";
+  if (typeof v !== "string") return "";
+  const raw = v.trim();
+  // A draft holds freshly picked photos as data URLs, which run to hundreds of
+  // KB. Cutting one at 2000 chars (as links are cut) leaves an invalid URL and
+  // a broken photo after every refresh.
+  if (/^data:image\//i.test(raw)) return raw.length <= 12_000_000 ? raw : "";
+  const s = cut(raw, 2000);
+  return /^https?:\/\//i.test(s) ? s : "";
 };
 
 const strList = (v: unknown, fallback: string[], max: number, itemMax: number): string[] => {
@@ -454,6 +366,24 @@ const strList = (v: unknown, fallback: string[], max: number, itemMax: number): 
     .slice(0, max);
   return out.length > 0 ? out : fallback;
 };
+
+const cropNum = (v: unknown, min: number, max: number): number | undefined => {
+  if (v === undefined || v === null || v === "") return undefined;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : undefined;
+};
+
+/** Framing numbers, only the ones present — absent means "centred, unzoomed". */
+function cropOf(x: unknown, y: unknown, scale: unknown): { cropX?: number; cropY?: number; scale?: number } {
+  const out: { cropX?: number; cropY?: number; scale?: number } = {};
+  const cx = cropNum(x, 0, 100);
+  const cy = cropNum(y, 0, 100);
+  const sc = cropNum(scale, 100, 300);
+  if (cx !== undefined) out.cropX = cx;
+  if (cy !== undefined) out.cropY = cy;
+  if (sc !== undefined) out.scale = sc;
+  return out;
+}
 
 /**
  * UI state → wire body.
@@ -471,9 +401,22 @@ export function appDataToBody(data: AppData, password?: string): Record<string, 
       count: data.rating.count,
       distribution: [...data.rating.distribution],
     },
-    screenshots: data.screenshots.map((s) => ({ imageUrl: s.imageUrl, caption: s.caption })),
+    screenshots: data.screenshots.map((s) => ({
+      imageUrl: s.imageUrl,
+      caption: s.caption,
+      cropX: s.cropX,
+      cropY: s.cropY,
+      scale: s.scale,
+    })),
     description: { short: [...data.description.short], full: [...data.description.full] },
-    whatsNew: { ...data.whatsNew, notes: [...data.whatsNew.notes] },
+    // "What's New" IS the newest changelog entry — one source, so they never disagree.
+    whatsNew: data.versionHistory[0]
+      ? {
+          version: data.versionHistory[0].version,
+          date: data.versionHistory[0].date,
+          notes: [...data.versionHistory[0].notes],
+        }
+      : { ...data.whatsNew, notes: [...data.whatsNew.notes] },
     versionHistory: data.versionHistory.map((v) => ({ ...v, notes: [...v.notes] })),
     info: data.info.map((r) => ({ label: r.label, value: r.value, link: !!r.link })),
     reviews: data.reviews.map((r) => ({
@@ -490,6 +433,11 @@ export function appDataToBody(data: AppData, password?: string): Record<string, 
       status: r.status,
     })),
     contributorPrompt: data.contributorPrompt,
+    iap: [...data.iap],
+    privacy: { tracked: [...data.privacy.tracked], linked: [...data.privacy.linked] },
+    letter: data.letter,
+    lockQuestion: data.lockQuestion,
+    lockAnswer: data.lockAnswer,
     ...(password ? { password } : {}),
   };
 }
@@ -541,7 +489,11 @@ export function dbToAppData(db: unknown): AppData {
   const screenshots = arr(src.screenshots)
     .map((entry) => {
       const s = obj(entry);
-      return { imageUrl: imageUrl(s.imageUrl), caption: strOr(s.caption, 160) };
+      return {
+        imageUrl: imageUrl(s.imageUrl),
+        caption: strOr(s.caption, 160),
+        ...cropOf(s.cropX, s.cropY, s.scale),
+      };
     })
     .filter((s) => s.imageUrl || s.caption)
     .slice(0, 8);
@@ -597,6 +549,11 @@ export function dbToAppData(db: unknown): AppData {
       ? [0, 1, 2, 3, 4].map((i) => Math.max(0, Math.trunc(num(rawDistribution[i], 0, 0, 1e6))))
       : [...DEMO_RATING.distribution];
 
+  const iconCrop = cropOf(meta.iconCropX, meta.iconCropY, meta.iconScale);
+  const rawPrivacy = obj(src.privacy);
+  // Older pages kept Compatibility as a free-standing info row.
+  const legacyCompat = info.find((r) => /compatib/i.test(r.label))?.value ?? "";
+
   return {
     app: {
       name: str(meta.name, DEMO_APP.app.name, 60),
@@ -609,6 +566,11 @@ export function dbToAppData(db: unknown): AppData {
       size: str(meta.size, DEMO_APP.app.size, 60),
       languages: str(meta.languages, DEMO_APP.app.languages, 120),
       price: str(meta.price, DEMO_APP.app.price, 60),
+      seller: strOr(meta.seller, 40),
+      compatibility: strOr(meta.compatibility, 90) || legacyCompat || DEMO_APP.app.compatibility,
+      ...(iconCrop.cropX !== undefined ? { iconCropX: iconCrop.cropX } : {}),
+      ...(iconCrop.cropY !== undefined ? { iconCropY: iconCrop.cropY } : {}),
+      ...(iconCrop.scale !== undefined ? { iconScale: iconCrop.scale } : {}),
     },
     rating: {
       average: num(rawRating.average, DEMO_RATING.average, 0, 5),
@@ -630,5 +592,18 @@ export function dbToAppData(db: unknown): AppData {
     info: info.length > 0 ? info : DEMO_APP.info,
     reviews: arr(src.reviews).length > 0 ? reviews : DEMO_APP.reviews,
     contributorPrompt: str(src.contributorPrompt, DEMO_APP.contributorPrompt, 240),
+    iap: Array.isArray(src.iap) ? strList(src.iap, [], 8, 80) : [...DEMO_APP.iap],
+    privacy: {
+      tracked: Array.isArray(rawPrivacy.tracked)
+        ? strList(rawPrivacy.tracked, [], 6, 70)
+        : [...DEMO_APP.privacy.tracked],
+      linked: Array.isArray(rawPrivacy.linked)
+        ? strList(rawPrivacy.linked, [], 6, 70)
+        : [...DEMO_APP.privacy.linked],
+    },
+    // No fallback: an old page without a letter simply shows no envelope.
+    letter: strOr(src.letter, 2000),
+    lockQuestion: strOr(src.lockQuestion, 140),
+    lockAnswer: strOr(src.lockAnswer, 40),
   };
 }
