@@ -1,5 +1,6 @@
 import { Heart, Gamepad2, Images, Music } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "love-gf",
@@ -13,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "You are the reason my heart beats a little faster. Every moment with you is a gift I treasure, today and always.",
   bgGradient: "from-pink-50 via-rose-50 to-white",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/love/lovegf.webp",
+  coverImage: templateMedia("love-gf", "cover-poster.webp"),
   tabs: [
     { id: "cover", icon: Heart, label: "Love" },
     { id: "games", icon: Gamepad2, label: "Games" },

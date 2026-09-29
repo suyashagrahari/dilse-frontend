@@ -1,5 +1,6 @@
 import { Home, Heart, Image, MapPin, Flower2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "reception",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Join us for a night of celebration, love & unforgettable memories.",
   bgGradient: "from-slate-950 via-slate-900 to-slate-950",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/Reception/reception.webp",
+  coverImage: templateMedia("reception", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "couple", icon: Heart, label: "Us" },

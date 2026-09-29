@@ -1,5 +1,6 @@
 import { PartyPopper, Mail, Gift } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "birthday-gf",
@@ -13,7 +14,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Every moment with you is a gift. On your special day, I want you to know how much you mean to me. Here's to another year of love, laughter, and beautiful memories together.",
   bgGradient: "from-pink-100 via-rose-50 to-red-100",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/Birthday1/birthdaytemplate1.webp",
+  coverImage: templateMedia("birthday-gf", "cover-poster.webp"),
   tabs: [
     { id: "cover", icon: PartyPopper, label: "Wish" },
     { id: "letter", icon: Mail, label: "Letter" },

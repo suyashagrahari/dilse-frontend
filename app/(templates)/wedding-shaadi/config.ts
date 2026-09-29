@@ -1,5 +1,6 @@
 import { Home, Heart, CalendarDays, Image, Flower2 } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "wedding-shaadi",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Two souls, one beautiful journey. Join us as we begin our forever together.",
   bgGradient: "from-amber-50 via-yellow-50 to-white",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/marriage/weeding.webp",
+  coverImage: templateMedia("wedding-shaadi", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "couple", icon: Heart, label: "Us" },

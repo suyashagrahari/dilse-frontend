@@ -1,6 +1,6 @@
 import { Heart, Gift, Sparkles, Images } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { RAKHI_ASSETS } from "./assets";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts + components/rakhi.css.
@@ -25,7 +25,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A Raksha Bandhan page for the years you can't be in the same room. He taps through the full puja — tilak, sweet, aarti, and the rakhi itself — asks for his gift, and sends you back a promise. Download the card for your story.",
   bgGradient: "from-amber-100 via-orange-50 to-red-100",
-  coverImage: RAKHI_ASSETS.cover.src,
+  coverImage: templateMedia("happy-rakshabandhan-to-brother", "cover-poster.webp"),
   tabs: [
     { id: "bhai", icon: Heart, label: "Bhai" },
     { id: "rakhi", icon: Sparkles, label: "Rakhi" },
