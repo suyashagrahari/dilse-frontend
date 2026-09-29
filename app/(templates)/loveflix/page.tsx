@@ -2,51 +2,22 @@
 
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Loader2, PenLine, Send, Share2 } from "lucide-react";
+import { Loader2, PenLine, Send, Share2 } from "lucide-react";
 
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditSheet from "./components/EditSheet";
+import EditorDock from "../_love/EditorDock";
 import LoveflixTemplate from "./components/LoveflixTemplate";
 import { ACCENT, BG, BG_RAISED, FONT_BODY, FONT_DISPLAY, HAIRLINE, TEXT } from "./components/theme";
 import { useReducedMotion } from "./components/useReducedMotion";
 import { useLoveflixEditor } from "./hooks/useLoveflixEditor";
 
 /* ── Editor chrome ─────────────────────────────────────────────────────────────
-   A slim black strip above the app, like a browser bar, so the app underneath
-   keeps its own nav, billboard and tab bar exactly where the real thing has
-   them. The template is told how tall the strip is (`topInset`) and starts
-   below it.
+   None reserved: the app starts at the very top edge and keeps its own nav,
+   billboard and tab bar exactly where the real thing has them. The editor
+   controls float in one EditorDock, clear of the phone tab bar.
 ─────────────────────────────────────────────────────────────────────────────*/
-
-const BAR_H = 52;
-
-const pill: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  height: 36,
-  padding: "0 14px",
-  borderRadius: 999,
-  background: "rgba(255,255,255,0.08)",
-  border: `1px solid ${HAIRLINE}`,
-  color: TEXT,
-  fontFamily: FONT_BODY,
-  fontSize: 13.5,
-  fontWeight: 600,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const primary: React.CSSProperties = {
-  ...pill,
-  padding: "0 18px",
-  background: ACCENT,
-  border: "1px solid rgba(0,0,0,0.2)",
-  color: "#fff",
-  fontWeight: 700,
-  boxShadow: "0 8px 20px -8px rgba(225,10,23,.8)",
-};
 
 function LoveflixPageInner() {
   const e = useLoveflixEditor();
@@ -61,50 +32,20 @@ function LoveflixPageInner() {
 
   return (
     <div style={{ position: "relative", minHeight: "100dvh", background: BG }}>
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 120,
-          height: BAR_H,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "0 12px",
-          background: "#000",
-          borderBottom: `1px solid ${HAIRLINE}`,
-        }}
-      >
-        <button type="button" onClick={e.goBack} style={{ ...pill, paddingLeft: 10 }} aria-label="Back to templates">
-          <ArrowLeft size={16} /> <span className="lf-edbar-label">Back</span>
-        </button>
-        <span
-          className="lf-edbar-label"
-          style={{ color: "rgba(255,255,255,.55)", fontFamily: FONT_BODY, fontSize: 12.5, marginLeft: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-        >
-          {e.isPersonalized ? "Your preview — tap around like they will" : "Demo — tap a profile to start"}
-        </span>
-        <div style={{ flex: 1 }} />
-        {e.isPersonalized && !e.showShare && (
-          <button type="button" onClick={e.handleEditFromPreview} style={pill}>
-            <PenLine size={15} /> Edit
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          style={{ ...primary, opacity: e.publishing ? 0.65 : 1 }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-        <style>{`@media (max-width:520px){.lf-edbar-label{display:none}}`}</style>
-      </div>
-
       {/* Live preview. Keyed so every save restarts the run from the profile picker. */}
-      <LoveflixTemplate key={e.previewVersion} data={e.displayData} mode="demo" topInset={BAR_H} />
+      <LoveflixTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+
+      <EditorDock
+        tone="dark"
+        accent={ACCENT}
+        font={FONT_BODY}
+        avoidBottom=".lf-tabs"
+        onBack={e.goBack}
+        secondary={[
+          e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview, icon: <PenLine size={15} /> },
+        ]}
+        primary={{ ...topAction, disabled: e.publishing }}
+      />
 
       <EditSheet
         editMode={e.editMode}

@@ -351,6 +351,10 @@ export function AppTemplate({
           sign="yours, every version,"
           forceOpen={letterForce}
           zIndex={90}
+          variant="app"
+          avatar={data.app.iconUrl || undefined}
+          title={data.app.name.trim() || undefined}
+          photos={data.screenshots.map((s) => s.imageUrl)}
         />
       ) : null}
     </div>

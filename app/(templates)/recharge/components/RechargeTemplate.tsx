@@ -134,7 +134,8 @@ export default function RechargeTemplate({
   }, []);
 
   const hasLetter = data.letter.trim().length > 0;
-  const topInset = mode === "preview" ? 60 : 0;
+  // The editor no longer reserves a strip above the app, in any mode.
+  const topInset = 0;
 
   // The envelope sits above the sticky pay bar on phones/tablets.
   const letterBottom = step === "plans" && selected && !wide ? 94 : 20;
@@ -216,6 +217,8 @@ export default function RechargeTemplate({
           sign="yours, on every network,"
           zIndex={70}
           forceOpen={forceLetter}
+          variant="recharge"
+          photos={data.photos.map((p) => p.url)}
         />
       ) : null}
     </div>

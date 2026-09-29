@@ -214,6 +214,10 @@ export default function UsTemplate({ data, mode }: UsTemplateProps) {
           right={web ? 24 : 14}
           teaser={`1 new letter${data.from ? ` from ${data.from}` : ""} 💌`}
           zIndex={overlay ? 20 : 155}
+          variant="us"
+          avatar={data.avatarUrl || undefined}
+          handle={data.handle || undefined}
+          photos={data.posts.map((p) => p.imageUrl)}
         />
       ) : null}
     </div>

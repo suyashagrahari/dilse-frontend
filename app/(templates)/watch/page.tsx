@@ -3,16 +3,16 @@
 // ─── /watch ──────────────────────────────────────────────────────────────────
 //
 // A thin renderer over `useWatchEditor`. The page opens on a live demo of the
-// finished thing — a real player, real chapters, real comments — with one
-// floating bar over it: Back on the left, and one polymorphic button on the
-// right that is Create, then Publish, then Share.
+// finished thing — a real player, real chapters, real comments — edge to edge,
+// with one floating EditorDock over it: Back, and one polymorphic button that
+// is Create, then Publish, then Share.
 //
 // Create opens the AI panel rather than the blank form. Publish defers auth and
 // resumes itself after login. The draft is written on every keystroke and is
 // cleared only when a publish succeeds.
 //
-// The editor bar sits at the very top and the template's own sticky bar is
-// pushed 48px down to live under it, so the two never overlap.
+// No space is reserved: the template's own header sits at the very top edge,
+// exactly where the real app has it, and the dock floats bottom-left.
 
 import { Suspense } from "react";
 import AuthModal from "@/components/AuthModal";
@@ -22,8 +22,7 @@ import WatchTemplate from "./components/WatchTemplate";
 import EditSheet from "./components/EditSheet";
 import { FONT, T } from "./components/theme";
 import { WATCH_FONT_VARS } from "./components/fonts";
-
-const BAR_H = 48;
+import EditorDock from "../_love/EditorDock";
 
 function WatchPageInner() {
   const e = useWatchEditor();
@@ -38,36 +37,23 @@ function WatchPageInner() {
     <div className={`wt-editor-frame ${WATCH_FONT_VARS}`}>
       <style>{EDITOR_CSS}</style>
 
-      <div className="wt-editbar">
-        <button type="button" className="wt-editbar-btn" onClick={e.goBack}>
-          ← Back
-        </button>
-        <span style={{ flex: 1 }} />
-        {e.isPersonalized && !e.showShare ? (
-          <button type="button" className="wt-editbar-btn" onClick={e.handleEditFromPreview}>
-            Edit
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="wt-editbar-btn is-primary"
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-        >
-          {topAction.label}
-        </button>
-      </div>
+      <WatchTemplate
+        key={e.previewVersion}
+        data={e.displayData}
+        mode="preview"
+        shareId={e.shareId}
+        shareUrl={e.shareUrl}
+        contribToken={e.contribToken}
+      />
 
-      <div style={{ paddingTop: BAR_H }}>
-        <WatchTemplate
-          key={e.previewVersion}
-          data={e.displayData}
-          mode="preview"
-          shareId={e.shareId}
-          shareUrl={e.shareUrl}
-          contribToken={e.contribToken}
-        />
-      </div>
+      <EditorDock
+        tone="dark"
+        accent="linear-gradient(135deg, #FF3E86, #FF7A59)"
+        font={FONT}
+        onBack={e.goBack}
+        secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+        primary={{ ...topAction, disabled: e.publishing }}
+      />
 
       <EditSheet
         editMode={e.editMode}
@@ -104,27 +90,6 @@ export default function WatchPage() {
 
 const EDITOR_CSS = `
 .wt-editor-frame { background: ${T.page}; min-height: 100dvh; }
-/* The template's own sticky surfaces live under the editor bar rather than behind it. */
-@media (min-width: 760px) { .wt-editor-frame .wt-bar { top: ${BAR_H}px; } }
-@media (max-width: 759px) { .wt-editor-frame .wt-player-slot { top: ${BAR_H}px; } }
-
-.wt-editbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-  height: ${BAR_H}px; display: flex; align-items: center; gap: 8px;
-  padding: 0 12px; background: rgba(15,15,15,0.96); border-bottom: 1px solid rgba(255,255,255,.08);
-  font-family: ${FONT};
-}
-.wt-editbar-btn {
-  height: 34px; padding: 0 16px; border-radius: 17px; border: 0;
-  background: rgba(255,255,255,.1); color: ${T.ink};
-  font-family: ${FONT}; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
-  transition: background .15s ease, transform .15s ease;
-}
-.wt-editbar-btn:hover { background: rgba(255,255,255,.18); }
-.wt-editbar-btn:active { transform: scale(.97); }
-.wt-editbar-btn.is-primary { background: linear-gradient(135deg, #FF3E86, #FF7A59); color: #FFFFFF; box-shadow: 0 6px 18px -8px rgba(255,62,134,.8); }
-.wt-editbar-btn:disabled { opacity: 0.6; cursor: default; }
-
 .wt-publishing {
   position: fixed; inset: 0; z-index: 320; display: grid; place-items: center;
   background: rgba(0,0,0,0.7); font-family: ${FONT}; color: ${T.ink};
