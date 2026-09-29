@@ -1,5 +1,6 @@
 import { Mail, Clock, Heart, Sparkles, MoreHorizontal } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card) and the BottomNav.
 // The night-layer visual tokens live in components/theme.ts.
@@ -16,7 +17,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A handmade little corner — break the wax seal on my letter, count down to when I hold you again, scratch a secret, and open the notes I left for your hard days.",
   bgGradient: "from-rose-100 via-orange-50 to-rose-50",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/TemplateComingSoon/missyou1.webp",
+  coverImage: templateMedia("missyou-gf", "cover-poster.webp"),
   // Mobile BottomNav — 5 slots (Cover · Letter · Distance · Memories · More).
   tabs: [
     { id: "cover", icon: Mail, label: "Cover" },

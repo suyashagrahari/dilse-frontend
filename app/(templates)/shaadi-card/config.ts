@@ -1,5 +1,6 @@
 import { Home, Heart, CalendarDays, Camera, HandHeart } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "shaadi-card",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Two hearts, one beautiful beginning. Join us as we celebrate our union.",
   bgGradient: "from-rose-50 via-pink-50 to-white",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/shaadi-card/shaadi-card-template-img.webp",
+  coverImage: templateMedia("shaadi-card", "cover-poster.webp"),
   tabs: [
     { id: "home",      icon: Home,        label: "Card"      },
     { id: "couple",    icon: Heart,       label: "Us"        },

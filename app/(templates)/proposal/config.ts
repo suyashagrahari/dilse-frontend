@@ -17,7 +17,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Your memories as polaroids, one big question, and a “No” button that keeps running away. Ends with a secret note only they can read.",
   bgGradient: "from-pink-50 via-rose-50 to-white",
-  coverImage: templateMedia("proposal", "cover.jpg"),
+  coverImage: templateMedia("proposal", "cover-poster.webp"),
   tabs: [
     { id: "gate", icon: Sparkles, label: "Surprise" },
     { id: "memories", icon: Images, label: "Memories" },

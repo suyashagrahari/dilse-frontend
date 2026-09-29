@@ -1,6 +1,6 @@
 import { Heart, Flame, Images, Gift } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { GANESH_ASSETS } from "./assets";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by `data/template-registry.ts` (the gallery card, and — because both
 // admin screens read the same list — the show/hide toggle in /admin/templates
@@ -25,7 +25,7 @@ export const config: TemplatePageConfig = {
   // The gallery cover. Set from the asset so the real dimensions travel with it
   // and no frame has to guess — see the note at the top of assets.ts. NOT the
   // GIF: an animation looping inside a grid of fifty still cards.
-  coverImage: GANESH_ASSETS.cover.src,
+  coverImage: templateMedia("happy-ganesh-chaturthi", "cover-poster.webp"),
   // The gallery card's quick-look chips. They mirror the page's own sections
   // rather than the builder's, which is one scroll with no tabs at all now.
   tabs: [

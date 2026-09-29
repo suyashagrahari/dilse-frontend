@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Dedication",
   description:
     "A radio show made for one person. They tune the dial through static to your station — your photos drift across the reel, your songs and videos play on its screen, your voice introduces them, and a sealed love letter opens at the end.",
-  coverImage:
-    templateMedia("dedication", "cover-v2.webp"),
+  coverImage: templateMedia("dedication", "cover-poster.webp"),
   emoji: "📻",
   color: "from-orange-700 to-red-900",
   previewText: "98.3 — this one goes out to you 📻",

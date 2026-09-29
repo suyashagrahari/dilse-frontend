@@ -1,6 +1,6 @@
 import { Heart, ScrollText, Images, Wallet } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { RS_ASSETS } from "./assets";
+import { templateMedia } from "@/lib/templateMedia";
 
 // Consumed by data/template-registry.ts (gallery card). The recipient-facing
 // visual tokens live in components/theme.ts + components/sister.css.
@@ -37,7 +37,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "The other half of Raksha Bandhan. You write the vow and put the shagun in the lifafa; she chooses the rakhi and ties it on your wrist, right there on her phone. The statement of account is included — hoodies never returned and chargers taken hostage in her column, and everything she actually did for you in yours. It does not balance. She writes back once.",
   bgGradient: "from-rose-100 via-amber-50 to-pink-100",
-  coverImage: RS_ASSETS.cover.src,
+  coverImage: templateMedia("happy-rakshabandhan-to-sister", "cover-poster.webp"),
   // These mirror the four sections of the builder form, in form order — so a
   // visitor scanning the tabs is reading the list of things they will be asked
   // for. "Vachan" rather than "Vow" because the certificate screen is titled in

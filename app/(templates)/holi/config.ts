@@ -1,5 +1,6 @@
 import { Home, Heart, Music, Info, Gift } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 
 export const config: TemplatePageConfig = {
   slug: "holi",
@@ -14,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Wishing you joy, colors, and countless blessings this Holi.",
   bgGradient: "from-pink-50 via-orange-50 to-yellow-50",
-  coverImage: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp",
+  coverImage: templateMedia("holi", "cover-poster.webp"),
   tabs: [
     { id: "home", icon: Home, label: "Home" },
     { id: "wish", icon: Gift, label: "Wish" },
