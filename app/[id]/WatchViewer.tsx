@@ -14,6 +14,8 @@ import { useCallback, useState } from "react";
 import WatchTemplate from "@/app/(templates)/watch/components/WatchTemplate";
 import { dbToWatchData } from "@/app/(templates)/watch/components/types";
 import { T, FONT } from "@/app/(templates)/watch/components/theme";
+import { WATCH_FONT_VARS } from "@/app/(templates)/watch/components/fonts";
+import { Mark } from "@/app/(templates)/watch/components/icons";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 function WatchGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () => void }) {
@@ -58,6 +60,7 @@ function WatchGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () =>
 
   return (
     <div
+      className={WATCH_FONT_VARS}
       style={{
         minHeight: "100dvh",
         background: T.page,
@@ -78,15 +81,13 @@ function WatchGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: () =>
           padding: 24,
         }}
       >
-        <p style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.04em" }}>
-          <span style={{ color: T.accent, marginRight: 3 }} aria-hidden="true">
-            ♥
-          </span>
+        <p style={{ margin: 0, display: "flex", alignItems: "center", gap: 4, fontSize: 22, fontWeight: 700, letterSpacing: "-0.06em" }}>
+          <Mark size={28} />
           us.
         </p>
-        <h1 style={{ margin: "14px 0 6px", fontSize: 17, fontWeight: 700 }}>This one is private.</h1>
-        <p style={{ margin: "0 0 16px", fontSize: 13.5, lineHeight: 19, color: T.inkSoft }}>
-          Put in the password they gave you and the video starts.
+        <h1 style={{ margin: "14px 0 6px", fontSize: 17, fontWeight: 700, fontFamily: "inherit" }}>This video is private</h1>
+        <p style={{ margin: "0 0 16px", fontSize: 13.5, lineHeight: "19px", color: T.inkSoft }}>
+          It was made for one person. Type the password they gave you and it starts playing.
         </p>
 
         <input
