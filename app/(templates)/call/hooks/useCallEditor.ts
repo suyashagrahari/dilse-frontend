@@ -30,12 +30,15 @@ import {
   DEMO_DATA,
   MAX_LOG_ENTRIES,
   MAX_MESSAGE_LINES,
+  MAX_TAGS,
   callDataToBody,
   dbToCallData,
   type CallData,
   type CallKind,
   type CallLogEntry,
+  type CallerTag,
 } from "../components/types";
+import { missingForSave } from "../components/EditSheet";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -103,27 +106,42 @@ const readDraft = (): { data?: CallData; password?: string; completed?: boolean 
 const KIND_SET = new Set<string>(CALL_KINDS);
 
 /**
- * `"missed | 3:41 AM | 47 calls today"` → one `CallLogEntry`.
+ * One AI call-log line → one `CallLogEntry`.
  *
- * Tolerant on purpose. A line with no pipes is a note; an unknown kind falls
- * back to `missed`, which is both the commonest and the funniest; an entry with
- * neither a clock nor a day gets one, because `dbToCallData` drops entries that
- * have neither and a silently vanished log line is the worst outcome here.
+ *   "kind | day | time | duration | note"   (the schema's format)
+ *   "kind | time | note"                    (older / lazier output)
+ *   "just a note"                           (no pipes at all)
+ *
+ * Tolerant on purpose: an unknown kind falls back to `missed` (the commonest
+ * and the funniest), "-" means empty, and an entry with neither a clock nor a
+ * day gets one, because `dbToCallData` drops entries that have neither.
  */
 function parseLogLine(raw: string): CallLogEntry | null {
-  const parts = raw.split("|").map((p) => p.trim());
+  const parts = raw.split("|").map((p) => p.trim()).map((p) => (/^[-–—]$/.test(p) ? "" : p));
   if (parts.length === 1) {
     const note = parts[0];
     if (!note) return null;
     return { kind: "missed", time: "", ago: "recently", note };
   }
-
   const kindRaw = (parts[0] ?? "").toLowerCase();
   const kind = (KIND_SET.has(kindRaw) ? kindRaw : "missed") as CallKind;
-  const time = parts[1] ?? "";
-  const note = parts.slice(2).filter(Boolean).join(" · ");
-
-  const entry: CallLogEntry = { kind, time, ago: time ? "" : "recently" };
+  let ago = "";
+  let time = "";
+  let duration = "";
+  let note = "";
+  if (parts.length >= 5) {
+    [, ago, time, duration] = parts;
+    note = parts.slice(4).filter(Boolean).join(" · ");
+  } else if (parts.length === 4) {
+    [, ago, time] = parts;
+    note = parts[3];
+  } else {
+    time = parts[1] ?? "";
+    note = parts.slice(2).filter(Boolean).join(" · ");
+  }
+  if (!time && !ago) ago = "recently";
+  const entry: CallLogEntry = { kind, time, ago };
+  if (duration && kind !== "missed" && kind !== "rejected") entry.duration = duration;
   if (note) entry.note = note;
   return entry;
 }
@@ -131,9 +149,13 @@ function parseLogLine(raw: string): CallLogEntry | null {
 /**
  * Everything the model may have written, in the shape the form expects.
  *
- * Runs on every filled result. Anything already well-formed passes through
- * untouched, so this is safe to apply to a form the sender has been editing by
- * hand as well as to a freshly generated one.
+ * Runs on every filled result and on a restored draft. Anything already
+ * well-formed passes through untouched.
+ *   - callLog: pipe strings → entries
+ *   - message: one string → lines
+ *   - tags: plain strings → { label, count } (counts borrowed from the demo's
+ *     descending ladder, so the top tag stays on top)
+ *   - photos: slots the model captioned but that hold no photo are dropped
  */
 export function normaliseAiCallData(next: CallData): CallData {
   const rawLog = next.callLog as unknown;
@@ -154,7 +176,51 @@ export function normaliseAiCallData(next: CallData): CallData {
       ? rawMessage.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, MAX_MESSAGE_LINES)
       : next.message;
 
-  return { ...next, callLog, message };
+  const rawTags = next.tags as unknown;
+  const tags = Array.isArray(rawTags)
+    ? rawTags
+        .map((t, i): CallerTag | null => {
+          if (typeof t === "string") {
+            const label = t.trim();
+            if (!label) return null;
+            return { label, count: DEMO_DATA.tags[i]?.count ?? Math.max(12, 300 - i * 37) };
+          }
+          return t && typeof t === "object" ? (t as CallerTag) : null;
+        })
+        .filter((t): t is CallerTag => t !== null)
+        .slice(0, MAX_TAGS)
+    : next.tags;
+
+  const photos = Array.isArray(next.photos) ? next.photos.filter((p) => p && typeof p.url === "string" && p.url) : [];
+
+  return { ...next, callLog, message, tags, photos };
+}
+
+/**
+ * The form is seeded from the demo, so a sender who skips the AI and only
+ * types their names would publish "Meera viewed your profile…" under their own
+ * name. Every text leaf still naming the demo couple gets the real names.
+ */
+export function personaliseLeftovers(d: CallData): CallData {
+  const firstOf = (s: string) => s.trim().split(/\s+/)[0] || "";
+  const demoFrom = firstOf(DEMO_DATA.caller.name);
+  const demoTo = firstOf(DEMO_DATA.recipient.name);
+  const from = firstOf(d.caller.name);
+  const to = firstOf(d.recipient.name);
+  if ((!from || from === demoFrom) && (!to || to === demoTo)) return d;
+  const fix = (t: string) =>
+    t.replace(new RegExp(`\\b${demoFrom}\\b`, "g"), from || demoFrom).replace(new RegExp(`\\b${demoTo}\\b`, "g"), to || demoTo);
+  return {
+    ...d,
+    savedAs: fix(d.savedAs),
+    whoViewed: fix(d.whoViewed),
+    contributorPrompt: fix(d.contributorPrompt),
+    callReason: fix(d.callReason),
+    letter: fix(d.letter),
+    message: d.message.map(fix),
+    callLog: d.callLog.map((e) => (e.note ? { ...e, note: fix(e.note) } : e)),
+    photos: d.photos.map((p) => (p.note ? { ...p, note: fix(p.note) } : p)),
+  };
 }
 
 /* ── The hook ──────────────────────────────────────────────────────────────── */
@@ -185,13 +251,18 @@ export function useCallEditor() {
   // Completely inert when the server has no schema for this slug: `schema`
   // stays null, StoryStarter renders nothing, and the entry point below falls
   // straight back to the form this editor has always opened.
-  const applyFilled = useCallback((next: CallData) => setMf(normaliseAiCallData(next)), []);
+  // Held RAW while the AI review is on screen: its list editors only read
+  // plain strings, so normalising here showed "Add a few" for the tags and the
+  // call log the model had just written. Normalised the moment the form opens.
+  const applyFilled = useCallback((next: CallData) => setMf(next), []);
 
   const storyFill = useStoryFill<CallData>({
     slug: "call",
     demo: DEMO_DATA,
     current: mf,
     onFilled: applyFilled,
+    // The caller is the sender; `recipient` is whose phone rings.
+    namePaths: { sender: "caller.name", recipient: "recipient.name" },
   });
   const { schema: storySchema, setMode: setStoryMode, persistStory } = storyFill;
   const [storyStarted, setStoryStarted] = useState(false);
@@ -358,6 +429,7 @@ export function useCallEditor() {
 
   /** StoryStarter's way out — the normal form, every field still hand-editable. */
   const handleStoryManual = useCallback(() => {
+    setMf((m) => normaliseAiCallData(m));
     setEditMode("manual");
   }, []);
 
@@ -367,11 +439,12 @@ export function useCallEditor() {
   }, [content]);
 
   const handleSave = useCallback(() => {
-    if (!mf.caller.name.trim()) {
-      pushToast({ type: "info", title: "Who is calling?", message: "Add her name first" });
+    const missing = missingForSave(mf);
+    if (missing.length) {
+      pushToast({ type: "info", title: "Almost there", message: `Add ${missing.join(" and ")} first` });
       return;
     }
-    const clean = normaliseAiCallData(mf);
+    const clean = personaliseLeftovers(normaliseAiCallData(mf));
     setContent(clean);
     setIsPersonalized(true);
     setEditMode("preview");
@@ -479,9 +552,9 @@ export function useCallEditor() {
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
 
-    if (!content.caller.name.trim()) {
-      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_caller_name" });
-      pushToast({ type: "info", title: "Who is calling?", message: "Open Edit and add her name" });
+    if (missingForSave(content).length) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_names" });
+      pushToast({ type: "info", title: "Who is calling?", message: `Add ${missingForSave(content).join(" and ")} first` });
       setMf({ ...content });
       setEditMode("manual");
       return;
@@ -552,7 +625,7 @@ export function useCallEditor() {
 
   const handleShare = useCallback(() => {
     if (!shareUrl) return;
-    const text = "Incoming call. Pick up.";
+    const text = `Incoming call from ${content.caller.name.trim().split(/\s+/)[0] || "someone"}. Pick up. 📞`;
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
@@ -561,7 +634,7 @@ export function useCallEditor() {
       accent: "#059669",
       slug: "call",
     });
-  }, [shareUrl, pagePassword]);
+  }, [shareUrl, pagePassword, content.caller.name]);
 
   const shareId = shareUrl ? (shareUrl.split("/").pop() ?? null) : null;
 

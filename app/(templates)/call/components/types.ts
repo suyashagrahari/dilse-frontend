@@ -1,7 +1,5 @@
 // ─── Caller ID — the frozen contract ─────────────────────────────────────────
 //
-// LEAD-OWNED AND FROZEN. Import from here; do not extend it.
-//
 // An incoming call from someone whose number you already know by heart, on a
 // full-bleed call screen, backed by a caller-identification card and a call
 // log. The goal is LAYOUT FIDELITY: the full-screen photo, the name at the top,
@@ -27,6 +25,17 @@
 // bar reads as "no data" — the opposite of the one thing this screen is saying.
 
 import { obj, str, strOr, num, bool, clampNum, oneOf, list, strList, bodyFromKeys, type Raw } from "@/lib/wire";
+import {
+  DEMO_PHOTO_CDN,
+  MAX_LETTER_LEN,
+  MAX_LOCK_ANSWER_LEN,
+  MAX_LOCK_QUESTION_LEN,
+  parseLoveLetter,
+  parseLovePhotos,
+  type LovePhoto,
+} from "../../_love/types";
+
+export type { LovePhoto };
 
 /** Our own mark, top-left of the identification card. The check is part of it. */
 export const WORDMARK = "Sacch";
@@ -89,6 +98,10 @@ export interface CallData {
     number: string;
     location: string;
     carrier: string;
+    /** Framing of the portrait (focal point 0–100, zoom 100–300). */
+    cropX?: number;
+    cropY?: number;
+    scale?: number;
   };
   /** Whose phone this is. Shown on the lock screen above the call. */
   recipient: { name: string };
@@ -108,6 +121,18 @@ export interface CallData {
   callLog: CallLogEntry[];
   /** Shown above the "add a tag" box on the published page. */
   contributorPrompt: string;
+  /** Pinned on the incoming screen: "Call reason — …". */
+  callReason: string;
+  /** How the recipient has the caller saved in their phone. */
+  savedAs: string;
+  /** The "who viewed your profile" line. */
+  whoViewed: string;
+  /** Shared media: the memories, each framed, with a caption and a little note. */
+  photos: LovePhoto[];
+  /** The main letter — delivered as a voicemail. */
+  letter: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -126,6 +151,9 @@ export const DEMO_DATA: CallData = {
   caller: {
     name: "Meera Sharma",
     photoUrl: photo("photo-1494790108377-be9c29b29330"),
+    cropX: 50,
+    cropY: 30,
+    scale: 100,
     number: "+91 98200 41821",
     location: "Lucknow, Uttar Pradesh",
     carrier: "DIL Prepaid",
@@ -198,7 +226,22 @@ export const DEMO_DATA: CallData = {
     },
   ],
   contributorPrompt:
-    "Know this number? Add a tag. Karan approves them before they show up, and he has already rejected four from Rohit.",
+    "Meera is collecting tags for her caller ID. What have you got her saved as? She approves them first (she has already rejected four from Rohit).",
+  callReason: "Pick up, I have something to tell you 🥹",
+  savedAs: "Meera 🍓🧿",
+  whoViewed: "Meera viewed your profile 38 times this week. Mostly between 1 and 3 AM. Zero regrets.",
+  photos: [
+    { url: `${DEMO_PHOTO_CDN}/couple1.webp`, caption: "the first sunset", note: "You said the sky looked like mango lassi. I have not stopped thinking about it.", cropX: 50, cropY: 45, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple2.webp`, caption: "date night, round 1", note: "You stole my fries and then my heart. In that order.", cropX: 50, cropY: 40, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees were jealous of your smile that day.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple4.webp`, caption: "us, forever", note: "Out of every timeline, I'd pick this one. Every time.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple1.webp`, caption: "4 hrs 12 mins", note: "The call where neither of us hung up. I fell asleep first. You stayed on anyway.", cropX: 30, cropY: 55, scale: 150 },
+    { url: `${DEMO_PHOTO_CDN}/couple3.webp`, caption: "wallpaper, since day 3", note: "This has been my lock screen for 700 days. My mom knows. My boss knows. Now you know.", cropX: 60, cropY: 40, scale: 140 },
+  ],
+  letter:
+    "Karan,\n\nIf you are reading this, you finally picked up. Took you long enough.\n\nI keep calling you for no reason, and I think you know by now that the reason is you. I call to tell you I ate. I call to tell you the chai was bad. I call because the day does not feel finished until your voice is the last thing in it.\n\nFour years of calls and I have never once wanted to hang up first. You say 'okay bye' and then keep talking for forty minutes, and those forty minutes are my favourite part of every single day.\n\nSo this is me, calling one more time, to say the thing properly: I love you. Not spam. Not a wrong number. Verified, every time.\n\nCall me back. Actually, don't hang up at all.",
+  lockQuestion: "Are you going to pick up this time?",
+  lockAnswer: "Answer 📞",
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the model content fields). */
@@ -212,6 +255,13 @@ export const CALL_CONTENT_KEYS: readonly (keyof CallData)[] = [
   "message",
   "callLog",
   "contributorPrompt",
+  "callReason",
+  "savedAs",
+  "whoViewed",
+  "photos",
+  "letter",
+  "lockQuestion",
+  "lockAnswer",
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -235,7 +285,13 @@ const LIMITS = {
   note: 240,
   line: 200,
   prompt: 240,
+  reason: 90,
+  savedAs: 40,
+  viewed: 160,
 } as const;
+
+/** Exported for the form's counters. */
+export const CALL_TEXT_LIMITS = LIMITS;
 
 const cut = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s);
 
@@ -342,6 +398,7 @@ export function dbToCallData(db: Raw | null | undefined): CallData {
       number: cut(str(rawCaller.number, DEMO_DATA.caller.number).trim(), LIMITS.number),
       location: cut(strOr(rawCaller.location, DEMO_DATA.caller.location).trim(), LIMITS.location),
       carrier: cut(strOr(rawCaller.carrier, DEMO_DATA.caller.carrier).trim(), LIMITS.carrier),
+      ...cropOf(rawCaller, db ? undefined : DEMO_DATA.caller),
     },
     recipient: {
       name: cut(str(obj(src.recipient).name, DEMO_DATA.recipient.name).trim(), LIMITS.name),
@@ -362,5 +419,30 @@ export function dbToCallData(db: Raw | null | undefined): CallData {
       .slice(0, MAX_MESSAGE_LINES),
     callLog: list<CallLogEntry>(src.callLog, coerceLogEntry, DEMO_DATA.callLog).slice(0, MAX_LOG_ENTRIES),
     contributorPrompt: cut(str(src.contributorPrompt, DEMO_DATA.contributorPrompt).trim(), LIMITS.prompt),
+    // Pages saved before these existed carry none of them: they fall back to
+    // "" (not the demo) so an old call never shows somebody else's words.
+    callReason: cut(textOr(src.callReason, db ? "" : DEMO_DATA.callReason), LIMITS.reason),
+    savedAs: cut(textOr(src.savedAs, db ? "" : DEMO_DATA.savedAs), LIMITS.savedAs),
+    whoViewed: cut(textOr(src.whoViewed, db ? "" : DEMO_DATA.whoViewed), LIMITS.viewed),
+    photos: parseLovePhotos(src.photos, db ? [] : DEMO_DATA.photos),
+    letter: parseLoveLetter(src.letter, db ? "" : DEMO_DATA.letter).slice(0, MAX_LETTER_LEN),
+    lockQuestion: textOr(src.lockQuestion, "").slice(0, MAX_LOCK_QUESTION_LEN),
+    lockAnswer: textOr(src.lockAnswer, "").slice(0, MAX_LOCK_ANSWER_LEN),
   };
+}
+
+const textOr = (v: unknown, fallback: string): string => (typeof v === "string" ? v.trim() : fallback);
+
+/** The portrait's framing, each number only when it is really there. */
+function cropOf(src: Raw, fallback?: { cropX?: number; cropY?: number; scale?: number }) {
+  const out: { cropX?: number; cropY?: number; scale?: number } = {};
+  const pick = (k: "cropX" | "cropY" | "scale", lo: number, hi: number) => {
+    const n = Number(src[k]);
+    if (src[k] !== undefined && src[k] !== null && Number.isFinite(n)) out[k] = Math.min(hi, Math.max(lo, n));
+    else if (fallback?.[k] !== undefined) out[k] = fallback[k];
+  };
+  pick("cropX", 0, 100);
+  pick("cropY", 0, 100);
+  pick("scale", 100, 300);
+  return out;
 }
