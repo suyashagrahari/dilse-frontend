@@ -1,28 +1,35 @@
 // ─── Us — wire coercion ──────────────────────────────────────────────────────
 //
-// This runs on the recipient's published page, where the payload is untrusted
-// input: it may be older than the current shape, partially filled, or actively
-// malformed. Nothing in here is allowed to throw and nothing is allowed to hand
-// the renderer a value it cannot draw.
+// Runs on the recipient's page (untrusted, possibly older payloads), on Save in
+// the editor (so the preview is byte-for-byte what the recipient sees) and
+// after an AI fill (which writes comments as "handle: text" strings). Total:
+// never throws, never hands the renderer something it cannot draw.
 //
-// Two repairs matter more than the rest, because both fail *silently* rather
-// than loudly:
-//
-//   1. `pinnedPostIds` is capped at 3 and every id that does not resolve to a
-//      real post is dropped. A stale id does not crash `orderedPosts` — it just
-//      quietly produces a grid whose order disagrees with the pin glyphs.
-//   2. The three stats are forced to non-negative integers. `formatStat` is
-//      handed them directly, and a float or a negative renders as "-1,847" or
-//      "84.7000000001K" in 18px semibold at the top of the profile.
-//
-// Kept out of types.ts on purpose: that file is the frozen contract.
+// An EMPTY payload falls back to the demo. A real page that simply predates a
+// field (no letter, no DMs, no names) gets the empty value — never the demo
+// couple's names or letter.
 
 import { obj, str, strOr, num, list, strList, type Raw } from "@/lib/wire";
-import { DEMO_DATA, MAX_POSTS, MAX_HIGHLIGHTS, MAX_HIGHLIGHT_SLIDES, MAX_BIO_LINES, MAX_COMMENTS, MAX_FOLLOWED_BY, MAX_PINNED } from "./data";
-import type { Comment, Highlight, HighlightSlide, Post, ProfileData } from "./types";
+import {
+  DEMO_DATA,
+  MAX_BIO_LINES,
+  MAX_COMMENTS,
+  MAX_DMS,
+  MAX_FOLLOWED_BY,
+  MAX_HIGHLIGHTS,
+  MAX_HIGHLIGHT_SLIDES,
+  MAX_LETTER,
+  MAX_LOCK_A,
+  MAX_LOCK_Q,
+  MAX_MORE,
+  MAX_NOTE,
+  MAX_PINNED,
+  MAX_POSTS,
+} from "./data";
+import { parseCommentLine, type Comment, type Crop, type Frame, type Highlight, type HighlightSlide, type Post, type ProfileData } from "./types";
 
-/** Hard caps on free text, so one pasted essay cannot destroy the header. */
 const LIMITS = {
+  name: 40,
   handle: 40,
   displayName: 60,
   category: 60,
@@ -30,31 +37,25 @@ const LIMITS = {
   linkLabel: 80,
   caption: 600,
   commentText: 300,
-  commentHandle: 40,
   postedAgo: 40,
   location: 80,
   highlightTitle: 60,
   slideCaption: 200,
+  dm: 300,
 } as const;
 
 const cut = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s);
+const text = (v: unknown, max: number): string => cut(strOr(v, "").trim(), max);
 
-/** A non-negative integer. Guards `formatStat` against floats and negatives. */
 const count = (v: unknown, fallback: number): number => {
   const n = num(v, fallback);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(0, Math.trunc(n));
+  return Number.isFinite(n) ? Math.max(0, Math.trunc(n)) : fallback;
 };
 
-/** A handle with the leading @ and any whitespace removed. */
 const handleOf = (v: unknown, fallback: string, max: number): string =>
   cut(str(v, fallback).trim().replace(/^@+/, "").replace(/\s+/g, "_"), max) || fallback;
 
-/**
- * Only http(s) and data: URLs reach an <img src>. Anything else — `javascript:`
- * most of all — becomes the empty string, which the renderer already knows how
- * to draw as the grey fallback cell.
- */
+/** Only http(s) and data:image URLs reach an <img src>. */
 const imageUrl = (v: unknown): string => {
   const raw = strOr(v, "").trim();
   if (!raw) return "";
@@ -63,67 +64,96 @@ const imageUrl = (v: unknown): string => {
   return "";
 };
 
-/** Link targets are navigable, so they are http(s) only — never data:. */
 const linkUrl = (v: unknown): string => {
   const raw = strOr(v, "").trim();
   return /^https?:\/\//i.test(raw) ? raw : "";
 };
 
-function coerceComment(o: Raw): Comment | null {
-  const handle = handleOf(o.handle, "", LIMITS.commentHandle);
-  const text = cut(strOr(o.text, "").trim(), LIMITS.commentText);
-  if (!handle || !text) return null;
-  return { handle, text, likes: count(o.likes, 0) };
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+export function coerceCrop(v: unknown): Crop | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const o = v as Raw;
+  const x = Number(o.x);
+  const y = Number(o.y);
+  const scale = Number(o.scale);
+  if (![x, y, scale].every(Number.isFinite)) return undefined;
+  const c = { x: clamp(x, 0, 100), y: clamp(y, 0, 100), scale: clamp(scale, 100, 300) };
+  // The default framing is the same as no framing — keep the payload lean.
+  if (c.x === 50 && c.y === 50 && c.scale === 100) return undefined;
+  return c;
+}
+
+const withCrop = <T extends object>(base: T, crop: Crop | undefined): T => (crop ? { ...base, crop } : base);
+
+function coerceComment(raw: unknown): Comment | null {
+  if (typeof raw === "string") {
+    const c = parseCommentLine(raw);
+    return c ? { handle: cut(c.handle, LIMITS.handle), text: cut(c.text, LIMITS.commentText), likes: 0 } : null;
+  }
+  const o = obj(raw);
+  const handle = handleOf(o.handle, "", LIMITS.handle);
+  const t = text(o.text, LIMITS.commentText);
+  if (!handle || !t) return null;
+  return { handle, text: t, likes: count(o.likes, 0) };
+}
+
+function coerceComments(v: unknown): Comment[] {
+  if (!Array.isArray(v)) return [];
+  return v.map(coerceComment).filter((c): c is Comment => c !== null).slice(0, MAX_COMMENTS);
+}
+
+function coerceFrame(o: Raw): Frame | null {
+  const url = imageUrl(o.url);
+  if (!url) return null;
+  return withCrop({ url }, coerceCrop(o.crop));
 }
 
 function coercePost(o: Raw, index: number): Post | null {
-  // A post with neither a photo nor a caption is not a post.
   const img = imageUrl(o.imageUrl);
-  const caption = cut(strOr(o.caption, "").trim(), LIMITS.caption);
+  const caption = text(o.caption, LIMITS.caption);
   if (!img && !caption) return null;
-  return {
-    id: str(o.id, "").trim() || `p${index + 1}`,
+  const more = list<Frame>(o.more, coerceFrame, []).slice(0, MAX_MORE);
+  const post: Post = {
+    id: str(o.id, "").trim().slice(0, 64) || `p${index + 1}`,
     imageUrl: img,
     caption,
     likes: count(o.likes, 0),
-    likedByName: handleOf(o.likedByName, "", LIMITS.commentHandle),
-    postedAgo: cut(strOr(o.postedAgo, "").trim(), LIMITS.postedAgo),
-    location: cut(strOr(o.location, "").trim(), LIMITS.location) || undefined,
-    isMultiple: o.isMultiple === true,
-    isVideo: o.isVideo === true,
-    comments: list<Comment>(o.comments, coerceComment, []).slice(0, MAX_COMMENTS),
+    likedByName: handleOf(o.likedByName, "", LIMITS.handle),
+    postedAgo: text(o.postedAgo, LIMITS.postedAgo),
+    comments: coerceComments(o.comments),
   };
+  const crop = coerceCrop(o.crop);
+  if (crop) post.crop = crop;
+  if (more.length) post.more = more;
+  const loc = text(o.location, LIMITS.location);
+  if (loc) post.location = loc;
+  if (o.isMultiple === true) post.isMultiple = true;
+  if (o.isVideo === true) post.isVideo = true;
+  return post;
 }
 
 function coerceSlide(o: Raw): HighlightSlide | null {
   const img = imageUrl(o.imageUrl);
   if (!img) return null;
-  const caption = cut(strOr(o.caption, "").trim(), LIMITS.slideCaption);
-  return caption ? { imageUrl: img, caption } : { imageUrl: img };
+  const slide: HighlightSlide = withCrop({ imageUrl: img }, coerceCrop(o.crop));
+  const caption = text(o.caption, LIMITS.slideCaption);
+  if (caption) slide.caption = caption;
+  return slide;
 }
 
 function coerceHighlight(o: Raw): Highlight | null {
-  const title = cut(strOr(o.title, "").trim(), LIMITS.highlightTitle);
+  const title = text(o.title, LIMITS.highlightTitle);
   const slides = list<HighlightSlide>(o.slides, coerceSlide, []).slice(0, MAX_HIGHLIGHT_SLIDES);
-  // A highlight bubble that opens onto nothing is worse than no bubble.
-  if (!title || slides.length === 0) return null;
-  return { title, coverUrl: imageUrl(o.coverUrl) || slides[0].imageUrl, slides };
+  if (slides.length === 0) return null;
+  return { title: title || "✨", coverUrl: imageUrl(o.coverUrl) || slides[0].imageUrl, slides };
 }
 
-/**
- * Server payload → the shape the renderer is allowed to see.
- *
- * Total function: every branch returns something drawable, and an empty or
- * absent payload falls all the way back to the demo profile rather than to a
- * blank screen.
- */
 export function dbToProfileData(db: Raw | null | undefined): ProfileData {
   const src = obj(db);
+  if (Object.keys(src).length === 0) return DEMO_DATA;
 
-  const posts = list<Post>(src.posts, coercePost, DEMO_DATA.posts).slice(0, MAX_POSTS);
-
-  // Duplicate ids break React keys AND make `pinnedPostIds` ambiguous, so they
-  // are renumbered here rather than anywhere downstream.
+  const posts = list<Post>(src.posts, coercePost, []).slice(0, MAX_POSTS);
   const seen = new Set<string>();
   const uniquePosts: Post[] = posts.map((p, i) => {
     if (!seen.has(p.id)) {
@@ -137,39 +167,46 @@ export function dbToProfileData(db: Raw | null | undefined): ProfileData {
   });
 
   const rawStats = obj(src.stats);
-  const bio = strList(src.bio, DEMO_DATA.bio)
-    .map((l) => cut(l.trim(), LIMITS.bioLine))
-    .filter(Boolean)
-    .slice(0, MAX_BIO_LINES);
-
   const rawLink = obj(src.link);
   const href = linkUrl(rawLink.url);
-  const label = cut(strOr(rawLink.label, "").trim(), LIMITS.linkLabel);
+  const label = text(rawLink.label, LIMITS.linkLabel);
 
-  return {
-    handle: handleOf(src.handle, DEMO_DATA.handle, LIMITS.handle),
-    displayName: cut(str(src.displayName, DEMO_DATA.displayName).trim(), LIMITS.displayName),
-    category: cut(strOr(src.category, "").trim(), LIMITS.category),
-    // strList already dropped blanks; if everything was blank, keep the demo bio
-    // rather than render a header with a hole in it.
-    bio: bio.length > 0 ? bio : DEMO_DATA.bio,
-    // A label with no working target is a dead blue line — drop the pair.
-    link: href ? { label: label || href, url: href } : undefined,
-    avatarUrl: imageUrl(src.avatarUrl) || DEMO_DATA.avatarUrl,
+  const out: ProfileData = {
+    from: text(src.from, LIMITS.name),
+    to: text(src.to, LIMITS.name),
+    handle: handleOf(src.handle, "us.two", LIMITS.handle),
+    displayName: text(src.displayName, LIMITS.displayName),
+    category: text(src.category, LIMITS.category),
+    bio: strList(src.bio, [])
+      .map((l) => cut(l.trim(), LIMITS.bioLine))
+      .filter(Boolean)
+      .slice(0, MAX_BIO_LINES),
+    link: href ? { label: label || href.replace(/^https?:\/\//, ""), url: href } : undefined,
+    avatarUrl: imageUrl(src.avatarUrl) || uniquePosts.find((p) => p.imageUrl)?.imageUrl || "",
+    note: text(src.note, MAX_NOTE),
     stats: {
       posts: count(rawStats.posts, uniquePosts.length),
       followers: count(rawStats.followers, 0),
       following: count(rawStats.following, 0),
     },
     followedBy: strList(src.followedBy, [])
-      .map((h) => handleOf(h, "", LIMITS.commentHandle))
+      .map((h) => handleOf(h, "", LIMITS.handle))
       .filter(Boolean)
       .slice(0, MAX_FOLLOWED_BY),
     highlights: list<Highlight>(src.highlights, coerceHighlight, []).slice(0, MAX_HIGHLIGHTS),
     posts: uniquePosts,
-    // Capped at 3, de-duplicated, and every id proven to resolve to a real post.
     pinnedPostIds: Array.from(new Set(strList(src.pinnedPostIds, [])))
       .filter((id) => uniquePosts.some((p) => p.id === id))
       .slice(0, MAX_PINNED),
+    dms: strList(src.dms, [])
+      .map((m) => cut(m.trim(), LIMITS.dm))
+      .filter(Boolean)
+      .slice(0, MAX_DMS),
+    letter: cut(strOr(src.letter, ""), MAX_LETTER),
+    lockQuestion: text(src.lockQuestion, MAX_LOCK_Q),
+    lockAnswer: text(src.lockAnswer, MAX_LOCK_A),
   };
+  const avatarCrop = coerceCrop(src.avatarCrop);
+  if (avatarCrop) out.avatarCrop = avatarCrop;
+  return out;
 }

@@ -190,3 +190,35 @@ export function useTransient(ms: number): [boolean, () => void] {
   const fire = useCallback(() => pulse.fire(ms), [pulse, ms]);
   return [on, fire];
 }
+
+/* ── Media query ─────────────────────────────────────────────────────────── */
+
+/** Live `matchMedia`. False on the server — overlays only open after a tap, so no mismatch. */
+export function useMedia(query: string): boolean {
+  const subscribe = useCallback(
+    (cb: () => void) => {
+      if (typeof window === "undefined" || !window.matchMedia) return () => {};
+      const m = window.matchMedia(query);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    [query],
+  );
+  return useSyncExternalStore(
+    subscribe,
+    () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(query).matches,
+    () => false,
+  );
+}
+
+/** Locks the page behind an overlay without losing the scroll position. */
+export function useBodyLock(on: boolean): void {
+  useEffect(() => {
+    if (!on || typeof document === "undefined") return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [on]);
+}
