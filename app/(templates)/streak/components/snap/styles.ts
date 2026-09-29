@@ -41,10 +41,10 @@ export const SNAP_CSS = `
 .snListCol { position: relative; border-right: 1px solid ${C.line}; overflow: hidden; background: #fff; }
 .snPane { position: relative; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #FFFDE0 0%, #F5F5F6 60%); }
 .snPane > .snConvo, .snPane > .snProfile, .snPane > .snStories, .snPane > .snMap { position: absolute; inset: 0; }
-.snPaneFrame { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); height: min(calc(100% - 40px), 880px); aspect-ratio: 9 / 16; max-width: calc(100% - 32px);
+.snPaneFrame { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-54%); width: min(calc(100% - 32px), 500px, calc((100dvh - 96px) * .5625)); aspect-ratio: 9 / 16;
   border-radius: 22px; overflow: hidden; box-shadow: 0 30px 70px -30px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.06); background: #000; }
 .snPaneFrame > * { position: absolute; inset: 0; }
-.snPaneHint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12.5px; color: ${C.mute}; font-weight: 600; pointer-events: none; }
+.snPaneHint { position: absolute; left: 0; right: 0; bottom: 16px; text-align: center; font-size: 12.5px; color: ${C.mute}; font-weight: 600; pointer-events: none; }
 
 /* ── camera ── */
 .snCam { position: absolute; inset: 0; background: #000; overflow: hidden; color: #fff; }

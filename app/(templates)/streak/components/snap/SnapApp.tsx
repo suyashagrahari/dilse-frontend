@@ -117,7 +117,7 @@ export default function SnapApp(p: SnapAppProps) {
     setOverlay({ k: "viewer", spec: { kind: "snap", from: them, time: "today", items } });
   }, [page, today, them, me, photos, openConvo]);
 
-  const letterBottom = wide ? 18 : tab === "camera" && !slide ? 176 : slide === "convo" ? 76 : 74;
+  const letterBottom = wide ? (pane === "convo" ? 76 : 18) : tab === "camera" && !slide ? 176 : slide === "convo" ? 76 : 74;
 
   const ctx: Ctx = useMemo(
     () => ({
@@ -273,6 +273,9 @@ export default function SnapApp(p: SnapAppProps) {
             {pane === "camera" && (
               <>
                 <div className="snPaneFrame"><Camera ctx={ctx} framed /></div>
+                <p className="snPaneHint">
+                  {todayView.mineIn ? "✓ today's snap is sent — the streak lives 🔥" : `tap the shutter to send ${ctx.themP.name || "them"} today's snap 📸`}
+                </p>
               </>
             )}
             {pane === "convo" && <Conversation ctx={ctx} embedded onBack={() => setPane("camera")} />}
