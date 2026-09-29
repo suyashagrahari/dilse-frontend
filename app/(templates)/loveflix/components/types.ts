@@ -22,8 +22,8 @@ export type EditMode = null | "manual" | "preview";
 // ─── Palette ─────────────────────────────────────────────────────────────────
 
 /** Rose red. Warm enough to read as romance, far enough from the incumbent's red. */
-export const ACCENT = "#E62E5C";
-export const ACCENT_DEEP = "#B3173F";
+export const ACCENT = "#E10A17";
+export const ACCENT_DEEP = "#B20710";
 export const MATCH_GREEN = "#46D369";
 export const BG = "#141414";
 export const BG_RAISED = "#181818";
@@ -179,6 +179,36 @@ export function assertBrandSafe(data: LoveflixData): string[] {
 // ─── Demo ────────────────────────────────────────────────────────────────────
 
 const CDN = "https://cdn.subhsandesh.in/gifts-media/assets";
+const UNSPLASH = (id: string) => `https://images.unsplash.com/${id}?q=80&w=900&h=900&fit=crop&auto=format`;
+
+/**
+ * Extra stills for the demo catalogue — the date-night, trip and food shots the
+ * Us template's demo uses, plus the Darling couple art. Real pages cycle their
+ * own photos instead (see `stillPool`); these only fill a demo so no card in
+ * the preview is an empty gradient.
+ */
+export const DEMO_STILLS: string[] = [
+  UNSPLASH("photo-1516589178581-6cd7833ae3b2"), // heart hands at sunset
+  UNSPLASH("photo-1414235077428-338989a2e8c0"), // candle-lit dinner
+  UNSPLASH("photo-1518199266791-5375a83190b7"), // bokeh hearts
+  UNSPLASH("photo-1502301197179-65228ab57f78"), // packing for a trip
+  UNSPLASH("photo-1476514525535-07fb3b4ae5f1"), // boat on the lake
+  UNSPLASH("photo-1504674900247-0877df9cc836"), // food date
+  UNSPLASH("photo-1441974231531-c6227db76b6e"), // forest walk
+  UNSPLASH("photo-1493246507139-91e8fad9978e"), // mountain lake
+  UNSPLASH("photo-1470071459604-3b5ec3a7fe05"), // hills at golden hour
+  `${CDN}/marriage/couple-hero.webp`,
+];
+
+/** Every photo the page has, in a stable order: episodes, billboard, profiles. */
+export function stillPool(d: LoveflixData): { src: string; crop?: Crop }[] {
+  const own: { src: string; crop?: Crop }[] = [];
+  for (const e of d.episodes) if (e.imageUrl) own.push({ src: e.imageUrl, crop: e.crop });
+  if (d.heroImageUrl) own.push({ src: d.heroImageUrl, crop: d.heroCrop });
+  // The demo (or a page still on demo photos) also gets the extra stills.
+  const onDemoPhotos = own.length > 0 && own.every((p) => p.src.startsWith(CDN));
+  return onDemoPhotos ? [...own, ...DEMO_STILLS.map((src) => ({ src }))] : own;
+}
 
 const EP = (title: string, synopsis: string, subtitle: string, imageUrl: string, crop: Partial<Crop> = {}): Episode => ({
   title,
@@ -190,10 +220,10 @@ const EP = (title: string, synopsis: string, subtitle: string, imageUrl: string,
 
 export const DEMO_DATA: LoveflixData = {
   recipientName: "Aditi",
-  recipientPhotoUrl: "",
+  recipientPhotoUrl: `${CDN}/couple1.webp`,
   recipientCrop: CROP_CENTER,
   senderName: "Rohan",
-  senderPhotoUrl: "",
+  senderPhotoUrl: `${CDN}/couple2.webp`,
   senderCrop: CROP_CENTER,
   thirdProfile: "Our future cat",
 

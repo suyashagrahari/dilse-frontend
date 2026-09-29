@@ -49,7 +49,7 @@ const hash = (s: string) => {
 
 /** Duotones for generated "title art" — moody, cinematic, all warm-adjacent. */
 const ART: [string, string, string][] = [
-  ["#5b0f2a", "#1b0810", "#ff5c8a"],
+  ["#5a0a0e", "#160405", "#ff4a4f"],
   ["#2a1446", "#0d0717", "#b98cff"],
   ["#0f3440", "#06141a", "#5fd6e0"],
   ["#4a2a0c", "#170c04", "#ffb35c"],

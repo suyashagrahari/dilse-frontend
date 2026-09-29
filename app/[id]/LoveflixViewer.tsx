@@ -11,7 +11,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 
 // The template's rose red — deliberately not the streaming red it would
 // otherwise be mistaken for.
-const ACCENT_GRAD = "linear-gradient(135deg,#E62E5C,#B3173F)";
+const ACCENT_GRAD = "linear-gradient(135deg,#E10A17,#B20710)";
 
 /* ─────────────────────────────────────────
    Password gate — the episode is whole
@@ -60,7 +60,7 @@ function LoveflixPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -12px rgba(230,46,92,.6)" }}
+                style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -12px rgba(225,10,23,.6)" }}
               >
                 <Lock size={28} className="text-white" />
               </motion.div>
@@ -113,7 +113,7 @@ function LoveflixPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlo
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -14px rgba(230,46,92,.7)" }}
+              style={{ background: ACCENT_GRAD, boxShadow: "0 14px 30px -14px rgba(225,10,23,.7)" }}
             >
               {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Press play</>}
             </motion.button>

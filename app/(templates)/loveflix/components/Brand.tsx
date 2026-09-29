@@ -102,7 +102,7 @@ export function BrandPill() {
 
 /* ── Avatars ────────────────────────────────────────────────────────────── */
 
-const AV_BG = ["#E62E5C", "#2D6CDF", "#F2B01E", "#16A36B"];
+const AV_BG = ["#E10A17", "#2D6CDF", "#F2B01E", "#16A36B"];
 
 /** A profile square: their photo, or a cute face in the app's avatar style. */
 export function Avatar({

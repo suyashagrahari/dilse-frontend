@@ -45,7 +45,7 @@ const primary: React.CSSProperties = {
   border: "1px solid rgba(0,0,0,0.2)",
   color: "#fff",
   fontWeight: 700,
-  boxShadow: "0 8px 20px -8px rgba(230,46,92,.8)",
+  boxShadow: "0 8px 20px -8px rgba(225,10,23,.8)",
 };
 
 function LoveflixPageInner() {
