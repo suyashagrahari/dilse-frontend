@@ -459,6 +459,8 @@ export default function ProductTemplate({
           sign="forever in your cart,"
           zIndex={250}
           forceOpen={letterForce}
+          variant="product"
+          photos={photos}
         />
       )}
 

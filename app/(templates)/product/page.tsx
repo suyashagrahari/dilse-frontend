@@ -3,8 +3,8 @@
 // ─── /product — the editor ───────────────────────────────────────────────────
 //
 // A thin renderer over `useProductEditor`. The page opens as a live demo of the
-// listing; a floating bar carries Back on the left and one polymorphic button
-// on the right that walks Create → Publish → Share. Create opens the AI
+// listing, edge to edge like the real store; a floating EditorDock carries Back
+// and one polymorphic button that walks Create → Publish → Share. Create opens the AI
 // StoryStarter, not the blank form.
 //
 // Everything stateful lives in the hook. Nothing in this file fetches.
@@ -20,17 +20,8 @@ import { useProductEditor } from "./hooks/useProductEditor";
 import ProductTemplate from "./components/ProductTemplate";
 import EditSheet from "./components/EditSheet";
 import ShareCardPanel from "./components/ShareCard";
+import EditorDock from "../_love/EditorDock";
 import { C, FONT, LinkText, WRAP, aggregateOf } from "./components/tokens";
-
-/* ── Bits ──────────────────────────────────────────────────────────────────── */
-
-function BackGlyph() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M14.5 5 8 12l6.5 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /* ── The page ──────────────────────────────────────────────────────────────── */
 
@@ -43,23 +34,6 @@ function ProductPageInner() {
     : e.showPublish
       ? { label: e.publishing ? "Listing…" : "List it", onClick: e.publish }
       : { label: "Create", onClick: e.handleStartCreate };
-
-  const barBtn: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    minHeight: 34,
-    padding: "6px 14px",
-    borderRadius: 100,
-    background: "#fff",
-    border: `1px solid ${C.border}`,
-    color: C.text,
-    fontFamily: FONT,
-    fontSize: 13.5,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(15,17,17,0.14)",
-  };
 
   const nudge = e.reviewLink
     ? whatsappNudgeUrl(
@@ -78,47 +52,11 @@ function ProductPageInner() {
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative", background: C.page }}>
-      {/* Floating top bar */}
-      <div
-        className="fixed left-0 right-0 z-[120] px-3 flex items-center gap-2"
-        style={{ top: 12, paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <button type="button" onClick={e.goBack} style={barBtn}>
-          <BackGlyph /> Back
-        </button>
-        <div style={{ flex: 1 }} />
-        {e.isPersonalized && !e.showShare && (
-          <button type="button" onClick={e.handleEditFromPreview} style={barBtn}>
-            Edit
-          </button>
-        )}
-        {e.showShare && (
-          <button type="button" onClick={openPanel} style={barBtn}>
-            Reviews{e.moderation.pendingCount > 0 ? ` (${e.moderation.pendingCount})` : ""}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          style={{
-            ...barBtn,
-            background: C.ctaYellow,
-            border: "1px solid #E7B93C",
-            opacity: e.publishing ? 0.6 : 1,
-          }}
-        >
-          {topAction.label}
-        </button>
-      </div>
-
       {/* Live preview */}
       <ProductTemplate
         key={e.previewVersion}
         data={e.displayData}
         mode="preview"
-        // Parks the store chrome under the floating bar so the two never meet.
-        topOffset={56}
         onBack={e.goBack}
         hideLetter={e.editMode === "manual" || e.editMode === "choose" || (e.storyStarted && e.storyFill.mode !== "manual") || panelOpen}
         onWriteReview={e.showShare ? openPanel : undefined}
@@ -165,6 +103,22 @@ function ProductPageInner() {
             </div>
           ) : undefined
         }
+      />
+
+      {/* The editor control floats over the store — no reserved strip. The
+          search bar's own back arrow (onBack above) is Back too. */}
+      <EditorDock
+        tone="light"
+        accent={C.ctaYellow}
+        accentInk={C.text}
+        font={FONT}
+        avoidBottom=".lk-tabbar"
+        onBack={e.goBack}
+        secondary={[
+          e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview },
+          e.showShare && { label: "Reviews", onClick: openPanel, badge: e.moderation.pendingCount },
+        ]}
+        primary={{ ...topAction, disabled: e.publishing }}
       />
 
       <EditSheet
