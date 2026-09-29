@@ -3,7 +3,7 @@
 
 import type { Title } from "./context";
 import { captionLines, fmtRuntime } from "./theme";
-import { progressOf, runtimeOf, type Crop, type LoveflixData } from "./types";
+import { progressOf, runtimeOf, stillPool, type Crop, type LoveflixData } from "./types";
 
 export interface Described {
   title: string;
@@ -20,11 +20,11 @@ export interface Described {
   episodeLabel?: string;
 }
 
+/** A photo for a catalogue card: the page's own photos, cycled (plus demo stills in the demo). */
 const photoFor = (d: LoveflixData, i: number) => {
-  const withPhoto = d.episodes.filter((e) => e.imageUrl);
-  if (!withPhoto.length) return { src: "", crop: undefined };
-  const e = withPhoto[i % withPhoto.length];
-  return { src: e.imageUrl, crop: e.crop };
+  const pool = stillPool(d);
+  if (!pool.length) return { src: "", crop: undefined as Crop | undefined };
+  return pool[i % pool.length];
 };
 
 export function describe(t: Title, d: LoveflixData): Described {
@@ -81,7 +81,8 @@ export function describe(t: Title, d: LoveflixData): Described {
       ];
       return {
         title: d.insideJokes[t.index] ?? "",
-        src: "",
+        src: photoFor(d, t.index + 7).src,
+        crop: photoFor(d, t.index + 7).crop,
         synopsis: blurbs[t.index % blurbs.length],
         length: fmtRuntime(runtimeOf(d.insideJokes[t.index] ?? "", t.index + 40) + 60),
         tags: ["Comedy", "Cult Classic", "Inside Joke"],
@@ -90,7 +91,7 @@ export function describe(t: Title, d: LoveflixData): Described {
       };
     }
     case "plan": {
-      const p = photoFor(d, t.index + 3);
+      const p = photoFor(d, t.index + 11);
       return {
         title: d.plans[t.index] ?? "",
         src: p.src,

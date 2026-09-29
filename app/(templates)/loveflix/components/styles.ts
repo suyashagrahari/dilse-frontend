@@ -41,6 +41,7 @@ export const LF_CSS = `
 .lf-art-sans{font-weight:700;letter-spacing:-.02em}
 .lf-art-sm{font-size:13px;font-size:11cqw}
 .has-ribbon .lf-art{padding-bottom:20%}
+.has-ribbon .lf-card-title{bottom:calc(12% + 1.6em)}
 .lf-card-poster .has-ribbon .lf-art{padding-bottom:24%}
 .lf-art-md{font-size:16px;font-size:8.6cqw}
 .lf-art-lg{font-size:40px;font-size:6.4cqw;padding:7%}
@@ -110,8 +111,8 @@ export const LF_CSS = `
 .lf-pp-manage{border:1px solid #808080;color:#808080;padding:.5em 1.5em;font-size:clamp(13px,1.2vw,18px);letter-spacing:.18em;text-transform:uppercase;transition:.15s;animation:lfRise .6s .3s both}
 .lf-pp-manage:hover{border-color:#fff;color:#fff}
 .lf-pp-picking{position:fixed;inset:var(--lf-top) 0 0;z-index:5;background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;animation:lfFade .2s}
-.lf-pp-pickav{width:clamp(110px,13vw,190px);aspect-ratio:1;animation:lfPickGrow .7s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 20px 60px rgba(230,46,92,.25)}
-.lf-spinner{width:46px;height:46px;border-radius:50%;border:3px solid rgba(230,46,92,.22);border-top-color:${A};animation:lfSpin .8s linear infinite}
+.lf-pp-pickav{width:clamp(110px,13vw,190px);aspect-ratio:1;animation:lfPickGrow .7s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 20px 60px rgba(225,10,23,.25)}
+.lf-spinner{width:46px;height:46px;border-radius:50%;border:3px solid rgba(225,10,23,.22);border-top-color:${A};animation:lfSpin .8s linear infinite}
 .lf-pin{position:fixed;inset:var(--lf-top) 0 0;z-index:6;background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;animation:lfFade .25s}
 .lf-pin-x{position:absolute;top:22px;left:4%;padding:6px}
 .lf-pin-k{color:#ccc;font-size:clamp(14px,1.3vw,20px);margin-bottom:12px}
@@ -127,7 +128,7 @@ export const LF_CSS = `
 /* ── Sting ── */
 .lf-sting{position:fixed;inset:var(--lf-top) 0 0;z-index:100;background:#000;overflow:hidden;display:grid;place-items:center}
 .lf-sting-l{position:relative;width:30vmin;height:30vmin;transform-origin:38% 50%;animation:lfDive 1.3s 1.25s cubic-bezier(.7,0,.9,.4) forwards}
-.lf-sting-v{position:absolute;left:26%;top:8%;width:24%;height:84%;background:linear-gradient(${A},${ACCENT_DEEP});transform-origin:50% 100%;transform:scaleY(0);animation:lfGrowY .5s .12s cubic-bezier(.3,.9,.3,1) forwards;box-shadow:0 0 50px rgba(230,46,92,.45)}
+.lf-sting-v{position:absolute;left:26%;top:8%;width:24%;height:84%;background:linear-gradient(${A},${ACCENT_DEEP});transform-origin:50% 100%;transform:scaleY(0);animation:lfGrowY .5s .12s cubic-bezier(.3,.9,.3,1) forwards;box-shadow:0 0 50px rgba(225,10,23,.45)}
 .lf-sting-h{position:absolute;left:26%;top:70%;width:50%;height:22%;background:linear-gradient(90deg,#7d0f2c,${A});transform-origin:0 50%;transform:scaleX(0);clip-path:polygon(0 0,100% 0,88% 100%,0 100%);animation:lfGrowX .42s .5s cubic-bezier(.3,.9,.3,1) forwards}
 .lf-sting-fold{position:absolute;left:26%;top:70%;width:24%;height:22%;background:#000;opacity:0;animation:lfFoldIn .3s .78s forwards}
 .lf-sting-heart{position:absolute;left:70%;top:50%;width:17%;height:17%;transform:scale(0);animation:lfHeartPop .55s .9s cubic-bezier(.2,1.7,.4,1) forwards;filter:drop-shadow(0 0 12px rgba(255,154,181,.8))}
@@ -378,7 +379,7 @@ export const LF_CSS = `
 .lf-pl-buffer{background:#8a8a8a}
 .lf-pl-played{background:${A};transition:width .12s linear,height .15s}
 .lf-pl-scrub:hover .lf-pl-track,.lf-pl-scrub:hover .lf-pl-buffer,.lf-pl-scrub:hover .lf-pl-played{height:7px}
-.lf-pl-knob{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:${A};transform:translate(-50%,-50%);transition:left .12s linear,transform .15s;box-shadow:0 0 0 4px rgba(230,46,92,.25)}
+.lf-pl-knob{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:${A};transform:translate(-50%,-50%);transition:left .12s linear,transform .15s;box-shadow:0 0 0 4px rgba(225,10,23,.25)}
 .lf-pl-scrub:hover .lf-pl-knob{transform:translate(-50%,-50%) scale(1.25)}
 .lf-pl-time{font-size:15px;font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
 .lf-pl-ctrls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
@@ -438,7 +439,7 @@ export const LF_CSS = `
 /* ── Finale & credits ── */
 .lf-fin{position:fixed;inset:var(--lf-top) 0 0;z-index:80;background:#000;display:grid;place-items:center;padding:24px;overflow:hidden}
 .lf-fin-bg{position:absolute;inset:-60px;background-size:cover;background-position:center;filter:blur(44px) brightness(.2) saturate(1.3);animation:lfFade 2.4s}
-.lf-fin::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(230,46,92,.16),rgba(0,0,0,.55) 72%);pointer-events:none}
+.lf-fin::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(225,10,23,.16),rgba(0,0,0,.55) 72%);pointer-events:none}
 .lf-fin-hearts{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .lf-fin-hearts i{position:absolute;bottom:-40px;color:#ff6b95;font-style:normal;opacity:0;animation:lfFloat linear infinite}
 .lf-fin-x{position:absolute;top:14px;left:14px;z-index:3}
@@ -455,7 +456,7 @@ export const LF_CSS = `
 .lf-cr-inner p b{font-size:clamp(17px,1.8vw,24px);font-weight:600}
 .lf-cr-inner .lf-cr-note{font-family:${FONT_SERIF};font-style:italic;color:#bbb;font-size:18px;margin-top:44px}
 .lf-cr-side{display:grid;place-items:center;padding:24px}
-.lf-cr-card{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:380px;padding:34px 30px;text-align:center;background:#181818;border-radius:12px;border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(230,46,92,.28);animation:lfPop .6s .7s both}
+.lf-cr-card{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:380px;padding:34px 30px;text-align:center;background:#181818;border-radius:12px;border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(225,10,23,.28);animation:lfPop .6s .7s both}
 .lf-cr-heart{font-size:56px;line-height:1;color:${A};animation:lfBeat 1.2s ease-in-out infinite}
 .lf-cr-k{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:${MATCH_GREEN};font-weight:700}
 .lf-cr-card b{font-size:24px;line-height:1.2}
