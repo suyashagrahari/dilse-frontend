@@ -1,92 +1,83 @@
-// ─── Recharge — the frozen contract ──────────────────────────────────────────
+// ─── Recharge — the data contract ────────────────────────────────────────────
 //
-// LEAD-OWNED AND FROZEN. Import from here; do not extend it.
-//
-// A prepaid recharge flow, end to end: the subscriber strip with the plan that
-// is about to expire, a category tab rail, a grid of plan cards, a payment
-// sheet, and a receipt. The goal is LAYOUT FIDELITY — three screens that feel
-// like a utility app right up until you read them. The humour is entirely in
-// the copy; the flow itself is plain, dense and correct.
+// A prepaid "relationship recharge" played exactly like a payments app: the
+// operator-detected card, offer banners, a category tab rail, plan cards, the
+// payment sheet with UPI apps and a PIN pad, the processing spinner, the green
+// success tick, a cashback scratch card and the transaction receipt.
 //
 // ── BRAND ────────────────────────────────────────────────────────────────────
 // No real network operator and no real payment app is named anywhere in this
-// template — not in copy, file names, class names, alt text, comments or tests
-// — and none of their brand colours appear either. The operator is invented and
-// is OPERATOR_NAME below; the payment rails in the demo are invented with it.
-// UPI itself is a public rail rather than a brand and is safe to name; the
-// handle attached to it must not be.
+// template, and none of their brand colours appear. The payments app is the
+// invented "dilpay" and the operator is the invented OPERATOR_NAME below.
 //
-// ── THE DETAIL THAT DECIDES THIS TEMPLATE ────────────────────────────────────
+// ── PRICES ARE STRINGS ───────────────────────────────────────────────────────
 // `plan.price` is a STRING and the headline demo plan's price is "∞". It is
-// never Number()'d, parseInt'd, parseFloat'd, summed, sorted numerically or
-// compared as a number — not to order the grid, not to pick the cheapest, not
-// to total the payment sheet. Plans render in the order they are stored, and
-// that is the whole ordering rule. The moment a price is parsed the grid shows
-// "NaN" on the largest type on the page.
+// never parsed, summed or sorted. Plans render in stored order.
+//
+// ── ROWS ARE LINES ───────────────────────────────────────────────────────────
+// A plan's detail rows are held as "Label: Value | optional note" lines. That
+// is the shape the AI fill writes and the shape the form edits; the wire body
+// sends the same lines and the server splits them. Older pages stored objects,
+// which `normalizeData` folds back into lines.
 
-import { obj, str, strOr, bool, list, strList, bodyFromKeys, type Raw } from "@/lib/wire";
+import { obj, str, strOr, bool, list, strList, type Raw } from "@/lib/wire";
+import {
+  DEMO_PHOTOS,
+  MAX_LETTER_LEN,
+  MAX_LOCK_ANSWER_LEN,
+  MAX_LOCK_QUESTION_LEN,
+  parseLovePhotos,
+  type LovePhoto,
+} from "../../_love/types";
 
 /** The invented operator. Nothing in this template names a real one. */
 export const OPERATOR_NAME = "DIL Prepaid";
-
-/** The accent. An invented magenta, matched to no operator's palette. */
-export const ACCENT = "#C2255C";
+/** The invented payments app. */
+export const APP_NAME = "dilpay";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Stored shape
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** One tab in the category rail. `id` is what plans point at. */
 export interface PlanCategory {
   id: string;
   label: string;
 }
 
-/** One row of the plan card's detail table. */
-export interface PlanRow {
-  label: string;
-  value: string;
-  note?: string;
-}
-
 export interface Plan {
   id: string;
-  /**
-   * STRING, and the headline demo plan is "∞". Never Number()/parseInt/
-   * parseFloat it. The currency symbol and grouping live inside the string.
-   */
+  /** STRING — "∞" is legal. Never parsed. */
   price: string;
-  /** Must match a `PlanCategory.id`; a plan pointing nowhere is dropped on read. */
   categoryId: string;
   validity: string;
-  /** "Most Recharged" / "Best Value" — the ribbon on the card. */
+  /** Ribbon on the card: "Most Recharged", "Best Value". */
   badge?: string;
-  rows: PlanRow[];
+  /** "Label: Value | note" lines. The first two become the card's columns. */
+  rows: string[];
+  /** Short benefit lines — chips on the card, full list in details. */
   benefits: string[];
-  /** A greyed card that cannot be selected. */
   disabled?: boolean;
-  /** Why. Rendered in place of the button, so it is required in spirit. */
   disabledReason?: string;
 }
 
-/** One row in the payment sheet. */
-export interface PaymentMethod {
-  id: string;
-  label: string;
-  sub?: string;
-}
-
 export interface RechargeData {
-  operator: { name: string; tagline: string };
   subscriber: { name: string; number: string; circle: string };
-  /** The strip at the top: what is running out, and the line under it. */
+  sender: { name: string };
+  /** The expiry strip on the operator card. */
   currentPlan: { expiresIn: string; note: string };
+  /** Offer-banner captions; banner i sits on photo i. */
+  promos: string[];
   categories: PlanCategory[];
-  /** Rendered in stored order. Never sorted by price — see the header. */
   plans: Plan[];
-  payment: { methods: PaymentMethod[] };
-  /** The payoff. Shown on the receipt after the payment sheet closes. */
+  /** The scratch card that appears after the payment succeeds. */
+  cashback: { title: string; note: string };
+  /** The payment note on the receipt — where the joking stops. */
   receipt: { message: string[] };
+  /** Photo 1 is their avatar; all of them become the offer banners. */
+  photos: LovePhoto[];
+  letter: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -94,41 +85,42 @@ export interface RechargeData {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const DEMO_DATA: RechargeData = {
-  operator: { name: OPERATOR_NAME, tagline: "Ab pyaar unlimited." },
-  subscriber: {
-    name: "Meera Sharma",
-    number: "+91 98200 41821",
-    circle: "Uttar Pradesh (West)",
-  },
+  subscriber: { name: "Meera", number: "+91 98200 14022", circle: "UP West" },
+  sender: { name: "Karan" },
   currentPlan: {
     expiresIn: "Expires in 3 days",
-    note: "Your plan is ending. Karan has already paid for the next one, but the button is yours to press.",
+    note: "cuddle balance critically low bestie 🪫 recharge before you start replying 'k'",
   },
+  promos: [
+    "Flat ₹∞ cashback on your first hug of the day 🫂",
+    "Unlimited 2 AM calls. No FUP. No sleep. 📞",
+    "Refer me to your mom, get lifetime biryani 🍛",
+    "Buy 1 forehead kiss, get the next 10,000 free 💋",
+  ],
   categories: [
-    { id: "popular", label: "Popular" },
-    { id: "unlimited", label: "Unlimited" },
-    { id: "data", label: "Data Add-On" },
-    { id: "longterm", label: "Long Term" },
-    { id: "special", label: "Special Recharge" },
+    { id: "popular", label: "Popular 🔥" },
+    { id: "unlimited", label: "Unlimited Love" },
+    { id: "hugs", label: "Hugs = Data" },
+    { id: "forever", label: "Forever Plans" },
   ],
   plans: [
     {
       id: "pl-forever",
       price: "∞",
       categoryId: "popular",
-      validity: "No expiry",
+      validity: "Lifetime",
       badge: "Most Recharged",
       rows: [
-        { label: "Calls", value: "Unlimited", note: "Including the 2 AM ones. Especially those." },
-        { label: "Data", value: "Unlimited", note: "For sending me videos I have already been sent." },
-        { label: "SMS", value: "100 / day", note: "You have used four since 2021." },
-        { label: "Validity", value: "No expiry", note: "This is not a typo and has been checked twice." },
+        "Hugs: Unlimited/day | no daily cap, no fair usage policy, no mercy",
+        "Calls: Unlimited | including the 2 AM 'are you awake' ones",
+        "Texts: 100/min | 97 of them are reels you already saw",
+        "Roaming: Free | wherever you go, I'm on the same network",
       ],
       benefits: [
-        "Priority answering — first ring, every ring, no exceptions",
-        "Free forehead kisses on national holidays and on all other days",
-        "Zero-rated arguments about the AC temperature (you still lose)",
-        "Unlimited 'have you eaten' checks, incoming and outgoing",
+        "Priority answering on the first ring",
+        "Free forehead kisses, all days",
+        "AC temperature fights (you still win)",
+        "Unlimited 'have you eaten?' checks",
       ],
     },
     {
@@ -138,159 +130,158 @@ export const DEMO_DATA: RechargeData = {
       validity: "84 days",
       badge: "Best Value",
       rows: [
-        { label: "Calls", value: "Unlimited" },
-        { label: "Data", value: "2 GB / day", note: "1.9 GB of which is her sending me the same clip." },
-        { label: "SMS", value: "100 / day" },
-        { label: "Validity", value: "84 days", note: "Twelve weekends. Eleven of them already planned." },
+        "Hugs: 2 GB/day | 1.9 GB of it is you sending me the same meme",
+        "Calls: Unlimited | yes, even the 'nothing, you tell' calls",
+        "Dates: 12 weekends | eleven already planned in my notes app",
       ],
-      benefits: [
-        "One long drive with the windows down, route unannounced",
-        "Weekly permission to pick the restaurant (revocable)",
-        "Complimentary carrying of your bag through any airport",
-      ],
+      benefits: ["One long drive, route unannounced", "Weekly restaurant veto power", "Airport bag-carrying included"],
     },
     {
       id: "pl-1",
       price: "₹1",
-      categoryId: "data",
+      categoryId: "hugs",
       validity: "1 day",
       rows: [
-        { label: "Data", value: "1 GB", note: "Enough for one call where the video keeps freezing." },
-        { label: "Calls", value: "Not included", note: "This is a top-up, not a substitute." },
-        { label: "Validity", value: "Today only" },
+        "Hugs: 1 GB | enough for one video call where the video keeps freezing",
+        "Good-morning texts: 1 | delivered before 8 AM, drafted the night before",
       ],
-      benefits: [
-        "One good-morning text, delivered before 8 AM, written the night before",
-        "One photo of whatever I am eating, unsolicited",
-      ],
+      benefits: ["One unsolicited food pic", "A voice note that's just me yawning"],
     },
     {
       id: "pl-365",
       price: "₹365",
-      categoryId: "longterm",
+      categoryId: "forever",
       validity: "365 days",
-      badge: "Long Term",
       rows: [
-        { label: "Calls", value: "Unlimited" },
-        { label: "Data", value: "2.5 GB / day" },
-        { label: "Validity", value: "365 days", note: "One rupee a day. I checked. It is the only sum here." },
-        { label: "Auto-renew", value: "On", note: "Cannot be switched off from this screen." },
+        "Hugs: 2.5 GB/day",
+        "Calls: Unlimited",
+        "Cost: ₹1/day | I did the maths. It's the only maths here.",
+        "Auto-renew: On | cannot be switched off from this screen",
       ],
-      benefits: [
-        "Every birthday, both anniversaries, and the odd Tuesday for no reason",
-        "One argument won by you per quarter, awarded regardless of merit",
-        "Standing invitation to your mother's kitchen, where I am allowed to stir",
-      ],
-    },
-    {
-      id: "pl-3650",
-      price: "₹3,650",
-      categoryId: "longterm",
-      validity: "10 years",
-      rows: [
-        { label: "Calls", value: "Unlimited" },
-        { label: "Data", value: "Unlimited" },
-        { label: "Validity", value: "10 years", note: "Renewable. I intend to keep renewing." },
-        { label: "Family plan", value: "Available", note: "Requires a separate conversation with your father." },
-      ],
-      benefits: [
-        "Everything in the 365-day plan, ten times over",
-        "One serious question, asked properly, in person, with the ring in my pocket",
-        "Free migration of all your things into one flat, movers included",
-      ],
+      benefits: ["Every birthday + both anniversaries", "One argument won by you per quarter", "Standing invite to your mom's kitchen"],
     },
     {
       id: "pl-silence",
       price: "₹0",
-      categoryId: "special",
+      categoryId: "unlimited",
       validity: "—",
-      rows: [
-        { label: "Calls", value: "Barred" },
-        { label: "Data", value: "Barred" },
-        { label: "Validity", value: "Indefinite, unfortunately" },
-      ],
-      benefits: ["Nothing. That was the point of it."],
+      rows: ["Calls: Barred", "Texts: Seen, no reply"],
+      benefits: ["Nothing. That was the point."],
       disabled: true,
-      disabledReason:
-        "Discontinued in October 2022 after a three-day trial. We do not offer the silent treatment on this network anymore.",
+      disabledReason: "The silent treatment plan was discontinued after a 3-day trial in 2023. Never again 🙅",
     },
   ],
-  payment: {
-    methods: [
-      { id: "upi", label: "UPI", sub: "meera@dilprepaid · saved" },
-      { id: "wallet", label: "DIL Wallet", sub: "Balance: ∞" },
-      { id: "card", label: "Debit / Credit Card", sub: "Saved card •••• 1402" },
-      { id: "netbanking", label: "Net Banking", sub: "All banks. None of them will understand this." },
-      { id: "later", label: "Pay Later", sub: "Settle in person. Preferred method." },
-    ],
+  cashback: {
+    title: "1 lifetime supply of forehead kisses",
+    note: "Auto-credited to your cheeks. No expiry. Non-transferable (I checked).",
   },
   receipt: {
     message: [
-      "Recharge successful.",
-      "Your plan is active and it does not expire.",
-      "Transaction ID: KRN-MRA-14022021",
-      "Amount debited: everything, cheerfully.",
-      "For any issue with this recharge, call the number you already know by heart. It rings on the first ring.",
-      "— Karan",
+      "Okay, no jokes for one second.",
+      "You're the only plan I never want to switch from. Thank you for picking up every single time — even on the days I was a lot.",
+      "Consider this recharged. Forever. 💗",
     ],
   },
+  photos: DEMO_PHOTOS.map(({ url, cropX, cropY, scale }) => ({ url, cropX, cropY, scale })),
+  letter:
+    "I tried to find a plan big enough for you and every single one had an expiry date, so I made my own.\n\nYou are my favourite notification. You're the reason I check my phone forty times an hour — and somehow also the reason I stopped needing to. Every call with you ends with neither of us hanging up, and honestly? I hope nobody ever fixes that bug.\n\nThis recharge doesn't run out. No FUP, no validity, no 'your data pack is exhausted'. Just me, on your network, forever. Full bars.",
+  lockQuestion: "Will you stay on my network forever? 📶",
+  lockAnswer: "Recharge accepted 💗",
 };
 
-/** Whitelisted keys that make up the flat wire payload (also the model content fields). */
+/** Whitelisted keys that make up the flat wire payload. */
 export const RECHARGE_CONTENT_KEYS: readonly (keyof RechargeData)[] = [
-  "operator",
   "subscriber",
+  "sender",
   "currentPlan",
+  "promos",
   "categories",
   "plans",
-  "payment",
+  "cashback",
   "receipt",
+  "photos",
+  "letter",
+  "lockQuestion",
+  "lockAnswer",
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Caps and helpers
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const MAX_CATEGORIES = 8;
-export const MAX_PLANS = 24;
-export const MAX_ROWS = 10;
-export const MAX_BENEFITS = 8;
-export const MAX_METHODS = 8;
-export const MAX_RECEIPT_LINES = 10;
+export const MAX_CATEGORIES = 6;
+export const MAX_PLANS = 12;
+export const MAX_ROWS = 6;
+export const MAX_BENEFITS = 6;
+export const MAX_PROMOS = 6;
+export const MAX_RECEIPT_LINES = 6;
+export const MAX_PHOTOS = 6;
 
-/** Hard caps on free text, so one pasted essay cannot destroy the plan grid. */
-const LIMITS = {
+export const LIMITS = {
   id: 48,
   name: 60,
   number: 32,
   circle: 60,
-  tagline: 120,
   price: 24,
   validity: 48,
   badge: 32,
   label: 60,
-  value: 80,
-  note: 200,
+  row: 300,
   benefit: 200,
   reason: 300,
   line: 240,
+  expiry: 48,
+  promo: 90,
+  cashTitle: 80,
+  cashNote: 200,
+  letter: MAX_LETTER_LEN,
+  lockQuestion: MAX_LOCK_QUESTION_LEN,
+  lockAnswer: MAX_LOCK_ANSWER_LEN,
 } as const;
 
 const cut = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s);
 
-/** A slug-safe id. Ids reach React keys and category lookups, nothing else. */
 const idOf = (v: unknown, fallback: string): string => {
   const raw = strOr(v, "").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
   return cut(raw, LIMITS.id) || fallback;
 };
 
-/** The plans in a category, in stored order. The only ordering rule there is. */
+export interface Row {
+  label: string;
+  value: string;
+  note: string;
+}
+
+/** "Label: Value | note" → parts. A line with no colon is all value. */
+export function parseRow(line: string): Row {
+  const [head, ...rest] = (line ?? "").split("|");
+  const at = head.indexOf(":");
+  const note = rest.join("|").trim();
+  if (at < 0) return { label: "", value: head.trim(), note };
+  return { label: head.slice(0, at).trim(), value: head.slice(at + 1).trim(), note };
+}
+
+/** One row off the wire — a line, or an older `{label,value,note}` object. */
+function rowLine(v: unknown): string | null {
+  if (typeof v === "string") {
+    const s = cut(v.trim(), LIMITS.row);
+    return s || null;
+  }
+  const o = obj(v);
+  const label = strOr(o.label, "").trim();
+  const value = strOr(o.value, "").trim();
+  if (!label || !value) return null;
+  const note = strOr(o.note, "").trim();
+  return cut(`${label}: ${value}${note ? ` | ${note}` : ""}`, LIMITS.row);
+}
+
 export const plansInCategory = (data: RechargeData, categoryId: string): Plan[] =>
   data.plans.filter((p) => p.categoryId === categoryId);
 
-/** The first selectable plan in a category, for the initial highlighted card. */
-export const firstSelectablePlan = (data: RechargeData, categoryId: string): Plan | null =>
-  plansInCategory(data, categoryId).find((p) => !p.disabled) ?? null;
+export function recommendedPlanId(data: RechargeData): string | null {
+  const first = data.plans.find((p) => !p.disabled);
+  return first ? first.id : (data.plans[0]?.id ?? null);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Wire format
@@ -298,7 +289,11 @@ export const firstSelectablePlan = (data: RechargeData, categoryId: string): Pla
 
 /** UI state → flat body sent to POST/PUT. `password` optional (empty = no gate). */
 export function rechargeDataToBody(data: RechargeData, password?: string): Record<string, unknown> {
-  return bodyFromKeys(data, RECHARGE_CONTENT_KEYS, password);
+  const d = normalizeData(data);
+  const body: Record<string, unknown> = {};
+  for (const k of RECHARGE_CONTENT_KEYS) body[k] = d[k];
+  if (password !== undefined) body.password = password;
+  return body;
 }
 
 function coerceCategory(o: Raw, index: number): PlanCategory | null {
@@ -307,128 +302,135 @@ function coerceCategory(o: Raw, index: number): PlanCategory | null {
   return { id: idOf(o.id, `cat-${index + 1}`), label };
 }
 
-function coerceRow(o: Raw): PlanRow | null {
-  const label = cut(strOr(o.label, "").trim(), LIMITS.label);
-  const value = cut(strOr(o.value, "").trim(), LIMITS.value);
-  // A row with a blank side renders as a hole in the card's table.
-  if (!label || !value) return null;
-  const note = cut(strOr(o.note, "").trim(), LIMITS.note);
-  return { label, value, ...(note ? { note } : {}) };
-}
-
-function coercePlan(o: Raw, index: number): Plan | null {
-  const rows = list<PlanRow>(o.rows, coerceRow, []).slice(0, MAX_ROWS);
+function coercePlan(v: unknown, index: number): Plan | null {
+  const o = obj(v);
+  const rows = (Array.isArray(o.rows) ? o.rows : [])
+    .map(rowLine)
+    .filter((r): r is string => !!r)
+    .slice(0, MAX_ROWS);
   const benefits = strList(o.benefits, [])
     .map((b) => cut(b.trim(), LIMITS.benefit))
     .filter(Boolean)
     .slice(0, MAX_BENEFITS);
-  // A card with no table and no benefits is an empty box with a price on it.
-  if (rows.length === 0 && benefits.length === 0) return null;
+  const price = cut(strOr(o.price, "").trim(), LIMITS.price);
+  if (!price && rows.length === 0 && benefits.length === 0) return null;
   const badge = cut(strOr(o.badge, "").trim(), LIMITS.badge);
   const disabled = bool(o.disabled, false);
   const reason = cut(strOr(o.disabledReason, "").trim(), LIMITS.reason);
   return {
     id: idOf(o.id, `pl-${index + 1}`),
-    // String, and it stays one. "∞" survives; nothing here parses it.
-    price: cut(str(o.price, "—").trim(), LIMITS.price),
+    price: price || "—",
     categoryId: idOf(o.categoryId, ""),
     validity: cut(strOr(o.validity, "").trim(), LIMITS.validity),
     ...(badge ? { badge } : {}),
     rows,
     benefits,
-    ...(disabled ? { disabled: true } : {}),
-    // A greyed card with no explanation is indistinguishable from a broken one,
-    // so an unexplained disable gets a house line rather than silence.
-    ...(disabled ? { disabledReason: reason || "Not available on this number." } : {}),
+    ...(disabled ? { disabled: true, disabledReason: reason || "Not available on this number." } : {}),
   };
 }
 
-function coerceMethod(o: Raw, index: number): PaymentMethod | null {
-  const label = cut(strOr(o.label, "").trim(), LIMITS.label);
-  if (!label) return null;
-  const sub = cut(strOr(o.sub, "").trim(), LIMITS.note);
-  return { id: idOf(o.id, `pm-${index + 1}`), label, ...(sub ? { sub } : {}) };
+const strings = (v: unknown, max: number, count: number): string[] =>
+  (Array.isArray(v) ? v : [])
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => cut(x, max))
+    .slice(0, count);
+
+/**
+ * Structural repair. Runs on live editor state (an AI patch can leave lines
+ * where the old shape had objects), on drafts, and on API payloads: it dedupes
+ * ids, rehomes orphaned plans, and never lets the grid go empty.
+ */
+export function normalizeData(input: RechargeData): RechargeData {
+  const src = input as unknown as Raw;
+  const categories = list<PlanCategory>(src.categories, coerceCategory, DEMO_DATA.categories).slice(0, MAX_CATEGORIES);
+  const seenCats = new Set<string>();
+  const uniqueCats = categories.map((c, i) => {
+    let id = c.id;
+    while (seenCats.has(id)) id = `${id}-${i}`;
+    seenCats.add(id);
+    return id === c.id ? c : { ...c, id };
+  });
+  const known = new Set(uniqueCats.map((c) => c.id));
+  const fallbackCat = uniqueCats[0]?.id ?? "";
+
+  const rawPlans = Array.isArray(src.plans) ? (src.plans as unknown[]) : [];
+  let plans = rawPlans
+    .map((p, i) => coercePlan(p, i))
+    .filter((p): p is Plan => !!p)
+    .slice(0, MAX_PLANS);
+  if (plans.length === 0) plans = DEMO_DATA.plans.map((p) => ({ ...p, rows: [...p.rows], benefits: [...p.benefits] }));
+  const seenPlans = new Set<string>();
+  plans = plans.map((p, i) => {
+    let id = p.id || `pl-${i + 1}`;
+    while (seenPlans.has(id)) id = `${id}-${i}`;
+    seenPlans.add(id);
+    return { ...p, id, categoryId: known.has(p.categoryId) ? p.categoryId : fallbackCat };
+  });
+
+  const sub = obj(src.subscriber);
+  const snd = obj(src.sender);
+  const cur = obj(src.currentPlan);
+  const cash = obj(src.cashback);
+  const rec = obj(src.receipt);
+
+  return {
+    subscriber: {
+      name: cut(strOr(sub.name, ""), LIMITS.name),
+      number: cut(strOr(sub.number, ""), LIMITS.number),
+      circle: cut(strOr(sub.circle, ""), LIMITS.circle),
+    },
+    sender: { name: cut(strOr(snd.name, ""), LIMITS.name) },
+    currentPlan: {
+      expiresIn: cut(strOr(cur.expiresIn, ""), LIMITS.expiry),
+      note: cut(strOr(cur.note, ""), LIMITS.line),
+    },
+    promos: strings(src.promos, LIMITS.promo, MAX_PROMOS),
+    categories: uniqueCats,
+    plans,
+    cashback: { title: cut(strOr(cash.title, ""), LIMITS.cashTitle), note: cut(strOr(cash.note, ""), LIMITS.cashNote) },
+    receipt: { message: strings(rec.message, LIMITS.line, MAX_RECEIPT_LINES) },
+    photos: parseLovePhotos(src.photos, []).slice(0, MAX_PHOTOS),
+    letter: cut(strOr(src.letter, ""), LIMITS.letter),
+    lockQuestion: cut(strOr(src.lockQuestion, ""), LIMITS.lockQuestion),
+    lockAnswer: cut(strOr(src.lockAnswer, ""), LIMITS.lockAnswer),
+  };
 }
 
 /**
- * DB/share response → UI state.
- *
- * Total function: every branch returns something drawable, and an empty or
- * absent payload falls all the way back to the demo flow rather than to an
- * empty grid. Nothing here parses a price.
+ * DB/share response → UI state. Total: an absent field falls back to the demo
+ * copy — except photos and the letter, which stay empty so a page made before
+ * they existed does not grow a stranger's photos or someone else's letter.
  */
 export function dbToRechargeData(db: Raw | null | undefined): RechargeData {
   const src = obj(db);
+  const sub = obj(src.subscriber);
+  const cur = obj(src.currentPlan);
+  const cash = obj(src.cashback);
+  const promos = strList(src.promos, []);
 
-  const rawOperator = obj(src.operator);
-  const rawSubscriber = obj(src.subscriber);
-  const rawCurrent = obj(src.currentPlan);
-
-  const categories = list<PlanCategory>(src.categories, coerceCategory, DEMO_DATA.categories).slice(
-    0,
-    MAX_CATEGORIES,
-  );
-  // Duplicate category ids make the tab rail ambiguous and silently hide plans,
-  // so they are renumbered here rather than anywhere downstream.
-  const seenCats = new Set<string>();
-  const uniqueCategories: PlanCategory[] = categories.map((c, i) => {
-    if (!seenCats.has(c.id)) {
-      seenCats.add(c.id);
-      return c;
-    }
-    let id = `${c.id}-${i}`;
-    while (seenCats.has(id)) id = `${id}x`;
-    seenCats.add(id);
-    return { ...c, id };
-  });
-
-  const known = new Set(uniqueCategories.map((c) => c.id));
-  const fallbackCategory = uniqueCategories[0]?.id ?? "";
-  const plans = list<Plan>(src.plans, coercePlan, DEMO_DATA.plans)
-    .slice(0, MAX_PLANS)
-    // A plan pointing at a category that is not on the rail is unreachable —
-    // it renders nowhere and looks like data loss. Rehome it on the first tab.
-    .map((p) => (known.has(p.categoryId) ? p : { ...p, categoryId: fallbackCategory }));
-
-  const seenPlans = new Set<string>();
-  const uniquePlans: Plan[] = plans.map((p, i) => {
-    if (!seenPlans.has(p.id)) {
-      seenPlans.add(p.id);
-      return p;
-    }
-    let id = `${p.id}-${i}`;
-    while (seenPlans.has(id)) id = `${id}x`;
-    seenPlans.add(id);
-    return { ...p, id };
-  });
-
-  const methods = list<PaymentMethod>(obj(src.payment).methods, coerceMethod, DEMO_DATA.payment.methods).slice(
-    0,
-    MAX_METHODS,
-  );
-
-  return {
-    operator: {
-      name: cut(str(rawOperator.name, DEMO_DATA.operator.name).trim(), LIMITS.name),
-      tagline: cut(strOr(rawOperator.tagline, DEMO_DATA.operator.tagline).trim(), LIMITS.tagline),
-    },
+  const merged = {
     subscriber: {
-      name: cut(str(rawSubscriber.name, DEMO_DATA.subscriber.name).trim(), LIMITS.name),
-      number: cut(str(rawSubscriber.number, DEMO_DATA.subscriber.number).trim(), LIMITS.number),
-      circle: cut(strOr(rawSubscriber.circle, DEMO_DATA.subscriber.circle).trim(), LIMITS.circle),
+      name: str(sub.name, DEMO_DATA.subscriber.name),
+      number: str(sub.number, DEMO_DATA.subscriber.number),
+      circle: strOr(sub.circle, DEMO_DATA.subscriber.circle),
     },
+    sender: { name: strOr(obj(src.sender).name, "") },
     currentPlan: {
-      expiresIn: cut(str(rawCurrent.expiresIn, DEMO_DATA.currentPlan.expiresIn).trim(), LIMITS.validity),
-      note: cut(strOr(rawCurrent.note, DEMO_DATA.currentPlan.note).trim(), LIMITS.line),
+      expiresIn: str(cur.expiresIn, DEMO_DATA.currentPlan.expiresIn),
+      note: strOr(cur.note, DEMO_DATA.currentPlan.note),
     },
-    categories: uniqueCategories,
-    plans: uniquePlans,
-    payment: { methods },
-    receipt: {
-      message: strList(obj(src.receipt).message, DEMO_DATA.receipt.message)
-        .map((l) => cut(l.trim(), LIMITS.line))
-        .filter(Boolean)
-        .slice(0, MAX_RECEIPT_LINES),
+    promos: promos.length ? promos : DEMO_DATA.promos,
+    categories: src.categories ?? DEMO_DATA.categories,
+    plans: Array.isArray(src.plans) && src.plans.length ? src.plans : DEMO_DATA.plans,
+    cashback: {
+      title: str(cash.title, DEMO_DATA.cashback.title),
+      note: str(cash.title, "") ? strOr(cash.note, "") : DEMO_DATA.cashback.note,
     },
+    receipt: { message: strList(obj(src.receipt).message, DEMO_DATA.receipt.message) },
+    photos: parseLovePhotos(src.photos, []),
+    letter: strOr(src.letter, ""),
+    lockQuestion: strOr(src.lockQuestion, ""),
+    lockAnswer: strOr(src.lockAnswer, ""),
   };
+  return normalizeData(merged as unknown as RechargeData);
 }
