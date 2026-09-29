@@ -21,15 +21,25 @@
 // more". Every one of those is a rendering path somebody has to be able to see
 // without filling in a form first.
 
+import { DEMO_PHOTO_CDN } from "../../_love/types";
 import type { ProfileProData } from "./types";
+
+const P = DEMO_PHOTO_CDN;
 
 export const DEMO_PROFILE: ProfileProData = {
   person: {
     name: "Meera Sharma",
     headline: "Professional Girlfriend | Serial Overthinker",
     location: "Bengaluru, Karnataka, India",
-    photoUrl: "",
-    connections: "1 connection",
+    photoUrl: `${P}/couple2.webp`,
+    photoCropX: 63,
+    photoCropY: 40,
+    photoScale: 260,
+    bannerUrl: `${P}/couple1.webp`,
+    bannerCropX: 50,
+    bannerCropY: 55,
+    bannerScale: 100,
+    connections: "1 connection (the important one)",
     degreeNote: "· 1st",
     // Just the value. `ProfileCard` already prints the "Open to" label above it,
     // so a value that repeats the prefix renders as "Open to / Open to: …".
@@ -208,6 +218,41 @@ export const DEMO_PROFILE: ProfileProData = {
 
   contributorPrompt:
     "You know her. Tap the skills you would actually put your name behind — it takes two taps and she sees every one of them before anybody else does.",
+
+  senderName: "Kabir",
+
+  photos: [
+    { url: `${P}/couple1.webp`, caption: "the first sunset", note: "You said the sky looked like mango lassi. I have not stopped thinking about it.", cropX: 50, cropY: 45, scale: 100 },
+    { url: `${P}/couple2.webp`, caption: "date night, round 1", note: "You stole my fries and then my heart. In that order. Both were non-refundable.", cropX: 50, cropY: 40, scale: 100 },
+    { url: `${P}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees were showing off for you that day. They lost.", cropX: 55, cropY: 50, scale: 100 },
+    { url: `${P}/couple4.webp`, caption: "stargazing, sort of", note: "You named every star wrong and I let you. I will let you forever.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${P}/Aniversary/aniversary.webp`, caption: "rooftop, 1 AM", note: "The city was loud and you were louder. My favourite noise.", cropX: 50, cropY: 60, scale: 100 },
+  ],
+
+  posts: [
+    {
+      id: "post-promo",
+      text: "I'm happy to share that I've been promoted to Girlfriend (Full-time, Permanent) at Sharma & Sons! 🎉\n\nHuge thanks to my manager, who took two years to open a conversation and has been catching up ever since. Grateful for the 2am performance reviews, the unlimited chai benefit and a team of exactly one.\n\nOnwards. #newrole #grateful #hesstilllearning",
+      ago: "2w",
+    },
+    {
+      id: "post-fan",
+      text: "After 4 years of rigorous A/B testing I can finally confirm it: fan speed 3 is objectively correct.\n\nWhat this taught me about leadership:\n1. Be right.\n2. Be patient while they realise you were right.\n3. Never say \"I told you so\" out loud. Say it with your eyes.\n\nAgree? 👇 #leadership #growthmindset",
+      ago: "1mo",
+    },
+  ],
+
+  languages: [
+    { name: "Hindi", level: "Native or bilingual proficiency" },
+    { name: "English", level: "Full professional proficiency" },
+    { name: "Sarcasm", level: "Native, with regional variations" },
+    { name: "His Silences", level: "Professional working proficiency" },
+  ],
+
+  letter:
+    "Meera,\n\nI was asked to write you a recommendation, so here it is — on the record, where you can screenshot it.\n\nI have worked alongside you for four years across several roles: best friend, reluctant navigator, official taster of everything you cook at 1 AM. In that time you have consistently exceeded expectations, including the ones I didn't know I had.\n\nYou remember the name of my school bus driver. You fight for the window seat and then give it to me anyway. You made a rainy Tuesday in a bus shelter feel like the best day of my life, and you've been quietly doing some version of that ever since.\n\nStrengths: being right (annoyingly often), kindness when nobody's watching, the laugh that makes strangers turn around. Areas for improvement: none I would ever want you to fix.\n\nI recommend you without reservation, for every role, in every timeline. Position filled. Permanently.",
+  lockQuestion: "Kabir wants to send you a recommendation. Accept?",
+  lockAnswer: "Accept 💙",
 };
 
 export default DEMO_PROFILE;
