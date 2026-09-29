@@ -13,8 +13,15 @@
 // Love Kit's CSS variables, because the templates that use it are clones of
 // real apps with palettes of their own. `bottom` lifts it above a template's
 // own bottom bar (tab bars, buy boxes, mini-players).
+//
+// `variant` (the six real-app clones) swaps the sheet for a full-screen,
+// app-themed reveal (see LetterReveal.tsx) and dresses the corner envelope and
+// its teaser like that app's own notification. Without it nothing changes.
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import LetterReveal, { type LetterVariant } from "./LetterReveal";
+
+export type { LetterVariant };
 
 export interface LetterPopProps {
   letter: string;
@@ -42,6 +49,16 @@ export interface LetterPopProps {
   /** Open immediately (e.g. when the template reaches its finale). */
   forceOpen?: boolean;
   onOpened?: () => void;
+  /** Full-screen reveal themed as one of the real-app templates. */
+  variant?: LetterVariant;
+  /** Photos the reveal may use as backdrops (first = hero). */
+  photos?: string[];
+  /** App icon / channel or profile avatar. */
+  avatar?: string;
+  /** App, show or video name. */
+  title?: string;
+  /** Social handle (us). */
+  handle?: string;
 }
 
 // "no" lives on its own row under "yes" and only ever moves sideways/down, so
@@ -71,6 +88,11 @@ export default function LetterPop({
   zIndex = 90,
   forceOpen,
   onOpened,
+  variant,
+  photos,
+  avatar,
+  title,
+  handle,
 }: LetterPopProps) {
   const [shown, setShown] = useState(false);
   const [open, setOpen] = useState(false);
@@ -79,10 +101,10 @@ export default function LetterPop({
   const [stage, setStage] = useState<"gate" | "opening" | "open">(question?.trim() ? "gate" : "opening");
   const [dodge, setDodge] = useState(-1);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const reduce = useRef(false);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const [reduce] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
   useEffect(() => {
-    reduce.current = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const t1 = window.setTimeout(() => setShown(true), delay);
     const t2 = window.setTimeout(() => setBubble(true), delay + 700);
     const t3 = window.setTimeout(() => setBubble(false), delay + 6500);
@@ -113,22 +135,42 @@ export default function LetterPop({
 
   // Envelope → paper, then mark read.
   useEffect(() => {
-    if (!open || stage !== "opening") return;
+    if (!open || stage !== "opening" || variant) return;
     const t = window.setTimeout(() => {
       setStage("open");
       setRead(true);
       onOpened?.();
-    }, reduce.current ? 0 : 1100);
+    }, reduce ? 0 : 1100);
     return () => window.clearTimeout(t);
-  }, [open, stage, onOpened]);
+  }, [open, stage, onOpened, variant, reduce]);
+
+  const onRevealRead = useCallback(() => { setRead(true); onOpened?.(); }, [onOpened]);
+
+  // Lock the page behind the letter, and hand focus back to the envelope after.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      const html = document.documentElement;
+      const prev = [html.style.overflow, document.body.style.overflow];
+      html.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      return () => { html.style.overflow = prev[0]; document.body.style.overflow = prev[1]; };
+    }
+    if (wasOpen.current) {
+      wasOpen.current = false;
+      const r = window.requestAnimationFrame(() => fabRef.current?.focus({ preventScroll: true }));
+      return () => window.cancelAnimationFrame(r);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    closeRef.current?.focus();
+    if (!variant || !question?.trim()) closeRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, variant, question]);
 
   if (!letter?.trim()) return null;
 
@@ -148,21 +190,38 @@ export default function LetterPop({
 
       {/* The envelope in the corner */}
       {shown && !open && (
-        <div className="lpDock" style={{ right, bottom: `calc(${bottom}px + env(safe-area-inset-bottom, 0px))`, zIndex }}>
+        <div className={`lpDock${variant ? ` lpDock--${variant}` : ""}`} style={{ right, bottom: `calc(${bottom}px + env(safe-area-inset-bottom, 0px))`, zIndex }}>
           {bubble && !read && (
-            <button type="button" className="lpBubble" onClick={openLetter}>{teaser}</button>
+            variant ? (
+              <button type="button" className="lpBubble lpBanner" onClick={openLetter}>
+                <span className="lpBanIc" style={avatar || photos?.[0] ? { backgroundImage: `url("${(avatar || photos?.[0] || "").replace(/"/g, "%22")}")` } : undefined}>
+                  {BANNER[variant].glyph}
+                </span>
+                <span className="lpBanTx">
+                  <span className="lpBanTop"><b>{BANNER[variant].app(title, from)}</b><small>now</small></span>
+                  <span className="lpBanMsg">{teaser}</span>
+                </span>
+              </button>
+            ) : (
+              <button type="button" className="lpBubble" onClick={openLetter}>{teaser}</button>
+            )
           )}
           <button
+            ref={fabRef}
             type="button"
             className={`lpFab${read ? " is-read" : ""}`}
             onClick={openLetter}
             aria-label={read ? "Open the letter again" : `Open your letter${from ? ` from ${from}` : ""}`}
           >
+            {variant === "us" ? (
+              <svg viewBox="0 0 24 24" width="27" height="27" aria-hidden><path d="M22 3L9.2 10.2M22 3l-6.5 18-3.3-8.1L4 9.6z" fill="none" stroke="#111" strokeWidth="2" strokeLinejoin="round" /></svg>
+            ) : (
             <svg viewBox="0 0 48 36" width="30" height="23" aria-hidden>
               <rect x="1.5" y="1.5" width="45" height="33" rx="5" fill="var(--lp-paper)" stroke="rgba(0,0,0,.12)" />
               <path d="M3 5l21 16L45 5" fill="none" stroke="var(--lp-a)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M24 26c-4-3-7-5-7-8a3.4 3.4 0 0 1 7-1 3.4 3.4 0 0 1 7 1c0 3-3 5-7 8z" fill="var(--lp-a)" />
             </svg>
+            )}
             {!read && <span className="lpBadge">1</span>}
             {read && <span className="lpRead">read</span>}
           </button>
@@ -170,7 +229,33 @@ export default function LetterPop({
       )}
 
       {/* The letter */}
-      {open && (
+      {open && variant && (
+        <LetterReveal
+          variant={variant}
+          paras={paras}
+          greeting={greeting}
+          sign={sign || "forever yours,"}
+          from={from}
+          to={to}
+          question={question?.trim() || undefined}
+          answer={answer}
+          accent={accent}
+          accent2={accent2}
+          paper={paper}
+          ink={ink}
+          photos={(photos ?? []).filter(Boolean)}
+          avatar={avatar || undefined}
+          title={title}
+          handle={handle}
+          reduce={reduce}
+          zIndex={Math.max(zIndex + 10, 1000)}
+          closeRef={closeRef}
+          onClose={() => setOpen(false)}
+          onRead={onRevealRead}
+        />
+      )}
+
+      {open && !variant && (
         <div className="lpOverlay" style={{ zIndex: zIndex + 10 }} role="dialog" aria-modal="true" aria-label="Your letter" onClick={() => setOpen(false)}>
           <div className="lpSheet" onClick={(e) => e.stopPropagation()}>
             <button ref={closeRef} type="button" className="lpClose" onClick={() => setOpen(false)} aria-label="Close the letter">✕</button>
@@ -224,6 +309,16 @@ export default function LetterPop({
   );
 }
 
+// The teaser, written the way each app words its own notification.
+const BANNER: Record<LetterVariant, { glyph: string; app: (title?: string, from?: string) => string }> = {
+  app: { glyph: "", app: (t) => t || "App Store" },
+  watch: { glyph: "", app: (_t, f) => (f ? `${f} · Premiere` : "Premiere") },
+  recharge: { glyph: "", app: (_t, f) => (f ? `${f} · ₹∞` : "Payment received") },
+  product: { glyph: "📦", app: () => "Delivered today" },
+  us: { glyph: "", app: (_t, f) => f || "New message" },
+  loveflix: { glyph: "L", app: () => "LoveFlix · New episode" },
+};
+
 const CSS = `
 .lpDock { position: fixed; display: flex; align-items: center; gap: 8px; animation: lpPop .55s cubic-bezier(.2,1.4,.4,1) backwards; }
 .lpFab { position: relative; width: 56px; height: 56px; border-radius: 18px; border: none; cursor: pointer; display: grid; place-items: center;
@@ -263,6 +358,36 @@ const CSS = `
 .lpPara { margin: 0 0 12px; animation: lpLine .6s ease backwards; }
 .lpSign { margin-top: 18px; text-align: right; font-style: italic; animation: lpLine .6s ease backwards; }
 .lpSign strong { font-style: normal; font-family: system-ui, sans-serif; font-size: 15px; color: var(--lp-a); }
+/* dressed as each app's own notification */
+.lpBanner { display: flex; align-items: center; gap: 10px; max-width: min(300px, calc(100vw - 110px)); text-align: left; padding: 10px 12px; border-radius: 16px; }
+.lpBanIc { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--lp-a), var(--lp-b)) center/cover no-repeat; color: #fff; font: 800 16px/1 system-ui, sans-serif; }
+.lpBanTx { display: grid; min-width: 0; gap: 1px; }
+.lpBanTop { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.lpBanTop b { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lpBanTop small { font-size: 11px; font-weight: 500; opacity: .55; flex: none; }
+.lpBanMsg { font-size: 12.5px; font-weight: 500; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.lpDock--app .lpBanner { background: rgba(250,250,252,.92); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); color: #000; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; border-radius: 20px; }
+.lpDock--app .lpBadge { background: #FF3B30; }
+.lpDock--watch .lpFab { border-radius: 50%; background: #212121; box-shadow: 0 12px 28px -8px rgba(0,0,0,.6), 0 0 0 2px #3f3f3f; }
+.lpDock--watch .lpBadge { background: #CC0000; border-color: #0f0f0f; }
+.lpDock--watch .lpBanner { background: #212121; color: #f1f1f1; border-radius: 12px; font-family: Roboto, Arial, sans-serif; box-shadow: 0 12px 30px -10px rgba(0,0,0,.6); }
+.lpDock--watch .lpBanIc { border-radius: 50%; }
+.lpDock--recharge .lpFab { border-radius: 50%; }
+.lpDock--recharge .lpBanner { font-family: var(--font-inter), Inter, system-ui, sans-serif; border-radius: 18px; border: 1px solid #F6D5E4; }
+.lpDock--recharge .lpBanIc { border-radius: 50%; }
+.lpDock--product .lpFab { border-radius: 12px; background: #232F3E; box-shadow: 0 12px 26px -10px rgba(19,25,33,.6), 0 0 0 2px #fff; }
+.lpDock--product .lpBadge { background: #FF9900; color: #0F1111; border-color: #232F3E; }
+.lpDock--product .lpBanner { border-radius: 10px; border: 1px solid #D5D9D9; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.lpDock--product .lpBanTop b { color: #007600; }
+.lpDock--product .lpBanIc { background: #FFF3D6 !important; font-size: 18px; }
+.lpDock--us .lpFab { border-radius: 50%; background: #fff; box-shadow: 0 10px 26px -8px rgba(0,0,0,.35), 0 0 0 1px #DBDBDB; }
+.lpDock--us .lpBadge { background: #FF3040; }
+.lpDock--us .lpBanner { border-radius: 14px; font-family: -apple-system, system-ui, sans-serif; box-shadow: 0 10px 30px -8px rgba(0,0,0,.3); }
+.lpDock--us .lpBanIc { border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #D62976; }
+.lpDock--loveflix .lpFab { border-radius: 8px; background: #141414; box-shadow: 0 12px 28px -8px rgba(229,9,20,.55), 0 0 0 2px var(--lp-a); }
+.lpDock--loveflix .lpBadge { background: var(--lp-a); border-color: #141414; }
+.lpDock--loveflix .lpBanner { background: #232323; color: #fff; border-radius: 6px; font-family: var(--font-inter), Inter, system-ui, sans-serif; box-shadow: 0 12px 30px -10px #000; border-left: 3px solid var(--lp-a); }
+.lpDock--loveflix .lpBanIc { background: #000 !important; color: var(--lp-a); font: 700 22px/1 var(--font-oswald), Impact, sans-serif; border-radius: 4px; }
 @keyframes lpPop { from { opacity: 0; transform: translateY(24px) scale(.6); } }
 @keyframes lpBob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-3deg); } }
 @keyframes lpPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
