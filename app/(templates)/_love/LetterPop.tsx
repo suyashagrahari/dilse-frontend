@@ -319,7 +319,7 @@ const BANNER: Record<LetterVariant, { glyph: string; app: (title?: string, from?
   loveflix: { glyph: "L", app: () => "LoveFlix · New episode" },
   call: { glyph: "📞", app: (_t, f) => (f ? `${f} · missed call` : "Missed call") },
   catch: { glyph: "💌", app: () => "A letter fell from the sky" },
-  profile: { glyph: "in", app: (_t, f) => (f ? `${f} sent you a message` : "New message") },
+  profile: { glyph: "♥", app: (_t, f) => (f ? `${f} sent you a message` : "New message") },
   searched: { glyph: "G", app: () => "1 new result for you" },
   streak: { glyph: "🔥", app: (_t, f) => (f ? `${f} sent a snap` : "New snap") },
   rewind: { glyph: "▶", app: () => "Your Rewind is ready" },
