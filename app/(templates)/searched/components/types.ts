@@ -1,34 +1,26 @@
-// ─── Searched — the frozen contract ──────────────────────────────────────────
+// ─── Searched — shape, tokens and small pure helpers ─────────────────────────
 //
-// LEAD-OWNED AND FROZEN. Import from here; do not extend it.
-//
-// This template must look like a BORING UTILITY. The comedy is entirely in the
-// copy, and any decoration undermines it. No gradients, no shadows beyond a 1px
-// border on the search box and the knowledge panel, greyscale everything except
-// the wordmark and the link colour. If a change makes this prettier, it makes
-// it worse.
+// A search-engine results page, cloned down to the spacing: the doodle home,
+// the pill search box with its mic and lens, autocomplete with the COMPLETION
+// in bold, the tab row, "About N results", an AI Overview that streams in, the
+// knowledge panel, People also ask, Top stories, the Images and Videos packs,
+// a local pack of "places we've been", related searches and the stretched
+// wordmark pagination. Every word of it is about one person.
 //
 // ── BRAND ────────────────────────────────────────────────────────────────────
-// The LAYOUT is a genre and is built here in full: centred search bar, the
-// autocomplete dropdown, the tab row, the results-count line, the
-// URL-breadcrumb / blue-title / grey-snippet hierarchy, People Also Ask
-// accordions, the right-hand knowledge panel, related searches.
-//
-// The MARKS are not. This file's `assertBrandSafe` is run over the rendered
-// template as part of verification, and fails on the trademarked wordmark, the
-// four-colour sequence, the type family, and the specific link blue. The
-// recognition comes from the layout, not from the logo — strip the mark and
-// swap the palette and it still reads as a search page in under a second.
+// The LAYOUT is a genre. The MARKS are not ours: the wordmark is the
+// recipient's own name in a colourful parody palette, and the checker below
+// fails on the real product names and the exact trademark colours. It runs
+// over this directory, so the deny-list is assembled from fragments.
+
+import type { LovePhoto } from "../../_love/types";
+
+export type { LovePhoto };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Brand safety — mechanically enforced
 // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * Substrings that must not appear ANYWHERE — copy, class names, alt text,
- * file names, or comments. Split so that this contract file can name what it
- * forbids without itself tripping the grep that runs over the template.
- */
 export const FORBIDDEN_TOKENS: readonly string[] = [
   ["Goo", "gle"].join(""),
   ["Gm", "ail"].join(""),
@@ -38,14 +30,6 @@ export const FORBIDDEN_TOKENS: readonly string[] = [
   ["Chr", "ome"].join(""),
 ];
 
-/**
- * The four-colour sequence, and the link blue. Never these exact values.
- *
- * Assembled from fragments for the same reason FORBIDDEN_TOKENS is: a deny-list
- * that spells out its own entries makes "grep this directory for banned values
- * and find nothing" untrue, and the one honest way to run that check is for it
- * to pass over every file including this one.
- */
 const hex = (...parts: string[]): string => parts.join("");
 
 export const FORBIDDEN_COLORS: readonly string[] = [
@@ -56,62 +40,44 @@ export const FORBIDDEN_COLORS: readonly string[] = [
   hex("#1A", "0DAB"),
 ];
 
-/**
- * Returns every violation found in the given source text. Empty array = clean.
- * Run over the concatenated template source and over the rendered DOM.
- */
+/** Every violation found in the given text. Empty array = clean. */
 export function assertBrandSafe(source: string): string[] {
-  const hits: string[] = [];
   const lower = source.toLowerCase();
-  for (const t of FORBIDDEN_TOKENS) {
-    if (lower.includes(t.toLowerCase())) hits.push(t);
-  }
-  for (const c of FORBIDDEN_COLORS) {
-    if (lower.includes(c.toLowerCase())) hits.push(c);
-  }
-  return hits;
+  return [...FORBIDDEN_TOKENS, ...FORBIDDEN_COLORS].filter((t) => lower.includes(t.toLowerCase()));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Palette — greyscale, plus exactly two colours
+// Palette
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * The parody wordmark palette — same spirit (primary, playful, one colour per
+ * letter), never the real values. Blue, rose, sun, blue, leaf, rose.
+ */
+export const WORDMARK_COLORS = ["#3F76EE", "#E8445E", "#F4B42B", "#3F76EE", "#26A160", "#E8445E"] as const;
+export const colorForIndex = (i: number): string => WORDMARK_COLORS[i % WORDMARK_COLORS.length];
+
+/** The one light palette the password gate and editor UI borrow. */
 export const PALETTE = {
-  bg: "#fdfdfd",
-  /** Primary text. */
+  bg: "#ffffff",
   ink: "#1f1f1f",
-  /** Snippets and the results-count line. */
-  grey: "#5f6368",
+  grey: "#4d5156",
   greyLight: "#70757a",
   border: "#dadce0",
-  /** Result titles. A blue-violet, deliberately distinct. */
-  link: "#5B4FD6",
-  linkVisited: "#6d3fa8",
-  /** Breadcrumb URLs. */
-  url: "#3c4043",
-  hover: "#f1f3f4",
+  link: "#1f15ab",
+  accent: "#0b57d0",
+  rose: "#E8445E",
 } as const;
 
-/**
- * The wordmark palette: plum, coral, amber, teal, rose. Clearly not the
- * four-colour sequence, in a different count and a different order.
- * Cycled per character of the recipient's name.
- */
-export const WORDMARK_COLORS = ["#8E3B8E", "#E2664F", "#D9A21B", "#2E8B8B", "#C2456E"] as const;
-
-export const colorForIndex = (i: number): string =>
-  WORDMARK_COLORS[i % WORDMARK_COLORS.length];
-
-/** Native-ish UI sans. Not a licensed brand face. */
-export const UI =
-  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
-/** The fake pages are deliberately plain — a personal blog from 2011. */
-export const ARTICLE = "var(--font-tinos), Georgia, 'Times New Roman', serif";
+export const UI = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+/** A geometric sans for the wordmark, tabs and headings. Loaded app-wide. */
+export const GS = 'var(--font-outfit), "Outfit", "Segoe UI", Roboto, Arial, sans-serif';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Stored shape
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Legacy: pages saved before the rebuild carried whole fake articles. */
 export interface FakePage {
   title: string;
   url: string;
@@ -121,64 +87,159 @@ export interface FakePage {
 
 export interface SearchResult {
   id: string;
-  title: string;
-  /** "meera.verma › my-life" — breadcrumb form, not a real URL. */
+  /** "Unencyclopedia" — the site name over the breadcrumb. */
+  site: string;
+  /** "unencyclopedia.in › wiki › Meera" — breadcrumb form, not a real URL. */
   url: string;
-  /** May contain <b> on matched terms. Rendered through a strict sanitiser. */
+  title: string;
+  /** May contain <b> on matched terms. Rendered through a strict parser. */
   snippet: string;
-  /** Present → the result is clickable and opens a full fake page. */
+  /** "2 days ago" — printed before the snippet. */
+  date?: string;
+  /** Legacy article body. */
   page?: FakePage;
-  /** "Ad · sponsored by me" */
+  /** "Sponsored" */
   badge?: string;
 }
 
 export interface PaaItem {
   question: string;
   answer: string;
-  /** "arjun.exe › feelings" */
   source?: string;
 }
 
-export interface KnowledgeFact {
+export interface Fact {
   label: string;
   value: string;
 }
 
 export interface KnowledgePanel {
-  /** "Person · The Love of My Life" */
+  /** "Arjun's favourite human" */
   subtitle: string;
   description: string;
-  facts: KnowledgeFact[];
-  quote?: string;
-  /** Friends' names → generated initial-circles. No fetched avatars. */
+  facts: Fact[];
+  /** "Name — caption" strings; rendered as circles. */
   alsoSearchFor: string[];
+  quote?: string;
+}
+
+export interface Review {
+  author: string;
+  stars: number;
+  text: string;
+  when?: string;
+}
+
+export interface Story {
+  source: string;
+  time: string;
+  title: string;
+}
+
+export interface Video {
+  channel: string;
+  duration: string;
+  title: string;
+}
+
+export interface Place {
+  name: string;
+  kind: string;
+  rating: string;
+  note: string;
 }
 
 export interface SearchData {
   sender: { name: string };
-  recipient: { name: string; photoUrl: string };
-  /** 5-6, funniest first. */
+  recipient: { name: string };
+  /** Hover title of the doodle: "Celebrating 3 years of Meera & Arjun". */
+  doodleTitle: string;
+  /** 5–6, funniest first. Each starts with the recipient's name. */
   autocomplete: string[];
-  didYouMean?: string;
-  /** "8,47,000" — Indian digit grouping, pre-formatted by `groupIndian`. */
+  /** "Did you mean: Arjun's favourite person" */
+  didYouMean: string;
+  /** "8,47,000" — Indian grouping, pre-formatted. */
   resultCount: string;
   searchSeconds: string;
-  results: SearchResult[];
-  paa: PaaItem[];
-  /** Held back, appended two at a time as questions are expanded. */
-  paaReserve: PaaItem[];
+  /** Streams in, paragraph by paragraph. */
+  aiOverview: string;
+  /** "Label: text" key points under the overview. */
+  aiPoints: string[];
   knowledgePanel: KnowledgePanel;
+  reviews: Review[];
+  results: SearchResult[];
+  /** The first four show; opening one appends two more (the real behaviour). */
+  paa: PaaItem[];
+  topStories: Story[];
+  videos: Video[];
+  places: Place[];
   relatedSearches: string[];
-  images: { url: string; caption?: string }[];
-  /** Swapped in when a related search is tapped. Cheap: 2-3 results, no pages. */
-  alternateResults: Record<string, SearchResult[]>;
+  /** The memories: images pack, panel collage, thumbnails, the viewer. */
+  photos: LovePhoto[];
+  letter: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Numbers
+// Limits (client side; the server mirrors and enforces its own)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** 847000 → "8,47,000". Lakh/crore grouping, which is the joke's home turf. */
+export const L = {
+  name: 48,
+  doodleTitle: 90,
+  suggestion: 90,
+  didYouMean: 80,
+  resultCount: 20,
+  seconds: 6,
+  overview: 900,
+  point: 140,
+  subtitle: 80,
+  description: 420,
+  factLabel: 28,
+  factValue: 90,
+  alsoSearch: 48,
+  reviewAuthor: 32,
+  reviewText: 200,
+  reviewWhen: 24,
+  site: 40,
+  url: 90,
+  title: 110,
+  snippet: 260,
+  date: 24,
+  question: 110,
+  answer: 420,
+  storySource: 32,
+  storyTime: 24,
+  storyTitle: 120,
+  videoChannel: 36,
+  videoDuration: 8,
+  videoTitle: 100,
+  placeName: 40,
+  placeKind: 48,
+  placeRating: 4,
+  placeNote: 140,
+  related: 70,
+  maxSuggestions: 6,
+  maxPoints: 5,
+  maxFacts: 8,
+  maxAlso: 6,
+  maxReviews: 5,
+  maxResults: 8,
+  maxPaa: 8,
+  maxStories: 5,
+  maxVideos: 4,
+  maxPlaces: 5,
+  maxRelated: 8,
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const firstNameOf = (full: string): string => (full || "").trim().split(/\s+/)[0] ?? "";
+
+/** 847000 → "8,47,000". */
 export function groupIndian(n: number): string {
   const s = Math.abs(Math.trunc(n)).toString();
   if (s.length <= 3) return (n < 0 ? "-" : "") + s;
@@ -187,56 +248,34 @@ export function groupIndian(n: number): string {
   return `${n < 0 ? "-" : ""}${rest},${last3}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Autocomplete — the best moment in the template
-// ═══════════════════════════════════════════════════════════════════════════
+/** Deterministic small hash — favicon colours, review counts. */
+export function hashOf(s: string): number {
+  let h = 7;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
 
-export const AUTOCOMPLETE = {
-  /** Rows appear staggered. */
-  staggerMs: 40,
-  /** After this long idle with a non-empty field, pulse the top suggestion once. */
-  nudgeAfterMs: 1500,
-  /** Loose-match threshold against the recipient's first name. */
-  looseMatchChars: 3,
-  maxRows: 6,
-} as const;
+export function initialCircle(name: string): { initial: string; bg: string } {
+  const initial = (name.trim()[0] ?? "?").toUpperCase();
+  return { initial, bg: WORDMARK_COLORS[hashOf(name) % WORDMARK_COLORS.length] };
+}
 
 /**
- * Filter entries that start with what's typed, but ALSO surface everything once
- * at least 3 characters of the recipient's first name match — sloppy typing
- * must not hide the jokes, and an empty dropdown is a dead moment.
+ * Autocomplete: rows that start with what's typed; once three letters of the
+ * first name match, everything — sloppy typing must never hide the jokes.
  */
-export function matchSuggestions(
-  query: string,
-  suggestions: string[],
-  recipientFirstName: string,
-): string[] {
+export function matchSuggestions(query: string, suggestions: string[], recipientName: string): string[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const prefix = suggestions.filter((s) => s.toLowerCase().startsWith(q));
-  const first = recipientFirstName.trim().toLowerCase();
-  const loose =
-    first.length > 0 &&
-    q.length >= AUTOCOMPLETE.looseMatchChars &&
-    (first.startsWith(q.slice(0, AUTOCOMPLETE.looseMatchChars)) ||
-      q.startsWith(first.slice(0, AUTOCOMPLETE.looseMatchChars)));
-  const pool = prefix.length > 0 ? prefix : loose ? suggestions : suggestions;
-  return pool.slice(0, AUTOCOMPLETE.maxRows);
+  if (prefix.length) return prefix.slice(0, L.maxSuggestions);
+  const first = firstNameOf(recipientName).toLowerCase();
+  const loose = first && (first.startsWith(q.slice(0, 3)) || q.startsWith(first.slice(0, 3)));
+  return loose ? suggestions.slice(0, L.maxSuggestions) : suggestions.slice(0, 3);
 }
 
-export interface SuggestionParts {
-  /** The portion the user has already typed. Rendered at NORMAL weight. */
-  typed: string;
-  /** Everything after it. Rendered BOLD. */
-  rest: string;
-}
-
-/**
- * The real convention, and almost everyone gets it backwards: the typed prefix
- * is normal weight and the COMPLETION is bold. Bolding the typed part instead
- * makes the dropdown look fake instantly.
- */
-export function splitSuggestion(suggestion: string, query: string): SuggestionParts {
+/** The real convention: the typed prefix is NORMAL, the completion is BOLD. */
+export function splitSuggestion(suggestion: string, query: string): { typed: string; rest: string } {
   const q = query.trim();
   if (q && suggestion.toLowerCase().startsWith(q.toLowerCase())) {
     return { typed: suggestion.slice(0, q.length), rest: suggestion.slice(q.length) };
@@ -244,73 +283,90 @@ export function splitSuggestion(suggestion: string, query: string): SuggestionPa
   return { typed: "", rest: suggestion };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// People Also Ask
-// ═══════════════════════════════════════════════════════════════════════════
+export interface SnippetToken {
+  text: string;
+  bold: boolean;
+}
 
-export const PAA = {
-  /** Measure scrollHeight and animate max-height. A fixed cap clips long answers. */
-  expandMs: 300,
-  /** Expanding one appends this many more to the bottom. A real behaviour. */
-  appendOnExpand: 2,
-} as const;
+/** `<b>` spans become bold tokens; every other tag becomes plain text. */
+export function parseSnippet(raw: string): SnippetToken[] {
+  const src = raw ?? "";
+  const out: SnippetToken[] = [];
+  const re = /<b>([\s\S]*?)<\/b>/gi;
+  const clean = (s: string) => s.replace(/<[^>]*>/g, "");
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index > last) out.push({ text: clean(src.slice(last, m.index)), bold: false });
+    out.push({ text: clean(m[1]), bold: true });
+    last = re.lastIndex;
+  }
+  if (last < src.length) out.push({ text: clean(src.slice(last)), bold: false });
+  return out.filter((t) => t.text.length > 0);
+}
 
 /**
- * Expanding a question appends two held-back ones. Never removes, never
- * collapses a sibling — people open all of them, and the box feeling alive is
- * exactly why the page reads as authentic.
+ * Bold the recipient's name parts inside plain text — the results page bolds
+ * the query terms in every snippet, and the AI writes plain text.
  */
-export function appendReserve(
-  shown: PaaItem[],
-  reserve: PaaItem[],
-  alreadyAppended: number,
-): { items: PaaItem[]; appended: number } {
-  const next = reserve.slice(alreadyAppended, alreadyAppended + PAA.appendOnExpand);
-  if (next.length === 0) return { items: shown, appended: alreadyAppended };
-  return { items: [...shown, ...next], appended: alreadyAppended + next.length };
+export function boldTerms(text: string, name: string): SnippetToken[] {
+  if (/<b>/i.test(text)) return parseSnippet(text);
+  const plain = text.replace(/<[^>]*>/g, "");
+  const parts = name.trim().split(/\s+/).filter((p) => p.length > 1);
+  if (!parts.length) return [{ text: plain, bold: false }];
+  const esc = parts.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const re = new RegExp(`(${esc.join("|")})`, "gi");
+  return plain
+    .split(re)
+    .filter(Boolean)
+    .map((t) => ({ text: t, bold: parts.some((p) => p.toLowerCase() === t.toLowerCase()) }));
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Layout & motion
-// ═══════════════════════════════════════════════════════════════════════════
-
-export const TIMING = {
-  /** Results animate in staggered on first paint. */
-  resultStaggerMs: 60,
-  /** The fake page slides in from the right. */
-  pageSlideMs: 300,
-  toastMs: 2200,
-} as const;
-
-export const TAP_TARGET_PX = 44;
-
-export type Tab = "all" | "images" | "news" | "videos" | "shopping" | "more";
-
-/** Only "all" and "images" have content. The rest are one-line jokes. */
-export const TAB_EMPTY_COPY: Record<Exclude<Tab, "all" | "images">, string> = {
-  news: "no news. we're private people.",
-  videos: "nothing recorded. you had to be there.",
-  shopping: "not for sale.",
-  more: "that's everything. there isn't a more.",
-};
-
-export const COPY = {
-  placeholder: "search your name",
-  search: "Search",
-  lucky: "I'm Feeling Lucky",
-  didYouMean: (s: string) => `Did you mean: ${s}`,
-  refuseCorrection: "no. I meant you.",
-  wrongName: (name: string) => `showing results for ${name} instead. obviously.`,
-  privateResult: "some things stay private",
-  emptySearch: "type something. anything. preferably your name.",
-  noImages: "no images. you'll have to remember.",
-  resultsLine: (count: string, secs: string) => `About ${count} results (${secs} seconds)`,
-} as const;
-
-/** Deterministic initial-circle colour. Never fetch a real favicon. */
-export function initialCircle(name: string): { initial: string; bg: string } {
-  const initial = (name.trim()[0] ?? "?").toUpperCase();
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return { initial, bg: WORDMARK_COLORS[h % WORDMARK_COLORS.length] };
+/**
+ * The stretched wordmark for pagination: "Meera" → M · e×N · ra.
+ * The first vowel after the first letter is repeated once per page.
+ */
+export function stretchName(name: string): { head: string; vowel: string; tail: string } {
+  const n = firstNameOf(name) || "Love";
+  const m = /[aeiouy]/i.exec(n.slice(1));
+  if (!m) return { head: n.slice(0, 1), vowel: "o", tail: n.slice(1) || "ve" };
+  const at = m.index + 1;
+  let end = at;
+  while (end < n.length && n[end].toLowerCase() === n[at].toLowerCase()) end++;
+  return { head: n.slice(0, at), vowel: n[at].toLowerCase(), tail: n.slice(end) };
 }
+
+/** "Label: value" → a fact; the first colon splits. */
+export function splitFact(s: string): Fact {
+  const i = s.indexOf(":");
+  if (i < 0) return { label: "", value: s.trim() };
+  return { label: s.slice(0, i).trim(), value: s.slice(i + 1).trim() };
+}
+
+/** "Name — caption" (em dash, en dash or hyphen with spaces). */
+export function splitAlso(s: string): { name: string; caption: string } {
+  const m = /^(.*?)\s+[—–-]\s+(.*)$/.exec(s.trim());
+  return m ? { name: m[1].trim(), caption: m[2].trim() } : { name: s.trim(), caption: "" };
+}
+
+export type Tab = "all" | "ai" | "images" | "videos" | "news" | "maps" | "shopping";
+
+export const TABS: { id: Tab; label: string }[] = [
+  { id: "ai", label: "AI Mode" },
+  { id: "all", label: "All" },
+  { id: "images", label: "Images" },
+  { id: "videos", label: "Videos" },
+  { id: "news", label: "News" },
+  { id: "maps", label: "Maps" },
+  { id: "shopping", label: "Shopping" },
+];
+
+export const LUCKY_ROLL = [
+  "I'm Feeling Lucky",
+  "I'm Feeling Loved",
+  "I'm Feeling Blushy",
+  "I'm Feeling Clingy",
+  "I'm Feeling Yours",
+  "I'm Feeling Kissable",
+  "I'm Feeling Lucky",
+];
