@@ -19,7 +19,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A grainy camera photo, a cropped number plate, an offence table with a total that reads 'one date'. Pay it and you get a receipt. Contest it and the objection is always upheld.",
   bgGradient: "from-amber-50 via-white to-red-50",
-  coverImage: templateMedia("challan", "cover.webp"),
+  coverImage: templateMedia("challan", "cover-v2.webp"),
   tabs: [
     { id: "lookup", icon: FileSearch, label: "Lookup" },
     { id: "evidence", icon: Camera, label: "Evidence" },

@@ -21,7 +21,7 @@ const SOCIAL_TITLE = "1 challan found · KA 01 LUV 2023";
 const SOCIAL_DESCRIPTION = "Total payable: one date. Pay before the due date, or contest it and win.";
 
 const OG_IMAGE = {
-  url: templateMedia("challan", "cover.webp"),
+  url: templateMedia("challan", "cover-v2.webp"),
   width: 1200,
   height: 630,
   alt: "A parody traffic notice made for someone you love — SubhSandesh",

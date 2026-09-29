@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Red Flag, Green Flag",
   description:
     "One profile near you. They swipe on your worst habits — left, right, or 'it's complicated' — and each direction reveals a different answer you wrote. Ends with a verdict about them.",
-  coverImage: templateMedia("flags", "cover.jpg"),
+  coverImage: templateMedia("flags", "cover-v2.webp"),
   emoji: "🚩",
   color: "from-rose-600 to-emerald-700",
   previewText: "1 profile near you. swipe up to begin 🚩",

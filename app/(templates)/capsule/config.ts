@@ -10,7 +10,7 @@ export const config: TemplatePageConfig = {
   description:
     "You both write predictions about the next year, blind to each other. It seals. A year later you crack it open together, judge every one, and find out who owes who.",
   coverImage:
-    templateMedia("capsule", "cover.jpg"),
+    templateMedia("capsule", "cover-v2.webp"),
   emoji: "🕰️",
   color: "from-red-800 to-amber-900",
   previewText: "sealed until 14 March 2027 🕰️",
