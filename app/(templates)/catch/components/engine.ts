@@ -616,13 +616,13 @@ export class Engine {
         this.burst(it.x, py - 20, 20, "spark");
         if (it.power === "magnet") {
           this.magnet = 7;
-          this.float("MAGNET 🧲", W / 2, this.H * 0.4, "#C9B8FF", 30);
+          this.float("MAGNET 🧲", W / 2, this.H * 0.6, "#C9B8FF", 30);
         } else if (it.power === "double") {
           this.double = 8;
-          this.float("DOUBLE POINTS ✨", W / 2, this.H * 0.4, "#FFE27A", 28);
+          this.float("DOUBLE POINTS ✨", W / 2, this.H * 0.6, "#FFE27A", 28);
         } else {
           this.shield = true;
-          this.float("SHIELD UP 🛡️", W / 2, this.H * 0.4, "#9CF5D8", 28);
+          this.float("SHIELD UP 🛡️", W / 2, this.H * 0.6, "#9CF5D8", 28);
         }
         this.ev.onPower(it.power);
         break;

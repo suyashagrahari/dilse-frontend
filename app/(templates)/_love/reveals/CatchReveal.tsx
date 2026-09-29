@@ -160,7 +160,7 @@ const CSS = `
 .lrCtStars span:nth-child(2) { font-size: 74px; transform: translateY(-10px); animation-name: lrCtStar2; }
 .lrCtBig { margin: 10px 0 0; font: 700 clamp(46px, 13vw, 76px)/.95 ${DISPLAY}; color: #fff; position: relative; z-index: 2;
   text-shadow: 0 5px 0 #FF4F9A, 0 11px 0 #2A1640, 0 24px 40px rgba(42,22,64,.35); animation: lrCtBigIn .6s cubic-bezier(.2,1.5,.4,1) .1s both; }
-.lrCtHi { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 10px; margin: 22px 0 0; padding: 8px 18px; border-radius: 16px; background: #2A1640; color: #FFD84D; font: 700 16px ${DISPLAY}; letter-spacing: .1em; animation: lrCtBlink .9s steps(2) 1.2s 3, lrPopIn .4s ease 1s both; }
+.lrCtHi { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 10px; margin: 22px 0 0; padding: 8px 18px; border-radius: 16px; background: #2A1640; color: #FFD84D; font: 700 16px ${DISPLAY}; letter-spacing: .1em; animation: lrPopIn .4s cubic-bezier(.2,1.6,.4,1) 1s both; }
 .lrCtHi b { font-size: 26px; color: #fff; }
 
 /* bonus loading */
