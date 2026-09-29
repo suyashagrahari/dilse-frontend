@@ -2,76 +2,62 @@
 
 // ─── AppTemplate — the composer ──────────────────────────────────────────────
 //
-// Assembles the listing out of the section components and owns the only three
-// pieces of state the page has: the install pill, the version-history panel,
-// and the toast. Nothing here fetches, and nothing here reads storage — the
-// recipient's render holds all of its own state in memory, because a gift page
-// that remembers you across visits is a gift page that wrote to your device.
+// Assembles the listing and owns its little bits of state: the GET pill's
+// install run, the pushed Version History page, review sheets, the island
+// toast, heart bursts, the "Tap to Rate" stars and the corner letter. Nothing
+// here fetches and nothing reads storage.
 //
-// ── THE INSTALL GUARD ────────────────────────────────────────────────────────
+// ── THREE LAYOUTS, ONE TREE ──────────────────────────────────────────────────
+// Phone gets the nav bar + bottom tab bar; tablet the floating pill tabs;
+// desktop the sidebar. All of it is CSS (listing/css.ts) — the markup is the
+// same at every width, so nothing reflows through React on resize.
 //
-// GET is the most-tapped thing on the page and it is a 2s animation, so it is
-// also the easiest thing to break: tap it four times and four timers race, the
-// pill flickers between states, and the last one to land wins. The transition is
-// guarded on `installState !== "idle"` so only the first tap starts anything,
-// and the timer is cleared on unmount so a preview that remounts on save cannot
-// fire into a dead component.
+// ── THE INSTALL ──────────────────────────────────────────────────────────────
+// GET → a spinner ring (authorising) → a progress ring with a stop square →
+// OPEN. Guarded on `idle` so repeated taps never race. OPEN opens the letter.
 //
 // ── THE RATING IS DERIVED, NEVER TRUSTED ─────────────────────────────────────
-//
-// `data.reviews` is filtered to `published` before it reaches `Reviews`, and the
-// histogram is recomputed from that same filtered list. A stored distribution
-// that disagrees with the reviews printed under it is the cheapest possible tell
-// that a page is a mock-up, and it is the first thing anybody checks.
-//
-// ── SPACING ──────────────────────────────────────────────────────────────────
-//
-// Sections are separated by SECTION_GAP and nothing tightens it. Listings
-// breathe; cramped vertical rhythm is the fastest way to make this read as fake.
+// Average and histogram are recomputed from the PUBLISHED reviews printed under
+// them; `count` stays the sender's label ("8,472").
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
-// Only SECTION_GAP is pulled from the theme here. Every colour on this file's
-// own chrome — the desktop surround and the toast — is stated locally so the
-// composer has no opinion about the section palette.
-import { SECTION_GAP } from "./theme";
-import { TopBar } from "./TopBar";
-import { HeaderBlock } from "./HeaderBlock";
-import { StatsStrip } from "./StatsStrip";
-import { Screenshots } from "./Screenshots";
-import { DescriptionBlock } from "./DescriptionBlock";
-import { WhatsNew } from "./WhatsNew";
-import { VersionHistory } from "./VersionHistory";
-import { Reviews } from "./Reviews";
-import { InfoTable } from "./InfoTable";
+import LetterPop from "../../_love/LetterPop";
+import { AP } from "./theme";
+import { LISTING_CSS } from "./listing/css";
+import { Bursts, Toast, haptic, type Burst, type GetState } from "./listing/parts";
+import {
+  AlsoLike,
+  Description,
+  Facts,
+  Header,
+  Information,
+  Preview,
+  Privacy,
+  Ratings,
+  Supports,
+  WhatsNew,
+} from "./listing/sections";
+import { NavBar, Sidebar, TabBar } from "./listing/chrome";
+import { AllReviewsSheet, ReviewSheet, VersionHistoryPage } from "./listing/sheets";
 import { ReviewQueue } from "./ReviewQueue";
-
 import { aggregateOf, publishedReviews } from "./demo";
-import type { AppData, AppRating, InstallState } from "./types";
+import type { AppData, AppRating, AppReview, AppVersion } from "./types";
 
-/** Deep indigo. Belongs to no storefront, which is the entire point. */
-const ACCENT = "#4B3FA7";
-/** The neutral the letterboxed column floats on at desktop widths. */
-const SURROUND = "#E8E6EF";
-const PAGE = "#FFFFFF";
-const INK = "#16141F";
+const WAIT_MS = 750;
+const LOAD_MS = 1900;
 
-/** The listing never reflows wide. It letterboxes in this column and stops. */
-const COLUMN = 420;
-
-/** How long the install pill spends in `installing`. */
-const INSTALL_MS = 2000;
-
-/**
- * "Sharma Family Enterprises" → "Sharma Store".
- *
- * The chrome pill is the sender's own store, built from the developer name they
- * typed. It falls back to her name so the bar is never a bare word.
- */
-function storeNameFrom(data: AppData): string {
-  const firstWord = data.app.developer.trim().split(/\s+/)[0] ?? "";
-  const base = firstWord || data.app.name.trim();
-  return base ? `${base} Store` : "Store";
+function useWide(query: string): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const sync = () => setOn(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [query]);
+  return on;
 }
 
 export function AppTemplate({
@@ -79,60 +65,132 @@ export function AppTemplate({
   shareId,
   capture = false,
   chromeTop = 0,
+  live = false,
 }: {
+  /** The published page a recipient opened: shows the brand pill + "make yours". */
+  live?: boolean;
   data: AppData;
   /** Present only on the sender's own view. Gates the moderation queue. */
   shareId?: string;
   /** True while a PNG is being taken: no animation, no chrome, no panels. */
   capture?: boolean;
-  /**
-   * Vertical space reserved above the listing for chrome this component does
-   * not own. The editor floats a Back/Create bar over the template, and without
-   * this the bar sits on top of the icon and the app name. Zero on the
-   * recipient's page, which has no chrome of its own.
-   */
+  /** Space reserved above the listing for the editor's floating bar. */
   chromeTop?: number;
 }) {
-  const [installState, setInstallState] = useState<InstallState>("idle");
+  const [get, setGet] = useState<GetState>("idle");
+  const [solid, setSolid] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [allReviews, setAllReviews] = useState(false);
+  const [review, setReview] = useState<AppReview | null>(null);
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
+  const [bursts, setBursts] = useState<Burst[]>([]);
+  const [myStars, setMyStars] = useState(0);
+  const [boop, setBoop] = useState(false);
+  const [letterForce, setLetterForce] = useState(false);
 
-  const installTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const iconTaps = useRef(0);
+  const getRef = useRef<HTMLDivElement>(null);
+  const tablet = useWide("(min-width: 740px)");
+  const desktop = useWide("(min-width: 1180px)");
+
+  const later = useCallback((fn: () => void, ms: number) => {
+    timers.current.push(setTimeout(fn, ms));
+  }, []);
 
   useEffect(
     () => () => {
-      if (installTimer.current) clearTimeout(installTimer.current);
-      if (toastTimer.current) clearTimeout(toastTimer.current);
+      for (const t of timers.current) clearTimeout(t);
+      timers.current = [];
     },
     []
   );
 
-  const say = useCallback((message: string) => {
-    setToast(message);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const say = useCallback((text: string) => {
+    setToast({ id: Date.now(), text });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2600);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
+  useEffect(() => () => void (toastTimer.current && clearTimeout(toastTimer.current)), []);
 
-  /**
-   * THE GUARD. Anything other than `idle` means an install is already running or
-   * has finished, so the tap is swallowed rather than starting a second timer.
-   */
-  const handleInstall = useCallback(() => {
-    if (installState !== "idle") return;
-    setInstallState("installing");
-    if (installTimer.current) clearTimeout(installTimer.current);
-    installTimer.current = setTimeout(() => {
-      setInstallState("installed");
-      installTimer.current = null;
-    }, INSTALL_MS);
-  }, [installState]);
+  const burst = useCallback(
+    (x: number, y: number, n = 12) => {
+      const id = Date.now() + Math.floor(x);
+      setBursts((b) => [...b.slice(-3), { id, x, y, n }]);
+      later(() => setBursts((b) => b.filter((z) => z.id !== id)), 1400);
+    },
+    [later]
+  );
 
-  const handleOpen = useCallback(() => {
-    say("Already open. She has been open the whole time.");
-  }, [say]);
+  const burstFrom = useCallback(
+    (el: Element | null, n?: number) => {
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height / 2, n);
+    },
+    [burst]
+  );
 
-  const handleShare = useCallback(() => {
+  // The nav bar turns solid and shows the mini icon + GET once the header's
+  // GET row has scrolled under it.
+  useEffect(() => {
+    const el = getRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => setSolid(!e.isIntersecting && e.boundingClientRect.top < 80 + chromeTop),
+      { rootMargin: `-${60 + chromeTop}px 0px 0px 0px`, threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [chromeTop]);
+
+  const hasLetter = !!data.letter?.trim();
+  // A letter that already opens with its own greeting ("Riyu," / "Hey you!")
+  // must not get a second "Dear Meera," stacked on top of it.
+  const firstLine = (data.letter ?? "").trim().split("\n")[0]?.trim() ?? "";
+  const ownGreeting = firstLine.length > 0 && firstLine.length <= 36 && /[,!:]$/.test(firstLine);
+
+  const openLetter = useCallback(() => {
+    setLetterForce(true);
+    later(() => setLetterForce(false), 60);
+  }, [later]);
+
+  const onGet = useCallback(() => {
+    if (get === "done") {
+      haptic(6);
+      if (hasLetter) openLetter();
+      else say(`Already open. ${data.app.name || "She"} has been open the whole time.`);
+      return;
+    }
+    if (get !== "idle") return;
+    haptic(10);
+    setGet("wait");
+    later(() => setGet("load"), WAIT_MS);
+    later(() => {
+      setGet("done");
+      haptic([10, 50, 14]);
+      burstFrom(getRef.current?.querySelector(".al-get") ?? null, 16);
+      say(hasLetter ? `${data.app.name || "She"} is installed. Tap OPEN — something’s inside.` : "Installed. No uninstall option.");
+    }, WAIT_MS + LOAD_MS);
+  }, [get, hasLetter, openLetter, say, later, burstFrom, data.app.name]);
+
+  const onIcon = useCallback(() => {
+    iconTaps.current += 1;
+    setBoop(false);
+    requestAnimationFrame(() => setBoop(true));
+    later(() => setBoop(false), 520);
+    haptic(6);
+    const icon = document.querySelector(".al-head .al-icon");
+    if (iconTaps.current % 5 === 0) {
+      burstFrom(icon, 22);
+      say(`Easter egg: ${data.app.seller.trim() || "someone"} has been in love since version 1.0 💗`);
+    } else {
+      burstFrom(icon, 5);
+    }
+  }, [burstFrom, say, later, data.app.seller]);
+
+  const onShare = useCallback(() => {
     if (typeof window === "undefined") return;
     const url = window.location.href;
     const title = `${data.app.name} — ${data.app.subtitle}`;
@@ -140,163 +198,161 @@ export function AppTemplate({
       navigator.share({ title, url }).catch(() => {});
       return;
     }
-    // Reached through `window` rather than the bare global: the guard above
-    // narrows the bare `navigator` to `never` on this branch, and widening the
-    // guard instead would lose the feature check that makes it correct.
     window.navigator.clipboard
       ?.writeText(url)
       .then(() => say("Link copied."))
-      .catch(() => say("Copy the address bar — that's the link."));
+      .catch(() => say("Copy the address bar — that’s the link."));
   }, [data.app.name, data.app.subtitle, say]);
 
-  const handleWriteReview = useCallback(() => {
-    say("Reviews come from her friends. Ask whoever sent you this for the link.");
-  }, [say]);
+  const onRate = useCallback(
+    (n: number, e: React.MouseEvent) => {
+      setMyStars(n);
+      haptic(8);
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top, n === 5 ? 16 : 6);
+      say(n === 5 ? "Thank you for your feedback. She’s a five. Always was." : "Thank you for your feedback. (It’s a 5. We fixed it.)");
+      if (n < 5) later(() => setMyStars(5), 900);
+    },
+    [burst, say, later]
+  );
 
   const published = useMemo(() => publishedReviews(data), [data]);
 
-  /**
-   * The rating as rendered. `average` and `distribution` are recomputed from the
-   * published reviews so the histogram can never contradict them; `count` stays
-   * the sender's own display string ("8,472"), because it is a label and not a
-   * quantity. No published reviews means an EMPTY aggregate, which the sections
-   * draw as "No Ratings Yet" — never as "0.0".
-   */
   const rating: AppRating = useMemo(() => {
-    if (published.length === 0) {
-      return { average: 0, count: "", distribution: [0, 0, 0, 0, 0] };
-    }
+    if (published.length === 0) return { average: 0, count: "", distribution: [0, 0, 0, 0, 0] };
     const agg = aggregateOf(published);
-    return {
-      average: agg.average,
-      count: data.rating.count || String(agg.count),
-      distribution: agg.distribution,
-    };
+    return { average: agg.average, count: data.rating.count || String(agg.count), distribution: agg.distribution };
   }, [published, data.rating.count]);
 
-  const openHistory = useCallback(() => setHistoryOpen(true), []);
-  const closeHistory = useCallback(() => setHistoryOpen(false), []);
+  const latest: AppVersion | null = useMemo(() => {
+    const v = data.versionHistory[0];
+    if (v) return v;
+    const w = data.whatsNew;
+    return w.version ? { version: w.version, date: w.date, size: "", notes: w.notes } : null;
+  }, [data.versionHistory, data.whatsNew]);
+
+  const tab = useCallback(
+    (label: string) => {
+      haptic(5);
+      const her = data.app.name || "her";
+      const lines: Record<string, string> = {
+        Today: `Today’s pick: ${her}. Tomorrow’s too.`,
+        Us: "Coming soon: the two of you, in one app.",
+        Apps: "You’re already on the best one.",
+        Dates: "Next date: whenever you say yes.",
+        Search: `Searched everywhere. Only found ${her}.`,
+        Discover: `Discovered: ${her}. Search complete.`,
+        Create: "Built with love. Mostly love, some caffeine.",
+        Play: "Now playing: your song.",
+        "Our Songs": "212 songs. All of them remind me of you.",
+        Updates: `1 update available: ${data.app.seller.trim() || "he"} loves you more today.`,
+        Purchased: "Purchased: one heart. Non-refundable.",
+      };
+      say(lines[label] ?? "You’re exactly where you should be.");
+    },
+    [data.app.name, data.app.seller, say]
+  );
+
+  const rootStyle = { "--al-top": `${chromeTop}px` } as CSSProperties;
 
   return (
-    <div
-      className={capture ? "ap-still" : undefined}
-      style={{
-        minHeight: "100dvh",
-        background: SURROUND,
-        display: "flex",
-        justifyContent: "center",
-        color: INK,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: COLUMN,
-          minHeight: "100dvh",
-          background: PAGE,
-          position: "relative",
-          // The letterbox edges. Invisible below 420px, where the column simply
-          // fills the viewport.
-          boxShadow: "0 0 0 1px rgba(22,20,31,0.08)",
-          overflowX: "hidden",
-        }}
-      >
-        {/* A real spacer, not padding on the column. This element has
-            `overflow-x: hidden`, which makes it a scroll container, and a
-            padding-top on a scroll container throws off where a sticky child
-            comes to rest — the bar ended up floating over the app icon instead
-            of above it. A sibling of known height has no such interaction. */}
+    <div className={`al-root${capture ? " al-still" : ""}`} style={rootStyle}>
+      <style>{LISTING_CSS}</style>
+
+      {!capture ? <Sidebar data={data} onItem={tab} /> : null}
+
+      <div className="al-main">
         {chromeTop > 0 ? <div style={{ height: chromeTop }} aria-hidden="true" /> : null}
-
-        <TopBar storeName={storeNameFrom(data)} onShare={handleShare} stickyTop={chromeTop} />
-
-        <main
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: SECTION_GAP,
-            paddingBottom: `calc(${SECTION_GAP}px + env(safe-area-inset-bottom, 0px))`,
-          }}
-        >
-          <HeaderBlock
-            app={data.app}
-            installState={installState}
-            onInstall={handleInstall}
-            onOpen={handleOpen}
-          />
-
-          <StatsStrip app={data.app} rating={rating} />
-
-          <Screenshots shots={data.screenshots} />
-
-          <DescriptionBlock description={data.description} developer={data.app.developer} />
-
-          <WhatsNew whatsNew={data.whatsNew} onOpenHistory={openHistory} />
-
-          <Reviews rating={rating} reviews={published} onWriteReview={handleWriteReview} />
-
-          <InfoTable rows={data.info} />
-
-          {/*
-            The sender's own view only. `shareId` is the read capability for a
-            published page, so its presence is what distinguishes "I am looking
-            at my own gift" from "I am the person it was sent to" — and the
-            recipient must never see a queue of things her friends said about her
-            before they were approved.
-          */}
-          {shareId && !capture ? <ReviewQueue shareId={shareId} /> : null}
-        </main>
-
         {!capture ? (
-          <VersionHistory versions={data.versionHistory} open={historyOpen} onClose={closeHistory} />
+          <NavBar data={data} solid={solid} get={get} onGet={onGet} onBack={() => tab("Today")} onTab={tab} brand={live} />
         ) : null}
 
-        {toast && !capture ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="ap-toast"
-            style={{
-              position: "fixed",
-              left: "50%",
-              bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
-              transform: "translateX(-50%)",
-              zIndex: 400,
-              maxWidth: "min(92vw, 380px)",
-              padding: "11px 16px",
-              borderRadius: 14,
-              background: ACCENT,
-              color: "#fff",
-              fontSize: 13.5,
-              lineHeight: 1.45,
-              fontWeight: 500,
-              textAlign: "center",
-              boxShadow: "0 10px 30px rgba(22,20,31,0.28)",
-              overflowWrap: "anywhere",
-            }}
-          >
-            {toast}
-          </div>
-        ) : null}
+        <main className="al-content">
+          <Header
+            data={data}
+            rating={rating}
+            get={get}
+            onGet={onGet}
+            onShare={onShare}
+            onIcon={onIcon}
+            iconBoop={boop}
+            getRef={getRef}
+            onDeveloper={() => say(`More by ${data.app.developer}: nothing. They only ever made one.`)}
+          />
+          <Facts data={data} rating={rating} />
+          <WhatsNew latest={latest} onHistory={() => setHistoryOpen(true)} />
+          <Preview data={data} />
+          <Description data={data} onDeveloper={() => say(`More by ${data.app.developer}: nothing. They only ever made one.`)} />
+          <Ratings
+            rating={rating}
+            reviews={published}
+            onOpenReview={setReview}
+            onSeeAll={() => setAllReviews(true)}
+            myStars={myStars}
+            onRate={onRate}
+            onWrite={() => say("Reviews come from her friends. Ask whoever sent you this for the link.")}
+            onSupport={() => say(`Support hours: 24/7. Response time: instant. Agent: ${data.app.seller.trim() || "him"}.`)}
+          />
+          <Privacy data={data} onDetails={() => say("Details: it’s all stored in one heart. Encrypted. No backups needed.")} />
+          <Supports data={data} />
+          <Information
+            data={data}
+            onLink={(w) =>
+              say(w === "site" ? "The website is her smile. It’s always up." : "Privacy policy: whatever she says goes.")
+            }
+          />
+          <AlsoLike data={data} onPick={say} />
+
+          {shareId && !capture ? (
+            <div style={{ padding: "8px var(--al-g) 0" }}>
+              <ReviewQueue shareId={shareId} />
+            </div>
+          ) : null}
+
+          <p className="al-foot">
+            {data.app.name} is a one-of-a-kind build. Not available in any other store, country or universe.
+            {live ? (
+              <>
+                <br />
+                <Link href="/app">Publish your person as an app →</Link>
+              </>
+            ) : null}
+          </p>
+        </main>
       </div>
 
-      <style>{`
-        /* Pauses every animation under the capture subtree, so a PNG can never
-           catch a bar mid-grow or a ring mid-sweep. */
-        .ap-still, .ap-still * {
-          animation: none !important;
-          animation-play-state: paused !important;
-          transition: none !important;
-        }
-        .ap-toast { animation: apToastIn 180ms ease-out both; }
-        @keyframes apToastIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .ap-toast { animation: none; }
-        }
-      `}</style>
+      {!capture ? <TabBar onTab={tab} /> : null}
+
+      {historyOpen && !capture ? (
+        <VersionHistoryPage versions={data.versionHistory} onClose={() => setHistoryOpen(false)} />
+      ) : null}
+      {allReviews && !review && !capture ? (
+        <AllReviewsSheet reviews={published} onOpen={setReview} onClose={() => setAllReviews(false)} />
+      ) : null}
+      {review && !capture ? <ReviewSheet review={review} name={data.app.name} onClose={() => setReview(null)} /> : null}
+
+      {toast && !capture ? <Toast key={toast.id} text={toast.text} /> : null}
+      {!capture ? <Bursts bursts={bursts} /> : null}
+
+      {hasLetter && !capture ? (
+        <LetterPop
+          letter={data.letter}
+          from={data.app.seller.trim() || undefined}
+          to={ownGreeting ? undefined : data.app.name.trim() || undefined}
+          question={data.lockQuestion?.trim() || undefined}
+          answer={data.lockAnswer?.trim() || undefined}
+          accent={AP.accent}
+          accent2="#FF8A65"
+          paper="#FFFBF8"
+          ink="#1C1C1E"
+          bottom={tablet ? 24 : 70}
+          right={desktop ? 28 : 16}
+          teaser="1 unread letter 💌"
+          sign="yours, every version,"
+          forceOpen={letterForce}
+          zIndex={90}
+        />
+      ) : null}
     </div>
   );
 }

@@ -6,7 +6,7 @@
 // template here: it is what gates the moderation queue, and the queue belongs to
 // the sender on their own editor view, never to whoever opens the share link.
 //
-// The gate borrows the listing's own chrome — the system stack, the indigo
+// The gate borrows the listing’s own chrome — the system stack, the pink
 // accent, the soft card fill. Nothing in it names or imitates a storefront.
 
 import { useCallback, useState } from "react";
@@ -23,7 +23,7 @@ const PALETTE = {
   muted: AP.inkSoft,
   accent: AP.accent,
   accentInk: AP.accentInk,
-  accentTint: "rgba(75, 63, 167, 0.08)",
+  accentTint: "rgba(255, 45, 85, 0.08)",
   font: AP.font,
   radius: 12,
 };
@@ -64,5 +64,5 @@ export default function AppViewer({
   const data = dbToAppData(rawData);
 
   // No `shareId`: the recipient must not get the moderation queue.
-  return <AppTemplate data={data} />;
+  return <AppTemplate data={data} live />;
 }
