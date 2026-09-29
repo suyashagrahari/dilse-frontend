@@ -29,9 +29,13 @@ function ProductPageInner() {
   const e = useProductEditor();
   const [panelOpen, setPanelOpen] = useState(false);
 
+  // `showPublish` goes false while publishing, which used to fall through to
+  // "Create" for the length of the request.
   const topAction = e.showShare
     ? { label: e.shareLabel, onClick: e.handleShare }
-    : e.showPublish
+    : e.publishing
+      ? { label: "Listing…", onClick: () => {} }
+      : e.showPublish
       ? { label: e.publishing ? "Listing…" : "List it", onClick: e.publish }
       : { label: "Create", onClick: e.handleStartCreate };
 

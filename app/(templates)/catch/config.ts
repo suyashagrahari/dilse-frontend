@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Catch",
   description:
     "A cute arcade game made of your love letter. Their face is the player: catch the falling letter pieces, memory polaroids and hearts, dodge the ick, level up — then the letter stacks itself together.",
-  coverImage: templateMedia("catch", "cover.jpg"),
+  coverImage: templateMedia("catch", "cover-poster.webp"),
   emoji: "🎮",
   color: "from-pink-500 to-violet-600",
   previewText: "i made you a game. catch it 🎮",
