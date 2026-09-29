@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
-import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
+import type { TemplateListItem } from "@/types/template-config";
+import { Search, X, Sparkles, SlidersHorizontal, Crown } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
 import PremiumTemplateCard, { PREMIUM_CARD_CSS } from "@/components/PremiumTemplateCard";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -14,6 +15,9 @@ import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { GallerySkeleton } from "@/components/skeleton/Skeletons";
+import {
+  LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
+} from "./PremiumShowcase";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -52,6 +56,31 @@ const UI = {
 
 const CORNER_FILTER =
   "brightness(0) saturate(100%) invert(8%) sepia(55%) saturate(2800%) hue-rotate(330deg) brightness(90%) contrast(120%)";
+const GOLD_FILTER =
+  "brightness(0) saturate(100%) invert(67%) sepia(23%) saturate(859%) hue-rotate(8deg) brightness(95%) contrast(92%)";
+
+const CORNERS: { pos: React.CSSProperties; size: string; opacity: number; transform?: string }[] = [
+  { pos: { top: 0, left: 0 }, size: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)" },
+  { pos: { top: 0, right: 0 }, size: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)" },
+  { pos: { bottom: 0, left: 0 }, size: "clamp(86px, 24vw, 170px)", opacity: 0.54 },
+  { pos: { bottom: 0, right: 0 }, size: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)" },
+];
+
+/**
+ * One gallery list. The "webpage" templates used to sit behind an App UI /
+ * Webpage UI toggle; they now live with the rest, each one next to its
+ * closest sibling (christian-wedding-2 beside christian-wedding). Hidden
+ * templates are still removed per visitor below, exactly as before.
+ */
+const GALLERY_LIST: TemplateListItem[] = (() => {
+  const list = [...templateList];
+  for (const w of webpageTemplateList) {
+    const sibling = list.findIndex((t) => w.slug.startsWith(`${t.slug}-`));
+    if (sibling >= 0) list.splice(sibling + 1, 0, w);
+    else list.push(w);
+  }
+  return list;
+})();
 
 function FilterModal({
   show, onClose,
@@ -219,6 +248,183 @@ function SearchModal({
   );
 }
 
+// ─── Freemium / Premium ──────────────────────────────────────────────────────
+//
+// The gallery is two rooms. Freemium is everything that is not a real-app
+// clone, in the familiar cream look. Premium is the real-app collection in a
+// dark, gold-lit room of its own. The tab is deep-linkable (`?tab=premium`) and
+// remembered per browser; the URL wins over the memory so a shared link always
+// lands where it was pointed.
+
+type GalleryTab = "freemium" | "premium";
+const TAB_KEY = "ss.gallery.tab";
+
+function readInitialTab(fromUrl: string | null): GalleryTab {
+  if (fromUrl === "premium" || fromUrl === "freemium") return fromUrl;
+  try {
+    const saved = window.localStorage.getItem(TAB_KEY);
+    if (saved === "premium" || saved === "freemium") return saved;
+  } catch { /* storage blocked — fall through to the default */ }
+  return "freemium";
+}
+
+const TABS: { id: GalleryTab; label: string; hint: string; Icon: typeof Sparkles }[] = [
+  { id: "freemium", label: "Freemium", hint: "Free to start", Icon: Sparkles },
+  { id: "premium", label: "Premium", hint: "Real-app clones", Icon: Crown },
+];
+
+function GalleryTabs({
+  tab, onChange, counts,
+}: {
+  tab: GalleryTab;
+  onChange: (t: GalleryTab) => void;
+  counts: Record<GalleryTab, number>;
+}) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKeyDown = (e: React.KeyboardEvent, i: number) => {
+    let next = -1;
+    if (e.key === "ArrowRight") next = (i + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    onChange(TABS[next].id);
+    refs.current[next]?.focus();
+  };
+
+  return (
+    <div className="pgTabsWrap">
+      <div role="tablist" aria-label="Template collections" className={`pgTabs${tab === "premium" ? " isDark" : ""}`}>
+        {TABS.map(({ id, label, hint, Icon }, i) => {
+          const active = tab === id;
+          return (
+            <button
+              key={id}
+              ref={(el) => { refs.current[i] = el; }}
+              role="tab"
+              id={`gallery-tab-${id}`}
+              aria-selected={active}
+              aria-controls="gallery-panel"
+              tabIndex={active ? 0 : -1}
+              onClick={() => onChange(id)}
+              onKeyDown={(e) => onKeyDown(e, i)}
+              className={`pgTab is-${id}${active ? " isActive" : ""}`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="gallery-tab-pill"
+                  className="pgTabPill"
+                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                />
+              )}
+              <span className="pgTabInner">
+                <span className="pgTabTop">
+                  <Icon size={14} aria-hidden />
+                  {label}
+                  <span className="pgTabCount">{counts[id]}</span>
+                </span>
+                <span className="pgTabHint">{hint}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Category chips, scoped to the active tab: each shows how many it would leave. */
+function CategoryChips({
+  selected, onSelect, counts, dark,
+}: {
+  selected: string;
+  onSelect: (id: string) => void;
+  counts: Record<string, number>;
+  dark: boolean;
+}) {
+  const shown = categories.filter((c) => c.id === "all" || c.id === selected || (counts[c.id] ?? 0) > 0);
+  if (shown.length <= 2) return null;
+  return (
+    <div className={`pgChips${dark ? " isDark" : ""}`} role="group" aria-label="Filter by category">
+      {shown.map((c) => {
+        const active = selected === c.id;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            className={`pgChip${active ? " isActive" : ""}`}
+            aria-pressed={active}
+            onClick={() => onSelect(active && c.id !== "all" ? "all" : c.id)}
+          >
+            <span aria-hidden>{c.emoji}</span> {c.label}
+            <span className="pgChipCount">{counts[c.id] ?? 0}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: boolean }) {
+  return (
+    <>
+      <motion.div
+        className="mt-16 mb-10 text-center flex flex-col items-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      >
+        <div className="w-10 h-[3px] rounded-full mb-5" style={{ background: dark ? LUX.gold : "var(--app-accent)" }} />
+        <h2
+          className="leading-[0.96] tracking-[-0.03em] text-[36px] md:text-[62px] lg:text-[80px]"
+          style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: dark ? LUX.ivory : UI.text }}
+        >
+          More Templates{" "}
+          <em style={{ color: dark ? LUX.gold : UI.accent, fontStyle: "italic" }}>Coming Soon.</em>
+        </h2>
+        <div className="w-16 h-[3px] rounded-full mt-5" style={{ background: dark ? LUX.line : "var(--app-accent-a35)" }} />
+      </motion.div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+        {items.map((template, i) => {
+          const comingSoonImg = COMING_SOON_IMAGES[template.slug];
+          return (
+            <div key={template.slug} className="tplCard" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+              <div className="relative">
+                <div className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden" style={{ border: "1px solid var(--app-border)" }}>
+                  {comingSoonImg && (
+                    <div className="absolute inset-0">
+                      <Image src={comingSoonImg} alt="" fill className="object-cover opacity-65" sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85))" }} />
+                  <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
+                    <span />
+                    <div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
+                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
+                        {template.type}
+                      </span>
+                      <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>{template.title}</h3>
+                      <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.35)" }}>{template.description}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute inset-0 rounded-2xl md:rounded-3xl flex items-center justify-center z-20 pointer-events-none">
+                  <span className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                    style={{ background: "rgba(0,0,0,0.72)", color: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.18)" }}>
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 function TemplatesContent() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
@@ -240,7 +446,30 @@ function TemplatesContent() {
     hasActiveFilters, clearFilters,
   } = useTemplateSearch();
   const [showSearch, setShowSearch] = useState(false);
-  const [uiMode, setUiMode] = useState<"app" | "webpage">("app");
+
+  // This component only ever renders after mount (see TemplatesPage below), so
+  // reading localStorage in the initialiser cannot cause a hydration mismatch.
+  const [tab, setTabState] = useState<GalleryTab>(() => readInitialTab(searchParams.get("tab")));
+  const panelTopRef = useRef<HTMLDivElement>(null);
+
+  const setTab = useCallback((next: GalleryTab, opts?: { scroll?: boolean }) => {
+    setTabState(next);
+    try {
+      const url = new URL(window.location.href);
+      if (next === "premium") url.searchParams.set("tab", "premium");
+      else url.searchParams.delete("tab");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    } catch { /* history unavailable */ }
+    if (opts?.scroll && panelTopRef.current) {
+      const top = panelTopRef.current.getBoundingClientRect().top + window.scrollY - 100;
+      if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+  }, []);
+
+  // Remember the room this visitor is in — including one a shared link opened.
+  useEffect(() => {
+    try { window.localStorage.setItem(TAB_KEY, tab); } catch { /* storage blocked */ }
+  }, [tab]);
 
   // Sync URL type param on mount
   useEffect(() => {
@@ -248,6 +477,14 @@ function TemplatesContent() {
     if (typeFromUrl && typeFromUrl !== "all") setSelectedType(typeFromUrl);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // "premium" used to be a category chip; the Premium tab replaced it. Anything
+  // still asking for that category is sent to the tab instead.
+  useEffect(() => {
+    if (selectedCategory !== "premium") return;
+    setSelectedCategory("all");
+    setTab("premium");
+  }, [selectedCategory, setSelectedCategory, setTab]);
 
   const handleFavorite = useCallback((e: React.MouseEvent, slug: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -260,21 +497,31 @@ function TemplatesContent() {
   // was released to and for nobody else. See `useTemplateAccess`.
   const { hidden: hiddenTemplates } = useTemplateAccess();
 
-  const sourceList = uiMode === "webpage" ? webpageTemplateList : templateList;
-  const filtered = sourceList.filter((t) => {
-    // An admin has switched this one off for this deployment. Filtered here
-    // rather than rendered as "coming soon" below, because a card that says
-    // coming soon still advertises the template — and something held back is
-    // usually held back because it is not ready to be advertised. See
-    // lib/templateVisibility.ts.
-    if (hiddenTemplates.has(t.slug)) return false;
-    const matchCategory =
-      selectedCategory === "premium" ? Boolean(t.premium)
-      : selectedCategory === "all" || t.category === selectedCategory;
-    const matchType = selectedType === "all" || t.type === selectedType;
-    const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchType && matchSearch;
-  });
+  // An admin has switched these off for this deployment. Filtered here rather
+  // than rendered as "coming soon", because a card that says coming soon still
+  // advertises the template. See lib/templateVisibility.ts.
+  const visible = useMemo(
+    () => GALLERY_LIST.filter((t) => !hiddenTemplates.has(t.slug)),
+    [hiddenTemplates],
+  );
+
+  const q = search.trim().toLowerCase();
+  const matchBase = (t: TemplateListItem) =>
+    (selectedType === "all" || t.type === selectedType) && (!q || t.title.toLowerCase().includes(q));
+  const matchCategory = (t: TemplateListItem) => selectedCategory === "all" || t.category === selectedCategory;
+
+  const inTab = (t: TemplateListItem, which: GalleryTab) => (which === "premium") === Boolean(t.premium);
+  const tabBase = visible.filter((t) => inTab(t, tab) && matchBase(t));
+  const filtered = tabBase.filter(matchCategory);
+  const otherTab: GalleryTab = tab === "premium" ? "freemium" : "premium";
+  const otherCount = visible.filter((t) => inTab(t, otherTab) && matchBase(t) && matchCategory(t)).length;
+  const tabCounts: Record<GalleryTab, number> = {
+    freemium: tab === "freemium" ? filtered.length : otherCount,
+    premium: tab === "premium" ? filtered.length : otherCount,
+  };
+
+  const chipCounts: Record<string, number> = { all: tabBase.length };
+  for (const t of tabBase) chipCounts[t.category] = (chipCounts[t.category] ?? 0) + 1;
 
   // Keep navbar count in sync
   useEffect(() => { setFilteredCount(filtered.length); }, [filtered.length, setFilteredCount]);
@@ -282,25 +529,74 @@ function TemplatesContent() {
   const readyTemplates = filtered.filter((t) => t.coverImage && !FORCE_COMING_SOON.has(t.slug));
   const comingSoonTemplates = filtered.filter((t) => !t.coverImage || FORCE_COMING_SOON.has(t.slug));
 
-  // On the unfiltered view the premium collection gets its own section at the
-  // top, so it is taken out of the main grid rather than shown twice.
-  const premiumTemplates = readyTemplates.filter((t) => t.premium);
-  const showPremiumSection = selectedCategory === "all" && premiumTemplates.length > 0;
-  const gridTemplates = showPremiumSection ? readyTemplates.filter((t) => !t.premium) : readyTemplates;
+  // The showcase pieces ignore search and filters: they are the shop window.
+  const premiumShowcase = useMemo(
+    () => visible.filter((t) => t.premium && t.coverImage && !FORCE_COMING_SOON.has(t.slug)),
+    [visible],
+  );
 
-  // Prevent dark background bleed on mobile rubber-band overscroll.
+  const isPremium = tab === "premium";
+  const P = isPremium;
+
+  // Prevent the wrong colour bleeding in on mobile rubber-band overscroll: the
+  // page behind the page follows the room you are in.
   useEffect(() => {
     const prevBodyBg = document.body.style.background;
     const prevHtmlBg = document.documentElement.style.background;
-
-    document.body.style.background = UI.bg;
-    document.documentElement.style.background = UI.bg;
-
     return () => {
       document.body.style.background = prevBodyBg;
       document.documentElement.style.background = prevHtmlBg;
     };
   }, []);
+  useEffect(() => {
+    const bg = isPremium ? LUX.bg : UI.bg;
+    document.body.style.background = bg;
+    document.documentElement.style.background = bg;
+  }, [isPremium]);
+
+  const emptyState = filtered.length === 0 && (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+        style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)" }}>
+        <Search size={24} style={{ color: P ? LUX.gold : UI.accent }} />
+      </div>
+      <p className="font-bold mb-1" style={{ color: P ? LUX.ivory : UI.text }}>
+        No {P ? "premium " : ""}templates found
+      </p>
+      <p className="text-sm mb-5" style={{ color: P ? LUX.muted : UI.textFaint }}>
+        {otherCount > 0
+          ? `Nothing here — but ${otherCount} ${otherCount === 1 ? "template matches" : "templates match"} in ${otherTab === "premium" ? "Premium" : "Freemium"}.`
+          : "Try adjusting your filters or search term"}
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {otherCount > 0 && (
+          <button onClick={() => setTab(otherTab, { scroll: true })} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
+            style={P
+              ? { color: "#241505", background: "linear-gradient(135deg,#fbecc0,#e6c77e 50%,#b8893a)" }
+              : { color: "#f7ecd9", background: "#3d0c11" }}>
+            See {otherCount} in {otherTab === "premium" ? "Premium" : "Freemium"} →
+          </button>
+        )}
+        <button onClick={clearFilters} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
+          style={{ color: P ? LUX.gold : UI.accent, border: "1px solid rgba(201,168,76,0.35)", background: "rgba(201,168,76,0.1)" }}>
+          Clear all filters
+        </button>
+      </div>
+    </motion.div>
+  );
+
+  // When a search finds nothing (or little) here but something in the other
+  // room, say so — otherwise the other tab's results are invisible.
+  const crossHint = hasActiveFilters && otherCount > 0 && filtered.length > 0 && (
+    <div className={`pgCross${P ? " isDark" : ""}`}>
+      <span>
+        {otherCount} {otherCount === 1 ? "match" : "matches"} in {otherTab === "premium" ? "Premium" : "Freemium"}
+      </span>
+      <button type="button" onClick={() => setTab(otherTab, { scroll: true })}>
+        Show <span aria-hidden>→</span>
+      </button>
+    </div>
+  );
 
   return (
     <div
@@ -308,45 +604,43 @@ function TemplatesContent() {
       style={{
         background: `linear-gradient(180deg, ${UI.bgSoft} 0%, ${UI.bg} 52%, ${UI.bgSoft} 100%)`,
         backgroundColor: UI.bg,
-        color: UI.text,
+        color: P ? LUX.ivory : UI.text,
         fontFamily: "'Inter', sans-serif",
         position: "relative",
         overflowX: "hidden",
         minHeight: "100dvh",
       }}
     >
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS}</style>
+
+      {/* The Premium room: fades in over the cream page */}
+      <PremiumBackdrop active={isPremium} />
+
       {/* Decorative corners + ambient glows */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
-          alt=""
-          aria-hidden="true"
-          style={{ position: "fixed", top: 0, left: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scaleY(-1)", filter: CORNER_FILTER, willChange: "transform" }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
-          alt=""
-          aria-hidden="true"
-          style={{ position: "fixed", top: 0, right: 0, width: "clamp(112px, 30vw, 180px)", height: "clamp(112px, 30vw, 180px)", opacity: 0.62, transform: "scale(-1,-1)", filter: CORNER_FILTER, willChange: "transform" }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
-          alt=""
-          aria-hidden="true"
-          style={{ position: "fixed", bottom: 0, left: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, filter: CORNER_FILTER, willChange: "transform" }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
-          alt=""
-          aria-hidden="true"
-          style={{ position: "fixed", bottom: 0, right: 0, width: "clamp(86px, 24vw, 170px)", height: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)", filter: CORNER_FILTER, willChange: "transform" }}
-        />
-        <div style={{ position: "absolute", top: "12%", right: "10%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle,rgba(201,168,76,0.14) 0%,transparent 72%)" }} />
-        <div style={{ position: "absolute", bottom: "20%", left: "6%", width: 290, height: 290, borderRadius: "50%", background: "radial-gradient(circle,rgba(61,12,17,0.08) 0%,transparent 74%)" }} />
+        {CORNERS.map((c, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg"
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: "fixed", ...c.pos, width: c.size, height: c.size,
+              opacity: P ? c.opacity * 0.55 : c.opacity,
+              transform: c.transform,
+              filter: P ? GOLD_FILTER : CORNER_FILTER,
+              transition: "opacity .5s ease",
+              willChange: "transform",
+            }}
+          />
+        ))}
+        {!P && (
+          <>
+            <div style={{ position: "absolute", top: "12%", right: "10%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle,rgba(201,168,76,0.14) 0%,transparent 72%)" }} />
+            <div style={{ position: "absolute", bottom: "20%", left: "6%", width: 290, height: 290, borderRadius: "50%", background: "radial-gradient(circle,rgba(61,12,17,0.08) 0%,transparent 74%)" }} />
+          </>
+        )}
       </div>
 
       {/* ── Filter Modal ── */}
@@ -377,19 +671,16 @@ function TemplatesContent() {
             // Opaque rather than blurred: a backdrop-filter here re-blurs the
             // scrolling cards underneath on every frame, the costliest single
             // thing on this page on a phone.
-            background: "rgba(245,237,230,0.97)",
-            border: "1px solid rgba(61,12,17,0.12)",
-            boxShadow: "0 6px 24px rgba(61,12,17,0.12)",
+            background: P ? "rgba(20,11,18,0.97)" : "rgba(245,237,230,0.97)",
+            border: P ? `1px solid ${LUX.line}` : "1px solid rgba(61,12,17,0.12)",
+            boxShadow: P ? "0 10px 30px rgba(0,0,0,0.5)" : "0 6px 24px rgba(61,12,17,0.12)",
+            transition: "background-color .4s ease, border-color .4s ease",
           }}
         >
           <Link
             href="/"
             className="inline-flex items-center min-w-0"
-            style={{
-              textDecoration: "none",
-              // gap: 7,
-              maxWidth: "calc(100% - 92px)",
-            }}
+            style={{ textDecoration: "none", maxWidth: "calc(100% - 92px)" }}
             aria-label="Go to home hero"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -399,7 +690,7 @@ function TemplatesContent() {
                 fontFamily: "'Playfair Display', serif",
                 fontSize: 16,
                 fontWeight: 700,
-                color: UI.text,
+                color: P ? LUX.ivory : UI.text,
                 lineHeight: 1,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -416,8 +707,12 @@ function TemplatesContent() {
           >
             <button
               onClick={() => setShowSearch(true)}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-              style={{ background: "rgba(61,12,17,0.06)", color: UI.text, border: `1px solid ${UI.border}` }}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all relative"
+              style={{
+                background: search ? (P ? LUX.gold : UI.accent) : P ? "rgba(255,255,255,0.06)" : "rgba(61,12,17,0.06)",
+                color: search ? UI.accentFg : P ? LUX.ivory : UI.text,
+                border: `1px solid ${search ? "transparent" : P ? LUX.line : UI.border}`,
+              }}
               aria-label="Open search"
             >
               <Search size={14} />
@@ -427,26 +722,15 @@ function TemplatesContent() {
               onClick={() => setShowFilter(true)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition-all relative"
               style={{
-                background: hasActiveFilters ? UI.accent : "rgba(61,12,17,0.06)",
-                color: hasActiveFilters ? UI.accentFg : UI.text,
-                border: `1px solid ${hasActiveFilters ? "transparent" : UI.border}`,
+                background: hasActiveFilters ? (P ? LUX.gold : UI.accent) : P ? "rgba(255,255,255,0.06)" : "rgba(61,12,17,0.06)",
+                color: hasActiveFilters ? UI.accentFg : P ? LUX.ivory : UI.text,
+                border: `1px solid ${hasActiveFilters ? "transparent" : P ? LUX.line : UI.border}`,
               }}
               aria-label="Open filters"
             >
               <SlidersHorizontal size={14} />
               {hasActiveFilters && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 5,
-                    right: 5,
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: "#1a0507",
-                    opacity: 0.7,
-                  }}
-                />
+                <span style={{ position: "absolute", top: 5, right: 5, width: 5, height: 5, borderRadius: "50%", background: "#1a0507", opacity: 0.7 }} />
               )}
             </button>
           </div>
@@ -454,215 +738,101 @@ function TemplatesContent() {
       </div>
 
       {/* Spacer for fixed mobile nav so content stays below */}
-      <div className="md:hidden" style={{ height: 84 }} />
+      <div className="md:hidden" style={{ height: 76 }} />
 
-      {/* ── Template grid ── */}
-      <div className="px-3 pt-5 pb-12 md:px-6 md:pt-6 md:pb-16" style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+      <div className="px-3 pt-4 pb-12 md:px-6 md:pt-6 md:pb-20" style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1320, margin: "0 auto" }} ref={panelTopRef}>
 
-        {/* Page header */}
-        <motion.div
-          className="mb-10 md:mb-12 text-center"
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        >
-          <p
-            className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3"
-            style={{ color: UI.accent }}
-          >
-            Discover
-          </p>
-          <h1
-            className="leading-[0.96] tracking-[-0.03em] text-[40px] md:text-[68px] lg:text-[84px]"
-            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: UI.text }}
-          >
-            Explore <em style={{ color: UI.accent, fontStyle: "italic" }}>Templates.</em>
-          </h1>
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <div style={{ width: 80, height: 1, background: "linear-gradient(to right,transparent,rgba(201,168,76,0.6))" }} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: "brightness(0) saturate(100%) invert(67%) sepia(23%) saturate(859%) hue-rotate(8deg) brightness(95%) contrast(92%)" }} />
-            <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
-          </div>
+          <GalleryTabs tab={tab} onChange={(t) => setTab(t)} counts={tabCounts} />
 
-          {/* UI mode toggle */}
-          <div className="mt-7 flex items-center justify-center">
-            <div
-              className="relative inline-flex items-center rounded-full p-1"
-              style={{
-                background: "rgba(61,12,17,0.06)",
-                border: `1px solid ${UI.border}`,
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              {(["app", "webpage"] as const).map((mode) => {
-                const active = uiMode === mode;
-                const label = mode === "app" ? "App UI" : "Webpage UI";
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => setUiMode(mode)}
-                    className="relative z-10 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-[0.18em] transition-colors"
-                    style={{
-                      color: active ? UI.accentFg : UI.textMuted,
-                      fontFamily: "'Inter', sans-serif",
-                    }}
-                    aria-pressed={active}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="ui-mode-pill"
-                        className="absolute inset-0 rounded-full"
-                        style={{ background: UI.accent }}
-                        transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                      />
-                    )}
-                    <span className="relative">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
-
-        {(readyTemplates.length > 0) && <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + PREMIUM_SECTION_CSS}</style>}
-
-        {/* The premium collection */}
-        {showPremiumSection && (
-          <section className="pmSection" aria-labelledby="premium-heading">
-            <div className="pmHead">
-              <span className="pmCrown" aria-hidden>👑</span>
-              <div>
-                <h2 id="premium-heading" className="pmTitle">The Premium Collection</h2>
-                <p className="pmSub">Real apps, cloned to the pixel — then made to fall in love.</p>
-              </div>
-              <button type="button" className="pmAll" onClick={() => setSelectedCategory("premium")}>
-                See all <span aria-hidden>→</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
-              {premiumTemplates.map((template, i) => (
-                <PremiumTemplateCard
-                  key={template.slug}
-                  template={template}
-                  isFav={favSlugs.includes(template.slug)}
-                  index={i}
-                  onFavorite={handleFavorite}
-                />
-              ))}
-            </div>
-            <div className="pmDivider" aria-hidden><span>All templates</span></div>
-          </section>
-        )}
-
-        {/* Ready templates */}
-        {gridTemplates.length > 0 && (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-              {/* Every card, apology-dashboard included, is now its poster cover —
-                  the animated ApologyTemplateCard predates the poster covers. */}
-              {gridTemplates.map((template, i) => template.premium ? (
-                <PremiumTemplateCard
-                  key={template.slug}
-                  template={template}
-                  isFav={favSlugs.includes(template.slug)}
-                  index={i}
-                  onFavorite={handleFavorite}
-                />
-              ) : (
-                <TemplateCard
-                  key={template.slug}
-                  template={template}
-                  isFav={favSlugs.includes(template.slug)}
-                  index={i}
-                  onFavorite={handleFavorite}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Coming Soon */}
-        {comingSoonTemplates.length > 0 && (
-          <>
-            {/* ── Coming Soon heading ── */}
-            <motion.div
-              className="mt-16 mb-10 text-center flex flex-col items-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 24 }}
-            >
-              {/* Top accent line */}
-              <div className="w-10 h-[3px] rounded-full mb-5" style={{ background: "var(--app-accent)" }} />
-
-              <h2
-                className="leading-[0.96] tracking-[-0.03em] text-[36px] md:text-[62px] lg:text-[80px]"
-                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: UI.text }}
+          <div role="tabpanel" id="gallery-panel" aria-labelledby={`gallery-tab-${tab}`}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={tab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
               >
-                More Templates{" "}
-                <em style={{ color: UI.accent, fontStyle: "italic" }}>Coming Soon.</em>
-              </h2>
+                {isPremium ? (
+                  <>
+                    <PremiumHero count={premiumShowcase.length} compact={hasActiveFilters} />
+                    {!hasActiveFilters && premiumShowcase.length > 0 && <PremiumSpotlight items={premiumShowcase} />}
 
-              {/* Bottom accent line */}
-              <div className="w-16 h-[3px] rounded-full mt-5" style={{ background: "var(--app-accent-a35)" }} />
-            </motion.div>
-            <style>{TEMPLATE_CARD_CSS}</style>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                {comingSoonTemplates.map((template, i) => {
-                  const comingSoonImg = COMING_SOON_IMAGES[template.slug];
-                  return (
-                    <div key={template.slug} className="tplCard" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                      <div className="relative">
-                        <div className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden" style={{ border: "1px solid var(--app-border)" }}>
-                          <div className="absolute inset-0" style={{ background: "transparent" }} />
-                          {comingSoonImg && (
-                            <div className="absolute inset-0">
-                              <Image src={comingSoonImg} alt="" fill className="object-cover opacity-65" sizes="(max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85))" }} />
-                          <div className="relative h-full p-3 md:p-4 flex flex-col justify-between z-10">
-                            <span />
-                            <div>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mb-2"
-                                style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
-                                {template.type}
-                              </span>
-                              <h3 className="font-bold text-sm md:text-[15px] leading-tight mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>{template.title}</h3>
-                              <p className="text-[11px] md:text-xs leading-relaxed line-clamp-2" style={{ color: "rgba(255,255,255,0.35)" }}>{template.description}</p>
-                            </div>
-                          </div>
+                    <CategoryChips selected={selectedCategory} onSelect={setSelectedCategory} counts={chipCounts} dark />
+                    {crossHint}
+
+                    {readyTemplates.length > 0 && (
+                      <>
+                        <p className="pxGridHead">
+                          {hasActiveFilters ? `${readyTemplates.length} of ${premiumShowcase.length}` : "The full collection"}
+                        </p>
+                        <div className="pxGrid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-5">
+                          {readyTemplates.map((template, i) => (
+                            <PremiumTemplateCard
+                              key={template.slug}
+                              template={template}
+                              isFav={favSlugs.includes(template.slug)}
+                              index={i}
+                              onFavorite={handleFavorite}
+                            />
+                          ))}
                         </div>
-                        <div className="absolute inset-0 rounded-2xl md:rounded-3xl flex items-center justify-center z-20 pointer-events-none">
-                          <span className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
-                            style={{ background: "rgba(0,0,0,0.72)", color: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.18)" }}>
-                            Coming Soon
-                          </span>
-                        </div>
+                      </>
+                    )}
+                    {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark />}
+                    {emptyState}
+
+                    <PremiumPerks />
+                  </>
+                ) : (
+                  <>
+                    {/* Page header */}
+                    <header className="mb-7 md:mb-9 text-center">
+                      <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3" style={{ color: UI.accent }}>
+                        Discover
+                      </p>
+                      <h1
+                        className="leading-[0.96] tracking-[-0.03em] text-[40px] md:text-[68px] lg:text-[84px]"
+                        style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, color: UI.text }}
+                      >
+                        Explore <em style={{ color: UI.accent, fontStyle: "italic" }}>Templates.</em>
+                      </h1>
+                      <div className="flex items-center justify-center gap-4 mt-4">
+                        <div style={{ width: 80, height: 1, background: "linear-gradient(to right,transparent,rgba(201,168,76,0.6))" }} />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/akehan3.svg" aria-hidden="true" alt="" style={{ width: 20, height: 20, opacity: 0.45, filter: GOLD_FILTER }} />
+                        <div style={{ width: 80, height: 1, background: "linear-gradient(to left,transparent,rgba(201,168,76,0.6))" }} />
                       </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </>
-        )}
+                    </header>
 
-        {/* Empty state */}
-        {filtered.length === 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)" }}>
-              <Search size={24} style={{ color: UI.accent }} />
-            </div>
-            <p className="font-bold mb-1" style={{ color: UI.text }}>No templates found</p>
-            <p className="text-sm mb-5" style={{ color: UI.textFaint }}>Try adjusting your filters or search term</p>
-            <button onClick={clearFilters} className="text-sm font-bold px-5 py-2 rounded-full transition-all"
-              style={{ color: UI.accent, border: "1px solid rgba(201,168,76,0.35)", background: "rgba(201,168,76,0.1)" }}>
-              Clear all filters
-            </button>
-          </motion.div>
-        )}
+                    {!hasActiveFilters && premiumShowcase.length > 0 && (
+                      <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium", { scroll: true })} />
+                    )}
+
+                    <CategoryChips selected={selectedCategory} onSelect={setSelectedCategory} counts={chipCounts} dark={false} />
+                    {crossHint}
+
+                    {readyTemplates.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                        {readyTemplates.map((template, i) => (
+                          <TemplateCard
+                            key={template.slug}
+                            template={template}
+                            isFav={favSlugs.includes(template.slug)}
+                            index={i}
+                            onFavorite={handleFavorite}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark={false} />}
+                    {emptyState}
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
@@ -687,25 +857,49 @@ export default function TemplatesPage() {
   );
 }
 
-/** Premium section chrome: gold heading, crown, divider into the main grid. */
-const PREMIUM_SECTION_CSS = `
-.pmSection { margin: 4px auto 28px; max-width: 1080px; }
-.pmHead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.pmCrown { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; font-size: 22px; border-radius: 14px;
-  background: linear-gradient(135deg, #fff1bf, #e2b44a 50%, #a6751c); box-shadow: 0 8px 20px -8px rgba(120,80,10,.7), inset 0 1px 0 rgba(255,255,255,.7);
-  animation: pmFloat 3.2s ease-in-out infinite; }
-.pmTitle { margin: 0; font: 700 clamp(20px, 3.4vw, 30px)/1.1 'Playfair Display', serif; letter-spacing: -.01em;
-  background: linear-gradient(90deg, #6e470a, #c99a2e 40%, #8a5a10 70%, #c99a2e); background-size: 200% 100%;
-  -webkit-background-clip: text; background-clip: text; color: transparent; animation: pmText 6s linear infinite; }
-.pmSub { margin: 3px 0 0; font-size: 12.5px; color: rgba(61,12,17,.62); }
-.pmAll { margin-left: auto; flex-shrink: 0; padding: 8px 14px; border-radius: 99px; border: 1px solid rgba(166,117,28,.45); background: rgba(255,241,191,.5);
-  color: #6e470a; font: 700 12px 'Inter', system-ui, sans-serif; cursor: pointer; transition: background .2s ease; }
-.pmAll:hover { background: rgba(255,241,191,.95); }
-.pmDivider { display: flex; align-items: center; gap: 12px; margin: 30px 0 4px; color: rgba(61,12,17,.5);
-  font: 700 10.5px 'Inter', system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; }
-.pmDivider::before, .pmDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,117,28,.45), transparent); }
-@media (max-width: 480px) { .pmSub { display: none; } .pmCrown { width: 38px; height: 38px; font-size: 19px; } }
-@keyframes pmFloat { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-4px) rotate(4deg); } }
-@keyframes pmText { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .pmCrown, .pmTitle { animation: none; } }
+/** Tabs, chips and the cross-tab hint. Theme-aware via `.isDark`. */
+const GALLERY_CSS = `
+.pgTabsWrap { display: flex; justify-content: center; margin: 0 0 26px; }
+@media (min-width: 768px) { .pgTabsWrap { margin-bottom: 40px; } }
+.pgTabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; max-width: 440px; padding: 5px;
+  border-radius: 999px; background: rgba(255,255,255,.62); border: 1px solid rgba(61,12,17,.14);
+  box-shadow: 0 10px 30px -18px rgba(61,12,17,.45); transition: background-color .45s ease, border-color .45s ease; }
+.pgTabs.isDark { background: rgba(255,255,255,.04); border-color: rgba(230,199,126,.26); box-shadow: 0 16px 40px -20px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,240,200,.06); }
+.pgTab { position: relative; border: 0; background: none; cursor: pointer; padding: 9px 10px 8px; border-radius: 999px; color: #7a5555;
+  -webkit-tap-highlight-color: transparent; transition: color .3s ease; }
+.pgTabs.isDark .pgTab { color: rgba(246,236,217,.6); }
+.pgTab:focus-visible { outline: 2px solid #c9a84c; outline-offset: 2px; }
+.pgTabPill { position: absolute; inset: 0; border-radius: 999px; background: #3d0c11; box-shadow: 0 8px 20px -10px rgba(61,12,17,.8); }
+.pgTabs.isDark .pgTabPill { background: linear-gradient(135deg, #fbecc0 0%, #e6c77e 45%, #b8893a 100%);
+  box-shadow: 0 10px 26px -10px rgba(230,199,126,.65), inset 0 1px 0 rgba(255,255,255,.6); }
+.pgTab.isActive { color: #f7ecd9; }
+.pgTabs.isDark .pgTab.isActive { color: #241505; }
+.pgTabInner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.pgTabTop { display: inline-flex; align-items: center; gap: 6px; font: 800 12.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.pgTabCount { min-width: 20px; padding: 3px 6px; border-radius: 99px; font-size: 10px; letter-spacing: 0; background: rgba(61,12,17,.08); }
+.pgTab.isActive .pgTabCount { background: rgba(255,255,255,.16); }
+.pgTabs.isDark .pgTabCount { background: rgba(255,255,255,.08); }
+.pgTabs.isDark .pgTab.isActive .pgTabCount { background: rgba(36,21,5,.14); }
+.pgTabHint { font: 500 10px/1 'Inter', system-ui, sans-serif; letter-spacing: .04em; opacity: .75; }
+@media (min-width: 768px) { .pgTab { padding: 12px 14px 11px; } .pgTabTop { font-size: 13.5px; } .pgTabHint { font-size: 11px; } }
+
+.pgChips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -12px 18px; padding: 2px 12px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.pgChips::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) { .pgChips { flex-wrap: wrap; justify-content: center; overflow: visible; margin: 0 0 26px; padding: 0; } }
+.pgChip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 99px; cursor: pointer;
+  font: 700 12px/1 'Inter', system-ui, sans-serif; color: #2a0a0e; background: rgba(255,255,255,.7); border: 1px solid rgba(61,12,17,.14);
+  transition: transform .2s ease; -webkit-tap-highlight-color: transparent; }
+.pgChip:active { transform: scale(.96); }
+.pgChip:focus-visible { outline: 2px solid #c9a84c; outline-offset: 2px; }
+.pgChip.isActive { background: #3d0c11; color: #f7ecd9; border-color: transparent; }
+.pgChipCount { font-size: 10.5px; opacity: .55; }
+.pgChips.isDark .pgChip { color: rgba(246,236,217,.82); background: rgba(255,255,255,.04); border-color: rgba(230,199,126,.2); }
+.pgChips.isDark .pgChip.isActive { background: linear-gradient(135deg, #fbecc0, #e6c77e 50%, #b8893a); color: #241505; border-color: transparent; }
+@media (min-width: 768px) { .pgChips.isDark { max-width: 1080px; margin-left: auto; margin-right: auto; } }
+
+.pgCross { display: flex; align-items: center; justify-content: center; gap: 10px; margin: -6px auto 18px; font: 600 12.5px/1.3 'Inter', system-ui, sans-serif; color: #7a5555; }
+.pgCross button { border: 1px solid rgba(201,168,76,.45); background: rgba(201,168,76,.12); color: #8b5a2b; padding: 6px 12px; border-radius: 99px; font: 700 12px/1 'Inter', system-ui, sans-serif; cursor: pointer; }
+.pgCross.isDark { color: rgba(246,236,217,.64); }
+.pgCross.isDark button { color: #e6c77e; border-color: rgba(230,199,126,.35); background: rgba(230,199,126,.08); }
+@media (prefers-reduced-motion: reduce) { .pgTabs, .pgTab, .pgChip { transition: none; } }
 `;
