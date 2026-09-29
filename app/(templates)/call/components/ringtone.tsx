@@ -216,6 +216,9 @@ export function makeHaptics(): { start: () => void; stop: () => void } {
   let timer: ReturnType<typeof setInterval> | null = null;
 
   const buzz = () => {
+    // Chrome logs an intervention for every vibrate before a real tap.
+    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+    if (ua && !ua.hasBeenActive) return;
     try {
       navigator.vibrate(VIBRATE_PATTERN);
     } catch {

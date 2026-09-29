@@ -21,6 +21,8 @@
 // transform/opacity only; prefers-reduced-motion skips the intros and fades.
 
 import { Caveat } from "next/font/google";
+import CallReveal from "./reveals/CallReveal";
+import CatchReveal from "./reveals/CatchReveal";
 import {
   createContext,
   useCallback,
@@ -40,7 +42,7 @@ import {
 
 const hand = Caveat({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-lr-hand", display: "swap", preload: false });
 
-export type LetterVariant = "app" | "watch" | "recharge" | "product" | "us" | "loveflix";
+export type LetterVariant = "app" | "watch" | "recharge" | "product" | "us" | "loveflix" | "call" | "catch";
 
 export interface RevealProps {
   variant: LetterVariant;
@@ -69,7 +71,7 @@ export interface RevealProps {
 /** The close button's ref travels by context so render code never touches it. */
 const CloseRefCtx = createContext<RefObject<HTMLButtonElement | null> | null>(null);
 
-type VProps = Omit<RevealProps, "closeRef">;
+export type VProps = Omit<RevealProps, "closeRef">;
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
 
@@ -81,16 +83,16 @@ const DODGE = [
 ];
 
 /** Deterministic 0..1 from an index — confetti and bursts, no Math.random in render. */
-const rnd = (i: number, salt = 1) => {
+export const rnd = (i: number, salt = 1) => {
   const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
   return x - Math.floor(x);
 };
 
-const bg = (url?: string): CSSProperties | undefined =>
+export const bg = (url?: string): CSSProperties | undefined =>
   url ? { backgroundImage: `url("${url.replace(/"/g, "%22")}")` } : undefined;
 
 /** Sentence-ish chunks no longer than `max` characters, split at clauses before words. */
-function chunk(text: string, max: number): string[] {
+export function chunk(text: string, max: number): string[] {
   const sentences = text.match(/[^.!?…]+[.!?…]+["'”’)\]]*\s*|[^.!?…]+$/g) ?? [text];
   const pieces: string[] = [];
   for (const sn of sentences) {
@@ -124,7 +126,7 @@ function hashNum(s: string, len: number) {
 }
 
 /** gate (-1) → intro steps (0..n-1) → letter (n). Reduced motion skips the intro. */
-function usePhases(gated: boolean, steps: number[], reduce: boolean, onRead: () => void) {
+export function usePhases(gated: boolean, steps: number[], reduce: boolean, onRead: () => void) {
   const n = steps.length;
   const [p, setP] = useState(gated ? -1 : reduce ? n : 0);
   const key = steps.join(",");
@@ -147,7 +149,7 @@ function usePhases(gated: boolean, steps: number[], reduce: boolean, onRead: () 
   return { p, n, pass: () => setP(reduce ? n : 0), skip: () => setP(n), set: setP };
 }
 
-function useBursts() {
+export function useBursts() {
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
   const fire = useCallback((x = 50, y = 50) => {
     const id = Date.now() + Math.floor(x * 1000 + y);
@@ -169,7 +171,7 @@ function useBursts() {
   return [node, fire] as const;
 }
 
-function Confetti({ n = 40, colors }: { n?: number; colors: string[] }) {
+export function Confetti({ n = 40, colors }: { n?: number; colors: string[] }) {
   return (
     <div className="lrConfetti" aria-hidden>
       {Array.from({ length: n }, (_, i) => (
@@ -192,7 +194,7 @@ function Confetti({ n = 40, colors }: { n?: number; colors: string[] }) {
 }
 
 // The runaway-no gate. `cls` picks the app's dialect in CSS.
-function Gate({
+export function Gate({
   cls,
   head,
   kicker,
@@ -251,7 +253,7 @@ function Gate({
   );
 }
 
-function Sign({ sign, from, cls = "lrSign" }: { sign: string; from?: string; cls?: string }) {
+export function Sign({ sign, from, cls = "lrSign" }: { sign: string; from?: string; cls?: string }) {
   return (
     <p className={cls}>
       {sign}
@@ -262,7 +264,7 @@ function Sign({ sign, from, cls = "lrSign" }: { sign: string; from?: string; cls
 
 // ─── the shell: dialog, close, focus trap, swipe-down ───────────────────────
 
-function Shell({ P, dark, label, children }: { P: VProps; dark?: boolean; label: string; children: ReactNode }) {
+export function Shell({ P, dark, label, children }: { P: VProps; dark?: boolean; label: string; children: ReactNode }) {
   const closeRef = useContext(CloseRefCtx);
   const stage = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; dy: number; ok: boolean } | null>(null);
@@ -1087,6 +1089,9 @@ function pick(P: VProps) {
     case "product": return <ProductReveal {...P} />;
     case "us": return <UsReveal {...P} />;
     case "loveflix": return <LoveflixReveal {...P} />;
+    // Each lives in its own file so its template's owner can work on it alone.
+    case "call": return <CallReveal {...P} />;
+    case "catch": return <CatchReveal {...P} />;
     default: return null;
   }
 }

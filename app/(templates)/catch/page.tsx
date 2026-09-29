@@ -1,66 +1,56 @@
 "use client";
 
+// ─── /catch — the editor ─────────────────────────────────────────────────────
+//
+// The game owns the whole screen from the very top edge; the editor's only
+// chrome is the shared floating EditorDock (Back · Edit · Create → Publish →
+// Share), which tucks itself away while a run is being played. Create opens the
+// guided AI questions first, then the form.
+
 import { Suspense } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, PenLine, Send, Share2, Loader2 } from "lucide-react";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
+import StoryStarter from "@/components/story/StoryStarter";
+import EditorDock from "../_love/EditorDock";
 import { useCatchEditor } from "./hooks/useCatchEditor";
 import CatchTemplate from "./components/CatchTemplate";
 import EditSheet from "./components/EditSheet";
-import StoryStarter from "@/components/story/StoryStarter";
-
-const AMBER = "#B9722A";
-const AMBER_GRAD = "linear-gradient(135deg,#E9A94A,#B9722A)";
-const CHROME = "rgba(255,255,255,.9)";
-const CHROME_BORDER = "1px solid #EADFCB";
+import { C, DISPLAY } from "./components/theme";
 
 function CatchPageInner() {
   const e = useCatchEditor();
 
   // One button, three lives: Create → Publish → Share.
   const topAction = e.showShare
-    ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
+    ? { label: e.shareLabel, onClick: e.handleShare }
     : e.showPublish
-      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.handleEditClick, icon: <PenLine size={14} /> };
+      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish }
+      : { label: "Create", onClick: e.handleEditClick };
+
+  const sheetOpen = e.editMode === "manual" || (e.storyStarter && e.fill.mode !== "manual");
 
   return (
     <div style={{ minHeight: "100dvh", position: "relative" }}>
-      {/* Floating top bar */}
-      <div
-        className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <button
-          onClick={e.goBack}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold shadow-sm"
-          style={{ background: CHROME, color: AMBER, border: CHROME_BORDER, backdropFilter: "blur(8px)" }}
-        >
-          <ArrowLeft size={15} /> Back
-        </button>
-        <div className="flex-1" />
-        {e.isPersonalized && !e.showShare && (
-          <button
-            onClick={e.handleEditFromPreview}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-sm"
-            style={{ background: CHROME, color: AMBER, border: CHROME_BORDER, backdropFilter: "blur(8px)" }}
-          >
-            <PenLine size={14} /> Edit
-          </button>
-        )}
-        <button
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-60"
-          style={{ background: AMBER_GRAD }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-      </div>
+      {/* Keyed so every save/publish restarts from the title screen with the new letter. */}
+      <CatchTemplate
+        key={e.previewVersion}
+        data={e.displayData}
+        mode="demo"
+        hideLetter={sheetOpen}
+        shiftForSheet={e.editMode === "manual"}
+        onPlayingChange={e.setPlaying}
+      />
 
-      {/* Live demo preview. Keyed so every save/publish restarts the run from the
-          intro screen with the freshly-written letter. */}
-      <CatchTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+      {!e.playing && (
+        <EditorDock
+          tone="light"
+          accent={`linear-gradient(135deg, ${C.pink}, ${C.grape})`}
+          font={DISPLAY}
+          onBack={e.goBack}
+          secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+          primary={{ ...topAction, disabled: e.publishing }}
+        />
+      )}
 
       <EditSheet
         editMode={e.editMode}
@@ -73,23 +63,21 @@ function CatchPageInner() {
         saving={e.saving}
       />
 
-      {/* Shown the first time Create is tapped, and only when the server has a
-          schema for this template. Every way out lands in the EditSheet above,
-          fully editable. */}
-      {e.storyStarter && (
-        <StoryStarter fill={e.fill} onManual={e.openManualForm} title="Let's write their letter" />
-      )}
+      {/* Mounted after EditSheet so the sheet sits over the form it seeds. */}
+      {e.storyStarter && <StoryStarter guided fill={e.fill} onManual={e.openManualForm} title="Let's build their game" />}
 
       <AnimatePresence>
         {e.publishing && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="fixed inset-0 z-[300] grid place-items-center"
-            style={{ background: "rgba(60,44,24,.5)", backdropFilter: "blur(6px)" }}
+            style={{ background: "rgba(42,22,64,.5)" }}
           >
-            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: "#fff" }}>
-              <Loader2 size={28} className="animate-spin" style={{ color: AMBER }} />
-              <p className="font-semibold" style={{ color: AMBER }}>Throwing it into the sky…</p>
+            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: "#fff", fontFamily: DISPLAY }} aria-live="polite">
+              <span style={{ fontSize: 34 }} className="animate-bounce" aria-hidden>💌</span>
+              <p className="font-semibold" style={{ color: C.ink }}>Throwing it into the sky…</p>
             </div>
           </motion.div>
         )}
@@ -97,17 +85,17 @@ function CatchPageInner() {
 
       {/* Auth is deferred, not gating: onClose cancels the pending publish,
           onSuccess just closes and the hook's effect resumes it. */}
-      <AnimatePresence>
-        {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
-      </AnimatePresence>
+      <AnimatePresence>{e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}</AnimatePresence>
     </div>
   );
 }
 
 export default function CatchPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#F4F5F7" }} />}>
-      <CatchPageInner />
-    </Suspense>
+    <MotionConfig reducedMotion="user">
+      <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#C8B8FF" }} />}>
+        <CatchPageInner />
+      </Suspense>
+    </MotionConfig>
   );
 }

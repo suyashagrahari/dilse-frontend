@@ -126,10 +126,13 @@ const allConfigs = [
 ];
 
 /**
- * The premium collection: the real-app clones. They get their own gallery
- * section and category chip, and a luxury card instead of the standard one.
+ * The premium collection: the real-app clones. They live in the gallery's
+ * Premium tab (everything else is under Freemium) and get a luxury card
+ * instead of the standard one.
  */
-export const PREMIUM_SLUGS = new Set(["loveflix", "us", "app", "watch", "product", "recharge"]);
+export const PREMIUM_SLUGS = new Set([
+  "loveflix", "us", "app", "watch", "product", "recharge", "call", "catch",
+]);
 
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
   return {
@@ -165,7 +168,6 @@ export const templateTypes = [
 
 export const categories = [
   { id: "all", label: "All", emoji: "✨" },
-  { id: "premium", label: "Premium", emoji: "👑" },
   { id: "gf", label: "Girlfriend", emoji: "💕" },
   { id: "friend", label: "Friend", emoji: "🤝" },
   { id: "parents", label: "Parents", emoji: "👨‍👩‍👧" },

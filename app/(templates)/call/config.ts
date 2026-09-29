@@ -18,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Swipe to answer and the message plays out line by line. Underneath: the identification card with its tags and spam meter, and a call log that reads like a relationship.",
   bgGradient: "from-emerald-50 via-white to-teal-50",
-  coverImage: templateMedia("call", "cover.webp"),
+  coverImage: templateMedia("call", "cover-poster.webp"),
   tabs: [
     { id: "call", icon: PhoneIncoming, label: "The Call" },
     { id: "caller", icon: BadgeCheck, label: "Caller" },
