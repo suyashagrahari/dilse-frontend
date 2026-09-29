@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "LoveFlix",
   description:
     "A streaming service with exactly one show on it, and they're the lead. Browse the catalogue of your relationship, then press play on a season of your moments.",
-  coverImage:
-    templateMedia("loveflix", "cover.jpg"),
+  coverImage: templateMedia("loveflix", "cover-poster.webp"),
   emoji: "🎬",
   color: "from-amber-500 to-neutral-800",
   previewText: "new episode. one profile. it's yours 🎬",

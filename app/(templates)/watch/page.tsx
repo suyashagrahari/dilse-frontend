@@ -81,7 +81,7 @@ function WatchPageInner() {
       />
 
       {/* Mounted after EditSheet so the panel sits over the form it seeds. */}
-      {e.storyStarted ? <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
+      {e.storyStarted ? <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
 
       {e.publishing ? (
         <div className="wt-publishing" role="status" aria-live="polite">

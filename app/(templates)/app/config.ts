@@ -20,8 +20,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "A full software listing for a person: the header block, the ratings histogram, five screenshots, the version history — and a review section that opens for her friends and stays closed until you approve what they wrote.",
   bgGradient: "from-indigo-50 via-white to-violet-50",
-  coverImage:
-    templateMedia("app", "cover.webp"),
+  coverImage: templateMedia("app", "cover-poster.webp"),
   tabs: [
     { id: "listing", icon: Download, label: "Listing" },
     { id: "shots", icon: Images, label: "Screens" },

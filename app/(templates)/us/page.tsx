@@ -95,7 +95,7 @@ function UsPageInner() {
       {/* Sits over the sheet above, so the first thing a sender sees after
           Create is the offer to have it written — with the form they get
           today one tap behind it. Renders nothing without a schema. */}
-      {e.storyStarted ? <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
+      {e.storyStarted ? <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} /> : null}
 
       <AnimatePresence>
         {e.publishing ? (
