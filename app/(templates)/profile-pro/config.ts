@@ -18,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Corporate-bland on purpose: hairline borders, no shadows, a headline that reads like a job title. The joke is that Punctuality (2) sits in exactly the same row as Being Right (47).",
   bgGradient: "from-teal-50 via-white to-emerald-50",
-  coverImage: templateMedia("profile-pro", "cover.webp"),
+  coverImage: templateMedia("profile-pro", "cover-poster.webp"),
   tabs: [
     { id: "profile", icon: UserRound, label: "Profile" },
     { id: "experience", icon: Briefcase, label: "Experience" },

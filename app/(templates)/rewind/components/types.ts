@@ -21,6 +21,9 @@
 
 import { bodyFromKeys, str, strList, strOr, type Raw } from "@/lib/wire";
 import { hash32 } from "@/lib/seededRandom";
+import { DEMO_PHOTO_CDN, MAX_LOCK_ANSWER_LEN, MAX_LOCK_QUESTION_LEN, parseLovePhotos, type LovePhoto } from "../../_love/types";
+
+export type { LovePhoto };
 
 export type EditMode = null | "manual" | "preview";
 
@@ -40,24 +43,54 @@ export interface Stat {
 
 export interface RewindData {
   senderName: string;
+  /** Legacy — pre-premium pages. Not in the form; kept so they round-trip. */
   senderPhotoUrl: string;
   recipientName: string;
+  /** Legacy — pre-premium pages. Not in the form; kept so they round-trip. */
   recipientPhotoUrl: string;
   /** ISO date. EVERY time-based stat on screen derives from this one field. */
   startDate: string;
+  /** Legacy single song. New pages keep it in step with songs[0]. */
   songTitle: string;
   songArtist: string;
-  /** "" skips the song slide entirely rather than rendering a placeholder. */
+  /** Optional clip that plays under the story and in the player bar. */
   audioUrl: string;
-  /** Up to 5. The ranked list — the highest-screenshot slide in the deck. */
+  /** "Title — Artist", up to 5. The playlist, the top-songs slide, the player bar. */
+  songs: string[];
+  /** The name of the "your songs" playlist. */
+  playlistName: string;
+  /** Top places, up to 5. */
+  places: string[];
+  /** Top genres, up to 4. The first one is THE genre. */
+  genres: string[];
+  /** Up to 5. The ranked list — "on repeat". */
   topReasons: string[];
   /** Sender-authored jokes. Not time-derived; these are the ones they write. */
   stats: Stat[];
-  /** Keyed by question id. Drives the archetype. */
+  /** Keyed by question id. Drives the archetype — the couple aura. */
   answers: Record<string, string>;
-  photos: string[];
+  /** Memories — framed photos with a caption and a note. Liked Songs. */
+  photos: LovePhoto[];
+  /** The line under "top 0.01% of fans". */
+  fanLine: string;
   closingLine: string;
+  /** The main letter — the hidden bonus track. "" = none. */
+  letter: string;
+  lockQuestion: string;
+  lockAnswer: string;
 }
+
+export interface Song { title: string; artist: string }
+
+/** "Kesariya — Arijit Singh" → { title, artist }. A bare title keeps an empty artist. */
+export function parseSong(line: string): Song {
+  const s = (line ?? "").trim();
+  // "Title — Artist", "Title - Artist", "Title | Artist", or the double space
+  // left behind when something upstream strips the dash.
+  const m = s.match(/^(.*?)\s+[—–|-]\s+(.*)$/) || s.match(/^(.*?)\s{2,}(.*)$/);
+  return m ? { title: m[1].trim(), artist: m[2].trim() } : { title: s, artist: "" };
+}
+export const joinSong = (s: Song): string => (s.artist.trim() ? `${s.title.trim()} — ${s.artist.trim()}` : s.title.trim());
 
 // ─── Slide mechanics ─────────────────────────────────────────────────────────
 
@@ -446,15 +479,31 @@ export const DEMO_DATA: RewindData = {
   recipientName: "Aditi",
   recipientPhotoUrl: "",
   startDate: demoStart(),
-  songTitle: "the one you played twice",
-  songArtist: "in the auto, both times",
+  songTitle: "Kesariya",
+  songArtist: "Arijit Singh",
   audioUrl: "",
+  songs: [
+    "Kesariya — Arijit Singh",
+    "Tum Se Hi — Mohit Chauhan",
+    "Iktara — Kavita Seth",
+    "Pehla Nasha — Udit Narayan",
+    "Raabta — Arijit Singh",
+  ],
+  playlistName: "songs that are basically you",
+  places: [
+    "Your terrace, 1 AM",
+    "The Maggi point on the highway",
+    "Corner table, that café",
+    "Marine Drive, sunset shift",
+    "Every auto ride home",
+  ],
+  genres: ["Slow-burn Bollywood", "3 AM Voice Notes", "Chai-core", "Soft Launch Pop"],
   topReasons: [
     "You hand me the left earbud without looking",
     "You laugh half a second before the punchline",
-    "You have never once made me feel like too much",
     "You fed a street dog one biscuit and adopted a responsibility",
     "You stop at page forty of every book and I find them everywhere",
+    "You have never once made me feel like too much",
   ],
   stats: [
     { key: "fine", label: "times you said", value: "47", sub: "\"I'm fine.\" You were fine twice." },
@@ -469,21 +518,44 @@ export const DEMO_DATA: RewindData = {
     love: "food",
     weekend: "talk",
   },
-  photos: [],
+  photos: [
+    { url: `${DEMO_PHOTO_CDN}/couple1.webp`, caption: "the first sunset", note: "You said the sky looked like mango lassi. I have not stopped thinking about it.", cropX: 50, cropY: 45, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple2.webp`, caption: "date night, round one", note: "You stole my fries and then my whole heart. In that order.", cropX: 50, cropY: 40, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees looked a little jealous of your smile that day.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${DEMO_PHOTO_CDN}/couple4.webp`, caption: "us, on repeat", note: "Out of every timeline, I'd pick this one. Every single time.", cropX: 50, cropY: 50, scale: 100 },
+  ],
+  fanLine: "Nobody has replayed Rohan more. Nobody is even close.",
   closingLine: "Same time next year.",
+  letter:
+    "Aditi,\n\nThey counted everything this year except the part that matters, so here it is, unskippable.\n\nThe night on your terrace when the power went out and we kept talking in the dark like the lights were a formality. The auto ride where you fell asleep on my shoulder and I let us miss the turn, twice.\n\nYou are the song I never skip, the one I play when I am happy and the one I play when I am not. I don't need an algorithm to tell me you are my top artist.\n\nSame time next year. And the year after that. Press play.",
+  lockQuestion: "Will you rewind this year with me again?",
+  lockAnswer: "Play it ▶",
 };
 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 export const REWIND_CONTENT_KEYS: (keyof RewindData)[] = [
   "senderName", "senderPhotoUrl", "recipientName", "recipientPhotoUrl",
-  "startDate", "songTitle", "songArtist", "audioUrl", "topReasons", "stats",
-  "answers", "photos", "closingLine",
+  "startDate", "songTitle", "songArtist", "audioUrl", "songs", "playlistName",
+  "places", "genres", "topReasons", "stats", "answers", "photos", "fanLine",
+  "closingLine", "letter", "lockQuestion", "lockAnswer",
 ];
 
+export const REWIND_LIMITS = {
+  songs: 5, places: 5, genres: 4, song: 120, place: 80, genre: 48,
+  fanLine: 200, playlistName: 60, photos: 10,
+  letter: 2000, lockQuestion: MAX_LOCK_QUESTION_LEN, lockAnswer: MAX_LOCK_ANSWER_LEN,
+} as const;
+
 export function rewindDataToBody(data: RewindData, password?: string): Record<string, unknown> {
-  return bodyFromKeys(data, REWIND_CONTENT_KEYS, password);
+  // The legacy single-song fields follow songs[0], so anything still reading
+  // them (older viewers, the share card) sees the same #1.
+  const first = parseSong(data.songs[0] ?? "");
+  return bodyFromKeys({ ...data, songTitle: first.title || data.songTitle, songArtist: first.title ? first.artist : data.songArtist }, REWIND_CONTENT_KEYS, password);
 }
+
+const lines = (v: unknown, max: number, len: number): string[] =>
+  strList(v, []).map((s) => s.trim().slice(0, len)).filter(Boolean).slice(0, max);
 
 export function dbToRewindData(db: Raw | null | undefined): RewindData {
   const src = db ?? {};
@@ -507,19 +579,38 @@ export function dbToRewindData(db: Raw | null | undefined): RewindData {
     if (typeof v === "string" && q.options.some((o) => o.value === v)) answers[q.id] = v;
   }
 
+  // Pages from before the redesign stored bare URL strings. Lift them.
+  const rawPhotos = Array.isArray(src.photos) ? src.photos.map((p) => (typeof p === "string" ? { url: p } : p)) : [];
+  const photos = parseLovePhotos(rawPhotos, []);
+
+  const songTitle = strOr(src.songTitle, "");
+  const songArtist = strOr(src.songArtist, "");
+  let songs = lines(src.songs, REWIND_LIMITS.songs, REWIND_LIMITS.song);
+  // An old page had one song line. It becomes the #1 of a one-song playlist.
+  if (!songs.length && songTitle.trim()) songs = [joinSong({ title: songTitle, artist: songArtist })];
+
   return {
     senderName: str(src.senderName, DEMO_DATA.senderName),
     senderPhotoUrl: strOr(src.senderPhotoUrl, ""),
     recipientName: str(src.recipientName, DEMO_DATA.recipientName),
     recipientPhotoUrl: strOr(src.recipientPhotoUrl, ""),
     startDate: str(src.startDate, DEMO_DATA.startDate),
-    songTitle: strOr(src.songTitle, ""),
-    songArtist: strOr(src.songArtist, ""),
+    songTitle,
+    songArtist,
     audioUrl: strOr(src.audioUrl, ""),
+    songs,
+    playlistName: strOr(src.playlistName, "").slice(0, REWIND_LIMITS.playlistName),
+    places: lines(src.places, REWIND_LIMITS.places, REWIND_LIMITS.place),
+    genres: lines(src.genres, REWIND_LIMITS.genres, REWIND_LIMITS.genre),
     topReasons: strList(src.topReasons, DEMO_DATA.topReasons).slice(0, 5),
     stats: stats.length ? stats : DEMO_DATA.stats,
     answers: Object.keys(answers).length ? answers : DEMO_DATA.answers,
-    photos: strList(src.photos, []).slice(0, 8),
+    photos,
+    fanLine: strOr(src.fanLine, "").slice(0, REWIND_LIMITS.fanLine),
     closingLine: str(src.closingLine, DEMO_DATA.closingLine),
+    // An old page has no letter and must not inherit the demo's.
+    letter: strOr(src.letter, "").slice(0, REWIND_LIMITS.letter),
+    lockQuestion: strOr(src.lockQuestion, "").slice(0, REWIND_LIMITS.lockQuestion),
+    lockAnswer: strOr(src.lockAnswer, "").slice(0, REWIND_LIMITS.lockAnswer),
   };
 }

@@ -7,7 +7,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { type RewindData, type EditMode, DEMO_DATA, deriveStats, rewindDataToBody, dbToRewindData } from "../components/types";
+import { type RewindData, type EditMode, DEMO_DATA, deriveStats, rewindDataToBody, dbToRewindData, parseSong, joinSong } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -23,7 +23,7 @@ const TEMPLATE = "rewind";
 /** Deck limits. The story slides are built to hold exactly this much. */
 export const MAX_REASONS = 5;
 export const MAX_STATS = 4;
-export const MAX_PHOTOS = 8;
+export const MAX_PHOTOS = 10;
 
 // Draft is persisted to localStorage so a refresh (or an accidental tab close)
 // keeps every line the sender wrote. Falls back to sessionStorage if unavailable.
@@ -128,6 +128,14 @@ export function useRewindEditor() {
    * so a state flag would still read as the previous render's value.
    */
   const publishInFlightRef = useRef(false);
+  /**
+   * The auto-draft's POST can still be in flight when Publish is tapped (photo
+   * uploads make it slow). Publish waits for it and reuses its row instead of
+   * creating a second one.
+   */
+  const pageIdRef = useRef<string | null>(null);
+  const persistingRef = useRef<Promise<string | null> | null>(null);
+  const adoptPageId = useCallback((id: string) => { pageIdRef.current = id; setPageId(id); }, []);
 
   // ── AI story fill ──────────────────────────────────────────────────────────
   //
@@ -175,7 +183,7 @@ export function useRewindEditor() {
             // work in progress, so re-seeding from it later is a no-op.
             hasWipRef.current = false;
             setRestoredDraft(false);
-            setPageId(id);
+            adoptPageId(id);
             setIsPersonalized(true);
             setEditMode("preview");
             bumpPreview();
@@ -199,7 +207,11 @@ export function useRewindEditor() {
         ...src,
         topReasons: Array.isArray(src.topReasons) ? src.topReasons : [],
         stats: Array.isArray(src.stats) ? src.stats : [],
-        photos: Array.isArray(src.photos) ? src.photos : [],
+        songs: Array.isArray(src.songs) ? src.songs : DEMO_DATA.songs,
+        places: Array.isArray(src.places) ? src.places : DEMO_DATA.places,
+        genres: Array.isArray(src.genres) ? src.genres : DEMO_DATA.genres,
+        // Drafts from before the redesign held bare URL strings.
+        photos: Array.isArray(src.photos) ? src.photos.map((p) => (typeof p === "string" ? { url: p } : p)).filter((p) => p && typeof p.url === "string") : [],
         answers: src.answers && typeof src.answers === "object" ? src.answers : {},
       };
       setMf(d);
@@ -233,7 +245,7 @@ export function useRewindEditor() {
         const result = await res.json();
         if (!result.success) throw new Error("Save failed");
         const savedId = result.data._id as string;
-        setPageId(savedId);
+        adoptPageId(savedId);
         setContent(data);
         setIsPersonalized(true);
 
@@ -347,10 +359,6 @@ export function useRewindEditor() {
     }
 
     const reasons = writtenReasons(mf);
-    if (reasons.length < 1) {
-      pushToast({ type: "info", title: "One reason, at least", message: "The ranked list is the slide people screenshot" });
-      return;
-    }
 
     // Half-written rows are fine to keep typing on; they are not fine to publish.
     const cleaned: RewindData = {
@@ -363,7 +371,15 @@ export function useRewindEditor() {
         .filter((s) => s.value.trim() || s.label.trim())
         .map((s, i) => ({ key: s.key || `s${i + 1}`, label: s.label.trim(), value: s.value.trim(), sub: s.sub.trim() }))
         .slice(0, MAX_STATS),
-      photos: (mf.photos ?? []).map((p) => p.trim()).filter(Boolean).slice(0, MAX_PHOTOS),
+      photos: (mf.photos ?? []).filter((p) => p?.url).slice(0, MAX_PHOTOS),
+      songs: (mf.songs ?? []).map(parseSong).filter((x) => x.title).map(joinSong).slice(0, 5),
+      places: (mf.places ?? []).map((x) => x.trim()).filter(Boolean).slice(0, 5),
+      genres: (mf.genres ?? []).map((x) => x.trim()).filter(Boolean).slice(0, 4),
+      playlistName: mf.playlistName.trim(),
+      fanLine: mf.fanLine.trim(),
+      letter: mf.letter.trim(),
+      lockQuestion: mf.lockQuestion.trim(),
+      lockAnswer: mf.lockAnswer.trim(),
       songTitle: mf.songTitle.trim(),
       songArtist: mf.songArtist.trim(),
       audioUrl: mf.audioUrl.trim(),
@@ -383,16 +399,16 @@ export function useRewindEditor() {
       reasons: cleaned.topReasons.length,
       answered: Object.keys(mf.answers ?? {}).length,
     });
-    pushToast({ type: "success", title: "Saved!", message: "Play it once, then publish ⏮️" });
+    pushToast({ type: "success", title: "Saved!", message: "Tap the banner to play it, then publish ⏮️" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
 
   const create = useCallback(async (): Promise<string | null> => {
     const res = await fetch(BASE, { method: "POST", headers: headers(), body: JSON.stringify(rewindDataToBody(content, pagePassword)) });
     const result = await res.json();
     if (!result.success) return null;
-    setPageId(result.data._id);
+    adoptPageId(result.data._id);
     return result.data._id as string;
-  }, [content, pagePassword, headers]);
+  }, [content, pagePassword, headers, adoptPageId]);
 
   const update = useCallback(async (id: string) => {
     await fetch(`${BASE}/${id}`, { method: "PUT", headers: headers(), body: JSON.stringify(rewindDataToBody(content, pagePassword)) });
@@ -422,14 +438,17 @@ export function useRewindEditor() {
     isAuthenticated,
     accessToken,
     pageId,
-    persist: (d) =>
-      persistDraft({
+    persist: (d) => {
+      const pr = persistDraft({
         base: BASE,
         headers: headers(),
-        pageId,
-        setPageId,
+        pageId: pageIdRef.current ?? pageId,
+        setPageId: adoptPageId,
         body: rewindDataToBody(d, pagePassword),
-      }),
+      });
+      persistingRef.current = pr;
+      return pr;
+    },
     onAdopted: (d) => {
       // The adopted payload carries CDN URLs where the browser held base64, so
       // the form has to be told — otherwise the next save sends the base64 back
@@ -471,12 +490,12 @@ export function useRewindEditor() {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
 
     const dateProblem = validateStartDate(content.startDate);
-    if (!content.recipientName.trim() || dateProblem || writtenReasons(content).length < 1) {
+    if (!content.recipientName.trim() || dateProblem) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: dateProblem ? `date_${dateProblem.kind}` : "story_incomplete" });
       pushToast({
         type: "info",
         title: "Finish the story first",
-        message: dateProblem ? dateProblem.message : "A name, the date, and one reason",
+        message: dateProblem ? dateProblem.message : "Their name and the date it started",
       });
       // Reopen the sheet on whatever is already there — never on demo data.
       setEditMode("manual");
@@ -494,7 +513,8 @@ export function useRewindEditor() {
 
     setPublishing(true);
     try {
-      let id = pageId;
+      if (persistingRef.current) await persistingRef.current.catch(() => null);
+      let id = pageIdRef.current ?? pageId;
       if (!id) id = await create();
       else await update(id);
       if (!id) throw new Error("Save failed");

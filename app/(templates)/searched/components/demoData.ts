@@ -1,466 +1,220 @@
-// ─── Searched — demo content, wire mapping and small pure helpers ────────────
-//
-// The frozen contract (./types) owns the shape, the palette, the timings and
-// every string of interface copy. This file owns the *content* that fills it, the
-// coercion to and from the API, and the handful of pure functions the UI needs
-// that are not interface copy (snippet parsing, name retargeting).
-//
-// Nothing here decorates. If a value here makes the page prettier rather than
-// funnier, it is in the wrong file.
+// ─── Searched — demo content and the wire body ───────────────────────────────
 
-import { bodyFromKeys } from "@/lib/wire";
-import {
-  groupIndian,
-  type FakePage,
-  type KnowledgeFact,
-  type KnowledgePanel,
-  type PaaItem,
-  type SearchData,
-  type SearchResult,
-} from "./types";
+import { DEMO_PHOTO_CDN } from "../../_love/types";
+import { groupIndian, type SearchData } from "./types";
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Pure helpers
-// ═══════════════════════════════════════════════════════════════════════════
+const P = DEMO_PHOTO_CDN;
 
-/** "Meera Verma" → "Meera". Used for the loose autocomplete match. */
-export const firstNameOf = (full: string): string => (full || "").trim().split(/\s+/)[0] ?? "";
+export const DEMO_LETTER = `Meera,
 
-export interface SnippetToken {
-  text: string;
-  bold: boolean;
-}
+I searched for you once, before I even knew your last name. "Girl, yellow scarf, momo stall, Hazratganj, laughs like a pressure cooker." Zero results. Turns out some things you only find by showing up.
 
-/**
- * Snippets are authored with `<b>` on the matched terms, which is the real
- * convention. We never hand that to `dangerouslySetInnerHTML` — we parse the
- * `<b>` spans ourselves and strip every other tag to plain text, so a snippet
- * pasted in by a sender can carry emphasis and nothing else.
- */
-export function parseSnippet(raw: string): SnippetToken[] {
-  const src = raw ?? "";
-  const out: SnippetToken[] = [];
-  const re = /<b>([\s\S]*?)<\/b>/gi;
-  const clean = (s: string) => s.replace(/<[^>]*>/g, "");
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(src)) !== null) {
-    if (m.index > last) out.push({ text: clean(src.slice(last, m.index)), bold: false });
-    out.push({ text: clean(m[1]), bold: true });
-    last = re.lastIndex;
-  }
-  if (last < src.length) out.push({ text: clean(src.slice(last)), bold: false });
-  return out.filter((t) => t.text.length > 0);
-}
+So I've been collecting the results myself. The way you say "suno" before every terrible idea. The 2 AM voice notes that start with "okay don't laugh". The eleven momos. Your mom pretending she doesn't like me, and then asking if I've eaten.
 
-/** True when the typed query is not, in any reading, the recipient's name. */
-export function isWrongName(query: string, recipientName: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return false;
-  const full = recipientName.trim().toLowerCase();
-  if (!full) return false;
-  if (full.includes(q) || q.includes(full)) return false;
-  // Any single name-part matching is close enough to count as "they typed it".
-  return !full.split(/\s+/).some((part) => part.length > 1 && (q.includes(part) || part.includes(q)));
-}
+If anyone ever indexed you properly — every Tuesday, every hoodie you've stolen, every time you fell asleep 35 minutes into a movie — the whole first page would still miss the point. The point is that I'm lucky. Every search, every single day.
 
-/**
- * Rewrite every piece of copy from one recipient name to another, so changing
- * the name in the editor does not leave the demo's jokes addressed to someone
- * else. Whole-word, full name first, then the first name.
- */
-export function retargetToRecipient(data: SearchData, oldName: string, newName: string): SearchData {
-  const from = (oldName || "").trim();
-  const to = (newName || "").trim();
-  if (!from || !to || from === to) return data;
+So here's the only result that matters: I love you. Not in a 0.42 seconds way. In an about-forever-results way.
 
-  const oldFirst = firstNameOf(from);
-  const newFirst = firstNameOf(to) || to;
-  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const fullRe = new RegExp(`\\b${esc(from)}\\b`, "gi");
-  const firstRe = oldFirst ? new RegExp(`\\b${esc(oldFirst)}\\b`, "gi") : null;
-  const slugRe = new RegExp(esc(from.toLowerCase().replace(/\s+/g, "-")), "gi");
-  const underRe = new RegExp(esc(from.replace(/\s+/g, "_")), "gi");
-
-  const t = (s: string): string => {
-    if (!s) return s;
-    let out = s.replace(fullRe, to);
-    out = out.replace(slugRe, to.toLowerCase().replace(/\s+/g, "-"));
-    out = out.replace(underRe, to.replace(/\s+/g, "_"));
-    if (firstRe) out = out.replace(firstRe, newFirst);
-    return out;
-  };
-  const ts = (a: string[]) => a.map(t);
-
-  return {
-    ...data,
-    recipient: { ...data.recipient, name: to },
-    autocomplete: ts(data.autocomplete),
-    didYouMean: data.didYouMean ? t(data.didYouMean) : data.didYouMean,
-    results: data.results.map((r) => ({
-      ...r,
-      title: t(r.title),
-      url: t(r.url),
-      snippet: t(r.snippet),
-      badge: r.badge ? t(r.badge) : r.badge,
-      page: r.page
-        ? { ...r.page, title: t(r.page.title), url: t(r.page.url), body: ts(r.page.body) }
-        : undefined,
-    })),
-    paa: data.paa.map((p) => ({ ...p, question: t(p.question), answer: t(p.answer), source: p.source ? t(p.source) : p.source })),
-    paaReserve: data.paaReserve.map((p) => ({ ...p, question: t(p.question), answer: t(p.answer), source: p.source ? t(p.source) : p.source })),
-    knowledgePanel: {
-      ...data.knowledgePanel,
-      subtitle: t(data.knowledgePanel.subtitle),
-      description: t(data.knowledgePanel.description),
-      facts: data.knowledgePanel.facts.map((f) => ({ label: t(f.label), value: t(f.value) })),
-      quote: data.knowledgePanel.quote ? t(data.knowledgePanel.quote) : data.knowledgePanel.quote,
-    },
-    relatedSearches: ts(data.relatedSearches),
-    images: data.images.map((i) => ({ ...i, caption: i.caption ? t(i.caption) : i.caption })),
-    alternateResults: Object.fromEntries(
-      Object.entries(data.alternateResults).map(([k, v]) => [
-        t(k),
-        v.map((r) => ({ ...r, title: t(r.title), url: t(r.url), snippet: t(r.snippet) })),
-      ]),
-    ),
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Demo content
-// ═══════════════════════════════════════════════════════════════════════════
-
-const UNSPLASH = (id: string, w = 700) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=70`;
-
-/** The emotional payload. Deliberately the least interesting title on the page. */
-const THE_LETTER: FakePage = {
-  title: "untitled document",
-  url: "arjun.exe › notes › untitled",
-  body: [
-    "This has been open in a tab since March. I keep meaning to say it out loud and then you walk into the room and I say something about the electricity bill instead.",
-    "So: you took the last samosa off my plate the evening we met and did not apologise, and I have thought about that roughly once a week for four years. Not the samosa. The not apologising. You have never once pretended to be smaller than you are, and I did not know until you that this was something a person could just decide to do.",
-    "You fall asleep at 9:40 with the lights on and the book on your face. You reorganise cupboards that belong to other people. You send me photographs of dogs you have met, with names you have invented for them. You argue with the news. You cry at adverts and not at funerals. You have made me laugh in a hospital corridor.",
-    "I do not have a large point. I only wanted it written down somewhere that if a search engine ever did index a person — every fact, every habit, every small unremarkable Tuesday — the whole first page would still miss it. The whole first page would still just be a list of things you did.",
-    "The thing itself is here at the bottom, in a file nobody clicks.",
-    "I love you. Come to bed.",
-  ],
-};
-
-const DEMO_RESULTS: SearchResult[] = [
-  {
-    id: "r-ad",
-    badge: "Ad",
-    url: "arjun.exe › entirely-unbiased",
-    title: "Meera Verma — Best Person Available (Sponsored)",
-    snippet:
-      "Paid placement. <b>Meera Verma</b> retains the top spot for a fourth consecutive year. No other candidates were shortlisted, interviewed, or considered.",
-    page: {
-      title: "Entirely Unbiased Rankings, 2026 Edition",
-      url: "arjun.exe › entirely-unbiased",
-      body: [
-        "This ranking is sponsored. It has always been sponsored. The sponsor is me and the currency is that I get to keep her.",
-        "Methodology: I thought about it. Sample size: one. Margin of error: none, obviously.",
-        "1. Meera Verma. 2. There is no two.",
-        "Complaints about the methodology may be directed to the complaints department, which is also me, and which has closed every ticket ever filed.",
-      ],
-    },
-  },
-  {
-    id: "r-about",
-    url: "meera-verma.in › about",
-    title: "About — Meera Verma",
-    snippet:
-      "<b>Meera</b> is a person who says she is not hungry and then eats half of yours. Known for excellent playlists, catastrophic parking, and being unreasonably kind to waiters.",
-    page: {
-      title: "About",
-      url: "meera-verma.in › about",
-      imageUrl: UNSPLASH("photo-1517841905240-472988babdf9"),
-      body: [
-        "Hello. This page has not been updated since 2011 and I am not going to update it now.",
-        "I am Meera. I work in a building with bad coffee. I am from a town you have not heard of and I will describe it to you at length if you let me.",
-        "Things I am good at: remembering birthdays, finding the one shop still open, arguing. Things I am bad at: parking, being told to relax, leaving a cupboard the way I found it.",
-        "If you are here because someone sent you a link, they are probably being sentimental. Let them.",
-      ],
-    },
-  },
-  {
-    id: "r-wiki",
-    url: "unencyclopedia.in › wiki › Meera_Verma",
-    title: "Meera Verma - The Free Encyclopedia (Unverified)",
-    snippet:
-      "<b>Meera Verma</b> (b. 14 March) is an Indian human best known for winning arguments she started. Citation needed. Citation refused. This article may not be neutral.",
-    page: {
-      title: "Meera Verma",
-      url: "unencyclopedia.in › wiki › Meera_Verma",
-      body: [
-        "This article has multiple issues. Please help improve it, or do not, she is fine.",
-        "Meera Verma is an Indian human. She is known primarily for her work in the field of starting arguments and subsequently winning them, and for a laugh that has been described by at least one source as 'audible from the next flat'.",
-        "Early life: born on a Wednesday, according to her mother, who has told this story at every family gathering since.",
-        "Personal life: lives with a man who keeps a document about her open in a browser tab. He believes this is a secret.",
-        "Controversies: the hoodie. Nobody will say more.",
-      ],
-    },
-  },
-  {
-    id: "r-archive",
-    url: "themonsoonproject.in › archive › the-evening",
-    title: "The evening she took the last samosa — an archive entry",
-    snippet:
-      "...it was raining hard enough that nobody could leave, and she took the last <b>samosa</b> off my plate without asking, and I remember thinking: oh no.",
-    page: {
-      title: "Archive entry #0041 — the evening it rained",
-      url: "themonsoonproject.in › archive › the-evening",
-      imageUrl: UNSPLASH("photo-1502823403499-6ccfcf4fb453"),
-      body: [
-        "Filed under: weather, food, mistakes that were not mistakes.",
-        "The power had gone. Somebody's cousin had brought a guitar, which was the worst news of the evening until it wasn't. There were nine of us and eight samosas and I had done the arithmetic and quietly decided who was going to lose.",
-        "She reached across, took mine, said 'you weren't going to eat that', and was correct, which was the part that undid me.",
-        "I walked her to the gate. It took forty minutes to walk two hundred metres. I have never told her that I counted.",
-      ],
-    },
-  },
-  {
-    id: "r-thread",
-    url: "group-chat.local › threads › 4417",
-    title: "[Thread] What is Meera doing right now — 47 replies",
-    snippet:
-      "Consensus: she is either reorganising a cupboard nobody asked her to reorganise, or asleep at 9:40pm with the lights on and a book on her face.",
-  },
-  {
-    id: "r-complaints",
-    url: "complaints.dept › open-tickets",
-    title: "Open complaints against Meera Verma (0 resolved)",
-    snippet:
-      "Ticket #1: steals hoodies. Ticket #2: says 'five more minutes' at 6am. Ticket #3: narrates films. Status for all tickets: <b>closed, complainant withdrew</b>.",
-    page: {
-      title: "Complaints Department — Ticket Log",
-      url: "complaints.dept › open-tickets",
-      body: [
-        "Ticket #1 — Subject: hoodies. Complainant reports that the hoodie was his. Resolution: it looks better on her. Closed.",
-        "Ticket #2 — Subject: 'five more minutes' at 6am, repeated up to four times. Resolution: complainant admitted he also went back to sleep. Closed.",
-        "Ticket #3 — Subject: narrating films that the complainant is watching. Resolution: complainant now cannot watch a film without her and considers this a fault of his own. Closed.",
-        "Ticket #4 — Subject: none given. Complainant withdrew before filing. Closed.",
-        "The department has processed four tickets in four years and upheld none of them. An internal review has found the department to be compromised.",
-      ],
-    },
-  },
-  {
-    id: "r-letter",
-    url: "arjun.exe › notes › untitled",
-    title: "untitled document (last edited today)",
-    snippet:
-      "A file that has been open in a browser tab for eleven months. No formatting, no headings. Just the thing I keep meaning to say out loud and then don't.",
-    page: THE_LETTER,
-  },
-];
-
-const DEMO_PAA: PaaItem[] = [
-  {
-    question: "Is Meera Verma actually that funny or do people just like her?",
-    // Deliberately over 300 characters: the accordion measures scrollHeight for
-    // exactly this case, and a fixed max-height would clip it.
-    answer:
-      "Both, and they are not separable. She is funny in the specific way where the joke is never at anyone's expense except her own, which means people relax around her, which means they laugh more easily, which means she is funnier. It compounds. Independent testing has confirmed that she is the only person who can make the queue at the passport office enjoyable, and that she once got a traffic constable to laugh so hard he forgot to write the ticket.",
-    source: "arjun.exe › feelings › longform",
-  },
-  {
-    question: "Why does Meera Verma fall asleep during every film?",
-    answer:
-      "Approximately thirty-five minutes in, without exception, regardless of genre, volume, or how strongly she insisted she was fine. She then wakes for the last four minutes and asks a question that reveals she has understood the entire plot.",
-    source: "group-chat.local › threads › 4417",
-  },
-  {
-    question: "How do I get Meera Verma to reply faster?",
-    answer:
-      "You do not. She reads the message, composes a reply in her head, considers it delivered, and moves on with her day. The reply arrives on Thursday. It is always worth it.",
-    source: "meera-verma.in › faq",
-  },
-];
-
-const DEMO_PAA_RESERVE: PaaItem[] = [
-  {
-    question: "Does Meera Verma know she does the thing with her nose?",
-    answer:
-      "She does not. It happens when she is concentrating, or lying, and the two are visually identical, which has been useful exactly once and inconvenient many times.",
-    source: "unencyclopedia.in › wiki › Meera_Verma",
-  },
-  {
-    question: "What is Meera Verma's actual coffee order?",
-    answer:
-      "She orders a filter coffee and then drinks half of somebody else's. Establishments are advised to simply bring two and bill for one and a half.",
-    source: "complaints.dept › closed-tickets",
-  },
-  {
-    question: "Is it normal to think about Meera Verma this much?",
-    answer:
-      "No. Sources indicate the healthy figure is considerably lower. No corrective action is planned.",
-    source: "arjun.exe › feelings",
-  },
-  {
-    question: "Will Meera Verma read all the way to the last result?",
-    answer:
-      "Statistically, nobody clicks the last result. This one is counting on her being unusual, which is the entire thesis of the page.",
-    source: "arjun.exe › notes › untitled",
-  },
-];
-
-const DEMO_FACTS: KnowledgeFact[] = [
-  { label: "Born", value: "14 March · a Wednesday, apparently" },
-  { label: "Height", value: "Exactly tall enough to steal a hoodie" },
-  { label: "Occupation", value: "Works in a building with bad coffee" },
-  { label: "Known for", value: "Winning arguments she started" },
-  { label: "Weakness", value: "Anything with a dog in it" },
-  { label: "Status", value: "Taken. Aggressively. By me." },
-];
-
-const DEMO_PANEL: KnowledgePanel = {
-  subtitle: "Person · The Love of My Life",
-  description:
-    "Meera Verma is an Indian human, best known for taking the last samosa off a stranger's plate in 2021 and never once apologising for it. She is currently reorganising a cupboard that does not belong to her.",
-  facts: DEMO_FACTS,
-  quote: "you weren't going to eat that",
-  alsoSearchFor: ["Priya", "Nikhil", "Aunty Sushma", "Rohan", "Kabir"],
-};
-
-const DEMO_ALTERNATES: Record<string, SearchResult[]> = {
-  "meera verma height": [
-    {
-      id: "a-h1",
-      url: "unencyclopedia.in › wiki › Meera_Verma",
-      title: "Meera Verma height — disputed",
-      snippet: "Sources disagree. She claims 5'6\". The doorframe pencil marks in her mother's house claim otherwise and have been sealed as evidence.",
-    },
-    {
-      id: "a-h2",
-      url: "complaints.dept › measurements",
-      title: "Request for official measurement denied",
-      snippet: "Subject declined to stand against the wall, described the exercise as 'a trap', and left the room.",
-    },
-  ],
-  "meera verma net worth": [
-    {
-      id: "a-n1",
-      url: "arjun.exe › accounts",
-      title: "Meera Verma net worth 2026",
-      snippet: "Incalculable. Assets include four hoodies that were not hers, a playlist nobody can improve on, and the entire emotional solvency of one household.",
-    },
-    {
-      id: "a-n2",
-      url: "group-chat.local › threads › 0912",
-      title: "she still owes me for the auto in 2022",
-      snippet: "Thread archived. Debt outstanding. Nobody is going to bring it up.",
-    },
-  ],
-  "is meera verma single": [
-    {
-      id: "a-s1",
-      url: "arjun.exe › no",
-      title: "No.",
-      snippet: "This page has one word on it and the word is no. It has been visited four hundred times, all by the same person, for reassurance.",
-    },
-  ],
-  "meera verma before she met me": [
-    {
-      id: "a-b1",
-      url: "themonsoonproject.in › archive › before",
-      title: "Archive: the years before",
-      snippet: "Records are thin. She was, by all accounts, doing perfectly well, which is the humbling part.",
-    },
-    {
-      id: "a-b2",
-      url: "unencyclopedia.in › wiki › Meera_Verma",
-      title: "Early life — Meera Verma",
-      snippet: "A town you have not heard of, a bicycle with no brakes, and an unbroken record of being the loudest person in every photograph.",
-    },
-  ],
-};
+Come here. And yes, you were right. I wasn't going to eat that.`;
 
 export const DEMO_DATA: SearchData = {
   sender: { name: "Arjun" },
-  recipient: {
-    name: "Meera Verma",
-    photoUrl: UNSPLASH("photo-1494790108377-be9c29b29330", 500),
-  },
+  recipient: { name: "Meera Verma" },
+  doodleTitle: "Celebrating 3 years of Meera & Arjun",
   autocomplete: [
-    "Meera Verma is always right",
-    "Meera Verma laugh sound download",
-    "Meera Verma why is she like this",
+    "Meera Verma why is she this cute",
+    "Meera Verma laugh ringtone download",
+    "Meera Verma stole my hoodie again",
     "Meera Verma how to keep her forever",
     "Meera Verma reviews 5 stars",
-    "Meera Verma near me",
+    "Meera Verma near me (please)",
   ],
-  didYouMean: "Meera Varma",
+  didYouMean: "Arjun's favourite person",
   resultCount: groupIndian(847000),
   searchSeconds: "0.42",
-  results: DEMO_RESULTS,
-  paa: DEMO_PAA,
-  paaReserve: DEMO_PAA_RESERVE,
-  knowledgePanel: DEMO_PANEL,
+  aiOverview:
+    "Meera Verma is a 5'3\" certified menace from Lucknow, best known for stealing hoodies, finishing Arjun's fries and laughing at her own jokes before the punchline. Sources widely agree she is the best thing to happen to Arjun since 2022 — a claim he has never once disputed.\n\nShe is currently in a relationship with Arjun, who has searched her name 4,012 times and still gets butterflies every single time.",
+  aiPoints: [
+    "Known for: a laugh you can hear from the next flat",
+    "Love language: sending reels at 2 AM with zero context",
+    "Weakness: golden retrievers, momos, being called cute",
+    "Status: taken — aggressively, by Arjun",
+  ],
+  knowledgePanel: {
+    subtitle: "Arjun's favourite human",
+    description:
+      "Meera Verma is a Lucknow-born menace, part-time philosopher and full-time hoodie thief. She is widely considered the reason Arjun smiles at his phone in public, and the only person alive who can win an argument she started by accident.",
+    facts: [
+      { label: "Born", value: "14 March, a Wednesday (allegedly)" },
+      { label: "Height", value: "5′3″ (5′5″ in her head)" },
+      { label: "Hometown", value: "Lucknow, Uttar Pradesh" },
+      { label: "Partner", value: "Arjun (since 2022, locked in)" },
+      { label: "Known for", value: "Winning arguments she started" },
+      { label: "Screen time", value: "9 hrs a day, mostly sending Arjun reels" },
+    ],
+    alsoSearchFor: [
+      "Arjun — the boyfriend",
+      "Momos — her first love",
+      "Bruno — a dog she met once",
+      "Her mom — the real boss",
+      "Chai — non-negotiable",
+    ],
+  },
+  reviews: [
+    { author: "Arjun", stars: 5, text: "10/10 would fall for her again. Steals fries, returns love with interest.", when: "a week ago" },
+    { author: "Her mom", stars: 5, text: "Calls me every day. Tells Arjun I said hi. I did not say hi.", when: "2 months ago" },
+    { author: "Bruno (a dog)", stars: 5, text: "She stopped the scooter to pet me. We are in a situationship now.", when: "3 weeks ago" },
+    { author: "Sharma Ji Momos", stars: 4, text: "Loyal customer. Minus one star for saying 'just one more' nine times.", when: "a year ago" },
+  ],
+  results: [
+    {
+      id: "r1",
+      site: "Unencyclopedia",
+      url: "unencyclopedia.in › wiki › Meera_Verma",
+      title: "Meera Verma — The Free Encyclopedia (unverified)",
+      snippet:
+        "Meera Verma (born 14 March) is an Indian menace best known for winning arguments she started, stealing hoodies, and making Arjun forget what he was saying mid-sentence.",
+    },
+    {
+      id: "r2",
+      site: "Arjun's Notes",
+      url: "notes.arjun › drafts › about-her",
+      title: "Things I love about Meera (draft #47, never finished)",
+      date: "2 days ago",
+      snippet:
+        "1. the way she says 'suno' before every bad idea. 2. her 2 AM voice notes. 3. she remembers my chai order better than I do. 4. the list keeps getting longer…",
+    },
+    {
+      id: "r3",
+      site: "Ask the Aunties",
+      url: "asktheaunties.in › threads › 4417",
+      title: "Is Meera the reason Arjun keeps smiling at his phone? — 212 replies",
+      snippet: "Top answer: “Yes beta, we have all seen the wallpaper.” Second answer: “Wedding kab hai?” Thread locked by moderator (Meera's mom).",
+    },
+    {
+      id: "r4",
+      site: "The Daily Blush",
+      url: "dailyblush.in › local › momo-incident",
+      title: "Local woman finishes boyfriend's momos, says “he wasn't going to eat them”",
+      date: "Mar 14, 2026",
+      snippet: "Witnesses confirm he was, in fact, going to eat them. He has since forgiven her, as he does every single time.",
+    },
+    {
+      id: "r5",
+      site: "Complaints Dept.",
+      url: "complaints.arjun › open-tickets",
+      title: "Open complaints against Meera Verma (0 resolved, 0 regretted)",
+      snippet:
+        "Ticket #1: steals the blanket. Ticket #2: “five more minutes” at 6 AM. Ticket #3: too cute to stay mad at. Status: closed — complainant fell in love again.",
+    },
+    {
+      id: "r6",
+      site: "Our Playlist",
+      url: "playlist.us › for-meera",
+      title: "songs that sound like you — 47 songs, 3 hr 12 min",
+      snippet: "Curated by Arjun. Every song made him think of Meera. Yes, even the sad ones. Especially the sad ones.",
+    },
+  ],
+  paa: [
+    {
+      question: "Is Meera Verma actually that funny or does Arjun just like her?",
+      answer:
+        "Both, and they are not separable. She laughs at her own jokes before the punchline, which makes everyone else laugh, which makes her funnier. It compounds. Independent testing (Arjun) confirms it.",
+      source: "arjun.exe › feelings",
+    },
+    {
+      question: "Why does Meera Verma fall asleep during every movie?",
+      answer:
+        "Approximately 35 minutes in, regardless of genre. She wakes up for the last four minutes and asks one question that proves she somehow understood the entire plot.",
+      source: "movie-nights.log › 2026",
+    },
+    {
+      question: "How do I make Meera Verma reply faster?",
+      answer:
+        "You don't. She reads it, writes the reply in her head, considers it sent, and moves on with her day. The reply arrives on Thursday. It is always worth it.",
+      source: "asktheaunties.in › threads",
+    },
+    {
+      question: "Does Meera Verma know how pretty she is?",
+      answer: "No. Every attempt to inform her ends with “shut up” followed by a smile she thinks nobody saw. Arjun saw.",
+      source: "notes.arjun › drafts",
+    },
+    {
+      question: "Is it normal to think about Meera Verma this much?",
+      answer: "No. Sources indicate the healthy figure is considerably lower. No corrective action is planned.",
+      source: "arjun.exe › feelings",
+    },
+    {
+      question: "Should Meera click “I'm Feeling Lucky”?",
+      answer: "Yes. There's a letter waiting at the very top of the results, and it has been waiting a while.",
+      source: "arjun.exe › letters",
+    },
+  ],
+  topStories: [
+    { source: "The Daily Blush", time: "2 hours ago", title: "Woman steals boyfriend's hoodie for 47th time; boyfriend “honestly flattered”" },
+    { source: "Lucknow Live", time: "5 hours ago", title: "Couple spends 40 minutes deciding where to eat, orders momos again" },
+    { source: "Heartbeat News", time: "1 day ago", title: "Scientists confirm Meera's laugh can be heard from the next flat" },
+    { source: "The Weekly Crush", time: "3 days ago", title: "“She's the one,” man tells group chat for the 900th time" },
+  ],
+  videos: [
+    { channel: "Arjun's Camera Roll", duration: "0:47", title: "Meera trying to parallel park (47 attempts, 1 success)" },
+    { channel: "Us, Unfiltered", duration: "2:13", title: "Meera laughing at her own joke for 2 minutes straight" },
+    { channel: "Us, Unfiltered", duration: "3:08", title: "Our first trip — the shaky, beautiful director's cut" },
+  ],
+  places: [
+    { name: "Sharma Ji Momos", kind: "Momo stall · Hazratganj", rating: "4.9", note: "First date. She ate 11. I paid for 12." },
+    { name: "Marine Drive", kind: "Promenade · Mumbai", rating: "5.0", note: "Where she said “okay fine, I like you too”." },
+    { name: "Café Ek Aur Chai", kind: "Café · Gomti Nagar", rating: "4.8", note: "Our table by the window. We still sit there." },
+    { name: "Her doorstep", kind: "Home · 11:58 PM", rating: "5.0", note: "Forty minutes of “okay bye” every single night." },
+  ],
   relatedSearches: [
     "meera verma height",
-    "meera verma net worth",
-    "is meera verma single",
-    "meera verma phone number",
-    "meera verma before she met me",
-    "meera verma 2011",
+    "meera verma net worth (priceless)",
+    "is meera verma single (no)",
+    "meera verma and arjun",
+    "meera verma laugh",
+    "meera verma birthday",
+    "meera verma favourite food",
+    "how to deserve meera verma",
   ],
-  images: [
-    { url: UNSPLASH("photo-1517841905240-472988babdf9", 500), caption: "the one where she is laughing at her own joke" },
-    { url: UNSPLASH("photo-1524504388940-b1c1722653e1", 500), caption: "asleep. 9:41pm. book on face." },
-    { url: UNSPLASH("photo-1502823403499-6ccfcf4fb453", 500), caption: "the evening it rained" },
-    { url: UNSPLASH("photo-1531123897727-8f129e1688ce", 500), caption: "arguing with a menu" },
-    { url: UNSPLASH("photo-1488426862026-3ee34a7d66df", 500), caption: "hoodie: mine. allegedly." },
-    { url: UNSPLASH("photo-1529626455594-4ff0802cfb7e", 500), caption: "a dog she met and renamed" },
-    { url: UNSPLASH("photo-1544005313-94ddf0286df2", 500), caption: "the passport office queue" },
-    { url: UNSPLASH("photo-1508214751196-bcfd4ca60f91", 500), caption: "no idea. she sent it at 2am." },
+  photos: [
+    { url: `${P}/couple1.webp`, caption: "the first sunset", note: "You said the sky looked like mango lassi. I have not stopped thinking about it.", cropX: 50, cropY: 45, scale: 100 },
+    { url: `${P}/couple2.webp`, caption: "date night, round 1", note: "You stole my fries and then my heart. In that order.", cropX: 50, cropY: 40, scale: 100 },
+    { url: `${P}/couple3.webp`, caption: "cherry blossom era", note: "Even the trees were jealous of your smile that day.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${P}/couple4.webp`, caption: "us, forever", note: "Out of every timeline, I'd pick this one. Every time.", cropX: 50, cropY: 50, scale: 100 },
+    { url: `${P}/couple1.webp`, caption: "golden hour, again", note: "I wasn't looking at the sunset. Obviously.", cropX: 30, cropY: 55, scale: 150 },
+    { url: `${P}/couple3.webp`, caption: "wallpaper since day 3", note: "This has been my lock screen for 700 days. My mom knows. My boss knows. Now you know.", cropX: 60, cropY: 40, scale: 140 },
   ],
-  alternateResults: DEMO_ALTERNATES,
+  letter: DEMO_LETTER,
+  lockQuestion: "Do you accept all of Arjun's love (and cookies)?",
+  lockAnswer: "Accept all 💗",
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Wire format
-// ═══════════════════════════════════════════════════════════════════════════
-
-export const SEARCHED_BODY_KEYS = [
-  "senderName",
-  "recipientName",
-  "recipientPhoto",
-  "autocomplete",
-  "didYouMean",
-  "resultCount",
-  "searchSeconds",
-  "results",
-  "paa",
-  "paaReserve",
-  "knowledgePanel",
-  "relatedSearches",
-  "images",
-  "alternateResults",
-] as const;
-
-/** UI state → the flat body the API stores. Explicit allow-list, per `wire`. */
-export function searchedDataToBody(data: SearchData, password?: string): Record<string, unknown> {
-  const flat = {
-    senderName: data.sender.name,
-    recipientName: data.recipient.name,
-    recipientPhoto: data.recipient.photoUrl,
-    autocomplete: data.autocomplete,
-    didYouMean: data.didYouMean ?? "",
-    resultCount: data.resultCount,
-    searchSeconds: data.searchSeconds,
-    results: data.results,
-    paa: data.paa,
-    paaReserve: data.paaReserve,
-    knowledgePanel: data.knowledgePanel,
-    relatedSearches: data.relatedSearches,
-    images: data.images,
-    alternateResults: data.alternateResults,
+/** UI state → the body the API stores. */
+export function searchedDataToBody(d: SearchData, password?: string): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    sender: { name: d.sender.name },
+    recipient: { name: d.recipient.name },
+    doodleTitle: d.doodleTitle,
+    autocomplete: d.autocomplete,
+    didYouMean: d.didYouMean,
+    resultCount: d.resultCount,
+    searchSeconds: d.searchSeconds,
+    aiOverview: d.aiOverview,
+    aiPoints: d.aiPoints,
+    knowledgePanel: d.knowledgePanel,
+    reviews: d.reviews,
+    results: d.results,
+    paa: d.paa,
+    topStories: d.topStories,
+    videos: d.videos,
+    places: d.places,
+    relatedSearches: d.relatedSearches,
+    photos: d.photos,
+    letter: d.letter,
+    lockQuestion: d.lockQuestion,
+    lockAnswer: d.lockAnswer,
   };
-  return bodyFromKeys(flat, SEARCHED_BODY_KEYS, password);
+  if (password !== undefined) body.password = password;
+  return body;
 }
-
-// DB → UI lives in ./coerce (`dbToSearchData`). It is the single place that
-// decides what a stored page may contain, and it is what the published-page
-// viewer imports. Keeping it out of here also keeps the import one-way:
-// coerce → demoData, never back.

@@ -23,6 +23,10 @@
 import { Caveat } from "next/font/google";
 import CallReveal from "./reveals/CallReveal";
 import CatchReveal from "./reveals/CatchReveal";
+import ProfileReveal from "./reveals/ProfileReveal";
+import SearchedReveal from "./reveals/SearchedReveal";
+import StreakReveal from "./reveals/StreakReveal";
+import RewindReveal from "./reveals/RewindReveal";
 import {
   createContext,
   useCallback,
@@ -42,7 +46,7 @@ import {
 
 const hand = Caveat({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-lr-hand", display: "swap", preload: false });
 
-export type LetterVariant = "app" | "watch" | "recharge" | "product" | "us" | "loveflix" | "call" | "catch";
+export type LetterVariant = "app" | "watch" | "recharge" | "product" | "us" | "loveflix" | "call" | "catch" | "profile" | "searched" | "streak" | "rewind";
 
 export interface RevealProps {
   variant: LetterVariant;
@@ -1092,6 +1096,10 @@ function pick(P: VProps) {
     // Each lives in its own file so its template's owner can work on it alone.
     case "call": return <CallReveal {...P} />;
     case "catch": return <CatchReveal {...P} />;
+    case "profile": return <ProfileReveal {...P} />;
+    case "searched": return <SearchedReveal {...P} />;
+    case "streak": return <StreakReveal {...P} />;
+    case "rewind": return <RewindReveal {...P} />;
     default: return null;
   }
 }

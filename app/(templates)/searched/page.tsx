@@ -1,118 +1,73 @@
+// ─── /searched — the editor ──────────────────────────────────────────────────
+//
+// A thin renderer over `useSearchedEditor`. The page opens as a LIVE DEMO of
+// the finished thing — the doodle home page, typing their name by itself —
+// and the editor's controls live in one floating EditorDock (Back · Edit ·
+// Create → Publish → Share), so the clone owns the whole screen.
+//
+// Create opens the AI StoryStarter in guided mode. It mounts AFTER EditSheet
+// so the form it seeds sits underneath it.
+
 "use client";
 
-import React, { Suspense } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Loader2, PenLine, Send, Share2 } from "lucide-react";
+import { Suspense } from "react";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
+import EditorDock from "../_love/EditorDock";
 import { useSearchedEditor } from "./hooks/useSearchedEditor";
 import SearchedTemplate from "./components/SearchedTemplate";
 import EditSheet from "./components/EditSheet";
-import { PALETTE } from "./components/types";
 
-const VIOLET = "#6D28D9";
-const VIOLET_GRAD = "linear-gradient(135deg,#7C3AED,#4F46E5)";
-const BAR = "rgba(255,255,255,.94)";
-const BAR_BORDER = "1px solid #E6E0F5";
+const FONT = `var(--font-outfit), "Outfit", Arial, sans-serif`;
 
-function SearchedPageInner() {
+function SearchedEditorPage() {
   const e = useSearchedEditor();
 
-  // One button, three lives: Create → Publish → Share.
-  const topAction = e.showShare
-    ? { label: e.shareLabel, onClick: e.handleShare, icon: <Share2 size={14} /> }
-    : e.showPublish
-      ? { label: e.publishing ? "Publishing…" : "Publish", onClick: e.publish, icon: <Send size={14} /> }
-      : { label: "Create", onClick: e.handleStartCreate, icon: <PenLine size={14} /> };
+  const primary = e.showShare
+    ? { label: e.shareLabel, onClick: e.handleShare }
+    : e.publishing
+      ? { label: "Publishing…", onClick: () => {}, disabled: true }
+      : e.showPublish
+        ? { label: "Publish", onClick: e.publish }
+        : { label: "Create", onClick: e.handleStartCreate };
+
+  const sheetOpen = e.editMode === "manual" || (e.storyStarted && e.storyFill.mode !== "manual") || e.showAuth;
 
   return (
-    <div style={{ minHeight: "100dvh", position: "relative", background: PALETTE.bg }}>
-      <div
-        className="fixed top-3 left-0 right-0 z-[120] px-3 flex items-center gap-2"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)", pointerEvents: "none" }}
-      >
-        <button
-          onClick={e.goBack}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold shadow-sm min-h-[44px]"
-          style={{ pointerEvents: "auto", background: BAR, color: VIOLET, border: BAR_BORDER, backdropFilter: "blur(8px)" }}
-        >
-          <ArrowLeft size={15} /> Back
-        </button>
-        <div className="flex-1" />
-        {e.isPersonalized && !e.showShare && (
-          <button
-            onClick={e.openSheet}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold shadow-sm min-h-[44px]"
-            style={{ pointerEvents: "auto", background: BAR, color: VIOLET, border: BAR_BORDER, backdropFilter: "blur(8px)" }}
-          >
-            <PenLine size={14} /> Edit
-          </button>
-        )}
-        <button
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-60 min-h-[44px]"
-          style={{ pointerEvents: "auto", background: VIOLET_GRAD }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-      </div>
+    <div style={{ minHeight: "100dvh", position: "relative", background: "#fff" }}>
+      <SearchedTemplate key={e.previewVersion} data={e.displayData} mode={e.isPersonalized ? "preview" : "demo"} hideLetter={sheetOpen} />
 
-      {/* Live preview. Keyed so every save returns them to the empty box —
-          the reveal only works from the landing screen. */}
-      <SearchedTemplate key={e.previewVersion} data={e.displayData} mode="demo" />
+      <EditorDock
+        tone="light"
+        accent="linear-gradient(135deg, #3F76EE, #E8445E)"
+        accentInk="#fff"
+        font={FONT}
+        onBack={e.goBack}
+        secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+        primary={primary}
+      />
 
       <EditSheet
         editMode={e.editMode}
         setEditMode={e.setEditMode}
         mf={e.mf}
         updateMf={e.updateMf}
-        setRecipientName={e.setRecipientName}
         pagePassword={e.pagePassword}
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
       />
 
-      {/* Sits over the sheet above, so the first thing a sender sees after
-          Create is the offer to have it written — with the form they get today
-          one tap behind it. The wrapper makes a stacking context: this sheet is
-          z-250 and StoryStarter is z-200, so without it the starter would open
-          underneath. Renders nothing without a schema. */}
-      {e.storyStarted && (
-        <div style={{ position: "relative", zIndex: 260 }}>
-          <StoryStarter fill={e.storyFill} onManual={e.handleStoryManual} />
-        </div>
-      )}
+      {e.storyStarted && <StoryStarter guided fill={e.storyFill} onManual={e.handleStoryManual} />}
 
-      <AnimatePresence>
-        {e.publishing && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] grid place-items-center"
-            style={{ background: "rgba(24,18,40,.5)", backdropFilter: "blur(6px)" }}
-          >
-            <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-3xl" style={{ background: "#fff" }}>
-              <Loader2 size={28} className="animate-spin" style={{ color: VIOLET }} />
-              <p className="font-semibold" style={{ color: VIOLET }}>Indexing…</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-
-      {/* Auth is deferred, not gating: closing cancels the pending publish and
-          the hook's effect resumes it on a successful login. */}
-      <AnimatePresence>
-        {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
-      </AnimatePresence>
+      {e.showAuth && <AuthModal onClose={e.closeAuth} onSuccess={e.closeAuthSuccess} />}
     </div>
   );
 }
 
 export default function SearchedPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: PALETTE.bg }} />}>
-      <SearchedPageInner />
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#fff" }} />}>
+      <SearchedEditorPage />
     </Suspense>
   );
 }
