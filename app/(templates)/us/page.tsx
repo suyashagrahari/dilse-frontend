@@ -18,11 +18,19 @@ import StoryStarter from "@/components/story/StoryStarter";
 import UsTemplate from "./components/UsTemplate";
 import EditSheet from "./components/EditSheet";
 import { useUsEditor } from "./hooks/useUsEditor";
-import { BackChevron, PenIcon, SendIcon, SpinnerIcon } from "./components/icons";
+import { ChevronLeft, PenIcon, SendIcon, SpinnerIcon } from "./components/icons";
 
-const INK = "#111111";
-const CHROME = "rgba(255,255,255,0.94)";
-const CHROME_BORDER = "1px solid #E1E1E1";
+const INK = "#1D1418";
+const CHROME = "rgba(255,255,255,0.96)";
+const CHROME_BORDER = "1px solid #F1DDE5";
+const CTA = "linear-gradient(135deg, #FF5E9A, #FF3D7F 55%, #E0287A)";
+
+/** Phone: above the tab bar. Web: bottom of the content area, clear of the left rail. */
+const CHROME_CSS = `
+.us-chrome{bottom:calc(64px + env(safe-area-inset-bottom,0px));left:0;right:0}
+@media (min-width:768px){.us-chrome{bottom:20px;left:72px;right:0;padding:0 24px}}
+@media (min-width:1264px){.us-chrome{left:244px}}
+`;
 
 function UsPageInner() {
   const e = useUsEditor();
@@ -45,23 +53,21 @@ function UsPageInner() {
 
       {/* Floating chrome. Sits below the template's own 44px bar so the two
           never read as one thing. */}
-      <div
-        className="pointer-events-none fixed left-0 right-0 z-[150] flex items-center gap-2 px-3"
-        style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
-      >
+      <style>{CHROME_CSS}</style>
+      <div className="us-chrome pointer-events-none fixed z-[150] flex items-center gap-2 px-3">
         <button
           onClick={e.goBack}
           className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold shadow-sm"
-          style={{ background: CHROME, color: INK, border: CHROME_BORDER, backdropFilter: "blur(8px)" }}
+          style={{ background: CHROME, color: INK, border: CHROME_BORDER }}
         >
-          <BackChevron size={15} color={INK} /> Back
+          <ChevronLeft size={15} color={INK} strokeWidth={2.6} /> Back
         </button>
         <div className="flex-1" />
         {e.isPersonalized && !e.showShare ? (
           <button
             onClick={e.handleEditFromPreview}
             className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold shadow-sm"
-            style={{ background: CHROME, color: INK, border: CHROME_BORDER, backdropFilter: "blur(8px)" }}
+            style={{ background: CHROME, color: INK, border: CHROME_BORDER }}
           >
             <PenIcon size={14} color={INK} /> Edit
           </button>
@@ -69,8 +75,8 @@ function UsPageInner() {
         <button
           onClick={topAction.onClick}
           disabled={e.publishing}
-          className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-white shadow-md disabled:opacity-60"
-          style={{ background: INK }}
+          className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-5 py-2 text-sm font-extrabold text-white disabled:opacity-60"
+          style={{ background: CTA, boxShadow: "0 10px 24px -10px rgba(255,61,127,.9)" }}
         >
           {topAction.icon} {topAction.label}
         </button>
@@ -98,12 +104,12 @@ function UsPageInner() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[300] grid place-items-center"
-            style={{ background: "rgba(20,20,20,0.5)", backdropFilter: "blur(6px)" }}
+            style={{ background: "rgba(20,8,14,0.5)" }}
           >
             <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-8 py-6">
-              <SpinnerIcon size={26} color={INK} />
+              <SpinnerIcon size={26} color="#FF3D7F" />
               <p className="font-semibold" style={{ color: INK }}>
-                Posting…
+                Posting your account… 💞
               </p>
             </div>
           </motion.div>
@@ -122,7 +128,7 @@ function UsPageInner() {
 
 export default function UsPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#EFEFEF" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#FFFFFF" }} />}>
       <UsPageInner />
     </Suspense>
   );

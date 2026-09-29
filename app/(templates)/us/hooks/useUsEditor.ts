@@ -27,7 +27,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { DEMO_DATA, usDataToBody } from "../components/data";
 import { dbToProfileData } from "../components/coerce";
-import type { ProfileData } from "../components/types";
+import { parseCommentLine, type Comment, type ProfileData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -46,12 +46,84 @@ export interface Toast {
   message?: string;
 }
 
-/** A profile with no handle and no photos is not a profile. */
+/** Everything the page needs before it can go live — named, so the sender knows exactly what's missing. */
+export function missingFields(d: ProfileData): string[] {
+  const out: string[] = [];
+  if (!d.posts.some((p) => p.imageUrl.trim())) out.push("at least one photo");
+  if (!d.to.trim()) out.push("their name");
+  if (!d.from.trim()) out.push("your name");
+  if (!d.handle.trim()) out.push("a handle");
+  return out;
+}
+
 export function validate(d: ProfileData): string | null {
-  if (!d.handle.trim()) return "The account needs a handle";
-  if (!d.displayName.trim()) return "Whose account is this?";
-  if (!d.posts.some((p) => p.imageUrl.trim() || p.caption.trim())) return "Add at least one post";
-  return null;
+  const m = missingFields(d);
+  if (!m.length) return null;
+  return `Still needed: ${m.join(", ")}`;
+}
+
+const DRAFT_KEY = "us_editor_draft_v2";
+
+function readDraft(): ProfileData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    return raw ? dbToProfileData(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(d: ProfileData): void {
+  try {
+    window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    // Over quota with inline photos: keep the words, drop the pixels.
+    try {
+      const lean = JSON.parse(JSON.stringify(d), (_k, v) => (typeof v === "string" && v.startsWith("data:") ? "" : v));
+      window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(lean));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+}
+
+export function clearDraft(): void {
+  try {
+    window.sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * An AI fill writes comments as "handle: text" strings and may address posts
+ * or highlights the sender does not have. Bring it back to the stored shape:
+ * comments become objects, and nothing the fill invented without a photo
+ * survives.
+ */
+function normaliseFill(next: ProfileData, prev: ProfileData): ProfileData {
+  const toComment = (c: unknown): Comment | null => {
+    if (typeof c === "string") return parseCommentLine(c);
+    if (c && typeof c === "object" && typeof (c as Comment).text === "string") return c as Comment;
+    return null;
+  };
+  return {
+    ...next,
+    posts: next.posts.slice(0, prev.posts.length).map((p, i) => ({
+      ...prev.posts[i],
+      ...p,
+      comments: (Array.isArray(p.comments) ? (p.comments as unknown[]) : []).map(toComment).filter((c): c is Comment => !!c),
+    })),
+    highlights: next.highlights.slice(0, prev.highlights.length).map((h, i) => ({
+      ...prev.highlights[i],
+      ...h,
+      slides: h.slides.slice(0, prev.highlights[i].slides.length).map((sl, j) => ({ ...prev.highlights[i].slides[j], ...sl })),
+    })),
+    dms: next.dms.map((m) => String(m)).filter(Boolean),
+    bio: next.bio.map((m) => String(m)).filter(Boolean),
+    followedBy: next.followedBy.map((h) => String(h).replace(/^@+/, "").replace(/\s+/g, "_")).filter(Boolean),
+  };
 }
 
 export function useUsEditor() {
@@ -60,7 +132,9 @@ export function useUsEditor() {
   const { isAuthenticated, accessToken } = useAppSelector((s) => s.auth);
 
   const [content, setContent] = useState<ProfileData>(DEMO_DATA);
-  const [mf, setMf] = useState<ProfileData>(() => ({ ...DEMO_DATA }));
+  // Unsaved form typing survives a refresh (sessionStorage — this tab only).
+  const [restored] = useState<ProfileData | null>(readDraft);
+  const [mf, setMf] = useState<ProfileData>(() => restored ?? { ...DEMO_DATA });
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [pagePassword, setPagePassword] = useState("");
   const [pageId, setPageId] = useState<string | null>(null);
@@ -74,7 +148,7 @@ export function useUsEditor() {
   const [copied, setCopied] = useState(false);
 
   /** True from the first keystroke. Nothing may overwrite `mf` while it is set. */
-  const hasWip = useRef(false);
+  const hasWip = useRef(restored !== null);
   /** Holds the intent when Publish is pressed logged-out; the effect below resumes it. */
   const pendingPublish = useRef<{ data: ProfileData; password: string } | null>(null);
 
@@ -86,7 +160,7 @@ export function useUsEditor() {
   /** Anything a fill writes is work in progress — a re-seed must never eat it. */
   const applyStoryFill = useCallback((next: ProfileData) => {
     hasWip.current = true;
-    setMf(next);
+    setMf((prev) => normaliseFill(next, prev));
   }, []);
 
   const storyFill = useStoryFill<ProfileData>({
@@ -176,7 +250,8 @@ export function useUsEditor() {
           // Never throws, never blocks — the page is already live either way.
           await persistStory();
           track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "auth_deferred" });
-          pushToast({ type: "publish", title: "Published 📱", message: "Tap Share to send it" });
+          clearDraft();
+          pushToast({ type: "publish", title: "Published 💞", message: "Tap Share to send it" });
         } else {
           track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "auth_deferred", reason: "publish_rejected" });
           pushToast({ type: "info", title: "Publish failed", message: "Saved — tap Publish to go live" });
@@ -191,6 +266,12 @@ export function useUsEditor() {
     // The ref is consumed and nulled on entry, so a re-run for any other reason
     // is a no-op. `pushToast` is stable; `headers` tracks `accessToken`.
   }, [isAuthenticated, accessToken, headers, pushToast, persistStory]);
+
+  // Mirror the form while it is being worked on.
+  useEffect(() => {
+    if (!hasWip.current) return;
+    writeDraft(mf);
+  }, [mf]);
 
   const displayData = editMode === "manual" ? mf : content;
 
@@ -242,7 +323,7 @@ export function useUsEditor() {
   const handleSave = useCallback(() => {
     const problem = validate(mf);
     if (problem) {
-      pushToast({ type: "info", title: problem, message: "Then it can go live" });
+      pushToast({ type: "info", title: problem, message: "Add it and tap Save again" });
       return;
     }
     // The recipient's exact transformation, applied here, so the preview after
@@ -258,7 +339,7 @@ export function useUsEditor() {
       posts: cleaned.posts.length,
       highlights: cleaned.highlights.length,
     });
-    pushToast({ type: "success", title: "Saved", message: "Scroll it, then publish 📱" });
+    pushToast({ type: "success", title: "Saved ✨", message: "Scroll it, tap around, then publish" });
   }, [mf, pagePassword, pushToast]);
 
   const create = useCallback(async (): Promise<string | null> => {
@@ -315,7 +396,8 @@ export function useUsEditor() {
         setPageId,
         body: usDataToBody(d, pagePassword),
       }),
-    onAdopted: (d) => {
+    onAdopted: (raw) => {
+      const d = dbToProfileData(raw as unknown as Record<string, unknown>);
       // The adopted payload carries CDN URLs where the browser held base64, so
       // the form has to be told — otherwise the next save sends the base64 back
       // and re-uploads it.
@@ -392,7 +474,8 @@ export function useUsEditor() {
         // Never throws, never blocks — the page is already live either way.
         await persistStory();
         track(EVENTS.PUBLISH_SUCCESS, { template: TEMPLATE, source: "direct" });
-        pushToast({ type: "publish", title: "Published 📱", message: "Tap Share to send it" });
+        clearDraft();
+          pushToast({ type: "publish", title: "Published 💞", message: "Tap Share to send it" });
       } else {
         track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, source: "direct", reason: "publish_rejected" });
         pushToast({ type: "info", title: "Publish failed", message: "Please try again" });
@@ -429,8 +512,8 @@ export function useUsEditor() {
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
-      title: "we got an account. 📱",
-      accent: "#171717",
+      title: "we made an account for us 💞",
+      accent: "#FF3D7F",
       slug: "us",
     });
   }, [shareUrl, pagePassword]);
