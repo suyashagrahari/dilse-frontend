@@ -42,7 +42,11 @@ export interface ShareCardProps {
 }
 
 export default function ShareCard({ data, topComments, nodeRef }: ShareCardProps) {
-  const [poster, posterAlt] = posterUrls(data.video.youtubeId);
+  const film = !data.video.youtubeId;
+  const [ytPoster, ytPosterAlt] = posterUrls(data.video.youtubeId);
+  const poster = film ? (data.photos[0]?.url ?? "") : ytPoster;
+  const posterAlt = film ? undefined : ytPosterAlt;
+  const avatar = data.channel.avatarUrl || data.photos[0]?.url || "";
 
   return (
     <div className="wt-card-stage" aria-hidden="true">
@@ -52,7 +56,7 @@ export default function ShareCard({ data, topComments, nodeRef }: ShareCardProps
             src={poster}
             altSrc={posterAlt}
             alt=""
-            crossOrigin="anonymous"
+            crossOrigin={film ? undefined : "anonymous"}
             fallback={<span className="wt-sc-thumb-blank" />}
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -67,9 +71,9 @@ export default function ShareCard({ data, topComments, nodeRef }: ShareCardProps
 
         <div className="wt-sc-channel">
           <SafeImage
-            src={data.channel.avatarUrl}
+            src={avatar}
             alt=""
-            crossOrigin="anonymous"
+            crossOrigin={data.channel.avatarUrl ? "anonymous" : undefined}
             fallback={<InitialsAvatar name={data.channel.name} size={34} />}
             style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flex: "none" }}
           />

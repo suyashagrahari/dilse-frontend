@@ -21,6 +21,7 @@ import { useWatchEditor } from "./hooks/useWatchEditor";
 import WatchTemplate from "./components/WatchTemplate";
 import EditSheet from "./components/EditSheet";
 import { FONT, T } from "./components/theme";
+import { WATCH_FONT_VARS } from "./components/fonts";
 
 const BAR_H = 48;
 
@@ -34,7 +35,7 @@ function WatchPageInner() {
       : { label: "Create", onClick: e.handleStartCreate };
 
   return (
-    <div className="wt-editor-frame">
+    <div className={`wt-editor-frame ${WATCH_FONT_VARS}`}>
       <style>{EDITOR_CSS}</style>
 
       <div className="wt-editbar">
@@ -84,7 +85,7 @@ function WatchPageInner() {
 
       {e.publishing ? (
         <div className="wt-publishing" role="status" aria-live="polite">
-          <p>Putting it up…</p>
+          <p>Premiering your video…</p>
         </div>
       ) : null}
 
@@ -103,23 +104,25 @@ export default function WatchPage() {
 
 const EDITOR_CSS = `
 .wt-editor-frame { background: ${T.page}; min-height: 100dvh; }
-/* The template's own bar lives under the editor bar rather than behind it. */
-.wt-editor-frame .wt-bar { top: ${BAR_H}px; }
-.wt-editor-frame .wt-brand { top: ${BAR_H + 64}px; }
+/* The template's own sticky surfaces live under the editor bar rather than behind it. */
+@media (min-width: 760px) { .wt-editor-frame .wt-bar { top: ${BAR_H}px; } }
+@media (max-width: 759px) { .wt-editor-frame .wt-player-slot { top: ${BAR_H}px; } }
 
 .wt-editbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   height: ${BAR_H}px; display: flex; align-items: center; gap: 8px;
-  padding: 0 12px calc(0px + env(safe-area-inset-top, 0px));
-  background: rgba(15,15,15,0.92); border-bottom: 1px solid ${T.line};
-  backdrop-filter: blur(8px); font-family: ${FONT};
+  padding: 0 12px; background: rgba(15,15,15,0.96); border-bottom: 1px solid rgba(255,255,255,.08);
+  font-family: ${FONT};
 }
 .wt-editbar-btn {
-  height: 32px; padding: 0 14px; border-radius: 16px; border: 1px solid ${T.line};
-  background: ${T.chip}; color: ${T.ink};
-  font-family: ${FONT}; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  height: 34px; padding: 0 16px; border-radius: 17px; border: 0;
+  background: rgba(255,255,255,.1); color: ${T.ink};
+  font-family: ${FONT}; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background .15s ease, transform .15s ease;
 }
-.wt-editbar-btn.is-primary { background: ${T.accent}; border-color: ${T.accent}; color: #FFFFFF; }
+.wt-editbar-btn:hover { background: rgba(255,255,255,.18); }
+.wt-editbar-btn:active { transform: scale(.97); }
+.wt-editbar-btn.is-primary { background: linear-gradient(135deg, #FF3E86, #FF7A59); color: #FFFFFF; box-shadow: 0 6px 18px -8px rgba(255,62,134,.8); }
 .wt-editbar-btn:disabled { opacity: 0.6; cursor: default; }
 
 .wt-publishing {
@@ -127,29 +130,13 @@ const EDITOR_CSS = `
   background: rgba(0,0,0,0.7); font-family: ${FONT}; color: ${T.ink};
 }
 .wt-publishing p {
-  margin: 0; padding: 16px 24px; border-radius: 12px;
-  background: ${T.raised}; border: 1px solid ${T.line}; font-size: 15px; font-weight: 600;
+  margin: 0; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px;
+  background: ${T.raised}; border: 1px solid ${T.line}; font-size: 15px; font-weight: 500;
 }
-
-.wt-editor-toasts {
-  position: fixed; top: ${BAR_H + 10}px; left: 50%; transform: translateX(-50%); z-index: 310;
-  display: flex; flex-direction: column; gap: 8px; width: min(92vw, 420px);
+.wt-publishing p::before {
+  content: ""; width: 18px; height: 18px; border-radius: 50%; border: 3px solid rgba(255,255,255,.2); border-top-color: #FF3E86;
+  animation: wt-pub-spin .8s linear infinite;
 }
-.wt-editor-toast {
-  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
-  background: ${T.raised}; border: 1px solid ${T.line}; font-family: ${FONT};
-  animation: wt-toast-in 200ms ease-out both;
-}
-.wt-editor-toast-title { margin: 0; font-size: 13.5px; font-weight: 700; color: ${T.ink}; }
-.wt-editor-toast-msg { margin: 2px 0 0; font-size: 12px; color: ${T.inkSoft}; }
-.wt-editor-toast-act {
-  height: 30px; padding: 0 12px; border-radius: 15px; border: 0;
-  background: ${T.accent}; color: #FFFFFF; font-family: ${FONT}; font-size: 12px;
-  font-weight: 600; cursor: pointer;
-}
-.wt-editor-toast-x {
-  width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent;
-  display: grid; place-items: center; cursor: pointer;
-}
-@media (prefers-reduced-motion: reduce) { .wt-editor-toast { animation: none; } }
+@keyframes wt-pub-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wt-publishing p::before { animation: none; } }
 `;
