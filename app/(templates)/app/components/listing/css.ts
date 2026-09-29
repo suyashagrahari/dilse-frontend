@@ -36,7 +36,7 @@ export const LISTING_CSS = `
 .al-nav-get { opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .3s cubic-bezier(.2,1,.3,1); pointer-events: none; }
 .al-nav.is-solid .al-nav-get { opacity: 1; transform: none; pointer-events: auto; }
 .al-brand { position: absolute; right: 8px; top: 50%; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px 0 5px; border-radius: 99px; background: #F2F2F7;
-  color: #1c1c1e; text-decoration: none; font-size: 12px; font-weight: 700; white-space: nowrap; transform: translateY(-50%); transition: opacity .2s, transform .25s; }
+  color: #1c1c1e; text-decoration: none; font-size: 12px; font-weight: 700; white-space: nowrap; width: max-content; transform: translateY(-50%); transition: opacity .2s, transform .25s; }
 .al-brand img { width: 20px; height: 20px; border-radius: 50%; }
 .al-brand small { font-weight: 500; color: var(--al-soft); font-size: 11px; }
 .al-nav.is-solid .al-brand { opacity: 0; transform: translateY(-50%) scale(.9); pointer-events: none; }
