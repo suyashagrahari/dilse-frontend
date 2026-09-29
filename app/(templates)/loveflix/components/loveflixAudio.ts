@@ -144,3 +144,9 @@ export const sfxUiTap = (): void => {
   burst({ ms: 40, cutoff: 2200, toCutoff: 900, gain: 0.09, attack: 0.002 });
   tone({ freq: 520, ms: 45, type: "sine", gain: 0.06 });
 };
+
+/** A like — two quick rising sine blips, a small "aww". */
+export const sfxLike = (): void => {
+  tone({ freq: 660, toFreq: 880, ms: 80, type: "sine", gain: 0.08 });
+  tone({ freq: 990, toFreq: 1320, ms: 90, type: "sine", gain: 0.05, delay: 0.07 });
+};

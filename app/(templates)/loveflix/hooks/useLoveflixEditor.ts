@@ -7,7 +7,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { DEMO_DATA, PLAYER, dbToLoveflixData, loveflixDataToBody, validateSceneGraph, type Credit, type EditMode, type LoveflixData, type Row, type RowItem, type Scene } from "../components/types";
+import { DEMO_DATA, LIMITS, dbToLoveflixData, loveflixDataToBody, toCrop, type EditMode, type Episode, type LoveflixData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -20,30 +20,16 @@ const BASE = `${API_URL}/loveflix-pages`;
 /** Slug reported on every analytics event from this editor. */
 const TEMPLATE = "loveflix";
 
-/* ── Authoring clamps ──────────────────────────────────────────────────────────
-   These mirror the ceilings the wire coercer in `types.ts` already enforces.
-   They live here so the form can stop the sender BEFORE they write something the
-   wire layer would silently throw away — a row 7 that vanishes on publish with
-   no explanation is the worst kind of bug. ─────────────────────────────────── */
-export const MAX_ROWS = 6;
-export const MAX_ITEMS_PER_ROW = 12;
-export const MAX_SCENES = 24;
-export const MAX_CREDITS = 12;
-export const MAX_CHOICES = 2;
-export const MIN_CHOICE_SECONDS = 4;
-export const MAX_CHOICE_SECONDS = 60;
-export const MIN_MATCH_PERCENT = 1;
-export const MAX_MATCH_PERCENT = 100;
-export const MIN_PROGRESS = 0;
-export const MAX_PROGRESS = 100;
-
 // Draft is persisted to localStorage so a refresh (or an accidental tab close)
 // keeps every line the sender wrote. Falls back to sessionStorage if unavailable.
 const draftStore = (): Storage | null => {
   try { return window.localStorage; } catch { try { return window.sessionStorage; } catch { return null; } }
 };
 const saveDraft = (payload: unknown) => {
-  try { draftStore()?.setItem(DRAFT_KEY, JSON.stringify(payload)); } catch {}
+  const json = JSON.stringify(payload);
+  try { draftStore()?.setItem(DRAFT_KEY, json); return; } catch {}
+  // Over quota (photos are base64 until publish) — sessionStorage has its own.
+  try { window.sessionStorage.setItem(DRAFT_KEY, json); } catch {}
 };
 const clearDraft = () => {
   try { window.localStorage.removeItem(DRAFT_KEY); } catch {}
@@ -57,98 +43,70 @@ const readDraft = (): { data?: LoveflixData; password?: string; completed?: bool
 };
 
 /* ── Cleaning ──────────────────────────────────────────────────────────────────
-   A work-in-progress draft legitimately contains half-typed rows, blank items
-   and scenes with nothing written on them yet. Those are fine to author with and
-   never fine to publish, so everything is trimmed and pruned once, on Save, on
-   the way from `mf` into `content`. `mf` itself is left untouched — the sender
-   goes back into the sheet and finds their blanks exactly where they left them.
+   A work-in-progress draft legitimately contains blank episodes and empty list
+   slots. Those are fine to author with and never fine to publish, so everything
+   is trimmed and pruned once, on Save, on the way from `mf` into `content`. `mf`
+   itself is left untouched.
 ─────────────────────────────────────────────────────────────────────────────*/
 
-const clampInt = (raw: unknown, lo: number, hi: number, fallback: number): number => {
-  const n = typeof raw === "number" ? raw : Number(raw);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.min(hi, Math.max(lo, Math.round(n)));
-};
+const t = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+const tl = (v: unknown, max: number) =>
+  typeof v === "string" ? v.replace(/[ \t]+$/gm, "").trim().slice(0, max) : "";
+const cleanList = (v: unknown, max: number, each: number) =>
+  (Array.isArray(v) ? v : []).map((x) => t(x, each)).filter(Boolean).slice(0, max);
 
-const cleanRows = (rows: Row[]): Row[] =>
-  (Array.isArray(rows) ? rows : [])
-    .map((r) => ({
-      title: (r?.title ?? "").trim(),
-      kind: r?.kind === "top10" ? ("top10" as const) : ("cards" as const),
-      items: (Array.isArray(r?.items) ? r.items : [])
-        .filter((it) => (it?.title ?? "").trim().length > 0)
-        .map<RowItem>((it) => ({
-          title: it.title.trim(),
-          imageUrl: (it.imageUrl ?? "").trim(),
-          caption: (it.caption ?? "").trim(),
-          runtime: (it.runtime ?? "").trim(),
-          progress: clampInt(it.progress, MIN_PROGRESS, MAX_PROGRESS, 0),
-        }))
-        .slice(0, MAX_ITEMS_PER_ROW),
+const cleanEpisodes = (eps: Episode[]): Episode[] =>
+  (Array.isArray(eps) ? eps : [])
+    .filter((e) => t(e?.title, LIMITS.epTitle).length > 0)
+    .map((e) => ({
+      title: t(e.title, LIMITS.epTitle),
+      synopsis: t(e.synopsis, LIMITS.synopsis),
+      subtitle: tl(e.subtitle, LIMITS.subtitle),
+      imageUrl: t(e.imageUrl, 3_000_000),
+      crop: toCrop(e.crop),
     }))
-    .filter((r) => r.title.length > 0 && r.items.length > 0)
-    .slice(0, MAX_ROWS);
+    .slice(0, LIMITS.episodes);
 
-const cleanScenes = (scenes: Scene[]): Scene[] =>
-  (Array.isArray(scenes) ? scenes : [])
-    .filter((s) => (s?.id ?? "").trim().length > 0)
-    .map<Scene>((s) => {
-      const isFinale = s.isFinale === true;
-      return {
-        id: s.id.trim(),
-        imageUrl: (s.imageUrl ?? "").trim(),
-        text: (s.text ?? "").replace(/[ \t]+$/gm, "").trim(),
-        choices: isFinale
-          ? []
-          : (Array.isArray(s.choices) ? s.choices : [])
-              .slice(0, MAX_CHOICES)
-              .map((c) => ({ label: (c?.label ?? "").trim(), nextSceneId: (c?.nextSceneId ?? "").trim() })),
-        choiceSeconds: clampInt(s.choiceSeconds, MIN_CHOICE_SECONDS, MAX_CHOICE_SECONDS, PLAYER.defaultChoiceSeconds),
-        defaultChoiceIndex: clampInt(s.defaultChoiceIndex, 0, MAX_CHOICES - 1, 0),
-        isFinale,
-      };
-    })
-    .slice(0, MAX_SCENES);
+export const cleanData = (d: LoveflixData): LoveflixData => ({
+  recipientName: t(d.recipientName, LIMITS.name),
+  recipientPhotoUrl: t(d.recipientPhotoUrl, 3_000_000),
+  recipientCrop: toCrop(d.recipientCrop),
+  senderName: t(d.senderName, LIMITS.name),
+  senderPhotoUrl: t(d.senderPhotoUrl, 3_000_000),
+  senderCrop: toCrop(d.senderCrop),
+  thirdProfile: t(d.thirdProfile, LIMITS.name),
+  showTitle: t(d.showTitle, LIMITS.showTitle),
+  tagline: t(d.tagline, LIMITS.tagline),
+  heroImageUrl: t(d.heroImageUrl, 3_000_000),
+  heroCrop: toCrop(d.heroCrop),
+  matchPercent: Math.round(Math.min(100, Math.max(1, Number(d.matchPercent) || 99))),
+  rating: t(d.rating, LIMITS.rating),
+  ratingReason: t(d.ratingReason, LIMITS.ratingReason),
+  seasons: t(d.seasons, LIMITS.seasons),
+  metYear: t(d.metYear, LIMITS.metYear),
+  genres: cleanList(d.genres, LIMITS.genres, LIMITS.genre),
+  episodes: cleanEpisodes(d.episodes),
+  reasons: cleanList(d.reasons, LIMITS.reasons, LIMITS.reason),
+  insideJokes: cleanList(d.insideJokes, LIMITS.jokes, LIMITS.joke),
+  plans: cleanList(d.plans, LIMITS.plans, LIMITS.plan),
+  finaleText: tl(d.finaleText, LIMITS.finaleText),
+  finaleQuestion: t(d.finaleQuestion, LIMITS.finaleQuestion),
+  letter: tl(d.letter, LIMITS.letter),
+  lockQuestion: t(d.lockQuestion, LIMITS.lockQuestion),
+  lockAnswer: t(d.lockAnswer, LIMITS.lockAnswer),
+});
 
-const cleanCredits = (credits: Credit[]): Credit[] =>
-  (Array.isArray(credits) ? credits : [])
-    .map<Credit>((c) => ({ role: (c?.role ?? "").trim(), name: (c?.name ?? "").trim() }))
-    .filter((c) => c.role.length > 0)
-    .slice(0, MAX_CREDITS);
-
-const cleanData = (d: LoveflixData): LoveflixData => {
-  const scenes = cleanScenes(d.scenes);
-  return {
-    senderName: d.senderName.trim() || DEMO_DATA.senderName,
-    senderPhotoUrl: d.senderPhotoUrl.trim(),
-    recipientName: d.recipientName.trim(),
-    recipientPhotoUrl: d.recipientPhotoUrl.trim(),
-    showTitle: d.showTitle.trim(),
-    tagline: d.tagline.trim(),
-    heroImageUrl: d.heroImageUrl.trim(),
-    matchPercent: clampInt(d.matchPercent, MIN_MATCH_PERCENT, MAX_MATCH_PERCENT, 99),
-    rating: d.rating.trim(),
-    seasons: d.seasons.trim(),
-    metYear: d.metYear.trim(),
-    rows: cleanRows(d.rows),
-    scenes,
-    // If the chosen start scene did not survive cleaning, fall back to the first
-    // one that did rather than shipping a graph that cannot even begin.
-    startSceneId: scenes.some((s) => s.id === d.startSceneId.trim())
-      ? d.startSceneId.trim()
-      : scenes[0]?.id ?? "",
-    finaleText: d.finaleText.trim(),
-    finaleQuestion: d.finaleQuestion.trim(),
-    credits: cleanCredits(d.credits),
-  };
+/** What still stops this from being publishable, in words. Empty = ready. */
+export const missingFields = (d: LoveflixData): string[] => {
+  const out: string[] = [];
+  if (!t(d.recipientName, LIMITS.name)) out.push("their name");
+  if (!t(d.showTitle, LIMITS.showTitle)) out.push("a show title");
+  if (cleanEpisodes(d.episodes).length === 0) out.push("one episode with a title");
+  return out;
 };
 
 /** True once the data carries enough to be worth publishing. */
-export const isPublishable = (d: LoveflixData): boolean =>
-  d.recipientName.trim().length > 0 &&
-  d.showTitle.trim().length > 0 &&
-  cleanRows(d.rows).length > 0 &&
-  validateSceneGraph(cleanScenes(d.scenes), d.startSceneId).ok;
+export const isPublishable = (d: LoveflixData): boolean => missingFields(d).length === 0;
 
 export function useLoveflixEditor() {
   const router = useRouter();
@@ -164,10 +122,7 @@ export function useLoveflixEditor() {
   const [isPersonalized, setIsPersonalized] = useState(false);
 
   // ── AI story fill ───────────────────────────────────────────────────────────
-  // The billing copy and `rows[0]` only. `scenes[]` is a branching graph that
-  // `validateSceneGraph` checks at load — exactly two choices per non-finale,
-  // every nextSceneId resolving, no cycles — and it is deliberately NOT on the
-  // schema, so no patch from here can reach it.
+  // Every text leaf is on the server schema; photos and crops never are.
   const fill = useStoryFill<LoveflixData>({
     slug: "loveflix",
     demo: DEMO_DATA,
@@ -238,11 +193,11 @@ export function useLoveflixEditor() {
     // Restore a locally-saved draft on refresh. The typed form data (mf) always
     // comes back; if it was saved from the preview ("completed"), reopen the preview.
     const draft = readDraft();
-    if (draft?.data && Array.isArray(draft.data.rows) && Array.isArray(draft.data.scenes)) {
-      // Restored verbatim, NOT through dbToLoveflixData: a work-in-progress draft
-      // legitimately contains blank rows and unwritten scenes, and the wire
-      // coercer strips those. They only get cleaned on Save.
-      const d = draft.data;
+    if (draft?.data && Array.isArray(draft.data.episodes)) {
+      // Restored verbatim (over the demo so a draft from an older build still has
+      // every key), NOT through dbToLoveflixData: a work-in-progress draft
+      // legitimately contains blank episodes, and the wire coercer strips those.
+      const d = { ...DEMO_DATA, ...draft.data };
       setMf(d);
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
@@ -370,41 +325,22 @@ export function useLoveflixEditor() {
 
   // Save (locally) & jump to preview.
   const handleSave = useCallback(() => {
-    if (!mf.recipientName.trim()) {
-      pushToast({ type: "info", title: "Who is this for?", message: "Add their name first" });
+    const missing = missingFields(mf);
+    if (missing.length) {
+      pushToast({ type: "info", title: "Almost there", message: `Still needs ${missing.join(", ")}` });
       return;
     }
-    if (!mf.showTitle.trim()) {
-      pushToast({ type: "info", title: "Give the show a title", message: "One or two words is plenty" });
-      return;
-    }
-
     const cleaned = cleanData(mf);
-
-    if (cleaned.rows.length === 0) {
-      pushToast({ type: "info", title: "The catalogue is empty", message: "Add one row with at least one card" });
-      return;
-    }
-
-    // The validator is loud on purpose. A branch that dead-ends renders a blank
-    // screen with no error, so the first real problem is named here rather than
-    // discovered by the recipient.
-    const report = validateSceneGraph(cleaned.scenes, cleaned.startSceneId);
-    if (!report.ok) {
-      pushToast({ type: "info", title: "The episode doesn't join up", message: report.errors[0] });
-      return;
-    }
-
     setContent(cleaned);
     setIsPersonalized(true);
     setEditMode("preview");
-    bumpPreview(); // fresh run: back to the intro with the new show
+    bumpPreview(); // fresh run: back to the profile picker with the new show
     saveDraft({ data: mf, password: pagePassword, completed: true });
     track(EVENTS.PAGE_SAVED, {
       template: TEMPLATE,
       has_password: Boolean(pagePassword),
-      rows: cleaned.rows.length,
-      scenes: cleaned.scenes.length,
+      episodes: cleaned.episodes.length,
+      has_letter: Boolean(cleaned.letter),
     });
     pushToast({ type: "success", title: "Saved!", message: "Watch it once, then publish" });
   }, [mf, pagePassword, pushToast, bumpPreview]);
@@ -495,11 +431,10 @@ export function useLoveflixEditor() {
 
     if (!isPublishable(content)) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "content_incomplete" });
-      const report = validateSceneGraph(content.scenes, content.startSceneId);
       pushToast({
         type: "info",
         title: "Finish the show first",
-        message: report.ok ? "A name, a title and one row of cards" : report.errors[0],
+        message: `Still needs ${missingFields(content).join(", ")}`,
       });
       setEditMode("manual");
       return;
@@ -572,7 +507,7 @@ export function useLoveflixEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "I made you something to watch 🍿",
-      accent: "#f59e0b",
+      accent: "#E62E5C",
       slug: "loveflix",
     });
   }, [shareUrl, pagePassword]);
