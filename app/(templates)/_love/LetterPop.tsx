@@ -317,6 +317,8 @@ const BANNER: Record<LetterVariant, { glyph: string; app: (title?: string, from?
   product: { glyph: "📦", app: () => "Delivered today" },
   us: { glyph: "", app: (_t, f) => f || "New message" },
   loveflix: { glyph: "L", app: () => "LoveFlix · New episode" },
+  call: { glyph: "📞", app: (_t, f) => (f ? `${f} · missed call` : "Missed call") },
+  catch: { glyph: "💌", app: () => "A letter fell from the sky" },
 };
 
 const CSS = `
