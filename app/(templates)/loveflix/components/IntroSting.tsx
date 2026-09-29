@@ -8,7 +8,7 @@
 import { useEffect, useMemo } from "react";
 import { sfxIntroSting } from "./loveflixAudio";
 
-const STREAK_HUES = ["#E62E5C", "#ff7aa2", "#b3173f", "#8a2be2", "#ff4f7a", "#5b1030", "#ffb3c7", "#c2185b", "#7a1fa2", "#ff2d6f"];
+const STREAK_HUES = ["#E10A17", "#ff7aa2", "#B20710", "#8a2be2", "#ff4f7a", "#5b1030", "#ffb3c7", "#c2185b", "#7a1fa2", "#ff2d6f"];
 
 export default function IntroSting({ reduced, onDone }: { reduced: boolean; onDone: () => void }) {
   useEffect(() => {

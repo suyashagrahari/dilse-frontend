@@ -336,7 +336,7 @@ export default memo(function EditSheet({ editMode, setEditMode, isPersonalized, 
   );
 });
 
-const R = "#E62E5C";
+const R = "#E10A17";
 
 const ES_CSS = `
 .es-overlay{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.6);display:flex;justify-content:flex-end;animation:esFade .2s}
@@ -360,12 +360,12 @@ const ES_CSS = `
 .es-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .es-field{display:block;margin-bottom:12px;min-width:0}
 .es-label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#cfcfcf;margin-bottom:6px}
-.es-req{font-style:normal;font-size:10px;font-weight:700;color:${R};background:rgba(230,46,92,.14);padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.es-req{font-style:normal;font-size:10px;font-weight:700;color:${R};background:rgba(225,10,23,.14);padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
 .es-count{margin-left:auto;font-style:normal;font-weight:500;color:#888;font-size:11px}
 .es-field input,.es-field textarea,.es-list input{width:100%;background:#121212;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font:inherit;font-size:16px;padding:12px 13px;outline:none;transition:border-color .15s,box-shadow .15s}
 .es-field textarea{resize:vertical;line-height:1.45;min-height:72px}
 .es-field input.is-big{font-family:var(--font-oswald),'Arial Narrow',sans-serif;font-size:24px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:10px 13px}
-.es-field input:focus,.es-field textarea:focus,.es-list input:focus{border-color:${R};box-shadow:0 0 0 3px rgba(230,46,92,.2)}
+.es-field input:focus,.es-field textarea:focus,.es-list input:focus{border-color:${R};box-shadow:0 0 0 3px rgba(225,10,23,.2)}
 .es-field input::placeholder,.es-field textarea::placeholder,.es-list input::placeholder{color:#5f5f5f}
 .es-help{display:block;font-size:11.5px;color:#8a8a8a;margin-top:5px}
 .es-range{padding:0!important;height:40px;accent-color:${R};background:transparent!important;border:0!important}
@@ -402,7 +402,7 @@ const ES_CSS = `
 .es-missing,.es-ready{flex:1;margin:0;font-size:12.5px;line-height:1.35;color:#bbb}
 .es-missing b{color:#ff9ab5}
 .es-ready{color:#46d369;font-weight:600}
-.es-save{flex-shrink:0;height:50px;padding:0 24px;border-radius:8px;border:0;background:${R};color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px -10px rgba(230,46,92,.8);transition:transform .12s,filter .15s}
+.es-save{flex-shrink:0;height:50px;padding:0 24px;border-radius:8px;border:0;background:${R};color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px -10px rgba(225,10,23,.8);transition:transform .12s,filter .15s}
 .es-save:hover{filter:brightness(1.08)}.es-save:active{transform:scale(.97)}
 @media (max-width:560px){
   .es{width:100%}

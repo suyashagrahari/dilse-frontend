@@ -204,7 +204,10 @@ function useNotifications() {
     const last = data.episodes[data.episodes.length - 1];
     if (last) out.push({ kicker: "New Episode", title: last.title, when: "Today", src: last.imageUrl, crop: last.crop });
     out.push({ kicker: "Reminder", title: `${data.senderName || "Someone"} is thinking about you`, when: "Just now", src: data.senderPhotoUrl, crop: data.senderCrop });
-    if (data.plans[0]) out.push({ kicker: "Coming Soon", title: data.plans[0], when: "This year" });
+    if (data.plans[0]) {
+      const p = describe({ kind: "plan", index: 0 }, data);
+      out.push({ kicker: "Coming Soon", title: data.plans[0], when: "This year", src: p.src, crop: p.crop });
+    }
     out.push({ kicker: "Renewed", title: `${data.showTitle} — another season confirmed`, when: "Yesterday", src: data.heroImageUrl, crop: data.heroCrop });
     return out;
   }, [data]);
@@ -680,9 +683,15 @@ function MyPage({ setView }: { setView: (v: View) => void }) {
         <Rail title="My List" kind="poster">
           {data.reasons.slice(0, 10).map((_, i) => (
             <button key={i} type="button" className="lf-card lf-card-poster lf-reasonposter" onClick={() => openDetails({ kind: "reason", index: i })}>
-              <Still seed={`reasonp${i}`} label={data.reasons[i]} artSize="sm" className="lf-card-img">
-                <CornerL />
-              </Still>
+              {(() => {
+                const r = describe({ kind: "reason", index: i }, data);
+                return (
+                  <Still src={r.src} crop={r.crop} seed={`reasonp${i}`} label={data.reasons[i]} artSize="sm" className="lf-card-img">
+                    <CornerL />
+                    {r.src && <span className="lf-card-title">{data.reasons[i]}</span>}
+                  </Still>
+                );
+              })()}
             </button>
           ))}
         </Rail>

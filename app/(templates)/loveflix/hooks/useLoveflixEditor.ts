@@ -507,7 +507,7 @@ export function useLoveflixEditor() {
       url: shareUrl,
       password: pagePassword,
       title: "I made you something to watch 🍿",
-      accent: "#E62E5C",
+      accent: "#E10A17",
       slug: "loveflix",
     });
   }, [shareUrl, pagePassword]);
