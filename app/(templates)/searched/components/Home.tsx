@@ -70,11 +70,13 @@ export default function Home(p: HomeProps) {
       if (p.reduce) {
         setQ(full);
       } else {
-        [...full].forEach((_, i) =>
+        let at = 140;
+        [...full].forEach((_, i) => {
+          at += 85 + ((i * 37) % 60);
           later(() => {
             if (!touched.current) setQ(full.slice(0, i + 1));
-          }, 140 + i * (90 + ((i * 37) % 60))),
-        );
+          }, at);
+        });
       }
       const typed = p.reduce ? 0 : 140 + full.length * 120;
       later(() => !touched.current && setNudge(true), typed + 900);
