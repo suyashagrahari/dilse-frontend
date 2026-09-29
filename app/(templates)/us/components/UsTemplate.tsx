@@ -2,275 +2,218 @@
 
 // ─── Us — the shell ──────────────────────────────────────────────────────────
 //
-// A relationship with its own account. One screen, two overlays, and a
-// deliberate refusal to be responsive.
+// A relationship with its own account. Under 768px it is the phone app (top
+// bar, bottom tab bar, full-screen post feed and stories); from 768px it is the
+// web app (left rail — collapsed until 1264px — the avatar-left header, the
+// 4px grid, the post modal and the dark story stage). The layout switch is CSS;
+// only overlays ask `matchMedia` which flavour to open.
 //
-// THE DESKTOP RULE. On a wide screen this is letterboxed into a centred 420px
-// column with a neutral surround. That is the design, not a fallback: the whole
-// point of the joke is that you are looking at a phone app, and a profile grid
-// stretched to 1440px stops being funny and starts being a bug report. Nothing
-// in this template reflows — there is no breakpoint that changes a layout, only
-// the one that draws the frame around the column.
-//
-// STATE. Two overlays, both wired into the browser's back stack through
-// `useOverlayHistory`, both closed by exactly one path (`history.back()`), so
-// the in-app chevron and the OS gesture cannot disagree. The grid underneath is
-// never unmounted, and its scroll offset is restored on the way back.
-//
-// The story viewer's clock lives in an external store rather than an effect —
-// see storyMachine.ts. No effect in this template calls a setter.
+// Every overlay is wired into the browser back stack (useOverlayHistory), so
+// the phone's back gesture closes a post instead of leaving the page.
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import BottomNav from "./BottomNav";
-import HighlightStrip from "./HighlightStrip";
-import PostDetail from "./PostDetail";
-import PostGrid from "./PostGrid";
-import ProfileHeader from "./ProfileHeader";
-import SaveCardSheet from "./SaveCardSheet";
-import StoryViewer from "./StoryViewer";
-import TabBar from "./TabBar";
-import TopBar from "./TopBar";
-import { ClipsTabIcon, TaggedTabIcon } from "./icons";
-import { useOverlayHistory, useReducedMotion, useScrollMemory, useTransient } from "./hooks";
-import { StoryMachine } from "./storyMachine";
-import { KEYFRAMES, TEXT_BASE, anim } from "./styles";
-import {
-  COPY,
-  METRICS,
-  PALETTE,
-  SYSTEM_FONT,
-  TAB_EMPTY_COPY,
-  TIMING,
-  orderedPosts,
-  type ProfileData,
-  type ProfileTab,
-} from "./types";
-
-/** The neutral surround on wide screens. Not part of the app; the desk it sits on. */
-const SURROUND = "#EFEFEF";
-
-/** Only the frame is a breakpoint. Wide enough that the 420px column plus its
- *  1px outline can never crowd the content. Outline, not border — an outline
- *  takes no space, so the column stays exactly 420 and the grid maths holds. */
-const FRAME_CSS = `
-@media (min-width: 480px) {
-  .us-column { outline: 1px solid ${PALETTE.border}; }
-}
-`;
+import { useCallback, useMemo, useState } from "react";
+import LetterPop from "../../_love/LetterPop";
+import { BottomNav, MobileTopBar, Rail, type NavKind } from "./Chrome";
+import DMs, { DM_CSS } from "./DMs";
+import PostViewer, { EMPTY_SOCIAL, POST_CSS, type Social } from "./PostViewer";
+import { EmptyTab, Grid, Highlights, ProfileHeader, Tabs, WebFooter, type HeaderActions } from "./Profile";
+import { FollowersSheet, FollowingMenu, FollowingSheet, OptionsMenu } from "./Sheets";
+import StoryViewer, { STORY_CSS } from "./StoryViewer";
+import { CSS } from "./styles";
+import { useBodyLock, useMedia, useOverlayHistory, useTransient } from "./hooks";
+import { BP, TIMING, orderedPosts, type ProfileData, type ProfileTab } from "./types";
 
 export interface UsTemplateProps {
   data: ProfileData;
-  /** "demo" is the gallery preview; "live" is the recipient's published page. */
+  /** "demo" = inside the editor (its floating bar sits at the bottom); "live" = the recipient's page. */
   mode: "demo" | "live";
   shareId?: string;
   hasPassword?: boolean;
 }
 
-function EmptyTab({ tab }: { tab: Exclude<ProfileTab, "grid"> }) {
-  const Icon = tab === "clips" ? ClipsTabIcon : TaggedTabIcon;
-  return (
-    <div
-      style={{
-        minHeight: 280,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 14,
-        padding: "40px 32px",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 62,
-          height: 62,
-          borderRadius: "50%",
-          border: `1.5px solid ${PALETTE.ink}`,
-          display: "grid",
-          placeItems: "center",
-        }}
-      >
-        <Icon size={28} color={PALETTE.ink} />
-      </div>
-      <div style={{ fontSize: 14, lineHeight: "19px", color: PALETTE.grey, maxWidth: 240 }}>
-        {TAB_EMPTY_COPY[tab]}
-      </div>
-    </div>
-  );
-}
+type Overlay =
+  | { kind: "post"; index: number }
+  | { kind: "story"; index: number }
+  | { kind: "dms" }
+  | { kind: "following" }
+  | { kind: "followers" }
+  | { kind: "followingList" }
+  | { kind: "options" };
+
+const ALL_CSS = CSS + POST_CSS + STORY_CSS + DM_CSS;
 
 export default function UsTemplate({ data, mode }: UsTemplateProps) {
-  const reduced = useReducedMotion();
-  const [tab, setTab] = useState<ProfileTab>("grid");
-  const [saveOpen, setSaveOpen] = useState(false);
-
+  const web = useMedia(`(min-width: ${BP.web}px)`);
   const posts = useMemo(() => orderedPosts(data), [data]);
+  const [tab, setTab] = useState<ProfileTab>("grid");
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const [storySeen, setStorySeen] = useState(false);
+  const [dmRead, setDmRead] = useState(false);
+  const [social, setSocialMap] = useState<Record<string, Social>>({});
 
-  /* ── Toast ───────────────────────────────────────────────────────────── */
   const [toastUp, fireToast] = useTransient(TIMING.toastMs);
-  const [toastText, setToastText] = useState<string>(COPY.nothingElse);
-  const showToast = useCallback(
-    (message: string) => {
-      setToastText(message);
+  const [toastText, setToastText] = useState("");
+  const toast = useCallback(
+    (t: string) => {
+      setToastText(t);
       fireToast();
     },
     [fireToast],
   );
-  const onNothing = useCallback(() => showToast(COPY.nothingElse), [showToast]);
 
-  /* ── Post detail ─────────────────────────────────────────────────────── */
-  const { remember, restore } = useScrollMemory();
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const close = useCallback(() => setOverlay(null), []);
+  const requestClose = useOverlayHistory(overlay !== null, close);
+  useBodyLock(overlay !== null);
 
-  const closePost = useCallback(() => {
-    setOpenIndex(null);
-    restore();
-  }, [restore]);
+  const open = useCallback((o: Overlay) => {
+    if (o.kind === "dms") setDmRead(true);
+    setOverlay(o);
+  }, []);
+  /** Swap one overlay for another without growing the back stack. */
+  const swap = useCallback((o: Overlay) => setOverlay(o), []);
 
-  const requestClosePost = useOverlayHistory(openIndex !== null, closePost);
+  const setSocial = useCallback((id: string, fn: (s: Social) => Social) => {
+    setSocialMap((m) => ({ ...m, [id]: fn(m[id] ?? EMPTY_SOCIAL) }));
+  }, []);
 
-  const openPost = useCallback(
-    (index: number) => {
-      remember();
-      setOpenIndex(index);
+  const scrollToGrid = useCallback(() => {
+    document.getElementById("us-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const onNav = useCallback(
+    (k: NavKind) => {
+      const who = data.from || "they";
+      switch (k) {
+        case "messages":
+          return open({ kind: "dms" });
+        case "notifications":
+          return toast(`${data.handle} liked your existence ❤️`);
+        case "home":
+          return toast("home is wherever they are 🏠");
+        case "search":
+          return toast("stop searching. you found them 🔎");
+        case "explore":
+          return toast("nothing out there beats this 🧭");
+        case "clips":
+          setTab("clips");
+          return scrollToGrid();
+        case "create":
+          return toast(`only ${who} gets to post here ✍️`);
+        case "profile":
+          return window.scrollTo({ top: 0, behavior: "smooth" });
+        case "more":
+        case "switch":
+          return open({ kind: "options" });
+      }
     },
-    [remember],
+    [data.from, data.handle, open, toast, scrollToGrid],
   );
 
-  /* ── Story highlights ────────────────────────────────────────────────── */
-  const [machine] = useState(() => new StoryMachine());
-  const story = useSyncExternalStore(machine.subscribe, machine.getSnapshot, machine.getServerSnapshot);
+  const actions: HeaderActions = {
+    onStory: () => open({ kind: "story", index: 0 }),
+    onFollowing: () => open({ kind: "following" }),
+    onMessage: () => open({ kind: "dms" }),
+    onFollowers: () => open({ kind: "followers" }),
+    onFollowingList: () => open({ kind: "followingList" }),
+    onPosts: scrollToGrid,
+    onNote: () => toast(`💭 ${data.from ? `${data.from}: ` : ""}${data.note}`),
+    onSuggest: () => toast("suggested for you: more of them 🫶"),
+    onMore: () => open({ kind: "options" }),
+    storySeen,
+  };
 
-  const counts = useMemo(() => data.highlights.map((h) => h.slides.length), [data.highlights]);
+  // Clear of the editor's floating bar in the editor, of the tab bar on phones.
+  const letterBottom = web ? (mode === "demo" ? 84 : 28) : mode === "demo" ? 124 : 66;
 
-  const closeStory = useCallback(() => machine.close(), [machine]);
-  const requestCloseStory = useOverlayHistory(story.open, closeStory);
-
-  // Configuration only — none of these publish a snapshot, so no effect here
-  // ever causes a render. The machine owns its own timer.
-  useEffect(() => machine.setCounts(counts), [machine, counts]);
-  useEffect(() => machine.setAuto(!reduced), [machine, reduced]);
-  useEffect(() => machine.setExhausted(requestCloseStory), [machine, requestCloseStory]);
-  useEffect(() => () => machine.dispose(), [machine]);
-
-  const openStory = useCallback((index: number) => machine.open(index), [machine]);
-
-  const activePost = openIndex !== null ? posts[openIndex] : undefined;
+  const body = (
+    <>
+      <ProfileHeader data={data} a={actions} />
+      <Highlights items={data.highlights} onOpen={(i) => open({ kind: "story", index: i })} />
+      <div id="us-tabs" style={{ scrollMarginTop: web ? 0 : 44 }}>
+        <Tabs active={tab} onSelect={setTab} />
+      </div>
+      {tab === "grid" ? <Grid posts={posts} pinned={data.pinnedPostIds} onOpen={(i) => open({ kind: "post", index: i })} /> : <EmptyTab tab={tab} to={data.to} />}
+    </>
+  );
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: SURROUND,
-        display: "flex",
-        justifyContent: "center",
-        fontFamily: SYSTEM_FONT,
-        color: PALETTE.ink,
-        ...TEXT_BASE,
-      }}
-    >
-      <style dangerouslySetInnerHTML={{ __html: KEYFRAMES + FRAME_CSS }} />
+    <div className="us-app">
+      <style dangerouslySetInnerHTML={{ __html: ALL_CSS }} />
 
-      <div
-        className="us-column"
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: METRICS.desktopColumn,
-          minHeight: "100dvh",
-          background: PALETTE.bg,
-        }}
+      <MobileTopBar handle={data.handle} onNav={onNav} />
+      <Rail avatarUrl={data.avatarUrl} avatarCrop={data.avatarCrop} onNav={onNav} unread={!dmRead && data.dms.length > 0} />
+
+      <main
+        className="us-web"
+        style={{ paddingBottom: web ? 0 : `calc(${50 + (mode === "demo" ? 70 : 12)}px + env(safe-area-inset-bottom, 0px))` }}
       >
-        <TopBar
-          handle={data.handle}
-          onBack={onNothing}
-          onMenu={() => setSaveOpen(true)}
-          onNothing={onNothing}
-        />
+        <div className="us-wrap">{body}</div>
+        <WebFooter from={data.from} />
+      </main>
 
-        {/* In the editor the site's floating Back / Create pills sit above the
-            bottom nav, so the scroll content has to clear both or the last row
-            of the grid is permanently under a button. The published page has no
-            such chrome and gets the tighter number. */}
-        <main
-          style={{
-            paddingBottom: `calc(${METRICS.bottomNavH + (mode === "demo" ? 76 : 20)}px + env(safe-area-inset-bottom, 0px))`,
-          }}
-        >
-          <ProfileHeader data={data} reduced={reduced} />
-          <HighlightStrip highlights={data.highlights} onOpen={openStory} />
-          <TabBar active={tab} onSelect={setTab} />
+      <BottomNav avatarUrl={data.avatarUrl} avatarCrop={data.avatarCrop} onNav={onNav} />
 
-          {tab === "grid" ? (
-            <PostGrid posts={posts} pinnedIds={data.pinnedPostIds} onOpen={openPost} />
-          ) : (
-            <EmptyTab tab={tab} />
-          )}
-
-          {/* No site chrome in either mode. The published page's viewer supplies
-              its own mark and Create CTA, and a second one here would double up. */}
-        </main>
-
-        <BottomNav avatarUrl={data.avatarUrl} onNothing={onNothing} />
-
-        {toastUp ? (
-          <div
-            role="status"
-            style={{
-              position: "fixed",
-              left: "50%",
-              transform: "translateX(-50%)",
-              bottom: `calc(${METRICS.bottomNavH + 18}px + env(safe-area-inset-bottom, 0px))`,
-              zIndex: 170,
-              maxWidth: 320,
-              padding: "10px 16px",
-              borderRadius: 8,
-              background: "rgba(0,0,0,0.86)",
-              color: "#FFFFFF",
-              fontSize: 13,
-              lineHeight: "17px",
-              textAlign: "center",
-              pointerEvents: "none",
-              animation: anim(reduced, "us-toast-in", 180),
-            }}
-          >
-            {toastText}
-          </div>
-        ) : null}
-      </div>
-
-      {activePost ? (
-        <PostDetail
-          key={activePost.id}
-          post={activePost}
-          handle={data.handle}
-          avatarUrl={data.avatarUrl}
-          reduced={reduced}
-          onBack={requestClosePost}
-          onNothing={onNothing}
-        />
-      ) : null}
-
-      {story.open ? (
-        <StoryViewer
-          highlights={data.highlights}
-          state={story}
-          reduced={reduced}
-          onNext={machine.next}
-          onPrev={machine.prev}
-          onHold={machine.setHeld}
-          onClose={requestCloseStory}
-        />
-      ) : null}
-
-      {saveOpen ? (
-        <SaveCardSheet
+      {overlay?.kind === "post" ? (
+        <PostViewer
           data={data}
           posts={posts}
-          reduced={reduced}
-          onClose={() => setSaveOpen(false)}
-          onToast={showToast}
+          start={overlay.index}
+          web={web}
+          social={social}
+          setSocial={setSocial}
+          onClose={requestClose}
+          onToast={toast}
+        />
+      ) : null}
+      {overlay?.kind === "story" ? (
+        <StoryViewer
+          data={data}
+          highlights={data.highlights}
+          start={overlay.index}
+          web={web}
+          onClose={requestClose}
+          onToast={toast}
+          onSeen={() => setStorySeen(true)}
+        />
+      ) : null}
+      {overlay?.kind === "dms" ? <DMs data={data} web={web} onClose={requestClose} onToast={toast} /> : null}
+      {overlay?.kind === "following" ? <FollowingMenu data={data} onClose={requestClose} onToast={toast} /> : null}
+      {overlay?.kind === "followers" ? <FollowersSheet data={data} onClose={requestClose} onToast={toast} /> : null}
+      {overlay?.kind === "followingList" ? <FollowingSheet data={data} onClose={requestClose} /> : null}
+      {overlay?.kind === "options" ? (
+        <OptionsMenu
+          onClose={requestClose}
+          items={[
+            { label: "Messages", onClick: () => swap({ kind: "dms" }) },
+            { label: "Close friends ★", onClick: () => toast("list: 1 person. you know who.") },
+            { label: "Archive", onClick: () => toast("we don't archive. we keep everything 🗂️") },
+            { label: "Your activity", onClick: () => toast("screen time: mostly staring at this profile") },
+            { label: "Log out", red: true, onClick: () => toast("you can't log out of love. sorry 💍") },
+          ]}
+        />
+      ) : null}
+
+      {toastUp ? (
+        <div role="status" className="us-toast" key={toastText}>
+          {toastText}
+        </div>
+      ) : null}
+
+      {data.letter.trim() ? (
+        <LetterPop
+          letter={data.letter}
+          from={data.from || undefined}
+          to={data.to || undefined}
+          question={data.lockQuestion || undefined}
+          answer={data.lockAnswer || undefined}
+          accent="#FF3D7F"
+          accent2="#FF9A6B"
+          paper="#FFFAF7"
+          ink="#26141B"
+          bottom={letterBottom}
+          right={web ? 24 : 14}
+          teaser={`1 new letter${data.from ? ` from ${data.from}` : ""} 💌`}
+          zIndex={overlay ? 20 : 155}
         />
       ) : null}
     </div>

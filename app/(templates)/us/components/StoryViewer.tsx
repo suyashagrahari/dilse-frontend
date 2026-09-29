@@ -1,330 +1,303 @@
 "use client";
 
-// ─── Us — the story highlight viewer ─────────────────────────────────────────
+// ─── Story viewer ────────────────────────────────────────────────────────────
 //
-// Press-and-hold is the feature. Not the auto-advance, not the tap zones —
-// hold. It pauses the slide AND removes every piece of chrome from the screen,
-// which is how anybody actually screenshots one of these: hold, screenshot,
-// release. Without it the export is a photo with progress bars stapled across
-// the top of it, and people just do not share that.
-//
-// The scrim behind the caption is the one place in this template where a real
-// dark fade belongs. It is built as ten stacked flat `rgba` bands rather than
-// with a CSS gradient function, because `assertBrandSafe` fails the template on
-// any of the three of them — and the check reads this comment too, which is why
-// none of them is spelled out anywhere in this directory. At ten steps over
-// 190px the banding is not visible.
-//
-// Timing lives in StoryMachine, not here — including the pause arithmetic, so
-// holding for eight seconds returns the remaining two rather than a fresh five.
+// Progress segments that fill on their own (a CSS animation — pausing it is
+// just animation-play-state), tap the left third to go back and the rest to go
+// forward, press-and-hold to pause, swipe down / ✕ to close, and the reply bar
+// with its heart. On the web it is the dark stage with the 9:16 card in the
+// middle and neighbouring highlights peeking either side.
 
-import { useCallback, useRef } from "react";
-import Photo from "./Photo";
-import { CloseIcon } from "./icons";
-import { METRICS, STORY_BACK_ZONE, TIMING, type Highlight } from "./types";
-import type { StoryState } from "./storyMachine";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import Pic from "./Pic";
+import { ChevronLeft, ChevronRight, CloseIcon, DotsIcon, HeartIcon, SendIcon } from "./icons";
+import { PALETTE as P, TIMING, WORDMARK, WORDMARK_FONT, type Highlight, type ProfileData } from "./types";
 
-/** Held for longer than this and it is a hold, not a tap. */
-const HOLD_MS = 200;
-/** Vertical travel that counts as a dismiss. */
-const SWIPE_CLOSE_PX = 70;
-/** Movement under this still counts as a tap. */
-const TAP_SLOP_PX = 12;
+const AGO = ["2w", "5w", "11w", "34w", "1y", "2y"];
 
-const SCRIM_BANDS = 10;
-const SCRIM_HEIGHT = 190;
-
-/** Quadratic ramp, computed once. Pure — no clock, no randomness. */
-const SCRIM = Array.from({ length: SCRIM_BANDS }, (_, i) => {
-  const t = (i + 1) / SCRIM_BANDS;
-  return { alpha: Number((0.66 * t * t).toFixed(4)), height: SCRIM_HEIGHT / SCRIM_BANDS };
-});
-
-export interface StoryViewerProps {
-  highlights: Highlight[];
-  state: StoryState;
-  reduced: boolean;
-  onNext: () => void;
-  onPrev: () => void;
-  onHold: (held: boolean) => void;
-  onClose: () => void;
+interface Floater {
+  id: number;
+  e: string;
+  dx: number;
+  left: number;
 }
 
 export default function StoryViewer({
+  data,
   highlights,
-  state,
-  reduced,
-  onNext,
-  onPrev,
-  onHold,
+  start,
+  web,
   onClose,
-}: StoryViewerProps) {
-  // Gesture bookkeeping. Written and read from pointer handlers only.
-  const start = useRef({ x: 0, y: 0, at: 0, held: false });
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  onToast,
+  onSeen,
+}: {
+  data: ProfileData;
+  highlights: Highlight[];
+  start: number;
+  web: boolean;
+  onClose: () => void;
+  onToast: (t: string) => void;
+  onSeen: () => void;
+}) {
+  const [h, setH] = useState(start);
+  const [s, setS] = useState(0);
+  const [held, setHeld] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [reply, setReply] = useState("");
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [restart, setRestart] = useState(0);
+  const press = useRef<{ t: number; x: number; y: number; timer: number } | null>(null);
 
-  const clearHoldTimer = useCallback(() => {
-    if (holdTimer.current !== null) clearTimeout(holdTimer.current);
-    holdTimer.current = null;
-  }, []);
+  const hl = highlights[h];
+  const slide = hl?.slides[s];
+  const key = `${h}-${s}`;
+  const paused = held || typing;
 
-  const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      start.current = { x: e.clientX, y: e.clientY, at: Date.now(), held: false };
-      clearHoldTimer();
-      holdTimer.current = setTimeout(() => {
-        holdTimer.current = null;
-        start.current = { ...start.current, held: true };
-        onHold(true);
-      }, HOLD_MS);
-    },
-    [clearHoldTimer, onHold],
-  );
+  const next = useCallback(() => {
+    const cur = highlights[h];
+    if (!cur) return onClose();
+    if (s < cur.slides.length - 1) setS(s + 1);
+    else if (h < highlights.length - 1) {
+      setH(h + 1);
+      setS(0);
+    } else {
+      onSeen();
+      onClose();
+    }
+  }, [h, s, highlights, onClose, onSeen]);
 
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const s = start.current;
-      if (s.at === 0) return;
-      const dy = e.clientY - s.y;
-      const dx = Math.abs(e.clientX - s.x);
-      // A downward drag dismisses. Only when it is clearly vertical, so a hold
-      // that wanders sideways does not throw the viewer away.
-      if (dy > SWIPE_CLOSE_PX && dy > dx) {
-        clearHoldTimer();
-        start.current = { x: 0, y: 0, at: 0, held: false };
-        if (s.held) onHold(false);
-        onClose();
-      }
-    },
-    [clearHoldTimer, onHold, onClose],
-  );
+  const prev = useCallback(() => {
+    if (s > 0) setS(s - 1);
+    else if (h > 0) {
+      setH(h - 1);
+      setS(0);
+    } else setRestart((r) => r + 1);
+  }, [h, s]);
 
-  const onPointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const s = start.current;
-      clearHoldTimer();
-      start.current = { x: 0, y: 0, at: 0, held: false };
-      if (s.at === 0) return;
+  const jump = (i: number) => {
+    setH(i);
+    setS(0);
+  };
 
-      if (s.held) {
-        // Releasing a hold resumes. It never also navigates.
-        onHold(false);
-        return;
-      }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [next, prev, onClose]);
 
-      const moved = Math.hypot(e.clientX - s.x, e.clientY - s.y);
-      if (moved > TAP_SLOP_PX) return;
+  const burst = (emoji: string, n = 5) => {
+    const base = Date.now();
+    const add = Array.from({ length: n }, (_, i) => ({ id: base + i, e: emoji, dx: (i - n / 2) * 18 + (i % 2 ? 8 : -8), left: 70 + (i % 3) * 8 }));
+    setFloaters((f) => [...f, ...add]);
+    window.setTimeout(() => setFloaters((f) => f.filter((x) => !add.some((a) => a.id === x.id))), 1900);
+  };
 
-      const rect = e.currentTarget.getBoundingClientRect();
-      const ratio = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 1;
-      if (ratio < STORY_BACK_ZONE) onPrev();
-      else onNext();
-    },
-    [clearHoldTimer, onHold, onPrev, onNext],
-  );
+  if (!hl || !slide) return null;
 
-  const onPointerCancel = useCallback(() => {
-    const s = start.current;
-    clearHoldTimer();
-    start.current = { x: 0, y: 0, at: 0, held: false };
-    if (s.held) onHold(false);
-  }, [clearHoldTimer, onHold]);
+  const onDown = (e: React.PointerEvent) => {
+    const timer = window.setTimeout(() => setHeld(true), 180);
+    press.current = { t: Date.now(), x: e.clientX, y: e.clientY, timer };
+  };
+  const onUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const pr = press.current;
+    press.current = null;
+    if (!pr) return;
+    window.clearTimeout(pr.timer);
+    const wasHold = Date.now() - pr.t > 250;
+    setHeld(false);
+    if (e.clientY - pr.y > 90) return onClose();
+    if (wasHold) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (e.clientX - rect.left < rect.width * 0.3) prev();
+    else next();
+  };
 
-  const highlight: Highlight | undefined = highlights[state.highlight];
-  if (!highlight) return null;
-  const slide = highlight.slides[state.slide];
-  if (!slide) return null;
+  const likedNow = !!liked[key];
 
-  const chrome = state.held ? 0 : 1;
-
-  return (
-    <div
-      role="dialog"
-      aria-label={`${highlight.title} highlight`}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerCancel}
-      className="us-no-select"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 160,
-        margin: "0 auto",
-        maxWidth: METRICS.desktopColumn,
-        background: "#000000",
-        overflow: "hidden",
-        touchAction: "none",
-        cursor: "pointer",
-      }}
-    >
-      {/* The photo fills the frame, centre-cropped. Letterboxing a story on a
-          phone reads as a bug; the black surround only shows on desktop. */}
-      <div style={{ position: "absolute", inset: 0 }}>
-        <Photo
-          src={slide.imageUrl}
-          alt={slide.caption ?? highlight.title}
-          sizes="420px"
-          glyphSize={44}
-          fallbackBg="#141414"
-          priority
-        />
+  const card = (
+    <div className="us-st-card" style={web ? undefined : { borderRadius: 0 }}>
+      <div key={`${key}-${restart}`} className="us-st-img">
+        <Pic src={slide.imageUrl} crop={slide.crop} eager style={{ width: "100%", height: "100%" }} />
       </div>
-
-      {/* ── Caption scrim: ten flat bands, never a gradient function ────── */}
-      {slide.caption ? (
-        <div
-          aria-hidden
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: SCRIM_HEIGHT }}
-        >
-          {SCRIM.map((band, i) => (
-            <div
-              key={i}
-              style={{
-                height: band.height,
-                background: `rgba(0,0,0,${band.alpha})`,
-              }}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {/* ── Chrome. All of it disappears on hold. ───────────────────────── */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: chrome,
-          transition: reduced ? undefined : "opacity 140ms ease-out",
-          pointerEvents: "none",
-        }}
-      >
-        {/* Progress segments: 2px tall, 4px apart, one per slide. */}
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(8px + env(safe-area-inset-top, 0px))",
-            left: 8,
-            right: 8,
-            display: "flex",
-            gap: 4,
-          }}
-        >
-          {highlight.slides.map((_, i) => {
-            const done = i < state.slide;
-            const active = i === state.slide;
-            return (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  height: 2,
-                  borderRadius: 1,
-                  background: "rgba(255,255,255,0.35)",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  // Keyed on `run` so re-entering the same slide restarts the fill.
-                  key={`${state.run}-${i}`}
-                  style={{
-                    height: "100%",
-                    background: "#FFFFFF",
-                    transformOrigin: "left center",
-                    // Reduced motion: the active bar is simply full. Taps still
-                    // move between slides; nothing advances on its own.
-                    transform: done || (active && reduced) ? "scaleX(1)" : "scaleX(0)",
-                    animation:
-                      active && !reduced
-                        ? `us-fill ${TIMING.storyAdvanceMs}ms linear both`
-                        : undefined,
-                    animationPlayState: state.held ? "paused" : "running",
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Cover, title, close. */}
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(20px + env(safe-area-inset-top, 0px))",
-            left: 12,
-            right: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              width: 30,
-              height: 30,
-              borderRadius: "50%",
-              overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.6)",
-              flexShrink: 0,
-            }}
-          >
-            <Photo src={highlight.coverUrl} alt="" sizes="30px" glyphSize={12} fallbackBg="#2A2A2A" />
+      <div className="us-st-shade" />
+      <div className="us-st-bars">
+        {hl.slides.map((_, i) => (
+          <div key={i} className="us-st-bar">
+            {i < s ? <i style={{ transform: "scaleX(1)" }} /> : null}
+            {i === s ? (
+              <i
+                key={`${key}-${restart}`}
+                className="us-story-bar-fill"
+                style={{ animation: `us-story-bar ${TIMING.storyMs}ms linear forwards`, animationPlayState: paused ? "paused" : "running" }}
+                onAnimationEnd={next}
+              />
+            ) : null}
           </div>
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#FFFFFF",
-              textShadow: "0 1px 2px rgba(0,0,0,0.4)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {highlight.title}
-          </div>
-          <button
-            type="button"
-            className="us-tap"
-            aria-label="Close"
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
-            onClick={onClose}
-            style={{
-              width: 32,
-              height: 32,
-              display: "grid",
-              placeItems: "center",
-              flexShrink: 0,
-              pointerEvents: "auto",
-            }}
-          >
-            <CloseIcon size={22} color="#FFFFFF" />
+        ))}
+      </div>
+      <div className="us-st-head">
+        <span style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", display: "block", flexShrink: 0 }}>
+          <Pic src={data.avatarUrl} crop={data.avatarCrop} eager style={{ width: "100%", height: "100%" }} />
+        </span>
+        <b>{hl.title}</b>
+        <span style={{ opacity: 0.7 }}>{AGO[h % AGO.length]}</span>
+        <span style={{ flex: 1 }} />
+        {paused && held ? <span style={{ fontSize: 12, opacity: 0.8 }}>paused</span> : null}
+        <button type="button" className="us-ico" onClick={() => onToast("screenshot notifications are on. just kidding 😌")} aria-label="Options">
+          <DotsIcon size={22} color="#fff" />
+        </button>
+        {!web ? (
+          <button type="button" className="us-ico" onClick={onClose} aria-label="Close story">
+            <CloseIcon size={24} color="#fff" />
           </button>
-        </div>
-
-        {/* Caption. */}
-        {slide.caption ? (
-          <div
-            style={{
-              position: "absolute",
-              left: 16,
-              right: 16,
-              bottom: "calc(22px + env(safe-area-inset-bottom, 0px))",
-              fontSize: 15,
-              lineHeight: "20px",
-              color: "#FFFFFF",
-              textShadow: "0 1px 3px rgba(0,0,0,0.45)",
-              overflowWrap: "anywhere",
-            }}
-          >
-            {slide.caption}
-          </div>
         ) : null}
       </div>
+
+      <div className="us-st-tap" onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => setHeld(false)} onContextMenu={(e) => e.preventDefault()} />
+
+      {slide.caption ? (
+        <div key={`c-${key}`} className="us-st-caption">
+          <span>{slide.caption}</span>
+        </div>
+      ) : null}
+      {s === 0 ? (
+        <span className="us-st-sticker" aria-hidden>
+          💞
+        </span>
+      ) : null}
+
+      <form
+        className="us-st-reply"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!reply.trim()) return;
+          setReply("");
+          burst("💌", 4);
+          onToast("Message sent 💌");
+          (document.activeElement as HTMLElement | null)?.blur();
+        }}
+      >
+        <input
+          value={reply}
+          onChange={(e) => setReply(e.target.value.slice(0, 200))}
+          onFocus={() => setTyping(true)}
+          onBlur={() => setTyping(false)}
+          placeholder={`Reply to ${data.handle}…`}
+          aria-label="Reply to story"
+          enterKeyHint="send"
+        />
+        <button
+          type="button"
+          className="us-ico"
+          aria-label={likedNow ? "Unlike story" : "Like story"}
+          onClick={() => {
+            setLiked((l) => ({ ...l, [key]: !likedNow }));
+            if (!likedNow) burst("❤️", 6);
+          }}
+        >
+          <span key={String(likedNow)} className={likedNow ? "us-pop" : ""} style={{ display: "block" }}>
+            <HeartIcon size={26} color={likedNow ? P.likeRed : "#fff"} filled={likedNow} />
+          </span>
+        </button>
+        <button type="submit" className="us-ico" aria-label="Send reply">
+          <SendIcon size={24} color="#fff" />
+        </button>
+      </form>
+
+      {floaters.map((f) => (
+        <span key={f.id} className="us-st-float" style={{ left: `${f.left}%`, "--dx": `${f.dx}px` } as CSSProperties} aria-hidden>
+          {f.e}
+        </span>
+      ))}
+    </div>
+  );
+
+  if (!web) {
+    return (
+      <div className="us-st-phone" role="dialog" aria-modal="true" aria-label={`Story: ${hl.title}`}>
+        {card}
+      </div>
+    );
+  }
+
+  const peek = (i: number, side: "l" | "r") => {
+    const o = highlights[i];
+    if (!o) return <span className="us-st-peek is-empty" aria-hidden />;
+    return (
+      <button type="button" className={`us-st-peek is-${side}`} onClick={() => jump(i)} aria-label={`Open highlight ${o.title}`}>
+        <Pic src={o.coverUrl} style={{ position: "absolute", inset: 0 }} />
+        <span className="us-st-peek-in">
+          <span style={{ width: 56, height: 56, borderRadius: "50%", padding: 2, background: "#fff", display: "block" }}>
+            <Pic src={data.avatarUrl} crop={data.avatarCrop} style={{ width: "100%", height: "100%", borderRadius: "50%" }} />
+          </span>
+          <b>{o.title}</b>
+          <span style={{ opacity: 0.8, fontSize: 12 }}>{AGO[i % AGO.length]}</span>
+        </span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="us-st-stage" role="dialog" aria-modal="true" aria-label={`Story: ${hl.title}`}>
+      <div className="us-st-word" style={{ fontFamily: WORDMARK_FONT }}>
+        {WORDMARK}
+      </div>
+      <button type="button" className="us-st-x" onClick={onClose} aria-label="Close story">
+        <CloseIcon size={28} color="#fff" />
+      </button>
+      {peek(h - 1, "l")}
+      <div className="us-st-center">
+        {card}
+        {h > 0 || s > 0 ? (
+          <button type="button" className="us-st-arrow is-l" onClick={prev} aria-label="Previous">
+            <ChevronLeft size={14} strokeWidth={3} />
+          </button>
+        ) : null}
+        <button type="button" className="us-st-arrow is-r" onClick={next} aria-label="Next">
+          <ChevronRight size={14} strokeWidth={3} />
+        </button>
+      </div>
+      {peek(h + 1, "r")}
     </div>
   );
 }
+
+export const STORY_CSS = `
+.us-st-phone{position:fixed;inset:0;z-index:240;background:#000;animation:us-zoom .22s ease}
+.us-st-phone .us-st-card{width:100%;height:100%}
+.us-st-card{position:relative;overflow:hidden;background:#111;border-radius:8px;color:#fff;touch-action:none}
+.us-st-img{position:absolute;inset:0;animation:us-story-in .5s ease}
+.us-st-shade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 18%,transparent 70%,rgba(0,0,0,.55));pointer-events:none}
+.us-st-bars{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:8px;right:8px;display:flex;gap:3px;z-index:3}
+.us-st-bar{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.35);overflow:hidden}
+.us-st-bar i{display:block;height:100%;background:#fff;transform-origin:left;transform:scaleX(0)}
+.us-st-head{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));left:12px;right:4px;display:flex;align-items:center;gap:8px;z-index:4;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.us-st-head b{font-weight:600}
+.us-st-tap{position:absolute;inset:70px 0 76px;z-index:2;cursor:pointer}
+.us-st-caption{position:absolute;left:10%;right:10%;bottom:24%;z-index:3;text-align:center;pointer-events:none;animation:us-bubble-in .5s cubic-bezier(.2,1.3,.4,1) .15s backwards}
+.us-st-caption span{display:inline;background:#fff;color:#111;font-weight:700;font-size:17px;line-height:1.55;padding:3px 8px;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.us-st-sticker{position:absolute;top:18%;right:12%;z-index:3;font-size:44px;transform:rotate(12deg);animation:us-sticker 2.8s ease-in-out infinite;pointer-events:none}
+.us-st-reply{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;align-items:center;gap:4px;padding:10px 8px calc(12px + env(safe-area-inset-bottom,0px)) 14px}
+.us-st-reply input{flex:1;min-width:0;height:44px;border-radius:22px;border:1px solid rgba(255,255,255,.7);background:transparent;color:#fff;padding:0 18px;font:inherit;font-size:16px;outline:0}
+.us-st-reply input::placeholder{color:rgba(255,255,255,.85)}
+.us-st-float{position:absolute;bottom:70px;z-index:5;font-size:30px;pointer-events:none;animation:us-float-up 1.8s ease-out forwards}
+.us-st-stage{position:fixed;inset:0;z-index:240;background:#1A1A1A;display:flex;align-items:center;justify-content:center;gap:40px;animation:us-fade .2s ease}
+.us-st-center{position:relative}
+.us-st-stage .us-st-card{height:min(94vh, 860px);aspect-ratio:9/16}
+.us-st-word{position:absolute;top:18px;left:22px;color:#fff;font-size:30px}
+.us-st-x{position:absolute;top:16px;right:18px}
+.us-st-arrow{position:absolute;top:50%;margin-top:-13px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.85)!important;display:grid;place-items:center}
+.us-st-arrow.is-l{left:-40px}.us-st-arrow.is-r{right:-40px}
+.us-st-peek{position:relative;width:min(16vw,200px);aspect-ratio:9/16;border-radius:8px;overflow:hidden;opacity:.55;transition:opacity .2s,transform .2s;color:#fff}
+.us-st-peek:hover{opacity:.85;transform:scale(1.03)}
+.us-st-peek.is-empty{visibility:hidden}
+.us-st-peek-in{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px}
+@media (max-width:1023px){.us-st-peek{display:none}}
+@keyframes us-sticker{0%,100%{transform:rotate(12deg) scale(1)}50%{transform:rotate(4deg) scale(1.12)}}
+`;

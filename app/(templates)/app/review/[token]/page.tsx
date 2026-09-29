@@ -46,7 +46,10 @@
 // to the letter: tick while visible, STOP on `visibilitychange` → hidden, and
 // tear the timer, the listener and the request down on unmount.
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+
+/** The URL never changes under this page, so there is nothing to subscribe to. */
+const subscribeNever = () => () => {};
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 
@@ -312,7 +315,6 @@ function useCountUp(target: number, reduced: boolean, ms = 600): number {
   useEffect(() => {
     if (reduced) {
       from.current = target;
-      setShown(target);
       return;
     }
     const start = from.current;
@@ -335,7 +337,7 @@ function useCountUp(target: number, reduced: boolean, ms = 600): number {
     return () => cancelAnimationFrame(frame);
   }, [target, reduced, ms]);
 
-  return shown;
+  return reduced ? target : shown;
 }
 
 /* ── Form bits ─────────────────────────────────────────────────────────────── */
@@ -721,10 +723,11 @@ function ReviewFormPage() {
    * client's first render disagree, and a hydration mismatch on a page a
    * stranger opened from a link is a blank screen.
    */
-  const [pageHref, setPageHref] = useState("");
-  useEffect(() => {
-    setPageHref(window.location.href);
-  }, []);
+  const pageHref = useSyncExternalStore(
+    subscribeNever,
+    () => window.location.href,
+    () => ""
+  );
 
   const nudgeHref = useMemo(
     () =>

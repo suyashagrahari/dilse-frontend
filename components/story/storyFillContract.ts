@@ -46,6 +46,15 @@ export interface StoryFill {
   lastLanguage: string | null;
 
   generate: () => void;
+  /**
+   * The guided-questions flow's generate: names, composed story and structured
+   * hints in one call. Optional so an older hook shape still satisfies this.
+   */
+  generateGuided?: (input: {
+    people: StoryPeople;
+    story: string;
+    hints?: { relation?: string; tone?: string; language?: string; occasion?: string };
+  }) => void;
 
   /** True only when signed in AND there is a built context worth reusing. */
   canUseMyStory: boolean;

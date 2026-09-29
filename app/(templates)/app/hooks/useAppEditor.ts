@@ -36,6 +36,7 @@ import { track } from "@/lib/analytics/track";
 import { useStoryFill } from "@/hooks/useStoryFill";
 
 import { DEMO_APP, appDataToBody, dbToAppData } from "../components/demo";
+import { missingFor } from "../components/EditSheet";
 import type { AppData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
@@ -142,6 +143,14 @@ export function useAppEditor() {
 
   const publishInFlightRef = useRef(false);
 
+  /**
+   * True once the form holds the sender's own unsaved work — a draft restored
+   * after a refresh, or anything typed. Create must then reopen THAT, not
+   * reseed the demo over it (which is how a refresh used to lose the draft).
+   */
+  const wipRef = useRef(false);
+
+
   useEffect(
     () => () => {
       for (const t of timers.current) clearTimeout(t);
@@ -186,6 +195,7 @@ export function useAppEditor() {
     if (draft?.data) {
       const d = dbToAppData(draft.data as unknown as Record<string, unknown>);
       setMf(d);
+      wipRef.current = true;
       if (draft.password) setPagePassword(draft.password);
       if (draft.completed) {
         setContent(d);
@@ -255,6 +265,7 @@ export function useAppEditor() {
   // ── Autosave the WIP draft on every keystroke ─────────────────────────────
   useEffect(() => {
     if (editMode !== "manual" && editMode !== "choose") return;
+    wipRef.current = true;
     saveDraft({ data: mf, password: pagePassword, completed: false });
   }, [mf, pagePassword, editMode]);
 
@@ -267,7 +278,8 @@ export function useAppEditor() {
 
   /** Seeds the form exactly as opening it does, without opening it. */
   const seedManualForm = useCallback(() => {
-    setMf(isPersonalized ? { ...content } : { ...DEMO_APP });
+    if (isPersonalized) setMf({ ...content });
+    else if (!wipRef.current) setMf({ ...DEMO_APP });
   }, [isPersonalized, content]);
 
   const handleEditClick = useCallback(() => {
@@ -301,8 +313,9 @@ export function useAppEditor() {
   }, [content]);
 
   const handleSave = useCallback(() => {
-    if (!mf.app.name.trim()) {
-      pushToast({ type: "info", title: "Add her name first", message: "The basics — it goes on the listing" });
+    const missing = missingFor(mf);
+    if (missing.length) {
+      pushToast({ type: "info", title: `Add ${missing.join(" and ")} first`, message: "Card 1 — it goes on the listing" });
       return;
     }
     setContent(mf);
@@ -411,9 +424,10 @@ export function useAppEditor() {
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
-    if (!content.app.name.trim()) {
+    const missing = missingFor(content);
+    if (missing.length) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_name" });
-      pushToast({ type: "info", title: "Add her name first", message: "Open Edit and fill in the basics" });
+      pushToast({ type: "info", title: `Add ${missing.join(" and ")} first`, message: "Open Edit and fill in the basics" });
       setMf({ ...content });
       setEditMode("manual");
       return;
@@ -489,7 +503,7 @@ export function useAppEditor() {
       password: pagePassword,
       title: "Your listing",
       text,
-      accent: "#4f46e5",
+      accent: "#FF2D55",
       slug: "app",
     });
   }, [shareUrl, pagePassword]);

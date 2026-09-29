@@ -74,9 +74,16 @@ export interface StoryReviewProps {
   fill: StoryFill;
   /** Into the template's own form. The one primary way out of this screen. */
   onDone: () => void;
+  /**
+   * Where "write it again" goes. Defaults to the free-text composer; the guided
+   * flow passes its own questions so a sender goes back to their answers, and
+   * `rewriteLabel` to say so.
+   */
+  onRewrite?: () => void;
+  rewriteLabel?: string;
 }
 
-export default function StoryReview({ fill, onDone }: StoryReviewProps) {
+export default function StoryReview({ fill, onDone, onRewrite, rewriteLabel }: StoryReviewProps) {
   const { filledFields, missingFields, lastLanguage, error, setFieldValue, valueAt, setMode } = fill;
 
   /** One row open at a time — twelve open textareas is not a review, it is a form. */
@@ -215,7 +222,7 @@ export default function StoryReview({ fill, onDone }: StoryReviewProps) {
 
       <button
         type="button"
-        onClick={() => setMode("composer")}
+        onClick={onRewrite ?? (() => setMode("composer"))}
         style={{
           minHeight: TAP,
           borderRadius: 12,
@@ -232,7 +239,7 @@ export default function StoryReview({ fill, onDone }: StoryReviewProps) {
         }}
       >
         <PenLine size={14} aria-hidden="true" />
-        Write it again
+        {rewriteLabel ?? "Write it again"}
       </button>
     </div>
   );

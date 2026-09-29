@@ -63,4 +63,6 @@ export interface TemplateListItem {
   color: string;
   bgGradient: string;
   coverImage?: string;
+  /** Part of the premium collection — shown in its own gallery section with a luxury card. */
+  premium?: boolean;
 }

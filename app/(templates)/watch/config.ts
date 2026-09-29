@@ -18,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Paste one video link. You get the full watch page around it — chapters that actually seek, a pinned comment, and a comment thread that stays hidden until you approve it.",
   bgGradient: "from-slate-50 via-white to-sky-50",
-  coverImage: templateMedia("watch", "cover.webp"),
+  coverImage: templateMedia("watch", "cover-poster.webp"),
   tabs: [
     { id: "video", icon: PlayCircle, label: "Video" },
     { id: "chapters", icon: ListVideo, label: "Chapters" },

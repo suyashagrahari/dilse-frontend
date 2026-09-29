@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Us",
   description:
     "Your relationship gets its own account. Bio, stats, story highlights, a photo grid, and posts with captions and comments from friends who are enjoying this far too much.",
-  coverImage:
-    templateMedia("us", "cover.jpg"),
+  coverImage: templateMedia("us", "cover-poster.webp"),
   emoji: "📱",
   color: "from-neutral-700 to-neutral-900",
   previewText: "@us_since_2023 · 847 followers 📱",

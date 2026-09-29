@@ -1,42 +1,32 @@
 "use client";
 
-// ─── Buy box — the right rail, and the two jokes that are buttons ────────────
+// ─── Buy box — the right rail on desktop, the inline block on a phone ────────
 //
-// 1px border, 8px radius, 14px padding, and every row a real one has: price,
-// delivery promise with the date in bold black, the location line, the stock
-// line, a quantity dropdown, two stacked CTAs, the secure-transaction line, the
-// ships-from / sold-by / returns table, and a wish list button.
+// Every row a real one has: price, the delivery promise with the date in bold,
+// the deliver-to link, the stock line, ships-from / sold-by, quantity, the two
+// pill CTAs, secure transaction, gift options, wish list.
 //
 // ── THE JOKE IS IN THE COLOUR ────────────────────────────────────────────────
-// `stockLine` is green — the reassuring green every listing uses — UNLESS it
-// says there is one left, and then it is red. That inversion is the whole gag
-// and it only lands because everything around it is played completely straight.
-//
-// ── NOTHING PARSES MONEY ─────────────────────────────────────────────────────
-// `amount` is rendered by slicing a leading currency character off a string.
-// See the note at the top of ./types.ts.
+// `stockLine` is the reassuring green UNLESS it says there is one left, and
+// then it is red. That inversion only lands because everything around it is
+// played completely straight.
 
-import { C, ChevronDown, FONT, LinkText, LockGlyph, PinGlyph, WRAP } from "./tokens";
+import { useState } from "react";
+import { C, FONT, WRAP } from "./tokens";
 import type { ProductData } from "./types";
+import { PriceTag } from "./Details";
+import { IconLock, IconPin, IconChevronDown } from "./icons";
 
-/**
- * The bits of a delivery promise that get set in bold black.
- *
- * Weekdays, "Tomorrow", and bare day-plus-month, with the trailing time if the
- * line carries one. Everything else stays secondary — the whole point of the
- * row is that your eye lands on the date and nothing else.
- */
 const DATE_RE =
   /((?:Today|Tonight|Tomorrow|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)(?:,\s*\d{1,2}\s+[A-Za-z]+)?(?:,?\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM))?|\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December))/g;
 
 function DeliveryLine({ line }: { line: string }) {
   const parts = line.split(DATE_RE);
   return (
-    <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: C.secondary, ...WRAP }}>
+    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: C.text, ...WRAP }}>
       {parts.map((part, i) =>
-        // `String.split` with a capturing group puts the matches at odd indices.
         i % 2 === 1 ? (
-          <strong key={`d${i}`} style={{ color: C.text, fontWeight: 700 }}>
+          <strong key={`d${i}`} style={{ fontWeight: 700 }}>
             {part}
           </strong>
         ) : (
@@ -47,13 +37,12 @@ function DeliveryLine({ line }: { line: string }) {
   );
 }
 
-/** Red when there is exactly one of her. Green the rest of the time. */
 const SCARCE = /only\s*(1|one)\b|1\s*left|last\s+one/i;
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", gap: 10, fontSize: 12, lineHeight: 1.5 }}>
-      <span style={{ flex: "0 0 78px", color: C.secondary }}>{label}</span>
+    <div style={{ display: "flex", gap: 10, fontSize: 12.5, lineHeight: 1.5 }}>
+      <span style={{ flex: "0 0 82px", color: C.secondary }}>{label}</span>
       <span style={{ flex: "1 1 auto", color: C.text, ...WRAP }}>{value}</span>
     </div>
   );
@@ -61,176 +50,116 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function BuyBox({
   data,
+  inCart,
   onAddToCart,
   onBuyNow,
   onWishList,
+  onQuantity,
 }: {
   data: ProductData;
-  onAddToCart: () => void;
+  inCart: boolean;
+  onAddToCart: (from: HTMLElement) => void;
   onBuyNow: () => void;
   onWishList: () => void;
+  onQuantity: () => void;
 }) {
-  const amount = data.price.amount;
-  const symbol = /^[₹$€£¥]/.test(amount.slice(0, 1)) ? amount.slice(0, 1) : "₹";
-  const rest = /^[₹$€£¥]/.test(amount.slice(0, 1)) ? amount.slice(1).trim() : amount;
   const scarce = SCARCE.test(data.stockLine);
-
-  const cta: React.CSSProperties = {
-    width: "100%",
-    minHeight: 29,
-    borderRadius: 100,
-    fontSize: 13,
-    fontFamily: FONT,
-    color: C.text,
-    cursor: "pointer",
-    padding: "5px 12px",
-    lineHeight: 1.4,
-    touchAction: "manipulation",
-  };
+  const [gift, setGift] = useState(true);
+  const her = data.subject.firstName.trim() || "her";
 
   return (
-    <aside
-      aria-label="Buy box"
-      style={{
-        border: `1px solid ${C.border}`,
-        borderRadius: 8,
-        padding: 14,
-        fontFamily: FONT,
-        color: C.text,
-        background: "#fff",
-        minWidth: 0,
-      }}
-    >
-      <div style={{ display: "inline-flex", alignItems: "flex-start", marginBottom: 8 }}>
-        <span style={{ fontSize: 13, lineHeight: "18px", marginTop: 2 }}>{symbol}</span>
-        <span style={{ fontSize: 28, lineHeight: "30px", ...WRAP }}>{rest}</span>
+    <aside aria-label="Buy box" className="lk-buy">
+      <div className="lk-buy-price">
+        <PriceTag amount={data.price.amount} size={28} />
       </div>
 
       <DeliveryLine line={data.deliveryLine} />
-
-      <p style={{ margin: "6px 0 0", fontSize: 13 }}>
-        <span style={{ color: C.text }}>Or fastest delivery: </span>
-        <LinkText onClick={onBuyNow} size={13}>
-          call her now
-        </LinkText>
+      <p style={{ margin: "8px 0 0", fontSize: 14, color: C.text }}>
+        Or fastest delivery <strong>right now</strong>. Just call. <span className="lk-link">Details</span>
       </p>
 
-      <p
-        style={{
-          margin: "8px 0 0",
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-          fontSize: 13,
-          color: C.link,
-        }}
-      >
-        <PinGlyph size={13} color={C.link} />
-        Bengaluru 560001
+      <p className="lk-link" style={{ margin: "10px 0 0", display: "flex", alignItems: "center", gap: 5, fontSize: 13 }}>
+        <IconPin size={15} color={C.text} />
+        Deliver to {her} – My heart 143001
       </p>
 
-      <p
-        style={{
-          margin: "10px 0 0",
-          fontSize: 17,
-          fontWeight: 400,
-          color: scarce ? C.priceRed : C.green,
-          ...WRAP,
-        }}
-      >
+      <p style={{ margin: "12px 0 0", fontSize: 18, color: scarce ? C.priceRed : C.green, fontWeight: scarce ? 700 : 400, ...WRAP }}>
         {data.stockLine}
       </p>
 
-      {/* Quantity. There is one of her, so the menu has one option. */}
-      <label style={{ display: "block", marginTop: 10 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 13, color: C.text }}>Quantity:</span>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              border: `1px solid ${C.border}`,
-              borderRadius: 8,
-              background: C.section,
-              padding: "3px 8px",
-              boxShadow: "0 1px 2px rgba(15,17,17,0.08) inset",
-            }}
-          >
-            <select
-              aria-label="Quantity"
-              defaultValue="1"
-              style={{
-                border: 0,
-                background: "transparent",
-                fontFamily: FONT,
-                fontSize: 13,
-                color: C.text,
-                appearance: "none",
-                paddingRight: 2,
-                cursor: "pointer",
-              }}
-            >
-              <option value="1">1</option>
-            </select>
-            <ChevronDown size={11} color={C.secondary} />
-          </span>
-        </span>
-      </label>
-      <p style={{ margin: "5px 0 0", fontSize: 12, color: C.secondary }}>
-        Qty limited to 1 per customer. Permanently.
-      </p>
+      <div style={{ display: "grid", gap: 3, marginTop: 10 }}>
+        <InfoRow label="Ships from" value="The seller's heart" />
+        <InfoRow label="Sold by" value="Nobody. Not for sale." />
+        <InfoRow label="Payment" value="Secure transaction" />
+        <InfoRow label="Packaging" value="Wrapped in hugs" />
+      </div>
+
+      <button type="button" className="lk-qty" onClick={onQuantity} aria-label="Quantity: 1">
+        Quantity: 1 <IconChevronDown size={10} color={C.text} />
+      </button>
 
       <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
         <button
           type="button"
-          onClick={onAddToCart}
-          style={{ ...cta, background: C.ctaYellow, border: `1px solid #E7B93C` }}
+          className="lk-cta lk-cta-yellow"
+          data-lk-add=""
+          onClick={(e) => onAddToCart(e.currentTarget)}
         >
-          Add to Cart
+          {inCart ? "Added to Cart ✓" : "Add to Cart"}
         </button>
-        <button
-          type="button"
-          onClick={onBuyNow}
-          style={{ ...cta, background: C.ctaOrange, border: `1px solid #E08A2B` }}
-        >
+        <button type="button" className="lk-cta lk-cta-orange" onClick={onBuyNow}>
           Buy Now
         </button>
       </div>
 
-      <p
-        style={{
-          margin: "10px 0 0",
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-          fontSize: 12,
-          color: C.link,
-        }}
-      >
-        <LockGlyph size={13} />
-        Secure transaction
+      <p className="lk-link" style={{ margin: "12px 0 0", display: "flex", alignItems: "center", gap: 5, fontSize: 13 }}>
+        <IconLock size={13} color={C.secondary} /> Secure transaction
       </p>
 
-      <div style={{ display: "grid", gap: 5, marginTop: 12 }}>
-        <InfoRow label="Ships from" value="Bengaluru" />
-        <InfoRow label="Sold by" value="Nobody. She is not for sale." />
-        <InfoRow label="Returns" value="Non-returnable" />
-      </div>
+      <label className="lk-gift">
+        <input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} />
+        <span>
+          Add gift options {gift ? <span style={{ color: C.secondary }}>· a handwritten note is already in the box 💌</span> : null}
+        </span>
+      </label>
 
-      <button
-        type="button"
-        onClick={onWishList}
-        style={{
-          ...cta,
-          marginTop: 12,
-          background: C.section,
-          border: `1px solid ${C.border}`,
-          color: C.text,
-        }}
-      >
+      <hr className="lk-hr" style={{ margin: "12px 0" }} />
+      <button type="button" className="lk-cta lk-cta-ghost" onClick={onWishList}>
         Add to Wish List
       </button>
     </aside>
+  );
+}
+
+export function BuyBoxStyles() {
+  return (
+    <style>{`
+      .lk-buy { font-family: ${FONT}; color: ${C.text}; background: #fff; min-width: 0; }
+      .lk-buy-price { display: none; margin-bottom: 10px; }
+      @media (min-width: 768px) {
+        .lk-buy { border: 1px solid ${C.border}; border-radius: 8px; padding: 18px; }
+        .lk-buy-price { display: block; }
+      }
+      .lk-qty {
+        margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px;
+        background: #F0F2F2; border: 1px solid ${C.border}; box-shadow: 0 2px 5px rgba(213,217,217,.5);
+        font: 400 13px ${FONT}; color: ${C.text}; cursor: pointer;
+      }
+      .lk-qty:hover { background: #E3E6E6; }
+      .lk-cta {
+        width: 100%; min-height: 44px; border-radius: 100px; font: 400 15px ${FONT}; color: ${C.text}; cursor: pointer; padding: 8px 14px;
+        touch-action: manipulation; transition: background .12s ease, transform .12s ease; -webkit-tap-highlight-color: transparent;
+      }
+      @media (min-width: 768px) { .lk-cta { min-height: 34px; font-size: 13px; padding: 6px 12px; } }
+      .lk-cta:active { transform: scale(.98); }
+      .lk-cta-yellow { background: ${C.ctaYellow}; border: 1px solid ${C.ctaYellowEdge}; }
+      .lk-cta-yellow:hover { background: ${C.ctaYellowHover}; }
+      .lk-cta-orange { background: ${C.ctaOrange}; border: 1px solid ${C.ctaOrangeEdge}; }
+      .lk-cta-orange:hover { background: ${C.ctaOrangeHover}; }
+      .lk-cta-ghost { background: #fff; border: 1px solid ${C.border}; box-shadow: 0 2px 5px rgba(213,217,217,.5); }
+      .lk-cta-ghost:hover { background: #F7FAFA; }
+      .lk-gift { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 13px; line-height: 1.4; cursor: pointer; }
+      .lk-gift input { accent-color: #007185; width: 16px; height: 16px; margin: 1px 0 0; flex: none; }
+    `}</style>
   );
 }

@@ -6,7 +6,8 @@ import { Lock, Eye, EyeOff, ShieldAlert, Loader2 } from "lucide-react";
 
 import UsTemplate from "@/app/(templates)/us/components/UsTemplate";
 import { dbToProfileData } from "@/app/(templates)/us/components/coerce";
-import { PALETTE } from "@/app/(templates)/us/components/types";
+import { PALETTE, RING, WORDMARK, WORDMARK_FONT } from "@/app/(templates)/us/components/types";
+import { usScript } from "@/app/(templates)/us/components/fonts";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 /* ─────────────────────────────────────────
@@ -40,7 +41,7 @@ function UsPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: 
   }, [pw, shareId, onUnlocked]);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center px-5" style={{ background: PALETTE.bg }}>
+    <div className={`${usScript.variable} fixed inset-0 z-[200] flex items-center justify-center px-5`} style={{ background: PALETTE.bg }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -48,21 +49,19 @@ function UsPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocked: 
         className="relative w-full max-w-sm z-10"
       >
         <div className="rounded-3xl overflow-hidden shadow-2xl" style={{ background: "#ffffff", border: `1px solid ${PALETTE.border}` }}>
-          <div className="h-1" style={{ background: PALETTE.actionBlue }} />
+          <div className="pt-6 text-center" style={{ fontFamily: WORDMARK_FONT, fontSize: 38, lineHeight: 1, color: PALETTE.ink }}>{WORDMARK}</div>
           <div className="px-7 pt-8 pb-7">
             <div className="flex flex-col items-center mb-7">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: PALETTE.actionBlue }}
-              >
-                <Lock size={28} className="text-white" />
+              <div className="w-24 h-24 rounded-full p-[3px] mb-4" style={{ background: RING }}>
+                <div className="w-full h-full rounded-full bg-white grid place-items-center">
+                  <Lock size={34} style={{ color: PALETTE.ink }} />
+                </div>
               </div>
-              <div className="text-3xl mb-2" aria-hidden>📱</div>
               <h2 className="text-xl font-bold text-center mb-1" style={{ color: PALETTE.ink }}>
                 This account is private.
               </h2>
               <p className="text-xs text-center leading-relaxed" style={{ color: PALETTE.grey }}>
-                Enter the password<br />to follow
+                Only one person has the password.<br />If that&apos;s you — follow 💞
               </p>
             </div>
 
@@ -143,5 +142,9 @@ export default function UsViewer({
   // input and this is the one place that decides what a malformed field becomes.
   const data = dbToProfileData(rawData);
 
-  return <UsTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />;
+  return (
+    <div className={usScript.variable}>
+      <UsTemplate data={data} mode="live" shareId={shareId} hasPassword={hasPassword} />
+    </div>
+  );
 }
