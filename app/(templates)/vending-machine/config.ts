@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Affection Dispenser",
   description:
     "A vending machine loaded with eighteen things you'd never say out loud. They pay with a confession, punch a code, and watch it drop. One slot jams on purpose.",
-  coverImage: templateMedia("vending-machine", "cover.jpg"),
+  coverImage: templateMedia("vending-machine", "cover-v2.webp"),
   emoji: "🎰",
   color: "from-teal-600 to-emerald-800",
   previewText: "CREDIT ₹0.00 · INSERT ONE THING YOU LOVE 🎰",

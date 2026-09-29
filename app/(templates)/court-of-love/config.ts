@@ -15,7 +15,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "Ten questions. One penguin judge. Your memories filed as evidence, a sealed judgement read after the gavel — and a signed ₹100 stamp paper for the winner.",
   bgGradient: "from-violet-50 via-pink-50 to-white",
-  coverImage: templateMedia("court-of-love", "cover.jpg"),
+  coverImage: templateMedia("court-of-love", "cover-v2.webp"),
   tabs: [
     { id: "summons", icon: Scale, label: "Summons" },
     { id: "session", icon: Gavel, label: "Session" },

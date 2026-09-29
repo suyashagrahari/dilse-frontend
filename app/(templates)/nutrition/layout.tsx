@@ -19,7 +19,7 @@ const SOCIAL_TITLE = "Nutrition Facts · Servings per container: 1";
 const SOCIAL_DESCRIPTION = "Calories: ∞, worth every one. Not a significant source of patience.";
 
 const OG_IMAGE = {
-  url: templateMedia("nutrition", "cover.webp"),
+  url: templateMedia("nutrition", "cover-v2.webp"),
   width: 1200,
   height: 630,
   alt: "A nutrition label made for someone you love — SubhSandesh",

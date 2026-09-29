@@ -18,7 +18,7 @@ export const config: TemplatePageConfig = {
   bodyText:
     "8px regulatory type, hard black rules, an ingredients paragraph nobody can read. Then, underneath the package, the same person says the sincere thing in a completely different voice.",
   bgGradient: "from-stone-50 via-white to-neutral-50",
-  coverImage: templateMedia("nutrition", "cover.webp"),
+  coverImage: templateMedia("nutrition", "cover-v2.webp"),
   tabs: [
     { id: "product", icon: Package, label: "Product" },
     { id: "serving", icon: ListOrdered, label: "Serving" },
