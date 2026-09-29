@@ -1,276 +1,202 @@
 "use client";
 
-// ─── The full-width sections: bundle, spec table, seller note ────────────────
-//
-// Three blocks that sit below the three-column grid and run the width of the
-// page. They are in one file because they share nothing but the page they are
-// on, and three twelve-line files would be worse than one.
+// ─── Full-width sections: bundle, product information, from the seller ───────
 //
 // ── THE SELLER NOTE IS THE PAYLOAD ───────────────────────────────────────────
 // Everything above it is spec-sheet comedy. `FromTheSeller` is where the page
-// stops joking, and it is the only block on the whole listing set in a serif
-// with real whitespace around it. That tonal break is the thing the recipient
-// actually keeps, so it gets the room. Do not compress it to match the density
-// of the rest of the page — the mismatch is deliberate.
+// stops joking — the only block on the listing set in a serif with real
+// whitespace, the way a brand's A+ content breaks out of the grid. Do not
+// compress it to match the density of the rest of the page.
 
-import { C, FONT, Photo, SECTION_IDS, SERIF, WRAP } from "./tokens";
-import type { BundleItem, ProductData, Spec } from "./types";
+import { useState } from "react";
+import { C, FONT, SECTION_IDS, SERIF, WRAP } from "./tokens";
+import type { BundleItem, PhotoCrop, ProductData, Spec } from "./types";
+import { Framed } from "./Gallery";
+import { PriceTag, priceParts } from "./Details";
 
-const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
-const numberWord = (n: number): string => NUMBER_WORDS[n] ?? String(n);
+/** A tile for an item with no photo — a soft square with the right emoji. */
+const EMOJI_RULES: [RegExp, string][] = [
+  [/coffee|chai|tea|latte/i, "☕"],
+  [/boyfriend|husband|him\b|guy|man\b/i, "🙋‍♂️"],
+  [/girlfriend|wife/i, "🙋‍♀️"],
+  [/\b(mom|mother|maa|mummy|aunty|mrs|papa|dad|father|parents?)\b/i, "🏠"],
+  [/flower|rose|bouquet/i, "💐"],
+  [/pizza|momo|food|biryani|maggi|snack|dinner/i, "🍕"],
+  [/dog|puppy|cat|kitten|pet/i, "🐶"],
+  [/music|playlist|song|spotify/i, "🎧"],
+  [/book|novel|read/i, "📚"],
+  [/\b(car|drive|bike|scooty|scooter|activa|road trip)\b/i, "🚗"],
+  [/chocolate|dessert|cake|ice ?cream/i, "🍫"],
+  [/hug|cuddle|blanket|hoodie/i, "🧸"],
+  [/movie|film|netflix|show/i, "🍿"],
+  [/phone|call|text|message/i, "📱"],
+];
+const FALLBACK_EMOJI = ["🎁", "💐", "🧸", "🍫"];
 
-/** The checkbox glyph. Drawn, not a native control — this list is decorative. */
-function CheckBox({ on }: { on: boolean }) {
+export function emojiFor(name: string, i: number): string {
+  for (const [re, e] of EMOJI_RULES) if (re.test(name)) return e;
+  return FALLBACK_EMOJI[i % FALLBACK_EMOJI.length] ?? "🎁";
+}
+
+function Tile({ item, i }: { item: BundleItem; i: number }) {
+  if (item.imageUrl) return <Framed src={item.imageUrl} alt={item.name} />;
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ flex: "none", marginTop: 2 }}>
-      <rect
-        x="0.9"
-        y="0.9"
-        width="14.2"
-        height="14.2"
-        rx="2.4"
-        fill={on ? C.link : "#fff"}
-        stroke={on ? C.link : C.border}
-        strokeWidth="1.4"
-      />
-      {on && (
-        <path d="M4 8.4 6.8 11 12 5.2" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      )}
-    </svg>
+    <span className="lk-emoji-tile" style={{ background: ["#FFF1E6", "#EAF7F5", "#FDEBF1", "#EEF1FF"][i % 4] }} aria-hidden="true">
+      {emojiFor(item.name, i)}
+    </span>
   );
 }
 
 /* ── Frequently bought together ────────────────────────────────────────────── */
 
-interface Tile {
-  name: string;
-  price: string;
-  imageUrl: string;
-  note?: string;
-  thisItem?: boolean;
-}
-
 export function FrequentlyBoughtTogether({
   data,
+  heroCrop,
   onAddAll,
 }: {
   data: ProductData;
-  onAddAll: () => void;
+  heroCrop?: PhotoCrop;
+  onAddAll: (from: HTMLElement) => void;
 }) {
-  const tiles: Tile[] = [
-    {
-      name: data.title,
-      // String. Never parsed, never summed. See the note in ./types.ts.
-      price: data.price.amount,
-      imageUrl: data.subject.photos[0] ?? "",
-      thisItem: true,
-    },
-    ...data.bundle.map((b: BundleItem) => ({
-      name: b.name,
-      price: b.price,
-      imageUrl: b.imageUrl,
-      note: b.note,
-    })),
-  ];
+  const extras = data.bundle.slice(0, 3);
+  const [on, setOn] = useState<boolean[]>(() => extras.map(() => true));
+  if (extras.length === 0) return null;
+  const n = 1 + on.filter(Boolean).length;
+  const words = ["", "", "both", "all three", "all four"];
 
   return (
-    <section
-      style={{
-        borderTop: `1px solid ${C.border}`,
-        padding: "20px 0",
-        fontFamily: FONT,
-        color: C.text,
-      }}
-    >
-      <h2 style={{ margin: "0 0 14px", fontSize: 20, fontWeight: 700 }}>Frequently bought together</h2>
-
+    <section className="lk-sec" aria-labelledby="lk-fbt-h">
+      <h2 id="lk-fbt-h" className="lk-h2">
+        Frequently bought together
+      </h2>
       <div className="lk-fbt">
-        {/* The image strip: image + image + image = Total. */}
-        <div className="lk-fbt-strip">
-          {tiles.map((tile, i) => (
-            <div key={`${tile.name}-${i}`} style={{ display: "contents" }}>
-              {i > 0 && (
-                <span aria-hidden="true" style={{ fontSize: 22, color: C.secondary, padding: "0 2px" }}>
-                  +
-                </span>
-              )}
-              <span className="lk-fbt-tile">
-                <Photo src={tile.imageUrl} alt={tile.name} fit="cover" glyphSize={22} />
+        <div className="lk-fbt-imgs">
+          <span className="lk-fbt-img" data-lk-fbt="">
+            <Framed src={data.subject.photos[0] ?? ""} crop={heroCrop} alt={data.subject.firstName} />
+          </span>
+          {extras.map((b, i) => (
+            <span key={`${b.name}-${i}`} style={{ display: "contents" }}>
+              <span className="lk-fbt-plus">+</span>
+              <span className="lk-fbt-img" style={{ opacity: on[i] ? 1 : 0.35 }}>
+                <Tile item={b} i={i} />
               </span>
-            </div>
+            </span>
           ))}
-          <span aria-hidden="true" style={{ fontSize: 22, color: C.secondary, padding: "0 2px" }}>
-            =
-          </span>
-          <span className="lk-fbt-total">
-            <span style={{ fontSize: 12, color: C.secondary }}>Total</span>
-            <span style={{ fontSize: 19, color: C.text, ...WRAP }}>{data.price.amount}</span>
-          </span>
         </div>
-
-        {/* The list. */}
-        <div style={{ minWidth: 0, display: "grid", gap: 10 }}>
-          {tiles.map((tile, i) => (
-            <div key={`row-${tile.name}-${i}`} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <CheckBox on />
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.4, ...WRAP }}>
-                  {tile.thisItem ? <strong style={{ fontWeight: 700 }}>This item: </strong> : null}
-                  {tile.name}
-                </p>
-                <p style={{ margin: "2px 0 0", fontSize: 13, color: C.text }}>{tile.price}</p>
-                {tile.note ? (
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: C.secondary, ...WRAP }}>{tile.note}</p>
-                ) : null}
-              </div>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={onAddAll}
-            style={{
-              justifySelf: "start",
-              minHeight: 31,
-              padding: "5px 16px",
-              borderRadius: 100,
-              border: "1px solid #E7B93C",
-              background: C.ctaYellow,
-              color: C.text,
-              fontFamily: FONT,
-              fontSize: 13,
-              cursor: "pointer",
-              touchAction: "manipulation",
-            }}
-          >
-            Add all {numberWord(tiles.length)} to Cart
+        <div className="lk-fbt-total">
+          <p style={{ margin: 0, fontSize: 14 }}>
+            Total price: <PriceTag amount={data.price.amount} size={18} />
+          </p>
+          <button type="button" className="lk-cta lk-cta-yellow" style={{ marginTop: 8 }} onClick={(e) => onAddAll(e.currentTarget)}>
+            Add {words[n] || `all ${n}`} to Cart
           </button>
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: C.secondary }}>Some of these items ship from the same heart.</p>
         </div>
       </div>
+
+      <ul className="lk-fbt-list">
+        <li>
+          <input type="checkbox" checked readOnly aria-label="This item" />
+          <span>
+            <strong>This item:</strong> {data.title} <strong className="lk-fbt-price">{priceParts(data.price.amount).symbol}{priceParts(data.price.amount).rest}</strong>
+          </span>
+        </li>
+        {extras.map((b, i) => (
+          <li key={`${b.name}-row-${i}`}>
+            <input
+              type="checkbox"
+              checked={on[i] ?? true}
+              onChange={() => setOn((prev) => prev.map((v, k) => (k === i ? !v : v)))}
+              aria-label={b.name}
+            />
+            <span>
+              <span className="lk-link">{b.name}</span> <strong className="lk-fbt-price">{b.price}</strong>
+              {b.note ? <span style={{ display: "block", color: C.secondary, fontSize: 12.5 }}>{b.note}</span> : null}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
 
 /* ── Product information ───────────────────────────────────────────────────── */
 
-/**
- * Every row from `data.specs`, alternating fill, label column at 30% / 700.
- *
- * `specs` may arrive from the AI fill as "Label: Value" strings; they are
- * turned into `{label, value}` upstream by `normalizeProductData`, splitting on
- * the FIRST colon only so a value may contain further colons.
- */
 export function SpecTable({ specs }: { specs: Spec[] }) {
   if (specs.length === 0) return null;
+  const half = Math.ceil(specs.length / 2);
+  const cols = [specs.slice(0, half), specs.slice(half)];
   return (
-    <section
-      id={SECTION_IDS.specs}
-      style={{ borderTop: `1px solid ${C.border}`, padding: "20px 0", fontFamily: FONT }}
-    >
-      <h2 style={{ margin: "0 0 14px", fontSize: 20, fontWeight: 700, color: C.text }}>
+    <section id={SECTION_IDS.specs} className="lk-sec" aria-labelledby="lk-spec-h">
+      <h2 id="lk-spec-h" className="lk-h2">
         Product information
       </h2>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
-          border: `1px solid ${C.border}`,
-        }}
-      >
-        <tbody>
-          {specs.map((row, i) => (
-            <tr key={`${row.label}-${i}`} style={{ background: i % 2 === 0 ? C.section : C.page }}>
-              <th
-                scope="row"
-                style={{
-                  width: "30%",
-                  textAlign: "left",
-                  verticalAlign: "top",
-                  padding: "9px 12px",
-                  border: `1px solid ${C.border}`,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: C.text,
-                  ...WRAP,
-                }}
-              >
-                {row.label}
-              </th>
-              <td
-                style={{
-                  padding: "9px 12px",
-                  border: `1px solid ${C.border}`,
-                  fontSize: 14,
-                  color: C.text,
-                  lineHeight: 1.45,
-                  ...WRAP,
-                }}
-              >
-                {row.value}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="lk-spec-grid">
+        {cols.map((col, c) => (
+          <div key={c}>
+            {c === 0 && <h3 className="lk-h3">Technical Details</h3>}
+            {c === 1 && <h3 className="lk-h3">Additional Information</h3>}
+            <table className="lk-spec">
+              <tbody>
+                {col.map((s, i) => (
+                  <tr key={`${s.label}-${i}`}>
+                    <th scope="row">{s.label}</th>
+                    <td>{s.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
 
-/* ── From the seller ───────────────────────────────────────────────────────── */
+/* ── From the seller (A+ content) ──────────────────────────────────────────── */
 
-export function FromTheSeller({ about }: { about: ProductData["aboutSection"] }) {
-  const paragraphs = about.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+export function FromTheSeller({
+  about,
+  photo,
+  crop,
+  sender,
+}: {
+  about: ProductData["aboutSection"];
+  photo: string;
+  crop?: PhotoCrop;
+  sender: string;
+}) {
+  const paras = about.body
+    .split(/\n{2,}|\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!about.heading && paras.length === 0) return null;
+  const img = about.imageUrl || photo;
 
   return (
-    <section
-      style={{
-        background: C.section,
-        borderTop: `1px solid ${C.border}`,
-        borderBottom: `1px solid ${C.border}`,
-        margin: "8px 0 0",
-        padding: "44px 0 48px",
-      }}
-    >
-      <div className="lk-shell">
-        <h2
-          style={{
-            margin: "0 0 26px",
-            fontFamily: SERIF,
-            fontSize: 27,
-            fontWeight: 400,
-            lineHeight: 1.25,
-            color: C.text,
-            ...WRAP,
-          }}
-        >
-          {about.heading}
-        </h2>
-
-        <div className="lk-seller">
-          <div style={{ minWidth: 0 }}>
-            <div style={{ aspectRatio: "16 / 9", width: "100%" }}>
-              <Photo src={about.imageUrl} alt={about.heading} fit="cover" background="#EDEEEE" />
-            </div>
+    <section className="lk-sec lk-aplus" aria-labelledby="lk-aplus-h">
+      <h2 className="lk-h2">From the manufacturer</h2>
+      <div className="lk-aplus-card">
+        {img ? (
+          <div className="lk-aplus-img">
+            <Framed src={img} crop={about.imageUrl ? undefined : crop} alt="" />
+            <span className="lk-aplus-tag">handmade · 1 of 1</span>
           </div>
-
-          <div style={{ minWidth: 0, display: "grid", gap: 18 }}>
-            {(paragraphs.length > 0 ? paragraphs : [about.body]).map((p, i) => (
-              <p
-                key={`p${i}`}
-                style={{
-                  margin: 0,
-                  fontFamily: SERIF,
-                  fontSize: 17,
-                  lineHeight: 1.75,
-                  color: C.text,
-                  ...WRAP,
-                }}
-              >
-                {p}
-              </p>
-            ))}
-          </div>
+        ) : null}
+        <div className="lk-aplus-copy">
+          {about.heading ? (
+            <h3 id="lk-aplus-h" style={{ margin: 0, fontFamily: SERIF, fontSize: 28, lineHeight: 1.2, fontWeight: 400, color: C.text, ...WRAP }}>
+              {about.heading}
+            </h3>
+          ) : null}
+          {paras.map((p, i) => (
+            <p key={i} style={{ margin: "14px 0 0", fontFamily: SERIF, fontSize: 17, lineHeight: 1.75, color: "#333", ...WRAP }}>
+              {p}
+            </p>
+          ))}
+          {sender ? (
+            <p style={{ margin: "18px 0 0", fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: C.love }}>— {sender}</p>
+          ) : null}
         </div>
       </div>
     </section>
@@ -280,24 +206,36 @@ export function FromTheSeller({ about }: { about: ProductData["aboutSection"] })
 export function SectionStyles() {
   return (
     <style>{`
-      .lk-fbt { display: grid; gap: 18px; }
-      .lk-fbt-strip {
-        display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-      }
-      .lk-fbt-tile {
-        display: block; width: 78px; height: 78px; flex: none;
-        border: 1px solid ${C.border}; background: #fff;
-      }
-      .lk-fbt-total {
-        display: inline-flex; flex-direction: column; gap: 2px;
-        padding-left: 4px; min-width: 0;
-      }
-      .lk-seller { display: grid; gap: 24px; }
+      .lk-sec { border-top: 1px solid ${C.hairline}; padding: 22px 0 6px; margin-top: 18px; font-family: ${FONT}; color: ${C.text}; }
+      .lk-h3 { margin: 0 0 8px; font: 700 16px ${FONT}; color: ${C.text}; }
+      .lk-emoji-tile { display: grid; place-items: center; width: 100%; height: 100%; font-size: 38px; }
 
-      @media (min-width: 900px) {
-        .lk-fbt { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-        .lk-seller { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 40px; align-items: start; }
-      }
+      .lk-fbt { display: flex; flex-direction: column; gap: 14px; }
+      @media (min-width: 768px) { .lk-fbt { flex-direction: row; align-items: center; gap: 28px; } }
+      .lk-fbt-imgs { display: flex; align-items: center; gap: 6px; min-width: 0; }
+      .lk-fbt-img { flex: 0 1 110px; min-width: 0; aspect-ratio: 1 / 1; border-radius: 8px; overflow: hidden; border: 1px solid ${C.hairline}; transition: opacity .2s ease; }
+      .lk-fbt-plus { flex: none; font-size: 22px; color: ${C.secondary}; }
+      .lk-fbt-total { min-width: 0; }
+      @media (min-width: 768px) { .lk-fbt-total { width: 230px; } }
+      .lk-fbt-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; line-height: 1.45; }
+      .lk-fbt-list li { display: flex; gap: 8px; align-items: flex-start; overflow-wrap: anywhere; }
+      .lk-fbt-list input { accent-color: #007185; width: 16px; height: 16px; margin-top: 2px; flex: none; }
+      .lk-fbt-price { color: ${C.priceRed}; font-weight: 700; white-space: nowrap; }
+
+      .lk-spec-grid { display: grid; gap: 18px; }
+      @media (min-width: 1024px) { .lk-spec-grid { grid-template-columns: 1fr 1fr; gap: 40px; } }
+      .lk-spec { width: 100%; border-collapse: collapse; font-size: 14px; }
+      .lk-spec th, .lk-spec td { border-top: 1px solid ${C.hairline}; padding: 8px 12px; vertical-align: top; text-align: left; overflow-wrap: anywhere; }
+      .lk-spec tr:last-child th, .lk-spec tr:last-child td { border-bottom: 1px solid ${C.hairline}; }
+      .lk-spec th { background: #F3F3F3; font-weight: 700; width: 42%; color: #333; }
+
+      .lk-aplus-card { display: grid; gap: 0; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #FFF8F1, #FFF 70%); border: 1px solid #F3E6D8; }
+      @media (min-width: 900px) { .lk-aplus-card { grid-template-columns: 5fr 7fr; align-items: stretch; } }
+      .lk-aplus-img { position: relative; aspect-ratio: 4 / 3; }
+      @media (min-width: 900px) { .lk-aplus-img { aspect-ratio: auto; min-height: 380px; } }
+      .lk-aplus-tag { position: absolute; left: 12px; bottom: 12px; background: rgba(255,255,255,.92); color: ${C.love}; font: 700 11px ${FONT}; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 100px; }
+      .lk-aplus-copy { padding: 26px 22px 28px; }
+      @media (min-width: 900px) { .lk-aplus-copy { padding: 44px 48px; } }
     `}</style>
   );
 }

@@ -40,6 +40,7 @@ import {
   type ProductData,
 } from "../components/types";
 import { normalizeProductData } from "../components/tokens";
+import { missingForSave } from "../components/EditSheet";
 import { useReviewModeration } from "../components/contribApi";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
@@ -99,6 +100,50 @@ const readDraft = (): { data?: ProductData; password?: string; completed?: boole
     return null;
   }
 };
+
+/* ── Demo names → their names ─────────────────────────────────────────────── */
+
+const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The demo copy is written about Meera Sharma, listed by Karan. A sender who
+ * skips the AI and only types the three names would otherwise publish a page
+ * whose title, bullets and reviews still say "Meera". Every text leaf (never a
+ * URL) has the demo names swapped for theirs; text they wrote themselves has
+ * no demo names in it, so it is untouched.
+ */
+export function personalizeDemo(d: ProductData): ProductData {
+  const her = d.subject.firstName.trim();
+  const last = d.subject.lastName.trim();
+  const him = d.sender.firstName.trim();
+  const demoHer = DEMO_DATA.subject.firstName;
+  const demoLast = DEMO_DATA.subject.lastName;
+  const demoHim = DEMO_DATA.sender.firstName;
+  const rules: [RegExp, string][] = [];
+  if (her && her !== demoHer) {
+    rules.push([new RegExp(`\\b${esc(demoHer)} ${esc(demoLast)}\\b`, "g"), last ? `${her} ${last}` : her]);
+    rules.push([new RegExp(`\\b${esc(demoHer)}\\b`, "g"), her]);
+    rules.push([new RegExp(`\\b${esc(demoHer.toUpperCase())}\\b`, "g"), her.toUpperCase()]);
+  }
+  if ((last || her) && (last || her) !== demoLast) rules.push([new RegExp(`\\b${esc(demoLast)}\\b`, "g"), last || her]);
+  if (him && him !== demoHim) {
+    rules.push([new RegExp(`\\b${esc(demoHim)}\\b`, "g"), him]);
+    rules.push([new RegExp(`\\b${esc(demoHim.slice(0, 3).toUpperCase())}\\b`, "g"), him.slice(0, 3).toUpperCase()]);
+  }
+  if (rules.length === 0) return d;
+  const swap = (v: string) => rules.reduce((acc, [re, to]) => acc.replace(re, to), v);
+  const walk = (v: unknown, key = ""): unknown => {
+    if (typeof v === "string") return /url$|^photos$/i.test(key) || /^(https?:|data:)/.test(v) ? v : swap(v);
+    if (Array.isArray(v)) return key === "photos" ? v : v.map((x) => walk(x, key === "crops" ? "crops" : ""));
+    if (v && typeof v === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, x] of Object.entries(v)) out[k] = k === "firstName" || k === "lastName" || k === "crops" ? x : walk(x, k);
+      return out;
+    }
+    return v;
+  };
+  return walk(d) as ProductData;
+}
 
 /* ── The hook ──────────────────────────────────────────────────────────────── */
 
@@ -270,10 +315,14 @@ export function useProductEditor() {
   // ── Autosave the WIP draft on every keystroke ─────────────────────────────
   useEffect(() => {
     if (editMode !== "manual" && editMode !== "choose") return;
-    saveDraft({ data: mf, password: pagePassword, completed: false });
+    // Normalised on the way to storage: the form keeps list fields as raw
+    // "Label: Value" lines while typing, and a restore reads objects.
+    saveDraft({ data: normalizeProductData(mf), password: pagePassword, completed: false });
   }, [mf, pagePassword, editMode]);
 
-  const displayData = editMode === "manual" || editMode === "choose" ? mf : content;
+  const editing = editMode === "manual" || editMode === "choose";
+  const personalMf = useMemo(() => (editing ? personalizeDemo(mf) : mf), [editing, mf]);
+  const displayData = editing ? personalMf : content;
 
   const updateMf = useCallback(
     (key: keyof ProductData, val: unknown) => setMf((p) => ({ ...p, [key]: val }) as ProductData),
@@ -316,11 +365,12 @@ export function useProductEditor() {
   }, [content]);
 
   const handleSave = useCallback(() => {
-    if (!mf.sender.firstName.trim()) {
-      pushToast({ type: "info", title: "Add your name first", message: "Step 1 — it goes on the listing" });
+    const missing = missingForSave(mf);
+    if (missing.length > 0) {
+      pushToast({ type: "info", title: "Almost there", message: `Still needed: ${missing.join(", ")}` });
       return;
     }
-    const next = normalizeProductData(mf);
+    const next = normalizeProductData(personalizeDemo(mf));
     setContent(next);
     setMf(next);
     setIsPersonalized(true);
@@ -414,9 +464,10 @@ export function useProductEditor() {
 
   const publish = useCallback(async () => {
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
-    if (!content.sender.firstName.trim()) {
-      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_sender_name" });
-      pushToast({ type: "info", title: "Add your name first", message: "Open Edit and fill in step 1" });
+    const missing = missingForSave(content);
+    if (missing.length > 0) {
+      track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "missing_required" });
+      pushToast({ type: "info", title: "Almost there", message: `Still needed: ${missing.join(", ")}` });
       setMf({ ...content });
       setEditMode("manual");
       return;

@@ -1,6 +1,9 @@
 // ─── Product — the frozen contract ───────────────────────────────────────────
 //
-// LEAD-OWNED AND FROZEN. Import from here; do not extend it.
+// Extended for the premium redesign: photo crops, the listing extras (deal
+// badge, bought line, variants, offers, "Customers say") and the main letter
+// with its one-question lock. Everything added is optional on the wire and
+// falls back to the demo, so pages published before it still render.
 //
 // A person, listed as a product. The goal is LAYOUT FIDELITY: this must read as
 // a real marketplace listing within one second — the breadcrumb, the gallery
@@ -98,9 +101,24 @@ export interface ProductPrice {
   discountPct?: number;
 }
 
+/** How one gallery photo is framed: focal point 0–100, zoom 100–300 (%). */
+export interface PhotoCrop {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export const CROP_CENTER: PhotoCrop = { x: 50, y: 50, scale: 100 };
+
 export interface ProductData {
   /** The product. Photos fill the gallery rail; the first is the hero. */
-  subject: { firstName: string; lastName: string; photos: string[] };
+  subject: {
+    firstName: string;
+    lastName: string;
+    photos: string[];
+    /** Index-aligned with `photos`. A missing entry is centred, no zoom. */
+    crops?: PhotoCrop[];
+  };
   /** Who listed it. */
   sender: { firstName: string };
   /** The listing title. Long on purpose — real ones are. */
@@ -121,6 +139,26 @@ export interface ProductData {
   aboutSection: { heading: string; body: string; imageUrl?: string };
   /** Shown above the "write a review" box on the published page. */
   contributorPrompt: string;
+  /** "Limited time deal" — the red badge over the price. */
+  dealLabel: string;
+  /** "10K+ bought in past month" — under the rating row. */
+  boughtLine: string;
+  /** "Mood" — the label over the variant chips. */
+  variantLabel: string;
+  /** The variant chips. Picking one swaps the hero photo. */
+  variants: string[];
+  /** Offer cards under the price, each "Label | text". */
+  offers: string[];
+  /** The "Customers say" summary paragraph. */
+  customersSay: string;
+  /** The aspect chips under the summary. */
+  customersSayTags: string[];
+  /** The main letter that waits in the corner. "" = no letter. */
+  letter: string;
+  /** Optional question asked before the letter opens. */
+  lockQuestion: string;
+  /** Label of the yes button that answers it. */
+  lockAnswer: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -148,7 +186,7 @@ export const DEMO_DATA: ProductData = {
     ],
   },
   sender: { firstName: "Karan" },
-  title: "Meera Sharma — Girlfriend, Original, 1 Count",
+  title: "Meera Sharma — Girlfriend, Original, 1 Count (Limited Edition, Handmade in Lucknow)",
   storeName: "Visit the Sharma Store",
   price: {
     amount: "∞",
@@ -184,19 +222,19 @@ export const DEMO_DATA: ProductData = {
     {
       name: "Karan Mehra — Boyfriend, Refurbished, 1 Count",
       price: "₹0",
-      imageUrl: photo("photo-1500648767791-00dcc994a43e", 300, 300),
+      imageUrl: "",
       note: "Cannot be bought separately. Nobody has tried.",
     },
     {
       name: "Cold coffee, 1 × large, extra ice, less sugar",
       price: "₹180",
-      imageUrl: photo("photo-1461023058943-07fcbe16d735", 300, 300),
+      imageUrl: "",
       note: "Ships with every order whether requested or not.",
     },
     {
       name: "Mrs. Sharma's opinion on your career (Unsolicited, Annual Subscription)",
       price: "Free",
-      imageUrl: photo("photo-1516534775068-ba3e7458af70", 300, 300),
+      imageUrl: "",
       note: "Auto-renews. Cannot be cancelled.",
     },
   ],
@@ -246,10 +284,9 @@ export const DEMO_DATA: ProductData = {
       title: "Ordered once in 2021. Still using daily. Would order again.",
       body:
         "Arrived early, which set the tone. Four years in and the build quality has not moved — same laugh, same terrible aim with the TV remote, same habit of finishing my sentences slightly better than I was going to. I have nothing constructive. I have tried, for the sake of a balanced review, and I have nothing.",
-      ago: "Reviewed on 14 February 2021",
+      ago: "Reviewed in India on 14 February 2021",
       verified: true,
       helpful: 1284,
-      imageUrl: photo("photo-1518199266791-5375a83190b7", 500, 500),
       status: "published",
     },
     {
@@ -259,7 +296,7 @@ export const DEMO_DATA: ProductData = {
       title: "Product is exactly as described in the listing",
       body:
         "I have known this unit since 2014, which is longer than the seller has, and I can confirm every bullet point. The 0.4-second early laugh is real. Deducting nothing. Karan, if you are reading this, you got extremely lucky and we all know it.",
-      ago: "Reviewed on 3 March 2023",
+      ago: "Reviewed in India on 3 March 2023",
       verified: true,
       helpful: 903,
       status: "published",
@@ -271,7 +308,7 @@ export const DEMO_DATA: ProductData = {
       title: "One star withheld on principle",
       body:
         "She is perfect. I am her mother. If I write five she will read this and get ideas, and then who will hear about it for a week. Otherwise no complaints. Boy is fine also. He eats properly now.",
-      ago: "Reviewed on 19 August 2023",
+      ago: "Reviewed in India on 19 August 2023",
       verified: true,
       helpful: 2140,
       status: "published",
@@ -283,31 +320,36 @@ export const DEMO_DATA: ProductData = {
       title: "Cannot get the buyer to stop talking about this purchase",
       body:
         "Three years of it. Every dinner. Someone asks him a normal question and forty minutes later we are hearing about the time she carried his bag through the airport because his shoulder hurt. Five stars for the product. One star for what it has done to my Friday evenings, but that is not what this field is for.",
-      ago: "Reviewed on 11 January 2024",
+      ago: "Reviewed in India on 11 January 2024",
       verified: false,
       helpful: 412,
       status: "published",
-    },
-    {
-      id: "rv5",
-      author: "Bunty (3rd floor)",
-      stars: 5,
-      title: "She said hi to me once in the lift",
-      body: "10/10. Have not recovered. Do not intend to.",
-      ago: "Reviewed on 2 February 2026",
-      verified: false,
-      helpful: 7,
-      status: "pending",
     },
   ],
   aboutSection: {
     heading: "From the Sharma Store",
     body:
       "We are a small family operation established in Lucknow in 1998 and we have released exactly one product. There is no roadmap, no second edition and no plan to scale. Everything we know about quality we learned from watching her decide, at 2 AM, that a friend of hers who lives four hours away needed company, and then going. If your order arrives and the packaging is a little dented, that is from the same trip. We do not intend to fix it.",
-    imageUrl: photo("photo-1509316975850-ff9c5deb0cd9", 900, 500),
   },
   contributorPrompt:
     "Know Meera? Leave a review. Karan reads every one before it goes up, and he has a documented bias toward publishing the nice ones.",
+  dealLabel: "Limited time deal",
+  boughtLine: "1 bought forever · by the same guy",
+  variantLabel: "Mood",
+  variants: ["Sunshine ☀️", "Hangry 🍕", "Sleepy 😴", "Dramatic 🎭", "Soft 🧸"],
+  offers: [
+    "Bank Offer | Upto ∞ hugs off on every bad day. Auto-applied, no card needed.",
+    "No Cost EMI | Pay in forehead kisses. 0% interest, 100% commitment.",
+    "Cashback | Get every 'good morning' back with a voice note. T&C: she's asleep till 9.",
+    "Partner Offer | Buy 1 Meera, get 1 lifetime of Sunday chai free.",
+  ],
+  customersSay:
+    "Customers find this product warm, loud in the best way, and impossible to stay mad at. They appreciate that she remembers everyone's order at the chai stall and that she will cross the city at 2 AM if a friend needs her. Some customers mention the AC temperature debates and the 9 AM wake-up restriction, but every one of them would buy again. They describe the laugh as ‘worth the entire price’, which is ∞.",
+  customersSayTags: ["Laugh", "Loyalty", "Hugs", "Chai skills", "Morning mood", "Value for money"],
+  letter:
+    "I made you a product page because it's the only format where I'm allowed to list every single thing I love about you and nobody can call it too much.\n\nFour years ago you laughed at a joke before I'd finished it, and I've been trying to finish sentences in front of you ever since. You make hospital corridors feel less cold, long drives feel short, and my terrible playlist feel like it was curated.\n\nThere's only one of you in stock. I checked. I'm keeping you.",
+  lockQuestion: "Will you stay my favourite order forever?",
+  lockAnswer: "Add to cart 💛",
 };
 
 /** Whitelisted keys that make up the flat wire payload (also the model content fields). */
@@ -326,6 +368,16 @@ export const PRODUCT_CONTENT_KEYS: readonly (keyof ProductData)[] = [
   "reviews",
   "aboutSection",
   "contributorPrompt",
+  "dealLabel",
+  "boughtLine",
+  "variantLabel",
+  "variants",
+  "offers",
+  "customersSay",
+  "customersSayTags",
+  "letter",
+  "lockQuestion",
+  "lockAnswer",
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -358,7 +410,21 @@ const LIMITS = {
   heading: 120,
   aboutBody: 2000,
   prompt: 240,
+  dealLabel: 40,
+  boughtLine: 80,
+  variantLabel: 30,
+  variant: 40,
+  offer: 200,
+  customersSay: 700,
+  tag: 40,
 } as const;
+
+/** Mirrors server `LOVE_LIMITS` for the letter and its lock. */
+export const LETTER_LIMITS = { letter: 2000, lockQuestion: 140, lockAnswer: 40 } as const;
+export const MAX_VARIANTS = 6;
+export const MAX_OFFERS = 4;
+export const MAX_TAGS = 8;
+export { LIMITS as PRODUCT_TEXT_LIMITS };
 
 const cut = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s);
 
@@ -490,6 +556,16 @@ export function dbToProductData(db: Raw | null | undefined): ProductData {
     .filter(Boolean)
     .slice(0, MAX_PHOTOS);
 
+  const rawCrops = Array.isArray(rawSubject.crops) ? rawSubject.crops : [];
+  const crops: PhotoCrop[] = photos.map((_, i) => {
+    const c = obj(rawCrops[i]);
+    return {
+      x: Math.round(clampNum(c.x, 50, 0, 100)),
+      y: Math.round(clampNum(c.y, 50, 0, 100)),
+      scale: Math.round(clampNum(c.scale, 100, 100, 300)),
+    };
+  });
+
   const rawPrice = obj(src.price);
   const original = cut(strOr(rawPrice.original, "").trim(), LIMITS.price);
   const discountPct =
@@ -520,6 +596,7 @@ export function dbToProductData(db: Raw | null | undefined): ProductData {
       firstName: cut(str(rawSubject.firstName, DEMO_DATA.subject.firstName).trim(), LIMITS.name),
       lastName: cut(strOr(rawSubject.lastName, DEMO_DATA.subject.lastName).trim(), LIMITS.name),
       photos: photos.length > 0 ? photos : DEMO_DATA.subject.photos,
+      crops: photos.length > 0 ? crops : DEMO_DATA.subject.photos.map(() => ({ ...CROP_CENTER })),
     },
     sender: {
       firstName: cut(str(obj(src.sender).firstName, DEMO_DATA.sender.firstName).trim(), LIMITS.name),
@@ -548,5 +625,26 @@ export function dbToProductData(db: Raw | null | undefined): ProductData {
       ...(aboutImg ? { imageUrl: aboutImg } : {}),
     },
     contributorPrompt: cut(str(src.contributorPrompt, DEMO_DATA.contributorPrompt).trim(), LIMITS.prompt),
+    dealLabel: cut(strOr(src.dealLabel, DEMO_DATA.dealLabel).trim(), LIMITS.dealLabel),
+    boughtLine: cut(strOr(src.boughtLine, DEMO_DATA.boughtLine).trim(), LIMITS.boughtLine),
+    variantLabel: cut(strOr(src.variantLabel, DEMO_DATA.variantLabel).trim(), LIMITS.variantLabel),
+    variants: shortList(src.variants, DEMO_DATA.variants, MAX_VARIANTS, LIMITS.variant),
+    offers: shortList(src.offers, DEMO_DATA.offers, MAX_OFFERS, LIMITS.offer),
+    customersSay: cut(strOr(src.customersSay, DEMO_DATA.customersSay).trim(), LIMITS.customersSay),
+    customersSayTags: shortList(src.customersSayTags, DEMO_DATA.customersSayTags, MAX_TAGS, LIMITS.tag),
+    // An old page has no letter and must not inherit the demo's: absent → "".
+    letter: cut(strOr(src.letter, "").trim(), LETTER_LIMITS.letter),
+    lockQuestion: cut(strOr(src.lockQuestion, "").trim(), LETTER_LIMITS.lockQuestion),
+    lockAnswer: cut(strOr(src.lockAnswer, "").trim(), LETTER_LIMITS.lockAnswer),
   };
+}
+
+/** A capped list of short strings. Absent → the demo; present but empty → empty. */
+function shortList(v: unknown, fallback: string[], maxItems: number, maxChars: number): string[] {
+  if (!Array.isArray(v)) return fallback;
+  return v
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => cut(x.trim(), maxChars))
+    .filter(Boolean)
+    .slice(0, maxItems);
 }

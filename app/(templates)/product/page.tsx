@@ -119,6 +119,8 @@ function ProductPageInner() {
         mode="preview"
         // Parks the store chrome under the floating bar so the two never meet.
         topOffset={56}
+        onBack={e.goBack}
+        hideLetter={e.editMode === "manual" || e.editMode === "choose" || (e.storyStarted && e.storyFill.mode !== "manual") || panelOpen}
         onWriteReview={e.showShare ? openPanel : undefined}
         writeReviewLabel={e.showShare ? "Get her friends to write one" : "Write a review"}
         reviewsFooter={
@@ -304,7 +306,8 @@ function ProductPageInner() {
               }}
               aria-live="polite"
             >
-              Listing her…
+              <span className="lk-spin" style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 10 }} />
+              Listing her on the store…
             </div>
           </motion.div>
         )}
