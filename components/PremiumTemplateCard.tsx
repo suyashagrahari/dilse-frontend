@@ -15,8 +15,8 @@ interface PremiumTemplateCardProps {
  * The standard card inside a luxury frame: a slowly turning gold border, a
  * light sweep across the cover every few seconds, and a gold PREMIUM seal.
  *
- * Only the six premium templates use it, so the animated border (one
- * conic-gradient layer per card) costs six layers, not fifty. Everything
+ * Only the eight premium templates use it, so the animated border (one
+ * conic-gradient layer per card) costs eight layers, not fifty. Everything
  * animates on transform/opacity; see PREMIUM_CARD_CSS.
  */
 const PremiumTemplateCard = memo(function PremiumTemplateCard(props: PremiumTemplateCardProps) {

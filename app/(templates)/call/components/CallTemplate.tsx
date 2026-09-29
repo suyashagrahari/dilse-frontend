@@ -1,44 +1,45 @@
-// ─── Caller ID — the three screens, in order ─────────────────────────────────
+// ─── Caller ID — the whole thing ─────────────────────────────────────────────
 //
-//   incoming → (dark) → connected → log
+//   incoming → (dark, if declined) → connected → ended
 //
-// This component owns the stage machine, the ringtone, the haptics and the
-// decline joke; the three screens own their own layout and nothing else.
+// This component owns the stage machine, the ringtone, the haptics, the
+// decline joke, the photo viewer, the toasts and the letter; the screens own
+// their own layout and nothing else.
+//
+// ── LAYOUT ───────────────────────────────────────────────────────────────────
+//
+//   phone   — the phone IS the screen: full-bleed call, then the caller-ID
+//             profile as a page once the call ends.
+//   tablet  — the caller-ID web app: the phone ringing in a device frame on
+//             the left, the caller's profile beside it.
+//   desktop — the same, plus the call history as its own left rail.
 //
 // ── THE DECLINE JOKE ─────────────────────────────────────────────────────────
 //
-// Decline and the screen goes dark for 800ms — and then the call comes straight
-// back, labelled "Incoming call (2)". Third time it says she is not going to
-// stop. After the fourth it answers itself, because she was always going to
-// win, and being told so is funnier than being allowed to keep refusing.
-//
-// ── THE RING, AND THE TAB ────────────────────────────────────────────────────
-//
-// The AudioContext is built on the first pointer down anywhere on the frame —
-// browsers will not give one out otherwise, and a context built without a
-// gesture is silent forever rather than loud later. Until that happens the
-// screen says "tap to answer" instead of pretending to ring.
-//
-// `visibilitychange` stops the tone AND the vibration on the same tick as the
-// tab going away. A phone ringing out of a background tab is genuinely bad.
+// Decline and the screen goes dark for 800ms — then the call comes straight
+// back, labelled "Incoming call (2)". After the fourth it answers itself.
 
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import CallLogScreen from "./CallLogScreen";
-import ConnectedScreen from "./ConnectedScreen";
-import IncomingScreen from "./IncomingScreen";
+import LetterPop from "../../_love/LetterPop";
+import Incoming from "./Incoming";
+import InCall from "./InCall";
+import Profile, { LogList } from "./Profile";
 import ShareCard from "./ShareCard";
+import Viewer from "./Viewer";
+import { CALL_CSS } from "./styles";
+import { Crown, Face, Heart, Pic, Play, Search, StatusBar, mmss, useLayout } from "./kit";
+import { CheckBadgeGlyph, PhoneGlyph } from "./icons";
 import { Ringtone, makeHaptics } from "./ringtone";
-import { DARK, FONT, LIGHT, PortraitFrame } from "./theme";
+import { useReducedMotion } from "./theme";
 import { mergeTags, useLiveTags, copyText } from "./tagApi";
-import type { CallData } from "./types";
+import { WORDMARK, type CallData } from "./types";
 
-type Stage = "incoming" | "dark" | "connected" | "log";
+type Stage = "incoming" | "dark" | "connected" | "ended";
 
-/** The decline that stops being a decline. */
 const AUTO_ANSWER_AFTER = 4;
 
 export interface CallTemplateProps {
@@ -46,41 +47,48 @@ export interface CallTemplateProps {
   mode: "preview" | "live";
   shareId?: string | null;
   hasPassword?: boolean;
-  /**
-   * The friends' write link. Present in the editor, where the sender owns the
-   * token; absent on the recipient's page, where the shared read deliberately
-   * strips it.
-   */
+  /** The friends' write link — only in the editor, where the sender owns it. */
   contribLink?: string | null;
+  /** The editor hides the letter while its own sheets are open. */
+  hideLetter?: boolean;
+  /** The editor's floating dock sits at the bottom: keep the call's own buttons clear of it. */
+  dockSpace?: boolean;
 }
 
-export default function CallTemplate({ data, mode, shareId, contribLink }: CallTemplateProps) {
+const portraitOf = (d: CallData) =>
+  d.caller.photoUrl ? { url: d.caller.photoUrl, cropX: d.caller.cropX, cropY: d.caller.cropY, scale: d.caller.scale } : null;
+
+export default function CallTemplate({ data, mode, shareId, contribLink, hideLetter, dockSpace }: CallTemplateProps) {
+  const layout = useLayout();
+  const reduce = useReducedMotion();
   const [stage, setStage] = useState<Stage>("incoming");
   const [declines, setDeclines] = useState(0);
   const [audioReady, setAudioReady] = useState(false);
+  const [silent, setSilent] = useState(false);
   const [showCard, setShowCard] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
+  const [viewer, setViewer] = useState<number | null>(null);
+  const [talked, setTalked] = useState(0);
+  const [openLetter, setOpenLetter] = useState(false);
+  const answeredAt = useRef(0);
 
   const ring = useRef<Ringtone | null>(null);
   const haptics = useRef<ReturnType<typeof makeHaptics> | null>(null);
 
-  // ── Tags, live ─────────────────────────────────────────────────────────────
-  // Runs wherever there is a published page to read — the recipient's view and
-  // the sender's own preview both, so approving a tag is visible immediately in
-  // the editor rather than after a reload.
   const { tags: published } = useLiveTags({ shareId: shareId ?? null, enabled: Boolean(shareId) });
   const tags = useMemo(() => mergeTags(data.tags, published), [data.tags, published]);
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
-  const pushToast = useCallback((message: string) => setToast(message), []);
+  const first = data.caller.name.trim().split(/\s+/)[0] || "They";
 
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  const pushToast = useCallback((text: string) => setToast({ id: Date.now(), text }), []);
   useEffect(() => {
     if (!toast) return;
-    const id = setTimeout(() => setToast(null), 2600);
+    const id = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(id);
   }, [toast]);
 
-  // ── Audio lifetime ─────────────────────────────────────────────────────────
+  // ── Audio ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const r = new Ringtone();
     const h = makeHaptics();
@@ -94,62 +102,40 @@ export default function CallTemplate({ data, mode, shareId, contribLink }: CallT
     };
   }, []);
 
-  /** The first gesture. Builds the context, and starts the ring if it is due. */
   const unlock = useCallback(() => {
     const r = ring.current;
     if (!r) return;
-    const built = r.ensureContext();
-    if (built && !audioReady) setAudioReady(true);
+    if (r.ensureContext() && !audioReady) setAudioReady(true);
   }, [audioReady]);
 
-  // Ring while — and only while — the call is incoming and unmuted.
+  const ringing = stage === "incoming" && audioReady && !silent;
   useEffect(() => {
     const r = ring.current;
     const h = haptics.current;
     if (!r || !h) return;
-
-    if (stage === "incoming" && audioReady && document.visibilityState === "visible") {
-      r.pump();
-      r.start();
-      h.start();
-    } else {
-      r.stop();
-      h.stop();
-    }
-
-    return () => {
-      r.stop();
-      h.stop();
-    };
-  }, [stage, audioReady]);
-
-  // Backgrounded tab: silence, immediately. Returning resumes if still ringing.
-  useEffect(() => {
-    const onVisibility = () => {
-      const r = ring.current;
-      const h = haptics.current;
-      if (!r || !h) return;
-      if (document.visibilityState === "hidden") {
-        r.stop();
-        h.stop();
-        return;
-      }
-      if (stage === "incoming" && audioReady) {
+    const sync = () => {
+      if (ringing && document.visibilityState === "visible") {
         r.pump();
         r.start();
         h.start();
+      } else {
+        r.stop();
+        h.stop();
       }
     };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [stage, audioReady]);
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      r.stop();
+      h.stop();
+    };
+  }, [ringing]);
 
-  // ── Stage transitions ──────────────────────────────────────────────────────
-  // Both guard on the current stage rather than inside a state updater: an
-  // updater that calls another setState runs twice under StrictMode and the
-  // decline counter would advance by two.
+  // ── Stages ─────────────────────────────────────────────────────────────────
   const answer = useCallback(() => {
     if (stage !== "incoming") return;
+    answeredAt.current = Date.now();
     setStage("connected");
   }, [stage]);
 
@@ -159,153 +145,230 @@ export default function CallTemplate({ data, mode, shareId, contribLink }: CallT
     setStage("dark");
   }, [stage]);
 
-  /**
-   * The dark beat between a decline and the call coming back.
-   *
-   * Longer on the last one, because that screen has a line on it and 800ms is
-   * not long enough to read "you were not going to win this."
-   */
   const autoAnswering = declines >= AUTO_ANSWER_AFTER;
   useEffect(() => {
     if (stage !== "dark") return;
-    const id = setTimeout(() => setStage(autoAnswering ? "connected" : "incoming"), autoAnswering ? 1600 : 800);
+    const id = setTimeout(() => {
+      if (autoAnswering) answeredAt.current = Date.now();
+      setStage(autoAnswering ? "connected" : "incoming");
+    }, autoAnswering ? 1700 : 800);
     return () => clearTimeout(id);
   }, [stage, autoAnswering]);
 
-  const endCall = useCallback(() => setStage("log"), []);
+  const endCall = useCallback(() => {
+    setTalked(Math.max(1, Math.round((Date.now() - answeredAt.current) / 1000)));
+    setStage("ended");
+    if (layout === "phone") window.scrollTo({ top: 0 });
+  }, [layout]);
 
-  // ── The friends' link ──────────────────────────────────────────────────────
+  const callBack = useCallback(() => {
+    setDeclines(0);
+    setStage("incoming");
+    pushToast(`Calling ${first}… picked up before it even rang.`);
+    window.setTimeout(() => {
+      answeredAt.current = Date.now();
+      setStage((s) => (s === "incoming" ? "connected" : s));
+    }, 1800);
+  }, [first, pushToast]);
+
+  // The voicemail card opens the letter; the prop is a one-shot pulse.
+  const playVoicemail = useCallback(() => setOpenLetter(true), []);
+  useEffect(() => {
+    if (!openLetter) return;
+    const id = window.setTimeout(() => setOpenLetter(false), 60);
+    return () => window.clearTimeout(id);
+  }, [openLetter]);
+
   const tagHer = useCallback(async () => {
     if (!contribLink) return;
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "Tag this number", text: "What would you call her?", url: contribLink });
+        await navigator.share({ title: "Tag this number", text: `What have you got ${first} saved as?`, url: contribLink });
         return;
       } catch {
-        /* the share sheet was dismissed — fall through to the clipboard */
+        /* dismissed — fall through to the clipboard */
       }
     }
     pushToast((await copyText(contribLink)) ? "Tag link copied" : "Couldn't copy the link");
-  }, [contribLink, pushToast]);
+  }, [contribLink, first, pushToast]);
 
-  const dark = stage !== "log";
+  // ── The screen inside the phone ────────────────────────────────────────────
+  const screen = (
+    <>
+      {stage === "incoming" && (
+        <Incoming
+          data={data}
+          tags={tags}
+          declines={declines}
+          needsGesture={!audioReady}
+          silent={silent}
+          onToggleSilent={() => setSilent((v) => !v)}
+          onAnswer={answer}
+          onDecline={decline}
+          onToast={pushToast}
+        />
+      )}
+      {stage === "dark" && (
+        <div className="cxDark" aria-live="polite">
+          {autoAnswering ? <p>you were never going to win this one.<br />connecting…</p> : <span />}
+        </div>
+      )}
+      {stage === "connected" && (
+        <InCall data={data} reduce={reduce} onEnd={endCall} onOpenPhoto={setViewer} onToast={pushToast} />
+      )}
+    </>
+  );
+
+  const profileProps = {
+    data,
+    tags,
+    talked,
+    contribLink,
+    onTagHer: contribLink ? tagHer : undefined,
+    onOpenPhoto: setViewer,
+    onVoicemail: playVoicemail,
+    onCallBack: callBack,
+    onSaveCard: () => setShowCard(true),
+    onToast: pushToast,
+  };
+
+  const brand =
+    mode === "live" ? (
+      <Link href="/templates" className="cxBrand" aria-label="SubhSandesh — make your own">
+        <Image src="/logo.webp" alt="" width={18} height={18} style={{ borderRadius: 5 }} />
+        <span>Make your own</span>
+      </Link>
+    ) : null;
+
+  const showLetter = !hideLetter && !!data.letter.trim() && (layout !== "phone" || stage === "ended");
 
   return (
-    <PortraitFrame
-      surround={dark ? DARK.surround : LIGHT.surround}
-      background={dark ? DARK.bg : LIGHT.paper}
-    >
-      {/* One capture handler for the whole template — every first touch, no
-          matter where it lands, is the gesture the AudioContext needs. */}
-      <div onPointerDownCapture={unlock} style={{ minHeight: "100dvh" }}>
-        {stage === "incoming" ? (
-          <IncomingScreen
-            data={data}
-            tags={tags}
-            declines={declines}
-            needsGesture={!audioReady}
-            onAnswer={answer}
-            onDecline={decline}
-            onToast={pushToast}
-          />
-        ) : null}
+    <div className={`cx cx--${layout}${reduce ? " is-reduced" : ""}${dockSpace ? " has-dock" : ""}`} onPointerDownCapture={unlock}>
+      <style>{CALL_CSS}</style>
 
-        {stage === "dark" ? (
-          <div
-            style={{
-              minHeight: "100dvh",
-              display: "grid",
-              placeItems: "center",
-              background: "#05070A",
-              color: DARK.dim,
-              fontFamily: FONT,
-              padding: 30,
-              textAlign: "center",
-            }}
-            aria-live="polite"
-          >
-            {autoAnswering ? (
-              <p style={{ margin: 0, fontSize: 17, lineHeight: 1.6 }}>you were not going to win this.</p>
-            ) : (
-              <span aria-hidden="true" />
-            )}
+      {layout === "phone" ? (
+        stage === "ended" ? (
+          <div className="cxPage">
+            <Profile variant="page" {...profileProps} />
+            {brand && <div className="cxPageBrand">{brand}</div>}
           </div>
-        ) : null}
+        ) : (
+          <div className="cxScreen cxScreen--full">
+            {screen}
+            {brand && stage !== "incoming" && <div className="cxBrandSlot">{brand}</div>}
+          </div>
+        )
+      ) : (
+        <div className="cxWeb">
+          <header className="cxWebBar">
+            <span className="cxWebLogo"><i>✓</i><b>{WORDMARK}</b><small>web</small></span>
+            <button type="button" className="cxWebSearch" onClick={() => pushToast(`1 result for everything you search: ${first}.`)}>
+              <Search size={17} /> <span>Search names, numbers, feelings…</span>
+            </button>
+            <span className="cxFlex" />
+            <span className="cxWebGold"><Crown size={13} /> Gold</span>
+            {brand}
+          </header>
+          <div className="cxWebGrid">
+            {layout === "desktop" && (
+              <aside className="cxRail" aria-label="Recent calls">
+                <h2 className="cxRailH">Recents</h2>
+                <button type="button" className={`cxRailNow${stage === "incoming" ? " is-ringing" : ""}`} onClick={stage === "ended" ? callBack : undefined}>
+                  <Face name={data.caller.name} photo={portraitOf(data)} size={44} />
+                  <span className="cxRailTx">
+                    <b>{data.savedAs || data.caller.name}</b>
+                    <small>{stage === "incoming" ? "Incoming call · ringing now" : stage === "connected" ? "On call · live" : `Call ended · ${mmss(talked)} · tap to call back`}</small>
+                  </span>
+                  <i><PhoneGlyph size={16} color="#fff" /></i>
+                </button>
+                <LogList data={data} compact />
+              </aside>
+            )}
 
-        {stage === "connected" ? <ConnectedScreen data={data} onEnd={endCall} /> : null}
+            <div className="cxDeviceCol">
+              <div className="cxDevice">
+                <span className="cxIsland" aria-hidden />
+                <div className="cxScreen">
+                  {stage === "ended" ? (
+                    <AfterCall data={data} talked={talked} onCallBack={callBack} onVoicemail={playVoicemail} onMemories={() => { if (data.photos.length) setViewer(0); }} />
+                  ) : (
+                    screen
+                  )}
+                </div>
+              </div>
+              <p className="cxDeviceHint">{stage === "incoming" ? "slide to answer on the phone ↑" : stage === "connected" ? "on call · psst, try the keypad: 1-4-3" : "call ended · duration: forever"}</p>
+            </div>
 
-        {stage === "log" ? (
-          <CallLogScreen
-            data={data}
-            tags={tags}
-            contribLink={contribLink}
-            onTagHer={tagHer}
-            onSaveCard={() => setShowCard(true)}
-          />
-        ) : null}
-      </div>
-
-      {/* Brand mark — and, on a recipient's page, their way to make one. */}
-      {mode === "live" ? (
-        <Link
-          href="/templates"
-          aria-label="SubhSandesh — make your own"
-          style={{
-            // Absolute, not fixed: on a desktop the template letterboxes into a
-            // 400px column and a fixed badge would sit out in the surround,
-            // detached from the phone it belongs to.
-            position: "absolute",
-            top: "calc(env(safe-area-inset-top, 0px) + 12px)",
-            right: 14,
-            zIndex: 200,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "6px 12px 6px 8px",
-            borderRadius: 999,
-            textDecoration: "none",
-            background: dark ? "rgba(26,31,38,0.86)" : "rgba(255,255,255,0.92)",
-            border: `1px solid ${dark ? DARK.edge : LIGHT.rule}`,
-            color: dark ? DARK.text : LIGHT.ink,
-            fontFamily: FONT,
-            fontSize: 12,
-            fontWeight: 600,
-            backdropFilter: "blur(6px)",
-          }}
-        >
-          <Image src="/logo.webp" alt="" width={18} height={18} style={{ borderRadius: 5 }} />
-          SubhSandesh
-        </Link>
-      ) : null}
-
-      {showCard ? (
-        <ShareCard data={data} tags={tags} onClose={() => setShowCard(false)} onToast={pushToast} />
-      ) : null}
-
-      {toast ? (
-        <div
-          role="status"
-          style={{
-            position: "fixed",
-            left: "50%",
-            transform: "translateX(-50%)",
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 26px)",
-            zIndex: 340,
-            maxWidth: 320,
-            padding: "11px 16px",
-            borderRadius: 12,
-            background: "rgba(16,20,24,0.94)",
-            border: `1px solid ${DARK.edge}`,
-            color: DARK.text,
-            fontFamily: FONT,
-            fontSize: 13.5,
-            lineHeight: 1.45,
-            textAlign: "center",
-          }}
-        >
-          {toast}
+            <section className="cxPanel" aria-label="Caller profile">
+              <Profile variant="panel" showLog={layout !== "desktop"} {...profileProps} />
+            </section>
+          </div>
         </div>
-      ) : null}
-    </PortraitFrame>
+      )}
+
+      {viewer !== null && data.photos[viewer] && (
+        <Viewer data={data} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />
+      )}
+
+      {showCard && <ShareCard data={data} tags={tags} onClose={() => setShowCard(false)} onToast={pushToast} />}
+
+      {showLetter && (
+        <LetterPop
+          letter={data.letter}
+          from={data.caller.name}
+          to={data.recipient.name}
+          question={data.lockQuestion.trim() || undefined}
+          answer={data.lockAnswer.trim() || "Answer 📞"}
+          accent="#1DA362"
+          accent2="#F4C95D"
+          paper="#FFF8EE"
+          ink="#1B1410"
+          bottom={layout === "phone" ? 18 : 24}
+          right={layout === "phone" ? 16 : 24}
+          delay={layout === "phone" ? 900 : 2600}
+          teaser="left you a voicemail 🎙️ tap to listen"
+          sign="yours, on every call,"
+          variant="call"
+          photos={data.photos.map((p) => p.url)}
+          avatar={data.caller.photoUrl || undefined}
+          title="Voicemail"
+          forceOpen={openLetter}
+          zIndex={95}
+        />
+      )}
+
+      {toast && (
+        <div className="cxToast" role="status" key={toast.id}>
+          <Heart size={13} color="#FF5C93" /> <span>{toast.text}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── after the call, inside the device (tablet / desktop) ─────────────────── */
+
+function AfterCall({ data, talked, onCallBack, onVoicemail, onMemories }: { data: CallData; talked: number; onCallBack: () => void; onVoicemail: () => void; onMemories: () => void }) {
+  const portrait = portraitOf(data);
+  const cover = data.photos[0] ?? portrait;
+  return (
+    <div className="cxAfterScr">
+      <div className="cxInBg" aria-hidden>
+        {cover && <Pic photo={cover} className="cxCallBlur" />}
+        <span className="cxCallShade" />
+      </div>
+      <StatusBar />
+      <div className="cxAfterIn">
+        <p className="cxAfterK">Call ended · {mmss(talked)}</p>
+        <Face name={data.caller.name} photo={portrait} size={96} className="cxHeroFace" />
+        <h2>{data.caller.name}{data.verified && <CheckBadgeGlyph size={18} color="#F4C95D" style={{ display: "inline-block", verticalAlign: "-2px", marginLeft: 6 }} />}</h2>
+        <p className="cxAfterForever">Duration: forever <span>∞</span></p>
+        <div className="cxAfterBtns">
+          <button type="button" onClick={onCallBack}><span className="is-green"><PhoneGlyph size={22} color="#fff" /></span>Call back</button>
+          {data.letter.trim() && <button type="button" onClick={onVoicemail}><span><Play size={20} /></span>Voicemail</button>}
+          {data.photos.length > 0 && <button type="button" onClick={onMemories}><span><Heart size={20} /></span>Memories</button>}
+        </div>
+      </div>
+    </div>
   );
 }

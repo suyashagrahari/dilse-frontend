@@ -28,7 +28,7 @@ import { useCallback, useEffect, useState } from "react";
 import { exportNodeToPng, fileSlug, toDataUrl } from "@/lib/exportPng";
 import { CheckGlyph, CheckBadgeGlyph, CloseGlyph, DownloadGlyph, PinGlyph, ShieldGlyph, TagGlyph } from "./icons";
 import { DARK, FONT, TAP, initialsOf, seededInk } from "./theme";
-import { heroTag } from "./IncomingScreen";
+import { heroTag } from "./Incoming";
 import { WORDMARK, spamLabel, type CallData, type CallerTag } from "./types";
 
 export const CARD_W = 360;

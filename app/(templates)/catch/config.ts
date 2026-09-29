@@ -8,23 +8,23 @@ export const config: TemplatePageConfig = {
   category: "gf",
   title: "Catch",
   description:
-    "A letter that falls out of the sky one line at a time. They catch it with their own face. Nothing is ever locked — every catch just adds another line.",
-  coverImage: templateMedia("catch", "cover.jpg"),
+    "A cute arcade game made of your love letter. Their face is the player: catch the falling letter pieces, memory polaroids and hearts, dodge the ick, level up — then the letter stacks itself together.",
+  coverImage: templateMedia("catch", "cover-poster.webp"),
   emoji: "🎮",
-  color: "from-sky-500 to-amber-600",
-  previewText: "it's in pieces. catch it 🎮",
+  color: "from-pink-500 to-violet-600",
+  previewText: "i made you a game. catch it 🎮",
   bodyText:
-    "Twelve objects, twelve lines, forty-five seconds. Miss one and it comes back around.",
-  bgGradient: "from-sky-50 via-amber-50 to-white",
+    "Combos, power-ups, three levels and a high score — and every piece they miss comes back around.",
+  bgGradient: "from-sky-50 via-pink-50 to-violet-50",
   tabs: [
     { id: "letter", icon: Mail, label: "Letter" },
-    { id: "items", icon: Heart, label: "Items" },
+    { id: "items", icon: Heart, label: "Memories" },
     { id: "flags", icon: Gamepad2, label: "Dodge" },
     { id: "result", icon: Trophy, label: "Result" },
     { id: "save", icon: Download, label: "Save" },
   ],
-  navActiveColor: "text-sky-700",
-  navActiveBg: "bg-sky-700/10",
+  navActiveColor: "text-pink-600",
+  navActiveBg: "bg-pink-600/10",
   floatStyle: "hearts",
   pages: {
     cover: {
