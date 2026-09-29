@@ -3,8 +3,8 @@
 // ─── /recharge ───────────────────────────────────────────────────────────────
 //
 // A thin renderer over `useRechargeEditor`. The page shows the live demo flow
-// immediately; a floating bar carries Back on the left and one polymorphic
-// button on the right that is Create → Publish → Share. Create opens the AI
+// immediately, edge to edge like the real app; a floating EditorDock carries
+// Back and one polymorphic button that is Create → Publish → Share. Create opens the AI
 // story panel, not the blank form.
 
 import { Suspense } from "react";
@@ -14,18 +14,10 @@ import StoryStarter from "@/components/story/StoryStarter";
 import { useRechargeEditor } from "./hooks/useRechargeEditor";
 import RechargeTemplate from "./components/RechargeTemplate";
 import EditSheet from "./components/EditSheet";
+import EditorDock from "../_love/EditorDock";
 import { PINK as ACCENT, LINE as BORDER, FONT, INK, BG as SURROUND } from "./components/ui";
 
 /* ── Inline icons. Drawn here, generically; no icon library in this template. ── */
-
-function IconBack() {
-  return (
-    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M19 12H5" /><path d="m11 6-6 6 6 6" />
-    </svg>
-  );
-}
 
 function IconPen() {
   return (
@@ -48,27 +40,7 @@ function IconLink() {
 
 
 
-/* ── Toasts ───────────────────────────────────────────────────────────────── */
-
 /* ── Page ─────────────────────────────────────────────────────────────────── */
-
-const barBtn: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  minHeight: 44,
-  height: 44,
-  padding: "0 14px",
-  borderRadius: 12,
-  background: "rgba(255,255,255,.96)",
-  boxShadow: "0 6px 18px -12px rgba(0,0,0,.35)",
-  border: `1px solid ${BORDER}`,
-  color: INK,
-  fontFamily: FONT,
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-};
 
 function RechargePageInner() {
   const e = useRechargeEditor();
@@ -81,37 +53,21 @@ function RechargePageInner() {
 
   return (
     <div style={{ minHeight: "100dvh", background: SURROUND, position: "relative" }}>
-      <div
-        className="fixed top-0 left-0 right-0 z-[120] flex items-center gap-2 px-3"
-        style={{ paddingTop: "calc(8px + env(safe-area-inset-top, 0px))", paddingBottom: 8 }}
-      >
-        <button type="button" onClick={e.goBack} style={barBtn}>
-          <IconBack /> Back
-        </button>
-        <div className="flex-1" />
-        {e.isPersonalized && !e.showShare ? (
-          <button type="button" onClick={e.handleEditFromPreview} style={barBtn}>
-            <IconPen /> Edit
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={topAction.onClick}
-          disabled={e.publishing}
-          style={{
-            ...barBtn,
-            background: ACCENT,
-            borderColor: ACCENT,
-            color: "#FFFFFF",
-            opacity: e.publishing ? 0.6 : 1,
-          }}
-        >
-          {topAction.icon} {topAction.label}
-        </button>
-      </div>
-
       {/* The live flow. Keyed so each save/publish restarts it at the plan grid. */}
       <RechargeTemplate key={e.previewVersion} data={e.displayData} mode="preview" />
+
+      {/* Floats above the phone pay bar; the app keeps the whole screen. */}
+      <EditorDock
+        tone="light"
+        accent={ACCENT}
+        font={FONT}
+        avoidBottom=".rc-bar"
+        onBack={e.goBack}
+        secondary={[
+          e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview, icon: <IconPen /> },
+        ]}
+        primary={{ ...topAction, disabled: e.publishing }}
+      />
 
       <EditSheet
         editMode={e.editMode}
