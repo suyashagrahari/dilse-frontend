@@ -204,7 +204,9 @@ function Slider({ onAnswer, hint }: { onAnswer: () => void; hint: string }) {
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={() => { drag.current = null; setLive(false); setDx(0); }}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAnswer(); } }}
+        // Keyboard and assistive-tech activation arrive as a click with no
+        // pointer behind it (detail 0); real taps were already handled above.
+        onClick={(e) => { if (e.detail === 0 && !done.current) { done.current = true; onAnswer(); } }}
         aria-label="Answer the call"
       >
         <PhoneGlyph size={26} color="#fff" />
