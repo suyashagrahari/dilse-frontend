@@ -7,7 +7,7 @@ import { useStoryFill } from "@/hooks/useStoryFill";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
-import { type CatchData, type EditMode, DEMO_DATA, catchDataToBody, dbToCatchData } from "../components/types";
+import { type CatchData, type EditMode, DEMO_DATA, LIMITS, catchDataToBody, dbToCatchData, tidyCatchData } from "../components/types";
 import { openShareSheet } from "@/lib/share/shareBus";
 import { ensurePublishAllowed } from "@/lib/paywall/publishRequest";
 import { useDraft } from "@/lib/draft/useDraft";
@@ -21,10 +21,9 @@ const BASE = `${API_URL}/catch-pages`;
 const TEMPLATE = "catch";
 
 /** The letter needs enough pieces to pace across `durationMs`. */
-export const MIN_GOOD = 8;
-export const MAX_GOOD = 14;
-export const MIN_BAD = 3;
-export const MAX_BAD = 6;
+export const MIN_GOOD = LIMITS.minGood;
+export const MAX_GOOD = LIMITS.maxGood;
+export const MAX_BAD = LIMITS.maxBad;
 
 // Draft is persisted to localStorage so a refresh (or an accidental tab close)
 // keeps every line the sender wrote. Falls back to sessionStorage if unavailable.
@@ -48,6 +47,16 @@ const readDraft = (): { data?: CatchData; password?: string; completed?: boolean
 /** Lines are the letter. An object with no line on it is not a piece of anything. */
 export const writtenCount = (d: CatchData) => d.goodItems.filter((g) => g.line.trim()).length;
 
+/** Exactly what still stops Save, in the words the form uses. */
+export function missingForSave(d: CatchData): string[] {
+  const out: string[] = [];
+  if (!d.recipientName.trim()) out.push("their name");
+  if (!d.senderName.trim()) out.push("your name");
+  const w = writtenCount(d);
+  if (w < MIN_GOOD) out.push(`${MIN_GOOD - w} more letter ${MIN_GOOD - w === 1 ? "piece" : "pieces"}`);
+  return out;
+}
+
 export function useCatchEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,16 +74,19 @@ export function useCatchEditor() {
   // Only the letter around the game: the labels and lines on the good items,
   // the two names and the closing line. Speeds, spawn rates, `badItems` and
   // `durationMs` are not on the schema, so the run itself is untouched.
+  const onFilled = useCallback((next: CatchData) => setMf(tidyCatchData(next)), []);
   const fill = useStoryFill<CatchData>({
     slug: "catch",
     demo: DEMO_DATA,
     current: mf,
-    onFilled: setMf,
+    onFilled,
   });
 
   // Mounted the first time Create is tapped. The starter renders nothing at all
   // when this template has no schema.
   const [storyStarter, setStoryStarter] = useState(false);
+  /** A run is in progress on the preview — the editor dock tucks itself away. */
+  const [playing, setPlaying] = useState(false);
 
   // Bumped whenever a *new* preview should be shown → remounts the game so the
   // run restarts from the intro with the freshly-written letter.
@@ -136,6 +148,8 @@ export function useCatchEditor() {
     // comes back; if it was saved from the preview ("completed"), reopen the preview.
     const draft = readDraft();
     if (draft?.data && Array.isArray(draft.data.goodItems) && Array.isArray(draft.data.badItems)) {
+      // Drafts saved before photos/letter existed get those fields from the demo.
+      draft.data = { ...DEMO_DATA, ...draft.data, photos: Array.isArray(draft.data.photos) ? draft.data.photos : DEMO_DATA.photos };
       // Restored verbatim, NOT through dbToCatchData: a work-in-progress draft
       // legitimately contains half-written objects with empty lines, and the
       // wire coercer strips those. They only get cleaned on Save.
@@ -218,17 +232,18 @@ export function useCatchEditor() {
 
   const updateMf = useCallback((key: keyof CatchData, val: unknown) => setMf((p) => ({ ...p, [key]: val })), []);
 
+  const { schema: storySchema, setMode: setStoryMode } = fill;
   const handleEditClick = useCallback(() => {
     setMf(isPersonalized ? { ...content } : { ...DEMO_DATA });
-    // The starter goes first, but only while there is a schema to fill from and
-    // only until the sender has said no once. Everything else opens the form
-    // exactly as it did before.
-    if (fill.schema && fill.mode !== "manual") {
+    // The guided AI questions go first whenever the server has a schema; every
+    // way out of them lands in the form, fully editable.
+    if (storySchema) {
+      setStoryMode("idle");
       setStoryStarter(true);
       return;
     }
     setEditMode("manual");
-  }, [isPersonalized, content, fill.schema, fill.mode]);
+  }, [isPersonalized, content, storySchema, setStoryMode]);
 
   /** The starter's only exit — into the same form Create would have opened. */
   const openManualForm = useCallback(() => setEditMode("manual"), []);
@@ -240,28 +255,17 @@ export function useCatchEditor() {
 
   // Save (locally) & jump to preview
   const handleSave = useCallback(() => {
-    if (!mf.senderName.trim()) { pushToast({ type: "info", title: "Add your name first" }); return; }
-
-    const written = writtenCount(mf);
-    if (written < MIN_GOOD) {
-      const need = MIN_GOOD - written;
-      pushToast({
-        type: "info",
-        title: `${need} more ${need === 1 ? "line" : "lines"} to go`,
-        message: `A letter needs at least ${MIN_GOOD} pieces to fall`,
-      });
-      return;
-    }
-    if (mf.badItems.length < MIN_BAD) {
-      pushToast({ type: "info", title: `Add ${MIN_BAD - mf.badItems.length} more to dodge`, message: "Petty is perfect" });
+    const missing = missingForSave(mf);
+    if (missing.length) {
+      pushToast({ type: "info", title: `Still needed: ${missing.join(", ")}`, message: `A letter needs at least ${MIN_GOOD} pieces to fall` });
       return;
     }
 
     // Only objects that actually carry a line get thrown into the sky.
     const cleaned: CatchData = {
-      ...mf,
+      ...tidyCatchData(mf),
       goodItems: mf.goodItems.filter((g) => g.line.trim()).slice(0, MAX_GOOD),
-      badItems: mf.badItems.slice(0, MAX_BAD),
+      badItems: mf.badItems.filter((b) => b.emoji || b.label.trim()).slice(0, MAX_BAD),
       closingLine: mf.closingLine.trim() || DEMO_DATA.closingLine,
     };
 
@@ -358,9 +362,9 @@ export function useCatchEditor() {
     // Recorded before any validation or auth check so this measures *intent*.
     track(EVENTS.PUBLISH_CLICKED, { template: TEMPLATE, is_authenticated: isAuthenticated });
 
-    if (!content.senderName.trim() || writtenCount(content) < MIN_GOOD) {
+    if (missingForSave(content).length) {
       track(EVENTS.PUBLISH_FAILED, { template: TEMPLATE, reason: "letter_incomplete" });
-      pushToast({ type: "info", title: "Finish the letter first", message: `At least ${MIN_GOOD} lines` });
+      pushToast({ type: "info", title: "Finish the letter first", message: `Still needed: ${missingForSave(content).join(", ")}` });
       setMf({ ...content });
       setEditMode("manual");
       return;
@@ -432,8 +436,8 @@ export function useCatchEditor() {
     openShareSheet({
       url: shareUrl,
       password: pagePassword,
-      title: "I wrote you something. It's in pieces. 💛",
-      accent: "#0369a1",
+      title: "I made you a game. Catch it 💘",
+      accent: "#FF4F9A",
       senderName: content.senderName,
       slug: "catch",
     });
@@ -447,7 +451,7 @@ export function useCatchEditor() {
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId,
     isPersonalized, showAuth, saving, publishing, copied, previewVersion,
 
-    fill, storyStarter, openManualForm,
+    fill, storyStarter, openManualForm, playing, setPlaying,
 
     setEditMode, setPagePassword, updateMf,
     handleEditClick, handleEditFromPreview, handleSave,

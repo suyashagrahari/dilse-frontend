@@ -8,8 +8,8 @@ import CatchTemplate from "@/app/(templates)/catch/components/CatchTemplate";
 import { dbToCatchData } from "@/app/(templates)/catch/components/types";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-const AMBER = "#B9722A";
-const AMBER_GRAD = "linear-gradient(135deg,#E9A94A,#B9722A)";
+const AMBER = "#D12A72";
+const AMBER_GRAD = "linear-gradient(135deg,#FF4F9A,#7C5CFF)";
 
 /* ─────────────────────────────────────────
    Password gate — the letter is still whole
@@ -42,7 +42,7 @@ function CatchPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center px-5"
-      style={{ background: "linear-gradient(180deg,#EEF1F4 0%,#F7F1E6 55%,#FDF8EF 100%)" }}
+      style={{ background: "linear-gradient(180deg,#9FD3FF 0%,#C8B8FF 55%,#FFD0E8 100%)" }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -50,7 +50,7 @@ function CatchPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
         transition={{ type: "spring", stiffness: 360, damping: 25 }}
         className="relative w-full max-w-sm z-10"
       >
-        <div className="rounded-3xl overflow-hidden shadow-2xl bg-white" style={{ border: "1px solid #EADFCB" }}>
+        <div className="rounded-3xl overflow-hidden shadow-2xl bg-white" style={{ border: "1px solid #EDE5F6" }}>
           <div className="h-1" style={{ background: AMBER_GRAD }} />
           <div className="px-7 pt-8 pb-7">
             <div className="flex flex-col items-center mb-7">
@@ -58,16 +58,16 @@ function CatchPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-xl"
-                style={{ background: AMBER_GRAD, boxShadow: "0 14px 30px -12px rgba(185,114,42,.6)" }}
+                style={{ background: AMBER_GRAD, boxShadow: "0 14px 30px -12px rgba(209,42,114,.6)" }}
               >
                 <Lock size={28} className="text-white" />
               </motion.div>
-              <div className="text-3xl mb-2" aria-hidden>💛</div>
+              <div className="text-3xl mb-2" aria-hidden>🎮</div>
               <h2 className="text-xl font-bold text-center mb-1" style={{ color: AMBER }}>
                 This one&apos;s just for you
               </h2>
               <p className="text-xs text-center leading-relaxed text-muted-foreground">
-                Enter the password and<br />it&apos;ll start falling
+                Enter the password to<br />press start 💘
               </p>
             </div>
 
@@ -83,7 +83,7 @@ function CatchPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
                 className={`w-full px-4 py-3.5 pr-11 rounded-2xl text-sm outline-none transition-all text-foreground border ${
                   error ? "border-red-400/60 ring-2 ring-red-400/15" : "focus:ring-2"
                 }`}
-                style={error ? { background: "#FBF6EE" } : { background: "#FBF6EE", borderColor: "#EADFCB" }}
+                style={error ? { background: "#FCFAFE" } : { background: "#FCFAFE", borderColor: "#EDE5F6" }}
               />
               <button
                 type="button" onClick={() => setShowPw((v) => !v)}
@@ -110,7 +110,7 @@ function CatchPasswordGate({ shareId, onUnlocked }: { shareId: string; onUnlocke
               onClick={handleVerify}
               disabled={loading || !pw.trim()}
               className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-40 text-white shadow-lg"
-              style={{ background: AMBER_GRAD, boxShadow: "0 14px 30px -14px rgba(185,114,42,.7)" }}
+              style={{ background: AMBER_GRAD, boxShadow: "0 14px 30px -14px rgba(209,42,114,.7)" }}
             >
               {loading ? <><Loader2 size={15} className="animate-spin" />Verifying...</> : <><Lock size={15} />Open it</>}
             </motion.button>
