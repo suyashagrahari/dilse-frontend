@@ -45,10 +45,10 @@ ENV NEXT_PUBLIC_PROD_CLARITY_ID=$NEXT_PUBLIC_PROD_CLARITY_ID
 ENV NEXT_PUBLIC_MEDIA_ORIGIN=$NEXT_PUBLIC_MEDIA_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Persist the Next.js compilation cache (.next/cache) across builds → incremental
-# recompiles instead of a cold build every time. In CI this mount is hydrated by the
-# buildkit-cache-dance step in the workflow; locally it persists in the BuildKit store.
-RUN --mount=type=cache,target=/app/.next/cache npm run build
+# Cold build every time. The .next/cache mount used to persist across builds, and
+# a stale Turbopack next/font entry in it failed production builds repeatedly
+# ("next/font/google queries have exactly one entry"). Reliability over speed.
+RUN npm run build
 
 # ── Stage 3: runner — Minimal production image ───────────────────────────────
 FROM node:20-alpine AS runner
