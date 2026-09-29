@@ -21,6 +21,7 @@ import {
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
+import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 
 /** The Premium room's palette: near-black aubergine with champagne gold. */
 export const LUX = {
@@ -141,12 +142,12 @@ export function PremiumSpotlight({ items }: { items: TemplateListItem[] }) {
       <div className="pxDeck">
         {n > 2 && (
           <div className="pxDeckCard isBack2" aria-hidden>
-            {back2.coverImage && <Image src={back2.coverImage} alt="" fill sizes="220px" className="object-cover" />}
+            {back2.coverImage && <CdnCover src={back2.coverImage} alt="" sizes="220px" />}
           </div>
         )}
         {n > 1 && (
           <div className="pxDeckCard isBack1" aria-hidden>
-            {back1.coverImage && <Image src={back1.coverImage} alt="" fill sizes="240px" className="object-cover" />}
+            {back1.coverImage && <CdnCover src={back1.coverImage} alt="" sizes="240px" />}
           </div>
         )}
         <Link
@@ -165,7 +166,7 @@ export function PremiumSpotlight({ items }: { items: TemplateListItem[] }) {
               transition={{ duration: reduce ? 0 : 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
               {cur.coverImage && (
-                <Image src={cur.coverImage} alt={cur.title} fill sizes="(max-width:768px) 40vw, 320px" className="object-cover" priority />
+                <CdnCover src={cur.coverImage} alt={cur.title} sizes="(max-width:768px) 40vw, 320px" eager />
               )}
             </motion.div>
           </AnimatePresence>
@@ -262,6 +263,15 @@ export function PremiumPerks() {
 }
 
 /** The Freemium tab's invitation into the Premium tab. */
+/** A CDN cover from its pre-sized variants (see coverSrcSet), else next/image. */
+function CdnCover({ src, alt, sizes, eager }: { src: string; alt: string; sizes: string; eager?: boolean }) {
+  const set = coverSrcSet(src);
+  if (!set) return <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" priority={eager} />;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={coverSmall(src)} srcSet={set} sizes={sizes} alt={alt} loading={eager ? "eager" : "lazy"} decoding="async"
+    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />;
+}
+
 export function PremiumTeaser({ items, count, onExplore }: { items: TemplateListItem[]; count: number; onExplore: () => void }) {
   const covers = items.filter((t) => t.coverImage).slice(0, 3);
   return (
@@ -278,10 +288,25 @@ export function PremiumTeaser({ items, count, onExplore }: { items: TemplateList
           Explore premium <ArrowRight size={15} aria-hidden />
         </button>
       </div>
+      {/* Phones: one slim row — stacked thumbnails, the line, a round button. */}
+      <button type="button" className="pxTzMini" onClick={onExplore} aria-label={`Explore the Premium collection, ${count} templates`}>
+        <span className="pxTzMiniStack" aria-hidden>
+          {covers.map((t, i) => (
+            <span key={t.slug} className={`pxTzMiniCard m${i}`}>
+              <CdnCover src={t.coverImage!} alt="" sizes="60px" eager />
+            </span>
+          ))}
+        </span>
+        <span className="pxTzMiniText">
+          <span className="pxTzMiniKick"><Crown size={10} aria-hidden /> Premium</span>
+          <span className="pxTzMiniTitle">{count} real apps, <em>cloned to the pixel</em></span>
+        </span>
+        <span className="pxTzMiniGo" aria-hidden><ArrowRight size={16} /></span>
+      </button>
       <div className="pxTzFan" aria-hidden>
         {covers.map((t, i) => (
           <span key={t.slug} className={`pxTzCard c${i}`}>
-            <Image src={t.coverImage!} alt="" fill sizes="(max-width:768px) 30vw, 180px" className="object-cover" />
+            <CdnCover src={t.coverImage!} alt="" sizes="(max-width:768px) 30vw, 180px" eager />
           </span>
         ))}
       </div>
@@ -318,6 +343,24 @@ export const PREMIUM_TAB_CSS = `
 .pxTzCard.c0 { left: 4%; transform: rotate(-8deg); }
 .pxTzCard.c1 { left: 34.5%; bottom: -8px; z-index: 2; }
 .pxTzCard.c2 { right: 4%; transform: rotate(8deg); }
+/* phones: slim row only */
+.pxTzMini { display: none; }
+@media (max-width: 767px) {
+  .pxTz { display: block; padding: 0; margin-bottom: 18px; border-radius: 18px; }
+  .pxTzBody, .pxTzFan { display: none; }
+  .pxTzMini { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px 10px 10px; border: none; background: transparent; cursor: pointer; text-align: left; }
+  .pxTzMiniStack { position: relative; flex-shrink: 0; width: 66px; height: 52px; }
+  .pxTzMiniCard { position: absolute; top: 2px; width: 36px; height: 48px; border-radius: 7px; overflow: hidden; border: 1.5px solid rgba(230,199,126,.6); box-shadow: 0 6px 12px -6px rgba(0,0,0,.7); }
+  .pxTzMiniCard.m0 { left: 0; transform: rotate(-9deg); }
+  .pxTzMiniCard.m1 { left: 15px; z-index: 2; top: 0; }
+  .pxTzMiniCard.m2 { left: 30px; transform: rotate(9deg); }
+  .pxTzMiniText { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+  .pxTzMiniKick { display: inline-flex; align-items: center; gap: 4px; color: #e9c97f; font: 800 9.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+  .pxTzMiniTitle { color: #fbf3e4; font: 600 15px/1.2 'Playfair Display', serif; }
+  .pxTzMiniTitle em { color: #e9c97f; font-style: italic; }
+  .pxTzMiniGo { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #2a1906;
+    background: linear-gradient(135deg, #fbecc0, #e6c77e 50%, #b8893a); box-shadow: 0 6px 14px -6px rgba(230,199,126,.8); }
+}
 @media (min-width: 768px) {
   .pxTz { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); gap: 28px; padding: 36px 40px 0 44px; border-radius: 30px; }
   .pxTzBody { padding-bottom: 36px; gap: 12px; }
