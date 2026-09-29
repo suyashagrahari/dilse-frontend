@@ -1,23 +1,25 @@
 // ─── The editor's form ───────────────────────────────────────────────────────
 //
-// A five-step bottom sheet: who is calling, the identification card, the
-// message, the log, and the send. Every keystroke goes through `updateMf`, and
-// the hook autosaves the draft on every change — nobody loses a call log to a
-// refresh.
+// One scrolling sheet (a bottom sheet on phones, a right-hand drawer on wide
+// screens so the call stays visible beside it). Four friendly steps up top —
+// who is calling, the memories, the voicemail, what the screen says when it
+// rings — and everything else folded away under "Fine-tune". Save stays pinned
+// at the bottom and says exactly what is still missing.
 //
-// The call log is edited as STRUCTURED ROWS rather than as the
-// `kind | time | note` strings the AI writes, because a round trip through a
-// pipe-delimited string silently drops `ago` and `duration` and the sender
-// never finds out. The pipe format is normalised into these fields once, at the
-// AI boundary, in `useCallEditor`.
+// The call log is edited as STRUCTURED ROWS; the AI's `kind | … | note` strings
+// are normalised into rows once, at the AI boundary, in `useCallEditor`.
 
 "use client";
 
-import { useState } from "react";
-import { ArrowLeftGlyph, CheckGlyph, CloseGlyph, LockGlyph, MinusGlyph, PlusGlyph } from "./icons";
-import { FONT, LIGHT, TAP } from "./theme";
+import { useRef, useState, type ReactNode } from "react";
+import PhotosEditor from "../../_love/editor/PhotosEditor";
+import PhotoAdjuster from "../../dedication/components/PhotoAdjuster";
+import { compressImage } from "../../dedication/components/mediaUploads";
+import { CROP_DEFAULT, cropStyle, photoCrop, type Crop } from "../../dedication/components/types";
+import { MAX_LETTER_LEN, MAX_LOCK_ANSWER_LEN, MAX_LOCK_QUESTION_LEN } from "../../_love/types";
 import {
   CALL_KINDS,
+  CALL_TEXT_LIMITS as L,
   MAX_LOG_ENTRIES,
   MAX_MESSAGE_LINES,
   MAX_TAGS,
@@ -28,37 +30,15 @@ import {
 } from "./types";
 import type { EditMode } from "../hooks/useCallEditor";
 
-const STEPS = ["Caller", "ID card", "Message", "Call log", "Send"] as const;
-
-/**
- * The field caption. Declared at module scope, not inside the sheet: a
- * component created during render is a new type on every keystroke, and React
- * remounts every input under it — which on a form like this means the caret
- * jumping to the end of whatever you were typing.
- */
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        display: "block",
-        marginBottom: 6,
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: "0.02em",
-        color: LIGHT.sub,
-      }}
-    >
-      {children}
-    </span>
-  );
+/** What Save needs before it will go. Everything else has a sensible default. */
+export function missingForSave(d: CallData): string[] {
+  const out: string[] = [];
+  if (!d.caller.name.trim()) out.push("your name");
+  if (!d.recipient.name.trim()) out.push("their name");
+  return out;
 }
 
-const KIND_LABEL: Record<CallKind, string> = {
-  missed: "Missed",
-  incoming: "In",
-  outgoing: "Out",
-  rejected: "Declined",
-};
+const KIND_LABEL: Record<CallKind, string> = { missed: "📵 Missed", incoming: "↙ Incoming", outgoing: "↗ Outgoing", rejected: "⛔ Declined" };
 
 export interface EditSheetProps {
   editMode: EditMode;
@@ -71,512 +51,383 @@ export interface EditSheetProps {
   saving: boolean;
 }
 
-export default function EditSheet({
-  editMode,
-  setEditMode,
-  mf,
-  updateMf,
-  pagePassword,
-  setPagePassword,
-  onSave,
-  saving,
-}: EditSheetProps) {
-  const [step, setStep] = useState(0);
+export default function EditSheet({ editMode, setEditMode, mf, updateMf, pagePassword, setPagePassword, onSave, saving }: EditSheetProps) {
   const open = editMode === "manual";
-
+  const [lockPicked, setLockPicked] = useState(false);
   if (!open) return null;
+  // On when they ticked it or when a question is already there (the AI writes one).
+  const lockOn = lockPicked || !!mf.lockQuestion.trim();
 
-  const input: React.CSSProperties = {
-    width: "100%",
-    minHeight: TAP,
-    padding: "11px 13px",
-    borderRadius: 12,
-    fontSize: 15,
-    fontFamily: FONT,
-    color: LIGHT.ink,
-    background: LIGHT.paper,
-    border: `1px solid #DDE1E5`,
-    outline: "none",
-  };
-
-  const setCaller = (field: keyof CallData["caller"], value: string) =>
-    updateMf("caller", { ...mf.caller, [field]: value });
-
-  const setTag = (i: number, patch: Partial<CallerTag>) =>
-    updateMf(
-      "tags",
-      mf.tags.map((t, idx) => (idx === i ? { ...t, ...patch } : t))
-    );
-
-  const setEntry = (i: number, patch: Partial<CallLogEntry>) =>
-    updateMf(
-      "callLog",
-      mf.callLog.map((e, idx) => (idx === i ? { ...e, ...patch } : e))
-    );
-
-  const quiet: React.CSSProperties = {
-    minHeight: TAP,
-    padding: "0 14px",
-    borderRadius: 12,
-    border: `1px solid #DDE1E5`,
-    background: LIGHT.paper,
-    color: LIGHT.ink,
-    fontFamily: FONT,
-    fontSize: 14,
-    fontWeight: 600,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 7,
-    cursor: "pointer",
-    touchAction: "manipulation",
-  };
-
-  const primary: React.CSSProperties = {
-    ...quiet,
-    border: "none",
-    background: LIGHT.accent,
-    color: "#fff",
-    padding: "0 22px",
-  };
+  const missing = missingForSave(mf);
+  const setCaller = (p: Partial<CallData["caller"]>) => updateMf("caller", { ...mf.caller, ...p });
+  const setTag = (i: number, p: Partial<CallerTag>) => updateMf("tags", mf.tags.map((t, idx) => (idx === i ? { ...t, ...p } : t)));
+  const setEntry = (i: number, p: Partial<CallLogEntry>) => updateMf("callLog", mf.callLog.map((e, idx) => (idx === i ? { ...e, ...p } : e)));
+  const close = () => setEditMode("preview");
+  const first = mf.caller.name.trim().split(/\s+/)[0] || "you";
+  const them = mf.recipient.name.trim().split(/\s+/)[0] || "them";
 
   return (
     <>
-      <div
-        onClick={() => setEditMode("preview")}
-        style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(7,9,11,0.5)" }}
-      />
-      <div
-        className="call-sheet"
-        role="dialog"
-        aria-label="Edit this call"
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 201,
-          margin: "0 auto",
-          width: "100%",
-          maxWidth: 520,
-          maxHeight: "92dvh",
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: "22px 22px 0 0",
-          background: "#F7F8F9",
-          fontFamily: FONT,
-          color: LIGHT.ink,
-        }}
-      >
-        <header style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px 10px" }}>
-          <div style={{ display: "flex", gap: 6, flex: 1 }}>
-            {STEPS.map((s, i) => (
-              <span
-                key={s}
-                title={s}
-                style={{
-                  width: i === step ? 20 : 8,
-                  height: 8,
-                  borderRadius: 999,
-                  background: i <= step ? LIGHT.accent : "#D8DDE1",
-                  transition: "width .2s",
-                }}
-              />
-            ))}
+      <style>{CSS}</style>
+      <div className="ceScrim" onClick={close} />
+      <div className="ceSheet" role="dialog" aria-modal="true" aria-label="Make your call">
+        <div className="ceHead">
+          <span className="ceGrab" aria-hidden />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p className="ceTitle">Make the call 📞</p>
+            <p className="ceSub">Names, photos, a voicemail. Everything else is already written — tweak anything.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setEditMode("preview")}
-            aria-label="Close"
-            style={{
-              minHeight: TAP,
-              minWidth: TAP,
-              border: "none",
-              background: "transparent",
-              display: "grid",
-              placeItems: "center",
-              cursor: "pointer",
-            }}
-          >
-            <CloseGlyph size={18} color={LIGHT.sub} />
-          </button>
-        </header>
-
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 12px" }}>
-          <h2 style={{ margin: "0 0 14px", fontSize: 20, fontWeight: 700 }}>
-            {step === 0 && "Who is calling"}
-            {step === 1 && "The identification card"}
-            {step === 2 && "What she says when he answers"}
-            {step === 3 && "The call log"}
-            {step === 4 && "Send it"}
-          </h2>
-
-          {/* ── 0. Caller ──────────────────────────────────────────────── */}
-          {step === 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <label>
-                <Label>Her name</Label>
-                <input
-                  value={mf.caller.name}
-                  onChange={(e) => setCaller("name", e.target.value)}
-                  placeholder="Meera Sharma"
-                  style={input}
-                />
-              </label>
-              <label>
-                <Label>Photo URL</Label>
-                <input
-                  value={mf.caller.photoUrl}
-                  onChange={(e) => setCaller("photoUrl", e.target.value)}
-                  placeholder="https://…"
-                  style={input}
-                />
-                <span style={{ display: "block", marginTop: 5, fontSize: 12, color: LIGHT.sub }}>
-                  Leave it blank and her initials fill the circle instead.
-                </span>
-              </label>
-              <label>
-                <Label>Number (never a real, dialable one)</Label>
-                <input
-                  value={mf.caller.number}
-                  onChange={(e) => setCaller("number", e.target.value)}
-                  placeholder="+91 98200 41821"
-                  style={input}
-                />
-              </label>
-              <label>
-                <Label>Location</Label>
-                <input
-                  value={mf.caller.location}
-                  onChange={(e) => setCaller("location", e.target.value)}
-                  placeholder="Lucknow, Uttar Pradesh"
-                  style={input}
-                />
-              </label>
-              <label>
-                <Label>Carrier line</Label>
-                <input
-                  value={mf.caller.carrier}
-                  onChange={(e) => setCaller("carrier", e.target.value)}
-                  placeholder="DIL Prepaid"
-                  style={input}
-                />
-              </label>
-              <label>
-                <Label>Whose phone is it</Label>
-                <input
-                  value={mf.recipient.name}
-                  onChange={(e) => updateMf("recipient", { name: e.target.value })}
-                  placeholder="Karan"
-                  style={input}
-                />
-              </label>
-            </div>
-          )}
-
-          {/* ── 1. The card ────────────────────────────────────────────── */}
-          {step === 1 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <button
-                type="button"
-                onClick={() => updateMf("verified", !mf.verified)}
-                style={{
-                  ...quiet,
-                  justifyContent: "space-between",
-                  width: "100%",
-                  background: LIGHT.paper,
-                }}
-              >
-                <span>Show the verified tick</span>
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 42,
-                    height: 25,
-                    borderRadius: 999,
-                    background: mf.verified ? LIGHT.accent : "#D8DDE1",
-                    position: "relative",
-                    flex: "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: 2.5,
-                      left: mf.verified ? 20 : 2.5,
-                      width: 20,
-                      height: 20,
-                      borderRadius: 999,
-                      background: "#fff",
-                      transition: "left .18s",
-                    }}
-                  />
-                </span>
-              </button>
-
-              <label>
-                <Label>Spam risk — {mf.spamRisk}%</Label>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={mf.spamRisk}
-                  onChange={(e) => updateMf("spamRisk", Number(e.target.value))}
-                  style={{ width: "100%", accentColor: LIGHT.accent, minHeight: TAP }}
-                />
-                <span style={{ display: "block", fontSize: 12, color: LIGHT.sub }}>
-                  0% is the joke. The meter says so out loud.
-                </span>
-              </label>
-
-              <div>
-                <Label>Tags — what people call this number</Label>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {mf.tags.map((tag, i) => (
-                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input
-                        value={tag.label}
-                        onChange={(e) => setTag(i, { label: e.target.value })}
-                        placeholder="Pick Up. Now."
-                        maxLength={48}
-                        style={{ ...input, flex: 1 }}
-                      />
-                      <input
-                        value={String(tag.count)}
-                        inputMode="numeric"
-                        onChange={(e) => setTag(i, { count: Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0) })}
-                        aria-label="How many people"
-                        style={{ ...input, width: 84, flex: "none" }}
-                      />
-                      <button
-                        type="button"
-                        aria-label="Remove this tag"
-                        onClick={() =>
-                          updateMf(
-                            "tags",
-                            mf.tags.filter((_, idx) => idx !== i)
-                          )
-                        }
-                        style={{ ...quiet, padding: 0, width: TAP, justifyContent: "center", flex: "none" }}
-                      >
-                        <MinusGlyph size={16} color={LIGHT.sub} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {mf.tags.length < MAX_TAGS && (
-                  <button
-                    type="button"
-                    onClick={() => updateMf("tags", [...mf.tags, { label: "", count: 1 }])}
-                    style={{ ...quiet, marginTop: 10 }}
-                  >
-                    <PlusGlyph size={15} color={LIGHT.ink} /> Add a tag
-                  </button>
-                )}
-                <p style={{ margin: "10px 0 0", fontSize: 12, lineHeight: 1.5, color: LIGHT.sub }}>
-                  Her friends can add more through the tag link after you publish — those land pending and you approve
-                  each one.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── 2. Message ─────────────────────────────────────────────── */}
-          {step === 2 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <label>
-                <Label>One line per line. They fade in one at a time.</Label>
-                <textarea
-                  value={mf.message.join("\n")}
-                  onChange={(e) =>
-                    updateMf(
-                      "message",
-                      e.target.value.split("\n").slice(0, MAX_MESSAGE_LINES)
-                    )
-                  }
-                  rows={8}
-                  placeholder={"Pick up.\nI know you are looking at the screen right now."}
-                  style={{ ...input, resize: "vertical", lineHeight: 1.6 }}
-                />
-              </label>
-              <label>
-                <Label>Voice note URL (optional)</Label>
-                <input
-                  value={mf.voiceUrl ?? ""}
-                  onChange={(e) => updateMf("voiceUrl", e.target.value.trim() || null)}
-                  placeholder="https://… — leave blank to go straight to the message"
-                  style={input}
-                />
-              </label>
-            </div>
-          )}
-
-          {/* ── 3. Call log ────────────────────────────────────────────── */}
-          {step === 3 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {mf.callLog.map((entry, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: 12,
-                    borderRadius: 14,
-                    background: LIGHT.paper,
-                    border: `1px solid #E4E8EB`,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {CALL_KINDS.map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setEntry(i, { kind: k })}
-                        style={{
-                          minHeight: TAP,
-                          padding: "0 12px",
-                          borderRadius: 10,
-                          border: `1px solid ${entry.kind === k ? LIGHT.accent : "#DDE1E5"}`,
-                          background: entry.kind === k ? "rgba(29,163,98,0.1)" : "transparent",
-                          color: entry.kind === k ? LIGHT.accent : LIGHT.sub,
-                          fontFamily: FONT,
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          touchAction: "manipulation",
-                        }}
-                      >
-                        {KIND_LABEL[k]}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      aria-label="Remove this entry"
-                      onClick={() =>
-                        updateMf(
-                          "callLog",
-                          mf.callLog.filter((_, idx) => idx !== i)
-                        )
-                      }
-                      style={{ ...quiet, marginLeft: "auto", padding: 0, width: TAP, justifyContent: "center" }}
-                    >
-                      <MinusGlyph size={16} color={LIGHT.sub} />
-                    </button>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input
-                      value={entry.time}
-                      onChange={(e) => setEntry(i, { time: e.target.value })}
-                      placeholder="11:47 PM"
-                      style={{ ...input, flex: 1 }}
-                    />
-                    <input
-                      value={entry.ago}
-                      onChange={(e) => setEntry(i, { ago: e.target.value })}
-                      placeholder="Yesterday"
-                      style={{ ...input, flex: 1 }}
-                    />
-                  </div>
-
-                  {entry.kind !== "missed" && entry.kind !== "rejected" && (
-                    <input
-                      value={entry.duration ?? ""}
-                      onChange={(e) => setEntry(i, { duration: e.target.value })}
-                      placeholder="4 hrs 12 mins"
-                      style={input}
-                    />
-                  )}
-
-                  <input
-                    value={entry.note ?? ""}
-                    onChange={(e) => setEntry(i, { note: e.target.value })}
-                    placeholder="the line under it — where the joke lives"
-                    style={input}
-                  />
-                </div>
-              ))}
-
-              {mf.callLog.length < MAX_LOG_ENTRIES && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateMf("callLog", [...mf.callLog, { kind: "missed" as CallKind, time: "", ago: "", note: "" }])
-                  }
-                  style={quiet}
-                >
-                  <PlusGlyph size={15} color={LIGHT.ink} /> Add an entry
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── 4. Send ────────────────────────────────────────────────── */}
-          {step === 4 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <label>
-                <Label>What her friends see on the tag page</Label>
-                <textarea
-                  value={mf.contributorPrompt}
-                  onChange={(e) => updateMf("contributorPrompt", e.target.value)}
-                  rows={3}
-                  placeholder="Know this number? Add a tag."
-                  style={{ ...input, resize: "vertical", lineHeight: 1.55 }}
-                />
-              </label>
-              <label>
-                <Label>Lock it with a password (optional)</Label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    value={pagePassword}
-                    onChange={(e) => setPagePassword(e.target.value)}
-                    placeholder="leave empty for no lock"
-                    style={{ ...input, paddingLeft: 38 }}
-                  />
-                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
-                    <LockGlyph size={16} color={LIGHT.sub} />
-                  </span>
-                </div>
-              </label>
-            </div>
-          )}
+          <button type="button" className="ceX" onClick={close} aria-label="Close">✕</button>
         </div>
 
-        <footer
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))",
-            borderTop: `1px solid #E4E8EB`,
-          }}
-        >
-          {step > 0 && (
-            <button type="button" onClick={() => setStep((s) => s - 1)} style={quiet}>
-              <ArrowLeftGlyph size={15} color={LIGHT.ink} /> Back
-            </button>
-          )}
-          <div style={{ flex: 1 }} />
-          {step < STEPS.length - 1 ? (
-            <button type="button" onClick={() => setStep((s) => s + 1)} style={primary}>
-              Next
-            </button>
-          ) : (
-            <button type="button" onClick={onSave} disabled={saving} style={{ ...primary, opacity: saving ? 0.6 : 1 }}>
-              <CheckGlyph size={15} color="#fff" /> {saving ? "Saving…" : "Save & preview"}
-            </button>
-          )}
-        </footer>
-      </div>
+        <div className="ceBody">
+          {/* 1 — who */}
+          <section className="ceStep">
+            <p className="ceStepN"><b>1</b> Who&apos;s calling who</p>
+            <div className="ceWho">
+              <PortraitSlot caller={mf.caller} onChange={setCaller} />
+              <div className="ceWhoFields">
+                <Field label="Your name" required hint="It flashes on their screen as the caller.">
+                  <Text big value={mf.caller.name} max={L.name} placeholder="Meera" onChange={(v) => setCaller({ name: v })} />
+                </Field>
+                <Field label="Their name" required hint="Whose phone is ringing.">
+                  <Text big value={mf.recipient.name} max={L.name} placeholder="Karan" onChange={(v) => updateMf("recipient", { name: v })} />
+                </Field>
+              </div>
+            </div>
+          </section>
 
-      <style>{`
-        .call-sheet { animation: call-sheet-up 260ms cubic-bezier(0.32, 0.72, 0, 1) both; }
-        @keyframes call-sheet-up {
-          from { transform: translateY(14px); opacity: 0; }
-          to   { transform: none; opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) { .call-sheet { animation: none; } }
-      `}</style>
+          {/* 2 — memories */}
+          <section className="ceStep">
+            <p className="ceStepN"><b>2</b> Shared media — your memories</p>
+            <p className="ceHint">
+              Up to 10 photos. They drop into the call as it plays, fill the &ldquo;shared media&rdquo; grid, and each one opens with its little note.
+              Tap a photo to move &amp; zoom it. <strong>Sample photos?</strong> Tap &ldquo;change photo&rdquo; to swap in yours — the captions stay.
+            </p>
+            <PhotosEditor
+              photos={mf.photos}
+              onChange={(v) => updateMf("photos", v)}
+              captionHint="caption — e.g. 4 hrs 12 mins"
+              noteHint="The little note that opens with this photo…"
+            />
+          </section>
+
+          {/* 3 — voicemail */}
+          <section className="ceStep">
+            <p className="ceStepN"><b>3</b> The voicemail — your main letter 💌</p>
+            <p className="ceHint">It waits as a voicemail and plays back word by word, like a live transcript. The call ends on &ldquo;Duration: forever&rdquo;.</p>
+            <Field label="Your letter" count={`${mf.letter.length}/${MAX_LETTER_LEN}`}>
+              <Area rows={8} value={mf.letter} max={MAX_LETTER_LEN} placeholder={`${them},\n\nI keep calling you for no reason, and the reason is you…`} onChange={(v) => updateMf("letter", v)} />
+            </Field>
+            <label className="ceCheck">
+              <input
+                type="checkbox"
+                checked={lockOn}
+                onChange={(e) => {
+                  setLockPicked(e.target.checked);
+                  if (!e.target.checked) {
+                    updateMf("lockQuestion", "");
+                    updateMf("lockAnswer", "");
+                  }
+                }}
+              />
+              <span>Make them answer a question first (the red Decline button runs away 😈)</span>
+            </label>
+            {lockOn && (
+              <div className="ceRow2">
+                <Field label="The question">
+                  <Text value={mf.lockQuestion} max={MAX_LOCK_QUESTION_LEN} placeholder="Are you going to pick up this time?" onChange={(v) => updateMf("lockQuestion", v)} />
+                </Field>
+                <Field label="The answer button says">
+                  <Text value={mf.lockAnswer} max={MAX_LOCK_ANSWER_LEN} placeholder="Answer 📞" onChange={(v) => updateMf("lockAnswer", v)} />
+                </Field>
+              </div>
+            )}
+          </section>
+
+          {/* 4 — the ring */}
+          <section className="ceStep">
+            <p className="ceStepN"><b>4</b> What their screen says when it rings</p>
+            <Field label="Call reason" hint="Pinned on the incoming call." count={`${mf.callReason.length}/${L.reason}`}>
+              <Text value={mf.callReason} max={L.reason} placeholder="Pick up, I have something to tell you 🥹" onChange={(v) => updateMf("callReason", v)} />
+            </Field>
+            <div className="ceRow2">
+              <Field label="They have you saved as" hint="Emojis encouraged.">
+                <Text value={mf.savedAs} max={L.savedAs} placeholder={`${first} 🍓🧿`} onChange={(v) => updateMf("savedAs", v)} />
+              </Field>
+              <Field label="Your number" hint="Make it a joke — never a real one.">
+                <Text value={mf.caller.number} max={L.number} placeholder="+91 90000 14022" onChange={(v) => setCaller({ number: v })} />
+              </Field>
+            </div>
+          </section>
+
+          {/* 5 — fine-tune */}
+          <section className="ceStep">
+            <p className="ceStepN"><b>5</b> Fine-tune (optional)</p>
+            <div className="ceFolds">
+              <Fold title="On the call — what you say" sub={`${mf.message.length} lines, shown one at a time as a live transcript`}>
+                <Field label="One spoken line per row" count={`${mf.message.length}/${MAX_MESSAGE_LINES} lines`}>
+                  <Area
+                    rows={6}
+                    value={mf.message.join("\n")}
+                    max={MAX_MESSAGE_LINES * L.line}
+                    placeholder={"Pick up.\nI know you're looking at the screen right now…"}
+                    onChange={(v) => updateMf("message", v.split("\n").slice(0, MAX_MESSAGE_LINES).map((l) => l.slice(0, L.line)))}
+                  />
+                </Field>
+              </Fold>
+
+              <Fold title="Caller-ID card" sub="Location, carrier, spam score, verified">
+                <div className="ceRow2">
+                  <Field label="Location"><Text value={mf.caller.location} max={L.location} placeholder="Lucknow, Uttar Pradesh" onChange={(v) => setCaller({ location: v })} /></Field>
+                  <Field label="Carrier"><Text value={mf.caller.carrier} max={L.carrier} placeholder="Dil Prepaid · 5G" onChange={(v) => setCaller({ carrier: v })} /></Field>
+                </div>
+                <Field label={`Spam score: ${mf.spamRisk}%`} hint={mf.spamRisk === 0 ? "0% reads as a proud “Not spam. Never spam.”" : "Anything above 0 is a bit of a roast."}>
+                  <input className="ceRange" type="range" min={0} max={100} value={mf.spamRisk} onChange={(e) => updateMf("spamRisk", Number(e.target.value))} aria-label="Spam score" />
+                </Field>
+                <label className="ceCheck">
+                  <input type="checkbox" checked={mf.verified} onChange={(e) => updateMf("verified", e.target.checked)} />
+                  <span>Show the gold verified tick</span>
+                </label>
+                <Field label="Who viewed your profile" count={`${mf.whoViewed.length}/${L.viewed}`}>
+                  <Text value={mf.whoViewed} max={L.viewed} placeholder={`${first} viewed your profile 38 times this week…`} onChange={(v) => updateMf("whoViewed", v)} />
+                </Field>
+              </Fold>
+
+              <Fold title="Saved-by-others tags" sub={`${mf.tags.length} tags · the top one shows on the ringing screen`}>
+                {mf.tags.map((t, i) => (
+                  <div key={i} className="ceTagRow">
+                    <Text value={t.label} max={L.tag} placeholder="Pick Up. Now." onChange={(v) => setTag(i, { label: v })} />
+                    <input className="ceIn ceNum" type="number" min={0} value={t.count} onChange={(e) => setTag(i, { count: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })} aria-label="How many people" />
+                    <button type="button" className="ceMini" onClick={() => updateMf("tags", mf.tags.filter((_, idx) => idx !== i))} aria-label="Remove tag">✕</button>
+                  </div>
+                ))}
+                {mf.tags.length < MAX_TAGS && (
+                  <button type="button" className="ceAdd" onClick={() => updateMf("tags", [...mf.tags, { label: "", count: Math.max(1, (mf.tags[mf.tags.length - 1]?.count ?? 40) - 7) }])}>+ Add a tag</button>
+                )}
+              </Fold>
+
+              <Fold title="Call history" sub={`${mf.callLog.length} calls · tap a row on the page to read its note`}>
+                {mf.callLog.map((e, i) => (
+                  <div key={i} className="ceLogRow">
+                    <div className="ceLogTop">
+                      <select className="ceIn" value={e.kind} onChange={(ev) => setEntry(i, { kind: ev.target.value as CallKind, ...(ev.target.value === "missed" || ev.target.value === "rejected" ? { duration: undefined } : {}) })} aria-label="Call type">
+                        {CALL_KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
+                      </select>
+                      <button type="button" className="ceMini" onClick={() => updateMf("callLog", mf.callLog.filter((_, idx) => idx !== i))} aria-label="Remove call">✕</button>
+                    </div>
+                    <div className="ceRow3">
+                      <Text value={e.ago} max={L.ago} placeholder="Yesterday" onChange={(v) => setEntry(i, { ago: v })} label="Day" />
+                      <Text value={e.time} max={L.time} placeholder="11:47 PM" onChange={(v) => setEntry(i, { time: v })} label="Time" />
+                      <Text value={e.duration ?? ""} max={L.duration} placeholder={e.kind === "missed" || e.kind === "rejected" ? "—" : "38 mins"} onChange={(v) => setEntry(i, { duration: v })} label="Duration" disabled={e.kind === "missed" || e.kind === "rejected"} />
+                    </div>
+                    <Text value={e.note ?? ""} max={L.note} placeholder="The joke / the memory behind this call" onChange={(v) => setEntry(i, { note: v })} label="Note" />
+                  </div>
+                ))}
+                {mf.callLog.length < MAX_LOG_ENTRIES && (
+                  <button type="button" className="ceAdd" onClick={() => updateMf("callLog", [...mf.callLog, { kind: "missed", time: "", ago: "Today", note: "" }])}>+ Add a call</button>
+                )}
+              </Fold>
+
+              <Fold title="Friends' tag link" sub="What their friends read when you share the tag link">
+                <Field label="Prompt" count={`${mf.contributorPrompt.length}/${L.prompt}`}>
+                  <Area rows={3} value={mf.contributorPrompt} max={L.prompt} onChange={(v) => updateMf("contributorPrompt", v)} />
+                </Field>
+              </Fold>
+
+              <Fold title="Password (optional)" sub="Only people with the password can pick up">
+                <Field label="Password" hint="Leave empty for no password.">
+                  <Text value={pagePassword} max={128} placeholder="e.g. our first date" onChange={setPagePassword} />
+                </Field>
+              </Fold>
+            </div>
+          </section>
+        </div>
+
+        <div className="ceFoot">
+          {missing.length > 0 ? <p className="ceMissing">Still needed: {missing.join(", ")}</p> : <p className="ceReady">Ready to ring ✓</p>}
+          <button type="button" className="ceSave" onClick={onSave} disabled={saving || missing.length > 0}>
+            {saving ? "Saving…" : "Save & preview the call"}
+          </button>
+        </div>
+      </div>
     </>
   );
 }
+
+/* ── the caller portrait: upload → frame → replace → remove ───────────────── */
+
+function PortraitSlot({ caller, onChange }: { caller: CallData["caller"]; onChange: (p: Partial<CallData["caller"]>) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [adjust, setAdjust] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const crop = photoCrop({ url: caller.photoUrl, cropX: caller.cropX, cropY: caller.cropY, scale: caller.scale });
+
+  const pick = async (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setErr("");
+    setBusy(true);
+    try {
+      onChange({ photoUrl: await compressImage(f), cropX: CROP_DEFAULT.x, cropY: 35, scale: CROP_DEFAULT.scale });
+      setAdjust(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "That photo couldn't be read");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="cePortrait">
+      <button type="button" className="cePortraitPic" onClick={() => (caller.photoUrl ? setAdjust(true) : input.current?.click())} aria-label={caller.photoUrl ? "Move and zoom your photo" : "Add your photo"}>
+        {caller.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={caller.photoUrl} alt="" draggable={false} style={cropStyle(crop)} />
+        ) : (
+          <span className="cePortraitEmpty">{busy ? "…" : "＋"}<small>your photo</small></span>
+        )}
+        {caller.photoUrl && <span className="cePortraitTag">adjust</span>}
+      </button>
+      <div className="cePortraitBtns">
+        <button type="button" onClick={() => input.current?.click()}>{caller.photoUrl ? "Change" : "Upload"}</button>
+        {caller.photoUrl && <button type="button" onClick={() => onChange({ photoUrl: "" })}>Remove</button>}
+      </div>
+      {err && <p className="ceErr">{err}</p>}
+      <input ref={input} type="file" accept="image/*" className="ceHidden" tabIndex={-1} aria-hidden onChange={(e) => { void pick(e.target.files); e.target.value = ""; }} />
+      <PhotoAdjuster
+        open={adjust && !!caller.photoUrl}
+        src={caller.photoUrl}
+        crop={crop}
+        title="Frame your caller photo"
+        onChange={(c: Crop) => onChange({ cropX: c.x, cropY: c.y, scale: c.scale })}
+        onClose={() => setAdjust(false)}
+        onReplace={() => input.current?.click()}
+      />
+    </div>
+  );
+}
+
+/* ── small form pieces (module scope, so inputs never remount mid-typing) ─── */
+
+function Field({ label, hint, required, count, children }: { label: string; hint?: string; required?: boolean; count?: string; children: ReactNode }) {
+  return (
+    <label className="ceField">
+      <span className="ceLabel">
+        {label}
+        {required && <i> *</i>}
+        {count && <small>{count}</small>}
+      </span>
+      {children}
+      {hint && <span className="ceFieldHint">{hint}</span>}
+    </label>
+  );
+}
+
+function Text({ value, onChange, max, placeholder, big, label, disabled }: { value: string; onChange: (v: string) => void; max: number; placeholder?: string; big?: boolean; label?: string; disabled?: boolean }) {
+  return (
+    <input
+      className={`ceIn${big ? " is-big" : ""}`}
+      value={value}
+      maxLength={max}
+      placeholder={placeholder}
+      aria-label={label}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value.slice(0, max))}
+    />
+  );
+}
+
+function Area({ value, onChange, max, rows, placeholder }: { value: string; onChange: (v: string) => void; max: number; rows: number; placeholder?: string }) {
+  return <textarea className="ceIn ceArea" value={value} rows={rows} maxLength={max} placeholder={placeholder} onChange={(e) => onChange(e.target.value.slice(0, max))} />;
+}
+
+function Fold({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+  return (
+    <details className="ceFold">
+      <summary>
+        <span><b>{title}</b>{sub && <small>{sub}</small>}</span>
+        <i aria-hidden>⌄</i>
+      </summary>
+      <div className="ceFoldBody">{children}</div>
+    </details>
+  );
+}
+
+const CSS = `
+.ceScrim { position: fixed; inset: 0; z-index: 200; background: rgba(7,9,11,.55); animation: ceFade .2s both; }
+.ceSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 201; margin: 0 auto; width: 100%; max-width: 620px; max-height: 92dvh; display: flex; flex-direction: column;
+  border-radius: 24px 24px 0 0; background: #F6F7F5; color: #14181D; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 -24px 60px -20px rgba(0,0,0,.5); animation: ceUp .38s cubic-bezier(.2,1,.3,1) both; }
+@media (min-width: 900px) {
+  .ceSheet { left: auto; right: 0; top: 0; bottom: 0; max-height: none; height: 100dvh; width: 480px; border-radius: 24px 0 0 24px; animation-name: ceIn; }
+  .ceGrab { display: none !important; }
+}
+.ceHead { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 18px 16px 12px; border-bottom: 1px solid #E4E7E3; }
+.ceGrab { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; border-radius: 99px; background: #D5D9D4; }
+.ceTitle { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+.ceSub { margin: 3px 0 0; font-size: 13px; color: #5D6670; line-height: 1.4; }
+.ceX { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #E9ECE8; color: #3A424A; font-size: 15px; cursor: pointer; }
+.ceBody { flex: 1; overflow-y: auto; padding: 6px 16px 24px; overscroll-behavior: contain; }
+.ceStep { padding: 16px 0 6px; border-bottom: 1px dashed #DDE1DC; display: grid; gap: 12px; }
+.ceStep:last-child { border-bottom: 0; }
+.ceStepN { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 15.5px; font-weight: 800; }
+.ceStepN b { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #159A5B; color: #fff; font-size: 13px; flex: none; }
+.ceHint { margin: -4px 0 0; font-size: 12.5px; line-height: 1.5; color: #5D6670; }
+.ceHint strong { color: #14181D; }
+.ceField { display: grid; gap: 6px; min-width: 0; }
+.ceLabel { display: flex; align-items: baseline; gap: 4px; font-size: 12.5px; font-weight: 700; color: #3A424A; }
+.ceLabel i { color: #D1435B; font-style: normal; }
+.ceLabel small { margin-left: auto; font-size: 11px; font-weight: 500; color: #8A939C; font-variant-numeric: tabular-nums; }
+.ceFieldHint { font-size: 11.5px; color: #7A838C; line-height: 1.4; }
+.ceIn { width: 100%; min-height: 46px; padding: 11px 13px; border-radius: 13px; border: 1.5px solid #DCE0DB; background: #fff; color: #14181D; font: inherit; font-size: 16px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.ceIn:focus { border-color: #159A5B; box-shadow: 0 0 0 4px rgba(21,154,91,.14); }
+.ceIn:disabled { background: #F0F2EF; color: #9AA3AB; }
+.ceIn.is-big { min-height: 52px; font-size: 18px; font-weight: 600; }
+.ceArea { resize: vertical; line-height: 1.5; min-height: 90px; }
+.ceRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ceRow3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+@media (max-width: 400px) { .ceRow2 { grid-template-columns: 1fr; } }
+.ceWho { display: flex; gap: 14px; align-items: flex-start; }
+.ceWhoFields { flex: 1; min-width: 0; display: grid; gap: 12px; }
+.cePortrait { flex: none; display: grid; justify-items: center; gap: 8px; width: 112px; }
+.cePortraitPic { position: relative; width: 104px; height: 104px; border-radius: 50%; overflow: hidden; border: 0; padding: 0; cursor: pointer; background: #fff;
+  box-shadow: 0 0 0 3px #F6F7F5, 0 0 0 5.5px #E3B64C, 0 10px 24px -10px rgba(0,0,0,.35); }
+.cePortraitPic img { display: block; }
+.cePortraitEmpty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; font-size: 30px; color: #159A5B; background: repeating-linear-gradient(45deg, #F2F7F3, #F2F7F3 8px, #E8F2EB 8px, #E8F2EB 16px); }
+.cePortraitEmpty small { font-size: 11px; font-weight: 700; color: #3A424A; }
+.cePortraitTag { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0 6px; font-size: 10.5px; font-weight: 800; color: #fff; background: rgba(0,0,0,.5); text-align: center; }
+.cePortraitBtns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.cePortraitBtns button { border: 1px solid #DCE0DB; background: #fff; border-radius: 99px; padding: 4px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; color: #14181D; }
+.ceErr { margin: 0; font-size: 11.5px; color: #D1435B; text-align: center; }
+.ceHidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ceCheck { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.ceCheck input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: #159A5B; flex: none; }
+.ceRange { width: 100%; accent-color: #159A5B; }
+.ceFolds { display: grid; gap: 8px; }
+.ceFold { border: 1.5px solid #E1E4E0; border-radius: 16px; background: #fff; }
+.ceFold summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; }
+.ceFold summary::-webkit-details-marker { display: none; }
+.ceFold summary span { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ceFold summary b { font-size: 14.5px; }
+.ceFold summary small { font-size: 12px; color: #7A838C; }
+.ceFold summary i { font-style: normal; font-size: 18px; color: #7A838C; transition: transform .2s; }
+.ceFold[open] summary i { transform: rotate(180deg); }
+.ceFoldBody { display: grid; gap: 12px; padding: 0 14px 14px; }
+.ceTagRow { display: grid; grid-template-columns: 1fr 92px 40px; gap: 6px; align-items: center; }
+.ceNum { text-align: right; font-variant-numeric: tabular-nums; }
+.ceMini { width: 40px; height: 40px; border-radius: 12px; border: 1px solid #E1E4E0; background: #fff; color: #7A838C; cursor: pointer; }
+.ceAdd { min-height: 44px; border-radius: 13px; border: 1.5px dashed #159A5B; background: #F1F8F3; color: #0F7A47; font-weight: 800; font-size: 14px; cursor: pointer; }
+.ceLogRow { display: grid; gap: 7px; padding: 10px; border-radius: 14px; background: #F6F7F5; }
+.ceLogTop { display: grid; grid-template-columns: 1fr 40px; gap: 6px; }
+.ceFoot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #E4E7E3; background: #fff; display: grid; gap: 8px; }
+.ceMissing { margin: 0; font-size: 13px; font-weight: 700; color: #D1435B; }
+.ceReady { margin: 0; font-size: 13px; font-weight: 700; color: #159A5B; }
+.ceSave { min-height: 52px; border-radius: 16px; border: 0; background: linear-gradient(145deg, #22B56E, #128A4F); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 12px 26px -12px rgba(21,154,91,.9); }
+.ceSave:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+@keyframes ceFade { from { opacity: 0; } }
+@keyframes ceUp { from { transform: translateY(100%); } }
+@keyframes ceIn { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .ceScrim, .ceSheet { animation: none; } }
+`;
