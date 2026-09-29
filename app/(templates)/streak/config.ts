@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Streak",
   description:
     "Two people, one tap a day. The streak grows, every check-in keeps a word, and after a hundred days you have a diary neither of you meant to write. Miss a day and it pauses — it never breaks.",
-  coverImage:
-    templateMedia("streak", "cover.jpg"),
+  coverImage: templateMedia("streak", "cover-poster.webp"),
   emoji: "🕯️",
   color: "from-amber-500 to-orange-700",
   previewText: "day 84. both of us 🕯️",

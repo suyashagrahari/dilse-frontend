@@ -9,8 +9,7 @@ export const config: TemplatePageConfig = {
   title: "Rewind",
   description:
     "Your year, as a story you tap through. Every number is worked out from one date — and it ends on the verdict: which couple you actually are.",
-  coverImage:
-    templateMedia("rewind", "cover.jpg"),
+  coverImage: templateMedia("rewind", "cover-poster.webp"),
   emoji: "⏮️",
   color: "from-fuchsia-500 to-indigo-600",
   previewText: "847 days. we ran the numbers ⏮️",
