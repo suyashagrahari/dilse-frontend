@@ -62,6 +62,8 @@ export interface IndexablePage {
  * lower because they exist to be found, not to compete.
  */
 export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
+  // ── Gallery ──────────────────────────────────────────────────────────────
+  { path: "/templates/premium", priority: 0.8, changeFrequency: "weekly" },
   // ── Templates ────────────────────────────────────────────────────────────
   { path: "/apology-dashboard", priority: 0.8, changeFrequency: "monthly" },
   { path: "/court-marriage", priority: 0.8, changeFrequency: "monthly" },
