@@ -23,6 +23,12 @@ const FALLBACK = ["apology-dashboard", "bouquet-gf", "love-gf", "birthday-gf", "
 const BY_SLUG = new Map(templateList.map((t) => [t.slug, t]));
 const SLIDE_MS = 3800;
 
+/** Chip label: drop "Happy", cut at a dash, keep it to ~18 characters. */
+function shortTitle(title: string): string {
+  const t = title.split(/\s[—–-]\s/)[0].replace(/^Happy\s+/i, "").trim();
+  return t.length > 18 ? `${t.slice(0, 17).trimEnd()}…` : t;
+}
+
 /** Horizontal spacing between stacked cards, matching the CSS breakpoints. */
 function useStep(): number {
   const [step, setStep] = useState(150);
@@ -207,7 +213,7 @@ export default function TrendingShowcase() {
             <button key={t.slug} type="button" role="tab" aria-selected={on} className="ts-chip" data-on={on ? "1" : "0"} onClick={() => go(i)}>
               {on && <motion.span layoutId="ts-chip-pill" className="ts-chipPill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
               <span className="ts-chipIn">
-                <b>#{i + 1}</b> {t.title.length > 18 ? `${t.title.slice(0, 17)}…` : t.title}
+                <b>#{i + 1}</b> {shortTitle(t.title)}
               </span>
               {on && autoStarted && !paused && (
                 <motion.span key={`p${tick}-${idx}`} className="ts-chipBar" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: SLIDE_MS / 1000, ease: "linear" }} />
@@ -270,7 +276,7 @@ const TS_CSS = `
 .ts-cta span { transition: transform .2s ease; }
 .ts-cta:hover span { transform: translateX(3px); }
 
-.ts-chips { display: flex; justify-content: center; gap: 6px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.ts-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
 .ts-chips::-webkit-scrollbar { display: none; }
 .ts-chip { position: relative; flex: none; overflow: hidden; border: 1px solid rgba(61,12,17,.16); background: #fdfaf4; color: #6b4545; border-radius: 99px;
   padding: 8px 13px; cursor: pointer; font: 600 12px/1 Inter, system-ui, sans-serif; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
@@ -280,7 +286,7 @@ const TS_CSS = `
 .ts-chipIn b { color: #c9a84c; margin-right: 2px; }
 .ts-chipBar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #e6c77e; transform-origin: left; z-index: 2; }
 @media (max-width: 768px) {
-  .ts-chips { justify-content: flex-start; } .ts-capTitle { font-size: 17px; }
+  .ts-chips { flex-wrap: nowrap; justify-content: flex-start; } .ts-capTitle { font-size: 17px; }
   .ts-rank { top: 7px; left: 7px; padding: 3px 8px 3px 3px; font-size: 10px; gap: 4px; }
   .ts-rankIc { width: 16px; height: 16px; font-size: 9px; }
   .ts-rankLbl { display: none; }
