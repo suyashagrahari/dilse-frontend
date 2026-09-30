@@ -18,8 +18,8 @@ export default function HeroSection() {
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
   return (
     <section id="hero" className="hero-section" style={{
-      background: '#f5ede6', minHeight: '100vh', display: 'flex', alignItems: 'center',
-      paddingTop: 96, paddingBottom: 60, position: 'relative', overflow: 'hidden', width: '100%'
+      background: '#f5ede6', minHeight: 'min(100vh, 900px)', display: 'flex', alignItems: 'center',
+      paddingTop: 112, paddingBottom: 56, position: 'relative', overflow: 'hidden', width: '100%'
     }}>
       {/* Subtle radial glow */}
       <div style={{ position: 'absolute', top: '18%', right: '12%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.08) 0%,transparent 70%)', pointerEvents: 'none' }} />
@@ -125,6 +125,9 @@ export default function HeroSection() {
       </div>
 
       <style>{`
+        @media (min-width: 1100px) {
+          .hero-grid { grid-template-columns: 0.8fr 1.2fr !important; gap: 52px !important; }
+        }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
         .hero-pills button{scroll-snap-align:center;}
