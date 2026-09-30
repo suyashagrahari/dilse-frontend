@@ -1,73 +1,50 @@
 "use client";
 
-// ─── Hero: the five most-created templates, as a card deck ───────────────────
+// ─── Hero: five featured templates on a desktop and a phone ─────────────────
 //
-// Each card is a designed 16:10 showcase of one template — its name, the real
-// desktop page in a browser and the real phone screen — rendered offline with
-// Puppeteer and stored at templates/<slug>/showcase-v1@{800,1600}w.webp. The
-// top five sit in a deck: the front card is the one playing, the next two peek
-// out above it, and the rank rides on the card's top-right corner. No text
-// beside it; the cards carry everything.
+// A browser window and a phone, floating on the page (no card behind them),
+// showing one still of each template. The five rotate; name pills and dots
+// underneath jump straight to one, and the devices swipe too.
 //
-// Order is live from `/api/template-meta`; until it answers, the last known top
-// five render so the first paint already has a card. Auto-advance begins on the
-// first interaction, so an audit that never interacts measures a still page.
+// Stills live on the CDN at gifts-media/hero/v1/<slug>/d<n>.webp (desktop) and
+// m<n>.webp (phone), captured with Puppeteer; `d`/`m` pick the frame. They are
+// immutable — a recapture goes to a new v<n> folder rather than overwriting.
+//
+// Rotation begins on the first interaction, so an audit that never interacts
+// measures a still page.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
-import { templateList } from "@/data/template-registry";
-import { useTemplateMeta, RANK_BADGES } from "@/lib/templateMeta";
-import { useTemplateAccess } from "@/hooks/useTemplateAccess";
-import { templateMedia } from "@/lib/templateMedia";
+import { media } from "@/lib/templateMedia";
 
-/** Templates with a rendered showcase card. */
-const SHOWCASE = new Set([
-  "anniversary-gf", "anniversary-parents", "apology-dashboard", "app", "birthday-bestfriend", "birthday-friend",
-  "birthday-gf", "birthday-parents", "bouquet-gf", "call", "capsule", "catch", "challan", "christian-wedding",
-  "court-marriage", "court-of-love", "darling", "date-invitation", "dedication", "eid-mubarak", "flags",
-  "happy-ganesh-chaturthi", "happy-rakshabandhan-to-brother", "happy-rakshabandhan-to-sister", "hold-my-hand", "holi",
-  "kundli-milan", "legal-notice", "love-gf", "loveflix", "missyou-bestfriend", "missyou-gf", "nutrition", "photo-puzzle",
-  "product", "profile-pro", "proposal", "recharge", "rewind", "searched", "streak", "train-ticket", "us",
-  "valentine-gf", "vending-machine", "watch", "wedding-shaadi",
-]);
-const card = (slug: string) => {
-  const at = (w: number) => templateMedia(slug, `showcase-v1@${w}w.webp`);
-  return { src: at(800), srcSet: `${at(800)} 800w, ${at(1600)} 1600w` };
-};
+type Feature = { slug: string; label: string; d: number; m: number };
 
-/** Production's top five when this was written — the pre-fetch fallback. */
-const FALLBACK = ["apology-dashboard", "bouquet-gf", "love-gf", "birthday-gf", "darling"];
-const BY_SLUG = new Map(templateList.map((t) => [t.slug, t]));
-const SLIDE_MS = 4200;
-const SIZES = "(max-width:768px) 94vw, (max-width:1099px) 640px, 700px";
+const FEATURES: Feature[] = [
+  { slug: "missyou-gf", label: "I Miss You", d: 1, m: 1 },
+  { slug: "photo-puzzle", label: "The Last Piece", d: 1, m: 1 },
+  { slug: "proposal", label: "Will You Marry Me?", d: 2, m: 2 },
+  { slug: "watch", label: "Our YouTube", d: 1, m: 1 },
+  { slug: "loveflix", label: "LoveFlix", d: 2, m: 2 },
+];
+
+const SLIDE_MS = 2250;
+const src = (slug: string, kind: "d" | "m", i: number) => media(`hero/v1/${slug}/${kind}${i}.webp`);
 
 export default function TrendingShowcase() {
-  const { ranking } = useTemplateMeta();
-  const { hidden } = useTemplateAccess();
-
-  const items = useMemo(() => {
-    const order = ranking.length ? ranking.map((r) => r.slug) : FALLBACK;
-    return order
-      .filter((slug) => SHOWCASE.has(slug) && BY_SLUG.has(slug) && !hidden.has(slug))
-      .slice(0, 5)
-      .map((slug) => ({ ...BY_SLUG.get(slug)!, img: card(slug) }));
-  }, [ranking, hidden]);
-
-  const n = items.length;
-  const [active, setActive] = useState(0);
-  const [dir, setDir] = useState(1);
+  const n = FEATURES.length;
+  const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const [autoStarted, setAutoStarted] = useState(false);
-  const [tick, setTick] = useState(0);
-  const idx = n ? active % n : 0;
+
+  const f = FEATURES[idx];
 
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined;
     const events = ["pointermove", "pointerdown", "touchstart", "scroll", "keydown"] as const;
     const start = () => {
       events.forEach((e) => window.removeEventListener(e, start));
-      t = setTimeout(() => setAutoStarted(true), 900);
+      t = setTimeout(() => setAutoStarted(true), 700);
     };
     events.forEach((e) => window.addEventListener(e, start, { passive: true, once: true }));
     return () => {
@@ -76,112 +53,82 @@ export default function TrendingShowcase() {
     };
   }, []);
 
-  // Warm every card once the deck is live, so no slide lands on a blank.
+  // Warm the other stills once rotation is live, so a change never lands on a blank.
   useEffect(() => {
     if (!autoStarted) return;
-    for (const t of items) { const im = new Image(); im.sizes = SIZES; im.srcset = t.img.srcSet; im.src = t.img.src; }
-  }, [autoStarted, items]);
+    for (const x of FEATURES) { new Image().src = src(x.slug, "d", x.d); new Image().src = src(x.slug, "m", x.m); }
+  }, [autoStarted]);
 
+  const [tick, setTick] = useState(0);
   useEffect(() => {
-    if (paused || !autoStarted || n < 2) return;
-    const t = setInterval(() => { setDir(1); setActive((i) => (i + 1) % n); }, SLIDE_MS);
+    if (paused || !autoStarted) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % n), SLIDE_MS);
     return () => clearInterval(t);
   }, [paused, autoStarted, n, tick]);
 
   const go = useCallback((i: number) => {
-    if (!n) return;
-    const next = ((i % n) + n) % n;
-    setDir(next >= idx ? 1 : -1);
-    setActive(next);
+    setIdx(((i % n) + n) % n);
     setTick((x) => x + 1);
-  }, [n, idx]);
+  }, [n]);
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x < -60 || info.velocity.x < -450) go(idx + 1);
     else if (info.offset.x > 60 || info.velocity.x > 450) go(idx - 1);
   };
 
-  if (!n) return null;
-  const playing = autoStarted && !paused;
-
-  // Front card + the next two, back to front.
-  const deck = [2, 1, 0].filter((k) => k < n).map((k) => ({ k, i: (idx + k) % n }));
-
   return (
-    <div className="td" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <style>{TD_CSS}</style>
+    <div className="hx" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <style>{HX_CSS}</style>
 
-      <div className="td-deck">
-        <div className="td-glow" aria-hidden />
-        <AnimatePresence initial={false} custom={dir}>
-          {deck.map(({ k, i }) => {
-            const t = items[i];
-            const b = RANK_BADGES[i];
-            const front = k === 0;
-            return (
-              <motion.div
-                key={t.slug}
-                className="td-card"
-                data-front={front ? "1" : "0"}
-                custom={dir}
-                initial={{ opacity: 0, y: -60, scale: 0.8 }}
-                animate={{ opacity: k === 2 ? 0.55 : k === 1 ? 0.8 : 1, y: k * -26, scale: 1 - k * 0.06, rotate: 0, x: 0 }}
-                exit={{ opacity: 0, x: dir * -140, rotate: dir * -8, scale: 0.96, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } }}
-                transition={{ type: "spring", stiffness: 210, damping: 26 }}
-                style={{ zIndex: 10 - k }}
-                drag={front ? "x" : false}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={front ? onDragEnd : undefined}
-              >
-                <Link
-                  href={`/${t.slug}`}
-                  className="td-link"
-                  tabIndex={front ? 0 : -1}
-                  aria-hidden={!front}
-                  draggable={false}
-                  aria-label={`#${i + 1} trending: ${t.title} — open the template`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={t.img.src}
-                    srcSet={t.img.srcSet}
-                    sizes={SIZES}
-                    alt={front ? t.title : ""}
-                    draggable={false}
-                    fetchPriority={front && i === 0 ? "high" : "auto"}
-                    loading={front ? "eager" : "lazy"}
-                    decoding="async"
-                  />
-                  {front && <span className="td-sheen" aria-hidden />}
-                </Link>
-                <span className={`td-rank td-rank--${b.tone}`}>
-                  <span className="td-rankIc">{b.icon}</span>
-                  <b>#{i + 1}</b>
-                  <span className="td-rankLbl">{b.label}</span>
-                </span>
-              </motion.div>
-            );
-          })}
+      <motion.div className="hx-stage" drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.12} onDragEnd={onDragEnd}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={f.slug}
+            className="hx-set"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Desktop */}
+            <Link href={`/${f.slug}`} className="hx-win" draggable={false} aria-label={`${f.label} — open the template`}>
+              <div className="hx-bar" aria-hidden>
+                <span className="hx-dots"><i /><i /><i /></span>
+                <span className="hx-url">🔒 yourname.subhsandesh.in/<b>{f.slug}</b></span>
+              </div>
+              <div className="hx-screen">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src(f.slug, "d", f.d)} alt={`${f.label} on desktop`} draggable={false} fetchPriority={idx === 0 ? "high" : "auto"} decoding="async" />
+              </div>
+            </Link>
+
+            {/* Phone */}
+            <div className="hx-phone" aria-hidden>
+              <div className="hx-scr">
+                <span className="hx-isl" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src(f.slug, "m", f.m)} alt="" draggable={false} decoding="async" />
+              </div>
+            </div>
+          </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
 
-      {/* Five slim segments — the only control, and they read as "top 5" */}
-      <div className="td-segs" role="tablist" aria-label="Top 5 trending templates">
-        {items.map((t, i) => (
-          <button key={t.slug} type="button" role="tab" aria-selected={i === idx} aria-label={`#${i + 1} ${t.title}`} className="td-seg" onClick={() => go(i)}>
-            <span className="td-segTrack">
-              {i < idx && <span className="td-segFill" style={{ transform: "scaleX(1)" }} />}
-              {i === idx && (
-                <motion.span
-                  key={`f${tick}-${idx}-${playing}`}
-                  className="td-segFill"
-                  initial={{ scaleX: playing ? 0 : 1 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: playing ? SLIDE_MS / 1000 : 0, ease: "linear" }}
-                />
-              )}
-            </span>
+      <div className="hx-pills" role="tablist" aria-label="Featured templates">
+        {FEATURES.map((x, i) => {
+          const on = i === idx;
+          return (
+            <button key={x.slug} type="button" role="tab" aria-selected={on} className="hx-pill" data-on={on ? "1" : "0"} onClick={() => go(i)}>
+              {on && <motion.span layoutId="hx-pill-bg" className="hx-pillBg" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+              <span className="hx-pillText">{x.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="hx-dotrow">
+        {FEATURES.map((x, i) => (
+          <button key={x.slug} type="button" aria-label={`Show ${x.label}`} aria-current={i === idx} className="hx-dot" onClick={() => go(i)}>
+            <span data-on={i === idx ? "1" : "0"} />
           </button>
         ))}
       </div>
@@ -189,52 +136,53 @@ export default function TrendingShowcase() {
   );
 }
 
-const TD_CSS = `
-.td { position: relative; width: 100%; min-width: 0; padding-top: 52px; }
-@media (max-width: 768px) { .td { padding-top: 34px; } }
+const HX_CSS = `
+.hx { position: relative; width: 100%; min-width: 0; }
+.hx-stage { position: relative; width: 100%; aspect-ratio: 16 / 10.4; touch-action: pan-y; cursor: grab; }
+.hx-stage:active { cursor: grabbing; }
+.hx-stage::before { content: ""; position: absolute; left: 50%; top: 50%; width: 92%; height: 82%; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(201,168,76,.22), transparent 70%); pointer-events: none; }
+.hx-set { position: absolute; inset: 0; }
 
-.td-deck { position: relative; width: 100%; aspect-ratio: 16 / 10; }
-.td-glow { position: absolute; left: 50%; top: 55%; width: 115%; height: 120%; translate: -50% -50%; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(201,168,76,.28), rgba(122,20,40,.08) 60%, transparent); pointer-events: none; }
-.td-card { position: absolute; inset: 0; transform-origin: 50% 0%; will-change: transform; }
-.td-card[data-front="1"] { cursor: grab; }
-.td-card[data-front="1"]:active { cursor: grabbing; }
-.td-link { position: relative; display: block; width: 100%; height: 100%; border-radius: 22px; overflow: hidden; background: #1d0a0f;
-  box-shadow: 0 40px 80px -36px rgba(42,10,14,.75), 0 0 0 1px rgba(201,168,76,.4); -webkit-tap-highlight-color: transparent; }
-.td-card[data-front="1"] .td-link { box-shadow: 0 50px 100px -40px rgba(42,10,14,.85), 0 0 0 1.5px rgba(230,199,126,.7); }
-.td-link img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
-.td-sheen { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.td-sheen::before { content: ""; position: absolute; top: -20%; bottom: -20%; width: 26%; left: -40%; transform: skewX(-18deg);
-  background: linear-gradient(100deg, transparent, rgba(255,246,220,.28), transparent); animation: tdSweep 5s cubic-bezier(.4,0,.2,1) infinite; }
+.hx-win { position: absolute; left: 0; top: 0; width: 81%; display: block; border-radius: 14px; overflow: hidden; background: #f5ede6;
+  box-shadow: 0 34px 60px -28px rgba(61,12,17,.45), 0 0 0 1px rgba(61,12,17,.12); -webkit-tap-highlight-color: transparent; }
+.hx-bar { height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: #f3ece2; border-bottom: 1px solid rgba(0,0,0,.06); }
+.hx-dots { display: flex; gap: 5px; flex: none; }
+.hx-dots i { width: 8px; height: 8px; border-radius: 50%; background: #f96f5d; }
+.hx-dots i:nth-child(2) { background: #f5bf4f; } .hx-dots i:nth-child(3) { background: #52c45a; }
+.hx-url { margin: 0 auto; transform: translateX(-20px); height: 17px; padding: 0 12px; border-radius: 6px; background: #fffaf4; display: flex; align-items: center; gap: 3px;
+  font: 500 9.5px/1 Inter, system-ui, sans-serif; color: #8a7a68; white-space: nowrap; overflow: hidden; max-width: 70%; }
+.hx-url b { color: #3d0c11; font-weight: 700; }
+.hx-screen { position: relative; aspect-ratio: 16 / 10; background: #efe6dc; overflow: hidden; }
+.hx-screen img, .hx-scr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; user-select: none; -webkit-user-drag: none; }
 
-.td-rank { position: absolute; top: 14px; right: 14px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px 6px 6px; border-radius: 99px;
-  color: #fff; font: 800 12px/1 Inter, system-ui, sans-serif; box-shadow: 0 10px 24px -8px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.45); pointer-events: none; }
-.td-rank b { font-size: 14px; font-weight: 900; }
-.td-rankIc { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.25); font-size: 12px; }
-.td-rankLbl { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.td-card[data-front="0"] .td-rankLbl, .td-card[data-front="0"] .td-rankIc { display: none; }
-.td-card[data-front="0"] .td-rank { top: 4px; padding: 3px 9px; box-shadow: none; }
-.td-card[data-front="0"] .td-rank b { font-size: 11px; }
-.td-rank--gold { background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); color: #3a2505; }
-.td-rank--fire { background: linear-gradient(135deg, #ff9a3c, #ff3d3d 60%, #c2185b); }
-.td-rank--hot  { background: linear-gradient(135deg, #ff6fb5, #e0287d 55%, #8e1a5a); }
-.td-rank--rise { background: linear-gradient(135deg, #9d7bff, #6a3df0 55%, #3b1fa8); }
-.td-rank--fan  { background: linear-gradient(135deg, #3ee0c5, #139e9a 55%, #0b5f6b); }
+.hx-phone { position: absolute; right: 1%; bottom: 0; width: 22.5%; border-radius: 30px; padding: 7px; background: #0d0708; transform: rotate(3deg);
+  box-shadow: 0 34px 60px -24px rgba(61,12,17,.55), 0 0 0 1px rgba(61,12,17,.2); z-index: 2; }
+.hx-scr { position: relative; border-radius: 24px; overflow: hidden; aspect-ratio: 390 / 844; background: #fff; }
+.hx-isl { position: absolute; top: 7px; left: 50%; width: 32%; height: 15px; translate: -50% 0; border-radius: 12px; background: #0d0708; z-index: 3; }
 
-.td-segs { display: flex; gap: 8px; width: min(320px, 70%); margin: 26px auto 0; }
-.td-seg { flex: 1; padding: 8px 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.td-segTrack { position: relative; display: block; height: 3px; border-radius: 3px; background: rgba(61,12,17,.14); overflow: hidden; }
-.td-seg:hover .td-segTrack { background: rgba(61,12,17,.24); }
-.td-segFill { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, #c9a84c, #8a6a1c); transform-origin: left; }
+
+.hx-pills { display: flex; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.hx-pill { position: relative; padding: 9px 15px; border-radius: 999px; border: 1px solid rgba(61,12,17,.16); background: #fdfaf4; color: #6b4545;
+  font: 600 13px/1 Inter, system-ui, sans-serif; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: color .25s, border-color .25s; }
+.hx-pill[data-on="1"] { color: #f5ede6; border-color: #241014; }
+.hx-pillBg { position: absolute; inset: -1px; border-radius: inherit; background: #241014; }
+.hx-pillText { position: relative; z-index: 1; }
+.hx-dotrow { display: flex; justify-content: center; gap: 2px; margin-top: 10px; }
+.hx-dot { width: 24px; height: 24px; display: grid; place-items: center; border: 0; padding: 0; background: none; cursor: pointer; }
+.hx-dot span { width: 7px; height: 7px; border-radius: 4px; background: rgba(61,12,17,.2); transition: width .35s, background .35s; }
+.hx-dot span[data-on="1"] { width: 22px; background: #3d0c11; }
 
 @media (max-width: 768px) {
-  .td-link { border-radius: 16px; }
-  .td-rank { top: 9px; right: 9px; padding: 4px 10px 4px 4px; gap: 4px; font-size: 10px; }
-  .td-rank b { font-size: 11.5px; }
-  .td-rankIc { width: 17px; height: 17px; font-size: 9.5px; }
-  .td-rankLbl { font-size: 8.5px; }
-  .td-segs { margin-top: 18px; }
+  .hx-win { border-radius: 10px; }
+  .hx-bar { height: 18px; gap: 5px; padding: 0 7px; }
+  .hx-dots i { width: 5px; height: 5px; }
+  .hx-url { height: 12px; font-size: 7px; padding: 0 6px; }
+  .hx-phone { border-radius: 20px; padding: 5px; }
+  .hx-scr { border-radius: 16px; }
+  .hx-isl { top: 5px; height: 10px; }
+        .hx-pills { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+  .hx-pills::-webkit-scrollbar { display: none; }
+  .hx-pill { flex: none; font-size: 12.5px; padding: 8px 14px; }
 }
-@keyframes tdSweep { 0%, 60% { left: -40%; } 90%, 100% { left: 130%; } }
-@media (prefers-reduced-motion: reduce) { .td-sheen::before { animation: none; } }
 `;

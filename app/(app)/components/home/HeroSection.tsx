@@ -18,14 +18,14 @@ export default function HeroSection() {
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
   return (
     <section id="hero" className="hero-section" style={{
-      background: '#f5ede6', minHeight: 'min(100vh, 900px)', display: 'flex', alignItems: 'center',
-      paddingTop: 112, paddingBottom: 56, position: 'relative', overflow: 'hidden', width: '100%'
+      background: '#f5ede6', display: 'flex', alignItems: 'center',
+      paddingTop: 131, paddingBottom: 57, position: 'relative', overflow: 'hidden', width: '100%'
     }}>
       {/* Subtle radial glow */}
       <div style={{ position: 'absolute', top: '18%', right: '12%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.08) 0%,transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '12%', left: '4%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle,rgba(61,12,17,0.04) 0%,transparent 70%)', pointerEvents: 'none' }} />
 
-      <div className="hero-inner" style={{ maxWidth: 1320, margin: '0 auto', padding: '0 44px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+      <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">
 
           {/* LEFT: Text Panel */}
@@ -48,7 +48,7 @@ export default function HeroSection() {
             <h1 className="hero-title"
               style={{
                 fontFamily: "var(--font-playfair),'Playfair Display',serif",
-                fontSize: 'clamp(34px,4.2vw,60px)', fontWeight: 600,
+                fontSize: 'clamp(34px,3.4vw,54px)', fontWeight: 600,
                 color: '#2a0a0e', lineHeight: 1.08, letterSpacing: '-1.6px', marginBottom: 14, textWrap: 'balance'
               }}>
               Every Wish Becomes a<br />
@@ -125,8 +125,27 @@ export default function HeroSection() {
       </div>
 
       <style>{`
+        /* Desktop and tablet: the hero fills exactly one screen (svh so mobile
+           browser chrome never pushes it past the fold). Phones keep a natural,
+           scrollable height — see the max-width: 768px rules in globals/home.css. */
+        @media (min-width: 769px) {
+          .hero-section { min-height: 100vh; min-height: 100svh; }
+        }
+        /* Wide screens: let the content grow with the screen instead of
+           sitting in a 1320px island. */
+        @media (min-width: 1700px) {
+          .hero-inner { max-width: 1400px !important; padding: 0 48px !important; }
+          .hero-title { font-size: clamp(52px, 2.9vw, 56px) !important; }
+          .hero-desc { font-size: 17px !important; max-width: 500px !important; }
+        }
         @media (min-width: 1100px) {
-          .hero-grid { grid-template-columns: 0.8fr 1.2fr !important; gap: 52px !important; }
+          /* Copy and devices sit as one compact, centred group: the copy column
+             hugs its text and the pair is centred, so neither side drifts to an edge. */
+          .hero-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important; gap: 32px !important; }
+        }
+        /* Two columns: the kicker lines up with the top edge of the browser window. */
+        @media (min-width: 769px) {
+          .hero-grid { align-items: start !important; }
         }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
