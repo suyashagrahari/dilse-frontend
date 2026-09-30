@@ -15,6 +15,7 @@ import { toggleFavoriteAsync, fetchFavorites } from "@/store/favoritesSlice";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { GallerySkeleton } from "@/components/skeleton/Skeletons";
+import { useTemplateMeta, isPremiumSlug } from "@/lib/templateMeta";
 import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
@@ -377,10 +378,34 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   // An admin has switched these off for this deployment. Filtered here rather
   // than rendered as "coming soon", because a card that says coming soon still
   // advertises the template. See lib/templateVisibility.ts.
-  const visible = useMemo(
-    () => GALLERY_LIST.filter((t) => !hiddenTemplates.has(t.slug)),
-    [hiddenTemplates],
-  );
+  //
+  // Then two super-admin/live-data layers on top of the code catalogue:
+  //  • tier — a super admin can move any template into or out of Premium;
+  //  • order — most-created first (pages made, all time), registry order as
+  //    the tie-break and for anything with no pages yet.
+  const { tiers, ranking } = useTemplateMeta();
+  const createdBy = useMemo(() => new Map(ranking.map((r) => [r.slug, r.created])), [ranking]);
+  const visible = useMemo(() => {
+    const idx = new Map(GALLERY_LIST.map((t, i) => [t.slug, i]));
+    return GALLERY_LIST
+      .filter((t) => !hiddenTemplates.has(t.slug))
+      .map((t) => ({ ...t, premium: isPremiumSlug(t.slug, tiers) }))
+      .sort((a, b) => (createdBy.get(b.slug) ?? 0) - (createdBy.get(a.slug) ?? 0) || idx.get(a.slug)! - idx.get(b.slug)!);
+  }, [hiddenTemplates, tiers, createdBy]);
+
+  // The five most-created templates in each room get a rank badge. Ranked
+  // against the whole room, not the filtered view, so a badge means the same
+  // thing whatever you searched for.
+  const rankOf = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const room of [true, false]) {
+      visible
+        .filter((t) => Boolean(t.premium) === room && t.coverImage && (createdBy.get(t.slug) ?? 0) > 0)
+        .slice(0, 5)
+        .forEach((t, i) => m.set(t.slug, i + 1));
+    }
+    return m;
+  }, [visible, createdBy]);
 
   const q = search.trim().toLowerCase();
   const matchBase = (t: TemplateListItem) =>
@@ -646,6 +671,8 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                             <PremiumTemplateCard
                               key={template.slug}
                               template={template}
+                              rank={rankOf.get(template.slug)}
+                              created={createdBy.get(template.slug)}
                               isFav={favSlugs.includes(template.slug)}
                               index={i}
                               onFavorite={handleFavorite}
@@ -692,6 +719,8 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                           <TemplateCard
                             key={template.slug}
                             template={template}
+                            rank={rankOf.get(template.slug)}
+                            created={createdBy.get(template.slug)}
                             isFav={favSlugs.includes(template.slug)}
                             index={i}
                             onFavorite={handleFavorite}
