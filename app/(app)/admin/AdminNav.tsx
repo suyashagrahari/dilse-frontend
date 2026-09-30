@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BarChart3, Users, MessageSquare, Star, FileText, Mail, LayoutTemplate,
-  IndianRupee, KeyRound, Repeat,
+  IndianRupee, KeyRound, Repeat, Crown,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { isSuperAdmin } from "@/lib/roles";
@@ -31,6 +31,7 @@ const ITEMS = [
   { href: "/admin/threads", label: "Conversations", Icon: Mail, superOnly: true },
   { href: "/admin/recurring", label: "Recurring", Icon: Repeat, superOnly: true },
   { href: "/admin/templates", label: "Templates", Icon: LayoutTemplate, superOnly: false },
+  { href: "/admin/premium", label: "Premium Studio", Icon: Crown, superOnly: true },
   { href: "/admin/pricing", label: "Pricing", Icon: IndianRupee, superOnly: true },
   { href: "/admin/early-access", label: "Early access", Icon: KeyRound, superOnly: true },
 ];
