@@ -63,6 +63,20 @@ export default function TrendingShowcase() {
     };
   }, []);
 
+  // Warm every poster before it is shown, so a slide never lands on an empty
+  // frame. Waits for the first interaction, like the carousel, to keep the
+  // initial load lean.
+  useEffect(() => {
+    if (!autoStarted) return;
+    for (const t of items) {
+      const im = new Image();
+      im.decoding = "async";
+      const set = coverSrcSet(t.coverImage);
+      if (set) { im.sizes = "(max-width:768px) 72vw, 360px"; im.srcset = set; }
+      im.src = img(t.coverImage) || "";
+    }
+  }, [autoStarted, items]);
+
   useEffect(() => {
     if (paused || !autoStarted || n < 2) return;
     const t = setInterval(() => { setDir(1); setActive((i) => (i + 1) % n); }, SLIDE_MS);
@@ -204,7 +218,8 @@ const TQ_CSS = `
 .tq-capIn { display: grid; gap: 6px; min-width: 0; }
 .tq-eyebrow { display: inline-flex; align-items: center; gap: 7px; font: 600 10.5px/1 Inter, system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: #8a6a1c; }
 .tq-dot { width: 6px; height: 6px; border-radius: 50%; background: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,.2); }
-.tq-title { font: 600 24px/1.1 var(--font-playfair), 'Playfair Display', serif; color: #2a0a0e; letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tq-title { font: 600 24px/1.12 var(--font-playfair), 'Playfair Display', serif; color: #2a0a0e; letter-spacing: -.3px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tq-cta { flex: none; display: inline-flex; align-items: center; gap: 6px; padding-bottom: 3px; color: #3d0c11; text-decoration: none;
   font: 700 12px/1 Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; border-bottom: 1.5px solid rgba(61,12,17,.35); transition: border-color .2s; }
 .tq-cta span { transition: transform .2s ease; }
