@@ -28,7 +28,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Heart, Loader2, Lock, LogOut, PenLine, Sparkles, X } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { logoutUser, setSubdomain } from "@/store/authSlice";
+import { logoutUser, refreshAuth, setSubdomain } from "@/store/authSlice";
 import { getImpersonation } from "@/lib/impersonation";
 import { clearSubdomainRequest, useSubdomainRequested } from "@/lib/subdomainRequest";
 import { API_URL, IS_NGROK } from "@/lib/config";
@@ -112,6 +112,8 @@ function SubdomainPicker({
   // Bumped to force a fresh availability check (after a lost race on save).
   const [recheck, setRecheck] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // One token refresh per expired session, not one per keystroke.
+  const refreshedRef = useRef(false);
 
   const headers = useMemo(
     () => ({
@@ -146,16 +148,30 @@ function SubdomainPicker({
       if (live) setStatus("checking");
       try {
         const res = await fetch(`${API_URL}/auth/subdomain/check?name=${encodeURIComponent(value)}`, { headers });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!live) return;
+        // Only the server saying "not available" means taken. A 401 (the
+        // session token expired), a 429 or a 5xx is NOT a verdict on the name
+        // — treating it as one showed every name as taken to that user.
+        if (res.status === 401) {
+          setStatus("idle");
+          setReason("Reconnecting…");
+          if (!refreshedRef.current) { refreshedRef.current = true; void dispatch(refreshAuth()); }
+          return;
+        }
+        if (!res.ok || !data.success) {
+          setStatus("idle");
+          setReason(data.error || "Couldn't check that name just now — try again in a moment.");
+          return;
+        }
         if (data.available) { setStatus("available"); setReason(""); }
         else { setStatus("taken"); setReason(data.reason || "Already taken"); setAlternative(data.alternative || null); }
       } catch {
-        if (live) { setStatus("idle"); setReason(""); }
+        if (live) { setStatus("idle"); setReason("Couldn't reach the server — check your connection."); }
       }
     }, value && !localError ? 380 : 0);
     return () => { live = false; window.clearTimeout(t); };
-  }, [value, localError, headers, recheck]);
+  }, [value, localError, headers, recheck, dispatch]);
 
   // One request for every idea: the server answers with names that are free,
   // swapping a taken idea for its first free numbered variant. Re-run after a
@@ -189,8 +205,11 @@ function SubdomainPicker({
     } catch (e) {
       // Most often somebody claimed it a moment ago. Re-check so the server's
       // free alternative shows up as a one-tap fix.
-      setSaveError(typeof e === "string" ? e : "Couldn't save that name — try again.");
-      setStatus("taken");
+      const msg = typeof e === "string" ? e : "Couldn't save that name — try again.";
+      setSaveError(msg);
+      // Mark it taken only when the server said so; any other failure keeps
+      // the name selectable so a retry is one tap.
+      if (/taken|claimed/i.test(msg)) setStatus("taken");
       setRecheck((n) => n + 1);
     } finally {
       setSaving(false);
