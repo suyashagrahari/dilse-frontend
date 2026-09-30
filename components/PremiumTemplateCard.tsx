@@ -9,14 +9,16 @@ interface PremiumTemplateCardProps {
   isFav: boolean;
   index: number;
   onFavorite: (e: React.MouseEvent, slug: string) => void;
+  rank?: number;
+  created?: number;
 }
 
 /**
  * The standard card inside a luxury frame: a slowly turning gold border, a
  * light sweep across the cover every few seconds, and a gold PREMIUM seal.
  *
- * Only the eight premium templates use it, so the animated border (one
- * conic-gradient layer per card) costs eight layers, not fifty. Everything
+ * Only the premium templates use it, so the animated border (one
+ * conic-gradient layer per card) costs a dozen layers, not fifty. Everything
  * animates on transform/opacity; see PREMIUM_CARD_CSS.
  */
 const PremiumTemplateCard = memo(function PremiumTemplateCard(props: PremiumTemplateCardProps) {

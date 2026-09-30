@@ -11,12 +11,17 @@ import type { TemplateListItem } from "@/types/template-config";
 import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { guideByTemplateHref } from "@/data/guide-registry";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
+import { RANK_BADGES, compactCount } from "@/lib/templateMeta";
 
 interface TemplateCardProps {
   template: TemplateListItem;
   isFav: boolean;
   index: number;
   onFavorite: (e: React.MouseEvent, slug: string) => void;
+  /** 1–5 when this is one of the most-created templates in its room. */
+  rank?: number;
+  /** Pages created — shown beside the rank badge once it is worth showing. */
+  created?: number;
 }
 
 /** Memoized — only re-renders when isFav, index, or template identity changes */
@@ -25,7 +30,10 @@ const TemplateCard = memo(function TemplateCard({
   isFav,
   index,
   onFavorite,
+  rank,
+  created = 0,
 }: TemplateCardProps) {
+  const badge = rank && rank >= 1 && rank <= RANK_BADGES.length ? RANK_BADGES[rank - 1] : null;
   // A compile-time lookup against the guide registry, not a fetch — the registry
   // is a static import, so this costs one object property read per card.
   const hasGuide = Boolean(guideByTemplateHref[`/${template.slug}`]);
@@ -103,10 +111,20 @@ const TemplateCard = memo(function TemplateCard({
           )}
           <span className="sr-only">{template.title} — {template.description}</span>
 
-          {/* Guide badge — top-left, so it never collides with the favourite
-              heart on the right. It is a marker on the card, not a second link:
-              the card still goes to the template. */}
-          {hasGuide && (
+          {/* Rank badge — the five most-created templates in this room. It
+              takes the top-left corner; a guide shrinks to an icon inside it. */}
+          {badge ? (
+            <div className={`tplRank tplRank--${badge.tone}`} aria-label={`#${rank} ${badge.label}`}>
+              <span className="tplRankIcon" aria-hidden>{badge.icon}</span>
+              <span className="tplRankNum">#{rank}</span>
+              <span className="tplRankLabel">{badge.label}</span>
+              {created >= 100 && <span className="tplRankCount">· {compactCount(created)} made</span>}
+              {hasGuide && <PlayCircle size={10} className="tplRankGuide" aria-label="Has a guide" />}
+            </div>
+          ) : hasGuide ? (
+            /* Guide badge — top-left, so it never collides with the favourite
+               heart on the right. It is a marker on the card, not a second link:
+               the card still goes to the template. */
             <div className="absolute top-0 left-0 z-20">
               <div
                 className="flex items-center gap-1 px-2 py-[3px] rounded-br-lg rounded-tl-2xl text-[8px] md:text-[9px] font-black uppercase tracking-widest"
@@ -122,7 +140,7 @@ const TemplateCard = memo(function TemplateCard({
                 Guide
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Favourite — a small heart tucked into the top-right corner. */}
           <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20">
@@ -164,8 +182,34 @@ export const TEMPLATE_CARD_CSS = `
   .tplLink:hover .tplImg { transform: scale(1.05); }
 }
 .tplLink:active .tplInner { transform: scale(0.985); }
+/* Rank badge: a glossy pill in the top-left corner with a slow shimmer. */
+.tplRank { position: absolute; top: 7px; left: 7px; z-index: 20; display: inline-flex; align-items: center; gap: 4px;
+  max-width: calc(100% - 50px); padding: 4px 8px 4px 5px; border-radius: 99px; overflow: hidden; white-space: nowrap;
+  font: 800 9.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .02em; color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.45); animation: tplRankPop .55s cubic-bezier(.34,1.56,.64,1) .25s backwards; }
+.tplRank::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: tplRankShine 3.6s ease-in-out infinite; }
+.tplRankIcon { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(255,255,255,.22); font-size: 10px; flex: none; }
+.tplRankNum { font-weight: 900; font-size: 10.5px; }
+.tplRankLabel { text-transform: uppercase; letter-spacing: .08em; font-size: 8.5px; overflow: hidden; text-overflow: ellipsis; }
+.tplRankCount { display: none; font-weight: 700; opacity: .85; font-size: 9px; }
+.tplRankGuide { flex: none; opacity: .9; display: none; }
+@media (max-width: 767px) { .tplRankLabel { letter-spacing: .04em; font-size: 8px; } }
+@media (min-width: 768px) {
+  .tplRank { top: 10px; left: 10px; gap: 5px; padding: 5px 11px 5px 5px; font-size: 11px; }
+  .tplRankIcon { width: 20px; height: 20px; font-size: 11.5px; }
+  .tplRankNum { font-size: 12px; } .tplRankLabel { font-size: 9.5px; } .tplRankCount { display: inline; font-size: 10px; } .tplRankGuide { display: block; }
+}
+.tplRank--gold { background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); color: #3a2505; }
+.tplRank--fire { background: linear-gradient(135deg, #ff9a3c, #ff3d3d 60%, #c2185b); }
+.tplRank--hot  { background: linear-gradient(135deg, #ff6fb5, #e0287d 55%, #8e1a5a); }
+.tplRank--rise { background: linear-gradient(135deg, #9d7bff, #6a3df0 55%, #3b1fa8); }
+.tplRank--fan  { background: linear-gradient(135deg, #3ee0c5, #139e9a 55%, #0b5f6b); }
+.tplRank--gold .tplRankIcon { background: rgba(255,255,255,.5); }
+@keyframes tplRankPop { from { opacity: 0; transform: translateY(-6px) scale(.7); } }
+@keyframes tplRankShine { 0%, 60% { left: -60%; } 90%, 100% { left: 130%; } }
 @media (prefers-reduced-motion: reduce) {
-  .tplCard { animation: none; }
+  .tplCard, .tplRank, .tplRank::after { animation: none; }
   .tplInner, .tplImg, .tplLink::after { transition: none; }
 }
 `;
