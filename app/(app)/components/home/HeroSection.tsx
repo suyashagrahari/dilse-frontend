@@ -1,101 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import { useCallback } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { SHOWCASE_ITEMS } from "./data";
+import { templateList } from "@/data/template-registry";
+import TrendingShowcase from "./TrendingShowcase";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
-  { n: `${SHOWCASE_ITEMS.length}+`, l: "Templates" },
+  { n: `${Math.floor(templateList.length / 10) * 10}+`, l: "Templates" },
   { n: "4.9★", l: "Loved Rating" },
 ];
 
-/* Real template screenshots that cycle inside the single desktop mockup —
-   the same images the old desktop showed, one per occasion. */
-type Preview = {
-  id: string;
-  pill: string;
-  slug: string;
-  img: string;
-  href: string;
-  footer: string;
-};
-
-const PREVIEWS: Preview[] = [
-  { id: "holi", pill: "Holi", slug: "holi", img: "https://cdn.subhsandesh.in/gifts-media/homePage/holi.webp", href: "/holi", footer: "RANG BARSE" },
-  { id: "eid", pill: "Eid", slug: "eid-mubarak", img: "https://cdn.subhsandesh.in/gifts-media/homePage/eid.webp", href: "/eid-mubarak", footer: "EID CELEBRATION" },
-  { id: "wedding", pill: "Wedding", slug: "wedding", img: "https://cdn.subhsandesh.in/gifts-media/homePage/wedding.webp", href: "/wedding-shaadi", footer: "SHAADI CELEBRATION" },
-  { id: "anniversary", pill: "Anniversary", slug: "anniversary", img: "https://cdn.subhsandesh.in/gifts-media/homePage/anniversary.webp", href: "/anniversary-gf", footer: "SILVER JUBILEE" },
-  { id: "birthday", pill: "Birthday", slug: "birthday", img: "https://cdn.subhsandesh.in/gifts-media/homePage/happyBirthday.webp", href: "/birthday-gf", footer: "BIRTHDAY BASH" },
-  { id: "valentine", pill: "Valentine", slug: "valentine", img: "https://cdn.subhsandesh.in/gifts-media/homePage/valentine.webp", href: "/valentine-gf", footer: "VALENTINE'S DAY" },
-  { id: "love", pill: "Love", slug: "love", img: "https://cdn.subhsandesh.in/gifts-media/homePage/loveyou.webp", href: "/love-gf", footer: "DIL SE" },
-];
-
-const TOT = PREVIEWS.length;
-
 export default function HeroSection() {
-  const [active, setActive] = useState(2); // start on Wedding (matches reference)
-  const [restart, setRestart] = useState(0);
-  const [paused, setPaused] = useState(false);
-  // LCP fix: on the very first paint (SSR + pre-hydration) the hero image must
-  // render at full opacity, NOT framer-motion's initial opacity:0 — otherwise
-  // the LCP element stays invisible until the JS bundle hydrates. We skip the
-  // enter animation for the first mount only, then enable fades for slide changes.
-  const [firstPaint, setFirstPaint] = useState(true);
   const router = useRouter();
-  const p = PREVIEWS[active];
-
-  useEffect(() => {
-    setFirstPaint(false);
-  }, []);
-
-  // The carousel starts cycling on the visitor's first interaction (pointer,
-  // touch, scroll, key), then waits 1.5s so the change is noticed rather than
-  // mid-glance. Previously it started on a fixed 7s timer, which a throttled
-  // mobile audit outlives: Lighthouse sampled a pill halfway through its colour
-  // transition and the URL slug at opacity 0, and flagged both as low contrast.
-  // A person moves the mouse or scrolls almost at once, so for them nothing
-  // changes; an audit never interacts, so the page it measures stays still and
-  // does no periodic re-render work while it is being timed.
-  const [autoStarted, setAutoStarted] = useState(false);
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout> | undefined;
-    const events = ["pointermove", "pointerdown", "touchstart", "scroll", "keydown"] as const;
-    const start = () => {
-      events.forEach((e) => window.removeEventListener(e, start));
-      t = setTimeout(() => setAutoStarted(true), 1500);
-    };
-    events.forEach((e) => window.addEventListener(e, start, { passive: true, once: true }));
-    return () => {
-      events.forEach((e) => window.removeEventListener(e, start));
-      if (t) clearTimeout(t);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (paused || !autoStarted) return;
-    const t = setInterval(() => setActive((i) => (i + 1) % TOT), 4200);
-    return () => clearInterval(t);
-  }, [restart, paused, autoStarted]);
 
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
-  const select = useCallback((i: number) => {
-    setActive(i);
-    setRestart((r) => r + 1);
-  }, []);
-
   return (
     <section id="hero" className="hero-section" style={{
-      background: '#f5ede6', minHeight: '100vh', display: 'flex', alignItems: 'center',
-      paddingTop: 96, paddingBottom: 60, position: 'relative', overflow: 'hidden', width: '100%'
+      background: '#f5ede6', display: 'flex', alignItems: 'center',
+      paddingTop: 131, paddingBottom: 57, position: 'relative', overflow: 'hidden', width: '100%'
     }}>
       {/* Subtle radial glow */}
       <div style={{ position: 'absolute', top: '18%', right: '12%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.08) 0%,transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '12%', left: '4%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle,rgba(61,12,17,0.04) 0%,transparent 70%)', pointerEvents: 'none' }} />
 
-      <div className="hero-inner" style={{ maxWidth: 1320, margin: '0 auto', padding: '0 44px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+      <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">
 
           {/* LEFT: Text Panel */}
@@ -118,7 +48,7 @@ export default function HeroSection() {
             <h1 className="hero-title"
               style={{
                 fontFamily: "var(--font-playfair),'Playfair Display',serif",
-                fontSize: 'clamp(34px,4.2vw,60px)', fontWeight: 600,
+                fontSize: 'clamp(34px,3.4vw,54px)', fontWeight: 600,
                 color: '#2a0a0e', lineHeight: 1.08, letterSpacing: '-1.6px', marginBottom: 14, textWrap: 'balance'
               }}>
               Every Wish Becomes a<br />
@@ -187,103 +117,36 @@ export default function HeroSection() {
             </motion.p>
           </div>
 
-          {/* RIGHT: single desktop mockup with a live, cycling template preview */}
-          <motion.div className="hero-laptop-wrap"
-            initial={false}
-            style={{ position: 'relative', width: '100%', minWidth: 0 }}
-            onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-
-            {/* Browser window */}
-            <div
-              style={{
-                position: 'relative', zIndex: 1, borderRadius: 16, overflow: 'hidden',
-                background: '#faf6ef', border: '1px solid rgba(61,12,17,0.12)',
-              }}>
-
-              {/* Chrome bar */}
-              <div style={{ height: 46, flexShrink: 0, background: '#efe7db', display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(61,12,17,0.08)' }}>
-                <div style={{ display: 'flex', gap: 7, marginRight: 16 }}>
-                  {['#f96f5d', '#f5bf4f', '#52c45a'].map((cc) => (
-                    <div key={cc} style={{ width: 11, height: 11, borderRadius: '50%', background: cc }} />
-                  ))}
-                </div>
-                <div style={{ flex: 1, maxWidth: 340, height: 28, borderRadius: 8, background: '#fbf7f1', border: '1px solid rgba(61,12,17,0.08)', display: 'flex', alignItems: 'center', padding: '0 12px', gap: 7, margin: '0 auto' }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4d8f6f" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  <span style={{ fontSize: 11.5, color: '#7a6a58', fontFamily: 'Inter,system-ui,sans-serif' }}>
-                    yourname.subhsandesh.in/<AnimatePresence mode="wait"><motion.span key={p.slug} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ color: '#3d0c11', fontWeight: 600 }}>{p.slug}</motion.span></AnimatePresence>
-                  </span>
-                </div>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a8a78" strokeWidth="1.8" style={{ marginLeft: 16 }}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" /></svg>
-              </div>
-
-              {/* Live preview canvas — real template screenshot */}
-              <div className="hero-preview-canvas" onClick={() => router.push(p.href)}
-                style={{ position: 'relative', height: 384, overflow: 'hidden', background: '#150507', cursor: 'pointer' }}>
-
-                {/* template image */}
-                <AnimatePresence mode="wait">
-                  <motion.div key={p.id}
-                    initial={firstPaint ? false : { opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }}
-                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-                    style={{ position: 'absolute', inset: 0 }}>
-                    <Image src={p.img} alt={p.pill + " celebration template"} fill className="object-cover" sizes="(max-width:768px) 100vw, 620px" priority={active === 2} />
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* bottom gradient for footer legibility */}
-                <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(12,3,5,0.82) 0%,rgba(12,3,5,0.15) 26%,transparent 46%)', pointerEvents: 'none' }} />
-
-                {/* footer row */}
-                <div style={{ position: 'absolute', left: 22, right: 22, bottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span key={p.footer} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
-                      style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: '#e9c97a', fontFamily: 'Inter,system-ui,sans-serif' }}>✦ {p.footer}</motion.span>
-                  </AnimatePresence>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: 'rgba(245,237,230,0.72)', fontStyle: 'italic', fontFamily: "'Playfair Display',serif" }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#52c45a', display: 'inline-block' }} />Live Preview Ready
-                  </span>
-                </div>
-
-                {/* regenerate loading bar (re-runs each switch) */}
-                <motion.div key={'bar' + active} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.4, ease: 'easeOut' }}
-                  style={{ position: 'absolute', left: 0, bottom: 0, height: 3, width: 120, transformOrigin: 'left', background: 'linear-gradient(90deg,#c9a84c,#a8823a)' }} />
-              </div>
-            </div>
-
-            {/* Occasion pills — single row */}
-            <div className="hero-pills" style={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', gap: 7, marginTop: 24, overflowX: 'auto', paddingBottom: 2 }}>
-              {PREVIEWS.map((pv, i) => {
-                const on = i === active;
-                return (
-                  <button key={pv.id} type="button" onClick={() => select(i)}
-                    style={{
-                      padding: '8px 15px', borderRadius: 999, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap',
-                      fontSize: 12.5, fontWeight: on ? 700 : 600, letterSpacing: '0.01em',
-                      fontFamily: 'Inter,system-ui,sans-serif',
-                      border: on ? '1px solid #241014' : '1px solid rgba(61,12,17,0.16)',
-                      background: on ? '#241014' : '#fdfaf4',
-                      color: on ? '#f5ede6' : '#6b4545',
-                      transition: 'background 0.25s, color 0.25s, border-color 0.25s',
-                    }}>{pv.pill}</button>
-                );
-              })}
-            </div>
-
-            {/* dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 12 }}>
-              {PREVIEWS.map((_, i) => (
-                // 24×24 hit area (a11y touch-target min) wrapping a small visual dot
-                <button key={i} type="button" aria-label={`Template ${i + 1}`} aria-current={i === active} onClick={() => select(i)}
-                  style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: 0, background: 'transparent', cursor: 'pointer' }}>
-                  <span aria-hidden style={{ width: i === active ? 22 : 7, height: 7, borderRadius: 4, display: 'block', background: i === active ? '#3d0c11' : 'rgba(61,12,17,0.2)', transition: 'all 0.35s' }} />
-                </button>
-              ))}
-            </div>
-          </motion.div>
+          {/* RIGHT: the five most-created templates, live from the gallery ranking */}
+          <div className="hero-laptop-wrap" style={{ position: 'relative', width: '100%', minWidth: 0 }}>
+            <TrendingShowcase />
+          </div>
         </div>
       </div>
 
       <style>{`
+        /* Desktop and tablet: the hero fills exactly one screen (svh so mobile
+           browser chrome never pushes it past the fold). Phones keep a natural,
+           scrollable height — see the max-width: 768px rules in globals/home.css. */
+        @media (min-width: 769px) {
+          .hero-section { min-height: 100vh; min-height: 100svh; }
+        }
+        /* Wide screens: let the content grow with the screen instead of
+           sitting in a 1320px island. */
+        @media (min-width: 1700px) {
+          .hero-inner { max-width: 1400px !important; padding: 0 48px !important; }
+          .hero-title { font-size: clamp(52px, 2.9vw, 56px) !important; }
+          .hero-desc { font-size: 17px !important; max-width: 500px !important; }
+        }
+        @media (min-width: 1100px) {
+          /* Copy and devices sit as one compact, centred group: the copy column
+             hugs its text and the pair is centred, so neither side drifts to an edge. */
+          .hero-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important; gap: 32px !important; }
+        }
+        /* Two columns: the kicker lines up with the top edge of the browser window. */
+        @media (min-width: 769px) {
+          .hero-grid { align-items: start !important; }
+        }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
         .hero-pills button{scroll-snap-align:center;}
