@@ -276,10 +276,17 @@ export default function ProfilePage() {
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`${API_URL}/auth/subdomain/check?name=${encodeURIComponent(lower)}`, { headers: authHeaders() });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        // A failed request (expired session, rate limit, server error) is not
+        // a verdict on the name — only an explicit "not available" is.
+        if (!res.ok || !data.success) {
+          setSubdomainStatus("idle");
+          setSubdomainStatusMsg(res.status === 401 ? "Your session expired — refresh the page and try again." : data.error || "Couldn't check that name just now — try again.");
+          return;
+        }
         if (data.available) { setSubdomainStatus("available"); setSubdomainStatusMsg("Available!"); }
         else { setSubdomainStatus("taken"); setSubdomainStatusMsg(data.reason || "Not available"); }
-      } catch { setSubdomainStatus("idle"); }
+      } catch { setSubdomainStatus("idle"); setSubdomainStatusMsg("Couldn't reach the server — check your connection."); }
     }, 500);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
