@@ -317,7 +317,7 @@ export function PremiumTeaser({ items, count, onExplore }: { items: TemplateList
 export const PREMIUM_TAB_CSS = `
 /* ── premium teaser card (cream page) ──────────────────────────────────── */
 .pxTz { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; align-items: center;
-  max-width: 1080px; margin: 0 auto 28px; padding: 22px 20px 0; border-radius: 26px; text-align: left;
+  max-width: none; margin: 0 auto 28px; padding: 22px 20px 0; border-radius: 26px; text-align: left;
   background: radial-gradient(120% 140% at 100% 0%, #3a1a2e 0%, #1c0c16 55%, #120810 100%);
   border: 1px solid rgba(230,199,126,.35); box-shadow: 0 24px 50px -28px rgba(61,12,17,.6), inset 0 1px 0 rgba(255,236,190,.12); }
 .pxTzSheen { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
