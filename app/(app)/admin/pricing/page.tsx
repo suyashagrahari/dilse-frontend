@@ -36,18 +36,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { derivePricing, formatINR } from "@/config/templatePricing";
 import { refreshPricing } from "@/lib/pricing";
-import { isPremiumSlug, refreshTemplateMeta } from "@/lib/templateMeta";
+import { isPremiumSlug } from "@/lib/templateMeta";
 import { UNPRICEABLE } from "./UNPRICEABLE";
 import {
   Search, Loader2, Check, RotateCcw, Globe, AlertTriangle, Ban, IndianRupee, Gift, Tag as TagIcon, Crown, Layers,
 } from "lucide-react";
-import { A, AdminPage, Hero, HeroStat, ChipGroup, SearchBox, Loading, EmptyState, Tag } from "../adminKit";
+import { A, AdminPage, Hero, ChipGroup, SearchBox, Loading, EmptyState, Tag } from "../adminKit";
 
 const t1 = A.ink;
 const t2 = A.soft;
@@ -128,14 +129,22 @@ export default function AdminPricingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [only, setOnly] = useState<"all" | "premium" | "normal" | "paid" | "free" | "blocked">("all");
-  /** Super-admin tier overrides (slug → premium). No entry = the code default. */
+  const [only, setOnly] = useState<"all" | "paid" | "free" | "blocked">("all");
+  /** Which collection is being priced. Membership is set in Premium Studio. */
+  const [room, setRoom] = useState<"normal" | "premium">("normal");
+  /** Super-admin tier overrides (slug → premium), read-only here. */
   const [tiers, setTiers] = useState<Record<string, boolean>>({});
-  const [tierSaving, setTierSaving] = useState<string | null>(null);
-  // Bulk pricing for a whole collection.
-  const [bulk, setBulk] = useState<{ room: "premium" | "normal"; rupees: string; discount: string; points: string }>({
-    room: "premium", rupees: "", discount: "0", points: "0",
+  // "Same price for every template in this collection", one draft per room.
+  const [bulkBy, setBulkBy] = useState<Record<"normal" | "premium", { rupees: string; discount: string; points: string }>>({
+    normal: { rupees: "", discount: "0", points: "0" },
+    premium: { rupees: "", discount: "0", points: "0" },
   });
+  const bulk = { room, ...bulkBy[room] };
+  const setBulk = useCallback(
+    (fn: (b: { rupees: string; discount: string; points: string }) => { rupees: string; discount: string; points: string }) =>
+      setBulkBy((p) => ({ ...p, [room]: fn(p[room]) })),
+    [room]
+  );
   const [bulkArmed, setBulkArmed] = useState<null | "price" | "free">(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -303,41 +312,9 @@ export default function AdminPricingPage() {
   const isPaid = useCallback((slug: string) => Boolean(rows[slug] && !rows[slug].isFree), [rows]);
   const isPremium = useCallback((slug: string) => isPremiumSlug(slug, tiers), [tiers]);
 
-  /** Move a template between the Premium collection and the normal gallery. */
-  const setTier = useCallback(
-    async (slug: string, premium: boolean) => {
-      if (tierSaving || isPremium(slug) === premium) return;
-      setTierSaving(slug);
-      try {
-        // Back to the code default removes the override instead of pinning it,
-        // so a later change to the default still applies.
-        const toDefault = isPremiumSlug(slug, {}) === premium;
-        const res = await fetch(`${API_URL}/admin/template-tiers/${slug}`, {
-          method: toDefault ? "DELETE" : "PATCH",
-          headers: hdr(),
-          body: toDefault ? undefined : JSON.stringify({ premium }),
-        });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error || "Failed to save");
-        setTiers((p) => {
-          const n = { ...p };
-          if (toDefault) delete n[slug]; else n[slug] = premium;
-          return n;
-        });
-        void refreshTemplateMeta();
-        say(premium ? `${slug} moved to Premium 👑` : `${slug} moved to Normal`);
-      } catch (e) {
-        say(e instanceof Error ? e.message : "Could not change tier");
-      } finally {
-        setTierSaving(null);
-      }
-    },
-    [tierSaving, isPremium, hdr, say]
-  );
-
   const bulkTargets = useMemo(
-    () => CATALOGUE.filter((t) => !UNPRICEABLE[t.slug] && isPremium(t.slug) === (bulk.room === "premium")),
-    [bulk.room, isPremium]
+    () => CATALOGUE.filter((t) => !UNPRICEABLE[t.slug] && isPremium(t.slug) === (room === "premium")),
+    [room, isPremium]
   );
   const bulkDraft: Draft = { paid: true, rupees: bulk.rupees, discount: bulk.discount, points: bulk.points };
   const bulkProblem = checkDraft(bulkDraft);
@@ -380,7 +357,7 @@ export default function AdminPricingPage() {
         setBulkBusy(false);
       }
     },
-    [bulkBusy, bulkTargets, bulkProblem, bulkArmed, bulk, hdr, say, load]
+    [bulkBusy, bulkTargets, bulkProblem, bulkArmed, bulk.rupees, bulk.discount, bulk.points, bulk.room, hdr, say, load]
   );
 
   const shown = useMemo(() => {
@@ -388,25 +365,32 @@ export default function AdminPricingPage() {
     return CATALOGUE.filter((t) => {
       if (q && !t.title.toLowerCase().includes(q) && !t.slug.includes(q)) return false;
       const blocked = Boolean(UNPRICEABLE[t.slug]);
-      if (only === "premium") return isPremium(t.slug);
-      if (only === "normal") return !isPremium(t.slug);
+      if (isPremium(t.slug) !== (room === "premium")) return false;
       if (only === "paid") return !blocked && isPaid(t.slug);
       if (only === "free") return !blocked && !isPaid(t.slug);
       if (only === "blocked") return blocked;
       return true;
     });
-  }, [search, only, isPaid, isPremium]);
-  const premiumCount = CATALOGUE.filter((t) => isPremium(t.slug)).length;
+  }, [search, only, isPaid, isPremium, room]);
+  /** Per-collection figures for the room tabs and the hero. */
+  const roomStats = (prem: boolean) => {
+    const list = CATALOGUE.filter((t) => isPremium(t.slug) === prem);
+    const priceable = list.filter((t) => !UNPRICEABLE[t.slug]);
+    const paid = priceable.filter((t) => isPaid(t.slug));
+    const avg = paid.length ? Math.round(paid.reduce((s, t) => s + rows[t.slug].finalPricePaise, 0) / paid.length / 100) : 0;
+    const prices = [...new Set(paid.map((t) => rows[t.slug].finalPricePaise))];
+    return { total: list.length, priceable: priceable.length, paid: paid.length, avg, uniform: prices.length === 1 && paid.length === priceable.length ? prices[0] / 100 : null };
+  };
+  const normalStats = roomStats(false);
+  const premStats = roomStats(true);
+  const cur = room === "premium" ? premStats : normalStats;
 
-  const paidCount = CATALOGUE.filter((t) => !UNPRICEABLE[t.slug] && isPaid(t.slug)).length;
-  const blockedCount = CATALOGUE.filter((t) => UNPRICEABLE[t.slug]).length;
-  const freeCount = CATALOGUE.length - paidCount - blockedCount;
+  const inRoom = (slug: string) => isPremiumSlug(slug, tiers) === (room === "premium");
+  const roomList = CATALOGUE.filter((t) => inRoom(t.slug));
+  const paidCount = roomList.filter((t) => !UNPRICEABLE[t.slug] && isPaid(t.slug)).length;
+  const blockedCount = roomList.filter((t) => UNPRICEABLE[t.slug]).length;
+  const freeCount = roomList.length - paidCount - blockedCount;
 
-  // Hero figures, from the stored rows only (not unsaved drafts).
-  const paidRows = CATALOGUE.map((t) => rows[t.slug]).filter((r): r is Row => Boolean(r && !r.isFree && !UNPRICEABLE[r.slug]));
-  const avgPrice = paidRows.length ? Math.round(paidRows.reduce((s, r) => s + r.finalPricePaise, 0) / paidRows.length / 100) : 0;
-  const discounted = paidRows.filter((r) => r.discountPercent > 0).length;
-  const pointsPriced = paidRows.filter((r) => r.pointsCost > 0).length;
   const unsaved = CATALOGUE.filter((t) => {
     if (UNPRICEABLE[t.slug]) return false;
     const d = drafts[t.slug];
@@ -423,12 +407,13 @@ export default function AdminPricingPage() {
     return <Loading label="Checking access…" h={320} />;
   }
 
-  const paidPct = CATALOGUE.length ? Math.round((paidCount / CATALOGUE.length) * 100) : 0;
+  const paidPct = cur.priceable ? Math.round((cur.paid / cur.priceable) * 100) : 0;
+  const P = room === "premium";
 
   return (
     <AdminPage
-      title="Templates: tier & pricing"
-      subtitle="Which templates are Premium, and what a user pays to publish a page. A template nobody has priced is free. Payment is once per page — editing and re-publishing is always free, and pages already published stay live if you make their template paid."
+      title="Template pricing"
+      subtitle="What a user pays to publish a page, priced per collection — Everyday and Premium. Set one price for a whole collection, or fine-tune any single template. Which templates are Premium is chosen in Premium Studio. A template nobody has priced is free. Payment is once per page — editing and re-publishing is always free, and pages already published stay live if you make their template paid."
       icon={<IndianRupee size={18} />}
       width={1180}
     >
@@ -442,14 +427,21 @@ export default function AdminPricingPage() {
       <style>{AP_CSS}</style>
 
       <Hero>
-        <div className="adk-hero-grid">
-          <HeroStat big label="PAID TEMPLATES" value={paidCount} sub={paidCount ? `avg ${formatINR(avgPrice)} per page${discounted ? ` · ${discounted} on discount` : ""}${pointsPriced ? ` · ${pointsPriced} take points` : ""}` : "everything is free"} />
-          <HeroStat label="PREMIUM" value={premiumCount} tone="#ffe3a3" sub={`${CATALOGUE.length - premiumCount} normal`} />
-          <HeroStat label="FREE" value={freeCount} tone="#bff0d2" />
-          <HeroStat label="CAN'T BE PRICED" value={blockedCount} tone="#ffb4a8" />
+        <div className="ap-rooms-hero">
+          {([["normal", normalStats], ["premium", premStats]] as const).map(([r, st]) => (
+            <div key={r} className="ap-rh" data-room={r}>
+              <span className="ap-rh-label">{r === "premium" ? <><Crown size={11} /> PREMIUM</> : <><Layers size={11} /> EVERYDAY</>}</span>
+              <span className="ap-rh-price">
+                {st.uniform != null ? formatINR(st.uniform) : st.paid ? `avg ${formatINR(st.avg)}` : "Free"}
+              </span>
+              <span className="ap-rh-sub">
+                {st.paid}/{st.priceable} paid · {st.total} templates{st.uniform != null ? " · one price for all" : ""}
+              </span>
+            </div>
+          ))}
         </div>
         <div className="ap-bar" aria-hidden>
-          <motion.span initial={{ width: 0 }} animate={{ width: `${paidPct}%` }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} />
+          <motion.span key={room} initial={{ width: 0 }} animate={{ width: `${paidPct}%` }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} />
         </div>
         {/* Which deployment am I editing. Not decoration: the same screen on
             staging and production looks identical and edits different data. */}
@@ -462,6 +454,30 @@ export default function AdminPricingPage() {
         </div>
       </Hero>
 
+      {/* ── Everyday / Premium: which collection am I pricing ─────────────── */}
+      <div className="ap-rooms" role="tablist" aria-label="Collection">
+        {([["normal", normalStats], ["premium", premStats]] as const).map(([r, st]) => {
+          const on = room === r;
+          return (
+            <button key={r} type="button" role="tab" aria-selected={on} data-on={on ? "1" : "0"} data-room={r}
+              onClick={() => { setRoom(r); setBulkArmed(null); setOnly("all"); }}>
+              {on && <motion.span layoutId="ap-room-pill" className="ap-room-pill" data-room={r} transition={{ type: "spring", stiffness: 380, damping: 32 }} />}
+              <span className="ap-room-in">
+                <span className="ap-room-ic">{r === "premium" ? <Crown size={16} /> : <Layers size={16} />}</span>
+                <span className="ap-room-txt">
+                  <b>{r === "premium" ? "Premium pricing" : "Everyday pricing"}</b>
+                  <small>{st.total} templates · {st.paid} paid</small>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="ap-studio-link">
+        {P ? "👑 " : ""}Want to change which templates are {P ? "Premium" : "Everyday"}?{" "}
+        <Link href="/admin/premium">Open Premium Studio →</Link>
+      </p>
+
       {/* Counts + search */}
       <div className="ap-controls">
         <SearchBox value={search} onChange={setSearch} placeholder="Search by name or slug" style={{ flex: "1 1 240px" }} />
@@ -470,9 +486,7 @@ export default function AdminPricingPage() {
           value={only}
           onChange={setOnly}
           options={[
-            { value: "all", label: "All", count: CATALOGUE.length },
-            { value: "premium", label: <><Crown size={11} /> Premium</>, count: premiumCount, tone: A.goldDeep },
-            { value: "normal", label: <><Layers size={11} /> Normal</>, count: CATALOGUE.length - premiumCount },
+            { value: "all", label: "All", count: roomList.length },
             { value: "paid", label: <><IndianRupee size={11} /> Paid</>, count: paidCount },
             { value: "free", label: <><Gift size={12} /> Free</>, count: freeCount, tone: OK },
             { value: "blocked", label: <><Ban size={12} /> Can&apos;t be priced</>, count: blockedCount, tone: OFF },
@@ -488,26 +502,16 @@ export default function AdminPricingPage() {
       </div>
 
       {/* ── Price a whole collection ─────────────────────────────────────── */}
-      <div className="adk-card ap-bulk">
+      <motion.div key={`bulk-${room}`} className="adk-card ap-bulk" data-room={room}
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
         <div className="ap-bulk-head">
-          <span className="ap-bulk-title"><IndianRupee size={14} /> Price a whole collection</span>
-          <div className="ap-seg" role="radiogroup" aria-label="Collection">
-            {(["premium", "normal"] as const).map((room) => {
-              const on = bulk.room === room;
-              return (
-                <button key={room} type="button" role="radio" aria-checked={on} data-on={on ? "1" : "0"}
-                  disabled={bulkBusy} onClick={() => { setBulk((b) => ({ ...b, room })); setBulkArmed(null); }}>
-                  {on && <motion.span layoutId="ap-bulk-seg" className="ap-seg-pill" style={{ background: room === "premium" ? A.goldDeep : bg }} transition={{ type: "spring", stiffness: 450, damping: 32 }} />}
-                  <span style={{ position: "relative", zIndex: 1, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    {room === "premium" ? <Crown size={11} /> : <Layers size={11} />} {room}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <span className="ap-bulk-title">
+            {P ? <Crown size={15} /> : <Layers size={15} />} One price for every {P ? "Premium" : "Everyday"} template
+          </span>
+          {cur.uniform != null && <Tag tone={P ? A.goldDeep : OK}>All at {formatINR(cur.uniform)}</Tag>}
         </div>
         <p className="ap-bulk-note">
-          Sets the same price on all <strong>{bulkTargets.length}</strong> {bulk.room} templates at once. You can still fine-tune any one below.
+          Applies the same price to all <strong>{bulkTargets.length}</strong> {P ? "Premium" : "Everyday"} templates in one go. Any single template can still be changed below.
         </p>
         <div className="ap-bulk-row">
           <div className="ap-fields" style={{ flex: "1 1 300px" }}>
@@ -540,6 +544,10 @@ export default function AdminPricingPage() {
             </button>
           </div>
         </div>
+      </motion.div>
+
+      <div className="ap-single-head">
+        <span>{P ? "Premium" : "Everyday"} templates, one by one</span>
       </div>
 
       {error ? (
@@ -555,7 +563,7 @@ export default function AdminPricingPage() {
       ) : shown.length === 0 ? (
         <EmptyState icon={<Search size={20} />} title="Nothing matches." note="Try another name, slug or filter." />
       ) : (
-        <div className="ap-grid">
+        <div className="ap-grid" key={`grid-${room}`} data-room={room}>
           {shown.map((t, i) => {
             const blockedReason = UNPRICEABLE[t.slug];
             const d = drafts[t.slug] ?? FREE_DRAFT;
@@ -621,28 +629,6 @@ export default function AdminPricingPage() {
                         );
                       })}
                     </div>
-                  )}
-                </div>
-
-                {/* Tier: which room of the gallery this template lives in. */}
-                <div className="ap-tier">
-                  <span className="ap-tier-label">Collection</span>
-                  <div className="ap-seg ap-seg-sm" role="radiogroup" aria-label={`${t.title} collection`}>
-                    {([["normal", false], ["premium", true]] as const).map(([label, prem]) => {
-                      const on = isPremium(t.slug) === prem;
-                      return (
-                        <button key={label} type="button" role="radio" aria-checked={on} data-on={on ? "1" : "0"}
-                          disabled={tierSaving === t.slug} onClick={() => void setTier(t.slug, prem)}>
-                          {on && <motion.span layoutId={`ap-tier-${t.slug}`} className="ap-seg-pill" style={{ background: prem ? A.goldDeep : "#6b5a5a" }} transition={{ type: "spring", stiffness: 450, damping: 32 }} />}
-                          <span style={{ position: "relative", zIndex: 1, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            {prem ? <Crown size={10} /> : <Layers size={10} />} {label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {tierSaving === t.slug ? <Loader2 size={12} className="animate-spin" style={{ color: tM }} /> : (
-                    <span className="ap-tier-note">{t.slug in tiers ? "set by super admin" : "default"}</span>
                   )}
                 </div>
 
@@ -846,7 +832,44 @@ const AP_CSS = `
   .ap-tier { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
   .ap-tier-label { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${A.muted}; }
   .ap-tier-note { font-size: 11px; color: ${A.muted}; }
+  .ap-rooms-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ap-rh { border-radius: 16px; padding: 12px 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,227,163,.18); display: grid; gap: 4px; min-width: 0; }
+  .ap-rh[data-room="premium"] { background: linear-gradient(135deg, rgba(255,241,191,.16), rgba(166,117,28,.12)); border-color: rgba(255,227,163,.4); }
+  .ap-rh-label { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; color: #ffe3a3; }
+  .ap-rh-price { font: 700 26px/1.1 'Playfair Display', serif; color: #fdf8ee; }
+  .ap-rh-sub { font-size: 11.5px; opacity: .75; overflow-wrap: anywhere; }
+
+  .ap-rooms { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; margin: 4px 0 8px; border-radius: 22px;
+    background: rgba(255,255,255,.7); border: 1px solid ${A.edge}; box-shadow: 0 14px 30px -22px rgba(61,12,17,.5); }
+  .ap-rooms button { position: relative; border: 0; background: none; cursor: pointer; border-radius: 17px; padding: 12px 14px; text-align: left;
+    color: ${A.ink}; -webkit-tap-highlight-color: transparent; }
+  .ap-room-pill { position: absolute; inset: 0; border-radius: 17px; background: linear-gradient(135deg, #5a1520, #3d0c11); box-shadow: 0 12px 26px -12px rgba(61,12,17,.8); }
+  .ap-room-pill[data-room="premium"] { background: linear-gradient(135deg, #2b1a0c, #1a0d07); box-shadow: 0 12px 26px -10px rgba(120,80,10,.7), inset 0 0 0 1.5px #e2b44a; }
+  .ap-room-pill[data-room="premium"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(110deg, transparent 35%, rgba(255,230,160,.18) 50%, transparent 65%);
+    background-size: 250% 100%; animation: apSheen 3.5s linear infinite; }
+  .ap-room-in { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .ap-room-ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; background: rgba(61,12,17,.07); color: ${A.maroon}; transition: background .3s, color .3s; }
+  .ap-rooms button[data-on="1"] .ap-room-ic { background: rgba(255,255,255,.14); color: #fdf8ee; }
+  .ap-rooms button[data-on="1"][data-room="premium"] .ap-room-ic { background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); color: #3a2505; }
+  .ap-room-txt { display: grid; gap: 3px; min-width: 0; }
+  .ap-room-txt b { font: 700 16px/1.1 'Playfair Display', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ap-room-txt small { font-size: 11px; color: ${A.muted}; }
+  .ap-rooms button[data-on="1"] .ap-room-txt b { color: #fdf8ee; }
+  .ap-rooms button[data-on="1"][data-room="premium"] .ap-room-txt b { background: linear-gradient(90deg, #fff1bf, #e6c77e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ap-rooms button[data-on="1"] .ap-room-txt small { color: rgba(253,248,238,.7); }
+  @media (max-width: 520px) { .ap-rooms button { padding: 10px; } .ap-room-ic { width: 30px; height: 30px; } .ap-room-txt b { font-size: 14px; } .ap-rh-price { font-size: 21px; } }
+  .ap-studio-link { margin: 0 4px 12px; font-size: 12px; color: ${A.soft}; }
+  .ap-studio-link a { color: ${A.goldDeep}; font-weight: 800; text-decoration: none; }
+  .ap-studio-link a:hover { text-decoration: underline; }
+  .ap-single-head { display: flex; align-items: center; gap: 12px; margin: 16px 2px 10px; font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: ${A.muted}; }
+  .ap-single-head::after { content: ""; flex: 1; height: 1px; background: ${A.edge}; }
+  @media (max-width: 420px) { .ap-room-ic { display: none; } }
+  .ap-grid[data-room="premium"] .ap-card { border-color: rgba(201,168,76,.45); background: linear-gradient(180deg, #fffdf6, #fbf3e0); }
+  .ap-grid[data-room="premium"] .ap-emoji { background: linear-gradient(135deg, #fff1bf, #e9c768); box-shadow: 0 4px 12px -6px rgba(166,117,28,.7); }
+  @keyframes apSheen { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+
   .ap-bulk { padding: 14px; margin-bottom: 12px; background: linear-gradient(135deg, #fffaf0, #fbf1df); }
+  .ap-bulk[data-room="premium"] { background: linear-gradient(135deg, #fff7e0, #f6e3b4); border-color: rgba(201,168,76,.55); box-shadow: 0 16px 34px -22px rgba(139,90,43,.6); }
   .ap-bulk-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .ap-bulk-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: ${A.ink}; }
   .ap-bulk-note { margin: 6px 0 10px; font-size: 12px; color: ${A.soft}; line-height: 1.45; }
