@@ -63,9 +63,9 @@ function Corners({ tone = "gold" }: { tone?: "gold" | "rose" }) {
   );
 }
 
-function Motif({ light }: { light?: boolean }) {
+function Motif({ light, className = "" }: { light?: boolean; className?: string }) {
   return (
-    <div className={`vwMotif${light ? " light" : ""}`} aria-hidden>
+    <div className={`vwMotif${light ? " light" : ""} ${className}`} aria-hidden>
       <span className="vwMotifL" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={MOTIF} alt="" />
@@ -222,8 +222,6 @@ export default function ValentineWishlistClient() {
           ))}
         </div>
         <span className="vwGlow" aria-hidden />
-        <span className="vwFrame" aria-hidden />
-        <Corners />
 
         <div className="vwHeroIn">
           <motion.span className="vwKick" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -240,11 +238,11 @@ export default function ValentineWishlistClient() {
             </span>{" "}
             again.
           </motion.h1>
-          <Motif light />
+          <Motif light className="vwHeroMotif" />
 
           <motion.p className="vwSub" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}>
-            A new collection of Valentine&apos;s week templates is on its way — one for every day from Rose Day to Valentine&apos;s Day.
-            Join the wishlist and your <b>{VALENTINE_DISCOUNT}% off</b> is saved to your account.
+            Eight new templates are on their way — one for every day from Rose Day to Valentine&apos;s Day.
+            Join now and your <b>{VALENTINE_DISCOUNT}% off</b> is saved to your account.
           </motion.p>
 
           <motion.div className="vwStage" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -292,7 +290,7 @@ export default function ValentineWishlistClient() {
             <p className="vwNote" role="status" aria-live="polite">
               {wl.error ? <span className="vwErr">{wl.error} — please try again.</span>
                 : joined ? <>We&apos;ll tell you the moment the collection is live.</>
-                : wl.status === "signed-out" ? <><Lock size={12} aria-hidden /> Takes 10 seconds — your offer is tied to your account.</>
+                : wl.status === "signed-out" ? <><Lock size={12} aria-hidden /> 10 seconds · your offer is saved to your account</>
                 : <><UserCheck size={12} aria-hidden /> Signed in{user?.name ? ` as ${user.name.split(" ")[0]}` : ""} — one tap and you&apos;re in.</>}
             </p>
           </motion.div>
@@ -572,6 +570,57 @@ const VW_CSS = `
   .vwEnd .vwCorner { width: 80px; height: 80px; }
   .vwSub { font-size: 16.5px; }
     }
+/* Phones: the whole card — offer, button and countdown — on one screen. */
+@media (max-width: 639px) {
+  .vwHero { padding: 22px 16px 18px; border-radius: 26px; }
+  .vwKick { padding: 5px 11px; font-size: 9.5px; letter-spacing: .14em; }
+  .vwTitle { margin-top: 12px; font-size: clamp(29px, 8.4vw, 34px); }
+  .vwScribble { bottom: -7px; height: 14px; }
+  .vwHeroMotif { display: none; }
+  .vwSub { margin-top: 12px; font-size: 13.5px; line-height: 1.5; }
+  .vwStage { margin-top: 10px; padding-top: 40px; gap: 6px; }
+  .vwEnvBox { width: 124px; height: 80px; }
+  .vwLetter { left: 8px; right: 8px; bottom: 6px; height: 76px; }
+  @keyframes vwLetterUp { to { transform: translateY(-40px); } }
+  @keyframes vwLetterBob { 0%, 100% { transform: translateY(-40px); } 50% { transform: translateY(-45px) rotate(-1.5deg); } }
+  .vwLetterFor { font-size: 10.5px; }
+  .vwLetterN { font-size: 28px; }
+  .vwLetterN small { font-size: 14px; }
+  .vwLetterOff { font-size: 8.5px; }
+  .vwWax { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: 12px; }
+  .vwCute { width: 40px; height: 36px; margin-bottom: 4px; }
+  .vwSpark { font-size: 11px; }
+  .vwCtaWrap { margin-top: 14px; gap: 8px; }
+  .vwBtn { min-height: 50px; font-size: 14.5px; }
+  .vwNote { font-size: 11.5px; }
+  .vwCount { margin-top: 14px; padding-top: 12px; }
+  .vwCountRow { gap: 6px; }
+  .vwTile { padding: 7px 2px 6px; border-radius: 11px; gap: 3px; }
+  .vwTile b { font-size: 19px; }
+  .vwTile span { font-size: 8px; }
+  .vwCountCap { margin-top: 7px; font-size: 12px; }
+  .vwWaiting { margin-top: 10px; }
+  .vwPassWrap { margin-top: 16px; }
+}
+/* Short phones (iPhone SE and the like): tighter still. */
+@media (max-width: 639px) and (max-height: 740px) {
+  .vwHero { padding: 16px 14px 14px; }
+  .vwTitle { margin-top: 9px; font-size: 27px; }
+  .vwSub { margin-top: 9px; font-size: 12.5px; line-height: 1.45; }
+  .vwStage { margin-top: 6px; padding-top: 34px; }
+  .vwEnvBox { width: 108px; height: 70px; }
+  .vwLetter { height: 66px; }
+  @keyframes vwLetterUp { to { transform: translateY(-34px); } }
+  @keyframes vwLetterBob { 0%, 100% { transform: translateY(-34px); } 50% { transform: translateY(-38px) rotate(-1.5deg); } }
+  .vwLetterN { font-size: 24px; }
+  .vwCute { width: 34px; height: 31px; }
+  .vwCtaWrap { margin-top: 10px; gap: 6px; }
+  .vwBtn { min-height: 46px; font-size: 14px; }
+  .vwCount { margin-top: 10px; padding-top: 9px; }
+  .vwTile { padding: 5px 2px 4px; }
+  .vwTile b { font-size: 16px; }
+  .vwCountCap { margin-top: 5px; font-size: 11px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .vwHeart, .vwBtn::after, .vwCute, .vwCuteEyes, .vwSpark, .vwBeat, .vwLetter, .vwEnvFlap, .vwWax, .vwScribble path, .vwTile b.tick, .vwCorner, .vwFrame, .vwMotif img, .vwPetal { animation: none !important; }
   .vwCorner { opacity: .7; }
