@@ -19,6 +19,7 @@ import { useTemplateMeta, isPremiumSlug } from "@/lib/templateMeta";
 import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
+import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -507,7 +508,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -688,8 +689,9 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                   </>
                 ) : (
                   <>
-                    {/* Page header */}
-                    <header className="mb-7 md:mb-9 text-center">
+                    {/* Page header — tablets and up. On phones the bottom nav
+                        already says where you are, so the cards lead instead. */}
+                    <header className="hidden md:block mb-7 md:mb-9 text-center">
                       <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] mb-3" style={{ color: UI.accent }}>
                         Discover
                       </p>
@@ -707,8 +709,13 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                       </div>
                     </header>
 
-                    {!hasActiveFilters && premiumShowcase.length > 0 && (
-                      <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
+                    {!hasActiveFilters && (
+                      <div className="txDuo">
+                        {premiumShowcase.length > 0 && (
+                          <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
+                        )}
+                        <ValentineTeaser />
+                      </div>
                     )}
 
                     {crossHint}

@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { templateList } from "@/data/template-registry";
 import TrendingShowcase from "./TrendingShowcase";
+import { useWishlist } from "@/hooks/useWishlist";
+import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
@@ -16,6 +18,9 @@ export default function HeroSection() {
   const router = useRouter();
 
   const goTemplates = useCallback(() => router.push("/templates"), [router]);
+  const goWishlist = useCallback(() => router.push(VALENTINE_PATH), [router]);
+  const wishlist = useWishlist(VALENTINE_CAMPAIGN);
+  const onList = wishlist.status === "joined";
   return (
     <section id="hero" className="hero-section" style={{
       background: '#f5ede6', display: 'flex', alignItems: 'center',
@@ -101,12 +106,16 @@ export default function HeroSection() {
                 style={{ background: '#3d0c11', color: '#f5ede6', border: 'none', padding: '15px 30px', fontSize: 11, fontWeight: 700, letterSpacing: '1.6px', cursor: 'pointer', transition: 'background-color 0.22s', borderRadius: 4 }}>
                 🎉 CREATE YOUR PAGE
               </motion.button>
+              {/* The Valentine's week wishlist — joining happens on its page. */}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={goTemplates}
-                style={{ background: 'transparent', color: '#2a0a0e', border: '1.5px solid rgba(61,12,17,0.35)', padding: '15px 26px', fontSize: 11, fontWeight: 700, letterSpacing: '1.6px', cursor: 'pointer', borderRadius: 4, backdropFilter: 'blur(4px)' }}>
-                👀 VIEW DEMO
+                onClick={goWishlist}
+                className={`hero-wish${onList ? " is-on" : ""}`}
+                aria-label={onList ? "You're on the Valentine's week wishlist" : `Join the Valentine's week wishlist — ${VALENTINE_DISCOUNT}% off`}>
+                <span className="hero-wish-h" aria-hidden>{onList ? "💖" : "💌"}</span>
+                {onList ? "ON THE VALENTINE LIST" : "VALENTINE WISHLIST"}
+                {!onList && <span className="hero-wish-off">{VALENTINE_DISCOUNT}% OFF</span>}
               </motion.button>
             </motion.div>
 
@@ -147,6 +156,19 @@ export default function HeroSection() {
         @media (min-width: 769px) {
           .hero-grid { align-items: start !important; }
         }
+        .hero-wish { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden;
+          background: linear-gradient(135deg, #fff6f3, #ffe7e2); color: #7a1028; border: 1.5px solid rgba(179,36,63,0.35);
+          padding: 15px 18px 15px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; cursor: pointer; border-radius: 4px;
+          box-shadow: 0 10px 24px -16px rgba(179,36,63,0.6); }
+        .hero-wish::after { content: ""; position: absolute; top: 0; bottom: 0; width: 34%; left: -50%; transform: skewX(-20deg);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent); animation: heroWishSheen 4s ease-in-out infinite; }
+        @keyframes heroWishSheen { 0%, 60% { left: -50%; } 92%, 100% { left: 130%; } }
+        .hero-wish-h { font-size: 14px; letter-spacing: 0; animation: heroWishBeat 1.8s ease-in-out infinite; display: inline-block; }
+        @keyframes heroWishBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.14); } 56% { transform: scale(1); } }
+        .hero-wish-off { padding: 4px 7px; border-radius: 99px; background: #b3243f; color: #fff4f1; font-size: 9.5px; letter-spacing: 1px; }
+        .hero-wish.is-on { background: #fff; }
+        .hero-wish.is-on::after { display: none; }
+        @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h { animation: none; } }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
         .hero-pills button{scroll-snap-align:center;}
