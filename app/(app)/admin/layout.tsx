@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { isAdmin } from "@/lib/roles";
-import AdminNav, { ADMIN_NAV_CSS } from "./AdminNav";
-import AdminSwipe from "./AdminSwipe";
+import AdminNav, { ADMIN_NAV_CSS, useAdminTabs } from "./AdminNav";
+import SwipeTabs from "@/components/SwipeTabs";
 import { AdminSkeleton } from "@/components/skeleton/Skeletons";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAppSelector((s) => s.auth);
   const [checked, setChecked] = useState(false);
+  const tabs = useAdminTabs();
 
   useEffect(() => {
     if (isLoading) return;
@@ -50,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <>
       <style>{ADMIN_NAV_CSS}</style>
       <AdminNav />
-      <AdminSwipe>{children}</AdminSwipe>
+      <SwipeTabs tabs={tabs} className="adm-main">{children}</SwipeTabs>
     </>
   );
 }
