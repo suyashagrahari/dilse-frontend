@@ -22,6 +22,7 @@ import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import { openShareSheet } from "@/lib/share/shareBus";
 import MyStorySection from "@/components/profile/MyStorySection";
+import ProfileWishlist from "@/components/wishlist/ProfileWishlist";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { ProfileSkeleton } from "@/components/skeleton/Skeletons";
 
@@ -1320,6 +1321,8 @@ export default function ProfilePage() {
     <ProfileShell>
       <div className="pfWrap">
         {HeroBlock}
+
+        <ProfileWishlist />
 
         <nav id="referral" className="pfTabs" role="tablist" aria-label="Profile sections">
           {tabs.map((t) => {

@@ -44,6 +44,7 @@ const STEPS = [
 /** One-tap starting points. Each is a partial filter over the defaults. */
 const SEGMENTS: { key: string; label: string; emoji: string; note: string; f: Partial<Filters> }[] = [
   { key: "all", label: "Everyone", emoji: "🌍", note: "All verified users", f: {} },
+  { key: "valentine", label: "Valentine wishlist", emoji: "💘", note: "Joined the Valentine's week wishlist", f: { wishlist: "valentine-2027" } },
   { key: "happy", label: "Happy creators", emoji: "😍", note: "Rated 4–5★", f: { ratings: [4, 5] } },
   { key: "unhappy", label: "Unhappy", emoji: "😟", note: "Rated 1–3★", f: { ratings: [1, 2, 3] } },
   { key: "never", label: "Never created", emoji: "🌱", note: "Signed up, 0 pages", f: { pages: "0" } },
@@ -138,6 +139,16 @@ export default function AdminOutreachPage() {
     // "All matching" means THIS filter. Change the filter and it no longer does.
     setSel((s) => (s.mode === "filter" ? { mode: "ids", rows: new Map() } : s));
   };
+  // `/admin/outreach?segment=valentine` — the Wishlist tab's "Email them"
+  // button lands here with that audience already chosen.
+  const linkedSegment = useRef(false);
+  useEffect(() => {
+    if (linkedSegment.current || !allowed) return;
+    linkedSegment.current = true;
+    const key = new URLSearchParams(window.location.search).get("segment");
+    if (key && key !== "all" && SEGMENTS.some((s) => s.key === key)) applySegmentRef.current(key);
+  }, [allowed]);
+
   const applySegment = (key: string) => {
     const seg = SEGMENTS.find((s) => s.key === key);
     if (!seg) return;
@@ -147,6 +158,8 @@ export default function AdminOutreachPage() {
     setSegment(key);
     setSel({ mode: "ids", rows: new Map() });
   };
+  const applySegmentRef = useRef(applySegment);
+  applySegmentRef.current = applySegment;
 
   const selectedCount = sel.mode === "ids" ? sel.rows.size : Math.max(0, (aud?.stats.sendable ?? 0) - sel.exclude.size);
   const isPicked = (r: AudienceRow) => (sel.mode === "ids" ? sel.rows.has(r.userId) : !sel.exclude.has(r.userId) && sendable(r));
@@ -658,6 +671,9 @@ function FilterPanel({ filters, setF, aud, onReset }: { filters: Filters; setF: 
       <FG label="Sign-in">
         <ChipGroup id="f-prov" value={filters.provider} onChange={(v) => setF({ provider: v })} options={[{ value: "any", label: "Any" }, { value: "google", label: "Google" }, { value: "local", label: "Email" }]} />
       </FG>
+      <FG label="Wishlist">
+        <ChipGroup id="f-wish" value={filters.wishlist} onChange={(v) => setF({ wishlist: v })} options={[{ value: "any", label: "Any" }, { value: "valentine-2027", label: "💘 Valentine" }, { value: "none", label: "Not joined" }]} />
+      </FG>
       <FG label="Last emailed by us">
         <ChipGroup id="f-em" value={filters.emailed} onChange={(v) => setF({ emailed: v })} options={[{ value: "any", label: "Any" }, { value: "not14", label: "Not in 14d" }, { value: "not30", label: "Not in 30d" }, { value: "never", label: "Never" }]} />
       </FG>
@@ -698,7 +714,7 @@ function PersonRow({ r, i, picked, onToggle, onOptOut }: { r: AudienceRow; i: nu
       <div className="ot-person">
         <span className="ot-av" style={{ background: avatarTone(r.email) }}>{(r.name || r.email)[0]?.toUpperCase()}</span>
         <div style={{ minWidth: 0 }}>
-          <div className="ot-name">{r.name || "—"} {r.paidOrders > 0 && <Tag tone={A.info}>💎 Paid</Tag>}</div>
+          <div className="ot-name">{r.name || "—"} {r.paidOrders > 0 && <Tag tone={A.info}>💎 Paid</Tag>} {r.wishlists?.length > 0 && <Tag tone="#b3243f">💘 Wishlist</Tag>}</div>
           <div className="ot-email">
             {r.verified ? <ShieldCheck size={12} color={A.ok} /> : <AlertTriangle size={12} color={A.warn} />}
             <span>{r.email}</span>
