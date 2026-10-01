@@ -8,16 +8,19 @@
 // the rest read the cached answer, and a join anywhere updates all of them on
 // the same render.
 //
-// A signed-out tap on "Join" opens the sign-up sheet and leaves a pending flag
-// in sessionStorage. Whichever surface sees an authenticated user with that
-// flag performs the join — so it survives the modal closing, and also the
-// full-page Google redirect a cross-origin subdomain falls back to.
+// Joining always asks for a phone number (the page's centred phone modal), so
+// the join is two steps: `requestJoin` says what comes next, `submitJoin` sends
+// the number. A signed-out tap opens sign-up and leaves a pending flag in
+// sessionStorage; once the account exists `resumePending` turns true and the
+// page opens the phone modal by itself — which also survives the full-page
+// Google redirect a cross-origin subdomain falls back to.
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL, IS_NGROK } from "@/lib/config";
 
-export type WishlistEntry = { campaign: string; discountPercent: number; joinedAt: string; position: number };
+export type WishlistEntry = { campaign: string; discountPercent: number; joinedAt: string; position: number; hasPhone?: boolean };
+export type WishlistPhone = { country: string; dialCode: string; number: string };
 export type WishlistStatus = "loading" | "signed-out" | "open" | "joined";
 
 type Snap = { token: string | null; status: WishlistStatus; entry: WishlistEntry | null; joining: boolean; error: string | null };
@@ -66,8 +69,9 @@ function setPending(campaign: string, source: string | null) {
     if (source) sessionStorage.setItem(PENDING_KEY, JSON.stringify({ campaign, source, at: Date.now() }));
     else sessionStorage.removeItem(PENDING_KEY);
   } catch {
-    /* storage blocked: the join still happens from the modal's onSuccess */
+    /* storage blocked: the page still opens the phone modal from the sign-up's onSuccess */
   }
+  listeners.forEach((l) => l());
 }
 
 async function load(campaign: string, token: string) {
@@ -89,21 +93,28 @@ async function load(campaign: string, token: string) {
   return p;
 }
 
-async function join(campaign: string, token: string, source: string) {
+async function join(campaign: string, token: string, source: string, phone: WishlistPhone): Promise<{ ok: boolean; error?: string }> {
   const key = keyOf(campaign, token);
   const cur = snaps.get(key);
-  if (cur?.joining || cur?.status === "joined") return;
+  if (cur?.joining) return { ok: false };
   put(key, { token, status: cur?.status ?? "open", entry: cur?.entry ?? null, joining: true, error: null });
   try {
     const res = await fetch(`${API_URL}/wishlist/${campaign}`, {
-      method: "POST", headers: headers(token), body: JSON.stringify({ source }),
+      method: "POST", headers: headers(token), body: JSON.stringify({ source, phone }),
     });
     const json = await res.json().catch(() => null);
-    if (!res.ok || !json?.success) throw new Error(json?.error || "Could not join right now");
+    if (!res.ok || !json?.success) {
+      const error = json?.error || "Could not join right now — please try again";
+      // A bad number stays in the modal; the page itself shows no error.
+      put(key, { token, status: cur?.status ?? "open", entry: cur?.entry ?? null, joining: false, error: null });
+      return { ok: false, error };
+    }
     setPending(campaign, null);
     put(key, { token, status: "joined", entry: json.data.entry, joining: false, error: null });
-  } catch (e) {
-    put(key, { token, status: "open", entry: null, joining: false, error: e instanceof Error ? e.message : "Could not join right now" });
+    return { ok: true };
+  } catch {
+    put(key, { token, status: cur?.status ?? "open", entry: cur?.entry ?? null, joining: false, error: null });
+    return { ok: false, error: "No connection — please try again" };
   }
 }
 
@@ -128,32 +139,39 @@ export function useWishlist(campaign: string) {
     if (!snaps.has(key)) void load(campaign, token);
   }, [campaign, token, key]);
 
-  // Finish a join that started signed out.
-  useEffect(() => {
-    if (!token) return;
-    if (snap.status === "joined") { if (readPending(campaign)) setPending(campaign, null); return; }
-    if (snap.status !== "open" || snap.joining || snap.error) return;
-    const source = readPending(campaign);
-    if (source) void join(campaign, token, source);
-  }, [campaign, token, snap.status, snap.joining, snap.error]);
+  const pending = useSyncExternalStore(subscribe, () => readPending(campaign), () => null);
+  // Signed up from a "Join" tap and not joined yet: the page opens the phone modal.
+  const resumePending = !!token && snap.status === "open" && !!pending;
 
-  /** Join now if signed in; otherwise remember the intent and return false so the caller opens sign-up. */
+  useEffect(() => {
+    if (token && snap.status === "joined" && pending) setPending(campaign, null);
+  }, [campaign, token, snap.status, pending]);
+
+  /** "auth" — open sign-up (the intent is remembered); "phone" — open the phone modal. */
   const requestJoin = useCallback(
-    (source: string): boolean => {
+    (source: string): "auth" | "phone" => {
       if (!token) {
         setPending(campaign, source);
-        return false;
+        return "auth";
       }
-      void join(campaign, token, source);
-      return true;
+      return "phone";
     },
     [campaign, token],
+  );
+
+  /** Join (or add a phone to an earlier join) with the number from the modal. */
+  const submitJoin = useCallback(
+    (source: string, phone: WishlistPhone) => {
+      if (!token) return Promise.resolve({ ok: false, error: "Please sign in first" });
+      return join(campaign, token, pending || source, phone);
+    },
+    [campaign, token, pending],
   );
 
   /** The sign-up sheet was dismissed without signing in. */
   const cancelPending = useCallback(() => setPending(campaign, null), [campaign]);
 
-  return { ...snap, requestJoin, cancelPending };
+  return { ...snap, resumePending, requestJoin, submitJoin, cancelPending };
 }
 
 /** Public "N people are waiting" count; null until loaded or on failure. */
