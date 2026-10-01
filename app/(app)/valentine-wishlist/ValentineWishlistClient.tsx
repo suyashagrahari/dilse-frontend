@@ -15,7 +15,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Bell, Check, Gift, Heart, Loader2, Lock, Sparkles, UserCheck } from "lucide-react";
+import { ArrowRight, Bell, Check, Gift, Heart, Loader2, Lock, UserCheck } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import CornerOrnaments from "@/app/(app)/components/home/CornerOrnaments";
@@ -23,7 +23,7 @@ import ValentinePass from "@/components/wishlist/ValentinePass";
 import { fetchWishlistCount, useWishlist } from "@/hooks/useWishlist";
 import { useAppSelector } from "@/store/hooks";
 import {
-  VALENTINE_CAMPAIGN, VALENTINE_DAYS, VALENTINE_DISCOUNT, daysUntilValentineWeek,
+  VALENTINE_CAMPAIGN, VALENTINE_DAYS, VALENTINE_DISCOUNT, VALENTINE_WEEK_START,
 } from "@/lib/wishlist/valentine";
 
 const HEARTS = Array.from({ length: 16 }, (_, i) => ({
@@ -73,12 +73,90 @@ function Motif({ light }: { light?: boolean }) {
   );
 }
 
+// ── The cute bits ──────────────────────────────────────────────────────────
+
+/** A blushing heart with a face. `side` decides which way it leans. */
+function CuteHeart({ side }: { side: "l" | "r" }) {
+  return (
+    <span className={`vwCute ${side}`} aria-hidden>
+      <svg viewBox="0 0 64 58" width="100%" height="100%">
+        <defs>
+          <linearGradient id={`vwch-${side}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor={side === "l" ? "#ff8fa8" : "#ffb38f"} />
+            <stop offset="1" stopColor={side === "l" ? "#e0345a" : "#e05a46"} />
+          </linearGradient>
+        </defs>
+        <path d="M32 56 C 10 40, 0 28, 0 16 C 0 6, 8 0, 17 0 C 24 0, 29 4, 32 9 C 35 4, 40 0, 47 0 C 56 0, 64 6, 64 16 C 64 28, 54 40, 32 56 Z" fill={`url(#vwch-${side})`} />
+        <ellipse cx="18" cy="13" rx="6" ry="3.5" fill="#fff" opacity=".45" transform="rotate(-25 18 13)" />
+        <g className="vwCuteEyes">
+          <circle cx="23" cy="25" r="3.2" fill="#3d0c11" />
+          <circle cx="41" cy="25" r="3.2" fill="#3d0c11" />
+          <circle cx="24.2" cy="23.8" r="1" fill="#fff" />
+          <circle cx="42.2" cy="23.8" r="1" fill="#fff" />
+        </g>
+        <ellipse cx="16" cy="32" rx="4.2" ry="2.6" fill="#ff5f84" opacity=".55" />
+        <ellipse cx="48" cy="32" rx="4.2" ry="2.6" fill="#ff5f84" opacity=".55" />
+        <path d="M28 31 Q 32 35.5 36 31" stroke="#3d0c11" strokeWidth="2" fill="none" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+}
+
+/** The envelope: the wax seal pops, the flap opens, the offer rises out. */
+function LoveLetter() {
+  return (
+    <span className="vwEnvBox">
+      <span className="vwEnvBack" />
+      <span className="vwLetter">
+        <span className="vwLetterFor">for you ♥</span>
+        <span className="vwLetterN">{VALENTINE_DISCOUNT}<small>%</small></span>
+        <span className="vwLetterOff">OFF</span>
+      </span>
+      <span className="vwEnvPocket" />
+      <span className="vwEnvFlap" />
+      <span className="vwWax">♥</span>
+    </span>
+  );
+}
+
+const SPARKS = [
+  { l: 6, t: 18, d: 0 }, { l: 92, t: 10, d: 0.8 }, { l: 14, t: 78, d: 1.6 }, { l: 86, t: 70, d: 0.4 }, { l: 50, t: -4, d: 1.2 },
+];
+
+const tickSubscribe = (cb: () => void) => { const id = setInterval(cb, 1000); return () => clearInterval(id); };
+const nowSec = () => Math.floor(Date.now() / 1000);
+
+/** Days · hours · minutes · seconds to Rose Day, ticking. Client-only. */
+function LoveCountdown() {
+  const now = useSyncExternalStore(tickSubscribe, nowSec, () => null);
+  const target = Math.floor(VALENTINE_WEEK_START.getTime() / 1000);
+  const left = now === null ? null : Math.max(0, target - now);
+  if (left === 0) return null;
+  const parts = left === null ? null : [
+    { v: Math.floor(left / 86400), l: "Days" },
+    { v: Math.floor((left % 86400) / 3600), l: "Hours" },
+    { v: Math.floor((left % 3600) / 60), l: "Mins" },
+    { v: left % 60, l: "Secs" },
+  ];
+  return (
+    <div className="vwCount" aria-label="Time until Rose Day">
+      <div className="vwCountRow">
+        {(parts ?? [{ v: 0, l: "Days" }, { v: 0, l: "Hours" }, { v: 0, l: "Mins" }, { v: 0, l: "Secs" }]).map((p, i) => (
+          <div key={p.l} className="vwTile" style={{ visibility: parts ? "visible" : "hidden" }}>
+            <b key={p.l === "Secs" ? p.v : undefined} className={i === 3 ? "tick" : undefined}>{String(p.v).padStart(2, "0")}</b>
+            <span>{p.l}</span>
+          </div>
+        ))}
+      </div>
+      <p className="vwCountCap">until Rose Day 🌹</p>
+    </div>
+  );
+}
+
 const BURST = Array.from({ length: 14 }, (_, i) => {
   const a = (i / 14) * Math.PI * 2;
   return { x: Math.cos(a) * (70 + (i % 3) * 22), y: Math.sin(a) * (54 + (i % 3) * 18) - 10, r: (i % 2 ? 1 : -1) * 25 };
 });
-
-const noopSubscribe = () => () => {};
 
 export default function ValentineWishlistClient() {
   const wl = useWishlist(VALENTINE_CAMPAIGN);
@@ -87,8 +165,6 @@ export default function ValentineWishlistClient() {
   const [showAuth, setShowAuth] = useState(false);
   const [burst, setBurst] = useState(0);
   const [count, setCount] = useState<number | null>(null);
-  // Days are a client-only number: the server would render yesterday's.
-  const days = useSyncExternalStore(noopSubscribe, daysUntilValentineWeek, () => null);
   const [prevStatus, setPrevStatus] = useState(wl.status);
 
   useEffect(() => {
@@ -150,11 +226,18 @@ export default function ValentineWishlistClient() {
 
         <div className="vwHeroIn">
           <motion.span className="vwKick" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <Sparkles size={12} aria-hidden /> Valentine&apos;s Week · 7–14 Feb 2027
+            <span className="vwBeat" aria-hidden>♥</span> Valentine&apos;s Week · 7–14 Feb 2027
           </motion.span>
 
           <motion.h1 className="vwTitle" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.05 }}>
-            Be the first to <em>fall in love</em> again.
+            Be the first to{" "}
+            <span className="vwLove">
+              <em>fall in love</em>
+              <svg className="vwScribble" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden>
+                <path d="M4 18 C 50 6, 100 26, 150 15 S 240 6, 270 16 C 280 19, 286 10, 280 7 C 274 4, 270 13, 278 19" />
+              </svg>
+            </span>{" "}
+            again.
           </motion.h1>
           <Motif light />
 
@@ -163,11 +246,14 @@ export default function ValentineWishlistClient() {
             Join the wishlist and your <b>{VALENTINE_DISCOUNT}% off</b> is saved to your account.
           </motion.p>
 
-          <motion.div className="vwSeal" initial={{ scale: 0.6, opacity: 0, rotate: -20 }} animate={{ scale: 1, opacity: 1, rotate: -8 }}
-            transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.25 }} aria-label={`${VALENTINE_DISCOUNT}% off for wishlist members`}>
-            <span className="vwSealRing" aria-hidden />
-            <span className="vwSealN">{VALENTINE_DISCOUNT}<small>%</small></span>
-            <span className="vwSealL">OFF</span>
+          <motion.div className="vwStage" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.2 }} aria-label={`${VALENTINE_DISCOUNT}% off for wishlist members`}>
+            {SPARKS.map((sp, i) => (
+              <span key={i} className="vwSpark" style={{ left: `${sp.l}%`, top: `${sp.t}%`, animationDelay: `${sp.d}s` }} aria-hidden>✦</span>
+            ))}
+            <CuteHeart side="l" />
+            <LoveLetter />
+            <CuteHeart side="r" />
           </motion.div>
 
           <motion.div className="vwCtaWrap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
@@ -210,15 +296,10 @@ export default function ValentineWishlistClient() {
             </p>
           </motion.div>
 
-          <div className="vwStats">
-            {days !== null && days > 0 && (
-              <div className="vwStat"><b>{days}</b><span>days to Rose Day</span></div>
-            )}
-            {count !== null && count >= 10 && (
-              <div className="vwStat"><b>{count.toLocaleString("en-IN")}</b><span>already waiting</span></div>
-            )}
-            <div className="vwStat"><b>8</b><span>days of love</span></div>
-          </div>
+          <LoveCountdown />
+          {count !== null && count >= 10 && (
+            <p className="vwWaiting"><Heart size={12} fill="currentColor" aria-hidden /> {count.toLocaleString("en-IN")} lovers already waiting</p>
+          )}
         </div>
       </section>
 
@@ -358,13 +439,66 @@ const VW_CSS = `
 .vwTitle em { color: #f6d58a; font-style: italic; }
 .vwSub { margin: 14px auto 0; max-width: 560px; color: rgba(255,236,232,.8); font: 400 14px/1.6 'Inter', system-ui, sans-serif; }
 .vwSub b { color: #fff; }
-.vwSeal { position: relative; margin: 18px 0 0; width: 96px; height: 96px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 35% 30%, #fff1c9, #f0cd7c 45%, #b8893a 100%); color: #3d0c11; box-shadow: 0 18px 40px -14px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.6); }
-.vwSealRing { position: absolute; inset: 7px; border-radius: 50%; border: 1.5px dashed rgba(61,12,17,.35); animation: vwSpin 18s linear infinite; }
-@keyframes vwSpin { to { transform: rotate(360deg); } }
-.vwSealN { font: 700 40px/1 'Playfair Display', serif; }
-.vwSealN small { font-size: 20px; }
-.vwSealL { font: 800 12px/1 'Inter', system-ui, sans-serif; letter-spacing: .3em; margin-top: 2px; padding-left: .3em; }
+/* kicker heartbeat */
+.vwBeat { display: inline-block; color: #ff8fa3; font-size: 12px; animation: vwBeatK 1.6s ease-in-out infinite; }
+@keyframes vwBeatK { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.35); } 28% { transform: scale(1); } 42% { transform: scale(1.2); } 56% { transform: scale(1); } }
+
+/* hand-drawn underline + heart loop under "fall in love" */
+.vwLove { position: relative; display: inline-block; white-space: nowrap; }
+.vwScribble { position: absolute; left: -2%; right: -6%; bottom: -10px; width: 108%; height: 18px; overflow: visible; pointer-events: none; }
+.vwScribble path { fill: none; stroke: #f6d58a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 420; stroke-dashoffset: 420; animation: vwDraw 1.4s .7s cubic-bezier(.65,0,.35,1) forwards; opacity: .9; }
+@keyframes vwDraw { to { stroke-dashoffset: 0; } }
+
+/* the stage: two cute hearts and the love letter */
+.vwStage { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 4px; margin: 26px 0 0; padding-top: 52px; }
+.vwSpark { position: absolute; color: #f6d58a; font-size: 13px; animation: vwTwinkle 2.4s ease-in-out infinite; text-shadow: 0 0 10px rgba(246,213,138,.8); }
+@keyframes vwTwinkle { 0%, 100% { opacity: .15; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(20deg); } }
+.vwCute { width: 52px; height: 47px; flex-shrink: 0; margin-bottom: 6px; filter: drop-shadow(0 8px 12px rgba(0,0,0,.35)); }
+.vwCute.l { animation: vwCuteL 3.2s ease-in-out infinite; }
+.vwCute.r { animation: vwCuteR 3.2s ease-in-out infinite; }
+@keyframes vwCuteL { 0%, 100% { transform: translateY(0) rotate(-14deg); } 50% { transform: translate(5px, -9px) rotate(-4deg); } }
+@keyframes vwCuteR { 0%, 100% { transform: translateY(-4px) rotate(14deg); } 50% { transform: translate(-5px, -12px) rotate(4deg); } }
+.vwCuteEyes { transform-box: fill-box; transform-origin: center; animation: vwBlink 4.2s infinite; }
+.vwCute.r .vwCuteEyes { animation-delay: .25s; }
+@keyframes vwBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+
+.vwEnvBox { position: relative; width: 150px; height: 98px; flex-shrink: 0; perspective: 700px; }
+.vwEnvBack { position: absolute; inset: 0; border-radius: 10px; background: linear-gradient(180deg, #e9bfa9, #dba78d); box-shadow: 0 18px 34px -14px rgba(0,0,0,.6); }
+.vwLetter { position: absolute; z-index: 1; left: 10px; right: 10px; bottom: 8px; height: 92px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: #7a1028; background: repeating-linear-gradient(180deg, #fffaf3 0 13px, #f6e9dc 13px 14px); box-shadow: 0 6px 14px -8px rgba(0,0,0,.4);
+  animation: vwLetterUp 1s 1.15s cubic-bezier(.22,1,.36,1) forwards, vwLetterBob 3.6s 2.4s ease-in-out infinite; }
+@keyframes vwLetterUp { to { transform: translateY(-50px); } }
+@keyframes vwLetterBob { 0%, 100% { transform: translateY(-50px); } 50% { transform: translateY(-56px) rotate(-1.5deg); } }
+.vwLetterFor { font: italic 500 12px/1 'Playfair Display', serif; color: #b3243f; }
+.vwLetterN { font: 700 34px/1 'Playfair Display', serif; }
+.vwLetterN small { font-size: 17px; }
+.vwLetterOff { font: 800 9.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .32em; padding-left: .32em; color: #3d0c11; }
+.vwEnvPocket { position: absolute; z-index: 2; inset: 0; border-radius: 10px; background: linear-gradient(160deg, #f8e4d6, #ecc6b0);
+  clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%); box-shadow: inset 0 -2px 0 rgba(122,16,40,.08); }
+.vwEnvFlap { position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: 60%; transform-origin: 50% 0;
+  background: linear-gradient(180deg, #e4b39a, #d49a7e); clip-path: polygon(0 0, 100% 0, 50% 100%); border-radius: 10px 10px 0 0;
+  animation: vwFlap .75s .6s cubic-bezier(.65,0,.35,1) forwards; }
+@keyframes vwFlap { 0% { transform: rotateX(0); z-index: 3; } 50% { z-index: 3; } 51% { z-index: 0; } 100% { transform: rotateX(180deg); z-index: 0; } }
+.vwWax { position: absolute; z-index: 4; left: 50%; top: 46%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; display: grid; place-items: center;
+  color: #ffe1e6; font-size: 15px; background: radial-gradient(circle at 35% 30%, #e0435f, #a3173a 70%); box-shadow: 0 3px 8px rgba(0,0,0,.35), inset 0 -2px 3px rgba(0,0,0,.2);
+  animation: vwWaxPop .45s .3s cubic-bezier(.5,0,.75,0) forwards; }
+@keyframes vwWaxPop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(0) rotate(40deg); opacity: 0; } }
+
+/* countdown tiles */
+.vwCount { margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,214,206,.18); width: min(100%, 420px); }
+.vwCountRow { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+.vwTile { position: relative; padding: 10px 4px 8px; border-radius: 14px; background: rgba(255,240,236,.08); border: 1px solid rgba(246,213,138,.25);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; overflow: hidden; }
+.vwTile::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,.18); }
+.vwTile b { font: 700 24px/1 'Playfair Display', serif; color: #fff4f1; font-variant-numeric: tabular-nums; }
+.vwTile b.tick { animation: vwTick .45s cubic-bezier(.22,1,.36,1); color: #f6d58a; }
+@keyframes vwTick { from { transform: translateY(-40%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.vwTile span { font: 700 9px/1 'Inter', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,236,232,.6); }
+.vwCountCap { margin: 10px 0 0; font: italic 500 14px/1 'Playfair Display', serif; color: #ffd4cb; }
+.vwWaiting { display: inline-flex; align-items: center; gap: 6px; margin: 14px 0 0; padding: 7px 13px; border-radius: 99px; background: rgba(255,240,236,.1);
+  color: #ffd4cb; font: 600 12px/1 'Inter', system-ui, sans-serif; }
+
 .vwCtaWrap { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .vwBtnHold { position: relative; display: flex; justify-content: center; width: 100%; }
 .vwBtn { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; min-width: min(100%, 320px); min-height: 56px; padding: 0 28px;
@@ -387,10 +521,6 @@ const VW_CSS = `
 .vwNote { display: block; text-align: center; text-wrap: balance; min-height: 18px; margin: 0; color: rgba(255,236,232,.7); font: 500 12.5px/1.4 'Inter', system-ui, sans-serif; }
 .vwNote svg { display: inline-block; vertical-align: -2px; margin-right: 5px; }
 .vwErr { color: #ffb4b4; }
-.vwStats { display: flex; justify-content: center; gap: 28px; margin-top: 30px; padding-top: 22px; border-top: 1px solid rgba(255,214,206,.18); width: min(100%, 460px); }
-.vwStat { display: flex; flex-direction: column; gap: 4px; }
-.vwStat b { font: 700 26px/1 'Playfair Display', serif; color: #fff4f1; }
-.vwStat span { font: 600 10.5px/1.2 'Inter', system-ui, sans-serif; color: rgba(255,236,232,.6); letter-spacing: .08em; text-transform: uppercase; }
 
 .vwBody { max-width: 980px; margin: 0 auto; padding: 0 16px; }
 .vwPassWrap { --vp-notch: #fff1ed; max-width: 520px; margin: -26px auto 0; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -427,6 +557,12 @@ const VW_CSS = `
 @media (min-width: 768px) { .vwHero { margin-top: 104px; } }
 @media (min-width: 640px) {
   .vwSub { font-size: 15px; }
+  .vwEnvBox { width: 180px; height: 116px; }
+  .vwLetter { height: 108px; }
+  .vwLetterN { font-size: 40px; }
+  .vwCute { width: 64px; height: 58px; }
+  .vwStage { gap: 14px; padding-top: 58px; }
+  .vwTile b { font-size: 30px; }
   .vwDays { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
   .vwPerks { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
 }
@@ -437,11 +573,9 @@ const VW_CSS = `
   .vwCorner { width: 150px; height: 150px; }
   .vwEnd .vwCorner { width: 80px; height: 80px; }
   .vwSub { font-size: 16.5px; }
-  .vwSeal { position: absolute; right: -150px; top: 30px; width: 140px; height: 140px; margin: 0; }
-  .vwSealN { font-size: 48px; }
-}
+    }
 @media (prefers-reduced-motion: reduce) {
-  .vwHeart, .vwSealRing, .vwBtn::after, .vwCorner, .vwFrame, .vwMotif img, .vwPetal { animation: none !important; }
+  .vwHeart, .vwBtn::after, .vwCute, .vwCuteEyes, .vwSpark, .vwBeat, .vwLetter, .vwEnvFlap, .vwWax, .vwScribble path, .vwTile b.tick, .vwCorner, .vwFrame, .vwMotif img, .vwPetal { animation: none !important; }
   .vwCorner { opacity: .7; }
   .vwDay { transition: none; }
 }
