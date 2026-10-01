@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, Heart, Mail, Sparkles, UserPlus, Users } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import { COUNTRIES, flagOf } from "@/lib/wishlist/countries";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Panel, SearchBox, Tag, fmtNum, rise } from "../adminKit";
@@ -26,6 +27,8 @@ interface Row {
   position: number;
   joinedAt: string;
   source: string | null;
+  phone: string | null;
+  phoneCountry: string | null;
   discountPercent: number;
   name: string;
   email: string;
@@ -46,7 +49,7 @@ interface Resp {
   campaign: string;
   campaigns: { key: string; label: string; discountPercent: number }[];
   stats: {
-    total: number; today: number; last7: number; google: number; verified: number;
+    total: number; today: number; last7: number; google: number; verified: number; withPhone: number;
     creators: number; paid: number; newSignups: number; sources: { source: string; n: number }[];
   };
   rows: Row[];
@@ -69,6 +72,14 @@ function when(iso: string): string {
   if (d < DAY) return `${Math.floor(d / 3_600_000)}h ago`;
   if (d < 7 * DAY) return `${Math.floor(d / DAY)}d ago`;
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** "+919876543210" → "+91 98765 43210" (longest matching dial code wins). */
+function prettyPhone(e164: string) {
+  const dial = COUNTRIES.map((c) => c.dial).filter((d) => e164.startsWith(d)).sort((a, b) => b.length - a.length)[0];
+  if (!dial) return e164;
+  const n = e164.slice(dial.length);
+  return `${dial} ${n.length === 10 ? `${n.slice(0, 5)} ${n.slice(5)}` : n}`;
 }
 
 function initials(name: string, email: string) {
@@ -154,6 +165,7 @@ export default function AdminWishlistPage() {
           <span className="wl-src">Google sign-in <b>{fmtNum(st.google)}</b></span>
           <span className="wl-src">Email sign-in <b>{fmtNum(st.total - st.google)}</b></span>
           <span className="wl-src">Verified <b>{fmtNum(st.verified)}</b></span>
+          <span className="wl-src">📱 Phone given <b>{fmtNum(st.withPhone)}</b></span>
           {st.sources.map((s) => (
             <span key={s.source} className="wl-src">
               <Sparkles size={11} /> {SOURCE_LABEL[s.source] ?? s.source} <b>{fmtNum(s.n)}</b>
@@ -164,7 +176,7 @@ export default function AdminWishlistPage() {
 
       <Panel title="People" icon={<Users size={15} color={A.goldDeep} />} note={data ? `${fmtNum(data.total)} shown` : undefined}>
         <div className="wl-controls">
-          <SearchBox value={qInput} onChange={setQInput} placeholder="Search name or email…" />
+          <SearchBox value={qInput} onChange={setQInput} placeholder="Search name, email or phone…" />
           <ChipGroup id="wl-kind" value={kind} onChange={(v) => { setKind(v); setPage(1); }} options={[
             { value: "any", label: "Everyone" },
             { value: "new", label: <><UserPlus size={12} /> New sign-ups</> },
@@ -204,6 +216,11 @@ export default function AdminWishlistPage() {
                     {r.deleted && <Tag tone={A.danger}>deleted</Tag>}
                   </div>
                   <div className="wl-mailtxt">{r.email}</div>
+                  {r.phone ? (
+                    <a className="wl-phone" href={`tel:${r.phone}`}>
+                      {r.phoneCountry ? flagOf(r.phoneCountry) : "📱"} {prettyPhone(r.phone)}
+                    </a>
+                  ) : <span className="wl-nophone">No phone</span>}
                   <div className="wl-tags">
                     <Tag tone={r.provider === "google" ? "#1a73e8" : A.goldDeep}>{r.provider === "google" ? "Google" : "Email"}</Tag>
                     {r.verified ? <Tag tone={A.ok}>Verified</Tag> : <Tag tone={A.warn}>Unverified</Tag>}
@@ -261,6 +278,9 @@ const WL_CSS = `
 .wl-who { min-width: 0; }
 .wl-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: ${A.ink}; font: 700 14px/1.2 'Inter', system-ui, sans-serif; }
 .wl-mailtxt { margin-top: 2px; color: ${A.soft}; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-phone { display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; color: #7a1028; font: 700 12.5px/1.2 'Inter', system-ui, sans-serif; text-decoration: none; }
+.wl-phone:hover { text-decoration: underline; }
+.wl-nophone { display: inline-block; margin-top: 3px; color: ${A.muted}; font-size: 11.5px; }
 .wl-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
 .wl-when { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
 .wl-when b { color: ${A.ink}; font-size: 12.5px; }

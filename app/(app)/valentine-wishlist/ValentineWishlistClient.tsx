@@ -12,7 +12,7 @@
 // Motion is transform/opacity only; reduced motion turns the drifting hearts
 // and the burst off.
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Bell, Check, Gift, Heart, Loader2, Lock, UserCheck } from "lucide-react";
@@ -20,8 +20,9 @@ import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import CornerOrnaments from "@/app/(app)/components/home/CornerOrnaments";
 import ValentinePass from "@/components/wishlist/ValentinePass";
+import PhoneJoinModal from "@/components/wishlist/PhoneJoinModal";
 import CardCorners from "@/components/wishlist/CardCorners";
-import { fetchWishlistCount, useWishlist } from "@/hooks/useWishlist";
+import { fetchWishlistCount, useWishlist, type WishlistPhone } from "@/hooks/useWishlist";
 import { useAppSelector } from "@/store/hooks";
 import {
   VALENTINE_CAMPAIGN, VALENTINE_DAYS, VALENTINE_DISCOUNT, VALENTINE_WEEK_START,
@@ -164,6 +165,8 @@ export default function ValentineWishlistClient() {
   const user = useAppSelector((s) => s.auth.user);
   const reduce = useReducedMotion();
   const [showAuth, setShowAuth] = useState(false);
+  /** The phone step: "join" from the button, "add" for an earlier join without a number. */
+  const [phoneMode, setPhoneMode] = useState<"join" | "add" | null>(null);
   const [burst, setBurst] = useState(0);
   const [count, setCount] = useState<number | null>(null);
   const [prevStatus, setPrevStatus] = useState(wl.status);
@@ -186,7 +189,17 @@ export default function ValentineWishlistClient() {
 
   const onJoin = () => {
     if (wl.status === "joined" || wl.joining) return;
-    if (!wl.requestJoin("wishlist-page")) setShowAuth(true);
+    if (wl.requestJoin("wishlist-page") === "auth") setShowAuth(true);
+    else setPhoneMode("join");
+  };
+
+  // Opens by itself right after a sign-up that started from "Join".
+  const phoneOpen = !showAuth && (phoneMode === "add" ? true : (phoneMode === "join" || wl.resumePending) && wl.status === "open");
+  const closePhone = useCallback(() => { setPhoneMode(null); wl.cancelPending(); }, [wl]);
+  const submitPhone = async (phone: WishlistPhone) => {
+    const r = await wl.submitJoin("wishlist-page", phone);
+    if (r.ok) setPhoneMode(null);
+    return r;
   };
 
   const cta = useMemo(() => {
@@ -291,7 +304,7 @@ export default function ValentineWishlistClient() {
               {wl.error ? <span className="vwErr">{wl.error} — please try again.</span>
                 : joined ? <>We&apos;ll tell you the moment the collection is live.</>
                 : wl.status === "signed-out" ? <><Lock size={12} aria-hidden /> 10 seconds · your offer is saved to your account</>
-                : <><UserCheck size={12} aria-hidden /> Signed in{user?.name ? ` as ${user.name.split(" ")[0]}` : ""} — one tap and you&apos;re in.</>}
+                : <><UserCheck size={12} aria-hidden /> Signed in{user?.name ? ` as ${user.name.split(" ")[0]}` : ""} — just add your phone and you&apos;re in.</>}
             </p>
           </motion.div>
 
@@ -309,6 +322,9 @@ export default function ValentineWishlistClient() {
             <motion.div className="vwPassWrap" initial={{ opacity: 0, y: 24, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 22, delay: burst ? 0.35 : 0 }}>
               <ValentinePass entry={wl.entry} name={user?.name} />
+              {wl.entry.hasPhone === false && (
+                <button type="button" className="vwAddPhone" onClick={() => setPhoneMode("add")}>📱 Add your phone number</button>
+              )}
               <Link href="/profile" className="vwPassLink">Saved in your profile <ArrowRight size={13} aria-hidden /></Link>
             </motion.div>
           )}
@@ -376,6 +392,14 @@ export default function ValentineWishlistClient() {
           />
         )}
       </AnimatePresence>
+
+      <PhoneJoinModal
+        open={phoneOpen}
+        mode={phoneMode === "add" ? "add" : "join"}
+        name={user?.name}
+        onClose={closePhone}
+        onSubmit={submitPhone}
+      />
 
       <style>{VW_CSS}</style>
     </div>
@@ -521,6 +545,8 @@ const VW_CSS = `
 
 .vwBody { max-width: 980px; margin: 0 auto; padding: 0 16px; }
 .vwPassWrap { --vp-notch: #fff1ed; max-width: 520px; margin: -26px auto 0; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.vwAddPhone { border: none; cursor: pointer; padding: 9px 16px; border-radius: 99px; color: #fff4f1; background: linear-gradient(135deg, #d13a59, #8a1430);
+  font: 700 12.5px/1 'Inter', system-ui, sans-serif; box-shadow: 0 10px 20px -12px rgba(138,20,48,.8); }
 .vwPassLink { display: inline-flex; align-items: center; gap: 5px; color: #7a1028; font: 700 12.5px/1 'Inter', system-ui, sans-serif; text-decoration: none; }
 .vwSec { margin-top: 52px; text-align: center; }
 .vwSecKick { margin: 0; color: #b3243f; font: 800 10.5px/1 'Inter', system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; }
