@@ -22,7 +22,6 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
-import CardCorners from "@/components/wishlist/CardCorners";
 
 /** The Premium room's palette: near-black aubergine with champagne gold. */
 export const LUX = {
@@ -278,7 +277,6 @@ export function PremiumTeaser({ items, count, onExplore }: { items: TemplateList
   return (
     <section className="pxTz" aria-label="The Premium Collection">
       <span className="pxTzSheen" aria-hidden />
-      <CardCorners tone="gold" className="txCorners" />
       <div className="pxTzBody">
         <span className="pxTzBadge"><Crown size={13} aria-hidden /> The Premium Collection</span>
         <h2 className="pxTzTitle">{count} real apps, <em>cloned to the pixel.</em></h2>
