@@ -8,7 +8,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
-import CardCorners from "@/components/wishlist/CardCorners";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
 
 const FLOAT = [
@@ -22,7 +21,6 @@ export default function ValentineTeaser() {
   return (
     <section className="vtz" aria-label="Valentine's week wishlist">
       <span className="vtzSheen" aria-hidden />
-      <CardCorners tone="gold" className="txCorners" />
       <Link href={VALENTINE_PATH} className="vtzLink" aria-label={joined ? "You're on the Valentine's week wishlist" : `Join the Valentine's week wishlist and get ${VALENTINE_DISCOUNT}% off`}>
         <div className="vtzBody">
           <span className="vtzBadge"><Heart size={12} fill="currentColor" aria-hidden /> Valentine&apos;s Week · Wishlist</span>
@@ -72,11 +70,6 @@ export const VALENTINE_TEASER_CSS = `
   .txDuo .pxTzCard { width: 40%; }
   .txDuo .pxTzCard.c0 { left: 0; } .txDuo .pxTzCard.c1 { left: 30%; } .txDuo .pxTzCard.c2 { right: 0; }
 }
-
-/* alekhan corners on both cards above the grid */
-.txCorners { --cc-size: 30px; --cc-op: .6; }
-@media (min-width: 768px) { .txCorners { --cc-size: 64px; --cc-op: .55; } }
-@media (min-width: 1024px) { .txCorners { --cc-size: 58px; } }
 
 /* ── the Valentine card ─────────────────────────────────────────────────── */
 .vtz { position: relative; isolation: isolate; overflow: hidden; border-radius: 26px;
