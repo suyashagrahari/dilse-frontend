@@ -8,12 +8,14 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import type { WishlistEntry } from "@/hooks/useWishlist";
 import { VALENTINE_PATH } from "@/lib/wishlist/valentine";
+import CardCorners from "@/components/wishlist/CardCorners";
 
 export default function ValentinePass({ entry, name, compact, link }: { entry: WishlistEntry; name?: string; compact?: boolean; link?: boolean }) {
   const joined = new Date(entry.joinedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   const body = (
     <>
       <span className="vpShine" aria-hidden />
+      <CardCorners tone="gold" size={compact ? 30 : 38} opacity={0.6} />
       <div className="vpMain">
         <span className="vpKick"><Heart size={11} fill="currentColor" aria-hidden /> Valentine&apos;s Week 2027</span>
         <strong className="vpTitle">{name ? <>{name.split(" ")[0]}, you&apos;re <em>on the list.</em></> : <>You&apos;re <em>on the list.</em></>}</strong>
@@ -38,7 +40,8 @@ const VP_CSS = `
 .vpShine::before { content: ""; position: absolute; top: -40%; bottom: -40%; width: 30%; left: -45%; transform: skewX(-18deg);
   background: linear-gradient(90deg, transparent, rgba(255,226,220,.22), transparent); animation: vpSweep 5.5s ease-in-out infinite; }
 @keyframes vpSweep { 0%, 50% { left: -45%; } 85%, 100% { left: 135%; } }
-.vpMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 18px 18px 18px 20px; }
+.vpMain, .vpStub { z-index: 1; }
+.vpMain { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 18px 18px 18px 20px; }
 .vpKick { display: inline-flex; align-items: center; gap: 6px; color: #ffc9c0; font: 800 10px/1 'Inter', system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
 .vpTitle { font: 600 22px/1.12 'Playfair Display', serif; color: #fff4f1; }
 .vpTitle em { color: #f6d58a; font-style: italic; }
