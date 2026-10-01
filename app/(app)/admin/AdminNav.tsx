@@ -37,11 +37,18 @@ const ITEMS = [
   { href: "/admin/early-access", label: "Early access", Icon: KeyRound, superOnly: true },
 ];
 
-export default function AdminNav() {
-  const pathname = usePathname() || "";
+export type AdminTab = (typeof ITEMS)[number];
+
+/** The sections this admin can see, in navbar order — the swipe order too. */
+export function useAdminTabs(): AdminTab[] {
   const { user } = useAppSelector((s) => s.auth);
   const sup = isSuperAdmin(user?.role);
-  const items = ITEMS.filter((i) => !i.superOnly || sup);
+  return ITEMS.filter((i) => !i.superOnly || sup);
+}
+
+export default function AdminNav() {
+  const pathname = usePathname() || "";
+  const items = useAdminTabs();
   const rowRef = useRef<HTMLDivElement>(null);
 
   // Keep the active tab visible when the row is scrolled on a phone.
