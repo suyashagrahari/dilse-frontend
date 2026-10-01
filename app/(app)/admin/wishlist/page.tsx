@@ -15,12 +15,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, Heart, Mail, Sparkles, UserPlus, Users } from "lucide-react";
+import {
+  BadgeCheck, ChevronLeft, ChevronRight, Clock3, Gem, Heart, LayoutTemplate, Mail, Phone, PhoneOff, Sparkles, Star, UserPlus, Users,
+} from "lucide-react";
+import { ROLE_META, RoleIcon, ProviderIcon } from "../adminIcons";
 import { useAppSelector } from "@/store/hooks";
 import { COUNTRIES, flagOf } from "@/lib/wishlist/countries";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
-import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Panel, SearchBox, Tag, fmtNum, rise } from "../adminKit";
+import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Panel, SearchBox, fmtNum, rise } from "../adminKit";
 
 interface Row {
   userId: string;
@@ -198,49 +201,70 @@ export default function AdminWishlistPage() {
           <EmptyState icon={<Heart size={22} />} title={q || kind !== "any" || provider !== "any" ? "Nobody matches" : "No one has joined yet"}
             note={q || kind !== "any" || provider !== "any" ? "Try clearing a filter." : "Joins appear here the moment they happen."} />
         ) : (
-          <div className="wl-list" style={{ opacity: loading ? 0.6 : 1 }}>
-            {data.rows.map((r, i) => (
-              <motion.div key={r.userId} className="wl-row" {...rise(i)}>
-                <span className="wl-pos">#{r.position}</span>
-                <span className="wl-av">
-                  {r.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.avatar} alt="" referrerPolicy="no-referrer" />
-                  ) : initials(r.name, r.email)}
-                </span>
-                <div className="wl-who">
-                  <div className="wl-name">
-                    {r.name || "—"}
-                    {r.role !== "normal" && <Tag tone={A.info}>{r.role === "superadmin" ? "Super admin" : r.role === "admin" ? "Admin" : r.role === "member" ? "Member" : r.role}</Tag>}
-                    {r.status !== "active" && <Tag tone={A.danger}>{r.status}</Tag>}
-                    {r.deleted && <Tag tone={A.danger}>deleted</Tag>}
+          <div className="wl-grid" style={{ opacity: loading ? 0.6 : 1 }}>
+            {data.rows.map((r, i) => {
+              const rm = ROLE_META[r.role] || ROLE_META.normal;
+              const fresh = !!r.accountCreatedAt && new Date(r.joinedAt).getTime() - new Date(r.accountCreatedAt).getTime() < DAY;
+              const open = () => { if (!r.deleted) router.push(`/admin/users/${r.userId}`); };
+              return (
+                <motion.div key={r.userId} className="wlc" {...rise(i)} role="link" tabIndex={r.deleted ? -1 : 0}
+                  aria-label={`Open ${r.name || r.email}'s profile`} onClick={open}
+                  onKeyDown={(e) => { if (e.key === "Enter") open(); }} data-off={r.deleted ? "1" : "0"}>
+                  <span className="wlc-bar" aria-hidden />
+                  <div className="wlc-top">
+                    <div className="wlc-av">
+                      {r.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.avatar} alt="" referrerPolicy="no-referrer" />
+                      ) : <span>{initials(r.name, r.email)}</span>}
+                      <span className="wlc-prov" title={r.provider === "google" ? "Signed in with Google" : "Signed in with email"}>
+                        <ProviderIcon provider={r.provider} size={10} />
+                      </span>
+                    </div>
+                    <div className="wlc-who">
+                      <div className="wlc-name">
+                        <span className="wlc-role" title={rm.label} style={{ background: `${rm.color}16` }}><RoleIcon role={r.role} size={11} /></span>
+                        <b>{r.name || "—"}</b>
+                        {r.verified
+                          ? <span className="wlc-ic ok" title="Email verified"><BadgeCheck size={13} /></span>
+                          : <span className="wlc-dot" title="Email not verified" />}
+                        {r.status !== "active" && <span className="wlc-pill bad" title={`Account ${r.status}`}>{r.status}</span>}
+                        {r.deleted && <span className="wlc-pill bad">deleted</span>}
+                      </div>
+                      <div className="wlc-mail">{r.email}</div>
+                    </div>
+                    <div className="wlc-pos" title={`#${r.position} in line · ${r.discountPercent}% off reserved`}>
+                      <Heart size={10} fill="currentColor" />
+                      <b>#{r.position}</b>
+                      <span>{r.discountPercent}% off</span>
+                    </div>
                   </div>
-                  <div className="wl-mailtxt">{r.email}</div>
-                  {r.phone ? (
-                    <a className="wl-phone" href={`tel:${r.phone}`}>
-                      {r.phoneCountry ? flagOf(r.phoneCountry) : "📱"} {prettyPhone(r.phone)}
-                    </a>
-                  ) : <span className="wl-nophone">No phone</span>}
-                  <div className="wl-tags">
-                    <Tag tone={r.provider === "google" ? "#1a73e8" : A.goldDeep}>{r.provider === "google" ? "Google" : "Email"}</Tag>
-                    {r.verified ? <Tag tone={A.ok}>Verified</Tag> : <Tag tone={A.warn}>Unverified</Tag>}
-                    {r.accountCreatedAt && new Date(r.joinedAt).getTime() - new Date(r.accountCreatedAt).getTime() < DAY && <Tag tone="#b3243f">New sign-up</Tag>}
-                    {r.pages > 0 ? <Tag>{r.pages} page{r.pages === 1 ? "" : "s"} · {r.published} live</Tag> : <Tag tone={A.muted}>No pages yet</Tag>}
-                    {r.paidOrders > 0 && <Tag tone={A.info}>💎 {r.paidOrders} paid</Tag>}
-                    {r.feedbackCount > 0 && <Tag tone={A.warn}>★ {r.feedbackCount} rating{r.feedbackCount === 1 ? "" : "s"}</Tag>}
+
+                  <div className="wlc-phone">
+                    {r.phone ? (
+                      <a href={`tel:${r.phone}`} onClick={(e) => e.stopPropagation()} title="Call">
+                        <span className="wlc-flag">{r.phoneCountry ? flagOf(r.phoneCountry) : "📱"}</span>
+                        {prettyPhone(r.phone)}
+                        <Phone size={11} />
+                      </a>
+                    ) : <span className="wlc-nophone"><PhoneOff size={11} /> No phone yet</span>}
                   </div>
-                </div>
-                <div className="wl-when">
-                  <b>{when(r.joinedAt)}</b>
-                  <span>{SOURCE_LABEL[r.source ?? "unknown"] ?? r.source}</span>
-                </div>
-                {!r.deleted && (
-                  <Link href={`/admin/users/${r.userId}`} className="wl-open" aria-label={`Open ${r.name || r.email}'s profile`}>
-                    Profile <ExternalLink size={12} />
-                  </Link>
-                )}
-              </motion.div>
-            ))}
+
+                  <div className="wlc-foot">
+                    <span title={`Joined the wishlist ${new Date(r.joinedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`}>
+                      <Clock3 size={11} /> {when(r.joinedAt)}
+                    </span>
+                    <span title={r.pages ? `${r.pages} page${r.pages === 1 ? "" : "s"}, ${r.published} live` : "No pages yet"} data-dim={r.pages ? "0" : "1"}>
+                      <LayoutTemplate size={11} /> {r.pages ? <>{r.pages}<i> · {r.published} live</i></> : "No pages"}
+                    </span>
+                    {r.paidOrders > 0 && <span className="paid" title={`${r.paidOrders} paid order${r.paidOrders === 1 ? "" : "s"}`}><Gem size={11} /> {r.paidOrders}</span>}
+                    {r.feedbackCount > 0 && <span className="star" title={`${r.feedbackCount} rating${r.feedbackCount === 1 ? "" : "s"}`}><Star size={11} fill="#e0a526" color="#e0a526" /> {r.feedbackCount}</span>}
+                    {fresh && <span className="new" title="Signed up the day they joined"><UserPlus size={11} /> new</span>}
+                    {!r.deleted && <ChevronRight size={14} className="wlc-go" />}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
 
@@ -268,35 +292,52 @@ const WL_CSS = `
 .wl-controls > .adk-chips { max-width: 100%; }
 .wl-controls .adk-search input { font-size: 16px; }
 .wl-err { margin-bottom: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(179,38,30,.08); color: ${A.danger}; font-size: 12.5px; }
-.wl-list { display: flex; flex-direction: column; gap: 8px; transition: opacity .2s ease; }
-.wl-row { display: grid; grid-template-columns: auto auto minmax(0,1fr) auto auto; align-items: center; gap: 12px; padding: 12px 14px;
-  border-radius: 16px; background: ${A.paper}; border: 1px solid ${A.edge}; }
-.wl-pos { font: 700 13px/1 'Playfair Display', serif; color: #b3243f; min-width: 34px; }
-.wl-av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; flex-shrink: 0;
-  background: linear-gradient(140deg, #d13a59, #7a1028); color: #fff4f1; font: 700 13px/1 'Inter', system-ui, sans-serif; }
-.wl-av img { width: 100%; height: 100%; object-fit: cover; }
-.wl-who { min-width: 0; }
-.wl-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: ${A.ink}; font: 700 14px/1.2 'Inter', system-ui, sans-serif; }
-.wl-mailtxt { margin-top: 2px; color: ${A.soft}; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wl-phone { display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; color: #7a1028; font: 700 12.5px/1.2 'Inter', system-ui, sans-serif; text-decoration: none; }
-.wl-phone:hover { text-decoration: underline; }
-.wl-nophone { display: inline-block; margin-top: 3px; color: ${A.muted}; font-size: 11.5px; }
-.wl-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.wl-when { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
-.wl-when b { color: ${A.ink}; font-size: 12.5px; }
-.wl-when span { color: ${A.muted}; font-size: 11px; }
-.wl-open { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: 99px; text-decoration: none;
-  border: 1px solid rgba(61,12,17,.16); color: ${A.maroon}; font: 700 12px/1 'Inter', system-ui, sans-serif; }
-.wl-open:hover { background: rgba(61,12,17,.05); }
+.wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); gap: 9px; transition: opacity .2s ease; }
+.wlc { position: relative; overflow: hidden; padding: 11px 12px 9px 14px; border-radius: 16px; cursor: pointer; text-align: left;
+  background: ${A.paper}; border: 1px solid ${A.edge}; box-shadow: 0 6px 18px -14px rgba(61,12,17,.45);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.wlc[data-off="1"] { cursor: default; opacity: .7; }
+.wlc:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -18px rgba(122,16,40,.55); border-color: rgba(179,36,63,.22); }
+.wlc:active { transform: scale(.99); }
+.wlc:focus-visible { outline: 2px solid #b3243f; outline-offset: 2px; }
+.wlc-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #e0435f, #8a1430); }
+.wlc-top { display: flex; align-items: center; gap: 10px; }
+.wlc-av { position: relative; flex: none; width: 40px; height: 40px; }
+.wlc-av img, .wlc-av > span:first-child { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; object-fit: cover;
+  background: linear-gradient(135deg, #d13a59, #7a1028); color: #fff; font: 800 14px/1 'Inter', system-ui, sans-serif; }
+.wlc-prov { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; background: #fff; display: grid; place-items: center;
+  box-shadow: 0 1px 4px rgba(61,12,17,.25); }
+.wlc-who { flex: 1; min-width: 0; }
+.wlc-name { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.wlc-name b { font: 800 13.5px/1.2 'Inter', system-ui, sans-serif; color: ${A.ink}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wlc-role { flex: none; width: 18px; height: 18px; border-radius: 6px; display: grid; place-items: center; }
+.wlc-ic.ok { flex: none; color: ${A.ok}; display: inline-flex; }
+.wlc-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: #d97706; }
+.wlc-pill { flex: none; padding: 2px 6px; border-radius: 99px; font: 800 9px/1.2 'Inter', system-ui, sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+.wlc-pill.bad { color: ${A.danger}; background: rgba(179,38,30,.1); }
+.wlc-mail { margin-top: 1px; color: ${A.muted}; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wlc-pos { flex: none; min-width: 48px; padding: 5px 7px 4px; border-radius: 11px; text-align: center; color: #b3243f;
+  background: linear-gradient(160deg, #fff1ee, #ffe2dc); border: 1px solid rgba(179,36,63,.2); display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.wlc-pos b { font: 700 14px/1 'Playfair Display', serif; color: #7a1028; }
+.wlc-pos span { font: 800 8px/1 'Inter', system-ui, sans-serif; letter-spacing: .04em; color: #b3243f; white-space: nowrap; }
+.wlc-phone { margin: 8px 0 0 50px; min-height: 18px; }
+.wlc-phone a { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 99px; text-decoration: none;
+  color: #7a1028; background: rgba(179,36,63,.06); border: 1px solid rgba(179,36,63,.14); font: 700 12px/1.3 'Inter', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.wlc-phone a:hover { background: rgba(179,36,63,.12); }
+.wlc-phone a svg { opacity: .7; }
+.wlc-flag { font-size: 13px; line-height: 1; }
+.wlc-nophone { display: inline-flex; align-items: center; gap: 5px; color: ${A.muted}; font: 600 11px/1.3 'Inter', system-ui, sans-serif; }
+.wlc-foot { display: flex; align-items: center; gap: 4px 11px; flex-wrap: wrap; margin-top: 8px; padding-top: 7px; border-top: 1px dashed ${A.edge};
+  color: ${A.soft}; font: 600 10.5px/1.2 'Inter', system-ui, sans-serif; }
+.wlc-foot > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.wlc-foot > span svg { color: ${A.goldDeep}; }
+.wlc-foot > span[data-dim="1"] { color: ${A.muted}; }
+.wlc-foot i { font-style: normal; color: ${A.muted}; font-weight: 500; }
+.wlc-foot .paid { color: ${A.info}; } .wlc-foot .paid svg { color: ${A.info}; }
+.wlc-foot .star { color: #b7791f; }
+.wlc-foot .new { color: #b3243f; } .wlc-foot .new svg { color: #b3243f; }
+.wlc-go { margin-left: auto; color: ${A.muted}; }
 .wl-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; color: ${A.soft}; font-size: 12.5px; }
 .wl-pager button { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid ${A.edge}; background: ${A.paper}; cursor: pointer; }
 .wl-pager button:disabled { opacity: .4; cursor: default; }
-@media (max-width: 720px) {
-  .wl-row { grid-template-columns: auto minmax(0,1fr) auto; grid-template-areas: "av who open" "av when when"; row-gap: 6px; }
-  .wl-pos { display: none; }
-  .wl-av { grid-area: av; align-self: start; }
-  .wl-who { grid-area: who; }
-  .wl-open { grid-area: open; align-self: start; }
-  .wl-when { grid-area: when; flex-direction: row; justify-content: flex-start; gap: 8px; align-items: center; }
-}
 `;
