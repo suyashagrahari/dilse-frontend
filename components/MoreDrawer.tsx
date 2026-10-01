@@ -35,6 +35,7 @@ import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
   Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus, Megaphone,
+  HeartHandshake,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
@@ -226,6 +227,7 @@ export default function MoreDrawer({
               { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },
               // Mails a chosen slice of every verified user, so super admin only.
               { label: "Outreach", icon: <Megaphone size={17} />, href: "/admin/outreach" },
+              { label: "Wishlist", icon: <HeartHandshake size={17} />, href: "/admin/wishlist" },
             ]
           : []),
         { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },

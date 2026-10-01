@@ -1238,3 +1238,18 @@ body {
 .cv-card {
   content-visibility: auto;
 }
+
+/* ── Alekhan card corners — components/wishlist/CardCorners.tsx ─────────── */
+.cc { position: absolute; inset: 0; pointer-events: none; z-index: 0; border-radius: inherit; overflow: hidden; }
+.cc-c { position: absolute; width: var(--cc-size, 44px); height: var(--cc-size, 44px); opacity: var(--cc-op, .7); }
+.cc-c img { display: block; width: 100%; height: 100%; }
+.cc-tl { top: 3px; left: 3px; transform-origin: 0 0; }
+.cc-tr { top: 3px; right: 3px; transform-origin: 100% 0; }
+.cc-bl { bottom: 3px; left: 3px; transform-origin: 0 100%; }
+.cc-br { bottom: 3px; right: 3px; transform-origin: 100% 100%; }
+.cc-gold img { filter: brightness(0) saturate(100%) invert(84%) sepia(38%) saturate(640%) hue-rotate(350deg) brightness(101%) contrast(92%); }
+.cc-maroon img { filter: brightness(0) saturate(100%) invert(14%) sepia(66%) saturate(3600%) hue-rotate(332deg) brightness(88%) contrast(105%); }
+.cc-rose img { filter: brightness(0) saturate(100%) invert(78%) sepia(23%) saturate(900%) hue-rotate(305deg) brightness(102%) contrast(96%); }
+.cc-breathe .cc-c { animation: ccBreathe 5s ease-in-out infinite; }
+@keyframes ccBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+@media (prefers-reduced-motion: reduce) { .cc-breathe .cc-c { animation: none; } }
