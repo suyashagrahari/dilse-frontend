@@ -22,6 +22,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import type { TemplateListItem } from "@/types/template-config";
 import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
+import CardCorners from "@/components/wishlist/CardCorners";
 
 /** The Premium room's palette: near-black aubergine with champagne gold. */
 export const LUX = {
@@ -277,6 +278,7 @@ export function PremiumTeaser({ items, count, onExplore }: { items: TemplateList
   return (
     <section className="pxTz" aria-label="The Premium Collection">
       <span className="pxTzSheen" aria-hidden />
+      <CardCorners tone="gold" className="txCorners" />
       <div className="pxTzBody">
         <span className="pxTzBadge"><Crown size={13} aria-hidden /> The Premium Collection</span>
         <h2 className="pxTzTitle">{count} real apps, <em>cloned to the pixel.</em></h2>
@@ -324,6 +326,8 @@ export const PREMIUM_TAB_CSS = `
 .pxTzSheen::before { content: ""; position: absolute; top: -30%; bottom: -30%; width: 28%; left: -40%; transform: skewX(-18deg);
   background: linear-gradient(90deg, transparent, rgba(255,232,170,.13), transparent); animation: pxTzSweep 6s ease-in-out infinite; }
 @keyframes pxTzSweep { 0%, 55% { left: -40%; } 90%, 100% { left: 130%; } }
+.pxTzBody, .pxTzMini { position: relative; z-index: 1; }
+.pxTzFan { z-index: 1; }
 .pxTzBody { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
 .pxTzBadge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 99px; color: #2a1906;
   background: linear-gradient(135deg, #fbecc0, #e6c77e 55%, #b8893a); font: 800 10px/1 'Inter', system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }

@@ -20,6 +20,7 @@ import AuthModal from "@/components/AuthModal";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import CornerOrnaments from "@/app/(app)/components/home/CornerOrnaments";
 import ValentinePass from "@/components/wishlist/ValentinePass";
+import CardCorners from "@/components/wishlist/CardCorners";
 import { fetchWishlistCount, useWishlist } from "@/hooks/useWishlist";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -325,8 +326,7 @@ export default function ValentineWishlistClient() {
               <motion.li key={d.date} className={`vwDay${d.date === 14 ? " is-big" : ""}`}
                 initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.45, delay: (i % 4) * 0.06 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="vwDayOrn" src={ALEKHAN} alt="" aria-hidden />
+                <CardCorners size={30} tone={d.date === 14 ? "gold" : "maroon"} opacity={d.date === 14 ? 0.75 : 0.42} breathe={false} />
                 <span className="vwDayE" aria-hidden>{d.emoji}</span>
                 <span className="vwDayD">{d.date} Feb</span>
                 <span className="vwDayN">{d.name}</span>
@@ -348,8 +348,7 @@ export default function ValentineWishlistClient() {
             ].map(({ Icon, t, d }, i) => (
               <motion.div key={t} className="vwPerk" initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }} transition={{ duration: 0.45, delay: i * 0.08 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="vwPerkOrn" src={ALEKHAN} alt="" aria-hidden />
+                <CardCorners size={44} tone="maroon" opacity={0.4} breathe={false} />
                 <span className="vwPerkI"><Icon size={18} aria-hidden /></span>
                 <b>{t}</b>
                 <p>{d}</p>
@@ -530,13 +529,12 @@ const VW_CSS = `
 .vwSecTitle { margin: 10px 0 22px; color: #2a0a0e; font: 600 clamp(26px, 4.4vw, 40px)/1.1 'Playfair Display', serif; letter-spacing: -.01em; }
 .vwSecTitle em { color: #b3243f; font-style: italic; }
 .vwDays { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-.vwDay { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 10px 16px; border-radius: 18px; background: #fffaf8;
+.vwDay { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px 14px 20px; border-radius: 18px; background: #fffaf8;
   border: 1px solid rgba(179,36,63,.12); box-shadow: 0 10px 26px -20px rgba(122,16,40,.5); transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease; }
 .vwDay { position: relative; overflow: hidden; }
-.vwDayOrn, .vwPerkOrn { position: absolute; top: 0; right: 0; width: 46px; height: 46px; opacity: .22; pointer-events: none; transform: scale(-1,-1);
-  filter: brightness(0) saturate(100%) invert(14%) sepia(66%) saturate(3600%) hue-rotate(332deg) brightness(88%) contrast(105%); transition: opacity .3s ease, transform .4s cubic-bezier(.22,1,.36,1); }
-.vwDay.is-big .vwDayOrn { filter: brightness(0) saturate(100%) invert(84%) sepia(38%) saturate(640%) hue-rotate(350deg) brightness(101%) contrast(92%); opacity: .5; }
-@media (hover: hover) { .vwDay:hover .vwDayOrn, .vwPerk:hover .vwPerkOrn { opacity: .45; transform: scale(-1.12,-1.12); } }
+.vwDay > :not(.cc), .vwPerk > :not(.cc) { position: relative; z-index: 1; }
+.vwDay .cc-c, .vwPerk .cc-c { transition: opacity .3s ease, transform .4s cubic-bezier(.22,1,.36,1); }
+@media (hover: hover) { .vwDay:hover .cc-c, .vwPerk:hover .cc-c { opacity: .6; transform: scale(1.12); } }
 .vwDayE { font-size: 30px; line-height: 1; transition: transform .35s cubic-bezier(.22,1,.36,1); }
 @media (hover: hover) { .vwDay:hover .vwDayE { transform: scale(1.18) rotate(-6deg); } }
 .vwDayD { color: #b3243f; font: 800 10px/1 'Inter', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
@@ -545,7 +543,7 @@ const VW_CSS = `
 .vwDay.is-big .vwDayD { color: #ffd4cb; } .vwDay.is-big .vwDayN { color: #fff4f1; }
 @media (hover: hover) { .vwDay:hover { transform: translateY(-4px); box-shadow: 0 18px 32px -20px rgba(122,16,40,.6); } }
 .vwPerks { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; text-align: left; }
-.vwPerk { position: relative; overflow: hidden; padding: 20px; border-radius: 20px; background: #fffaf8; border: 1px solid rgba(179,36,63,.12); box-shadow: 0 10px 26px -20px rgba(122,16,40,.5); }
+.vwPerk { position: relative; overflow: hidden; padding: 24px 26px; border-radius: 20px; background: #fffaf8; border: 1px solid rgba(179,36,63,.12); box-shadow: 0 10px 26px -20px rgba(122,16,40,.5); }
 .vwPerkI { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: #fff; background: linear-gradient(140deg, #d13a59, #7a1028); margin-bottom: 12px; }
 .vwPerk b { display: block; color: #2a0a0e; font: 600 19px/1.2 'Playfair Display', serif; }
 .vwPerk p { margin: 6px 0 0; color: #6b4545; font: 400 13.5px/1.55 'Inter', system-ui, sans-serif; }

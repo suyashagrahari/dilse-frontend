@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { ArrowRight, Check, Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
+import CardCorners from "@/components/wishlist/CardCorners";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
 
 const FLOAT = [
@@ -21,6 +22,7 @@ export default function ValentineTeaser() {
   return (
     <section className="vtz" aria-label="Valentine's week wishlist">
       <span className="vtzSheen" aria-hidden />
+      <CardCorners tone="gold" className="txCorners" />
       <Link href={VALENTINE_PATH} className="vtzLink" aria-label={joined ? "You're on the Valentine's week wishlist" : `Join the Valentine's week wishlist and get ${VALENTINE_DISCOUNT}% off`}>
         <div className="vtzBody">
           <span className="vtzBadge"><Heart size={12} fill="currentColor" aria-hidden /> Valentine&apos;s Week · Wishlist</span>
@@ -71,6 +73,11 @@ export const VALENTINE_TEASER_CSS = `
   .txDuo .pxTzCard.c0 { left: 0; } .txDuo .pxTzCard.c1 { left: 30%; } .txDuo .pxTzCard.c2 { right: 0; }
 }
 
+/* alekhan corners on both cards above the grid */
+.txCorners { --cc-size: 30px; --cc-op: .6; }
+@media (min-width: 768px) { .txCorners { --cc-size: 64px; --cc-op: .55; } }
+@media (min-width: 1024px) { .txCorners { --cc-size: 58px; } }
+
 /* ── the Valentine card ─────────────────────────────────────────────────── */
 .vtz { position: relative; isolation: isolate; overflow: hidden; border-radius: 26px;
   background: radial-gradient(120% 140% at 0% 0%, #c42d4c 0%, #8a1430 45%, #4a0d1c 100%);
@@ -79,7 +86,7 @@ export const VALENTINE_TEASER_CSS = `
 .vtzSheen::before { content: ""; position: absolute; top: -30%; bottom: -30%; width: 28%; left: -40%; transform: skewX(-18deg);
   background: linear-gradient(90deg, transparent, rgba(255,226,220,.16), transparent); animation: vtzSweep 6s ease-in-out 1.5s infinite; }
 @keyframes vtzSweep { 0%, 55% { left: -40%; } 90%, 100% { left: 130%; } }
-.vtzLink { display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; align-items: center; padding: 22px 20px; color: inherit; text-decoration: none; height: 100%; }
+.vtzLink { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; align-items: center; padding: 22px 20px; color: inherit; text-decoration: none; height: 100%; }
 .vtzLink:focus-visible { outline: 2px solid #f6d58a; outline-offset: -4px; border-radius: 26px; }
 .vtzBody { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
 .vtzBadge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 99px; color: #7a1028;
