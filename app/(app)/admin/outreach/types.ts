@@ -21,6 +21,8 @@ export interface AudienceRow {
   commentCount: number;
   paidOrders: number;
   lastEmailedAt: string | null;
+  /** Wishlists joined, e.g. ["valentine-2027"]. */
+  wishlists: string[];
 }
 
 export interface Filters {
@@ -36,6 +38,8 @@ export interface Filters {
   provider: "any" | "google" | "local";
   paid: "any" | "yes" | "no";
   emailed: "any" | "never" | "not14" | "not30";
+  /** "any" | "none" | a wishlist campaign key. */
+  wishlist: string;
   optout: "hide" | "only";
   sort: "joined" | "pages" | "rating" | "active" | "name";
   order: "asc" | "desc";
@@ -43,7 +47,7 @@ export interface Filters {
 
 export const DEFAULT_FILTERS: Filters = {
   q: "", verified: "verified", ratings: [], feedback: "any", pages: "any", published: "any", template: "",
-  joined: "any", active: "any", provider: "any", paid: "any", emailed: "any", optout: "hide", sort: "joined", order: "desc",
+  joined: "any", active: "any", provider: "any", paid: "any", emailed: "any", wishlist: "any", optout: "hide", sort: "joined", order: "desc",
 };
 
 export interface AudienceStats {
