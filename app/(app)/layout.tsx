@@ -16,7 +16,8 @@ import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import SwipeTabs from "@/components/SwipeTabs";
 
 // The bottom nav's tabs, in its left-to-right order: on a phone or tablet a
-// sideways swipe on one of these pages moves to its neighbour.
+// sideways swipe on one of these pages moves to its neighbour, and a swipe
+// past Manifesto pulls in the More drawer (BottomNav listens for the event).
 const MAIN_TABS = [{ href: "/templates" }, { href: "/feedback" }, { href: "/" }, { href: "/manifesto" }];
 
 export const metadata: Metadata = buildMeta({
@@ -42,7 +43,7 @@ export default function AppLayout({
             sub-page — the hazard of impersonation is forgetting you are in it. */}
         <ImpersonationBanner />
         {/* Only the page itself moves on a swipe; the navs and hosts stay put. */}
-        <SwipeTabs tabs={MAIN_TABS} media="(max-width: 1023px)">
+        <SwipeTabs tabs={MAIN_TABS} media="(max-width: 1023px)" pastEnd="ss:more-swipe">
           <ErrorBoundary>{children}</ErrorBoundary>
         </SwipeTabs>
         {/* Same sheet the templates raise, so sharing a creation from the
