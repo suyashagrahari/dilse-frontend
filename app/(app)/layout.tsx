@@ -13,6 +13,12 @@ import WelcomeHost from "@/components/WelcomeHost";
 import SubdomainOnboardingHost from "@/components/subdomain/SubdomainOnboardingHost";
 import ToastHost from "@/components/toast/ToastHost";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
+import SwipeTabs from "@/components/SwipeTabs";
+
+// The bottom nav's tabs, in its left-to-right order: on a phone or tablet a
+// sideways swipe on one of these pages moves to its neighbour, and a swipe
+// past Manifesto pulls in the More drawer (BottomNav listens for the event).
+const MAIN_TABS = [{ href: "/templates" }, { href: "/feedback" }, { href: "/" }, { href: "/manifesto" }];
 
 export const metadata: Metadata = buildMeta({
   title: "SubhSandesh — Digital Celebration Pages | Weddings, Birthdays & Festivals",
@@ -36,7 +42,10 @@ export default function AppLayout({
             Mounted at the layout so it cannot be scrolled past or missed on a
             sub-page — the hazard of impersonation is forgetting you are in it. */}
         <ImpersonationBanner />
-        <ErrorBoundary>{children}</ErrorBoundary>
+        {/* Only the page itself moves on a swipe; the navs and hosts stay put. */}
+        <SwipeTabs tabs={MAIN_TABS} media="(max-width: 1023px)" pastEnd="ss:more-swipe">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </SwipeTabs>
         {/* Same sheet the templates raise, so sharing a creation from the
             profile offers the QR, the photo QR and the printable card too. */}
         <ShareSheetHost />

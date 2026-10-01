@@ -30,11 +30,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
 import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
-  Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus,
+  Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus, Megaphone,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
@@ -141,13 +141,29 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Panel width in px — `min(86vw, 340px)`, needed to drive it by the finger. */
+export const drawerWidth = () => (typeof window === "undefined" ? 340 : Math.min(window.innerWidth * 0.86, 340));
+
 export default function MoreDrawer({
   open,
   onClose,
+  side = "left",
+  dragX,
 }: {
   open: boolean;
   onClose: () => void;
+  /**
+   * "right" when it was pulled in by swiping past the last bottom-nav tab:
+   * More sits right of Manifesto, so it arrives from that side, following
+   * the finger through `dragX` (px from fully open; drawerWidth() = closed).
+   */
+  side?: "left" | "right";
+  dragX?: MotionValue<number>;
 }) {
+  const ownX = useMotionValue(0);
+  const x = dragX ?? ownX;
+  const right = side === "right" && !!dragX;
+  const scrimOpacity = useTransform(x, (v) => 1 - Math.min(Math.max(v / drawerWidth(), 0), 1));
   // Signing in happens in the AuthModal, not on a page: there is no /auth
   // route (only /auth/google-bridge), so the old link here was a 404. The
   // drawer closes first so the modal is never stacked under it.
@@ -208,6 +224,8 @@ export default function MoreDrawer({
               { label: "Feedback", icon: <Star size={17} />, href: "/admin/feedback" },
               { label: "Unfinished Drafts", icon: <FileText size={17} />, href: "/admin/drafts" },
               { label: "Conversations", icon: <MessageSquare size={17} />, href: "/admin/threads" },
+              // Mails a chosen slice of every verified user, so super admin only.
+              { label: "Outreach", icon: <Megaphone size={17} />, href: "/admin/outreach" },
             ]
           : []),
         { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },
@@ -241,37 +259,43 @@ export default function MoreDrawer({
             className="md:hidden fixed inset-0 z-[84]"
             onClick={onClose}
             aria-label="Close menu"
-            style={{ background: "rgba(23,6,9,0.55)", backdropFilter: "blur(3px)", border: "none" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            style={{
+              background: "rgba(23,6,9,0.55)", backdropFilter: "blur(3px)", border: "none",
+              // Pulled in by a swipe: the scrim deepens with the panel's travel.
+              ...(right ? { opacity: scrimOpacity } : {}),
+            }}
+            initial={right ? false : { opacity: 0 }}
+            animate={right ? undefined : { opacity: 1 }}
+            exit={right ? undefined : { opacity: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.2 }}
           />
 
           {/* Panel */}
           <motion.aside
-            className="md:hidden fixed top-0 bottom-0 left-0 z-[85] flex flex-col"
+            className={`md:hidden fixed top-0 bottom-0 ${right ? "right-0" : "left-0"} z-[85] flex flex-col`}
             role="dialog"
             aria-modal="true"
             aria-label="More"
             style={{
               width: "min(86vw, 340px)",
               background: PANEL,
-              borderRight: `1px solid ${GOLD_LINE}`,
-              boxShadow: "12px 0 40px rgba(0,0,0,0.5)",
+              ...(right
+                ? { borderLeft: `1px solid ${GOLD_LINE}`, boxShadow: "-12px 0 40px rgba(0,0,0,0.5)", x }
+                : { borderRight: `1px solid ${GOLD_LINE}`, boxShadow: "12px 0 40px rgba(0,0,0,0.5)" }),
             }}
-            initial={reduceMotion ? { opacity: 0 } : { x: "-100%" }}
-            animate={reduceMotion ? { opacity: 1 } : { x: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { x: "-100%" }}
+            initial={right ? false : reduceMotion ? { opacity: 0 } : { x: "-100%" }}
+            animate={right ? undefined : reduceMotion ? { opacity: 1 } : { x: 0 }}
+            exit={right ? { x: drawerWidth(), transition: { type: "spring", stiffness: 380, damping: 40 } } : reduceMotion ? { opacity: 0 } : { x: "-100%" }}
             transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 340, damping: 34 }}
-            // Flick left to dismiss. The trigger is bottom-right, so without this
-            // the only way out is a reach across the screen — see the note above.
+            // Flick toward its own edge to dismiss. The trigger is bottom-right,
+            // so without this the only way out is a reach across the screen —
+            // see the note above.
             drag={reduceMotion ? false : "x"}
             dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={{ left: 0.35, right: 0 }}
+            dragElastic={right ? { left: 0, right: 0.35 } : { left: 0.35, right: 0 }}
             dragMomentum={false}
             onDragEnd={(_, info) => {
-              if (info.offset.x < -60 || info.velocity.x < -420) onClose();
+              if (right ? info.offset.x > 60 || info.velocity.x > 420 : info.offset.x < -60 || info.velocity.x < -420) onClose();
             }}
           >
             {/* ── Header: who is signed in ─────────────────────────────────

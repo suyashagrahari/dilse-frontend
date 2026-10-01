@@ -3,8 +3,10 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { animate, useMotionValue } from "framer-motion";
 import { Ellipsis, Home, LayoutTemplate, MessageSquareHeart, ScrollText } from "lucide-react";
-import MoreDrawer from "@/components/MoreDrawer";
+import MoreDrawer, { drawerWidth } from "@/components/MoreDrawer";
+import type { PastEndDetail } from "@/components/SwipeTabs";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -19,6 +21,36 @@ export default function BottomNav() {
     setMoreOpen(false);
   }, [pathname]);
 
+  // ── Swiping past Manifesto pulls the drawer in under the finger ─────────
+  // More is the slot right of Manifesto, so the drawer arrives from the right
+  // and tracks the drag (see SwipeTabs' `pastEnd`); the tapped button keeps
+  // opening it from the left as before.
+  const [side, setSide] = useState<"left" | "right">("left");
+  const [peeking, setPeeking] = useState(false);
+  const peekX = useMotionValue(0);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<PastEndDetail>).detail;
+      const W = drawerWidth();
+      if (d.phase === "start") {
+        peekX.stop();
+        peekX.set(W);
+        setSide("right");
+        setPeeking(true);
+        setMoreOpen(true);
+      } else if (d.phase === "move") {
+        peekX.set(Math.min(Math.max(W + d.dx, 0), W));
+      } else {
+        const open = -d.dx > W * 0.32 || d.v < -0.45;
+        setPeeking(false);
+        if (open) animate(peekX, 0, { type: "spring", stiffness: 420, damping: 40, velocity: Math.min(d.v, 0) * 1000 });
+        else animate(peekX, W, { type: "spring", stiffness: 420, damping: 42 }).then(() => setMoreOpen(false));
+      }
+    };
+    window.addEventListener("ss:more-swipe", on);
+    return () => window.removeEventListener("ss:more-swipe", on);
+  }, [peekX]);
+
   const tabBg = (active: boolean) =>
     active
       ? "linear-gradient(180deg,rgba(214,174,84,0.24),rgba(214,174,84,0.08))"
@@ -27,7 +59,7 @@ export default function BottomNav() {
     active ? "1px solid rgba(229,191,101,0.42)" : "1px solid transparent";
 
   const activeSlot = (() => {
-    if (moreOpen) return 4;
+    if (moreOpen && !peeking) return 4;
     if (pathname.startsWith("/templates")) return 0;
     // The second slot is the Love Wall — what creators say about SubhSandesh.
     // Favorites moved into the More drawer, where the rest of "your stuff" is.
@@ -127,7 +159,7 @@ export default function BottomNav() {
       {/* The destinations list lives in `MoreDrawer` — a full-height panel
           rather than the 228px popover this replaces. See the note at the top of
           that file for why, and for why the item order did not change. */}
-      <MoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <MoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} side={side} dragX={peekX} />
 
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-[79] pointer-events-none"
@@ -180,7 +212,7 @@ export default function BottomNav() {
           />
 
           <button
-            onClick={() => setMoreOpen((v) => !v)}
+            onClick={() => { setSide("left"); setMoreOpen((v) => !v); }}
             aria-label="Open more menu"
             style={{
               display: "flex",
