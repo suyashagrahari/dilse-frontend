@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { isAdmin } from "@/lib/roles";
 import AdminNav, { ADMIN_NAV_CSS } from "./AdminNav";
+import AdminSwipe from "./AdminSwipe";
 import { AdminSkeleton } from "@/components/skeleton/Skeletons";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -49,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <>
       <style>{ADMIN_NAV_CSS}</style>
       <AdminNav />
-      <div className="adm-main">{children}</div>
+      <AdminSwipe>{children}</AdminSwipe>
     </>
   );
 }
