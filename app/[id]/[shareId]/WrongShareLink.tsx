@@ -17,7 +17,10 @@ import { ROOT_DOMAIN } from "@/lib/config";
 const noop = () => () => {};
 const readHost = () => window.location.hostname.toLowerCase();
 
-export default function WrongShareLink() {
+export default function WrongShareLink({ reason = "name" }: {
+  /** "name": the subdomain is wrong. "missing": the link has no subdomain but needs one. */
+  reason?: "name" | "missing";
+} = {}) {
   const host = useSyncExternalStore(noop, readHost, () => "");
   const suffix = ROOT_DOMAIN ? `.${ROOT_DOMAIN}` : "";
   const name = suffix && host.endsWith(suffix) ? host.slice(0, -suffix.length) : "";
@@ -26,17 +29,25 @@ export default function WrongShareLink() {
     <main className="wsl">
       <div className="wsl-card">
         <div className="wsl-ico" aria-hidden><HeartCrack size={30} /></div>
-        <h1 className="wsl-t">This link doesn&apos;t look right</h1>
-        {name ? (
+        <h1 className="wsl-t">{reason === "missing" ? "This link is incomplete" : "This link doesn\u2019t look right"}</h1>
+        {name && reason === "name" ? (
           <p className="wsl-host" aria-label={`${name}${suffix}`}>
             <span className="wsl-name">{name}</span>{suffix}
           </p>
         ) : null}
-        <p className="wsl-p">
-          We couldn&apos;t find this page under {name ? "this name" : "this link"}. The part before
-          <strong> {suffix || ".subhsandesh.in"}</strong> has to match the link exactly as it was sent —
-          check it for a spelling mistake, or ask the sender to share it again.
-        </p>
+        {reason === "missing" ? (
+          <p className="wsl-p">
+            This page opens only on the sender&apos;s own link — the one with their name before
+            <strong> {suffix || ".subhsandesh.in"}</strong>. Open the exact link you were sent, or ask the
+            sender to share it again.
+          </p>
+        ) : (
+          <p className="wsl-p">
+            We couldn&apos;t find this page under {name ? "this name" : "this link"}. The part before
+            <strong> {suffix || ".subhsandesh.in"}</strong> has to match the link exactly as it was sent —
+            check it for a spelling mistake, or ask the sender to share it again.
+          </p>
+        )}
         <div className="wsl-actions">
           <Link href="/" className="wsl-btn" data-v="ghost"><Home size={15} /> Home</Link>
           <Link href="/templates" className="wsl-btn"><Sparkles size={15} /> Make your own</Link>

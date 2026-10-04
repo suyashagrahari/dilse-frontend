@@ -354,7 +354,10 @@ export default function ApologyDashboard({ data, mode, shareId }: Props) {
           <motion.div
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ amount: 0.35 }}
+            // "some", not a fraction: a step taller than the screen (a long
+            // Memory Lane on a phone is three screens) can never have 35% of
+            // itself in view at once, so a fraction left it invisible forever.
+            viewport={{ amount: "some", margin: "0px 0px -12% 0px" }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-4xl"
           >
@@ -1053,7 +1056,7 @@ function BriberyDesk({ data, setMood, anger, toast, onLock }: { data: ApologyDat
           <div className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: DISPLAY, color: INK }}>Sweet Bribery Desk 🎁</div>
           <div className="text-sm sm:text-base mt-1 mb-5" style={{ color: "rgba(58,34,51,.6)" }}>Tick the promises — then make them official.</div>
         </motion.div>
-        <motion.div variants={STAGGER_PARENT} initial="hidden" whileInView="show" viewport={{ once: false, amount: 0.2 }} className="space-y-2.5">
+        <motion.div variants={STAGGER_PARENT} initial="hidden" whileInView="show" viewport={{ once: false, amount: "some" }} className="space-y-2.5">
           {data.briberyItems.map((b, i) => {
             const on = checked[i] ?? false;
             return (
@@ -1296,7 +1299,7 @@ function SorryLetter({ letter, voiceUrl, senderName, recipientName }: { letter: 
         variants={STAGGER_PARENT}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: false, amount: 0.4 }}
+        viewport={{ once: false, amount: "some" }}
         className="w-full max-w-2xl mx-auto text-center flex flex-col items-center gap-5"
       >
         <motion.div variants={STAGGER_CHILD} className="text-5xl sm:text-6xl">💌</motion.div>
@@ -1336,50 +1339,67 @@ function SorryLetter({ letter, voiceUrl, senderName, recipientName }: { letter: 
 // ─── Timeline ────────────────────────────────────────────────────────────────
 const TL_GRADS = ["linear-gradient(135deg,#f9a8d4,#f43f5e)", "linear-gradient(135deg,#fde047,#fb923c)", "linear-gradient(135deg,#6ee7b7,#14b8a6)", "linear-gradient(135deg,#a5b4fc,#818cf8)"];
 function Timeline({ data }: { data: ApologyData }) {
+  // Each memory animates in on its own as it scrolls into view. One parent
+  // trigger needed 30% of the whole list on screen, which a long list on a
+  // phone never reaches — the section stayed blank.
   return (
-    <section className="p-8 sm:p-12" style={FULL_CARD}>
-      <span aria-hidden className="absolute select-none" style={{ top: 22, right: 28, fontSize: 26, opacity: 0.4 }}>🌸</span>
+    <section className="px-5 py-8 sm:p-12" style={{ ...FULL_CARD, overflow: "visible" }}>
+      <span aria-hidden className="absolute select-none" style={{ top: 22, right: 24, fontSize: 26, opacity: 0.4 }}>🌸</span>
       <span aria-hidden className="absolute select-none" style={{ bottom: 24, right: 44, fontSize: 18, opacity: 0.3 }}>✨</span>
 
       <div className="w-full max-w-2xl mx-auto">
         <motion.h2
           initial={{ opacity: 0, y: -12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.5 }}
+          viewport={{ once: true, amount: "some" }}
           transition={{ duration: 0.5 }}
-          className="text-2xl sm:text-4xl font-bold mb-8 sm:mb-10"
+          className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-10"
           style={{ fontFamily: DISPLAY, color: INK }}
         >
           Memory Lane 🌸
+          {data.timeline.length > 4 && (
+            <span className="block text-xs sm:text-sm font-semibold mt-1.5" style={{ fontFamily: BODY, color: ROSE_DEEP, opacity: 0.75 }}>
+              {data.timeline.length} little moments of us
+            </span>
+          )}
         </motion.h2>
 
-        <motion.div variants={STAGGER_PARENT} initial="hidden" whileInView="show" viewport={{ once: false, amount: 0.3 }} className="space-y-8 sm:space-y-10">
+        <div className="space-y-6 sm:space-y-10">
           {data.timeline.map((n, i) => (
-            <motion.div key={i} variants={STAGGER_CHILD} className="relative flex gap-5 items-start">
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: "some", margin: "0px 0px -8% 0px" }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="relative flex gap-3.5 sm:gap-5 items-start"
+            >
               {i < data.timeline.length - 1 && (
-                <motion.span
-                  initial={{ scaleY: 0 }}
-                  whileInView={{ scaleY: 1 }}
-                  viewport={{ once: false, amount: 0.3 }}
-                  transition={{ duration: 0.5, delay: 0.15 * i + 0.2 }}
-                  style={{ position: "absolute", left: 26, top: 58, bottom: -34, width: 3, background: "linear-gradient(#ffb3c8,#ffd6d6)", transformOrigin: "top", borderRadius: 2 }}
+                <span
+                  aria-hidden
+                  className="apo-tl-line"
+                  style={{ position: "absolute", top: 0, bottom: 0, width: 3, background: "linear-gradient(#ffb3c8,#ffd6d6)", borderRadius: 2 }}
                 />
               )}
               <motion.div
                 whileHover={{ scale: 1.08, rotate: -4 }}
-                className="w-14 h-14 rounded-full text-white grid place-items-center shrink-0 text-2xl"
-                style={{ background: TL_GRADS[i % TL_GRADS.length], boxShadow: "0 10px 22px -8px rgba(230,64,114,.45)" }}
+                className="w-11 h-11 sm:w-14 sm:h-14 rounded-full text-white grid place-items-center shrink-0 text-xl sm:text-2xl relative"
+                style={{ background: TL_GRADS[i % TL_GRADS.length], boxShadow: "0 10px 22px -8px rgba(230,64,114,.45)", zIndex: 1 }}
               >
-                {n.icon || (i === 0 ? <Star size={22} /> : i === 1 ? <Smile size={22} /> : <Sprout size={22} />)}
+                {n.icon || (i === 0 ? <Star size={20} /> : i === 1 ? <Smile size={20} /> : <Sprout size={20} />)}
               </motion.div>
-              <div className="pt-1">
-                <div className="text-lg sm:text-xl font-semibold" style={{ fontFamily: DISPLAY, color: INK }}>{n.title}</div>
-                <p className="text-sm sm:text-base mt-1" style={{ color: "rgba(58,34,51,.72)" }}>{n.text}</p>
+              <div className="pt-0.5 sm:pt-1 min-w-0 flex-1">
+                <div className="text-base sm:text-xl font-semibold" style={{ fontFamily: DISPLAY, color: INK, overflowWrap: "anywhere" }}>{n.title}</div>
+                <p className="text-[13.5px] leading-relaxed sm:text-base mt-1" style={{ color: "rgba(58,34,51,.72)", overflowWrap: "anywhere", whiteSpace: "pre-line" }}>{n.text}</p>
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
+      <style>{`
+        .apo-tl-line{left:20.5px;top:48px!important;bottom:-24px!important}
+        @media (min-width:640px){.apo-tl-line{left:26.5px;top:62px!important;bottom:-36px!important}}
+      `}</style>
     </section>
   );
 }
