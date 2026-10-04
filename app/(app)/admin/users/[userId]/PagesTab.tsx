@@ -166,6 +166,7 @@ export default function PagesTab({
                 key={p._id}
                 index={i}
                 page={p}
+                subdomain={data.user.subdomain}
                 hdr={hdr}
                 revealed={revealed[p._id]}
                 busy={busy === p._id}
