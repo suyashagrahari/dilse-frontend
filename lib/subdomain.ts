@@ -6,7 +6,7 @@
 // stay in step with `validateSubdomain` in server/src/controllers/auth.controller.ts
 // — the server is the one that decides; this only saves a round trip.
 
-import { ROOT_DOMAIN } from "@/lib/config";
+import { ROOT_DOMAIN, SITE_URL } from "@/lib/config";
 
 /** Mirrors SUBDOMAIN_RESERVED on the server. */
 const RESERVED = new Set([
@@ -115,4 +115,18 @@ export function withUserSubdomain(url: string | null | undefined, subdomain?: st
   } catch {
     return url;
   }
+}
+
+/**
+ * The link a creator's published page is shared on: `{subdomain}.{ROOT_DOMAIN}/{id}`
+ * where subdomains are served, `{SITE_URL}/{subdomain}/{id}` locally (the same
+ * route the middleware rewrites to), and the bare `{SITE_URL}/{id}` for a
+ * creator who never picked a name.
+ */
+export function shareLinkFor(shareId: string, subdomain?: string | null): string {
+  if (subdomain) {
+    if (ROOT_DOMAIN) return `https://${subdomain}.${ROOT_DOMAIN}/${shareId}`;
+    return `${SITE_URL}/${subdomain}/${shareId}`;
+  }
+  return `${SITE_URL}/${shareId}`;
 }
