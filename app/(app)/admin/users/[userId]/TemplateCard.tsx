@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { API_URL, SITE_URL } from "@/lib/config";
+import { API_URL } from "@/lib/config";
+import { shareLinkFor } from "@/lib/subdomain";
 import {
   Eye, EyeOff, KeyRound, Trash2, ExternalLink, Pencil, ChevronRight, BarChart3,
 } from "lucide-react";
@@ -21,9 +22,11 @@ import { useToast } from "@/lib/toast/useToast";
  * record forty reads the admin never made.
  */
 export default function TemplateCard({
-  page, hdr, revealed, onReveal, onSetPassword, onDelete, onEdit, busy, index = 0,
+  page, subdomain, hdr, revealed, onReveal, onSetPassword, onDelete, onEdit, busy, index = 0,
 }: {
   page: ProfilePage;
+  /** The owner's subdomain: their links are only valid under it. */
+  subdomain?: string | null;
   hdr: () => Record<string, string>;
   revealed?: string;
   onReveal: (p: ProfilePage) => void;
@@ -37,7 +40,8 @@ export default function TemplateCard({
   const { pushToast } = useToast();
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
-  const url = page.shareId ? `${SITE_URL}/${page.shareId}` : "";
+  const url = page.shareId ? shareLinkFor(page.shareId, subdomain) : "";
+  const shown = url.replace(/^https?:\/\//, "");
 
   const loadDetails = useCallback(async () => {
     if (details || loading) return details;
@@ -84,7 +88,7 @@ export default function TemplateCard({
                   title={url}
                   style={{ color: C.accent, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}
                 >
-                  /{page.shareId}
+                  {shown}
                 </a>
                 <CopyBtn value={url} label="Copy full link" />
               </>
