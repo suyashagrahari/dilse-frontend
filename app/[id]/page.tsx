@@ -3,11 +3,14 @@ import { notFound } from "next/navigation";
 import { getSharePageMeta, buildMeta, SITE_URL } from "@/lib/seo";
 import { SharePageJsonLd } from "@/components/JsonLd";
 import SharePageWrapper from "./SharePageWrapper";
+import WrongShareLink from "./[shareId]/WrongShareLink";
 import { API_URL } from "@/lib/config";
 
 interface SharePageData {
   success: boolean;
   templateType?: string;
+  /** Set only where subdomains are served, and only when the creator has one. */
+  ownerSubdomain?: string;
   data?: {
     recipientName?: string;
     senderName?: string;
@@ -52,7 +55,7 @@ export async function generateMetadata({
   const fetched = await fetchShareData(shareId);
   const result = fetched.status === "ok" ? fetched.data : null;
 
-  if (!result?.success || !result.data || !result.templateType) {
+  if (!result?.success || !result.data || !result.templateType || result.ownerSubdomain) {
     return buildMeta({
       title: "Gift Page | Gifts",
       description: "Someone created a special gift page for you. Open to see the surprise!",
@@ -88,6 +91,11 @@ export default async function SharePage({
   const fetched = await fetchShareData(shareId);
   if (fetched.status === "notfound") notFound();
   const result = fetched.status === "ok" ? fetched.data : null;
+
+  // A creator with a subdomain shares `{subdomain}.subhsandesh.in/{id}` and
+  // nothing else: the bare link is refused, without naming the subdomain —
+  // saying it would make the bare link work with one extra click.
+  if (result?.ownerSubdomain) return <WrongShareLink reason="missing" />;
 
   const senderName = result?.data?.senderName || "Someone Special";
   const recipientName = result?.data?.recipientName || "You";
