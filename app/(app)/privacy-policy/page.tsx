@@ -21,7 +21,7 @@ const SECTIONS: LegalSection[] = [
   {
     title: "2. How We Use Your Information",
     body:
-      "We use information only for core functionality: account access, page creation, private link sharing, content management, payments, security, abuse prevention, and essential service communication. We do not use your personal photos, private messages, or uploaded media for advertising, external marketing, profiling, or unrelated training purposes.",
+      "We use information only for core functionality: account access, page creation, private link sharing, content management, payments, security, abuse prevention, and essential service communication. Your country, worked out from your IP address at the moment you view a price or pay, decides whether you are shown prices in Indian rupees or US dollars; we store only the country (never your city or IP address) on your account. Country lookups use IP geolocation data by DB-IP (db-ip.com), licensed under CC BY 4.0. We do not use your personal photos, private messages, or uploaded media for advertising, external marketing, profiling, or unrelated training purposes.",
   },
   {
     title: "3. Content Ownership and Responsibility",
