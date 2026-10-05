@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import { checkAuth, hydrateAuth } from "@/store/authSlice";
@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import PwaProvider from "@/components/PwaProvider";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
 import TemplateFontsLoader from "@/components/TemplateFontsLoader";
+import RefCodeCapture from "@/components/RefCodeCapture";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 
@@ -52,6 +53,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <Provider store={store}>
       <ThemeProvider>
           <StoreHydrator />
+          <Suspense fallback={null}><RefCodeCapture /></Suspense>
           <AnalyticsProvider />
           <TemplateFontsLoader />
           <PwaProvider>

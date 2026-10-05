@@ -39,7 +39,7 @@ function ReferralWelcomeInner() {
     fetch(`${API_URL}/referral/by-code/${encodeURIComponent(code)}`, { headers: apiHeaders() })
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) {
+        if (d.success && !d.data.isInfluencer) {
           setReferrerName(d.data.name);
           setReferrerAvatar(d.data.avatar || null);
           setShow(true);
