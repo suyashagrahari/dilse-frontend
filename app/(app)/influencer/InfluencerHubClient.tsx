@@ -6,7 +6,7 @@
 //   signed in, not an influencer → instant signup (InfluencerJoin)
 //   influencer → the dashboard
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Loader2, Crown, LogIn } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
@@ -22,6 +22,14 @@ export default function InfluencerHubClient() {
   const [data, setData] = useState<InfluencerDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  // Auth is read from localStorage on the client, so the server cannot know
+  // which of the three states to render. Render nothing state-specific until
+  // mounted, or hydration mismatches (React #418).
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -53,7 +61,9 @@ export default function InfluencerHubClient() {
   };
 
   let body: React.ReactNode;
-  if (!isAuthenticated) {
+  if (!mounted) {
+    body = <Spinner />;
+  } else if (!isAuthenticated) {
     body = isLoading ? (
       <Spinner />
     ) : (
