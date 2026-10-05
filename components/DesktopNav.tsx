@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Search, X, SlidersHorizontal, User, BarChart3 } from "lucide-react";
+import { Search, X, SlidersHorizontal, User, BarChart3, Crown, GraduationCap, BookOpen, Star, Info, Mail, HelpCircle, Gift } from "lucide-react";
+import NavDropdown from "@/components/NavDropdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTemplateSearch } from "@/components/TemplateSearchProvider";
 import { useAppSelector } from "@/store/hooks";
@@ -20,11 +21,13 @@ export default function DesktopNav() {
 
   const isTemplates = pathname.startsWith("/templates");
   const isProfile = pathname.startsWith("/profile");
-  const { user: authUser } = useAppSelector((s) => s.auth);
+  const { user: authUser, isAuthenticated } = useAppSelector((s) => s.auth);
+  const isExplore = ["/guides", "/blog", "/feedback"].some((p) => pathname.startsWith(p));
+  const isCompany = ["/about-us", "/contact-us", "/help"].some((p) => pathname.startsWith(p));
+  const isInfluencerPage = pathname.startsWith("/influencer");
   // Rank check, not equality: `superadmin` outranks `admin` and must still
   // see the Admin entry. `=== "admin"` hid it the moment that role existed.
   const isAdmin = roleAtLeast(authUser?.role, "admin");
-  const isAdminPage = pathname.startsWith("/admin");
 
   useEffect(() => {
     setMounted(true);
@@ -113,7 +116,9 @@ export default function DesktopNav() {
           </Link>
         </div>
 
-        {/* Middle tabs */}
+        {/* Middle tabs — the two things people come to do stay visible; the
+            reading and company pages fold into dropdowns so the bar stays calm
+            as sections are added. "Earn" is the influencer program. */}
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(14px, 1.6vw, 22px)", minWidth: 0 }}>
           <button onClick={() => router.push("/templates")} style={tabTextStyle(pathname.startsWith("/templates"))}>
             Templates
@@ -124,29 +129,42 @@ export default function DesktopNav() {
           >
             Favorite
           </button>
-          {/* Guides sits between Favorite and Blog rather than at the end with
-              About/Contact. It belongs with the tabs someone uses while they
-              are deciding what to make, not with the ones they use to find out
-              who we are — and next to Blog specifically, because the two are
-              the site's whole body of reading and people who want one often
-              want the other. */}
-          <button onClick={() => router.push("/guides")} style={tabTextStyle(pathname.startsWith("/guides"))}>
-            Guides
-          </button>
-          <button onClick={() => router.push("/blog")} style={tabTextStyle(pathname.startsWith("/blog"))}>
-            Blog
-          </button>
-          {/* Feedback sits after the reading tabs and before the company ones,
-              because that is what it is: neither something you make with nor a
-              page about us, but the evidence somebody wants in between. */}
-          <button onClick={() => router.push("/feedback")} style={tabTextStyle(pathname.startsWith("/feedback"))}>
-            Feedback
-          </button>
-          <button onClick={() => router.push("/about-us")} style={tabTextStyle(pathname.startsWith("/about-us"))}>
-            About Us
-          </button>
-          <button onClick={() => router.push("/contact-us")} style={tabTextStyle(pathname.startsWith("/contact-us"))}>
-            Contact Us
+          <NavDropdown
+            label="Explore"
+            active={isExplore}
+            triggerStyle={tabTextStyle(isExplore)}
+            items={[
+              { href: "/guides", label: "Product Guides", description: "Step-by-step help for every template", icon: <GraduationCap size={16} /> },
+              { href: "/blog", label: "Blog", description: "Ideas, wishes and gifting stories", icon: <BookOpen size={16} /> },
+              { href: "/feedback", label: "Love Wall", description: "What creators say about us", icon: <Star size={16} /> },
+            ]}
+          />
+          <NavDropdown
+            label="Company"
+            active={isCompany}
+            triggerStyle={tabTextStyle(isCompany)}
+            items={[
+              { href: "/about-us", label: "About Us", description: "The story behind SubhSandesh", icon: <Info size={16} /> },
+              { href: "/contact-us", label: "Contact Us", description: "We reply within a day", icon: <Mail size={16} /> },
+              { href: "/help", label: "Help Center", description: "Answers to common questions", icon: <HelpCircle size={16} /> },
+            ]}
+          />
+          <button
+            onClick={() => router.push("/influencer")}
+            style={{
+              ...tabTextStyle(isInfluencerPage),
+              opacity: 1,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "6px 11px",
+              borderRadius: 99,
+              background: isInfluencerPage ? "#3d0c11" : "rgba(201,168,76,0.16)",
+              color: isInfluencerPage ? "#f2cf74" : "#8b5a2b",
+              border: "1px solid rgba(201,168,76,0.4)",
+            }}
+          >
+            <Crown size={12} /> Earn
           </button>
         </div>
 
@@ -281,60 +299,81 @@ export default function DesktopNav() {
             </>
           )}
 
-          {isAdmin && (
-            <Link
-              href="/admin/analytics"
-              aria-label="Admin Dashboard"
-              style={{
+          {isAuthenticated ? (
+            <NavDropdown
+              align="right"
+              ariaLabel="Account menu"
+              triggerStyle={{
                 width: 42,
                 height: 42,
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: isAdminPage
-                  ? "linear-gradient(145deg,#7a4a00 0%,#5a3500 100%)"
-                  : "rgba(61,12,17,0.06)",
-                border: isAdminPage
-                  ? "1px solid rgba(242,207,116,0.6)"
-                  : "1px solid rgba(61,12,17,0.12)",
-                color: isAdminPage ? "#f2cf74" : "#2a0a0e",
-                cursor: "pointer",
-                transition: "all 0.25s",
-                textDecoration: "none",
+                padding: 0,
+                overflow: "hidden",
+                background: isProfile
+                  ? "linear-gradient(145deg,#7a1622 0%,#3d0c11 100%)"
+                  : "linear-gradient(145deg,#5a0f17 0%,#3d0c11 100%)",
+                border: isProfile
+                  ? "1px solid rgba(201,168,76,0.55)"
+                  : "1px solid rgba(201,168,76,0.35)",
+                color: "#f5ede6",
+                boxShadow: isProfile
+                  ? "0 6px 16px rgba(61,12,17,0.25), inset 0 1px 0 rgba(255,255,255,0.15)"
+                  : "0 4px 12px rgba(61,12,17,0.2)",
               }}
+              trigger={
+                authUser?.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={authUser.avatar} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <User size={17} />
+                )
+              }
+              header={
+                <div style={{ padding: "8px 10px 10px", borderBottom: "1px solid rgba(61,12,17,0.08)", marginBottom: 4 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 800, color: "#2a0a0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 230 }}>{authUser?.name}</div>
+                  <div style={{ fontSize: 11.5, color: "#9a7070", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 230 }}>{authUser?.email}</div>
+                </div>
+              }
+              items={[
+                { href: "/profile", label: "My Profile", description: "Your pages, link and account", icon: <User size={16} /> },
+                authUser?.influencer
+                  ? { href: "/influencer", label: "Influencer Hub", description: "Earnings, links and referrals", icon: <Crown size={16} /> }
+                  : { href: "/influencer", label: "Become an Influencer", description: "Earn commission on every sale", icon: <Crown size={16} />, badge: "NEW" },
+                { href: "/profile#referral", label: "Refer & Earn", description: "Invite friends, get points", icon: <Gift size={16} /> },
+                ...(isAdmin ? [{ href: "/admin/analytics", label: "Admin Dashboard", description: "Analytics, users and settings", icon: <BarChart3 size={16} /> }] : []),
+              ]}
+            />
+          ) : (
+            <Link
+              href="/profile"
+              aria-label="Go to profile"
+              style={{ ...{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                overflow: "hidden",
+                background: isProfile
+                  ? "linear-gradient(145deg,#7a1622 0%,#3d0c11 100%)"
+                  : "linear-gradient(145deg,#5a0f17 0%,#3d0c11 100%)",
+                border: isProfile
+                  ? "1px solid rgba(201,168,76,0.55)"
+                  : "1px solid rgba(201,168,76,0.35)",
+                color: "#f5ede6",
+                boxShadow: isProfile
+                  ? "0 6px 16px rgba(61,12,17,0.25), inset 0 1px 0 rgba(255,255,255,0.15)"
+                  : "0 4px 12px rgba(61,12,17,0.2)",
+              }, textDecoration: "none" }}
             >
-              <BarChart3 size={17} />
+              <User size={17} />
             </Link>
           )}
-
-          <Link
-            href="/profile"
-            aria-label="Go to profile"
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: isProfile
-                ? "linear-gradient(145deg,#7a1622 0%,#3d0c11 100%)"
-                : "linear-gradient(145deg,#5a0f17 0%,#3d0c11 100%)",
-              border: isProfile
-                ? "1px solid rgba(201,168,76,0.55)"
-                : "1px solid rgba(201,168,76,0.35)",
-              color: "#f5ede6",
-              cursor: "pointer",
-              transition: "all 0.25s",
-              boxShadow: isProfile
-                ? "0 6px 16px rgba(61,12,17,0.25), inset 0 1px 0 rgba(255,255,255,0.15)"
-                : "0 4px 12px rgba(61,12,17,0.2)",
-              textDecoration: "none",
-            }}
-          >
-            <User size={17} />
-          </Link>
         </div>
       </motion.div>
     </header>

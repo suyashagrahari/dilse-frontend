@@ -2,8 +2,9 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { getImpersonation } from "@/lib/impersonation";
+import { readRefCode, clearRefCode } from "@/lib/referral";
 
-export type UserRole = "normal" | "member" | "admin";
+export type UserRole = "normal" | "member" | "admin" | "superadmin";
 
 export interface AuthUser {
   id: string;
@@ -34,6 +35,8 @@ export interface AuthUser {
    * needed. Optional because an older cached user object will not carry it.
    */
   earlyAccess?: string[];
+  /** Present once the user has registered as an influencer. */
+  influencer?: { status: "active" | "suspended" } | null;
 }
 
 interface AuthState {
@@ -77,7 +80,7 @@ export const registerUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const referralCode = typeof window !== "undefined" ? localStorage.getItem("ref_code") ?? undefined : undefined;
+      const referralCode = readRefCode();
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: apiHeaders(),
@@ -85,7 +88,7 @@ export const registerUser = createAsyncThunk(
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Registration failed");
-      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
+      clearRefCode();
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");
@@ -104,7 +107,7 @@ export const verifyOtp = createAsyncThunk(
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Verification failed");
-      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
+      clearRefCode();
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");
@@ -170,7 +173,7 @@ export const googleLogin = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const referralCode = typeof window !== "undefined" ? localStorage.getItem("ref_code") ?? undefined : undefined;
+      const referralCode = readRefCode();
       const res = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: apiHeaders(),
@@ -178,7 +181,7 @@ export const googleLogin = createAsyncThunk(
       });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.error || "Google login failed");
-      if (typeof window !== "undefined") localStorage.removeItem("ref_code");
+      clearRefCode();
       return data.data;
     } catch {
       return rejectWithValue("Network error. Please try again.");

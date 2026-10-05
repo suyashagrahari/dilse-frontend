@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import dynamic from "next/dynamic";
+import InfluencerLanding, { type PublicInfluencer } from "@/components/influencer/InfluencerLanding";
 
 // Lazy-load the full homepage — only rendered when subdomain is valid
 const HomePage = dynamic(() => import("@/app/(app)/page"), { ssr: false });
@@ -15,19 +16,30 @@ function apiHeaders(): Record<string, string> {
   return h;
 }
 
-type Status = "loading" | "found" | "not_found";
+type Status = "loading" | "found" | "influencer" | "not_found";
 
 export default function SubdomainRootPage() {
   const params = useParams();
   const username = params.username as string;
   const [status, setStatus] = useState<Status>("loading");
+  const [influencer, setInfluencer] = useState<PublicInfluencer | null>(null);
 
   useEffect(() => {
     if (!username) return;
-    fetch(`${API_URL}/share/u/${username}`, { headers: apiHeaders() })
+    // An active influencer's subdomain root is their invite page; anyone else's
+    // keeps the homepage it always served.
+    const inf = fetch(`${API_URL}/influencer/public/${encodeURIComponent(username)}`, { headers: apiHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+    const user = fetch(`${API_URL}/share/u/${username}`, { headers: apiHeaders() })
       .then((r) => r.json())
-      .then((res) => setStatus(res.success ? "found" : "not_found"))
-      .catch(() => setStatus("not_found"));
+      .catch(() => null);
+    Promise.all([inf, user]).then(([i, u]) => {
+      if (i?.success) {
+        setInfluencer(i.data);
+        setStatus("influencer");
+      } else setStatus(u?.success ? "found" : "not_found");
+    });
   }, [username]);
 
   if (status === "loading") {
@@ -69,6 +81,8 @@ export default function SubdomainRootPage() {
       </div>
     );
   }
+
+  if (status === "influencer" && influencer) return <InfluencerLanding influencer={influencer} />;
 
   // User exists — render the full homepage as-is
   return <HomePage />;
