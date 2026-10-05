@@ -203,22 +203,37 @@ function useCopy() {
   return { copied, copy };
 }
 
+/** "https://priya.subhsandesh.in" → bold "priya", muted ".subhsandesh.in". */
+function LinkText({ url }: { url: string }) {
+  const shown = displayLink(url);
+  const r = shown.indexOf("/r/");
+  if (r >= 0) {
+    return (<><span className="idb-url-dim">{shown.slice(0, r + 3)}</span><b>{shown.slice(r + 3)}</b></>);
+  }
+  const dot = shown.indexOf(".");
+  if (dot > 0) return (<><b>{shown.slice(0, dot)}</b><span className="idb-url-dim">{shown.slice(dot)}</span></>);
+  return <b>{shown}</b>;
+}
+
 function LinkRow({ label, url, primary }: { label: string; url: string; primary?: boolean }) {
   const { copied, copy } = useCopy();
   const canShare = typeof navigator !== "undefined" && !!navigator.share;
+  const done = copied === url;
   return (
     <div className={`idb-link ${primary ? "primary" : ""}`}>
-      <div style={{ minWidth: 0, flex: 1 }}>
+      <div className="idb-link-text">
         <span className="idb-link-label">{label}</span>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="idb-link-url">{displayLink(url)}</a>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="idb-link-url" title={url}>
+          <LinkText url={url} />
+        </a>
       </div>
-      <button type="button" className="idb-icon-btn" onClick={() => copy(url)} aria-label={`Copy ${label}`}>
-        {copied === url ? <Check size={15} /> : <Copy size={15} />}
-        <span>{copied === url ? "Copied" : "Copy"}</span>
+      <button type="button" className={`idb-icon-btn ${done ? "done" : ""}`} onClick={() => copy(url)} aria-label={`Copy ${label}`}>
+        {done ? <Check size={14} /> : <Copy size={14} />}
+        <span className="idb-icon-txt">{done ? "Copied" : "Copy"}</span>
       </button>
       {canShare && (
         <button type="button" className="idb-icon-btn" aria-label={`Share ${label}`} onClick={() => navigator.share({ url, title: "SubhSandesh", text: "Make a heartfelt digital surprise 💌" }).catch(() => {})}>
-          <Share2 size={15} />
+          <Share2 size={14} />
         </button>
       )}
     </div>
@@ -263,7 +278,7 @@ function ShareKit({ link }: { link: string }) {
     },
     {
       key: "x",
-      label: "X / Twitter",
+      label: "X",
       icon: <span style={{ fontWeight: 900, fontSize: 15 }}>𝕏</span>,
       bg: "linear-gradient(135deg,#111,#333)",
       onClick: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank", "noopener"),
@@ -291,6 +306,7 @@ function WhatsAppGlyph() {
 
 function BioIdeas({ link, percent }: { link: string; percent: number }) {
   const { copied, copy } = useCopy();
+  const [open, setOpen] = useState(false);
   const ideas = [
     `💌 Make a surprise they'll never forget 👉 ${link}`,
     `🎁 Birthday, sorry, proposal: make it digital & magical ✨ ${link}`,
@@ -298,14 +314,25 @@ function BioIdeas({ link, percent }: { link: string; percent: number }) {
   ];
   return (
     <div className="idb-bio">
-      <p className="idb-bio-title"><Instagram size={13} /> Ready-to-paste bio & caption lines</p>
-      {ideas.map((t) => (
-        <button key={t} type="button" className="idb-bio-line" onClick={() => copy(t)}>
-          <span>{t}</span>
-          {copied === t ? <Check size={14} color={BRAND.ok} /> : <Copy size={14} />}
-        </button>
-      ))}
-      <p className="idb-bio-note">Tip: post a reel of a template you made, then pin the link. You earn {percent}% of every paid template your followers make.</p>
+      <button type="button" className="idb-bio-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <Instagram size={13} /> Caption & bio ideas <span className="idb-bio-count">{ideas.length}</span>
+        <ChevronDown size={14} className="idb-bio-chev" style={{ transform: open ? "rotate(180deg)" : "none" }} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+            <div className="idb-bio-list">
+              {ideas.map((t) => (
+                <button key={t} type="button" className="idb-bio-line" onClick={() => copy(t)}>
+                  <span>{t}</span>
+                  {copied === t ? <Check size={13} color={BRAND.ok} /> : <Copy size={13} />}
+                </button>
+              ))}
+              <p className="idb-bio-note">Tap a line to copy it. Tip: post a reel of a template you made, then pin your link. You earn {percent}% of every paid template.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -555,30 +582,37 @@ const CSS = `
   .idb-name { margin: 3px 0 0; font-family: 'Playfair Display', serif; font-size: clamp(19px, 2.6vw, 25px); line-height: 1.2; overflow-wrap: anywhere; }
   .idb-sub { margin: 2px 0 0; font-size: 12.5px; color: rgba(245,237,230,.7); }
   .idb-rate { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 99px; background: rgba(242,207,116,.14); border: 1px solid rgba(242,207,116,.3); color: #f2cf74; font-size: 12.5px; font-weight: 800; white-space: nowrap; }
-  .idb-money { position: relative; display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 18px; }
+  .idb-money { position: relative; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 12px; margin-top: 18px; }
   .idb-money-main, .idb-money-side > div { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(242,207,116,.16); }
-  .idb-money-side { display: grid; gap: 12px; }
+  .idb-money-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .idb-money-label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(245,237,230,.7); }
   .idb-money-big { font: 700 clamp(34px, 6vw, 48px)/1.05 'Playfair Display', serif; color: #fff; }
   .idb-money-mid { font: 700 24px/1.1 'Playfair Display', serif; color: #fff; }
   .idb-money-note { font-size: 12px; color: rgba(245,237,230,.65); }
   .idb-card { padding: 16px; border-radius: 20px; background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; box-shadow: ${BRAND.shadow}; }
   .idb-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: ${BRAND.accent}; flex-wrap: wrap; }
-  .idb-card-head h2 { margin: 0; font-size: 15px; font-weight: 800; color: ${BRAND.text}; }
+  .idb-card-head h2 { margin: 0; font-size: 14px; font-weight: 800; color: ${BRAND.text}; }
   .idb-legend { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: ${BRAND.muted}; font-weight: 700; }
   .idb-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-left: 6px; }
-  .idb-links { display: grid; gap: 8px; }
-  .idb-link { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: ${BRAND.bgAlt}; border: 1px solid ${BRAND.border}; }
+  .idb-links { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .idb-link { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 6px; min-width: 0; padding: 8px 8px 8px 12px; border-radius: 12px; background: ${BRAND.bgAlt}; border: 1px solid ${BRAND.border}; }
   .idb-link.primary { background: linear-gradient(135deg, rgba(201,168,76,.14), rgba(201,168,76,.04)); border-color: rgba(201,168,76,.4); }
-  .idb-link-label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: ${BRAND.faint}; }
-  .idb-link-url { display: block; font-size: 15px; font-weight: 800; color: ${BRAND.accentStrong}; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .idb-icon-btn { display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 12px; border-radius: 99px; border: 1px solid ${BRAND.borderStrong}; background: ${BRAND.surface}; color: ${BRAND.accentStrong}; font-weight: 800; font-size: 12.5px; cursor: pointer; flex-shrink: 0; }
-  .idb-bio { margin-top: 14px; padding-top: 12px; border-top: 1px dashed ${BRAND.borderStrong}; display: grid; gap: 6px; }
-  .idb-bio-title { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; font-size: 12px; font-weight: 800; color: ${BRAND.muted}; }
-  .idb-bio-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; padding: 9px 12px; border-radius: 12px; border: 1px solid ${BRAND.border}; background: ${BRAND.bgAlt}; color: ${BRAND.text}; font-size: 13px; cursor: pointer; }
-  .idb-bio-line span { overflow-wrap: anywhere; }
+  .idb-link-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .idb-link-label { font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: ${BRAND.faint}; }
+  .idb-link-url { display: block; min-width: 0; font-size: 14px; color: ${BRAND.accentStrong}; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .idb-link-url b { font-weight: 800; }
+  .idb-url-dim { font-weight: 600; color: ${BRAND.faint}; }
+  .idb-icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; min-width: 32px; padding: 0 10px; border-radius: 99px; border: 1px solid ${BRAND.borderStrong}; background: ${BRAND.surface}; color: ${BRAND.accentStrong}; font-weight: 800; font-size: 12px; cursor: pointer; transition: background .15s, color .15s; }
+  .idb-icon-btn.done { background: ${BRAND.ok}; border-color: ${BRAND.ok}; color: #fff; }
+  .idb-bio { margin-top: 10px; padding-top: 8px; border-top: 1px dashed ${BRAND.borderStrong}; min-width: 0; }
+  .idb-bio-toggle { width: 100%; display: flex; align-items: center; gap: 6px; padding: 4px 2px; border: none; background: none; cursor: pointer; font-size: 12.5px; font-weight: 800; color: ${BRAND.muted}; }
+  .idb-bio-count { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: rgba(201,168,76,.2); color: ${BRAND.accent}; }
+  .idb-bio-chev { margin-left: auto; transition: transform .2s; }
+  .idb-bio-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; padding-top: 6px; }
+  .idb-bio-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid ${BRAND.border}; background: ${BRAND.bgAlt}; color: ${BRAND.text}; font-size: 12.5px; line-height: 1.4; cursor: pointer; }
+  .idb-bio-line span { min-width: 0; overflow-wrap: anywhere; }
   .idb-bio-line svg { flex-shrink: 0; color: ${BRAND.faint}; }
-  .idb-bio-note { margin: 4px 0 0; font-size: 12px; color: ${BRAND.muted}; line-height: 1.5; }
+  .idb-bio-note { margin: 2px 2px 0; font-size: 11.5px; color: ${BRAND.muted}; line-height: 1.45; }
   .idb-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .idb-chart { height: 210px; }
   @media (min-width: 768px) { .idb-tabs { top: 84px; } }
@@ -588,10 +622,10 @@ const CSS = `
   .idb-goal-bar { margin-top: 8px; height: 8px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
   .idb-goal-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c9a84c, #f2cf74, #ffe7a8); box-shadow: 0 0 12px rgba(242,207,116,.6); }
   .idb-goal-hint { display: block; margin-top: 6px; font-size: 11.5px; color: rgba(245,237,230,.6); }
-  .idb-sharekit { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-  .idb-share-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; border: 1px solid ${BRAND.border}; background: ${BRAND.bgAlt}; color: ${BRAND.text}; font-size: 11.5px; font-weight: 800; cursor: pointer; transition: transform .15s; min-width: 0; }
+  .idb-sharekit { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+  .idb-share-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border-radius: 12px; border: 1px solid ${BRAND.border}; background: ${BRAND.bgAlt}; color: ${BRAND.text}; font-size: 11px; font-weight: 800; cursor: pointer; transition: transform .15s; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .idb-share-btn:active { transform: scale(.96); }
-  .idb-share-btn > span { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+  .idb-share-btn > span { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; }
   .idb-stat { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 18px; background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; overflow: hidden; }
   .idb-stat::after { content: ""; position: absolute; right: -24px; top: -24px; width: 70px; height: 70px; border-radius: 50%; background: var(--acc); opacity: .12; }
   .idb-stat-ic { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--acc) 16%, transparent); color: ${BRAND.accent}; margin-bottom: 6px; }
@@ -617,7 +651,7 @@ const CSS = `
   .idb-filters { display: flex; gap: 4px; flex-wrap: wrap; }
   .idb-filters button { border: 1px solid ${BRAND.border}; background: ${BRAND.surface}; color: ${BRAND.muted}; font-weight: 800; font-size: 12px; padding: 7px 11px; border-radius: 99px; cursor: pointer; }
   .idb-filters button.on { background: ${BRAND.accentStrong}; color: #f5ede6; border-color: ${BRAND.accentStrong}; }
-  .idb-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .idb-people { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .idb-people > li { border-radius: 14px; border: 1px solid ${BRAND.border}; background: ${BRAND.surface}; overflow: hidden; }
   .idb-people > li.open { border-color: rgba(201,168,76,.45); }
   .idb-person { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: none; background: none; cursor: pointer; text-align: left; }
@@ -631,8 +665,8 @@ const CSS = `
   .idb-earned { font-size: 13px; font-weight: 800; color: ${BRAND.ok}; white-space: nowrap; }
   .idb-chev { color: ${BRAND.faint}; transition: transform .2s; flex-shrink: 0; }
   .idb-people > li.open .idb-chev { transform: rotate(180deg); }
-  .idb-pages { list-style: none; margin: 0; padding: 0 12px 10px 58px; display: grid; gap: 4px; }
-  .idb-pages li { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; background: ${BRAND.bgAlt}; font-size: 12.5px; }
+  .idb-pages { list-style: none; margin: 0; padding: 0 12px 10px 58px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .idb-pages li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; background: ${BRAND.bgAlt}; font-size: 12.5px; }
   .idb-page-name { font-weight: 700; color: ${BRAND.text}; overflow-wrap: anywhere; }
   .idb-page-date { color: ${BRAND.faint}; font-size: 11.5px; white-space: nowrap; }
   .idb-page-money { white-space: nowrap; color: ${BRAND.muted}; font-weight: 700; min-width: 64px; text-align: right; }
@@ -682,15 +716,19 @@ const CSS = `
     .idb-person-main { flex-basis: calc(100% - 80px); }
     .idb-person-meta { order: 3; flex-basis: 100%; justify-content: flex-start; padding-left: 46px; }
     .idb-person-meta .idb-earned { margin-left: auto; }
-    .idb-money { grid-template-columns: 1fr; }
-    .idb-money-side { grid-template-columns: 1fr 1fr; }
+    .idb-money { grid-template-columns: minmax(0, 1fr); }
+    .idb-money-side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .idb-stats { grid-template-columns: 1fr 1fr; }
     .idb-rate { margin-left: 0; }
     .idb-pages { padding-left: 12px; }
-    .idb-pages li { grid-template-columns: 1fr auto; }
+    .idb-pages li { grid-template-columns: minmax(0, 1fr) auto; }
     .idb-page-date { grid-column: 1; }
     .idb-nopages { padding-left: 12px; }
     .idb-ledger-calc { display: none; }
-    .idb-icon-btn span { display: none; }
+    .idb-icon-txt { display: none; }
+    .idb-icon-btn { padding: 0; width: 32px; }
+    .idb-link-url { font-size: 13px; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .idb-card-head { margin-bottom: 8px; }
+    .idb-share-btn { font-size: 10.5px; }
   }
 `;
