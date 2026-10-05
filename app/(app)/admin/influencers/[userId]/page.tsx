@@ -122,6 +122,9 @@ function Controls({ data, token, onChange }: { data: InfluencerDashboard; token:
         </p>
         <div className="infc-row">
           <div className="infc-input"><b>₹</b><input type="number" min={1} step={1} value={amount} placeholder={String(Math.floor(totals.pendingPaise / 100))} onChange={(e) => setAmount(e.target.value)} /></div>
+          {totals.pendingPaise >= 100 && String(Math.floor(totals.pendingPaise / 100)) !== amount && (
+            <button type="button" className="infc-fill" onClick={() => setAmount(String(Math.floor(totals.pendingPaise / 100)))}>Fill owed</button>
+          )}
           <input className="infc-note" value={note} maxLength={200} placeholder="UPI ref / note" onChange={(e) => setNote(e.target.value)} />
           <button type="button" className="infc-btn" disabled={!amount || busy === "pay"} onClick={async () => {
             if (await call("pay", `${base}/payouts`, "POST", { amountRupees: Number(amount), note })) {
@@ -160,8 +163,8 @@ function Controls({ data, token, onChange }: { data: InfluencerDashboard; token:
 
 const CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
-  .infc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .infc-box { padding: 14px; border-radius: 18px; background: ${A.paper}; border: 1px solid rgba(201,168,76,.35); }
+  .infc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px; min-width: 0; }
+  .infc-box { min-width: 0; padding: 14px; border-radius: 18px; background: ${A.paper}; border: 1px solid rgba(201,168,76,.35); }
   .infc-box h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13.5px; color: ${A.ink}; }
   .infc-box p { margin: 4px 0 10px; font-size: 12px; color: ${A.muted}; line-height: 1.45; overflow-wrap: anywhere; }
   .infc-box p b { color: ${A.ink}; }
@@ -169,17 +172,17 @@ const CSS = `
   .infc-input { display: flex; align-items: center; gap: 4px; height: 38px; padding: 0 10px; border-radius: 10px; border: 1.5px solid ${A.edge}; background: #fff; width: 110px; }
   .infc-input input { width: 100%; border: none; outline: none; font-size: 15px; font-weight: 800; color: ${A.ink}; background: none; }
   .infc-input b { color: ${A.muted}; font-size: 12px; }
-  .infc-note { flex: 1; min-width: 110px; height: 38px; padding: 0 10px; border-radius: 10px; border: 1.5px solid ${A.edge}; font-size: 13px; outline: none; }
+  .infc-note { flex: 1 1 120px; min-width: 0; height: 38px; padding: 0 10px; border-radius: 10px; border: 1.5px solid ${A.edge}; font-size: 13px; outline: none; }
+  .infc-fill { height: 38px; padding: 0 12px; border-radius: 99px; border: 1px dashed rgba(201,168,76,.7); background: rgba(201,168,76,.1); color: ${A.goldDeep}; font-weight: 800; font-size: 12px; cursor: pointer; }
   .infc-btn { height: 38px; padding: 0 14px; border-radius: 99px; border: none; background: ${A.maroon}; color: #f5ede6; font-weight: 800; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .infc-btn.danger { background: ${A.danger}; }
   .infc-btn:disabled { opacity: .45; cursor: not-allowed; }
   .infc-now { margin: 8px 0 0 !important; }
   .infc-upi { display: inline-flex; align-items: center; gap: 4px; border: none; background: rgba(201,168,76,.15); color: ${A.goldDeep}; font-weight: 800; font-size: 11.5px; padding: 2px 8px; border-radius: 99px; cursor: pointer; }
   .infc-payouts { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
-  .infc-payouts li { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11.5px; color: ${A.soft}; padding: 5px 8px; border-radius: 8px; background: rgba(61,12,17,.03); }
+  .infc-payouts li { min-width: 0; overflow-wrap: anywhere; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11.5px; color: ${A.soft}; padding: 5px 8px; border-radius: 8px; background: rgba(61,12,17,.03); }
   .infc-payouts button { border: none; background: none; color: ${A.danger}; cursor: pointer; display: flex; }
   .infc-msg { grid-column: 1 / -1; margin: 0; font-size: 12.5px; font-weight: 700; color: ${A.danger}; }
   .infc-msg.ok { color: ${A.ok}; }
   .infc-spin { animation: spin 1s linear infinite; }
-  @media (max-width: 900px) { .infc { grid-template-columns: 1fr; } }
 `;
