@@ -35,7 +35,7 @@ import {
   X, User, Gift, BookOpen, Info, Mail, HelpCircle, GraduationCap,
   BarChart3, Users, LayoutGrid, IndianRupee, KeyRound, MessageSquare, Star, FileText,
   Coins, LogIn, ChevronRight, Repeat, Heart, UserPlus, Megaphone,
-  HeartHandshake,
+  HeartHandshake, Crown, BadgePercent,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import AuthModal from "@/components/AuthModal";
@@ -206,6 +206,9 @@ export default function MoreDrawer({
     { label: "Favorites", icon: <Heart size={17} />, href: "/favorites" },
     { label: "Blog", icon: <BookOpen size={17} />, href: "/blog" },
     { label: "Refer & Earn", icon: <Gift size={17} />, href: "/profile#referral" },
+    // One entry for both states: /influencer shows the signup to everyone else
+    // and the dashboard to an influencer.
+    { label: user?.influencer ? "Influencer Hub" : "Become an Influencer", icon: <Crown size={17} />, href: "/influencer" },
   ];
 
   const adminItems: Item[] = isAdmin
@@ -228,6 +231,7 @@ export default function MoreDrawer({
               // Mails a chosen slice of every verified user, so super admin only.
               { label: "Outreach", icon: <Megaphone size={17} />, href: "/admin/outreach" },
               { label: "Wishlist", icon: <HeartHandshake size={17} />, href: "/admin/wishlist" },
+              { label: "Influencers", icon: <BadgePercent size={17} />, href: "/admin/influencers" },
             ]
           : []),
         { label: "Contacts", icon: <MessageSquare size={17} />, href: "/admin/contacts" },

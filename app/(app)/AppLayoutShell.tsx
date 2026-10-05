@@ -1,8 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
 import { usePathname } from "next/navigation";
-import RefCodeCapture from "@/components/RefCodeCapture";
 import ReferralWelcomeOverlay from "@/components/ReferralWelcomeOverlay";
 
 export default function AppLayoutShell({ children }: { children: React.ReactNode }) {
@@ -15,7 +13,6 @@ export default function AppLayoutShell({ children }: { children: React.ReactNode
   // late-appearing loader.
   return (
     <div className={isHome ? "" : "pb-24 md:pb-0"}>
-      <Suspense fallback={null}><RefCodeCapture /></Suspense>
       <ReferralWelcomeOverlay />
       {children}
     </div>

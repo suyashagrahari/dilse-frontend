@@ -25,6 +25,7 @@ import MyStorySection from "@/components/profile/MyStorySection";
 import ProfileWishlist from "@/components/wishlist/ProfileWishlist";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { ProfileSkeleton } from "@/components/skeleton/Skeletons";
+import ProfileInfluencerStrip from "@/components/influencer/ProfileInfluencerStrip";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -1321,6 +1322,8 @@ export default function ProfilePage() {
     <ProfileShell>
       <div className="pfWrap">
         {HeroBlock}
+
+        <ProfileInfluencerStrip />
 
         <ProfileWishlist />
 

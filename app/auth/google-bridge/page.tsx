@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { API_URL, SITE_URL } from "@/lib/config";
+import { readRefCode, clearRefCode } from "@/lib/referral";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
@@ -38,12 +39,16 @@ export default function GoogleBridgePage() {
                 picture: profile.picture,
                 sub: profile.sub,
               },
+              // The bridge always runs on the apex, where the root-domain
+              // cookie set on the influencer's subdomain is readable.
+              referralCode: readRefCode(),
             }),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Auth failed");
 
           const { accessToken: jwt, refreshToken } = data.data;
+          clearRefCode();
 
           // Redirect back to the originating subdomain page with tokens in hash
           const destination = new URL(returnTo);
