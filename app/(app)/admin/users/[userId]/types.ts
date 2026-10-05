@@ -16,6 +16,9 @@ export interface ProfileUser {
   totalPointsEarned: number;
   referralCode: string;
   subdomain?: string;
+  /** ISO-2 country at signup / latest seen (≤ daily). Reporting only. */
+  signupCountry?: string | null;
+  lastSeenCountry?: string | null;
   isVerified: boolean;
   tokenVersion?: number;
   createdAt: string;

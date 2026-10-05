@@ -45,6 +45,7 @@ import { derivePricing, formatINR } from "@/config/templatePricing";
 import { refreshPricing } from "@/lib/pricing";
 import { isPremiumSlug } from "@/lib/templateMeta";
 import { UNPRICEABLE } from "./UNPRICEABLE";
+import IntlPricingPanel from "./IntlPricingPanel";
 import {
   Search, Loader2, Check, RotateCcw, Globe, AlertTriangle, Ban, IndianRupee, Gift, Tag as TagIcon, Crown, Layers,
 } from "lucide-react";
@@ -65,6 +66,7 @@ interface Row {
   finalPricePaise: number;
   discountPercent: number;
   pointsCost: number;
+  usdPriceCents?: number | null;
   updatedByEmail: string;
   updatedAt: string | null;
 }
@@ -75,6 +77,8 @@ interface Draft {
   rupees: string;
   discount: string;
   points: string;
+  /** Dollars as typed ("4.99"). Empty = derive from INR at the saved rate. */
+  usd: string;
 }
 
 const CATALOGUE = [
@@ -82,7 +86,7 @@ const CATALOGUE = [
   ...webpageTemplateList.map((t) => ({ ...t, group: "Webpage" as const })),
 ];
 
-const FREE_DRAFT: Draft = { paid: false, rupees: "", discount: "0", points: "0" };
+const FREE_DRAFT: Draft = { paid: false, rupees: "", discount: "0", points: "0", usd: "" };
 
 function draftFromRow(row: Row | undefined): Draft {
   if (!row || row.isFree) return FREE_DRAFT;
@@ -91,8 +95,19 @@ function draftFromRow(row: Row | undefined): Draft {
     rupees: String(row.finalPricePaise / 100),
     discount: String(row.discountPercent),
     points: String(row.pointsCost),
+    usd: typeof row.usdPriceCents === "number" && row.usdPriceCents > 0 ? (row.usdPriceCents / 100).toFixed(2) : "",
   };
 }
+
+/** Same rule as the server (config/currency.ts): ₹ ÷ rate, up to the next .99. */
+function derivedUsdCents(inrPaise: number, inrPerUsd: number): number {
+  const rate = inrPerUsd > 0 ? inrPerUsd : 88;
+  const cents = Math.ceil(Math.max(0, inrPaise) / rate - 1e-9);
+  return Math.max(199, Math.ceil((cents + 1) / 100) * 100 - 1);
+}
+
+const sameDraft = (a: Draft, b: Draft) =>
+  a.paid === b.paid && (!a.paid || (a.rupees === b.rupees && a.discount === b.discount && a.points === b.points && a.usd === b.usd));
 
 /**
  * Validate a draft the same way the server does, so a mistake is caught before
@@ -116,6 +131,13 @@ function checkDraft(d: Draft): string | null {
 
   const pts = Number(d.points || "0");
   if (!Number.isInteger(pts) || pts < 0) return "Points must be 0 or more.";
+
+  if (d.usd.trim()) {
+    if (!/^\d{1,4}(\.\d{1,2})?$/.test(d.usd.trim())) return "USD price must look like 4.99.";
+    const usd = Number(d.usd);
+    if (usd < 1) return "USD price must be at least $1 — PayPal keeps ~$0.30 of every sale.";
+    if (usd > 1000) return "USD price must be $1,000 or less.";
+  }
 
   return null;
 }
@@ -148,6 +170,8 @@ export default function AdminPricingPage() {
   const [bulkArmed, setBulkArmed] = useState<null | "price" | "free">(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // INR per USD from the International pricing panel, for derived-price previews.
+  const [inrPerUsd, setInrPerUsd] = useState(88);
   const [error, setError] = useState<string | null>(null);
 
   // ── Access ────────────────────────────────────────────────────────────────
@@ -244,6 +268,9 @@ export default function AdminPricingPage() {
               finalPricePaise: Math.round(Number(d.rupees) * 100),
               discountPercent: Number(d.discount) || 0,
               pointsCost: Number(d.points) || 0,
+              // Always sent from this panel: a number sets it, null clears it
+              // back to "derived". (A client that omits it keeps the old value.)
+              usdPriceCents: d.usd.trim() ? Math.round(Number(d.usd) * 100) : null,
             }
           : { isFree: true };
 
@@ -263,6 +290,7 @@ export default function AdminPricingPage() {
             finalPricePaise: d.paid ? Math.round(Number(d.rupees) * 100) : 0,
             discountPercent: d.paid ? Number(d.discount) || 0 : 0,
             pointsCost: d.paid ? Number(d.points) || 0 : 0,
+            usdPriceCents: d.paid && d.usd.trim() ? Math.round(Number(d.usd) * 100) : null,
             updatedByEmail: json.data?.updatedByEmail || user?.email || "",
             updatedAt: new Date().toISOString(),
           },
@@ -316,7 +344,8 @@ export default function AdminPricingPage() {
     () => CATALOGUE.filter((t) => !UNPRICEABLE[t.slug] && isPremium(t.slug) === (room === "premium")),
     [room, isPremium]
   );
-  const bulkDraft: Draft = { paid: true, rupees: bulk.rupees, discount: bulk.discount, points: bulk.points };
+  // Bulk edits never touch USD: the field is omitted, so the server keeps each template's own USD price.
+  const bulkDraft: Draft = { paid: true, rupees: bulk.rupees, discount: bulk.discount, points: bulk.points, usd: "" };
   const bulkProblem = checkDraft(bulkDraft);
   const bulkPreview = previewOf("bulk", bulkDraft);
 
@@ -395,8 +424,7 @@ export default function AdminPricingPage() {
     if (UNPRICEABLE[t.slug]) return false;
     const d = drafts[t.slug];
     if (!d) return false;
-    const s = draftFromRow(rows[t.slug]);
-    return s.paid !== d.paid || (d.paid && (s.rupees !== d.rupees || s.discount !== d.discount || s.points !== d.points));
+    return !sameDraft(draftFromRow(rows[t.slug]), d);
   }).length;
 
   const apiHost = useMemo(() => {
@@ -453,6 +481,8 @@ export default function AdminPricingPage() {
           </span>
         </div>
       </Hero>
+
+      <IntlPricingPanel headers={hdr} onRate={setInrPerUsd} />
 
       {/* ── Everyday / Premium: which collection am I pricing ─────────────── */}
       <div className="ap-rooms" role="tablist" aria-label="Collection">
@@ -574,10 +604,7 @@ export default function AdminPricingPage() {
 
             // "Dirty" compares the draft to the stored row, so Save is only
             // offered when there is something to save.
-            const stored = draftFromRow(row);
-            const dirty =
-              stored.paid !== d.paid ||
-              (d.paid && (stored.rupees !== d.rupees || stored.discount !== d.discount || stored.points !== d.points));
+            const dirty = !sameDraft(draftFromRow(row), d);
 
             return (
               <motion.div
@@ -650,7 +677,7 @@ export default function AdminPricingPage() {
                       style={{ overflow: "hidden" }}
                     >
                       <div className="ap-edit" style={{ paddingTop: 10, display: "grid", gap: 10 }}>
-                        <div className="ap-fields">
+                        <div className="ap-fields ap-fields4">
                           <Field
                             label="Price charged"
                             prefix={<IndianRupee size={12} style={{ color: tM }} />}
@@ -673,6 +700,15 @@ export default function AdminPricingPage() {
                             onChange={(v) => setDraft(t.slug, { points: v })}
                             disabled={busy}
                             placeholder="0"
+                          />
+                          <Field
+                            label="USD price"
+                            prefix={<span style={{ fontSize: 13, fontWeight: 700, color: tM }}>$</span>}
+                            value={d.usd}
+                            onChange={(v) => setDraft(t.slug, { usd: v })}
+                            disabled={busy}
+                            decimal
+                            placeholder={`${(derivedUsdCents(Math.round(Number(d.rupees || 0) * 100), inrPerUsd) / 100).toFixed(2)} auto`}
                           />
                         </div>
 
@@ -716,6 +752,15 @@ export default function AdminPricingPage() {
                                   or {preview.pointsCost.toLocaleString("en-IN")} points
                                 </div>
                               )}
+                              <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${cB}`, fontSize: 11.5, color: t2 }}>
+                                Abroad:{" "}
+                                <b style={{ color: t1 }}>
+                                  ${(
+                                    (d.usd.trim() ? Math.round(Number(d.usd) * 100) : derivedUsdCents(preview.finalPricePaise, inrPerUsd)) / 100
+                                  ).toFixed(2)}
+                                </b>
+                                <span style={{ color: tM }}>{d.usd.trim() ? " (set)" : " (auto)"}</span>
+                              </div>
                             </>
                           )}
                         </div>
@@ -821,6 +866,8 @@ const AP_CSS = `
      the two-column grid on a desktop for the same reason. */
   .ap-edit { grid-template-columns: minmax(0, 1fr) minmax(0, 200px); }
   .ap-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .ap-fields4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .ap-fields4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .ap-field { min-width: 0; }
   .ap-fieldwrap > span + span:focus-within { border-color: ${A.gold} !important; box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
   .ap-preview { border-radius: 12px; background: linear-gradient(135deg, #f7eee5, #fbf4ea); border: 1px solid ${A.edge}; padding: 9px 11px; min-width: 0; }
@@ -887,7 +934,7 @@ const AP_CSS = `
 /** A small labelled number input. Text, not `number`, so a partial value while
  *  typing does not get silently coerced or rejected by the browser. */
 function Field({
-  label, value, onChange, disabled, placeholder, prefix, suffix,
+  label, value, onChange, disabled, placeholder, prefix, suffix, decimal,
 }: {
   label: string;
   value: string;
@@ -896,6 +943,8 @@ function Field({
   placeholder?: string;
   prefix?: React.ReactNode;
   suffix?: string;
+  /** Allow one "." and two decimals (USD). Everything else stays whole numbers. */
+  decimal?: boolean;
 }) {
   return (
     <label className="ap-field ap-fieldwrap" style={{ display: "block" }}>
@@ -913,10 +962,16 @@ function Field({
         {prefix}
         <input
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
+          onChange={(e) =>
+            onChange(
+              decimal
+                ? e.target.value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1").replace(/^(\d*\.\d{0,2}).*$/, "$1")
+                : e.target.value.replace(/[^\d]/g, "")
+            )
+          }
           disabled={disabled}
           placeholder={placeholder}
-          inputMode="numeric"
+          inputMode={decimal ? "decimal" : "numeric"}
           style={{
             // Fills the 40px wrapper so the whole control is the tap target. As a
             // 24px input inside 40px of padding, two thirds of what looks like

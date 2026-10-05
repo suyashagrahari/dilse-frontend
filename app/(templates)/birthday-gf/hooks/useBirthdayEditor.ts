@@ -225,7 +225,7 @@ export function useBirthdayEditor() {
         // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
         // and the publish request is only made when it will succeed.
         const gate = await ensurePublishAllowed(
-          { slug: TEMPLATE, templateType: "birthday", pageId: savedId, templateTitle: "Happy Birthday My Love" },
+          { slug: TEMPLATE, templateType: "birthday-gf", pageId: savedId, templateTitle: "Happy Birthday My Love" },
           setPublishing,
         );
         if (gate === "cancelled") return;
@@ -595,7 +595,7 @@ export function useBirthdayEditor() {
       // Clear the paywall BEFORE publishing, so nothing spins behind the sheet,
       // and the publish request is only made when it will succeed.
       const gate = await ensurePublishAllowed(
-        { slug: TEMPLATE, templateType: "birthday", pageId: id, templateTitle: "Happy Birthday My Love" },
+        { slug: TEMPLATE, templateType: "birthday-gf", pageId: id, templateTitle: "Happy Birthday My Love" },
         setPublishing,
       );
       if (gate === "cancelled") return;

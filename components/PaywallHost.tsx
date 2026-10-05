@@ -19,6 +19,7 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { refreshPricing } from "@/lib/pricing";
 import { closePaywall, completePaywall, usePaywallRequest } from "@/lib/paywall/paywallBus";
 import { track } from "@/lib/analytics/track";
+import { debugCountryHeader, inrQuoteFrom, type Quote } from "@/lib/money";
 import { EVENTS } from "@/lib/analytics/events";
 
 export type PaywallStatus = "idle" | "loading" | "error";
@@ -27,9 +28,15 @@ export default function PaywallHost() {
   const request = usePaywallRequest();
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const authUser = useAppSelector((s) => s.auth.user);
 
   const [status, setStatus] = useState<PaywallStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  // The buyer's price in their currency. `null` = still loading; the modal
+  // holds the Pay button until it lands. `fallback` = /quote failed, so this is
+  // the INR price from the gate and create-order is sent the legacy INR fields.
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const quoteIsFallback = useRef(false);
 
   // Reset when a new request arrives, so a previous failure is not still on
   // screen the next time the paywall opens.
@@ -40,15 +47,44 @@ export default function PaywallHost() {
     openedFor.current = key;
     setStatus("idle");
     setError(null);
+    setQuote(null);
+    quoteIsFallback.current = false;
+    if (!request) return;
 
-    if (request) {
-      track(EVENTS.BEGIN_CHECKOUT, {
-        template: request.slug,
-        value: request.pricing.finalPrice,
-        currency: "INR",
+    let cancelled = false;
+    const controller = new AbortController();
+    fetch(`${API_URL}/payment/quote?templateType=${encodeURIComponent(request.templateType)}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+        ...debugCountryHeader(),
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        if (cancelled) return;
+        if (!d?.success || !d.data?.pricing) throw new Error("bad quote");
+        setQuote(d.data as Quote);
+        track(EVENTS.BEGIN_CHECKOUT, {
+          template: request.slug,
+          value: d.data.pricing.finalAmount / 100,
+          currency: d.data.currency,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Degrade to exactly the pre-multi-currency behaviour: INR, from the gate.
+        quoteIsFallback.current = true;
+        setQuote(inrQuoteFrom(request.pricing));
+        track(EVENTS.BEGIN_CHECKOUT, { template: request.slug, value: request.pricing.finalPrice, currency: "INR" });
       });
-    }
-  }, [request]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [request, accessToken]);
 
   const headers = useCallback(
     () => ({
@@ -97,8 +133,9 @@ export default function PaywallHost() {
   // ── Option B: Razorpay ────────────────────────────────────────────────────
 
   const onRazorpay = useCallback(async () => {
-    if (!request) return;
+    if (!request || !quote) return;
     const { templateType, pageId, slug, pricing } = request;
+    const charge = quote.pricing;
 
     setStatus("loading");
     setError(null);
@@ -108,21 +145,33 @@ export default function PaywallHost() {
       // charging an amount that was never on screen.
       const orderRes = await fetch(`${API_URL}/payment/create-order`, {
         method: "POST",
-        headers: headers(),
-        body: JSON.stringify({
-          templateType,
-          pageId,
-          expectedFinalPricePaise: pricing.finalPricePaise,
-        }),
+        headers: { ...headers(), ...debugCountryHeader() },
+        body: JSON.stringify(
+          quoteIsFallback.current
+            ? // /quote was unreachable: the legacy contract, which the server
+              // always charges in INR.
+              { templateType, pageId, expectedFinalPricePaise: pricing.finalPricePaise }
+            : { templateType, pageId, expectedCurrency: charge.currency, expectedAmount: charge.finalAmount }
+        ),
       });
       const orderData = await orderRes.json();
 
       if (orderRes.status === 409 && orderData?.code === "PRICE_CHANGED") {
-        // Pull the new price into the badges, and tell the user plainly. Not an
-        // error they caused, and not something to retry silently at a new price.
+        // Pull the new price into the badges, show the NEW quote in the modal,
+        // and tell the user plainly. They press Pay again to accept it — never a
+        // silent retry at a different amount or currency.
         void refreshPricing();
+        if (orderData.quote?.pricing) {
+          quoteIsFallback.current = false;
+          setQuote({
+            pricing: orderData.quote.pricing,
+            currency: orderData.quote.currency,
+            country: orderData.quote.country ?? null,
+            international: orderData.quote.currency !== "INR",
+          });
+        }
         setStatus("error");
-        setError(orderData.error || "The price changed. Please close this and try again.");
+        setError(orderData.error || "The price changed. Please review it and press Pay again.");
         return;
       }
       if (orderRes.status === 400 && orderData?.code === "ALREADY_PUBLISHED") {
@@ -184,7 +233,8 @@ export default function PaywallHost() {
           },
 
           modal: { ondismiss: () => reject(new Error("PAYMENT_CANCELLED")) },
-          prefill: {},
+          // Prefilled so PayPal / card forms start with the buyer's details.
+          prefill: { name: authUser?.name || "", email: authUser?.email || "" },
           theme: { color: "#FF6B35" },
         });
         rzp.open();
@@ -194,8 +244,8 @@ export default function PaywallHost() {
       // actually taken. `amount` is paise; GA4 revenue must be in major units.
       track(EVENTS.PURCHASE, {
         template: slug,
-        value: typeof amount === "number" ? amount / 100 : pricing.finalPrice,
-        currency: "INR",
+        value: typeof amount === "number" ? amount / 100 : charge.finalAmount / 100,
+        currency: currency || charge.currency,
         transaction_id: typeof orderId === "string" ? orderId : undefined,
       });
 
@@ -206,8 +256,8 @@ export default function PaywallHost() {
       if (msg === "PAYMENT_CANCELLED") {
         track(EVENTS.CHECKOUT_CANCELLED, {
           template: slug,
-          value: pricing.finalPrice,
-          currency: "INR",
+          value: charge.finalAmount / 100,
+          currency: charge.currency,
         });
         setStatus("idle");
         setError(null);
@@ -229,7 +279,7 @@ export default function PaywallHost() {
           : msg
       );
     }
-  }, [request, headers]);
+  }, [request, headers, quote, authUser]);
 
   if (!request) return null;
 
@@ -237,6 +287,7 @@ export default function PaywallHost() {
     <PaymentModal
       open
       pricing={request.pricing}
+      quote={quote}
       templateTitle={request.templateTitle}
       paymentStatus={status}
       paymentError={error}

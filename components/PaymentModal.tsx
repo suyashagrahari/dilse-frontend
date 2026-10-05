@@ -34,16 +34,22 @@
 
 import { useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X, Coins, Crown, AlertCircle, Loader2, Check, ShieldCheck } from "lucide-react";
+import { X, Coins, Crown, AlertCircle, Loader2, Check, ShieldCheck, Globe } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { BRAND as C } from "@/lib/brand";
-import { formatINR, type ResolvedPricing } from "@/config/templatePricing";
+import { type ResolvedPricing } from "@/config/templatePricing";
+import { formatMoney, inrQuoteFrom, type Quote } from "@/lib/money";
 
 export type PaymentStatus = "idle" | "loading" | "error";
 
 interface PaymentModalProps {
   open: boolean;
   pricing: ResolvedPricing;
+  /**
+   * The buyer's quote, in their currency. Null while it loads — the price and
+   * the Pay button wait for it, so nobody is shown ₹ and then charged $.
+   */
+  quote: Quote | null;
   /** The template's own name, for the heading. Falls back to generic copy. */
   templateTitle?: string;
   paymentStatus: PaymentStatus;
@@ -56,6 +62,7 @@ interface PaymentModalProps {
 export default function PaymentModal({
   open,
   pricing,
+  quote,
   templateTitle,
   paymentStatus,
   paymentError,
@@ -73,7 +80,10 @@ export default function PaymentModal({
 
   // Hidden entirely at 0%: a struck-through price beside "0% OFF" reads as a
   // rendering bug, and "You save ₹0" is worse than saying nothing.
-  const discounted = pricing.discountPercent > 0 && pricing.savingsPaise > 0;
+  const q = quote ?? inrQuoteFrom(pricing);
+  const quoteReady = quote !== null;
+  const money = (minor: number) => formatMoney(minor, q.currency);
+  const discounted = q.pricing.discountPercent > 0 && q.pricing.savingsAmount > 0;
 
   // Lock the background, and let Escape close — but never mid-charge, for the
   // same reason the backdrop stops responding then.
@@ -242,17 +252,23 @@ export default function PaymentModal({
                             color: C.text, lineHeight: 1,
                           }}
                         >
-                          {formatINR(pricing.finalPrice)}
+                          {quoteReady ? money(q.pricing.finalAmount) : "…"}
                         </span>
                         {discounted && (
                           <span style={{ fontSize: 15, color: C.faint, textDecoration: "line-through" }}>
-                            {formatINR(pricing.mrp)}
+                            {money(q.pricing.mrpAmount)}
                           </span>
                         )}
                       </div>
                       {discounted && (
                         <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: C.ok }}>
-                          You save {formatINR(pricing.savings)}
+                          You save {money(q.pricing.savingsAmount)}
+                        </div>
+                      )}
+                      {quoteReady && q.international && (
+                        <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, color: C.muted }}>
+                          <Globe size={12} style={{ flex: "none" }} />
+                          International price in USD · pay with PayPal or a card through PayPal
                         </div>
                       )}
                     </div>
@@ -266,7 +282,7 @@ export default function PaymentModal({
                           lineHeight: 1.05,
                         }}
                       >
-                        <div style={{ fontSize: 17, fontWeight: 900 }}>{pricing.discountPercent}%</div>
+                        <div style={{ fontSize: 17, fontWeight: 900 }}>{q.pricing.discountPercent}%</div>
                         <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: "0.12em" }}>OFF</div>
                       </div>
                     )}
@@ -302,21 +318,21 @@ export default function PaymentModal({
                   <button
                     type="button"
                     onClick={onRazorpay}
-                    disabled={isLoading}
+                    disabled={isLoading || !quoteReady}
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                       width: "100%", minHeight: 52, padding: "0 16px",
                       borderRadius: 999, border: "none",
                       background: C.gradient, color: "#fff",
                       fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em",
-                      cursor: isLoading ? "wait" : "pointer",
-                      opacity: isLoading ? 0.72 : 1,
+                      cursor: isLoading || !quoteReady ? "wait" : "pointer",
+                      opacity: isLoading || !quoteReady ? 0.72 : 1,
                       boxShadow: "0 10px 24px -10px rgba(61,12,17,0.55)",
                       WebkitTapHighlightColor: "transparent",
                     }}
                   >
-                    {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
-                    {isLoading ? "Please wait…" : `Pay ${formatINR(pricing.finalPrice)}`}
+                    {isLoading || !quoteReady ? <Loader2 size={18} className="animate-spin" /> : null}
+                    {isLoading ? "Please wait…" : !quoteReady ? "Loading price…" : `Pay ${money(q.pricing.finalAmount)}`}
                   </button>
 
                   {pointsOffered && (
