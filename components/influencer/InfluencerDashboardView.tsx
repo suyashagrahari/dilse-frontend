@@ -13,7 +13,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IndianRupee, Wallet, Clock, Copy, Check, Share2, MousePointerClick, UserPlus, Sparkles,
-  Crown, Percent, ChevronDown, Search, Link2, Instagram, AlertTriangle, Users, Receipt, Settings, Loader2,
+  Crown, Percent, ChevronDown, Search, Link2, Instagram, Youtube, AlertTriangle, Users, Receipt, Settings, Loader2,
 } from "lucide-react";
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { BRAND } from "@/lib/brand";
@@ -46,11 +46,12 @@ export default function InfluencerDashboardView({
   const first = profile.name.split(" ")[0];
 
   const tabs: { id: Tab; label: string; icon: ReactNode; count?: number }[] = [
-    { id: "people", label: "People", icon: <Users size={14} />, count: data.referrals.length },
-    { id: "earnings", label: "Earnings", icon: <Receipt size={14} />, count: data.earnings.length },
-    { id: "payouts", label: "Payouts", icon: <Wallet size={14} />, count: data.payouts.length },
-    ...(mode === "self" ? [{ id: "settings" as Tab, label: "Payout details", icon: <Settings size={14} /> }] : []),
+    { id: "people", label: "People", icon: <Users size={15} />, count: data.referrals.length },
+    { id: "earnings", label: "Earnings", icon: <Receipt size={15} />, count: data.earnings.length },
+    { id: "payouts", label: "Payouts", icon: <Wallet size={15} />, count: data.payouts.length },
+    ...(mode === "self" ? [{ id: "settings" as Tab, label: "UPI", icon: <Settings size={15} /> }] : []),
   ];
+  const goal = nextGoal(totals.earnedPaise);
 
   return (
     <div className="idb">
@@ -102,6 +103,19 @@ export default function InfluencerDashboardView({
             </div>
           </div>
         </div>
+
+        <div className="idb-goal">
+          <div className="idb-goal-top">
+            <span>{totals.earnedPaise >= goal.target ? "Every goal smashed 🎉" : <>Next goal: <b>{rupees(goal.target)}</b></>}</span>
+            <span>{goal.pct}%</span>
+          </div>
+          <div className="idb-goal-bar"><motion.span initial={{ width: 0 }} animate={{ width: `${goal.pct}%` }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} /></div>
+          {totals.earnedPaise < goal.target && (
+            <span className="idb-goal-hint">
+              About {Math.max(1, Math.ceil((goal.target - totals.earnedPaise) / Math.max(1, (14900 * profile.commissionPercent) / 100)))} more premium sales to go
+            </span>
+          )}
+        </div>
       </motion.section>
 
       {adminSlot}
@@ -116,6 +130,7 @@ export default function InfluencerDashboardView({
           {links.nameLink && <LinkRow label="Name link" url={links.nameLink} primary />}
           {links.shortLink && <LinkRow label={links.nameLink ? "Short link" : "Your link"} url={links.shortLink} primary={!links.nameLink} />}
         </div>
+        {mode === "self" && <ShareKit link={links.nameLink || links.shortLink || ""} />}
         {mode === "self" && (
           <BioIdeas link={displayLink(links.nameLink || links.shortLink || "")} percent={profile.commissionPercent} />
         )}
@@ -144,11 +159,11 @@ export default function InfluencerDashboardView({
       </section>
 
       {/* ── Tabs ── */}
-      <nav className="idb-tabs" role="tablist">
+      <nav className="idb-tabs" role="tablist" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? "on" : ""} onClick={() => setTab(t.id)}>
             {tab === t.id && <motion.span layoutId={`idb-tab-${mode}`} className="idb-tab-pill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-            <span className="idb-tab-in">{t.icon}{t.label}{typeof t.count === "number" && t.count > 0 && <b>{t.count}</b>}</span>
+            <span className="idb-tab-in">{t.icon}<span className="idb-tab-label">{t.label}</span>{typeof t.count === "number" && t.count > 0 && <b>{t.count}</b>}</span>
           </button>
         ))}
       </nav>
@@ -171,7 +186,7 @@ export default function InfluencerDashboardView({
 
 function useCopy() {
   const [copied, setCopied] = useState<string | null>(null);
-  const copy = async (text: string) => {
+  const copy = async (text: string, key: string = text) => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -182,8 +197,8 @@ function useCopy() {
       document.execCommand("copy");
       ta.remove();
     }
-    setCopied(text);
-    setTimeout(() => setCopied((c) => (c === text ? null : c)), 1600);
+    setCopied(key);
+    setTimeout(() => setCopied((c) => (c === key ? null : c)), 1600);
   };
   return { copied, copy };
 }
@@ -207,6 +222,70 @@ function LinkRow({ label, url, primary }: { label: string; url: string; primary?
         </button>
       )}
     </div>
+  );
+}
+
+const GOALS = [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000];
+
+/** The first milestone not yet reached, in paise, and progress toward it. */
+function nextGoal(earned: number) {
+  const target = GOALS.find((g) => g > earned) ?? GOALS[GOALS.length - 1];
+  const prev = [...GOALS].reverse().find((g) => g <= earned) ?? 0;
+  const pct = earned >= target ? 100 : Math.round(((earned - prev) / (target - prev)) * 100);
+  return { target, pct: Math.max(earned > 0 ? 3 : 0, pct) };
+}
+
+function ShareKit({ link }: { link: string }) {
+  const { copied, copy } = useCopy();
+  const text = `Make a surprise they'll never forget 💌 ${link}`;
+  const items: { key: string; label: string; icon: ReactNode; bg: string; onClick: () => void }[] = [
+    {
+      key: "wa",
+      label: "WhatsApp",
+      icon: <WhatsAppGlyph />,
+      bg: "linear-gradient(135deg,#25d366,#128c7e)",
+      onClick: () => window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener"),
+    },
+    {
+      key: "ig",
+      label: copied === "ig" ? "Copied!" : "Instagram",
+      icon: <Instagram size={18} />,
+      bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)",
+      // Instagram has no share-with-text URL: copy the link for the bio/sticker, then open the app.
+      onClick: () => { void copy(link, "ig"); setTimeout(() => window.open("https://instagram.com/", "_blank", "noopener"), 400); },
+    },
+    {
+      key: "yt",
+      label: copied === "yt" ? "Copied!" : "YouTube",
+      icon: <Youtube size={18} />,
+      bg: "linear-gradient(135deg,#ff0000,#b30000)",
+      onClick: () => void copy(`🎁 Make yours here: ${link}`, "yt"),
+    },
+    {
+      key: "x",
+      label: "X / Twitter",
+      icon: <span style={{ fontWeight: 900, fontSize: 15 }}>𝕏</span>,
+      bg: "linear-gradient(135deg,#111,#333)",
+      onClick: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank", "noopener"),
+    },
+  ];
+  return (
+    <div className="idb-sharekit">
+      {items.map((it) => (
+        <button key={it.key} type="button" onClick={it.onClick} className="idb-share-btn">
+          <span style={{ background: it.bg }}>{it.icon}</span>
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function WhatsAppGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2S21.8 6.6 21.8 12 17.4 21.8 12 21.8zm0-21.6C5.5.2.2 5.5.2 12c0 2.1.5 4.1 1.6 5.9L.1 23.9l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4 6.5 0 11.8-5.3 11.8-11.8S18.5.2 12 .2z" />
+    </svg>
   );
 }
 
@@ -246,9 +325,9 @@ function ActivityChart({ daily }: { daily: InfluencerDashboard["daily"] }) {
   const rows = daily.map((d) => ({ ...d, earned: d.earnedPaise / 100, label: d.day.slice(8) + "/" + d.day.slice(5, 7) }));
   const empty = rows.every((r) => !r.clicks && !r.signups && !r.earned);
   return (
-    <div style={{ height: 200, position: "relative" }}>
+    <div className="idb-chart" style={{ position: "relative" }}>
       {empty && <p className="idb-chart-empty">Share your link: activity shows up here as soon as someone opens it.</p>}
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 170 }}>
         <ComposedChart data={rows} margin={{ top: 8, right: 4, bottom: 0, left: -24 }}>
           <CartesianGrid vertical={false} stroke="rgba(61,12,17,0.06)" />
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: BRAND.faint }} interval={4} tickLine={false} axisLine={false} />
@@ -500,7 +579,19 @@ const CSS = `
   .idb-bio-line span { overflow-wrap: anywhere; }
   .idb-bio-line svg { flex-shrink: 0; color: ${BRAND.faint}; }
   .idb-bio-note { margin: 4px 0 0; font-size: 12px; color: ${BRAND.muted}; line-height: 1.5; }
-  .idb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .idb-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .idb-chart { height: 210px; }
+  @media (min-width: 768px) { .idb-tabs { top: 84px; } }
+  .idb-goal { position: relative; margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: rgba(0,0,0,.18); }
+  .idb-goal-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: rgba(245,237,230,.8); font-weight: 700; }
+  .idb-goal-top b { color: #f2cf74; }
+  .idb-goal-bar { margin-top: 8px; height: 8px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .idb-goal-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c9a84c, #f2cf74, #ffe7a8); box-shadow: 0 0 12px rgba(242,207,116,.6); }
+  .idb-goal-hint { display: block; margin-top: 6px; font-size: 11.5px; color: rgba(245,237,230,.6); }
+  .idb-sharekit { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .idb-share-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; border: 1px solid ${BRAND.border}; background: ${BRAND.bgAlt}; color: ${BRAND.text}; font-size: 11.5px; font-weight: 800; cursor: pointer; transition: transform .15s; min-width: 0; }
+  .idb-share-btn:active { transform: scale(.96); }
+  .idb-share-btn > span { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
   .idb-stat { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 18px; background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; overflow: hidden; }
   .idb-stat::after { content: ""; position: absolute; right: -24px; top: -24px; width: 70px; height: 70px; border-radius: 50%; background: var(--acc); opacity: .12; }
   .idb-stat-ic { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--acc) 16%, transparent); color: ${BRAND.accent}; margin-bottom: 6px; }
@@ -508,11 +599,13 @@ const CSS = `
   .idb-stat-val { font: 700 26px/1.1 'Playfair Display', serif; color: ${BRAND.text}; }
   .idb-stat-sub { font-size: 11.5px; color: ${BRAND.faint}; }
   .idb-chart-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 24px; margin: 0; font-size: 13px; color: ${BRAND.muted}; z-index: 1; pointer-events: none; }
-  .idb-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 99px; background: ${BRAND.surfaceAlt}; border: 1px solid ${BRAND.border}; overflow-x: auto; scrollbar-width: none; }
-  .idb-tabs button { position: relative; flex: 1; min-width: max-content; border: none; background: none; padding: 9px 14px; border-radius: 99px; cursor: pointer; color: ${BRAND.muted}; font-weight: 800; font-size: 13px; }
+  .idb-tabs { display: grid; gap: 4px; padding: 4px; border-radius: 99px; background: ${BRAND.surfaceAlt}; border: 1px solid ${BRAND.border}; position: sticky; top: 8px; z-index: 5; box-shadow: 0 8px 20px -14px rgba(61,12,17,.35); }
+  .idb-tabs button { position: relative; min-width: 0; border: none; background: none; padding: 10px 6px; border-radius: 99px; cursor: pointer; color: ${BRAND.muted}; font-weight: 800; font-size: 13px; }
   .idb-tabs button.on { color: #f5ede6; }
   .idb-tab-pill { position: absolute; inset: 0; border-radius: 99px; background: ${BRAND.accentStrong}; }
   .idb-tab-in { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+  .idb-tab-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .idb-tab-in { min-width: 0; max-width: 100%; justify-content: center; width: 100%; }
   .idb-tab-in b { font-size: 10.5px; padding: 1px 6px; border-radius: 99px; background: rgba(201,168,76,.25); }
   .idb-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 36px 20px; border-radius: 20px; background: ${BRAND.surface}; border: 1px dashed ${BRAND.borderStrong}; color: ${BRAND.muted}; }
   .idb-empty svg { color: ${BRAND.gold}; }
@@ -573,12 +666,26 @@ const CSS = `
   .idb-save:disabled { opacity: .45; cursor: not-allowed; }
   .idb-spin { animation: idb-spin 1s linear infinite; }
   @keyframes idb-spin { to { transform: rotate(360deg); } }
+  @media (max-width: 1023px) and (min-width: 761px) {
+    .idb-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (max-width: 760px) {
+    .idb-hero { padding: 18px 16px; border-radius: 22px; }
+    .idb-card { padding: 14px; }
+    .idb-chart { height: 170px; }
+    .idb-tabs button { padding: 8px 2px; font-size: 11.5px; }
+    .idb-tab-in { flex-direction: column; gap: 2px; }
+    .idb-tab-in b { position: absolute; top: 2px; right: 6px; font-size: 9px; padding: 0 5px; }
+    .idb-tabs { border-radius: 18px; }
+    .idb-tab-pill { border-radius: 14px; }
+    .idb-person { flex-wrap: wrap; }
+    .idb-person-main { flex-basis: calc(100% - 80px); }
+    .idb-person-meta { order: 3; flex-basis: 100%; justify-content: flex-start; padding-left: 46px; }
+    .idb-person-meta .idb-earned { margin-left: auto; }
     .idb-money { grid-template-columns: 1fr; }
     .idb-money-side { grid-template-columns: 1fr 1fr; }
     .idb-stats { grid-template-columns: 1fr 1fr; }
     .idb-rate { margin-left: 0; }
-    .idb-person-meta .idb-chip:first-child { display: none; }
     .idb-pages { padding-left: 12px; }
     .idb-pages li { grid-template-columns: 1fr auto; }
     .idb-page-date { grid-column: 1; }

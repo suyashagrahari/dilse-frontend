@@ -106,11 +106,11 @@ export default function DesktopNav() {
         }}
       >
         {/* Left side */}
-        <div style={{ width: "clamp(220px, 30vw, 340px)", display: "flex", alignItems: "center", justifyContent: "flex-start", minWidth: 0 }}>
+        <div className="dnav-side dnav-left" style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", minWidth: 0 }}>
           <Link href="/" className="flex items-center  shrink-0" style={{ textDecoration: "none" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/logo-sm.webp" alt="" width={56} height={56} style={{ width: 56, height: 56, objectFit: "contain", flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 1.35vw, 22px)", fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.2px", userSelect: "none", lineHeight: 1 }}>
+            <span className="dnav-wordmark" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 1.35vw, 22px)", fontWeight: 700, color: "#2a0a0e", letterSpacing: "-0.2px", userSelect: "none", lineHeight: 1 }}>
               SubhSandesh
             </span>
           </Link>
@@ -169,7 +169,7 @@ export default function DesktopNav() {
         </div>
 
         {/* Right actions */}
-        <div style={{ width: "clamp(220px, 30vw, 340px)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, minWidth: 0 }}>
+        <div className="dnav-side dnav-right" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, minWidth: 0 }}>
           {isTemplates && (
             <>
               <AnimatePresence>
@@ -375,6 +375,17 @@ export default function DesktopNav() {
             </Link>
           )}
         </div>
+        {/* Tablets get the desktop bar too (md+), where the wordmark plus five
+            tabs no longer fit: the wordmark drops and the side columns shrink
+            to their content so the tabs never slide under the logo. */}
+        <style>{`
+          .dnav-side { width: clamp(220px, 30vw, 340px); flex-shrink: 0; }
+          @media (max-width: 1100px) {
+            .dnav-wordmark { display: none; }
+            .dnav-left { width: auto; }
+            .dnav-right { width: auto; min-width: 42px; }
+          }
+        `}</style>
       </motion.div>
     </header>
   );
