@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader2, Link2, Instagram, Wallet, IndianRupee, Users, Sparkles, AlertCircle } from "lucide-react";
+import { Check, Loader2, Link2, Instagram, Wallet, Sparkles, AlertCircle } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { API_URL, ROOT_DOMAIN, SITE_URL } from "@/lib/config";
 import { sanitizeSubdomain, validateSubdomainLocal, firstNameSlug } from "@/lib/subdomain";
@@ -95,29 +95,13 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
   const pct = terms?.defaultCommissionPercent ?? 30;
 
   return (
-    <div className="ij">
+    <div className="ij" id="join">
       <style>{CSS}</style>
 
-      <motion.section className="ij-hero" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <span aria-hidden className="ij-shine" />
-        <p className="ij-kicker"><Sparkles size={13} /> SubhSandesh Creator Program</p>
-        <h1>Share SubhSandesh. Earn {pct}% of every sale.</h1>
-        <p className="ij-lead">
-          Get your own invite link for your Instagram bio. Everyone who signs up through it is yours for good, and
-          you earn {pct}% of whatever they pay for premium templates.
-        </p>
-        <div className="ij-points">
-          <div><IndianRupee size={16} /><b>{pct}% commission</b><span>on every paid template</span></div>
-          <div><Users size={16} /><b>Lifetime referrals</b><span>they stay yours for good</span></div>
-          <div><Link2 size={16} /><b>Your name link</b><span>{ROOT_DOMAIN ? `you.${ROOT_DOMAIN}` : "a short /r/ link"}</span></div>
-        </div>
-        <p className="ij-example">
-          Example: 2 followers each buy a ₹100 template → SubhSandesh receives ₹200 → <b>you earn ₹{(200 * pct) / 100}</b>.
-        </p>
-      </motion.section>
-
       <motion.section className="ij-card" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08 }}>
-        <h2>Create your influencer account</h2>
+        <span className="ij-kick"><Sparkles size={12} /> Takes 30 seconds</span>
+        <h2>Claim your influencer link</h2>
+        <p className="ij-sub">You&apos;ll earn <b>{pct}%</b> of every premium template your referrals buy, for life.</p>
 
         <label className="ij-label"><Link2 size={14} /> Your link name</label>
         {hasSubdomain ? (
@@ -195,7 +179,10 @@ export default function InfluencerJoin({ onJoined }: { onJoined: () => void }) {
 }
 
 const CSS = `
-  .ij { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
+  .ij { max-width: 600px; margin: clamp(36px, 6vw, 64px) auto 0; scroll-margin-top: 110px; }
+  .ij-kick { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; background: rgba(201,168,76,.16); color: ${BRAND.accent}; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .ij-sub { margin: 0 0 4px; font-size: 14px; color: ${BRAND.muted}; }
+  .ij-sub b { color: ${BRAND.ok}; }
   .ij-hero { position: relative; overflow: hidden; padding: 28px 26px; border-radius: 24px; background: ${BRAND.gradient}; color: #f5ede6; box-shadow: ${BRAND.shadowElevated}; }
   .ij-shine { position: absolute; inset: -40% auto auto -20%; width: 60%; height: 180%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); transform: rotate(18deg); pointer-events: none; }
   .ij-kicker { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #f2cf74; }
@@ -208,8 +195,8 @@ const CSS = `
   .ij-points span { font-size: 12px; color: rgba(245,237,230,.7); }
   .ij-example { margin: 16px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.18); font-size: 13px; line-height: 1.5; color: rgba(245,237,230,.85); }
   .ij-example b { color: #f2cf74; }
-  .ij-card { padding: 24px 22px; border-radius: 24px; background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; box-shadow: ${BRAND.shadow}; }
-  .ij-card h2 { margin: 0 0 6px; font-family: 'Playfair Display', serif; font-size: 22px; color: ${BRAND.text}; }
+  .ij-card { padding: clamp(20px, 4vw, 32px); border-radius: 24px; background: ${BRAND.surface}; border: 1px solid ${BRAND.border}; box-shadow: ${BRAND.shadow}; }
+  .ij-card h2 { margin: 10px 0 4px; font-family: 'Playfair Display', serif; font-size: clamp(22px, 3vw, 28px); color: ${BRAND.text}; }
   .ij-label { display: flex; align-items: center; gap: 6px; margin: 16px 0 6px; font-size: 12.5px; font-weight: 800; color: ${BRAND.text}; }
   .ij-label em { font-style: normal; font-weight: 600; color: ${BRAND.faint}; }
   .ij-input-wrap { display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 46px; border-radius: 12px; background: ${BRAND.bgAlt}; border: 1.5px solid ${BRAND.border}; transition: border-color .2s; }
@@ -231,5 +218,4 @@ const CSS = `
   .ij-submit:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
   .ij-spin { animation: ij-spin 1s linear infinite; }
   @keyframes ij-spin { to { transform: rotate(360deg); } }
-  @media (max-width: 860px) { .ij { grid-template-columns: 1fr; } }
 `;
