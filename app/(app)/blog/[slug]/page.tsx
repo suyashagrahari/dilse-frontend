@@ -17,6 +17,7 @@ import TableOfContents from "@/components/blog/TableOfContents";
 import TemplatesPromoCard from "@/components/blog/TemplatesPromoCard";
 import { ArticleGraphJsonLd } from "@/components/JsonLd";
 import FollowUs from "@/components/blog/FollowUs";
+import { PromoMarquee, PromoCountdownCard } from "@/components/promo/PromoBanners";
 
 export const revalidate = 3600;
 // Allow on-demand pages not built at deploy time to be generated + cached on first hit.
@@ -153,6 +154,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           sticky TOC stays pinned through the whole left-content scroll. */}
       <div className="mx-auto flex max-w-7xl flex-col gap-12 px-5 pt-12 pb-24 md:pt-32 lg:flex-row lg:justify-center lg:gap-16">
       <article className="relative w-full lg:max-w-[52rem]">
+        {/* The wishlist sale strip — renders nothing unless a countdown is running. */}
+        <PromoMarquee source="blog-banner" />
+
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs" style={{ color: "rgba(42,10,14,0.55)" }} aria-label="Breadcrumb">
           <Link href="/blog" className="hover:underline">Blog</Link>
@@ -224,6 +228,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </ul>
           </div>
         )}
+
+        {/* The sale's big countdown, after the TL;DR where the reader decides to stay. */}
+        <PromoCountdownCard source="blog-card" />
 
         {/* TOC — mobile only (desktop uses the sticky sidebar) */}
         {hasBody && (

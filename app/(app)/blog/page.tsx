@@ -6,6 +6,7 @@ import BlogCard from "@/components/blog/BlogCard";
 import CategoryChips from "@/components/blog/CategoryChips";
 import BlogSearch from "@/components/blog/BlogSearch";
 import { BlogIndexJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { PromoMarquee } from "@/components/promo/PromoBanners";
 import FollowUs from "@/components/blog/FollowUs";
 
 // Time-based ISR fallback; the Strapi webhook revalidates instantly on publish.
@@ -63,6 +64,8 @@ export default async function BlogPage({
       />
 
       <section className="relative mx-auto max-w-6xl px-5 pt-12 pb-24 md:pt-32">
+        <PromoMarquee source="blog-banner" />
+
         {/* Header */}
         <header className="mx-auto mb-10 max-w-2xl text-center">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#7d5f18" }}>

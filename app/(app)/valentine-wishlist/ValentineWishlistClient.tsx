@@ -9,10 +9,16 @@
 //   open        → "Join" submits straight away
 //   joined      → disabled, plus the pass with their place in line
 //
+// `?join=1&src=blog-banner` (every sale banner links here that way) opens the
+// join by itself once the status is known: sign-up for a visitor, the phone
+// step for a signed-in user, nothing for someone already on the list. The
+// query is stripped straight away so a refresh doesn't open it again.
+//
 // Motion is transform/opacity only; reduced motion turns the drifting hearts
 // and the burst off.
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Bell, Check, Gift, Heart, Loader2, Lock, UserCheck } from "lucide-react";
@@ -24,6 +30,7 @@ import PhoneJoinModal from "@/components/wishlist/PhoneJoinModal";
 import CardCorners from "@/components/wishlist/CardCorners";
 import { fetchWishlistCount, useWishlist, type WishlistPhone } from "@/hooks/useWishlist";
 import { useAppSelector } from "@/store/hooks";
+import { usePromo, useNow, countdown, pad2 } from "@/hooks/usePromo";
 import {
   VALENTINE_CAMPAIGN, VALENTINE_DAYS, VALENTINE_DISCOUNT, VALENTINE_WEEK_START,
 } from "@/lib/wishlist/valentine";
@@ -160,6 +167,43 @@ const BURST = Array.from({ length: 14 }, (_, i) => {
   return { x: Math.cos(a) * (70 + (i % 3) * 22), y: Math.sin(a) * (54 + (i % 3) * 18) - 10, r: (i % 2 ? 1 : -1) * 25 };
 });
 
+const SOURCE_RE = /^[a-z0-9-]{1,40}$/;
+
+/**
+ * Reports `?join=1&src=…` once, then strips it so a refresh doesn't reopen the
+ * join. `useSearchParams`, not `window.location`: on an in-app click the
+ * address bar changes only after this page first renders. Its own Suspense
+ * boundary keeps the rest of the page server-rendered.
+ */
+function JoinDeepLink({ onJoin }: { onJoin: (source: string) => void }) {
+  const sp = useSearchParams();
+  const join = sp.get("join");
+  const src = sp.get("src") || "";
+  useEffect(() => {
+    if (join !== "1") return;
+    onJoin(SOURCE_RE.test(src) ? src : "deep-link");
+    const u = new URL(window.location.href);
+    u.searchParams.delete("join");
+    u.searchParams.delete("src");
+    window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+  }, [join, src, onJoin]);
+  return null;
+}
+
+/** "Wishlist sale ends in 09d 14:22:05" — only while a countdown is running. */
+function SaleClock() {
+  const p = usePromo();
+  const t = useNow();
+  if (!p) return null;
+  const c = countdown(p.endsAtLocal, t);
+  return (
+    <p className={`vwSale${c.totalMs < 86_400_000 ? " is-urgent" : ""}`} role="timer">
+      <span>⏳ {p.style === "last-chance" ? "Last chance" : "Sale ends in"}</span>
+      <b>{c.d > 0 ? `${c.d}d ` : ""}{pad2(c.h)}:{pad2(c.m)}:{pad2(c.s)}</b>
+    </p>
+  );
+}
+
 export default function ValentineWishlistClient() {
   const wl = useWishlist(VALENTINE_CAMPAIGN);
   const user = useAppSelector((s) => s.auth.user);
@@ -170,6 +214,24 @@ export default function ValentineWishlistClient() {
   const [burst, setBurst] = useState(0);
   const [count, setCount] = useState<number | null>(null);
   const [prevStatus, setPrevStatus] = useState(wl.status);
+  /** Where the join came from: a sale banner's `src`, or this page's button. */
+  const [joinSource, setJoinSource] = useState("wishlist-page");
+  const [deepLink, setDeepLink] = useState<string | null>(null);
+  /** A signed-out deep link: remember the intent through sign-up (an effect, as it writes storage). */
+  const [authIntent, setAuthIntent] = useState<string | null>(null);
+
+  // Act on the deep link once we know who this is.
+  if (deepLink && wl.status !== "loading") {
+    setDeepLink(null);
+    setJoinSource(deepLink);
+    if (wl.status === "signed-out") { setAuthIntent(deepLink); setShowAuth(true); }
+    else if (wl.status === "open") setPhoneMode("join");
+  }
+
+  const { requestJoin } = wl;
+  useEffect(() => {
+    if (authIntent) requestJoin(authIntent);
+  }, [authIntent, requestJoin]);
 
   useEffect(() => {
     let live = true;
@@ -189,6 +251,7 @@ export default function ValentineWishlistClient() {
 
   const onJoin = () => {
     if (wl.status === "joined" || wl.joining) return;
+    setJoinSource("wishlist-page");
     if (wl.requestJoin("wishlist-page") === "auth") setShowAuth(true);
     else setPhoneMode("join");
   };
@@ -197,7 +260,7 @@ export default function ValentineWishlistClient() {
   const phoneOpen = !showAuth && (phoneMode === "add" ? true : (phoneMode === "join" || wl.resumePending) && wl.status === "open");
   const closePhone = useCallback(() => { setPhoneMode(null); wl.cancelPending(); }, [wl]);
   const submitPhone = async (phone: WishlistPhone) => {
-    const r = await wl.submitJoin("wishlist-page", phone);
+    const r = await wl.submitJoin(joinSource, phone);
     if (r.ok) setPhoneMode(null);
     return r;
   };
@@ -215,6 +278,7 @@ export default function ValentineWishlistClient() {
   return (
     <div className="vwPage">
       <LuxuryMobileTopBrand />
+      <Suspense fallback={null}><JoinDeepLink onJoin={setDeepLink} /></Suspense>
       <CornerOrnaments />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -269,6 +333,7 @@ export default function ValentineWishlistClient() {
           </motion.div>
 
           <motion.div className="vwCtaWrap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+            {!joined && <SaleClock />}
             <div className="vwBtnHold">
               <motion.button
                 type="button"
@@ -407,6 +472,12 @@ export default function ValentineWishlistClient() {
 }
 
 const VW_CSS = `
+.vwSale { display: inline-flex; align-items: baseline; gap: 8px; margin: 0; padding: 7px 14px; border-radius: 999px;
+  background: rgba(0,0,0,.28); box-shadow: inset 0 0 0 1px rgba(246,213,138,.45); font: 600 12px/1 'Inter', sans-serif; color: #f6d58a; }
+.vwSale b { font: 800 14px/1 'Inter', sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+.vwSale.is-urgent { animation: vwSalePulse 1.2s ease-in-out infinite; }
+@keyframes vwSalePulse { 50% { box-shadow: inset 0 0 0 1px rgba(255,140,140,.9), 0 0 16px rgba(255,90,110,.5); } }
+@media (prefers-reduced-motion: reduce) { .vwSale.is-urgent { animation: none; } }
 .vwPage { position: relative; min-height: 100vh; background: linear-gradient(180deg, #fff3f0 0%, #f9ebe4 40%, #f5ede6 100%); padding-bottom: 96px; }
 .vwHero { position: relative; isolation: isolate; overflow: hidden; margin: 4px 12px 0; padding: 50px 22px 36px;
   background: radial-gradient(120% 90% at 50% 0%, #a01d3a 0%, #6d0f26 42%, #3d0c11 78%, #2a070c 100%); color: #fff4f1; text-align: center;
