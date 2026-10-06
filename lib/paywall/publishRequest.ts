@@ -39,6 +39,8 @@
 
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { isPaymentRequired, offerPaywall, readPricing, type PaywallContext } from "./paywallBus";
+import { debugCountryHeader } from "@/lib/money";
+import { pushToast } from "@/lib/toast/toastBus";
 
 export type PublishGateResult =
   /** Free, already paid, already published, or paid just now. Go ahead. */
@@ -51,6 +53,9 @@ function headers(token: string | null | undefined): HeadersInit {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+    // A super admin's "Test checkout as" country, so the access check agrees
+    // with the quote and the order. The server ignores it for everyone else.
+    ...debugCountryHeader(),
   };
 }
 
@@ -115,6 +120,11 @@ export async function ensurePublishAllowed(
     }
     needsPayment = Boolean(json.data?.needsPayment);
     pricing = json.data?.pricing;
+    // A priced template, free because "Only visitors outside India pay" is on.
+    // Say so, so it reads as a gift rather than a price that silently vanished.
+    if (json.data?.reason === "free_in_india") {
+      pushToast({ type: "success", title: "🇮🇳 Free for you in India", message: "This premium template costs nothing to publish from India." });
+    }
   } catch {
     setBusy?.(true);
     return "allowed";
