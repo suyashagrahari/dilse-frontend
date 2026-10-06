@@ -23,6 +23,7 @@ import { useAppSelector } from "@/store/hooks";
 import { COUNTRIES, flagOf } from "@/lib/wishlist/countries";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
+import SaleCountdownPanel, { PROMO_SOURCE_LABEL } from "./SaleCountdownPanel";
 import { A, AdminPage, ChipGroup, EmptyState, Hero, HeroStat, Loading, Panel, SearchBox, fmtNum, rise } from "../adminKit";
 
 interface Row {
@@ -63,6 +64,7 @@ interface Resp {
 
 const SOURCE_LABEL: Record<string, string> = {
   "wishlist-page": "Wishlist page",
+  ...PROMO_SOURCE_LABEL,
   unknown: "Unknown",
 };
 
@@ -162,6 +164,8 @@ export default function AdminWishlistPage() {
           <HeroStat label="Paid before" value={st?.paid ?? 0} sub="at least one order" />
         </div>
       </Hero>
+
+      {data && <SaleCountdownPanel campaign={data.campaign} accessToken={accessToken} onChange={load} />}
 
       {st && st.total > 0 && (
         <div className="wl-sources" aria-label="Who joined and where from">
