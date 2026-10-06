@@ -66,6 +66,13 @@ export default function PaywallHost() {
       .then((d) => {
         if (cancelled) return;
         if (!d?.success || !d.data?.pricing) throw new Error("bad quote");
+        // The switch went to "Only visitors outside India pay" after the gate
+        // asked, and this visitor is in India: nothing is owed, so no price is
+        // shown — unlock and let the publish go through (the gate agrees).
+        if (d.data.freeForViewer) {
+          completePaywall();
+          return;
+        }
         setQuote(d.data as Quote);
         track(EVENTS.BEGIN_CHECKOUT, {
           template: request.slug,
@@ -110,6 +117,11 @@ export default function PaywallHost() {
         body: JSON.stringify({ templateType, pageId }),
       });
       const data = await res.json();
+      if (res.status === 400 && data?.code === "NO_PAYMENT_NEEDED") {
+        // Free in India now — no points taken; publish.
+        completePaywall();
+        return;
+      }
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to spend points");
 
       // The server is the authority on the new balance — it deducted atomically
@@ -174,9 +186,9 @@ export default function PaywallHost() {
         setError(orderData.error || "The price changed. Please review it and press Pay again.");
         return;
       }
-      if (orderRes.status === 400 && orderData?.code === "ALREADY_PUBLISHED") {
-        // Nothing to pay for. Treat it as unlocked so the editor re-publishes and
-        // the user lands where they were going.
+      if (orderRes.status === 400 && (orderData?.code === "ALREADY_PUBLISHED" || orderData?.code === "NO_PAYMENT_NEEDED")) {
+        // Nothing to pay for — already live, or free in India now. Treat it as
+        // unlocked so the editor publishes and the user lands where they were going.
         completePaywall();
         return;
       }
