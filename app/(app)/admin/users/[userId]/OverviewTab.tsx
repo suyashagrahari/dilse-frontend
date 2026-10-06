@@ -7,6 +7,7 @@ import { C, type ProfileData } from "./types";
 import { Card, Stat, Row, Empty, CopyBtn, fmt, fmtAgo } from "./ui";
 import { Num } from "../../adminKit";
 import { ROLE_META, RoleIcon, ProviderIcon } from "../../adminIcons";
+import { formatMoney } from "@/lib/money";
 
 export default function OverviewTab({ data, hdr, reload }: { data: ProfileData; hdr: () => Record<string, string>; reload: () => void }) {
   const { user, stats, referrals } = data;
@@ -29,7 +30,8 @@ export default function OverviewTab({ data, hdr, reload }: { data: ProfileData; 
       setSaving(false);
     }
   };
-  const spent = Number(stats.totalSpent || 0);
+  // INR paise (USD orders converted at their frozen rate) → rupees.
+  const spent = Math.round(Number(stats.totalSpent || 0) / 100);
   return (
     <>
       {/* Pages, published, views and points headline the hero; these are the rest. */}
@@ -46,6 +48,17 @@ export default function OverviewTab({ data, hdr, reload }: { data: ProfileData; 
         <Card title="Account">
           <Row label="User ID" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0 }}><code className="sa-mono" style={{ overflowWrap: "anywhere" }}>{user._id}</code><CopyBtn value={user._id} label="Copy id" /></span>} />
           <Row label="Email" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0 }}><span style={{ overflowWrap: "anywhere" }}>{user.email}</span><CopyBtn value={user.email} label="Copy email" /></span>} />
+          {(user.lastSeenCountry || user.signupCountry) && (
+            <Row
+              label="Country"
+              value={
+                <span>
+                  {user.lastSeenCountry || "—"}
+                  {user.signupCountry && user.signupCountry !== user.lastSeenCountry ? ` (signed up in ${user.signupCountry})` : ""}
+                </span>
+              }
+            />
+          )}
           <Row label="Sign-in method" value={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><ProviderIcon provider={user.provider} size={13} />{user.provider === "google" ? "Google" : "Email & password"}</span>} />
           <Row label="Email verified" value={<span style={{ color: user.isVerified ? C.ok : C.warn }}>{user.isVerified ? "Yes" : "No"}</span>} />
           <Row
@@ -104,7 +117,13 @@ export default function OverviewTab({ data, hdr, reload }: { data: ProfileData; 
                 <Row
                   key={i}
                   label={`${String(p.templateType || "—")} · ${String(p.status || "")}`}
-                  value={<strong style={{ color: String(p.status) === "paid" ? C.ok : C.muted }}>₹{Number(p.amount || 0)}</strong>}
+                  value={
+                    <strong style={{ color: String(p.status) === "paid" ? C.ok : C.muted }}>
+                      {/* Amounts are minor units of the order's own currency. */}
+                      {formatMoney(Number(p.amount || 0), String(p.currency || "INR") === "USD" ? "USD" : "INR")}
+                      {p.country ? <span style={{ fontWeight: 600, color: C.muted }}> · {String(p.country)}</span> : null}
+                    </strong>
+                  }
                 />
               ))
             )}

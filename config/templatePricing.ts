@@ -34,6 +34,8 @@ export interface ResolvedPricing {
   savings: number;
   discountPercent: number;
   pointsCost: number;
+  /** International price in cents set by a super admin; null = derived from INR. */
+  usdPriceCents?: number | null;
 }
 
 export interface PricingRow {
@@ -42,6 +44,8 @@ export interface PricingRow {
   finalPricePaise: number;
   discountPercent: number;
   pointsCost: number;
+  /** International price in cents set by a super admin; null = derived from INR. */
+  usdPriceCents?: number | null;
 }
 
 const toRupees = (paise: number): number => Math.round(paise) / 100;
