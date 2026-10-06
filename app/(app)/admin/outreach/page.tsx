@@ -905,7 +905,13 @@ function HistoryView({ api, say }: { api: Api; say: (m: string, t?: "ok" | "err"
   useEffect(() => {
     let alive = true;
     api<Broadcast[]>("/broadcasts")
-      .then((d) => alive && setRows(d))
+      .then((d) => {
+        if (!alive) return;
+        setRows(d);
+        // Open the most recent broadcast by default, so History shows a result
+        // straight away instead of a column of closed rows.
+        setOpenId((cur) => cur ?? d[0]?._id ?? null);
+      })
       .catch((e) => { if (alive) { say((e as Error).message, "err"); setRows([]); } });
     return () => { alive = false; };
   }, [api, say, reload]);
