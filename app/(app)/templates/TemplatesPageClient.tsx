@@ -20,6 +20,7 @@ import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
+import { PromoMarquee } from "@/components/promo/PromoBanners";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -639,6 +640,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
 
       <div className="px-3 pt-4 pb-12 md:px-6 md:pt-6 md:pb-20" style={{ position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }} ref={panelTopRef}>
+          <PromoMarquee source="templates-banner" />
 
           {isPremium && (
             <Link href="/templates" className="pxBack">
