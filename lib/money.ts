@@ -27,6 +27,8 @@ export interface Quote {
   currency: Currency;
   country: string | null;
   international: boolean;
+  /** "Only visitors outside India pay" covers this visitor — nothing is owed. */
+  freeForViewer?: boolean;
 }
 
 /** "₹149" · "₹149.50" · "$1.99" — from minor units. */
