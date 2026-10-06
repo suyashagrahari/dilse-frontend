@@ -6,6 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { isAdmin } from "@/lib/roles";
 import AdminNav, { ADMIN_NAV_CSS, useAdminTabs } from "./AdminNav";
 import SwipeTabs from "@/components/SwipeTabs";
+import AdminPageTransition from "./AdminPageTransition";
 import { AdminSkeleton } from "@/components/skeleton/Skeletons";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -51,7 +52,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <>
       <style>{ADMIN_NAV_CSS}</style>
       <AdminNav />
-      <SwipeTabs tabs={tabs} className="adm-main">{children}</SwipeTabs>
+      {/* Sideways swipe/slide only where a finger moves the page; on a desktop
+          (clicks) the section fades and rises in instead. */}
+      <SwipeTabs tabs={tabs} className="adm-main" media="(max-width: 1023px)">
+        <AdminPageTransition>{children}</AdminPageTransition>
+      </SwipeTabs>
     </>
   );
 }

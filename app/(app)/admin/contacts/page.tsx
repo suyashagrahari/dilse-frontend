@@ -6,8 +6,9 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import {
   MessageSquare, ChevronLeft, ChevronRight,
-  X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff, Send,
+  X, Mail, Phone, Clock, Check, Circle, Trash2, StickyNote, Eye, EyeOff, Send, Sparkles, Loader2,
 } from "lucide-react";
+import Link from "next/link";
 import SortToggle, { type SortOrder } from "@/components/admin/SortToggle";
 import { A, AdminPage, Hero, HeroStat, ChipGroup, Loading, EmptyState, Tag, rise } from "../adminKit";
 
@@ -17,6 +18,14 @@ interface ContactItem {
   isRead: boolean; adminNotes?: string; createdAt: string; replies?: IReply[];
 }
 interface Pg { page: number; limit: number; total: number; totalPages: number }
+/** What the AI draft was based on — shown so a human can sanity-check it. */
+interface AiInfo {
+  reading?: string;
+  hasAccount: boolean;
+  userId: string | null;
+  likelyTemplate: string | null;
+  pages: { templateLabel: string; isPublished: boolean; access: string; createdAt: string }[];
+}
 
 const cB = "rgba(61,12,17,0.08)";
 const t1 = "#2a0a0e";
@@ -38,7 +47,14 @@ export default function AdminContactsPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [replyBody, setReplyBody] = useState("");
+  const [replySubject, setReplySubject] = useState("");
   const [replying, setReplying] = useState(false);
+  // AI draft state. `aiAssisted` travels with the send so the record says the
+  // body began as a draft — a human still reads, edits and presses Send.
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiInfo, setAiInfo] = useState<AiInfo | null>(null);
+  const [aiAssisted, setAiAssisted] = useState(false);
 
   const hdr = useCallback(() => ({ Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }), [accessToken]);
 
@@ -50,9 +66,27 @@ export default function AdminContactsPage() {
       const res = await fetch(`${API_URL}/admin/contacts?${p}`, { headers: hdr() });
       const data = await res.json();
       if (data.success) {
-        setItems(data.data.items);
+        const list: ContactItem[] = data.data.items;
+        setItems(list);
         setPg(data.data.pagination);
         setUnread(data.data.unreadCount);
+        // Desktop shows list + detail side by side, so open the first message
+        // instead of an empty "pick one" panel. Not marked read: opening it
+        // automatically is not the same as somebody reading it. Phones keep
+        // the list first, where the detail would cover it.
+        if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+          setSel((prev) => {
+            if (prev && list.some((i) => i._id === prev._id)) return prev;
+            const first = list[0] ?? null;
+            setNotes(first?.adminNotes || "");
+            setReplyBody("");
+            setReplySubject("");
+            setAiInfo(null);
+            setAiError(null);
+            setAiAssisted(false);
+            return first;
+          });
+        }
       }
     } finally { setLoading(false); }
   }, [accessToken, filter, sort, hdr]);
@@ -102,7 +136,9 @@ export default function AdminContactsPage() {
     setReplying(true);
     try {
       const res = await fetch(`${API_URL}/admin/contacts/${sel._id}/reply`, {
-        method: "POST", headers: hdr(), body: JSON.stringify({ body: replyBody.trim() }),
+        method: "POST",
+        headers: hdr(),
+        body: JSON.stringify({ body: replyBody.trim(), subject: replySubject.trim() || undefined, aiAssisted }),
       });
       const data = await res.json();
       if (data.success) {
@@ -110,16 +146,44 @@ export default function AdminContactsPage() {
         setSel(updated);
         setItems((prev) => prev.map((i) => i._id === sel._id ? updated : i));
         setReplyBody("");
+        setReplySubject("");
+        setAiInfo(null);
+        setAiAssisted(false);
       } else {
         alert(data.error || "Failed to send reply");
       }
     } finally { setReplying(false); }
   };
 
+  /** Ask the server for a reply written from this person's whole context. */
+  const draftWithAi = async () => {
+    if (!sel || aiBusy) return;
+    if (replyBody.trim() && !confirm("Replace what you have written with an AI draft?")) return;
+    setAiBusy(true);
+    setAiError(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/contacts/${sel._id}/draft-reply`, { method: "POST", headers: hdr() });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || "Could not draft a reply");
+      setReplyBody(data.data.body);
+      setReplySubject(data.data.subject || "");
+      setAiInfo({ reading: data.data.reading, ...data.data.context });
+      setAiAssisted(true);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Could not draft a reply");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
   const openDetail = (item: ContactItem) => {
     setSel(item);
     setNotes(item.adminNotes || "");
     setReplyBody("");
+    setReplySubject("");
+    setAiInfo(null);
+    setAiError(null);
+    setAiAssisted(false);
     if (!item.isRead) toggleRead(item);
   };
 
@@ -159,7 +223,28 @@ export default function AdminContactsPage() {
         }
         .c-ph { display: grid; place-items: center; min-height: 260px; text-align: center; color: ${tM}; font-size: 12.5px; }
         .c-sec { font-size: 10px; font-weight: 800; color: ${tM}; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 8px; display: flex; align-items: center; gap: 5px; }
-        .c-ta { resize: vertical; font-family: inherit; line-height: 1.5; }
+        .c-ta { resize: vertical; font-family: inherit; line-height: 1.55; }
+        .c-compose { margin-bottom: 14px; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.75); border: 1px solid ${cB}; display: grid; gap: 8px; }
+        .c-compose-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .c-ai-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 99px; border: 1px solid rgba(201,168,76,.55); background: linear-gradient(135deg, rgba(201,168,76,.18), rgba(201,168,76,.06)); color: ${gD}; font-weight: 800; font-size: 12px; cursor: pointer; transition: transform .15s, box-shadow .2s; }
+        .c-ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 14px -8px rgba(139,90,43,.6); }
+        .c-ai-btn:disabled { opacity: .7; cursor: wait; }
+        .c-spin { animation: c-spin 1s linear infinite; }
+        @keyframes c-spin { to { transform: rotate(360deg); } }
+        .c-ai-wait { font-size: 12px; color: ${t2}; padding: 8px 10px; border-radius: 10px; background: linear-gradient(90deg, rgba(201,168,76,.08), rgba(201,168,76,.18), rgba(201,168,76,.08)); background-size: 200% 100%; animation: c-shim 1.4s linear infinite; }
+        @keyframes c-shim { to { background-position: -200% 0; } }
+        .c-ai-err { font-size: 12px; font-weight: 700; color: ${A.danger}; padding: 8px 10px; border-radius: 10px; background: rgba(179,38,30,.07); }
+        .c-ai-info { padding: 9px 10px; border-radius: 10px; background: rgba(201,168,76,.08); border: 1px dashed rgba(201,168,76,.45); display: grid; gap: 6px; }
+        .c-ai-reading { margin: 0; font-size: 12px; color: ${t1}; line-height: 1.45; }
+        .c-ai-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+        .c-ai-chips > * { font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: #fff; border: 1px solid ${cB}; color: ${t2}; text-decoration: none; }
+        .c-ai-chips .ok { color: ${A.ok}; border-color: rgba(30,122,75,.3); }
+        .c-ai-chips .warn { color: ${A.warn}; border-color: rgba(183,121,31,.35); }
+        .c-ai-chips .lnk { color: ${gD}; border-color: rgba(201,168,76,.5); }
+        .c-ai-note { margin: 0; font-size: 10.5px; color: ${tM}; }
+        .c-subject { height: 38px; font-size: 13px; }
+        .c-compose-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .c-compose-foot > span { font-size: 10.5px; color: ${tM}; }
       `}</style>
 
       <Hero>
@@ -337,20 +422,60 @@ export default function AdminContactsPage() {
                 </div>
 
                 {/* Reply composer */}
-                <div style={{ marginBottom: 14, padding: 12, borderRadius: 14, background: "rgba(255,255,255,0.7)", border: `1px solid ${cB}` }}>
-                  <label className="c-sec" style={{ color: t2 }}>
-                    <Send size={11} color={gD} /> Reply via Email (from support@subhsandesh.in)
-                  </label>
+                <div className="c-compose">
+                  <div className="c-compose-head">
+                    <label className="c-sec" style={{ color: t2, margin: 0 }}>
+                      <Send size={11} color={gD} /> Reply from support@subhsandesh.in
+                    </label>
+                    <button type="button" className="c-ai-btn" onClick={draftWithAi} disabled={aiBusy}>
+                      {aiBusy ? <Loader2 size={13} className="c-spin" /> : <Sparkles size={13} />}
+                      {aiBusy ? "Writing…" : replyBody.trim() ? "Rewrite with AI" : "Write with AI"}
+                    </button>
+                  </div>
+
+                  {aiBusy && (
+                    <div className="c-ai-wait">
+                      Reading {sel.name.split(" ")[0] || "their"}&apos;s message and account — templates made, published or not, and feedback…
+                    </div>
+                  )}
+                  {aiError && <div className="c-ai-err">{aiError}</div>}
+                  {aiInfo && !aiBusy && (
+                    <div className="c-ai-info">
+                      {aiInfo.reading && <p className="c-ai-reading"><b>Understood:</b> {aiInfo.reading}</p>}
+                      <div className="c-ai-chips">
+                        <span className={aiInfo.hasAccount ? "ok" : "warn"}>{aiInfo.hasAccount ? "Has an account" : "No account for this email"}</span>
+                        {aiInfo.likelyTemplate && <span>About: {aiInfo.likelyTemplate.replace(/ \(.*\)$/, "")}</span>}
+                        {aiInfo.pages.slice(0, 4).map((p, i) => (
+                          <span key={i} className="pg">{p.templateLabel} · {p.isPublished ? "live" : "draft"}{p.access === "paid" ? " · paid" : p.access === "points" ? " · points" : ""}</span>
+                        ))}
+                        {aiInfo.hasAccount && aiInfo.userId && (
+                          <Link href={`/admin/users/${aiInfo.userId}`} className="lnk">Open profile →</Link>
+                        )}
+                      </div>
+                      <p className="c-ai-note">AI draft — read it and edit anything before sending. It never offers refunds, discounts or dates.</p>
+                    </div>
+                  )}
+
+                  <input
+                    className="adk-input c-subject"
+                    value={replySubject}
+                    onChange={(e) => setReplySubject(e.target.value)}
+                    placeholder="Subject (default: Re: Your message to SubhSandesh)"
+                    maxLength={150}
+                  />
                   <textarea
                     className="adk-input c-ta"
                     value={replyBody}
                     onChange={(e) => setReplyBody(e.target.value)}
-                    placeholder={`Write your reply to ${sel.name}...`}
-                    rows={3}
+                    placeholder={`Write your reply to ${sel.name}… or press "Write with AI".`}
+                    rows={replyBody.length > 200 ? 10 : 4}
                   />
-                  <button className="adk-btn" data-v="primary" onClick={sendReply} disabled={replying || !replyBody.trim()} style={{ marginTop: 8 }}>
-                    <Send size={12} /> {replying ? "Sending..." : "Send Reply"}
-                  </button>
+                  <div className="c-compose-foot">
+                    <span>Signed automatically as “SubhSandesh Support Team”.</span>
+                    <button className="adk-btn" data-v="primary" onClick={sendReply} disabled={replying || !replyBody.trim()}>
+                      <Send size={12} /> {replying ? "Sending..." : "Send Reply"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Admin notes */}
