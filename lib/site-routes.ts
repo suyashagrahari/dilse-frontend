@@ -82,6 +82,15 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/flags", priority: 0.8, changeFrequency: "monthly" },
   { path: "/app", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal-notice", priority: 0.8, changeFrequency: "monthly" },
+  // Valentine's week — seasonal: indexed early so they can rank by February.
+  { path: "/happy-rose-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-propose-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-chocolate-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-teddy-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-promise-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-hug-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-kiss-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-valentines-day", priority: 0.8, changeFrequency: "monthly" },
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card

@@ -53,6 +53,14 @@ import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
 import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshabandhan-to-sister/config";
 import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chaturthi/config";
+import { config as roseDayCfg } from "@/app/(templates)/happy-rose-day/config";
+import { config as proposeDayCfg } from "@/app/(templates)/happy-propose-day/config";
+import { config as chocolateDayCfg } from "@/app/(templates)/happy-chocolate-day/config";
+import { config as teddyDayCfg } from "@/app/(templates)/happy-teddy-day/config";
+import { config as promiseDayCfg } from "@/app/(templates)/happy-promise-day/config";
+import { config as hugDayCfg } from "@/app/(templates)/happy-hug-day/config";
+import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
+import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -64,6 +72,17 @@ import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chatur
 // a page nobody is shopping for. Move one back to the top only in the fortnight
 // before its date.
 const allConfigs = [
+  // ── Valentine's week (7–14 Feb), in week order. Ship hidden on the apex
+  //    (server DEFAULT_HIDDEN); the super admin releases each day. ─────────
+  roseDayCfg,
+  proposeDayCfg,
+  chocolateDayCfg,
+  teddyDayCfg,
+  promiseDayCfg,
+  hugDayCfg,
+  kissDayCfg,
+  valentinesDayCfg,
+
   // ── new & just rebuilt ────────────────────────────────────────────────────
   kundliMilan,
   dateInvitation,
