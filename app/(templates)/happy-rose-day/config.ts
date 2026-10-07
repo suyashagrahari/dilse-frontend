@@ -1,17 +1,17 @@
 import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { DEMO_PHOTO_CDN } from "../_love/types";
+import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is a placeholder (a demo couple photo) until the
-// day's own cover art is uploaded to templates/happy-rose-day/cover.webp.
+// Gallery card. The cover is the day's own scene, captured from the live page
+// (source: media-src/templates/happy-rose-day/cover.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-rose-day",
-  type: "love",
+  type: "valentine",
   category: "gf",
   title: "Rose Day — Ek Gulaab, Sirf Tumhare Liye",
   description:
     'Press and hold to grow a rose in your colour, pluck loves-me-not, open a wax-sealed letter.',
-  coverImage: `${DEMO_PHOTO_CDN}/couple1.webp`,
+  coverImage: templateMedia("happy-rose-day", "cover.webp"),
   emoji: "🌹",
   color: "from-rose-500 to-pink-400",
   previewText: 'a rose is waiting for you 🌹',

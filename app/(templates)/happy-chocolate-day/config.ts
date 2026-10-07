@@ -1,17 +1,17 @@
 import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { DEMO_PHOTO_CDN } from "../_love/types";
+import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is a placeholder (a demo couple photo) until the
-// day's own cover art is uploaded to templates/happy-chocolate-day/cover.webp.
+// Gallery card. The cover is the day's own scene, captured from the live page
+// (source: media-src/templates/happy-chocolate-day/cover.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-chocolate-day",
-  type: "love",
+  type: "valentine",
   category: "gf",
   title: "Chocolate Day — Ek Dabba Pyaar",
   description:
     'Unwrap a box of chocolates — every piece hides a sweet reason, the last one melts into your letter.',
-  coverImage: `${DEMO_PHOTO_CDN}/couple3.webp`,
+  coverImage: templateMedia("happy-chocolate-day", "cover.webp"),
   emoji: "🍫",
   color: "from-amber-900 to-pink-500",
   previewText: 'kuch meetha ho jaaye? 🍫',
