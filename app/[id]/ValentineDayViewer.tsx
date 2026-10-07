@@ -1,6 +1,6 @@
 "use client";
 
-// ─── The published Valentine's-week page (all eight days) ────────────────────
+// ─── The published page for every day on the engine (Valentine's week + Halloween) ─
 //
 // Password gate (the shared _TemplateGate, painted in the day's palette,
 // verify URL from the slug) → the day's Experience in LIVE mode, with `react`
@@ -103,7 +103,7 @@ export default function ValentineDayViewer({
     <MotionConfig reducedMotion="user">
       {/* The sender's music (off · melody · YouTube song) — the day's own
           useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
-      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark}>
+      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions}>
         <Experience data={data} mode="live" react={react} />
       </DayMusicProvider>
       <BrandMark dark={day.theme.dark} />

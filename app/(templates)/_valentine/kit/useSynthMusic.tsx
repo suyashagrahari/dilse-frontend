@@ -31,6 +31,9 @@ const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorTy
   cafe: { root: 70, bpm: 88, wave: "triangle", bars: [[0, 4, 7, 11, 7, 4, -1, -1], [2, 5, 9, 12, 9, 5, -1, -1], [-1, 2, 5, 9, 5, 2, -1, -1], [0, 4, 7, 12, 7, -1, -1, -1]] },
   blush: { root: 74, bpm: 96, wave: "sine", bars: [[0, 4, 7, 9, 7, 4, 0, -1], [-3, 0, 4, 7, 4, 0, -3, -1], [-5, -1, 2, 5, 2, -1, -5, -1], [0, 4, 7, 12, 7, -1, -1, -1]] },
   lantern: { root: 67, bpm: 66, wave: "sine", bars: [[0, 7, 12, 16, 12, 7, -1, -1], [-4, 3, 8, 12, 8, 3, -1, -1], [-7, 0, 5, 9, 5, 0, -1, -1], [-5, 2, 7, 11, 7, 2, -1, -1]] },
+  // Halloween: a minor-key music box — A minor with a sneaky leading tone and a
+  // tiptoeing E7, cute rather than scary.
+  spooky: { root: 69, bpm: 80, wave: "triangle", bars: [[0, 3, 7, 12, 11, 7, 3, -1], [-4, 0, 3, 8, 7, 3, -1, -1], [-5, -1, 2, 8, 7, 2, -1, -1], [0, 3, 7, 6, 3, 0, -1, -1]] },
 };
 
 const freq = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);

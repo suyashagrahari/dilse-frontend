@@ -18,6 +18,7 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "happy-hug-day": dynamic(() => import("../happy-hug-day/components/HugDayExperience"), { ssr: false, loading: Loading }),
   "happy-kiss-day": dynamic(() => import("../happy-kiss-day/components/KissDayExperience"), { ssr: false, loading: Loading }),
   "happy-valentines-day": dynamic(() => import("../happy-valentines-day/components/ValentinesDayExperience"), { ssr: false, loading: Loading }),
+  "happy-halloween": dynamic(() => import("../happy-halloween/components/HalloweenExperience"), { ssr: false, loading: Loading }),
 };
 
 export function getExperience(slug: DaySlug): ComponentType<ExperienceProps> {

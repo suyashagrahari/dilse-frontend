@@ -1,6 +1,6 @@
 "use client";
 
-// ─── The editor page shell, shared by all eight days ─────────────────────────
+// ─── The editor page shell, shared by every day on the engine ────────────────
 //
 // The day's Experience fills the screen in preview mode (keyed on
 // previewVersion so every Save restarts it); the only chrome is the floating
@@ -23,10 +23,10 @@ import { useValentineDayEditor } from "./useValentineDayEditor";
 
 const noopReact = () => {};
 
-function ReactionsChip({ r, asks }: { r: ValentineReactions; asks: boolean }) {
+function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactions; asks: boolean; yes?: string }) {
   if (!r.openedAt && !r.answer && !r.completedAt) return null;
   const label = r.answer === "yes" && asks
-    ? `Said YES 💍${r.noDodges ? ` · dodged No ×${r.noDodges}` : ""}`
+    ? `${yes}${r.noDodges ? ` · dodged No ×${r.noDodges}` : ""}`
     : r.completedAt
       ? "Seen it all ✓✓"
       : "Seen ✓";
@@ -69,10 +69,12 @@ function Inner({ slug }: { slug: DaySlug }) {
         dark={day.theme.dark}
         overSheet={e.editMode === "manual"}
         dockBase="96px"
+        audioOnly={!!day.music?.audioOnly}
+        songs={day.music?.suggestions}
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 
-      {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} />}
+      {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
       <EditorDock
         tone={day.theme.dark ? "dark" : "light"}

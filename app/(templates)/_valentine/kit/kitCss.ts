@@ -25,12 +25,14 @@ export const KIT_CSS = `
 .vw-wf-fall { animation: vw-wf-fall 20s linear infinite }
 .vw-wf-rise { animation: vw-wf-rise 20s linear infinite }
 .vw-wf-twinkle { animation: vw-wf-twinkle 4s ease-in-out infinite }
+@keyframes vw-wf-flit { 0%,100% { transform: translate3d(0,0,0) scaleY(1) } 20% { transform: translate3d(12px,-9px,0) scaleY(.62) } 45% { transform: translate3d(26px,-2px,0) scaleY(1) } 70% { transform: translate3d(12px,8px,0) scaleY(.62) } }
+.vw-wf-flit { animation: vw-wf-flit 5s ease-in-out infinite }
 @keyframes vw-wf-in { from { opacity: 0 } to { opacity: 1 } }
 .vw-wf-wing { animation: vw-wf-in .9s ease both }
 .vw-wf-bob { animation: vw-wf-bob 6.5s ease-in-out infinite }
 .vw-wf-par { transition: transform .9s cubic-bezier(.2,.7,.3,1); will-change: transform }
 @media (prefers-reduced-motion: reduce) {
-  .vw-wf-fall, .vw-wf-rise, .vw-wf-twinkle, .vw-wf-bob, .vw-wf-wing { animation: none !important }
+  .vw-wf-fall, .vw-wf-rise, .vw-wf-twinkle, .vw-wf-flit, .vw-wf-bob, .vw-wf-wing { animation: none !important }
   .vw-anim-bounce, .vw-anim-float, .vw-anim-wiggle, .vw-anim-pulse, .vw-anim-spin, .vw-fade-up, .vw-drift { animation: none !important }
 }
 `;

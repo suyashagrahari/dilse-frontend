@@ -91,6 +91,8 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/happy-hug-day", priority: 0.8, changeFrequency: "monthly" },
   { path: "/happy-kiss-day", priority: 0.8, changeFrequency: "monthly" },
   { path: "/happy-valentines-day", priority: 0.8, changeFrequency: "monthly" },
+  // Halloween (31 Oct) — seasonal, on the same engine; indexed so it can rank in the last week of October.
+  { path: "/happy-halloween", priority: 0.8, changeFrequency: "monthly" },
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card

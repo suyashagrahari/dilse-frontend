@@ -13,7 +13,7 @@ export function defaultGifs(ids: readonly string[]): Record<string, string> {
   return Object.fromEntries(ids.map((id) => [id, ""]));
 }
 
-/** name / emoji / date, from lib/wishlist/valentine.ts. */
+/** name / emoji / date / month (the week from lib/wishlist/valentine.ts, plus the occasions). */
 export const meta = (slug: DaySlug) => DAY_META[slug];
 
 /** Every day's demo starts on its own built-in melody (no YouTube song). */
