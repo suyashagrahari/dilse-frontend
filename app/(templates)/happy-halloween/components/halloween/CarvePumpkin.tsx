@@ -228,6 +228,11 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
         >
           {/* FRONT — the face you carve */}
           <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+            {/* Shadow and candle glow are gradient layers, not a CSS drop-shadow on
+                the <svg>: the marching-ants outline repaints the svg every frame,
+                and a filter on it would be recomputed on each of those paints. */}
+            <div aria-hidden style={{ position: "absolute", left: "8%", right: "8%", top: "70%", height: "26%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(0,0,0,.5), transparent)", opacity: lit ? 0 : 1, transition: "opacity 1s" }} />
+            <div aria-hidden style={{ position: "absolute", inset: "-12%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(255,170,70,.42), rgba(255,170,70,.16) 70%, transparent)", opacity: lit ? 1 : 0, transition: "opacity 1s" }} />
             <svg
               ref={svgRef}
               viewBox="0 0 300 290"
@@ -235,7 +240,7 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
               height="100%"
               role="group"
               aria-label="A pumpkin to carve"
-              style={{ display: "block", overflow: "visible", touchAction: allCut ? "auto" : "none", cursor: allCut ? "default" : "crosshair", filter: lit ? "drop-shadow(0 0 26px rgba(255,170,70,.55))" : "drop-shadow(0 18px 24px rgba(0,0,0,.45))", transition: "filter 1s" }}
+              style={{ position: "relative", display: "block", overflow: "visible", touchAction: allCut ? "auto" : "none", cursor: allCut ? "default" : "crosshair" }}
               onPointerDown={(e) => {
                 if (allCut) return;
                 setTouched(true);
@@ -296,7 +301,12 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
                       />
                       <path className="hw-focus" d={pc.d} fill="none" stroke="#9BE7C4" strokeWidth="5" opacity="0" pointerEvents="none" />
                       {(samples[i] ?? []).map((s, k) =>
-                        marked[i]?.[k] ? <circle key={k} cx={s.x} cy={s.y} r="3.2" fill="#FFF1B8" style={{ filter: "drop-shadow(0 0 3px #FFB347)" }} pointerEvents="none" /> : null,
+                        marked[i]?.[k] ? (
+                          <g key={k} pointerEvents="none">
+                            <circle cx={s.x} cy={s.y} r="6.5" fill="#FFB347" opacity=".35" />
+                            <circle cx={s.x} cy={s.y} r="3.2" fill="#FFF1B8" />
+                          </g>
+                        ) : null,
                       )}
                     </>
                   )}
@@ -332,7 +342,9 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
 
           {/* BACK — the word, carved through, glowing */}
           <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }} aria-hidden={!back}>
-            <svg viewBox="0 0 300 290" width="100%" height="100%" style={{ display: "block", overflow: "visible", filter: "drop-shadow(0 0 30px rgba(255,170,70,.6))" }} role="img" aria-label={`The pumpkin's back, carved with “${word}”`}>
+            {/* glow as a gradient layer (the flicker repaints this svg several times a second) */}
+            <div aria-hidden style={{ position: "absolute", inset: "-14%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(255,170,70,.48), rgba(255,170,70,.18) 70%, transparent)" }} />
+            <svg viewBox="0 0 300 290" width="100%" height="100%" style={{ position: "relative", display: "block", overflow: "visible" }} role="img" aria-label={`The pumpkin's back, carved with “${word}”`}>
               <defs>
                 <linearGradient id="hw-word" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stopColor="#FFF6C8" />

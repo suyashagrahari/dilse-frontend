@@ -1,21 +1,59 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
+// Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
+// ("happy-halloween"), which also puts the page in the sitemap, /llms.txt and
+// the agent catalog. The og:image is ./opengraph-image.tsx (1200×630, rendered
+// at build time); Next adds it to openGraph and twitter on its own.
 const SLUG = "happy-halloween";
-const TITLE = "Interactive Happy Halloween Card with Photos & Music";
-const DESCRIPTION =
-  "Send a spooky-cute Halloween card they can play: carve a pumpkin, read your letter by flashlight, brew a love potion and answer 'Will you be my boo?'";
+const tpl = TEMPLATE_SEO[SLUG];
+
+// The link preview stays a teaser (the brief's delivery plan): it is what
+// shows on WhatsApp when someone pastes the template link to a friend.
 const SOCIAL_TITLE = "🎃 A little haunted house was built for you";
 const SOCIAL_DESCRIPTION = "Someone left something on your doorstep… open it with the lights off 👻";
 
+const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
+  ...base,
   alternates: { canonical: `${SITE_URL}/${SLUG}` },
-  openGraph: { title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}` },
-  twitter: { card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION },
+  openGraph: {
+    ...base.openGraph,
+    title: SOCIAL_TITLE,
+    description: SOCIAL_DESCRIPTION,
+    url: `${SITE_URL}/${SLUG}`,
+    // Drop the site-wide default image so the route's opengraph-image is the only one.
+    images: undefined,
+  },
+  twitter: {
+    ...base.twitter,
+    card: "summary_large_image",
+    title: SOCIAL_TITLE,
+    description: SOCIAL_DESCRIPTION,
+    images: undefined,
+  },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const faqs = getFAQs(SLUG);
+  const howTo = getHowTo(SLUG);
+  // Null: no real ratings yet, and the guard renders nothing rather than stars.
+  const rating = getAggregateRating(SLUG);
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: SITE_URL },
+          { name: "Templates", url: `${SITE_URL}/templates` },
+          { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
+        ]}
+      />
+      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
+      {howTo && <HowToJsonLd howTo={howTo} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {children}
+    </>
+  );
 }

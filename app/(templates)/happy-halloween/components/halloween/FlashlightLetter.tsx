@@ -4,8 +4,8 @@
 //
 // The attic is pitch dark; the letter is there, but all you can see is the
 // circle of a flashlight. Move your finger (or the mouse) and the beam
-// follows — a CSS radial-gradient mask driven by --x/--y custom properties,
-// painted on the compositor, never a re-render per move. Sweep about 60% of
+// follows — a CSS radial-gradient driven by --x/--y custom properties: each
+// move repaints only that overlay layer, never a React re-render per move. Sweep about 60% of
 // the page and a bulb clicks on; "Turn the lights on" is always there too.
 //
 // Accessibility (the reference's rule): the letter is ALWAYS fully in the DOM

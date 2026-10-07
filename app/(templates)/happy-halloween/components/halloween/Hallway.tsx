@@ -27,8 +27,15 @@ function Eyes({ closed }: { closed: boolean }) {
     if (closed || reduced) return;
     const el = ref.current;
     if (!el) return;
+    // The rect is cached and only re-read after a scroll/resize: with several
+    // portraits each listening, reading it on every move interleaves layout
+    // reads with the other portraits' style writes (a forced recalc per eye).
+    let rect: DOMRect | null = null;
+    const forget = () => {
+      rect = null;
+    };
     const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
+      const r = rect ?? (rect = el.getBoundingClientRect());
       const dx = e.clientX - (r.left + r.width / 2);
       const dy = e.clientY - (r.top + r.height / 2);
       const d = Math.max(1, Math.hypot(dx, dy));
@@ -37,7 +44,13 @@ function Eyes({ closed }: { closed: boolean }) {
       el.style.setProperty("--ey", `${((dy / d) * k).toFixed(1)}px`);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
+    window.addEventListener("scroll", forget, { passive: true, capture: true });
+    window.addEventListener("resize", forget);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("scroll", forget, { capture: true });
+      window.removeEventListener("resize", forget);
+    };
   }, [closed, reduced]);
   const eye = (k: number) => (
     <span key={k} style={{ position: "relative", width: 14, height: 10, borderRadius: "50%", background: closed ? "transparent" : "#FFF6E6", overflow: "hidden", display: "inline-block", boxShadow: closed ? undefined : "inset 0 0 0 1.5px #5A3818" }}>

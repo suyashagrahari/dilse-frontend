@@ -109,9 +109,12 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
   const screen = (key: string, children: ReactNode, opts: { center?: boolean } = {}) => (
     <motion.section
       key={`${key}-${round}`}
-      initial={reduced ? false : { opacity: 0, y: 18, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={reduced ? undefined : { opacity: 0, y: -14, filter: "blur(4px)" }}
+      // Opacity + translate only: a blur() on a full-screen room is repainted on
+      // the main thread every frame of the 0.5 s change (and the leftover
+      // filter: blur(0px) kept every room a non-composited filter layer).
+      initial={reduced ? false : { opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduced ? undefined : { opacity: 0, y: -14 }}
       transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
       style={{
         minHeight: "calc(100dvh - var(--vw-dock-space, 0px))",
@@ -173,7 +176,10 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
         })}
       </div>
 
-      <AnimatePresence mode="wait">
+      {/* initial={false}: the first room (and its h1, the LCP element) paints at
+          its final state instead of waiting on hydration at opacity 0. Later
+          rooms still fade in. */}
+      <AnimatePresence mode="wait" initial={false}>
         {step === "door" && screen("door", <Doorstep recipient={recipient} petName={data.petName} houseName={clean(x.houseName)} sticker={sticker("h1-doorstep", 64)} onEnter={next} />)}
         {step === "treat" && screen("treat", <TrickOrTreat trickLine={clean(x.trickLine)} gentle={T.gentle} sticker={sticker("h2-treat", 84)} onNext={next} />)}
         {step === "carve" && screen("carve", <CarvePumpkin word={carveWord} onNext={next} />)}

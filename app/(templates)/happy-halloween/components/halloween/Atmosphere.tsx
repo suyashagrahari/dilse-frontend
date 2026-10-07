@@ -17,16 +17,23 @@ import { Bat, Cobweb, MoonHeart } from "./art";
 const CSS = `
 .hw-atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .hw-stars { position: absolute; inset: 0 0 40% 0; }
+/* Three star layers: one still, two twinkling as a whole — two composited
+   opacity animations instead of ~30 per-star ones. */
+.hw-stars > div { position: absolute; inset: 0; }
 .hw-stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #F7F3FF; opacity: .55; }
-.hw-stars i:nth-child(3n) { animation: hw-tw 3.6s ease-in-out infinite; }
-.hw-stars i:nth-child(3n+1) { animation: hw-tw 5.2s ease-in-out infinite 1s; width: 1.5px; height: 1.5px; }
+.hw-stars .tw1, .hw-stars .tw2 { will-change: opacity; }
+.hw-stars .tw1 { animation: hw-tw 3.6s ease-in-out infinite; }
+.hw-stars .tw2 { animation: hw-tw 5.2s ease-in-out infinite 1s; }
+.hw-stars .tw1 i, .hw-stars .tw2 i { opacity: 1; }
+.hw-stars .tw2 i { width: 1.5px; height: 1.5px; }
 @keyframes hw-tw { 0%,100% { opacity: .2 } 50% { opacity: .85 } }
 .hw-moon { position: absolute; top: 64px; right: calc(var(--vw-gutter, 0px) - 64px); filter: drop-shadow(0 0 28px rgba(255,235,170,.45)); }
 /* Phones: tuck the moon half off the edge so it never sits under a room's heading. */
 @media (max-width: 767px) { .hw-moon { top: 96px; right: -24px; transform: scale(.76); transform-origin: top right; } }
-.hw-cloud { position: absolute; height: 26px; border-radius: 30px; background: rgba(247,243,255,.10); filter: blur(6px); }
-.hw-cloud.c1 { top: 104px; width: 160px; animation: hw-cloud 46s linear infinite; }
-.hw-cloud.c2 { top: 142px; width: 110px; animation: hw-cloud 64s linear infinite -30s; opacity: .7; }
+/* Soft edges from the gradient itself — a blur() filter on a moving layer is not composited. */
+.hw-cloud { position: absolute; height: 38px; border-radius: 50%; background: radial-gradient(closest-side, rgba(247,243,255,.12) 40%, rgba(247,243,255,0)); will-change: transform; }
+.hw-cloud.c1 { top: 98px; width: 160px; animation: hw-cloud 46s linear infinite; }
+.hw-cloud.c2 { top: 136px; width: 110px; animation: hw-cloud 64s linear infinite -30s; opacity: .7; }
 @keyframes hw-cloud { from { transform: translateX(-30vw) } to { transform: translateX(130vw) } }
 .hw-fog { position: absolute; left: 0; width: 200%; bottom: 0; pointer-events: none; }
 .hw-fog.f1 { height: 34vh; background: radial-gradient(40% 60% at 25% 100%, rgba(207,198,232,.20), transparent 70%), radial-gradient(40% 60% at 75% 100%, rgba(207,198,232,.18), transparent 70%); animation: hw-fog 38s linear infinite; }
@@ -36,7 +43,8 @@ const CSS = `
 .hw-bat { position: absolute; left: 0; opacity: 0; }
 .hw-bat.b1 { top: 22%; animation: hw-batx 13s linear infinite 2s; }
 .hw-bat.b2 { top: 38%; animation: hw-batx 17s linear infinite 9s; }
-.hw-bat svg { filter: drop-shadow(0 0 3px rgba(183,156,255,.55)); }
+/* A thin lilac rim instead of a drop-shadow filter (which blocks compositing of the flight). */
+.hw-bat svg path { stroke: rgba(183,156,255,.55); stroke-width: 1.2px; }
 .hw-bat > span { display: block; animation: hw-baty 1.6s ease-in-out infinite alternate; }
 .hw-bat > span > span { display: block; animation: hw-flap .26s ease-in-out infinite alternate; transform-origin: 50% 40%; }
 @keyframes hw-batx { 0% { transform: translateX(-12vw); opacity: 0 } 3% { opacity: .85 } 45% { opacity: .85 } 50% { transform: translateX(112vw); opacity: 0 } 100% { transform: translateX(112vw); opacity: 0 } }
@@ -47,8 +55,9 @@ const CSS = `
 .hw-warm.is-on { opacity: 1; }
 .hw-flies { position: absolute; inset: 0; width: 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) {
-  .hw-stars i, .hw-cloud, .hw-fog, .hw-bat, .hw-bat > span, .hw-bat > span > span { animation: none !important; }
+  .hw-stars > div, .hw-cloud, .hw-fog, .hw-bat, .hw-bat > span, .hw-bat > span > span { animation: none !important; }
   .hw-bat { display: none; }
+  .hw-stars .tw1 i, .hw-stars .tw2 i { opacity: .55; }
 }
 `;
 
@@ -75,7 +84,9 @@ function Fireflies({ count = 16, warm }: { count?: number; warm: boolean }) {
     if (!ctx) return;
     let w = 0;
     let h = 0;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // Soft glows need no retina pixels: 1× halves-to-quarters the fill cost of
+    // a full-screen canvas, and 30 fps is plenty for drifting fireflies.
+    const dpr = 1;
     const flies = Array.from({ length: count }, (_, i) => ({
       x: Math.random(),
       y: 0.35 + Math.random() * 0.6,
@@ -110,8 +121,12 @@ function Fireflies({ count = 16, warm }: { count?: number; warm: boolean }) {
       }
     };
     let raf = 0;
+    let last = 0;
     const loop = (t: number) => {
-      draw(t);
+      if (t - last >= 32) {
+        last = t;
+        draw(t);
+      }
       raf = requestAnimationFrame(loop);
     };
     if (reduced) draw(4000);
@@ -141,8 +156,12 @@ export default function Atmosphere({ warm = false }: { warm?: boolean }) {
     <div className="hw-atmo" aria-hidden>
       <style>{CSS}</style>
       <div className="hw-stars">
-        {STARS.map((s, i) => (
-          <i key={i} style={{ left: `${s.left}%`, top: `${s.top}%` }} />
+        {(["tw1", "tw2", "still"] as const).map((layer, g) => (
+          <div key={layer} className={layer}>
+            {STARS.filter((_, i) => (i + 1) % 3 === g).map((s, i) => (
+              <i key={i} style={{ left: `${s.left}%`, top: `${s.top}%` }} />
+            ))}
+          </div>
         ))}
       </div>
       <div className="hw-moon">

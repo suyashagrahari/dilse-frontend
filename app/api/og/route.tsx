@@ -10,6 +10,9 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   missyou: { emoji: "💭", gradient: ["#6366f1", "#8b5cf6"], label: "Miss You" },
   sorry: { emoji: "🥺", gradient: ["#f59e0b", "#f97316"], label: "Sorry" },
   gift: { emoji: "🎁", gradient: ["#f43f5e", "#a855f7"], label: "Gift" },
+  // Happy Halloween: night indigo → pumpkin, and the teaser wording rather than
+  // "Gift for …" (lib/seo.ts TEASER_PREVIEW uses the same line as the og:title).
+  "happy-halloween": { emoji: "🎃", gradient: ["#17122B", "#B84E14"], label: "A little haunted house" },
 };
 
 export async function GET(req: NextRequest) {
