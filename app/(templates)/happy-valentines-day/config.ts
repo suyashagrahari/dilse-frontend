@@ -1,17 +1,17 @@
 import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { DEMO_PHOTO_CDN } from "../_love/types";
+import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is a placeholder (a demo couple photo) until the
-// day's own cover art is uploaded to templates/happy-valentines-day/cover.webp.
+// Gallery card. The cover is the day's own scene, captured from the live page
+// (source: media-src/templates/happy-valentines-day/cover.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-valentines-day",
-  type: "love",
+  type: "valentine",
   category: "gf",
   title: "Valentine's Day — Our Valentine Night",
   description:
     'A ticket, seven lanterns for the week, your Love Wrapped stats, a gift-box letter and the forever question.',
-  coverImage: `${DEMO_PHOTO_CDN}/couple4.webp`,
+  coverImage: templateMedia("happy-valentines-day", "cover.webp"),
   emoji: "💘",
   color: "from-indigo-900 to-amber-400",
   previewText: 'admit two. tonight 💘',

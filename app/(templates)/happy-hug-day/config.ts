@@ -1,17 +1,17 @@
 import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-react";
 import type { TemplatePageConfig } from "@/types/template-config";
-import { DEMO_PHOTO_CDN } from "../_love/types";
+import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is a placeholder (a demo couple photo) until the
-// day's own cover art is uploaded to templates/happy-hug-day/cover.webp.
+// Gallery card. The cover is the day's own scene, captured from the live page
+// (source: media-src/templates/happy-hug-day/cover.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-hug-day",
-  type: "love",
+  type: "valentine",
   category: "gf",
   title: "Hug Day — Jaadu Ki Jhappi Café",
   description:
     'A cosy café with a Hug Menu, a squishy first hug and tear-off hug coupons.',
-  coverImage: `${DEMO_PHOTO_CDN}/couple2.webp`,
+  coverImage: templateMedia("happy-hug-day", "cover.webp"),
   emoji: "🤗",
   color: "from-orange-300 to-pink-500",
   previewText: 'a warm hug, delivered 🤗',
