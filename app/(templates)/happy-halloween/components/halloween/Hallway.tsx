@@ -106,7 +106,11 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
   const done = list.length === 0 || forced || wiped.every(Boolean);
   const count = wiped.filter(Boolean).length;
 
+  // The fog clears mid-swipe, so the photo button mounts under the finger and
+  // would catch the lift as a click. Ignore clicks just after a reveal.
+  const revealedAt = useRef<number[]>([]);
   const markWiped = (i: number) => {
+    revealedAt.current[i] = Date.now();
     haptic(12);
     setWiped((w) => {
       const n = w.slice();
@@ -131,7 +135,10 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
                     {shown ? (
                       <motion.button
                         type="button"
-                        onClick={() => setOpen(i)}
+                        onClick={() => {
+                          if (Date.now() - (revealedAt.current[i] ?? 0) < 600) return;
+                          setOpen(i);
+                        }}
                         aria-label={`Open photo ${i + 1}${p.caption ? `: ${p.caption}` : ""}`}
                         initial={reduced ? false : { filter: "blur(6px)" }}
                         animate={{ filter: "blur(0px)" }}
