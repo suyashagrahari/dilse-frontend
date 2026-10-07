@@ -44,7 +44,7 @@ export default function CafeDoor({ recipient, petName, sign, sender, sticker, on
         @media (prefers-reduced-motion: reduce) { .hd-steam, .hd-tw, .hd-ring { animation: none } }
       `}</style>
 
-      <div style={{ position: "relative", width: "min(88vw, 340px)", aspectRatio: "340 / 360", marginTop: 6 }}>
+      <div style={{ position: "relative", width: "min(88vw, calc(340px * var(--vw-s, 1)))", aspectRatio: "340 / 360", marginTop: 6 }}>
         <svg viewBox="0 0 340 360" width="100%" height="100%" aria-hidden style={{ display: "block", overflow: "visible" }}>
           <defs>
             <radialGradient id="hd-in" cx=".5" cy=".6" r=".7">

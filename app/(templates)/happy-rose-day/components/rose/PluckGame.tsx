@@ -113,7 +113,7 @@ export default function PluckGame({ day, data, reduced, onNext }: Props) {
         <p style={{ margin: 0, font: `400 15px ${FONTS.ui}`, color: VW.inkSoft }}>{done ? "The rose has spoken." : "Tap a petal to pluck it"}</p>
       </header>
 
-      <div ref={wrapRef} style={{ position: "relative", width: "min(80vw, 320px)", aspectRatio: "1 / 1" }}>
+      <div ref={wrapRef} style={{ position: "relative", width: "min(80vw, calc(320px * var(--vw-s, 1)))", aspectRatio: "1 / 1" }}>
         <svg viewBox="-130 -130 260 260" width="100%" height="100%" style={{ overflow: "visible", display: "block" }} role="group" aria-label={`A rose with ${N - plucked} petals left`}>
           <GradDefs grads={roseGrads(id, sh)} />
           <defs>

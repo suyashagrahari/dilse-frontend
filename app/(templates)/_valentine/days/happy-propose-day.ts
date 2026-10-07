@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-propose-day" as const;
 
@@ -34,6 +34,7 @@ export const proposeDay: DayConfig<ProposeExtras> = {
   letterMin: 50,
   asksQuestion: true,
   melody: "velvet",
+  photoAspect: 4 / 5,
   gifSlots: GIFS,
   extras: [
     {
@@ -110,7 +111,7 @@ export const proposeDay: DayConfig<ProposeExtras> = {
       ["today", "And every day after this one, if you'll have me."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Best yes of my life. Ab koi return policy nahi 💍",
     extras: {
       question: "Will you be mine, forever? 💍",

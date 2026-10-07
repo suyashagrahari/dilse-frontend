@@ -18,7 +18,19 @@ export const KIT_CSS = `
 .vw-fade-up { animation: vw-fade-up .5s cubic-bezier(.2,.8,.2,1) both }
 [data-vw-day] input, [data-vw-day] textarea, [data-vw-day] [contenteditable] { user-select: text; -webkit-user-select: text }
 .vw-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0 }
+@keyframes vw-wf-fall { 0% { transform: translate3d(0,0,0) rotate(0deg); opacity: 0 } 8% { opacity: var(--wf-op) } 50% { transform: translate3d(var(--wf-sway),55vh,0) rotate(calc(var(--wf-rot) / 2)) } 92% { opacity: var(--wf-op) } 100% { transform: translate3d(0,115vh,0) rotate(var(--wf-rot)); opacity: 0 } }
+@keyframes vw-wf-rise { 0% { transform: translate3d(0,0,0) rotate(0deg); opacity: 0 } 10% { opacity: var(--wf-op) } 50% { transform: translate3d(var(--wf-sway),-55vh,0) rotate(calc(var(--wf-rot) / 3)) } 90% { opacity: var(--wf-op) } 100% { transform: translate3d(0,-115vh,0) rotate(calc(var(--wf-rot) / 2)); opacity: 0 } }
+@keyframes vw-wf-twinkle { 0%,100% { opacity: calc(var(--wf-op) * .25); transform: scale(.7) } 50% { opacity: var(--wf-op); transform: scale(1.1) } }
+@keyframes vw-wf-bob { 0%,100% { transform: translateY(0) rotate(0deg) } 50% { transform: translateY(-7px) rotate(.8deg) } }
+.vw-wf-fall { animation: vw-wf-fall 20s linear infinite }
+.vw-wf-rise { animation: vw-wf-rise 20s linear infinite }
+.vw-wf-twinkle { animation: vw-wf-twinkle 4s ease-in-out infinite }
+@keyframes vw-wf-in { from { opacity: 0 } to { opacity: 1 } }
+.vw-wf-wing { animation: vw-wf-in .9s ease both }
+.vw-wf-bob { animation: vw-wf-bob 6.5s ease-in-out infinite }
+.vw-wf-par { transition: transform .9s cubic-bezier(.2,.7,.3,1); will-change: transform }
 @media (prefers-reduced-motion: reduce) {
+  .vw-wf-fall, .vw-wf-rise, .vw-wf-twinkle, .vw-wf-bob, .vw-wf-wing { animation: none !important }
   .vw-anim-bounce, .vw-anim-float, .vw-anim-wiggle, .vw-anim-pulse, .vw-anim-spin, .vw-fade-up, .vw-drift { animation: none !important }
 }
 `;

@@ -184,7 +184,7 @@ export default function ChocoBox(p: ChocoBoxProps) {
       </div>
 
       {/* ── the box ── */}
-      <div style={{ position: "relative", zIndex: 2, width: "min(86vw, 344px)", aspectRatio: `${cols} / ${rows}`, perspective: 1100, perspectiveOrigin: "50% 0%" }}>
+      <div style={{ position: "relative", zIndex: 2, width: "min(86vw, calc(344px * var(--vw-s, 1)))", aspectRatio: `${cols} / ${rows}`, perspective: 1100, perspectiveOrigin: "50% 0%" }}>
         {/* box walls + tray */}
         <div
           style={{

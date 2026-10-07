@@ -80,7 +80,7 @@ export default function Quilt({ photos, onNext }: { photos: LovePhoto[]; onNext:
       <p style={{ margin: "-6px 0 0", maxWidth: 320, font: `400 15px/1.45 ${FONTS.ui}`, color: VW.inkSoft }}>
         {photos.length ? "Every patch is a hug we already had. Tap one 🧶" : "Patches waiting for our next photos. Squish them anyway 🧶"}
       </p>
-      <div style={{ position: "relative", width: "min(100%, 420px)", padding: 12, borderRadius: 20, background: "#FFF6EC", boxShadow: "0 0 0 3px #F2DDCF, 0 26px 50px -28px rgba(74,44,32,.6)" }}>
+      <div style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))", padding: 12, borderRadius: 20, background: "#FFF6EC", boxShadow: "0 0 0 3px #F2DDCF, 0 26px 50px -28px rgba(74,44,32,.6)" }}>
         {/* the quilt's outer running stitch */}
         <div aria-hidden style={{ position: "absolute", inset: 5, borderRadius: 16, border: `2px dashed ${H.peach}`, pointerEvents: "none" }} />
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 6 }}>

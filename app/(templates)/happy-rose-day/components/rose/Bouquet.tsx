@@ -143,7 +143,7 @@ export default function Bouquet({ day, data, reduced, onNext }: Props) {
         <p style={{ margin: 0, font: `400 14.5px ${FONTS.ui}`, color: VW.inkSoft }}>{all ? "All of them, collected 💗" : "Tap a bud to make it bloom"}</p>
       </header>
 
-      <div style={{ position: "relative", width: "min(80vw, 300px)", aspectRatio: "300 / 330" }}>
+      <div style={{ position: "relative", width: "min(80vw, calc(300px * var(--vw-s, 1)))", aspectRatio: "300 / 330" }}>
         {slot && (
           <div style={{ position: "absolute", right: -28, top: -6, zIndex: 3 }}>
             <Sticker slug={day.slug} slot={slot} value={data.gifs[slot.id]} size={74} />

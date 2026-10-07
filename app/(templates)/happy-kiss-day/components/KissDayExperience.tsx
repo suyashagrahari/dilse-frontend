@@ -23,7 +23,7 @@ import { getDay } from "../../_valentine/days";
 import { VW } from "../../_valentine/theme";
 import type { ExperienceProps } from "../../_valentine/types";
 import type { KissExtras } from "../../_valentine/days/happy-kiss-day";
-import { SHADES, type KissStyle, type ShadeId } from "./kissArt";
+import { CuteCouple, KissStamp, SHADES, type KissStyle, type ShadeId } from "./kissArt";
 import KissJarGame from "./KissJarGame";
 import KissLetter from "./KissLetter";
 import KissCam, { type PhotoKiss } from "./KissCam";
@@ -159,9 +159,14 @@ export default function KissDayExperience({ data, mode, react }: ExperienceProps
   }
 
   return (
-    <DayRoot day={day}>
+    <DayRoot
+      day={day}
+      data={data}
+      line={x.openingLine}
+      art={kind === "cute" ? <CuteCouple style={{ height: "100%", width: "auto" }} /> : <KissStamp kind={kind} shade={shade} size={170} />}
+    >
       {/* soft bokeh + drifting kisses */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      <div aria-hidden className="vw-wide-fixed" style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
         <span style={{ position: "absolute", left: "-20%", top: "8%", width: "70%", aspectRatio: "1", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,122,162,.22), transparent 70%)" }} />
         <span style={{ position: "absolute", right: "-25%", top: "45%", width: "80%", aspectRatio: "1", borderRadius: "50%", background: "radial-gradient(circle, rgba(232,176,75,.14), transparent 70%)" }} />
         <span style={{ position: "absolute", left: "10%", bottom: "-10%", width: "60%", aspectRatio: "1", borderRadius: "50%", background: "radial-gradient(circle, rgba(224,36,94,.10), transparent 70%)" }} />

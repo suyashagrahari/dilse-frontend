@@ -15,8 +15,9 @@
 //   const music = useSynthMusic({ melody: day.melody, enabled: mode === "live" && data.music });
 //   <MusicToggle music={music} />
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { DayConfig } from "../types";
+import { DayMusicContext } from "../music/context";
 
 export type MelodyId = DayConfig["melody"];
 
@@ -43,7 +44,20 @@ export interface SynthMusic {
   stop: () => void;
 }
 
-export function useSynthMusic({ melody, enabled, volume = 0.5 }: { melody: MelodyId; enabled: boolean; volume?: number }): SynthMusic {
+/**
+ * The day-facing hook. Inside a page shell (editor preview or live viewer) the
+ * shell's <DayMusicProvider> owns the music — the sender's off / melody /
+ * YouTube choice — and this simply hands back its controls, ignoring
+ * `enabled`. Outside one (a stand-alone demo) it plays the synth itself.
+ */
+export function useSynthMusic(opts: { melody: MelodyId; enabled: boolean; volume?: number }): SynthMusic {
+  const shell = useContext(DayMusicContext);
+  const own = useSynthEngine({ ...opts, enabled: shell ? false : opts.enabled });
+  return shell ?? own;
+}
+
+/** The raw synth. `autoStart` (default true): start on the visitor's first tap / key press. */
+export function useSynthEngine({ melody, enabled, volume = 0.5, autoStart = true }: { melody: MelodyId; enabled: boolean; volume?: number; autoStart?: boolean }): SynthMusic {
   const [playing, setPlaying] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
   const masterRef = useRef<GainNode | null>(null);
@@ -146,6 +160,7 @@ export function useSynthMusic({ melody, enabled, volume = 0.5 }: { melody: Melod
       stop();
       return;
     }
+    if (!autoStart) return;
     const go = () => {
       if (!userOff.current && timerRef.current == null) start();
     };
@@ -155,7 +170,7 @@ export function useSynthMusic({ melody, enabled, volume = 0.5 }: { melody: Melod
       window.removeEventListener("pointerdown", go);
       window.removeEventListener("keydown", go);
     };
-  }, [enabled, start, stop]);
+  }, [enabled, autoStart, start, stop]);
 
   // Hidden tab → pause; back → resume if it was playing.
   useEffect(() => {
@@ -181,12 +196,29 @@ export function useSynthMusic({ melody, enabled, volume = 0.5 }: { melody: Melod
   return { playing, available: enabled, toggle, start, stop };
 }
 
-/** A small round speaker button. Renders nothing when music is off for the page. */
+/**
+ * A small round speaker button. Renders nothing when music is off for the page.
+ * Inside a page shell it shows the shell's melody state, and nothing at all for
+ * a YouTube song (the shell's mini-player carries those controls).
+ */
 export function MusicToggle({ music, style }: { music: SynthMusic; style?: React.CSSProperties }) {
+  const shell = useContext(DayMusicContext);
+  const register = shell?.registerToggle;
+  useEffect(() => register?.(), [register]);
+  if (shell) return shell.mode === "melody" ? <MusicButton music={shell} style={style} /> : null;
   if (!music.available) return null;
+  return <MusicButton music={music} style={style} />;
+}
+
+/** The round button itself (also drawn by the page shell when a day shows none). */
+export function MusicButton({ music, style }: { music: SynthMusic; style?: React.CSSProperties }) {
   return (
     <button
       type="button"
+      // Keep this tap away from the "first gesture starts the music" listener,
+      // or the same tap would start it and then toggle it straight back off.
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         music.toggle();

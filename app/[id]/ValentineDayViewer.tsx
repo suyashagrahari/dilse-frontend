@@ -16,6 +16,7 @@ import { getExperience } from "@/app/(templates)/_valentine/experiences";
 import { fromDb, type DaySlug, type ReactFn } from "@/app/(templates)/_valentine/types";
 import { BrandMark } from "@/app/(templates)/_valentine/kit/DayRoot";
 import { FONTS } from "@/app/(templates)/_valentine/theme";
+import { DayMusicProvider } from "@/app/(templates)/_valentine/music/DayMusic";
 import { TemplateGate, initialUnlocked } from "./_TemplateGate";
 
 /** Fire-and-forget; never throws, never blocks the experience. */
@@ -100,7 +101,11 @@ export default function ValentineDayViewer({
 
   return (
     <MotionConfig reducedMotion="user">
-      <Experience data={data} mode="live" react={react} />
+      {/* The sender's music (off · melody · YouTube song) — the day's own
+          useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
+      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark}>
+        <Experience data={data} mode="live" react={react} />
+      </DayMusicProvider>
       <BrandMark dark={day.theme.dark} />
     </MotionConfig>
   );

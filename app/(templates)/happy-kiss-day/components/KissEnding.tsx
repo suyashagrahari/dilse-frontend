@@ -30,7 +30,7 @@ export function PhotoStrip({ photos, marks, kind, shade, names }: { photos: Love
       initial={reduced ? false : { y: 60, rotate: 8, opacity: 0 }}
       animate={{ y: 0, rotate: -3.5, opacity: 1 }}
       transition={{ type: "spring", stiffness: 120, damping: 16, delay: 0.2 }}
-      style={{ position: "relative", width: "min(52vw, 196px)", padding: "10px 10px 0", background: "#fff", borderRadius: 4, boxShadow: "0 30px 50px -26px rgba(59,10,30,.6), 0 2px 6px rgba(0,0,0,.08)" }}
+      style={{ position: "relative", width: "min(52vw, calc(196px * var(--vw-s, 1)))", padding: "10px 10px 0", background: "#fff", borderRadius: 4, boxShadow: "0 30px 50px -26px rgba(59,10,30,.6), 0 2px 6px rgba(0,0,0,.08)" }}
     >
       <span aria-hidden style={{ position: "absolute", top: -12, left: "50%", width: 70, height: 22, transform: "translateX(-50%) rotate(-4deg)", background: "rgba(255,214,224,.85)", boxShadow: "0 2px 4px rgba(0,0,0,.08)" }} />
       <div style={{ display: "grid", gap: 8 }}>
@@ -126,7 +126,7 @@ export function KissEnding({
   const camKisses = Object.values(marks).reduce((a, m) => a + m.length, 0);
   const names = `${data.recipientName || "You"} ♥ ${data.senderName || "Me"}`;
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 14, textAlign: "center" }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 14, textAlign: "center" }}>
       <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".2em", textTransform: "uppercase", color: VW.inkSoft }}>Kiss received · kiss returned</p>
       <h2 style={{ margin: 0, font: `700 clamp(34px, 10vw, 50px)/1.08 ${FONTS.script}`, color: VW.ink, overflowWrap: "anywhere" }}>Happy Kiss Day, {data.recipientName || "you"}</h2>
       <PhotoStrip photos={data.photos} marks={marks} kind={kind} shade={shade} names={names} />

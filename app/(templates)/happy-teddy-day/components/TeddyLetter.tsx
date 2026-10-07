@@ -79,7 +79,7 @@ export default function TeddyLetter({
   };
 
   return (
-    <div style={{ width: "100%", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `58px 16px ${preview ? 140 : 64}px`, textAlign: "center" }}>
+    <div style={{ width: "100%", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `58px 16px ${preview ? 140 : 64}px`, textAlign: "center" }}>
       <AnimatePresence mode="wait">
         {phase === "deliver" ? (
           <motion.div key="deliver" exit={{ opacity: 0, y: -20 }} style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -127,7 +127,7 @@ export default function TeddyLetter({
 
       {/* the teddy peeking from the corner while they read */}
       {phase === "reading" && (
-        <motion.div aria-hidden initial={{ y: 160 }} animate={{ y: 0 }} transition={{ delay: 0.6, type: "spring", stiffness: 120, damping: 14 }} style={{ position: "fixed", right: 6, bottom: -18, width: 112, zIndex: 30, pointerEvents: "none" }}>
+        <motion.div aria-hidden initial={{ y: 160 }} animate={{ y: 0 }} transition={{ delay: 0.6, type: "spring", stiffness: 120, damping: 14 }} style={{ position: "fixed", right: "calc(var(--vw-gutter, 0px) + 6px)", bottom: -18, width: 112, zIndex: 30, pointerEvents: "none" }}>
           <div className={reduced ? undefined : "td-peek"}>
             <Teddy fur={fur} worn={worn} pose="wave" size={112} />
           </div>

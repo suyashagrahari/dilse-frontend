@@ -7,10 +7,11 @@
 // Everything is one SVG (viewBox 360×230). The left hand rides a motion value
 // in viewBox units; pointer deltas are scaled by the SVG's rendered width.
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { animate, AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { burst, haptic, useReducedMotion } from "../../../_valentine/kit";
+import { useViewportTier } from "../../../_valentine/kit/WideFrame";
 import { Btn, Hint, P, Title, clamp, sfx } from "./ui";
 
 const START = -82;
@@ -26,12 +27,28 @@ const PINKY = {
   hookUp: "M108 136 C130 139 150 133 166 128 C184 122 190 108 179 101",
 };
 
-function Hand({ skin, sleeve, sleeveInk, cuff, pinky, wiggle, reduced }: { skin: string; sleeve: string; sleeveInk: string; cuff: string; pinky: string; wiggle?: boolean; reduced: boolean }) {
+function Hand({ skin, sleeve, sleeveInk, cuff, pinky, wiggle, reduced, fade }: { skin: string; sleeve: string; sleeveInk: string; cuff: string; pinky: string; wiggle?: boolean; reduced: boolean; fade?: boolean }) {
+  // Phones crop the sleeves at the screen edge; on wide screens they would run
+  // across the desktop wings, so they fade out behind the cuff instead.
+  const mid = useId().replace(/:/g, "");
   return (
     <g>
+      {fade && (
+        <defs>
+          <linearGradient id={`${mid}-g`} gradientUnits="userSpaceOnUse" x1={-330} y1={0} x2={-120} y2={0}>
+            <stop offset="0" stopColor="#000" />
+            <stop offset="1" stopColor="#fff" />
+          </linearGradient>
+          <mask id={`${mid}-m`} maskUnits="userSpaceOnUse" x={-720} y={0} width={780} height={240}>
+            <rect x={-720} y={0} width={780} height={240} fill={`url(#${mid}-g)`} />
+          </mask>
+        </defs>
+      )}
       {/* sleeve */}
-      <path d="M-700 60 L22 74 Q34 112 22 150 L-700 164 Z" fill={sleeve} stroke={sleeveInk} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M-40 92 l6 0 M-70 120 l6 0 M-100 98 l6 0 M-20 134 l6 0" stroke="#fff" strokeOpacity=".55" strokeWidth="5" strokeLinecap="round" />
+      <g mask={fade ? `url(#${mid}-m)` : undefined}>
+        <path d="M-700 60 L22 74 Q34 112 22 150 L-700 164 Z" fill={sleeve} stroke={sleeveInk} strokeWidth="3" strokeLinejoin="round" />
+        <path d="M-40 92 l6 0 M-70 120 l6 0 M-100 98 l6 0 M-20 134 l6 0" stroke="#fff" strokeOpacity=".55" strokeWidth="5" strokeLinecap="round" />
+      </g>
       <path d="M12 74 Q26 112 12 152" fill="none" stroke={cuff} strokeWidth="13" strokeLinecap="round" />
       <path d="M12 74 Q26 112 12 152" fill="none" stroke={sleeveInk} strokeOpacity=".35" strokeWidth="1.5" />
 
@@ -83,6 +100,7 @@ function Hand({ skin, sleeve, sleeveInk, cuff, pinky, wiggle, reduced }: { skin:
 
 export default function PinkySwear({ prompt, me, them, sticker, onDone }: { prompt: string; me: string; them: string; sticker: React.ReactNode; onDone: () => void }) {
   const reduced = useReducedMotion();
+  const wide = useViewportTier() !== "phone";
   const svgRef = useRef<SVGSVGElement>(null);
   const x = useMotionValue(START);
   const [hooked, setHooked] = useState(false);
@@ -146,7 +164,7 @@ export default function PinkySwear({ prompt, me, them, sticker, onDone }: { prom
         Slide your hand across and hook your pinky with {them}&rsquo;s. Rules are rules 🤞
       </p>
 
-      <div style={{ position: "relative", width: "min(100%, 440px)", marginTop: 6 }}>
+      <div style={{ position: "relative", width: "min(100%, calc(440px * var(--vw-s, 1)))", marginTop: 6 }}>
         <div style={{ position: "absolute", left: "50%", top: -34, transform: "translateX(-50%)", zIndex: 3, pointerEvents: "none" }}>
           <AnimatePresence>
             {hooked && (
@@ -179,7 +197,7 @@ export default function PinkySwear({ prompt, me, them, sticker, onDone }: { prom
           {/* THEIR hand (right, mirrored), waiting with a wiggling pinky */}
           <g transform="translate(360 0) scale(-1 1)">
             <g transform="translate(0 6)">
-              <Hand skin="#EDB48E" sleeve={P.berry} sleeveInk={P.berryDeep} cuff="#F3D58C" pinky={hooked ? PINKY.hookUp : PINKY.open} wiggle={!hooked} reduced={reduced} />
+              <Hand skin="#EDB48E" sleeve={P.berry} sleeveInk={P.berryDeep} cuff="#F3D58C" pinky={hooked ? PINKY.hookUp : PINKY.open} wiggle={!hooked} reduced={reduced} fade={wide} />
             </g>
           </g>
 
@@ -188,7 +206,7 @@ export default function PinkySwear({ prompt, me, them, sticker, onDone }: { prom
             <motion.g animate={grabbed ? { scale: 1.04 } : { scale: 1 }} style={{ originX: "60px", originY: "112px" }} transition={{ type: "spring", stiffness: 400, damping: 18 }}>
               {/* generous invisible hit area */}
               <rect x="-150" y="40" width="360" height="150" fill="transparent" />
-              <Hand skin={P.skin} sleeve={P.petal} sleeveInk="#C9708F" cuff="#FFFFFF" pinky={hooked ? PINKY.hookDown : PINKY.open} reduced={reduced} />
+              <Hand skin={P.skin} sleeve={P.petal} sleeveInk="#C9708F" cuff="#FFFFFF" pinky={hooked ? PINKY.hookDown : PINKY.open} reduced={reduced} fade={wide} />
             </motion.g>
           </motion.g>
 

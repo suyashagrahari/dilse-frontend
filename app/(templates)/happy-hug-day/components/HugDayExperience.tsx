@@ -16,7 +16,7 @@ import { DayRoot, FloatingParticles, MusicToggle, Sticker, useReducedMotion, use
 import { VW } from "../../_valentine/theme";
 import type { ExperienceProps, GifSlot } from "../../_valentine/types";
 import CafeDoor from "./hug/CafeDoor";
-import { pairOf } from "./hug/Characters";
+import { Pair, pairOf } from "./hug/Characters";
 import Coupons from "./hug/Coupons";
 import Ending from "./hug/Ending";
 import FirstSquish from "./hug/FirstSquish";
@@ -101,7 +101,7 @@ export default function HugDayExperience({ data, mode, react }: ExperienceProps)
       exit={reduced ? undefined : { opacity: 0, y: -14 }}
       transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
       style={{
-        minHeight: "100dvh",
+        minHeight: "calc(100dvh - var(--vw-dock-space, 0px))",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -111,7 +111,7 @@ export default function HugDayExperience({ data, mode, react }: ExperienceProps)
         textAlign: "center",
         position: "relative",
         zIndex: 1,
-        maxWidth: 560,
+        maxWidth: "calc(560px * var(--vw-s, 1))",
         margin: "0 auto",
       }}
     >
@@ -120,7 +120,16 @@ export default function HugDayExperience({ data, mode, react }: ExperienceProps)
   );
 
   return (
-    <DayRoot day={day}>
+    <DayRoot
+      day={day}
+      data={data}
+      line={str(x.cafeSign)}
+      art={
+        <svg viewBox="80 40 200 160" height="100%" style={{ display: "block", overflow: "visible" }}>
+          <Pair species={species} lx={146} rx={214} ground={180} left={{ hugging: true, reach: 58, happy: true }} right={{ hugging: true, reach: 58, happy: true }} leftRot={4} rightRot={4} />
+        </svg>
+      }
+    >
       <FloatingParticles emojis={day.theme.particles} count={10} opacity={0.32} />
       {mode === "live" && <MusicToggle music={music} />}
 

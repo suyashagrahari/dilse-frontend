@@ -92,7 +92,7 @@ export default function Ending({ facts, data, mode, sticker, onReplay }: { facts
         initial={reduced ? false : { rotate: -6, y: 30, opacity: 0 }}
         animate={{ rotate: -1.5, y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 140, damping: 16 }}
-        style={{ position: "relative", width: "min(100%, 360px)", padding: "14px 16px 16px", background: P.paper, borderRadius: 4, boxShadow: "0 26px 50px -26px rgba(94,20,51,.6)", textAlign: "left" }}
+        style={{ position: "relative", width: "min(100%, calc(360px * var(--vw-s, 1)))", padding: "14px 16px 16px", background: P.paper, borderRadius: 4, boxShadow: "0 26px 50px -26px rgba(94,20,51,.6)", textAlign: "left" }}
       >
         <div aria-hidden style={{ position: "absolute", inset: 6, border: `2px solid ${P.gold}`, pointerEvents: "none" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 8, borderBottom: `1.5px solid ${P.gold}` }}>

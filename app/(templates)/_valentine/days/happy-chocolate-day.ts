@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-chocolate-day" as const;
 
@@ -28,6 +28,7 @@ export const chocolateDay: DayConfig<ChocolateExtras> = {
   letterMin: 50,
   asksQuestion: false,
   melody: "cocoa",
+  photoAspect: 1,
   gifSlots: GIFS,
   extras: [
     { key: "giftTag", kind: "text", max: 80, label: "Gift tag on the box", placeholder: "what you'd scribble on the tag — e.g. for the girl who hides my Dairy Milk", suggestions: ["For the person sweeter than every chocolate in this box.", "Kuch meetha ho jaaye? 🍫"] },
@@ -87,7 +88,7 @@ export const chocolateDay: DayConfig<ChocolateExtras> = {
       ["us — 100% pure", "No added sugar needed."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "9 reasons, 0 calories, 100% yours 🍫",
     extras: {
       giftTag: "For the girl who is sweeter than every chocolate in this box.",

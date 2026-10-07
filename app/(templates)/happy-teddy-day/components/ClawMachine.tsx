@@ -70,7 +70,12 @@ export default function ClawMachine({
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const fit = () => setK(Math.max(0.72, Math.min(1.12, el.clientWidth / DW, (window.innerHeight - 250) / DH)));
+    const fit = () => {
+      // keep GRAB clear of the editor dock / music player; tall tablets may grow the cabinet a little more
+      const dock = parseFloat(getComputedStyle(el).getPropertyValue("--vw-dock-space")) || 0;
+      const cap = window.innerWidth >= 768 ? 1.32 : 1.12;
+      setK(Math.max(0.72, Math.min(cap, el.clientWidth / DW, (window.innerHeight - 250 - dock) / DH)));
+    };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);

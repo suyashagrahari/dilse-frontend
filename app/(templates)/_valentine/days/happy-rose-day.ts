@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-rose-day" as const;
 
@@ -52,6 +52,7 @@ export const roseDay: DayConfig<RoseExtras> = {
   letterMin: 50,
   asksQuestion: false,
   melody: "garden",
+  photoAspect: 4 / 5,
   gifSlots: GIFS,
   extras: [
     { key: "roseColor", kind: "enum", label: "Pick your rose", display: "swatches", default: "red", options: ROSE_COLORS, hint: "Each colour says something — the meaning shows on their screen." },
@@ -100,7 +101,7 @@ export const roseDay: DayConfig<RoseExtras> = {
       ["us, forever", "Out of every timeline, I'd pick this one. Every time."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Happy Rose Day, my forever favourite flower 🌹",
     extras: {
       roseColor: "red",

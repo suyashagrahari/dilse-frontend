@@ -48,7 +48,7 @@ export function Speech({ day, data, reduced, onNext }: Props) {
         <p style={kicker}>The speech</p>
         <h2 style={{ margin: 0, font: `italic 700 26px/1.2 ${FONTS.serif}`, color: PEARL }}>{data.senderName ? `${data.senderName} clears their throat…` : "Ahem…"}</h2>
       </header>
-      <div style={{ position: "relative", width: "min(100%, 420px)" }}>
+      <div style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))" }}>
         <Roller />
         <motion.div
           initial={reduced ? false : { height: 0 }}
@@ -151,7 +151,7 @@ export function Question({ day, data, reduced, onYes }: Omit<Props, "onNext"> & 
           lastDust.current = t;
           goldDust(hostRef.current, e.clientX, e.clientY);
         }}
-        style={{ position: "relative", width: "min(100%, 380px)" }}
+        style={{ position: "relative", width: "min(100%, calc(380px * var(--vw-s, 1)))" }}
       >
         <ScratchCanvas
           height={176}
@@ -296,7 +296,7 @@ export function Finale({ day, data, mode, reduced, dodges, at, onReplay, onReach
         transition={{ delay: 0.6, type: "spring", stiffness: 120, damping: 16 }}
         style={{
           position: "relative",
-          width: "min(100%, 360px)",
+          width: "min(100%, calc(360px * var(--vw-s, 1)))",
           padding: "22px 20px 20px",
           background: "#FFFBF5",
           borderRadius: 16,

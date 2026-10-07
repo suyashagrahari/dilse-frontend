@@ -236,6 +236,24 @@ export function useValentineDayEditor(slug: DaySlug) {
   /** StoryStarter's exit — into the same form Create would have opened. */
   const openManualForm = useCallback(() => setEditMode("manual"), []);
 
+  /**
+   * The form's "✨ Write it for me" card: the same guided StoryStarter, opened
+   * OVER the form without resetting what they've typed. Generated text lands in
+   * `mf` (onFilled) and every field stays editable.
+   */
+  const openAiFromForm = useCallback(() => {
+    if (!storySchema) return;
+    setStoryMode("idle");
+    setStoryStarter(true);
+  }, [storySchema, setStoryMode]);
+  const aiAvailable = Boolean(storySchema);
+
+  /** Close the form throwing away what changed since it opened. */
+  const discardEdits = useCallback(() => {
+    setMf({ ...content });
+    setEditMode("preview");
+  }, [content]);
+
   const handleEditFromPreview = useCallback(() => {
     setMf({ ...content });
     setEditMode("manual");
@@ -389,9 +407,9 @@ export function useValentineDayEditor(slug: DaySlug) {
     day, slug,
     content, mf, displayData, editMode, pagePassword, pageId, shareUrl, shareId, reactions,
     isPersonalized, showAuth, saving, publishing, copied, previewVersion,
-    fill, storyStarter, openManualForm, handleStartCreate,
+    fill, storyStarter, openManualForm, handleStartCreate, openAiFromForm, aiAvailable,
     setEditMode, setPagePassword, updateMf, updateExtra, setMf,
-    handleEditClick, handleEditFromPreview, handleSave,
+    handleEditClick, handleEditFromPreview, handleSave, discardEdits,
     create, update, publish,
     closeAuth, closeAuthSuccess, handleCopy, handleShare, goBack,
     pushToast, showPublish: isPersonalized && !shareUrl && !publishing,

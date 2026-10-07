@@ -138,7 +138,7 @@ export default function KissJarGame({
   return (
     <div
       onPointerDown={onPointerDown}
-      style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, touchAction: "manipulation", userSelect: "none", WebkitUserSelect: "none", cursor: "pointer" }}
+      style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, touchAction: "manipulation", userSelect: "none", WebkitUserSelect: "none", cursor: "pointer" }}
     >
       <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".2em", textTransform: "uppercase", color: VW.inkSoft }}>The kiss jar</p>
       <h2 style={{ margin: "6px 0 0", font: `700 clamp(26px, 7.4vw, 34px)/1.1 ${FONTS.serif}`, color: VW.ink, textAlign: "center" }}>
@@ -160,7 +160,7 @@ export default function KissJarGame({
       </div>
 
       {/* the milestone note */}
-      <div style={{ minHeight: 96, width: "min(100%, 360px)", display: "grid", placeItems: "center", marginTop: 8 }}>
+      <div style={{ minHeight: 96, width: "min(100%, calc(360px * var(--vw-s, 1)))", display: "grid", placeItems: "center", marginTop: 8 }}>
         <AnimatePresence mode="wait">
           {note && (
             <motion.div
@@ -204,7 +204,7 @@ export default function KissJarGame({
         }
         key={overflow ? "full" : `w${wobble}`}
         transition={{ duration: overflow ? 0.9 : 0.6, ease: "easeInOut" }}
-        style={{ width: "min(58vw, 232px)", aspectRatio: "200 / 226", transformOrigin: "50% 90%", position: "relative" }}
+        style={{ width: "min(58vw, calc(232px * var(--vw-s, 1)))", aspectRatio: "200 / 226", transformOrigin: "50% 90%", position: "relative" }}
       >
         <HeartJar slots={slots} count={Math.min(inJar, slots.length)} kind={kind} shade={shade} fill={inJar / target} glow={overflow} />
         {overflow &&

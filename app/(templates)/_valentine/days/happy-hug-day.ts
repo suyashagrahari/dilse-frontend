@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-hug-day" as const;
 
@@ -31,6 +31,7 @@ export const hugDay: DayConfig<HugExtras> = {
   letterMin: 50,
   asksQuestion: false,
   melody: "cafe",
+  photoAspect: 1,
   gifSlots: GIFS,
   extras: [
     { key: "cafeSign", kind: "text", max: 40, label: "Café sign", placeholder: "the sign over the door", suggestions: ["Jhappi Café · open only for you", "Hugs on tap ☕"] },
@@ -95,7 +96,7 @@ export const hugDay: DayConfig<HugExtras> = {
       ["us, squished", "Best seat in the house."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Ek jhappi roz, baaki sab adjust ho jayega.",
     extras: {
       cafeSign: "Jhappi Café · open only for you",

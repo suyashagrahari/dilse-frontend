@@ -150,7 +150,7 @@ export default function RingBox({ day, data, reduced, onNext }: Props) {
             openFully();
           }
         }}
-        style={{ position: "relative", width: 300, height: 330, perspective: 900, perspectiveOrigin: "50% 10%", touchAction: "none", cursor: opened ? "default" : "grab", outline: "none", userSelect: "none", WebkitUserSelect: "none" }}
+        style={{ position: "relative", width: 300, height: 330, zoom: "var(--vw-s, 1)", perspective: 900, perspectiveOrigin: "50% 10%", touchAction: "none", cursor: opened ? "default" : "grab", outline: "none", userSelect: "none", WebkitUserSelect: "none" }}
       >
         {/* spotlight pool */}
         <div aria-hidden style={{ position: "absolute", left: "50%", bottom: 6, width: 300, height: 70, transform: "translateX(-50%)", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(255,201,210,.28), transparent)" }} />

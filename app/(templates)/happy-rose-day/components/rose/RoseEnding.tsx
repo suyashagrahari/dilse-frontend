@@ -73,7 +73,7 @@ export default function RoseEnding({ day, data, mode, reduced, onReplay, onReach
         {data.petName || data.recipientName || "you"}
       </h2>
 
-      <div style={{ position: "relative", width: "min(62vw, 230px)", aspectRatio: "200 / 300" }}>
+      <div style={{ position: "relative", width: "min(62vw, calc(230px * var(--vw-s, 1)))", aspectRatio: "200 / 300" }}>
         <motion.svg
           viewBox="0 0 200 300"
           width="100%"

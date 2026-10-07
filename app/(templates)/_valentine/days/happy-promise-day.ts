@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-promise-day" as const;
 
@@ -31,6 +31,7 @@ export const promiseDay: DayConfig<PromiseExtras> = {
   letterMin: 50,
   asksQuestion: false,
   melody: "paper",
+  photoAspect: 4 / 5,
   gifSlots: GIFS,
   extras: [
     { key: "envelopeLine", kind: "text", max: 60, label: "Envelope line", placeholder: "what's written on the envelope", suggestions: ["Ek vaada, sirf tumhare liye", "Open only if you trust me 🤞"] },
@@ -84,7 +85,7 @@ export const promiseDay: DayConfig<PromiseExtras> = {
       ["us, pakka", "Signed, sealed, and forever."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Signed, sealed, and forever yours.",
     extras: {
       envelopeLine: "Ek vaada, sirf tumhare liye",

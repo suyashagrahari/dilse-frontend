@@ -143,7 +143,7 @@ export default function FirstSquish({ prompt, species, tagMe, tagYou, sticker, o
       <Title>{prompt}</Title>
       <p style={{ margin: "-6px 0 0", maxWidth: 320, font: `400 15px/1.45 ${FONTS.ui}`, color: VW.inkSoft }}>Pinch them together with two fingers — or drag one into the other.</p>
 
-      <div style={{ position: "relative", width: "min(100%, 420px)" }}>
+      <div style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))" }}>
         <div style={{ position: "absolute", left: "50%", top: -40, transform: "translateX(-50%)", zIndex: 0, pointerEvents: "none" }}>
           <AnimatePresence>
             {hugged && (

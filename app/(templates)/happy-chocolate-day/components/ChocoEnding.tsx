@@ -67,7 +67,7 @@ export default function ChocoEnding({
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${mode === "preview" ? 130 : 48}px`, textAlign: "center" }}>
       {/* the ask */}
-      <motion.div layout={!reduced} style={{ width: "min(100%, 380px)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <motion.div layout={!reduced} style={{ width: "min(100%, calc(380px * var(--vw-s, 1)))", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <p style={{ margin: 0, font: `600 12.5px ${FONTS.ui}`, letterSpacing: ".22em", textTransform: "uppercase", color: "#E9CDB6" }}>The box is empty. Almost.</p>
         <h2 style={{ margin: "6px 0 4px", font: `700 clamp(34px, 10vw, 46px)/1.08 ${FONTS.serif}`, color: C.cream }}>One more piece?</h2>
         {finalAsk && <p style={{ margin: "0 0 6px", font: `700 23px/1.3 ${FONTS.script}`, color: C.gold, overflowWrap: "anywhere" }}>{finalAsk}</p>}
@@ -111,7 +111,7 @@ export default function ChocoEnding({
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: -30, scaleY: 0.3 }}
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1], delay: 0.35 }}
-            style={{ transformOrigin: "50% 0%", width: "min(100%, 340px)", marginTop: 22, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}
+            style={{ transformOrigin: "50% 0%", width: "min(100%, calc(340px * var(--vw-s, 1)))", marginTop: 22, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}
           >
             <Receipt info={info} />
             <EndingActions day={day} data={data} mode={mode} onReplay={onReplay} keepsake={() => receiptKeepsake(info)} />

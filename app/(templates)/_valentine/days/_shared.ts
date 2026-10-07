@@ -15,3 +15,6 @@ export function defaultGifs(ids: readonly string[]): Record<string, string> {
 
 /** name / emoji / date, from lib/wishlist/valentine.ts. */
 export const meta = (slug: DaySlug) => DAY_META[slug];
+
+/** Every day's demo starts on its own built-in melody (no YouTube song). */
+export const MUSIC_DEMO = { music: true, musicMode: "melody", musicYoutubeId: "", musicStart: 0 } as const;

@@ -131,7 +131,7 @@ export default function Coupons({ coupons, sender, redeemed, onRedeem, sticker, 
       <p style={{ margin: "-6px 0 0", maxWidth: 320, font: `400 15px/1.45 ${FONTS.ui}`, color: VW.inkSoft }}>
         Tear one off whenever you need a real one. {sender} has to report immediately. Rules of the café.
       </p>
-      <div style={{ width: "min(100%, 420px)", display: "grid", gap: 14 }}>
+      <div style={{ width: "min(100%, calc(420px * var(--vw-s, 1)))", display: "grid", gap: 14 }}>
         {coupons.map((c, k) => (
           <Coupon key={k} k={k} title={c.title} detail={c.detail} sender={sender} torn={redeemed.includes(k)} onTear={() => onRedeem(k)} />
         ))}

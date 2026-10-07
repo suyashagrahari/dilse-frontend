@@ -36,12 +36,12 @@ export function GiftBox({ a, b, sticker, bottomPad, onOpened }: { a: string; b: 
   };
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 16px ${bottomPad}px`, overflow: "hidden" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 16px ${bottomPad}px`, overflow: "hidden" }}>
       <Starfield count={40} style={{ opacity: 0.7 }} />
       <p style={{ ...kicker, position: "relative" }}>The grand gift</p>
       <h2 style={{ ...headline, position: "relative", marginTop: 6 }}>{open ? "For you, tonight" : "Pull the ribbon"}</h2>
 
-      <div ref={boxRef} style={{ position: "relative", width: "min(74vw, 290px)", aspectRatio: "1 / 1.05", marginTop: 96 }}>
+      <div ref={boxRef} style={{ position: "relative", width: "min(74vw, calc(290px * var(--vw-s, 1)))", aspectRatio: "1 / 1.05", marginTop: 96 }}>
         {/* warm glow from inside */}
         <motion.span aria-hidden initial={false} animate={{ opacity: open ? 1 : 0, scale: open ? 1.2 : 0.6 }} transition={{ duration: 0.8 }} style={{ position: "absolute", left: "-30%", right: "-30%", top: "-50%", height: "120%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(255,215,140,.6), rgba(245,198,107,.2) 55%, transparent)", pointerEvents: "none" }} />
 
@@ -225,7 +225,7 @@ export function CandleLetter({ letter, ps, a, b, bottomPad, onNext }: { letter: 
   const paper: React.CSSProperties = { background: "linear-gradient(180deg, #FFF8EA, #FBEFD6)", boxShadow: "inset 0 0 40px rgba(196,143,46,.12)" };
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 14px ${bottomPad}px`, overflow: "hidden" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 14px ${bottomPad}px`, overflow: "hidden" }}>
       {/* candlelight on the room */}
       <div aria-hidden className="vn-flicker" style={{ position: "absolute", left: "-30%", bottom: "-10%", width: "110%", aspectRatio: "1", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,179,71,.22), transparent 62%)", pointerEvents: "none" }} />
       <Starfield count={26} style={{ opacity: 0.5 }} />
@@ -233,7 +233,7 @@ export function CandleLetter({ letter, ps, a, b, bottomPad, onNext }: { letter: 
       <h2 style={{ ...headline, position: "relative", marginTop: 6, marginBottom: 18 }}>{phase === "sealed" ? "Sealed with our initials" : "Read it slowly"}</h2>
 
       {phase === "sealed" && (
-        <motion.div initial={reduced ? false : { y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 120, damping: 16 }} style={{ position: "relative", width: "min(86vw, 340px)", marginTop: 40 }}>
+        <motion.div initial={reduced ? false : { y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 120, damping: 16 }} style={{ position: "relative", width: "min(86vw, calc(340px * var(--vw-s, 1)))", marginTop: 40 }}>
           <CreamEnvelope style={{ filter: "drop-shadow(0 26px 30px rgba(0,0,0,.55))" }}>
             <motion.button
               type="button"
@@ -251,7 +251,7 @@ export function CandleLetter({ letter, ps, a, b, bottomPad, onNext }: { letter: 
       )}
 
       {phase === "unfold" && (
-        <div style={{ position: "relative", width: "min(100%, 440px)", height: H, perspective: 1800 }}>
+        <div style={{ position: "relative", width: "min(100%, 440px)", height: H, perspective: 1800, zoom: "var(--vw-s, 1)" }}>
           {/* middle panel */}
           <div style={{ position: "absolute", left: 0, right: 0, top: panelH, height: panelH, ...paper, borderTop: "1px solid rgba(160,110,40,.18)", borderBottom: "1px solid rgba(160,110,40,.18)" }} />
           {/* top panel folds down → up */}
@@ -272,7 +272,7 @@ export function CandleLetter({ letter, ps, a, b, bottomPad, onNext }: { letter: 
       )}
 
       {phase === "read" && (
-        <div style={{ position: "relative", width: "min(100%, 440px)" }}>
+        <div style={{ position: "relative", width: "min(100%, calc(440px * var(--vw-s, 1)))" }}>
           <article
             style={{
               position: "relative",
@@ -391,7 +391,7 @@ export function GalleryWall({ photos, bottomPad, onNext }: { photos: LovePhoto[]
   }, [reduced]);
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 0 ${bottomPad}px` }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 0 ${bottomPad}px` }}>
       <p style={{ ...kicker, position: "relative" }}>Now on display</p>
       <h2 style={{ ...headline, position: "relative", marginTop: 6 }}>The Gallery of Us</h2>
       <p style={{ position: "relative", margin: "6px 0 0", font: `400 14px ${FONTS.ui}`, color: "#E6CFE0" }}>Move your finger — the spotlight follows</p>
@@ -400,7 +400,10 @@ export function GalleryWall({ photos, bottomPad, onNext }: { photos: LovePhoto[]
         ref={wallRef}
         style={{
           position: "relative",
-          width: "min(100%, 520px)",
+          // phones: the column; wide screens: the whole wall, frames centred
+          width: "100%",
+          maxWidth: "max(520px, 100%)",
+          boxSizing: "border-box",
           marginTop: 18,
           padding: "34px 18px 40px",
           background: "radial-gradient(circle at 25% 25%, rgba(255,255,255,.035) 0 2px, transparent 3px) 0 0 / 28px 28px, radial-gradient(circle at 75% 75%, rgba(255,255,255,.035) 0 2px, transparent 3px) 0 0 / 28px 28px, linear-gradient(180deg, #4A0E26, #3A0A1E 60%, #2A0716)",
@@ -410,7 +413,7 @@ export function GalleryWall({ photos, bottomPad, onNext }: { photos: LovePhoto[]
       >
         {/* picture rail */}
         <div aria-hidden style={{ position: "absolute", left: 0, right: 0, top: 12, height: 6, background: "linear-gradient(#C48F2E, #7C561C)", opacity: 0.7 }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "26px 16px", alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "26px 16px", alignItems: "start", maxWidth: "calc(484px * var(--vw-s, 1))", margin: "0 auto" }}>
           {items.map((p, k) => (
             <motion.div key={k} initial={reduced ? false : { opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.6 }} style={{ marginTop: k % 2 ? 34 : 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
               <span aria-hidden style={{ width: 1, height: 16, background: "rgba(245,198,107,.5)", marginBottom: -8 }} />

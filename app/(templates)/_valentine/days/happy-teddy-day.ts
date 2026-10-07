@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-teddy-day" as const;
 
@@ -31,6 +31,7 @@ export const teddyDay: DayConfig<TeddyExtras> = {
   letterMin: 50,
   asksQuestion: false,
   melody: "arcade",
+  photoAspect: 1,
   gifSlots: GIFS,
   extras: [
     { key: "teddyName", kind: "text", max: 20, label: "Teddy's name", placeholder: "an inside joke works best — e.g. Golu", suggestions: ["Golu", "Mishti", "Bhalu", "Chiku"] },
@@ -100,7 +101,7 @@ export const teddyDay: DayConfig<TeddyExtras> = {
       ["us, forever", "Out of every timeline, I'd pick this one."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Keep him close. He's basically me, but quieter 🧸",
     extras: {
       teddyName: "Golu",
