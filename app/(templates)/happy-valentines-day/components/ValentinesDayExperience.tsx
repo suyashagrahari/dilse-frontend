@@ -22,12 +22,13 @@ import { DayRoot, MusicToggle, Sticker, haptic, useReducedMotion, useSynthMusic 
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
 import type { ValentinesExtras } from "../../_valentine/days/happy-valentines-day";
-import { NIGHT, ValCss } from "./valArt";
+import { LANTERN_TINTS, Lantern, Moon, NIGHT, ValCss } from "./valArt";
 import { LanternWalk, LoveWrapped, TicketArrival } from "./ValOpening";
 import { CandleLetter, GalleryWall, GiftBox } from "./ValMiddle";
 import { Finale, TheQuestion } from "./ValFinale";
 
 const STEPS = ["ticket", "lanterns", "wrapped", "gift", "letter", "gallery", "question", "finale"] as const;
+const FULL_BLEED = new Set<string>(["ticket", "lanterns", "gallery", "finale"]);
 type Step = (typeof STEPS)[number];
 
 const strList = (v: unknown, max: number): string[] => (Array.isArray(v) ? v.map((s) => (typeof s === "string" ? s : "")).slice(0, max) : []);
@@ -139,7 +140,22 @@ export default function ValentinesDayExperience({ data, mode, react }: Experienc
   }
 
   return (
-    <DayRoot day={day}>
+    <DayRoot
+      day={day}
+      data={data}
+      // Scenes painted as wide stages (the velvet ticket wall, the rooftop, the
+      // gallery wall, the lantern sky) take the whole screen; the intimate
+      // ones (wrapped, gift, letter, question) sit in the column between the wings.
+      layout={FULL_BLEED.has(step) ? "full" : "column"}
+      line={str(x.ticketLine)}
+      art={
+        <div style={{ position: "relative", height: "100%", aspectRatio: "1.2" }}>
+          <Moon size={120} style={{ position: "absolute", right: "6%", top: 0 }} />
+          <div style={{ position: "absolute", left: "8%", bottom: "4%" }} className="vw-anim-float"><Lantern tint={LANTERN_TINTS[0]} lit size={52} /></div>
+          <div style={{ position: "absolute", left: "38%", bottom: "26%", animationDelay: "-1.2s" }} className="vw-anim-float"><Lantern tint={LANTERN_TINTS[5]} lit size={40} /></div>
+        </div>
+      }
+    >
       <ValCss />
       {mode === "live" && <MusicToggle music={music} />}
 

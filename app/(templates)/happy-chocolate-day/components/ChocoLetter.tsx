@@ -68,13 +68,13 @@ export default function ChocoLetter({
         initial={reduced ? false : { scale: 1.08, opacity: 0, y: -10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 140, damping: 16, delay: 0.1 }}
-        style={{ position: "relative", width: "min(100%, 420px)", zIndex: 2 }}
+        style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))", zIndex: 2 }}
       >
         <Slab name={recipientName} engraving={engraving} />
       </motion.div>
 
       {/* ── foil sleeve + wrapper paper ── */}
-      <div style={{ position: "relative", width: "min(94%, 396px)", marginTop: -16, zIndex: 1 }}>
+      <div style={{ position: "relative", width: "min(94%, calc(396px * var(--vw-s, 1)))", marginTop: -16, zIndex: 1 }}>
         <div aria-hidden style={{ position: "relative", height: 26, zIndex: 3, background: "linear-gradient(180deg, #FFF0BF, #E6B85C 40%, #A67A2A)", clipPath: "polygon(0 30%, 4% 0, 8% 30%, 12% 0, 16% 30%, 20% 0, 24% 30%, 28% 0, 32% 30%, 36% 0, 40% 30%, 44% 0, 48% 30%, 52% 0, 56% 30%, 60% 0, 64% 30%, 68% 0, 72% 30%, 76% 0, 80% 30%, 84% 0, 88% 30%, 92% 0, 96% 30%, 100% 0, 100% 100%, 0 100%)", boxShadow: "0 6px 10px rgba(0,0,0,.3)" }} />
         <motion.article
           initial={reduced ? false : { clipPath: "inset(0 0 100% 0)" }}

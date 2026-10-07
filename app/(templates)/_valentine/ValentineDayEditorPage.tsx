@@ -14,6 +14,7 @@ import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import EditSheet from "./EditSheet";
+import { DayMusicProvider } from "./music/DayMusic";
 import { getDay } from "./days";
 import { getExperience } from "./experiences";
 import { FONTS } from "./theme";
@@ -58,6 +59,17 @@ function Inner({ slug }: { slug: DaySlug }) {
     // --vw-dock-space: room under the scene so the floating EditorDock never
     // sits on top of a day's last button or hint (DayRoot pads by it).
     <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: "96px" }}>
+      {/* The sender's music plays in the preview too (and from the form's
+          Listen button). It waits for a tap until they've saved once, so the
+          demo stays quiet while they look around. */}
+      <DayMusicProvider
+        settings={e.displayData}
+        melody={day.melody}
+        autoStart={e.isPersonalized && e.editMode !== "manual"}
+        dark={day.theme.dark}
+        overSheet={e.editMode === "manual"}
+        dockBase="96px"
+      >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} />}
@@ -82,10 +94,14 @@ function Inner({ slug }: { slug: DaySlug }) {
         pagePassword={e.pagePassword}
         setPagePassword={e.setPagePassword}
         onSave={e.handleSave}
+        onDiscard={e.discardEdits}
         saving={e.saving}
+        ai={{ available: e.aiAvailable, onOpen: e.openAiFromForm }}
       />
+      </DayMusicProvider>
 
-      {/* Mounted after EditSheet so the sheet sits over the form it seeds. */}
+      {/* Mounted after EditSheet (and above it: z 200 > 190) so the AI
+          questions sit over the form they fill. */}
       {e.storyStarter && <StoryStarter guided fill={e.fill} onManual={e.openManualForm} title={day.copy.storyTitle} />}
 
       <AnimatePresence>

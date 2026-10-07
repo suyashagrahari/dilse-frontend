@@ -88,7 +88,7 @@ export default function VachanPatra({
         animate={paper}
         style={{
           position: "relative",
-          width: "min(100%, 470px)",
+          width: "min(100%, calc(470px * var(--vw-s, 1)))",
           padding: "16px 16px 22px",
           background: `linear-gradient(180deg, #FFFDF6 0%, ${P.paper} 60%, #FFF6EA 100%)`,
           borderRadius: 4,

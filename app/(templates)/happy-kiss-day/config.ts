@@ -2,8 +2,8 @@ import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-reac
 import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-kiss-day/cover-v2.webp).
+// Gallery card. The cover is the day's poster (three real screens of the page)
+// (source: media-src/templates/happy-kiss-day/cover-poster.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-kiss-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Kiss Day — Sealed With a Kiss",
   description:
     'Fill a kiss jar until it overflows, open a lipstick-sealed letter, scratch kiss coupons — cute and family-safe.',
-  coverImage: templateMedia("happy-kiss-day", "cover-v2.webp"),
+  coverImage: templateMedia("happy-kiss-day", "cover-poster.webp"),
   emoji: "💋",
   color: "from-rose-500 to-pink-600",
   previewText: 'a little something for you 💌',

@@ -101,7 +101,7 @@ export default function GrowStage({ day, data, reduced, onNext }: Props) {
       </AnimatePresence>
 
       {/* the plant */}
-      <div ref={stageRef} style={{ position: "relative", width: "100%", maxWidth: 340, display: "grid", justifyItems: "center" }}>
+      <div ref={stageRef} style={{ position: "relative", width: "100%", maxWidth: "calc(340px * var(--vw-s, 1))", display: "grid", justifyItems: "center" }}>
         <div
           className={hold.holding ? "" : "rd-sway"}
           style={{
@@ -185,7 +185,7 @@ export default function GrowStage({ day, data, reduced, onNext }: Props) {
             initial={reduced ? false : { opacity: 0, rotateY: 80, y: 10 }}
             animate={{ opacity: 1, rotateY: 0, y: 0 }}
             transition={{ type: "spring", stiffness: 140, damping: 16 }}
-            style={{ width: "100%", maxWidth: 380, display: "grid", gap: 14, justifyItems: "center", perspective: 800 }}
+            style={{ width: "100%", maxWidth: "calc(380px * var(--vw-s, 1))", display: "grid", gap: 14, justifyItems: "center", perspective: 800 }}
           >
             <div
               style={{

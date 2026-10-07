@@ -234,7 +234,7 @@ export default function LoveLock({
         .pl-ff { animation: pl-ff 5s ease-in-out infinite }
         @media (prefers-reduced-motion: reduce) { .pl-tw, .pl-gl, .pl-ff { animation: none } }
       `}</style>
-      <div style={{ position: "relative", width: "min(100%, 420px)", borderRadius: 26, overflow: "hidden", boxShadow: "0 30px 60px -28px rgba(46,58,107,.75)" }}>
+      <div style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))", borderRadius: 26, overflow: "hidden", boxShadow: "0 30px 60px -28px rgba(46,58,107,.75)" }}>
         <svg ref={svgRef} viewBox="0 0 360 560" width="100%" style={{ display: "block", aspectRatio: "360 / 560", touchAction: "none", userSelect: "none" }} aria-hidden>
           <defs>
             <linearGradient id="pl-sky" x1="0" y1="0" x2="0" y2="1">

@@ -227,7 +227,7 @@ function HugStage({ item, gesture, species, onDone, onBack }: { item: MenuItem; 
   const lift = gesture === "twirl" ? Math.min(1, Math.abs(spin) / 60) : 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ width: "min(100%, 440px)", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ width: "min(100%, calc(440px * var(--vw-s, 1)))", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
       <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <button type="button" onClick={onBack} style={{ minHeight: 44, padding: "6px 10px", border: 0, background: "transparent", color: VW.inkSoft, font: `600 14px ${FONTS.ui}`, cursor: "pointer" }}>
           ← Menu
@@ -391,7 +391,7 @@ export default function HugMenu({
       <p style={{ margin: "-6px 0 0", font: `600 14px ${FONTS.ui}`, color: VW.inkSoft }}>Order every hug to fill {recipient}&apos;s Jhappi Passport</p>
 
       {/* passport strip */}
-      <div style={{ width: "min(100%, 420px)", padding: "10px 12px", borderRadius: 16, background: "linear-gradient(135deg, #8E3B4E, #6B2A3A)", boxShadow: "0 14px 28px -18px rgba(74,44,32,.8)", display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ width: "min(100%, calc(420px * var(--vw-s, 1)))", padding: "10px 12px", borderRadius: 16, background: "linear-gradient(135deg, #8E3B4E, #6B2A3A)", boxShadow: "0 14px 28px -18px rgba(74,44,32,.8)", display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ textAlign: "left", flex: "none" }}>
           <p style={{ margin: 0, font: `800 10px ${FONTS.ui}`, letterSpacing: ".2em", color: H.butter }}>JHAPPI</p>
           <p style={{ margin: 0, font: `800 10px ${FONTS.ui}`, letterSpacing: ".2em", color: H.butter }}>PASSPORT</p>
@@ -416,7 +416,7 @@ export default function HugMenu({
 
       <AnimatePresence mode="wait">
         {open == null ? (
-          <motion.div key="board" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: "relative", width: "min(100%, 420px)" }}>
+          <motion.div key="board" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))" }}>
             <div style={{ position: "absolute", right: -8, top: -46, zIndex: 2, pointerEvents: "none" }}>{sticker}</div>
             {/* chalkboard in a wooden frame */}
             <div style={{ padding: 10, borderRadius: 18, background: `linear-gradient(135deg, #B07A4C, ${H.wood} 50%, #7E5233)`, boxShadow: "0 24px 44px -26px rgba(74,44,32,.85)" }}>

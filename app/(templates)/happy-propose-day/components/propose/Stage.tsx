@@ -91,7 +91,7 @@ export function Reasons({ data, reduced, onNext }: Props) {
         <h2 style={{ margin: 0, font: `italic 700 28px/1.2 ${FONTS.serif}`, color: PEARL }}>{reasons.length === 1 ? "One reason" : `${reasons.length} reasons`} I&apos;m asking</h2>
       </header>
       <Heart bpm={BPM[Math.min(k, BPM.length - 1)]} reduced={reduced} />
-      <div style={{ position: "relative", width: "min(80vw, 300px)", height: 250, perspective: 1000 }}>
+      <div style={{ position: "relative", width: "min(80vw, calc(300px * var(--vw-s, 1)))", height: "calc(250px * var(--vw-s, 1))", perspective: 1000 }}>
         {/* the deck behind */}
         {reasons.slice(k + 1).map((_, j) => (
           <div key={`d${j}`} aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 18, background: `linear-gradient(160deg, ${WINE}, #3E0818)`, border: `1.5px solid ${GOLD}66`, transform: `translate(${(j + 1) * 6}px, ${(j + 1) * 6}px) rotate(${(j + 1) * 3}deg)`, boxShadow: "0 18px 30px -18px rgba(0,0,0,.8)" }}>
@@ -216,7 +216,7 @@ function Node({ m, i, reduced, onPhoto }: { m: Moment; i: number; reduced: boole
             type="button"
             onClick={onPhoto}
             aria-label={`Open photo${m.what ? `: ${m.what}` : ""}`}
-            style={{ width: "min(36vw, 138px)", padding: "6px 6px 8px", border: 0, borderRadius: 4, background: PEARL, boxShadow: "0 16px 26px -14px rgba(0,0,0,.8)", transform: `rotate(${left ? -3 : 3}deg)`, cursor: "zoom-in" }}
+            style={{ width: "min(36vw, calc(138px * var(--vw-s, 1)))", padding: "6px 6px 8px", border: 0, borderRadius: 4, background: PEARL, boxShadow: "0 16px 26px -14px rgba(0,0,0,.8)", transform: `rotate(${left ? -3 : 3}deg)`, cursor: "zoom-in" }}
           >
             <span style={{ display: "block", aspectRatio: "4 / 5", overflow: "hidden", borderRadius: 2, filter: lit ? "none" : "grayscale(1) brightness(.7)", transition: "filter 1s ease" }}>
               <CroppedPhoto photo={m.photo} />
@@ -240,7 +240,7 @@ export function Timeline({ data, reduced, onNext }: Props) {
         <h2 style={{ margin: 0, font: `italic 700 28px/1.2 ${FONTS.serif}`, color: PEARL }}>Every little step, to this one</h2>
         <p style={{ margin: 0, font: `400 13.5px ${FONTS.ui}`, color: "#E8CFC9" }}>Scroll — each moment lights up</p>
       </header>
-      <ol style={{ position: "relative", margin: "8px 0 0", padding: 0, width: "100%", maxWidth: 400, display: "grid", gap: 18 }}>
+      <ol style={{ position: "relative", margin: "8px 0 0", padding: 0, width: "100%", maxWidth: "calc(400px * var(--vw-s, 1))", display: "grid", gap: 18 }}>
         <span aria-hidden style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 0, borderLeft: `2px dotted ${GOLD}`, opacity: 0.55, transform: "translateX(-1px)" }} />
         {ms.map((m, i) => (
           <Node key={i} m={m} i={i} reduced={reduced} onPhoto={() => m.photo && setLightbox(data.photos.indexOf(m.photo))} />

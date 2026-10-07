@@ -17,6 +17,29 @@ export type { LovePhoto } from "../_love/types";
 
 export type EditMode = null | "manual" | "preview";
 
+export type MusicMode = "off" | "melody" | "youtube";
+export const MUSIC_MODES: readonly MusicMode[] = ["off", "melody", "youtube"];
+export const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+export const MUSIC_START_MAX = 600;
+
+/**
+ * The four stored music fields, made consistent — the client twin of the
+ * server's sanitizeMusic: an unknown mode or a "youtube" choice without a valid
+ * id falls back to the melody; an old page with only `music: false` is "off".
+ */
+export function coerceMusic(src: Record<string, unknown>): Pick<ValentineDayData, "music" | "musicMode" | "musicYoutubeId" | "musicStart"> {
+  const id = typeof src.musicYoutubeId === "string" && YOUTUBE_ID_RE.test(src.musicYoutubeId.trim()) ? src.musicYoutubeId.trim() : "";
+  let mode: MusicMode =
+    typeof src.musicMode === "string" && (MUSIC_MODES as readonly string[]).includes(src.musicMode)
+      ? (src.musicMode as MusicMode)
+      : src.music === false
+        ? "off"
+        : "melody";
+  if (mode === "youtube" && !id) mode = "melody";
+  const n = typeof src.musicStart === "number" && Number.isFinite(src.musicStart) ? Math.round(src.musicStart) : 0;
+  return { music: mode !== "off", musicMode: mode, musicYoutubeId: id, musicStart: Math.min(MUSIC_START_MAX, Math.max(0, n)) };
+}
+
 export interface ValentineDayData<E = Extras> {
   /** ≤30 */
   recipientName: string;
@@ -30,8 +53,14 @@ export interface ValentineDayData<E = Extras> {
   photos: LovePhoto[];
   /** slotId → "" (default sticker) | "none" (hidden) | https GIF/WebP url. */
   gifs: Record<string, string>;
-  /** Soft synthesised melody on/off (still muted until the first gesture). */
+  /** Kept for older pages/clients: always `musicMode !== "off"`. */
   music: boolean;
+  /** off · the day's built-in synth melody · a YouTube song. Silent until the first gesture. */
+  musicMode: MusicMode;
+  /** An 11-char YouTube video id — never a URL. "" unless musicMode is "youtube". */
+  musicYoutubeId: string;
+  /** Seconds into the song to start from (0–600). */
+  musicStart: number;
   /** ≤90, the final screen line. */
   endLine: string;
   extras: E;
@@ -123,6 +152,8 @@ export interface DayConfig<E extends Extras = Extras> {
   share: { title: string; accent: string };
   /** Which synthesised melody useSynthMusic plays. */
   melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern";
+  /** The frame (width / height) this day shows photos in — the crop editor uses the same shape. */
+  photoAspect: number;
 }
 
 export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as const;
@@ -130,7 +161,7 @@ export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 const CONTENT_KEYS: (keyof ValentineDayData)[] = [
-  "recipientName", "senderName", "petName", "letter", "photos", "gifs", "music", "endLine", "extras",
+  "recipientName", "senderName", "petName", "letter", "photos", "gifs", "music", "musicMode", "musicYoutubeId", "musicStart", "endLine", "extras",
 ];
 
 /** POST/PUT body. An explicit allow-list: UI-only state never reaches the server. */
@@ -172,7 +203,7 @@ export function fromDb(slug: DaySlug, db: Raw | null | undefined, fromServer = d
     letter: s(src.letter, day.letterMax, demo.letter),
     photos: parseLovePhotos(src.photos, fromServer ? [] : demo.photos).slice(0, day.maxPhotos),
     gifs: coerceGifs(slug, src.gifs),
-    music: typeof src.music === "boolean" ? src.music : true,
+    ...coerceMusic(src),
     endLine: s(src.endLine, VW_LIMITS.endLine, demo.endLine),
     extras: coerceExtras(day.extras, src.extras, fromServer ? null : demo.extras),
   };
@@ -207,6 +238,7 @@ export function tidy(slug: DaySlug, d: ValentineDayData): ValentineDayData {
       .map((p) => ({ ...p, caption: p.caption?.slice(0, MAX_CAPTION_LEN), note: p.note?.slice(0, MAX_NOTE_LEN) }))
       .slice(0, day.maxPhotos),
     gifs: coerceGifs(slug, d.gifs),
+    ...coerceMusic(d as unknown as Record<string, unknown>),
     extras: tidyExtras(day.extras, d.extras ?? {}),
   };
 }
@@ -219,5 +251,6 @@ export function missingForSave(slug: DaySlug, d: ValentineDayData): string[] {
   if (!d.senderName.trim()) out.push("your name");
   if (d.letter.trim().length < day.letterMin) out.push(day.letterMin > 1 ? `a letter (at least ${day.letterMin} characters)` : "your letter");
   out.push(...extrasMissing(day.extras, d.extras ?? {}));
+  if (d.musicMode === "youtube" && !YOUTUBE_ID_RE.test(d.musicYoutubeId ?? "")) out.push("a YouTube song (or pick another music option)");
   return out;
 }

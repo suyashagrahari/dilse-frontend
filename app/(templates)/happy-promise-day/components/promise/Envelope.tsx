@@ -53,7 +53,7 @@ export default function Envelope({
       <h1 style={{ margin: 0, font: `700 clamp(44px, 13vw, 68px)/1.05 ${FONTS.script}`, color: VW.ink, overflowWrap: "anywhere", maxWidth: "100%" }}>{recipient}</h1>
       {petName && <p style={{ margin: "-8px 0 0", font: `italic 400 18px ${FONTS.serif}`, color: VW.inkSoft, overflowWrap: "anywhere" }}>“{petName}”</p>}
 
-      <div style={{ position: "relative", width: "min(88vw, 340px)", aspectRatio: "300 / 214", marginTop: 26 }}>
+      <div style={{ position: "relative", width: "min(88vw, calc(340px * var(--vw-s, 1)))", aspectRatio: "300 / 214", marginTop: 26 }}>
         {/* the GIF slot peeks over the top-right corner */}
         <div style={{ position: "absolute", right: -6, top: -66, zIndex: 0 }}>{sticker}</div>
 

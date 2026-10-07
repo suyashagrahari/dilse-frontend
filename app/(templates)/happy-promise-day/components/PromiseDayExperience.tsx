@@ -23,6 +23,7 @@ import PinkySwear from "./promise/PinkySwear";
 import PromiseJar from "./promise/PromiseJar";
 import VachanPatra from "./promise/VachanPatra";
 import { hashStr, initial, useSfxEnabled } from "./promise/ui";
+import { CupidSeal } from "./promise/art";
 
 const day = getDay("happy-promise-day");
 
@@ -90,7 +91,7 @@ export default function PromiseDayExperience({ data, mode, react }: ExperiencePr
       exit={reduced ? undefined : { opacity: 0, y: -14 }}
       transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
       style={{
-        minHeight: "100dvh",
+        minHeight: "calc(100dvh - var(--vw-dock-space, 0px))",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -100,7 +101,7 @@ export default function PromiseDayExperience({ data, mode, react }: ExperiencePr
         textAlign: "center",
         position: "relative",
         zIndex: 1,
-        maxWidth: 560,
+        maxWidth: "calc(560px * var(--vw-s, 1))",
         margin: "0 auto",
       }}
     >
@@ -109,7 +110,7 @@ export default function PromiseDayExperience({ data, mode, react }: ExperiencePr
   );
 
   return (
-    <DayRoot day={day}>
+    <DayRoot day={day} data={data} line={x.bigPromise || x.envelopeLine} art={<CupidSeal size={170} date={date} />}>
       <FloatingParticles emojis={day.theme.particles} count={10} opacity={0.35} />
       {mode === "live" && <MusicToggle music={music} />}
 

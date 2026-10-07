@@ -60,7 +60,7 @@ export function Arrival({
   };
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `62px 18px ${bottomPad}px`, gap: 10 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `62px 18px ${bottomPad}px`, gap: 10 }}>
       {/* the notification */}
       <motion.button
         type="button"
@@ -68,7 +68,7 @@ export function Arrival({
         initial={reduced ? false : { y: -120, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 220, damping: 20, delay: 0.5 }}
-        style={{ width: "min(100%, 370px)", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 20, border: "1px solid rgba(255,255,255,.7)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 18px 40px -22px rgba(59,10,30,.5)", textAlign: "left", cursor: "pointer" }}
+        style={{ width: "min(100%, calc(370px * var(--vw-s, 1)))", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 20, border: "1px solid rgba(255,255,255,.7)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 18px 40px -22px rgba(59,10,30,.5)", textAlign: "left", cursor: "pointer" }}
       >
         <span aria-hidden style={{ flex: "none", width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: "linear-gradient(140deg, #FF7AA2, #E0245E)", boxShadow: "inset 0 1px 0 rgba(255,255,255,.5)" }}>
           <svg viewBox="0 0 24 24" width="24" height="24">
@@ -94,7 +94,7 @@ export function Arrival({
       {petName && <p style={{ margin: "-4px 0 0", font: `italic 400 18px ${FONTS.serif}`, color: VW.inkSoft, textAlign: "center", overflowWrap: "anywhere" }}>“{petName}”</p>}
 
       {/* the sealed envelope */}
-      <div style={{ position: "relative", width: "min(80vw, 320px)", aspectRatio: "300 / 200", marginTop: 34 }}>
+      <div style={{ position: "relative", width: "min(80vw, calc(320px * var(--vw-s, 1)))", aspectRatio: "300 / 200", marginTop: 34 }}>
         <div aria-hidden style={{ position: "absolute", right: -6, top: -54, width: 86, height: 86, transform: "rotate(10deg)" }}>
           {sticker}
         </div>
@@ -157,12 +157,12 @@ export function LipstickPicker({ initial, senderName, bottomPad, onPick }: { ini
     setPicked(s);
   };
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 10 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 10 }}>
       <p style={kicker}>Getting ready</p>
       <h2 style={title}>Pick your lipstick</h2>
       <p style={{ margin: 0, font: `400 15px/1.4 ${FONTS.ui}`, color: VW.inkSoft, textAlign: "center", maxWidth: 320 }}>Every kiss on this page will be in this shade.</p>
 
-      <div style={{ position: "relative", width: "min(94vw, 380px)", marginTop: 26, padding: "0 10px" }}>
+      <div style={{ position: "relative", width: "min(94vw, calc(380px * var(--vw-s, 1)))", marginTop: 26, padding: "0 10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, alignItems: "end", position: "relative", zIndex: 1 }}>
           {order.map((s) => {
             const on = picked === s;
@@ -178,7 +178,7 @@ export function LipstickPicker({ initial, senderName, bottomPad, onPick }: { ini
                 <motion.div
                   animate={reduced ? undefined : { y: on ? -18 : 0, rotate: on ? 0 : s === "gulabi" ? -4 : s === "berry" ? 4 : 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 15 }}
-                  style={{ width: "min(20vw, 74px)" }}
+                  style={{ width: "min(20vw, calc(74px * var(--vw-s, 1)))" }}
                 >
                   <Lipstick shade={s} up={on ? 1 : 0} capOff={on} />
                 </motion.div>
@@ -241,7 +241,7 @@ export function FirstKiss({ shade, bottomPad, onDone }: { shade: ShadeId; bottom
     kiss(best);
   };
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 10 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 10 }}>
       <p style={kicker}>Warm-up round</p>
       <h2 style={title}>Where does kiss #1 go?</h2>
       <p style={{ margin: 0, font: `400 15px/1.4 ${FONTS.ui}`, color: VW.inkSoft, textAlign: "center" }}>Tap a spot on this very patient bear.</p>
@@ -251,7 +251,7 @@ export function FirstKiss({ shade, bottomPad, onDone }: { shade: ShadeId; bottom
         animate={reduced ? undefined : spot ? { scale: [1, 1.08, 0.97, 1], rotate: [0, -4, 3, 0] } : { y: [0, -5, 0] }}
         transition={spot ? { duration: 0.6 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
         key={spot ?? "idle"}
-        style={{ width: "min(70vw, 270px)", aspectRatio: "1", marginTop: 14, cursor: "pointer", filter: "drop-shadow(0 20px 24px rgba(157,23,77,.22))" }}
+        style={{ width: "min(70vw, calc(270px * var(--vw-s, 1)))", aspectRatio: "1", marginTop: 14, cursor: "pointer", filter: "drop-shadow(0 20px 24px rgba(157,23,77,.22))" }}
       >
         <BearCub happy={!!spot} blush={spot ? 1 : 0.2} kissed={spot} kind="cute" shade={shade} />
       </motion.div>
@@ -305,12 +305,12 @@ export function Mwah({ kind, shade, senderName, count, sticker, bottomPad, onNex
   }, [reduced, pal.hex, pal.hi, shake]);
 
   return (
-    <motion.div animate={shake} style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, overflow: "hidden" }}>
+    <motion.div animate={shake} style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, overflow: "hidden" }}>
       {/* soft lens vignette */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 50% at 50% 42%, transparent 40%, ${pal.hi}33 75%, ${pal.hex}22)`, pointerEvents: "none" }} />
+      <div aria-hidden className="vw-feather" style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 50% at 50% 42%, transparent 40%, ${pal.hi}33 75%, ${pal.hex}22)`, pointerEvents: "none" }} />
       <p style={{ ...kicker, position: "relative" }}>Jar full · {count} kisses</p>
 
-      <div style={{ position: "relative", width: "min(86vw, 380px)", aspectRatio: "1.1", marginTop: 10, display: "grid", placeItems: "center" }}>
+      <div style={{ position: "relative", width: "min(86vw, calc(380px * var(--vw-s, 1)))", aspectRatio: "1.1", marginTop: 10, display: "grid", placeItems: "center" }}>
         {/* MWAH lettering */}
         <motion.div
           initial={reduced ? false : { scale: 0.2, opacity: 0, rotate: -20 }}
@@ -379,11 +379,11 @@ export function Coupons({ coupons, kind, shade, senderName, bottomPad, onNext }:
   const all = open.every(Boolean);
   const pal = kissPalette(kind, shade);
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, gap: 10 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, gap: 10 }}>
       <p style={kicker}>Redeemable in real life</p>
       <h2 style={title}>Your kiss coupons</h2>
       <p style={{ margin: 0, font: `400 15px ${FONTS.ui}`, color: VW.inkSoft, textAlign: "center" }}>Scratch each one. Screenshot. Redeem with {senderName || "them"}.</p>
-      <div style={{ display: "grid", gap: 14, width: "min(100%, 400px)", marginTop: 10 }}>
+      <div style={{ display: "grid", gap: 14, width: "min(100%, calc(400px * var(--vw-s, 1)))", marginTop: 10 }}>
         {coupons.map((c, k) => (
           <motion.div
             key={k}
@@ -483,7 +483,7 @@ export function BlowBack({ kind, shade, senderName, sticker, bottomPad, onSent }
   };
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 8, overflow: "hidden" }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 18px ${bottomPad}px`, gap: 8, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <h2 style={{ ...title, fontSize: "clamp(32px, 9vw, 42px)" }}>Your turn</h2>
         <div style={{ width: 74, height: 74 }}>{sticker}</div>

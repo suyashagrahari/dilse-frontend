@@ -63,14 +63,14 @@ export function TicketArrival({ recipientName, senderName, ticketLine, sticker, 
   const foil = "linear-gradient(110deg, #C48F2E 0%, #F5C66B 18%, #FFF0C4 32%, #E8B04B 48%, #F9DD94 64%, #C48F2E 82%, #F5C66B 100%)";
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, gap: 8, overflow: "hidden", background: "radial-gradient(120% 70% at 50% 40%, #5A1030 0%, #3A0A24 45%, #1A0612 100%)" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, gap: 8, overflow: "hidden", background: "radial-gradient(120% 70% at 50% 40%, #5A1030 0%, #3A0A24 45%, #1A0612 100%)" }}>
       {/* velvet texture */}
       <div aria-hidden style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 2px, transparent 2px 6px), radial-gradient(60% 40% at 50% 45%, rgba(245,198,107,.12), transparent 70%)", pointerEvents: "none" }} />
       <p style={{ ...kicker, position: "relative", marginTop: 6 }}>You&apos;re invited</p>
       <h1 style={{ position: "relative", margin: 0, font: `700 clamp(44px, 13vw, 64px)/1.05 ${FONTS.script}`, color: NIGHT.star, textAlign: "center", overflowWrap: "anywhere", maxWidth: "100%" }}>{recipientName || "You"}</h1>
       <p style={{ position: "relative", margin: 0, font: `italic 400 18px ${FONTS.serif}`, color: "#E6CFE0" }}>to one night only</p>
 
-      <div style={{ position: "relative", width: "min(94vw, 380px)", marginTop: 44 }}>
+      <div style={{ position: "relative", width: "min(94vw, calc(380px * var(--vw-s, 1)))", marginTop: 44 }}>
         <div aria-hidden style={{ position: "absolute", left: -8, top: -64, width: 84, height: 84, transform: "rotate(-8deg)", zIndex: 3 }}>
           {sticker}
         </div>
@@ -172,17 +172,17 @@ export function LanternWalk({ weekLines, bottomPad, onDone }: { weekLines: strin
   const line = last != null ? (weekLines[last] ?? "").trim() : "";
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 12px ${bottomPad}px` }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 12px ${bottomPad}px` }}>
       <Starfield count={60} />
       <motion.div aria-hidden animate={{ opacity: count / 7 }} transition={{ duration: 0.8 }} style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 60% at 50% 100%, rgba(255,179,71,.28), rgba(232,67,110,.12) 45%, transparent 75%)", pointerEvents: "none" }} />
-      <Moon size={60} style={{ position: "absolute", right: 22, top: "50%" }} />
+      <Moon size={60} style={{ position: "absolute", right: "max(22px, calc(50% - 420px))", top: "50%", zoom: "var(--vw-s, 1)" }} />
 
       <p style={{ ...kicker, position: "relative" }}>Seven days · seven lights</p>
       <h2 style={{ ...headline, position: "relative", marginTop: 6, fontSize: "clamp(24px, 6.8vw, 32px)" }}>{eighth ? "…and today is the 8th." : "Light up our week"}</h2>
       <p style={{ position: "relative", margin: "6px 0 0", font: `400 14px ${FONTS.ui}`, color: "#E6CFE0", textAlign: "center" }}>{all ? "Every lantern is lit 🏮" : `Tap each lantern · ${count} / 7 lit`}</p>
 
       {/* the string of lanterns */}
-      <div style={{ position: "relative", width: "min(100%, 420px)", height: 168, marginTop: 14 }}>
+      <div style={{ position: "relative", width: "min(100%, 420px)", height: 168, marginTop: 14, zoom: "var(--vw-s, 1)" }}>
         <svg aria-hidden viewBox="0 0 100 40" preserveAspectRatio="none" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: 70 }}>
           <path d="M-2 2 Q50 46 102 2" stroke="#C9A25A" strokeOpacity=".7" strokeWidth=".5" fill="none" vectorEffect="non-scaling-stroke" />
         </svg>
@@ -214,7 +214,7 @@ export function LanternWalk({ weekLines, bottomPad, onDone }: { weekLines: strin
       </div>
 
       {/* the line that floats out */}
-      <div style={{ position: "relative", width: "min(100%, 360px)", minHeight: 126, display: "grid", placeItems: "center", marginTop: 4 }}>
+      <div style={{ position: "relative", width: "min(100%, 360px)", minHeight: 126, display: "grid", placeItems: "center", marginTop: 4, zoom: "var(--vw-s, 1)" }}>
         <AnimatePresence mode="wait">
           {last != null && !eighth && (
             <motion.div
@@ -397,7 +397,7 @@ export function LoveWrapped({ recipientName, senderName, togetherSince, metPlace
   };
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 0 ${bottomPad}px`, overflow: "hidden" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 0 ${bottomPad}px`, overflow: "hidden" }}>
       <Starfield count={34} style={{ opacity: 0.6 }} />
       <p style={{ ...kicker, position: "relative" }}>Love Wrapped</p>
       <h2 style={{ ...headline, position: "relative", marginTop: 6, padding: "0 16px" }}>Our year, in numbers</h2>
@@ -405,7 +405,7 @@ export function LoveWrapped({ recipientName, senderName, togetherSince, metPlace
       <div
         ref={scroller}
         onScroll={onScroll}
-        style={{ position: "relative", width: "100%", maxWidth: 560, overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none", marginTop: 18, WebkitOverflowScrolling: "touch" }}
+        style={{ position: "relative", width: "100%", maxWidth: "calc(560px * var(--vw-s, 1))", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none", marginTop: 18, WebkitOverflowScrolling: "touch" }}
       >
         <div style={{ display: "flex", gap: 14, padding: "6px calc((100% - min(76vw, 320px)) / 2) 18px", width: "max-content" }}>
           {cards.map((c, k) => (
@@ -415,7 +415,7 @@ export function LoveWrapped({ recipientName, senderName, togetherSince, metPlace
               initial={reduced ? false : { opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0, scale: active === k ? 1 : 0.94 }}
               transition={{ delay: k < 2 ? 0.1 + k * 0.1 : 0, type: "spring", stiffness: 180, damping: 22 }}
-              style={{ width: "min(76vw, 320px)", height: "min(56dvh, 430px)", minHeight: 340, flex: "none", scrollSnapAlign: "center", borderRadius: 26, background: c.bg, boxShadow: "0 30px 50px -26px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,246,229,.1)", padding: "26px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 4, position: "relative", overflow: "hidden" }}
+              style={{ width: "min(76vw, calc(320px * var(--vw-s, 1)))", height: "min(56dvh, calc(430px * var(--vw-s, 1)))", minHeight: 340, flex: "none", scrollSnapAlign: "center", borderRadius: 26, background: c.bg, boxShadow: "0 30px 50px -26px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,246,229,.1)", padding: "26px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 4, position: "relative", overflow: "hidden" }}
             >
               <span aria-hidden style={{ position: "absolute", right: -40, top: -40, width: 150, height: 150, borderRadius: "50%", background: "rgba(255,246,229,.06)" }} />
               <span aria-hidden style={{ position: "absolute", left: -30, bottom: -50, width: 130, height: 130, borderRadius: "50%", background: "rgba(245,198,107,.07)" }} />

@@ -64,9 +64,9 @@ export const Screen = forwardRef<HTMLElement, { id: string; preview: boolean; ch
       style={{
         position: "relative",
         zIndex: 2,
-        minHeight: "100dvh",
+        minHeight: "calc(100dvh - var(--vw-dock-space, 0px))",
         width: "100%",
-        maxWidth: 520,
+        maxWidth: "calc(520px * var(--vw-s, 1))",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",

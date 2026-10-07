@@ -158,7 +158,7 @@ export default function FairyLights({ photos, fallbackCaptions, nextLabel, onNex
         {photos.length ? "Proof that the vaade are already real ✨" : "Our photos are still being made. Till then, these ✨"}
       </p>
 
-      <div style={{ width: "min(100%, 440px)", display: "grid", gap: 10, marginTop: 4 }}>
+      <div style={{ width: "min(100%, calc(440px * var(--vw-s, 1)))", display: "grid", gap: 10, marginTop: 4 }}>
         {rows.map((row, r) => (
           <div key={r} style={{ position: "relative", paddingTop: 20, height: "auto" }}>
             <LightString seed={r} reduced={reduced} />

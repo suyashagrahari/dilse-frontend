@@ -1,5 +1,5 @@
 import type { DayConfig, GifSlot } from "../types";
-import { defaultGifs, demoPhotos, meta } from "./_shared";
+import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-valentines-day" as const;
 
@@ -36,6 +36,7 @@ export const valentinesDay: DayConfig<ValentinesExtras> = {
   letterMin: 80,
   asksQuestion: true,
   melody: "lantern",
+  photoAspect: 4 / 5,
   gifSlots: GIFS,
   extras: [
     { key: "ticketLine", kind: "text", max: 50, label: "Ticket tagline", placeholder: "the fine print on your ADMIT TWO ticket", suggestions: ["Admit two · one night · forever seats", "Row 1, Seat 2 · next to me, always"] },
@@ -94,7 +95,7 @@ export const valentinesDay: DayConfig<ValentinesExtras> = {
       ["us, forever", "Out of every timeline, I'd pick this one. Every time."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    music: true,
+    ...MUSIC_DEMO,
     endLine: "Every February. Every day in between. 💘",
     extras: {
       ticketLine: "Admit two · one night · forever seats",

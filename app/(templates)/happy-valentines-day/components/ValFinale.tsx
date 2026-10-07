@@ -17,7 +17,7 @@ export function TheQuestion({ recipientName, question, noLines, sticker, bottomP
   const [dodges, setDodges] = useState(0);
   const [said, setSaid] = useState(false);
   return (
-    <div style={{ position: "relative", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, overflow: "hidden" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, overflow: "hidden" }}>
       <Starfield count={70} />
       <div aria-hidden style={{ position: "absolute", left: "50%", top: "30%", width: "120%", aspectRatio: "1", transform: "translate(-50%,-50%)", background: "radial-gradient(circle, rgba(232,67,110,.22), transparent 60%)", pointerEvents: "none" }} />
       <p style={{ ...kicker, position: "relative" }}>The real question</p>
@@ -26,7 +26,7 @@ export function TheQuestion({ recipientName, question, noLines, sticker, bottomP
       </motion.div>
       <h1 style={{ position: "relative", margin: "8px 0 0", font: `700 clamp(36px, 11vw, 52px)/1.05 ${FONTS.script}`, color: NIGHT.gold, textAlign: "center", overflowWrap: "anywhere", maxWidth: "100%" }}>{recipientName || "You"},</h1>
       <p style={{ ...headline, position: "relative", marginTop: 8, maxWidth: 360, overflowWrap: "anywhere" }}>{question || "Will you be my Valentine… forever?"}</p>
-      <div style={{ position: "relative", width: "min(100%, 400px)", marginTop: 18 }}>
+      <div style={{ position: "relative", width: "min(100%, calc(400px * var(--vw-s, 1)))", marginTop: 18 }}>
         <RunawayNo
           height={250}
           yesLabel="Yes 💘"
@@ -342,14 +342,14 @@ export function Finale({ day, data, mode, dodges, datePlan, togetherSince, stick
   const days = since ? Math.floor((Date.now() - since.getTime()) / 86400000) : null;
 
   return (
-    <div style={{ position: "relative", minHeight: "100dvh" }}>
+    <div style={{ position: "relative", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))" }}>
       {/* the sky stays pinned while the ending scrolls over it */}
       <div style={{ position: "sticky", top: 0, height: "100dvh", marginBottom: "-100dvh", overflow: "hidden", background: "radial-gradient(130% 80% at 50% 100%, #4A1A4F 0%, #2A1240 45%, #12081F 100%)" }}>
         <Starfield count={80} />
         <LanternSky running={released} reduced={reduced} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, textAlign: "center", textShadow: "0 2px 14px rgba(18,8,31,.85)" }}>
+      <div style={{ position: "relative", zIndex: 1, minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `64px 16px ${bottomPad}px`, textAlign: "center", textShadow: "0 2px 14px rgba(18,8,31,.85)" }}>
         <p style={kicker}>{released ? "Up it goes" : "One more thing"}</p>
         <h2 style={{ ...headline, marginTop: 6 }}>{released ? "Our lantern is in the sky" : "Release our lantern"}</h2>
 
@@ -372,7 +372,9 @@ export function Finale({ day, data, mode, dodges, datePlan, togetherSince, stick
               transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
               style={{ cursor: "grab", touchAction: "none", filter: "drop-shadow(0 0 30px rgba(255,179,71,.6))" }}
             >
-              <Lantern tint="#E8436E" lit size={118} glyph={<span style={{ font: `700 ${Math.round(118 * 0.2)}px ${FONTS.script}`, color: "#7A1035" }}>us</span>} />
+              <div style={{ zoom: "var(--vw-s, 1)" }}>
+                <Lantern tint="#E8436E" lit size={118} glyph={<span style={{ font: `700 ${Math.round(118 * 0.2)}px ${FONTS.script}`, color: "#7A1035" }}>us</span>} />
+              </div>
             </motion.div>
             <motion.p animate={reduced ? undefined : { y: [0, -6, 0] }} transition={{ duration: 1.3, repeat: Infinity }} style={{ margin: "26px 0 0", font: `600 15px ${FONTS.ui}`, color: NIGHT.star }}>
               ↑ swipe up to let it go
@@ -419,7 +421,7 @@ export function Finale({ day, data, mode, dodges, datePlan, togetherSince, stick
               )}
 
               {photo && (
-                <div style={{ width: "min(56vw, 210px)", padding: "10px 10px 34px", background: "#FFF6E5", borderRadius: 3, transform: "rotate(-3deg)", boxShadow: "0 24px 40px -18px rgba(0,0,0,.8)", position: "relative" }}>
+                <div style={{ width: "min(56vw, calc(210px * var(--vw-s, 1)))", padding: "10px 10px 34px", background: "#FFF6E5", borderRadius: 3, transform: "rotate(-3deg)", boxShadow: "0 24px 40px -18px rgba(0,0,0,.8)", position: "relative" }}>
                   <div style={{ aspectRatio: "4 / 5", overflow: "hidden" }}>
                     <CroppedPhoto photo={photo} />
                   </div>

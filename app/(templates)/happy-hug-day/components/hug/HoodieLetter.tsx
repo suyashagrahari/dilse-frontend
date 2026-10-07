@@ -68,7 +68,7 @@ export default function HoodieLetter({ letter, sender, recipient, sticker, onNex
       <>
         <Title>Hoodie pehen lo, letter padh lo</Title>
         <p style={{ margin: "-6px 0 0", maxWidth: 320, font: `400 15px/1.45 ${FONTS.ui}`, color: VW.inkSoft }}>Something&apos;s tucked in the pocket. Still warm.</p>
-        <div style={{ position: "relative", width: "min(92vw, 360px)", aspectRatio: "340 / 320" }}>
+        <div style={{ position: "relative", width: "min(92vw, calc(360px * var(--vw-s, 1)))", aspectRatio: "340 / 320" }}>
           {/* hoodie body */}
           <svg viewBox="0 0 340 320" width="100%" height="100%" aria-hidden style={{ position: "absolute", inset: 0, display: "block", overflow: "visible" }}>
             <path d="M120 40 C110 0 230 0 220 40 C214 70 126 70 120 40 Z" fill={HOODIE_DEEP} stroke={H.cocoa} strokeWidth="3.5" />
@@ -122,7 +122,7 @@ export default function HoodieLetter({ letter, sender, recipient, sticker, onNex
         initial={reduced ? false : { scaleY: 0.2, y: -40, opacity: 0 }}
         animate={{ scaleY: 1, y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 140, damping: 18 }}
-        style={{ position: "relative", width: "min(100%, 420px)", transformOrigin: "50% 0" }}
+        style={{ position: "relative", width: "min(100%, calc(420px * var(--vw-s, 1)))", transformOrigin: "50% 0" }}
       >
         <article
           style={{

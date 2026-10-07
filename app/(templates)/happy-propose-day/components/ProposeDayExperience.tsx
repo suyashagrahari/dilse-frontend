@@ -23,6 +23,7 @@ import { Curtain, Reasons, Timeline, moments } from "./propose/Stage";
 import RingBox from "./propose/RingBox";
 import { Finale, Question, Speech } from "./propose/Proposal";
 import { Drape, Fireworks, GOLD, GoldDust, PROPOSE_CSS, Screen, Valance } from "./propose/ui";
+import { Ring } from "./propose/RingArt";
 
 type Step = "curtain" | "reasons" | "story" | "box" | "speech" | "question" | "yes";
 
@@ -85,7 +86,15 @@ export default function ProposeDayExperience({ data: raw, mode, react }: Experie
   const curtainsOpen = step !== "curtain";
 
   return (
-    <DayRoot day={day} style={blush ? BLUSH_VARS : undefined}>
+    <DayRoot
+      day={day}
+      data={data}
+      dark={!blush}
+      line={data.extras.teaser}
+      art={<Ring style={data.extras.ringStyle} stone={data.extras.stoneColor} id="pd-wing" size={150} css={{ height: "100%", width: "auto" }} />}
+      // the gathered drapes take ~4vw at each edge: keep the wings clear of them
+      style={{ ...(blush ? BLUSH_VARS : null), ["--vw-wing-pad" as string]: "clamp(40px, 5.5vw, 96px)" }}
+    >
       <style>{PROPOSE_CSS}</style>
       {/* spotlight */}
       <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(42% 60% at 50% 0%, rgba(255,201,210,.22), transparent 70%), radial-gradient(60% 30% at 50% 100%, rgba(107,15,42,.45), transparent 70%)" }} />

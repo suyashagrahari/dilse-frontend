@@ -2,8 +2,8 @@ import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-reac
 import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-promise-day/cover-v2.webp).
+// Gallery card. The cover is the day's poster (three real screens of the page)
+// (source: media-src/templates/happy-promise-day/cover-poster.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-promise-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Promise Day — Vaada Pakka",
   description:
     'Pinky swear, a jar of promises, and a love letter they sign as a stamp-paper contract.',
-  coverImage: templateMedia("happy-promise-day", "cover-v2.webp"),
+  coverImage: templateMedia("happy-promise-day", "cover-poster.webp"),
   emoji: "🤞",
   color: "from-pink-500 to-amber-400",
   previewText: 'pinky promise? 🤞',

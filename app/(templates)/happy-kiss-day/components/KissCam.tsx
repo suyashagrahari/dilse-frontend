@@ -122,12 +122,12 @@ export default function KissCam({
   const photo = n ? photos[i] : null;
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 16px ${bottomPad}px`, gap: 12 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `60px 16px ${bottomPad}px`, gap: 12 }}>
       <style>{CSS}</style>
       <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".2em", textTransform: "uppercase", color: VW.inkSoft }}>Now showing</p>
       <h2 style={{ margin: 0, font: `700 clamp(24px, 7vw, 32px)/1.1 ${FONTS.serif}`, color: VW.ink, textAlign: "center" }}>You&apos;re on the Kiss-Cam!</h2>
 
-      <div style={{ position: "relative", width: "min(90vw, 380px)", marginTop: 6 }}>
+      <div style={{ position: "relative", width: "min(90vw, calc(380px * var(--vw-s, 1)))", marginTop: 6 }}>
         <div style={{ position: "absolute", right: -10, top: -38, width: 78, height: 78, zIndex: 4, transform: "rotate(8deg)" }}>{sticker}</div>
         {/* the jumbotron */}
         <div style={{ position: "relative", padding: "16px 16px 18px", borderRadius: 24, background: "linear-gradient(160deg, #3A1426, #1A0710 60%, #2B0C1B)", boxShadow: "0 30px 60px -28px rgba(59,10,30,.8), inset 0 0 0 2px rgba(255,201,77,.35)" }}>

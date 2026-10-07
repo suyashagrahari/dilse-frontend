@@ -24,7 +24,7 @@ import PluckGame from "./rose/PluckGame";
 import WaxLetter from "./rose/WaxLetter";
 import Bouquet from "./rose/Bouquet";
 import RoseEnding from "./rose/RoseEnding";
-import { accentVars, shadesFor } from "./rose/art";
+import { GradDefs, StemRose, accentVars, roseGrads, shadesFor } from "./rose/art";
 import { FallingPetals, ROSE_CSS, Screen } from "./rose/ui";
 
 const STEPS = ["grow", "pluck", "letter", "bouquet", "ending"] as const;
@@ -58,7 +58,20 @@ export default function RoseDayExperience({ data: raw, mode, react }: Experience
   const preview = mode === "preview";
 
   return (
-    <DayRoot day={day} style={accentVars(data.extras.roseColor) as CSSProperties}>
+    <DayRoot
+      day={day}
+      data={data}
+      line={data.extras.openingLine}
+      art={
+        <svg viewBox="-120 -120 240 290" width="100%" height="100%" style={{ overflow: "visible" }}>
+          <GradDefs grads={roseGrads("wing", sh)} />
+          <StemRose id="wing" open={0.85} x={-46} y={-6} rotate={-18} s={0.72} len={150} />
+          <StemRose id="wing" open={0.6} x={48} y={4} rotate={16} s={0.66} len={140} />
+          <StemRose id="wing" open={1} x={0} y={-30} s={0.86} len={170} />
+        </svg>
+      }
+      style={accentVars(data.extras.roseColor) as CSSProperties}
+    >
       <style>{ROSE_CSS}</style>
       {/* garden bokeh */}
       <div

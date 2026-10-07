@@ -22,7 +22,7 @@ import { getDay } from "../../_valentine/days";
 import type { TeddyExtras } from "../../_valentine/days/happy-teddy-day";
 import { DayRoot, FloatingParticles, MusicToggle, Sticker, useReducedMotion, useSynthMusic } from "../../_valentine/kit";
 import type { ExperienceProps } from "../../_valentine/types";
-import { FairyLights, furOf, isItem, T, TEDDY_CSS, wear, type ItemId } from "./teddyArt";
+import { FairyLights, furOf, isItem, T, TEDDY_CSS, Teddy, wear, type ItemId } from "./teddyArt";
 import ClawMachine from "./ClawMachine";
 import TeddyWardrobe from "./TeddyWardrobe";
 import TeddyLetter from "./TeddyLetter";
@@ -91,7 +91,13 @@ export default function TeddyDayExperience({ data, mode, react }: ExperienceProp
   const i = STEPS.indexOf(step);
 
   return (
-    <DayRoot day={day}>
+    <DayRoot
+      day={day}
+      data={data}
+      dark={!light}
+      line={x.winLine}
+      art={<Teddy fur={fur} worn={step === "arcade" ? initialWorn : worn} size="100%" style={{ height: "100%", width: "auto" }} />}
+    >
       <style>{TEDDY_CSS}</style>
       {/* the cosy bedroom (letter + photos) fades in over the night arcade */}
       <div
@@ -116,7 +122,7 @@ export default function TeddyDayExperience({ data, mode, react }: ExperienceProp
         ))}
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh" }}>
+      <div style={{ position: "relative", zIndex: 1, minHeight: "calc(100dvh - var(--vw-dock-space, 0px))" }}>
         <AnimatePresence mode="wait">
           <motion.section
             key={`${step}-${run}`}
@@ -124,7 +130,7 @@ export default function TeddyDayExperience({ data, mode, react }: ExperienceProp
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
             transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-            style={{ width: "100%", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center" }}
+            style={{ width: "100%", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center" }}
           >
             {step === "arcade" && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: `52px 16px ${preview ? 120 : 40}px` }}>

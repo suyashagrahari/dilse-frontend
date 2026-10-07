@@ -23,7 +23,7 @@ import { getDay } from "../../_valentine/days";
 import { chocolateDay, type ChocolateExtras } from "../../_valentine/days/happy-chocolate-day";
 import { DayRoot, FloatingParticles, MusicToggle, Sticker, useReducedMotion, useSynthMusic } from "../../_valentine/kit";
 import type { ExperienceProps } from "../../_valentine/types";
-import { C, CHOCO_CSS, CocoaDust } from "./chocoArt";
+import { C, CHOCO_CSS, CHOCOS, ChocoArt, CocoaDust, HEART_CHOCO } from "./chocoArt";
 import ChocoBox from "./ChocoBox";
 import ChocoLetter from "./ChocoLetter";
 import Assortment from "./Assortment";
@@ -100,7 +100,18 @@ export default function ChocolateDayExperience({ data, mode, react }: Experience
   const preview = mode === "preview";
 
   return (
-    <DayRoot day={day}>
+    <DayRoot
+      day={day}
+      data={data}
+      line={x.giftTag}
+      art={
+        <div style={{ position: "relative", height: "100%", aspectRatio: "1.3" }}>
+          <ChocoArt shape="round" choco={CHOCOS[0]} size="42%" style={{ position: "absolute", left: "2%", bottom: "6%", transform: "rotate(-14deg)" }} />
+          <ChocoArt shape="square" choco={CHOCOS[2]} size="38%" style={{ position: "absolute", right: "2%", bottom: "10%", transform: "rotate(12deg)" }} />
+          <ChocoArt shape="heart" choco={HEART_CHOCO} size="62%" style={{ position: "absolute", left: "19%", top: 0 }} />
+        </div>
+      }
+    >
       <style>{CHOCO_CSS}</style>
       {/* atmosphere: warm vignette, cocoa dust, a few floating sweets */}
       <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", background: "radial-gradient(90% 70% at 50% 35%, transparent 40%, rgba(20,8,4,.55) 100%)", zIndex: 0 }} />
@@ -115,7 +126,7 @@ export default function ChocolateDayExperience({ data, mode, react }: Experience
         ))}
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <AnimatePresence mode="wait">
           <motion.section
             key={`${step}-${run}`}
@@ -123,7 +134,7 @@ export default function ChocolateDayExperience({ data, mode, react }: Experience
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
             transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
-            style={{ width: "100%", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center" }}
+            style={{ width: "100%", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center" }}
           >
             {step === "box" && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: `52px 16px ${preview ? 120 : 40}px` }}>

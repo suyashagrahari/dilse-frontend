@@ -108,7 +108,7 @@ export default function PromiseJar({ chits, bigIndex, sticker, onDone }: { chits
       </p>
 
       {/* the chit being read */}
-      <div style={{ position: "relative", width: "min(100%, 360px)", minHeight: 170, display: "grid", placeItems: "center", perspective: 900 }}>
+      <div style={{ position: "relative", width: "min(100%, calc(360px * var(--vw-s, 1)))", minHeight: 170, display: "grid", placeItems: "center", perspective: 900 }}>
         <AnimatePresence mode="popLayout">
           {current != null ? (
             <motion.div
@@ -151,7 +151,7 @@ export default function PromiseJar({ chits, bigIndex, sticker, onDone }: { chits
       </div>
 
       {/* the jar */}
-      <div style={{ position: "relative", width: 220, height: 270 }}>
+      <div style={{ position: "relative", width: 220, height: 270, zoom: "var(--vw-s, 1)" }}>
         <div style={{ position: "absolute", right: -64, top: 18, zIndex: 2, pointerEvents: "none" }}>{sticker}</div>
         <motion.button
           type="button"

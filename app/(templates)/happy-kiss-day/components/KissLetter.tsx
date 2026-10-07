@@ -64,7 +64,7 @@ export default function KissLetter({
   };
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: out ? "flex-start" : "center", padding: `64px 18px ${bottomPad}px`, gap: 14 }}>
+    <div style={{ minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: out ? "flex-start" : "center", padding: `64px 18px ${bottomPad}px`, gap: 14 }}>
       <AnimatePresence mode="wait">
         {!out ? (
           <motion.div
@@ -78,7 +78,7 @@ export default function KissLetter({
             <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".2em", textTransform: "uppercase", color: VW.inkSoft }}>Sealed with a kiss</p>
             <h2 style={{ margin: 0, font: `700 clamp(26px, 7.4vw, 34px)/1.15 ${FONTS.serif}`, color: VW.ink, textAlign: "center" }}>There&apos;s a letter inside</h2>
 
-            <div style={{ position: "relative", width: "min(84vw, 340px)", aspectRatio: "300 / 200", marginTop: 110 }}>
+            <div style={{ position: "relative", width: "min(84vw, calc(340px * var(--vw-s, 1)))", aspectRatio: "300 / 200", marginTop: 110 }}>
               <div style={{ position: "absolute", inset: 0 }}>
                 <EnvelopeBack open />
               </div>
@@ -147,7 +147,7 @@ export default function KissLetter({
             <article
               style={{
                 position: "relative",
-                width: "min(100%, 440px)",
+                width: "min(100%, calc(440px * var(--vw-s, 1)))",
                 maxHeight: "64dvh",
                 overflowY: "auto",
                 padding: "30px 22px 24px 30px",

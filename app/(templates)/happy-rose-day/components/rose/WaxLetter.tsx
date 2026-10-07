@@ -185,7 +185,7 @@ export default function WaxLetter({ day, data, reduced, onNext }: Props) {
           <motion.div
             key="env"
             exit={reduced ? undefined : { opacity: 0, y: 60, scale: 0.9, transition: { duration: 0.45 } }}
-            style={{ position: "relative", width: `min(88vw, ${EW}px)`, paddingTop: "min(40vw, 150px)", display: "flex", flexDirection: "column" }}
+            style={{ position: "relative", width: `min(88vw, calc(${EW}px * var(--vw-s, 1)))`, paddingTop: "min(40vw, 150px)", display: "flex", flexDirection: "column" }}
           >
             <div style={{ position: "relative", width: "100%", aspectRatio: `${EW} / ${EH}`, perspective: 900 }}>
               {/* back */}
@@ -283,7 +283,7 @@ export default function WaxLetter({ day, data, reduced, onNext }: Props) {
             initial={reduced ? false : { opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: EASE }}
-            style={{ position: "relative", width: "min(100%, 440px)", ["--rd-ink-wet" as string]: inkWet } as CSSProperties}
+            style={{ position: "relative", width: "min(100%, calc(440px * var(--vw-s, 1)))", ["--rd-ink-wet" as string]: inkWet } as CSSProperties}
           >
             {slot && (
               <div style={{ position: "absolute", right: -4, top: -46, zIndex: 3 }}>

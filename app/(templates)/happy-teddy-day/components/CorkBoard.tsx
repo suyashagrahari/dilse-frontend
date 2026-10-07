@@ -46,7 +46,7 @@ export default function CorkBoard({
   const notes = [`${teddyName} was here 🐾`, `${recipientName || "You"} + ${senderName || "me"} = ♥`, "Squeeze daily. Side effects: smiling."];
 
   return (
-    <div style={{ width: "100%", minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", padding: `58px 14px ${preview ? 140 : 56}px`, textAlign: "center" }}>
+    <div style={{ width: "100%", minHeight: "calc(100dvh - var(--vw-dock-space, 0px))", display: "flex", flexDirection: "column", alignItems: "center", padding: `58px 14px ${preview ? 140 : 56}px`, textAlign: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
         {sticker("t4-photos", 72)}
         <div style={{ textAlign: "left" }}>

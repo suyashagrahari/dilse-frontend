@@ -56,7 +56,7 @@ export default function Assortment({
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: `52px 16px ${preview ? 130 : 56}px`, textAlign: "center" }}>
-      <div style={{ position: "relative", width: "min(100%, 440px)" }}>
+      <div style={{ position: "relative", width: "min(100%, calc(440px * var(--vw-s, 1)))" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>{sticker("c4-photos", 80)}</div>
         <p style={{ margin: 0, font: `600 12.5px ${FONTS.ui}`, letterSpacing: ".22em", textTransform: "uppercase", color: "#E9CDB6" }}>Psst… there&apos;s a second layer</p>
         <h2 style={{ margin: "6px 0 2px", font: `700 clamp(32px, 9.5vw, 42px)/1.1 ${FONTS.serif}`, color: C.cream }}>The Assortment</h2>
@@ -66,7 +66,7 @@ export default function Assortment({
       {/* the tray */}
       <div
         style={{
-          width: "min(100%, 440px)",
+          width: "min(100%, calc(440px * var(--vw-s, 1)))",
           padding: 12,
           borderRadius: 22,
           background: `linear-gradient(160deg, #EE5A8C, ${C.rasp} 45%, ${C.raspDeep})`,

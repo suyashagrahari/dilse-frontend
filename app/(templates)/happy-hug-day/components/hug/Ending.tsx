@@ -111,7 +111,7 @@ export default function Ending({
         initial={reduced ? false : { rotateX: 60, y: 30, opacity: 0 }}
         animate={{ rotateX: 0, y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 120, damping: 16 }}
-        style={{ width: "min(100%, 360px)", padding: 10, borderRadius: 22, background: `linear-gradient(135deg, #8E3B4E, ${COVER})`, boxShadow: "0 30px 50px -28px rgba(74,44,32,.9)", transformPerspective: 900 }}
+        style={{ width: "min(100%, calc(360px * var(--vw-s, 1)))", padding: 10, borderRadius: 22, background: `linear-gradient(135deg, #8E3B4E, ${COVER})`, boxShadow: "0 30px 50px -28px rgba(74,44,32,.9)", transformPerspective: 900 }}
       >
         <div style={{ borderRadius: 14, background: "#FFF8EE", overflow: "hidden", textAlign: "left" }}>
           <div style={{ background: "#FFE3D3", padding: "12px 14px 4px", textAlign: "center" }}>
