@@ -3,7 +3,7 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
 // Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-propose-day/cover.webp).
+// (source: media-src/templates/happy-propose-day/cover-v2.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-propose-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Propose Day — The Little Velvet Box",
   description:
     'A velvet ring box, your speech, a scratch-to-reveal question and a No that runs away — you hear the YES.',
-  coverImage: templateMedia("happy-propose-day", "cover.webp"),
+  coverImage: templateMedia("happy-propose-day", "cover-v2.webp"),
   emoji: "💍",
   color: "from-purple-900 to-amber-500",
   previewText: 'i have something to ask you 💍',
