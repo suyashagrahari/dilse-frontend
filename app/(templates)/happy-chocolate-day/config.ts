@@ -3,7 +3,7 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
 // Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-chocolate-day/cover.webp).
+// (source: media-src/templates/happy-chocolate-day/cover-v2.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-chocolate-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Chocolate Day — Ek Dabba Pyaar",
   description:
     'Unwrap a box of chocolates — every piece hides a sweet reason, the last one melts into your letter.',
-  coverImage: templateMedia("happy-chocolate-day", "cover.webp"),
+  coverImage: templateMedia("happy-chocolate-day", "cover-v2.webp"),
   emoji: "🍫",
   color: "from-amber-900 to-pink-500",
   previewText: 'kuch meetha ho jaaye? 🍫',

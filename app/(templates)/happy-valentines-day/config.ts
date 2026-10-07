@@ -3,7 +3,7 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
 // Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-valentines-day/cover.webp).
+// (source: media-src/templates/happy-valentines-day/cover-v2.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-valentines-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Valentine's Day — Our Valentine Night",
   description:
     'A ticket, seven lanterns for the week, your Love Wrapped stats, a gift-box letter and the forever question.',
-  coverImage: templateMedia("happy-valentines-day", "cover.webp"),
+  coverImage: templateMedia("happy-valentines-day", "cover-v2.webp"),
   emoji: "💘",
   color: "from-indigo-900 to-amber-400",
   previewText: 'admit two. tonight 💘',

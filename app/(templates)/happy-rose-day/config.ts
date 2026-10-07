@@ -3,7 +3,7 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
 // Gallery card. The cover is the day's own scene, captured from the live page
-// (source: media-src/templates/happy-rose-day/cover.webp).
+// (source: media-src/templates/happy-rose-day/cover-v2.webp).
 export const config: TemplatePageConfig = {
   slug: "happy-rose-day",
   type: "valentine",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Rose Day — Ek Gulaab, Sirf Tumhare Liye",
   description:
     'Press and hold to grow a rose in your colour, pluck loves-me-not, open a wax-sealed letter.',
-  coverImage: templateMedia("happy-rose-day", "cover.webp"),
+  coverImage: templateMedia("happy-rose-day", "cover-v2.webp"),
   emoji: "🌹",
   color: "from-rose-500 to-pink-400",
   previewText: 'a rose is waiting for you 🌹',
