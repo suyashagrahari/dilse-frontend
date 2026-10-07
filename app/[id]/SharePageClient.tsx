@@ -15,6 +15,7 @@ import { holdRemainingMs } from "@/lib/share/loaderHold";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { EVENTS } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
+import { VALENTINE_DAY_SET, isDaySlug } from "@/app/(templates)/_valentine/days/slugs";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -165,6 +166,10 @@ const KundliMilanViewer = dynamic(() => import("./KundliMilanViewer"), {
   loading: ViewerSkeleton,
 });
 const VendingMachineViewer = dynamic(() => import("./VendingMachineViewer"), {
+  ssr: false,
+  loading: ViewerSkeleton,
+});
+const ValentineDayViewer = dynamic(() => import("./ValentineDayViewer"), {
   ssr: false,
   loading: ViewerSkeleton,
 });
@@ -360,7 +365,7 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
           setSenderUserId(result.senderUserId || null);
 
           // Holi, Eid, Wedding, Reception, Shaadi, Love-GF and Darling have their own full-page viewers — just store raw data
-          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro" || result.templateType === "raksha-bandhan" || result.templateType === "raksha-bandhan-sister" || result.templateType === "ganesh-chaturthi") {
+          if (result.templateType === "holi" || result.templateType === "eid" || result.templateType === "wedding" || result.templateType === "reception" || result.templateType === "shaadi" || result.templateType === "christian-wedding" || result.templateType === "love-gf" || result.templateType === "darling" || result.templateType === "birthday-gf" || result.templateType === "apology-dashboard" || result.templateType === "missyou-gf" || result.templateType === "bouquet-gf" || result.templateType === "court-of-love" || result.templateType === "proposal" || result.templateType === "court-marriage" || result.templateType === "hold-my-hand" || result.templateType === "train-ticket" || result.templateType === "legal-notice" || result.templateType === "kundli-milan" || result.templateType === "vending-machine" || result.templateType === "catch" || result.templateType === "flags" || result.templateType === "date-invitation" || result.templateType === "photo-puzzle" || result.templateType === "loveflix" || result.templateType === "rewind" || result.templateType === "streak" || result.templateType === "dedication" || result.templateType === "searched" || result.templateType === "capsule" || result.templateType === "us" || result.templateType === "product" || result.templateType === "watch" || result.templateType === "call" || result.templateType === "recharge" || result.templateType === "challan" || result.templateType === "nutrition" || result.templateType === "app" || result.templateType === "profile-pro" || result.templateType === "raksha-bandhan" || result.templateType === "raksha-bandhan-sister" || result.templateType === "ganesh-chaturthi" || VALENTINE_DAY_SET.has(result.templateType)) {
             setData(result.data);
             ok = true;
             // No setLoading here: the `finally` below owns it, because it is
@@ -588,6 +593,11 @@ export default function SharePage({ shareIdOverride }: { shareIdOverride?: strin
   // Vending Machine has its own full-page viewer
   if (!loading && templateType === "vending-machine" && data) {
     return <VendingMachineViewer rawData={data} hasPassword={hasPassword} shareId={shareId} />;
+  }
+
+  // Valentine's week — eight days, one viewer (the slug picks the Experience)
+  if (!loading && isDaySlug(templateType) && data) {
+    return <ValentineDayViewer slug={templateType} rawData={data} hasPassword={hasPassword} shareId={shareId} />;
   }
 
   // Catch has its own full-page viewer

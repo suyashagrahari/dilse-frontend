@@ -112,6 +112,16 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   // fallback composes both names into the image, and a static cover would lose
   // that. See `getSharePageMeta`.
   "raksha-bandhan-sister": { emoji: "🪢", label: "Raksha Bandhan" },
+  "happy-rose-day":       { emoji: "🌹", label: "Rose Day" },
+  "happy-propose-day":    { emoji: "💍", label: "Propose Day" },
+  "happy-chocolate-day":  { emoji: "🍫", label: "Chocolate Day" },
+  "happy-teddy-day":      { emoji: "🧸", label: "Teddy Day" },
+  "happy-promise-day":    { emoji: "🤞", label: "Promise Day" },
+  "happy-hug-day":        { emoji: "🤗", label: "Hug Day" },
+  // Kiss Day previews neutrally (see NEUTRAL_PREVIEW below) — the label is
+  // only used if that override is ever removed.
+  "happy-kiss-day":       { emoji: "💌", label: "Surprise" },
+  "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
   gift:          { emoji: "🎁", label: "Gift" },
 };
 
@@ -127,6 +137,9 @@ const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; heigh
   holi:          { path: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp", width: 1024, height: 1536 },
 };
 
+/** Templates whose share preview must stay neutral (Kiss Day). */
+const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day"]);
+
 interface SharePageSeo {
   templateType: string;
   recipientName: string;
@@ -137,8 +150,13 @@ interface SharePageSeo {
 export function getSharePageMeta({ templateType, recipientName, senderName, shareId }: SharePageSeo): Metadata {
   const info = TEMPLATE_TYPE_INFO[templateType] ?? { emoji: "🎁", label: "Gift" };
 
-  const title = `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
-  const description = `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
+  // A link preview can surface on a shared family phone; for these templates
+  // it names nothing about what is inside.
+  const neutral = NEUTRAL_PREVIEW.has(templateType);
+  const title = neutral ? "A little something for you 💌" : `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
+  const description = neutral
+    ? `${senderName} made you something. Open it when you have a quiet minute ✨`
+    : `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
   const cover = TEMPLATE_COVER_IMAGES[templateType];
   const ogImageUrl = cover
