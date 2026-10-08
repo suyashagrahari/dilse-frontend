@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-kiss-day-premium";
-const TITLE = `Kiss Day Premium Website — A Thousand Kisses, a Cinematic Page With Your Song`;
+const TITLE = `Kiss Day Premium — A Thousand Kisses: Your Photo Made of Kisses, With Your Song`;
 const DESCRIPTION =
-  `Catch a thousand kisses into a jar until they lock into a mosaic of you two, read a letter in the mirror, and step into a photo booth.`;
-const SOCIAL_TITLE = `💌 A Thousand Kisses ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `Send a Kiss Day surprise they'll replay: warm a wax seal, catch falling kisses, watch two thousand kisses fly into your photo as your song drops, read a lipstick letter on a mirror, and stamp a kiss-booth strip.`;
+const SOCIAL_TITLE = `💌 A little something for you`;
+const SOCIAL_DESCRIPTION = `Sealed and made just for you. Open it with the sound on 🎧`;
 
 export const metadata: Metadata = {
   title: TITLE,
