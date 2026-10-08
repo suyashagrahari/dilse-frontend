@@ -817,13 +817,15 @@ function NowPlayingChip({
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const at: Corner = overSheet ? "br" : corner;
   const expanded = open || overSheet;
-  // Phones, collapsed: the disc tucks into the screen edge, leaving a 28px
-  // half-disc tab, so a scene's full-width buttons scrolling past (or resting at
-  // the bottom) are never covered. The player stays partly on screen, still covered.
+  // Phones, collapsed: the chip sits flush on the screen edge with only a 14px
+  // sliver showing — narrower than the 16px page gutter — so a scene's
+  // full-width buttons scrolling past (or resting at the bottom) are never
+  // covered. The player stays partly on screen, still covered.
   const tuck = phone && !expanded && !overSheet;
+  const edge = tuck ? "0px" : "12px";
   const style: CSSProperties = {
     zIndex: overSheet ? 195 : 96,
-    transform: tuck ? `translateX(${at[1] === "r" ? "" : "-"}36px)` : "none",
+    transform: tuck ? `translateX(${at[1] === "r" ? "" : "-"}calc(100% - 14px))` : "none",
     ["--vp-bg" as string]: theme.bg,
     ["--vp-ink" as string]: theme.ink,
     ["--vp-soft" as string]: theme.soft,
@@ -834,7 +836,7 @@ function NowPlayingChip({
       ? { bottom: overSheet ? "calc(112px + env(safe-area-inset-bottom, 0px))" : `calc(${dockBase} + 12px + env(safe-area-inset-bottom, 0px))` }
       : // Top corners sit under the 🔊 chip (left) / the SubhSandesh mark (right).
         { top: "calc(64px + env(safe-area-inset-top, 0px))" }),
-    ...(at[1] === "r" ? { right: "max(12px, env(safe-area-inset-right, 0px))" } : { left: "max(12px, env(safe-area-inset-left, 0px))" }),
+    ...(at[1] === "r" ? { right: `max(${edge}, env(safe-area-inset-right, 0px))` } : { left: `max(${edge}, env(safe-area-inset-left, 0px))` }),
     visibility: hidden ? "hidden" : "visible",
     pointerEvents: hidden ? "none" : "auto",
   };
