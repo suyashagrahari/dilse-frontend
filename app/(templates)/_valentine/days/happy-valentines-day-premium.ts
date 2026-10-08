@@ -98,6 +98,7 @@ export const valentinesDayPremium: DayConfig<ValentinesExtrasPremium> = {
   ...base,
   letterMin: 80,
   music: {
+    audioOnly: true,
     suggestions: FILM_SONGS,
     suggestionsNote: "film-worthy favourites · tap to use",
   },

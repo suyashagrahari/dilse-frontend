@@ -14,7 +14,8 @@ export interface IcsEvent {
   location?: string;
 }
 
-const esc = (s: string) => s.replace(/[\;,]/g, (m) => `\\${m}`).replace(/\r?\n/g, "\\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "");
+// RFC 5545 §3.3.11: backslash first, then ; and , — then newlines; other controls dropped.
+const esc = (s: string) => s.replace(/[\\;,]/g, (m) => `\\${m}`).replace(/\r?\n/g, "\\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "");
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 const fold = (line: string) => line.match(/.{1,73}/g)?.join("\r\n ") ?? line;
 

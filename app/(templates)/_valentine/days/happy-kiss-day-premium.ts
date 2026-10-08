@@ -80,7 +80,7 @@ const base = premiumDay<KissExtrasPremium>(kissDay, {
 
 export const kissDayPremium: DayConfig<KissExtrasPremium> = {
   ...base,
-  music: { suggestions: KISS_PREMIUM_SONGS, suggestionsNote: "romantic favourites · tap to use" },
+  music: { audioOnly: true, suggestions: KISS_PREMIUM_SONGS, suggestionsNote: "romantic favourites · tap to use" },
   extras: [
     {
       key: "kissStyle", kind: "enum", label: "Kiss style", display: "cards", default: "cute",

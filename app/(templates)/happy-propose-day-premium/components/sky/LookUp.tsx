@@ -32,7 +32,9 @@ export function LookUp({ sky, sticker, setFormation, setHush, onDone }: {
     dropped.current = true;
     timers.current.forEach(clearTimeout);
     drop(() => {
-      setFormation({ kind: "text", text: sky.question, color: "#FFFFFF", maxLines: 3 });
+      // Long questions get more lines instead of a smaller (illegible in drones) size.
+      const len = sky.question.length;
+      setFormation({ kind: "text", text: sky.question, color: "#FFFFFF", maxLines: len > 40 ? 4 : 3 });
       sfx("sky-chime", { detune: 700, gain: 1.1 });
       setHush(false);
       setPhase("asked");

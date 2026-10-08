@@ -13,11 +13,11 @@ import { MotionConfig } from "framer-motion";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { useAppSelector } from "@/store/hooks";
 import { getDay } from "@/app/(templates)/_valentine/days";
-import { getExperience } from "@/app/(templates)/_valentine/experiences";
+import { getExperience, teaserArtFor } from "@/app/(templates)/_valentine/experiences";
 import { fromDb, type DaySlug, type ReactFn } from "@/app/(templates)/_valentine/types";
 import { BrandMark } from "@/app/(templates)/_valentine/kit/DayRoot";
 import { FONTS } from "@/app/(templates)/_valentine/theme";
-import { DayMusicProvider } from "@/app/(templates)/_valentine/music/DayMusic";
+import { DayMusicProvider, chipThemeFrom } from "@/app/(templates)/_valentine/music/DayMusic";
 import { TemplateGate, initialUnlocked } from "./_TemplateGate";
 import { parseLockedTeaser } from "@/app/(templates)/_valentine/premiumData";
 import UnlockTeaser from "@/app/(templates)/_valentine/kit/premium/UnlockTeaser";
@@ -133,7 +133,12 @@ export default function ValentineDayViewer({
   if (teaser) {
     return (
       <>
-        <UnlockTeaser day={day} teaser={teaser} onUnlocked={refetch} />
+        <UnlockTeaser
+          day={day}
+          teaser={teaser}
+          onUnlocked={refetch}
+          art={teaserArtFor(slug, { recipientName: teaser.recipientName, senderName: teaser.senderName })}
+        />
         <BrandMark dark={day.theme.dark} />
       </>
     );
@@ -143,7 +148,7 @@ export default function ValentineDayViewer({
     <MotionConfig reducedMotion="user">
       {/* The sender's music (off · melody · YouTube song) — the day's own
           useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
-      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions}>
+      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}>
         <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
           <Experience data={data} mode="live" react={react} />
         </PremiumShareContext.Provider>

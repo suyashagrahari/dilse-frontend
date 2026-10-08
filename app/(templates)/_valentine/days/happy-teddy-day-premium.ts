@@ -92,7 +92,7 @@ export const teddyDayPremium: DayConfig<TeddyExtrasPremium> = {
     inkSoft: "#D6D3F0",
     particles: ["🧸", "⭐", "💗", "✨"],
   },
-  music: { suggestions: SONGS, suggestionsNote: "cosy & sweet · tap to use" },
+  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "cosy & sweet · tap to use" },
   extras: [
     { key: "teddyName", kind: "text", max: 20, label: "Teddy's name", placeholder: "an inside joke works best — e.g. Golu", suggestions: ["Golu", "Mishti", "Bhalu", "Chiku"] },
     {

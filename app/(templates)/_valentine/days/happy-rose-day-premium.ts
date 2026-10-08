@@ -79,7 +79,7 @@ const base = premiumDay<RoseExtrasPremium>(roseDay, {
 
 export const roseDayPremium: DayConfig<RoseExtrasPremium> = {
   ...base,
-  music: { suggestions: GLASSHOUSE_SONGS, suggestionsNote: "romantic favourites · tap to use" },
+  music: { audioOnly: true, suggestions: GLASSHOUSE_SONGS, suggestionsNote: "romantic favourites · tap to use" },
   theme: {
     bg: "radial-gradient(90% 55% at 50% 0%, #6B4A3E 0%, #3A3330 45%, #1E2A27 100%)",
     base: "#1E2422",

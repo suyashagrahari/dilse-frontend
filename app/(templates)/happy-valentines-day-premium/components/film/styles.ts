@@ -200,6 +200,8 @@ export const FILM_CSS = `
 .fm-book { position: relative; perspective: 2600px; border-radius: 4px 10px 10px 4px; background: #5b1220; padding: 10px 10px 10px 16px;
   box-shadow: 0 30px 60px -24px #000, inset 6px 0 10px -4px rgba(0,0,0,.6); }
 .fm-pages { position: relative; transform-style: preserve-3d; }
+/* Narrow phones: a nearer eye so the lifted leaf reads as a page, not a strip. */
+@media (max-width: 480px) { .fm-book { perspective: 1300px; } }
 .fm-page { position: relative; min-height: 380px; padding: 30px 26px 54px; box-sizing: border-box; text-align: left; border-radius: 2px 6px 6px 2px; color: #2A1712;
   background: linear-gradient(90deg, rgba(0,0,0,.08), transparent 7%), #F6EBD6; box-shadow: inset -10px 0 18px -14px rgba(80,40,10,.4); }
 .fm-page .fm-ch { margin: 0 0 4px; font: 700 10px/1 var(--fm-type); letter-spacing: .32em; text-transform: uppercase; color: #8E6A14; }

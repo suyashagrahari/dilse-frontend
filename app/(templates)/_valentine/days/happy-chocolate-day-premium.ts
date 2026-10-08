@@ -93,7 +93,7 @@ export const chocolateDayPremium: DayConfig<ChocolateExtrasPremium> = {
   ...base,
   melody: "cocoa",
   photoAspect: 1,
-  music: { suggestions: SONGS, suggestionsNote: "sweet & slow · tap to use" },
+  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "sweet & slow · tap to use" },
   extras: [
     {
       key: "welcomeNote", kind: "text", max: 80, label: "Note on the counter",

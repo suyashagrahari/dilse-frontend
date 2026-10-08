@@ -14,7 +14,7 @@ import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import EditSheet from "./EditSheet";
-import { DayMusicProvider } from "./music/DayMusic";
+import { DayMusicProvider, chipThemeFrom } from "./music/DayMusic";
 import { getDay } from "./days";
 import { getExperience } from "./experiences";
 import { FONTS } from "./theme";
@@ -87,6 +87,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         dockBase="96px"
         audioOnly={!!day.music?.audioOnly}
         songs={day.music?.suggestions}
+        chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 

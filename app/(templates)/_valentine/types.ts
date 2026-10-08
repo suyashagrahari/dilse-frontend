@@ -99,6 +99,12 @@ export interface ExperienceProps {
   react: ReactFn;
 }
 
+/** A premium day's own art for the unlock teaser (only the names are known before unlockAt). */
+export interface TeaserArtProps {
+  recipientName: string;
+  senderName: string;
+}
+
 export interface GifSlot {
   /** "r1-arrival" — the key in `data.gifs`. */
   id: string;

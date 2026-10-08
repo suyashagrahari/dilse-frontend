@@ -98,7 +98,7 @@ export const promiseDayPremium: DayConfig<PromiseExtrasPremium> = {
     particles: ["🧵", "✨", "🤞"],
     confetti: ["#F2C14E", "#D7263D", "#9DB4FF", "#F7F1E8"],
   },
-  music: { suggestions: SONGS, suggestionsNote: "vow-worthy · tap to use" },
+  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "vow-worthy · tap to use" },
   extras: [
     {
       key: "gateLine", kind: "text", max: 70, label: "Opening line",

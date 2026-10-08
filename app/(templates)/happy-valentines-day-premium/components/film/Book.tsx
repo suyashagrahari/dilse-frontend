@@ -37,6 +37,9 @@ function Page({ k, title, text, last, from, signed }: { k: number; title: string
   );
 }
 
+const DRAG_MAX = 62;
+const AUTO_TURN = 96;
+
 export default function Book({ film, letter, onDone }: { film: Film; letter: string; onDone: () => void }) {
   const { sfx } = usePremium();
   const reduce = useReducedMotion();
@@ -103,17 +106,25 @@ export default function Book({ film, letter, onDone }: { film: Film; letter: str
     setAngle(4);
     sfx("paper-rustle", { gain: 0.5 });
   };
+  // Under the finger the leaf lifts to at most DRAG_MAX°; past AUTO_TURN° of travel it
+  // flips on its own. Following the finger through 90° showed the leaf edge-on — a thin
+  // 3D sliver — for as long as the finger stayed mid-page (worst on narrow phones).
   const cornerMove = (e: RPointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     if (!d) return;
-    const a = Math.max(2, Math.min(178, ((d.x - e.clientX) / (d.w * 1.1)) * 180));
-    setAngle(a);
+    const raw = ((d.x - e.clientX) / (d.w * 1.1)) * 180;
+    if (raw >= AUTO_TURN) {
+      drag.current = null;
+      finishTurn(true);
+      return;
+    }
+    setAngle(Math.max(2, Math.min(DRAG_MAX, raw)));
   };
   const cornerUp = () => {
     const d = drag.current;
     drag.current = null;
     if (!d) return;
-    finishTurn((angle ?? 0) > 60);
+    finishTurn((angle ?? 0) > 45);
   };
 
   const cur = pages[page];

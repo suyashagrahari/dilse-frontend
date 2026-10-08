@@ -83,7 +83,7 @@ const base = premiumDay<ProposeExtrasPremium>(proposeDay, {
 
 export const proposeDayPremium: DayConfig<ProposeExtrasPremium> = {
   ...base,
-  music: { suggestions: SKY_SONGS, suggestionsNote: "proposal favourites · tap to use" },
+  music: { audioOnly: true, suggestions: SKY_SONGS, suggestionsNote: "proposal favourites · tap to use" },
   theme: {
     bg: "linear-gradient(180deg, #0B1026 0%, #141A44 55%, #1C1F4A 100%)",
     base: "#0B1026",

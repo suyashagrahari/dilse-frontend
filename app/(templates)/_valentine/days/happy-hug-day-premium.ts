@@ -70,7 +70,7 @@ const base = premiumDay<HugExtrasPremium>(hugDay, {
 export const hugDayPremium: DayConfig<HugExtrasPremium> = {
   ...base,
   photoAspect: 1,
-  music: { suggestions: KISS_PREMIUM_SONGS, suggestionsNote: "romantic favourites · tap to use" },
+  music: { audioOnly: true, suggestions: KISS_PREMIUM_SONGS, suggestionsNote: "romantic favourites · tap to use" },
   extras: [
     {
       key: "frostLine", kind: "text", max: 50, label: "Written behind the frost",
