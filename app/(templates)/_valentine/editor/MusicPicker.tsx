@@ -180,7 +180,7 @@ export default function MusicPicker({
           </div>
           <p className="vs-hint" style={{ margin: 0 }}>
             {audioOnly
-              ? "Only the sound plays — the video stays hidden behind a little spirit-radio card in the corner that they can pause or mute."
+              ? "Only the sound plays — the video stays hidden behind a small now-playing card in the corner that they can pause, mute or move."
               : "Plays through YouTube's own player — a small card in the corner of their screen that they can pause."}
           </p>
         </div>

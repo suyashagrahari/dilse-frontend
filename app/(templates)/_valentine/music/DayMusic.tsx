@@ -17,6 +17,8 @@
 //                 it playing (they throttle or refuse 0px / offscreen frames),
 //                 but fully covered by an opaque themed "spirit radio" card.
 //                 The video is never visible; only the sound comes through.
+//                 With `chip` (every -premium day) the cover is a compact
+//                 themed "now playing" pill instead (NowPlayingChip).
 // Browsers only allow sound after a gesture, so it starts on the visitor's
 // first tap/key (when `autoStart`), loops, fades in, pauses while the tab is
 // hidden, and falls back to the melody if the song refuses to play (removed,
@@ -27,23 +29,45 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { MusicButton, useSynthEngine, type MelodyId } from "../kit/useSynthMusic";
 import { FONTS } from "../theme";
 import type { MusicMode } from "../types";
-import { DayMusicContext, type DayMusicApi } from "./context";
+import { DayMusicContext, isIOSDevice, type DayMusicApi } from "./context";
 import { loadYouTubeApi, suggestionFor, youTubeThumb, type SongSuggestion, type YTPlayer } from "./youtube";
 
 const TARGET_VOLUME = 80;
 const YT_STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 } as const;
+/** No PLAYING/BUFFERING this long after start() → `blocked` (show the "Tap to hear" chip). */
+const BLOCKED_AFTER_MS = 2500;
 
 interface YouTubeEngine {
   playing: boolean;
   loading: boolean;
+  ready: boolean;
+  blocked: boolean;
   title: string | null;
   muted: boolean;
+  userOff: boolean;
   start: () => void;
   stop: () => void;
   toggle: () => void;
   toggleMute: () => void;
+  play: () => void;
+  pause: () => void;
+  seekTo: (sec: number) => void;
+  currentTime: () => number;
+  fadeTo: (level: number, ms?: number) => void;
+  duck: (level?: number, ms?: number) => void;
+  unduck: (ms?: number) => void;
+  canFade: boolean;
 }
 
+// The autoplay race (fixed for every day, not just premium): browsers — iOS
+// above all — only allow audible playback from code that runs synchronously
+// inside a tap. The player is created at mount (not on the first tap), so by
+// the time someone taps it is usually ready and play() calls playVideo()
+// inside the gesture. If the tap beats onReady, play() still runs from
+// onReady (fine on Chrome/Android thanks to sticky activation, refused on
+// iOS); in that case nothing reaches PLAYING, `blocked` turns on after 2.5 s,
+// and the gesture listeners stay attached, so the NEXT tap anywhere retries
+// inside a real gesture. They detach once the song is actually playing.
 function useYouTubeEngine({
   videoId,
   startAt,
@@ -66,6 +90,10 @@ function useYouTubeEngine({
   const userOff = useRef(false);
   const resumeOnShow = useRef(false);
   const fadeRef = useRef<number | null>(null);
+  const blockTimer = useRef<number | null>(null);
+  const stateRef = useRef<number>(YT_STATE.UNSTARTED);
+  const levelRef = useRef(1);
+  const duckedPaused = useRef(false);
   const startRef = useRef(startAt);
   const failRef = useRef(onFail);
   useEffect(() => {
@@ -73,6 +101,11 @@ function useYouTubeEngine({
   });
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [off, setOff] = useState(false);
+  // Once the song has really played, taps no longer (re)start it — exactly the old "first gesture" semantics.
+  const [everPlayed, setEverPlayed] = useState(false);
   const [title, setTitle] = useState<string | null>(() => suggestionFor(videoId, songs)?.title ?? null);
   const [titleFor, setTitleFor] = useState(videoId);
   if (titleFor !== videoId) {
@@ -81,11 +114,38 @@ function useYouTubeEngine({
   }
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
+  // iOS ignores volume writes on media (YouTube setVolume is a no-op there).
+  const [ios] = useState(() => isIOSDevice());
 
   const clearFade = () => {
     if (fadeRef.current != null) window.clearInterval(fadeRef.current);
     fadeRef.current = null;
   };
+  const clearBlockTimer = () => {
+    if (blockTimer.current != null) window.clearTimeout(blockTimer.current);
+    blockTimer.current = null;
+  };
+  const isAudible = () => stateRef.current === YT_STATE.PLAYING || stateRef.current === YT_STATE.BUFFERING;
+
+  /** Ramp setVolume from its current level to `to` (0–100) over `ms`. Non-iOS only. */
+  const rampVolume = useCallback((to: number, ms: number, from?: number) => {
+    clearFade();
+    const p = playerRef.current;
+    if (!p) return;
+    const steps = Math.max(1, Math.round(ms / 90));
+    let i = 0;
+    const start = from ?? levelRef.current * TARGET_VOLUME;
+    fadeRef.current = window.setInterval(() => {
+      i += 1;
+      const v = Math.round(start + ((to - start) * i) / steps);
+      try {
+        playerRef.current?.setVolume(v);
+      } catch {
+        /* player gone */
+      }
+      if (i >= steps) clearFade();
+    }, 90);
+  }, []);
 
   const play = useCallback(() => {
     const p = playerRef.current;
@@ -98,30 +158,31 @@ function useYouTubeEngine({
     wantPlay.current = false;
     clearFade();
     try {
+      // Synchronous, in this order — WebKit only honours unMute/playVideo inside the tap.
       if (mutedRef.current) p.mute();
       else p.unMute();
-      p.setVolume(0);
+      if (!ios) p.setVolume(0);
       p.playVideo();
     } catch {
       return;
     }
-    // A gentle fade-in rather than a song slamming in mid-chorus.
-    let v = 0;
-    fadeRef.current = window.setInterval(() => {
-      v = Math.min(TARGET_VOLUME, v + 6);
-      try {
-        playerRef.current?.setVolume(v);
-      } catch {
-        /* player gone */
+    clearBlockTimer();
+    blockTimer.current = window.setTimeout(() => {
+      if (!isAudible() && !userOff.current) {
+        setBlocked(true);
+        setLoading(false);
       }
-      if (v >= TARGET_VOLUME) clearFade();
-    }, 90);
-  }, []);
+    }, BLOCKED_AFTER_MS);
+    // A gentle fade-in rather than a song slamming in mid-chorus (not on iOS:
+    // volume is read-only there, the premium gate's sting masks the entry).
+    if (!ios) rampVolume(Math.round(levelRef.current * TARGET_VOLUME), 1200, 0);
+  }, [ios, rampVolume]);
 
   const pause = useCallback(() => {
     wantPlay.current = false;
     setLoading(false);
     clearFade();
+    clearBlockTimer();
     try {
       playerRef.current?.pauseVideo();
     } catch {
@@ -129,7 +190,7 @@ function useYouTubeEngine({
     }
   }, []);
 
-  // Create the player once per song. The API script loads only now.
+  // Create the player once per song, at mount — NOT on the first tap (see the race note above).
   useEffect(() => {
     if (!videoId) return;
     let cancelled = false;
@@ -162,16 +223,26 @@ function useYouTubeEngine({
             onReady: (e) => {
               if (cancelled) return;
               readyRef.current = true;
+              setReady(true);
               setLoading(false);
               const t = e.target.getVideoData?.().title;
               if (t) setTitle(t);
               if (wantPlay.current) play();
             },
+            onAutoplayBlocked: () => {
+              if (cancelled) return;
+              setBlocked(true);
+              setLoading(false);
+            },
             onStateChange: (e) => {
               if (cancelled) return;
+              stateRef.current = e.data;
               if (e.data === YT_STATE.PLAYING) {
                 setPlaying(true);
+                setEverPlayed(true);
                 setLoading(false);
+                setBlocked(false);
+                clearBlockTimer();
                 const t = e.target.getVideoData?.().title;
                 if (t) setTitle(t);
               } else if (e.data === YT_STATE.BUFFERING) {
@@ -202,7 +273,9 @@ function useYouTubeEngine({
     return () => {
       cancelled = true;
       clearFade();
+      clearBlockTimer();
       readyRef.current = false;
+      stateRef.current = YT_STATE.UNSTARTED;
       try {
         playerRef.current?.destroy();
       } catch {
@@ -211,6 +284,7 @@ function useYouTubeEngine({
       playerRef.current = null;
       setPlaying(false);
       setLoading(false);
+      setReady(false);
       if (box0) box0.innerHTML = "";
     };
   }, [videoId, host, play]);
@@ -229,19 +303,21 @@ function useYouTubeEngine({
     }
   }, [startAt, videoId]);
 
-  // First gesture anywhere starts it (unless they turned it off).
+  // Taps anywhere start it (unless they turned it off) — and keep retrying,
+  // each time inside a fresh gesture, until it is really playing. iOS counts
+  // touchend/click as activation (not pointerdown), so all four are heard.
   useEffect(() => {
-    if (!videoId || !autoStart) return;
+    if (!videoId || !autoStart || everPlayed) return;
     const go = () => {
-      if (!userOff.current) play();
+      if (userOff.current || isAudible()) return;
+      play();
     };
-    window.addEventListener("pointerdown", go, { once: true });
-    window.addEventListener("keydown", go, { once: true });
+    const evs = ["pointerdown", "touchend", "click", "keydown"] as const;
+    for (const ev of evs) window.addEventListener(ev, go, { passive: true });
     return () => {
-      window.removeEventListener("pointerdown", go);
-      window.removeEventListener("keydown", go);
+      for (const ev of evs) window.removeEventListener(ev, go);
     };
-  }, [videoId, autoStart, play]);
+  }, [videoId, autoStart, play, everPlayed]);
 
   // Hidden tab → pause; back → resume if it was playing.
   useEffect(() => {
@@ -268,10 +344,14 @@ function useYouTubeEngine({
 
   const start = useCallback(() => {
     userOff.current = false;
+    setOff(false);
+    setBlocked(false);
     play();
   }, [play]);
   const stop = useCallback(() => {
     userOff.current = true;
+    setOff(true);
+    setBlocked(false);
     pause();
   }, [pause]);
   const toggle = useCallback(() => (playing || wantPlay.current ? stop() : start()), [playing, start, stop]);
@@ -287,7 +367,76 @@ function useYouTubeEngine({
     }
   }, []);
 
-  return { playing, loading, title, muted, start, stop, toggle, toggleMute };
+  const resume = useCallback(() => {
+    if (!userOff.current) play();
+  }, [play]);
+  const seekTo = useCallback((sec: number) => {
+    const p = playerRef.current;
+    if (!p || !readyRef.current) return;
+    try {
+      p.seekTo(Math.max(0, sec), true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const currentTime = useCallback(() => {
+    try {
+      return playerRef.current?.getCurrentTime?.() ?? 0;
+    } catch {
+      return 0;
+    }
+  }, []);
+  const fadeTo = useCallback(
+    (level: number, ms = 800) => {
+      levelRef.current = Math.min(1, Math.max(0, level));
+      if (ios) return;
+      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+  const duck = useCallback(
+    (level = 0.25, ms = 400) => {
+      if (ios) {
+        // No volume on iOS: pause under the voice, resume on unduck.
+        if (isAudible()) {
+          duckedPaused.current = true;
+          try {
+            playerRef.current?.pauseVideo();
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
+      rampVolume(Math.round(Math.min(1, Math.max(0, level)) * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+  const unduck = useCallback(
+    (ms = 600) => {
+      if (ios) {
+        if (duckedPaused.current && !userOff.current) {
+          duckedPaused.current = false;
+          try {
+            playerRef.current?.playVideo();
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
+      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+
+  return useMemo(
+    () => ({
+      playing, loading, ready, blocked, title, muted, userOff: off,
+      start, stop, toggle, toggleMute, play: resume, pause, seekTo, currentTime, fadeTo, duck, unduck, canFade: !ios,
+    }),
+    [playing, loading, ready, blocked, title, muted, off, start, stop, toggle, toggleMute, resume, pause, seekTo, currentTime, fadeTo, duck, unduck, ios],
+  );
 }
 
 // ─── The floating "now playing" card ─────────────────────────────────────────
@@ -564,6 +713,245 @@ const RADIO_CSS = `
 @media (prefers-reduced-motion: reduce) { .vr-disc.is-on, .vm-radio .vr-disc.is-on ~ .vr-eq i { animation: none; } }
 `;
 
+// ─── Audio-only, premium: the themed "now playing" chip ──────────────────────
+//
+// THIS ALSO HIDES THE YOUTUBE PLAYER — the same trade-off as the spirit radio
+// above (YouTube's embed terms expect a visible player; hiding it is the
+// product owner's explicit decision for the -premium days, whose cinematic
+// scenes a visible video card would cover). The iframe stays mounted at
+// 200×113 inside the chip, clipped by it and covered by its opaque face, so it
+// is never offscreen and never seen. Switch `music.audioOnly` off on a day to
+// bring back the visible mini-player.
+//
+// Compact: a 52px pill in the day's own colours (disc with the day's emoji,
+// status, title, play/pause, mute, move). Collapsed to the disc until the
+// song first plays; on phones it opens for a few seconds when the song starts,
+// then folds back into a half-disc tab at the screen edge, so it never sits on
+// a scene's buttons (the page also reserves 68px above --vw-dock-space).
+
+export interface NowPlayingChipTheme {
+  /** Opaque face colour. */
+  bg: string;
+  ink: string;
+  soft: string;
+  accent: string;
+  accentInk: string;
+  gold: string;
+  /** The day's emoji in the disc. */
+  glyph: string;
+}
+
+/** Chip theme from a day's palette (dark days use the base, light days the paper). */
+export function chipThemeFrom(t: { base: string; paper: string; ink: string; inkSoft: string; paperInk: string; accent: string; accentInk: string; gold: string; dark?: boolean }, glyph: string): NowPlayingChipTheme {
+  return t.dark
+    ? { bg: t.base, ink: t.ink, soft: t.inkSoft, accent: t.accent, accentInk: t.accentInk, gold: t.gold, glyph }
+    : { bg: t.paper, ink: t.paperInk, soft: t.paperInk, accent: t.accent, accentInk: t.accentInk, gold: t.gold, glyph };
+}
+
+/** Bottom room the chip needs on phones (52px pill + 12px gap + 4px air). */
+const CHIP_RESERVE = 68;
+
+function NowPlayingChip({
+  api,
+  videoId,
+  host,
+  overSheet,
+  dockBase,
+  songs,
+  muted,
+  onMute,
+  theme,
+}: {
+  api: DayMusicApi;
+  videoId: string;
+  host: React.RefObject<HTMLDivElement | null>;
+  overSheet: boolean;
+  dockBase: string;
+  songs?: readonly SongSuggestion[];
+  muted: boolean;
+  onMute: () => void;
+  theme: NowPlayingChipTheme;
+}) {
+  const [corner, setCorner] = useState<Corner>("br");
+  const [phone, setPhone] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [peekFor, setPeekFor] = useState(0);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setPhone(window.innerWidth < 768);
+      try {
+        const c = window.localStorage.getItem(CORNER_KEY) as Corner | null;
+        if (c && CORNERS.includes(c)) setCorner(c);
+      } catch {
+        /* storage blocked — default corner */
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  // Opens when the song starts (phones: for a few seconds, then back to the disc).
+  const [wasPlaying, setWasPlaying] = useState(false);
+  if (api.playing !== wasPlaying) {
+    setWasPlaying(api.playing);
+    if (api.playing) {
+      setOpen(true);
+      setPeekFor((n) => n + 1);
+    }
+  }
+  useEffect(() => {
+    if (!peekFor || !phone) return;
+    const t = window.setTimeout(() => setOpen(false), 4500);
+    return () => window.clearTimeout(t);
+  }, [peekFor, phone]);
+  const move = () => {
+    const next = CORNERS[(CORNERS.indexOf(corner) + 1) % CORNERS.length];
+    setCorner(next);
+    try {
+      window.localStorage.setItem(CORNER_KEY, next);
+    } catch {
+      /* fine */
+    }
+  };
+  const hidden = overSheet && !api.playing && !api.loading;
+  const title = api.title ?? suggestionFor(videoId, songs)?.title ?? "Your song";
+  const artist = suggestionFor(videoId, songs)?.artist ?? "";
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+  const at: Corner = overSheet ? "br" : corner;
+  const expanded = open || overSheet;
+  // Phones, collapsed: the chip sits flush on the screen edge with only a 14px
+  // sliver showing — narrower than the 16px page gutter — so a scene's
+  // full-width buttons scrolling past (or resting at the bottom) are never
+  // covered. The player stays partly on screen, still covered.
+  const tuck = phone && !expanded && !overSheet;
+  const edge = tuck ? "0px" : "12px";
+  const style: CSSProperties = {
+    zIndex: overSheet ? 195 : 96,
+    transform: tuck ? `translateX(${at[1] === "r" ? "" : "-"}calc(100% - 14px))` : "none",
+    ["--vp-bg" as string]: theme.bg,
+    ["--vp-ink" as string]: theme.ink,
+    ["--vp-soft" as string]: theme.soft,
+    ["--vp-accent" as string]: theme.accent,
+    ["--vp-accent-ink" as string]: theme.accentInk,
+    ["--vp-gold" as string]: theme.gold,
+    ...(at[0] === "b"
+      ? { bottom: overSheet ? "calc(112px + env(safe-area-inset-bottom, 0px))" : `calc(${dockBase} + 12px + env(safe-area-inset-bottom, 0px))` }
+      : // Top corners sit under the 🔊 chip (left) / the SubhSandesh mark (right).
+        { top: "calc(64px + env(safe-area-inset-top, 0px))" }),
+    ...(at[1] === "r" ? { right: `max(${edge}, env(safe-area-inset-right, 0px))` } : { left: `max(${edge}, env(safe-area-inset-left, 0px))` }),
+    visibility: hidden ? "hidden" : "visible",
+    pointerEvents: hidden ? "none" : "auto",
+  };
+  const on = api.playing && !muted;
+  const status = api.playing ? (muted ? "Muted" : "Now playing") : api.loading ? "Tuning in…" : "Paused";
+  return (
+    <div
+      className={`vp-chip${expanded ? " is-open" : ""}${tuck ? " is-tucked" : ""}`}
+      style={style}
+      onPointerDown={stop}
+      onKeyDown={stop}
+      role="region"
+      aria-label="Now playing"
+    >
+      {/* The real player — 200×113, clipped by the chip, under its opaque face. Never visible. */}
+      <div ref={host} className="vp-host" aria-hidden />
+      <div className="vp-face">
+        <button
+          type="button"
+          className={`vp-disc${on ? " is-on" : ""}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Hide the music controls" : `Music: ${title}. Show the controls`}
+        >
+          <span className="vp-ring" aria-hidden />
+          <span className="vp-glyph" aria-hidden>{theme.glyph}</span>
+        </button>
+        <span className="vp-tx" aria-hidden={!expanded}>
+          <small><i className={`vp-dot${api.playing ? " is-on" : ""}`} />{status}</small>
+          <b title={title}>{title}</b>
+          {artist && <em>{artist}</em>}
+        </span>
+        <span className="vp-ctrls">
+          <button type="button" className="vp-btn vp-play" tabIndex={expanded ? 0 : -1} onClick={api.toggle} aria-label={api.playing ? "Pause the song" : "Play the song"}>
+            {api.playing ? <PauseIcon /> : <PlayIcon />}
+          </button>
+          <button type="button" className="vp-btn" tabIndex={expanded ? 0 : -1} onClick={onMute} aria-pressed={muted} aria-label={muted ? "Unmute the song" : "Mute the song"}>
+            {muted ? <MuteIcon off /> : <MuteIcon />}
+          </button>
+          {!overSheet && (
+            <button type="button" className="vp-btn" tabIndex={expanded ? 0 : -1} onClick={move} aria-label="Move the music chip to another corner" title="Move to another corner">
+              <MoveIcon />
+            </button>
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const svgProps = { width: 16, height: 16, viewBox: "0 0 16 16", "aria-hidden": true, focusable: false } as const;
+const PlayIcon = () => (
+  <svg {...svgProps}>
+    <path d="M5 3.2v9.6L12.6 8z" fill="currentColor" />
+  </svg>
+);
+const PauseIcon = () => (
+  <svg {...svgProps}>
+    <rect x="4" y="3" width="2.8" height="10" rx="1" fill="currentColor" />
+    <rect x="9.2" y="3" width="2.8" height="10" rx="1" fill="currentColor" />
+  </svg>
+);
+const MuteIcon = ({ off = false }: { off?: boolean }) => (
+  <svg {...svgProps}>
+    <path d="M2.5 6h2.6L8.6 3v10L5.1 10H2.5z" fill="currentColor" />
+    {off ? (
+      <path d="M10.6 5.8l3.6 4.4M14.2 5.8l-3.6 4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    ) : (
+      <path d="M10.6 5.6c1.1 1.3 1.1 3.5 0 4.8M12.4 4c2 2.3 2 5.7 0 8" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+    )}
+  </svg>
+);
+const MoveIcon = () => (
+  <svg {...svgProps}>
+    <path d="M8 1.8v12.4M1.8 8h12.4M8 1.8 6.2 3.6M8 1.8l1.8 1.8M8 14.2l-1.8-1.8M8 14.2l1.8-1.8M1.8 8l1.8-1.8M1.8 8l1.8 1.8M14.2 8l-1.8-1.8M14.2 8l-1.8 1.8" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+  </svg>
+);
+
+const CHIP_CSS = `
+.vp-chip { position: fixed; width: 52px; height: 52px; border-radius: 26px; overflow: hidden; isolation: isolate;
+  background: var(--vp-bg); color: var(--vp-ink); font-family: ${FONTS.ui};
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.6), 0 0 0 1px color-mix(in srgb, var(--vp-gold) 45%, transparent);
+  transition: width .38s cubic-bezier(.3,.7,.2,1), transform .38s cubic-bezier(.3,.7,.2,1); }
+.vp-chip.is-open { width: min(316px, calc(100vw - 24px)); }
+.vp-host, .vp-host iframe { position: absolute; left: 0; top: 0; width: 200px; height: 113px; border: 0; pointer-events: none; }
+.vp-face { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; gap: 6px; padding: 4px; box-sizing: border-box;
+  background: var(--vp-bg);
+  background-image: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--vp-accent) 22%, transparent), transparent 62%); }
+.vp-disc { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center;
+  background: radial-gradient(circle, color-mix(in srgb, var(--vp-ink) 6%, var(--vp-bg)) 0 46%, transparent 47%),
+    repeating-radial-gradient(circle, color-mix(in srgb, var(--vp-ink) 18%, var(--vp-bg)) 0 1.5px, color-mix(in srgb, var(--vp-ink) 8%, var(--vp-bg)) 1.5px 3px); }
+.vp-ring { position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--vp-gold), transparent 30%, var(--vp-accent) 52%, transparent 78%, var(--vp-gold));
+  -webkit-mask: radial-gradient(circle, transparent 0 19px, #000 19.5px 22px, transparent 22.5px); mask: radial-gradient(circle, transparent 0 19px, #000 19.5px 22px, transparent 22.5px);
+  opacity: .75; }
+.vp-disc.is-on .vp-ring { animation: vp-spin 2.8s linear infinite; opacity: 1; }
+.vp-glyph { position: relative; font-size: 18px; line-height: 1; }
+.vp-tx { display: grid; min-width: 0; flex: 1; gap: 1px; line-height: 1.15; opacity: 0; transition: opacity .2s; }
+.vp-chip.is-open .vp-tx { opacity: 1; transition-delay: .12s; }
+.vp-tx small { display: flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--vp-gold); }
+.vp-tx b { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vp-tx em { font-style: normal; font-size: 10.5px; color: var(--vp-soft); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vp-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: color-mix(in srgb, var(--vp-ink) 30%, transparent); }
+.vp-dot.is-on { background: var(--vp-accent); box-shadow: 0 0 6px var(--vp-accent); }
+.vp-ctrls { display: flex; gap: 4px; flex: none; opacity: 0; transition: opacity .2s; }
+.vp-chip.is-open .vp-ctrls { opacity: 1; transition-delay: .12s; }
+.vp-chip:not(.is-open) .vp-ctrls, .vp-chip:not(.is-open) .vp-tx { pointer-events: none; }
+.vp-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; padding: 0;
+  background: color-mix(in srgb, var(--vp-ink) 9%, transparent); color: var(--vp-ink); }
+.vp-btn.vp-play { background: var(--vp-accent); color: var(--vp-accent-ink); }
+.vp-btn:focus-visible, .vp-disc:focus-visible { outline: 3px solid var(--vp-gold); outline-offset: -3px; }
+@keyframes vp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .vp-chip { transition: none; } .vp-disc.is-on .vp-ring { animation: none; } }
+`;
+
 type Corner = "br" | "bl" | "tl" | "tr";
 const CORNERS: Corner[] = ["br", "bl", "tl", "tr"];
 const CORNER_KEY = "vw_music_corner";
@@ -624,6 +1012,7 @@ export function DayMusicProvider({
   dockBase = "0px",
   audioOnly = false,
   songs,
+  chip,
   children,
 }: {
   settings: DayMusicSettings;
@@ -640,6 +1029,8 @@ export function DayMusicProvider({
   audioOnly?: boolean;
   /** The day's own song list (titles for the card). */
   songs?: readonly SongSuggestion[];
+  /** With `audioOnly`: draw the compact themed chip (premium days) instead of the spirit radio. */
+  chip?: NowPlayingChipTheme;
   children: ReactNode;
 }) {
   const requested = settings.musicMode;
@@ -661,10 +1052,41 @@ export function DayMusicProvider({
 
   const error = broken ? "That song can't be played on other sites (the owner turned embedding off, or it's region-locked). Playing the soft melody instead." : null;
 
+  // The melody's "turned off by the visitor" flag (the synth keeps its own for its toggle).
+  const [melodyOff, setMelodyOff] = useState(false);
+  const melodyOffRef = useRef(false);
+  const melodyStart = synth.start;
+  const melodyStop = synth.stop;
+  const synthApi = useMemo(() => {
+    const start = () => {
+      melodyOffRef.current = false;
+      setMelodyOff(false);
+      melodyStart();
+    };
+    const stop = () => {
+      melodyOffRef.current = true;
+      setMelodyOff(true);
+      melodyStop();
+    };
+    return {
+      start,
+      stop,
+      toggle: () => (synth.playing ? stop() : start()),
+      play: () => {
+        if (!melodyOffRef.current) melodyStart();
+      },
+    };
+  }, [melodyStart, melodyStop, synth.playing]);
+
   const api = useMemo<DayMusicApi>(
     () =>
       mode === "youtube"
-        ? { mode, available: true, playing: yt.playing, loading: yt.loading, error, title: yt.title, toggle: yt.toggle, start: yt.start, stop: yt.stop, registerToggle }
+        ? {
+            mode, available: true, playing: yt.playing, loading: yt.loading, error, title: yt.title,
+            toggle: yt.toggle, start: yt.start, stop: yt.stop, registerToggle,
+            ready: yt.ready, blocked: yt.blocked, userOff: yt.userOff, play: yt.play, pause: yt.pause, seekTo: yt.seekTo,
+            currentTime: yt.currentTime, duck: yt.duck, unduck: yt.unduck, fadeTo: yt.fadeTo, canFade: yt.canFade, audioOnly,
+          }
         : {
             mode,
             available: mode === "melody",
@@ -672,31 +1094,48 @@ export function DayMusicProvider({
             loading: false,
             error,
             title: null,
-            toggle: synth.toggle,
-            start: synth.start,
-            stop: synth.stop,
+            toggle: synthApi.toggle,
+            start: synthApi.start,
+            stop: synthApi.stop,
             registerToggle,
+            ready: true,
+            blocked: false,
+            userOff: melodyOff,
+            play: synthApi.play,
+            pause: melodyStop,
+            seekTo: () => synth.restartPhrase?.(),
+            currentTime: () => synth.elapsed?.() ?? 0,
+            duck: (level = 0.25, ms = 400) => synth.setLevel?.(level, ms),
+            unduck: (ms = 600) => synth.setLevel?.(1, ms),
+            fadeTo: (level: number, ms = 800) => synth.setLevel?.(level, ms),
+            canFade: true,
+            audioOnly,
           },
-    [mode, yt.playing, yt.loading, yt.title, yt.toggle, yt.start, yt.stop, synth.playing, synth.toggle, synth.start, synth.stop, error, registerToggle],
+    [mode, yt, synth, synthApi, melodyOff, melodyStop, error, registerToggle, audioOnly],
   );
 
   return (
     <DayMusicContext.Provider value={api}>
       {/* DayRoot pads its bottom by --vw-dock-space; with a YouTube song it grows by the
           player's height on phones. Always the same wrapper, so a mode change never remounts the day. */}
-      <div className={mode === "youtube" ? "vm-reserve" : undefined} style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: `calc(${dockBase} + 137px)` }}>
+      <div
+        className={mode === "youtube" ? "vm-reserve" : undefined}
+        style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: `calc(${dockBase} + ${audioOnly && chip ? CHIP_RESERVE : 137}px)` }}
+      >
         {children}
       </div>
       {mode === "melody" && toggles === 0 && !overSheet && <MusicButton music={api} />}
       {mode === "youtube" && (
         <>
-          {audioOnly ? (
+          {audioOnly && chip ? (
+            <NowPlayingChip api={api} videoId={ytId} host={host} overSheet={overSheet} dockBase={dockBase} songs={songs} muted={yt.muted} onMute={yt.toggleMute} theme={chip} />
+          ) : audioOnly ? (
             <SpiritRadioDock api={api} videoId={ytId} host={host} overSheet={overSheet} dockBase={dockBase} songs={songs} muted={yt.muted} onMute={yt.toggleMute} />
           ) : (
             <YouTubeDock api={api} videoId={ytId} host={host} dark={dark} overSheet={overSheet} dockBase={dockBase} />
           )}
           <style>{DOCK_CSS}</style>
-          {audioOnly && <style>{RADIO_CSS}</style>}
+          {audioOnly && <style>{chip ? CHIP_CSS : RADIO_CSS}</style>}
         </>
       )}
     </DayMusicContext.Provider>

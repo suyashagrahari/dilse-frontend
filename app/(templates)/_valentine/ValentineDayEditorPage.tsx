@@ -8,13 +8,13 @@
 // AI questions (StoryStarter, mounted after EditSheet), then the form.
 // When the recipient has reacted, the owner sees a small "Seen ✓ / Said YES" chip.
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
 import EditSheet from "./EditSheet";
-import { DayMusicProvider } from "./music/DayMusic";
+import { DayMusicProvider, chipThemeFrom } from "./music/DayMusic";
 import { getDay } from "./days";
 import { getExperience } from "./experiences";
 import { FONTS } from "./theme";
@@ -24,7 +24,23 @@ import { useValentineDayEditor } from "./useValentineDayEditor";
 const noopReact = () => {};
 
 function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactions; asks: boolean; yes?: string }) {
-  if (!r.openedAt && !r.answer && !r.completedAt) return null;
+  const [open, setOpen] = useState(false);
+  if (!r.openedAt && !r.answer && !r.completedAt && !r.reply) return null;
+  // ✦ Premium: the recipient wrote back — the chip opens to show it.
+  if (r.reply) {
+    return (
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        style={{ position: "fixed", top: 44, left: "50%", transform: "translateX(-50%)", zIndex: 140, maxWidth: "min(92vw, 420px)", padding: open ? "12px 16px" : "8px 14px", borderRadius: open ? 18 : 99, border: "1.5px solid #e2b44a", background: "rgba(255,250,240,.97)", color: "#2a1a22", font: `600 13px ${FONTS.ui}`, boxShadow: "0 10px 30px -12px rgba(0,0,0,.4)", textAlign: "left", cursor: "pointer", whiteSpace: open ? "pre-wrap" : "nowrap" }}
+      >
+        {open ? <>They wrote back ✦<br /><span style={{ fontWeight: 500, fontSize: 15 }}>{r.reply.text}</span></> : "They wrote back ✦ · tap to read"}
+      </motion.button>
+    );
+  }
   const label = r.answer === "yes" && asks
     ? `${yes}${r.noDodges ? ` · dodged No ×${r.noDodges}` : ""}`
     : r.completedAt
@@ -71,6 +87,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         dockBase="96px"
         audioOnly={!!day.music?.audioOnly}
         songs={day.music?.suggestions}
+        chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 

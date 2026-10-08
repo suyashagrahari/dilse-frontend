@@ -11,13 +11,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { API_URL, IS_NGROK } from "@/lib/config";
+import { useAppSelector } from "@/store/hooks";
 import { getDay } from "@/app/(templates)/_valentine/days";
-import { getExperience } from "@/app/(templates)/_valentine/experiences";
+import { getExperience, teaserArtFor } from "@/app/(templates)/_valentine/experiences";
 import { fromDb, type DaySlug, type ReactFn } from "@/app/(templates)/_valentine/types";
 import { BrandMark } from "@/app/(templates)/_valentine/kit/DayRoot";
 import { FONTS } from "@/app/(templates)/_valentine/theme";
-import { DayMusicProvider } from "@/app/(templates)/_valentine/music/DayMusic";
+import { DayMusicProvider, chipThemeFrom } from "@/app/(templates)/_valentine/music/DayMusic";
 import { TemplateGate, initialUnlocked } from "./_TemplateGate";
+import { parseLockedTeaser } from "@/app/(templates)/_valentine/premiumData";
+import UnlockTeaser from "@/app/(templates)/_valentine/kit/premium/UnlockTeaser";
+import { PremiumShareContext } from "@/app/(templates)/_valentine/kit/premium/ReplyBox";
 
 /** Fire-and-forget; never throws, never blocks the experience. */
 function useReactBeacon(slug: DaySlug, shareId: string): ReactFn {
@@ -60,16 +64,43 @@ export default function ValentineDayViewer({
   shareId: string;
 }) {
   const day = getDay(slug);
+  // ✦ Premium scheduled unlock: before `unlockAt` the server sends only a
+  // teaser (names + time). At zero we fetch the page again for the content.
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const [raw, setRaw] = useState(rawData);
+  const teaser = useMemo(() => (day.premium ? parseLockedTeaser(raw) : null), [day.premium, raw]);
+  const refetch = useCallback(() => {
+    fetch(`${API_URL}/${slug}-pages/share/${encodeURIComponent(shareId)}`, {
+      headers: {
+        ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}),
+        // The signed-in owner gets the full page before the unlock time.
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j?.success && j.data) setRaw(j.data as Record<string, unknown>);
+      })
+      .catch(() => {});
+  }, [slug, shareId, accessToken]);
+  // The share route's first fetch is anonymous: if this is the owner, ask again with their token.
+  const askedAsOwner = useRef(false);
+  useEffect(() => {
+    if (!teaser || !accessToken || askedAsOwner.current) return;
+    askedAsOwner.current = true;
+    refetch();
+  }, [teaser, accessToken, refetch]);
+  const shareInfo = useMemo(() => ({ slug, shareId, replySent: raw.replySent === true }), [slug, shareId, raw.replySent]);
   const [unlocked, setUnlocked] = useState(() => initialUnlocked(hasPassword, slug, shareId));
   const unlock = useCallback(() => setUnlocked(true), []);
   const react = useReactBeacon(slug, shareId);
-  const data = useMemo(() => fromDb(slug, rawData, true), [slug, rawData]);
+  const data = useMemo(() => fromDb(slug, raw, true), [slug, raw]);
   const Experience = getExperience(slug);
   const open = !hasPassword || unlocked;
 
   useEffect(() => {
-    if (open) react("opened");
-  }, [open, react]);
+    if (open && !teaser) react("opened");
+  }, [open, teaser, react]);
 
   if (!open) {
     const t = day.theme;
@@ -99,12 +130,28 @@ export default function ValentineDayViewer({
     );
   }
 
+  if (teaser) {
+    return (
+      <>
+        <UnlockTeaser
+          day={day}
+          teaser={teaser}
+          onUnlocked={refetch}
+          art={teaserArtFor(slug, { recipientName: teaser.recipientName, senderName: teaser.senderName })}
+        />
+        <BrandMark dark={day.theme.dark} />
+      </>
+    );
+  }
+
   return (
     <MotionConfig reducedMotion="user">
       {/* The sender's music (off · melody · YouTube song) — the day's own
           useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
-      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions}>
-        <Experience data={data} mode="live" react={react} />
+      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}>
+        <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
+          <Experience data={data} mode="live" react={react} />
+        </PremiumShareContext.Provider>
       </DayMusicProvider>
       <BrandMark dark={day.theme.dark} />
     </MotionConfig>

@@ -24,6 +24,11 @@ import { VW_FONT_VARS } from "./fonts";
 import Sticker from "./kit/Sticker";
 import VwPhotos, { PHOTOS_CSS } from "./editor/VwPhotos";
 import MusicPicker, { MUSIC_CSS } from "./editor/MusicPicker";
+import VoiceNoteRecorder, { VOICE_CSS } from "./editor/VoiceNoteRecorder";
+import ChorusPicker, { CHORUS_CSS } from "./editor/ChorusPicker";
+import { coercePremium, formatUnlock, PREMIUM_LIMITS, type PremiumFields } from "./premiumData";
+import { premiumTwinOf } from "./days/slugs";
+import { useTemplateAccess } from "@/hooks/useTemplateAccess";
 import { useDayMusic } from "./music/context";
 import { blankRow, extrasMissing, type BoolSpec, type EnumSpec, type FieldSpec, type LeafSpec, type ListSpec, type ObjListSpec, type TextSpec } from "./spec";
 import { VW_LIMITS, YOUTUBE_ID_RE, missingForSave, type DayConfig, type EditMode, type GifSlot, type ValentineDayData } from "./types";
@@ -398,9 +403,87 @@ function scrollToSection(body: HTMLElement | null, id: string) {
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([tabindex="-1"]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
+// ─── ✦ Premium: voice note, the drop, unlock time, sealed P.S., replies ──────
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+/** ISO → the value a datetime-local input wants, in this browser's zone. */
+const toLocalInput = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isFinite(d.getTime()) ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` : "";
+};
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** The next midnight that starts the day's own date (31 Oct, 14 Feb…). */
+function nextDayMidnight(date: number, month: string): Date | null {
+  const m = MONTHS.indexOf(month);
+  if (m < 0) return null;
+  const now = new Date();
+  let d = new Date(now.getFullYear(), m, date, 0, 0, 0);
+  if (d.getTime() <= now.getTime()) d = new Date(now.getFullYear() + 1, m, date, 0, 0, 0);
+  return d;
+}
+
+function PremiumFieldsSection({ day, mf, set }: { day: DayConfig; mf: ValentineDayData; set: (p: Partial<PremiumFields>) => void }) {
+  const p = coercePremium(mf.premium);
+  const tz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata" : "Asia/Kolkata";
+  const chip = nextDayMidnight(day.date, day.month);
+  return (
+    <>
+      <Field label="Your voice ✦ (optional)" hint="Up to 60 seconds. They hear it in its own scene, with the music softly lowered.">
+        <VoiceNoteRecorder value={p} onChange={(v) => set(v)} />
+      </Field>
+      <Field label="Under your voice note" hint="Shown under the waveform — and as a typed message if you don't record one." count={<Counter n={p.voiceCaption.length} max={PREMIUM_LIMITS.voiceCaption} />} htmlFor="vs-vcap">
+        <input id="vs-vcap" className="vs-input" value={p.voiceCaption} maxLength={PREMIUM_LIMITS.voiceCaption} placeholder="the one line you'd say if you were there" onChange={(e) => set({ voiceCaption: e.target.value })} />
+      </Field>
+      <Field label="The drop ✦ — where your chorus hits">
+        <ChorusPicker value={p.songDropAt} onChange={(songDropAt) => set({ songDropAt })} musicMode={mf.musicMode} musicStart={mf.musicStart} />
+      </Field>
+      <Field label="Unlock at ✦ (optional)" hint={p.unlockAt ? `Sealed until ${formatUnlock(p.unlockAt, p.unlockTz)}. Before then the link shows only a countdown — no letter, no photos.` : "Leave empty to open right away. Set a time and the link shows a countdown until then."} htmlFor="vs-unlock">
+        <div className="vs-chorusRow">
+          <input
+            id="vs-unlock"
+            className="vs-input"
+            type="datetime-local"
+            style={{ maxWidth: 240 }}
+            value={p.unlockAt ? toLocalInput(p.unlockAt) : ""}
+            onChange={(e) => {
+              const d = new Date(e.target.value);
+              set(Number.isFinite(d.getTime()) ? { unlockAt: d.toISOString(), unlockTz: tz } : { unlockAt: "" });
+            }}
+          />
+          {chip && (
+            <button type="button" className="vs-ghostBtn" onClick={() => set({ unlockAt: chip.toISOString(), unlockTz: tz })}>
+              {day.date} {day.month.slice(0, 3)}, midnight
+            </button>
+          )}
+          {p.unlockAt && <button type="button" className="vs-ghostBtn" onClick={() => set({ unlockAt: "" })}>Open now</button>}
+        </div>
+      </Field>
+      <Field label="A sealed P.S. ✦ (optional)" hint="Kept folded until they tap it — 'open only if…'." count={<Counter n={p.psLetter.length} max={PREMIUM_LIMITS.psLetter} />} htmlFor="vs-ps">
+        <textarea id="vs-ps" className="vs-input vs-area" rows={3} value={p.psLetter} maxLength={PREMIUM_LIMITS.psLetter} placeholder="Open only if you miss me: …" onChange={(e) => set({ psLetter: e.target.value })} />
+      </Field>
+      <Switch label="Let them write back ✦" hint="A reply box at the end (one reply, up to 280 characters). You'll see it here and get an email." value={p.allowReply} onChange={(allowReply) => set({ allowReply })} />
+    </>
+  );
+}
+
+/** On a $2 day: a quiet pointer to its ✦ Premium twin (only when that one is live here). */
+function PremiumUpsell({ slug }: { slug: string }) {
+  const twin = premiumTwinOf(slug);
+  const { hidden } = useTemplateAccess();
+  if (!twin || hidden.has(twin)) return null;
+  return (
+    <a className="vs-upsell" href={`/${twin}`}>
+      <span className="vs-upsellK">✦ Premium</span>
+      <span className="vs-upsellT">Make it cinematic</span>
+      <span className="vs-upsellP">Your voice, a song that drops at the chorus, 12 photos as a film reel, a sealed P.S. and a reply from them.</span>
+      <span className="vs-upsellGo" aria-hidden>→</span>
+    </a>
+  );
+}
+
 // ─── The sheet ───────────────────────────────────────────────────────────────
 
-type SectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "finish";
+type SectionId = "names" | "details" | "letter" | "photos" | "stickers" | "music" | "premium" | "finish";
 
 export interface EditSheetProps {
   day: DayConfig;
@@ -512,6 +595,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
       photos: mf.photos.length > 0,
       stickers: null, // optional
       music: musicOk,
+      premium: null, // optional
       finish: !!mf.endLine.trim(),
     }),
     [mf, day, musicOk],
@@ -526,6 +610,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
     { id: "photos", label: "Photos", emoji: "📸" },
     { id: "stickers", label: "Stickers", emoji: "✨" },
     { id: "music", label: "Music", emoji: "🎵" },
+    ...(day.premium ? [{ id: "premium" as const, label: "Premium ✦", emoji: "✦" }] : []),
     { id: "finish", label: "Finish", emoji: "🎀" },
   ];
 
@@ -613,6 +698,8 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     </button>
                   </div>
                 )}
+
+                {!day.premium && <PremiumUpsell slug={day.slug} />}
 
                 <section className="vs-sec" id="vs-sec-names" aria-labelledby="vs-h-names">
                   <SecHead n={1} done={status.names} title={<span id="vs-h-names">Names</span>} sub="Who it's for, and who it's from." />
@@ -706,8 +793,15 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                   />
                 </section>
 
+                {day.premium && (
+                  <section className="vs-sec" id="vs-sec-premium" aria-labelledby="vs-h-premium">
+                    <SecHead n={7} done={status.premium} title={<span id="vs-h-premium">The premium touches ✦</span>} sub="Your voice, the drop, an unlock time, a sealed P.S. and their reply." />
+                    <PremiumFieldsSection day={day} mf={mf} set={(patch) => updateMf("premium", { ...coercePremium(mf.premium), ...patch })} />
+                  </section>
+                )}
+
                 <section className="vs-sec" id="vs-sec-finish" aria-labelledby="vs-h-finish">
-                  <SecHead n={7} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
+                  <SecHead n={day.premium ? 8 : 7} done={status.finish} title={<span id="vs-h-finish">Finishing touches 🎀</span>} sub="The last thing they read, and an optional lock." />
                   <TextInput spec={{ key: "endLine", kind: "text", max: VW_LIMITS.endLine, label: "The very last line", placeholder: c.endLinePlaceholder, hint: c.endLineHint }} value={mf.endLine} onChange={(v) => updateMf("endLine", v)} />
                   <Field label="Password (optional)" hint="They type it to open your page — something only they'd know. Leave empty for no lock." htmlFor="vs-pw">
                     <input id="vs-pw" className="vs-input" value={pagePassword} maxLength={128} placeholder="e.g. the name of your first date spot" onChange={(e) => setPagePassword(e.target.value)} autoComplete="off" />
@@ -760,7 +854,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
             </AnimatePresence>
           </motion.div>
 
-          <style>{SHEET_CSS}{PHOTOS_CSS}{MUSIC_CSS}</style>
+          <style>{SHEET_CSS}{PHOTOS_CSS}{MUSIC_CSS}{day.premium ? VOICE_CSS + CHORUS_CSS : ""}{UPSELL_CSS}</style>
         </div>
       )}
     </AnimatePresence>
@@ -960,4 +1054,14 @@ const SHEET_CSS = `
   .vs-headArt { animation: none; }
   .vs-root *, .vs-root *::before, .vs-root *::after { transition-duration: .01ms !important; }
 }
+`;
+
+const UPSELL_CSS = `
+.vs-upsell { position: relative; display: grid; gap: 3px; margin: 0 0 18px; padding: 14px 44px 14px 16px; border-radius: 18px; text-decoration: none; color: #3a2505;
+  background: linear-gradient(135deg, #fffaf0, #fff1cf); box-shadow: inset 0 0 0 1.5px #e2b44a, 0 10px 24px -18px rgba(120,80,10,.6); }
+.vs-upsellK { font-weight: 800; font-size: 10.5px; line-height: 1; letter-spacing: .22em; text-transform: uppercase; color: #a6751c; }
+.vs-upsellT { font-weight: 700; font-size: 16px; }
+.vs-upsellP { font-size: 13px; line-height: 1.4; opacity: .8; }
+.vs-upsellGo { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #a6751c; }
+.vs-upsell:focus-visible { outline: 3px solid #a6751c; outline-offset: 2px; }
 `;

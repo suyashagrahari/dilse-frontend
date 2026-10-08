@@ -15,7 +15,7 @@
 //   const music = useSynthMusic({ melody: day.melody, enabled: mode === "live" && data.music });
 //   <MusicToggle music={music} />
 
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DayConfig } from "../types";
 import { DayMusicContext } from "../music/context";
 
@@ -45,6 +45,12 @@ export interface SynthMusic {
   toggle: () => void;
   start: () => void;
   stop: () => void;
+  /** Engine-only extras (the page shell uses them for duck / fade / the song drop). */
+  setLevel?: (level: number, ms?: number) => void;
+  /** Jump back to the top of the phrase (the melody's "drop"). */
+  restartPhrase?: () => void;
+  /** Seconds since it started. */
+  elapsed?: () => number;
 }
 
 /**
@@ -68,6 +74,8 @@ export function useSynthEngine({ melody, enabled, volume = 0.5, autoStart = true
   const stepRef = useRef(0);
   const nextAtRef = useRef(0);
   const userOff = useRef(false);
+  const startedAt = useRef(0);
+  const levelRef = useRef(1);
 
   const schedule = useCallback(() => {
     const ctx = ctxRef.current;
@@ -138,8 +146,9 @@ export function useSynthEngine({ melody, enabled, volume = 0.5, autoStart = true
     }
     const ctx = ctxRef.current;
     if (ctx.state === "suspended") void ctx.resume();
-    masterRef.current!.gain.setTargetAtTime(volume, ctx.currentTime, 0.6);
+    masterRef.current!.gain.setTargetAtTime(volume * levelRef.current, ctx.currentTime, 0.6);
     if (timerRef.current == null) {
+      startedAt.current = ctx.currentTime;
       nextAtRef.current = ctx.currentTime + 0.08;
       schedule();
       timerRef.current = window.setInterval(schedule, 120);
@@ -196,7 +205,30 @@ export function useSynthEngine({ melody, enabled, volume = 0.5, autoStart = true
     [],
   );
 
-  return { playing, available: enabled, toggle, start, stop };
+  const setLevel = useCallback(
+    (level: number, ms = 600) => {
+      levelRef.current = Math.min(1, Math.max(0, level));
+      const ctx = ctxRef.current;
+      const master = masterRef.current;
+      if (!ctx || !master || timerRef.current == null) return;
+      master.gain.setTargetAtTime(volume * levelRef.current, ctx.currentTime, Math.max(0.02, ms / 3000));
+    },
+    [volume],
+  );
+  const restartPhrase = useCallback(() => {
+    stepRef.current = 0;
+    const ctx = ctxRef.current;
+    if (ctx) nextAtRef.current = Math.max(nextAtRef.current, ctx.currentTime + 0.05);
+  }, []);
+  const elapsed = useCallback(() => {
+    const ctx = ctxRef.current;
+    return ctx && timerRef.current != null ? Math.max(0, ctx.currentTime - startedAt.current) : 0;
+  }, []);
+
+  return useMemo(
+    () => ({ playing, available: enabled, toggle, start, stop, setLevel, restartPhrase, elapsed }),
+    [playing, enabled, toggle, start, stop, setLevel, restartPhrase, elapsed],
+  );
 }
 
 /**
