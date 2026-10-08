@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-promise-day-premium";
-const TITLE = `Promise Day Premium Website — The Red Thread, a Cinematic Page With Your Song`;
+const TITLE = `Promise Day Premium Website — The Red Thread: Pull It to Their Hand, Tie the Knot, With Your Song`;
 const DESCRIPTION =
-  `A red thread that ties two people together: pull it across the distance, knot each promise, and float a sealed vial down the river.`;
-const SOCIAL_TITLE = `🤞 The Red Thread ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `The red thread of fate: they pull it through your photos to your hand, the knot tightens as your song drops and writes “I promise” in gold. Promises on rings, a stitched vow, a promise for later and “Do you promise too?”.`;
+const SOCIAL_TITLE = `🧵 Someone tied a red thread to your finger`;
+const SOCIAL_DESCRIPTION = `Follow it. Sound on ✦`;
 
 export const metadata: Metadata = {
   title: TITLE,
