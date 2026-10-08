@@ -55,13 +55,18 @@ export default function Montage({ photos, seed, onDone }: { photos: readonly Lov
 
   // The chorus: seek once, as the first frame lands. Full volume where we can.
   const seeked = useRef(false);
+  const live = useRef({ music, at: premium.songDropAt });
+  useEffect(() => {
+    live.current = { music, at: premium.songDropAt };
+  });
   const chorus = useCallback(() => {
     if (seeked.current) return;
     seeked.current = true;
-    if (music?.mode === "youtube" && premium.songDropAt > 0) music.seekTo(premium.songDropAt);
-    music?.play();
-    music?.fadeTo(1, 600);
-  }, [music, premium.songDropAt]);
+    const { music: m, at } = live.current;
+    if (m?.mode === "youtube" && at > 0) m.seekTo(at);
+    m?.play();
+    m?.fadeTo(1, 600);
+  }, []);
 
   useEffect(() => {
     if (!n) return;

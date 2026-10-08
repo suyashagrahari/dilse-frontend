@@ -9,5 +9,5 @@ export const config: TemplatePageConfig = {
   slug: "happy-propose-day-premium",
   title: "Propose Day ✦ Premium — Look Up",
   description:
-    "A cinematic proposal: a cold-open chat, candles to light, then a drone show that writes the question across the night sky right as your song drops.",
+    "A rooftop proposal at night: your nervous texts, a candle for every reason, a city of memory windows, then a drone show writes the question in the sky on your song's chorus — and they slide the ring on to say yes.",
 };

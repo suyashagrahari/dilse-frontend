@@ -73,11 +73,15 @@ export default function Titles({ film, sticker, onDone }: { film: Film; sticker:
 
   const [i, setI] = useState(0);
   const finished = useRef(false);
+  const doneRef = useRef(onDone);
+  useEffect(() => {
+    doneRef.current = onDone;
+  });
   const finish = useCallback(() => {
     if (finished.current) return;
     finished.current = true;
-    onDone();
-  }, [onDone]);
+    doneRef.current();
+  }, []);
   const iRef = useRef(0);
   useEffect(() => {
     iRef.current = i;

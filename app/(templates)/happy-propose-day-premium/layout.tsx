@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-propose-day-premium";
-const TITLE = `Propose Day Premium Website — Look Up, a Cinematic Page With Your Song`;
+const TITLE = `Propose Day Premium Website — Look Up, a Drone-Show Proposal With Your Song`;
 const DESCRIPTION =
-  `A cinematic proposal: a cold-open chat, candles to light, then a drone show that writes the question across the night sky right as your song drops.`;
-const SOCIAL_TITLE = `💍 Look Up ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `Propose on a rooftop at night: your nervous texts arrive first, they light a candle for every reason and switch on a city of memories, then hundreds of drone lights write your question in the sky as your song drops. They say yes by sliding the ring on.`;
+const SOCIAL_TITLE = `💍 Go somewhere you can see the sky`;
+const SOCIAL_DESCRIPTION = `Someone planned a rooftop and borrowed the sky. Sound on, then look up ✦`;
 
 export const metadata: Metadata = {
   title: TITLE,

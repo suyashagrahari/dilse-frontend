@@ -59,6 +59,11 @@ export default function Finale({ day, data, film, takes, origin, mode, yesSticke
     return () => window.clearTimeout(t);
   }, [phase, canRoll]);
 
+  // Phase entry effects run once per phase (the props below change identity on every parent render).
+  const live = useRef({ music, onComplete });
+  useEffect(() => {
+    live.current = { music, onComplete };
+  });
   useEffect(() => {
     if (phase === "black") {
       const t = window.setTimeout(() => setPhase("post"), 2000);
@@ -66,12 +71,12 @@ export default function Finale({ day, data, film, takes, origin, mode, yesSticke
     }
     if (phase === "post") {
       sfx("film-post");
-      music?.fadeTo(0.3, 6000);
-      onComplete();
+      live.current.music?.fadeTo(0.3, 6000);
+      live.current.onComplete();
       window.scrollTo({ top: 0 });
     }
     if (phase === "credits") window.scrollTo({ top: 0 });
-  }, [phase, sfx, music, onComplete]);
+  }, [phase, sfx]);
 
   const poster = useCallback(() => {
     const layout = posterKeepsake(day, data, { title: film.title, tagline: film.tagline || undefined, dateLine: (data.endLine.trim() || "Now showing: forever").toUpperCase(), accent: "#FFD36E" });

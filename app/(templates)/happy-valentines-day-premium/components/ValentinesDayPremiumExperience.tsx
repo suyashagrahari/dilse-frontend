@@ -19,7 +19,7 @@
 // projector → 70% titles → 60% stars → chorus at 100% for the montage → 45% for the book → paused for the
 // question → drop() on YES → 30% after the credits (fades are desktop/Android only; iOS keeps full volume).
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
 import { Letterbox, ParticleField, PremiumGate, PremiumRoot, SceneFade, usePremium, type ParticlePreset } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
@@ -54,25 +54,31 @@ function Film({ data, mode, react }: ExperienceProps) {
   const [scene, setScene] = useState<Scene>("gate");
   const [yes, setYes] = useState<{ takes: number; origin: { x: number; y: number } } | null>(null);
   const [run, setRun] = useState(0);
-  const { music } = p;
+  const { music, sfx } = p;
 
   const go = useCallback((s: Scene) => {
     setScene(s);
     window.scrollTo({ top: 0 });
   }, []);
 
-  // The music script, per scene (a no-op where the platform can't fade).
+  // The music script, per scene (a no-op where the platform can't fade). Keyed on the scene only: the music
+  // object changes identity whenever its state does, and re-applying a level would undo a voice-note duck.
+  const musicRef = useRef(music);
+  useEffect(() => {
+    musicRef.current = music;
+  });
   useEffect(() => {
     const lv = LEVEL[scene];
-    if (lv !== undefined && music?.canFade) music.fadeTo(lv, 1200);
-  }, [scene, music]);
+    const m = musicRef.current;
+    if (lv !== undefined && m?.canFade) m.fadeTo(lv, 1200);
+  }, [scene]);
 
   // The projector hum under the leader and the titles.
   useEffect(() => {
     if (scene !== "leader" && scene !== "titles") return;
-    const h = p.sfx("projector-loop", { gain: 0.35 });
+    const h = sfx("projector-loop", { gain: 0.35 });
     return () => h.stop(900);
-  }, [scene, p]);
+  }, [scene, sfx]);
 
   // A voice scene with nothing to say (no note, no caption) is skipped.
   const hasVoice = !!(p.premium.voiceNote || p.premium.voiceCaption);

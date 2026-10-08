@@ -38,9 +38,14 @@ export default function Question({ film, sticker, onYes }: { film: Film; sticker
   const yesRef = useRef<HTMLButtonElement>(null);
   const giveUp = takes >= film.takes.length;
 
-  // Silence: pause the song, hit the lamp, start the heartbeat.
+  // Silence: pause the song, hit the lamp, start the heartbeat. Once, on arrival — the music object changes
+  // identity with its state, and re-running this would pause the song again right after YES.
+  const musicRef = useRef(music);
   useEffect(() => {
-    music?.pause();
+    musicRef.current = music;
+  });
+  useEffect(() => {
+    musicRef.current?.pause();
     sfx("film-spot");
     let hb = sfx("heartbeat", { count: 9, gain: 0.55, at: 0.8 });
     const loop = window.setInterval(() => {
@@ -51,7 +56,7 @@ export default function Question({ film, sticker, onYes }: { film: Film; sticker
       window.clearInterval(loop);
       hb.stop(300);
     };
-  }, [music, sfx]);
+  }, [sfx]);
 
   const no = () => {
     if (rising) return;
