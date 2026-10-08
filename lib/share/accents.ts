@@ -35,6 +35,7 @@ const ACCENTS: Record<string, string> = {
   "happy-hug-day": "#D64C70",
   "happy-kiss-day": "#9D174D",
   "happy-valentines-day": "#C48F2E",
+  "happy-halloween": "#B84E14",
   challan: "#b91c1c",
   "christian-wedding": "#065f46",
   "christian-wedding-2": "#065f46",

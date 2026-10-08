@@ -2375,4 +2375,116 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+
+  // Happy Halloween — the ninth entry on the Valentine-week engine, but an
+  // occasion of its own (31 October). Searchers come in three groups: people
+  // after an "interactive / online Halloween card", couples typing "will you be
+  // my boo", and parents or friends wanting something cute rather than scary —
+  // the FAQs answer each in its own words. No `aggregateRating`: it launches with
+  // zero real uses. No price is stated anywhere: it is set in /admin/pricing.
+  "happy-halloween": {
+    title: "Interactive Halloween Card with Photos & Music",
+    description:
+      "Send a spooky-cute Halloween card they can play: carve a pumpkin, read your letter by flashlight, brew a love potion and answer 'Will you be my boo?'",
+    category: "Festival",
+    emoji: "🎃",
+
+    keywords: [
+      // ── PRIMARY ──
+      "halloween ecard",
+      "interactive halloween card",
+      "happy halloween card online",
+      "digital halloween card with music",
+      "personalised halloween greeting with photos",
+      "trick or treat online card",
+      "send halloween wishes on whatsapp",
+      "happy halloween 2026",
+      // ── ROMANTIC ──
+      "halloween card for girlfriend",
+      "halloween card for boyfriend",
+      "will you be my boo",
+      "you're my boo halloween",
+      "halloween message for crush",
+      "halloween love letter",
+      "be my boo card",
+      // ── FRIENDS / FAMILY / KIDS ──
+      "halloween wishes for best friend",
+      "cute halloween card for kids",
+      "halloween card for family",
+      "not scary halloween card",
+      // ── THE PAGE ──
+      "carve a pumpkin online",
+      "halloween card with my own song",
+      "boo license",
+      "you've been booed online",
+    ],
+
+    faqs: [
+      {
+        question: "How do I send an interactive Halloween card?",
+        answer:
+          "Open the Happy Halloween template, press Create and fill in their name and yours, a letter, up to six photos and the word to carve on the pumpkin — or describe the two of you in a few lines and let the AI write the page for you. Press Save to preview it, then Publish and send the private link on WhatsApp, Instagram or by text. They open it in any phone or laptop browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open the Halloween card?",
+        answer:
+          "They walk through a little haunted house built for them. They knock three times on the door, choose trick or treat and catch falling sweets, carve a jack-o'-lantern until the candle lights and their word glows through the back, wipe the fog off portraits to find your photos, read your letter by flashlight in a dark attic, brew a potion from your memories, and answer the question at the end. It finishes with a Boo License they can download.",
+      },
+      {
+        question: "Can I ask \"Will you be my boo?\"",
+        answer:
+          "Yes — that is the default question for a partner or a crush, and you can rewrite it in up to 60 characters. The No button runs away from their finger a few times before giving in, so the answer is always yes.",
+      },
+      {
+        question: "Will I know if they said yes?",
+        answer:
+          "Yes. The first time they answer, you get an email saying they said yes to being your boo, including how many times the No button ghosted them first. Only the first answer is recorded, and you can also see it on your own page.",
+      },
+      {
+        question: "Can I add my own song?",
+        answer:
+          "Yes. Paste a YouTube link (and an optional start time) and only the sound plays while they explore; the video stays hidden behind a small radio card with a mute button. You can also pick one of eight Halloween favourites such as This Is Halloween, Monster Mash or Thriller, or keep the built-in spooky music box. Music starts only after they knock on the door.",
+      },
+      {
+        question: "Is it scary for kids?",
+        answer:
+          "No. The house is spooky-cute rather than scary: round, blushing ghosts, no blood, no gore and no jump scares. Choose the Kids tone and the trick becomes confetti spiders, nothing goes dark, and the No button simply waits as \"maybe later?\" instead of running away. Motion is reduced automatically for anyone whose phone asks for less motion.",
+      },
+      {
+        question: "Can I send it to a best friend or family instead of a partner?",
+        answer:
+          "Yes. Pick who it is for — partner, bestie, family or kids — and the question and the licence change with it, for example \"Will you be my boo-st friend forever?\" for a best friend or \"Will you be my favourite little pumpkin?\" for family. Every line stays editable.",
+      },
+      {
+        question: "What is the Boo License?",
+        answer:
+          "The keepsake at the end: a 1080×1920 card (Instagram Story size) with their photo, the costume you chose for them — ghost, witch, vampire, pumpkin, black cat, skeleton, mummy or bat — your reason why, and \"Valid every 31 October, forever\". They can download it as a PNG, and a \"Boo someone back\" button passes the haunted house on.",
+      },
+      {
+        question: "When is Halloween 2026?",
+        answer:
+          "Halloween is on Saturday, 31 October 2026. Good moments to send the link are at sunset that evening or at midnight going into the 31st; for a long-distance partner, open it together on a video call. The page works on any date, before or after.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send an Interactive Halloween Card",
+      description:
+        "Build a little haunted house for someone — their pumpkin, your letter by flashlight, your photos and a 'Will you be my boo?' — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Halloween page on SubhSandesh and press Create." },
+        { name: "Choose Who It's For", text: "Pick partner, bestie, family or kids; the question, the trick and the ending follow the choice." },
+        { name: "Write the House", text: "Add both names, the sign on the gate, your trick, the word to carve on the pumpkin and the letter they will read by flashlight — or let the AI write it from a short story." },
+        { name: "Add Photos and Music", text: "Upload up to six photos for the haunted portraits, then paste a YouTube song or pick a Halloween favourite." },
+        { name: "Fill the Potion and the Licence", text: "List three to five potion ingredients from your memories, what the spell does, and their costume for the Boo License." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link — ideally with the lights off on 31 October." },
+      ],
+    },
+  },
 };

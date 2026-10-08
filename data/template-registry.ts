@@ -61,6 +61,7 @@ import { config as promiseDayCfg } from "@/app/(templates)/happy-promise-day/con
 import { config as hugDayCfg } from "@/app/(templates)/happy-hug-day/config";
 import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
 import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
+import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -72,6 +73,12 @@ import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-d
 // a page nobody is shopping for. Move one back to the top only in the fortnight
 // before its date.
 const allConfigs = [
+  // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
+  //    releases it in /admin/templates. Move it to the dated-festival tail
+  //    after 31 October. ────────────────────────────────────────────────────
+  halloweenCfg,
+
   // ── Valentine's week (7–14 Feb), in week order. Ship hidden on the apex
   //    (server DEFAULT_HIDDEN); the super admin releases each day. ─────────
   roseDayCfg,

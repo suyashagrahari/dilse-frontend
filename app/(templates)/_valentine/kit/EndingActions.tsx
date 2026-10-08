@@ -26,10 +26,12 @@ export interface EndingActionsProps {
   keepsake?: KeepsakeLayout | (() => KeepsakeLayout);
   /** WhatsApp text. Defaults to the day's reply line. */
   replyText?: string;
+  /** The WhatsApp button's label (default "💬 Send one back"). */
+  replyLabel?: string;
   style?: CSSProperties;
 }
 
-export default function EndingActions({ day, data, mode, onReplay, keepsake, replyText, style }: EndingActionsProps) {
+export default function EndingActions({ day, data, mode, onReplay, keepsake, replyText, replyLabel = "💬 Send one back", style }: EndingActionsProps) {
   const [saving, setSaving] = useState<"idle" | "busy" | "failed" | "done">("idle");
   const reply = (replyText ?? (day.extras.some((f) => f.key === "kissBackText") && typeof data.extras.kissBackText === "string" && data.extras.kissBackText ? data.extras.kissBackText : day.copy.replyText)) as string;
   const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${reply}${data.senderName ? `\n— to ${data.senderName}` : ""}`)}`;
@@ -69,7 +71,7 @@ export default function EndingActions({ day, data, mode, onReplay, keepsake, rep
         onClick={() => haptic(10)}
         style={{ ...base, border: 0, background: VW.accent, color: VW.accentInk, boxShadow: `0 5px 0 ${VW.accentDeep}`, fontSize: 16 }}
       >
-        💬 Send one back
+        {replyLabel}
       </a>
       <div style={{ display: "grid", gridTemplateColumns: onReplay ? "1fr 1fr" : "1fr", gap: 10 }}>
         <button type="button" onClick={save} disabled={saving === "busy"} style={base} aria-live="polite">

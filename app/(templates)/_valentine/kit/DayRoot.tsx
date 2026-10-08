@@ -114,7 +114,8 @@ export default function DayRoot({ day, children, style, className, data, layout 
     >
       <style>{STAGE_CSS}</style>
       {tier !== "phone" && <WideFrame day={day} data={data} tier={tier} layout={layout} art={art} line={line} dark={dark} />}
-      <div className="vw-stage">{children}</div>
+      {/* <main>: the scene is the page's main content (one landmark for screen readers and agents). */}
+      <main className="vw-stage">{children}</main>
     </div>
   );
 }

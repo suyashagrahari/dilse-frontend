@@ -10,6 +10,7 @@ import { MAX_CAPTION_LEN, MAX_NOTE_LEN, parseLovePhotos, type LovePhoto } from "
 import { coerceExtras, extrasMissing, tidyExtras, type Extras, type FieldSpec } from "./spec";
 import type { DayTheme } from "./theme";
 import type { DaySlug } from "./days/slugs";
+import type { SongSuggestion } from "./music/youtube";
 import { getDay } from "./days";
 
 export type { DaySlug } from "./days/slugs";
@@ -127,6 +128,8 @@ export interface DayCopy {
   storyTitle: string;
   /** Prefilled WhatsApp reply the recipient sends back from the ending. */
   replyText: string;
+  /** The owner's "they answered" chip (default "Said YES 💍"). */
+  yesChip?: string;
 }
 
 export interface DayConfig<E extends Extras = Extras> {
@@ -135,8 +138,10 @@ export interface DayConfig<E extends Extras = Extras> {
   name: string;
   /** "🌹" */
   emoji: string;
-  /** 7 (February) */
+  /** 7 (February) / 31 (October) */
   date: number;
+  /** "February" / "October" */
+  month: string;
   /** "Ek Gulaab, Sirf Tumhare Liye" */
   title: string;
   maxPhotos: number;
@@ -151,9 +156,28 @@ export interface DayConfig<E extends Extras = Extras> {
   copy: DayCopy;
   share: { title: string; accent: string };
   /** Which synthesised melody useSynthMusic plays. */
-  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern";
+  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern" | "spooky";
   /** The frame (width / height) this day shows photos in — the crop editor uses the same shape. */
   photoAspect: number;
+  /**
+   * Optional per-day music settings. Absent = the Valentine defaults: the
+   * romantic suggestion list and a visible YouTube mini-player.
+   */
+  music?: DayMusicConfig;
+}
+
+export interface DayMusicConfig {
+  /**
+   * Play a pasted YouTube song as AUDIO ONLY: the official player stays mounted
+   * at its normal size (so iOS/Chrome keep it playing) but is fully covered by
+   * an opaque now-playing card, so the video is never seen. See
+   * music/DayMusic.tsx for the trade-off and how to switch it off.
+   */
+  audioOnly?: boolean;
+  /** One-tap song chips in the form (default: the romantic list in music/youtube.ts). */
+  suggestions?: readonly SongSuggestion[];
+  /** Small line next to "Suggestions" ("romantic favourites · tap to use"). */
+  suggestionsNote?: string;
 }
 
 export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as const;

@@ -122,6 +122,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   // only used if that override is ever removed.
   "happy-kiss-day":       { emoji: "💌", label: "Surprise" },
   "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
+  "happy-halloween":      { emoji: "🎃", label: "Halloween" },
   gift:          { emoji: "🎁", label: "Gift" },
 };
 
@@ -140,6 +141,14 @@ const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; heigh
 /** Templates whose share preview must stay neutral (Kiss Day). */
 const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day"]);
 
+/** Templates with their own teaser preview (the brief's delivery plan). */
+const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  "happy-halloween": (r, s) => ({
+    title: `🎃 A little haunted house was built for ${r}`,
+    description: `${s} left something on your doorstep… open it with the lights off 👻`,
+  }),
+};
+
 interface SharePageSeo {
   templateType: string;
   recipientName: string;
@@ -153,10 +162,13 @@ export function getSharePageMeta({ templateType, recipientName, senderName, shar
   // A link preview can surface on a shared family phone; for these templates
   // it names nothing about what is inside.
   const neutral = NEUTRAL_PREVIEW.has(templateType);
-  const title = neutral ? "A little something for you 💌" : `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
+  const teaser = TEASER_PREVIEW[templateType]?.(recipientName, senderName);
+  const title = neutral ? "A little something for you 💌" : teaser ? teaser.title : `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
   const description = neutral
     ? `${senderName} made you something. Open it when you have a quiet minute ✨`
-    : `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
+    : teaser
+      ? teaser.description
+      : `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
   const cover = TEMPLATE_COVER_IMAGES[templateType];
   const ogImageUrl = cover

@@ -9,7 +9,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { useDayMusic } from "../music/context";
-import { SONG_SUGGESTIONS, formatClock, parseClock, parseStartFromLink, parseYouTubeId, suggestionFor, youTubeThumb } from "../music/youtube";
+import { SONG_SUGGESTIONS, formatClock, parseClock, parseStartFromLink, parseYouTubeId, suggestionFor, youTubeThumb, type SongSuggestion } from "../music/youtube";
 import { MUSIC_START_MAX, type MusicMode, type ValentineDayData } from "../types";
 
 type MusicValue = Pick<ValentineDayData, "musicMode" | "musicYoutubeId" | "musicStart">;
@@ -20,7 +20,21 @@ const MODES: { value: MusicMode; emoji: string; label: string; hint: string }[] 
   { value: "youtube", emoji: "🎵", label: "Our song", hint: "Any song from YouTube" },
 ];
 
-export default function MusicPicker({ value, onChange }: { value: MusicValue; onChange: (patch: Partial<MusicValue>) => void }) {
+export default function MusicPicker({
+  value,
+  onChange,
+  suggestions = SONG_SUGGESTIONS,
+  suggestionsNote = "romantic favourites · tap to use",
+  audioOnly = false,
+}: {
+  value: MusicValue;
+  onChange: (patch: Partial<MusicValue>) => void;
+  /** The day's own one-tap songs (default: the romantic list). */
+  suggestions?: readonly SongSuggestion[];
+  suggestionsNote?: string;
+  /** The day plays YouTube as sound only (DayConfig.music.audioOnly). */
+  audioOnly?: boolean;
+}) {
   const music = useDayMusic();
   const uid = useId().replace(/:/g, "");
   const [link, setLink] = useState("");
@@ -36,7 +50,7 @@ export default function MusicPicker({ value, onChange }: { value: MusicValue; on
   }, [value.musicYoutubeId]);
 
   const id = value.musicYoutubeId;
-  const known = id ? suggestionFor(id) : null;
+  const known = id ? suggestionFor(id, suggestions) : null;
   const songTitle = known?.title ?? (music?.mode === "youtube" && music.title ? music.title : "Your YouTube song");
   const listening = !!music?.playing && music.mode === (value.musicMode === "youtube" && !id ? "melody" : value.musicMode);
 
@@ -147,10 +161,10 @@ export default function MusicPicker({ value, onChange }: { value: MusicValue; on
           {music?.error && <p className="vs-err" role="alert">{music.error}</p>}
 
           <div className="vmp-sugHead">
-            <b>Suggestions</b> <small>romantic favourites · tap to use</small>
+            <b>Suggestions</b> <small>{suggestionsNote}</small>
           </div>
           <div className="vmp-sugs" role="radiogroup" aria-label="Suggested songs">
-            {SONG_SUGGESTIONS.map((s) => {
+            {suggestions.map((s) => {
               const on = s.id === id;
               return (
                 <button key={s.id} type="button" role="radio" aria-checked={on} className={`vmp-sug${on ? " is-on" : ""}`} onClick={() => onChange({ musicMode: "youtube", musicYoutubeId: s.id, musicStart: 0 })}>
@@ -164,7 +178,11 @@ export default function MusicPicker({ value, onChange }: { value: MusicValue; on
               );
             })}
           </div>
-          <p className="vs-hint" style={{ margin: 0 }}>Plays through YouTube&apos;s own player — a small card in the corner of their screen that they can pause.</p>
+          <p className="vs-hint" style={{ margin: 0 }}>
+            {audioOnly
+              ? "Only the sound plays — the video stays hidden behind a little spirit-radio card in the corner that they can pause or mute."
+              : "Plays through YouTube's own player — a small card in the corner of their screen that they can pause."}
+          </p>
         </div>
       )}
     </div>

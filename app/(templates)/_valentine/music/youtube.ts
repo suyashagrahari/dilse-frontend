@@ -71,6 +71,8 @@ export interface SongSuggestion {
 /**
  * One-tap suggestions — official uploads by the artist or label (checked
  * against YouTube's oEmbed, 2026-10-07). Only the id is stored with a page.
+ * This is the Valentine's-week list; a day can bring its own through
+ * `DayConfig.music.suggestions` (Halloween does).
  */
 export const SONG_SUGGESTIONS: readonly SongSuggestion[] = [
   { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
@@ -83,7 +85,9 @@ export const SONG_SUGGESTIONS: readonly SongSuggestion[] = [
   { id: "Cb6wuzOurPc", title: "Tum Se Hi", artist: "Mohit Chauhan · Jab We Met" },
 ];
 
-export const suggestionFor = (id: string) => SONG_SUGGESTIONS.find((s) => s.id === id) ?? null;
+/** A known suggestion by id — the day's own list first (Halloween has one), then the romantic default. */
+export const suggestionFor = (id: string, dayList?: readonly SongSuggestion[]) =>
+  dayList?.find((s) => s.id === id) ?? SONG_SUGGESTIONS.find((s) => s.id === id) ?? null;
 
 // ─── The IFrame Player API, loaded once, only when needed ────────────────────
 

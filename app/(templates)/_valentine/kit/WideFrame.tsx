@@ -62,7 +62,7 @@ export function useViewportTier(): ViewportTier {
 
 // ─── Motifs ──────────────────────────────────────────────────────────────────
 
-type Shape = "petal" | "heart" | "sparkle" | "light" | "star";
+type Shape = "petal" | "heart" | "sparkle" | "light" | "star" | "bat";
 type Drift = "fall" | "rise" | "twinkle";
 interface Deco {
   shapes: Shape[];
@@ -81,12 +81,15 @@ const DECO: Record<string, Deco> = {
   "happy-hug-day": { shapes: ["heart", "heart", "light", "sparkle"], drift: "rise", count: 18, halo: "rgba(255,250,240,.75)" },
   "happy-kiss-day": { shapes: ["heart", "heart", "sparkle"], drift: "rise", count: 20, halo: "rgba(255,255,255,.65)" },
   "happy-valentines-day": { shapes: ["star", "star", "sparkle", "heart"], drift: "twinkle", count: 34, halo: "rgba(255,190,150,.10)" },
+  // Halloween: fireflies and stars twinkling, a few bats flitting on the spot.
+  "happy-halloween": { shapes: ["light", "star", "bat", "light", "star"], drift: "twinkle", count: 30, halo: "rgba(183,156,255,.12)" },
 };
 
 const PATH: Record<Exclude<Shape, "light" | "star">, { vb: string; d: string }> = {
   petal: { vb: "-20 -26 40 52", d: "M0 24 C -16 14 -20 -8 -8 -22 C -4 -26 4 -26 8 -22 C 20 -8 16 14 0 24 Z" },
   heart: { vb: "0 0 24 24", d: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" },
   sparkle: { vb: "0 0 24 24", d: "M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z" },
+  bat: { vb: "0 0 64 32", d: "M32 9c-1.6-3-3.4-4.4-5.4-4.6 1 1.8 1 3.6.2 5C22.4 8.6 17 6 12.4 1.6c.8 4.8-1 8.6-5.4 10.8 4 .2 7 2 8.4 5 3-1.8 6.6-1.8 9.6.4 2 1.6 3 4.4 3.4 7.6 1-2.2 2.2-3.6 3.6-3.6s2.6 1.4 3.6 3.6c.4-3.2 1.4-6 3.4-7.6 3-2.2 6.6-2.2 9.6-.4 1.4-3 4.4-4.8 8.4-5-4.4-2.2-6.2-6-5.4-10.8C47 6 41.6 8.6 37.2 9.4c-.8-1.4-.8-3.2.2-5C35.4 4.6 33.6 6 32 9z" },
 };
 
 function MotifShape({ shape, color }: { shape: Shape; color: string }) {
@@ -116,7 +119,7 @@ function Backdrop({ day, reduced }: { day: DayConfig; reduced: boolean }) {
         const t = rnd(i, 1);
         const left = i % 7 === 3 ? 30 + t * 40 : side === 0 ? t * 30 : 70 + t * 30;
         const shape = deco.shapes[i % deco.shapes.length];
-        const big = shape === "light" ? 26 + rnd(i, 2) * 46 : shape === "star" ? 4 + rnd(i, 2) * 6 : 10 + rnd(i, 2) * 16;
+        const big = shape === "light" ? 26 + rnd(i, 2) * 46 : shape === "star" ? 4 + rnd(i, 2) * 6 : shape === "bat" ? 26 + rnd(i, 2) * 22 : 10 + rnd(i, 2) * 16;
         return {
           shape,
           left,
@@ -126,7 +129,7 @@ function Backdrop({ day, reduced }: { day: DayConfig; reduced: boolean }) {
           dur: (deco.drift === "twinkle" ? 3 : 16) + rnd(i, 4) * (deco.drift === "twinkle" ? 4 : 14),
           delay: -rnd(i, 5) * 20,
           sway: Math.round((rnd(i, 6) - 0.5) * 140),
-          rot: Math.round((rnd(i, 7) - 0.5) * 540),
+          rot: shape === "bat" ? Math.round((rnd(i, 7) - 0.5) * 24) : Math.round((rnd(i, 7) - 0.5) * 540),
           op: (shape === "light" ? 0.28 : 0.4) + rnd(i, 8) * 0.35,
           depth: 0.4 + rnd(i, 9) * 1.2,
           middle: i % 7 === 3,
@@ -152,14 +155,14 @@ function Backdrop({ day, reduced }: { day: DayConfig; reduced: boolean }) {
         {items.map((p, i) => (
           <span
             key={i}
-            className={reduced ? undefined : `vw-wf-${deco.drift}`}
+            className={reduced ? undefined : p.shape === "bat" ? "vw-wf-flit" : `vw-wf-${deco.drift}`}
             style={{
               position: "absolute",
               left: `${p.left}%`,
               top: deco.drift === "twinkle" || reduced ? `${p.top}%` : deco.drift === "fall" ? -60 : "auto",
               bottom: deco.drift === "rise" && !reduced ? -60 : undefined,
               width: p.size,
-              height: p.shape === "petal" ? p.size * 1.3 : p.size,
+              height: p.shape === "petal" ? p.size * 1.3 : p.shape === "bat" ? p.size * 0.5 : p.size,
               opacity: p.middle ? p.op * 0.45 : p.op,
               animationDuration: `${p.dur}s`,
               animationDelay: `${p.delay}s`,
@@ -327,8 +330,6 @@ function Wing({ side, children }: { side: "l" | "r"; children: ReactNode }) {
   );
 }
 
-const MONTH = "February";
-
 export interface WideFrameProps {
   day: DayConfig;
   data?: ValentineDayData;
@@ -465,7 +466,7 @@ export default function WideFrame({ day, data, tier, layout, art, line, dark: da
               </div>
             )}
             <p style={{ margin: 0, font: `600 12px ${FONTS.ui}`, letterSpacing: ".32em", textTransform: "uppercase", color: gold }}>
-              {day.date} {MONTH}
+              {day.date} {day.month}
             </p>
             <p style={{ margin: "6px 0 0", font: `700 clamp(36px, 3.7vw, 70px)/1.02 ${FONTS.serif}`, color: ink, letterSpacing: "-.01em", textWrap: "balance" }}>{day.name}</p>
             <p style={{ margin: "6px 0 0", font: `600 clamp(18px, 1.5vw, 26px)/1.2 ${FONTS.script}`, color: accent }}>{day.title}</p>

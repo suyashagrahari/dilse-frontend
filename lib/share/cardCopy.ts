@@ -65,6 +65,7 @@ const COPY: Record<string, CardCopy> = {
   // Neutral on purpose: this card can be seen on a shared family phone.
   "happy-kiss-day": { kicker: "For you", headline: "A Little Something", line: "Open it 💌" },
   "happy-valentines-day": { kicker: "Admit two", headline: "Our Valentine Night", line: "Tonight" },
+  "happy-halloween": { kicker: "Happy Halloween", headline: "A Little Haunted House", line: "Knock three times" },
   searched: { kicker: "Top result", headline: "What I Keep Looking Up", line: "Every single time" },
   flags: { kicker: "Full disclosure", headline: "All My Red Flags", line: "Still worth it" },
   "kundli-milan": { kicker: "Written in the stars", headline: "A Perfect Match", line: "The charts agree" },
