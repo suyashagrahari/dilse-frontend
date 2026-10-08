@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-teddy-day-premium";
-const TITLE = `Teddy Day Premium Website — Made With a Heart, a Cinematic Page With Your Song`;
+const TITLE = `Teddy Day Premium Website — Made With a Heart: Stuff a Teddy, Sew In Your Heart, With Your Song`;
 const DESCRIPTION =
-  `A teddy made by hand for them: open the parcel, give it a heart, watch it wake up, play hide-and-seek and tuck it in with your voice note.`;
-const SOCIAL_TITLE = `🧸 Made With a Heart ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `A parcel holds an unfinished teddy: they stuff it, warm your fabric heart, hear it whisper, sew it in, and it wakes up as your song drops. Then a torchlight letter, star-lamp photos, hide-and-seek and a tuck-in.`;
+const SOCIAL_TITLE = `🧸 A parcel for you: 1 teddy (unfinished)`;
+const SOCIAL_DESCRIPTION = `It needs a heart. Open it with the sound on ✦`;
 
 export const metadata: Metadata = {
   title: TITLE,
