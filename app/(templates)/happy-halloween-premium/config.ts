@@ -1,4 +1,5 @@
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-halloween/config";
 
 // Gallery card for the ✦ Premium twin of /happy-halloween ("The Midnight Manor").
@@ -7,6 +8,7 @@ import { config as base } from "../happy-halloween/config";
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-halloween-premium",
+  coverImage: templateMedia("happy-halloween-premium", "cover-poster.webp"),
   title: "Halloween ✦ Premium — The Midnight Manor",
   description:
     "A sealed invitation to a moonlit haunted manor: memory candles, portraits that wake up, a spirit board that spells their name, your voice on the spirit radio, and a midnight question on the twelfth bell of your song.",

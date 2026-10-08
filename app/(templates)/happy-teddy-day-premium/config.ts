@@ -1,4 +1,5 @@
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-teddy-day/config";
 
 // Gallery card for the ✦ Premium twin of /happy-teddy-day. Until this template has its
@@ -7,6 +8,7 @@ import { config as base } from "../happy-teddy-day/config";
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-teddy-day-premium",
+  coverImage: templateMedia("happy-teddy-day-premium", "cover-poster.webp"),
   title: "Teddy Day ✦ Premium — Made With a Heart",
   description:
     "An unfinished teddy arrives by parcel: they stuff it, sew your heart inside and it wakes up as your song drops. Then a torchlight letter, star-lamp photos and a tuck-in.",

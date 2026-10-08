@@ -1,4 +1,5 @@
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-hug-day/config";
 
 // Gallery card for the ✦ Premium twin of /happy-hug-day ("Hold Me for 20 Seconds").
@@ -7,6 +8,7 @@ import { config as base } from "../happy-hug-day/config";
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-hug-day-premium",
+  coverImage: templateMedia("happy-hug-day-premium", "cover-poster.webp"),
   title: "Hug Day ✦ Premium — Hold Me for 20 Seconds",
   description:
     "A twenty-second hug through the phone: wipe a frosted window, close the distance, then hold with both thumbs while two heat shapes melt into one and a heartbeat slows to theirs. Mittens for bad days, a hoodie letter, a blanket fort, a hug back.",

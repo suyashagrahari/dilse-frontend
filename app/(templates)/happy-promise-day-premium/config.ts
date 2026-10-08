@@ -1,4 +1,5 @@
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-promise-day/config";
 
 // Gallery card for the ✦ Premium twin of /happy-promise-day. Until this template has its
@@ -7,6 +8,7 @@ import { config as base } from "../happy-promise-day/config";
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-promise-day-premium",
+  coverImage: templateMedia("happy-promise-day-premium", "cover-poster.webp"),
   title: "Promise Day ✦ Premium — The Red Thread",
   description:
     "The red thread of fate: they pull it through your photos to your hand, the knot tightens on your song’s drop and writes “I promise” in gold.",

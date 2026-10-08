@@ -1,4 +1,5 @@
 import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-propose-day/config";
 
 // Gallery card for the ✦ Premium twin of /happy-propose-day. Until this template has its
@@ -7,6 +8,7 @@ import { config as base } from "../happy-propose-day/config";
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-propose-day-premium",
+  coverImage: templateMedia("happy-propose-day-premium", "cover-poster.webp"),
   title: "Propose Day ✦ Premium — Look Up",
   description:
     "A rooftop proposal at night: your nervous texts, a candle for every reason, a city of memory windows, then a drone show writes the question in the sky on your song's chorus — and they slide the ring on to say yes.",
