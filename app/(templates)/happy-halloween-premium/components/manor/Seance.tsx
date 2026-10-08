@@ -57,7 +57,7 @@ export default function Seance({ m, sticker, onAsked, onNext }: { m: Manor; stic
   const [asking, setAsking] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const plan = useRef<HTMLDivElement>(null);
-  const st = useRef({ i: 0, from: SPOTS.REST as Pt, t: 0, drag: false, lastX: 0, lastY: 0, travel: 0, idleAt: performance.now(), pauseUntil: 0, target: null as Pt | null, onLand: null as null | (() => void) });
+  const st = useRef({ i: 0, from: SPOTS.REST as Pt, t: 0, drag: false, lastX: 0, lastY: 0, travel: 0, idleAt: 0, pauseUntil: 0, target: null as Pt | null, onLand: null as null | (() => void) });
 
   const place = useCallback((pt: Pt, wob = 0) => {
     const el = plan.current;
@@ -67,7 +67,10 @@ export default function Seance({ m, sticker, onAsked, onNext }: { m: Manor; stic
     el.style.transform = `translate(-50%, -46%) rotate(${wob}deg)`;
   }, []);
 
-  useEffect(() => place(SPOTS.REST), [place]);
+  useEffect(() => {
+    place(SPOTS.REST);
+    st.current.idleAt = performance.now();
+  }, [place]);
 
   // The spelling loop.
   useEffect(() => {
@@ -257,7 +260,7 @@ export default function Seance({ m, sticker, onAsked, onNext }: { m: Manor; stic
               );
             })}
           </div>
-          {allAsked ? <Gilded big onClick={() => { sfx("static", { dur: 0.4, gain: 0.5 }); onNext(); }}>Something's on the radio →</Gilded> : <Hint>Tap a question</Hint>}
+          {allAsked ? <Gilded big onClick={() => { sfx("static", { dur: 0.4, gain: 0.5 }); onNext(); }}>Something&rsquo;s on the radio →</Gilded> : <Hint>Tap a question</Hint>}
         </>
       )}
       <style>{CSS}</style>

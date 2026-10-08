@@ -130,7 +130,7 @@ export default function Attic({ m, letter, onNext }: { m: Manor; letter: string;
               )}
             </button>
           )}
-          <Gilded big onClick={() => { sfx("bubble", { count: 3, gain: 0.6 }); onNext(); }}>Down to the witch's kitchen →</Gilded>
+          <Gilded big onClick={() => { sfx("bubble", { count: 3, gain: 0.6 }); onNext(); }}>Down to the witch&rsquo;s kitchen →</Gilded>
         </>
       )}
       <style>{CSS}</style>

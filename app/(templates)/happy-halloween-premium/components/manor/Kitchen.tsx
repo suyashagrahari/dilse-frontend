@@ -33,6 +33,8 @@ export default function Kitchen({ m, sticker, onNext }: { m: Manor; sticker: Rea
   const pathRef = useRef<SVGPathElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pts = useRef<{ x: number; y: number }[]>([]);
+  const [guide, setGuide] = useState<{ x: number; y: number }[]>([]);
+  const covRef = useRef<boolean[]>(Array(N).fill(false));
   const lastTap = useRef(0);
   const drawing = useRef(false);
   const sig = SIGILS[Math.min(k, 2)];
@@ -46,7 +48,9 @@ export default function Kitchen({ m, sticker, onNext }: { m: Manor; sticker: Rea
       const q = el.getPointAtLength((i / N) * len);
       return { x: q.x, y: q.y };
     });
-    setCovered(Array(N).fill(false));
+    setGuide(pts.current);
+    covRef.current = Array(N).fill(false);
+    setCovered(covRef.current);
     setTrail([]);
   }, [k]);
 
@@ -78,8 +82,6 @@ export default function Kitchen({ m, sticker, onNext }: { m: Manor; sticker: Rea
     if (!r) return null;
     return { x: ((e.clientX - r.left) / r.width) * 200, y: ((e.clientY - r.top) / r.height) * 200 };
   };
-  const covRef = useRef<boolean[]>(covered);
-  covRef.current = covered;
   const mark = (pt: { x: number; y: number }) => {
     let changed = false;
     const next = covRef.current.map((v, i) => {
@@ -149,7 +151,7 @@ export default function Kitchen({ m, sticker, onNext }: { m: Manor; sticker: Rea
 
   return (
     <Room label="The witch's kitchen" className="mm-kitchen">
-      <Kicker>The witch's kitchen</Kicker>
+      <Kicker>The witch&rsquo;s kitchen</Kicker>
       <RoomTitle>{erupted ? "The crystal ball shows…" : allCast ? "Stir the spell" : "Cast the spell"}</RoomTitle>
 
       <div className="mm-brewStage" style={{ ["--mm-brew" as string]: brew }}>
@@ -167,7 +169,7 @@ export default function Kitchen({ m, sticker, onNext }: { m: Manor; sticker: Rea
           >
             <path ref={pathRef} d={sig.d} fill="none" stroke="rgba(255,240,200,.18)" strokeWidth="26" strokeLinejoin="round" />
             <path d={sig.d} fill="none" stroke="#FFF1BF" strokeWidth="3" strokeDasharray="2 9" strokeLinecap="round" opacity=".85" />
-            {pts.current.map((q, i) => (covered[i] ? <circle key={i} cx={q.x} cy={q.y} r="5" fill="#FFE6A0" opacity=".95" /> : null))}
+            {guide.map((q, i) => (covered[i] ? <circle key={i} cx={q.x} cy={q.y} r="5" fill="#FFE6A0" opacity=".95" /> : null))}
             {trailD && <path d={trailD} fill="none" stroke="#FFF7DA" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" className="mm-trail" />}
           </svg>
         )}

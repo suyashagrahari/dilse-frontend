@@ -112,7 +112,7 @@ export default function Ending({ day, data, m, stats, mode, onReplay }: { day: D
       {saved && <p className="mm-saved" role="status">{saved}</p>}
 
       <section className="mm-ledger" aria-label="The manor's guest book">
-        <h3 style={{ fontFamily: ENGRAVED }}>The manor's guest book</h3>
+        <h3 style={{ fontFamily: ENGRAVED }}>The manor&rsquo;s guest book</h3>
         <dl>
           {ledger.map(([k, v]) => (
             <div key={k}>

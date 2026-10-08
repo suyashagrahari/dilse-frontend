@@ -16,6 +16,7 @@ import type { Manor } from "./model";
 import { Gilded, Hint, Kicker, Quiet, Room, RoomTitle } from "./ui";
 
 const TARGET = 0.72;
+const clock = () => performance.now();
 
 export default function Radio({ m, onNext }: { m: Manor; onNext: () => void }) {
   const p = usePremium();
@@ -33,7 +34,7 @@ export default function Radio({ m, onNext }: { m: Manor; onNext: () => void }) {
     if (locked) return;
     const t = Math.max(0, Math.min(1, v));
     setTune(t);
-    const now = performance.now();
+    const now = clock();
     const c = Math.max(0, 1 - Math.abs(t - TARGET) / 0.3);
     if (now - lastStatic.current > 170) {
       lastStatic.current = now;

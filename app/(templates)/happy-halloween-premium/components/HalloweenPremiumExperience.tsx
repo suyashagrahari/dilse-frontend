@@ -62,7 +62,7 @@ function Manor({ data, mode, react }: ExperienceProps) {
   const [scene, setScene] = useState<Scene>(p.opened ? "approach" : "gate");
   const [round, setRound] = useState(0);
   const [warm, setWarm] = useState(0);
-  const [phase, setPhase] = useState<SkyPhase>("storm");
+  const [dawn, setDawn] = useState(false);
   const [stats, setStats] = useState<NightStats>({ candles: 0, portraits: 0, spirits: 0 });
   const idx = order.indexOf(scene);
   const next = useCallback(() => setScene((s) => order[Math.min(order.length - 1, order.indexOf(s) + 1)]), [order]);
@@ -72,10 +72,7 @@ function Manor({ data, mode, react }: ExperienceProps) {
   }, [scene]);
 
   // Weather follows the night: storm outside until we're in, night after, dawn after YES.
-  useEffect(() => {
-    if (phase === "dawn") return;
-    setPhase(scene === "gate" || scene === "approach" ? "storm" : "night");
-  }, [scene, phase]);
+  const phase: SkyPhase = dawn ? "dawn" : scene === "gate" || scene === "approach" ? "storm" : "night";
 
   // The rain, audible only on the approach (inside, the walls take it).
   useEffect(() => {
@@ -100,7 +97,7 @@ function Manor({ data, mode, react }: ExperienceProps) {
   const replay = () => {
     setRound((r) => r + 1);
     setWarm(0);
-    setPhase("storm");
+    setDawn(false);
     setStats({ candles: 0, portraits: 0, spirits: 0 });
     setScene("approach");
   };
@@ -109,8 +106,11 @@ function Manor({ data, mode, react }: ExperienceProps) {
   const onAsked = useCallback((n: number) => setStats((s) => (s.spirits === n ? s : { ...s, spirits: n })), []);
 
   // Unsealed by a scheduled unlock in the last two days → the gate says so.
-  const unlockAt = Date.parse(p.premium.unlockAt || "");
-  const justUnsealed = Number.isFinite(unlockAt) && Date.now() >= unlockAt && Date.now() - unlockAt < 48 * 3600e3;
+  const [justUnsealed] = useState(() => {
+    const at = Date.parse(p.premium.unlockAt || "");
+    const now = Date.now();
+    return Number.isFinite(at) && now >= at && now - at < 48 * 3600e3;
+  });
 
   const particles: { preset: ParticlePreset; colors?: string[]; density: number } =
     phase === "dawn"
@@ -158,7 +158,7 @@ function Manor({ data, mode, react }: ExperienceProps) {
           m={m}
           sticker={sticker("p6-yes", 110)}
           onYes={(d) => react("answered", { noDodges: d })}
-          onDawn={() => setPhase("dawn")}
+          onDawn={() => setDawn(true)}
           onNext={next}
         />
       );
