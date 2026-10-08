@@ -19,6 +19,16 @@ const EXPERIENCES: Record<DaySlug, ComponentType<ExperienceProps>> = {
   "happy-kiss-day": dynamic(() => import("../happy-kiss-day/components/KissDayExperience"), { ssr: false, loading: Loading }),
   "happy-valentines-day": dynamic(() => import("../happy-valentines-day/components/ValentinesDayExperience"), { ssr: false, loading: Loading }),
   "happy-halloween": dynamic(() => import("../happy-halloween/components/HalloweenExperience"), { ssr: false, loading: Loading }),
+  // ✦ Premium twins
+  "happy-rose-day-premium": dynamic(() => import("../happy-rose-day-premium/components/RoseDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-propose-day-premium": dynamic(() => import("../happy-propose-day-premium/components/ProposeDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-chocolate-day-premium": dynamic(() => import("../happy-chocolate-day-premium/components/ChocolateDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-teddy-day-premium": dynamic(() => import("../happy-teddy-day-premium/components/TeddyDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-promise-day-premium": dynamic(() => import("../happy-promise-day-premium/components/PromiseDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-hug-day-premium": dynamic(() => import("../happy-hug-day-premium/components/HugDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-kiss-day-premium": dynamic(() => import("../happy-kiss-day-premium/components/KissDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-valentines-day-premium": dynamic(() => import("../happy-valentines-day-premium/components/ValentinesDayPremiumExperience"), { ssr: false, loading: Loading }),
+  "happy-halloween-premium": dynamic(() => import("../happy-halloween-premium/components/HalloweenPremiumExperience"), { ssr: false, loading: Loading }),
 };
 
 export function getExperience(slug: DaySlug): ComponentType<ExperienceProps> {

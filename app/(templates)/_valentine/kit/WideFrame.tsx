@@ -27,6 +27,7 @@
 // curtains. The wings live strictly inside the gutters, so they never overlap
 // the column.
 
+import { PREMIUM_BASE } from "../days/slugs";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { DayConfig, ValentineDayData } from "../types";
 import { FONTS } from "../theme";
@@ -84,6 +85,8 @@ const DECO: Record<string, Deco> = {
   // Halloween: fireflies and stars twinkling, a few bats flitting on the spot.
   "happy-halloween": { shapes: ["light", "star", "bat", "light", "star"], drift: "twinkle", count: 30, halo: "rgba(183,156,255,.12)" },
 };
+// ✦ Premium twins start on their $2 day's motif (a builder may add its own entry above).
+for (const [p, b] of Object.entries(PREMIUM_BASE)) if (!DECO[p]) DECO[p] = DECO[b];
 
 const PATH: Record<Exclude<Shape, "light" | "star">, { vb: string; d: string }> = {
   petal: { vb: "-20 -26 40 52", d: "M0 24 C -16 14 -20 -8 -8 -22 C -4 -26 4 -26 8 -22 C 20 -8 16 14 0 24 Z" },

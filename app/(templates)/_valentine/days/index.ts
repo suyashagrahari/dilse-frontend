@@ -1,4 +1,4 @@
-// Every template on the engine (the eight Valentine days + Halloween). `getDay(slug)` is the one lookup everything uses.
+// Every template on the engine (the eight Valentine days + Halloween + their nine ✦ Premium twins). `getDay(slug)` is the one lookup everything uses.
 
 import type { DayConfig } from "../types";
 import { roseDay } from "./happy-rose-day";
@@ -10,9 +10,18 @@ import { hugDay } from "./happy-hug-day";
 import { kissDay } from "./happy-kiss-day";
 import { valentinesDay } from "./happy-valentines-day";
 import { halloweenDay } from "./happy-halloween";
+import { roseDayPremium } from "./happy-rose-day-premium";
+import { proposeDayPremium } from "./happy-propose-day-premium";
+import { chocolateDayPremium } from "./happy-chocolate-day-premium";
+import { teddyDayPremium } from "./happy-teddy-day-premium";
+import { promiseDayPremium } from "./happy-promise-day-premium";
+import { hugDayPremium } from "./happy-hug-day-premium";
+import { kissDayPremium } from "./happy-kiss-day-premium";
+import { valentinesDayPremium } from "./happy-valentines-day-premium";
+import { halloweenDayPremium } from "./happy-halloween-premium";
 import { VALENTINE_DAY_SLUGS, type DaySlug } from "./slugs";
 
-export { VALENTINE_DAY_SLUGS, VALENTINE_WEEK_SLUGS, OCCASION_SLUGS, VALENTINE_DAY_SET, DAY_META, isDaySlug, type DaySlug } from "./slugs";
+export { VALENTINE_DAY_SLUGS, VALENTINE_WEEK_SLUGS, OCCASION_SLUGS, PREMIUM_DAY_SLUGS, PREMIUM_BASE, VALENTINE_DAY_SET, DAY_META, isDaySlug, isPremiumDaySlug, premiumTwinOf, type DaySlug, type PremiumDaySlug } from "./slugs";
 
 export const DAYS: Record<DaySlug, DayConfig> = {
   "happy-rose-day": roseDay as unknown as DayConfig,
@@ -24,6 +33,16 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   "happy-kiss-day": kissDay as unknown as DayConfig,
   "happy-valentines-day": valentinesDay as unknown as DayConfig,
   "happy-halloween": halloweenDay as unknown as DayConfig,
+  // ✦ Premium twins
+  "happy-rose-day-premium": roseDayPremium as unknown as DayConfig,
+  "happy-propose-day-premium": proposeDayPremium as unknown as DayConfig,
+  "happy-chocolate-day-premium": chocolateDayPremium as unknown as DayConfig,
+  "happy-teddy-day-premium": teddyDayPremium as unknown as DayConfig,
+  "happy-promise-day-premium": promiseDayPremium as unknown as DayConfig,
+  "happy-hug-day-premium": hugDayPremium as unknown as DayConfig,
+  "happy-kiss-day-premium": kissDayPremium as unknown as DayConfig,
+  "happy-valentines-day-premium": valentinesDayPremium as unknown as DayConfig,
+  "happy-halloween-premium": halloweenDayPremium as unknown as DayConfig,
 };
 
 export function getDay(slug: DaySlug): DayConfig {

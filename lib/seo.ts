@@ -123,6 +123,16 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "happy-kiss-day":       { emoji: "💌", label: "Surprise" },
   "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
   "happy-halloween":      { emoji: "🎃", label: "Halloween" },
+  // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
+  "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
+  "happy-propose-day-premium": { emoji: "💍", label: "Propose Day" },
+  "happy-chocolate-day-premium": { emoji: "🍫", label: "Chocolate Day" },
+  "happy-teddy-day-premium": { emoji: "🧸", label: "Teddy Day" },
+  "happy-promise-day-premium": { emoji: "🤞", label: "Promise Day" },
+  "happy-hug-day-premium": { emoji: "🤗", label: "Hug Day" },
+  "happy-kiss-day-premium": { emoji: "💌", label: "Surprise" },
+  "happy-valentines-day-premium": { emoji: "💘", label: "Valentine's Day" },
+  "happy-halloween-premium": { emoji: "🎃", label: "Halloween" },
   gift:          { emoji: "🎁", label: "Gift" },
 };
 
@@ -139,13 +149,17 @@ const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; heigh
 };
 
 /** Templates whose share preview must stay neutral (Kiss Day). */
-const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day"]);
+const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-kiss-day-premium"]);
 
 /** Templates with their own teaser preview (the brief's delivery plan). */
 const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
   "happy-halloween": (r, s) => ({
     title: `🎃 A little haunted house was built for ${r}`,
     description: `${s} left something on your doorstep… open it with the lights off 👻`,
+  }),
+  "happy-halloween-premium": (r, s) => ({
+    title: `🕯️ A sealed invitation to the Midnight Manor, for ${r}`,
+    description: `${s} made you something for midnight. Open it with the sound on 🎃`,
   }),
 };
 

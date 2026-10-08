@@ -1,0 +1,13 @@
+import type { TemplatePageConfig } from "@/types/template-config";
+import { config as base } from "../happy-chocolate-day/config";
+
+// Gallery card for the ✦ Premium twin of /happy-chocolate-day. Until this template has its
+// own cover (Stage 5), it shows the $2 day"s poster inside the gold premium
+// frame. OWNED BY THIS DAY"S BUILDER.
+export const config: TemplatePageConfig = {
+  ...base,
+  slug: "happy-chocolate-day-premium",
+  title: "Chocolate Day ✦ Premium — The Midnight Chocolatier",
+  description:
+    "A midnight chocolate kitchen: pour, set and crack a chocolate heart, taste truffles of reasons, find a golden ticket and tie up the box.",
+};

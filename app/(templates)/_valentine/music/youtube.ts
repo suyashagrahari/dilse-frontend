@@ -103,6 +103,7 @@ export interface YTPlayer {
   cueVideoById(o: { videoId: string; startSeconds?: number }): void;
   loadVideoById(o: { videoId: string; startSeconds?: number }): void;
   getVideoData?(): { title?: string; author?: string };
+  getCurrentTime?(): number;
   destroy(): void;
 }
 interface YTNamespace {
@@ -118,6 +119,8 @@ interface YTNamespace {
         onReady?: (e: { target: YTPlayer }) => void;
         onStateChange?: (e: { data: number; target: YTPlayer }) => void;
         onError?: (e: { data: number }) => void;
+        /** Fired when playVideo/autoplay was refused by the browser's autoplay policy. */
+        onAutoplayBlocked?: (e: { target: YTPlayer }) => void;
       };
     },
   ) => YTPlayer;

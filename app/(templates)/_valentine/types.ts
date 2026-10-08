@@ -12,9 +12,11 @@ import type { DayTheme } from "./theme";
 import type { DaySlug } from "./days/slugs";
 import type { SongSuggestion } from "./music/youtube";
 import { getDay } from "./days";
+import { coercePremium, tidyPremium, PREMIUM_DEFAULTS, type PremiumFields } from "./premiumData";
 
 export type { DaySlug } from "./days/slugs";
 export type { LovePhoto } from "../_love/types";
+export type { PremiumFields } from "./premiumData";
 
 export type EditMode = null | "manual" | "preview";
 
@@ -65,6 +67,11 @@ export interface ValentineDayData<E = Extras> {
   /** ≤90, the final screen line. */
   endLine: string;
   extras: E;
+  /**
+   * Premium slugs only (always present there, absent on the $2 days): voice
+   * note, song drop, scheduled unlock, sealed P.S., reply switch. See premiumData.ts.
+   */
+  premium?: PremiumFields;
 }
 
 /** Server-written by the recipient's beacon. The owner sees them; recipients never get them. */
@@ -75,6 +82,8 @@ export interface ValentineReactions {
   answeredAt: string | null;
   noDodges: number | null;
   count: number | null;
+  /** Premium: the recipient's written reply (first one wins), owner-only. */
+  reply: { text: string; at: string } | null;
 }
 
 export type ReactionEvent = "opened" | "completed" | "answered";
@@ -164,6 +173,8 @@ export interface DayConfig<E extends Extras = Extras> {
    * romantic suggestion list and a visible YouTube mini-player.
    */
   music?: DayMusicConfig;
+  /** Present on the `-premium` slugs: the $2 twin, the premium limits are on the config itself. */
+  premium?: { base: DaySlug };
 }
 
 export interface DayMusicConfig {
@@ -185,7 +196,7 @@ export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as 
 // ─── Wire format ─────────────────────────────────────────────────────────────
 
 const CONTENT_KEYS: (keyof ValentineDayData)[] = [
-  "recipientName", "senderName", "petName", "letter", "photos", "gifs", "music", "musicMode", "musicYoutubeId", "musicStart", "endLine", "extras",
+  "recipientName", "senderName", "petName", "letter", "photos", "gifs", "music", "musicMode", "musicYoutubeId", "musicStart", "endLine", "extras", "premium",
 ];
 
 /** POST/PUT body. An explicit allow-list: UI-only state never reaches the server. */
@@ -230,6 +241,7 @@ export function fromDb(slug: DaySlug, db: Raw | null | undefined, fromServer = d
     ...coerceMusic(src),
     endLine: s(src.endLine, VW_LIMITS.endLine, demo.endLine),
     extras: coerceExtras(day.extras, src.extras, fromServer ? null : demo.extras),
+    ...(day.premium ? { premium: coercePremium(src.premium, fromServer ? PREMIUM_DEFAULTS : demo.premium ?? PREMIUM_DEFAULTS) } : {}),
   };
 }
 
@@ -245,6 +257,10 @@ export function parseReactions(raw: unknown): ValentineReactions {
     answeredAt: d(r.answeredAt),
     noDodges: n(r.noDodges),
     count: n(r.count),
+    reply:
+      r.reply && typeof r.reply === "object" && typeof (r.reply as Record<string, unknown>).text === "string"
+        ? { text: String((r.reply as Record<string, unknown>).text).slice(0, 280), at: d((r.reply as Record<string, unknown>).at) ?? "" }
+        : null,
   };
 }
 
@@ -264,6 +280,7 @@ export function tidy(slug: DaySlug, d: ValentineDayData): ValentineDayData {
     gifs: coerceGifs(slug, d.gifs),
     ...coerceMusic(d as unknown as Record<string, unknown>),
     extras: tidyExtras(day.extras, d.extras ?? {}),
+    ...(day.premium ? { premium: tidyPremium(coercePremium(d.premium)) } : {}),
   };
 }
 

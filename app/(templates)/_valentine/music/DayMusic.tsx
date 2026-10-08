@@ -27,23 +27,45 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { MusicButton, useSynthEngine, type MelodyId } from "../kit/useSynthMusic";
 import { FONTS } from "../theme";
 import type { MusicMode } from "../types";
-import { DayMusicContext, type DayMusicApi } from "./context";
+import { DayMusicContext, isIOSDevice, type DayMusicApi } from "./context";
 import { loadYouTubeApi, suggestionFor, youTubeThumb, type SongSuggestion, type YTPlayer } from "./youtube";
 
 const TARGET_VOLUME = 80;
 const YT_STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 } as const;
+/** No PLAYING/BUFFERING this long after start() → `blocked` (show the "Tap to hear" chip). */
+const BLOCKED_AFTER_MS = 2500;
 
 interface YouTubeEngine {
   playing: boolean;
   loading: boolean;
+  ready: boolean;
+  blocked: boolean;
   title: string | null;
   muted: boolean;
+  userOff: boolean;
   start: () => void;
   stop: () => void;
   toggle: () => void;
   toggleMute: () => void;
+  play: () => void;
+  pause: () => void;
+  seekTo: (sec: number) => void;
+  currentTime: () => number;
+  fadeTo: (level: number, ms?: number) => void;
+  duck: (level?: number, ms?: number) => void;
+  unduck: (ms?: number) => void;
+  canFade: boolean;
 }
 
+// The autoplay race (fixed for every day, not just premium): browsers — iOS
+// above all — only allow audible playback from code that runs synchronously
+// inside a tap. The player is created at mount (not on the first tap), so by
+// the time someone taps it is usually ready and play() calls playVideo()
+// inside the gesture. If the tap beats onReady, play() still runs from
+// onReady (fine on Chrome/Android thanks to sticky activation, refused on
+// iOS); in that case nothing reaches PLAYING, `blocked` turns on after 2.5 s,
+// and the gesture listeners stay attached, so the NEXT tap anywhere retries
+// inside a real gesture. They detach once the song is actually playing.
 function useYouTubeEngine({
   videoId,
   startAt,
@@ -66,6 +88,10 @@ function useYouTubeEngine({
   const userOff = useRef(false);
   const resumeOnShow = useRef(false);
   const fadeRef = useRef<number | null>(null);
+  const blockTimer = useRef<number | null>(null);
+  const stateRef = useRef<number>(YT_STATE.UNSTARTED);
+  const levelRef = useRef(1);
+  const duckedPaused = useRef(false);
   const startRef = useRef(startAt);
   const failRef = useRef(onFail);
   useEffect(() => {
@@ -73,6 +99,11 @@ function useYouTubeEngine({
   });
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [off, setOff] = useState(false);
+  // Once the song has really played, taps no longer (re)start it — exactly the old "first gesture" semantics.
+  const [everPlayed, setEverPlayed] = useState(false);
   const [title, setTitle] = useState<string | null>(() => suggestionFor(videoId, songs)?.title ?? null);
   const [titleFor, setTitleFor] = useState(videoId);
   if (titleFor !== videoId) {
@@ -81,11 +112,38 @@ function useYouTubeEngine({
   }
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
+  // iOS ignores volume writes on media (YouTube setVolume is a no-op there).
+  const [ios] = useState(() => isIOSDevice());
 
   const clearFade = () => {
     if (fadeRef.current != null) window.clearInterval(fadeRef.current);
     fadeRef.current = null;
   };
+  const clearBlockTimer = () => {
+    if (blockTimer.current != null) window.clearTimeout(blockTimer.current);
+    blockTimer.current = null;
+  };
+  const isAudible = () => stateRef.current === YT_STATE.PLAYING || stateRef.current === YT_STATE.BUFFERING;
+
+  /** Ramp setVolume from its current level to `to` (0–100) over `ms`. Non-iOS only. */
+  const rampVolume = useCallback((to: number, ms: number, from?: number) => {
+    clearFade();
+    const p = playerRef.current;
+    if (!p) return;
+    const steps = Math.max(1, Math.round(ms / 90));
+    let i = 0;
+    const start = from ?? levelRef.current * TARGET_VOLUME;
+    fadeRef.current = window.setInterval(() => {
+      i += 1;
+      const v = Math.round(start + ((to - start) * i) / steps);
+      try {
+        playerRef.current?.setVolume(v);
+      } catch {
+        /* player gone */
+      }
+      if (i >= steps) clearFade();
+    }, 90);
+  }, []);
 
   const play = useCallback(() => {
     const p = playerRef.current;
@@ -98,30 +156,31 @@ function useYouTubeEngine({
     wantPlay.current = false;
     clearFade();
     try {
+      // Synchronous, in this order — WebKit only honours unMute/playVideo inside the tap.
       if (mutedRef.current) p.mute();
       else p.unMute();
-      p.setVolume(0);
+      if (!ios) p.setVolume(0);
       p.playVideo();
     } catch {
       return;
     }
-    // A gentle fade-in rather than a song slamming in mid-chorus.
-    let v = 0;
-    fadeRef.current = window.setInterval(() => {
-      v = Math.min(TARGET_VOLUME, v + 6);
-      try {
-        playerRef.current?.setVolume(v);
-      } catch {
-        /* player gone */
+    clearBlockTimer();
+    blockTimer.current = window.setTimeout(() => {
+      if (!isAudible() && !userOff.current) {
+        setBlocked(true);
+        setLoading(false);
       }
-      if (v >= TARGET_VOLUME) clearFade();
-    }, 90);
-  }, []);
+    }, BLOCKED_AFTER_MS);
+    // A gentle fade-in rather than a song slamming in mid-chorus (not on iOS:
+    // volume is read-only there, the premium gate's sting masks the entry).
+    if (!ios) rampVolume(Math.round(levelRef.current * TARGET_VOLUME), 1200, 0);
+  }, [ios, rampVolume]);
 
   const pause = useCallback(() => {
     wantPlay.current = false;
     setLoading(false);
     clearFade();
+    clearBlockTimer();
     try {
       playerRef.current?.pauseVideo();
     } catch {
@@ -129,7 +188,7 @@ function useYouTubeEngine({
     }
   }, []);
 
-  // Create the player once per song. The API script loads only now.
+  // Create the player once per song, at mount — NOT on the first tap (see the race note above).
   useEffect(() => {
     if (!videoId) return;
     let cancelled = false;
@@ -162,16 +221,26 @@ function useYouTubeEngine({
             onReady: (e) => {
               if (cancelled) return;
               readyRef.current = true;
+              setReady(true);
               setLoading(false);
               const t = e.target.getVideoData?.().title;
               if (t) setTitle(t);
               if (wantPlay.current) play();
             },
+            onAutoplayBlocked: () => {
+              if (cancelled) return;
+              setBlocked(true);
+              setLoading(false);
+            },
             onStateChange: (e) => {
               if (cancelled) return;
+              stateRef.current = e.data;
               if (e.data === YT_STATE.PLAYING) {
                 setPlaying(true);
+                setEverPlayed(true);
                 setLoading(false);
+                setBlocked(false);
+                clearBlockTimer();
                 const t = e.target.getVideoData?.().title;
                 if (t) setTitle(t);
               } else if (e.data === YT_STATE.BUFFERING) {
@@ -202,7 +271,9 @@ function useYouTubeEngine({
     return () => {
       cancelled = true;
       clearFade();
+      clearBlockTimer();
       readyRef.current = false;
+      stateRef.current = YT_STATE.UNSTARTED;
       try {
         playerRef.current?.destroy();
       } catch {
@@ -211,6 +282,7 @@ function useYouTubeEngine({
       playerRef.current = null;
       setPlaying(false);
       setLoading(false);
+      setReady(false);
       if (box0) box0.innerHTML = "";
     };
   }, [videoId, host, play]);
@@ -229,19 +301,21 @@ function useYouTubeEngine({
     }
   }, [startAt, videoId]);
 
-  // First gesture anywhere starts it (unless they turned it off).
+  // Taps anywhere start it (unless they turned it off) — and keep retrying,
+  // each time inside a fresh gesture, until it is really playing. iOS counts
+  // touchend/click as activation (not pointerdown), so all four are heard.
   useEffect(() => {
-    if (!videoId || !autoStart) return;
+    if (!videoId || !autoStart || everPlayed) return;
     const go = () => {
-      if (!userOff.current) play();
+      if (userOff.current || isAudible()) return;
+      play();
     };
-    window.addEventListener("pointerdown", go, { once: true });
-    window.addEventListener("keydown", go, { once: true });
+    const evs = ["pointerdown", "touchend", "click", "keydown"] as const;
+    for (const ev of evs) window.addEventListener(ev, go, { passive: true });
     return () => {
-      window.removeEventListener("pointerdown", go);
-      window.removeEventListener("keydown", go);
+      for (const ev of evs) window.removeEventListener(ev, go);
     };
-  }, [videoId, autoStart, play]);
+  }, [videoId, autoStart, play, everPlayed]);
 
   // Hidden tab → pause; back → resume if it was playing.
   useEffect(() => {
@@ -268,10 +342,14 @@ function useYouTubeEngine({
 
   const start = useCallback(() => {
     userOff.current = false;
+    setOff(false);
+    setBlocked(false);
     play();
   }, [play]);
   const stop = useCallback(() => {
     userOff.current = true;
+    setOff(true);
+    setBlocked(false);
     pause();
   }, [pause]);
   const toggle = useCallback(() => (playing || wantPlay.current ? stop() : start()), [playing, start, stop]);
@@ -287,7 +365,76 @@ function useYouTubeEngine({
     }
   }, []);
 
-  return { playing, loading, title, muted, start, stop, toggle, toggleMute };
+  const resume = useCallback(() => {
+    if (!userOff.current) play();
+  }, [play]);
+  const seekTo = useCallback((sec: number) => {
+    const p = playerRef.current;
+    if (!p || !readyRef.current) return;
+    try {
+      p.seekTo(Math.max(0, sec), true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const currentTime = useCallback(() => {
+    try {
+      return playerRef.current?.getCurrentTime?.() ?? 0;
+    } catch {
+      return 0;
+    }
+  }, []);
+  const fadeTo = useCallback(
+    (level: number, ms = 800) => {
+      levelRef.current = Math.min(1, Math.max(0, level));
+      if (ios) return;
+      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+  const duck = useCallback(
+    (level = 0.25, ms = 400) => {
+      if (ios) {
+        // No volume on iOS: pause under the voice, resume on unduck.
+        if (isAudible()) {
+          duckedPaused.current = true;
+          try {
+            playerRef.current?.pauseVideo();
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
+      rampVolume(Math.round(Math.min(1, Math.max(0, level)) * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+  const unduck = useCallback(
+    (ms = 600) => {
+      if (ios) {
+        if (duckedPaused.current && !userOff.current) {
+          duckedPaused.current = false;
+          try {
+            playerRef.current?.playVideo();
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
+      rampVolume(Math.round(levelRef.current * TARGET_VOLUME), ms);
+    },
+    [ios, rampVolume],
+  );
+
+  return useMemo(
+    () => ({
+      playing, loading, ready, blocked, title, muted, userOff: off,
+      start, stop, toggle, toggleMute, play: resume, pause, seekTo, currentTime, fadeTo, duck, unduck, canFade: !ios,
+    }),
+    [playing, loading, ready, blocked, title, muted, off, start, stop, toggle, toggleMute, resume, pause, seekTo, currentTime, fadeTo, duck, unduck, ios],
+  );
 }
 
 // ─── The floating "now playing" card ─────────────────────────────────────────
@@ -661,10 +808,41 @@ export function DayMusicProvider({
 
   const error = broken ? "That song can't be played on other sites (the owner turned embedding off, or it's region-locked). Playing the soft melody instead." : null;
 
+  // The melody's "turned off by the visitor" flag (the synth keeps its own for its toggle).
+  const [melodyOff, setMelodyOff] = useState(false);
+  const melodyOffRef = useRef(false);
+  const melodyStart = synth.start;
+  const melodyStop = synth.stop;
+  const synthApi = useMemo(() => {
+    const start = () => {
+      melodyOffRef.current = false;
+      setMelodyOff(false);
+      melodyStart();
+    };
+    const stop = () => {
+      melodyOffRef.current = true;
+      setMelodyOff(true);
+      melodyStop();
+    };
+    return {
+      start,
+      stop,
+      toggle: () => (synth.playing ? stop() : start()),
+      play: () => {
+        if (!melodyOffRef.current) melodyStart();
+      },
+    };
+  }, [melodyStart, melodyStop, synth.playing]);
+
   const api = useMemo<DayMusicApi>(
     () =>
       mode === "youtube"
-        ? { mode, available: true, playing: yt.playing, loading: yt.loading, error, title: yt.title, toggle: yt.toggle, start: yt.start, stop: yt.stop, registerToggle }
+        ? {
+            mode, available: true, playing: yt.playing, loading: yt.loading, error, title: yt.title,
+            toggle: yt.toggle, start: yt.start, stop: yt.stop, registerToggle,
+            ready: yt.ready, blocked: yt.blocked, userOff: yt.userOff, play: yt.play, pause: yt.pause, seekTo: yt.seekTo,
+            currentTime: yt.currentTime, duck: yt.duck, unduck: yt.unduck, fadeTo: yt.fadeTo, canFade: yt.canFade, audioOnly,
+          }
         : {
             mode,
             available: mode === "melody",
@@ -672,12 +850,24 @@ export function DayMusicProvider({
             loading: false,
             error,
             title: null,
-            toggle: synth.toggle,
-            start: synth.start,
-            stop: synth.stop,
+            toggle: synthApi.toggle,
+            start: synthApi.start,
+            stop: synthApi.stop,
             registerToggle,
+            ready: true,
+            blocked: false,
+            userOff: melodyOff,
+            play: synthApi.play,
+            pause: melodyStop,
+            seekTo: () => synth.restartPhrase?.(),
+            currentTime: () => synth.elapsed?.() ?? 0,
+            duck: (level = 0.25, ms = 400) => synth.setLevel?.(level, ms),
+            unduck: (ms = 600) => synth.setLevel?.(1, ms),
+            fadeTo: (level: number, ms = 800) => synth.setLevel?.(level, ms),
+            canFade: true,
+            audioOnly,
           },
-    [mode, yt.playing, yt.loading, yt.title, yt.toggle, yt.start, yt.stop, synth.playing, synth.toggle, synth.start, synth.stop, error, registerToggle],
+    [mode, yt, synth, synthApi, melodyOff, melodyStop, error, registerToggle, audioOnly],
   );
 
   return (

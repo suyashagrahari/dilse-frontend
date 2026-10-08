@@ -91,6 +91,16 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/happy-hug-day", priority: 0.8, changeFrequency: "monthly" },
   { path: "/happy-kiss-day", priority: 0.8, changeFrequency: "monthly" },
   { path: "/happy-valentines-day", priority: 0.8, changeFrequency: "monthly" },
+  // ✦ Premium twins (ship hidden on the apex until released in /admin/templates).
+  { path: "/happy-rose-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-propose-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-chocolate-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-teddy-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-promise-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-hug-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-kiss-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-valentines-day-premium", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/happy-halloween-premium", priority: 0.7, changeFrequency: "monthly" },
   // Halloween (/happy-halloween) is NOT listed here: it has a TEMPLATE_DATA entry
   // in lib/seo-data.ts (FAQs + HowTo), so sitemap.ts already emits it from
   // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.

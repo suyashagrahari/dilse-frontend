@@ -30,7 +30,7 @@ const PremiumTemplateCard = memo(function PremiumTemplateCard(props: PremiumTemp
         <span className="pmShine" aria-hidden />
         <span className="pmSeal" aria-hidden>
           <svg viewBox="0 0 24 24" width="11" height="11"><path d="M3 18h18l-1.6-9.2-4.6 3.9L12 5.5l-2.8 7.2-4.6-3.9z" fill="currentColor" /></svg>
-          Premium
+          {props.template.ultra ? "✦ Premium" : "Premium"}
         </span>
       </div>
     </div>

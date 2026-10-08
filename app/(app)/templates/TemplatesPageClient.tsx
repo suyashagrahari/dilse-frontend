@@ -414,7 +414,8 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
     (selectedType === "all" || t.type === selectedType) && (!q || t.title.toLowerCase().includes(q));
   const matchCategory = (t: TemplateListItem) => selectedCategory === "all" || t.category === selectedCategory;
 
-  const inTab = (t: TemplateListItem, which: GalleryTab) => (which === "premium") === Boolean(t.premium);
+  // ✦ Premium-tier (ultra) templates live in BOTH rooms: the main grid (gold card) and the Premium tab.
+  const inTab = (t: TemplateListItem, which: GalleryTab) => Boolean(t.ultra) || (which === "premium") === Boolean(t.premium);
   const tabBase = visible.filter((t) => inTab(t, tab) && matchBase(t));
   const filtered = tabBase.filter(matchCategory);
   const otherTab: GalleryTab = tab === "premium" ? "freemium" : "premium";
@@ -724,17 +725,29 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
 
                     {readyTemplates.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                        {readyTemplates.map((template, i) => (
-                          <TemplateCard
-                            key={template.slug}
-                            template={template}
-                            rank={rankOf.get(template.slug)}
-                            created={createdBy.get(template.slug)}
-                            isFav={favSlugs.includes(template.slug)}
-                            index={i}
-                            onFavorite={handleFavorite}
-                          />
-                        ))}
+                        {readyTemplates.map((template, i) =>
+                          template.ultra ? (
+                            <PremiumTemplateCard
+                              key={template.slug}
+                              template={template}
+                              rank={rankOf.get(template.slug)}
+                              created={createdBy.get(template.slug)}
+                              isFav={favSlugs.includes(template.slug)}
+                              index={i}
+                              onFavorite={handleFavorite}
+                            />
+                          ) : (
+                            <TemplateCard
+                              key={template.slug}
+                              template={template}
+                              rank={rankOf.get(template.slug)}
+                              created={createdBy.get(template.slug)}
+                              isFav={favSlugs.includes(template.slug)}
+                              index={i}
+                              onFavorite={handleFavorite}
+                            />
+                          ),
+                        )}
                       </div>
                     )}
                     {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark={false} />}
