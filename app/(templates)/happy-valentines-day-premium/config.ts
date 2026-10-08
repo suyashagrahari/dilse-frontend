@@ -9,5 +9,5 @@ export const config: TemplatePageConfig = {
   slug: "happy-valentines-day-premium",
   title: `Valentine's Day ✦ Premium — Our Film`,
   description:
-    `Your relationship as a film: a ticket at the door, a "previously on" week recap, a constellation of your stats, the big question in takes, and end credits with a poster.`,
+    `Your love story as a film starring them: a ticket and a film-leader countdown, your photos cut to your song's chorus, a three-part letter, the question shot in black and white, and end credits with a movie poster.`,
 };

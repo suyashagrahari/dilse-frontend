@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-valentines-day-premium";
-const TITLE = `Valentine's Day Premium Website — Our Film, a Cinematic Page With Your Song`;
+const TITLE = `Valentine's Day Premium Website — Our Film, Your Love Story as a Movie`;
 const DESCRIPTION =
-  `Your relationship as a film: a ticket at the door, a "previously on" week recap, a constellation of your stats, the big question in takes, and end credits with a poster.`;
-const SOCIAL_TITLE = `💘 Our Film ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `Turn your relationship into a film starring your Valentine: opening titles, a constellation of the night you met, your photos as a montage cut to your song's chorus, a three-part letter, the big question in black-and-white takes, and end credits with a movie poster.`;
+const SOCIAL_TITLE = `🎬 You're starring in something tonight`;
+const SOCIAL_DESCRIPTION = `Someone directed a film about the two of you. Tonight's screening starts when you tap ✦ sound on`;
 
 export const metadata: Metadata = {
   title: TITLE,
