@@ -2487,4 +2487,497 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // ── ✦ Premium twins (Stage 7, 2026-10-08) ─────────────────────────────────
+  // Nine cinematic, several-scene versions of the Valentine-week days and
+  // Halloween. Search intent is split from the $2 twin on purpose: the twin is
+  // "a <day> surprise website"; these target "premium / cinematic <day>
+  // website for girlfriend / boyfriend", "with our song", "with a voice note",
+  // "long distance". Shared FAQs + HowTo come from premiumFaqs()/premiumHowTo()
+  // at the end of this file so the nine stay factually in step (limits from
+  // .template-factory/premium/PREMIUM-ENGINE.md §2). No price, no rating.
+  "happy-valentines-day-premium": {
+    title: "Cinematic Valentine's Website for Girlfriend",
+    description:
+      "Turn your love story into a film for your Valentine: opening titles starring them, your photos cut to your song, a letter in a book and a question in takes.",
+    category: "Valentine",
+    emoji: "🎬",
+    keywords: [
+      "cinematic valentine's day website",
+      "valentine's day website for girlfriend",
+      "valentine's day website for boyfriend",
+      "love story movie website",
+      "our love story as a movie",
+      "premium valentine surprise",
+      "valentine's day gift for long distance girlfriend",
+      "valentine website with our song",
+      "valentine's day website with voice note",
+      "photo montage to our song",
+      "will you be my valentine website",
+      "valentine's day proposal website",
+      "romantic movie poster of us",
+      "valentine's day 2027 surprise",
+      "digital valentine gift for her",
+      "valentine's day gift for him online",
+      "how we met constellation",
+      "end credits love story",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Valentine's film?",
+        answer:
+          "Their love story plays as a film you directed. An ADMIT ONE ticket and a film leader count down, the opening titles say they are starring, they trace the stars of the night you met into a heart, your photos play as a montage cut to your song, your voice note becomes the director's commentary, your letter turns page by page in a book, your relationship is shown by the numbers, and the question is asked in black and white. When they say yes, the colour floods back, fireworks write your initials and the end credits roll.",
+      },
+      {
+        question: "What if they press No?",
+        answer:
+          "Every No becomes a new take: a clapperboard reads \"SCENE 8 / TAKE 2\" with one of your director's lines, and the No button shrinks until it turns into a second YES. The movie poster at the end counts the takes it needed.",
+      },
+      ...premiumFaqs({
+        day: "Valentine's Day",
+        twin: "Valentine's Day",
+        keepsake: "movie poster of the two of you",
+        voiceAt: "as the director's commentary",
+        yesEmail: true,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Cinematic Valentine's Day Website",
+      description: "Direct a short film of your relationship — titles, montage, letter and the question — and send it as a private link.",
+      write: { name: "Write the Film", text: "Name your film, add where and when you met, chapter titles for the letter (split it into pages with ---), your own numbers, the big question and a director's line for each No — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-rose-day-premium": {
+    title: "Cinematic Rose Day Website for Girlfriend",
+    description:
+      "Grow them a glasshouse rose: wipe their name off the fogged door, pluck the thorns you got through, and watch a garden of roses bloom on your song's chorus.",
+    category: "Valentine",
+    emoji: "🌹",
+    keywords: [
+      "cinematic rose day website",
+      "rose day website for girlfriend",
+      "rose day website for boyfriend",
+      "premium rose day surprise",
+      "rose day gift for long distance girlfriend",
+      "rose day surprise with our song",
+      "rose day message with voice note",
+      "virtual rose garden for her",
+      "rose that blooms online",
+      "eternal rose gift online",
+      "rose day 2027",
+      "7 february rose day surprise",
+      "rose day love letter online",
+      "digital rose for girlfriend",
+      "rose day wishes with photos",
+      "romantic rose day idea",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Glasshouse Rose?",
+        answer:
+          "They find a glasshouse door with their name traced in the fog and wipe it clear to go in. Inside, they pluck the thorns you wrote — the hard things you got through together — and each one turns gold. They hold the bud and it opens, then a garden of roses blooms in a heart as your song's chorus drops. Falling petals spell out a line from you, your letter opens in a pressed book, your photos sit inside dew drops, and it ends with an Eternal Rose under a glass dome engraved with both your names.",
+      },
+      ...premiumFaqs({
+        day: "Rose Day",
+        twin: "Rose Day",
+        keepsake: "Eternal Rose picture",
+        voiceAt: "as the gardener's note beside the Eternal Rose",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Cinematic Rose Day Website",
+      description: "Grow them a glasshouse rose that blooms on your song, with your letter, photos and voice — and send it as a private link.",
+      write: { name: "Plant the Glasshouse", text: "Pick the rose colour and how many roses bloom, write the thorns you got through, the line the petals spell and your letter — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-propose-day-premium": {
+    title: "Propose Day Drone-Show Website for Girlfriend",
+    description:
+      "Propose with a drone show: your nervous texts arrive, they light a candle for each reason, then hundreds of drone lights write your question as your song drops.",
+    category: "Valentine",
+    emoji: "💍",
+    keywords: [
+      "drone show proposal website",
+      "propose day website for girlfriend",
+      "propose day website for boyfriend",
+      "cinematic proposal website",
+      "online proposal idea with our song",
+      "will you marry me website",
+      "long distance proposal idea",
+      "rooftop proposal online",
+      "premium propose day surprise",
+      "proposal website with voice note",
+      "propose day 2027",
+      "8 february propose day",
+      "propose day message for girlfriend",
+      "virtual ring proposal",
+      "proposal with photos and music",
+      "creative way to propose online",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Propose Day page?",
+        answer:
+          "It starts on a phone: your nervous texts arrive one by one. Their reply opens a rooftop at night. They strike a match and light a candle for each reason you wrote, switch on city windows that hold your photos, and are told to look up — hundreds of drone lights rise to form your initials, a beating heart and a ring box that opens, then write your question in the sky as your song's chorus drops. They answer by sliding the ring onto the finger, and the drones spell that they said yes.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "Not really. Next to \"Put it on\" there is a \"Let me think\" button that runs away with your lines a few times, then becomes \"Okay okay YES\". The keepsake ticket counts how many times they had to think.",
+      },
+      ...premiumFaqs({
+        day: "Propose Day",
+        twin: "Propose Day",
+        keepsake: "front-row ticket that says YES in drone lights",
+        voiceAt: "as a voice message in the chat after they say yes",
+        yesEmail: true,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Drone-Show Proposal Website",
+      description: "Plan a rooftop proposal with candles, your photos in city windows and your question written in drone lights, then send the link.",
+      write: { name: "Plan the Rooftop", text: "Write your nervous texts, the reasons for each candle, the memories behind each window, the question for the sky (short reads best) and the ring — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-chocolate-day-premium": {
+    title: "Premium Chocolate Day Website for Girlfriend",
+    description:
+      "A chocolate shop that opens at midnight for one person: they pour a heart, smash it on your song's drop, taste truffles of reasons and find a golden ticket.",
+    category: "Valentine",
+    emoji: "🍫",
+    keywords: [
+      "premium chocolate day website",
+      "chocolate day website for girlfriend",
+      "chocolate day website for boyfriend",
+      "cinematic chocolate day surprise",
+      "chocolate day gift for long distance",
+      "chocolate day surprise with our song",
+      "chocolate day message with voice note",
+      "virtual chocolate gift online",
+      "smash the chocolate heart online",
+      "golden ticket love coupon",
+      "chocolate day 2027",
+      "9 february chocolate day",
+      "chocolate day wishes with photos",
+      "romantic chocolate day idea",
+      "digital chocolate box for her",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Midnight Chocolatier?",
+        answer:
+          "A rainy shop door says \"CLOSED · except for\" their name. Inside, the lamps flicker on and they tilt a copper pot to pour a chocolate heart, pop the bubbles and turn it out of the mould. Three taps of a gold hammer crack it and it shatters as your song's chorus drops, revealing truffles. Each truffle they taste carries a reason, the wrapper of a bar hides a golden ticket with your promise, your letter is piped in chocolate, your photos sit in a lit display case, and they pipe a word and tie the box with a ribbon.",
+      },
+      ...premiumFaqs({
+        day: "Chocolate Day",
+        twin: "Chocolate Day",
+        keepsake: "Certificate of Craft with their photo and the golden ticket",
+        voiceAt: "as a word from the chocolatier beside your letter",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Premium Chocolate Day Website",
+      description: "Open a midnight chocolate shop for one person — a heart to smash on your song, truffles of reasons and a golden ticket — and send the link.",
+      write: { name: "Stock the Shop", text: "Choose the flavour and the box colour, write the note on the counter, the line before the smash, what the golden ticket is good for, the word they pipe and your letter — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-teddy-day-premium": {
+    title: "Premium Teddy Day Website for Girlfriend",
+    description:
+      "Send an unfinished teddy: they stuff it, warm your fabric heart, sew it in, and it wakes up as your song drops. Then a torchlight letter and a tuck-in.",
+    category: "Valentine",
+    emoji: "🧸",
+    keywords: [
+      "premium teddy day website",
+      "teddy day website for girlfriend",
+      "teddy day website for boyfriend",
+      "cinematic teddy day surprise",
+      "build a teddy online",
+      "teddy day gift for long distance",
+      "teddy day surprise with our song",
+      "teddy day message with voice note",
+      "virtual teddy bear gift",
+      "teddy day 2027",
+      "10 february teddy day",
+      "teddy day wishes with photos",
+      "cute teddy day idea",
+      "teddy birth certificate",
+      "digital teddy for her",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the teddy parcel?",
+        answer:
+          "A kraft parcel labelled \"Contents: 1 teddy (unfinished)\" opens on a toy workshop at night. They turn the wheel of a stuffing machine until the teddy is fluffy, warm a fabric heart, hold it to their cheek and ear, make a wish, then sew it into the teddy's chest — on the last stitch it wakes up as your song's chorus drops. Then they read your letter by torchlight, spin your photos round a star lamp, play hide and seek, and tuck the teddy in.",
+      },
+      ...premiumFaqs({
+        day: "Teddy Day",
+        twin: "Teddy Day",
+        keepsake: "Teddy Birth Certificate",
+        voiceAt: "when they press the teddy's paw — there's a voice box inside",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Premium Teddy Day Website",
+      description: "Build them a teddy that wakes up on your song, with your letter, photos and voice inside, and send it as a private link.",
+      write: { name: "Design the Teddy", text: "Choose the fur, eyes and accessory, write the tag, what the heart whispers and your letter — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-promise-day-premium": {
+    title: "Cinematic Promise Day Website for Boyfriend",
+    description:
+      "Tie a red thread of fate: they pull it through your photos to your hand, the knot tightens as your song drops and writes “I promise” in gold.",
+    category: "Valentine",
+    emoji: "🧵",
+    keywords: [
+      "cinematic promise day website",
+      "promise day website for boyfriend",
+      "promise day website for girlfriend",
+      "red thread of fate gift",
+      "premium promise day surprise",
+      "promise day for long distance relationship",
+      "promise day surprise with our song",
+      "promise day message with voice note",
+      "promise ring online",
+      "promise day 2027",
+      "11 february promise day",
+      "promise day wishes with photos",
+      "promises for my partner",
+      "pinky promise online",
+      "promise day vow letter",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Red Thread?",
+        answer:
+          "A red thread sways down to their little finger. They pull it hand over hand and your photos ride past on wooden pegs, until your hand arrives and the knot tightens as your song's chorus drops — the thread runs gold and \"I promise\" writes itself. They draw a line through rings that each open one of your promises, read your vow as it is stitched in, seal it with a thumbprint, send a promise for later down a river in a glass vial, and are asked \"Do you promise too?\".",
+      },
+      ...premiumFaqs({
+        day: "Promise Day",
+        twin: "Promise Day",
+        keepsake: "\"Bound by a Red Thread\" poster",
+        voiceAt: "before your vow, in your own voice",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Cinematic Promise Day Website",
+      description: "Tie a red thread from your photos to their hand, with your promises, your vow and your voice, and send it as a private link.",
+      write: { name: "Write the Promises", text: "Pick the thread colour, write the big promise, the small ones on the rings, your vow and an optional promise for a later date — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-hug-day-premium": {
+    title: "Long-Distance Hug Day Website for Boyfriend",
+    description:
+      "A hug they feel through the phone: they hold the screen with both thumbs for twenty seconds while warmth spreads, a heartbeat slows and your words fade in.",
+    category: "Valentine",
+    emoji: "🤗",
+    keywords: [
+      "long distance hug day website",
+      "hug day website for boyfriend",
+      "hug day website for girlfriend",
+      "virtual hug online",
+      "send a hug through the phone",
+      "20 second hug",
+      "premium hug day surprise",
+      "cinematic hug day surprise",
+      "hug day surprise with our song",
+      "hug day message with voice note",
+      "hug day 2027",
+      "12 february hug day",
+      "hug day wishes with photos",
+      "long distance relationship gift online",
+      "hug certificate",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Hug Day page?",
+        answer:
+          "They wipe the frost off a window to find your photo, walk one figure across the distance between you, then hold the screen with both thumbs for twenty seconds — warmth spreads under their fingers, a heartbeat slows to yours and your words fade in, and the hug is delivered with the time. Then they warm knitted mittens, unzip a hoodie to find your letter, sit in a blanket fort of your photos tapping along with your heartbeat, and send a hug back.",
+      },
+      ...premiumFaqs({
+        day: "Hug Day",
+        twin: "Hug Day",
+        keepsake: "hug certificate",
+        voiceAt: "inside the hug",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Long-Distance Hug Day Website",
+      description: "Send a twenty-second hug they hold through the screen, with your letter, photos and voice, as a private link.",
+      write: { name: "Write the Hug", text: "Write the line behind the frost, the lines that appear during the hug, a note for each mitten, the hug passes and your letter — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-kiss-day-premium": {
+    title: "Kiss Day Photo Mosaic Website for Girlfriend",
+    description:
+      "Send a Kiss Day surprise she will replay: warm a wax seal, catch falling kisses, and watch two thousand kisses fly into your photo as your song drops.",
+    category: "Valentine",
+    emoji: "💋",
+    keywords: [
+      "kiss day photo mosaic",
+      "kiss day website for girlfriend",
+      "kiss day website for boyfriend",
+      "premium kiss day surprise",
+      "cinematic kiss day surprise",
+      "photo made of kisses",
+      "kiss day gift for long distance",
+      "kiss day surprise with our song",
+      "kiss day message with voice note",
+      "virtual kiss online",
+      "kiss day 2027",
+      "13 february kiss day",
+      "kiss day wishes with photos",
+      "lipstick letter on the mirror",
+      "photo booth strip online",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open A Thousand Kisses?",
+        answer:
+          "A cream envelope with a lipstick kiss waits on red velvet. They warm the wax seal to open it, catch falling kisses in a jar, then swipe and up to two thousand kisses fly together into your photo as your song's chorus drops, with a count of how many kisses it is made of. Your letter writes itself in lipstick on a mirror, a kiss booth prints a photo strip of you two, and at the end they press and hold anywhere to leave a kiss back.",
+      },
+      ...premiumFaqs({
+        day: "Kiss Day",
+        twin: "Kiss Day",
+        keepsake: "kiss-booth photo strip",
+        voiceAt: "after your letter",
+        yesEmail: false,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Kiss Day Photo Mosaic Website",
+      description: "Turn your photo into a mosaic of kisses that locks on your song, with your letter and voice, and send it as a private link.",
+      write: { name: "Write the Kisses", text: "Pick the kiss style and lipstick shade, the line on the envelope, the notes in the falling kisses and the letter for the mirror — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
+
+  "happy-halloween-premium": {
+    title: "Cinematic Halloween Website for Girlfriend",
+    description:
+      "A sealed invitation to a moonlit haunted manor: light candles, wake portraits of you two, hear your voice on a spirit radio, and ask your question at midnight.",
+    category: "Festival",
+    emoji: "🕯️",
+    keywords: [
+      "cinematic halloween website",
+      "halloween website for girlfriend",
+      "halloween website for boyfriend",
+      "premium halloween surprise",
+      "haunted manor invitation online",
+      "romantic halloween surprise",
+      "halloween surprise with our song",
+      "halloween message with voice note",
+      "will you be my boo website",
+      "halloween proposal idea",
+      "halloween gift for long distance partner",
+      "midnight halloween surprise",
+      "halloween 2026 surprise for partner",
+      "halloween card for best friend",
+      "spooky cute halloween for kids",
+    ],
+    faqs: [
+      {
+        question: "What happens when they open the Midnight Manor?",
+        answer:
+          "They break the seal on a black invitation and push open the iron gate of a moonlit manor. They strike a match and light candles that hold your memories, wake sepia portraits of you two, let a planchette spell their name on a spirit board, tune a spirit radio until they hear your voice, read your letter in invisible ink by candlelight, brew a potion, and drag the clock hand to midnight — your question comes on the first of twelve bells, and a YES bursts into firework hearts with your initials.",
+      },
+      {
+        question: "Can I send it to a friend or family, or to kids?",
+        answer:
+          "Yes. Choose partner, best friend, family or kids; the wording changes with it, family and kids get a magic letter board instead of the spirit board, and the kids tone has no jump scares.",
+      },
+      ...premiumFaqs({
+        day: "Halloween",
+        twin: "Happy Halloween",
+        keepsake: "gilded portrait with a brass plaque",
+        voiceAt: "on the spirit radio",
+        yesEmail: true,
+      }),
+    ],
+    howTo: premiumHowTo({
+      name: "How to Make a Cinematic Halloween Website",
+      description: "Invite them to a haunted manor with your memories, letter, voice and a question at midnight, and send it as a private link.",
+      write: { name: "Write the Invitation", text: "Choose who it is for, name the manor and the night, write the memories for the candles, the secret word for the spirit board, the question and the letter — or let the AI write it from a few lines about the two of you." },
+    }),
+  },
 };
+
+// ─── Premium twins: shared FAQs + HowTo ──────────────────────────────────────
+// Function declarations (hoisted), so TEMPLATE_DATA above can call them. Every
+// fact here is engine-wide and checked against PREMIUM-ENGINE.md §2 and the
+// premium EditSheet: voice ≤60 s, 12 photos, letter ≤3,000 characters, one
+// reply ≤280 characters (owner emailed), optional unlock time (server withholds
+// the content until then), audio-only YouTube, 1080×1920 keepsake.
+
+function premiumFaqs(o: {
+  /** "Rose Day" — the occasion. */
+  day: string;
+  /** The $2 twin's name as the gallery shows it. */
+  twin: string;
+  /** "Eternal Rose picture" — the 1080×1920 keepsake. */
+  keepsake: string;
+  /** Where the voice note plays ("on the spirit radio"). */
+  voiceAt: string;
+  /** The day asks a question and the first YES is emailed to the sender. */
+  yesEmail: boolean;
+}): { question: string; answer: string }[] {
+  return [
+    {
+      question: `How is the premium ${o.day} page different from the regular ${o.twin} page?`,
+      answer: `The regular ${o.twin} page is a short interactive card. The premium one is a cinematic, scene-by-scene experience: a sealed opening whose first tap starts your song, one big moment timed to land on your song's chorus, a voice note of up to 60 seconds, up to 12 photos, a letter of up to 3,000 characters, a sealed P.S., an optional unlock time, a reply box so they can write back once, and a ${o.keepsake} they can save. Both are made the same way: press Create, fill it in (or let the AI write it), Publish and send the link.`,
+    },
+    {
+      question: "Can I add our song?",
+      answer:
+        "Yes. Paste a YouTube link or tap one of the suggestions, and pick the second where the chorus starts so the big moment lands on it. The song starts with their first tap on the sealed opening. Only the sound plays: the video stays hidden behind a small now-playing chip they can pause, mute or move. If a song can't be played on other sites, a built-in melody plays instead.",
+    },
+    {
+      question: "Can I add a voice note?",
+      answer: `Yes. Record up to 60 seconds in the editor and it plays ${o.voiceAt}, with the song turned down underneath. Without a recording, a short typed line shows in its place.`,
+    },
+    {
+      question: "Can I make it open at midnight or at a set time?",
+      answer:
+        "Yes. Set an unlock time and, until then, the link shows only their name and a countdown — the letter, photos and voice note are not sent to their phone before that moment. It opens on its own when the countdown ends. Signed in, you can still see your whole page.",
+    },
+    {
+      question: o.yesEmail ? "Will I know if they said yes or wrote back?" : "Can they write back to me?",
+      answer: `${o.yesEmail ? "Yes. The first time they say yes you get an email, and it shows on your page. " : ""}At the end there is a reply box: they can write you one reply of up to 280 characters, which you get by email and see on your page. You can turn the reply box off before you publish.`,
+    },
+    {
+      question: "Do they need an app or an account?",
+      answer:
+        "No. They open the private link in any phone or laptop browser — WhatsApp, Instagram and text links all work. It is best with the sound on, and every swipe, drag or hold also has a button, so it works for everyone.",
+    },
+    {
+      question: "Can I lock it with a password or edit it later?",
+      answer:
+        "Yes to both. You can set an optional password when you publish, and you can edit and republish any time; the same link always shows the latest version.",
+    },
+  ];
+}
+
+function premiumHowTo(o: { name: string; description: string; write: { name: string; text: string } }) {
+  return {
+    name: o.name,
+    description: o.description,
+    totalTime: "PT10M",
+    steps: [
+      { name: "Open the Template", text: "Open the premium template on SubhSandesh and press Create." },
+      o.write,
+      { name: "Add Photos, Your Song and Your Voice", text: "Upload up to 12 photos, paste a YouTube song and mark where the chorus starts, and record a voice note of up to 60 seconds." },
+      { name: "Choose When It Opens", text: "Leave it to open right away, or set an unlock time so they see only a countdown until then. Decide whether they can write back." },
+      { name: "Publish and Send", text: "Press Save to preview the whole experience, Publish, then send the private link on WhatsApp or by text." },
+    ],
+  };
+}

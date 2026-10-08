@@ -1,21 +1,47 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
+// Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
+// ("happy-chocolate-day-premium"), which also puts the page in the sitemap, /llms.txt and the
+// agent catalog. The search title targets the premium/cinematic intent; the
+// $2 twin keeps the plain "<day> surprise website" one. No route og:image yet,
+// so the site default stays in openGraph/twitter.
 const SLUG = "happy-chocolate-day-premium";
-const TITLE = `Chocolate Day Premium Website — The Midnight Chocolatier: Pour, Smash & Taste a Heart, With Your Song`;
-const DESCRIPTION =
-  `A chocolate shop that opens at midnight for one person: they pour a chocolate heart, smash it with a gold hammer as your song drops, taste truffles of reasons, find a golden ticket and tie the box. With your voice note and photos.`;
+const tpl = TEMPLATE_SEO[SLUG];
+
+// The link preview stays a teaser: it is what shows on WhatsApp when someone
+// pastes the template link to a friend.
 const SOCIAL_TITLE = `🍫 The shop is closed. Except for you.`;
 const SOCIAL_DESCRIPTION = `Someone made you a chocolate heart, by hand, at midnight. Open it with the sound on ✦`;
 
+const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
+  ...base,
   alternates: { canonical: `${SITE_URL}/${SLUG}` },
-  openGraph: { title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}` },
-  twitter: { card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION },
+  openGraph: { ...base.openGraph, title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}` },
+  twitter: { ...base.twitter, card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const faqs = getFAQs(SLUG);
+  const howTo = getHowTo(SLUG);
+  // Null: no real ratings yet, and the guard renders nothing rather than stars.
+  const rating = getAggregateRating(SLUG);
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: SITE_URL },
+          { name: "Templates", url: `${SITE_URL}/templates` },
+          { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
+        ]}
+      />
+      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
+      {howTo && <HowToJsonLd howTo={howTo} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {children}
+    </>
+  );
 }

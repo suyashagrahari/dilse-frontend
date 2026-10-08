@@ -1,21 +1,47 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { getTemplateMeta, SITE_URL, TEMPLATE_SEO, getFAQs, getHowTo, getAggregateRating } from "@/lib/seo";
+import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJsonLd } from "@/components/JsonLd";
 
+// Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
+// ("happy-kiss-day-premium"), which also puts the page in the sitemap, /llms.txt and the
+// agent catalog. The search title targets the premium/cinematic intent; the
+// $2 twin keeps the plain "<day> surprise website" one. No route og:image yet,
+// so the site default stays in openGraph/twitter.
 const SLUG = "happy-kiss-day-premium";
-const TITLE = `Kiss Day Premium — A Thousand Kisses: Your Photo Made of Kisses, With Your Song`;
-const DESCRIPTION =
-  `Send a Kiss Day surprise they'll replay: warm a wax seal, catch falling kisses, watch two thousand kisses fly into your photo as your song drops, read a lipstick letter on a mirror, and stamp a kiss-booth strip.`;
+const tpl = TEMPLATE_SEO[SLUG];
+
+// The link preview stays a teaser: it is what shows on WhatsApp when someone
+// pastes the template link to a friend.
 const SOCIAL_TITLE = `💌 A little something for you`;
 const SOCIAL_DESCRIPTION = `Sealed and made just for you. Open it with the sound on 🎧`;
 
+const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
+  ...base,
   alternates: { canonical: `${SITE_URL}/${SLUG}` },
-  openGraph: { title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}` },
-  twitter: { card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION },
+  openGraph: { ...base.openGraph, title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}` },
+  twitter: { ...base.twitter, card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const faqs = getFAQs(SLUG);
+  const howTo = getHowTo(SLUG);
+  // Null: no real ratings yet, and the guard renders nothing rather than stars.
+  const rating = getAggregateRating(SLUG);
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: SITE_URL },
+          { name: "Templates", url: `${SITE_URL}/templates` },
+          { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
+        ]}
+      />
+      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
+      {howTo && <HowToJsonLd howTo={howTo} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {children}
+    </>
+  );
 }
