@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 const SLUG = "happy-halloween-premium";
-const TITLE = `Halloween Premium Website — The Midnight Manor, a Cinematic Page With Your Song`;
+const TITLE = `Happy Halloween Premium — The Midnight Manor, a Haunted-Manor Surprise With Your Song`;
 const DESCRIPTION =
-  `A haunted manor at midnight: light candles of memories, ask the spirit board, brew a spell, hear the spirit radio and answer the midnight question.`;
-const SOCIAL_TITLE = `🎃 The Midnight Manor ✦ made for you`;
-const SOCIAL_DESCRIPTION = `Someone made you something cinematic. Open it with the sound on ✦`;
+  `A sealed invitation to a moonlit haunted manor: light memory candles, wake portraits of you two, let the spirit board spell their name, hear your voice on the spirit radio, and ask your question as the clock strikes twelve on your song.`;
+const SOCIAL_TITLE = `🕯️ A sealed invitation to the Midnight Manor`;
+const SOCIAL_DESCRIPTION = `Someone is waiting for you at midnight. Open it in the dark, sound on 🎧`;
 
 export const metadata: Metadata = {
   title: TITLE,
