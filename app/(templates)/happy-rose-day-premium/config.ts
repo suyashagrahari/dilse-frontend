@@ -9,5 +9,5 @@ export const config: TemplatePageConfig = {
   slug: "happy-rose-day-premium",
   title: "Rose Day ✦ Premium — The Glasshouse Rose",
   description:
-    "A rose grown under glass for one person: fog the door open, clear the thorns, catch a hidden sentence in falling petals, and watch a whole garden bloom on the chorus of your song.",
+    "A private glasshouse at dusk: wipe their name off the fogged door, pluck the thorns you got through together, and watch a garden bloom in a heart on your song's chorus — then a pressed-book letter and a rose sealed forever under glass.",
 };
