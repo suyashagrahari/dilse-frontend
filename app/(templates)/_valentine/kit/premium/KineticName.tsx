@@ -32,6 +32,17 @@ export interface KineticNameProps {
   style?: CSSProperties;
 }
 
+/** Splits letters into words, keeping each letter's index for its stagger. */
+function words(letters: string[]): { ch: string; i: number }[][] {
+  const out: { ch: string; i: number }[][] = [[]];
+  letters.forEach((ch, i) => {
+    if (/\s/.test(ch)) {
+      if (out[out.length - 1].length) out.push([]);
+    } else out[out.length - 1].push({ ch, i });
+  });
+  return out.filter((w) => w.length);
+}
+
 export default function KineticName({ text, size = "clamp(40px, 11vw, 88px)", font, color, gilt = false, stagger = 55, delay = 0, play = true, as: Tag = "h1", className, style }: KineticNameProps) {
   const letters = Array.from(text || "");
   const total = delay + letters.length * stagger + 500;
@@ -41,9 +52,19 @@ export default function KineticName({ text, size = "clamp(40px, 11vw, 88px)", fo
       aria-label={text}
       style={{ fontSize: size, fontFamily: font ?? "var(--vw-font-serif, serif)", color, ["--pm-kn-total" as string]: `${total}ms`, ...style }}
     >
-      {letters.map((ch, i) => (
-        <span key={i} aria-hidden className="pm-knL" style={{ animationDelay: `${delay + i * stagger}ms` }}>
-          {ch === " " ? " " : ch}
+      {/* Letters are grouped per word (nowrap) with real spaces between the
+          groups: a lone " " in an inline-block span has no width, and
+          per-letter spans would otherwise wrap mid-word. */}
+      {words(letters).map((w, wi) => (
+        <span key={wi}>
+          {wi > 0 && " "}
+          <span aria-hidden style={{ whiteSpace: "nowrap" }}>
+            {w.map(({ ch, i }) => (
+              <span key={i} className="pm-knL" style={{ animationDelay: `${delay + i * stagger}ms` }}>
+                {ch}
+              </span>
+            ))}
+          </span>
         </span>
       ))}
       <style>{KN_CSS}</style>
