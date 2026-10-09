@@ -1,75 +1,75 @@
 "use client";
 
-// ─── happy-kiss-day-premium — "Photo Booth" ───────────────────────────────
+// ─── happy-kiss-day-premium — "Mwah Booth" ────────────────────────────────
 //
-// research.md §D.7. A vintage photo booth behind a lacquer-red curtain.
-//   gate      the curtain + a chrome coin plate: "Insert one kiss" (song starts)
-//   booth     the money moment: press the arcade button, 3·2·1, FOUR FLASHES,
-//             then the strip drops out of the slot on the song's drop and
-//             develops frame by frame (useSongDrop)
-//   frames    behind each frame: tap a print to turn it over, swipe it away
-//   outtakes  photos 5–12 on a swipeable contact sheet (only if they exist)
-//   voice     the booth also recorded: the voice note over their last frame
-//             (no voice: the caption, printed big)
-//   receipt   the letter on a booth receipt; drag the scissors to tear it off
-//   kiss      kiss the screen (wide touch = lips, or press and hold)
-//   ending    the strip with both kisses: save it, write back, WhatsApp
-// One WebGL backdrop (velvet → bokeh), one particle layer, grain + vignette.
+// research.md v3 §D7. A bright, strawberry-milk kissing booth, full of couple
+// stickers, lip prints and pops:
+//   gate      twist up a lipstick (or just tap) → the song starts
+//   kiss      kiss his photo three times; the heart meter fills
+//   menu      pick a kiss: forehead / cheek / nose / hand cards flip to a
+//             sticker and his reason
+//   booth     kiss-cam: 3·2·1, four flashes, the strip prints; she drags lip
+//             stickers onto it
+//   catch     15 s: catch the flying kisses → "kisses I owe you"
+//   letter    an envelope sealed with a kiss; the letter types itself; P.S.
+//   voice     "come closer…": the whispered voice note (or caption)
+//   question  "Kiss me?" Yes / Later (Later runs away). YES = the money moment
+//             on the chorus (drop()): kiss prints storm the screen and gather
+//             into a heart around her decorated strip
+//   ending    save the strip as a story card, kiss his photo back, reply
+// Light theme, one ambient float of hearts, transform/opacity animation only.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { templateMedia } from "@/lib/templateMedia";
 import { getDay } from "../../_valentine/days";
-import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import {
-  FilmGrain,
-  GlowParticles,
-  LightLeak,
-  PremiumGate,
-  PremiumRoot,
-  SceneTransition,
-  ShaderBackdrop,
-  Vignette,
-  usePremium,
-  type TransitionVariant,
-} from "../../_valentine/kit/premium";
-import type { ExperienceProps, GifSlot } from "../../_valentine/types";
-import BoothScene from "./booth/BoothScene";
-import { registerBoothCues } from "./booth/cues";
-import EndingScene from "./booth/EndingScene";
-import FramesScene from "./booth/FramesScene";
-import { PB_FONT_VARS } from "./booth/fonts";
-import { CoinPlate, GATE_BG, GATE_CSS } from "./booth/Gate";
-import KissScene from "./booth/KissScene";
-import { readBooth } from "./booth/model";
-import OuttakesScene from "./booth/OuttakesScene";
-import ReceiptScene from "./booth/ReceiptScene";
-import { STRIP_CSS } from "./booth/Strip";
-import { UI_CSS } from "./booth/ui";
-import VoiceScene from "./booth/VoiceScene";
+import { DayRoot, FloatingParticles } from "../../_valentine/kit";
+import { PremiumGate, PremiumRoot, usePremium } from "../../_valentine/kit/premium";
+import type { ExperienceProps } from "../../_valentine/types";
+import BoothScene from "./mwah/BoothScene";
+import CatchScene from "./mwah/CatchScene";
+import { registerMwahCues } from "./mwah/cues";
+import EndingScene from "./mwah/EndingScene";
+import { KM_FONT_VARS } from "./mwah/fonts";
+import { GATE_BG, GATE_CSS, Lipstick } from "./mwah/Gate";
+import KissPhotoScene from "./mwah/KissPhotoScene";
+import LetterScene from "./mwah/LetterScene";
+import { LipPrint } from "./mwah/LipPrint";
+import MenuScene from "./mwah/MenuScene";
+import { readMwah, type Deco } from "./mwah/model";
+import QuestionScene from "./mwah/QuestionScene";
+import { STRIP_CSS } from "./mwah/Strip";
+import { UI_CSS } from "./mwah/ui";
+import VoiceScene from "./mwah/VoiceScene";
 
-registerBoothCues();
+registerMwahCues();
 
 const day = getDay("happy-kiss-day-premium");
-type SceneId = "gate" | "booth" | "frames" | "outtakes" | "voice" | "receipt" | "kiss" | "ending";
-const CUT: Record<SceneId, TransitionVariant> = { gate: "flash", booth: "flash", frames: "iris", outtakes: "fold", voice: "iris", receipt: "flash", kiss: "iris", ending: "flash" };
-const SKIPPABLE: SceneId[] = ["frames", "outtakes", "voice", "receipt"];
+type SceneId = "kiss" | "menu" | "booth" | "catch" | "letter" | "voice" | "question" | "ending";
+const SKIPPABLE: SceneId[] = ["menu", "booth", "catch", "letter", "voice"];
+const AMBIENT = ["💗", "💋", "✨", "💕"] as const;
 
-function PhotoBooth({ data, mode, react }: ExperienceProps) {
+function MwahBooth({ data, mode, react }: ExperienceProps) {
   const p = usePremium();
-  const reduce = useReducedMotion();
-  const b = useMemo(() => readBooth(data), [data]);
-  const order = useMemo(() => {
-    const o: SceneId[] = ["booth", "frames"];
-    if (b.outtakes.length) o.push("outtakes");
-    if (p.premium.voiceNote || p.premium.voiceCaption) o.push("voice");
-    o.push("receipt", "kiss", "ending");
-    return o;
-  }, [b.outtakes.length, p.premium.voiceNote, p.premium.voiceCaption]);
-  const [scene, setScene] = useState<SceneId>(p.opened ? "booth" : "gate");
+  const m = useMemo(() => readMwah(data), [data]);
+  const hasVoice = !!(p.premium.voiceNote || p.premium.voiceCaption);
+  const order = useMemo<SceneId[]>(() => ["kiss", "menu", "booth", "catch", "letter", ...(hasVoice ? (["voice"] as const) : []), "question", "ending"], [hasVoice]);
+  const [gate, setGate] = useState(!p.opened);
+  const [twisted, setTwisted] = useState(false);
+  const [scene, setScene] = useState<SceneId>("kiss");
   const [round, setRound] = useState(0);
-  const [kissed, setKissed] = useState(0);
-  const [flashN, setFlashN] = useState(0);
-  const next = useCallback(() => setScene((s) => order[Math.min(order.length - 1, order.indexOf(s as SceneId) + 1)] ?? "ending"), [order]);
-  const flash = useCallback(() => setFlashN((n) => n + 1), []);
+  const [decos, setDecos] = useState<Deco[]>([]);
+  const next = useCallback(() => setScene((s) => order[Math.min(order.length - 1, order.indexOf(s) + 1)] ?? "ending"), [order]);
+
+  // Each scene starts at its top.
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [scene]);
 
   const completed = useRef(false);
   useEffect(() => {
@@ -79,129 +79,121 @@ function PhotoBooth({ data, mode, react }: ExperienceProps) {
     }
   }, [scene, react]);
 
-  // Only the sender's own GIF shows: the template's emoji stand-in would be
-  // decoration, and this page keeps its frames for their photos.
-  const sticker = (id: string, size = 64): ReactNode => {
-    const s: GifSlot | undefined = day.gifSlots.find((g) => g.id === id);
+  /** A GIF slot: the sender's link, nothing ("none"), or our default from the shared library. */
+  const gif = (id: string) => {
     const v = (data.gifs?.[id] ?? "").trim();
-    return s && /^https:\/\//i.test(v) ? <Sticker slug={day.slug} slot={s} value={v} size={size} /> : null;
+    if (v === "none") return "";
+    if (/^https:\/\//i.test(v)) return v;
+    const s = day.gifSlots.find((g) => g.id === id);
+    return s ? new URL(templateMedia(day.slug, s.file)).href : "";
   };
   const replay = () => {
     setRound((r) => r + 1);
-    setKissed(0);
-    setScene("booth");
+    setDecos([]);
+    setScene("kiss");
   };
 
   const idx = order.indexOf(scene);
-  const warm = scene === "kiss" || scene === "ending";
-
-  let body: ReactNode = null;
+  let body = null;
   switch (scene) {
+    case "kiss":
+      body = <KissPhotoScene m={m} gif={gif("km2-mwah")} onNext={next} />;
+      break;
+    case "menu":
+      body = <MenuScene m={m} onNext={next} />;
+      break;
     case "booth":
-      body = <BoothScene b={b} flash={flash} sticker={sticker("pb1-booth", 58)} onNext={next} />;
+      body = <BoothScene m={m} gif={gif("km3-booth")} decos={decos} setDecos={setDecos} onNext={next} />;
       break;
-    case "frames":
-      body = <FramesScene b={b} onNext={next} />;
+    case "catch":
+      body = <CatchScene m={m} gif={gif("km4-catch")} onNext={next} />;
       break;
-    case "outtakes":
-      body = <OuttakesScene photos={b.outtakes} onNext={next} />;
+    case "letter":
+      body = <LetterScene m={m} letter={data.letter || "Happy Kiss Day 💋"} gif={gif("km5-letter")} onNext={next} />;
       break;
     case "voice":
-      body = <VoiceScene b={b} onNext={next} />;
+      body = <VoiceScene m={m} onNext={next} />;
       break;
-    case "receipt":
-      body = <ReceiptScene b={b} letter={data.letter || "Happy Kiss Day."} onNext={next} />;
-      break;
-    case "kiss":
-      body = (
-        <KissScene
-          b={b}
-          sticker={sticker("pb2-kiss", 76)}
-          onKissed={(n) => {
-            setKissed(n);
-            react("answered", { count: n });
-            next();
-          }}
-        />
-      );
+    case "question":
+      body = <QuestionScene m={m} decos={decos} gif={gif("km6-yes")} onAnswer={(n) => react("answered", { noDodges: n })} onNext={next} />;
       break;
     case "ending":
-      body = <EndingScene b={b} endLine={data.endLine} kissed={kissed > 0} mode={mode} replyText={day.copy.replyText} onReplay={replay} />;
+      body = <EndingScene m={m} decos={decos} endLine={(data.endLine ?? "").trim()} mode={mode} replyText={day.copy.replyText} onReplay={replay} />;
       break;
   }
 
   return (
     <>
-      {/* First, so each scene's own <style> (rendered later) wins at equal specificity. */}
       <style>{ROOT_CSS}</style>
-      <ShaderBackdrop
-        preset={warm ? "bokeh" : "velvet"}
-        colors={warm ? ["#0b0607", b.S.lo, "#ffcfae"] : ["#0a0405", "#5c0812", "#ff9aa6"]}
-        intensity={warm ? 0.9 : 0.75}
-        speed={0.55}
-        parallax
-      />
-      {(scene === "ending" || scene === "booth") && (
-        <GlowParticles preset={scene === "ending" ? "hearts" : "sparkles"} density={scene === "ending" ? 0.22 : 0.16} colors={scene === "ending" ? [b.S.hi, "#F4EDE1", b.S.c] : undefined} speed={0.6} />
-      )}
-      <LightLeak color={b.S.hi} color2="#ffd2a6" corner="top-left" opacity={0.32} />
-      <Vignette strength={0.62} />
-      <FilmGrain opacity={0.075} />
+      <div className="km-ambient" aria-hidden>
+        <span className="km-blob is-a" />
+        <span className="km-blob is-b" />
+        <FloatingParticles emojis={AMBIENT} count={9} opacity={0.42} />
+      </div>
 
-      {scene === "gate" && (
+      {gate && (
         <PremiumGate
-          art={<CoinPlate b={b} />}
-          kicker="A photo booth, for"
-          subtitle={b.sign || "Sit close. Closer. Perfect."}
-          sting="kpb-insert"
-          openLabel="Insert one kiss"
-          className="pb-gate"
+          art={<Lipstick m={m} gif={gif("km1-gate")} onReady={() => setTwisted(true)} />}
+          kicker="A kissing booth, just for"
+          subtitle={m.sign || "Twist it up. A kiss is waiting."}
+          sting="kmw-open"
+          openLabel={twisted ? "Ready? Open it 💋" : "Open the booth 💋"}
+          sealText={`Made with love by ${m.sender}`}
+          className={`km-gate${twisted ? " is-ready" : ""}`}
           bg={GATE_BG}
-          ink="#F4EDE1"
-          accent={b.S.hi}
-          onOpen={() => setScene("booth")}
+          ink="#5B2333"
+          accent="#FF4F86"
+          openMs={700}
+          onOpen={() => setGate(false)}
         />
       )}
 
-      {scene !== "gate" && (
-        <div className="pb-chip" role="group" aria-label="Chapter">
-          <span className="pb-chipNo" aria-label={`Chapter ${idx + 1} of ${order.length}`}>
-            {String(idx + 1).padStart(2, "0")}
-            <i>/{String(order.length).padStart(2, "0")}</i>
+      {!gate && (
+        <div className="km-chip" role="group" aria-label="Progress">
+          <span className="km-chipNo" aria-label={`Scene ${idx + 1} of ${order.length}`}>
+            <span aria-hidden>💗</span> {idx + 1}/{order.length}
           </span>
           {SKIPPABLE.includes(scene) && (
-            <button type="button" className="pb-chipSkip" onClick={next}>
-              Skip ›
+            <button type="button" className="km-chipSkip" onClick={next}>
+              Skip
             </button>
           )}
         </div>
       )}
 
-      {flashN > 0 && <div key={flashN} className={`pb-flash${reduce ? " is-reduced" : ""}`} aria-hidden />}
-
-      {scene !== "gate" && (
-        <div className="pb-stage">
-          <SceneTransition sceneKey={`${scene}-${round}`} variant={CUT[scene]} flashColor="#fff6ee">
+      {!gate && (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={`${scene}-${round}`}
+            className="km-stage"
+            // Opacity only: a transformed wrapper would trap every position:fixed
+            // layer inside it (flash, drag ghost, the kiss storm) on desktop.
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.3 }}
+          >
             {body}
-          </SceneTransition>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       )}
     </>
   );
 }
 
+function WingArt() {
+  return (
+    <span style={{ display: "grid", placeItems: "center", transform: "rotate(-10deg)" }}>
+      <LipPrint color="#FF4F86" size={150} seed={8} />
+    </span>
+  );
+}
+
 export default function KissDayPremiumExperience(props: ExperienceProps) {
-  const b = readBooth(props.data);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug="happy-kiss-day-premium">
-      <DayRoot
-        day={day}
-        data={props.data}
-        layout="full"
-        className={`${PB_FONT_VARS} pb-root`}
-        style={{ ["--pb-shade" as string]: b.S.c, ["--pb-shade-hi" as string]: b.S.hi, height: "100svh", overflow: "hidden" }}
-      >
-        <PhotoBooth {...props} />
+      <DayRoot day={day} data={props.data} className={`${KM_FONT_VARS} km-root`} art={<WingArt />} line={props.data.endLine || "Sealed with a kiss. Opened with a smile."}>
+        <MwahBooth {...props} />
       </DayRoot>
     </PremiumRoot>
   );
@@ -211,15 +203,15 @@ const ROOT_CSS = `
 ${UI_CSS}
 ${STRIP_CSS}
 ${GATE_CSS}
-.pb-chip { position: fixed; z-index: 97; left: calc(max(12px, env(safe-area-inset-left, 0px)) + 54px); top: max(12px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 2px;
-  height: 44px; padding: 0 6px 0 14px; border-radius: 99px; background: rgba(14,9,10,.5); border: 1px solid rgba(244,237,225,.14); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  font: 700 11px/1 var(--pb-mono); letter-spacing: .16em; color: var(--pb-cream); }
-.pb-chipNo { font-variant-numeric: tabular-nums; padding-right: 8px; }
-.pb-chipNo i { font-style: normal; opacity: .45; }
-.pb-chipSkip { all: unset; cursor: pointer; height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 99px; background: rgba(244,237,225,.1); letter-spacing: .2em; text-transform: uppercase; font-size: 10px; }
-.pb-chipSkip:focus-visible { outline: 2px solid var(--pb-shade-hi); outline-offset: 2px; }
-.pb-flash { position: fixed; inset: 0; z-index: 88; pointer-events: none; background: #fff; animation: pb-flash .55s cubic-bezier(.1,.7,.3,1) forwards; }
-.pb-flash.is-reduced { animation: pb-flashR .4s ease forwards; }
-@keyframes pb-flash { 0% { opacity: 0; } 8% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes pb-flashR { 0% { opacity: .25; } 100% { opacity: 0; } }
+.km-stage { position: relative; z-index: 1; }
+.km-ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.km-blob { position: absolute; border-radius: 50%; opacity: .55; }
+.km-blob.is-a { width: 60vmax; height: 60vmax; left: -22vmax; top: -18vmax; background: radial-gradient(circle, #FFD1DF 0%, transparent 65%); }
+.km-blob.is-b { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -20vmax; background: radial-gradient(circle, rgba(255,226,122,.55) 0%, transparent 65%); }
+.km-chip { position: fixed; z-index: 97; left: calc(max(12px, env(safe-area-inset-left, 0px)) + 54px); top: max(12px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 2px;
+  height: 44px; padding: 0 4px 0 12px; border-radius: 99px; background: rgba(255,255,255,.82); box-shadow: 0 6px 18px -10px rgba(214,63,114,.55); box-sizing: border-box;
+  font: 600 14px/1 var(--km-ui); color: var(--km-deep); }
+.km-chipNo { font-variant-numeric: tabular-nums; padding-right: 8px; white-space: nowrap; }
+.km-chipSkip { all: unset; cursor: pointer; height: 34px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 99px; background: #FFE3EC; font: 600 13px/1 var(--km-ui); color: var(--km-deep); }
+.km-chipSkip:focus-visible { outline: 2px solid var(--km-primary); outline-offset: 2px; }
 `;

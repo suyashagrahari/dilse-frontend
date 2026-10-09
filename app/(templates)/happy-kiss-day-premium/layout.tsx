@@ -4,8 +4,8 @@ import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJs
 
 // Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
 // ("happy-kiss-day-premium"), which also puts the page in the sitemap, /llms.txt and the
-// agent catalog. The search title targets the premium/cinematic intent; the
-// $2 twin keeps the plain "<day> surprise website" one. The og:image is
+// agent catalog. The search title targets the cute "for girlfriend" intent;
+// the $2 twin keeps the plain "<day> surprise website" one. The og:image is
 // ./opengraph-image.tsx; images: undefined drops the site default so it wins.
 const SLUG = "happy-kiss-day-premium";
 const tpl = TEMPLATE_SEO[SLUG];
