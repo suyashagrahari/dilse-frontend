@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-teddy-day-premium",
   coverImage: templateMedia("happy-teddy-day-premium", "cover-poster.webp"),
-  title: "Teddy Day ✦ Premium — Made With a Heart",
+  title: "Teddy Day ✦ Premium: Adoption Papers",
   description:
-    "An unfinished teddy arrives by parcel: they stuff it, sew your heart inside and it wakes up as your song drops. Then a torchlight letter, star-lamp photos and a tuck-in.",
+    "A teddy arrives with his adoption file: your photos as his new family, care labels that are secretly love notes, your letter and your voice. They sign the certificate, and on your song's chorus the gold seal presses and ADOPTED is stamped on it.",
 };

@@ -2687,7 +2687,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "happy-teddy-day-premium": {
     title: "Premium Teddy Day Website for Girlfriend",
     description:
-      "Send an unfinished teddy: they stuff it, warm your fabric heart, sew it in, and it wakes up as your song drops. Then a torchlight letter and a tuck-in.",
+      "Send a teddy with adoption papers: they meet him, flip his care labels, read your letter, then sign the certificate and the gold seal presses as your song drops.",
     category: "Valentine",
     emoji: "🧸",
     keywords: [
@@ -2695,7 +2695,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       "teddy day website for girlfriend",
       "teddy day website for boyfriend",
       "cinematic teddy day surprise",
-      "build a teddy online",
+      "teddy adoption certificate",
       "teddy day gift for long distance",
       "teddy day surprise with our song",
       "teddy day message with voice note",
@@ -2711,20 +2711,20 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       {
         question: "What happens when they open the teddy parcel?",
         answer:
-          "A kraft parcel labelled \"Contents: 1 teddy (unfinished)\" opens on a toy workshop at night. They turn the wheel of a stuffing machine until the teddy is fluffy, warm a fabric heart, hold it to their cheek and ear, make a wish, then sew it into the teddy's chest — on the last stitch it wakes up as your song's chorus drops. Then they read your letter by torchlight, spin your photos round a star lamp, play hide and seek, and tuck the teddy in.",
+          "They untie a parcel tag (\"Fragile: contains one (1) hug\") and meet a teddy you have named, with a woven tag carrying both your names; squeeze him and he says his first words. His file follows: your photos clipped in as his new family, satin care labels that flip over to love notes, your letter folded in three, and your voice. Then they sign his Certificate of Adoption with a finger, hold to press the gold seal, and as your song's chorus drops the seal embosses and ADOPTED is stamped across it. The signed certificate is theirs to save.",
       },
       ...premiumFaqs({
         day: "Teddy Day",
         twin: "Teddy Day",
-        keepsake: "Teddy Birth Certificate",
-        voiceAt: "when they press the teddy's paw — there's a voice box inside",
+        keepsake: "signed Certificate of Adoption",
+        voiceAt: "just before they sign the adoption papers",
         yesEmail: false,
       }),
     ],
     howTo: premiumHowTo({
       name: "How to Make a Premium Teddy Day Website",
-      description: "Build them a teddy that wakes up on your song, with your letter, photos and voice inside, and send it as a private link.",
-      write: { name: "Design the Teddy", text: "Choose the fur, eyes and accessory, write the tag, what the heart whispers and your letter — or let the AI write it from a few lines about the two of you." },
+      description: "Give them a teddy with adoption papers they sign themselves, with your photos, letter and voice in his file, and send it as a private link.",
+      write: { name: "Write his file", text: "Name the teddy, write his parcel tag, first words, place of birth, temperament, care instructions and your letter, or let the AI write them from a few lines about the two of you." },
     }),
   },
 

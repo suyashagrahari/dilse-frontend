@@ -1,181 +1,154 @@
-// happy-teddy-day-premium — "Made With a Heart" (the ✦ Premium twin of happy-teddy-day).
+// happy-teddy-day-premium — "Adoption Papers" (the ✦ Premium twin of happy-teddy-day).
 //
-// A parcel on the doorstep: an unfinished teddy. In a toy workshop after hours
-// they crank the stuffing machine, warm the sender's fabric heart in their hands,
-// touch it to their cheek, hold it to their ear (it whispers), kiss it, sew it
-// in — and the teddy wakes up (the song drops). Lights out: a torchlight letter
-// in a blanket fort, memories on a star-projector ceiling, hide-and-seek under
-// the pillows, and a tuck-in.
+// A parcel tag ("Fragile: contains one (1) hug"), then a real teddy (Fluent 3D art, never a drawing) with a woven
+// tag carrying both names. His file follows: their photos as paper-clipped exhibits, satin care labels that flip
+// to love notes, the sender's letter folded in three, their voice. Then a beautifully typeset Certificate of
+// Adoption that the recipient signs with a finger; they hold to press the seal and, on the song's drop, the gold
+// seal embosses and ADOPTED ♥ is stamped on it. The signed certificate is the keepsake.
 //
-// Keys + limits mirror server/src/config/premiumDays/happy-teddy-day-premium.ts
-// (pinned in valentineDays.test.ts). AI fill: server/src/config/aiFill/happy-teddy-day-premium.ts.
+// Keys + limits mirror server/src/config/premiumDays/happy-teddy-day-premium.ts (pinned in valentineDays.test.ts).
+// Keys shared with v1/the $2 day keep their key (teddyName, parcelNote, firstWords). The chorus second is the
+// shared premium.songDropAt. AI fill: server/src/config/aiFill/happy-teddy-day-premium.ts.
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
+import type { LovePhoto } from "../../_love/types";
 import { premiumDay } from "./_premium";
 import { teddyDay } from "./happy-teddy-day";
 
-export type TeddyFur = "honey" | "cocoa" | "pink" | "white" | "lilac" | "mint";
-export type TeddyEyes = "button" | "sparkle" | "sleepy" | "heart";
-export type TeddyAccessory = "none" | "bow" | "scarf" | "bowtie" | "flower" | "sweater" | "glasses";
-
 export interface TeddyExtrasPremium {
   teddyName: string;
-  furColor: TeddyFur;
-  eyeStyle: TeddyEyes;
-  pawInitial: string;
-  accessory: TeddyAccessory;
   parcelNote: string;
-  heartWhisper: string;
   firstWords: string;
-  squeezeLines: string[];
-  bedtimeLine: string;
-  sleepOver: "snow" | "rain" | "stars";
+  birthPlace: string;
+  temperament: string;
+  careLines: string[];
+  signOff: string;
   [k: string]: unknown;
 }
 
+// Two quiet sticker spots: this page is carried by the bear, their photos and type. The ids (and their GIFs on
+// the CDN) are v1's, so nothing needs re-uploading.
 const GIFS: GifSlot[] = [
-  { id: "pt1-parcel", label: "Parcel", moment: "The unfinished teddy on the workbench", file: "pt1-parcel.gif", emoji: "📦", anim: "wiggle" },
-  { id: "pt2-heart", label: "Heart", moment: "After the kiss on the heart", file: "pt2-heart.gif", emoji: "❤️", anim: "bounce" },
-  { id: "pt3-alive", label: "Alive", moment: "The teddy wakes up (beside the speech bubble)", file: "pt3-alive.gif", emoji: "🧸", anim: "wiggle" },
-  { id: "pt4-letter", label: "Letter", moment: "End of the torchlight letter", file: "pt4-letter.gif", emoji: "🔦", anim: "float" },
-  { id: "pt5-found", label: "Found", moment: "Hide-and-seek, the last round found", file: "pt5-found.gif", emoji: "🙈", anim: "bounce" },
-  { id: "pt6-sleep", label: "Sleep", moment: "Tucked in, the ending", file: "pt6-sleep.gif", emoji: "😴", anim: "pulse" },
+  { id: "pt3-alive", label: "Hello", moment: "Beside the teddy when they meet him", file: "pt3-alive.gif", emoji: "🧸", anim: "wiggle" },
+  { id: "pt6-sleep", label: "Keepsake", moment: "On the corner of the signed certificate", file: "pt6-sleep.gif", emoji: "😴", anim: "pulse" },
 ];
 
-/** Soft, happy, bedtime-cosy picks — official uploads, checked against YouTube oEmbed 2026-10-08. */
-const SONGS: readonly SongSuggestion[] = [
+/** research §E (oEmbed 200 + playableInEmbed, 2026-10-09). The first one is the demo song. */
+export const PAPERS_SONGS: readonly SongSuggestion[] = [
+  { id: "AWGqoCNbsvM", title: "Bubbly", artist: "Colbie Caillat" },
   { id: "EkHTsc9PU2A", title: "I'm Yours", artist: "Jason Mraz" },
-  { id: "acvIVA9-FMQ", title: "Lucky", artist: "Jason Mraz ft. Colbie Caillat" },
-  { id: "kVpv8-5XWOI", title: "Hey, Soul Sister", artist: "Train" },
-  { id: "uJ_1HMAGb4k", title: "Riptide", artist: "Vance Joy" },
-  { id: "ZbZSe6N_BXs", title: "Happy", artist: "Pharrell Williams" },
-  { id: "fLexgOxsZu0", title: "The Lazy Song", artist: "Bruno Mars" },
-  { id: "ElZfdU54Cp8", title: "Apna Bana Le", artist: "Arijit Singh · Bhediya" },
-  { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
+  { id: "Ov0YGGSY6gY", title: "Kaun Tujhe", artist: "Palak Muchhal · M.S. Dhoni" },
+  { id: "ilNt2bikxDI", title: "Jo Tum Mere Ho", artist: "Anuv Jain" },
+];
+/** The demo song starts on its most-replayed phrase; the drop lands back on it as the seal presses. */
+const DEMO_START = 29;
+
+const A = "https://cdn.subhsandesh.in/gifts-media/assets";
+const photo = (path: string, caption: string, cropY = 45): LovePhoto => ({ url: `${A}/${path}.webp`, caption, note: "", cropX: 50, cropY, scale: 100 });
+const DEMO_PHOTOS: LovePhoto[] = [
+  photo("couple1", "the evening you said yes to coffee", 55),
+  photo("couple2", "our first proper date", 40),
+  photo("couple3", "Shimla, and the cold you blamed on me", 60),
+  photo("couple4", "the night we counted stars", 55),
+  photo("Aniversary/aniversary", "one whole year of us"),
+  photo("hero-bg", "us, always", 40),
+];
+
+export const DEFAULT_CARE_LINES = [
+  "Hug daily. Twice on Mondays.",
+  "Not to be left alone on long-distance nights.",
+  "Responds to forehead kisses.",
+  "If you're sad, squeeze firmly. Repeat as needed.",
+  "Do not lend to anyone. He's very particular, like me.",
 ];
 
 const base = premiumDay<TeddyExtrasPremium>(teddyDay, {
   slug: "happy-teddy-day-premium",
-  title: "Made With a Heart",
+  title: "Adoption Papers",
   gifSlots: GIFS,
+  demoSong: { id: PAPERS_SONGS[0].id, start: DEMO_START },
   demoPremium: {
-    voiceCaption: "Press his paw any time. That's me, saying goodnight.",
-    psLetter: "Open only on a night you can't sleep.\n\nSqueeze him twice. The second one is from me. I asked him to keep the left side of the bed warm until I'm back.",
+    songDropAt: DEMO_START,
+    voiceCaption: "Hold him while you play this. It's the closest I can get tonight.",
+    psLetter:
+      "Open only on a night you can't sleep.\n\nSqueeze him twice. The second one is from me. I asked him to keep the left side of the bed warm until I'm back.",
   },
   copy: {
-    letterPlaceholder: "What you'd whisper to them under a blanket fort at 1 a.m. — the soft stuff, the silly stuff…",
-    letterHint: "They read it by torchlight in a blanket fort, with the teddy holding the torch.",
-    photosHint: "Your photos float across the ceiling like moons from a star-lamp.",
-    captionHint: "a tiny caption for the moon — e.g. our first trip ✨",
-    endLinePlaceholder: "A piece of me stays with you. Goodnight.",
-    endLineHint: "The last line, after the tuck-in.",
-    sheetTitle: "Make their teddy 🧸",
-    sheetSub: "They stuff it, give it your heart, sew it shut and it wakes up. Everything is pre-filled — make it yours.",
-    extrasTitle: "Your teddy",
-    extrasSub: "Its name, its look, what its heart whispers and what it says",
-    publishing: "Wrapping the parcel…",
-    storyTitle: "Let's make a teddy with your heart inside 🧸",
-    replyText: "You sent me a teddy with your heart inside 🥹🧸",
+    letterPlaceholder: "What he should know about them, and what you'd say if you could tuck them in tonight…",
+    letterHint: "Folded in three and tucked into the teddy's file. It unfolds just before they sign the adoption papers.",
+    photosHint: "Your photos are clipped into his file as 'the family' (the first six). Captions print under each one.",
+    captionHint: "caption, e.g. Shimla, and the cold you blamed on me",
+    endLinePlaceholder: "He's yours now. So am I.",
+    endLineHint: "The last line, over the signed certificate.",
+    sheetTitle: "Write their teddy's adoption papers 🧸",
+    sheetSub: "A real teddy arrives with a file: your photos, his care instructions, your letter. They sign the certificate and the seal presses on your song. Everything is pre-filled: make it yours.",
+    extrasTitle: "The teddy's file",
+    extrasSub: "His name, where he's from, his temperament and how to look after him",
+    publishing: "Filing the papers…",
+    storyTitle: "Let's write their teddy's adoption papers 🧸",
+    replyText: "I signed the adoption papers 🥹🧸",
   },
-  share: { title: "A parcel for you: 1 teddy (unfinished) 🧸", accent: "#D9628F" },
+  share: { title: "A parcel for you. Fragile: contains one (1) hug 🧸", accent: "#C58B4B" },
 });
 
 export const teddyDayPremium: DayConfig<TeddyExtrasPremium> = {
   ...base,
-  melody: "lantern",
-  photoAspect: 1,
+  photoAspect: 0.8,
+  music: { audioOnly: true, suggestions: PAPERS_SONGS, suggestionsNote: "sweet & cosy · tap to use", demoStart: DEMO_START },
   theme: {
-    ...teddyDay.theme,
-    bg: "radial-gradient(120% 90% at 50% 0%, #3A3360 0%, #222748 55%, #141729 100%)",
-    base: "#1B2240",
-    inkSoft: "#D6D3F0",
-    particles: ["🧸", "⭐", "💗", "✨"],
+    bg: "radial-gradient(90% 60% at 50% 35%, #3A2418 0%, #1E120C 55%, #140B07 100%)",
+    base: "#140B07",
+    paper: "#F5EEE2",
+    glass: "rgba(245,238,226,0.08)",
+    ink: "#F5EEE2",
+    inkSoft: "#E6D6C2",
+    paperInk: "#3A2418",
+    accent: "#C58B4B",
+    accentDeep: "#8A5E22",
+    accentInk: "#1E120C",
+    soft: "#3A2418",
+    edge: "rgba(245,238,226,0.18)",
+    gold: "#E9C08A",
+    dark: true,
+    particles: ["🧸", "🤎", "✨"],
+    confetti: ["#B23A3A", "#C58B4B", "#EFE6D8", "#BFD3E0", "#E9C08A"],
   },
-  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "cosy & sweet · tap to use" },
   extras: [
-    { key: "teddyName", kind: "text", max: 20, label: "Teddy's name", placeholder: "an inside joke works best — e.g. Golu", suggestions: ["Golu", "Mishti", "Bhalu", "Chiku"] },
+    { key: "teddyName", kind: "text", max: 20, label: "Teddy's name", placeholder: "an inside joke works best, e.g. Golu", suggestions: ["Golu", "Mishti", "Bhalu", "Chiku"], hint: "Printed on his woven tag and on the adoption certificate." },
     {
-      key: "furColor", kind: "enum", label: "Fur colour", display: "swatches", default: "honey",
-      options: [
-        { value: "honey", label: "Honey", swatch: "#E8B07A" },
-        { value: "cocoa", label: "Cocoa", swatch: "#8A5A3C" },
-        { value: "pink", label: "Pink", swatch: "#FFC8DD" },
-        { value: "white", label: "Snow", swatch: "#FFF8F0" },
-        { value: "lilac", label: "Lilac", swatch: "#CDB4DB" },
-        { value: "mint", label: "Mint", swatch: "#A8D8C0" },
-      ],
+      key: "parcelNote", kind: "text", max: 60, label: "The parcel tag",
+      placeholder: "the line on the tag they see first",
+      hint: "The first thing they read, on a manila tag, before they untie the string.",
+      suggestions: ["Contains one (1) hug.", "Warning: may cause smiling.", "Return to sender: never."],
     },
+    { key: "firstWords", kind: "text", max: 50, label: "His first words", placeholder: "e.g. Hi Riya! Aryan sent me. I'm yours now.", hint: "What he says when they squeeze him the first time." },
+    { key: "birthPlace", kind: "text", max: 40, label: "Place of birth", placeholder: "e.g. Aryan's hoodie pocket, Pune", hint: "On the certificate. Somewhere that's yours." },
+    { key: "temperament", kind: "text", max: 40, label: "Temperament", placeholder: "e.g. Clingy. Extremely huggable.", hint: "On the certificate, like an official record." },
     {
-      key: "eyeStyle", kind: "enum", label: "Eyes", display: "chips", default: "sparkle",
-      options: [
-        { value: "button", label: "Button", emoji: "⚫" },
-        { value: "sparkle", label: "Sparkly", emoji: "✨" },
-        { value: "sleepy", label: "Sleepy", emoji: "😌" },
-        { value: "heart", label: "Hearts", emoji: "😍" },
-      ],
+      key: "careLines", kind: "list", maxItems: 5, minItems: 3, itemMax: 70, label: "Care instructions",
+      hint: "Each one is a satin care label they flip over. Love notes disguised as instructions.",
+      itemPlaceholder: ["e.g. Hug daily. Twice on Mondays.", "e.g. Responds to forehead kisses.", "e.g. Not to be left alone on long-distance nights."],
+      addLabel: "+ add a label",
     },
-    { key: "pawInitial", kind: "text", max: 2, label: "Initial stitched on its paw (yours)", placeholder: "your initial — e.g. A" },
-    {
-      key: "accessory", kind: "enum", label: "One accessory", display: "chips", default: "scarf",
-      options: [
-        { value: "none", label: "None", emoji: "🧸" },
-        { value: "bow", label: "Bow", emoji: "🎀" },
-        { value: "scarf", label: "Scarf", emoji: "🧣" },
-        { value: "bowtie", label: "Bow tie", emoji: "👔" },
-        { value: "flower", label: "Flower", emoji: "🌼" },
-        { value: "sweater", label: "Heart sweater", emoji: "🧶" },
-        { value: "glasses", label: "Glasses", emoji: "👓" },
-      ],
-    },
-    {
-      key: "parcelNote", kind: "text", max: 80, label: "Tag on the unfinished teddy",
-      placeholder: "the note pinned to the teddy before it has a heart",
-      suggestions: ["He's not finished yet. He needs you to give him a heart."],
-    },
-    {
-      key: "heartWhisper", kind: "text", max: 90, min: 6, label: "What the heart whispers in their ear",
-      hint: "They hold your fabric heart to their ear before sewing it in. Make it the softest line on the page.",
-      placeholder: "the one thing you'd say if you could whisper it right now",
-    },
-    { key: "firstWords", kind: "text", max: 50, label: "Teddy's first words when it wakes up", placeholder: "e.g. Hi! Aryan sent me. I'm yours now." },
-    {
-      key: "squeezeLines", kind: "list", maxItems: 5, minItems: 3, itemMax: 70, label: "What the teddy says",
-      hint: "One pops up each time they find it in hide-and-seek or squish it at bedtime.",
-      itemPlaceholder: ["a cheeky line about you two", "something you'd want them to hear at night", "a silly reminder in your voice"],
-      addLabel: "+ add a line",
-    },
-    { key: "bedtimeLine", kind: "text", max: 70, label: "The goodnight whisper", placeholder: "e.g. Goodnight, Riya. Aryan is just a dream away." },
-    {
-      key: "sleepOver", kind: "enum", label: "Outside the window", display: "chips", default: "rain",
-      options: [
-        { value: "rain", label: "Rain", emoji: "🌧️" },
-        { value: "snow", label: "Snow", emoji: "❄️" },
-        { value: "stars", label: "Stars", emoji: "✨" },
-      ],
-    },
+    { key: "signOff", kind: "text", max: 40, label: "Sign-off", placeholder: "how you end every text to them, e.g. Always yours, Aryan" },
   ],
   demo: {
     ...base.demo,
-    endLine: "A piece of me stays with you. Goodnight 🧸",
+    recipientName: "Riya",
+    senderName: "Aryan",
+    photos: DEMO_PHOTOS,
+    letter:
+      "Riya,\n\nI know you said you're too old for teddy bears. I also know you still sleep with the sleeve of my hoodie, so I'm not taking that seriously.\n\nGolu is for the nights I can't be there. The long ones, when the call drops at 1 a.m. and you pretend you're not sad. He's been briefed. He knows you like the left side of the bed, that you need exactly one more hug than you ask for, and that you pretend to hate forehead kisses.\n\nHe isn't me. But he's soft, he's patient, and he will never once steal the blanket, which already makes him better than me at one thing.\n\nTake care of him. He'll take care of you. And when I'm back, he'll have to share.",
+    endLine: "He's yours now. So am I.",
     extras: {
       teddyName: "Golu",
-      furColor: "honey",
-      eyeStyle: "sparkle",
-      pawInitial: "A",
-      accessory: "scarf",
-      parcelNote: "He's not finished yet. He needs you to give him a heart.",
-      heartWhisper: "Whenever you hold him, I'm holding you back.",
-      firstWords: "Hi! Aryan sent me. I'm yours now.",
-      squeezeLines: [
-        "Found me! Now go find Aryan, he misses you.",
-        "I'm on duty for all bad dreams tonight.",
-        "Aryan says drink water. I say hug me.",
-        "Ek aur squeeze? Theek hai.",
-        "I smell like his hoodie. Don't ask.",
-      ],
-      bedtimeLine: "Goodnight, Riya. Aryan is just a dream away.",
-      sleepOver: "rain",
+      parcelNote: "Contains one (1) hug.",
+      firstWords: "Hi Riya! Aryan sent me. I'm yours now.",
+      birthPlace: "Aryan's hoodie pocket, Pune",
+      temperament: "Clingy. Extremely huggable.",
+      careLines: DEFAULT_CARE_LINES,
+      signOff: "Always yours, Aryan",
     },
   },
 };
