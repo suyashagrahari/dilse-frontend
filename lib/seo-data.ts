@@ -2589,55 +2589,54 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   },
 
   "happy-propose-day-premium": {
-    title: "Propose Day Movie Website for Girlfriend",
+    title: "Cute Propose Day Website for Girlfriend",
     description:
-      "Propose with a film of your love story: a premiere ticket, three acts cut from your photos, a director's commentary, and your question as the final title card.",
+      "A cute proposal website: she knocks on a little door, swipes your story, finds the ring in a gift box, and says yes as your song's chorus lands.",
     category: "Valentine",
     emoji: "💍",
     keywords: [
-      "love story movie proposal website",
+      "cute proposal website for girlfriend",
       "propose day website for girlfriend",
       "propose day website for boyfriend",
-      "cinematic proposal website",
-      "our love story as a movie",
-      "online proposal idea with our song",
+      "interactive proposal website",
+      "will you be mine website",
       "will you marry me website",
+      "proposal website with photos and song",
+      "cute online proposal idea",
       "long distance proposal idea",
-      "movie premiere proposal",
-      "premium propose day surprise",
       "proposal website with voice note",
+      "find the ring proposal game",
+      "premium propose day surprise",
       "propose day 2027",
       "8 february propose day",
       "propose day message for girlfriend",
-      "proposal with photos and music",
       "creative way to propose online",
     ],
     faqs: [
       {
-        question: "What happens when they open The Premiere?",
+        question: "What happens when they open The Little Proposal?",
         answer:
-          "They are handed a premiere ticket with their name on it, and taking their seat starts your song. A projector counts down 3, 2, 1, the title card presents your film starring them, then three acts play out from your photos: they turn a lens ring to bring the first still into focus, hold for slow motion as colour floods into the second, and swipe through a trailer of what comes next. They hear your director's commentary, read your letter as the last page of the script, and then your question appears as the final title card. On yes the frame opens to full screen as your song's chorus lands, the credits roll, and the lobby holds a poster to keep.",
+          "They knock on a little pink door, which starts your song, and a shy panda opens it with your nervous hello. They swipe through polaroid story cards of how you started, tap open a four-panel comic of you rehearsing the proposal (badly), and pick from three gift boxes until the ring turns up. Then your letter arrives in a heart-sealed envelope, your voice note plays, and your question appears above a ring box. On yes the box pops open on your song's chorus, the ring flies onto a heart-shaped photo of you two, a wall of celebrating stickers pops in, and they sign an \"Officially Taken\" certificate with a tap of their ring finger.",
       },
       {
         question: "Can they say no?",
         answer:
-          "Not really. The No button dodges away with your lines a few times, then the screen says No was never in the script and offers the director's cut: Yes.",
+          "Not really. The No button runs away and shrinks, saying your lines as it goes (\"Let me think 🤔\", \"Are you sure?\"), and a pleading sticker pops up beside it. After a few tries it gives up and turns into another Yes.",
       },
       ...premiumFaqs({
         day: "Propose Day",
         twin: "Propose Day",
-        keepsake: "film poster of your premiere",
-        voiceAt: "as the director's commentary",
+        keepsake: "\"Officially Taken\" certificate",
+        voiceAt: "just before the question",
         yesEmail: true,
       }),
     ],
     howTo: premiumHowTo({
-      name: "How to Make a Love Story Movie Proposal Website",
-      description: "Cut your love story into a three-act film from your photos, end it on your question as the final title card, and send the link.",
-      write: { name: "Write the Film", text: "Name your film and its tagline, write the three acts (how it started, the moment you knew, what's coming), the trailer cards, the question, the end credits and your letter as the script, or let the AI write it from a few lines about the two of you." },
+      name: "How to Make a Cute Proposal Website",
+      description: "Tell your little love story with photos, hide the ring in a gift box, ask your question and send the link.",
+      write: { name: "Write the Proposal", text: "Write your nervous hello, three story cards of how you started, the four rehearsal comic panels, the notes in the gift boxes, the question, what No says as it runs, and your letter, or let the AI write it from a few lines about the two of you." },
     }),
   },
-
   "happy-chocolate-day-premium": {
     title: "Premium Chocolate Day Website for Girlfriend",
     description:
