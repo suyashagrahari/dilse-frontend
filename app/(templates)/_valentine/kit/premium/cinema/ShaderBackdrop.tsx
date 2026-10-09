@@ -216,8 +216,10 @@ export default function ShaderBackdrop({
   const cols = colors ?? BACKDROP_COLORS[preset];
   const colorKey = cols.join("|");
   // Uniforms that may change without rebuilding the program.
-  const live = useRef({ intensity, speed });
-  useEffect(() => { live.current = { intensity, speed }; }, [intensity, speed]);
+  const live = useRef({ intensity, speed, colors: colorKey });
+  // Reduced motion draws one still frame; a new palette needs one more.
+  const redraw = useRef<(() => void) | null>(null);
+  useEffect(() => { live.current = { intensity, speed, colors: colorKey }; redraw.current?.(); }, [intensity, speed, colorKey]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -252,10 +254,16 @@ export default function ShaderBackdrop({
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const u = (n: string) => gl.getUniformLocation(prog, n);
     const uR = u("R"), uT = u("T"), uI = u("I"), uP = u("P");
-    const c = colorKey.split("|").map(hexToRgb01);
-    gl.uniform3fv(u("C0"), c[0]);
-    gl.uniform3fv(u("C1"), c[1]);
-    gl.uniform3fv(u("C2"), c[2]);
+    // Colours change in place (a Wrapped-style page re-tints on every slide):
+    // the uniforms ease to the new palette over ~0.6s instead of the context
+    // being rebuilt and the shader recompiled.
+    const uC = [u("C0"), u("C1"), u("C2")];
+    let target = live.current.colors;
+    let to = target.split("|").map(hexToRgb01);
+    const cur = to.map((v) => [...v]);
+    let easing = false;
+    const setColors = () => uC.forEach((l, i) => gl.uniform3fv(l, cur[i]));
+    setColors();
 
     const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
     const frameMs = touch ? 1000 / 31 : 0;
@@ -282,6 +290,14 @@ export default function ShaderBackdrop({
       t = (t + dt * live.current.speed) % 3600;
       tilt.x += (tilt.tx - tilt.x) * Math.min(1, dt * 3);
       tilt.y += (tilt.ty - tilt.y) * Math.min(1, dt * 3);
+      if (live.current.colors !== target) { target = live.current.colors; to = target.split("|").map(hexToRgb01); easing = true; }
+      if (easing) {
+        const k = reduce ? 1 : Math.min(1, dt * 6);
+        let d = 0;
+        cur.forEach((v, i) => v.forEach((x, j) => { v[j] = x + (to[i][j] - x) * k; d += Math.abs(to[i][j] - v[j]); }));
+        if (d < 0.002) { cur.forEach((v, i) => v.splice(0, 3, ...to[i])); easing = false; }
+        setColors();
+      }
       gl.uniform1f(uT, t);
       gl.uniform1f(uI, live.current.intensity);
       gl.uniform2f(uP, tilt.x, tilt.y);
@@ -304,7 +320,7 @@ export default function ShaderBackdrop({
       if (reduce) return;
       if (!raf && alive && onScreen && visible && !lost) { last = performance.now(); raf = requestAnimationFrame(loop); }
     };
-    if (reduce) draw(performance.now());
+    if (reduce) { draw(performance.now()); redraw.current = () => { if (alive && !lost) draw(performance.now()); }; }
     else kick();
 
     const ro = new ResizeObserver(() => { resize(); if (reduce) draw(performance.now()); });
@@ -321,15 +337,15 @@ export default function ShaderBackdrop({
       document.removeEventListener("visibilitychange", onVis);
       canvas.removeEventListener("webglcontextlost", onLost);
     });
-    return () => { release(); setReady(false); };
-  }, [preset, colorKey, parallax, reduce, scale]);
+    return () => { redraw.current = null; release(); setReady(false); };
+  }, [preset, parallax, reduce, scale]);
 
   const pos: CSSProperties = { position: fixed ? "fixed" : "absolute", inset: 0, width: "100%", height: "100%" };
   return (
     <div aria-hidden className={className} style={{ ...pos, zIndex: z, pointerEvents: "none", background: backdropGradient(preset, cols), ...style }}>
       <canvas
         // A fresh canvas per program: a lost context can't be re-acquired on the same element.
-        key={`${preset}|${colorKey}|${scale}|${parallax}|${reduce}`}
+        key={`${preset}|${scale}|${parallax}|${reduce}`}
         ref={ref}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", opacity: ready ? 1 : 0, transition: "opacity .9s ease" }}
       />

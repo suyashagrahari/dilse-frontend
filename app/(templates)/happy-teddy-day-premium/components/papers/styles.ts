@@ -324,10 +324,7 @@ export const PAPERS_CSS = `
 .ap-endKit p { font-family: var(--ap-sans), sans-serif !important; }
 .ap-credit { margin: 6px 0 0; text-align: center; font: 700 10px/1 var(--ap-sans), sans-serif; letter-spacing: .3em; text-transform: uppercase; color: rgba(245,238,226,.42); }
 
-/* The kit's "tap to hear the song" chip sits bottom-centre from 768 up, on top of every CTA; on this page it moves
-   to the free top-centre (top-left is the mute chip, top-right the editor bar). KIT-REQUESTS.md. */
 @media (min-width: 768px) {
-  .pm-blockedChip { bottom: auto !important; top: calc(env(safe-area-inset-top, 0px) + 14px); }
   .ap-scene { padding-left: 40px; padding-right: 40px; }
   .ap-letter { padding: 54px 60px 48px; }
   .ap-letterP { font-size: 20.5px; }
