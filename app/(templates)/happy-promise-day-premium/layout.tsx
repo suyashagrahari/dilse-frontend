@@ -4,7 +4,7 @@ import { BreadcrumbJsonLd, TemplateJsonLd, FAQJsonLd, HowToJsonLd, TemplateAppJs
 
 // Title, description, keywords, FAQs and the HowTo live in lib/seo-data.ts
 // ("happy-promise-day-premium"), which also puts the page in the sitemap, /llms.txt and the
-// agent catalog. The search title targets the premium/cinematic intent; the
+// agent catalog. The search title targets the cute/interactive intent; the
 // $2 twin keeps the plain "<day> surprise website" one. The og:image is
 // ./opengraph-image.tsx; images: undefined drops the site default so it wins.
 const SLUG = "happy-promise-day-premium";
@@ -12,8 +12,8 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `✍️ A sealed promise, to be opened by you only`;
-const SOCIAL_DESCRIPTION = `Break the seal with the sound on ✦`;
+const SOCIAL_TITLE = `🤙 Pinky promise? You've been invited to a very small club`;
+const SOCIAL_DESCRIPTION = `Two members. One jar of promises. A love lock that clicks shut on your song. Sound on, then hook the pinky 🧡`;
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {

@@ -1,94 +1,94 @@
 "use client";
 
-// ─── Hug Day ✦ Premium: "The Twenty-Second Hug" ──────────────────────────────────────────────────────────────────
+// ─── Hug Day ✦ Premium: "The Hug Passport" (v3) ──────────────────────────────────────────────────────────────
 //
-// research.md §D.6. The page starts in black and white and ends in colour; the hug is what turns it.
-//   gate    a thumbprint drawn in warm light, a heartbeat ring breathing out of it. The tap starts the song.
-//   come    I   "Come" · "here." · "{name}." One word per screen, each landing with a felt thump.
-//   arms    II  Arms open: two black-and-white prints at the edges, the kilometres between them printed huge.
-//               Drag them together; at zero they squeeze into each other.
-//   hold    III THE MONEY MOMENT. Thumb anywhere on their photo and hold for twenty seconds: colour blooms out from
-//               under the thumb, a heartbeat slows to the sender's, their lines fade in, the song swells; letting go
-//               pauses it ("Don't let go yet."). drop() fires so the chorus lands with the last of the colour.
-//   feels   IV  What your hugs feel like: four lines, each over a print (now in colour). Swipe each away.
-//   letter  V   A folded note, still warm. Tap to unfold; the paragraphs ink in.
-//   voice   VI  In my voice: the voice note over a graded photo (their words, large, without a recording).
-//   end         "Hug owed: 1. Redeem in person." A coupon to tear off and send back; keepsake image, P.S., reply.
-// One ShaderBackdrop (cocoa candlelight → sand bokeh after the hug), one particle layer, grain + vignette always.
+// Collect every kind of hug. research §D6 "Jhappi Passport" (.template-factory/premium-v3/research.md). Bright Peach
+// Sorbet + mint palette, Fredoka + Caveat (+ Patrick Hand for the letter), the $2 Hug Day's hand-drawn huggers, cute
+// GIF stickers in every scene, and a stamp (thunk + hearts + haptic) at the end of every hug. Short gesture hugs with
+// jelly physics, never a long timed hold (hold-my-hand already ships that).
+//
+//  gate      her Hug Passport and a bear with open arms ("Come here, you."); the tap starts the song and the bear
+//            runs at the screen
+//  bear      stamp 1: pinch the two of them together → a squash-and-stretch bear hug → stamp + photo souvenir
+//  back      stamp 2: drag him round behind her → a back hug (chai o'clock)
+//  twirl     stamp 3: draw a circle round them → they spin and lift off
+//  pat       stamp 4: pat his head three times under a rain cloud → sun, rainbow, a hug
+//  far       stamp 5: drag two phones together across the distance (km counts down) → they meet, her photo in a heart
+//  letter    hug mail: an airmail envelope with her name; tap → his letter types itself
+//  voice     a hug you can hear: a plush that purrs while his voice note plays (or says his caption)
+//  coupons   hug coupons she can REDEEM (stamped, and she can tell him on WhatsApp)
+//  final     the last stamp: his question, Yes / a pleading runaway No → drop(): THE money moment, the Forever stamp
+//            slams down on the chorus and the passport bursts into a wall of hugging couples around her photo
+//  passport  the keepsake: her passport (holder page + every stamp), save as a wallpaper, the sealed P.S., send a
+//            hug back, replay
+//
+// Scenes without content are skipped (no letter, no voice + no caption).
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { DayRoot, burst, useReducedMotion } from "../../_valentine/kit";
+import { PremiumGate, PremiumRoot, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
-import { DayRoot, Sticker } from "../../_valentine/kit";
-import {
-  FilmGrain,
-  GlowParticles,
-  LightLeak,
-  PremiumGate,
-  PremiumRoot,
-  SceneTransition,
-  ShaderBackdrop,
-  Vignette,
-  requestTiltPermission,
-  usePremium,
-  type TransitionVariant,
-} from "../../_valentine/kit/premium";
-import type { ExperienceProps, GifSlot } from "../../_valentine/types";
-import ArmsScene from "./hold/ArmsScene";
-import ComeScene from "./hold/ComeScene";
-import { registerHugCues } from "./hold/cues";
-import EndingScene from "./hold/EndingScene";
-import FeelsScene from "./hold/FeelsScene";
-import { HUG_FONT_VARS } from "./hold/fonts";
-import { GATE_BG, GATE_CSS, Thumbprint } from "./hold/Gate";
-import HoldScene from "./hold/HoldScene";
-import LetterScene from "./hold/LetterScene";
-import { readHug } from "./hold/model";
-import { UI_CSS } from "./hold/ui";
-import VoiceScene from "./hold/VoiceScene";
-
-registerHugCues();
+import type { ExperienceProps } from "../../_valentine/types";
+import { PASSPORT_FONT_VARS } from "./passport/fonts";
+import { PASSPORT_CSS } from "./passport/styles";
+import { registerPassportCues } from "./passport/cues";
+import { readPassport, type StampKind } from "./passport/util";
+import { PassportCover, Slot } from "./passport/art";
+import { PassportContext, type PassportCtx } from "./passport/ui";
+import { HugScene } from "./passport/HugScene";
+import { FarScene } from "./passport/FarScene";
+import { LetterScene } from "./passport/LetterScene";
+import { VoiceScene } from "./passport/VoiceScene";
+import { CouponScene } from "./passport/CouponScene";
+import { FinalScene } from "./passport/FinalScene";
+import { PassportScene } from "./passport/PassportScene";
 
 const SLUG = "happy-hug-day-premium" as const;
-let tiltAsked = false;
-const askTilt = () => {
-  if (tiltAsked) return;
-  tiltAsked = true;
-  void requestTiltPermission();
-};
-type SceneId = "gate" | "come" | "arms" | "hold" | "feels" | "letter" | "voice" | "end";
-const CUT: Record<SceneId, TransitionVariant> = { gate: "iris", come: "iris", arms: "iris", hold: "flash", feels: "iris", letter: "fold", voice: "iris", end: "flash" };
-const SKIPPABLE: SceneId[] = ["come", "feels", "letter", "voice"];
-/** After the hug the page is in colour, on sand. */
-const LIGHT: SceneId[] = ["feels", "letter", "end"];
+type SceneId = "gate" | "bear" | "back" | "twirl" | "pat" | "far" | "letter" | "voice" | "coupons" | "final" | "passport";
 
-function TwentySecondHug({ data, mode, react }: ExperienceProps) {
+function Passport({ data, mode, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
-  const h = useMemo(() => readHug(data), [data]);
+  const reduce = useReducedMotion();
+  const g = useMemo(() => readPassport(data), [data]);
+  const [scene, setScene] = useState<SceneId>(p.opened ? "bear" : "gate");
+  const [run, setRun] = useState(0);
+  const [got, setGot] = useState<ReadonlySet<StampKind>>(() => new Set());
   const hasLetter = !!data.letter?.trim();
   const hasVoice = !!p.premium.voiceNote || !!p.premium.voiceCaption.trim();
+
+  useEffect(registerPassportCues, []);
+
   const order = useMemo(() => {
-    const o: SceneId[] = ["come", "arms", "hold", "feels"];
+    const o: SceneId[] = ["bear", "back", "twirl", "pat", "far"];
     if (hasLetter) o.push("letter");
     if (hasVoice) o.push("voice");
-    o.push("end");
+    o.push("coupons", "final", "passport");
     return o;
   }, [hasLetter, hasVoice]);
-  const [scene, setScene] = useState<SceneId>(p.opened ? "come" : "gate");
-  const [run, setRun] = useState(0);
-  const [at, setAt] = useState("");
-  const next = (from: SceneId) => setScene(order[Math.min(order.length - 1, order.indexOf(from) + 1)] ?? "end");
-  const light = LIGHT.includes(scene);
 
-  // The song sits lower under the letter; the hold scene runs its own swell.
+  const next = useCallback(
+    (from: SceneId) => {
+      const i = order.indexOf(from);
+      setScene(order[Math.min(order.length - 1, i + 1)]);
+    },
+    [order],
+  );
+
+  useEffect(() => {
+    if (scene !== "gate" && typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "auto" });
+  }, [scene]);
+
+  // The song sits a little lower under the letter (where the platform lets us fade it).
   const musicRef = useRef(p.music);
   useEffect(() => {
     musicRef.current = p.music;
   });
   useEffect(() => {
     const m = musicRef.current;
-    if (!m?.canFade || scene === "gate" || scene === "hold") return;
-    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
+    if (!m?.canFade || scene === "gate") return;
+    m.fadeTo(scene === "letter" ? 0.6 : 1, 1200);
   }, [scene]);
 
   const reactRef = useRef(react);
@@ -96,122 +96,112 @@ function TwentySecondHug({ data, mode, react }: ExperienceProps) {
     reactRef.current = react;
   });
   useEffect(() => {
-    if (scene === "end") reactRef.current("completed");
+    if (scene === "passport") reactRef.current("completed");
   }, [scene]);
 
-  // Only the sender's own GIF shows: the emoji stand-in would be decoration on a page carried by photos.
-  const sticker = (id: string, size: number): ReactNode => {
-    const s: GifSlot | undefined = day.gifSlots.find((g) => g.id === id);
-    const v = (data.gifs?.[id] ?? "").trim();
-    return s && /^https:\/\//i.test(v) ? <Sticker slug={day.slug} slot={s} value={v} size={size} alt="" /> : null;
-  };
+  const stamp = useCallback((k: StampKind) => {
+    setGot((s) => {
+      if (s.has(k)) return s;
+      const n = new Set(s);
+      n.add(k);
+      return n;
+    });
+  }, []);
+  const date = `${day.date} ${String(day.month).slice(0, 3).toUpperCase()}`;
+  const ctx: PassportCtx = useMemo(() => ({ g, day, gifs: data.gifs, got, stamp, date }), [g, day, data.gifs, got, stamp, date]);
 
   const replay = () => {
     setRun((r) => r + 1);
-    setAt("");
-    setScene("arms");
+    setScene("bear");
   };
 
-  const idx = order.indexOf(scene);
-  const nextLabel = (from: SceneId) => {
-    const n = order[order.indexOf(from) + 1];
-    return n === "letter" ? "Read my letter" : n === "voice" ? "Hear me say it" : "One last thing";
+  const render = (s: SceneId) => {
+    switch (s) {
+      case "gate":
+        return null;
+      case "bear":
+      case "back":
+      case "twirl":
+      case "pat":
+        return <HugScene kind={s} onDone={() => next(s)} />;
+      case "far":
+        return <FarScene hasLetter={hasLetter} onDone={() => next("far")} />;
+      case "letter":
+        return <LetterScene letter={data.letter} hasMore={hasVoice} onDone={() => next("letter")} />;
+      case "voice":
+        return <VoiceScene onDone={() => next("voice")} />;
+      case "coupons":
+        return <CouponScene onDone={() => next("coupons")} />;
+      case "final":
+        return <FinalScene onAnswered={(d) => react("answered", { noDodges: d })} onDone={() => next("final")} />;
+      case "passport":
+        return <PassportScene data={data} mode={mode} onReplay={replay} />;
+    }
   };
-
-  let body: ReactNode = null;
-  switch (scene) {
-    case "come":
-      body = <ComeScene h={h} onNext={() => next("come")} />;
-      break;
-    case "arms":
-      body = <ArmsScene h={h} onNext={() => next("arms")} />;
-      break;
-    case "hold":
-      body = <HoldScene h={h} sticker={sticker("ph3-held", 64)} onDelivered={setAt} onNext={() => next("hold")} />;
-      break;
-    case "feels":
-      body = <FeelsScene h={h} nextLabel={nextLabel("feels")} onNext={() => next("feels")} />;
-      break;
-    case "letter":
-      body = <LetterScene h={h} letter={data.letter} nextLabel={nextLabel("letter")} onNext={() => next("letter")} />;
-      break;
-    case "voice":
-      body = <VoiceScene h={h} onNext={() => next("voice")} />;
-      break;
-    case "end":
-      body = (
-        <EndingScene
-          h={h}
-          endLine={data.endLine || ""}
-          dateLine={`Hug Day · ${day.date} ${day.month}`}
-          deliveredAt={at}
-          mode={mode}
-          replyText={day.copy.replyText}
-          sticker={sticker("ph6-back", 60)}
-          onReplay={replay}
-        />
-      );
-      break;
-  }
 
   return (
-    <>
-      {/* First, so each scene's own <style> (rendered later) wins at equal specificity. */}
-      <style>{ROOT_CSS}</style>
-      <ShaderBackdrop
-        preset={light ? "bokeh" : "candle"}
-        colors={light ? ["#BFA286", "#F2A477", "#FFF3E6"] : ["#0D0806", "#4B3426", "#F2A477"]}
-        intensity={light ? 0.55 : scene === "hold" ? 0.5 : 0.8}
-        speed={0.5}
-        parallax
-      />
-      {(scene === "come" || scene === "arms" || scene === "gate") && <GlowParticles preset="embers" colors={["#F2A477", "#FFD9BC"]} density={0.12} speed={0.45} />}
-      {/* The hug lands: warm sparks drift up over the photo (above the stage, under the grain). */}
-      {scene === "hold" && at && <GlowParticles preset="sparkles" colors={["#FFE2CC", "#F2A477", "#FFFFFF"]} density={0.32} speed={0.55} z={5} />}
-      {light && <LightLeak color="#F2A477" color2="#FFE2CC" corner="top-right" opacity={0.3} />}
-      <Vignette strength={light ? 0.42 : 0.62} color={light ? "#7A5236" : "#000"} />
-      <FilmGrain opacity={light ? 0.06 : 0.075} />
-
-      {scene === "gate" && (
-        <PremiumGate
-          art={<Thumbprint />}
-          kicker="A hug, sent to"
-          subtitle="Twenty seconds of you and me. Sound on, somewhere quiet."
-          sting="hh-breath"
-          openLabel="Open your arms"
-          className="hh-gate"
-          bg={GATE_BG}
-          ink="#FAF7F2"
-          accent="#F2A477"
-          onOpen={() => {
-            react("opened");
-            setScene("come");
-          }}
-        />
-      )}
-
-      {scene !== "gate" && (
-        <div className={`hh-chip${light ? " is-light" : ""}`} role="group" aria-label="Chapter">
-          <span className="hh-chipNo" aria-label={`Chapter ${idx + 1} of ${order.length}`}>
-            {String(idx + 1).padStart(2, "0")}
-            <i>/{String(order.length).padStart(2, "0")}</i>
-          </span>
-          {SKIPPABLE.includes(scene) && (
-            <button type="button" className="hh-chipSkip" onClick={() => next(scene)}>
-              Skip ›
-            </button>
+    <PassportContext.Provider value={ctx}>
+      <div
+        className="hp-root"
+        // The bear runs at the screen in the same tap that starts the song.
+        onClickCapture={
+          scene === "gate"
+            ? (e) => {
+                const t = e.target as HTMLElement;
+                if (t.closest(".pm-gateCta, .pm-gateArt")) burst({ kind: "hearts", origin: { x: 0.5, y: 0.45 }, emojis: ["🧡", "💗", "🤗", "✨"], count: 26, spread: 0.42 });
+              }
+            : undefined
+        }
+      >
+        <style>{PASSPORT_CSS}</style>
+        <div className="hp-bg" aria-hidden>
+          <i className="hp-blob hp-blob--a" />
+          <i className="hp-blob hp-blob--b" />
+          <i className="hp-blob hp-blob--c" />
+          {!reduce && (
+            <span className="hp-bubbles">
+              {Array.from({ length: 8 }, (_, k) => (
+                <i key={k} style={{ left: `${6 + k * 12}%`, animationDelay: `${(k * 1.7) % 9}s`, animationDuration: `${11 + (k % 3) * 3}s` }} />
+              ))}
+            </span>
           )}
         </div>
-      )}
 
-      {scene !== "gate" && (
-        <div className="hh-stage">
-          <SceneTransition sceneKey={`${scene}-${run}`} variant={CUT[scene]} flashColor="#FFE2CC" origin={scene === "feels" ? "50% 70%" : "50% 50%"}>
-            {body}
-          </SceneTransition>
-        </div>
-      )}
-    </>
+        {scene === "gate" && (
+          <PremiumGate
+            art={<PassportCover name={g.to} species={g.species} opening={g.opening} peek={<Slot day={day} gifs={data.gifs} id="hp1-run" size={96} tilt={-8} eager />} />}
+            kicker="A hug passport, issued to"
+            subtitle={<span className="hp-gateSub">{g.pet ? `${g.pet} · ` : ""}Hug Day · sound on 🎧</span>}
+            sting="chime-cascade"
+            openLabel="Come here 🤗"
+            sealText="Valid for unlimited hugs"
+            className="hp-gate"
+            bg="transparent"
+            ink="#5E3226"
+            accent="#FF8A6B"
+            openMs={reduce ? 250 : 1150}
+            onOpen={() => {
+              react("opened");
+              setScene("bear");
+            }}
+          />
+        )}
+
+        <AnimatePresence mode="wait" initial={false}>
+          {scene !== "gate" && (
+            <motion.div
+              key={`${scene}-${run}`}
+              className="hp-sceneWrap"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scaleX: 1.06, scaleY: 0.94 }}
+              animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scaleX: 1, scaleY: 1, transition: { type: "spring", stiffness: 260, damping: 18 } }}
+              exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, y: -12, scale: 0.96, transition: { duration: 0.25 } }}
+            >
+              {render(scene)}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </PassportContext.Provider>
   );
 }
 
@@ -222,30 +212,12 @@ export default function HugDayPremiumExperience(props: ExperienceProps) {
       <DayRoot
         day={day}
         data={props.data}
-        layout="full"
-        dark
-        className={`${HUG_FONT_VARS} hh-root`}
-        style={{ ["--font-vw-ui" as string]: "var(--hh-sans)", ["--vw-font-ui" as string]: "var(--hh-sans), system-ui, sans-serif", height: "100svh", overflow: "hidden" }}
+        layout="column"
+        className={PASSPORT_FONT_VARS}
+        style={{ ["--font-vw-script" as string]: "var(--hp-hand)", ["--vw-font-script" as string]: "var(--hp-hand), 'Caveat', cursive" }}
       >
-        {/* iOS asks for gyro permission only inside a tap: the gate's own tap is the one (the coupon tilts). */}
-        <div onClickCapture={askTilt} style={{ display: "contents" }}>
-          <TwentySecondHug {...props} />
-        </div>
+        <Passport {...props} />
       </DayRoot>
     </PremiumRoot>
   );
 }
-
-const ROOT_CSS = `
-${UI_CSS}
-${GATE_CSS}
-.hh-chip { position: fixed; z-index: 97; left: calc(max(12px, env(safe-area-inset-left, 0px)) + 54px); top: max(12px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 2px;
-  height: 44px; padding: 0 6px 0 14px; border-radius: 99px; background: rgba(18,12,9,.45); border: 1px solid rgba(250,247,242,.14); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  font: 700 11px/1 var(--hh-ui); letter-spacing: .16em; color: var(--hh-cloud); transition: background .6s ease, color .6s ease; }
-.hh-chip.is-light { background: rgba(250,247,242,.55); border-color: rgba(75,52,38,.14); color: var(--hh-cocoa); }
-.hh-chipNo { font-variant-numeric: tabular-nums; padding-right: 8px; }
-.hh-chipNo i { font-style: normal; opacity: .45; }
-.hh-chipSkip { all: unset; cursor: pointer; height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 99px; background: rgba(250,247,242,.1); letter-spacing: .2em; text-transform: uppercase; font-size: 10px; }
-.hh-chip.is-light .hh-chipSkip { background: rgba(75,52,38,.08); }
-.hh-chipSkip:focus-visible { outline: 2px solid var(--hh-apricot); outline-offset: 2px; }
-`;

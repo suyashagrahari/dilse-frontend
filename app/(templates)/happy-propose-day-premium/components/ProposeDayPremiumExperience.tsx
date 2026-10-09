@@ -1,191 +1,188 @@
 "use client";
 
-// ─── Propose Day ✦ Premium — "The Premiere" ─────────────────────────────────────────────────────────────────────
+// ─── Propose Day ✦ Premium — "The Little Proposal" ─────────────────────────────────────────────────────────────
 //
-// Your relationship, screened as a film for an audience of one (research §D.2).
+// A tiny, cute love story with a ring at the end (research v3 §D2). Bright lavender + cherry pink, GIF stickers
+// in every scene, a pop/chime + heart burst + haptic on every reveal.
 //
-//  gate        a printed ticket, "Take your seat" (PremiumGate: the tap starts the song)
-//  leader      the projector leader: 3 · 2 · 1 with the sweep and the pop → "Based on a true story."
-//  titles      "{FROM} presents" → the title in foil, "Starring {TO}", the tagline → Roll film (slate clap)
-//  act1        Act I · How it started — drag the focus ring until the still snaps sharp; the subtitle types in
-//  act2        Act II · The moment I knew — hold for slow motion: B&W → colour, push-in, words appear
-//  act3        Act III · Coming soon — swipe the trailer cards (braam + cut flash)
-//  commentary  the director's commentary: the voice note, or the caption typed as a subtitle
-//  script      the last page of the screenplay: the letter as the sender's dialogue, a paragraph per tap
-//  question    the final title card in a scope band. YES → drop(): the bars sweep open to full screen on the
-//              chorus, the last photo floods in, "{TO} said yes." + applause (the money moment)
-//  credits     the end credits roll (hold to pause) → the lobby: poster, review (reply), post-credits P.S.
-//
-// One WebGL context (ShaderBackdrop, preset switched per scene) + one particle canvas. The letterbox is CSS
-// variables on the root (styles.ts), so "the bars sweep open" is one class change.
+//  gate       a little pink door with a heart window: "Knock knock" (PremiumGate: the knock starts the song)
+//  hello      knock once more → the door swings open, a shy panda with a rose, the nervous hello (slot pp-door)
+//  story      how it started: swipe the polaroid story cards (slot pp-story watches)
+//  rehearsal  a 4-panel comic of the sender practising the proposal and failing; tap each panel open
+//  ring       find the ring: three gift boxes, a chocolate, a teddy, then the ring (slot pp-peek)
+//  letter     the heart-sealed envelope: crack the seal, the letter types itself
+//  voice      "Before I ask, listen 🎙" (skipped when there is neither a voice note nor a caption)
+//  question   the question over a heart photo and a ring box; No runs (slot pp-please). YES → drop(): on the chorus
+//             the ring flies onto the heart photo and a wall of six celebrating stickers pops in (the money moment)
+//  cert       "Officially Taken 💍": they sign with a ring-finger tap; save it, say it back, the sealed P.S.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import { DayRoot } from "../../_valentine/kit";
-import { FilmGrain, GlowParticles, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette, requestTiltPermission, usePremium, type BackdropPreset, type TransitionVariant } from "../../_valentine/kit/premium";
+import { PremiumGate, PremiumRoot, SceneFade, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { PREMIERE_FONT_VARS } from "./premiere/fonts";
-import { registerPremiereCues } from "./premiere/cues";
-import { PREMIERE_CSS } from "./premiere/styles";
-import { readFilm } from "./premiere/util";
-import { Leader, Ticket, Titles } from "./premiere/Opening";
-import { ActOne, ActThree, ActTwo } from "./premiere/Acts";
-import { Commentary, Script } from "./premiere/Script";
-import { Question } from "./premiere/Question";
-import { Credits } from "./premiere/Credits";
+import { PROPOSAL_FONT_VARS } from "./proposal/fonts";
+import { registerProposalCues } from "./proposal/cues";
+import { PROPOSAL_CSS } from "./proposal/styles";
+import { readStory } from "./proposal/util";
+import { DECOR, Gif, Polaroid } from "./proposal/parts";
+import { DoorArt, Hello } from "./proposal/Door";
+import { Story } from "./proposal/Story";
+import { Rehearsal } from "./proposal/Rehearsal";
+import { FindRing } from "./proposal/FindRing";
+import { Letter, Voice } from "./proposal/Letter";
+import { Question } from "./proposal/Question";
+import { Certificate } from "./proposal/Certificate";
 
-registerPremiereCues();
+registerProposalCues();
 
 const SLUG = "happy-propose-day-premium" as const;
-type Scene = "gate" | "leader" | "titles" | "act1" | "act2" | "act3" | "commentary" | "script" | "question" | "credits";
+type Scene = "gate" | "hello" | "story" | "rehearsal" | "ring" | "letter" | "voice" | "question" | "cert";
+const ORDER: Scene[] = ["hello", "story", "rehearsal", "ring", "letter", "voice", "question", "cert"];
 
-const SLATE: Record<Scene, string> = {
-  gate: "",
-  leader: "Reel 1",
-  titles: "Reel 1",
-  act1: "Reel 2",
-  act2: "Reel 3",
-  act3: "Reel 4",
-  commentary: "Reel 5",
-  script: "Reel 5",
-  question: "Final reel",
-  credits: "",
-};
-const CUT: Partial<Record<Scene, TransitionVariant>> = { leader: "flash", act1: "flash", act2: "flash", act3: "flash", script: "fold", question: "iris", credits: "iris" };
+const HEART_MASK =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 92'%3E%3Cpath d='M50 88 C20 66 4 50 4 30 C4 15 15 4 29 4 C38 4 45 9 50 16 C55 9 62 4 71 4 C85 4 96 15 96 30 C96 50 80 66 50 88 Z'/%3E%3C/svg%3E\")";
 
-// [deep, mid, highlight] per scene: the velvet house curtain at the door, the projector beam everywhere else.
-const BACK: Record<Scene, { preset: BackdropPreset; colors: [string, string, string]; intensity: number }> = {
-  gate: { preset: "velvet", colors: ["#140204", "#5e0d14", "#c8414f"], intensity: 1 },
-  leader: { preset: "candle", colors: ["#030303", "#151311", "#d8b25a"], intensity: 0.6 },
-  titles: { preset: "candle", colors: ["#030303", "#1a1612", "#e8cf8a"], intensity: 0.95 },
-  act1: { preset: "candle", colors: ["#030303", "#120f0d", "#d8b25a"], intensity: 0.5 },
-  act2: { preset: "candle", colors: ["#030303", "#120f0d", "#d8b25a"], intensity: 0.5 },
-  act3: { preset: "candle", colors: ["#020203", "#16141a", "#c9d4ff"], intensity: 0.8 },
-  commentary: { preset: "candle", colors: ["#030303", "#1a1612", "#f3d58c"], intensity: 1 },
-  script: { preset: "candle", colors: ["#030303", "#17130f", "#e8cf8a"], intensity: 0.75 },
-  question: { preset: "bokeh", colors: ["#030102", "#2a0609", "#c9a45c"], intensity: 0.55 },
-  credits: { preset: "candle", colors: ["#020202", "#0f0d0b", "#b89a55"], intensity: 0.5 },
-};
+const FLOATY = [
+  { l: "6%", s: "16px", d: "15s", dl: "0s", c: "#FF8FB8", t: "♥" },
+  { l: "18%", s: "12px", d: "19s", dl: "6s", c: "#A07BFF", t: "✦" },
+  { l: "31%", s: "20px", d: "17s", dl: "3s", c: "#FFB3D6", t: "♥" },
+  { l: "52%", s: "13px", d: "21s", dl: "9s", c: "#FFD166", t: "✦" },
+  { l: "67%", s: "18px", d: "16s", dl: "1.5s", c: "#FF6F8E", t: "♥" },
+  { l: "80%", s: "12px", d: "20s", dl: "11s", c: "#A07BFF", t: "♥" },
+  { l: "92%", s: "17px", d: "18s", dl: "4.5s", c: "#FFB3D6", t: "✦" },
+];
+
+function Dots({ scene, hasVoice }: { scene: Scene; hasVoice: boolean }) {
+  const order = ORDER.filter((s) => hasVoice || s !== "voice");
+  const cur = order.indexOf(scene);
+  if (cur < 0) return null;
+  return (
+    <div className="lp-dots" aria-label={`Step ${cur + 1} of ${order.length}`} role="img">
+      {order.map((s, k) => (
+        <i key={s} className={`${k <= cur ? "on" : ""}${k === cur ? " cur" : ""}`}>
+          <svg viewBox="0 0 24 22" aria-hidden>
+            <path d="M12 21 C5 15.5 1 12 1 7 C1 3.7 3.6 1 6.8 1 C9 1 10.9 2.2 12 4 C13.1 2.2 15 1 17.2 1 C20.4 1 23 3.7 23 7 C23 12 19 15.5 12 21 Z" fill="currentColor" />
+          </svg>
+        </i>
+      ))}
+    </div>
+  );
+}
 
 function Show({ data, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
-  const film = useMemo(() => readFilm(data), [data]);
+  const story = useMemo(() => readStory(data), [data]);
   const [scene, setScene] = useState<Scene>("gate");
-  const [open, setOpen] = useState(false);
-  const [premiered, setPremiered] = useState<Date | null>(null);
   const [run, setRun] = useState(0);
-  const { music } = p;
+  const [yesAt, setYesAt] = useState<Date | null>(null);
+  const hasVoice = !!(p.premium.voiceNote || p.premium.voiceCaption);
 
-  const go = useCallback((s: Scene) => setScene(s), []);
-
-  // the song's level follows the film: full for the acts, softer under the page; the question dips it itself
-  const musicRef = useRef(music);
-  useEffect(() => {
-    musicRef.current = music;
-  });
-  useEffect(() => {
-    const m = musicRef.current;
-    if (!m?.canFade) return;
-    if (scene === "script") m.fadeTo(0.6, 1400);
-    if (scene === "act1" || scene === "act3" || scene === "titles" || scene === "credits") m.fadeTo(1, 1200);
-  }, [scene]);
-
-  const hasCommentary = !!(p.premium.voiceNote || p.premium.voiceCaption);
-  const bars = scene === "gate" || scene === "leader" || scene === "credits" || (scene === "question" && open) ? "off" : scene === "question" ? "scope" : scene === "script" ? "page" : "film";
-  const back = BACK[scene];
-  const yesNow = scene === "question" && open;
-  const showParticles = yesNow || scene === "titles" || scene === "commentary" || scene === "act3" || scene === "gate";
+  const go = useCallback((s: Scene) => {
+    setScene(s);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const replay = () => {
     setRun((r) => r + 1);
-    setOpen(false);
-    go("titles");
+    setYesAt(null);
+    go("hello");
   };
 
   const render = (s: Scene) => {
     switch (s) {
       case "gate":
         return null;
-      case "leader":
-        return <Leader onDone={() => go("titles")} />;
-      case "titles":
-        return <Titles film={film} onRoll={() => go("act1")} />;
-      case "act1":
-        return <ActOne film={film} onNext={() => go("act2")} />;
-      case "act2":
-        return <ActTwo film={film} onNext={() => go("act3")} />;
-      case "act3":
-        return <ActThree film={film} onNext={() => go(hasCommentary ? "commentary" : "script")} />;
-      case "commentary":
-        return <Commentary film={film} onNext={() => go("script")} />;
-      case "script":
-        return <Script film={film} letter={data.letter || ""} onNext={() => go("question")} />;
+      case "hello":
+        return <Hello story={story} day={day} data={data} onNext={() => go("story")} onSkipToQuestion={p.repeatVisit || run > 0 ? () => go("question") : undefined} />;
+      case "story":
+        return <Story story={story} day={day} data={data} onNext={() => go("rehearsal")} />;
+      case "rehearsal":
+        return <Rehearsal story={story} onNext={() => go("ring")} />;
+      case "ring":
+        return <FindRing story={story} day={day} data={data} onNext={() => go("letter")} />;
+      case "letter":
+        return <Letter story={story} letter={data.letter || ""} nextLabel={hasVoice ? "One more thing 🎙" : "Okay, ask me 💍"} onNext={() => go(hasVoice ? "voice" : "question")} />;
+      case "voice":
+        return <Voice story={story} onNext={() => go("question")} />;
       case "question":
         return (
           <Question
-            film={film}
+            story={story}
             day={day}
             data={data}
             onAnswer={(d) => {
-              setPremiered(new Date());
+              setYesAt(new Date());
               react("answered", { noDodges: d });
             }}
-            onPeak={() => setOpen(true)}
-            onCredits={() => go("credits")}
+            onYes={() => undefined}
+            onDone={() => go("cert")}
           />
         );
-      case "credits":
-        return <Credits film={film} day={day} data={data} premieredAt={premiered} onArrive={() => react("completed")} onReplay={replay} />;
+      case "cert":
+        return <Certificate story={story} when={yesAt ?? new Date()} onArrive={() => react("completed")} onReplay={replay} />;
     }
   };
 
+  const wingPhotos = story.photos.slice(0, 2);
+
   return (
-    // iOS only grants the gyro (TiltCard, parallax) from inside a tap: ask on the gate's tap.
-    <div className={`pr-root pr-bars-${bars} ${PREMIERE_FONT_VARS}`} onClickCapture={scene === "gate" ? () => void requestTiltPermission() : undefined}>
-      <style>{PREMIERE_CSS}</style>
-      <div className="pr-back" aria-hidden>
-        <ShaderBackdrop preset={back.preset} colors={back.colors} intensity={back.intensity} speed={0.7} fixed={false} parallax />
-        {showParticles && (
-          <GlowParticles
-            preset={yesNow ? "sparkles" : "fireflies"}
-            colors={yesNow ? ["#F3D58C", "#D8B25A", "#FFF4CF"] : ["#FFE7B0", "#E9E6DF"]}
-            density={yesNow ? 0.75 : 0.22}
-            speed={0.5}
-            fixed={false}
-            z={yesNow ? 4 : 1}
-          />
-        )}
+    <div className={`lp-root ${PROPOSAL_FONT_VARS}`} style={{ ["--lp-heart" as string]: HEART_MASK } as CSSProperties}>
+      <style>{PROPOSAL_CSS}</style>
+      <span className="lp-blob a" aria-hidden />
+      <span className="lp-blob b" aria-hidden />
+      <span className="lp-blob c" aria-hidden />
+      <div className="lp-floaty" aria-hidden>
+        {FLOATY.map((f, k) => (
+          <i key={k} style={{ left: f.l, ["--s" as string]: f.s, ["--d" as string]: f.d, ["--dl" as string]: f.dl, ["--c" as string]: f.c } as CSSProperties}>
+            {f.t}
+          </i>
+        ))}
       </div>
-      <span className="pr-bar top" aria-hidden />
-      <span className="pr-bar bot" aria-hidden />
-      <div className="pr-stage">
-        <SceneTransition sceneKey={`${run}-${scene}`} variant={CUT[scene] ?? "iris"} flashColor="#FFF4DE" duration={CUT[scene] === "flash" ? 0.7 : 1}>
-          {render(scene)}
-        </SceneTransition>
-      </div>
-      {SLATE[scene] && !yesNow && (
-        <div className="pr-slate" aria-hidden>
-          <i />
-          {SLATE[scene]}
-        </div>
+      {scene !== "gate" && (
+        <>
+          <aside className="lp-wing l" aria-hidden>
+            {wingPhotos.map((ph, k) => (
+              <Polaroid key={k} photo={ph} tilt={k ? 5 : -6} tape={k ? "mint" : "lilac"} caption={ph.caption ? <span className="lp-what">{ph.caption}</span> : undefined} />
+            ))}
+            <Gif src={DECOR.wingLeft} size={120} />
+          </aside>
+          <Gif src={DECOR.wingLeft} size={100} className="lp-corner a" />
+          <Gif src={DECOR.heart} size={90} className="lp-corner b" />
+          <aside className="lp-wing r" aria-hidden>
+            <Gif src={DECOR.wingRight} size={150} />
+            <p className="lp-wing-name">
+              for {story.to}
+              <br />
+              from {story.from}
+            </p>
+            <p className="lp-wing-line">a little proposal, made by hand 💜</p>
+            <Gif src={DECOR.heart} size={86} />
+          </aside>
+        </>
       )}
-      <Vignette strength={0.55} />
-      <FilmGrain opacity={0.075} />
+      <div className="lp-stage">
+        <Dots scene={scene} hasVoice={hasVoice} />
+        <SceneFade sceneKey={`${run}-${scene}`} duration={0.45} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {render(scene)}
+        </SceneFade>
+      </div>
 
       {scene === "gate" && (
         <PremiumGate
-          art={<Ticket film={film} date={`${day.date} ${day.month.slice(0, 3)}`} />}
-          kicker="Tonight's premiere, for"
-          subtitle={<span style={{ fontFamily: "var(--pr-mono), monospace", fontSize: 13, letterSpacing: ".18em", textTransform: "uppercase", opacity: 0.8 }}>A {film.from} production</span>}
-          sting="pr-start"
-          openLabel="Take your seat"
-          openMs={1000}
-          className={`pr-gate ${PREMIERE_FONT_VARS}`}
-          bg="radial-gradient(110% 70% at 50% 42%, rgba(20,2,4,0) 0%, rgba(8,2,3,.35) 62%, rgba(4,1,2,.85) 100%)"
-          ink="#F1ECE2"
-          accent="#D8B25A"
-          onOpen={({ repeatVisit }) => go(repeatVisit ? "titles" : "leader")}
+          art={<DoorArt sticker={DECOR.gate} />}
+          kicker="Knock knock. A little something for"
+          subtitle={<span>from {story.from} 💜</span>}
+          sting="knock"
+          openLabel="Knock knock 🚪"
+          sealText={`Hand-made for ${story.to}`}
+          openMs={900}
+          className={`lp-gate ${PROPOSAL_FONT_VARS}`}
+          bg="linear-gradient(160deg, #F8F4FF 0%, #EDE3FF 52%, #FFE3EC 100%)"
+          ink="#3B2A63"
+          accent="#7A52E0"
+          onOpen={() => go("hello")}
         />
       )}
     </div>
@@ -196,7 +193,7 @@ export default function ProposeDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot day={day} data={props.data} layout="full" dark>
+      <DayRoot day={day} data={props.data} layout="full">
         <Show {...props} />
       </DayRoot>
     </PremiumRoot>

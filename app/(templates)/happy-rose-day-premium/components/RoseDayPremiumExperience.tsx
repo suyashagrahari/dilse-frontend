@@ -1,70 +1,70 @@
 "use client";
 
-// ─── Rose Day ✦ Premium: "The Bloom of Us" ───────────────────────────────────────────────────────────────────
+// ─── Rose Day ✦ Premium: "The Rose Garden" (v3) ──────────────────────────────────────────────────────────────
 //
-// The buyer's photos are the petals. research §D.1 (.template-factory/premium-v2/research.md).
+// A little garden that grows for her. research §D1 (.template-factory/premium-v3/research.md). Bright Strawberry
+// Milk palette, Fredoka + Caveat, cute GIF stickers in every scene, a pop/chime/haptic on every interaction.
 //
-//  gate    a single hairline of gold draws a long-stem rose; "For {name}". The tap starts the song (PremiumGate).
-//  rose    I  The bud: their opening line over a closed velvet bud. Hold to warm it (heartbeat).
-//          ↓  drop(): letterbox, riser, the chorus lands and the bud opens ring by ring, every petal a photo; the
-//             camera tilts down and pulls back (THE money moment). Petals start to fall.
-//          II The bloom: their bloom line; tap a petal to lift its photo out; the colour's meaning; "Turn the pages".
-//  pages   III Pressed pages: three photos under vellum, swipe to lift each, caption + note.
-//  letter  IV  The letter on cream paper with pressed petals; tap to raise it, paragraphs ink in as you read.
-//  voice   V   In my voice: the voice note over a graded photo (or their words, large, when there is no recording).
-//  end     "Every Rose Day, it's still you." A tiltable keepsake card + poster, the sealed P.S., reply, replay.
+//  gate      a seed packet "Seeds of {name}" with a shy panda peeking; the tap tears it open and starts the song
+//  water     1 drag the watering can over the pot: the sprout grows in three bouncy stages (sprout, leaves, bud)
+//  colour    2 the bud blooms; tap colour chips, the rose recolours, a sticky note says what it means, from him
+//  pluck     3 loves me, loves me not: seven petals, always LOVES ME
+//  note      4 a rose at her door: pull the ribbon to untie the tag, his letter types itself (photo taped on)
+//  voice     5 a singing rose plays his voice note (or says his caption in a bubble)
+//  bouquet   6 drag her photo-flowers into a kraft cone, tie the ribbon, tap each for his caption + note
+//  question  7 "Will you keep my rose forever?" Yes / a wilting runaway No → drop(): THE money moment, roses bloom
+//              across the whole screen on the chorus and her bouquet rises into the middle, ribbon tying itself
+//  diary     8 pressed in her diary: save as a wallpaper, the sealed P.S., "Send a rose back" reply, replay
 //
-// One ShaderBackdrop + one GlowParticles for the whole page (presets change per chapter), grain + vignette always,
-// SceneTransition between chapters. Fixed layers (the lightbox) live here, outside every transformed scene.
+// Scenes without content are skipped (no letter, no voice + no caption, no photos).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import {
-  FilmGrain, GlowParticles, Letterbox, LightLeak, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette,
-  requestTiltPermission, usePremium, type BackdropPreset, type GlowPreset, type TransitionVariant,
-} from "../../_valentine/kit/premium";
+import { AnimatePresence, motion } from "framer-motion";
+import { DayRoot, burst, useReducedMotion } from "../../_valentine/kit";
+import { PremiumGate, PremiumRoot, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { BLOOM_FONT_VARS } from "./bloom/fonts";
-import { BLOOM_CSS } from "./bloom/styles";
-import { pressedPhotos, readBloom, SHADES } from "./bloom/util";
-import { GoldRose } from "./bloom/GoldRose";
-import { BloomScene } from "./bloom/BloomScene";
-import { PagesScene } from "./bloom/PagesScene";
-import { LetterScene } from "./bloom/LetterScene";
-import { VoiceScene } from "./bloom/VoiceScene";
-import { EndingScene } from "./bloom/EndingScene";
-import { PetalLightbox } from "./bloom/PetalLightbox";
+import { FallingPetals } from "../../happy-rose-day/components/rose/ui";
+import { shadesFor } from "../../happy-rose-day/components/rose/art";
+import { GARDEN_FONT_VARS } from "./garden/fonts";
+import { GARDEN_CSS } from "./garden/styles";
+import { registerGardenCues } from "./garden/cues";
+import { readGarden } from "./garden/util";
+import { SeedPacket, Slot } from "./garden/art";
+import { WaterScene } from "./garden/WaterScene";
+import { ColourScene } from "./garden/ColourScene";
+import { PluckScene } from "./garden/PluckScene";
+import { NoteScene } from "./garden/NoteScene";
+import { VoiceScene } from "./garden/VoiceScene";
+import { BouquetScene } from "./garden/BouquetScene";
+import { QuestionScene } from "./garden/QuestionScene";
+import { DiaryScene } from "./garden/DiaryScene";
 
 const SLUG = "happy-rose-day-premium" as const;
-type Scene = "gate" | "rose" | "pages" | "letter" | "voice" | "end";
+type Scene = "gate" | "water" | "colour" | "pluck" | "note" | "voice" | "bouquet" | "question" | "diary";
 
-const BACKDROP: Record<Scene, BackdropPreset> = { gate: "velvet", rose: "candle", pages: "candle", letter: "candle", voice: "candle", end: "bokeh" };
-const ENTER: Record<Scene, TransitionVariant> = { gate: "iris", rose: "iris", pages: "iris", letter: "fold", voice: "flash", end: "iris" };
-
-function Bloom({ data, mode, react }: ExperienceProps) {
+function Garden({ data, mode, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
   const reduce = useReducedMotion();
-  const b = useMemo(() => readBloom(data), [data]);
-  const shade = SHADES[b.color];
-  const [scene, setScene] = useState<Scene>(p.opened ? "rose" : "gate");
-  const [bars, setBars] = useState(false);
-  const [bloomed, setBloomed] = useState(false);
-  const [pick, setPick] = useState<number | null>(null);
+  const g = useMemo(() => readGarden(data), [data]);
+  const [scene, setScene] = useState<Scene>(p.opened ? "water" : "gate");
   const [run, setRun] = useState(0);
-  const pages = useMemo(() => pressedPhotos(b.photos), [b.photos]);
   const hasLetter = !!data.letter?.trim();
   const hasVoice = !!p.premium.voiceNote || !!p.premium.voiceCaption.trim();
+  const hasPhotos = g.photos.length > 0;
+
+  useEffect(registerGardenCues, []);
 
   const order = useMemo(() => {
-    const o: Scene[] = ["rose"];
-    if (pages.length) o.push("pages");
-    if (hasLetter) o.push("letter");
+    const o: Scene[] = ["water", "colour", "pluck"];
+    if (hasLetter) o.push("note");
     if (hasVoice) o.push("voice");
-    o.push("end");
+    if (hasPhotos) o.push("bouquet");
+    o.push("question", "diary");
     return o;
-  }, [pages.length, hasLetter, hasVoice]);
+  }, [hasLetter, hasVoice, hasPhotos]);
+
   const next = useCallback(
     (from: Scene) => {
       const i = order.indexOf(from);
@@ -72,6 +72,10 @@ function Bloom({ data, mode, react }: ExperienceProps) {
     },
     [order],
   );
+
+  useEffect(() => {
+    if (scene !== "gate" && typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "auto" });
+  }, [scene]);
 
   // The song sits a little lower under the letter (where the platform lets us fade it).
   const musicRef = useRef(p.music);
@@ -81,7 +85,7 @@ function Bloom({ data, mode, react }: ExperienceProps) {
   useEffect(() => {
     const m = musicRef.current;
     if (!m?.canFade || scene === "gate") return;
-    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
+    m.fadeTo(scene === "note" ? 0.6 : 1, 1200);
   }, [scene]);
 
   const reactRef = useRef(react);
@@ -89,114 +93,95 @@ function Bloom({ data, mode, react }: ExperienceProps) {
     reactRef.current = react;
   });
   useEffect(() => {
-    if (scene === "end") reactRef.current("completed");
+    if (scene === "diary") reactRef.current("completed");
   }, [scene]);
 
-  const sticker = (id: string, size: number) => {
-    const slot = day.gifSlots.find((s) => s.id === id);
-    return slot ? <Sticker slug={day.slug} slot={slot} value={data.gifs?.[id]} size={size} alt="" /> : null;
-  };
-
   const replay = () => {
-    setBloomed(false);
-    setBars(false);
     setRun((r) => r + 1);
-    setScene("rose");
+    setScene("water");
   };
 
-  const glowColors = [shade.light, shade.base, "#F2D4D2"];
-  let particles: GlowPreset = "sparkles";
-  let density = 0.22;
-  let pColors: string[] = ["#FFE7B8", "#E3C27E"];
-  if ((scene === "rose" && bloomed) || scene === "end") {
-    particles = "petals";
-    density = scene === "end" ? 0.35 : 0.5;
-    pColors = glowColors;
-  } else if (scene === "pages") {
-    particles = "petals";
-    density = 0.18;
-    pColors = glowColors;
-  }
+  const step = Math.max(0, order.indexOf(scene));
+  const total = order.length;
+  const common = { g, day, gifs: data.gifs, step, total };
 
   const render = (s: Scene) => {
     switch (s) {
       case "gate":
         return null;
-      case "rose":
-        return (
-          <BloomScene
-            key={run}
-            b={b}
-            onRising={() => setBars(true)}
-            onOpen={() => {
-              setBloomed(true);
-              window.setTimeout(() => setBars(false), reduce ? 0 : 3200);
-            }}
-            onPick={setPick}
-            onNext={() => next("rose")}
-            sticker={sticker("pr3-petals", 56)}
-          />
-        );
-      case "pages":
-        return <PagesScene pages={pages} to={b.to} onDone={() => next("pages")} />;
-      case "letter":
-        return <LetterScene b={b} letter={data.letter} onDone={() => next("letter")} />;
+      case "water":
+        return <WaterScene {...common} onDone={() => next("water")} />;
+      case "colour":
+        return <ColourScene {...common} onDone={() => next("colour")} />;
+      case "pluck":
+        return <PluckScene {...common} onDone={() => next("pluck")} />;
+      case "note":
+        return <NoteScene {...common} letter={data.letter} hasMore={hasVoice} onDone={() => next("note")} />;
       case "voice":
-        return <VoiceScene from={b.from} photo={b.photos[b.photos.length - 1]} onDone={() => next("voice")} />;
-      case "end":
-        return <EndingScene b={b} data={data} day={day} mode={mode} sticker={sticker("pr6-forever", 64)} onReplay={replay} />;
+        return <VoiceScene g={g} step={step} total={total} onDone={() => next("voice")} />;
+      case "bouquet":
+        return <BouquetScene g={g} step={step} total={total} onDone={() => next("bouquet")} />;
+      case "question":
+        return <QuestionScene {...common} onAnswered={(d) => react("answered", { noDodges: d })} onDone={() => next("question")} />;
+      case "diary":
+        return <DiaryScene g={g} data={data} day={day} mode={mode} step={step} total={total} onReplay={replay} />;
     }
   };
 
   return (
     <div
-      className={`rb-root ${BLOOM_FONT_VARS}`}
-      // iOS asks for gyro permission only inside a tap: the gate's own tap is the one.
-      onClickCapture={scene === "gate" ? () => void requestTiltPermission() : undefined}
-      style={{ ["--font-vw-ui" as string]: "var(--rb-sans)", ["--vw-font-ui" as string]: "var(--rb-sans), system-ui, sans-serif", ["--glow" as string]: shade.glow }}
+      className="rg-root"
+      // The seed packet bursts open in the same tap that starts the song.
+      onClickCapture={
+        scene === "gate"
+          ? (e) => {
+              const t = e.target as HTMLElement;
+              if (t.closest(".pm-gateCta, .pm-gateArt")) burst({ kind: "petals", origin: { x: 0.5, y: 0.45 }, count: 26, spread: 0.4 });
+            }
+          : undefined
+      }
     >
-      <style>{BLOOM_CSS}</style>
-      <ShaderBackdrop
-        preset={BACKDROP[scene]}
-        colors={["#0E0306", shade.deep, scene === "gate" ? "#8A6A2F" : shade.base]}
-        intensity={scene === "gate" ? 0.7 : scene === "rose" && bloomed ? 1.2 : 0.95}
-        speed={0.7}
-        parallax
-      />
-      <GlowParticles preset={particles} colors={pColors} density={density} speed={particles === "petals" ? 0.7 : 0.5} z={1} />
-      {(bloomed && scene === "rose") || scene === "end" ? <LightLeak color={`rgb(${shade.glow})`} color2="#FFD9A0" corner="top-right" opacity={0.35} /> : null}
-      <Vignette strength={0.62} />
-      <FilmGrain opacity={0.07} />
-      <Letterbox show={bars} />
+      <style>{GARDEN_CSS}</style>
+      <div className="rg-bg" aria-hidden>
+        <i className="rg-blob rg-blob--a" />
+        <i className="rg-blob rg-blob--b" />
+        <i className="rg-blob rg-blob--c" />
+      </div>
+      {scene !== "gate" && <FallingPetals sh={shadesFor(g.color)} reduced={reduce} count={8} />}
 
       {scene === "gate" && (
         <PremiumGate
-          art={<GoldRose size={260} />}
-          kicker="Something has been opening for"
-          subtitle="Rose Day · sound on, somewhere quiet"
+          art={<SeedPacket name={g.to} color={g.color} peek={<Slot day={day} gifs={data.gifs} id="rg1-peek" size={104} tilt={-10} eager />} />}
+          kicker="A little garden, grown for"
+          subtitle={<span className="rg-gateSub">{g.pet ? `${g.pet} · ` : ""}Rose Day · sound on 🎧</span>}
           sting="chime-cascade"
-          openLabel="Let it open"
-          className="rb-gate"
+          openLabel="Tear it open 🌱"
+          sealText={`Hand-grown for ${g.to}`}
+          className="rg-gate"
           bg="transparent"
-          ink="#F6F0E6"
-          accent="#C9A45C"
-          openMs={reduce ? 250 : 1100}
+          ink="#5B2333"
+          accent="#FF6F9C"
+          openMs={reduce ? 250 : 1150}
           onOpen={() => {
             react("opened");
-            setScene("rose");
+            setScene("water");
           }}
         />
       )}
 
-      <div className="rb-stage">
+      <AnimatePresence mode="wait" initial={false}>
         {scene !== "gate" && (
-          <SceneTransition sceneKey={`${scene}-${run}`} variant={ENTER[scene]} origin={scene === "pages" ? "50% 45%" : "50% 50%"}>
+          <motion.div
+            key={`${scene}-${run}`}
+            className="rg-sceneWrap"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, transition: { type: "spring", stiffness: 260, damping: 22 } }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, y: -12, scale: 0.96, transition: { duration: 0.25 } }}
+          >
             {render(scene)}
-          </SceneTransition>
+          </motion.div>
         )}
-      </div>
-
-      <PetalLightbox photo={pick != null ? (b.photos[pick] ?? null) : null} onClose={() => setPick(null)} />
+      </AnimatePresence>
     </div>
   );
 }
@@ -205,8 +190,14 @@ export default function RoseDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot day={day} data={props.data} layout="full" dark>
-        <Bloom {...props} />
+      <DayRoot
+        day={day}
+        data={props.data}
+        layout="column"
+        className={GARDEN_FONT_VARS}
+        style={{ ["--font-vw-script" as string]: "var(--rg-hand)", ["--vw-font-script" as string]: "var(--rg-hand), 'Caveat', cursive" }}
+      >
+        <Garden {...props} />
       </DayRoot>
     </PremiumRoot>
   );

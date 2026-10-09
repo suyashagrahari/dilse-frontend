@@ -12,12 +12,12 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🌹 Something has been opening, just for you`;
-const SOCIAL_DESCRIPTION = `A rose made of us. Go somewhere quiet, sound on ✦`;
-// "The Bloom of Us" (v2). The page's own description and its JSON-LD use this fuller line; the shorter
+const SOCIAL_TITLE = `🌱 Someone planted a rose garden for you`;
+const SOCIAL_DESCRIPTION = `Tear open your seed packet. Sound on 🌹`;
+// "The Rose Garden" (v3). The page's own description and its JSON-LD use this fuller line; the shorter
 // lib/seo-data.ts description feeds the gallery, sitemap and /llms.txt.
 const DESCRIPTION =
-  "A cinematic Rose Day website where your photos are the petals: a velvet bud they hold to warm, which opens on your song's chorus into a rose made of your photos, then pressed photos, your letter, your voice and a keepsake card.";
+  "A cute, interactive Rose Day website: they tear open a seed packet with their name, water a sprout until it blooms, pick its colour, play loves-me-loves-me-not, untie your letter from a rose at their door, hear your voice, arrange your photos into a bouquet, and say yes as roses bloom across the screen on your song.";
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {

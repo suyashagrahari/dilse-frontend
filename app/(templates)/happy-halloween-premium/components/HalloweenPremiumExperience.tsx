@@ -1,75 +1,78 @@
 "use client";
 
-// ─── happy-halloween-premium — "A Night at the Manor" ────────────────────────
+// ─── happy-halloween-premium — "Boo-tiful Night" (premium v3) ────────────────
 //
-// Cute-spooky, never scary; the buyer's photos and words are the hero.
-//   gate      "Trick or treat, {name}?" — both buttons are a treat; the tap
-//             starts the song (custom gate, same synchronous contract as
-//             PremiumGate: p.open() + sting inside the tap)
-//   hall      I · The Hall of Portraits — drag a torch beam through the dark to
-//             find their photos (gilt portraits) and notes on the walls
-//   seance    II · hold a finger on the talking board; the planchette spells
-//             their name, then the sender's word, then YES
-//   tarot     III · three cards, Past / Present / Future, flip each one
-//   voice     IV · a voice from beyond (voice note, or the crystal ball's line)
-//   letter    V · hold to light the candle; parchment letter + sealed P.S.
-//   portrait  VI · THE MONEY MOMENT: the last portrait is in the dark; the
-//             beam finds it → drop() → thunder + flash → it's them, and it
-//             winks. Names, then the question.
-//   ending    VII · "Stay haunted": costume-duo poster keepsake, reply, replay.
-// Atmosphere: one fog ShaderBackdrop (constant colours — a colour change would
-// rebuild the GL context), one GlowParticles layer whose preset follows the
-// scene, grain + vignette on top. Chapters after the hall are code-split and
-// prefetched one scene ahead.
+// Cute-spooky and romantic, never scary (research §D9): a warm candy-coloured
+// night with blushing ghosts and a GIF sticker reacting in every scene.
+//   gate      the haunted mailbox: tap it, a ghost pops out with a letter, BOO;
+//             the tap starts the song (same synchronous contract as PremiumGate)
+//   treats    1 · tap/shake the treat bag; catch the candies (sweet lines + cute dares)
+//   carve     2 · carve a pumpkin: pick eyes + smile, hold to light it; initials glow
+//   booth     3 · ghosts are hiding their photos; shoo each one away
+//   potion    4 · drag three ingredients into the cauldron, stir it, it puffs a heart
+//   letter    5 · a bat brings the letter; tap it; the scroll unrolls (+ sealed P.S.)
+//   radio     6 · tune the spirit radio to Boo FM; his voice comes through
+//   question  7 · THE MONEY MOMENT: "Will you be my boo?" — the No ghosts away;
+//             YES on the song's drop: the night turns pink, the moon becomes a
+//             heart, a swarm of bats forms a heart around her photo, ghosts kiss
+//   license   the Boo License keepsake (9:16 / 4:5), reply, replay
+// One fixed CSS sky (stars, a sleepy moon, hills), one GlowParticles layer.
+// Scenes after the first stop are code-split and prefetched one ahead.
 
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getDay } from "../../_valentine/days";
-import { DayRoot, Sticker } from "../../_valentine/kit";
-import {
-  FilmGrain, GlowParticles, PremiumRoot, SceneTransition, ShaderBackdrop, SkipChip, Vignette, usePremium, type GlowPreset,
-} from "../../_valentine/kit/premium";
-import type { ExperienceProps, GifSlot } from "../../_valentine/types";
-import { registerNightCues } from "./night/cues";
-import { NM_FONT_VARS } from "./night/fonts";
-import Gate from "./night/Gate";
-import Hall from "./night/Hall";
-import { readNight } from "./night/model";
-import { UI_CSS } from "./night/ui";
+import { DayRoot, useReducedMotion } from "../../_valentine/kit";
+import { GlowParticles, PremiumRoot, SkipChip, usePremium } from "../../_valentine/kit/premium";
+import type { ExperienceProps } from "../../_valentine/types";
+import { Ghost } from "./boo/art";
+import { registerBooCues } from "./boo/cues";
+import { BN_FONT_VARS, BODY } from "./boo/fonts";
+import Gate from "./boo/Gate";
+import { readNight } from "./boo/model";
+import Treats from "./boo/Treats";
+import { BOO_CSS, Backdrop, slotSrc } from "./boo/ui";
 
-registerNightCues();
+registerBooCues();
 
 const day = getDay("happy-halloween-premium");
 
 const load = {
-  seance: () => import("./night/Seance"),
-  tarot: () => import("./night/Tarot"),
-  voice: () => import("./night/Voice"),
-  letter: () => import("./night/Letter"),
-  portrait: () => import("./night/Portrait"),
-  ending: () => import("./night/Ending"),
+  carve: () => import("./boo/Carve"),
+  booth: () => import("./boo/Booth"),
+  potion: () => import("./boo/Potion"),
+  letter: () => import("./boo/Letter"),
+  radio: () => import("./boo/Radio"),
+  question: () => import("./boo/Question"),
+  license: () => import("./boo/License"),
 };
-const Seance = dynamic(load.seance, { ssr: false });
-const Tarot = dynamic(load.tarot, { ssr: false });
-const Voice = dynamic(load.voice, { ssr: false });
+const Carve = dynamic(load.carve, { ssr: false });
+const Booth = dynamic(load.booth, { ssr: false });
+const Potion = dynamic(load.potion, { ssr: false });
 const Letter = dynamic(load.letter, { ssr: false });
-const Portrait = dynamic(load.portrait, { ssr: false });
-const Ending = dynamic(load.ending, { ssr: false });
+const Radio = dynamic(load.radio, { ssr: false });
+const Question = dynamic(load.question, { ssr: false });
+const License = dynamic(load.license, { ssr: false });
 
-type Scene = "gate" | "hall" | "seance" | "tarot" | "voice" | "letter" | "portrait" | "ending";
-const ALL: Scene[] = ["gate", "hall", "seance", "tarot", "voice", "letter", "portrait", "ending"];
-const SKIPPABLE = new Set<Scene>(["hall", "seance", "tarot", "voice"]);
+type Scene = "gate" | "treats" | "carve" | "booth" | "potion" | "letter" | "radio" | "question" | "license";
+const ALL: Scene[] = ["gate", "treats", "carve", "booth", "potion", "letter", "radio", "question", "license"];
+const SKIPPABLE = new Set<Scene>(["treats", "carve", "booth", "potion", "letter", "radio"]);
 
 function Night({ data, mode, react }: ExperienceProps) {
   const p = usePremium();
+  const reduce = useReducedMotion();
   const n = useMemo(() => readNight(data), [data]);
-  const order = useMemo(() => ALL.filter((s) => s !== "hall" || n.hall.length + n.notes.length > 0), [n.hall.length, n.notes.length]);
+  const order = useMemo(() => ALL.filter((s) => s !== "booth" || n.booth.length > 0), [n.booth.length]);
+  const stops: Scene[] = order.filter((s) => s !== "gate" && s !== "license");
   const [scene, setScene] = useState<Scene>(() => (p.opened ? order[1] : "gate"));
   const [round, setRound] = useState(0);
   const [peak, setPeak] = useState(false);
-  const next = useCallback(() => setScene((s) => order[Math.min(order.length - 1, order.indexOf(s) + 1)]), [order]);
+  const next = useCallback(() => {
+    setScene((s) => order[Math.min(order.length - 1, order.indexOf(s) + 1)]);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  }, [order]);
 
-  // Prefetch the next chapter's code while this one plays.
   useEffect(() => {
     const nx = order[order.indexOf(scene) + 1] as keyof typeof load | undefined;
     if (nx && nx in load) void load[nx]();
@@ -77,7 +80,7 @@ function Night({ data, mode, react }: ExperienceProps) {
 
   const completed = useRef(false);
   useEffect(() => {
-    if (scene === "ending" && !completed.current) {
+    if (scene === "license" && !completed.current) {
       completed.current = true;
       react("completed");
     }
@@ -90,77 +93,84 @@ function Night({ data, mode, react }: ExperienceProps) {
     return Number.isFinite(at) && now >= at && now - at < 48 * 3600e3;
   });
 
-  const sticker = (id: string): ReactNode => {
-    const s: GifSlot | undefined = day.gifSlots.find((g) => g.id === id);
-    if (!s || !data.gifs?.[s.id]) return null;
-    return <Sticker slug={day.slug} slot={s} value={data.gifs[s.id]} size={84} />;
-  };
-
   const replay = () => {
     setRound((r) => r + 1);
     setPeak(false);
     setScene(order[1]);
+    window.scrollTo({ top: 0 });
   };
 
-  const particles: { preset: GlowPreset; colors?: string[]; density: number } | null =
-    scene === "gate" ? { preset: "embers", colors: ["#F2B35B", "#E0782F", "#FFE2A8"], density: 0.32 }
-    : scene === "seance" ? { preset: "fireflies", colors: ["#FFE2A8", "#F2B35B"], density: 0.28 }
-    : scene === "tarot" ? { preset: "sparkles", colors: ["#E8CF8A", "#FFF4CF"], density: 0.3 }
-    : scene === "voice" ? { preset: "fireflies", colors: ["#d9c8ff", "#b48cff"], density: 0.26 }
-    : scene === "letter" ? { preset: "embers", colors: ["#F2B35B", "#FFE2A8"], density: 0.22 }
-    : scene === "portrait" && peak ? { preset: "bats", density: 0.5 }
-    : scene === "ending" ? { preset: "embers", colors: ["#F2B35B", "#E0782F", "#E8CF8A"], density: 0.3 }
-    : null;
+  const step = stops.indexOf(scene) + 1;
+  const total = stops.length;
+  const gif = (id: string) => slotSrc(data, id);
 
   let body: ReactNode = null;
   switch (scene) {
     case "gate":
-      body = <Gate n={n} justUnsealed={justUnsealed} onOpen={next} />;
+      body = <Gate n={n} hello={gif("hb1-hello")} justUnsealed={justUnsealed} onOpen={next} />;
       break;
-    case "hall":
-      body = <Hall n={n} sticker={sticker("h1-hall")} onNext={next} />;
+    case "treats":
+      body = <Treats n={n} reactor={gif("hb2-treats")} step={step} total={total} onNext={next} />;
       break;
-    case "seance":
-      body = <Seance n={n} onNext={next} />;
+    case "carve":
+      body = <Carve n={n} pal={gif("hb3-pumpkin")} step={step} total={total} onNext={next} />;
       break;
-    case "tarot":
-      body = <Tarot n={n} onNext={next} />;
+    case "booth":
+      body = <Booth n={n} cuddle={gif("hb4-booth")} step={step} total={total} onNext={next} />;
       break;
-    case "voice":
-      body = <Voice n={n} onNext={next} />;
+    case "potion":
+      body = <Potion n={n} helper={gif("hb5-potion")} step={step} total={total} onNext={next} />;
       break;
     case "letter":
-      body = <Letter n={n} letter={data.letter || "Happy Halloween."} onNext={next} />;
+      body = <Letter n={n} letter={data.letter || "Happy Halloween."} step={step} total={total} onNext={next} />;
       break;
-    case "portrait":
+    case "radio":
+      body = <Radio n={n} step={step} total={total} onNext={next} />;
+      break;
+    case "question":
       body = (
-        <Portrait
+        <Question
           n={n}
-          sticker={sticker("h6-yes")}
+          couple={gif("hb6-yes")}
+          step={step}
+          total={total}
           onPeak={() => setPeak(true)}
           onYes={(d) => react("answered", { noDodges: d })}
           onNext={next}
         />
       );
       break;
-    case "ending":
-      body = <Ending n={n} endLine={data.endLine || ""} mode={mode} onReplay={replay} />;
+    case "license":
+      body = <License n={n} endLine={data.endLine || ""} mode={mode} onReplay={replay} />;
       break;
   }
 
+  const sparkle = peak || scene === "license";
+
   return (
-    <div className="nm-root">
-      <ShaderBackdrop preset="fog" colors={["#0b0610", "#3a2236", "#f2b35b"]} intensity={1.05} speed={0.7} parallax />
-      {particles && <GlowParticles preset={particles.preset} colors={particles.colors} density={particles.density} z={1} />}
+    <div className={`bn-root${peak ? " is-peak" : ""}`}>
+      <Backdrop peak={peak} />
+      <GlowParticles
+        preset={sparkle ? "hearts" : "sparkles"}
+        colors={sparkle ? ["#FF9EC4", "#FFD27A", "#FFFFFF"] : ["#FFF3C9", "#C9B6FF", "#9BE7C4", "#FF9EC4"]}
+        density={sparkle ? 0.4 : 0.22}
+        z={1}
+      />
 
-      <div className="nm-stage">
-        <SceneTransition sceneKey={`${scene}-${round}`} variant={scene === "hall" ? "iris" : "ink"} origin={scene === "hall" ? "50% 42%" : "50% 60%"}>
-          {body}
-        </SceneTransition>
+      <div className="bn-stage">
+        {/* research §C5: the old scene shrinks away, the new one springs up (no
+            blur, and transform: none at rest so fixed layers stay viewport-fixed) */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={`${scene}-${round}`}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0, transition: reduce ? { duration: 0.15 } : { type: "spring", stiffness: 260, damping: 22 } }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, scale: 0.96, y: -12, transition: { duration: 0.25 } }}
+          >
+            {body}
+          </motion.div>
+        </AnimatePresence>
       </div>
-
-      <Vignette strength={0.62} z={69} />
-      <FilmGrain opacity={0.075} z={70} />
 
       {SKIPPABLE.has(scene) && (
         <SkipChip
@@ -168,18 +178,18 @@ function Night({ data, mode, react }: ExperienceProps) {
           onSkip={next}
           label="Skip ›"
           delay={p.repeatVisit ? 0 : 4000}
-          style={{ right: "auto", left: "calc(max(12px, env(safe-area-inset-left, 0px)) + 52px)", top: "max(12px, env(safe-area-inset-top, 0px))", background: "rgba(12,7,14,.55)", color: "#E8DFCC", border: "1px solid rgba(232,223,204,.2)", font: "400 14px/1 var(--font-nm-body), Georgia, serif", minHeight: 44 }}
+          style={{ right: "auto", left: "calc(max(12px, env(safe-area-inset-left, 0px)) + 52px)", top: "max(12px, env(safe-area-inset-top, 0px))", background: "rgba(42,31,61,.55)", color: "#FFF7EC", border: "2px solid rgba(255,247,236,.25)", font: `800 14px/1 ${BODY}`, minHeight: 44 }}
         />
       )}
-      <style>{UI_CSS}</style>
+      <style>{BOO_CSS}</style>
     </div>
   );
 }
 
 export default function HalloweenPremiumExperience(props: ExperienceProps) {
   return (
-    <PremiumRoot data={props.data} mode={props.mode} slug="happy-halloween-premium" chipStyle={{ background: "rgba(12,7,14,.55)", color: "#E8DFCC", borderColor: "rgba(232,223,204,.2)" }}>
-      <DayRoot day={day} data={props.data} layout="full" className={NM_FONT_VARS}>
+    <PremiumRoot data={props.data} mode={props.mode} slug="happy-halloween-premium" chipStyle={{ background: "rgba(42,31,61,.55)", color: "#FFF7EC", borderColor: "rgba(255,247,236,.25)" }}>
+      <DayRoot day={day} data={props.data} layout="column" className={BN_FONT_VARS} art={<Ghost size={150} mood="happy" hold="heart" />}>
         <Night {...props} />
       </DayRoot>
     </PremiumRoot>
