@@ -19,9 +19,9 @@
 
 import type { SongSuggestion } from "../music/youtube";
 import type { DayConfig, GifSlot } from "../types";
-import { demoPhotos } from "./_shared";
+import { TRACK_DEMO, demoPhotos } from "./_shared";
 import { premiumDay } from "./_premium";
-import { halloweenDay, type HalloweenTone } from "./happy-halloween";
+import { HALLOWEEN_TRACK, halloweenDay, type HalloweenTone } from "./happy-halloween";
 
 export interface PotionIngredient {
   name: string;
@@ -110,6 +110,7 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   ...base,
   music: {
     audioOnly: true,
+    track: HALLOWEEN_TRACK,
     suggestions: HALLOWEEN_PREMIUM_SONGS,
     suggestionsNote: "romantic, a little spooky · tap to use",
     demoStart: DEMO_START,
@@ -201,6 +202,8 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   },
   demo: {
     ...base.demo,
+    // The haunted piano, not the first YouTube suggestion.
+    ...TRACK_DEMO,
     recipientName: "Meera",
     senderName: "Arjun",
     petName: "Pumpkin",
