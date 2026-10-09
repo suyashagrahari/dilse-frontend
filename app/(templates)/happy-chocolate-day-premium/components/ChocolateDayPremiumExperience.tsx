@@ -1,255 +1,230 @@
 "use client";
 
-// ─── Chocolate Day ✦ Premium: "La Boîte" ───────────────────────────────────────────────────────────────────────
+// ─── Chocolate Day ✦ Premium — "The Sweetheart Chocolate Factory" ──────────────────────────────────────────────
 //
-// The chocolatier's box, made for one person; every bonbon is one of their photos. research §D.3
-// (.template-factory/premium-v2/research.md).
+// A bright, candy-pastel chocolate factory built for her (research-v3 §D3, "Meethi Si Factory"). She takes the tour
+// station by station; every station is one cute game that ends in an "aww" beat (sound + heart burst + haptic) with a
+// couple-sticker GIF reacting to what she just did.
 //
-//  gate    the lid in matte cacao, their initials in gold foil, a satin ribbon. "Pull the ribbon" (the tap starts the
-//          song; the ribbon slides off).
-//  box     I  La boîte: their opening line over the closed box. Drag the lid up.
-//          ↓  drop(): letterbox, riser, the lid hovers with light leaking out; the chorus lands, the lid flies off, the
-//             tissue parts, a foil sheen runs across nine glossy photo-bonbons (THE money moment).
-//          II The tasting: tap a piece, it lifts out and turns over to its flavour and the memory it tastes of.
-//  heart   III The last piece: a ruby heart dusted in cocoa; brush it clean to find their photo and line.
-//  letter  IV  Notes from the chocolatier: the menu card slides out of its sleeve.
-//  voice   V   In my voice (or their words, large, when there is no recording).
-//  end     "Every piece of it was you." The lid as a tiltable keepsake card + poster, the sealed P.S., reply, replay.
+//  gate     her golden ticket: scratch the gold to see who's invited → the factory gates open, the song starts
+//  1 pack   the packing line: six kawaii truffles on a conveyor; tap/drag each into her box → its flavour = a reason
+//  2 unwrap the wrapping room: pull the wrapper off a giant bar, tear the foil: the bar is her photo in chocolate relief
+//  3 dip    the dipping station: pull each photo down into warm chocolate → it comes up dipped, with its memory
+//  4 catch  quality control: a 15 s catch game; every chocolate = one of his "{catchPrize}"
+//  5 melt   the melting room: hold the chocolate heart until it melts → his heart line → his letter types itself
+//  6 music  the music box: open the lid, a truffle twirls, his voice note plays           (skipped if nothing)
+//  7 last   the tasting table: "who gets the last piece?" his name hops away; hers → the bigger half
+//  8 finale the chocolate fountain: pull the lever → drop() → on the chorus a chocolate river carries her photos
+//           across the screen, sprinkles rain, and they land one by one in the box she filled: a box of us
+//  9 exit   the gift shop: the "Box of Us" (save as PNG), his coupon to stamp, the P.S., send a chocolate back, replay
 //
-// One ShaderBackdrop + one GlowParticles for the page (presets change per chapter), grain + vignette always,
-// SceneTransition between chapters. The tilt (useGyroParallax) is written once to --sx/--sy on the root, where the
-// foil and the bonbons' gloss read it. Fixed layers (the lifted piece) live here, outside every transformed scene.
+// Next appears when the station's interaction lands, or after a while so nobody is stuck; from the 2nd station she
+// can skip ahead. Repeat visit: the progress dots become a map. react("opened") at the gate, react("completed") at
+// the exit.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import {
-  FilmGrain, GlowParticles, Letterbox, LightLeak, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette,
-  requestTiltPermission, useGyroParallax, usePremium, type BackdropPreset, type TransitionVariant,
-} from "../../_valentine/kit/premium";
+import { DayRoot } from "../../_valentine/kit";
+import { PremiumRoot, SceneFade, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { BOITE_FONT_VARS } from "./boite/fonts";
-import { BOITE_CSS } from "./boite/styles";
-import { readBoite } from "./boite/util";
-import { registerBoiteCues } from "./boite/cues";
-import { LidFace } from "./boite/Box";
-import { BoxScene } from "./boite/BoxScene";
-import { Tasting } from "./boite/Tasting";
-import { HeartScene } from "./boite/HeartScene";
-import { LetterScene } from "./boite/LetterScene";
-import { VoiceScene } from "./boite/VoiceScene";
-import { EndingScene } from "./boite/EndingScene";
+import { FACTORY_FONT_VARS } from "./factory/fonts";
+import { GIF, readFactory } from "./factory/model";
+import { FACTORY_CSS } from "./factory/styles";
+import { Gif, StationCtx, Truffle, ensureFactoryCues, type StationApi } from "./factory/ui";
+import { LOOKS } from "./factory/model";
+import Gate, { FactorySkyline } from "./factory/Gate";
+import PackBox from "./factory/PackBox";
+import Unwrap from "./factory/Unwrap";
+import Dip from "./factory/Dip";
+import Catch from "./factory/Catch";
+import Melt from "./factory/Melt";
+import MusicBox from "./factory/MusicBox";
+import LastPiece from "./factory/LastPiece";
+import Fountain from "./factory/Fountain";
+import Keepsake from "./factory/Keepsake";
 
 const SLUG = "happy-chocolate-day-premium" as const;
-type Scene = "gate" | "box" | "heart" | "letter" | "voice" | "end";
+type StationId = "pack" | "unwrap" | "dip" | "catch" | "melt" | "music" | "last" | "finale" | "exit";
 
-const BACKDROP: Record<Scene, BackdropPreset> = { gate: "velvet", box: "candle", heart: "candle", letter: "candle", voice: "candle", end: "candle" };
-const ENTER: Record<Scene, TransitionVariant> = { gate: "iris", box: "iris", heart: "iris", letter: "fold", voice: "flash", end: "iris" };
+const NAME: Record<StationId, string> = {
+  pack: "The packing line", unwrap: "The wrapping room", dip: "The dipping station", catch: "Quality control", melt: "The melting room",
+  music: "The music box", last: "The tasting table", finale: "The chocolate fountain", exit: "The gift shop",
+};
+const NEXT_LABEL: Partial<Record<StationId, string>> = {
+  pack: "Next station →", unwrap: "Next station →", dip: "Next station →", catch: "Next station →", melt: "Keep going →",
+  music: "Keep going →", last: "To the grand finale ✨", finale: "To the gift shop 🎁",
+};
+/** Never stuck: Next appears after this long even if the game wasn't finished. */
+const AUTO_READY: Partial<Record<StationId, number>> = { pack: 22000, unwrap: 16000, dip: 20000, catch: 30000, melt: 16000, music: 10000, last: 20000 };
 
-function Boite({ data, mode, react }: ExperienceProps) {
+function Story({ data, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
-  const reduce = useReducedMotion();
-  const b = useMemo(() => readBoite(data), [data]);
-  const [scene, setScene] = useState<Scene>(p.opened ? "box" : "gate");
-  const [pulled, setPulled] = useState(false);
-  const [bars, setBars] = useState(false);
-  const [opened, setOpened] = useState(false);
-  const [pick, setPick] = useState<number | null>(null);
-  const [tasted, setTasted] = useState<ReadonlySet<number>>(() => new Set());
+  const { sfx, music, premium } = p;
+  const f = useMemo(() => readFactory(day, data, music?.title), [day, data, music?.title]);
+  const [opened, setOpened] = useState(p.opened);
   const [run, setRun] = useState(0);
-  const hasLetter = !!data.letter?.trim();
-  const hasVoice = !!p.premium.voiceNote || !!p.premium.voiceCaption.trim();
-
-  useEffect(() => registerBoiteCues(), []);
-
-  // The tilt, written once as CSS variables (no re-render): the foil, the gloss and the sheen read --sx/--sy.
-  const root = useRef<HTMLDivElement>(null);
-  const par = useGyroParallax({ stiffness: 50, damping: 16 });
-  useEffect(() => {
-    const set = (k: string) => (v: number) => root.current?.style.setProperty(k, v.toFixed(3));
-    const a = par.x.on("change", set("--sx"));
-    const c = par.y.on("change", set("--sy"));
-    return () => {
-      a();
-      c();
-    };
-  }, [par.x, par.y]);
+  useEffect(ensureFactoryCues, []);
 
   const order = useMemo(() => {
-    const o: Scene[] = ["box", "heart"];
-    if (hasLetter) o.push("letter");
-    if (hasVoice) o.push("voice");
-    o.push("end");
+    const o: StationId[] = ["pack", "unwrap", "dip", "catch", "melt"];
+    if (premium.voiceNote || premium.voiceCaption.trim()) o.push("music");
+    o.push("last", "finale", "exit");
     return o;
-  }, [hasLetter, hasVoice]);
-  const next = useCallback(
-    (from: Scene) => {
-      const i = order.indexOf(from);
-      setScene(order[Math.min(order.length - 1, i + 1)]);
-    },
-    [order],
-  );
+  }, [premium.voiceNote, premium.voiceCaption]);
 
-  // The song sits a little lower under the letter (where the platform lets us fade it).
-  const musicRef = useRef(p.music);
+  const [idx, setIdx] = useState(0);
+  const [doneSet, setDoneSet] = useState<Record<string, boolean>>({});
+  const [skipOn, setSkipOn] = useState(false);
+  const station = order[Math.min(idx, order.length - 1)];
+  const key = `${run}-${station}`;
+  const isDone = !!doneSet[key];
+
+  const done = useCallback(() => setDoneSet((r) => (r[key] ? r : { ...r, [key]: true })), [key]);
   useEffect(() => {
-    musicRef.current = p.music;
+    if (!opened) return;
+    const ms = AUTO_READY[station];
+    const t1 = ms ? window.setTimeout(done, ms) : 0;
+    const t2 = window.setTimeout(() => setSkipOn(true), 3500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setSkipOn(false);
+    };
+  }, [station, done, opened, run]);
+
+  const go = useCallback(
+    (i: number) => {
+      setIdx(Math.max(0, Math.min(order.length - 1, i)));
+      sfx("swoosh-soft", { gain: 0.45 });
+      window.scrollTo({ top: 0 });
+    },
+    [order.length, sfx],
+  );
+  const next = useCallback(() => go(idx + 1), [go, idx]);
+
+  // The song dips under the letter and the voice note manages itself; everywhere else it plays full.
+  const musicRef = useRef(music);
+  useEffect(() => {
+    musicRef.current = music;
   });
   useEffect(() => {
     const m = musicRef.current;
-    if (!m?.canFade || scene === "gate") return;
-    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
-  }, [scene]);
-
-  const reactRef = useRef(react);
-  useEffect(() => {
-    reactRef.current = react;
-  });
-  useEffect(() => {
-    if (scene === "end") reactRef.current("completed");
-  }, [scene]);
-
-  const sticker = (id: string, size: number) => {
-    const slot = day.gifSlots.find((s) => s.id === id);
-    return slot ? <Sticker slug={day.slug} slot={slot} value={data.gifs?.[id]} size={size} alt="" /> : null;
-  };
+    if (!opened || !m?.canFade) return;
+    if (station === "melt") m.fadeTo(0.55, 1200);
+    else if (station !== "music" && station !== "finale") m.fadeTo(station === "exit" ? 0.75 : 1, 1200);
+  }, [station, opened]);
 
   const replay = () => {
-    setOpened(false);
-    setBars(false);
-    setPick(null);
-    setTasted(new Set());
     setRun((r) => r + 1);
-    setScene("box");
+    setDoneSet({});
+    setIdx(0);
+    sfx("whoosh", { gain: 0.5 });
+    window.scrollTo({ top: 0 });
   };
 
-  const taste = (i: number) => {
-    p.sfx("lb-lift", { gain: 0.8 });
-    setPick(i);
-    setTasted((s) => (s.has(i) ? s : new Set(s).add(i)));
-  };
+  const api: StationApi = { f, data, day, done, isDone, sfx: sfx as StationApi["sfx"], index: idx };
 
-  let particles: "sparkles" | "embers" = "embers";
-  let density = 0.16;
-  if ((scene === "box" && opened) || scene === "end") {
-    particles = "sparkles";
-    density = scene === "end" ? 0.3 : 0.42;
-  } else if (scene === "heart") {
-    particles = "sparkles";
-    density = 0.2;
-  }
-
-  const render = (s: Scene) => {
-    switch (s) {
-      case "gate":
-        return null;
-      case "box":
-        return (
-          <BoxScene
-            key={run}
-            b={b}
-            tasted={tasted}
-            out={pick}
-            onRising={() => setBars(true)}
-            onOpen={() => {
-              setOpened(true);
-              window.setTimeout(() => setBars(false), reduce ? 0 : 3000);
-            }}
-            onPick={taste}
-            onNext={() => next("box")}
-            sticker={sticker("pc3-yum", 54)}
-          />
-        );
-      case "heart":
-        return <HeartScene b={b} hasLetter={hasLetter} onDone={() => next("heart")} />;
-      case "letter":
-        return <LetterScene b={b} letter={data.letter} onDone={() => next("letter")} />;
-      case "voice":
-        return <VoiceScene from={b.from} photo={b.photos[b.photos.length - 1]} onDone={() => next("voice")} />;
-      case "end":
-        return <EndingScene b={b} data={data} day={day} mode={mode} sticker={sticker("pc6-box", 64)} onReplay={replay} />;
+  const render = () => {
+    switch (station) {
+      case "pack": return <PackBox />;
+      case "unwrap": return <Unwrap />;
+      case "dip": return <Dip />;
+      case "catch": return <Catch />;
+      case "melt": return <Melt letter={data.letter} />;
+      case "music": return <MusicBox />;
+      case "last": return <LastPiece />;
+      case "finale": return <Fountain />;
+      case "exit": return <Keepsake onComplete={() => react("completed")} onReplay={replay} />;
     }
   };
 
-  const cw = b.cw;
-  const vars = {
-    ["--font-vw-ui" as string]: "var(--lb-sans)",
-    ["--vw-font-ui" as string]: "var(--lb-sans), system-ui, sans-serif",
-    ["--lid-hi" as string]: cw.lid[0],
-    ["--lid" as string]: cw.lid[1],
-    ["--lid-deep" as string]: cw.lid[2],
-    ["--rib-hi" as string]: cw.ribbon[0],
-    ["--rib" as string]: cw.ribbon[1],
-    ["--rib-deep" as string]: cw.ribbon[2],
-    ["--foil-l" as string]: cw.foil[0],
-    ["--foil" as string]: cw.foil[1],
-    ["--foil-d" as string]: cw.foil[2],
-    ["--lid-ink" as string]: cw.ink,
-    ["--glow" as string]: cw.glow,
-  };
+  const showNext = opened && isDone && station !== "exit";
+  const showSkip = opened && !isDone && skipOn && idx >= 1 && station !== "finale" && station !== "exit";
 
   return (
-    <div
-      ref={root}
-      className={`lb-root ${BOITE_FONT_VARS}${cw.light ? " is-lightLid" : ""}`}
-      // iOS asks for gyro permission only inside a tap: the gate's own tap is the one. The same tap pulls the ribbon.
-      onClickCapture={
-        scene === "gate"
-          ? () => {
-              void requestTiltPermission();
-              if (pulled) return;
-              setPulled(true);
-              // After the gate's own handler has unlocked the audio (this capture runs first).
-              window.setTimeout(() => p.sfx("ribbon", { gain: 0.8 }), 60);
-            }
-          : undefined
-      }
-      style={vars}
-    >
-      <style>{BOITE_CSS}</style>
-      <ShaderBackdrop
-        preset={BACKDROP[scene]}
-        colors={scene === "gate" ? ["#0E0705", "#3A2018", "#9C6B4E"] : ["#0E0705", "#3A2018", "#C9A45C"]}
-        intensity={scene === "gate" ? 0.75 : scene === "box" && opened ? 1.15 : 0.9}
-        speed={0.6}
-        parallax
-      />
-      <GlowParticles preset={particles} colors={["#FFE7B8", "#E3C27E", "#C9A45C"]} density={density} speed={0.45} z={1} />
-      {(opened && scene === "box") || scene === "end" ? <LightLeak color="#FFB877" color2="#FFE2B0" corner="top-right" opacity={0.3} /> : null}
-      <Vignette strength={0.64} />
-      <FilmGrain opacity={0.07} />
-      <Letterbox show={bars} />
+    <StationCtx.Provider value={api}>
+      <div className={`sf-root ${FACTORY_FONT_VARS}`}>
+        <style>{FACTORY_CSS}</style>
+        <FactoryFloor />
 
-      {scene === "gate" && (
-        <PremiumGate
-          art={<LidFace b={b} ribbon pulled={pulled} className="lb-gateLid" />}
-          kicker="A box made by hand for"
-          subtitle="Chocolate Day · sound on"
-          sting="chime"
-          openLabel="Pull the ribbon"
-          sealText={`Made by hand for ${b.to}`}
-          className="lb-gate"
-          bg="transparent"
-          ink="#F3E6D3"
-          accent="#C9A45C"
-          openMs={reduce ? 250 : 1200}
-          onOpen={() => {
-            react("opened");
-            setScene("box");
-          }}
-        />
-      )}
+        {!opened && (
+          <Gate
+            f={f}
+            onOpen={() => {
+              react("opened");
+              setOpened(true);
+            }}
+          />
+        )}
 
-      <div className="lb-stage">
-        {scene !== "gate" && (
-          <SceneTransition sceneKey={`${scene}-${run}`} variant={ENTER[scene]} origin="50% 50%">
-            {render(scene)}
-          </SceneTransition>
+        {opened && (
+          <div className={`sf-stage is-${station}`}>
+            <nav className={`sf-dots${p.repeatVisit ? " is-map" : ""}`} aria-label="The factory tour">
+              {order.map((s, i) =>
+                p.repeatVisit ? (
+                  <button key={s} type="button" className={`sf-dot${i < idx ? " is-past" : ""}${i === idx ? " is-now" : ""}`} onClick={() => go(i)} aria-label={`Go to ${NAME[s]}`} aria-current={i === idx ? "step" : undefined} />
+                ) : (
+                  <span key={s} className={`sf-dot${i < idx ? " is-past" : ""}${i === idx ? " is-now" : ""}`} aria-label={i === idx ? `${NAME[s]}, station ${i + 1} of ${order.length}` : undefined} />
+                ),
+              )}
+            </nav>
+            <SceneFade sceneKey={key} duration={0.45} className="sf-sceneWrap">
+              {/* Each station gets its own context value, so a station still fading out keeps ITS done(). */}
+              <StationCtx.Provider value={api}>{render()}</StationCtx.Provider>
+            </SceneFade>
+            <div className="sf-foot">
+              {showNext && (
+                <button type="button" className="sf-puffy is-pink sf-next" key={key} onClick={next}>
+                  {NEXT_LABEL[station] ?? "Next →"}
+                </button>
+              )}
+              {showSkip && (
+                <button type="button" className="sf-skip" onClick={next}>
+                  Skip this station ▸
+                </button>
+              )}
+            </div>
+          </div>
         )}
       </div>
+    </StationCtx.Provider>
+  );
+}
 
-      <Tasting key={pick ?? -1} piece={pick != null ? (b.pieces[pick] ?? null) : null} at={pick ?? 0} onClose={() => setPick(null)} />
+/** The factory floor around the stage: milky blobs and drifting sprinkles everywhere; from 768 px a candy factory,
+ *  a giant lollipop, floating truffles and a couple of stickers live in the side space around the centred stage. */
+function FactoryFloor() {
+  const cols = ["#FF8FAB", "#FFD166", "#9FE5C8", "#C9A7FF", "#B9744D"];
+  return (
+    <div className="sf-floor" aria-hidden>
+      <i className="sf-blob is-a" />
+      <i className="sf-blob is-b" />
+      <i className="sf-blob is-c" />
+      <div className="sf-floaters">
+        {Array.from({ length: 12 }, (_, i) => (
+          <i key={i} style={{ ["--x" as string]: `${(i * 37) % 100}%`, ["--d" as string]: `${(i * 1.7) % 11}s`, ["--r" as string]: `${(i * 47) % 180}deg`, background: cols[i % cols.length] }} />
+        ))}
+      </div>
+      <div className="sf-side is-left">
+        <FactorySkyline className="sf-sideFactory" />
+        <Gif src={GIF.penguinBar} size={116} tilt={-6} float className="sf-sideGif" />
+      </div>
+      <div className="sf-side is-right">
+        <div className="sf-sideTruffles">
+          {[0, 1, 2].map((i) => (
+            <span key={i} style={{ ["--i" as string]: i }}>
+              <Truffle look={LOOKS[[1, 5, 3][i]]} size={[70, 56, 64][i]} happy={i === 1} />
+            </span>
+          ))}
+        </div>
+        <svg className="sf-sideLolly" viewBox="0 0 120 260">
+          <line x1="60" y1="110" x2="60" y2="256" stroke="#fff" strokeWidth="8" strokeLinecap="round" />
+          <circle cx="60" cy="60" r="54" fill="#FF8FAB" />
+          <path d="M60 60 m-36 0 a36 36 0 1 1 36 36 a24 24 0 1 1 -24 -24 a12 12 0 1 1 12 12" fill="none" stroke="#fff" strokeWidth="8" strokeLinecap="round" />
+        </svg>
+        <Gif src={GIF.bearsCuddle} size={110} tilt={6} float className="sf-sideGif" />
+      </div>
     </div>
   );
 }
@@ -258,8 +233,8 @@ export default function ChocolateDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot day={day} data={props.data} layout="full" dark>
-        <Boite {...props} />
+      <DayRoot day={day} data={props.data} layout="full">
+        <Story {...props} />
       </DayRoot>
     </PremiumRoot>
   );

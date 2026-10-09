@@ -1,4 +1,4 @@
-// /happy-chocolate-day-premium — the ✦ Premium twin of /happy-chocolate-day, "La Boîte". The editor is the shared
+// /happy-chocolate-day-premium — the ✦ Premium twin of /happy-chocolate-day, "The Sweetheart Chocolate Factory". The editor is the shared
 // engine (app/(templates)/_valentine); this template's own scenes are
 // ./components/ChocolateDayPremiumExperience.tsx.
 import ValentineDayEditorPage from "../_valentine/ValentineDayEditorPage";

@@ -12,11 +12,11 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🍫 A box of chocolates, made only for you`;
-const SOCIAL_DESCRIPTION = `Every piece in it is a memory. Pull the ribbon with the sound on ✦`;
-// "La Boîte" (v2). The page description and its JSON-LD use this line (lib/seo-data.ts carries the same concept).
+const SOCIAL_TITLE = `🍫 A chocolate factory, made just for you`;
+const SOCIAL_DESCRIPTION = `Scratch your golden ticket, fill your box, catch the chocolates, melt the heart… and pull the lever on the chocolate fountain. Sound on ✦`;
+// "The Sweetheart Chocolate Factory" (v3). The page description and its JSON-LD use this line (lib/seo-data.ts carries the same concept).
 const DESCRIPTION =
-  "A cinematic Chocolate Day website shaped like a chocolatier's box: they pull the ribbon, lift the lid on your song's chorus, and every bonbon inside is one of your photos, each turning over to its flavour and memory. Then a cocoa-dusted heart, your letter on the menu card, your voice, and a keepsake card.";
+  "A cute Chocolate Day website shaped like a chocolate factory made just for her: a golden ticket, six truffles with six reasons, her photo in a chocolate bar, a catch game, your letter, your voice, and a chocolate fountain on your song's chorus.";
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
