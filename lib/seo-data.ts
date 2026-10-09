@@ -2548,7 +2548,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "happy-rose-day-premium": {
     title: "Cinematic Rose Day Website for Girlfriend",
     description:
-      "Grow them a glasshouse rose: wipe their name off the fogged door, pluck the thorns you got through, and watch a garden of roses bloom on your song's chorus.",
+      "A rose made of your photos: they hold a velvet bud to warm it, and on your song's chorus it opens ring by ring, every petal a photo of the two of you.",
     category: "Valentine",
     emoji: "🌹",
     keywords: [
@@ -2556,12 +2556,12 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       "rose day website for girlfriend",
       "rose day website for boyfriend",
       "premium rose day surprise",
+      "rose made of our photos",
+      "photo rose online",
       "rose day gift for long distance girlfriend",
       "rose day surprise with our song",
       "rose day message with voice note",
-      "virtual rose garden for her",
       "rose that blooms online",
-      "eternal rose gift online",
       "rose day 2027",
       "7 february rose day surprise",
       "rose day love letter online",
@@ -2571,72 +2571,72 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
     ],
     faqs: [
       {
-        question: "What happens when they open the Glasshouse Rose?",
+        question: "What happens when they open The Bloom of Us?",
         answer:
-          "They find a glasshouse door with their name traced in the fog and wipe it clear to go in. Inside, they pluck the thorns you wrote — the hard things you got through together — and each one turns gold. They hold the bud and it opens, then a garden of roses blooms in a heart as your song's chorus drops. Falling petals spell out a line from you, your letter opens in a pressed book, your photos sit inside dew drops, and it ends with an Eternal Rose under a glass dome engraved with both your names.",
+          "A gold rose draws itself in the dark with their name under it, and their first tap starts your song. They hold a closed velvet bud to warm it, its heartbeat quickening, until your song's chorus lands and the rose opens ring by ring: every petal is one of your photos. They tap a petal to lift its photo out with your caption, peel back vellum to find photos pressed between pages, raise your letter to read it, hear your voice, and end on a keepsake card they can tilt in the light, with a sealed P.S. to break open.",
       },
       ...premiumFaqs({
         day: "Rose Day",
         twin: "Rose Day",
-        keepsake: "Eternal Rose picture",
-        voiceAt: "as the gardener's note beside the Eternal Rose",
+        keepsake: "keepsake card of the rose made of your photos",
+        voiceAt: "over one of your photos, after the letter",
         yesEmail: false,
       }),
     ],
     howTo: premiumHowTo({
       name: "How to Make a Cinematic Rose Day Website",
-      description: "Grow them a glasshouse rose that blooms on your song, with your letter, photos and voice — and send it as a private link.",
-      write: { name: "Plant the Glasshouse", text: "Pick the rose colour and how many roses bloom, write the thorns you got through, the line the petals spell and your letter — or let the AI write it from a few lines about the two of you." },
+      description: "Turn your photos into the petals of one rose that opens on your song, with your letter and voice, and send it as a private link.",
+      write: { name: "Grow the Rose", text: "Pick the rose colour and why it is theirs, write the line over the bud and the line when it blooms, a caption for each photo and your letter, or let the AI write it from a few lines about the two of you." },
     }),
   },
 
   "happy-propose-day-premium": {
-    title: "Propose Day Drone-Show Website for Girlfriend",
+    title: "Propose Day Movie Website for Girlfriend",
     description:
-      "Propose with a drone show: your nervous texts arrive, they light a candle for each reason, then hundreds of drone lights write your question as your song drops.",
+      "Propose with a film of your love story: a premiere ticket, three acts cut from your photos, a director's commentary, and your question as the final title card.",
     category: "Valentine",
     emoji: "💍",
     keywords: [
-      "drone show proposal website",
+      "love story movie proposal website",
       "propose day website for girlfriend",
       "propose day website for boyfriend",
       "cinematic proposal website",
+      "our love story as a movie",
       "online proposal idea with our song",
       "will you marry me website",
       "long distance proposal idea",
-      "rooftop proposal online",
+      "movie premiere proposal",
       "premium propose day surprise",
       "proposal website with voice note",
       "propose day 2027",
       "8 february propose day",
       "propose day message for girlfriend",
-      "virtual ring proposal",
       "proposal with photos and music",
       "creative way to propose online",
     ],
     faqs: [
       {
-        question: "What happens when they open the Propose Day page?",
+        question: "What happens when they open The Premiere?",
         answer:
-          "It starts on a phone: your nervous texts arrive one by one. Their reply opens a rooftop at night. They strike a match and light a candle for each reason you wrote, switch on city windows that hold your photos, and are told to look up — hundreds of drone lights rise to form your initials, a beating heart and a ring box that opens, then write your question in the sky as your song's chorus drops. They answer by sliding the ring onto the finger, and the drones spell that they said yes.",
+          "They are handed a premiere ticket with their name on it, and taking their seat starts your song. A projector counts down 3, 2, 1, the title card presents your film starring them, then three acts play out from your photos: they turn a lens ring to bring the first still into focus, hold for slow motion as colour floods into the second, and swipe through a trailer of what comes next. They hear your director's commentary, read your letter as the last page of the script, and then your question appears as the final title card. On yes the frame opens to full screen as your song's chorus lands, the credits roll, and the lobby holds a poster to keep.",
       },
       {
         question: "Can they say no?",
         answer:
-          "Not really. Next to \"Put it on\" there is a \"Let me think\" button that runs away with your lines a few times, then becomes \"Okay okay YES\". The keepsake ticket counts how many times they had to think.",
+          "Not really. The No button dodges away with your lines a few times, then the screen says No was never in the script and offers the director's cut: Yes.",
       },
       ...premiumFaqs({
         day: "Propose Day",
         twin: "Propose Day",
-        keepsake: "front-row ticket that says YES in drone lights",
-        voiceAt: "as a voice message in the chat after they say yes",
+        keepsake: "film poster of your premiere",
+        voiceAt: "as the director's commentary",
         yesEmail: true,
       }),
     ],
     howTo: premiumHowTo({
-      name: "How to Make a Drone-Show Proposal Website",
-      description: "Plan a rooftop proposal with candles, your photos in city windows and your question written in drone lights, then send the link.",
-      write: { name: "Plan the Rooftop", text: "Write your nervous texts, the reasons for each candle, the memories behind each window, the question for the sky (short reads best) and the ring — or let the AI write it from a few lines about the two of you." },
+      name: "How to Make a Love Story Movie Proposal Website",
+      description: "Cut your love story into a three-act film from your photos, end it on your question as the final title card, and send the link.",
+      write: { name: "Write the Film", text: "Name your film and its tagline, write the three acts (how it started, the moment you knew, what's coming), the trailer cards, the question, the end credits and your letter as the script, or let the AI write it from a few lines about the two of you." },
     }),
   },
 

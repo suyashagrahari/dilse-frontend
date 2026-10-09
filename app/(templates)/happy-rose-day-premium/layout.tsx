@@ -14,8 +14,8 @@ const tpl = TEMPLATE_SEO[SLUG];
 // pastes the template link to a friend.
 const SOCIAL_TITLE = `🌹 Something has been opening, just for you`;
 const SOCIAL_DESCRIPTION = `A rose made of us. Go somewhere quiet, sound on ✦`;
-// "The Bloom of Us" (v2). lib/seo-data.ts still describes the v1 glasshouse, so the page's own description
-// and its JSON-LD use this until that shared entry is rewritten.
+// "The Bloom of Us" (v2). The page's own description and its JSON-LD use this fuller line; the shorter
+// lib/seo-data.ts description feeds the gallery, sitemap and /llms.txt.
 const DESCRIPTION =
   "A cinematic Rose Day website where your photos are the petals: a velvet bud they hold to warm, which opens on your song's chorus into a rose made of your photos, then pressed photos, your letter, your voice and a keepsake card.";
 
