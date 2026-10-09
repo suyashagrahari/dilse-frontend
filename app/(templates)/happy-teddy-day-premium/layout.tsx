@@ -12,11 +12,11 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🧸 A parcel for you. Fragile: contains one (1) hug`;
-const SOCIAL_DESCRIPTION = `He comes with papers. Open it with the sound on ✦`;
-// "Adoption Papers" (v2): the page's own description + JSON-LD text.
+const SOCIAL_TITLE = `🧸 Special delivery: a cuddly teddy is waiting for you`;
+const SOCIAL_DESCRIPTION = `Wake him up with a heart, give him a name, dress him up and squeeze him to hear a secret. Sound on 🎧`;
+// "The Teddy House" (premium v3): the page's own description + JSON-LD text.
 const DESCRIPTION =
-  "A cinematic Teddy Day website with adoption papers: they meet a teddy you named, flip his care labels (love notes in disguise), read your letter and hear your voice, then sign his Certificate of Adoption as the gold seal presses on your song's chorus.";
+  "A cute, interactive Teddy Day website: a teddy arrives in a box and moves into a little pastel house. They wake him with a heart, name him, dress him up, squeeze him to hear your letter, flip through your photos, feed him, take your call and tuck him in, then your song's chorus lands as teddies rain into a heart around your photo. Ends with an adoption certificate to save.";
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {

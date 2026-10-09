@@ -2682,46 +2682,46 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   },
 
   "happy-teddy-day-premium": {
-    title: "Premium Teddy Day Website for Girlfriend",
+    title: "Cute Teddy Day Website for Girlfriend",
     description:
-      "Send a teddy with adoption papers: they meet him, flip his care labels, read your letter, then sign the certificate and the gold seal presses as your song drops.",
+      "A teddy arrives in a box and moves into a little pastel house: she wakes him with a heart, names him, dresses him, squeezes him to hear your letter, and keeps him forever.",
     category: "Valentine",
     emoji: "🧸",
     keywords: [
-      "premium teddy day website",
+      "cute teddy day website for girlfriend",
       "teddy day website for girlfriend",
       "teddy day website for boyfriend",
-      "cinematic teddy day surprise",
+      "interactive teddy day surprise",
+      "virtual teddy bear gift",
+      "dress up teddy online",
       "teddy adoption certificate",
       "teddy day gift for long distance",
       "teddy day surprise with our song",
       "teddy day message with voice note",
-      "virtual teddy bear gift",
       "teddy day 2027",
       "10 february teddy day",
       "teddy day wishes with photos",
       "cute teddy day idea",
-      "teddy birth certificate",
       "digital teddy for her",
     ],
     faqs: [
       {
-        question: "What happens when they open the teddy parcel?",
+        question: "What happens when they open The Teddy House?",
         answer:
-          "They untie a parcel tag (\"Fragile: contains one (1) hug\") and meet a teddy you have named, with a woven tag carrying both your names; squeeze him and he says his first words. His file follows: your photos clipped in as his new family, satin care labels that flip over to love notes, your letter folded in three, and your voice. Then they sign his Certificate of Adoption with a finger, hold to press the gold seal, and as your song's chorus drops the seal embosses and ADOPTED is stamped across it. The signed certificate is theirs to save.",
+          "A delivery box wiggles on the doorstep; when they open it, a sleepy teddy pops out. They rub a little heart warm, kiss it and tuck it into his chest, and he wakes up, waves and says his first words; they keep the name you picked or give him their own. Then they dress him up (each accessory pops a note from you), squeeze him to hear your letter one speech bubble at a time, flip through your photos in his album, catch treats in the kitchen to unlock his house rules, pick up his toy phone to hear your voice and tuck him into bed, where a note waits under his pillow. The next morning he asks them to keep him forever, and on your song's chorus teddies of every size rain into a heart around your photo. They finish with an adoption certificate to save.",
       },
       ...premiumFaqs({
         day: "Teddy Day",
         twin: "Teddy Day",
-        keepsake: "signed Certificate of Adoption",
-        voiceAt: "just before they sign the adoption papers",
+        keepsake: "cute adoption certificate",
+        voiceAt: "when his toy phone rings",
         yesEmail: false,
       }),
     ],
     howTo: premiumHowTo({
       name: "How to Make a Premium Teddy Day Website",
-      description: "Give them a teddy with adoption papers they sign themselves, with your photos, letter and voice in his file, and send it as a private link.",
-      write: { name: "Write his file", text: "Name the teddy, write his parcel tag, first words, place of birth, temperament, care instructions and your letter, or let the AI write them from a few lines about the two of you." },
+      description: "Send them a teddy who moves into a little pastel house, with your photos, letter and voice inside, as a private link.",
+      write: { name: "Get the teddy ready", text: "Name the teddy, write the line on his delivery box, his first words, the notes for his outfit, his house rules and your letter, or let the AI write them from a few lines about the two of you." },
     }),
   },
 
