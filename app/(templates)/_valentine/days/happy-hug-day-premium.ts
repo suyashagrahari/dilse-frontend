@@ -1,40 +1,51 @@
-// happy-hug-day-premium — "The Twenty-Second Hug" (the ✦ Premium twin of happy-hug-day).
+// happy-hug-day-premium — "The Hug Passport" (v3, the ✦ Premium twin of happy-hug-day).
 //
-// research.md §D.6. "Come here." arrives one word at a time; two black-and-white photos of the two of them are
-// dragged together across the distance; then the recipient holds their thumb on the screen for twenty seconds while
-// the sender's photo blooms from black-and-white into colour outward from their thumb, a heartbeat slows to the
-// sender's, the sender's lines fade in, and the song's chorus lands as the last of the colour does. Letting go
-// pauses it ("don't let go yet"). After the hug the whole page is in colour: what your hugs feel like (four lines,
-// each over a photo, swiped away one by one), the letter, the voice note, and a coupon: "Hug owed: 1. Redeem in
-// person." that they tear off. Sensory and soft; no medical claims ("they say…").
+// Collect every kind of hug (research §D6). Her own Hug Passport and a bear with open arms ("Come here, you.") open
+// the page; the tap starts the song. Then five hugs, each a short gesture with jelly physics that ends with a rubber
+// stamp thunking into the passport and one of her photos as the souvenir: the bear hug (pinch them together), the
+// back hug (drag him behind her), the twirl hug (draw a circle), the pat-pat hug (pat his head under a rain cloud)
+// and the long-distance hug (drag two phones together while the kilometres count down). Then his letter by hug mail,
+// his voice from a purring plush, hug coupons she can redeem, and the last stamp: "Will you be my forever hug?" —
+// on the chorus the Forever stamp slams down and the passport bursts into a wall of hugging couples around her
+// photo. It ends on her passport (holder page + every stamp), saved as a wallpaper, and a hug she sends back.
 //
-// Server twin: server/src/config/premiumDays/happy-hug-day-premium.ts (same keys + limits; valentineDays.test.ts
-// pins them). `coupons` keeps the $2 key (upgrade path). The chorus second is the shared premium.songDropAt.
+// Extras keys + limits are mirrored in server/src/config/premiumDays/happy-hug-day-premium.ts and pinned in
+// server/src/config/valentineDays.test.ts. Keys shared with the $2 day keep its key (characters, coupons); keys from
+// v2 keep theirs (openingLine, distanceKm, meetLine, hugLines, replyLine). The chorus second is premium.songDropAt.
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
 import type { LovePhoto } from "../../_love/types";
 import { premiumDay } from "./_premium";
-import { hugDay } from "./happy-hug-day";
+import { hugDay, type HugExtras } from "./happy-hug-day";
 
 export interface HugExtrasPremium {
   openingLine: string;
+  characters: HugExtras["characters"];
+  hugLines: string[];
   distanceKm: number;
   meetLine: string;
-  holdSeconds: number;
-  heartbeatBpm: number;
-  hugLines: string[];
-  hugFeels: string[];
   coupons: { title: string; detail: string }[];
   replyLine: string;
+  question: string;
+  yesLine: string;
+  hugTitle: string;
   [k: string]: unknown;
 }
 
-// Two quiet sticker spots: this page is carried by photos and type. The ids (and their GIFs on the CDN) are v1's.
+const CDN_GIFS = "https://cdn.subhsandesh.in/gifts-media/templates/_premium/gifs";
+/** Our sticker library lives under templates/_premium/gifs; a slot's `file` resolves against templates/<slug>/. */
+const lib = (path: string) => `../_premium/gifs/${path}`;
+
 const GIFS: GifSlot[] = [
-  { id: "ph3-held", label: "Held", moment: "Beside “Hug delivered”, once the photo is in colour", file: "ph3-held.gif", emoji: "🫂", anim: "pulse" },
-  { id: "ph6-back", label: "Hug back", moment: "On the corner of the hug coupon", file: "ph6-back.gif", emoji: "🤍", anim: "pulse" },
+  { id: "hp1-run", label: "Come here", moment: "On the passport cover, running in for a hug", file: lib("hug-day/penguin-run-hug.webp"), emoji: "🤗", anim: "bounce" },
+  { id: "hp2-bear", label: "Bear hug", moment: "When the bear hug is stamped", file: lib("hug-day/cats-squeeze-hug.webp"), emoji: "🐻", anim: "pulse" },
+  { id: "hp3-back", label: "Back hug", moment: "When the back hug is stamped", file: lib("hug-day/bears-back-hug.webp"), emoji: "🫶", anim: "float" },
+  { id: "hp4-far", label: "Long distance", moment: "Next to the two phones, before they meet", file: lib("valentines-day/penguin-i-love-you-so-much.webp"), emoji: "📱", anim: "bounce" },
+  { id: "hp5-coupon", label: "Coupons", moment: "Peeking over the hug coupon booklet", file: lib("valentines-day/panda-i-love-u-sign.webp"), emoji: "🎟️", anim: "wiggle" },
+  { id: "hp6-yes", label: "Forever", moment: "On the wall of hugs, after they say yes", file: lib("kiss-day/bears-surprise-kiss.webp"), emoji: "💞", anim: "pulse" },
 ];
+const DEMO_GIFS: Record<string, string> = Object.fromEntries(GIFS.map((g) => [g.id, `${CDN_GIFS}/${g.file.replace("../_premium/gifs/", "")}`]));
 
 /** research §E (oEmbed 200 + playableInEmbed, 2026-10-09). The first one is the demo song. */
 export const HUG_SONGS: readonly SongSuggestion[] = [
@@ -44,7 +55,7 @@ export const HUG_SONGS: readonly SongSuggestion[] = [
   { id: "RLzC55ai0eo", title: "Heeriye", artist: "Jasleen Royal ft. Arijit Singh" },
   { id: "Q5z6RHIpi2Y", title: "Thinking Out Loud (lyric video)", artist: "Ed Sheeran" },
 ];
-/** The demo song opens on its most-replayed phrase; the hug's drop lands back on it as the photo reaches full colour. */
+/** The demo song opens on its most-replayed phrase; the last stamp drops back onto it. */
 const DEMO_START = 42;
 
 const A = "https://cdn.subhsandesh.in/gifts-media/assets";
@@ -58,121 +69,152 @@ const DEMO_PHOTOS: LovePhoto[] = [
   photo("hero-bg", "us, squished", "Best seat in the house.", 40),
 ];
 
+const DEFAULT_HUG_LINES = [
+  "For the days that are too much. I'll squeeze them smaller.",
+  "For when you're making chai and pretending not to notice me.",
+  "For good news. I'm lifting you off the ground.",
+  "For bad days. Pat, pat. I'm right here.",
+];
+
 const base = premiumDay<HugExtrasPremium>(hugDay, {
   slug: "happy-hug-day-premium",
-  title: "The Twenty-Second Hug",
+  title: "The Hug Passport",
   gifSlots: GIFS,
   demoSong: { id: HUG_SONGS[0].id, start: DEMO_START },
   demoPremium: {
     songDropAt: DEMO_START,
-    voiceCaption: "Twenty seconds. That's all I'm asking. Okay, maybe forty.",
+    voiceCaption: "I recorded this three times. The third one has me laughing, so obviously that's the one.",
     psLetter:
-      "Open only on a day that's too heavy.\n\nPut your thumb back on the screen and stay as long as you like. I'll be on the other end of it, the way I was at the airport, not letting go first.",
+      "Open only on a day that's too heavy.\n\nGo back to the pat-pat hug and do it three more times. I'll feel it, I promise. Then call me, even if it's late.",
   },
   copy: {
-    recipientPlaceholder: "who the hug is for, e.g. Tanvi",
+    recipientPlaceholder: "whose passport is it, e.g. Tanvi",
     petNamePlaceholder: "what you call them mid-hug",
     letterPlaceholder: "What you'd say with your arms around them: the bad day you'd hug away, the good day you'd squeeze, the first hug you remember…",
-    letterHint: "It unfolds after the hug, on soft paper, in colour.",
-    photosHint: "Photo 1 is the one they hold: it blooms from black-and-white into colour under their thumb. Photos 1–2 are the two of you, dragged together; the rest sit under “what your hugs feel like”.",
+    letterHint: "It arrives by hug mail after the five hugs, in an airmail envelope with their name, and types itself out.",
+    photosHint: "Photo 1 is their passport photo. Photos 1–5 are the souvenirs of the five hugs, each with your caption.",
     captionHint: "caption, e.g. the airport, the first goodbye",
-    endLinePlaceholder: "Twenty seconds was never going to be enough.",
-    endLineHint: "The last line, under the hug coupon.",
-    sheetTitle: "Send a twenty-second hug 🤍",
-    sheetSub: "They hold their thumb on the screen for twenty seconds while your photo warms into colour and your song swells. Everything is pre-filled: make it yours.",
-    extrasTitle: "The hug",
-    extrasSub: "The first words, the distance, the twenty seconds, what your hugs feel like, and the hug you owe them",
-    publishing: "Warming it up…",
-    storyTitle: "Let's send them a twenty-second hug 🤍",
-    replyText: "Hugged you back for twenty seconds. Come redeem the real one 🤍",
-    yesChip: "Hugged back 🤍",
+    noteHint: "a little note about this photo…",
+    endLinePlaceholder: "Valid for every hug, forever. Starting with the next one.",
+    endLineHint: "The last line, under their finished passport.",
+    sheetTitle: "Issue their Hug Passport 🛂",
+    sheetSub: "Five hugs to collect (bear, back, twirl, pat-pat, long-distance), a stamp for each, your letter, your voice, hug coupons and one last question on the chorus. Everything is pre-filled: make it yours.",
+    extrasTitle: "The passport",
+    extrasSub: "The two huggers, your line for each hug, the distance, the coupons and the last question",
+    publishing: "Stamping your passport…",
+    storyTitle: "Let's issue their Hug Passport 🛂",
+    replyText: "Passport complete 🛂 Now come and stamp it in person 🤗",
+    yesChip: "Forever hug 💗",
   },
-  share: { title: "Come here. Someone needs twenty seconds of you 🤍", accent: "#F2A477" },
+  share: { title: "Your Hug Passport is ready 🛂🤗", accent: "#E0603F" },
 });
 
 export const hugDayPremium: DayConfig<HugExtrasPremium> = {
   ...base,
-  photoAspect: 0.8,
   music: { audioOnly: true, suggestions: HUG_SONGS, suggestionsNote: "hug songs · tap to use", demoStart: DEMO_START },
   extras: [
     {
-      key: "openingLine", kind: "text", max: 40, label: "The first words, one at a time",
-      placeholder: "e.g. Come here.",
-      hint: "Shown one word per screen, big, right after they open it. Then their name. Keep it to two to five words.",
-      suggestions: ["Come here.", "Come here, you.", "Hey. Come closer."],
+      key: "openingLine", kind: "text", max: 40, label: "What the bear says",
+      placeholder: "e.g. Come here, you.",
+      hint: "In a speech bubble on the passport cover, before they tap “Come here”.",
+      suggestions: ["Come here, you.", "Come here. Hug o'clock.", "Idhar aao, jhappi time 🤗"],
+    },
+    {
+      key: "characters", kind: "enum", label: "The two huggers", display: "cards", default: "bear-bunny",
+      hint: "The first one is you, the second one is them.",
+      options: [
+        { value: "bear-bunny", label: "Bear + Bunny", emoji: "🐻🐰" },
+        { value: "bear-bear", label: "Two bears", emoji: "🐻🐻" },
+        { value: "cat-cat", label: "Two cats", emoji: "🐱🐱" },
+        { value: "panda-bear", label: "Panda + Bear", emoji: "🐼🐻" },
+      ],
+    },
+    {
+      key: "hugLines", kind: "list", maxItems: 4, minItems: 4, itemMax: 70, label: "Your line for each hug",
+      hint: "In order: the bear hug, the back hug, the twirl hug, the pat-pat hug. Each one sits next to its stamp with one of your photos.",
+      itemPlaceholder: DEFAULT_HUG_LINES,
+      addLabel: "+ add a line",
     },
     {
       key: "distanceKm", kind: "number", min: 0, max: 20000, default: 860, step: 10, unit: "km", label: "How far apart you are",
-      hint: "Two photos of you start this far apart; they drag them together and it counts down to zero. 0 = “too far”.",
+      hint: "The long-distance hug: two phones start this far apart and count down as they drag them together. 0 = “even next door is too far”.",
     },
     {
-      key: "meetLine", kind: "text", max: 50, label: "When the two photos meet",
-      placeholder: "e.g. Close enough. Now hold on.",
-      suggestions: ["Close enough. Now hold on.", "There you are.", "Zero. Finally."],
-    },
-    { key: "holdSeconds", kind: "number", min: 10, max: 30, default: 20, step: 1, unit: "seconds", label: "How long the hug lasts", hint: "They say twenty seconds is the one that counts. Your photo is in full colour when it ends." },
-    { key: "heartbeatBpm", kind: "number", min: 50, max: 90, default: 64, step: 1, unit: "bpm", label: "Your resting heartbeat", hint: "The heartbeat under their thumb slows down to yours." },
-    {
-      key: "hugLines", kind: "list", maxItems: 5, minItems: 2, itemMax: 60, label: "What you'd whisper during the hug",
-      hint: "One fades in every few seconds while they hold on. Short, soft, present tense.",
-      itemPlaceholder: ["Breathe. I've got you.", "You don't have to be okay right now.", "I'm not letting go first.", "This is my favourite place.", "Stay."],
-      addLabel: "+ add a line",
+      key: "meetLine", kind: "text", max: 50, label: "When the two phones meet",
+      placeholder: "e.g. There you are. Finally.",
+      suggestions: ["There you are. Finally.", "Zero kilometres. Now hold on.", "Close enough. Don't let go."],
     },
     {
-      key: "hugFeels", kind: "list", maxItems: 4, minItems: 2, itemMax: 60, label: "What your hugs feel like",
-      hint: "One line over each photo after the hug. They swipe each one away.",
-      itemPlaceholder: ["Like coming home with the lights on.", "Like a Sunday that doesn't end.", "Like the cold can't find me.", "Like the whole world got quieter."],
-      addLabel: "+ add a line",
-    },
-    {
-      key: "coupons", kind: "objlist", maxItems: 3, minItems: 1, label: "The hug you owe them", itemTitle: "Coupon", addLabel: "+ add a coupon",
-      hint: "The last screen is a coupon they tear off and send you to redeem. The first one is on top.",
+      key: "coupons", kind: "objlist", maxItems: 6, minItems: 1, label: "Hug coupons", itemTitle: "Coupon", addLabel: "+ add a coupon",
+      hint: "A little booklet they swipe through. Each one has a REDEEM button that stamps it and lets them tell you on WhatsApp.",
       item: [
-        { key: "title", kind: "text", max: 30, label: "The coupon", placeholder: "One airport hug" },
-        { key: "detail", kind: "text", max: 80, label: "Fine print", placeholder: "The first thing I do when I land" },
+        { key: "title", kind: "text", max: 30, label: "The coupon", placeholder: "One 10-minute bear hug" },
+        { key: "detail", kind: "text", max: 80, label: "Fine print", placeholder: "Redeemable anytime, even in the middle of a fight." },
       ],
     },
-    { key: "replyLine", kind: "text", max: 80, label: "Their message when they redeem it", placeholder: "what their WhatsApp says when they tear it off", suggestions: ["Redeeming my hug. Twenty seconds minimum. 🤍"] },
+    { key: "replyLine", kind: "text", max: 80, label: "Their message when they redeem one", placeholder: "what their WhatsApp says when they redeem a coupon", suggestions: ["Redeeming this one. Report for hugging duty 🤗"] },
+    {
+      key: "question", kind: "text", max: 60, label: "The last question",
+      placeholder: "asked before the last stamp",
+      hint: "Asked with a Yes (“Stamp it”) and a No that pleads and runs away. Their Yes stamps the passport on your song's chorus.",
+      suggestions: ["Will you be my forever hug?", "Will you let me hug you forever?", "Forever wali jhappi, deal? 🤗"],
+    },
+    {
+      key: "yesLine", kind: "text", max: 70, label: "After they say yes",
+      placeholder: "what appears on the wall of hugs",
+      suggestions: ["Then I'm never letting go first.", "Stamped. You're stuck with me now.", "Pakka? Pakka. 🤗"],
+    },
+    {
+      key: "hugTitle", kind: "text", max: 24, label: "Their passport title",
+      placeholder: "e.g. VIP Hugger",
+      hint: "Printed on their passport and on the last stamp.",
+      suggestions: ["VIP Hugger", "Chief Hugging Officer", "Certified Cuddle Expert"],
+    },
   ],
   theme: {
-    bg: "radial-gradient(110% 80% at 50% 30%, #3A2A20 0%, #1E1510 60%, #120C09 100%)",
-    base: "#1E1510",
-    paper: "#FAF7F2",
-    glass: "rgba(250,247,242,0.08)",
-    ink: "#FAF7F2",
-    inkSoft: "#D9CBB9",
-    paperInk: "#4B3426",
-    accent: "#F2A477",
-    accentDeep: "#C9774A",
-    accentInk: "#2A1A10",
-    soft: "#EADBC8",
-    edge: "rgba(250,247,242,0.18)",
-    gold: "#F2C79A",
-    dark: true,
-    particles: ["🤍", "✨"],
-    confetti: ["#F2A477", "#EADBC8", "#FAF7F2", "#C9774A", "#8C8279"],
+    bg: "linear-gradient(160deg, #FFF8F1 0%, #FFEDE0 55%, #FFE4D2 100%)",
+    base: "#FFF8F1",
+    paper: "#FFFDF9",
+    glass: "rgba(255,255,255,0.72)",
+    ink: "#5E3226",
+    inkSoft: "#8A5A48",
+    paperInk: "#5E3226",
+    accent: "#FF8A6B",
+    accentDeep: "#E0603F",
+    accentInk: "#FFFFFF",
+    soft: "#FFD3B8",
+    edge: "#FFD3B8",
+    gold: "#F0A35E",
+    dark: false,
+    particles: ["🤗", "🧡", "💗", "✨"],
+    confetti: ["#FF8A6B", "#9FE5C8", "#FFD3B8", "#FF7AA2", "#FFE27A"],
   },
   demo: {
     ...base.demo,
     recipientName: "Tanvi",
     senderName: "Aarav",
+    petName: "Cutie",
     photos: DEMO_PHOTOS,
+    gifs: DEMO_GIFS,
     letter:
-      "Tanvi,\n\nI wish this page could actually hold you. Since it can't, here is what I'd say with my arms around you: you are my favourite place to be.\n\nOn your bad days, I want to be the hug that makes them smaller. On your good days, I want to be the one squeezing you the tightest, the one you can't get out of even when the chai is getting cold.\n\nEight hundred and sixty kilometres is a stupid number. I check it like a countdown. Every week it's the same number and every week I'm a week closer anyway.\n\nTill I can hug you for real, keep this one. It's warm. I checked.",
-    endLine: "Twenty seconds was never going to be enough.",
+      "Tanvi,\n\nI wish this link could actually hug you. It can't, so I made you a passport instead, and you just collected every kind of hug I owe you.\n\nThe bear hug is for your bad Mondays. The back hug is for when you're making chai and pretending not to notice me. The twirl is for every bit of good news, and the pat-pat is for the days you need someone to say it'll be okay.\n\nEight hundred and sixty kilometres is a silly number. I check it like a countdown. Every week it's the same, and every week I'm a week closer anyway.\n\nKeep this passport safe. I'm stamping it in person very soon.",
+    endLine: "Valid for every hug, forever. Starting with the next one.",
     extras: {
-      openingLine: "Come here.",
+      openingLine: "Come here, you.",
+      characters: "bear-bunny",
+      hugLines: DEFAULT_HUG_LINES,
       distanceKm: 860,
-      meetLine: "Close enough. Now hold on.",
-      holdSeconds: 20,
-      heartbeatBpm: 64,
-      hugLines: ["Breathe. I've got you.", "You don't have to be okay right now.", "I'm not letting go first.", "This is my favourite place."],
-      hugFeels: ["Like coming home with the lights on.", "Like a Sunday that doesn't end.", "Like the cold can't find me.", "Like the whole world got quieter."],
+      meetLine: "There you are. Finally.",
       coupons: [
-        { title: "Hug owed: 1", detail: "Redeem in person. The first thing I do when I land." },
-        { title: "Unlimited back hugs", detail: "Especially while you're cooking." },
+        { title: "One 10-minute bear hug", detail: "Redeemable anytime, even in the middle of a fight." },
+        { title: "Unlimited back hugs", detail: "Especially while you're making chai. No expiry." },
+        { title: "One airport hug", detail: "The long one. The first thing I do when I land." },
+        { title: "Hug + forehead kiss combo", detail: "For the days that are too heavy. No questions asked." },
       ],
-      replyLine: "Redeeming my hug. Twenty seconds minimum. 🤍",
+      replyLine: "Redeeming this one. Report for hugging duty 🤗",
+      question: "Will you be my forever hug?",
+      yesLine: "Then I'm never letting go first.",
+      hugTitle: "VIP Hugger",
     },
   },
 };

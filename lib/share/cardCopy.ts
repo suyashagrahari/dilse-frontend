@@ -71,7 +71,7 @@ const COPY: Record<string, CardCopy> = {
   "happy-chocolate-day-premium": { kicker: "✦ Chocolate Day", headline: "La Boîte", line: "Pull the ribbon" },
   "happy-teddy-day-premium": { kicker: "✦ Teddy Day", headline: "Adoption Papers", line: "Sign for him" },
   "happy-promise-day-premium": { kicker: "✦ Promise Day", headline: "Signed, Sealed, Promised", line: "Break the seal" },
-  "happy-hug-day-premium": { kicker: "✦ Hug Day", headline: "The Twenty-Second Hug", line: "Hold on, don't let go" },
+  "happy-hug-day-premium": { kicker: "✦ Hug Day", headline: "The Hug Passport", line: "Come collect your hugs" },
   "happy-kiss-day-premium": { kicker: "For you ✦", headline: "A Little Something", line: "Open it 💌" },
   "happy-valentines-day-premium": { kicker: "✦ Valentine's Day", headline: "Us, Wrapped", line: "Your year in love" },
   "happy-halloween-premium": { kicker: "✦ Halloween", headline: "A Night at the Manor", line: "Trick or treat?" },
