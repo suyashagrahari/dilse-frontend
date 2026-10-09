@@ -2496,54 +2496,52 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   // at the end of this file so the nine stay factually in step (limits from
   // .template-factory/premium/PREMIUM-ENGINE.md §2). No price, no rating.
   "happy-valentines-day-premium": {
-    title: "Cinematic Valentine's Website for Girlfriend",
+    title: "Couples Wrapped: Valentine's Website for Girlfriend",
     description:
-      "Turn your love story into a film for your Valentine: opening titles starring them, your photos cut to your song, a letter in a book and a question in takes.",
+      "Your year in love as a Wrapped-style story: your song, your top 3 memories, the stats you secretly kept, reasons over your photos, and your days together slamming in on the chorus.",
     category: "Valentine",
-    emoji: "🎬",
+    emoji: "💘",
     keywords: [
-      "cinematic valentine's day website",
+      "couples wrapped",
+      "relationship wrapped website",
+      "our year in love wrapped",
       "valentine's day website for girlfriend",
       "valentine's day website for boyfriend",
-      "love story movie website",
-      "our love story as a movie",
+      "love wrapped for girlfriend",
       "premium valentine surprise",
       "valentine's day gift for long distance girlfriend",
       "valentine website with our song",
       "valentine's day website with voice note",
-      "photo montage to our song",
+      "days together counter valentine",
+      "reasons i love you website",
       "will you be my valentine website",
-      "valentine's day proposal website",
-      "romantic movie poster of us",
       "valentine's day 2027 surprise",
       "digital valentine gift for her",
       "valentine's day gift for him online",
-      "how we met constellation",
-      "end credits love story",
     ],
     faqs: [
       {
-        question: "What happens when they open the Valentine's film?",
+        question: "What happens when they open Us, Wrapped?",
         answer:
-          "Their love story plays as a film you directed. An ADMIT ONE ticket and a film leader count down, the opening titles say they are starring, they trace the stars of the night you met into a heart, your photos play as a montage cut to your song, your voice note becomes the director's commentary, your letter turns page by page in a book, your relationship is shown by the numbers, and the question is asked in black and white. When they say yes, the colour floods back, fireworks write your initials and the end credits roll.",
+          "Their year with you plays as a tap-through story in bold colours, like a music app's year-end Wrapped. They see your song with your photo as its cover, swipe through your top 3 memories, flip tiles of stats you secretly kept (the phrase they always say, your place), scratch off their top trait according to you, and tap through five reasons that flash over your photos. Then your voice note and your letter. Last, they hold a button to count, and the number of days you've been together slams onto the screen on your song's chorus, cuts to your best photo, and the big question appears.",
       },
       {
         question: "What if they press No?",
         answer:
-          "Every No becomes a new take: a clapperboard reads \"SCENE 8 / TAKE 2\" with one of your director's lines, and the No button shrinks until it turns into a second YES. The movie poster at the end counts the takes it needed.",
+          "No slides out of the way each time and shows one of your lines, and after the last one it gives up and becomes a second Yes. It ends on an \"Us, Wrapped\" card with your photo, your days together, your song and your place, which they can save as a story-sized image.",
       },
       ...premiumFaqs({
         day: "Valentine's Day",
         twin: "Valentine's Day",
-        keepsake: "movie poster of the two of you",
-        voiceAt: "as the director's commentary",
+        keepsake: "\"Us, Wrapped\" card of your year together",
+        voiceAt: "right before your letter",
         yesEmail: true,
       }),
     ],
     howTo: premiumHowTo({
-      name: "How to Make a Cinematic Valentine's Day Website",
-      description: "Direct a short film of your relationship — titles, montage, letter and the question — and send it as a private link.",
-      write: { name: "Write the Film", text: "Name your film, add where and when you met, chapter titles for the letter (split it into pages with ---), your own numbers, the big question and a director's line for each No — or let the AI write it from a few lines about the two of you." },
+      name: "How to Make a Couples Wrapped Valentine's Website",
+      description: "Turn your year together into a Wrapped-style story — your song, top memories, stats, reasons and your days together — and send it as a private link.",
+      write: { name: "Write Your Wrapped", text: "Add the date you got together, a line about your song, your most-said phrase and your place, two stats only you kept, their top trait, five reasons and the big question — or let the AI write it from a few lines about the two of you." },
     }),
   },
 

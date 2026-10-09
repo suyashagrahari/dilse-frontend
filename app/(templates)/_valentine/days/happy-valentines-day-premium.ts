@@ -1,97 +1,95 @@
-// happy-valentines-day-premium — "Our Film" (the ✦ Premium twin of happy-valentines-day, flagship of the tier).
+// happy-valentines-day-premium — "Us, Wrapped" (the ✦ Premium twin of happy-valentines-day, flagship of the tier).
 //
-// Their love story, screened as a film: a ticket and a film-leader countdown, opening titles and a "Previously
-// on…" week recap, a constellation they trace, "The Film of Us" montage cut on the chorus, the director's
-// commentary (voice note), a three-chapter book, "By the numbers", a black-and-white question shot in takes,
-// and a colour flood, fireworks, end credits and a post-credits date plan.
+// Their year in love as a Wrapped-style story: bold colour-blocked slides, huge kinetic numbers, tap-through
+// progress bars. Our top song, top 3 memories (swiped away #3 → #1), stats you didn't know I kept (flip tiles),
+// their top trait according to you (scratch), reasons (fast cuts over their photos), a voice note, the letter,
+// then THE NUMBER: hold to count, the days counter slams to its final number on the song's drop and cuts to
+// their best photo full-bleed, where the question waits. Ends on a shareable "Us, Wrapped" card.
 //
 // Extras keys + limits are mirrored in server/src/config/premiumDays/happy-valentines-day-premium.ts and pinned
 // in server/src/config/valentineDays.test.ts. Keys that mean the same thing as the $2 day keep its key
-// (weekLines, togetherSince, stats, metPlace, question, datePlan) so an upgrade carries them over.
+// (togetherSince, stats, question, noLines, datePlan) so an upgrade carries them over.
 // The chorus second is NOT an extra: it is the shared premium.songDropAt ("The drop" in the form).
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
 import { DEMO_PHOTO_CDN } from "../../_love/types";
 import { premiumDay } from "./_premium";
-import { demoPhotos } from "./_shared";
-import { valentinesDay, WEEK_LINE_DAYS } from "./happy-valentines-day";
+import { valentinesDay } from "./happy-valentines-day";
 
 export interface ValentinesExtrasPremium {
-  filmTitle: string;
-  tagline: string;
-  weekLines: string[];
-  metPlace: string;
-  metDate: string;
   togetherSince: string;
-  chapterTitles: string[];
+  songNote: string;
+  topPhrase: string;
+  topPlace: string;
   stats: { label: string; value: string }[];
+  topTrait: string;
+  reasons: string[];
   question: string;
-  noTakes: string[];
+  noLines: string[];
   datePlan: string;
-  dateOn: string;
   [k: string]: unknown;
 }
 
 const GIFS: GifSlot[] = [
-  { id: "pv1-ticket", label: "Popcorn", moment: "Beside the ticket at the door", file: "pv1-ticket.gif", emoji: "🍿", anim: "wiggle" },
-  { id: "pv2-starring", label: "Starring", moment: "A cameo in the “starring” title card", file: "pv2-starring.gif", emoji: "🌟", anim: "bounce" },
-  { id: "pv3-stars", label: "Stargazing", moment: "Over the finished constellation", file: "pv3-stars.gif", emoji: "✨", anim: "pulse" },
-  { id: "pv4-please", label: "Please?", moment: "Next to YES and No, through every take", file: "pv4-please.gif", emoji: "🥺", anim: "float" },
-  { id: "pv5-yes", label: "Yay", moment: "When the colour floods back", file: "pv5-yes.gif", emoji: "🥳", anim: "bounce" },
-  { id: "pv6-credits", label: "Credits", moment: "Waving in the corner of the end credits", file: "pv6-credits.gif", emoji: "🎬", anim: "wiggle" },
+  { id: "pv4-please", label: "Please?", moment: "Next to Yes and No, under the big question", file: "pv4-please.gif", emoji: "🥺", anim: "float" },
+  { id: "pv5-yes", label: "Yay", moment: "The second they say Yes", file: "pv5-yes.gif", emoji: "🥳", anim: "bounce" },
 ];
 
-/** Official uploads, checked against YouTube's oEmbed on 2026-10-08. */
-export const FILM_SONGS: readonly SongSuggestion[] = [
-  { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
-  { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
-  { id: "gvyUuxdRdR4", title: "Raataan Lambiyan", artist: "Jubin Nautiyal · Shershaah" },
-  { id: "qoq8B8ThgEM", title: "Tujh Mein Rab Dikhta Hai", artist: "Roop Kumar Rathod · Rab Ne Bana Di Jodi" },
-  { id: "-BjZmE2gtdo", title: "Lover", artist: "Taylor Swift" },
-  { id: "jo6iAkSoraY", title: "Tere Liye", artist: "Lata Mangeshkar, Roop Kumar Rathod · Veer-Zaara" },
-  { id: "0put0_a--Ng", title: "Make You Feel My Love", artist: "Adele" },
+/**
+ * research §E (premium-v2): every id passed YouTube oEmbed + playableInEmbed on 2026-10-09. The first one is
+ * the preview's demo song and starts at `demoStart` (its "most replayed" second).
+ */
+export const WRAPPED_SONGS: readonly SongSuggestion[] = [
+  { id: "450p7goxZqg", title: "All of Me", artist: "John Legend" },
+  { id: "aXzVF3XeS8M", title: "Love Story (Taylor's Version)", artist: "Taylor Swift" },
+  { id: "u2NAuswnTKs", title: "Apna Bana Le", artist: "Arijit Singh · Bhediya" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh · Brahmāstra" },
+  { id: "NwFVSclD_uc", title: "I Love You So", artist: "The Walters" },
+  { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
 ];
 
+const photo = (file: string, caption: string, note: string, cropX = 50, cropY = 50, scale = 100) => ({
+  url: `${DEMO_PHOTO_CDN}/${file}`, caption, note, cropX, cropY, scale,
+});
+
+// Photo 1 = the big reveal + the card cover · 2–4 = top 3 memories (#1, #2, #3) · the rest flash behind the reasons.
 const PHOTOS = [
-  ...demoPhotos([
-    ["the canteen, day one · 2021", "You asked to borrow a pen and kept it. I let you."],
-    ["first real date · 2022", "You ordered for both of us and got mine wrong. Perfectly."],
-    ["the cherry blossom walk", "Even the trees were showing off for you that day."],
-    ["us, forever", "Out of every timeline, I'd pick this one. Every time."],
-  ]),
-  { url: `${DEMO_PHOTO_CDN}/marriage/couple-hero.webp`, caption: "your sister's wedding · 2024", note: "Everyone was watching the bride. I wasn't.", cropX: 50, cropY: 35, scale: 100 },
-  { url: `${DEMO_PHOTO_CDN}/couple2.webp`, caption: "the close-up I never posted", note: "This one is just for me.", cropX: 50, cropY: 32, scale: 165 },
+  photo("couple1.webp", "the sunset we drove two hours for", "You said the sky looked like mango lassi.", 50, 55),
+  photo("couple2.webp", "first date, the fairy-light café", "You stole my fries, then the whole evening."),
+  photo("couple4.webp", "the night we counted stars", "You named one after me. It's the wrong one.", 50, 40),
+  photo("couple3.webp", "cherry blossom season", "Even the trees were showing off for you."),
+  photo("couple2.webp", "the close-up I never posted", "This one is just for me.", 46, 36, 170),
+  photo("couple1.webp", "us, mid-laugh", "I don't remember the joke. I remember you.", 50, 70, 160),
 ];
 
 const base = premiumDay<ValentinesExtrasPremium>(valentinesDay, {
   slug: "happy-valentines-day-premium",
-  title: "Our Film",
+  title: "Us, Wrapped",
   gifSlots: GIFS,
+  demoSong: { id: WRAPPED_SONGS[0].id, start: 44 },
   demoPremium: {
-    voiceCaption: "Director's note: I rewrote this scene forty times. It's still just “I love you.”",
+    voiceCaption: "I practised this eleven times. You still make me forget my lines.",
     psLetter:
-      "Open only if you ever wonder whether I'd do it all again.\n\nI would. The canteen, the borrowed pen, the wrong order, every single take. I'd buy the same ticket and sit in the same seat, next to you.",
+      "Open only if you ever wonder whether I'd choose this year again.\n\nI would. The wrong turns, the cold chai, the two-hour drive for one sunset. Every single minute of it, with you.",
   },
   copy: {
-    letterPlaceholder:
-      "Chapter I: how it started, the first thing you noticed.\n---\nChapter II: what they are to you now.\n---\nChapter III: what you want for every chapter after this one.",
-    letterHint: "Bound as a three-chapter book they turn by the corner. Put a line with three dashes (---) where each chapter ends, or we'll split it for you.",
-    photosHint: "6 to 12 photos make “The Film of Us”, a trailer cut on your song's chorus. Photo 1 is also the movie poster.",
-    captionHint: "the scene + when, e.g. the canteen, day one · 2021",
-    noteHint: "what you'd whisper about this scene…",
-    endLinePlaceholder: "Now showing: forever. 🎬",
-    endLineHint: "The last line on the movie poster.",
-    sheetTitle: "Direct your love story 🎬",
-    sheetSub: "A film starring them: the night you met, your photos cut to your song, a three-chapter letter, the question in takes and end credits. Everything is pre-filled — make it yours.",
-    extrasTitle: "The film",
-    extrasSub: "Title, the week recap, where it began, your numbers, the question and the post-credits plan",
-    publishing: "Developing the film…",
-    storyTitle: "Let's make your love story a film 🎬",
-    replyText: "YES. Take one. Obviously 🎬💘 Now tell me what to wear.",
+    letterPlaceholder: "Ananya,\n\nWhat this year with you was really like, in your own words…",
+    letterHint: "Unfolds near the end, right before the big number. Write it like a letter, not a caption.",
+    photosHint: "Photo 1 is the big reveal and the cover of your card. Photos 2–4 are your top 3 memories. The rest flash behind your reasons.",
+    captionHint: "the moment, e.g. first date, the fairy-light café",
+    noteHint: "what you remember most about it…",
+    endLinePlaceholder: "Same time next year? And every year after.",
+    endLineHint: "Printed on your “Us, Wrapped” card at the very end.",
+    sheetTitle: "Wrap your year together ✦",
+    sheetSub: "Your year in love, told like a Wrapped story: your song, your top memories, the stats only you kept, reasons, a letter and the number of days, landing on the drop. Everything is pre-filled. Make it yours.",
+    extrasTitle: "Your Wrapped",
+    extrasSub: "The date it began, your song, your stats, their top trait, reasons and the question",
+    publishing: "Wrapping your year…",
+    storyTitle: "Let's wrap your year together ✦",
+    replyText: "Yes. Obviously. Same time next year, and every year after. 💘",
   },
-  share: { title: "You're starring in something tonight 🎬", accent: "#D4AF37" },
+  share: { title: "Your year in love, wrapped 💘", accent: "#FF4B3E" },
 });
 
 export const valentinesDayPremium: DayConfig<ValentinesExtrasPremium> = {
@@ -99,107 +97,105 @@ export const valentinesDayPremium: DayConfig<ValentinesExtrasPremium> = {
   letterMin: 80,
   music: {
     audioOnly: true,
-    suggestions: FILM_SONGS,
-    suggestionsNote: "film-worthy favourites · tap to use",
+    suggestions: WRAPPED_SONGS,
+    suggestionsNote: "the most-added love songs · tap to use",
+    demoStart: 44,
   },
   theme: {
-    bg: "radial-gradient(120% 70% at 50% 0%, #2A1016 0%, #12090C 48%, #0B0A0C 100%)",
-    base: "#0B0A0C",
-    paper: "#F6EBD6",
-    glass: "rgba(255,231,179,0.08)",
-    ink: "#FFF3DC",
-    inkSoft: "#D9C6A6",
-    paperInk: "#2A1712",
-    accent: "#D4AF37",
-    accentDeep: "#8E6A14",
-    accentInk: "#160E04",
-    soft: "#3A2A12",
-    edge: "rgba(255,231,179,0.22)",
-    gold: "#FFD36E",
+    bg: "#151018",
+    base: "#151018",
+    paper: "#FFF4D6",
+    glass: "rgba(255,231,163,0.10)",
+    ink: "#FFF6E8",
+    inkSoft: "#D9CDE6",
+    paperInk: "#151018",
+    accent: "#FF4B3E",
+    accentDeep: "#B8231A",
+    accentInk: "#FFFFFF",
+    soft: "#2A2030",
+    edge: "rgba(255,231,163,0.22)",
+    gold: "#FFE7A3",
     dark: true,
-    particles: ["🎬", "✨", "🍿", "💘"],
-    confetti: ["#D4AF37", "#FF5C8A", "#FFD36E", "#FFE7B3", "#7A0E1C"],
+    particles: ["💘", "✨", "🎧", "💗"],
+    confetti: ["#FF4B3E", "#FF7AB6", "#FFE7A3", "#B9A7FF", "#FFFFFF"],
   },
   extras: [
     {
-      key: "filmTitle", kind: "text", max: 40, label: "Your film's title",
-      placeholder: "the title of your love story",
-      hint: "On the title card, the credits and the poster.",
-      suggestions: ["The One Where I Met You", "Two Seats, One Story", "Us, Directed by Fate"],
+      key: "togetherSince", kind: "text", max: 10, input: "date", label: "Together since",
+      hint: "The big number: hold to count, and it slams to your days together on the drop of your song. Empty = “∞”.",
     },
     {
-      key: "tagline", kind: "text", max: 70, label: "Poster tagline",
-      placeholder: "the one-line pitch, like a real poster",
-      suggestions: ["Two strangers. One canteen. Every day since.", "Some stories you only get to live once.", "Based on a true story. Ours."],
+      key: "songNote", kind: "text", max: 60, label: "A line about your song",
+      placeholder: "e.g. On repeat since the Lonavala drive.",
+      hint: "Under your top song, after they tap ♥. Pick the song itself in Music.",
     },
     {
-      key: "weekLines", kind: "list", maxItems: 7, itemMax: 60, label: "“Previously on…” — one line per day of the week",
-      hint: "A 7-frame recap in the opening titles. Leave any blank and that frame is skipped.",
-      itemLabels: WEEK_LINE_DAYS,
-      itemPlaceholder: ["what you did with the rose", "how the asking went", "who ate whose chocolate", "the teddy's name", "the promise still kept", "how long the hug was", "family-safe, please 😌"],
+      key: "topPhrase", kind: "text", max: 40, label: "Most-said phrase",
+      placeholder: "e.g. “Reached?”", suggestions: ["“Reached?”", "“Did you eat?”", "“Five more minutes.”"],
     },
-    { key: "metPlace", kind: "text", max: 40, label: "Where you met", placeholder: "the exact spot — e.g. college canteen, Pune", hint: "Under the constellation, and “filmed on location in…” in the credits." },
-    { key: "metDate", kind: "text", max: 10, input: "date", label: "When you met", hint: "Printed under the stars they trace. Leave empty to hide it." },
-    { key: "togetherSince", kind: "text", max: 10, input: "date", label: "Together since", hint: "Powers “By the numbers”: days together, a live seconds counter, heartbeats shared." },
+    { key: "topPlace", kind: "text", max: 40, label: "Your top place", placeholder: "e.g. Our chai stall on FC Road" },
     {
-      key: "chapterTitles", kind: "list", maxItems: 3, itemMax: 24, label: "Chapter titles for your letter",
-      hint: "One per chapter of the book.",
-      itemLabels: ["Chapter I", "Chapter II", "Chapter III"],
-      itemPlaceholder: ["Then", "Now", "Always"],
-    },
-    {
-      key: "stats", kind: "objlist", maxItems: 3, label: "Your own numbers", itemTitle: "Stat", addLabel: "+ add a stat",
-      hint: "Up to three, after the ones we work out from your dates.",
+      key: "stats", kind: "objlist", maxItems: 2, label: "Stats you didn't know you kept", itemTitle: "Stat", addLabel: "+ add a stat",
+      hint: "Flip tiles next to the phrase and the place. Something only you two would count.",
       item: [
-        { key: "label", kind: "text", max: 30, label: "What it counts", placeholder: "Hoodies you've stolen" },
+        { key: "label", kind: "text", max: 30, label: "What it counts", placeholder: "Hoodies you stole" },
         { key: "value", kind: "text", max: 24, label: "The number", placeholder: "7 (and counting)" },
       ],
     },
     {
-      key: "question", kind: "text", max: 60, label: "The big question", placeholder: "the forever question",
-      hint: "Asked in black and white, under a single spotlight.",
-      suggestions: ["Will you be my Valentine… for every sequel?", "Will you be my Valentine, forever?", "Will you marry me? 💍"],
+      key: "topTrait", kind: "text", max: 28, label: "Their top trait, according to you",
+      placeholder: "e.g. Annoyingly kind", hint: "They scratch it off a foil card.",
+      suggestions: ["Annoyingly kind", "Main-character energy", "Professional hoodie thief"],
     },
     {
-      key: "noTakes", kind: "list", maxItems: 6, itemMax: 50, label: "The director's line for each “No” take",
-      hint: "Each No gets a clapperboard and the next line. After the last one, No gives up and turns into a second YES.",
-      itemPlaceholder: ["CUT! Take 2. With feeling this time.", "Take 3. The director is very patient.", "Take 4. We have all night.", "Take 5. Craft services is out of snacks."],
-      addLabel: "+ add a take",
+      key: "reasons", kind: "list", maxItems: 5, itemMax: 70, label: "Reasons I love you (fast cuts)",
+      hint: "Each one flashes over one of your photos. Short and specific hits hardest.",
+      itemPlaceholder: ["You laugh at your jokes before the punchline.", "You remember how I take my chai.", "You make bad days shorter.", "You hold my hand in crowds.", "You're my favourite notification."],
+      addLabel: "+ add a reason",
     },
-    { key: "datePlan", kind: "text", max: 80, label: "Post-credits: the plan", placeholder: "Saturday · 8 PM · that rooftop place · wear the red one", hint: "The scene after the credits. Optional." },
-    { key: "dateOn", kind: "text", max: 10, input: "date", label: "Post-credits: on which day", hint: "Adds “Add to calendar”. We take the time from your plan (“8 PM”), or 7 PM." },
+    {
+      key: "question", kind: "text", max: 60, label: "The big question", placeholder: "asked over your best photo",
+      hint: "Appears over photo 1, right after the big number.",
+      suggestions: ["Another year of us. Be my Valentine?", "Will you be my Valentine, forever?", "Will you marry me? 💍"],
+    },
+    {
+      key: "noLines", kind: "list", maxItems: 4, itemMax: 40, label: "What “No” says as it runs",
+      hint: "After the last one, No gives up and becomes a second Yes.",
+      itemPlaceholder: ["Wrong button, clearly.", "Try the pink one.", "Nice try.", "Fine. This is a Yes now."],
+      addLabel: "+ add a line",
+    },
+    {
+      key: "datePlan", kind: "text", max: 80, label: "Coming up next (optional)",
+      placeholder: "Saturday · 8 PM · our chai stall, then the long way home",
+      hint: "“Coming soon” on your Wrapped card.",
+    },
   ],
   demo: {
     ...base.demo,
     letter:
-      "Ananya,\n\nIt started with a borrowed pen in a loud canteen. You never gave it back, and somewhere between that pen and your terrible jokes about the sambar, I stopped noticing anyone else in the room.\n---\nNow you're the first person I want to tell everything to, the calm on my loud days and my favourite notification. You steal my hoodies, you finish my fries, and you still somehow make me feel like the luckiest person in every room we walk into.\n---\nI don't know every scene that's coming. But I know who I want in all of them. Every chapter, every sequel, every rerun on a Sunday afternoon. One more thing is coming on the next screen. Watch closely.",
+      "Ananya,\n\nThis year I learned that you hum when you cook, that you say “five more minutes” and mean forty, and that a two-hour drive for one sunset is never too far if you're the one in the passenger seat.\n\nYou made the ordinary days the ones I want to keep. The cold chai, the wrong turns, the calls that ran past midnight because neither of us wanted to be the one to hang up.\n\nI don't need a big year next year. I just need it to be ours. There's one number I've been counting. Hold on, it's next.",
     photos: PHOTOS,
-    endLine: "Now showing: forever. 🎬",
+    endLine: "Same time next year? And every year after.",
     extras: {
-      filmTitle: "The One Where I Met You",
-      tagline: "Two strangers. One canteen. Every day since.",
-      weekLines: [
-        "You kept every single petal.",
-        "You said yes before I finished asking.",
-        "You ate mine too. Obviously.",
-        "He has a name now. And my side of the bed.",
-        "Still keeping every one of them.",
-        "Twenty seconds was not enough.",
-        "No comment 😌",
-      ],
-      metPlace: "College canteen, Pune",
-      metDate: "2021-08-09",
-      togetherSince: "2022-02-14",
-      chapterTitles: ["Then", "Now", "Always"],
+      togetherSince: "2023-02-14",
+      songNote: "On repeat since the Lonavala drive.",
+      topPhrase: "“Reached?”",
+      topPlace: "Our chai stall, FC Road",
       stats: [
-        { label: "Hoodies you've stolen", value: "7 (and counting)" },
-        { label: "Most-said line", value: "“Did you eat?”" },
-        { label: "Our song on repeat", value: "Every road trip" },
+        { label: "Hoodies you stole", value: "7" },
+        { label: "Calls past midnight", value: "Too many" },
       ],
-      question: "Will you be my Valentine… for every sequel?",
-      noTakes: ["CUT! Take 2. With feeling this time.", "Take 3. The director is very patient.", "Take 4. We have all night.", "Take 5. Craft services is out of snacks."],
-      datePlan: "Saturday · 8 PM · that rooftop place · wear the red one",
-      dateOn: "",
+      topTrait: "Annoyingly kind",
+      reasons: [
+        "You laugh at your own jokes before the punchline.",
+        "You remember exactly how I take my chai.",
+        "You make every bad day shorter.",
+        "You hold my hand in crowds. Every time.",
+        "You're my favourite notification.",
+      ],
+      question: "Another year of us. Be my Valentine?",
+      noLines: ["Wrong button, clearly.", "Try the pink one.", "Nice try.", "Fine. This is a Yes now."],
+      datePlan: "Saturday · 8 PM · our chai stall, then the long way home",
     },
   },
 };

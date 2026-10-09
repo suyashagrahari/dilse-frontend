@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-valentines-day-premium",
   coverImage: templateMedia("happy-valentines-day-premium", "cover-poster.webp"),
-  title: `Valentine's Day ✦ Premium — Our Film`,
+  title: `Valentine's Day ✦ Premium — Us, Wrapped`,
   description:
-    `Your love story as a film starring them: a ticket and a film-leader countdown, your photos cut to your song's chorus, a three-part letter, the question shot in black and white, and end credits with a movie poster.`,
+    `Your year in love as a Wrapped-style story: your song, your top 3 memories, the stats only you kept, reasons over your photos, a letter, and your days together slamming onto the screen on the chorus. Ends on a card they can save.`,
 };
