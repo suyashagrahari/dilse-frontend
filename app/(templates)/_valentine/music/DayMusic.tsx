@@ -775,7 +775,6 @@ function NowPlayingChip({
   const [corner, setCorner] = useState<Corner>("br");
   const [phone, setPhone] = useState(false);
   const [open, setOpen] = useState(false);
-  // (no peek timer here: on phones it never auto-opens, see below)
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
       setPhone(window.innerWidth < 768);
@@ -795,10 +794,7 @@ function NowPlayingChip({
     // Phones never auto-open it: an open 52px pill sat on scenes' bottom CTAs
     // for its first seconds. There the edge sliver's spinning disc says the
     // song is on, and a tap on it opens the pill.
-    if (api.playing && !phone) {
-      setOpen(true);
-      setPeekFor((n) => n + 1);
-    }
+    if (api.playing && !phone) setOpen(true);
   }
   const move = () => {
     const next = CORNERS[(CORNERS.indexOf(corner) + 1) % CORNERS.length];
