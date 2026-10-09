@@ -1,22 +1,21 @@
-// happy-halloween-premium — "A Night at the Manor" (the ✦ Premium twin of happy-halloween).
+// happy-halloween-premium — "Boo-tiful Night" (the ✦ Premium twin of happy-halloween).
 //
-// Cute-spooky, never scary. The recipient is let into a dark manor and finds
-// the two of them in it:
-//   gate     "Trick or treat, {name}?" — both answers are a treat (the song starts)
-//   hall     the Hall of Portraits: drag a torch beam through the dark to find
-//            their photos hung as gilt portraits and notes scrawled on the walls
-//   séance   rest a finger on the planchette: it spells their name, then a word
-//   tarot    three cards, Past · Present · Future, each a personal fortune
-//   voice    a voice from the other side (voice note, or the crystal ball's line)
-//   letter   light the candle; a parchment letter and a sealed P.S.
-//   portrait the money moment: one portrait is still in the dark. The beam
-//            finds it, the song drops, thunder, and the portrait (them) winks.
-//            Then the question.
-//   ending   "Stay haunted" — a costume-duo poster keepsake, a reply, replay.
+// Cute-spooky and romantic, never scary: a warm candy-coloured night, ghosts
+// with blush cheeks, and a GIF sticker reacting in every scene.
+//   gate     the haunted mailbox: tap it, a ghost pops out with a letter, BOO (the song starts)
+//   treats   tap the treat bag; candies fly out; catch each one for a sweet line or a cute dare
+//   carve    carve a pumpkin together: pick the eyes, pick the smile, hold to light the candle
+//   booth    the ghost photo booth: ghosts are hiding their photos; shoo each one away
+//   potion   drag three ingredients into the cauldron, stir it, it puffs a heart + the spell
+//   letter   a bat flies in with the letter; tap the bat; the scroll unrolls (+ the sealed P.S.)
+//   radio    the spirit radio: tune the dial to Boo FM and his voice comes through
+//   question "Will you be my boo?" — the No ghosts away; YES on the song's drop turns the
+//            night pink, the moon becomes a heart and a swarm of bats makes a heart around her
+//   license  the Boo License keepsake (9:16 story / 4:5 post), a reply, replay
 // Server twin: server/src/config/premiumDays/happy-halloween-premium.ts (same
 // keys + limits; valentineDays.test.ts pins them). Keys shared with the $2 day
-// (tone, houseName, question, yesLine) keep their names so an upgrade carries
-// them over.
+// (tone, houseName, ingredients, potionSpell, question, yesLine) keep its names
+// and shapes so an upgrade carries them over.
 
 import type { SongSuggestion } from "../music/youtube";
 import type { DayConfig, GifSlot } from "../types";
@@ -24,19 +23,18 @@ import { demoPhotos } from "./_shared";
 import { premiumDay } from "./_premium";
 import { halloweenDay, type HalloweenTone } from "./happy-halloween";
 
-export interface TarotCard {
-  card: string;
+export interface PotionIngredient {
+  name: string;
   line: string;
 }
 
 export interface HalloweenExtrasPremium {
   tone: HalloweenTone;
   houseName: string;
-  nightTitle: string;
-  wallNotes: string[];
-  spiritWord: string;
-  spiritLine: string;
-  tarot: TarotCard[];
+  treats: string[];
+  ingredients: PotionIngredient[];
+  potionSpell: string;
+  perks: string[];
   costumeDuo: string;
   question: string;
   yesLine: string;
@@ -44,58 +42,68 @@ export interface HalloweenExtrasPremium {
 }
 
 /**
- * Spooky-romantic, not horror (research §E: each id passed YouTube oEmbed and
- * playableInEmbed on 2026-10-09; the start second is the "Most replayed" peak).
- * The first one is the demo song, from DEMO_START.
+ * Romantic first, with a wink of spooky (each id: YouTube oEmbed 200 +
+ * playableInEmbed, 2026-10-09). The first one is the demo song, from
+ * DEMO_START: "Until I Found You" lands on its chorus there (YouTube's
+ * most-replayed marker is 37 s), and the YES drops back onto it.
  */
 export const HALLOWEEN_PREMIUM_SONGS: readonly SongSuggestion[] = [
-  { id: "4V90AmXnguw", title: "Thriller", artist: "Michael Jackson" },
-  { id: "LXuSOkf2M3c", title: "Abracadabra", artist: "Lady Gaga" },
+  { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
   { id: "WCjzNfJLHa0", title: "I Put a Spell on You", artist: "Nina Simone" },
-  { id: "rtL5oMyBHPs", title: "Little Dark Age", artist: "MGMT" },
+  { id: "fb0KjR4bik8", title: "Love Potion No. 9", artist: "The Searchers" },
+  { id: "vGJTaP6anOU", title: "Can't Help Falling in Love", artist: "Elvis Presley" },
+  { id: "orYf6VDtj_k", title: "Raataan Lambiyan", artist: "Jubin Nautiyal · Shershaah" },
+  { id: "LXuSOkf2M3c", title: "Abracadabra", artist: "Lady Gaga" },
   { id: "ZVuToMilP0A", title: "This Is Halloween", artist: "The Nightmare Before Christmas" },
-  { id: "tsPdVsIXqzU", title: "Monster Mash", artist: "Bobby \"Boris\" Pickett" },
 ];
-const DEMO_START = 46;
+const DEMO_START = 35;
+const DEMO_DROP = 36;
 
-// Stickers only appear where the sender picked one: an emoji fallback in a
-// dark gilt room reads as clip-art, so an empty slot shows nothing.
+// Six sticker slots, each defaulting to a real GIF from the premium library
+// (gifts-media/templates/_premium/gifs/halloween/…). `file` is relative to the
+// template's own media folder, so "../_premium/…" resolves to the shared one
+// (browsers normalise the dot segment before the request).
+const G = (name: string) => `../_premium/gifs/halloween/${name}.webp`;
 const GIFS: GifSlot[] = [
-  { id: "h1-hall", label: "A friend in the hall", moment: "Peeks out of the Hall of Portraits once the last one is found", file: "h1-hall.gif", emoji: "👻", anim: "float" },
-  { id: "h6-yes", label: "After the YES", moment: "Next to your portrait, after they say yes", file: "h6-yes.gif", emoji: "💜", anim: "pulse" },
+  { id: "hb1-hello", label: "Hello ghost", moment: "Peeks out of the mailbox at the start", file: G("ghost-boo-pumpkins"), emoji: "👻", anim: "wiggle" },
+  { id: "hb2-treats", label: "Trick or treat", moment: "Next to the treat bag", file: G("ghost-pumpkin-bucket"), emoji: "🎃", anim: "bounce" },
+  { id: "hb3-pumpkin", label: "Pumpkin pal", moment: "Watches you carve the pumpkin", file: G("pink-pumpkin-smile"), emoji: "🎃", anim: "wiggle" },
+  { id: "hb4-booth", label: "Ghost booth", moment: "Pops up when every photo is found", file: G("ghosts-cuddling"), emoji: "👻", anim: "float" },
+  { id: "hb5-potion", label: "Potion helper", moment: "Flies past while the potion brews", file: G("witch-bears-broom"), emoji: "🧙", anim: "float" },
+  { id: "hb6-yes", label: "After the YES", moment: "Two ghosts hugging after they say yes", file: G("ghost-couple-hearts"), emoji: "💜", anim: "pulse" },
 ];
 
 const base = premiumDay<HalloweenExtrasPremium>(halloweenDay, {
   slug: "happy-halloween-premium",
-  title: "A Night at the Manor",
+  title: "Boo-tiful Night",
   gifSlots: GIFS,
   demoSong: { id: HALLOWEEN_PREMIUM_SONGS[0].id, start: DEMO_START },
   demoPremium: {
-    voiceCaption: "If you can hear this, the manor let you in. I'll be the one holding the torch.",
+    voiceCaption: "Hi Pumpkin. The ghosts found you. Happy Halloween, I'm all yours.",
     psLetter:
-      "Open only if you're scared.\n\nI'm right here. I was always right here: on the other end of the call at 2 a.m., in the next seat at every horror movie, holding the umbrella we never remember to carry.",
-    songDropAt: DEMO_START,
+      "P.S. Check your bag tonight. There's real candy in it, a note, and probably me, hiding behind the door.",
+    songDropAt: DEMO_DROP,
   },
   copy: {
-    recipientPlaceholder: "who's invited — e.g. Meera",
+    recipientPlaceholder: "who it's for, e.g. Meera",
     letterPlaceholder:
-      "The candle-lit letter at the end of the night. A memory only you two share, the night you'd relive, what they mean to you…",
-    letterHint: "They light a candle and your letter appears on old parchment.",
+      "The letter a little bat delivers. A memory only you two share, the night you'd relive, what they mean to you…",
+    letterHint: "A cute bat flies in with it; they tap the bat and your letter unrolls like a scroll.",
     photosHint:
-      "Your first photo is the last portrait in the dark — the big reveal. The next three hang in the Hall of Portraits for them to find with a torch.",
-    captionHint: "the brass plaque under the portrait — e.g. Lonavala, in the rain",
-    endLinePlaceholder: "Happy Halloween. Stay haunted with me. 🕯️",
-    endLineHint: "The last line of the night, over your costume-duo poster.",
-    sheetTitle: "Build their night at the manor 🕯️",
-    sheetSub: "Hang your photos, write on the walls, set the spirit board and deal three tarot cards. Everything is pre-filled — make it yours.",
-    extrasTitle: "The manor",
-    extrasSub: "Who it's for, the manor, the notes on the walls, the spirit board, three tarot cards and the question",
-    publishing: "Lighting the candles…",
-    storyTitle: "Let's build their night at the manor 🕯️",
-    replyText: "I found us in the dark at the manor 🕯️ Yes. Obviously.",
-    yesChip: "Said yes at the manor 🕯️",
+      "Your first photo is the big one: it sits in the moonlight when you ask the question, and on their Boo License. The next four hide behind ghosts in the photo booth.",
+    captionHint: "a short label under the photo, e.g. the pumpkin patch",
+    endLinePlaceholder: "Happy Halloween, my boo. 👻🧡",
+    endLineHint: "The last line, over their Boo License.",
+    sheetTitle: "Build their Boo-tiful Night 👻",
+    sheetSub: "Fill the treat bag, pick the potion's ingredients and write the perks on their Boo License. Everything is pre-filled, so make it yours.",
+    extrasTitle: "The night",
+    extrasSub: "Who it's for, the treat bag, the love potion, their Boo License and the question",
+    publishing: "Waking up the ghosts…",
+    storyTitle: "Let's build their Boo-tiful Night 👻",
+    replyText: "Yes. Obviously. I'm your boo 👻🧡",
+    yesChip: "Said yes on Boo-tiful Night 👻",
   },
-  share: { title: "Trick or treat? Someone left the manor door open for you 🕯️", accent: "#5C1A1B" },
+  share: { title: "Boo! 👻 A little ghost has a letter for you", accent: "#FF9A3C" },
 });
 
 export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
@@ -103,13 +111,13 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   music: {
     audioOnly: true,
     suggestions: HALLOWEEN_PREMIUM_SONGS,
-    suggestionsNote: "spooky-romantic · tap to use",
+    suggestionsNote: "romantic, a little spooky · tap to use",
     demoStart: DEMO_START,
   },
   extras: [
     {
       key: "tone", kind: "enum", label: "Who's it for?", display: "cards", default: "romantic",
-      hint: "Family and kids: no thunder, no lightning flash, and the No button never runs away.",
+      hint: "For family and kids the No button never appears and the jokes stay gentle.",
       options: [
         { value: "romantic", label: "My boo", emoji: "💜", hint: "partner or crush" },
         { value: "friends", label: "My bestie", emoji: "🦇", hint: "best friend" },
@@ -118,77 +126,78 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
       ],
     },
     {
-      key: "houseName", kind: "text", max: 40, label: "Name of your manor",
-      placeholder: "a place only you two would get — your street, a running joke",
-      hint: "On the door at the start and on your poster.",
+      key: "houseName", kind: "text", max: 40, label: "Name of your haunted house",
+      placeholder: "a cute pun only you two would get",
+      hint: "On the mailbox at the start and on their Boo License.",
       suggestions: ["Villa Boo-tiful", "The Haunted Hideout", "Casa de Boo"],
     },
     {
-      key: "nightTitle", kind: "text", max: 40, label: "Name of the night",
-      placeholder: "like the title of a gothic love story",
-      hint: "Shown over your portrait at the big reveal, and on the poster.",
-      suggestions: ["The Haunting of Us", "A Very Spooky Love Story", "Ghouls Night Out"],
-    },
-    {
-      key: "wallNotes", kind: "list", maxItems: 3, minItems: 1, itemMax: 48, label: "Notes on the walls",
-      addLabel: "+ add a note",
-      hint: "Scrawled on the walls of the Hall of Portraits; they find them with the torch. Short and true.",
-      itemPlaceholder: ["you snorted at Haldiram's", "Lonavala, no umbrella", "my hoodie lives with you now"],
-    },
-    {
-      key: "spiritWord", kind: "text", max: 10, min: 2, label: "What the spirit board spells",
-      placeholder: "one word only they'd understand (letters only)",
-      hint: "The planchette spells their name, then this word. A–Z only, up to 10 letters.",
-      suggestions: ["MINE", "ALWAYS", "BOO"],
-    },
-    {
-      key: "spiritLine", kind: "text", max: 80, label: "The board's last whisper",
-      placeholder: "what you whisper once the word is spelled",
-      suggestions: ["The spirits agree. So do I."],
-    },
-    {
-      key: "tarot", kind: "objlist", maxItems: 3, minItems: 3, label: "Their tarot reading", itemTitle: "Card",
-      hint: "Card 1 is their Past, 2 their Present, 3 their Future. They flip each one.",
-      item: [
-        { key: "card", kind: "text", max: 24, label: "The card", placeholder: "The Lovers, The Moon, The Sun, The Star…" },
-        { key: "line", kind: "text", max: 90, label: "Its fortune", placeholder: "one line, personal — e.g. You, obviously." },
+      key: "treats", kind: "list", maxItems: 5, minItems: 3, itemMax: 70, label: "What's in the treat bag",
+      addLabel: "+ add a candy",
+      hint: "Each candy they catch opens to one line. Start with “Treat:” for something sweet or “Trick:” for a cute dare.",
+      itemPlaceholder: [
+        "Treat: the last slice of pizza is yours. Forever.",
+        "Trick: you owe me 3 hugs. Pay up tonight.",
+        "Treat: my hoodie is officially yours now.",
+        "Trick: one horror movie, no hiding behind me.",
+        "Treat: forehead kisses, unlimited supply.",
       ],
     },
     {
+      key: "ingredients", kind: "objlist", maxItems: 3, minItems: 3, label: "Love potion ingredients", itemTitle: "Ingredient",
+      hint: "Three little bottles they pour into the cauldron. Each one is a real memory.",
+      item: [
+        { key: "name", kind: "text", max: 30, label: "On the bottle", placeholder: "A drop of your laugh" },
+        { key: "line", kind: "text", max: 70, label: "What it really is", placeholder: "the one where you snort and deny it" },
+      ],
+    },
+    {
+      key: "potionSpell", kind: "text", max: 90, label: "What the potion does",
+      placeholder: "a promise or a plan the potion “casts”",
+      hint: "Revealed when the cauldron puffs out a heart.",
+      suggestions: ["One sip and you're stuck with me. Every October, and every month in between."],
+    },
+    {
+      key: "perks", kind: "list", maxItems: 3, minItems: 1, itemMax: 40, label: "Perks on their Boo License",
+      addLabel: "+ add a perk",
+      hint: "Printed on the license they can save and post.",
+      itemPlaceholder: ["Unlimited hoodie access", "First pick of the candy", "Forehead kisses on demand"],
+    },
+    {
       key: "costumeDuo", kind: "text", max: 40, label: "Your costume duo (optional)",
-      placeholder: "theirs first — e.g. Morticia & Gomez",
-      hint: "Printed on your poster: “Meera & Arjun as Morticia & Gomez”.",
-      suggestions: ["Morticia & Gomez", "Two ghosts, one bedsheet", "The witch & her cat"],
+      placeholder: "e.g. Two ghosts, one bedsheet",
+      hint: "Printed on the license as “Costume”.",
+      suggestions: ["Two ghosts, one bedsheet", "The witch & her cat", "Pumpkin & spice"],
     },
     {
       key: "question", kind: "text", max: 60, label: "The question",
       placeholder: "leave empty to use the one for who it's for",
-      hint: "Asked under your portrait after the big reveal.",
-      suggestions: ["Will you be my boo, tonight and every Halloween after?", "Will you be my boo-st friend forever?", "Will you be my favourite little pumpkin?"],
+      hint: "Asked in the moonlight next to your first photo.",
+      suggestions: ["Will you be my boo, this Halloween and every one after?", "Will you be my boo-st friend forever?", "Will you be my favourite little pumpkin?"],
     },
     {
       key: "yesLine", kind: "text", max: 80, label: "After they say yes",
       placeholder: "what you'd say back",
-      suggestions: ["Booked. Booed. Yours. Every October after."],
+      suggestions: ["Best treat I ever got. I'm never ghosting you. 👻"],
     },
   ],
   theme: {
-    bg: "radial-gradient(120% 80% at 50% 0%, #2B1A2F 0%, #170D19 52%, #08050A 100%)",
-    base: "#08050A",
-    paper: "#E8DFCC",
-    glass: "rgba(232,223,204,0.07)",
-    ink: "#F1E9D8",
-    inkSoft: "#B9AC9A",
-    paperInk: "#2A1712",
-    accent: "#F2B35B",
-    accentDeep: "#8A5A1E",
-    accentInk: "#1E1206",
-    soft: "#F6DDB0",
-    edge: "rgba(232,223,204,0.18)",
-    gold: "#E8CF8A",
+    bg: "linear-gradient(165deg, #3B2D6E 0%, #4A3A80 48%, #6A4C96 100%)",
+    base: "#3B2D6E",
+    paper: "#FFF4E3",
+    glass: "rgba(255,244,227,0.12)",
+    ink: "#FFF7EC",
+    inkSoft: "#D9CCF5",
+    paperInk: "#2A1F3D",
+    accent: "#FF9A3C",
+    accentDeep: "#E06A12",
+    accentInk: "#2A1206",
+    soft: "#C9B6FF",
+    edge: "rgba(255,244,227,0.22)",
+    gold: "#FFD27A",
     dark: true,
-    particles: ["🦇", "🕯️", "✨", "🌙"],
-    confetti: ["#F2B35B", "#E0782F", "#E8DFCC", "#5C1A1B", "#E8CF8A"],
+    particles: ["👻", "🦇", "✨", "🍬"],
+    confetti: ["#FF9A3C", "#FF9EC4", "#C9B6FF", "#9BE7C4", "#FFD27A"],
   },
   demo: {
     ...base.demo,
@@ -196,29 +205,34 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
     senderName: "Arjun",
     petName: "Pumpkin",
     letter:
-      "You told me you're not scared of horror movies, and then you watched the whole of Stree 2 through the gap between your fingers, holding my hand so hard I lost the feeling in two of them. I have never loved anyone more.\n\nThis year I couldn't take you to a real haunted manor, so I built you one. Portraits of us in the dark, a spirit board that knows your name, three cards that already know how this ends.\n\nYou make every ordinary night feel like the best part of October: a bit spooky, mostly sweet, and full of snacks I'm not allowed to touch.\n\nOne more portrait is still waiting in the dark. Go and find it.",
+      "You told me you're not scared of horror movies. Then you watched the whole thing through your fingers, holding my hand so tight I lost the feeling in two of them. I've never loved anyone more.\n\nSo this year I made you a little haunted night of your own: candy, a pumpkin, a love potion, and a few ghosts who are really bad at hiding.\n\nYou make every ordinary night feel like the best part of October. A tiny bit spooky, mostly sweet, and full of snacks I'm not allowed to touch.\n\nOne last thing is waiting for you at the end. Go on, I'm right behind you.",
     photos: demoPhotos([
       ["us, after dark", "My favourite thing about October is you."],
       ["costume party", "Two ghosts, one bedsheet, zero regrets."],
       ["the pumpkin patch", "You picked the ugliest pumpkin on purpose and named it Gerald."],
-      ["horror movie night", "You screamed before the scary part. Every single time."],
+      ["movie night", "You screamed before the scary part. Every single time."],
     ]),
-    endLine: "Happy Halloween. Stay haunted with me. 🕯️",
+    endLine: "Happy Halloween, my boo. 👻🧡",
     extras: {
       tone: "romantic",
       houseName: "Villa Boo-tiful",
-      nightTitle: "The Haunting of Us",
-      wallNotes: ["you snorted at Haldiram's", "Lonavala, no umbrella", "my hoodie lives with you now"],
-      spiritWord: "MINE",
-      spiritLine: "The spirits agree. So do I.",
-      tarot: [
-        { card: "The Moon", line: "3 a.m. Maggi in the hostel kitchen. Even then, the cards knew." },
-        { card: "The Lovers", line: "You, obviously." },
-        { card: "The Sun", line: "A cabin in Manali, a fireplace, and my hoodie on you. Again." },
+      treats: [
+        "Treat: the last slice of pizza is yours. Forever.",
+        "Trick: you owe me 3 hugs. Pay up tonight.",
+        "Treat: my hoodie is officially yours now.",
+        "Trick: one horror movie, no hiding behind me.",
+        "Treat: forehead kisses, unlimited supply.",
       ],
-      costumeDuo: "Morticia & Gomez",
-      question: "Will you be my boo, tonight and every Halloween after?",
-      yesLine: "Booked. Booed. Yours. Every October after.",
+      ingredients: [
+        { name: "A pinch of stardust", line: "the night we counted stars from the terrace" },
+        { name: "A drop of your laugh", line: "the one where you snort and then deny it" },
+        { name: "A sprinkle of hugs", line: "the long ones at the airport" },
+      ],
+      potionSpell: "One sip and you're stuck with me. Every October, and every month in between.",
+      perks: ["Unlimited hoodie access", "First pick of the candy", "Forehead kisses on demand"],
+      costumeDuo: "Two ghosts, one bedsheet",
+      question: "Will you be my boo, this Halloween and every one after?",
+      yesLine: "Best treat I ever got. I'm never ghosting you. 👻",
     },
   },
 };

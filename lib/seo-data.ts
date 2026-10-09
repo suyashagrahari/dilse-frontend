@@ -2860,51 +2860,50 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   },
 
   "happy-halloween-premium": {
-    title: "Cinematic Halloween Website for Girlfriend",
+    title: "Cute Halloween Website for Girlfriend",
     description:
-      "Trick or treat? They find your photos in a dark manor by torchlight, a spirit board spells their name, three tarot cards tell your story, and the last portrait winks on your song.",
+      "Boo! A ghost pops out of a mailbox with your letter. Candy with sweet dares, a pumpkin to carve, ghosts hiding your photos, a love potion, and 'will you be my boo?' on your song.",
     category: "Festival",
-    emoji: "🕯️",
+    emoji: "👻",
     keywords: [
-      "cinematic halloween website",
+      "cute halloween website for girlfriend",
       "halloween website for girlfriend",
       "halloween website for boyfriend",
-      "premium halloween surprise",
-      "haunted manor surprise online",
+      "will you be my boo website",
       "romantic halloween surprise",
+      "premium halloween surprise",
       "halloween surprise with our song",
       "halloween message with voice note",
-      "will you be my boo website",
       "halloween proposal idea",
+      "boo license",
       "halloween gift for long distance partner",
-      "tarot card love message",
       "halloween 2026 surprise for partner",
       "halloween card for best friend",
       "spooky cute halloween for kids",
     ],
     faqs: [
       {
-        question: "What happens when they open A Night at the Manor?",
+        question: "What happens when they open Boo-tiful Night?",
         answer:
-          "They're asked 'Trick or treat?' at the door of a dark manor (both answers are a treat), then drag a torch through a Hall of Portraits to find your photos and the notes you left on the walls. A spirit board spells their name and your secret word, three tarot cards read their past, present and future, your voice comes through a crystal ball, and they light a candle to read your letter. Last, they find one more portrait in the dark — the two of you — and it winks as your song drops. Then your question, and a costume-duo poster to keep.",
+          "A little ghost pops out of a haunted mailbox with your letter and your song starts. They catch candies from a trick-or-treat bag (each one a sweet line or a cute dare), carve a pumpkin that lights up with your initials, shoo away ghosts hiding your photos, brew a love potion from three of your memories, get your letter from a bat, and tune a spirit radio to hear your voice. Then 'Will you be my boo?': on yes, your song hits the chorus, the night turns pink, the moon becomes a heart and a swarm of tiny bats makes a heart around your photo. They keep a Boo License to save and post.",
       },
       {
         question: "Can I send it to a friend or family, or to kids?",
         answer:
-          "Yes. Choose partner, best friend, family or kids; the question changes with it, and for family and kids there is no thunder or lightning flash and the No button never runs away. It is cute-spooky, never scary.",
+          "Yes. Choose partner, best friend, family or kids; the question and the license change with it, and for family and kids the No button never appears. It is cute-spooky, never scary.",
       },
       ...premiumFaqs({
         day: "Halloween",
         twin: "Happy Halloween",
-        keepsake: "costume-duo movie poster of the two of you",
-        voiceAt: "from a crystal ball",
+        keepsake: "Boo License with your photo, perks and a certified-boo stamp",
+        voiceAt: "on a cute spirit radio",
         yesEmail: true,
       }),
     ],
     howTo: premiumHowTo({
-      name: "How to Make a Cinematic Halloween Website",
-      description: "Hang your photos in a dark manor for them to find by torchlight, with a spirit board, three tarot cards, your letter, your voice and a question, and send it as a private link.",
-      write: { name: "Write the Night", text: "Choose who it is for, name the manor and the night, write the notes for the walls, the word for the spirit board, three tarot fortunes, the question and the letter — or let the AI write it from a few lines about the two of you." },
+      name: "How to Make a Cute Halloween Website",
+      description: "Fill a treat bag, a love potion and a Boo License with your words, hide your photos behind cute ghosts, add your letter, your voice and a question, and send it as a private link.",
+      write: { name: "Write the Night", text: "Choose who it is for, name your haunted house, write the candies' sweet lines and dares, three potion ingredients, the license perks, the question and the letter — or let the AI write it from a few lines about the two of you." },
     }),
   },
 };
