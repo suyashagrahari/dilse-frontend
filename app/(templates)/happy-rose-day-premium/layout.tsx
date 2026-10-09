@@ -12,12 +12,17 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🌹 Someone has been growing something for you`;
-const SOCIAL_DESCRIPTION = `A glasshouse, at dusk. Go somewhere quiet, sound on ✦`;
+const SOCIAL_TITLE = `🌹 Something has been opening, just for you`;
+const SOCIAL_DESCRIPTION = `A rose made of us. Go somewhere quiet, sound on ✦`;
+// "The Bloom of Us" (v2). lib/seo-data.ts still describes the v1 glasshouse, so the page's own description
+// and its JSON-LD use this until that shared entry is rewritten.
+const DESCRIPTION =
+  "A cinematic Rose Day website where your photos are the petals: a velvet bud they hold to warm, which opens on your song's chorus into a rose made of your photos, then pressed photos, your letter, your voice and a keepsake card.";
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
   ...base,
+  description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/${SLUG}` },
   openGraph: { ...base.openGraph, title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}`, images: undefined },
   twitter: { ...base.twitter, card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, images: undefined },
@@ -37,10 +42,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
         ]}
       />
-      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      <TemplateJsonLd name={tpl.title} description={DESCRIPTION} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
       {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
       {howTo && <HowToJsonLd howTo={howTo} />}
-      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={DESCRIPTION} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
       {children}
     </>
   );

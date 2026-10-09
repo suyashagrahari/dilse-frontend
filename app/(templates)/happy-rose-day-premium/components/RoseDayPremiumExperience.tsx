@@ -1,140 +1,202 @@
 "use client";
 
-// ─── Rose Day ✦ Premium — "The Glasshouse Rose" ──────────────────────────────────────────────────────────────
+// ─── Rose Day ✦ Premium: "The Bloom of Us" ───────────────────────────────────────────────────────────────────
 //
-// "I am the one rose in all the world to someone." Chosen, tended, and kept.
+// The buyer's photos are the petals. research §D.1 (.template-factory/premium-v2/research.md).
 //
-//  0 gate      the glasshouse door, their name traced in the fog (PremiumGate: the tap starts the song)
-//  1 fog       wipe the condensation off the glass (their name glows through it) → the door creaks open
-//  2 inside    the camera dollies in: iron arches, god-rays, a bud on the potting bench, the opening line
-//  3 thorns    pluck each thorn (a hard time) → "…and we got through it ✓"
-//  4 bloom     hold to bloom → the garden blooms in a heart, the song drops on the final bloom   (WOW)
-//  5 petals    catch the falling word-petals → the hidden sentence                               (mini-game 1)
-//  6 book      the pressed book: the letter writes itself in ink beside a pressed rose
-//  7 dew       dew-drop memories (the photos) + find the tiny dew drop's secret                   (mini-game 2)
-//  8 eternal   the rose under an engraved glass dome; the gardener's note (voice), P.S., reply, keepsake
+//  gate    a single hairline of gold draws a long-stem rose; "For {name}". The tap starts the song (PremiumGate).
+//  rose    I  The bud: their opening line over a closed velvet bud. Hold to warm it (heartbeat).
+//          ↓  drop(): letterbox, riser, the chorus lands and the bud opens ring by ring, every petal a photo; the
+//             camera tilts down and pulls back (THE money moment). Petals start to fall.
+//          II The bloom: their bloom line; tap a petal to lift its photo out; the colour's meaning; "Turn the pages".
+//  pages   III Pressed pages: three photos under vellum, swipe to lift each, caption + note.
+//  letter  IV  The letter on cream paper with pressed petals; tap to raise it, paragraphs ink in as you read.
+//  voice   V   In my voice: the voice note over a graded photo (or their words, large, when there is no recording).
+//  end     "Every Rose Day, it's still you." A tiltable keepsake card + poster, the sealed P.S., reply, replay.
 //
-// Sound: PremiumRoot/gate/drop + 16 template cues (./glass/cues.ts) + kit cues. Music: ducks to 55 % for the
-// thorns and the letter (where it can), full for the bloom; never paused.
+// One ShaderBackdrop + one GlowParticles for the whole page (presets change per chapter), grain + vignette always,
+// SceneTransition between chapters. Fixed layers (the lightbox) live here, outside every transformed scene.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import { Letterbox, ParticleField, PremiumGate, PremiumRoot, usePremium, type ParticlePreset } from "../../_valentine/kit/premium";
+import {
+  FilmGrain, GlowParticles, Letterbox, LightLeak, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette,
+  requestTiltPermission, usePremium, type BackdropPreset, type GlowPreset, type TransitionVariant,
+} from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { GLASS_FONT_VARS } from "./glass/fonts";
-import { registerGlassCues } from "./glass/cues";
-import { GLASS_CSS } from "./glass/styles";
-import { readGlass, SHADES } from "./glass/util";
-import { Glasshouse } from "./glass/world";
-import { DoorArt, Fog } from "./glass/Threshold";
-import { Establishing, Thorns } from "./glass/Thorns";
-import { Bloom } from "./glass/Bloom";
-import { Petals } from "./glass/Petals";
-import { Book } from "./glass/Book";
-import { Dew } from "./glass/Dew";
-import { Eternal } from "./glass/Eternal";
-
-registerGlassCues();
+import { BLOOM_FONT_VARS } from "./bloom/fonts";
+import { BLOOM_CSS } from "./bloom/styles";
+import { pressedPhotos, readBloom, SHADES } from "./bloom/util";
+import { GoldRose } from "./bloom/GoldRose";
+import { BloomScene } from "./bloom/BloomScene";
+import { PagesScene } from "./bloom/PagesScene";
+import { LetterScene } from "./bloom/LetterScene";
+import { VoiceScene } from "./bloom/VoiceScene";
+import { EndingScene } from "./bloom/EndingScene";
+import { PetalLightbox } from "./bloom/PetalLightbox";
 
 const SLUG = "happy-rose-day-premium" as const;
-type Scene = "gate" | "fog" | "inside" | "thorns" | "bloom" | "petals" | "book" | "dew" | "eternal";
-const LETTERBOX = new Set<Scene>(["fog", "inside"]);
-const DUCK = new Set<Scene>(["thorns", "book"]);
+type Scene = "gate" | "rose" | "pages" | "letter" | "voice" | "end";
 
-function House({ data, mode, react }: ExperienceProps) {
+const BACKDROP: Record<Scene, BackdropPreset> = { gate: "velvet", rose: "candle", pages: "candle", letter: "candle", voice: "candle", end: "bokeh" };
+const ENTER: Record<Scene, TransitionVariant> = { gate: "iris", rose: "iris", pages: "iris", letter: "fold", voice: "flash", end: "iris" };
+
+function Bloom({ data, mode, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
   const reduce = useReducedMotion();
-  const g = useMemo(() => readGlass(data), [data]);
-  const [scene, setScene] = useState<Scene>("gate");
-  const [burst, setBurst] = useState(false);
-  const [found, setFound] = useState(false);
+  const b = useMemo(() => readBloom(data), [data]);
+  const shade = SHADES[b.color];
+  const [scene, setScene] = useState<Scene>(p.opened ? "rose" : "gate");
+  const [bars, setBars] = useState(false);
+  const [bloomed, setBloomed] = useState(false);
+  const [pick, setPick] = useState<number | null>(null);
   const [run, setRun] = useState(0);
-  const { music, sfx } = p;
-  const shade = SHADES[g.color];
+  const pages = useMemo(() => pressedPhotos(b.photos), [b.photos]);
+  const hasLetter = !!data.letter?.trim();
+  const hasVoice = !!p.premium.voiceNote || !!p.premium.voiceCaption.trim();
 
-  const go = useCallback((s: Scene) => {
-    setScene(s);
-    window.scrollTo({ top: 0 });
-  }, []);
+  const order = useMemo(() => {
+    const o: Scene[] = ["rose"];
+    if (pages.length) o.push("pages");
+    if (hasLetter) o.push("letter");
+    if (hasVoice) o.push("voice");
+    o.push("end");
+    return o;
+  }, [pages.length, hasLetter, hasVoice]);
+  const next = useCallback(
+    (from: Scene) => {
+      const i = order.indexOf(from);
+      setScene(order[Math.min(order.length - 1, i + 1)]);
+    },
+    [order],
+  );
 
-  // music: duck for the intimate scenes, full again for the rest (no-op where it can't fade)
-  const musicRef = useRef(music);
+  // The song sits a little lower under the letter (where the platform lets us fade it).
+  const musicRef = useRef(p.music);
   useEffect(() => {
-    musicRef.current = music;
+    musicRef.current = p.music;
   });
   useEffect(() => {
     const m = musicRef.current;
     if (!m?.canFade || scene === "gate") return;
-    m.fadeTo(DUCK.has(scene) ? 0.55 : 1, 1200);
+    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
   }, [scene]);
 
-  // the glasshouse hush (bed), from the door to the dome
-  const inside = scene !== "gate" && scene !== "fog";
+  const reactRef = useRef(react);
   useEffect(() => {
-    if (!inside) return;
-    const h = sfx("gh-amb", { gain: 0.9 });
-    return () => h.stop(1500);
-  }, [inside, sfx]);
+    reactRef.current = react;
+  });
+  useEffect(() => {
+    if (scene === "end") reactRef.current("completed");
+  }, [scene]);
 
-  const slot = (id: string) => day.gifSlots.find((s) => s.id === id)!;
-  const sticker = (id: string, size: number) => <Sticker slug={day.slug} slot={slot(id)} value={data.gifs?.[id]} size={size} alt="" eager />;
-
-  const particles: ParticlePreset | null =
-    scene === "gate" || scene === "petals" ? null : scene === "eternal" ? "fireflies" : scene === "bloom" && burst ? "petals" : scene === "bloom" && g.count === 1 ? "fireflies" : "dust";
+  const sticker = (id: string, size: number) => {
+    const slot = day.gifSlots.find((s) => s.id === id);
+    return slot ? <Sticker slug={day.slug} slot={slot} value={data.gifs?.[id]} size={size} alt="" /> : null;
+  };
 
   const replay = () => {
-    setBurst(false);
+    setBloomed(false);
+    setBars(false);
     setRun((r) => r + 1);
-    go("inside");
+    setScene("rose");
+  };
+
+  const glowColors = [shade.light, shade.base, "#F2D4D2"];
+  let particles: GlowPreset = "sparkles";
+  let density = 0.22;
+  let pColors: string[] = ["#FFE7B8", "#E3C27E"];
+  if ((scene === "rose" && bloomed) || scene === "end") {
+    particles = "petals";
+    density = scene === "end" ? 0.35 : 0.5;
+    pColors = glowColors;
+  } else if (scene === "pages") {
+    particles = "petals";
+    density = 0.18;
+    pColors = glowColors;
+  }
+
+  const render = (s: Scene) => {
+    switch (s) {
+      case "gate":
+        return null;
+      case "rose":
+        return (
+          <BloomScene
+            key={run}
+            b={b}
+            onRising={() => setBars(true)}
+            onOpen={() => {
+              setBloomed(true);
+              window.setTimeout(() => setBars(false), reduce ? 0 : 3200);
+            }}
+            onPick={setPick}
+            onNext={() => next("rose")}
+            sticker={sticker("pr3-petals", 56)}
+          />
+        );
+      case "pages":
+        return <PagesScene pages={pages} to={b.to} onDone={() => next("pages")} />;
+      case "letter":
+        return <LetterScene b={b} letter={data.letter} onDone={() => next("letter")} />;
+      case "voice":
+        return <VoiceScene from={b.from} photo={b.photos[b.photos.length - 1]} onDone={() => next("voice")} />;
+      case "end":
+        return <EndingScene b={b} data={data} day={day} mode={mode} sticker={sticker("pr6-forever", 64)} onReplay={replay} />;
+    }
   };
 
   return (
-    <div className={`gh-root ${GLASS_FONT_VARS}`} style={{ ["--gh-bar" as string]: LETTERBOX.has(scene) ? "9vh" : "0px" }}>
-      <style>{GLASS_CSS}</style>
-      <Glasshouse dolly={scene === "gate" || scene === "fog" ? 1 : 0} night={scene === "eternal" ? 1 : scene === "dew" || scene === "book" ? 0.5 : 0} />
-      {particles && (
-        <ParticleField
-          preset={particles}
-          density={particles === "petals" ? 0.5 : 0.3}
-          colors={particles === "petals" ? [shade.base, shade.light, shade.hi] : particles === "dust" ? ["rgba(255,236,200,.75)"] : undefined}
-          z={1}
-        />
-      )}
-      {!reduce && scene !== "gate" && <span className="gh-grain" aria-hidden />}
-      <Letterbox show={LETTERBOX.has(scene)} />
+    <div
+      className={`rb-root ${BLOOM_FONT_VARS}`}
+      // iOS asks for gyro permission only inside a tap: the gate's own tap is the one.
+      onClickCapture={scene === "gate" ? () => void requestTiltPermission() : undefined}
+      style={{ ["--font-vw-ui" as string]: "var(--rb-sans)", ["--vw-font-ui" as string]: "var(--rb-sans), system-ui, sans-serif", ["--glow" as string]: shade.glow }}
+    >
+      <style>{BLOOM_CSS}</style>
+      <ShaderBackdrop
+        preset={BACKDROP[scene]}
+        colors={["#0E0306", shade.deep, scene === "gate" ? "#8A6A2F" : shade.base]}
+        intensity={scene === "gate" ? 0.7 : scene === "rose" && bloomed ? 1.2 : 0.95}
+        speed={0.7}
+        parallax
+      />
+      <GlowParticles preset={particles} colors={pColors} density={density} speed={particles === "petals" ? 0.7 : 0.5} z={1} />
+      {(bloomed && scene === "rose") || scene === "end" ? <LightLeak color={`rgb(${shade.glow})`} color2="#FFD9A0" corner="top-right" opacity={0.35} /> : null}
+      <Vignette strength={0.62} />
+      <FilmGrain opacity={0.07} />
+      <Letterbox show={bars} />
 
       {scene === "gate" && (
         <PremiumGate
-          art={<DoorArt to={g.to} sticker={sticker("pr1-door", 70)} />}
-          kicker="Someone has been growing something for"
-          subtitle={<span style={{ fontFamily: "var(--gh-serif)", fontStyle: "italic", fontSize: 18 }}>A glasshouse, at dusk · 🎧 sound on</span>}
+          art={<GoldRose size={260} />}
+          kicker="Something has been opening for"
+          subtitle="Rose Day · sound on, somewhere quiet"
           sting="chime-cascade"
-          openLabel="Open the glasshouse"
-          className={`gh-gate ${GLASS_FONT_VARS}`}
-          bg="radial-gradient(90% 60% at 50% 20%, #6B4A3E 0%, #3A3330 50%, #1E2A27 100%)"
-          ink="#FBF3E6"
-          accent="#F4C27A"
+          openLabel="Let it open"
+          className="rb-gate"
+          bg="transparent"
+          ink="#F6F0E6"
+          accent="#C9A45C"
+          openMs={reduce ? 250 : 1100}
           onOpen={() => {
             react("opened");
-            go("fog");
+            setScene("rose");
           }}
         />
       )}
 
-      <div key={`${run}-${scene}`} className="gh-fade gh-layer">
-        {scene === "fog" && <Fog to={g.to} onClear={() => go("inside")} />}
-        {scene === "inside" && <Establishing g={g} onDone={() => go(g.thorns.length ? "thorns" : "bloom")} />}
-        {scene === "thorns" && <Thorns g={g} sticker={sticker("pr2-thorn", 84)} onDone={() => go("bloom")} />}
-        {scene === "bloom" && <Bloom g={g} onBurst={() => setBurst(true)} onDone={() => go("petals")} />}
-        {scene === "petals" && <Petals g={g} sticker={sticker("pr3-petals", 90)} onDone={() => go("book")} />}
-        {scene === "book" && <Book g={g} letter={data.letter} sticker={sticker("pr4-letter", 80)} onDone={() => go("dew")} />}
-        {scene === "dew" && <Dew g={g} photos={data.photos} sticker={sticker("pr5-memories", 72)} onFound={() => setFound(true)} onDone={() => go("eternal")} />}
-        {scene === "eternal" && (
-          <Eternal day={day} data={data} g={g} mode={mode} sticker={sticker("pr6-forever", 72)} onReplay={replay} onArrive={() => react("completed", { count: found ? 1 : 0 })} />
+      <div className="rb-stage">
+        {scene !== "gate" && (
+          <SceneTransition sceneKey={`${scene}-${run}`} variant={ENTER[scene]} origin={scene === "pages" ? "50% 45%" : "50% 50%"}>
+            {render(scene)}
+          </SceneTransition>
         )}
       </div>
+
+      <PetalLightbox photo={pick != null ? (b.photos[pick] ?? null) : null} onClose={() => setPick(null)} />
     </div>
   );
 }
@@ -144,7 +206,7 @@ export default function RoseDayPremiumExperience(props: ExperienceProps) {
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
       <DayRoot day={day} data={props.data} layout="full" dark>
-        <House {...props} />
+        <Bloom {...props} />
       </DayRoot>
     </PremiumRoot>
   );

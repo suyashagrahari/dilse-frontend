@@ -3,13 +3,13 @@ import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-rose-day/config";
 
 // Gallery card for the ✦ Premium twin of /happy-rose-day. Until this template has its
-// own cover (Stage 5), it shows the $2 day"s poster inside the gold premium
-// frame. OWNED BY THIS DAY"S BUILDER.
+// own cover (Stage 5), it shows the $2 day's poster inside the gold premium
+// frame. OWNED BY THIS DAY'S BUILDER.
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-rose-day-premium",
   coverImage: templateMedia("happy-rose-day-premium", "cover-poster.webp"),
-  title: "Rose Day ✦ Premium — The Glasshouse Rose",
+  title: "Rose Day ✦ Premium: The Bloom of Us",
   description:
-    "A private glasshouse at dusk: wipe their name off the fogged door, pluck the thorns you got through together, and watch a garden bloom in a heart on your song's chorus — then a pressed-book letter and a rose sealed forever under glass.",
+    "Your photos become the petals of one rose. They hold a velvet bud to warm it, and on your song's chorus it opens, every petal a photo of you two. Then photos pressed under vellum, your letter, your voice, and a keepsake card.",
 };
