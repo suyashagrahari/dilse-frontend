@@ -2775,7 +2775,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "happy-hug-day-premium": {
     title: "Long-Distance Hug Day Website for Boyfriend",
     description:
-      "A hug they feel through the phone: they hold the screen with both thumbs for twenty seconds while warmth spreads, a heartbeat slows and your words fade in.",
+      "A hug they feel through the phone: they hold a thumb on your photo for twenty seconds while it blooms from black-and-white into colour, a heartbeat slows to yours and your song lands on the chorus.",
     category: "Valentine",
     emoji: "🤗",
     keywords: [
@@ -2793,26 +2793,27 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       "12 february hug day",
       "hug day wishes with photos",
       "long distance relationship gift online",
-      "hug certificate",
+      "hug coupon",
+      "black and white to colour photo",
     ],
     faqs: [
       {
         question: "What happens when they open the Hug Day page?",
         answer:
-          "They wipe the frost off a window to find your photo, walk one figure across the distance between you, then hold the screen with both thumbs for twenty seconds — warmth spreads under their fingers, a heartbeat slows to yours and your words fade in, and the hug is delivered with the time. Then they warm knitted mittens, unzip a hoodie to find your letter, sit in a blanket fort of your photos tapping along with your heartbeat, and send a hug back.",
+          "\"Come here\" arrives one word at a time, then their name. They drag two black-and-white photos of you together until the distance between you reads zero, then hold a thumb on your photo for twenty seconds: it blooms into colour from under their thumb, a heartbeat slows to yours and your lines fade in, and the chorus of your song lands as the last of the colour does. Letting go pauses it. Then what your hugs feel like, a line over each photo, your letter, your voice, and a hug coupon they tear off and send back to redeem in person.",
       },
       ...premiumFaqs({
         day: "Hug Day",
         twin: "Hug Day",
-        keepsake: "hug certificate",
-        voiceAt: "inside the hug",
+        keepsake: "hug coupon",
+        voiceAt: "after the letter",
         yesEmail: false,
       }),
     ],
     howTo: premiumHowTo({
       name: "How to Make a Long-Distance Hug Day Website",
       description: "Send a twenty-second hug they hold through the screen, with your letter, photos and voice, as a private link.",
-      write: { name: "Write the Hug", text: "Write the line behind the frost, the lines that appear during the hug, a note for each mitten, the hug passes and your letter — or let the AI write it from a few lines about the two of you." },
+      write: { name: "Write the Hug", text: "Write the first words, the lines that fade in during the hug, what your hugs feel like, the hug coupon and your letter — or let the AI write it from a few lines about the two of you." },
     }),
   },
 
