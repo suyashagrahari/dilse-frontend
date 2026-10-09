@@ -195,6 +195,8 @@ export interface DayMusicConfig {
   suggestions?: readonly SongSuggestion[];
   /** Small line next to "Suggestions" ("romantic favourites · tap to use"). */
   suggestionsNote?: string;
+  /** ✦ Premium: the second the preview's demo song (the first suggestion) starts at. */
+  demoStart?: number;
 }
 
 export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as const;
