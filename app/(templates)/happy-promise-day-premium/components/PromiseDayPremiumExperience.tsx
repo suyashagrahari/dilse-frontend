@@ -1,191 +1,234 @@
 "use client";
 
-// ─── happy-promise-day-premium — "The Red Thread" ───────────────────────────
+// ─── happy-promise-day-premium — "Signed, Sealed, Promised" ────────────────
 //
-//   gate    near-black indigo, one red thread swaying down to their little
-//           finger: "{gateLine}" — the tap starts the song and a warm hum
-//   pull    drag down hand over hand; photos ride past on pegs
-//   knot    the other end (the sender's hand) arrives; the knot cinches on
-//           THE drop, the thread turns gold and writes "I promise"
-//   rings   mini-game 1: draw the thread through gold rings (one promise each)
-//   vow     the voice, the letter stitched in, a thumbprint seal (hold)
-//   later   a promise for later sealed in a vial (hold), .ics reminder;
-//           opens on the date
-//   bound   the thread across the night (distance), "Do you promise too?"
-//           (mini-game 2: pinky pendulum) → keepsake, P.S., write back
-//
-// Files: thread/{art, sfx, Pull, Knot, Rings, Vow, Later, Bound, css, shared}.
+// research.md §D.5. A promise drawn up as a deed, on warm ivory paper under
+// a desk lamp at night.
+//   gate      a heavy cream envelope, wax-sealed: "Break the seal" (song starts)
+//   whereas   the deed comes out folded in three: drag to unfold it; two
+//             "Whereas…" lines (their story) + Exhibit A clipped on
+//   promises  press the typewriter key: each clause types itself in, clack by
+//             clack, with one of their photos clipped above it
+//   exhibits  any photos left over, a pile of prints to flick through
+//   letter    Schedule A, in my own words: the letter; tap to initial it
+//   voice     the sworn statement: the voice note (or the caption, typed)
+//   sign      "And above all…" over two signature lines: the sender's writes
+//             itself in ink, the recipient signs with a finger
+//   seal      the money moment: the deed folds into its envelope, they hold
+//             the brass seal to pour the wax, and on the song's drop the
+//             seal presses in, the wax blooms with their initials, the
+//             notary's red stamp lands
+//   ending    the sealed envelope to keep, witnessed by…, save the deed,
+//             the codicil (P.S.), write back
+// One WebGL backdrop (candle), one particle layer, grain + vignette + leak.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getDay } from "../../_valentine/days";
-import type { PromiseExtrasPremium } from "../../_valentine/days/happy-promise-day-premium";
-import { promiseDayPremium } from "../../_valentine/days/happy-promise-day-premium";
 import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import { ParticleField, PremiumGate, PremiumRoot, SceneFade, SkipChip, usePremium, useScenes, type ParticlePreset } from "../../_valentine/kit/premium";
-import type { ExperienceProps, ValentineDayData } from "../../_valentine/types";
-import { GateThread, Hand, NightBackdrop, THREAD } from "./thread/art";
-import Bound from "./thread/Bound";
-import { THREAD_CSS } from "./thread/css";
-import Knot from "./thread/Knot";
-import Later from "./thread/Later";
-import Pull from "./thread/Pull";
-import Rings from "./thread/Rings";
-import type { SceneProps } from "./thread/shared";
-import { registerThreadCues } from "./thread/sfx";
-import Vow from "./thread/Vow";
+import {
+  FilmGrain,
+  GlowParticles,
+  LightLeak,
+  PremiumGate,
+  PremiumRoot,
+  SceneTransition,
+  ShaderBackdrop,
+  Vignette,
+  usePremium,
+  type TransitionVariant,
+} from "../../_valentine/kit/premium";
+import type { ExperienceProps, GifSlot } from "../../_valentine/types";
+import { registerDeedCues } from "./deed/cues";
+import EndingScene from "./deed/EndingScene";
+import ExhibitsScene from "./deed/ExhibitsScene";
+import { SP_FONT_VARS } from "./deed/fonts";
+import { Envelope, GATE_BG, GATE_CSS } from "./deed/Gate";
+import LetterScene from "./deed/LetterScene";
+import { readDeed } from "./deed/model";
+import PromisesScene from "./deed/PromisesScene";
+import SealScene from "./deed/SealScene";
+import SignScene, { type SignResult } from "./deed/SignScene";
+import { UI_CSS } from "./deed/ui";
+import VoiceScene from "./deed/VoiceScene";
+import WhereasScene from "./deed/WhereasScene";
 
-const SLUG = "happy-promise-day-premium" as const;
-const ORDER = ["gate", "pull", "knot", "rings", "vow", "later", "bound"] as const;
-type Scene = (typeof ORDER)[number];
+registerDeedCues();
 
-function Scenes({ data, mode, react }: ExperienceProps) {
-  const day = getDay(SLUG);
-  const x = data.extras as PromiseExtrasPremium;
+const day = getDay("happy-promise-day-premium");
+type SceneId = "gate" | "whereas" | "promises" | "exhibits" | "letter" | "voice" | "sign" | "seal" | "ending";
+const CUT: Record<SceneId, TransitionVariant> = { gate: "flash", whereas: "iris", promises: "fold", exhibits: "fold", letter: "fold", voice: "iris", sign: "fold", seal: "iris", ending: "flash" };
+const SKIPPABLE: SceneId[] = ["whereas", "promises", "exhibits", "letter", "voice"];
+
+function Deed({ data, mode, react }: ExperienceProps) {
   const p = usePremium();
-  const reduced = useReducedMotion();
-  const sc = useScenes(ORDER);
-  const [run, setRun] = useState(0);
-  const [preset, setPreset] = useState<ParticlePreset>("dust");
-  const timers = useRef<number[]>([]);
+  const reduce = useReducedMotion();
+  const d = useMemo(() => readDeed(data), [data]);
+  const order = useMemo(() => {
+    const o: SceneId[] = ["whereas", "promises"];
+    if (d.exhibits.length) o.push("exhibits");
+    o.push("letter");
+    if (p.premium.voiceNote || p.premium.voiceCaption) o.push("voice");
+    o.push("sign", "seal", "ending");
+    return o;
+  }, [d.exhibits.length, p.premium.voiceNote, p.premium.voiceCaption]);
+  const [scene, setScene] = useState<SceneId>(p.opened ? "whereas" : "gate");
+  const [round, setRound] = useState(0);
+  const [sig, setSig] = useState<SignResult | null>(null);
+  const [sealed, setSealed] = useState(false);
+  const [flashN, setFlashN] = useState(0);
+  const next = useCallback(() => setScene((s) => order[Math.min(order.length - 1, order.indexOf(s as SceneId) + 1)] ?? "ending"), [order]);
+
+  const completed = useRef(false);
   useEffect(() => {
-    registerThreadCues();
-    const t = timers.current;
-    return () => t.forEach(clearTimeout);
-  }, []);
-  const th = THREAD[x.threadColor] ?? THREAD.red;
-  const promises = useMemo(() => {
-    const l = (Array.isArray(x.promises) ? x.promises : []).map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean).slice(0, 6);
-    return l.length ? l : (promiseDayPremium.demo.extras.promises as string[]).slice(0, 5);
-  }, [x.promises]);
+    if (scene === "ending" && !completed.current) {
+      completed.current = true;
+      react("completed");
+    }
+  }, [scene, react]);
 
-  const sticker = useCallback(
-    (id: string, px: number) => {
-      const slot = day.gifSlots.find((g) => g.id === id);
-      return slot ? <Sticker slug={SLUG} slot={slot} value={data.gifs[slot.id]} size={px} /> : null;
-    },
-    [day, data.gifs],
-  );
-  const go = useCallback(
-    (s: Scene) => {
-      sc.go(s);
-      window.scrollTo({ top: 0, behavior: "auto" });
-    },
-    [sc],
-  );
-  const next = useCallback(() => {
-    const i = ORDER.indexOf(sc.scene);
-    let n = ORDER[Math.min(ORDER.length - 1, i + 1)];
-    if (n === "later" && !(x.futurePromise || "").trim()) n = "bound";
-    go(n);
-  }, [sc.scene, go, x.futurePromise]);
-
-  useEffect(() => {
-    const s = sc.scene;
-    setPreset(s === "rings" || s === "bound" ? "sparkles" : s === "later" ? "fireflies" : "dust");
-  }, [sc.scene]);
-
-  const onPeak = useCallback(() => {
-    setPreset("embers");
-    timers.current.push(window.setTimeout(() => setPreset("sparkles"), 3200));
-  }, []);
-
-  const props: SceneProps = {
-    data: data as ValentineDayData<PromiseExtrasPremium>,
-    x,
-    promises,
-    color: th.c,
-    hi: th.hi,
-    reduced,
-    preview: mode === "preview",
-    react,
-    sfx: p.sfx,
-    sticker,
-    next,
+  // Only the sender's own GIF shows: an emoji stand-in would be decoration here.
+  const sticker = (id: string, size = 64): ReactNode => {
+    const s: GifSlot | undefined = day.gifSlots.find((g) => g.id === id);
+    const v = (data.gifs?.[id] ?? "").trim();
+    return s && /^https:\/\//i.test(v) ? <Sticker slug={day.slug} slot={s} value={v} size={size} /> : null;
   };
-  const scene = sc.scene;
-  const step = ORDER.indexOf(scene);
+  const replay = () => {
+    setRound((r) => r + 1);
+    setSig(null);
+    setSealed(false);
+    setScene("whereas");
+  };
 
-  return (
-    <>
-      <style>{THREAD_CSS}</style>
-      <NightBackdrop scene={scene} />
-      <ParticleField
-        preset={preset}
-        density={preset === "dust" ? 0.25 : 0.38}
-        colors={preset === "embers" ? ["#FFE08A", "#F2C14E", "#FFB347"] : preset === "dust" ? ["rgba(255,236,210,.6)"] : preset === "fireflies" ? ["#FFF3C4", "#9DB4FF"] : ["#FFF1BF", "#F2C14E", "#ffffff"]}
-        z={1}
-      />
-      {scene === "gate" && (
-        <PremiumGate
-          className="tp-gate"
-          art={<GateThread color={th.c} hi={th.hi} />}
-          kicker="There's a thread tied to the little finger of"
-          subtitle={<span className="tp-gateSub">{x.gateLine || "Follow it."}</span>}
-          sting="tp-hum"
-          openLabel="Follow the thread"
-          openMs={reduced ? 250 : 1100}
-          bg="radial-gradient(120% 90% at 50% 10%, #22265A 0%, #0E1030 55%, #05061A 100%)"
-          ink="#F7F1E8"
-          accent={th.c}
-          onOpen={({ quiet }) => {
-            if (!quiet) p.sfx("tp-glint", { at: 0.4 });
-            go("pull");
+  const idx = order.indexOf(scene);
+  let body: ReactNode = null;
+  switch (scene) {
+    case "whereas":
+      body = <WhereasScene d={d} onNext={next} />;
+      break;
+    case "promises":
+      body = <PromisesScene d={d} sticker={sticker("ps1-desk", 58)} onNext={next} />;
+      break;
+    case "exhibits":
+      body = <ExhibitsScene photos={d.exhibits} onNext={next} />;
+      break;
+    case "letter":
+      body = <LetterScene d={d} letter={data.letter || "Happy Promise Day."} onNext={next} />;
+      break;
+    case "voice":
+      body = <VoiceScene d={d} onNext={next} />;
+      break;
+    case "sign":
+      body = (
+        <SignScene
+          d={d}
+          onSigned={(r) => {
+            setSig(r);
+            react("answered", { count: r.typed ? 0 : r.strokes.length });
+            next();
           }}
         />
+      );
+      break;
+    case "seal":
+      body = (
+        <SealScene
+          d={d}
+          sig={sig}
+          onPeak={() => {
+            setSealed(true);
+            setFlashN((n) => n + 1);
+          }}
+          onNext={next}
+        />
+      );
+      break;
+    case "ending":
+      body = <EndingScene d={d} sig={sig} endLine={data.endLine} mode={mode} replyText={day.copy.replyText} sticker={sticker("ps2-sealed", 64)} onReplay={replay} />;
+      break;
+  }
+
+  const glow = sealed && (scene === "seal" || scene === "ending");
+  return (
+    <>
+      {/* First, so each scene's own <style> (rendered later) wins at equal specificity. */}
+      <style>{ROOT_CSS}</style>
+      <ShaderBackdrop preset="candle" colors={["#120a06", "#4a2c18", "#ffcf8f"]} intensity={glow ? 1.15 : 0.95} speed={0.5} parallax />
+      {scene !== "gate" && <div className="sp-desk" aria-hidden />}
+      {glow && <GlowParticles preset="sparkles" density={scene === "seal" ? 0.3 : 0.14} colors={["#ffe3a8", "#E9C77A", d.W.hi]} speed={0.55} />}
+      <LightLeak color="#ffb46a" color2="#ffd9a0" corner="top-left" opacity={0.3} />
+      <Vignette strength={0.64} />
+      <FilmGrain opacity={0.075} />
+
+      {scene === "gate" && (
+        <PremiumGate
+          art={<Envelope d={d} />}
+          kicker="A sealed promise for"
+          subtitle={d.envelopeLine || "To be opened by you, and only you."}
+          sting="sp-open"
+          openLabel="Break the seal"
+          sealText={`Drawn up by hand for ${d.recipient}`}
+          className="sp-gate"
+          bg={GATE_BG}
+          ink="#F5EFE2"
+          accent="#E9C77A"
+          openMs={reduce ? 250 : 1100}
+          onOpen={() => setScene("whereas")}
+        />
       )}
+
       {scene !== "gate" && (
-        <div className="tp-progress" aria-hidden>
-          {ORDER.slice(1).map((s, k) => (
-            <span key={s} className={k + 1 <= step ? "is-on" : ""} style={{ width: k + 1 === step ? 18 : 7, ["--tc" as string]: th.c }} />
-          ))}
+        <div className="sp-chip" role="group" aria-label="Chapter">
+          <span className="sp-chipNo" aria-label={`Chapter ${idx + 1} of ${order.length}`}>
+            § {String(idx + 1).padStart(2, "0")}
+            <i>/{String(order.length).padStart(2, "0")}</i>
+          </span>
+          {SKIPPABLE.includes(scene) && (
+            <button type="button" className="sp-chipSkip" onClick={next}>
+              Skip ›
+            </button>
+          )}
         </div>
       )}
-      <SceneFade sceneKey={`${scene}-${run}`} className="tp-scene">
-        {scene === "pull" && (
-          <>
-            <Pull {...props} />
-            {p.repeatVisit && <SkipChip onSkip={() => go("knot")} label="Skip to the knot ▸" style={{ top: "calc(116px + env(safe-area-inset-top, 0px))" }} />}
-          </>
-        )}
-        {scene === "knot" && <Knot {...props} onPeak={onPeak} />}
-        {scene === "rings" && <Rings {...props} />}
-        {scene === "vow" && <Vow {...props} />}
-        {scene === "later" && <Later {...props} />}
-        {scene === "bound" && (
-          <Bound
-            {...props}
-            day={day}
-            mode={mode}
-            onReplay={() => {
-              setRun((r) => r + 1);
-              go("pull");
-            }}
-          />
-        )}
-      </SceneFade>
+
+      {flashN > 0 && <div key={flashN} className={`sp-flash${reduce ? " is-reduced" : ""}`} aria-hidden />}
+
+      {scene !== "gate" && (
+        <div className="sp-stage">
+          <SceneTransition sceneKey={`${scene}-${round}`} variant={CUT[scene]} flashColor="#fff1dc">
+            {body}
+          </SceneTransition>
+        </div>
+      )}
     </>
   );
 }
 
 export default function PromiseDayPremiumExperience(props: ExperienceProps) {
-  const day = getDay(SLUG);
-  const x = props.data.extras as PromiseExtrasPremium;
-  const th = THREAD[x?.threadColor] ?? THREAD.red;
   return (
-    <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot
-        day={day}
-        data={props.data}
-        line={x?.bigPromise}
-        art={
-          <div style={{ position: "relative", height: "100%", aspectRatio: "0.9" }}>
-            <Hand color={th.c} style={{ position: "absolute", left: "4%", bottom: 0, width: "44%" }} />
-            <Hand color={th.c} flip style={{ position: "absolute", right: "4%", top: 0, width: "44%" }} />
-          </div>
-        }
-      >
-        <Scenes {...props} />
+    <PremiumRoot data={props.data} mode={props.mode} slug="happy-promise-day-premium">
+      <DayRoot day={day} data={props.data} layout="full" className={`${SP_FONT_VARS} sp-root`} style={{ height: "100svh", overflow: "hidden" }}>
+        <Deed {...props} />
       </DayRoot>
     </PremiumRoot>
   );
 }
+
+const ROOT_CSS = `
+${UI_CSS}
+${GATE_CSS}
+.sp-desk { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(70% 46% at 50% 46%, rgba(255,196,120,.13), transparent 72%), radial-gradient(80% 50% at 18% 0%, rgba(255,214,150,.1), transparent 60%),
+    repeating-linear-gradient(88deg, rgba(0,0,0,0) 0 31px, rgba(0,0,0,.12) 31px 32px, rgba(255,220,180,.02) 32px 83px),
+    repeating-linear-gradient(91deg, rgba(0,0,0,0) 0 13px, rgba(0,0,0,.07) 13px 14px, rgba(0,0,0,0) 14px 47px); }
+.sp-chip { position: fixed; z-index: 97; left: calc(max(12px, env(safe-area-inset-left, 0px)) + 54px); top: max(12px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 2px;
+  height: 44px; padding: 0 6px 0 14px; border-radius: 99px; background: rgba(20,12,8,.5); border: 1px solid rgba(245,239,226,.14); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font: 700 11px/1 var(--sp-type); letter-spacing: .14em; color: var(--sp-ivory); }
+.sp-chipNo { font-variant-numeric: tabular-nums; padding-right: 8px; }
+.sp-chipNo i { font-style: normal; opacity: .45; }
+.sp-chipSkip { all: unset; cursor: pointer; height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 99px; background: rgba(245,239,226,.1); letter-spacing: .2em; text-transform: uppercase; font-size: 10px; }
+.sp-chipSkip:focus-visible { outline: 2px solid var(--sp-gold); outline-offset: 2px; }
+.sp-flash { position: fixed; inset: 0; z-index: 88; pointer-events: none; background: radial-gradient(60% 50% at 50% 55%, #fff4dc, rgba(255,214,150,.6) 60%, rgba(255,190,110,.2)); animation: sp-flash 1s cubic-bezier(.1,.7,.3,1) forwards; }
+.sp-flash.is-reduced { animation: sp-flashR .4s ease forwards; }
+@keyframes sp-flash { 0% { opacity: 0; } 10% { opacity: .85; } 100% { opacity: 0; } }
+@keyframes sp-flashR { 0% { opacity: .2; } 100% { opacity: 0; } }
+`;

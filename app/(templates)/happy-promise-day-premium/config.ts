@@ -9,7 +9,8 @@ export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-promise-day-premium",
   coverImage: templateMedia("happy-promise-day-premium", "cover-poster.webp"),
-  title: "Promise Day ✦ Premium — The Red Thread",
+  title: "Promise Day ✦ Premium — Signed, Sealed, Promised",
   description:
-    "The red thread of fate: they pull it through your photos to your hand, the knot tightens on your song’s drop and writes “I promise” in gold.",
+    "Your promises, drawn up as a deed on ivory paper: a typewriter types each one beside your photos, you both sign, and on your song's drop the wax seal presses in your initials.",
+  previewText: "a sealed promise for you ✍️",
 };

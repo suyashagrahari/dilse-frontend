@@ -1,79 +1,87 @@
-// happy-promise-day-premium — "The Red Thread" (the ✦ Premium twin of happy-promise-day).
+// happy-promise-day-premium — "Signed, Sealed, Promised" (the ✦ Premium twin of happy-promise-day).
 //
-// The red thread of fate: an invisible cord tied to the little finger. They
-// pull it hand over hand through your photos until the other end arrives —
-// tied to your finger. The pinkies hook, the knot cinches on the song's drop,
-// the thread turns gold and writes "I promise". Then: thread the rings (each
-// ring a promise), the vow stitched in with a thumbprint seal, a promise for
-// later sealed in a vial, the distance between you, and "Do you promise too?".
+// A promise drawn up like a deed, on warm ivory paper under a desk lamp. A
+// heavy envelope "to be opened by {name} only" starts their song; they unfold
+// the deed (two "Whereas…" lines: your story in legal-romantic prose), then
+// press the typewriter's key and each promise types itself in, clack by
+// clack, with one of your photos clipped beside it. Your letter is the
+// schedule they initial; your voice is the sworn statement. Then both sign:
+// yours is already in ink, theirs is drawn with a finger. The deed folds into
+// its envelope and, on the song's drop, the wax blooms and your initials are
+// pressed into it. Witnessed by a line of your choosing.
 //
 // Keys + limits mirror server/src/config/premiumDays/happy-promise-day-premium.ts
 // (pinned in valentineDays.test.ts). AI fill: server/src/config/aiFill/happy-promise-day-premium.ts.
+// envelopeLine, promises and bigPromise keep the $2 keys (upgrade path).
 
-import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
+import type { DayConfig, GifSlot } from "../types";
 import { premiumDay } from "./_premium";
+import { demoPhotos } from "./_shared";
 import { promiseDay } from "./happy-promise-day";
 
+export type WaxColour = "oxblood" | "midnight" | "forest" | "blush";
+
 export interface PromiseExtrasPremium {
-  gateLine: string;
-  sharedSince: string;
+  envelopeLine: string;
+  whereas: string[];
   promises: string[];
   bigPromise: string;
-  futurePromise: string;
-  futureDate: string;
-  distanceKm: number;
-  threadColor: "red" | "gold" | "rose";
+  sinceDate: string;
+  witnessLine: string;
+  monogram: string;
+  waxColour: WaxColour;
   replyLine: string;
   [k: string]: unknown;
 }
 
-const GIFS: GifSlot[] = [
-  { id: "pp1-gate", label: "Gate", moment: "Peeking at the bottom of the opening", file: "pp1-gate.gif", emoji: "🤞", anim: "wiggle" },
-  { id: "pp2-pull", label: "Pull", moment: "Beside the hand while they pull", file: "pp2-pull.gif", emoji: "🧶", anim: "bounce" },
-  { id: "pp3-knot", label: "Knot", moment: "After “I promise” writes itself", file: "pp3-knot.gif", emoji: "🫶", anim: "pulse" },
-  { id: "pp4-rings", label: "Rings", moment: "When every ring is threaded", file: "pp4-rings.gif", emoji: "💫", anim: "float" },
-  { id: "pp5-vial", label: "Vial", moment: "By the vial on the river", file: "pp5-vial.gif", emoji: "🍾", anim: "float" },
-  { id: "pp6-promised", label: "Promised", moment: "After “Do you promise too?”", file: "pp6-promised.gif", emoji: "💞", anim: "pulse" },
-];
-
-/** Vow-worthy picks — official uploads, checked against YouTube oEmbed 2026-10-08. */
-const SONGS: readonly SongSuggestion[] = [
+/** research.md §E (oEmbed 200 + playableInEmbed, 2026-10-09). The first one is the preview's song, from DEMO_START. */
+export const DEED_SONGS: readonly SongSuggestion[] = [
+  { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
+  { id: "vGJTaP6anOU", title: "Can't Help Falling in Love", artist: "Elvis Presley" },
+  { id: "Qdz5n1Xe5Qo", title: "Tera Ban Jaunga", artist: "Akhil Sachdeva, Tulsi Kumar · Kabir Singh" },
+  { id: "Umqb9KENgmk", title: "Tum Hi Ho", artist: "Arijit Singh · Aashiqui 2" },
   { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
   { id: "sK7riqg2mr4", title: "Agar Tum Saath Ho", artist: "Arijit Singh · Tamasha" },
-  { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
-  { id: "gvyUuxdRdR4", title: "Raataan Lambiyan", artist: "Jubin Nautiyal · Shershaah" },
-  { id: "0put0_a--Ng", title: "Make You Feel My Love", artist: "Adele" },
-  { id: "Cb6wuzOurPc", title: "Tum Se Hi", artist: "Mohit Chauhan · Jab We Met" },
-  { id: "450p7goxZqg", title: "All of Me", artist: "John Legend" },
-  { id: "vGJTaP6anOU", title: "Can't Help Falling in Love", artist: "Elvis Presley" },
+];
+/** "A Thousand Years": YouTube's most-replayed marker, −2 s. */
+const DEMO_START = 44;
+
+// Two quiet spots only; the deed keeps its space for their photos and words.
+const GIFS: GifSlot[] = [
+  { id: "ps1-desk", label: "On the desk", moment: "Beside the typewriter while the promises type", file: "ps1-desk.gif", emoji: "✍️", anim: "wiggle" },
+  { id: "ps2-sealed", label: "Sealed", moment: "Next to the envelope once the wax is pressed", file: "ps2-sealed.gif", emoji: "💌", anim: "pulse" },
 ];
 
 const base = premiumDay<PromiseExtrasPremium>(promiseDay, {
   slug: "happy-promise-day-premium",
-  title: "The Red Thread",
+  title: "Signed, Sealed, Promised",
   gifSlots: GIFS,
+  demoSong: { id: DEED_SONGS[0].id, start: DEMO_START },
   demoPremium: {
-    voiceCaption: "However far apart we are, the thread doesn't break. I checked.",
-    psLetter: "Open only if you're ever unsure.\n\nI meant every single one. Even the one about the last slice of pizza.",
+    voiceCaption: "I read every clause out loud before I typed it. The typewriter didn't laugh. Much.",
+    psLetter:
+      "Open only if you ever doubt one of these.\n\nI typed clause three twice, because the first time my hands were shaking. Not from the typewriter. From how sure I am.",
+    songDropAt: DEMO_START,
   },
   copy: {
-    letterPlaceholder: "Your vow, in your own words — what you promise them, and why you're sure…",
-    letterHint: "Stitched into the page paragraph by paragraph with red thread; they seal it with their thumbprint.",
-    photosHint: "Your photos ride the red thread on little pegs while they pull it towards you.",
-    captionHint: "a tiny label on the peg — e.g. the first trip",
-    endLinePlaceholder: "Bound by a red thread. Both ends tied.",
-    endLineHint: "On the keepsake and the last screen.",
-    sheetTitle: "Tie the red thread 🧵",
-    sheetSub: "They pull it through your memories to your hand, then promise back. Everything is pre-filled — make it yours.",
-    extrasTitle: "The thread",
-    extrasSub: "The opening line, the promises on the rings, the promise for later",
-    publishing: "Tying the thread…",
-    storyTitle: "Let's tie your red thread 🧵",
-    replyText: "I promise too. Both ends tied 🤞❤️",
-    yesChip: "Promised too 🤞",
+    recipientPlaceholder: "who the deed is for — e.g. Meera",
+    letterPlaceholder: "The schedule to the deed, in your own words: why these promises, why them, why you're sure…",
+    letterHint: "Set on ivory paper as “Schedule A”; they initial it at the bottom. Short paragraphs read best.",
+    photosHint: "The first photo is clipped to the deed as Exhibit A. The next ones sit beside each promise as it types; any extras become exhibits they flick through.",
+    captionHint: "written on the clip — e.g. the night you said yes to chai",
+    endLinePlaceholder: "Signed, sealed, and promised. Yours.",
+    endLineHint: "The last line, under the sealed envelope they keep.",
+    sheetTitle: "Draw up your promise ✍️",
+    sheetSub: "Two “Whereas…” lines, the promises the typewriter types, the one above all, and the wax for your seal. Everything is pre-filled — make it yours.",
+    extrasTitle: "The deed",
+    extrasSub: "Whereas…, the promises, the wax seal, the witness",
+    publishing: "Sealing the envelope…",
+    storyTitle: "Let's draw up your promise ✍️",
+    replyText: "Signed. Sealed. Promised right back 🤞",
+    yesChip: "Signed it ✍️",
   },
-  share: { title: "Someone tied a red thread to your finger 🧵", accent: "#D7263D" },
+  share: { title: "A sealed promise, to be opened by you only ✍️", accent: "#6E1423" },
 });
 
 export const promiseDayPremium: DayConfig<PromiseExtrasPremium> = {
@@ -81,78 +89,95 @@ export const promiseDayPremium: DayConfig<PromiseExtrasPremium> = {
   melody: "velvet",
   photoAspect: 4 / 5,
   theme: {
-    bg: "radial-gradient(120% 90% at 50% 0%, #22265A 0%, #0E1030 60%, #070818 100%)",
-    base: "#0E1030",
-    paper: "#F7F1E8",
-    glass: "rgba(247,241,232,0.08)",
-    ink: "#F7F1E8",
-    inkSoft: "#C9CDEB",
-    paperInk: "#2A1A1F",
-    accent: "#D7263D",
-    accentDeep: "#9E1B2C",
-    accentInk: "#FFFFFF",
-    soft: "#F9D9DE",
-    edge: "rgba(247,241,232,0.18)",
-    gold: "#F2C14E",
+    bg: "radial-gradient(120% 80% at 50% 0%, #3a2418 0%, #1a100b 55%, #0d0806 100%)",
+    base: "#140c08",
+    paper: "#F5EFE2",
+    glass: "rgba(20,12,8,0.62)",
+    ink: "#F5EFE2",
+    inkSoft: "#CDBFA8",
+    paperInk: "#1C2541",
+    accent: "#B8964B",
+    accentDeep: "#6E1423",
+    accentInk: "#1a1008",
+    soft: "#3a2418",
+    edge: "rgba(245,239,226,0.16)",
+    gold: "#B8964B",
     dark: true,
-    particles: ["🧵", "✨", "🤞"],
-    confetti: ["#F2C14E", "#D7263D", "#9DB4FF", "#F7F1E8"],
+    particles: ["✍️", "✦", "🤞"],
+    confetti: ["#6E1423", "#B8964B", "#F5EFE2", "#1C2541"],
   },
-  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "vow-worthy · tap to use" },
+  music: { audioOnly: true, suggestions: DEED_SONGS, suggestionsNote: "promise songs · tap to use", demoStart: DEMO_START },
   extras: [
     {
-      key: "gateLine", kind: "text", max: 70, label: "Opening line",
-      placeholder: "the first thing they read — e.g. There's a thread tied to your little finger. Follow it.",
-      suggestions: ["There's a thread tied to your little finger. Follow it.", "Pull gently. I'm on the other end."],
-    },
-    { key: "sharedSince", kind: "text", max: 24, label: "Together since (shown while they pull)", placeholder: "e.g. March 2022" },
-    {
-      key: "promises", kind: "list", maxItems: 6, minItems: 3, itemMax: 90, label: "Promises (one per gold ring)",
-      hint: "They thread a gold ring for each one. Small, real, keepable promises land best.",
-      itemPlaceholder: ["I'll always pick up, even at 2 a.m.", "a habit you'll keep for them", "how you'll end every fight", "the small daily thing", "the big-picture one", "one more"],
-      addLabel: "+ add a promise",
+      key: "envelopeLine", kind: "text", max: 60, label: "On the envelope",
+      placeholder: "typed under their name on the sealed envelope",
+      suggestions: ["To be opened by you, and only you.", "Read slowly. I meant every word.", "Contents: one promise. Handle with care."],
     },
     {
-      key: "bigPromise", kind: "longtext", max: 160, rows: 2, label: "The promise under “I promise”",
-      hint: "Appears beneath the gold “I promise” at the big moment.",
+      key: "whereas", kind: "list", maxItems: 2, minItems: 2, itemMax: 90, label: "Whereas… (your story, two lines)",
+      hint: "The deed opens with these. Line one: how it started. Line two: what you've known since.",
+      itemPlaceholder: ["Whereas you laughed at my worst joke in March 2022,", "and whereas I have been hopelessly sure ever since,"],
+    },
+    {
+      key: "promises", kind: "list", maxItems: 7, minItems: 3, itemMax: 90, label: "The promises (one per clause)",
+      hint: "The typewriter types one per press, each beside one of your photos. Small, real, keepable promises land best.",
+      itemPlaceholder: ["I'll always pick up, even at 2 a.m.", "a habit you'll keep for them", "how you'll end every fight", "the small daily thing", "the big-picture one", "one more", "the last one"],
+      addLabel: "+ add a clause",
+    },
+    {
+      key: "bigPromise", kind: "longtext", max: 140, rows: 2, label: "Above all (the clause they sign under)",
+      hint: "The last clause, set right above both signatures.",
       placeholder: "the one promise that matters most",
     },
+    { key: "sinceDate", kind: "text", input: "date", max: 10, label: "In force since", hint: "The day it started. The deed counts the days." },
     {
-      key: "futurePromise", kind: "longtext", max: 200, rows: 3, label: "A promise for later (sealed in a vial)",
-      hint: "Sealed until the date below. They get a calendar reminder; on the day, the vial opens.",
-      placeholder: "something you'll have done together by then — e.g. we'll have watched the sunrise in Ladakh",
+      key: "witnessLine", kind: "text", max: 90, label: "Witnessed by",
+      placeholder: "a witness only you two would understand",
+      suggestions: ["every song we've ever sung badly in the car.", "the chaiwala who saw it all.", "two very tired cats."],
     },
-    { key: "futureDate", kind: "text", input: "date", max: 10, label: "When the vial opens", placeholder: "YYYY-MM-DD" },
-    { key: "distanceKm", kind: "number", min: 0, max: 20000, default: 0, unit: "km", label: "Distance between you", hint: "Shown as “1,240 km of thread · 0 km apart”. 0 hides it." },
+    { key: "monogram", kind: "text", max: 5, label: "Initials on the wax", placeholder: "e.g. A&M (blank = your initials)" },
     {
-      key: "threadColor", kind: "enum", label: "Thread colour", display: "swatches", default: "red",
+      key: "waxColour", kind: "enum", label: "Wax", display: "swatches", default: "oxblood",
       options: [
-        { value: "red", label: "Red", swatch: "#D7263D" },
-        { value: "gold", label: "Gold", swatch: "#F2C14E" },
-        { value: "rose", label: "Rose", swatch: "#E86A92" },
+        { value: "oxblood", label: "Oxblood", swatch: "#6E1423" },
+        { value: "midnight", label: "Midnight", swatch: "#1C2541" },
+        { value: "forest", label: "Forest", swatch: "#1F4D3A" },
+        { value: "blush", label: "Blush", swatch: "#B5566A" },
       ],
     },
-    { key: "replyLine", kind: "text", max: 80, label: "Their WhatsApp reply", placeholder: "what they send back — e.g. I promise too. Both ends tied 🤞❤️" },
+    {
+      key: "replyLine", kind: "text", max: 80, label: "Their WhatsApp reply",
+      placeholder: "what they send back once they've signed",
+      suggestions: ["Signed. Sealed. Promised right back 🤞"],
+    },
   ],
   demo: {
     ...base.demo,
-    endLine: "Bound by a red thread. Both ends tied.",
+    letter:
+      "I've never been good at saying the big things out loud, so I did what any reasonable person would do: I found a typewriter.\n\nThese aren't promises about forever in the abstract. They're about Tuesdays. About the last bite, the 2 a.m. calls, the fights we'll have and the way we'll end them before we sleep.\n\nI'm writing them down because I want you to be able to hold me to every single one. Keep this somewhere safe. Read it when I'm being annoying. Then read clause three again.\n\nI'm sure of very few things. You are the first of them.",
+    photos: demoPhotos([
+      ["the night it started", "Exhibit A, your honour."],
+      ["every 2 a.m. call", "You fell asleep first. Again."],
+      ["chai, always", "Still learning your order."],
+      ["us, on a Tuesday", "My favourite kind of day."],
+    ]),
+    endLine: "Signed, sealed, and promised. Yours.",
     extras: {
-      gateLine: "There's a thread tied to your little finger. Follow it.",
-      sharedSince: "March 2022",
+      envelopeLine: "To be opened by you, and only you.",
+      whereas: ["Whereas you laughed at my worst joke in March 2022,", "and whereas I have been hopelessly sure ever since,"],
       promises: [
         "I'll always pick up, even at 2 a.m.",
-        "I'll learn your coffee order by heart.",
+        "I'll learn your chai order by heart.",
         "I'll never let a fight outlast the night.",
         "I'll cheer loudest at every win.",
-        "I'll keep choosing you.",
+        "I'll save you the last bite. Mostly.",
       ],
-      bigPromise: "Wherever life pulls us, I'll be on the other end of this thread.",
-      futurePromise: "By the time you open this, we'll have watched the sunrise in Ladakh. I promised. Check.",
-      futureDate: "2028-02-11",
-      distanceKm: 1240,
-      threadColor: "red",
-      replyLine: "I promise too. Both ends tied 🤞❤️",
+      bigPromise: "Wherever life takes us, I'll keep choosing you.",
+      sinceDate: "2022-03-14",
+      witnessLine: "every song we've ever sung badly in the car.",
+      monogram: "",
+      waxColour: "oxblood",
+      replyLine: "Signed. Sealed. Promised right back 🤞",
     },
   },
 };
