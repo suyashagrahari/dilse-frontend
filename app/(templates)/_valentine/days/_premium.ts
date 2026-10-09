@@ -20,10 +20,15 @@ export interface PremiumDayOptions {
   demoPremium?: Partial<PremiumFields>;
   copy?: Partial<DayCopy>;
   share?: Partial<DayConfig["share"]>;
+  /** The real song the demo plays when a visitor opens the preview (never the
+   *  synth melody: a $5 page has to sound like one). Defaults to the day's
+   *  first suggestion from 0s. */
+  demoSong?: { id: string; start?: number };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function premiumDay<E extends Extras>(base: DayConfig<any>, o: PremiumDayOptions): DayConfig<E> {
+  const song = o.demoSong ?? (base.music?.suggestions?.[0] ? { id: base.music.suggestions[0].id } : undefined);
   return {
     ...base,
     slug: o.slug,
@@ -34,6 +39,7 @@ export function premiumDay<E extends Extras>(base: DayConfig<any>, o: PremiumDay
     premium: { base: base.slug },
     demo: {
       ...base.demo,
+      ...(song && { music: true, musicMode: "youtube", musicYoutubeId: song.id, musicStart: song.start ?? 0 }),
       gifs: defaultGifs(o.gifSlots.map((g) => g.id)),
       premium: { ...PREMIUM_DEFAULTS, ...o.demoPremium },
     },

@@ -1,252 +1,208 @@
 "use client";
 
-// ─── happy-teddy-day-premium — "Made With a Heart" ──────────────────────────
+// ─── Teddy Day ✦ Premium: "Adoption Papers" ──────────────────────────────────────────────────────────────────
 //
-//   gate      a parcel on the doorstep: "Contents: 1 teddy (unfinished)" — the
-//             tap slips the twine, the flaps open, the song starts
-//   workshop  the toy workshop after hours: the flat teddy skin + its tag
-//   stuff     crank the brass wheel (circular drag) → he fills out
-//   heart     the heart ceremony: warm it, cheek, ear (it whispers), kiss
-//   stitch    the heart goes in, sew 5 stitches → THE drop: he wakes up,
-//             first words, then press his paw (the voice note)
-//   torch     lights out: read the letter by torchlight (paint-reveal)
-//   stars     the star lamp: photos as moons on the ceiling (drag to turn)
-//   seek      hide and seek under three pillows (mini-game 2)
-//   tuck      pull the blanket up, goodnight whisper, squish him
-//   end       birth certificate, sealed P.S., write back
+// research §D.4 (.template-factory/premium-v2/research.md). No drawn teddy, ever: the bear is Fluent 3D art and
+// everything else is type and material (manila, satin labels, letterpress paper, gold foil, a rubber stamp).
 //
-// Files: workshop/{art, sfx, Make, Heart, Night, Ending, css, shared}.
+//  gate    a manila parcel tag on twine: "Fragile: contains one (1) hug". The tap starts the song (PremiumGate).
+//  meet    I    Arrival: the bear in a pool of light, a woven tag with both names. Squeeze him: his first words.
+//  family  II   Next of kin: their photos as paper-clipped exhibits in his file; flick through the stack.
+//  care    III  Care instructions: satin care labels that flip to love notes ("Responds to forehead kisses.").
+//  letter  IV   Enclosed with him: the letter, folded in three; tap to unfold.
+//  voice   V    In my voice: the voice note over a graded photo (or their words, large).
+//  adopt   VI   The certificate: they sign it with a finger, hold to press the seal, and drop(): the gold seal
+//               embosses with a thump and ADOPTED ♥ is stamped on it as the chorus lands (THE money moment).
+//  end     the signed certificate as a tiltable keepsake + poster, the sealed P.S., reply, replay.
+//
+// One ShaderBackdrop + one GlowParticles for the whole page (presets change per chapter), grain + vignette always,
+// SceneTransition between chapters. Chapters with nothing to show (no photos, letter or voice) are skipped.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getDay } from "../../_valentine/days";
-import type { TeddyAccessory, TeddyExtrasPremium, TeddyEyes, TeddyFur } from "../../_valentine/days/happy-teddy-day-premium";
-import { teddyDayPremium } from "../../_valentine/days/happy-teddy-day-premium";
 import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import { ParticleField, PremiumGate, PremiumRoot, SceneFade, SkipChip, usePremium, useScenes, type ParticlePreset } from "../../_valentine/kit/premium";
-import type { ExperienceProps, ValentineDayData } from "../../_valentine/types";
-import { Backdrop, Parcel, Teddy } from "./workshop/art";
-import { TEDDY_CSS } from "./workshop/css";
-import Ending from "./workshop/Ending";
-import { Ceremony, Stitch } from "./workshop/Heart";
-import { Stuff, Workshop } from "./workshop/Make";
-import { Seek, Stars, Torch, Tuck } from "./workshop/Night";
-import type { SceneProps } from "./workshop/shared";
-import { registerWorkshopCues } from "./workshop/sfx";
+import {
+  FilmGrain, GlowParticles, Letterbox, LightLeak, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette,
+  requestTiltPermission, usePremium, type BackdropPreset, type TransitionVariant,
+} from "../../_valentine/kit/premium";
+import { getDay } from "../../_valentine/days";
+import type { ExperienceProps } from "../../_valentine/types";
+import { PAPERS_FONT_STYLE, PAPERS_FONT_VARS } from "./papers/fonts";
+import { PAPERS_CSS } from "./papers/styles";
+import { C, ROMAN, readPapers } from "./papers/util";
+import { ParcelTag } from "./papers/ParcelTag";
+import { MeetScene } from "./papers/MeetScene";
+import { FamilyScene } from "./papers/FamilyScene";
+import { CareScene } from "./papers/CareScene";
+import { LetterScene } from "./papers/LetterScene";
+import { VoiceScene } from "./papers/VoiceScene";
+import { AdoptScene } from "./papers/AdoptScene";
+import { EndingScene, type Ink } from "./papers/EndingScene";
 
 const SLUG = "happy-teddy-day-premium" as const;
-const ORDER = ["gate", "workshop", "stuff", "heart", "stitch", "torch", "stars", "seek", "tuck", "end"] as const;
-type Scene = (typeof ORDER)[number];
-const FURS: TeddyFur[] = ["honey", "cocoa", "pink", "white", "lilac", "mint"];
-const EYES: TeddyEyes[] = ["button", "sparkle", "sleepy", "heart"];
-const ACCS: TeddyAccessory[] = ["none", "bow", "scarf", "bowtie", "flower", "sweater", "glasses"];
+type Scene = "gate" | "meet" | "family" | "care" | "letter" | "voice" | "adopt" | "end";
 
-function Scenes({ data, mode, react }: ExperienceProps) {
+const BACKDROP: Record<Scene, BackdropPreset> = { gate: "candle", meet: "candle", family: "candle", care: "candle", letter: "candle", voice: "candle", adopt: "candle", end: "candle" };
+const ENTER: Record<Scene, TransitionVariant> = { gate: "iris", meet: "iris", family: "fold", care: "iris", letter: "fold", voice: "flash", adopt: "iris", end: "flash" };
+
+function Papers({ data, mode, react }: ExperienceProps) {
   const day = getDay(SLUG);
-  const x = data.extras as TeddyExtrasPremium;
-  const p = usePremium();
-  const reduced = useReducedMotion();
-  const sc = useScenes(ORDER);
-  const [fluff, setFluff] = useState(0);
-  const [dim, setDim] = useState(0);
+  const pm = usePremium();
+  const reduce = useReducedMotion();
+  const p = useMemo(() => readPapers(data), [data]);
+  const [scene, setScene] = useState<Scene>(pm.opened ? "meet" : "gate");
+  const [bars, setBars] = useState(false);
+  const [adopted, setAdopted] = useState(false);
+  const [ink, setInk] = useState<Ink>(null);
   const [run, setRun] = useState(0);
-  const [preset, setPreset] = useState<ParticlePreset>("dust");
-  const squishes = useRef(0);
-  const [squishN, setSquishN] = useState(0);
-  const beds = useRef<{ crickets?: { stop: (ms?: number) => void }; clock?: { stop: (ms?: number) => void } }>({});
-  const timers = useRef<number[]>([]);
+  const hasLetter = !!data.letter?.trim();
+  const hasVoice = !!pm.premium.voiceNote || !!pm.premium.voiceCaption.trim();
+
+  const order = useMemo(() => {
+    const o: Scene[] = ["meet"];
+    if (p.photos.length) o.push("family");
+    o.push("care");
+    if (hasLetter) o.push("letter");
+    if (hasVoice) o.push("voice");
+    o.push("adopt", "end");
+    return o;
+  }, [p.photos.length, hasLetter, hasVoice]);
+  const next = useCallback((from: Scene) => setScene(order[Math.min(order.length - 1, order.indexOf(from) + 1)]), [order]);
+  const num = (s: Scene) => ROMAN[Math.max(0, order.indexOf(s))];
+
+  // The song sits lower under the letter (where the platform lets us fade it).
+  const musicRef = useRef(pm.music);
   useEffect(() => {
-    registerWorkshopCues();
-    const t = timers.current;
-    const b = beds.current;
-    return () => {
-      t.forEach(clearTimeout);
-      b.crickets?.stop(200);
-      b.clock?.stop(200);
-    };
-  }, []);
-
-  const name = (x.teddyName || "").trim() || "your teddy";
-  const lines = useMemo(() => {
-    const l = (Array.isArray(x.squeezeLines) ? x.squeezeLines : []).map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean);
-    return l.length ? l : (teddyDayPremium.demo.extras.squeezeLines as string[]);
-  }, [x.squeezeLines]);
-  const look = useMemo(
-    () => ({
-      fur: (FURS.includes(x.furColor) ? x.furColor : "honey") as TeddyFur,
-      eyes: (EYES.includes(x.eyeStyle) ? x.eyeStyle : "sparkle") as TeddyEyes,
-      accessory: (ACCS.includes(x.accessory) ? x.accessory : "scarf") as TeddyAccessory,
-      initial: (x.pawInitial || "").trim().slice(0, 2).toUpperCase(),
-    }),
-    [x.furColor, x.eyeStyle, x.accessory, x.pawInitial],
-  );
-
-  const sticker = useCallback(
-    (id: string, px: number) => {
-      const slot = day.gifSlots.find((g) => g.id === id);
-      return slot ? <Sticker slug={SLUG} slot={slot} value={data.gifs[slot.id]} size={px} /> : null;
-    },
-    [day, data.gifs],
-  );
-  const go = useCallback(
-    (s: Scene) => {
-      sc.go(s);
-      window.scrollTo({ top: 0, behavior: "auto" });
-    },
-    [sc],
-  );
-  const next = useCallback(() => {
-    const i = ORDER.indexOf(sc.scene);
-    let n = ORDER[Math.min(ORDER.length - 1, i + 1)];
-    if (n === "stars" && !data.photos.some((ph) => ph?.url)) n = "seek";
-    go(n);
-  }, [sc.scene, go, data.photos]);
-
+    musicRef.current = pm.music;
+  });
   useEffect(() => {
-    const s = sc.scene;
-    const inWorkshop = s === "workshop" || s === "stuff" || s === "heart" || s === "stitch";
-    if (s !== "gate" && beds.current.crickets) {
-      beds.current.crickets.stop(1500);
-      beds.current.crickets = undefined;
-    }
-    if (inWorkshop && !beds.current.clock) beds.current.clock = p.sfx("td-clock", { gain: 0.6 });
-    if (!inWorkshop && beds.current.clock) {
-      beds.current.clock.stop(600);
-      beds.current.clock = undefined;
-    }
-    if (s === "torch") setPreset("fireflies");
-    if (s === "stars" || s === "seek") setPreset("sparkles");
-    if (s === "tuck") setPreset("fireflies");
-    if (s === "workshop") setDim(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sc.scene]);
+    const m = musicRef.current;
+    if (!m?.canFade || scene === "gate") return;
+    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
+  }, [scene]);
 
-  const completed = useRef(false);
+  const reactRef = useRef(react);
   useEffect(() => {
-    if (sc.scene !== "end" || completed.current) return;
-    completed.current = true;
-    react("completed", { count: squishes.current });
-  }, [sc.scene, react]);
+    reactRef.current = react;
+  });
+  useEffect(() => {
+    if (scene === "end") reactRef.current("completed");
+  }, [scene]);
 
-  const onPeak = useCallback(() => {
-    setPreset("snowhearts");
-    timers.current.push(window.setTimeout(() => setPreset("dust"), 4000));
-  }, []);
-
-  const props: SceneProps = {
-    data: data as ValentineDayData<TeddyExtrasPremium>,
-    x,
-    name,
-    lines,
-    look,
-    fluff,
-    setFluff,
-    reduced,
-    preview: mode === "preview",
-    sfx: p.sfx,
-    sticker,
-    next,
+  const sticker = (id: string, size: number) => {
+    const slot = day.gifSlots.find((s) => s.id === id);
+    return slot ? <Sticker slug={day.slug} slot={slot} value={data.gifs?.[id]} size={size} alt="" /> : null;
   };
-  const scene = sc.scene;
-  const world = scene === "gate" ? "porch" : scene === "workshop" || scene === "stuff" || scene === "heart" || scene === "stitch" ? "workshop" : "bedroom";
-  const step = ORDER.indexOf(scene);
-  const weather = x.sleepOver === "snow" || x.sleepOver === "stars" ? x.sleepOver : "rain";
+
+  const replay = () => {
+    setAdopted(false);
+    setBars(false);
+    setInk(null);
+    setRun((r) => r + 1);
+    setScene("meet");
+  };
+
+  const warm = adopted || scene === "end";
+  const render = (s: Scene) => {
+    switch (s) {
+      case "gate":
+        return null;
+      case "meet":
+        return <MeetScene p={p} n={num("meet")} sticker={sticker("pt3-alive", 58)} onNext={() => next("meet")} />;
+      case "family":
+        return <FamilyScene photos={p.photos} n={num("family")} teddy={p.teddy} onNext={() => next("family")} />;
+      case "care":
+        return <CareScene care={p.care} n={num("care")} teddy={p.teddy} from={p.from} onNext={() => next("care")} />;
+      case "letter":
+        return <LetterScene p={p} n={num("letter")} letter={data.letter} onDone={() => next("letter")} />;
+      case "voice":
+        return <VoiceScene from={p.from} n={num("voice")} photo={p.photos[p.photos.length - 1]} onDone={() => next("voice")} />;
+      case "adopt":
+        return (
+          <AdoptScene
+            p={p}
+            n={num("adopt")}
+            onSigned={setInk}
+            onRising={() => setBars(true)}
+            onAdopted={() => {
+              setAdopted(true);
+              window.setTimeout(() => setBars(false), reduce ? 0 : 2600);
+            }}
+            onNext={() => next("adopt")}
+          />
+        );
+      case "end":
+        return <EndingScene p={p} data={data} day={day} mode={mode} ink={ink} sticker={sticker("pt6-sleep", 60)} onReplay={replay} />;
+    }
+  };
 
   return (
-    <>
-      <style>{TEDDY_CSS}</style>
-      <Backdrop world={world} weather={reduced ? "stars" : weather} dim={dim} />
-      <ParticleField
-        preset={preset}
-        density={preset === "dust" ? 0.25 : 0.35}
-        colors={preset === "dust" ? ["rgba(255,226,180,.55)"] : preset === "snowhearts" ? ["#FF8FB8", "#FFE6F0", "#FFFFFF"] : preset === "fireflies" ? ["#FFF3C4", "#FFE08A"] : undefined}
+    <div
+      className="ap-root"
+      // iOS asks for gyro permission only inside a tap: the gate's own tap is the one.
+      onClickCapture={scene === "gate" ? () => void requestTiltPermission() : undefined}
+    >
+      <style>{PAPERS_CSS}</style>
+      <ShaderBackdrop
+        preset={BACKDROP[scene]}
+        colors={[C.night, scene === "gate" ? "#3A2418" : C.cocoa, warm ? "#E9A15B" : C.honey]}
+        intensity={scene === "gate" ? 0.75 : warm ? 1.15 : 0.95}
+        speed={0.6}
+        parallax
+      />
+      <GlowParticles
+        preset={warm ? "hearts" : "fireflies"}
+        colors={warm ? [C.stamp, "#E07A6E", C.honeyLight] : ["#FFD9A0", "#E9C08A"]}
+        density={warm ? (scene === "end" ? 0.22 : 0.4) : 0.16}
+        speed={warm ? 0.6 : 0.45}
         z={1}
       />
+      {warm && <LightLeak color="#FFB070" color2="#FFE2B8" corner="top-left" opacity={0.3} />}
+      <Vignette strength={0.6} />
+      <FilmGrain opacity={0.075} />
+      <Letterbox show={bars} />
+
       {scene === "gate" && (
         <PremiumGate
-          className="td-gate"
-          art={<Parcel name={data.recipientName || "you"} />}
-          kicker="A parcel on the doorstep for"
-          subtitle={<span className="td-gateSub">Handle with love{data.senderName ? ` · from ${data.senderName}` : ""}</span>}
-          sting="td-twine"
-          openLabel="Pull the twine"
-          openMs={reduced ? 250 : 1250}
-          bg="radial-gradient(120% 90% at 50% 10%, #3A3360 0%, #1E2340 55%, #10132A 100%)"
-          ink="#FFF8F0"
-          accent="#FF8FB8"
-          onOpen={({ quiet }) => {
-            if (!quiet) {
-              p.sfx("td-flap", { at: 0.1 });
-              beds.current.crickets = p.sfx("td-crickets", { gain: 0.7 });
-            }
-            go("workshop");
+          art={<ParcelTag line={p.tagLine} serial={p.serial} to={p.to} />}
+          kicker="A parcel has arrived for"
+          subtitle="Teddy Day · sound on, somewhere cosy"
+          sting="ribbon"
+          openLabel="Untie the string"
+          className="ap-gate"
+          bg="transparent"
+          ink={C.paper}
+          accent={C.honey}
+          openMs={reduce ? 250 : 1000}
+          onOpen={() => {
+            react("opened");
+            setScene("meet");
           }}
         />
       )}
-      {scene !== "gate" && (
-        <div className="td-progress" aria-hidden>
-          {ORDER.slice(1).map((s, k) => (
-            <span key={s} className={k + 1 <= step ? "is-on" : ""} style={{ width: k + 1 === step ? 18 : 7 }} />
-          ))}
-        </div>
+
+      {pm.repeatVisit && scene !== "gate" && scene !== "adopt" && scene !== "end" && (
+        <button type="button" className="ap-skip" onClick={() => setScene("adopt")}>
+          Skip to the papers
+        </button>
       )}
-      <SceneFade sceneKey={`${scene}-${run}`} className="td-scene">
-        {scene === "workshop" && (
-          <>
-            <Workshop {...props} />
-            {p.repeatVisit && <SkipChip onSkip={() => { setFluff(1); go("stitch"); }} label="Skip to the wake-up ▸" />}
-          </>
+
+      <div className="ap-stage">
+        {scene !== "gate" && (
+          <SceneTransition sceneKey={`${scene}-${run}`} variant={ENTER[scene]} origin="50% 50%">
+            {render(scene)}
+          </SceneTransition>
         )}
-        {scene === "stuff" && <Stuff {...props} />}
-        {scene === "heart" && <Ceremony {...props} />}
-        {scene === "stitch" && <Stitch {...props} onPeak={onPeak} />}
-        {scene === "torch" && <Torch {...props} />}
-        {scene === "stars" && <Stars {...props} />}
-        {scene === "seek" && <Seek {...props} />}
-        {scene === "tuck" && (
-          <Tuck
-            {...props}
-            onDim={setDim}
-            onSquish={() => {
-              squishes.current += 1;
-              setSquishN(squishes.current);
-              return squishes.current;
-            }}
-          />
-        )}
-        {scene === "end" && (
-          <Ending
-            {...props}
-            day={day}
-            mode={mode}
-            squishes={squishN}
-            onReplay={() => {
-              setRun((r) => r + 1);
-              setFluff(0);
-              go("workshop");
-            }}
-          />
-        )}
-      </SceneFade>
-    </>
+      </div>
+    </div>
   );
 }
 
 export default function TeddyDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
-  const x = props.data.extras as TeddyExtrasPremium;
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot
-        day={day}
-        data={props.data}
-        line={x?.heartWhisper}
-        art={
-          <div style={{ height: "100%", aspectRatio: "0.8", display: "grid", placeItems: "center" }}>
-            <Teddy fur={FURS.includes(x?.furColor) ? x.furColor : "honey"} eyes={EYES.includes(x?.eyeStyle) ? x.eyeStyle : "sparkle"} accessory={ACCS.includes(x?.accessory) ? x.accessory : "scarf"} initial={(x?.pawInitial || "").slice(0, 2)} style={{ width: "100%", height: "100%" }} />
-          </div>
-        }
-      >
-        <Scenes {...props} />
+      <DayRoot day={day} data={props.data} layout="full" dark className={PAPERS_FONT_VARS} style={PAPERS_FONT_STYLE}>
+        <Papers {...props} />
       </DayRoot>
     </PremiumRoot>
   );

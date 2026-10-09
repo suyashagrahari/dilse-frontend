@@ -23,6 +23,18 @@ import { VALENTINE_DAY_SLUGS, type DaySlug } from "./slugs";
 
 export { VALENTINE_DAY_SLUGS, VALENTINE_WEEK_SLUGS, OCCASION_SLUGS, PREMIUM_DAY_SLUGS, PREMIUM_BASE, VALENTINE_DAY_SET, DAY_META, isDaySlug, isPremiumDaySlug, premiumTwinOf, type DaySlug, type PremiumDaySlug } from "./slugs";
 
+/**
+ * ✦ Premium previews play a real song, never the synth melody: unless the
+ * config's demo already names a YouTube song, it plays the day's first
+ * suggestion (from `music.demoStart`, default 0s) once the visitor taps in.
+ */
+function withDemoSong(day: DayConfig): DayConfig {
+  const first = day.music?.suggestions?.[0];
+  const d = day.demo as unknown as Record<string, unknown>;
+  if (!first || d.musicMode === "youtube") return day;
+  return { ...day, demo: { ...day.demo, music: true, musicMode: "youtube", musicYoutubeId: first.id, musicStart: day.music?.demoStart ?? 0 } } as DayConfig;
+}
+
 export const DAYS: Record<DaySlug, DayConfig> = {
   "happy-rose-day": roseDay as unknown as DayConfig,
   "happy-propose-day": proposeDay as unknown as DayConfig,
@@ -34,15 +46,15 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   "happy-valentines-day": valentinesDay as unknown as DayConfig,
   "happy-halloween": halloweenDay as unknown as DayConfig,
   // ✦ Premium twins
-  "happy-rose-day-premium": roseDayPremium as unknown as DayConfig,
-  "happy-propose-day-premium": proposeDayPremium as unknown as DayConfig,
-  "happy-chocolate-day-premium": chocolateDayPremium as unknown as DayConfig,
-  "happy-teddy-day-premium": teddyDayPremium as unknown as DayConfig,
-  "happy-promise-day-premium": promiseDayPremium as unknown as DayConfig,
-  "happy-hug-day-premium": hugDayPremium as unknown as DayConfig,
-  "happy-kiss-day-premium": kissDayPremium as unknown as DayConfig,
-  "happy-valentines-day-premium": valentinesDayPremium as unknown as DayConfig,
-  "happy-halloween-premium": halloweenDayPremium as unknown as DayConfig,
+  "happy-rose-day-premium": withDemoSong(roseDayPremium as unknown as DayConfig),
+  "happy-propose-day-premium": withDemoSong(proposeDayPremium as unknown as DayConfig),
+  "happy-chocolate-day-premium": withDemoSong(chocolateDayPremium as unknown as DayConfig),
+  "happy-teddy-day-premium": withDemoSong(teddyDayPremium as unknown as DayConfig),
+  "happy-promise-day-premium": withDemoSong(promiseDayPremium as unknown as DayConfig),
+  "happy-hug-day-premium": withDemoSong(hugDayPremium as unknown as DayConfig),
+  "happy-kiss-day-premium": withDemoSong(kissDayPremium as unknown as DayConfig),
+  "happy-valentines-day-premium": withDemoSong(valentinesDayPremium as unknown as DayConfig),
+  "happy-halloween-premium": withDemoSong(halloweenDayPremium as unknown as DayConfig),
 };
 
 export function getDay(slug: DaySlug): DayConfig {

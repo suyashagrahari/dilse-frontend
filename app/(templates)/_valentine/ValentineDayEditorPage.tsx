@@ -13,6 +13,7 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 import StoryStarter from "@/components/story/StoryStarter";
 import EditorDock from "../_love/EditorDock";
+import PremiumTopBar from "./kit/premium/PremiumTopBar";
 import EditSheet from "./EditSheet";
 import { DayMusicProvider, chipThemeFrom } from "./music/DayMusic";
 import { getDay } from "./days";
@@ -74,7 +75,9 @@ function Inner({ slug }: { slug: DaySlug }) {
   return (
     // --vw-dock-space: room under the scene so the floating EditorDock never
     // sits on top of a day's last button or hint (DayRoot pads by it).
-    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: "96px" }}>
+    // ✦ Premium days have no bottom dock: their controls sit top-right
+    // (PremiumTopBar), so the bottom of the screen belongs to the scene.
+    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: day.premium ? "0px" : "96px", ["--vw-top-space" as string]: day.premium ? "60px" : "0px" }}>
       {/* The sender's music plays in the preview too (and from the form's
           Listen button). It waits for a tap until they've saved once, so the
           demo stays quiet while they look around. */}
@@ -84,7 +87,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         autoStart={e.isPersonalized && e.editMode !== "manual"}
         dark={day.theme.dark}
         overSheet={e.editMode === "manual"}
-        dockBase="96px"
+        dockBase={day.premium ? "0px" : "96px"}
         audioOnly={!!day.music?.audioOnly}
         songs={day.music?.suggestions}
         chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}
@@ -93,6 +96,17 @@ function Inner({ slug }: { slug: DaySlug }) {
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
+      {day.premium ? (
+        <PremiumTopBar
+          dark={!!day.theme.dark}
+          accent={`linear-gradient(135deg, ${day.theme.accent}, ${day.theme.accentDeep})`}
+          accentInk={day.theme.accentInk}
+          font={FONTS.ui}
+          onBack={e.goBack}
+          secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
+          primary={{ ...topAction, disabled: e.publishing }}
+        />
+      ) : (
       <EditorDock
         tone={day.theme.dark ? "dark" : "light"}
         accent={`linear-gradient(135deg, ${day.theme.accent}, ${day.theme.accentDeep})`}
@@ -102,6 +116,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         secondary={[e.isPersonalized && !e.showShare && { label: "Edit", onClick: e.handleEditFromPreview }]}
         primary={{ ...topAction, disabled: e.publishing }}
       />
+      )}
 
       <EditSheet
         day={day}

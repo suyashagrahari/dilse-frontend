@@ -158,8 +158,8 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
     description: `${s} left something on your doorstep… open it with the lights off 👻`,
   }),
   "happy-halloween-premium": (r, s) => ({
-    title: `🕯️ A sealed invitation to the Midnight Manor, for ${r}`,
-    description: `${s} made you something for midnight. Open it with the sound on 🎃`,
+    title: `🎃 Trick or treat, ${r}? A night at the manor is waiting`,
+    description: `${s} left the manor door open for you. Sound on 🎧`,
   }),
 };
 

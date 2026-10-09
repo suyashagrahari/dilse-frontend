@@ -12,12 +12,16 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🧸 A parcel for you: 1 teddy (unfinished)`;
-const SOCIAL_DESCRIPTION = `It needs a heart. Open it with the sound on ✦`;
+const SOCIAL_TITLE = `🧸 A parcel for you. Fragile: contains one (1) hug`;
+const SOCIAL_DESCRIPTION = `He comes with papers. Open it with the sound on ✦`;
+// "Adoption Papers" (v2): the page's own description + JSON-LD text.
+const DESCRIPTION =
+  "A cinematic Teddy Day website with adoption papers: they meet a teddy you named, flip his care labels (love notes in disguise), read your letter and hear your voice, then sign his Certificate of Adoption as the gold seal presses on your song's chorus.";
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {
   ...base,
+  description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/${SLUG}` },
   openGraph: { ...base.openGraph, title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, url: `${SITE_URL}/${SLUG}`, images: undefined },
   twitter: { ...base.twitter, card: "summary_large_image", title: SOCIAL_TITLE, description: SOCIAL_DESCRIPTION, images: undefined },
@@ -37,10 +41,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { name: tpl.title, url: `${SITE_URL}/${SLUG}` },
         ]}
       />
-      <TemplateJsonLd name={tpl.title} description={tpl.description} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
+      <TemplateJsonLd name={tpl.title} description={DESCRIPTION} category={tpl.category} url={`${SITE_URL}/${SLUG}`} />
       {faqs.length > 0 && <FAQJsonLd faqs={faqs} />}
       {howTo && <HowToJsonLd howTo={howTo} />}
-      {rating && <TemplateAppJsonLd name={tpl.title} description={tpl.description} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
+      {rating && <TemplateAppJsonLd name={tpl.title} description={DESCRIPTION} url={`${SITE_URL}/${SLUG}`} aggregateRating={rating} />}
       {children}
     </>
   );

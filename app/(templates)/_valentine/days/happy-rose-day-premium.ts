@@ -1,141 +1,147 @@
-// happy-rose-day-premium — "The Glasshouse Rose" (the ✦ Premium twin of happy-rose-day).
+// happy-rose-day-premium — "The Bloom of Us" (the ✦ Premium twin of happy-rose-day).
 //
-// A private glasshouse at dusk. They wipe the fog off the door (their name is traced in it), take the thorns off one
-// rose (each a hard time you got through together), breathe it into bloom — and a whole garden of roses blooms in a
-// wave that draws a heart, with the song's chorus dropping on the final bloom. Then falling word-petals, a pressed-
-// book letter, dew-drop memories, and the rose sealed forever under a glass dome with both names engraved.
+// The buyer's photos ARE the petals. A tight velvet bud waits in the dark; they hold it to warm it, and on the
+// song's drop it unfurls in 3D, ring by ring, every petal one of their photos, while the camera pulls back. Then three
+// photos pressed under vellum (swipe to lift), the letter on cream paper with a pressed-petal watermark, the
+// sender's voice, and a keepsake card: "Every Rose Day, it's still you."
 //
 // Extras keys + limits are mirrored in server/src/config/premiumDays/happy-rose-day-premium.ts and pinned in
 // server/src/config/valentineDays.test.ts. Keys shared with the $2 day keep its key (roseColor, colorReason,
-// roseCount, openingLine, shayari, signOff). The chorus second is the shared premium.songDropAt.
+// openingLine, shayari, signOff). The chorus second is the shared premium.songDropAt.
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
+import type { LovePhoto } from "../../_love/types";
 import { premiumDay } from "./_premium";
-import { demoPhotos } from "./_shared";
-import { ROSE_COLORS, ROSE_COUNTS, roseDay } from "./happy-rose-day";
+import { ROSE_COLORS, roseDay } from "./happy-rose-day";
 
 export interface RoseExtrasPremium {
   roseColor: string;
   colorReason: string;
-  roseCount: string;
   openingLine: string;
-  thorns: string[];
-  petalSentence: string;
+  bloomLine: string;
   sinceDate: string;
-  engraving: string;
-  secretLine: string;
   signOff: string;
   shayari: string;
   [k: string]: unknown;
 }
 
+// Two quiet sticker spots only: this page is carried by photos and type, not stickers. The ids (and their GIFs on
+// the CDN) are the v1 ones, so nothing needs re-uploading.
 const GIFS: GifSlot[] = [
-  { id: "pr1-door", label: "Peek", moment: "Beside the fogged glasshouse door", file: "pr1-door.gif", emoji: "🚪", anim: "wiggle" },
-  { id: "pr2-thorn", label: "Comfort", moment: "After the last thorn comes off", file: "pr2-thorn.gif", emoji: "🫶", anim: "pulse" },
-  { id: "pr3-petals", label: "Petals", moment: "When the petal sentence is complete", file: "pr3-petals.gif", emoji: "🌸", anim: "float" },
-  { id: "pr4-letter", label: "Letter", moment: "Under the pressed-book letter", file: "pr4-letter.gif", emoji: "💌", anim: "bounce" },
-  { id: "pr5-memories", label: "Memories", moment: "Over the dew-drop memories", file: "pr5-memories.gif", emoji: "📸", anim: "bounce" },
-  { id: "pr6-forever", label: "Forever", moment: "Beside the rose under the glass dome", file: "pr6-forever.gif", emoji: "🌹", anim: "pulse" },
+  { id: "pr3-petals", label: "Bloom", moment: "Beside the line under the open rose", file: "pr3-petals.gif", emoji: "🌸", anim: "float" },
+  { id: "pr6-forever", label: "Keepsake", moment: "On the corner of the keepsake card", file: "pr6-forever.gif", emoji: "🌹", anim: "pulse" },
 ];
 
-/** Official uploads, checked against YouTube's oEmbed on 2026-10-08. */
-export const GLASSHOUSE_SONGS: readonly SongSuggestion[] = [
-  { id: "2Vv-BfVoq4g", title: "Perfect", artist: "Ed Sheeran" },
+/** research §E (oEmbed 200 + playableInEmbed, 2026-10-09). The first one is the demo song. */
+export const BLOOM_SONGS: readonly SongSuggestion[] = [
+  { id: "iKzRIweSBLA", title: "Perfect", artist: "Ed Sheeran" },
+  { id: "MlThQTo6D8A", title: "Until I Found You", artist: "Stephen Sanchez" },
+  { id: "orYf6VDtj_k", title: "Raataan Lambiyan", artist: "Jubin Nautiyal · Shershaah" },
+  { id: "hgi2MYAFgE8", title: "Gulabi Aankhen", artist: "SANAM" },
   { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh · Brahmāstra" },
-  { id: "rtOvBOTyX00", title: "A Thousand Years", artist: "Christina Perri" },
-  { id: "Umqb9KENgmk", title: "Tum Hi Ho", artist: "Arijit Singh · Aashiqui 2" },
-  { id: "450p7goxZqg", title: "All of Me", artist: "John Legend" },
-  { id: "gvyUuxdRdR4", title: "Raataan Lambiyan", artist: "Jubin Nautiyal · Shershaah" },
-  { id: "0put0_a--Ng", title: "Make You Feel My Love", artist: "Adele" },
-  { id: "Cb6wuzOurPc", title: "Tum Se Hi", artist: "Mohit Chauhan · Jab We Met" },
+];
+/** The demo song starts on its most-replayed phrase; the drop lands back on it when the rose opens. */
+const DEMO_START = 56;
+
+const A = "https://cdn.subhsandesh.in/gifts-media/assets";
+const photo = (path: string, caption: string, note: string, cropY = 45): LovePhoto => ({ url: `${A}/${path}.webp`, caption, note, cropX: 50, cropY, scale: 100 });
+const DEMO_PHOTOS: LovePhoto[] = [
+  photo("couple1", "the evening you said yes to coffee", "I had a whole speech ready. I said “hi” and forgot the rest.", 55),
+  photo("couple2", "our first proper date", "You laughed at my joke before I finished it. I've been showing off ever since.", 40),
+  photo("couple3", "the cherry blossoms in Shimla", "You made me stand still for one photo. I'm glad you did.", 60),
+  photo("couple4", "the night we counted stars", "You fell asleep at forty-two. I kept counting.", 55),
+  photo("Aniversary/aniversary", "our first anniversary", "One year, and you still look at me like that."),
+  photo("TemplateComingSoon/sorry2", "the day we made up", "We were both wrong. You were just nicer about it."),
+  photo("TemplateComingSoon/valentine", "our first Valentine's", "You ate the last chocolate and I let you. That's love."),
+  photo("TemplateComingSoon/wddinganiversary", "your sister's wedding", "Everyone was looking at the bride. I was looking at you."),
+  photo("hero-bg", "us, always", "Out of every timeline, I'd pick this one. Every time.", 40),
 ];
 
 const base = premiumDay<RoseExtrasPremium>(roseDay, {
   slug: "happy-rose-day-premium",
-  title: "The Glasshouse Rose",
+  title: "The Bloom of Us",
   gifSlots: GIFS,
+  demoSong: { id: BLOOM_SONGS[0].id, start: DEMO_START },
   demoPremium: {
-    voiceCaption: "I grew this one where nothing could touch it. Not even time.",
-    psLetter: "Open only if you ever doubt it was real.\n\nIt was. Every petal, every thorn, every single day of it. I'd plant the whole garden again just to give you the one rose.",
+    songDropAt: DEMO_START,
+    voiceCaption: "I practised this twelve times. You'll still hear me smiling on the last line.",
+    psLetter:
+      "Open only if you ever wonder whether I'd do it all again.\n\nI would. The coffee, the long wait, the fight about the umbrella, all of it. I'd find you in every timeline and I'd still be nervous saying hi.",
   },
   copy: {
     letterPlaceholder: "Start with the first time you noticed them. Then the tiny thing they do that nobody else notices…",
-    letterHint: "Pressed between the pages of an old book, next to a dried rose. It writes itself in ink, line by line.",
-    photosHint: "Every photo hides inside a dew drop on a rose petal. A tap swells it to full screen.",
-    captionHint: "caption — e.g. that rainy day in Lonavala",
-    endLinePlaceholder: "This one never wilts. Neither will I. 🌹",
-    endLineHint: "Under the rose sealed in its glass dome, at the very end.",
-    sheetTitle: "Grow their glasshouse rose 🌹",
-    sheetSub: "A fogged door with their name, thorns you got through together, a garden that blooms on your song, and a rose sealed forever. Everything is pre-filled — make it yours.",
-    extrasTitle: "Your glasshouse",
-    extrasSub: "The rose, the thorns, the petals' secret and the engraving",
-    publishing: "Planting the glasshouse…",
-    storyTitle: "Let's grow their glasshouse rose 🌹",
-    replyText: "You grew me a whole garden 🥹🌹 My turn.",
+    letterHint: "On cream paper with a pressed petal. It unfolds after the rose has bloomed, and reveals line by line.",
+    photosHint: "Every photo becomes a petal of the rose (up to 12). The first three are also pressed under vellum, with your captions.",
+    captionHint: "caption, e.g. the cherry blossoms in Shimla",
+    endLinePlaceholder: "Every Rose Day, it's still you.",
+    endLineHint: "The last line, over the keepsake card.",
+    sheetTitle: "Grow their rose of photos 🌹",
+    sheetSub: "Your photos become the petals of one rose that opens on your song. Then pressed photos, your letter, your voice and a keepsake card. Everything is pre-filled: make it yours.",
+    extrasTitle: "Your rose",
+    extrasSub: "The colour, the words around the bloom, and your sign-off",
+    publishing: "Pressing the petals…",
+    storyTitle: "Let's grow their rose of photos 🌹",
+    replyText: "You turned us into a rose 🥹🌹 My turn.",
   },
-  share: { title: "Someone has been growing something for you 🌹", accent: "#C8102E" },
+  share: { title: "Something has been opening, just for you 🌹", accent: "#C8475B" },
 });
 
 export const roseDayPremium: DayConfig<RoseExtrasPremium> = {
   ...base,
-  music: { audioOnly: true, suggestions: GLASSHOUSE_SONGS, suggestionsNote: "romantic favourites · tap to use" },
+  music: { audioOnly: true, suggestions: BLOOM_SONGS, suggestionsNote: "romantic favourites · tap to use", demoStart: DEMO_START },
   theme: {
-    bg: "radial-gradient(90% 55% at 50% 0%, #6B4A3E 0%, #3A3330 45%, #1E2A27 100%)",
-    base: "#1E2422",
-    paper: "#FBF3E6",
-    glass: "rgba(251,243,230,0.09)",
-    ink: "#FBF3E6",
-    inkSoft: "#E3D2C0",
-    paperInk: "#3B2420",
-    accent: "#F4C27A",
-    accentDeep: "#B9853A",
-    accentInk: "#1E2422",
-    soft: "#3C4A44",
-    edge: "rgba(251,243,230,0.2)",
-    gold: "#F4C27A",
+    bg: "radial-gradient(90% 60% at 50% 35%, #3A0E18 0%, #1A070C 55%, #0C0406 100%)",
+    base: "#12060A",
+    paper: "#F6F0E6",
+    glass: "rgba(246,240,230,0.08)",
+    ink: "#F6F0E6",
+    inkSoft: "#E6CFCB",
+    paperInk: "#3A1A1F",
+    accent: "#C9A45C",
+    accentDeep: "#8A6A2F",
+    accentInk: "#1A070C",
+    soft: "#3A1A22",
+    edge: "rgba(246,240,230,0.18)",
+    gold: "#C9A45C",
     dark: true,
-    particles: ["🌹", "🌸", "✨", "🍃"],
-    confetti: ["#C8102E", "#E8A0A8", "#F4C27A", "#FBF3E6", "#5E8C61"],
+    particles: ["🌹", "🌸", "✨"],
+    confetti: ["#7A1E2C", "#C8475B", "#F2D4D2", "#F6F0E6", "#C9A45C"],
   },
   extras: [
-    { key: "roseColor", kind: "enum", label: "Pick your rose", display: "swatches", default: "red", options: ROSE_COLORS, hint: "It tints the bloom, the whole garden and the dome's glow. The colour's meaning shows on their screen." },
-    { key: "colorReason", kind: "text", max: 90, label: "Why this colour?", placeholder: "e.g. because red is the dupatta you wore the day I knew", hint: "Shown under the colour's meaning when the rose opens." },
-    { key: "roseCount", kind: "enum", label: "How many roses bloom for them?", display: "chips", default: "99", options: ROSE_COUNTS, hint: "1 blooms alone in a ring of light, 3 in a cluster, 7–12 draw a heart's outline, 99 fill a whole heart." },
-    { key: "openingLine", kind: "text", max: 70, label: "The line on the potting bench", placeholder: "the first thing they read inside the glasshouse", suggestions: ["I couldn't send you a garden. So I grew you one.", "Someone has been growing something for you.", "Ek gulaab, sirf tumhare liye 🌹"] },
+    { key: "roseColor", kind: "enum", label: "The colour of your rose", display: "swatches", default: "red", options: ROSE_COLORS, hint: "It tints the velvet of the bud and the glow behind it. Its meaning shows under the open rose." },
+    { key: "colorReason", kind: "text", max: 90, label: "Why this colour?", placeholder: "e.g. because it's the colour of the dupatta you wore the day I knew", hint: "Shown under the colour's meaning once the rose has opened." },
     {
-      key: "thorns", kind: "list", maxItems: 5, itemMax: 60, label: "Thorns you got through (keep it gentle)",
-      hint: "Hard times you made it through together. They pluck each thorn and it becomes “…and we got through it”. Leave empty to skip the thorns.",
-      itemPlaceholder: ["7 months of long-distance", "the year of the exams", "your move to Bangalore", "our worst fight (the AC one)", "the night the phone died at the airport"],
-      addLabel: "+ add a thorn",
+      key: "openingLine", kind: "text", max: 60, label: "The line over the closed bud",
+      placeholder: "what they read before it opens",
+      hint: "The first words they read, over the closed bud, before they hold it to warm it.",
+      suggestions: ["Some things take time to open.", "I've been saving this one for you.", "Hold it. It's been waiting for you."],
     },
-    { key: "petalSentence", kind: "text", max: 60, min: 12, label: "A sentence hidden in falling petals", placeholder: "seven words or fewer", hint: "One word per petal. They catch them to read it.", suggestions: ["You are my favourite thing that grows.", "Out of every flower, I'd pick you.", "Tum ho toh sab theek hai."] },
-    { key: "sinceDate", kind: "text", max: 24, label: "Engraved “since”", placeholder: "any way you like — 14 Feb 2022, our first monsoon", hint: "On the dome's walnut base: “{their name} & {you} · since …”" },
-    { key: "engraving", kind: "text", max: 40, label: "The engraving on the base", placeholder: "a short line to keep forever", suggestions: ["My one rose, in all the world.", "This one never wilts.", "Hamesha, sirf tum."] },
-    { key: "secretLine", kind: "text", max: 80, label: "A secret in the tiny dew drop (optional)", placeholder: "something only they should find", hint: "Hidden in a tiny dew drop on a stem among the memories. You'll see if they found it." },
-    { key: "signOff", kind: "text", max: 40, label: "Sign-off", placeholder: "how you end every text to them — e.g. Hamesha tumhara, Rohan" },
-    { key: "shayari", kind: "longtext", max: 160, rows: 2, label: "A little shayari (optional)", placeholder: "two lines at the end of the letter — add the poet's name if it's a famous sher" },
+    {
+      key: "bloomLine", kind: "text", max: 60, label: "The line over the open rose",
+      placeholder: "what they read when every petal is a photo of you two",
+      hint: "Appears over the open rose, once they can see every petal is one of your photos.",
+      suggestions: ["Every petal is a day with you.", "This is what we grew.", "Look closer. It's us."],
+    },
+    { key: "sinceDate", kind: "text", max: 24, label: "Together since", placeholder: "any way you like: 14 Feb 2022, our first monsoon", hint: "Printed on the keepsake card under your names." },
+    { key: "signOff", kind: "text", max: 40, label: "Sign-off", placeholder: "how you end every text to them, e.g. Forever yours, Rohan" },
+    { key: "shayari", kind: "longtext", max: 160, rows: 2, label: "A little shayari (optional)", placeholder: "two lines at the end of the letter; add the poet's name if it's a famous sher" },
   ],
   demo: {
     ...base.demo,
-    photos: demoPhotos([
-      ["our first chai date ☕", "You blew on my chai for me like I was five. I pretended to mind."],
-      ["that rainy day in Lonavala", "One umbrella, two people, zero dry shoulders. Best walk of my life."],
-      ["you, stealing my fries", "I ordered extra on purpose. Don't tell anyone."],
-      ["us, forever", "Out of every timeline, I'd pick this one. Every time."],
-    ]),
-    endLine: "This one never wilts. Neither will I. 🌹",
+    recipientName: "Ananya",
+    senderName: "Rohan",
+    photos: DEMO_PHOTOS,
+    letter:
+      "Ananya,\n\nI keep trying to work out the exact moment it happened, and I can't. It wasn't the coffee, or the first date, or the night you fell asleep counting stars. It was all of it, quietly, the way a rose opens: you never see it move, and then one morning it's simply there.\n\nYou make ordinary days feel chosen. You remember the small things I say once and forget. You laugh at my jokes before the end, and you hold my hand in crowds like it's the most natural thing in the world.\n\nSo this year I didn't want to send you a rose from a shop. I wanted to give you one made of us. Every petal is a day I'd live again.\n\nHappy Rose Day. I'm still nervous saying hi.",
+    endLine: "Every Rose Day, it's still you.",
     extras: {
       roseColor: "red",
-      colorReason: "Because red is the dupatta you wore the day I knew.",
-      roseCount: "99",
-      openingLine: "I couldn't send you a garden. So I grew you one.",
-      thorns: ["7 months of long-distance", "the night I almost lost my job", "your move to Bangalore", "our worst fight (the AC one)"],
-      petalSentence: "You are my favourite thing that grows.",
+      colorReason: "Because it's the colour of the dupatta you wore the day I knew.",
+      openingLine: "Some things take time to open.",
+      bloomLine: "Every petal is a day with you.",
       sinceDate: "14 Feb 2022",
-      engraving: "My one rose, in all the world.",
-      secretLine: "I still have the first rose you gave back to me. Pressed. In my wallet.",
-      signOff: "Tumhara, hamesha",
+      signOff: "Forever yours, Rohan",
       shayari: "",
     },
   },

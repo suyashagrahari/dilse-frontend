@@ -1,250 +1,256 @@
 "use client";
 
-// ─── happy-chocolate-day-premium — "The Midnight Chocolatier" ───────────────
+// ─── Chocolate Day ✦ Premium: "La Boîte" ───────────────────────────────────────────────────────────────────────
 //
-//   gate     a rainy shop door, sign "CLOSED · except for {name}" — the tap
-//            flips it to OPEN, rings the bell and starts the song
-//   lights   three pendant lamps flicker on; brass plate + note on the counter
-//   make     tilt the copper pot to pour a heart → tap out the bubbles
-//            (mini-game 1) → it tempers at 31 °C → turn it out (embossed)
-//   crack    three taps with the gold hammer; the third is THE drop: the
-//            shell shatters into Voronoi shards on the song's peak
-//   truffles taste each truffle: lift, bite, a reason with its flavour
-//   ticket   peel the wrapper of a bar → a golden ticket (a real promise)
-//   letter   the first line piped in chocolate, the voice note, the recipe card
-//   case     the lit display case: photos as labelled bonbons (montage)
-//   box      pipe the word on the last bonbon (mini-game 2), pack, tie the bow
-//   end      the line, the coupon, the sealed P.S., the reply, the certificate
+// The chocolatier's box, made for one person; every bonbon is one of their photos. research §D.3
+// (.template-factory/premium-v2/research.md).
 //
-// Files: atelier/{art, sfx, Shatter, Make, Crack, Truffles, Ticket, Letter, Case, Box, Ending, css}.
+//  gate    the lid in matte cacao, their initials in gold foil, a satin ribbon. "Pull the ribbon" (the tap starts the
+//          song; the ribbon slides off).
+//  box     I  La boîte: their opening line over the closed box. Drag the lid up.
+//          ↓  drop(): letterbox, riser, the lid hovers with light leaking out; the chorus lands, the lid flies off, the
+//             tissue parts, a foil sheen runs across nine glossy photo-bonbons (THE money moment).
+//          II The tasting: tap a piece, it lifts out and turns over to its flavour and the memory it tastes of.
+//  heart   III The last piece: a ruby heart dusted in cocoa; brush it clean to find their photo and line.
+//  letter  IV  Notes from the chocolatier: the menu card slides out of its sleeve.
+//  voice   V   In my voice (or their words, large, when there is no recording).
+//  end     "Every piece of it was you." The lid as a tiltable keepsake card + poster, the sealed P.S., reply, replay.
+//
+// One ShaderBackdrop + one GlowParticles for the page (presets change per chapter), grain + vignette always,
+// SceneTransition between chapters. The tilt (useGyroParallax) is written once to --sx/--sy on the root, where the
+// foil and the bonbons' gloss read it. Fixed layers (the lifted piece) live here, outside every transformed scene.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getDay } from "../../_valentine/days";
-import type { ChocolateExtrasPremium, TruffleFlavour } from "../../_valentine/days/happy-chocolate-day-premium";
-import { chocolateDayPremium } from "../../_valentine/days/happy-chocolate-day-premium";
 import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import { ParticleField, PremiumGate, PremiumRoot, SceneFade, SkipChip, usePremium, useScenes, type ParticlePreset } from "../../_valentine/kit/premium";
-import type { ExperienceProps, ValentineDayData } from "../../_valentine/types";
-import { AtelierBackdrop, ShopDoor, Truffle, initials } from "./atelier/art";
-import Box from "./atelier/Box";
-import Case from "./atelier/Case";
-import Crack from "./atelier/Crack";
-import { ATELIER_CSS } from "./atelier/css";
-import Ending from "./atelier/Ending";
-import Letter from "./atelier/Letter";
-import Make from "./atelier/Make";
-import type { SceneProps, Truf } from "./atelier/shared";
-import { registerAtelierCues } from "./atelier/sfx";
-import Ticket from "./atelier/Ticket";
-import Truffles from "./atelier/Truffles";
+import {
+  FilmGrain, GlowParticles, Letterbox, LightLeak, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette,
+  requestTiltPermission, useGyroParallax, usePremium, type BackdropPreset, type TransitionVariant,
+} from "../../_valentine/kit/premium";
+import { getDay } from "../../_valentine/days";
+import type { ExperienceProps } from "../../_valentine/types";
+import { BOITE_FONT_VARS } from "./boite/fonts";
+import { BOITE_CSS } from "./boite/styles";
+import { readBoite } from "./boite/util";
+import { registerBoiteCues } from "./boite/cues";
+import { LidFace } from "./boite/Box";
+import { BoxScene } from "./boite/BoxScene";
+import { Tasting } from "./boite/Tasting";
+import { HeartScene } from "./boite/HeartScene";
+import { LetterScene } from "./boite/LetterScene";
+import { VoiceScene } from "./boite/VoiceScene";
+import { EndingScene } from "./boite/EndingScene";
 
 const SLUG = "happy-chocolate-day-premium" as const;
-const ORDER = ["gate", "lights", "make", "crack", "truffles", "ticket", "letter", "case", "box", "end"] as const;
-type Scene = (typeof ORDER)[number];
-const FLAVOUR_KEYS: TruffleFlavour[] = ["hazelnut", "sea-salt", "raspberry", "gold-leaf", "pistachio", "rose", "heart"];
+type Scene = "gate" | "box" | "heart" | "letter" | "voice" | "end";
 
-function Scenes({ data, mode, react }: ExperienceProps) {
+const BACKDROP: Record<Scene, BackdropPreset> = { gate: "velvet", box: "candle", heart: "candle", letter: "candle", voice: "candle", end: "candle" };
+const ENTER: Record<Scene, TransitionVariant> = { gate: "iris", box: "iris", heart: "iris", letter: "fold", voice: "flash", end: "iris" };
+
+function Boite({ data, mode, react }: ExperienceProps) {
   const day = getDay(SLUG);
-  const x = data.extras as ChocolateExtrasPremium;
   const p = usePremium();
-  const reduced = useReducedMotion();
-  const sc = useScenes(ORDER);
-  const [lit, setLit] = useState(0);
-  const [tasted, setTasted] = useState(0);
+  const reduce = useReducedMotion();
+  const b = useMemo(() => readBoite(data), [data]);
+  const [scene, setScene] = useState<Scene>(p.opened ? "box" : "gate");
+  const [pulled, setPulled] = useState(false);
+  const [bars, setBars] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const [pick, setPick] = useState<number | null>(null);
+  const [tasted, setTasted] = useState<ReadonlySet<number>>(() => new Set());
   const [run, setRun] = useState(0);
-  const [preset, setPreset] = useState<ParticlePreset>("dust");
-  const beds = useRef<{ rain?: { stop: (ms?: number) => void }; room?: { stop: (ms?: number) => void } }>({});
-  const timers = useRef<number[]>([]);
+  const hasLetter = !!data.letter?.trim();
+  const hasVoice = !!p.premium.voiceNote || !!p.premium.voiceCaption.trim();
+
+  useEffect(() => registerBoiteCues(), []);
+
+  // The tilt, written once as CSS variables (no re-render): the foil, the gloss and the sheen read --sx/--sy.
+  const root = useRef<HTMLDivElement>(null);
+  const par = useGyroParallax({ stiffness: 50, damping: 16 });
   useEffect(() => {
-    registerAtelierCues();
-    const t = timers.current;
-    const b = beds.current;
+    const set = (k: string) => (v: number) => root.current?.style.setProperty(k, v.toFixed(3));
+    const a = par.x.on("change", set("--sx"));
+    const c = par.y.on("change", set("--sy"));
     return () => {
-      t.forEach(clearTimeout);
-      b.rain?.stop(200);
-      b.room?.stop(200);
+      a();
+      c();
     };
-  }, []);
+  }, [par.x, par.y]);
 
-  const truffles: Truf[] = useMemo(() => {
-    const given = (Array.isArray(x.reasons) ? x.reasons : [])
-      .map((r) => ({ flavour: (FLAVOUR_KEYS.includes(r?.flavour) ? r.flavour : "hazelnut") as TruffleFlavour, reason: typeof r?.reason === "string" ? r.reason.trim() : "" }))
-      .filter((r) => r.reason)
-      .slice(0, 6);
-    if (given.length >= 1) return given;
-    return (chocolateDayPremium.demo.extras.reasons as Truf[]).slice(0, 4);
-  }, [x.reasons]);
-  const marks = useMemo(() => (x.embossNames === false ? [] : initials(data.recipientName, data.senderName)), [x.embossNames, data.recipientName, data.senderName]);
-  const word = useMemo(() => {
-    const w = (x.drizzleWord || data.petName || data.recipientName || "YOU").replace(/[^\p{L}\p{N}♥ ]/gu, "").trim();
-    return (w || "YOU").slice(0, 6).toUpperCase();
-  }, [x.drizzleWord, data.petName, data.recipientName]);
-
-  const sticker = useCallback(
-    (id: string, px: number) => {
-      const slot = day.gifSlots.find((g) => g.id === id);
-      return slot ? <Sticker slug={SLUG} slot={slot} value={data.gifs[slot.id]} size={px} /> : null;
+  const order = useMemo(() => {
+    const o: Scene[] = ["box", "heart"];
+    if (hasLetter) o.push("letter");
+    if (hasVoice) o.push("voice");
+    o.push("end");
+    return o;
+  }, [hasLetter, hasVoice]);
+  const next = useCallback(
+    (from: Scene) => {
+      const i = order.indexOf(from);
+      setScene(order[Math.min(order.length - 1, i + 1)]);
     },
-    [day, data.gifs],
+    [order],
   );
 
-  const go = useCallback(
-    (s: Scene) => {
-      sc.go(s);
-      window.scrollTo({ top: 0, behavior: "auto" });
-    },
-    [sc],
-  );
-  const next = useCallback(() => {
-    const i = ORDER.indexOf(sc.scene);
-    let n = ORDER[Math.min(ORDER.length - 1, i + 1)];
-    if (n === "case" && !data.photos.some((ph) => ph?.url)) n = "box";
-    go(n);
-  }, [sc.scene, go, data.photos]);
-
-  // Scene side-effects: beds, lamps, particles, ducking.
+  // The song sits a little lower under the letter (where the platform lets us fade it).
+  const musicRef = useRef(p.music);
   useEffect(() => {
-    const s = sc.scene;
-    if (s === "lights") {
-      setLit(0);
-      [0, 1, 2].forEach((i) =>
-        timers.current.push(
-          window.setTimeout(() => {
-            setLit(i + 1);
-            p.sfx("choc-lamp", { pan: (i - 1) * 0.6, detune: i * 40 });
-          }, reduced ? 50 : 350 + i * 520),
-        ),
-      );
-      if (!beds.current.room) beds.current.room = p.sfx("choc-room");
-    }
-    if (s !== "gate" && s !== "lights") setLit(3);
-    if (s === "make" || s === "crack") p.music?.fadeTo(0.6, 600);
-    if (s === "truffles") setPreset("sparkles");
-    if (s === "end") {
-      setPreset("sparkles");
-      beds.current.room?.stop(1500);
-      beds.current.room = undefined;
-    }
-    if (s !== "gate" && s !== "lights" && beds.current.rain) {
-      beds.current.rain.stop(1800);
-      beds.current.rain = undefined;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sc.scene]);
-
-  const completed = useRef(false);
+    musicRef.current = p.music;
+  });
   useEffect(() => {
-    if (sc.scene !== "end" || completed.current) return;
-    completed.current = true;
-    react("completed", { count: tasted || truffles.length });
-  }, [sc.scene, react, tasted, truffles.length]);
+    const m = musicRef.current;
+    if (!m?.canFade || scene === "gate") return;
+    m.fadeTo(scene === "letter" ? 0.55 : 1, 1400);
+  }, [scene]);
 
-  const onPeak = useCallback(() => {
-    setPreset("confetti");
-    timers.current.push(window.setTimeout(() => setPreset("sparkles"), 2600));
-  }, []);
+  const reactRef = useRef(react);
+  useEffect(() => {
+    reactRef.current = react;
+  });
+  useEffect(() => {
+    if (scene === "end") reactRef.current("completed");
+  }, [scene]);
 
-  const props: SceneProps = {
-    data: data as ValentineDayData<ChocolateExtrasPremium>,
-    x,
-    truffles,
-    marks,
-    word,
-    reduced,
-    preview: mode === "preview",
-    sfx: p.sfx,
-    sticker,
-    next,
+  const sticker = (id: string, size: number) => {
+    const slot = day.gifSlots.find((s) => s.id === id);
+    return slot ? <Sticker slug={day.slug} slot={slot} value={data.gifs?.[id]} size={size} alt="" /> : null;
   };
-  const step = ORDER.indexOf(sc.scene);
-  const host = data.petName || data.senderName;
+
+  const replay = () => {
+    setOpened(false);
+    setBars(false);
+    setPick(null);
+    setTasted(new Set());
+    setRun((r) => r + 1);
+    setScene("box");
+  };
+
+  const taste = (i: number) => {
+    p.sfx("lb-lift", { gain: 0.8 });
+    setPick(i);
+    setTasted((s) => (s.has(i) ? s : new Set(s).add(i)));
+  };
+
+  let particles: "sparkles" | "embers" = "embers";
+  let density = 0.16;
+  if ((scene === "box" && opened) || scene === "end") {
+    particles = "sparkles";
+    density = scene === "end" ? 0.3 : 0.42;
+  } else if (scene === "heart") {
+    particles = "sparkles";
+    density = 0.2;
+  }
+
+  const render = (s: Scene) => {
+    switch (s) {
+      case "gate":
+        return null;
+      case "box":
+        return (
+          <BoxScene
+            key={run}
+            b={b}
+            tasted={tasted}
+            out={pick}
+            onRising={() => setBars(true)}
+            onOpen={() => {
+              setOpened(true);
+              window.setTimeout(() => setBars(false), reduce ? 0 : 3000);
+            }}
+            onPick={taste}
+            onNext={() => next("box")}
+            sticker={sticker("pc3-yum", 54)}
+          />
+        );
+      case "heart":
+        return <HeartScene b={b} hasLetter={hasLetter} onDone={() => next("heart")} />;
+      case "letter":
+        return <LetterScene b={b} letter={data.letter} onDone={() => next("letter")} />;
+      case "voice":
+        return <VoiceScene from={b.from} photo={b.photos[b.photos.length - 1]} onDone={() => next("voice")} />;
+      case "end":
+        return <EndingScene b={b} data={data} day={day} mode={mode} sticker={sticker("pc6-box", 64)} onReplay={replay} />;
+    }
+  };
+
+  const cw = b.cw;
+  const vars = {
+    ["--font-vw-ui" as string]: "var(--lb-sans)",
+    ["--vw-font-ui" as string]: "var(--lb-sans), system-ui, sans-serif",
+    ["--lid-hi" as string]: cw.lid[0],
+    ["--lid" as string]: cw.lid[1],
+    ["--lid-deep" as string]: cw.lid[2],
+    ["--rib-hi" as string]: cw.ribbon[0],
+    ["--rib" as string]: cw.ribbon[1],
+    ["--rib-deep" as string]: cw.ribbon[2],
+    ["--foil-l" as string]: cw.foil[0],
+    ["--foil" as string]: cw.foil[1],
+    ["--foil-d" as string]: cw.foil[2],
+    ["--lid-ink" as string]: cw.ink,
+    ["--glow" as string]: cw.glow,
+  };
 
   return (
-    <>
-      <style>{ATELIER_CSS}</style>
-      <AtelierBackdrop lit={sc.scene === "gate" ? 0 : lit} rain={!reduced} />
-      <ParticleField
-        preset={preset}
-        density={preset === "dust" ? 0.3 : 0.4}
-        colors={preset === "dust" ? ["rgba(255,214,170,.55)", "rgba(230,184,92,.45)"] : preset === "confetti" ? ["#E6B85C", "#C2185B", "#7B4A2E", "#FFE6A6", "#F3ECE4"] : ["#FFE6A6", "#E6B85C", "#fff"]}
-        z={1}
+    <div
+      ref={root}
+      className={`lb-root ${BOITE_FONT_VARS}${cw.light ? " is-lightLid" : ""}`}
+      // iOS asks for gyro permission only inside a tap: the gate's own tap is the one. The same tap pulls the ribbon.
+      onClickCapture={
+        scene === "gate"
+          ? () => {
+              void requestTiltPermission();
+              if (pulled) return;
+              setPulled(true);
+              // After the gate's own handler has unlocked the audio (this capture runs first).
+              window.setTimeout(() => p.sfx("ribbon", { gain: 0.8 }), 60);
+            }
+          : undefined
+      }
+      style={vars}
+    >
+      <style>{BOITE_CSS}</style>
+      <ShaderBackdrop
+        preset={BACKDROP[scene]}
+        colors={scene === "gate" ? ["#0E0705", "#3A2018", "#9C6B4E"] : ["#0E0705", "#3A2018", "#C9A45C"]}
+        intensity={scene === "gate" ? 0.75 : scene === "box" && opened ? 1.15 : 0.9}
+        speed={0.6}
+        parallax
       />
+      <GlowParticles preset={particles} colors={["#FFE7B8", "#E3C27E", "#C9A45C"]} density={density} speed={0.45} z={1} />
+      {(opened && scene === "box") || scene === "end" ? <LightLeak color="#FFB877" color2="#FFE2B0" corner="top-right" opacity={0.3} /> : null}
+      <Vignette strength={0.64} />
+      <FilmGrain opacity={0.07} />
+      <Letterbox show={bars} />
 
-      {sc.scene === "gate" && (
+      {scene === "gate" && (
         <PremiumGate
-          className="mc-gate"
-          art={<ShopDoor name={data.recipientName || "you"} />}
-          kicker="After hours, a little shop opens for"
-          subtitle={<span className="mc-gateSub">{data.senderName ? `${data.senderName}'s midnight atelier` : "A midnight chocolate atelier"}</span>}
-          sting="choc-bell"
-          openLabel="Flip the sign"
-          openMs={reduced ? 250 : 1300}
-          bg="radial-gradient(120% 90% at 50% 20%, #3a2140 0%, #1a1022 55%, #0c0710 100%)"
-          ink="#FFF6EA"
-          accent="#E6B85C"
-          onOpen={({ quiet }) => {
-            if (!quiet) beds.current.rain = p.sfx("choc-rain");
-            go("lights");
+          art={<LidFace b={b} ribbon pulled={pulled} className="lb-gateLid" />}
+          kicker="A box made by hand for"
+          subtitle="Chocolate Day · sound on"
+          sting="chime"
+          openLabel="Pull the ribbon"
+          sealText={`Made by hand for ${b.to}`}
+          className="lb-gate"
+          bg="transparent"
+          ink="#F3E6D3"
+          accent="#C9A45C"
+          openMs={reduce ? 250 : 1200}
+          onOpen={() => {
+            react("opened");
+            setScene("box");
           }}
         />
       )}
 
-      {sc.scene !== "gate" && (
-        <div className="mc-progress" aria-hidden>
-          {ORDER.slice(1).map((s, k) => (
-            <span key={s} className={k + 1 <= step ? "is-on" : ""} style={{ width: k + 1 === step ? 18 : 7 }} />
-          ))}
-        </div>
-      )}
+      <div className="lb-stage">
+        {scene !== "gate" && (
+          <SceneTransition sceneKey={`${scene}-${run}`} variant={ENTER[scene]} origin="50% 50%">
+            {render(scene)}
+          </SceneTransition>
+        )}
+      </div>
 
-      <SceneFade sceneKey={`${sc.scene}-${run}`} className="mc-scene">
-        {sc.scene === "lights" && (
-          <section className="mc-sec mc-lightsSec">
-            <div className={`mc-plate${lit >= 3 ? " is-on" : ""}`}>
-              <small>Atelier</small>
-              <b>{host || "Midnight"}</b>
-              <i>est. tonight · for one</i>
-            </div>
-            <div className={`mc-note${lit >= 3 ? " is-on" : ""}`}>
-              <span className="mc-notePin" aria-hidden />
-              <p>{x.welcomeNote || "I kept the shop open late. Just for you."}</p>
-              <i>— {data.senderName || "the chocolatier"}</i>
-            </div>
-            <div className={`mc-counterSet${lit >= 3 ? " is-on" : ""}`} aria-hidden>
-              <Truffle flavour="gold-leaf" size={46} />
-              <Truffle flavour="raspberry" size={38} />
-              <Truffle flavour="pistachio" size={42} />
-            </div>
-            <span className="mc-stick">{lit >= 3 && sticker("pc1-open", 84)}</span>
-            <div className="mc-actions">
-              <button type="button" className="mc-btn" onClick={() => { p.sfx("whoosh", { gain: 0.5 }); next(); }} disabled={lit < 3 && !reduced}>
-                {lit < 3 ? "The lights are coming on…" : "Put on the apron →"}
-              </button>
-            </div>
-            {p.repeatVisit && <SkipChip onSkip={() => go("crack")} label="Skip to the smash ▸" />}
-          </section>
-        )}
-        {sc.scene === "make" && <Make {...props} />}
-        {sc.scene === "crack" && <Crack {...props} onPeak={onPeak} />}
-        {sc.scene === "truffles" && <Truffles {...props} onTasted={setTasted} />}
-        {sc.scene === "ticket" && <Ticket {...props} />}
-        {sc.scene === "letter" && <Letter {...props} />}
-        {sc.scene === "case" && <Case {...props} />}
-        {sc.scene === "box" && <Box {...props} />}
-        {sc.scene === "end" && (
-          <Ending
-            {...props}
-            day={day}
-            mode={mode}
-            tasted={tasted}
-            onReplay={() => {
-              setRun((r) => r + 1);
-              go("lights");
-            }}
-          />
-        )}
-      </SceneFade>
-    </>
+      <Tasting key={pick ?? -1} piece={pick != null ? (b.pieces[pick] ?? null) : null} at={pick ?? 0} onClose={() => setPick(null)} />
+    </div>
   );
 }
 
@@ -252,19 +258,8 @@ export default function ChocolateDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot
-        day={day}
-        data={props.data}
-        line={(props.data.extras as ChocolateExtrasPremium)?.welcomeNote}
-        art={
-          <div style={{ position: "relative", height: "100%", aspectRatio: "1.2", display: "grid", placeItems: "center" }}>
-            <Truffle flavour="heart" size="46%" style={{ position: "absolute", left: "27%", top: "6%" }} />
-            <Truffle flavour="gold-leaf" size="30%" style={{ position: "absolute", left: "4%", bottom: "8%" }} />
-            <Truffle flavour="pistachio" size="28%" style={{ position: "absolute", right: "6%", bottom: "12%" }} />
-          </div>
-        }
-      >
-        <Scenes {...props} />
+      <DayRoot day={day} data={props.data} layout="full" dark>
+        <Boite {...props} />
       </DayRoot>
     </PremiumRoot>
   );

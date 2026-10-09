@@ -238,11 +238,10 @@ const ROOT_CSS = `
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .pm-soundChip:focus-visible, .pm-blockedChip:focus-visible { outline: 3px solid var(--vw-accent, #d0245f); outline-offset: 2px; }
 .pm-blockedChip { position: fixed; left: 50%; transform: translateX(-50%); z-index: 98;
-  bottom: calc(var(--vw-dock-space, 0px) + 150px + env(safe-area-inset-bottom, 0px));
+  top: calc(max(10px, env(safe-area-inset-top, 0px)) + 56px);
   display: inline-flex; gap: 8px; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: 99px; border: 0; cursor: pointer;
   background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); color: #2b1a03; font: 700 14px/1.1 system-ui, sans-serif;
   box-shadow: 0 12px 30px -10px rgba(90,55,5,.7); animation: pm-chipIn .5s cubic-bezier(.22,1,.36,1) both; white-space: nowrap; }
-@media (min-width: 768px) { .pm-blockedChip { bottom: calc(var(--vw-dock-space, 0px) + 32px + env(safe-area-inset-bottom, 0px)); } }
-@keyframes pm-chipIn { from { opacity: 0; transform: translate(-50%, 12px); } }
+@keyframes pm-chipIn { from { opacity: 0; transform: translate(-50%, -12px); } }
 @media (prefers-reduced-motion: reduce) { .pm-blockedChip { animation: none; } }
 `;

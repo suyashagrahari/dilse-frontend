@@ -12,8 +12,8 @@ const tpl = TEMPLATE_SEO[SLUG];
 
 // The link preview stays a teaser: it is what shows on WhatsApp when someone
 // pastes the template link to a friend.
-const SOCIAL_TITLE = `🧵 Someone tied a red thread to your finger`;
-const SOCIAL_DESCRIPTION = `Follow it. Sound on ✦`;
+const SOCIAL_TITLE = `✍️ A sealed promise, to be opened by you only`;
+const SOCIAL_DESCRIPTION = `Break the seal with the sound on ✦`;
 
 const base = getTemplateMeta(SLUG);
 export const metadata: Metadata = {

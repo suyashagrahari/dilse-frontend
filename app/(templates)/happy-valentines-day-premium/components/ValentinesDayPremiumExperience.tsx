@@ -1,173 +1,231 @@
 "use client";
 
-// ─── Valentine's Day ✦ Premium — "Our Film" (the flagship of the premium tier) ──────────────────────────────
+// ─── Valentine's Day ✦ Premium — "Us, Wrapped" (the flagship of the premium tier) ─────────────────────────
 //
-// Their love story, screened as a film, directed by the sender and starring the recipient.
+// Their year in love as a Wrapped-style story: bold colour-blocked slides (each owns one background, a velvet
+// shader in that colour behind it), huge kinetic numbers in Bricolage Grotesque, the emotional lines in
+// Instrument Serif italic, tap-through progress bars, film grain + vignette on every frame.
 //
-//  1 gate      ADMIT ONE ticket (PremiumGate: the tap starts the song + the projector lamp) → film leader 5-4-3-2
-//  2 titles    "{sender} presents" · "a love story" · "starring {recipient}" · the title · "Previously on…" (the week)
-//  3 stars     Chapter I — trace the constellation of the night you met; it becomes your initials   (mini-game 1)
-//  4 montage   Chapter II — "The Film of Us": photos cut on the chorus, hold to freeze, scrub the strip   (WOW 1)
-//  5 voice     Director's commentary — the voice note (or the caption as screenplay dialogue)
-//  6 book      Chapter III — a three-chapter book turned by its corner, signed in an animated pen stroke
-//  7 numbers   Chapter IV — by the numbers: slot-reel digits, a live seconds counter, their own stats
-//  8 question  black and white, the song paused, every No is a take with a clapperboard              (mini-game 2)
-//  9 finale    YES → drop(): colour floods from the button, fireworks write the initials, end credits with
-//              bloopers, post-credits date plan (+ .ics), deleted scene (P.S.), movie poster, reply   (WOW 2)
+//  gate      a Wrapped cover (PremiumGate: the tap starts their song)
+//  1 intro    "Your 2026 in love."                               tomato
+//  2 song     our top song: tilt the cover, ♥ it → their line     lilac
+//  3 memories top 3: swipe #3 and #2 away, #1 stays               ink
+//  4 stats    stats you didn't know I kept: tap to flip           butter
+//  5 trait    your top trait, according to me: scratch the foil   pink
+//  6 reasons  fast cuts over their photos: tap, or hold           photos, a new tint per cut
+//  7 voice    the voice note (or the caption as a quote)          lilac
+//  8 letter   tap to unfold                                       butter
+//  9 NUMBER   hold to count → drop(): the days SLAM on the drop, cut to their best photo, the question  ink → photo
+// 10 card     the "Us, Wrapped" card: save it, the sealed P.S., write back, watch again   tomato
 //
-// Sound: the kit's PremiumRoot/gate/drop + 19 template cues (./film/cues.ts). Music script: 35% under the
-// projector → 70% titles → 60% stars → chorus at 100% for the montage → 45% for the book → paused for the
-// question → drop() on YES → 30% after the credits (fades are desktop/Android only; iOS keeps full volume).
+// Slides with nothing to show (no stats, no trait, no reasons, no voice) are skipped.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DayRoot, Sticker, useReducedMotion } from "../../_valentine/kit";
-import { Letterbox, ParticleField, PremiumGate, PremiumRoot, SceneFade, usePremium, type ParticlePreset } from "../../_valentine/kit/premium";
+import { DayRoot, Sticker } from "../../_valentine/kit";
+import { FilmGrain, GlowParticles, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { FILM_FONT_VARS } from "./film/fonts";
-import { registerFilmCues } from "./film/cues";
-import { FILM_CSS } from "./film/styles";
-import { readFilm } from "./film/util";
-import { Leader, Ticket } from "./film/Screening";
-import Titles from "./film/Titles";
-import Stars from "./film/Stars";
-import Montage from "./film/Montage";
-import Commentary from "./film/Commentary";
-import Book from "./film/Book";
-import Numbers from "./film/Numbers";
-import Question from "./film/Question";
-import Finale from "./film/Finale";
-
-registerFilmCues();
+import { WRAPPED_FONT_VARS } from "./wrapped/fonts";
+import { SW, readWrapped, type Swatch } from "./wrapped/model";
+import { WRAPPED_CSS } from "./wrapped/styles";
+import { Arrow, Back } from "./wrapped/ui";
+import { Intro, Letter, Memories, Stats, Trait, TopSong, Voice, statTiles } from "./wrapped/Slides";
+import Reasons from "./wrapped/Reasons";
+import TheNumber from "./wrapped/Number";
+import WrappedCard from "./wrapped/Card";
 
 const SLUG = "happy-valentines-day-premium" as const;
-type Scene = "gate" | "leader" | "titles" | "stars" | "montage" | "voice" | "book" | "numbers" | "question" | "finale";
-const LEVEL: Partial<Record<Scene, number>> = { leader: 0.35, titles: 0.7, stars: 0.6, voice: 0.7, book: 0.45, numbers: 0.7 };
-const PARTICLES: Partial<Record<Scene, ParticlePreset>> = { leader: "dust", titles: "dust", stars: "sparkles", book: "dust", numbers: "dust" };
-const LETTERBOX = new Set<Scene>(["titles", "stars", "montage", "voice", "book", "numbers", "question"]);
+type SlideId = "intro" | "song" | "memories" | "stats" | "trait" | "reasons" | "voice" | "letter" | "number" | "card";
 
-function Film({ data, mode, react }: ExperienceProps) {
+const SWATCH: Record<SlideId, Swatch> = {
+  intro: SW.tomato, song: SW.lilac, memories: SW.ink, stats: SW.butter, trait: SW.pink,
+  reasons: SW.ink, voice: SW.lilac, letter: SW.butter, number: SW.ink, card: SW.tomato,
+};
+const NEXT_LABEL: Partial<Record<SlideId, string>> = { intro: "Let's go", letter: "One more thing", number: "See our Wrapped" };
+/** Never stuck: Next appears after this long even if the interaction hasn't happened. */
+const AUTO_READY: Partial<Record<SlideId, number>> = { song: 6000, memories: 7000, stats: 8000, trait: 8000, reasons: 9000, voice: 6000, letter: 6000 };
+
+function GateCover({ year }: { year: number }) {
+  return (
+    <div className="uw-cover" aria-hidden>
+      <i className="c1" />
+      <i className="c2" />
+      <i className="c3" />
+      <b>Us,</b>
+      <em>wrapped</em>
+      <small>{year}</small>
+    </div>
+  );
+}
+
+function Story({ data, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
-  const reduce = useReducedMotion();
-  const film = useMemo(() => readFilm(data), [data]);
-  const [scene, setScene] = useState<Scene>("gate");
-  const [yes, setYes] = useState<{ takes: number; origin: { x: number; y: number } } | null>(null);
+  const { sfx, music, premium } = p;
+  const w = useMemo(() => readWrapped(day, data, music?.title), [day, data, music?.title]);
+  const [opened, setOpened] = useState(p.opened);
   const [run, setRun] = useState(0);
-  const { music, sfx } = p;
 
-  const go = useCallback((s: Scene) => {
-    setScene(s);
-    window.scrollTo({ top: 0 });
-  }, []);
+  const order = useMemo(() => {
+    const o: SlideId[] = ["intro", "song", "memories"];
+    if (statTiles(w).length) o.push("stats");
+    if (w.trait) o.push("trait");
+    if (w.reasons.length) o.push("reasons");
+    if (premium.voiceNote || premium.voiceCaption.trim()) o.push("voice");
+    if (data.letter.trim()) o.push("letter");
+    o.push("number", "card");
+    return o;
+  }, [w, premium.voiceNote, premium.voiceCaption, data.letter]);
 
-  // The music script, per scene (a no-op where the platform can't fade). Keyed on the scene only: the music
-  // object changes identity whenever its state does, and re-applying a level would undo a voice-note duck.
+  const [idx, setIdx] = useState(0);
+  const [readySet, setReadySet] = useState<Record<string, boolean>>({});
+  const [yesSaid, setYesSaid] = useState(false);
+  const slide = order[Math.min(idx, order.length - 1)];
+  const key = `${run}-${slide}`;
+  const isReady = !!readySet[key];
+  const sw = SWATCH[slide];
+
+  const ready = useCallback(() => setReadySet((r) => (r[key] ? r : { ...r, [key]: true })), [key]);
+  useEffect(() => {
+    const ms = AUTO_READY[slide];
+    if (!ms || !opened) return;
+    const t = window.setTimeout(ready, ms);
+    return () => clearTimeout(t);
+  }, [slide, ready, opened]);
+
+  const go = useCallback(
+    (i: number) => {
+      setIdx(Math.max(0, Math.min(order.length - 1, i)));
+      sfx("swoosh-soft", { gain: 0.45 });
+    },
+    [order.length, sfx],
+  );
+  const next = useCallback(() => go(idx + 1), [go, idx]);
+  const back = useCallback(() => go(idx - 1), [go, idx]);
+
+  // Keyboard: → / ← move through the story.
+  useEffect(() => {
+    if (!opened) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.key === "ArrowRight" && isReady && slide !== "card" && (slide !== "number" || yesSaid)) next();
+      if (e.key === "ArrowLeft" && idx > 0 && slide !== "number" && slide !== "card") back();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [opened, isReady, slide, idx, next, back, yesSaid]);
+
+  // The song dips under the letter and comes back for the rest; the number slide and the voice note manage
+  // their own level (a no-op where the platform can't fade).
   const musicRef = useRef(music);
   useEffect(() => {
     musicRef.current = music;
   });
   useEffect(() => {
-    const lv = LEVEL[scene];
     const m = musicRef.current;
-    if (lv !== undefined && m?.canFade) m.fadeTo(lv, 1200);
-  }, [scene]);
-
-  // The projector hum under the leader and the titles.
-  useEffect(() => {
-    if (scene !== "leader" && scene !== "titles") return;
-    const h = sfx("projector-loop", { gain: 0.35 });
-    return () => h.stop(900);
-  }, [scene, sfx]);
-
-  // A voice scene with nothing to say (no note, no caption) is skipped.
-  const hasVoice = !!(p.premium.voiceNote || p.premium.voiceCaption);
-  const afterMontage = useCallback(() => go(hasVoice ? "voice" : "book"), [go, hasVoice]);
+    if (!opened || !m?.canFade) return;
+    if (slide === "letter") m.fadeTo(0.55, 1200);
+    else if (slide !== "number" && slide !== "voice") m.fadeTo(slide === "card" ? 0.7 : 1, 1200);
+  }, [slide, opened]);
 
   const slot = (id: string) => day.gifSlots.find((g) => g.id === id)!;
   const sticker = (id: string, size: number) => <Sticker slug={day.slug} slot={slot(id)} value={data.gifs?.[id]} size={size} alt="" eager />;
 
   const replay = () => {
-    setYes(null);
     setRun((r) => r + 1);
-    go("titles");
+    setYesSaid(false);
+    setIdx(0);
+    sfx("whoosh", { gain: 0.5 });
   };
 
-  const grain = scene === "question" ? 0.16 : 0.07;
-
-  return (
-    <div className={`fm-root ${FILM_FONT_VARS}${scene === "question" ? " is-bw" : ""}`} style={{ ["--fm-grain" as string]: grain }}>
-      <style>{FILM_CSS}</style>
-      <div className="fm-curtains" aria-hidden>
-        <span className="fm-curtain is-l" />
-        <span className="fm-curtain is-r" />
-        <span className="fm-valance" />
-      </div>
-      {PARTICLES[scene] && <ParticleField preset={PARTICLES[scene]!} density={scene === "stars" ? 0.45 : 0.3} colors={scene === "stars" ? undefined : ["rgba(255,231,179,.55)"]} z={1} />}
-      {scene !== "gate" && !reduce && <span className="fm-grain" aria-hidden />}
-      {scene !== "gate" && <span className="fm-vig" aria-hidden />}
-      <Letterbox show={LETTERBOX.has(scene) && !yes} />
-
-      {scene === "gate" && (
-        <PremiumGate
-          art={<Ticket to={film.to} from={film.from} sticker={sticker("pv1-ticket", 64)} />}
-          kicker="Tonight's screening, starring"
-          subtitle={
-            <span className="fm-gateSub">
-              <i>{film.title}</i>
-              <small>🎧 Sound on · tap to start the film</small>
-            </span>
-          }
-          sting="film-lamp"
-          openLabel="Start the film"
-          className={`fm-gateBg ${FILM_FONT_VARS}`}
-          bg="#0B0A0C"
-          ink="#FFF3DC"
-          accent="#D4AF37"
-          onOpen={({ quiet }) => {
-            if (!quiet && music?.canFade) music.fadeTo(0.35, 400);
-            go("leader");
-          }}
-        />
-      )}
-
-      {scene === "leader" && <Leader onDone={() => go(p.repeatVisit ? "stars" : "titles")} />}
-
-      <SceneFade sceneKey={`${run}-${scene}`}>
-        {scene === "titles" && <Titles film={film} sticker={sticker("pv2-starring", 96)} onDone={() => go("stars")} />}
-        {scene === "stars" && <Stars film={film} sticker={sticker("pv3-stars", 84)} onDone={() => go("montage")} />}
-        {scene === "montage" && <Montage photos={data.photos} seed={`${film.to}${film.from}${film.title}`} onDone={afterMontage} />}
-        {scene === "voice" && <Commentary film={film} onDone={() => go("book")} />}
-        {scene === "book" && <Book film={film} letter={data.letter} onDone={() => go("numbers")} />}
-        {scene === "numbers" && <Numbers film={film} onDone={() => go("question")} />}
-        {scene === "question" && (
-          <Question
-            film={film}
-            sticker={sticker("pv4-please", 88)}
-            onYes={(takes, origin) => {
-              react("answered", { noDodges: takes });
-              setYes({ takes, origin });
-              setScene("finale");
+  const props = { w, ready, isReady, next };
+  const render = () => {
+    switch (slide) {
+      case "intro": return <Intro {...props} />;
+      case "song": return <TopSong {...props} />;
+      case "memories": return <Memories {...props} />;
+      case "stats": return <Stats {...props} />;
+      case "trait": return <Trait {...props} />;
+      case "reasons": return <Reasons {...props} />;
+      case "voice": return <Voice {...props} />;
+      case "letter": return <Letter {...props} letter={data.letter} />;
+      case "number":
+        return (
+          <TheNumber
+            {...props}
+            please={sticker("pv4-please", 76)}
+            yesSticker={sticker("pv5-yes", 96)}
+            onAnswer={(noDodges) => {
+              setYesSaid(true);
+              react("answered", { noDodges });
             }}
           />
-        )}
-      </SceneFade>
+        );
+      case "card": return <WrappedCard {...props} onComplete={() => react("completed")} onReplay={replay} />;
+    }
+  };
 
-      {scene === "finale" && yes && (
-        <Finale
-          key={run}
-          day={day}
-          data={data}
-          film={film}
-          takes={yes.takes}
-          origin={yes.origin}
-          mode={mode}
-          yesSticker={sticker("pv5-yes", 110)}
-          creditsSticker={sticker("pv6-credits", 72)}
-          onComplete={() => react("completed")}
-          onReplay={replay}
+  const hearts = yesSaid && (slide === "number" || slide === "card");
+  const showNext = opened && isReady && slide !== "card" && (slide !== "number" || yesSaid);
+  const showBack = opened && idx > 0 && slide !== "card" && slide !== "number";
+
+  return (
+    <div className={`uw-root ${WRAPPED_FONT_VARS}`} style={{ ["--uw-bg" as string]: sw.bg, ["--uw-ink" as string]: sw.ink, ["--uw-accent" as string]: sw.accent, background: "#151018" }}>
+      <style>{WRAPPED_CSS}</style>
+      <ShaderBackdrop preset="velvet" colors={sw.silk} intensity={0.6} speed={0.45} parallax />
+      {hearts && <GlowParticles preset="hearts" colors={["#FF7AB6", "#FF4B3E", "#FFE7A3"]} density={0.35} z={3} />}
+
+      {!opened && (
+        <PremiumGate
+          art={<GateCover year={w.year} />}
+          kicker="Your year in love, wrapped for"
+          subtitle={<span>with love, from {w.from}</span>}
+          sting="chime-cascade"
+          openLabel="Unwrap our year"
+          className={`uw-gate ${WRAPPED_FONT_VARS}`}
+          bg="#151018"
+          ink="#FFF6E8"
+          accent="#FF4B3E"
+          onOpen={() => setOpened(true)}
         />
       )}
+
+      {opened && (
+        <div className="uw-stage">
+          {/* On a repeat visit the bars are a chapter menu: tap one to jump straight there. */}
+          <div className={`uw-bars${p.repeatVisit ? " is-nav" : ""}`} aria-hidden={!p.repeatVisit || undefined}>
+            {order.map((s, i) =>
+              p.repeatVisit ? (
+                <button type="button" key={s} aria-label={`Go to ${s}`} onClick={() => go(i)} className={`uw-bar${i < idx ? " is-done" : ""}${i === idx ? " is-now" : ""}${i === idx && isReady ? " is-ready" : ""}`}>
+                  <i />
+                </button>
+              ) : (
+                <span key={s} className={`uw-bar${i < idx ? " is-done" : ""}${i === idx ? " is-now" : ""}${i === idx && isReady ? " is-ready" : ""}`}>
+                  <i />
+                </span>
+              ),
+            )}
+          </div>
+          <SceneTransition sceneKey={key} variant="flash" duration={0.8} flashColor={sw.accent}>
+            {render()}
+          </SceneTransition>
+          {showBack && (
+            <button type="button" className="uw-back" onClick={back} aria-label="Back">
+              <Back />
+            </button>
+          )}
+          {showNext && (
+            <div className="uw-foot">
+              <button type="button" className="uw-next" key={key} onClick={next}>
+                {NEXT_LABEL[slide] ?? "Next"} <Arrow />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <Vignette strength={0.36} />
+      <FilmGrain opacity={0.08} />
     </div>
   );
 }
@@ -177,7 +235,7 @@ export default function ValentinesDayPremiumExperience(props: ExperienceProps) {
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
       <DayRoot day={day} data={props.data} layout="full" dark>
-        <Film {...props} />
+        <Story {...props} />
       </DayRoot>
     </PremiumRoot>
   );
