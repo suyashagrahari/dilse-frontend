@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-propose-day-premium",
   coverImage: templateMedia("happy-propose-day-premium", "cover-poster.webp"),
-  title: "Propose Day ✦ Premium — Look Up",
+  title: "Propose Day ✦ Premium — The Premiere",
   description:
-    "A rooftop proposal at night: your nervous texts, a candle for every reason, a city of memory windows, then a drone show writes the question in the sky on your song's chorus — and they slide the ring on to say yes.",
+    "Your love story, screened as a film: a ticket, a projector countdown, three acts cut from your photos with subtitles, a director's commentary, and the question as the final title card. On yes the screen opens up on your song's chorus and the credits roll.",
 };
