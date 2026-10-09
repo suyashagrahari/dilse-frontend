@@ -15,6 +15,7 @@ import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { Ghost } from "./art";
 import { HW_DISPLAY } from "./fonts";
+import { HW_GIF, useHw } from "./stage";
 import { HW, RoomTitle } from "./ui";
 
 const MAX_DODGES = 5;
@@ -33,6 +34,11 @@ export default function Question({
   onYes: (dodges: number) => void;
 }) {
   const reduced = useReducedMotion();
+  const { cue } = useHw();
+  const yes = () => {
+    cue("chime", { gain: 0.8 });
+    onYes(dodgesRef.current);
+  };
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const yesRef = useRef<HTMLButtonElement | null>(null);
   const noRef = useRef<HTMLButtonElement | null>(null);
@@ -54,6 +60,7 @@ export default function Question({
     busy.current = true;
     dodgesRef.current += 1;
     haptic(12);
+    cue("swoosh-soft", { gain: 0.6 });
     setGhosting(true);
     window.setTimeout(
       () => {
@@ -83,7 +90,7 @@ export default function Question({
       },
       reduced ? 0 : 260,
     );
-  }, [gentle, reduced]);
+  }, [gentle, reduced, cue]);
 
   // A longer line can push the ghost past the edge — re-clamp once it has laid out.
   useLayoutEffect(() => {
@@ -130,15 +137,18 @@ export default function Question({
   return (
     <>
       <RoomTitle kicker="Room 7 · the moonlit balcony" title={<span style={{ font: "inherit" }}>{question}</span>} />
-      <motion.div animate={reduced ? undefined : { y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
-        <Ghost size={110} heart mood="shy" />
+      <motion.div animate={reduced ? undefined : { y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "relative", flex: "none", width: "clamp(72px, 14dvh, 120px)" }}>
+        {/* three cute bats keeping the ghost company on the balcony */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HW_GIF.bats} alt="" aria-hidden width={360} height={360} decoding="async" style={{ position: "absolute", left: "96%", top: "2%", width: "100%", height: "auto", pointerEvents: "none" }} />
+        <Ghost size="100%" heart mood="shy" />
       </motion.div>
 
-      <div ref={arenaRef} style={{ position: "relative", width: "100%", maxWidth: "calc(420px * var(--vw-s, 1))", height: 260 }}>
+      <div ref={arenaRef} style={{ position: "relative", flex: "1 1 0", minHeight: 150, width: "100%", maxWidth: "calc(420px * var(--vw-s, 1))", maxHeight: 300 }}>
         <motion.button
           ref={yesRef}
           type="button"
-          onClick={() => onYes(dodgesRef.current)}
+          onClick={yes}
           animate={gentle && waitNote && !reduced ? { scale: [1, 1.08, 1] } : { scale: yesScale }}
           transition={gentle && waitNote ? { duration: 1.2, repeat: Infinity } : { type: "spring", stiffness: 260, damping: 14 }}
           style={{
@@ -179,7 +189,7 @@ export default function Question({
             }
           }}
           onClick={() => {
-            if (surrendered) onYes(dodgesRef.current);
+            if (surrendered) yes();
             else if (gentle) dodge();
           }}
           style={{
@@ -217,12 +227,14 @@ export default function Question({
           {dodges > 0 && !surrendered ? `The No button ghosted you. ${noLabel}` : ""}
         </span>
       </div>
-      {gentle && waitNote && <p style={{ margin: 0, font: `600 15px ${FONTS.ui}`, color: VW.inkSoft }}>That&apos;s okay. I&apos;ll wait right here 🍭</p>}
-      {!gentle && dodges > 0 && !surrendered && (
-        <p style={{ margin: 0, font: `400 18px ${HW_DISPLAY}`, color: HW.mint }}>
-          The No button ghosted you ×{dodges}
-        </p>
-      )}
+      <div style={{ flex: "none", minHeight: 28 }}>
+        {gentle && waitNote && <p style={{ margin: 0, font: `600 15px ${FONTS.ui}`, color: VW.inkSoft }}>That&apos;s okay. I&apos;ll wait right here 🍭</p>}
+        {!gentle && dodges > 0 && !surrendered && (
+          <p style={{ margin: 0, font: `400 18px ${HW_DISPLAY}`, color: HW.mint }}>
+            The No button ghosted you ×{dodges}
+          </p>
+        )}
+      </div>
     </>
   );
 }

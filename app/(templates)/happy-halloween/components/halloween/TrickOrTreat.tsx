@@ -3,25 +3,27 @@
 // Room 2 — Trick or Treat? Mini-game A, about ten seconds.
 //   TREAT → sweets rain down; slide the pumpkin pail (or tap the sweets) to
 //           catch five. "Fill it for me" does it for them.
-//   TRICK → the lights fade out (slowly — no flashing), a round little ghost
-//           says BOO! with the sender's trick line, then "…fine, have a treat
-//           anyway". Kids mode skips the blackout: it's confetti spiders.
+//   TRICK → asked for it: the prankster panda in a Scream mask jumps at them
+//           with a BOO (the optional third scare, ./stage.tsx), then "got you!
+//           💜", the sender's trick line and "…fine, have a treat anyway".
+//           Kids mode: the panda just waves hello, no sound, no dark.
 // Both paths end on a full pail and the way into the house.
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { burst, haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
-import { CandyBucket, Ghost } from "./art";
+import { CandyBucket } from "./art";
 import { HW_DISPLAY } from "./fonts";
-import { Btn, GhostBtn, Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { HW_GIF, preload, useHw, useNext } from "./stage";
+import { Btn, Hint, HW, RoomTitle, SkipChip } from "./ui";
 
 const GOAL = 5;
 const SWEETS = ["🍬", "🍭", "🍫", "🍬", "🍭", "🧁"];
 const POOL = 6;
 const BUCKET_W = 112;
 
-type Phase = "choose" | "treat" | "dark" | "boo" | "anyway" | "done";
+type Phase = "choose" | "treat" | "trick" | "anyway" | "done";
 
 interface Drop {
   on: boolean;
@@ -34,6 +36,7 @@ interface Drop {
 
 function CatchGame({ onDone }: { onDone: () => void }) {
   const reduced = useReducedMotion();
+  const { cue } = useHw();
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const bucketRef = useRef<HTMLDivElement | null>(null);
   const els = useRef<(HTMLSpanElement | null)[]>([]);
@@ -50,11 +53,12 @@ function CatchGame({ onDone }: { onDone: () => void }) {
       caughtRef.current += 1;
       setCaught(caughtRef.current);
       haptic(12);
+      cue("pop", { gain: 0.7, detune: caughtRef.current * 90 });
       const id = performance.now();
       setPops((p) => [...p.slice(-4), { id, x, y }]);
       if (caughtRef.current >= GOAL) window.setTimeout(onDone, 500);
     },
-    [onDone],
+    [onDone, cue],
   );
 
   // The falling sweets (skipped under reduced motion — they sit still to be tapped).
@@ -122,8 +126,8 @@ function CatchGame({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div style={{ display: "grid", gap: 10, justifyItems: "center", width: "100%" }}>
-      <p aria-live="polite" style={{ margin: 0, font: `400 22px ${HW_DISPLAY}`, color: HW.candle }}>
+    <>
+      <p aria-live="polite" style={{ margin: 0, flex: "none", font: `400 clamp(18px, 2.8dvh, 22px) ${HW_DISPLAY}`, color: HW.candle }}>
         🍬 {caught} / {GOAL}
       </p>
       <div
@@ -132,9 +136,11 @@ function CatchGame({ onDone }: { onDone: () => void }) {
         onPointerDown={(e) => move(e.clientX)}
         style={{
           position: "relative",
+          flex: "1 1 0",
+          minHeight: 0,
           width: "100%",
           maxWidth: "calc(420px * var(--vw-s, 1))",
-          height: "min(46dvh, 360px)",
+          maxHeight: 420,
           borderRadius: 24,
           overflow: "hidden",
           background: "linear-gradient(180deg, rgba(247,243,255,.04), rgba(247,243,255,.10))",
@@ -195,27 +201,21 @@ function CatchGame({ onDone }: { onDone: () => void }) {
           ))}
         </AnimatePresence>
       </div>
-      {!finished && <Hint>{reduced ? "Tap the sweets to drop them in the pail" : "Slide the pail to catch 5 sweets (or tap them)"}</Hint>}
-      {!finished && <SkipChip onClick={fillForMe}>Fill it for me</SkipChip>}
-    </div>
+      <div style={{ flex: "none", display: "grid", gap: 4, justifyItems: "center", minHeight: 76 }}>
+        {!finished && <Hint>{reduced ? "Tap the sweets to drop them in the pail" : "Slide the pail to catch 5 sweets (or tap them)"}</Hint>}
+        {!finished && <SkipChip onClick={fillForMe}>Fill it for me</SkipChip>}
+      </div>
+    </>
   );
 }
 
-export default function TrickOrTreat({
-  trickLine,
-  gentle,
-  sticker,
-  onNext,
-}: {
-  trickLine: string;
-  /** Kids mode: no blackout, the trick is confetti spiders. */
-  gentle: boolean;
-  sticker: ReactNode;
-  onNext: () => void;
-}) {
+export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine: string; sticker: ReactNode; onNext: () => void }) {
   const reduced = useReducedMotion();
+  const hw = useHw();
   const [phase, setPhase] = useState<Phase>("choose");
-  const [picked, setPicked] = useState<"trick" | "treat" | null>(null);
+  const play = `trick${hw.round}`;
+
+  useEffect(() => preload(`${HW_GIF.panda}?play=${play}`), [play]);
 
   const candyRain = useCallback(() => {
     burst({ kind: "sparkles", emojis: ["🍬", "🍭", "🍫", "🧁"], origin: { x: 0.5, y: 0.25 }, count: 26 });
@@ -223,42 +223,40 @@ export default function TrickOrTreat({
 
   const treat = () => {
     haptic(15);
-    setPicked("treat");
+    hw.cue("sparkle", { gain: 0.6 });
     setPhase("treat");
   };
+  const line = trickLine || "Trick! You owe me three hugs.";
   const trick = () => {
-    haptic([20, 60, 20]);
-    setPicked("trick");
-    if (gentle) {
-      burst({ kind: "sparkles", emojis: ["🕷️", "🕸️", "🍬", "🕷️"], origin: { x: 0.5, y: 0.35 }, count: 24 });
-      setPhase("anyway");
-      return;
-    }
-    setPhase("dark");
+    setPhase("trick");
+    hw.scare({
+      kind: "panda",
+      play,
+      line,
+      onDone: () => {
+        setPhase("anyway");
+        candyRain();
+      },
+    });
   };
 
-  // Blackout → BOO (timed; the overlay fades, never flashes).
-  useEffect(() => {
-    if (phase !== "dark") return;
-    const t = window.setTimeout(() => setPhase("boo"), reduced ? 300 : 1300);
-    return () => window.clearTimeout(t);
-  }, [phase, reduced]);
-
-  const line = trickLine || "Trick! You owe me three hugs.";
+  useNext(phase === "anyway" || phase === "done" ? "Come inside" : null, onNext, "candy");
 
   return (
     <>
       <RoomTitle kicker="Room 2 · the front porch" title="Trick or treat?" sub={phase === "choose" ? "Pick one. Choose wisely… or don't." : undefined} />
 
-      {phase === "choose" && (
+      {(phase === "choose" || phase === "trick") && (
         <>
-          <div style={{ display: "grid", justifyItems: "center", gap: 4 }}>
-            {sticker}
-            <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}>
-              <CandyBucket size={170} fill={0.15} />
-            </motion.div>
+          <div className="hw-fill">
+            <div style={{ display: "grid", justifyItems: "center", gap: 2 }}>
+              <div style={{ height: "min(30cqh, 96px)", display: "grid", placeItems: "end center" }}>{sticker}</div>
+              <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ width: "min(56cqh, 170px)" }}>
+                <CandyBucket size="100%" fill={0.15} />
+              </motion.div>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+          <div className="hw-row" style={{ flex: "none", gap: 12, minHeight: 76, alignContent: "start" }}>
             <Btn onClick={trick} style={{ background: HW.lavender, color: HW.paperInk, boxShadow: `0 5px 0 #6E55B8, 0 16px 34px -14px rgba(183,156,255,.5)`, minWidth: 140 }}>
               TRICK 👻
             </Btn>
@@ -267,56 +265,29 @@ export default function TrickOrTreat({
         </>
       )}
 
-      {phase === "treat" && <CatchGame onDone={() => { candyRain(); setPhase("done"); }} />}
-
-      {/* the blackout: a slow fade to dark, then the ghost */}
-      <AnimatePresence>
-        {(phase === "dark" || phase === "boo") && (
-          <motion.div
-            key="dark"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0.01 : 0.8, ease: "easeInOut" }}
-            style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(6,4,14,.95)", display: "grid", placeItems: "center", padding: 24 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Trick!"
-          >
-            {phase === "boo" && (
-              <motion.div initial={reduced ? false : { scale: 0.4, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 220, damping: 13 }} style={{ display: "grid", justifyItems: "center", gap: 14, textAlign: "center", maxWidth: 360 }}>
-                <Ghost size={130} mood="boo" />
-                <p style={{ margin: 0, font: `400 64px/1 ${HW_DISPLAY}`, color: HW.ghost, textShadow: "0 0 24px rgba(183,156,255,.6)" }}>BOO!</p>
-                <p style={{ margin: 0, padding: "12px 16px", borderRadius: 16, background: HW.paper, color: HW.paperInk, font: `600 17px/1.4 ${FONTS.ui}`, overflowWrap: "anywhere" }}>{line}</p>
-                <GhostBtn onClick={() => { setPhase("anyway"); candyRain(); }} style={{ marginTop: 6 }}>
-                  Hehe, okay 😅
-                </GhostBtn>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {phase === "anyway" && (
-        <motion.div initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: "grid", gap: 12, justifyItems: "center" }}>
-          {gentle && (
-            <p style={{ margin: 0, padding: "12px 16px", borderRadius: 16, background: HW.paper, color: HW.paperInk, font: `600 16px/1.4 ${FONTS.ui}`, maxWidth: 340, overflowWrap: "anywhere" }}>
-              Trick! Confetti spiders 🕷️ {trickLine}
-            </p>
-          )}
-          <CandyBucket size={150} fill={1} />
-          <p style={{ margin: 0, font: `400 24px ${HW_DISPLAY}`, color: VW.ink }}>…fine, have a treat anyway 🍬</p>
-          <Btn onClick={onNext}>Come inside →</Btn>
-        </motion.div>
+      {phase === "treat" && (
+        <CatchGame
+          onDone={() => {
+            candyRain();
+            hw.cue("chime", { gain: 0.6 });
+            setPhase("done");
+          }}
+        />
       )}
 
-      {phase === "done" && (
-        <motion.div initial={reduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "grid", gap: 12, justifyItems: "center" }}>
-          {sticker}
-          <p style={{ margin: 0, font: `400 28px ${HW_DISPLAY}`, color: HW.candle }}>Treat unlocked! 🍬</p>
-          <p style={{ margin: 0, font: `500 15px ${FONTS.ui}`, color: VW.inkSoft }}>{picked === "treat" ? "A full pail. You're a natural." : ""}</p>
-          <Btn onClick={onNext}>Come inside →</Btn>
-        </motion.div>
+      {(phase === "anyway" || phase === "done") && (
+        <div className="hw-fill">
+          <motion.div initial={reduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "grid", gap: "clamp(6px, 1.4dvh, 12px)", justifyItems: "center" }}>
+            {phase === "done" ? <div style={{ height: "min(26cqh, 96px)", display: "grid", placeItems: "end center" }}>{sticker}</div> : null}
+            <div style={{ width: "min(44cqh, 160px)" }}>
+              <CandyBucket size="100%" fill={1} />
+            </div>
+            <p style={{ margin: 0, font: `400 clamp(22px, 3.6dvh, 28px) ${HW_DISPLAY}`, color: HW.candle }}>{phase === "done" ? "Treat unlocked! 🍬" : "…fine, have a treat anyway 🍬"}</p>
+            <p style={{ margin: 0, maxWidth: 320, font: `500 clamp(13px, 2dvh, 15px)/1.4 ${FONTS.ui}`, color: VW.inkSoft, overflowWrap: "anywhere" }}>
+              {phase === "done" ? "A full pail. You're a natural." : `“${line}”`}
+            </p>
+          </motion.div>
+        </div>
       )}
     </>
   );

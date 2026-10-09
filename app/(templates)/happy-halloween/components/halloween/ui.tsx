@@ -1,9 +1,10 @@
 "use client";
 
 // Small building blocks shared by the Halloween rooms: the palette, the chunky
-// pumpkin button, the quiet ghost button, the pulsing hint, the "do it for me"
-// chip and the room heading. Sound-free on purpose — the page's music (synth
-// or the sender's song) is the only audio; haptics are a bonus.
+// pumpkin button (in-room actions — the way forward is the candy pill in
+// ./stage.tsx), the quiet ghost button, the pulsing hint, the "do it for me"
+// chip and the room heading. Type is clamp()ed to the viewport's height as well
+// as its width, so every room fits one screen from 360×640 up.
 
 import type { CSSProperties, ReactNode } from "react";
 import { motion } from "framer-motion";
@@ -32,13 +33,13 @@ export const HW = {
 } as const;
 
 export const btn: CSSProperties = {
-  minHeight: 54,
-  padding: "14px 28px",
+  minHeight: 50,
+  padding: "12px 24px",
   borderRadius: 18,
   border: 0,
   background: VW.accent,
   color: VW.accentInk,
-  font: `700 17px ${FONTS.ui}`,
+  font: `700 16.5px ${FONTS.ui}`,
   boxShadow: `0 5px 0 ${VW.accentDeep}, 0 16px 34px -14px rgba(255,138,61,.55)`,
   cursor: "pointer",
   touchAction: "manipulation",
@@ -86,8 +87,8 @@ export function SkipChip({ children, onClick }: { children: ReactNode; onClick: 
       type="button"
       onClick={onClick}
       style={{
-        minHeight: 40,
-        padding: "8px 14px",
+        minHeight: 36,
+        padding: "6px 14px",
         borderRadius: 99,
         border: 0,
         background: "transparent",
@@ -113,12 +114,12 @@ export function Hint({ children, style }: { children: ReactNode; style?: CSSProp
       transition={reduced ? { duration: 0.3 } : { opacity: { duration: 2.4, repeat: Infinity }, y: { duration: 0.4 } }}
       style={{
         margin: 0,
-        padding: "8px 14px",
+        padding: "6px 14px",
         borderRadius: 99,
         background: "rgba(247,243,255,.1)",
         border: "1px solid rgba(247,243,255,.18)",
         color: VW.ink,
-        font: `600 14px ${FONTS.ui}`,
+        font: `600 clamp(12.5px, 1.9dvh, 14px) ${FONTS.ui}`,
         ...style,
       }}
     >
@@ -131,10 +132,10 @@ export function Hint({ children, style }: { children: ReactNode; style?: CSSProp
 export function RoomTitle({ kicker, title, sub, as = "h2" }: { kicker?: ReactNode; title: ReactNode; sub?: ReactNode; as?: "h1" | "h2" }) {
   const H = as;
   return (
-    <header style={{ display: "grid", gap: 6, justifyItems: "center" }}>
-      {kicker && <p style={{ margin: 0, font: `700 12px ${FONTS.ui}`, letterSpacing: ".2em", textTransform: "uppercase", color: VW.gold }}>{kicker}</p>}
-      <H style={{ margin: 0, font: `400 calc(34px * var(--vw-s, 1))/1.08 ${HW_DISPLAY}`, color: VW.ink, letterSpacing: ".01em", textWrap: "balance", textShadow: "0 2px 18px rgba(255,138,61,.25)" }}>{title}</H>
-      {sub && <p style={{ margin: 0, maxWidth: 360, font: `500 15px/1.45 ${FONTS.ui}`, color: VW.inkSoft, textWrap: "pretty" }}>{sub}</p>}
+    <header style={{ display: "grid", gap: "clamp(2px, .7dvh, 6px)", justifyItems: "center", flex: "none" }}>
+      {kicker && <p style={{ margin: 0, font: `700 clamp(10.5px, 1.6dvh, 12px) ${FONTS.ui}`, letterSpacing: ".18em", textTransform: "uppercase", color: VW.gold }}>{kicker}</p>}
+      <H style={{ margin: 0, font: `400 clamp(25px, min(8.4vw, 4.6dvh), 38px)/1.06 ${HW_DISPLAY}`, color: VW.ink, letterSpacing: ".01em", textWrap: "balance", textShadow: "0 2px 18px rgba(255,138,61,.25)" }}>{title}</H>
+      {sub && <p style={{ margin: 0, maxWidth: 360, font: `500 clamp(13px, 2.05dvh, 15px)/1.4 ${FONTS.ui}`, color: VW.inkSoft, textWrap: "pretty" }}>{sub}</p>}
     </header>
   );
 }

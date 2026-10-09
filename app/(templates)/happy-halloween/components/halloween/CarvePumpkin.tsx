@@ -8,9 +8,12 @@
 // Tapping a shape twice cuts it too (about a quarter of people never think
 // to "draw", per the Halloween Artist write-up), keyboard users get each
 // shape as a button, and "Carve it for me" does the lot. When all four are
-// out, the candle lights inside (a two-layer flicker: a steady glow plus a
-// brighter copy whose opacity jitters slowly — never a flash), then the
-// pumpkin turns around to show their word carved through the back, glowing.
+// out they tap "Light the candle" and the pumpkin comes alive — the second
+// jump-scare: a jack-o'-lantern whose eyes and grin flare up lunges at them
+// with a BOO (./stage.tsx), then "got you! 💜". The candle is lit after that
+// (a two-layer flicker: a steady glow plus a brighter copy whose opacity
+// jitters slowly — never a flash), and the pumpkin turns around to show their
+// word carved through the back, glowing.
 //
 // SVG rather than the canvas `source-out` trick from the reference: the
 // holes are just the cut paths filled with a light gradient, which stays
@@ -22,6 +25,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { burst, haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { HW_DISPLAY } from "./fonts";
+import { HW_GIF, preload, useHw, useNext } from "./stage";
 import { Btn, GhostBtn, Hint, HW, RoomTitle, SkipChip } from "./ui";
 
 const PIECES = [
@@ -99,8 +103,12 @@ function Body({ back }: { back?: boolean }) {
   );
 }
 
-export default function CarvePumpkin({ word, onNext }: { word: string; onNext: () => void }) {
+export default function CarvePumpkin({ word, recipient, onNext }: { word: string; recipient: string; onNext: () => void }) {
   const reduced = useReducedMotion();
+  const hw = useHw();
+  const play = `carve${hw.round}`;
+  useEffect(() => preload(`${HW_GIF.light}?play=${play}`), [play]);
+  const [lighting, setLighting] = useState(false);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   // Points along each outline, from the path data itself (a detached SVG
@@ -118,6 +126,7 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
   const flickerF = useFlicker(lit, reduced);
   const flickerB = useFlicker(lit, reduced);
 
+  const { cue } = hw;
   const doCut = useCallback((i: number) => {
     setCut((c) => {
       if (c[i]) return c;
@@ -126,21 +135,28 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
       return n;
     });
     haptic(20);
-  }, []);
+    cue("pop", { gain: 0.8, detune: i * 120 - 120 });
+  }, [cue]);
 
-  // All out → light the candle → turn the pumpkin around.
-  useEffect(() => {
-    if (!allCut || lit) return;
-    const t = window.setTimeout(() => {
-      setLit(true);
-      haptic([15, 50, 25]);
-      burst({ kind: "sparkles", emojis: ["✨", "🕯️", "⭐", "✨"], origin: { x: 0.5, y: 0.42 }, count: 22 });
-    }, reduced ? 100 : 650);
-    return () => window.clearTimeout(t);
-  }, [allCut, lit, reduced]);
+  // All out → they light the candle themselves (the scare is earned by that tap) → it turns around.
+  const lightCandle = () => {
+    if (lighting || lit) return;
+    setLighting(true);
+    hw.scare({
+      kind: "light",
+      play,
+      line: <>Just a very happy pumpkin. It&apos;s been dying to meet you, {recipient}.</>,
+      onDone: () => {
+        setLit(true);
+        haptic([15, 50, 25]);
+        hw.cue("sparkle", { gain: 0.7 });
+        burst({ kind: "sparkles", emojis: ["✨", "🕯️", "⭐", "✨"], origin: { x: 0.5, y: 0.42 }, count: 22 });
+      },
+    });
+  };
   useEffect(() => {
     if (!lit) return;
-    const t = window.setTimeout(() => setBack(true), reduced ? 900 : 1700);
+    const t = window.setTimeout(() => setBack(true), reduced ? 700 : 1300);
     return () => window.clearTimeout(t);
   }, [lit, reduced]);
 
@@ -204,6 +220,8 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
     PIECES.forEach((_, i) => window.setTimeout(() => doCut(i), reduced ? 0 : i * 260));
   };
 
+  useNext(lit ? "Into the hallway" : null, onNext, "pumpkin");
+
   const fontSize = useMemo(() => {
     const n = word.length;
     return n <= 3 ? 82 : n <= 5 ? 62 : n <= 7 ? 48 : 40;
@@ -215,10 +233,11 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
       <RoomTitle
         kicker="Room 3 · the kitchen"
         title="Carve the pumpkin"
-        sub={!allCut ? "Trace the dotted lines with your finger to cut out the face." : lit ? (back ? "Look what's carved on the back 🕯️" : "It's alive! 🕯️") : "Lighting the candle…"}
+        sub={!allCut ? "Trace the dotted lines with your finger to cut out the face." : lit ? (back ? "Look what's carved on the back 🕯️" : "It's alive! 🕯️") : "All carved. Now give it a little light…"}
       />
 
-      <div style={{ position: "relative", width: "min(82vw, calc(300px * var(--vw-s, 1)))", aspectRatio: "300 / 300", perspective: 1000 }}>
+      <div className="hw-fill">
+      <div style={{ position: "relative", width: "min(80cqw, 88cqh, calc(300px * var(--vw-s, 1)))", aspectRatio: "300 / 300", perspective: 1000 }}>
         {/* glow on the table */}
         <div aria-hidden style={{ position: "absolute", left: "-10%", right: "-10%", bottom: "-6%", height: "26%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(255,190,90,.55), transparent)", opacity: lit ? 1 : 0, transition: "opacity 1s" }} />
         <motion.div
@@ -378,24 +397,36 @@ export default function CarvePumpkin({ word, onNext }: { word: string; onNext: (
         </motion.div>
       </div>
 
-      {!allCut && (
-        <>
-          <div aria-hidden style={{ display: "flex", gap: 8 }}>
-            {cut.map((c, i) => (
-              <span key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: c ? HW.candle : "rgba(247,243,255,.2)", boxShadow: c ? "0 0 8px #FFB347" : undefined }} />
-            ))}
-          </div>
-          <Hint>{touched ? "Keep tracing… or tap a shape twice ✂️" : "Trace the dotted lines ✂️ (or tap a shape twice)"}</Hint>
-          <SkipChip onClick={carveAll}>Carve it for me</SkipChip>
-        </>
-      )}
-      {lit && (
-        <motion.div initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 1.2 }} style={{ display: "grid", gap: 10, justifyItems: "center" }}>
-          {back && <p style={{ margin: 0, font: `500 15px ${FONTS.ui}`, color: VW.inkSoft }}>Carved just for you, by candlelight.</p>}
-          <GhostBtn onClick={() => setBack((b) => !b)}>{back ? "↺ See its face" : "↻ Turn it around"}</GhostBtn>
-          <Btn onClick={onNext}>Into the hallway →</Btn>
-        </motion.div>
-      )}
+      </div>
+
+      <div style={{ flex: "none", display: "grid", gap: 6, justifyItems: "center", alignContent: "start", minHeight: "clamp(92px, 14dvh, 104px)" }}>
+        {!allCut && (
+          <>
+            <div className="hw-row" style={{ gap: 12 }}>
+              <div aria-hidden style={{ display: "flex", gap: 7 }}>
+                {cut.map((c, i) => (
+                  <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: c ? HW.candle : "rgba(247,243,255,.2)", boxShadow: c ? "0 0 8px #FFB347" : undefined }} />
+                ))}
+              </div>
+              <Hint>{touched ? "Keep tracing… or tap a shape twice ✂️" : "Trace the dotted lines ✂️"}</Hint>
+            </div>
+            <SkipChip onClick={carveAll}>Carve it for me</SkipChip>
+          </>
+        )}
+        {allCut && !lit && (
+          <motion.div initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 0.5 }}>
+            <Btn onClick={lightCandle} disabled={lighting} style={{ background: `linear-gradient(180deg, ${HW.flame}, ${HW.candle})`, color: HW.paperInk, boxShadow: "0 5px 0 #B8863A, 0 0 30px -4px rgba(255,210,122,.8)" }}>
+              🕯️ Light the candle
+            </Btn>
+          </motion.div>
+        )}
+        {lit && (
+          <motion.div initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 0.8 }} style={{ display: "grid", gap: 8, justifyItems: "center" }}>
+            {back && <p style={{ margin: 0, font: `500 clamp(13px, 2dvh, 15px) ${FONTS.ui}`, color: VW.inkSoft }}>Carved just for you, by candlelight.</p>}
+            <GhostBtn onClick={() => setBack((b) => !b)}>{back ? "↺ See its face" : "↻ Turn it around"}</GhostBtn>
+          </motion.div>
+        )}
+      </div>
     </>
   );
 }
