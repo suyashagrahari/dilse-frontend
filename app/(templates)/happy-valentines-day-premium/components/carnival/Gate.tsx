@@ -56,10 +56,11 @@ export default function Gate({ c, onOpen }: { c: Carnival; onOpen: () => void })
     setDrag({ x: Math.max(0, e.clientX - s.x), y: e.clientY - s.y });
   };
   const onUp = () => {
-    const far = Math.hypot(drag.x, drag.y) > TEAR_AT;
+    const moved = Math.hypot(drag.x, drag.y);
     start.current = null;
     setDragging(false);
-    if (far) tear(false);
+    // A far drag tears it; so does a plain tap (most people tap the stub before they think to drag it).
+    if (moved > TEAR_AT || moved < 8) tear(false);
     else setDrag({ x: 0, y: 0 });
   };
 
