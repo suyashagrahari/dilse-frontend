@@ -2,13 +2,13 @@ import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 import { config as base } from "../happy-rose-day/config";
 
-// Gallery card for the ✦ Premium twin of /happy-rose-day. The cover is the v2 poster
-// (cover-poster-v2*.webp: a new name, since CDN covers are cached immutable). OWNED BY THIS DAY'S BUILDER.
+// Gallery card for the ✦ Premium twin of /happy-rose-day, v3 "The Rose Garden". The cover is still the v2 poster
+// (cover-poster-v2*.webp, cached immutable on the CDN) until a v3 cover is uploaded. OWNED BY THIS DAY'S BUILDER.
 export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-rose-day-premium",
   coverImage: templateMedia("happy-rose-day-premium", "cover-poster-v2.webp"),
-  title: "Rose Day ✦ Premium: The Bloom of Us",
+  title: "Rose Day ✦ Premium: The Rose Garden",
   description:
-    "Your photos become the petals of one rose. They hold a velvet bud to warm it, and on your song's chorus it opens, every petal a photo of you two. Then photos pressed under vellum, your letter, your voice, and a keepsake card.",
+    "A little rose garden that grows for them: they tear open a seed packet with their name, water the sprout, pick its colour, play loves-me-loves-me-not, untie your letter, hear your voice, arrange your photos into a bouquet, and say yes as roses bloom on your song.",
 };
