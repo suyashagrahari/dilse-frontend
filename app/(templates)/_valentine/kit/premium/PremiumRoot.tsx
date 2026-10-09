@@ -193,7 +193,7 @@ export default function PremiumRoot({
     [premium, mode, data.senderName, data.recipientName, opened, repeatVisit, audio.muted, setMuted, open, music, voice],
   );
 
-  const showBlocked = opened && !audio.muted && !!music && music.mode === "youtube" && music.blocked;
+  const showBlocked = opened && !audio.muted && !!music && (music.mode === "youtube" || music.mode === "track") && music.blocked;
 
   return (
     <PremiumContext.Provider value={api}>

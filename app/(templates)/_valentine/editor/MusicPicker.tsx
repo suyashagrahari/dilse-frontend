@@ -2,15 +2,15 @@
 
 // ─── Music, in the edit form ─────────────────────────────────────────────────
 //
-// Off · the day's soft built-in melody · a YouTube song (any link, or one of
-// the suggestions). Only the 11-char video id is kept. "Listen" plays it
+// [The template's own track, when the day ships one] · Off · the day's soft
+// built-in melody · a YouTube song (any link, or one of the suggestions). Only the 11-char video id is kept. "Listen" plays it
 // right here through the page's DayMusic player, so the sender hears exactly
 // what the recipient will.
 
 import { useEffect, useId, useState } from "react";
 import { useDayMusic } from "../music/context";
 import { SONG_SUGGESTIONS, formatClock, parseClock, parseStartFromLink, parseYouTubeId, suggestionFor, youTubeThumb, type SongSuggestion } from "../music/youtube";
-import { MUSIC_START_MAX, type MusicMode, type ValentineDayData } from "../types";
+import { MUSIC_START_MAX, type DayTrack, type MusicMode, type ValentineDayData } from "../types";
 
 type MusicValue = Pick<ValentineDayData, "musicMode" | "musicYoutubeId" | "musicStart">;
 
@@ -26,6 +26,7 @@ export default function MusicPicker({
   suggestions = SONG_SUGGESTIONS,
   suggestionsNote = "romantic favourites · tap to use",
   audioOnly = false,
+  track,
 }: {
   value: MusicValue;
   onChange: (patch: Partial<MusicValue>) => void;
@@ -34,6 +35,8 @@ export default function MusicPicker({
   suggestionsNote?: string;
   /** The day plays YouTube as sound only (DayConfig.music.audioOnly). */
   audioOnly?: boolean;
+  /** The template's own track (DayConfig.music.track): offered first. */
+  track?: DayTrack;
 }) {
   const music = useDayMusic();
   const uid = useId().replace(/:/g, "");
@@ -52,6 +55,7 @@ export default function MusicPicker({
   const id = value.musicYoutubeId;
   const known = id ? suggestionFor(id, suggestions) : null;
   const songTitle = known?.title ?? (music?.mode === "youtube" && music.title ? music.title : "Your YouTube song");
+  const modes = track ? [{ value: "track" as const, emoji: "🎼", label: track.title, hint: "Made for this template" }, ...MODES] : MODES;
   const listening = !!music?.playing && music.mode === (value.musicMode === "youtube" && !id ? "melody" : value.musicMode);
 
   const applyLink = (raw: string) => {
@@ -84,8 +88,8 @@ export default function MusicPicker({
 
   return (
     <div className="vmp">
-      <div className="vmp-modes" role="radiogroup" aria-label="Background music">
-        {MODES.map((m) => {
+      <div className={`vmp-modes${modes.length > 3 ? " is-four" : ""}`} role="radiogroup" aria-label="Background music">
+        {modes.map((m) => {
           const on = value.musicMode === m.value;
           return (
             <button key={m.value} type="button" role="radio" aria-checked={on} className={`vmp-mode${on ? " is-on" : ""}`} onClick={() => onChange({ musicMode: m.value })}>
@@ -96,6 +100,15 @@ export default function MusicPicker({
           );
         })}
       </div>
+
+      {value.musicMode === "track" && track && (
+        <div className="vmp-panel">
+          <p className="vs-hint" style={{ margin: 0 }}>
+            <b>{track.title}</b> loops softly from their first tap — made for this page. They can mute it any time.
+          </p>
+          {listenBtn("▶ Listen")}
+        </div>
+      )}
 
       {value.musicMode === "melody" && (
         <div className="vmp-panel">
@@ -192,6 +205,7 @@ export default function MusicPicker({
 export const MUSIC_CSS = `
 .vmp { display: grid; gap: 12px; }
 .vmp-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vmp-modes.is-four { grid-template-columns: repeat(2, 1fr); }
 .vmp-mode { display: grid; justify-items: center; align-content: start; gap: 3px; padding: 12px 6px; min-height: 96px; border-radius: 18px; border: 2px solid var(--vw-edge); background: #fff; color: var(--vw-paper-ink); text-align: center; cursor: pointer; font-family: var(--vw-font-ui); transition: border-color .15s, background .15s, transform .15s; }
 .vmp-mode b { font-size: 13.5px; }
 .vmp-mode small { font-size: 11px; line-height: 1.3; opacity: .65; }

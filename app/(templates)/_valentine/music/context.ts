@@ -4,7 +4,7 @@
 //
 // ValentineDayEditorPage and ValentineDayViewer mount <DayMusicProvider>; the
 // eight day Experiences keep calling `useSynthMusic()` / `<MusicToggle>` and
-// those delegate here, so the sender's choice (off · melody · YouTube) plays in
+// those delegate here, so the sender's choice (off · melody · YouTube · track) plays in
 // the live page AND in the editor preview without touching any day file.
 // Kept in its own module (no imports from the kit) to avoid an import cycle.
 
@@ -21,7 +21,7 @@ export interface DayMusicApi {
   loading: boolean;
   /** YouTube: the song refused to play (removed, region-locked, embedding off). */
   error: string | null;
-  /** YouTube: the video's own title once the player knows it. */
+  /** YouTube: the video's own title once the player knows it. Track: DayConfig.music.track.title. */
   title: string | null;
   toggle: () => void;
   /** Call from inside a tap/click handler — that is what browsers allow. */
@@ -52,6 +52,12 @@ export interface DayMusicApi {
   duck: (level?: number, ms?: number) => void;
   /** Undo duck(). */
   unduck: (ms?: number) => void;
+  /**
+   * A scare-sized duck: dip to `level` (default .2) in ~120 ms, hold for
+   * `holdMs`, then ease back over ~700 ms. Re-calling extends the hold. Works
+   * for track, YouTube and melody (iOS track/YouTube pause instead, as duck() does).
+   */
+  duckFor: (holdMs: number, level?: number) => void;
   /** Ramp the music to level 0–1. A no-op where it can't (iOS YouTube) — check canFade and show a visual instead. */
   fadeTo: (level: number, ms?: number) => void;
   /** False on iOS with a YouTube song (no volume control there). */

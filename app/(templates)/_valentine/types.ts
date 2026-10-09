@@ -20,8 +20,9 @@ export type { PremiumFields } from "./premiumData";
 
 export type EditMode = null | "manual" | "preview";
 
-export type MusicMode = "off" | "melody" | "youtube";
-export const MUSIC_MODES: readonly MusicMode[] = ["off", "melody", "youtube"];
+/** "track" = the template's own looping MP3 (DayConfig.music.track); only valid on a day that ships one. */
+export type MusicMode = "off" | "melody" | "youtube" | "track";
+export const MUSIC_MODES: readonly MusicMode[] = ["off", "melody", "youtube", "track"];
 export const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 export const MUSIC_START_MAX = 600;
 
@@ -29,16 +30,20 @@ export const MUSIC_START_MAX = 600;
  * The four stored music fields, made consistent — the client twin of the
  * server's sanitizeMusic: an unknown mode or a "youtube" choice without a valid
  * id falls back to the melody; an old page with only `music: false` is "off".
+ * "track" is kept only when the day ships its own track (`opts.track`, i.e.
+ * DayConfig.music.track); such a day also defaults to it when no mode is given.
  */
-export function coerceMusic(src: Record<string, unknown>): Pick<ValentineDayData, "music" | "musicMode" | "musicYoutubeId" | "musicStart"> {
+export function coerceMusic(src: Record<string, unknown>, opts: { track?: boolean } = {}): Pick<ValentineDayData, "music" | "musicMode" | "musicYoutubeId" | "musicStart"> {
   const id = typeof src.musicYoutubeId === "string" && YOUTUBE_ID_RE.test(src.musicYoutubeId.trim()) ? src.musicYoutubeId.trim() : "";
+  const fallback: MusicMode = opts.track ? "track" : "melody";
   let mode: MusicMode =
     typeof src.musicMode === "string" && (MUSIC_MODES as readonly string[]).includes(src.musicMode)
       ? (src.musicMode as MusicMode)
       : src.music === false
         ? "off"
-        : "melody";
-  if (mode === "youtube" && !id) mode = "melody";
+        : fallback;
+  if (mode === "youtube" && !id) mode = fallback;
+  if (mode === "track" && !opts.track) mode = "melody";
   const n = typeof src.musicStart === "number" && Number.isFinite(src.musicStart) ? Math.round(src.musicStart) : 0;
   return { music: mode !== "off", musicMode: mode, musicYoutubeId: id, musicStart: Math.min(MUSIC_START_MAX, Math.max(0, n)) };
 }
@@ -58,7 +63,7 @@ export interface ValentineDayData<E = Extras> {
   gifs: Record<string, string>;
   /** Kept for older pages/clients: always `musicMode !== "off"`. */
   music: boolean;
-  /** off · the day's built-in synth melody · a YouTube song. Silent until the first gesture. */
+  /** off · the day's built-in synth melody · a YouTube song · the template's own track. Silent until the first gesture. */
   musicMode: MusicMode;
   /** An 11-char YouTube video id — never a URL. "" unless musicMode is "youtube". */
   musicYoutubeId: string;
@@ -181,6 +186,13 @@ export interface DayConfig<E extends Extras = Extras> {
   music?: DayMusicConfig;
   /** Present on the `-premium` slugs: the $2 twin, the premium limits are on the config itself. */
   premium?: { base: DaySlug };
+  /**
+   * Editor chrome: put the editor controls in the top-right PremiumTopBar
+   * (Back · Edit · Create → Publish → Share) instead of the bottom EditorDock,
+   * leaving the bottom of the screen to the scene. Premium days always do;
+   * this opts a $2 day in. Scenes keep the top-right ≈200×56 clear.
+   */
+  topBar?: boolean;
 }
 
 export interface DayMusicConfig {
@@ -197,6 +209,20 @@ export interface DayMusicConfig {
   suggestionsNote?: string;
   /** ✦ Premium: the second the preview's demo song (the first suggestion) starts at. */
   demoStart?: number;
+  /**
+   * The template's own looping background MP3 (music mode "track"). When set,
+   * the editor offers it first in the music picker, and a demo whose
+   * musicMode is "track" keeps it (withDemoSong never swaps it for YouTube).
+   */
+  track?: DayTrack;
+}
+
+export interface DayTrack {
+  /** Absolute https URL of a seamlessly looping MP3 (use templateMedia helpers). */
+  url: string;
+  /** Shown in the now-playing chip / radio card and the picker. */
+  title: string;
+  artist?: string;
 }
 
 export const VW_LIMITS = { name: 30, petName: 24, endLine: 90, gifUrl: 600 } as const;
@@ -246,7 +272,7 @@ export function fromDb(slug: DaySlug, db: Raw | null | undefined, fromServer = d
     letter: s(src.letter, day.letterMax, demo.letter),
     photos: parseLovePhotos(src.photos, fromServer ? [] : demo.photos).slice(0, day.maxPhotos),
     gifs: coerceGifs(slug, src.gifs),
-    ...coerceMusic(src),
+    ...coerceMusic(src, { track: !!day.music?.track }),
     endLine: s(src.endLine, VW_LIMITS.endLine, demo.endLine),
     extras: coerceExtras(day.extras, src.extras, fromServer ? null : demo.extras),
     ...(day.premium ? { premium: coercePremium(src.premium, fromServer ? PREMIUM_DEFAULTS : demo.premium ?? PREMIUM_DEFAULTS) } : {}),
@@ -286,7 +312,7 @@ export function tidy(slug: DaySlug, d: ValentineDayData): ValentineDayData {
       .map((p) => ({ ...p, caption: p.caption?.slice(0, MAX_CAPTION_LEN), note: p.note?.slice(0, MAX_NOTE_LEN) }))
       .slice(0, day.maxPhotos),
     gifs: coerceGifs(slug, d.gifs),
-    ...coerceMusic(d as unknown as Record<string, unknown>),
+    ...coerceMusic(d as unknown as Record<string, unknown>, { track: !!day.music?.track }),
     extras: tidyExtras(day.extras, d.extras ?? {}),
     ...(day.premium ? { premium: tidyPremium(coercePremium(d.premium)) } : {}),
   };

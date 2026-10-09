@@ -34,7 +34,9 @@ export default function ChorusPicker({ value, onChange, musicMode, musicStart }:
   if (musicMode !== "youtube") {
     return (
       <p className="vs-hint" style={{ margin: 0 }}>
-        {musicMode === "melody"
+        {musicMode === "track"
+          ? "The page's own track swells on the big moment by itself — nothing to pick. Choose a YouTube song above to set your own drop."
+          : musicMode === "melody"
           ? "The built-in melody has its own big moment — nothing to pick. Choose a YouTube song above to set your own drop."
           : "No music on this page, so the big moment is all visual. Add a song above to time it to the chorus."}
       </p>

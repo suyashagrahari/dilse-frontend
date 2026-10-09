@@ -782,6 +782,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
                     suggestions={day.music?.suggestions}
                     suggestionsNote={day.music?.suggestionsNote}
                     audioOnly={!!day.music?.audioOnly}
+                    track={day.music?.track}
                     onChange={(p) => {
                       if (p.musicMode !== undefined) {
                         updateMf("musicMode", p.musicMode);

@@ -148,7 +148,7 @@ export default function ValentineDayViewer({
     <MotionConfig reducedMotion="user">
       {/* The sender's music (off · melody · YouTube song) — the day's own
           useSynthMusic()/MusicToggle delegate to this. Starts on the first tap. */}
-      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}>
+      <DayMusicProvider settings={data} melody={day.melody} autoStart dark={day.theme.dark} audioOnly={!!day.music?.audioOnly} songs={day.music?.suggestions} chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined} track={day.music?.track}>
         <PremiumShareContext.Provider value={day.premium ? shareInfo : null}>
           <Experience data={data} mode="live" react={react} />
         </PremiumShareContext.Provider>

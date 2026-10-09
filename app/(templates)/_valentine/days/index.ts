@@ -25,13 +25,14 @@ export { VALENTINE_DAY_SLUGS, VALENTINE_WEEK_SLUGS, OCCASION_SLUGS, PREMIUM_DAY_
 
 /**
  * ✦ Premium previews play a real song, never the synth melody: unless the
- * config's demo already names a YouTube song, it plays the day's first
+ * config's demo already names a YouTube song — or plays the day's own track
+ * (demo musicMode "track", with music.track set) — it plays the day's first
  * suggestion (from `music.demoStart`, default 0s) once the visitor taps in.
  */
 function withDemoSong(day: DayConfig): DayConfig {
   const first = day.music?.suggestions?.[0];
   const d = day.demo as unknown as Record<string, unknown>;
-  if (!first || d.musicMode === "youtube") return day;
+  if (!first || d.musicMode === "youtube" || (d.musicMode === "track" && day.music?.track)) return day;
   return { ...day, demo: { ...day.demo, music: true, musicMode: "youtube", musicYoutubeId: first.id, musicStart: day.music?.demoStart ?? 0 } } as DayConfig;
 }
 
