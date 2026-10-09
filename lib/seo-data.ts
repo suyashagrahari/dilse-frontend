@@ -2496,55 +2496,53 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   // at the end of this file so the nine stay factually in step (limits from
   // .template-factory/premium/PREMIUM-ENGINE.md §2). No price, no rating.
   "happy-valentines-day-premium": {
-    title: "Couples Wrapped: Valentine's Website for Girlfriend",
+    title: "Valentine Carnival Website for Girlfriend",
     description:
-      "Your year in love as a Wrapped-style story: your song, your top 3 memories, the stats you secretly kept, reasons over your photos, and your days together slamming in on the chorus.",
+      "A cute pastel funfair made just for her: pop balloons that spell your line, break a love meter, win your photos from a gacha machine, ride a Ferris wheel of you two, then ask the big question on your song's chorus.",
     category: "Valentine",
-    emoji: "💘",
+    emoji: "🎡",
     keywords: [
-      "couples wrapped",
-      "relationship wrapped website",
-      "our year in love wrapped",
+      "valentine carnival website",
+      "cute valentine website for girlfriend",
+      "will you be my valentine website",
       "valentine's day website for girlfriend",
       "valentine's day website for boyfriend",
-      "love wrapped for girlfriend",
+      "interactive valentine gift for her",
       "premium valentine surprise",
-      "valentine's day gift for long distance girlfriend",
       "valentine website with our song",
       "valentine's day website with voice note",
-      "days together counter valentine",
-      "reasons i love you website",
-      "will you be my valentine website",
+      "valentine website with photos",
+      "love meter valentine website",
+      "valentine's day gift for long distance girlfriend",
       "valentine's day 2027 surprise",
       "digital valentine gift for her",
       "valentine's day gift for him online",
     ],
     faqs: [
       {
-        question: "What happens when they open Us, Wrapped?",
+        question: "What happens when they open the Valentine Carnival?",
         answer:
-          "Their year with you plays as a tap-through story in bold colours, like a music app's year-end Wrapped. They see your song with your photo as its cover, swipe through your top 3 memories, flip tiles of stats you secretly kept (the phrase they always say, your place), scratch off their top trait according to you, and tap through five reasons that flash over your photos. Then your voice note and your letter. Last, they hold a button to count, and the number of days you've been together slams onto the screen on your song's chorus, cuts to your best photo, and the big question appears.",
+          "They get an ADMIT ONE ticket with their name on it. Tearing the stub opens the carnival and starts your song. Then they play their way through the stalls: pop heart balloons until your line is spelled out, hold a thumb on a love tester until it breaks past 999%, turn a gacha machine to win four capsules with your photos inside, ride a Ferris wheel whose cabins carry your photos, knock down seven cans (Rose Day to Kiss Day) that each hold your line for that day, open your letter at the kissing booth and hear your voice note on the carnival radio. Every stall has cute couple stickers reacting to what they do.",
       },
       {
         question: "What if they press No?",
         answer:
-          "No slides out of the way each time and shows one of your lines, and after the last one it gives up and becomes a second Yes. It ends on an \"Us, Wrapped\" card with your photo, your days together, your song and your place, which they can save as a story-sized image.",
+          "No hides behind a sticker every time they reach for it, shrinks a little and shows one of your lines, while the little face under the question gets sadder. After the last line it gives up and turns into a second Yes. When they say yes, the chorus of your song lands, heart fireworks burst over the fair and the Ferris wheel lights up with your photos. It ends on a ticket stub and photobooth strip they can save as a story-sized image.",
       },
       ...premiumFaqs({
         day: "Valentine's Day",
         twin: "Valentine's Day",
-        keepsake: "\"Us, Wrapped\" card of your year together",
-        voiceAt: "right before your letter",
+        keepsake: "carnival ticket stub with a photobooth strip of your photos",
+        voiceAt: "on the carnival radio, right before the big question",
         yesEmail: true,
       }),
     ],
     howTo: premiumHowTo({
-      name: "How to Make a Couples Wrapped Valentine's Website",
-      description: "Turn your year together into a Wrapped-style story — your song, top memories, stats, reasons and your days together — and send it as a private link.",
-      write: { name: "Write Your Wrapped", text: "Add the date you got together, a line about your song, your most-said phrase and your place, two stats only you kept, their top trait, five reasons and the big question — or let the AI write it from a few lines about the two of you." },
+      name: "How to Make a Valentine Carnival Website for Her",
+      description: "Build a cute pastel funfair from your photos, your words, your voice and your song, and send it as a private link.",
+      write: { name: "Write Your Carnival", text: "Add her ticket's fine print, the line hidden in the balloons, the love meter's joke, a line for each day of Valentine's week, your song and the big question, or let the AI write it from a few lines about the two of you." },
     }),
   },
-
   "happy-rose-day-premium": {
     title: "Cinematic Rose Day Website for Girlfriend",
     description:

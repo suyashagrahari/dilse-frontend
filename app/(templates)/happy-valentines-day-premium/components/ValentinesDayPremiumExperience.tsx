@@ -1,122 +1,107 @@
 "use client";
 
-// ─── Valentine's Day ✦ Premium — "Us, Wrapped" (the flagship of the premium tier) ─────────────────────────
+// ─── Valentine's Day ✦ Premium — "Be My Valentine Carnival" (the flagship of the premium tier) ───────────────────
 //
-// Their year in love as a Wrapped-style story: bold colour-blocked slides (each owns one background, a velvet
-// shader in that colour behind it), huge kinetic numbers in Bricolage Grotesque, the emotional lines in
-// Instrument Serif italic, tap-through progress bars, film grain + vignette on every frame.
+// A bright pastel funfair built for her (research-v3 §D8). One cute game per stall, each ending in an "aww" beat
+// (sound + heart burst + haptic) and a couple-sticker GIF reacting to what she just did.
 //
-//  gate      a Wrapped cover (PremiumGate: the tap starts their song)
-//  1 intro    "Your 2026 in love."                               tomato
-//  2 song     our top song: tilt the cover, ♥ it → their line     lilac
-//  3 memories top 3: swipe #3 and #2 away, #1 stays               ink
-//  4 stats    stats you didn't know I kept: tap to flip           butter
-//  5 trait    your top trait, according to me: scratch the foil   pink
-//  6 reasons  fast cuts over their photos: tap, or hold           photos, a new tint per cut
-//  7 voice    the voice note (or the caption as a quote)          lilac
-//  8 letter   tap to unfold                                       butter
-//  9 NUMBER   hold to count → drop(): the days SLAM on the drop, cut to their best photo, the question  ink → photo
-// 10 card     the "Us, Wrapped" card: save it, the sealed P.S., write back, watch again   tomato
+//  gate      her ADMIT ONE ticket: drag the stub to tear it → the curtains part, the song starts
+//  1 balloons pop 8 heart balloons; each drops a word of his line into place
+//  2 meter    the love tester: hold her thumb on it → 100% → 999% → the glass cracks, his joke on the screen
+//  3 gacha    turn the knob (circular drag / tap) → 4 capsules → twist each open: a prize polaroid of them
+//  4 wheel    the Ferris wheel of us: her photos ride the cabins; tap one to peek inside
+//  5 cans     knock down the week: 7 cans (Rose → Kiss), each one his line for that day → "…and today, it's you"
+//  6 letter   the kissing-booth mailbox → envelope → wax seal → the letter types itself     (skipped if empty)
+//  7 radio    his voice note on the carnival radio (or tune the dial: his note types out)  (skipped if nothing)
+//  8 question "Will you be my Valentine?" — No hides behind stickers, shrinks, turns into a second Yes. On YES:
+//             drop() → on the chorus the wheel lights up with her photos, heart fireworks, confetti, a GIF wall
+//  9 exit     ticket stub + photobooth strip (save as PNG), week recap, the sealed P.S., wishing wall, ride again
 //
-// Slides with nothing to show (no stats, no trait, no reasons, no voice) are skipped.
+// Next appears when the stall's interaction lands, or after a while so nobody is stuck; from the 2nd stall she can
+// skip ahead. Repeat visit: the progress hearts become a map. react("answered") on YES, react("completed") at exit.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DayRoot, Sticker } from "../../_valentine/kit";
-import { FilmGrain, GlowParticles, PremiumGate, PremiumRoot, SceneTransition, ShaderBackdrop, Vignette, usePremium } from "../../_valentine/kit/premium";
+import { DayRoot } from "../../_valentine/kit";
+import { PremiumRoot, SceneFade, usePremium } from "../../_valentine/kit/premium";
 import { getDay } from "../../_valentine/days";
 import type { ExperienceProps } from "../../_valentine/types";
-import { WRAPPED_FONT_VARS } from "./wrapped/fonts";
-import { SW, readWrapped, type Swatch } from "./wrapped/model";
-import { WRAPPED_CSS } from "./wrapped/styles";
-import { Arrow, Back } from "./wrapped/ui";
-import { Intro, Letter, Memories, Stats, Trait, TopSong, Voice, statTiles } from "./wrapped/Slides";
-import Reasons from "./wrapped/Reasons";
-import TheNumber from "./wrapped/Number";
-import WrappedCard from "./wrapped/Card";
+import { CARNIVAL_FONT_VARS } from "./carnival/fonts";
+import { GIF, readCarnival } from "./carnival/model";
+import { CARNIVAL_CSS } from "./carnival/styles";
+import { Gif, StallCtx, ensureCarnivalCues, type StallApi } from "./carnival/ui";
+import Gate, { Bunting } from "./carnival/Gate";
+import Balloons from "./carnival/Balloons";
+import LoveMeter from "./carnival/LoveMeter";
+import Gacha from "./carnival/Gacha";
+import FerrisWheel from "./carnival/FerrisWheel";
+import Cans from "./carnival/Cans";
+import Letter from "./carnival/Letter";
+import Radio from "./carnival/Radio";
+import Question from "./carnival/Question";
+import Keepsake from "./carnival/Keepsake";
 
 const SLUG = "happy-valentines-day-premium" as const;
-type SlideId = "intro" | "song" | "memories" | "stats" | "trait" | "reasons" | "voice" | "letter" | "number" | "card";
+type StallId = "balloons" | "meter" | "gacha" | "wheel" | "cans" | "letter" | "radio" | "question" | "exit";
 
-const SWATCH: Record<SlideId, Swatch> = {
-  intro: SW.tomato, song: SW.lilac, memories: SW.ink, stats: SW.butter, trait: SW.pink,
-  reasons: SW.ink, voice: SW.lilac, letter: SW.butter, number: SW.ink, card: SW.tomato,
+const NAME: Record<StallId, string> = {
+  balloons: "Balloon pop", meter: "Love tester", gacha: "Gacha machine", wheel: "Ferris wheel", cans: "Prize stall",
+  letter: "Kissing booth", radio: "Carnival radio", question: "The big question", exit: "Gift shop",
 };
-const NEXT_LABEL: Partial<Record<SlideId, string>> = { intro: "Let's go", letter: "One more thing", number: "See our Wrapped" };
-/** Never stuck: Next appears after this long even if the interaction hasn't happened. */
-const AUTO_READY: Partial<Record<SlideId, number>> = { song: 6000, memories: 7000, stats: 8000, trait: 8000, reasons: 9000, voice: 6000, letter: 6000 };
-
-function GateCover({ year }: { year: number }) {
-  return (
-    <div className="uw-cover" aria-hidden>
-      <i className="c1" />
-      <i className="c2" />
-      <i className="c3" />
-      <b>Us,</b>
-      <em>wrapped</em>
-      <small>{year}</small>
-    </div>
-  );
-}
+const NEXT_LABEL: Partial<Record<StallId, string>> = {
+  balloons: "Next stall →", meter: "Next stall →", gacha: "To the Ferris wheel →", wheel: "Next stall →", cans: "Keep walking →",
+  letter: "Keep walking →", radio: "To the last stall 💍", question: "Get my ticket stub 🎟",
+};
+/** Never stuck: Next appears after this long even if the game wasn't finished. */
+const AUTO_READY: Partial<Record<StallId, number>> = { balloons: 20000, meter: 16000, gacha: 24000, wheel: 18000, cans: 24000, letter: 14000, radio: 9000 };
 
 function Story({ data, react }: ExperienceProps) {
   const day = getDay(SLUG);
   const p = usePremium();
   const { sfx, music, premium } = p;
-  const w = useMemo(() => readWrapped(day, data, music?.title), [day, data, music?.title]);
+  const c = useMemo(() => readCarnival(day, data, music?.title), [day, data, music?.title]);
   const [opened, setOpened] = useState(p.opened);
   const [run, setRun] = useState(0);
+  useEffect(ensureCarnivalCues, []);
 
   const order = useMemo(() => {
-    const o: SlideId[] = ["intro", "song", "memories"];
-    if (statTiles(w).length) o.push("stats");
-    if (w.trait) o.push("trait");
-    if (w.reasons.length) o.push("reasons");
-    if (premium.voiceNote || premium.voiceCaption.trim()) o.push("voice");
+    const o: StallId[] = ["balloons", "meter", "gacha", "wheel", "cans"];
     if (data.letter.trim()) o.push("letter");
-    o.push("number", "card");
+    if (premium.voiceNote || premium.voiceCaption.trim() || c.songNote) o.push("radio");
+    o.push("question", "exit");
     return o;
-  }, [w, premium.voiceNote, premium.voiceCaption, data.letter]);
+  }, [data.letter, premium.voiceNote, premium.voiceCaption, c.songNote]);
 
   const [idx, setIdx] = useState(0);
-  const [readySet, setReadySet] = useState<Record<string, boolean>>({});
-  const [yesSaid, setYesSaid] = useState(false);
-  const slide = order[Math.min(idx, order.length - 1)];
-  const key = `${run}-${slide}`;
-  const isReady = !!readySet[key];
-  const sw = SWATCH[slide];
+  const [doneSet, setDoneSet] = useState<Record<string, boolean>>({});
+  const [skipOn, setSkipOn] = useState(false);
+  const stall = order[Math.min(idx, order.length - 1)];
+  const key = `${run}-${stall}`;
+  const isDone = !!doneSet[key];
 
-  const ready = useCallback(() => setReadySet((r) => (r[key] ? r : { ...r, [key]: true })), [key]);
+  const done = useCallback(() => setDoneSet((r) => (r[key] ? r : { ...r, [key]: true })), [key]);
   useEffect(() => {
-    const ms = AUTO_READY[slide];
-    if (!ms || !opened) return;
-    const t = window.setTimeout(ready, ms);
-    return () => clearTimeout(t);
-  }, [slide, ready, opened]);
+    if (!opened) return;
+    const ms = AUTO_READY[stall];
+    const t1 = ms ? window.setTimeout(done, ms) : 0;
+    const t2 = window.setTimeout(() => setSkipOn(true), 3500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setSkipOn(false);
+    };
+  }, [stall, done, opened, run]);
 
   const go = useCallback(
     (i: number) => {
       setIdx(Math.max(0, Math.min(order.length - 1, i)));
       sfx("swoosh-soft", { gain: 0.45 });
+      window.scrollTo({ top: 0 });
     },
     [order.length, sfx],
   );
   const next = useCallback(() => go(idx + 1), [go, idx]);
-  const back = useCallback(() => go(idx - 1), [go, idx]);
 
-  // Keyboard: → / ← move through the story.
-  useEffect(() => {
-    if (!opened) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLElement && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
-      if (e.key === "ArrowRight" && isReady && slide !== "card" && (slide !== "number" || yesSaid)) next();
-      if (e.key === "ArrowLeft" && idx > 0 && slide !== "number" && slide !== "card") back();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [opened, isReady, slide, idx, next, back, yesSaid]);
-
-  // The song dips under the letter and comes back for the rest; the number slide and the voice note manage
-  // their own level (a no-op where the platform can't fade).
+  // The song dips under the letter and the voice note manages itself; everywhere else it plays full.
   const musicRef = useRef(music);
   useEffect(() => {
     musicRef.current = music;
@@ -124,108 +109,133 @@ function Story({ data, react }: ExperienceProps) {
   useEffect(() => {
     const m = musicRef.current;
     if (!opened || !m?.canFade) return;
-    if (slide === "letter") m.fadeTo(0.55, 1200);
-    else if (slide !== "number" && slide !== "voice") m.fadeTo(slide === "card" ? 0.7 : 1, 1200);
-  }, [slide, opened]);
-
-  const slot = (id: string) => day.gifSlots.find((g) => g.id === id)!;
-  const sticker = (id: string, size: number) => <Sticker slug={day.slug} slot={slot(id)} value={data.gifs?.[id]} size={size} alt="" eager />;
+    if (stall === "letter") m.fadeTo(0.55, 1200);
+    else if (stall !== "radio" && stall !== "question") m.fadeTo(stall === "exit" ? 0.75 : 1, 1200);
+  }, [stall, opened]);
 
   const replay = () => {
     setRun((r) => r + 1);
-    setYesSaid(false);
+    setDoneSet({});
     setIdx(0);
     sfx("whoosh", { gain: 0.5 });
+    window.scrollTo({ top: 0 });
   };
 
-  const props = { w, ready, isReady, next };
+  const api: StallApi = { c, data, day, done, isDone, sfx: sfx as StallApi["sfx"], index: idx };
+
   const render = () => {
-    switch (slide) {
-      case "intro": return <Intro {...props} />;
-      case "song": return <TopSong {...props} />;
-      case "memories": return <Memories {...props} />;
-      case "stats": return <Stats {...props} />;
-      case "trait": return <Trait {...props} />;
-      case "reasons": return <Reasons {...props} />;
-      case "voice": return <Voice {...props} />;
-      case "letter": return <Letter {...props} letter={data.letter} />;
-      case "number":
-        return (
-          <TheNumber
-            {...props}
-            please={sticker("pv4-please", 76)}
-            yesSticker={sticker("pv5-yes", 96)}
-            onAnswer={(noDodges) => {
-              setYesSaid(true);
-              react("answered", { noDodges });
-            }}
-          />
-        );
-      case "card": return <WrappedCard {...props} onComplete={() => react("completed")} onReplay={replay} />;
+    switch (stall) {
+      case "balloons": return <Balloons />;
+      case "meter": return <LoveMeter />;
+      case "gacha": return <Gacha />;
+      case "wheel": return <FerrisWheel />;
+      case "cans": return <Cans />;
+      case "letter": return <Letter letter={data.letter} />;
+      case "radio": return <Radio />;
+      case "question": return <Question onAnswer={(noDodges) => react("answered", { noDodges })} />;
+      case "exit": return <Keepsake onComplete={() => react("completed")} onReplay={replay} />;
     }
   };
 
-  const hearts = yesSaid && (slide === "number" || slide === "card");
-  const showNext = opened && isReady && slide !== "card" && (slide !== "number" || yesSaid);
-  const showBack = opened && idx > 0 && slide !== "card" && slide !== "number";
+  const showNext = opened && isDone && stall !== "exit";
+  const showSkip = opened && !isDone && skipOn && idx >= 1 && stall !== "question" && stall !== "exit";
 
   return (
-    <div className={`uw-root ${WRAPPED_FONT_VARS}`} style={{ ["--uw-bg" as string]: sw.bg, ["--uw-ink" as string]: sw.ink, ["--uw-accent" as string]: sw.accent, background: "#151018" }}>
-      <style>{WRAPPED_CSS}</style>
-      <ShaderBackdrop preset="velvet" colors={sw.silk} intensity={0.6} speed={0.45} parallax />
-      {hearts && <GlowParticles preset="hearts" colors={["#FF7AB6", "#FF4B3E", "#FFE7A3"]} density={0.35} z={3} />}
+    <StallCtx.Provider value={api}>
+      <div className={`vc-root ${CARNIVAL_FONT_VARS}`}>
+        <style>{CARNIVAL_CSS}</style>
+        <Fairground />
 
-      {!opened && (
-        <PremiumGate
-          art={<GateCover year={w.year} />}
-          kicker="Your year in love, wrapped for"
-          subtitle={<span>with love, from {w.from}</span>}
-          sting="chime-cascade"
-          openLabel="Unwrap our year"
-          className={`uw-gate ${WRAPPED_FONT_VARS}`}
-          bg="#151018"
-          ink="#FFF6E8"
-          accent="#FF4B3E"
-          onOpen={() => setOpened(true)}
-        />
-      )}
+        {!opened && <Gate c={c} onOpen={() => setOpened(true)} />}
 
-      {opened && (
-        <div className="uw-stage">
-          {/* On a repeat visit the bars are a chapter menu: tap one to jump straight there. */}
-          <div className={`uw-bars${p.repeatVisit ? " is-nav" : ""}`} aria-hidden={!p.repeatVisit || undefined}>
-            {order.map((s, i) =>
-              p.repeatVisit ? (
-                <button type="button" key={s} aria-label={`Go to ${s}`} onClick={() => go(i)} className={`uw-bar${i < idx ? " is-done" : ""}${i === idx ? " is-now" : ""}${i === idx && isReady ? " is-ready" : ""}`}>
-                  <i />
+        {opened && (
+          <div className={`vc-stage is-${stall}`}>
+            <nav className={`vc-dots${p.repeatVisit ? " is-map" : ""}`} aria-label="The carnival map">
+              {order.map((s, i) =>
+                p.repeatVisit ? (
+                  <button key={s} type="button" className={`vc-dot${i < idx ? " is-past" : ""}${i === idx ? " is-now" : ""}`} onClick={() => go(i)} aria-label={`Go to ${NAME[s]}`} aria-current={i === idx ? "step" : undefined} />
+                ) : (
+                  <span key={s} className={`vc-dot${i < idx ? " is-past" : ""}${i === idx ? " is-now" : ""}`} aria-label={i === idx ? `${NAME[s]}, stall ${i + 1} of ${order.length}` : undefined} />
+                ),
+              )}
+            </nav>
+            <SceneFade sceneKey={key} duration={0.45} className="vc-sceneWrap">
+              {/* Each stall gets its own context value, so a stall still fading out keeps ITS done(), never the
+                  next stall's (an exiting Balloons used to mark the meter as done). */}
+              <StallCtx.Provider value={api}>{render()}</StallCtx.Provider>
+            </SceneFade>
+            <div className="vc-foot">
+              {showNext && (
+                <button type="button" className="vc-puffy is-cherry vc-next" key={key} onClick={next}>
+                  {NEXT_LABEL[stall] ?? "Next →"}
                 </button>
-              ) : (
-                <span key={s} className={`uw-bar${i < idx ? " is-done" : ""}${i === idx ? " is-now" : ""}${i === idx && isReady ? " is-ready" : ""}`}>
-                  <i />
-                </span>
-              ),
-            )}
-          </div>
-          <SceneTransition sceneKey={key} variant="flash" duration={0.8} flashColor={sw.accent}>
-            {render()}
-          </SceneTransition>
-          {showBack && (
-            <button type="button" className="uw-back" onClick={back} aria-label="Back">
-              <Back />
-            </button>
-          )}
-          {showNext && (
-            <div className="uw-foot">
-              <button type="button" className="uw-next" key={key} onClick={next}>
-                {NEXT_LABEL[slide] ?? "Next"} <Arrow />
-              </button>
+              )}
+              {showSkip && (
+                <button type="button" className="vc-skip" onClick={next}>
+                  Skip this stall ▸
+                </button>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
+    </StallCtx.Provider>
+  );
+}
 
-      <Vignette strength={0.36} />
-      <FilmGrain opacity={0.08} />
+/** The fair around the stage: soft blobs and floating hearts everywhere; from 768 px a wheel, a tent, balloons and
+ *  a few couple stickers live in the side space around the centred phone-like stage. */
+function Fairground() {
+  return (
+    <div className="vc-fair" aria-hidden>
+      <i className="vc-blob is-a" />
+      <i className="vc-blob is-b" />
+      <i className="vc-blob is-c" />
+      <Bunting className="vc-fairBunting" />
+      <div className="vc-floaters">
+        {Array.from({ length: 9 }, (_, i) => (
+          <i key={i} style={{ ["--x" as string]: `${(i * 37) % 100}%`, ["--d" as string]: `${(i * 1.7) % 9}s`, ["--s" as string]: `${12 + ((i * 5) % 12)}px` }}>
+            {i % 3 === 0 ? "♥" : i % 3 === 1 ? "✦" : "♡"}
+          </i>
+        ))}
+      </div>
+      <div className="vc-side is-left">
+        <svg className="vc-sideWheel" viewBox="0 0 200 220">
+          <g className="vc-sideSpin">
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#FF8FAB" strokeWidth="5" />
+            {Array.from({ length: 8 }, (_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              return (
+                <g key={i}>
+                  <line x1="100" y1="100" x2={100 + 80 * Math.cos(a)} y2={100 + 80 * Math.sin(a)} stroke="#FFB3C6" strokeWidth="3" />
+                  <circle cx={100 + 80 * Math.cos(a)} cy={100 + 80 * Math.sin(a)} r="11" fill={["#FF4D6D", "#FFD166", "#B9A7FF", "#7FD8BE"][i % 4]} />
+                </g>
+              );
+            })}
+          </g>
+          <path d="M100 100 L60 214 M100 100 L140 214" stroke="#FF8FAB" strokeWidth="6" strokeLinecap="round" />
+        </svg>
+        <Gif src={GIF.penguinsHappy} size={120} tilt={-6} float className="vc-sideGif" />
+      </div>
+      <div className="vc-side is-right">
+        <svg className="vc-tent" viewBox="0 0 200 170">
+          <path d="M100 6 L190 70 L10 70 Z" fill="#FF4D6D" />
+          <path d="M100 6 L130 70 L70 70 Z" fill="#FFF" fillOpacity=".9" />
+          <rect x="22" y="70" width="156" height="94" rx="6" fill="#FFF0F3" />
+          {Array.from({ length: 6 }, (_, i) => <rect key={i} x={22 + i * 26} y="70" width="13" height="94" fill="#FFB3C6" />)}
+          <path d="M80 164 L80 112 Q100 92 120 112 L120 164 Z" fill="#C9184A" />
+          <circle cx="100" cy="6" r="6" fill="#FFD166" />
+        </svg>
+        <div className="vc-sideBalloons">
+          {["#FF4D6D", "#B9A7FF", "#FFD166"].map((col, i) => (
+            <svg key={i} viewBox="0 0 60 92" style={{ ["--i" as string]: i }}>
+              <path d="M30 56 C 6 40, 0 26, 0 17 A 15 15 0 0 1 30 12 A 15 15 0 0 1 60 17 C 60 26, 54 40, 30 56 Z" fill={col} />
+              <path d="M30 58 C 24 70, 36 76, 30 92" stroke="#C9184A" strokeOpacity=".4" strokeWidth="1.4" fill="none" />
+            </svg>
+          ))}
+        </div>
+        <Gif src={GIF.bearsCheek} size={116} tilt={6} float className="vc-sideGif" />
+      </div>
     </div>
   );
 }
@@ -234,7 +244,7 @@ export default function ValentinesDayPremiumExperience(props: ExperienceProps) {
   const day = getDay(SLUG);
   return (
     <PremiumRoot data={props.data} mode={props.mode} slug={SLUG}>
-      <DayRoot day={day} data={props.data} layout="full" dark>
+      <DayRoot day={day} data={props.data} layout="full">
         <Story {...props} />
       </DayRoot>
     </PremiumRoot>
