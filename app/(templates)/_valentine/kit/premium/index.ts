@@ -19,3 +19,5 @@ export { Letterbox, SceneFade, SkipChip, useScenes } from "./scene";
 export { posterKeepsake, saveOrSharePoster, type PosterOptions } from "./poster";
 export { downloadIcs, icsText, type IcsEvent } from "./ics";
 export { default as PremiumPlaceholder } from "./PremiumPlaceholder";
+// Cinema kit — shader backdrops, film finish, tilt cards, reveals, 3D objects (./cinema/README.md).
+export * from "./cinema";
