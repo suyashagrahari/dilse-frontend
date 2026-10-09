@@ -2643,7 +2643,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "happy-chocolate-day-premium": {
     title: "Premium Chocolate Day Website for Girlfriend",
     description:
-      "A chocolate shop that opens at midnight for one person: they pour a heart, smash it on your song's drop, taste truffles of reasons and find a golden ticket.",
+      "A chocolatier's box made for one person: they pull the ribbon, lift the lid on your song's chorus, and every bonbon inside is one of your photos.",
     category: "Valentine",
     emoji: "🍫",
     keywords: [
@@ -2655,8 +2655,8 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       "chocolate day surprise with our song",
       "chocolate day message with voice note",
       "virtual chocolate gift online",
-      "smash the chocolate heart online",
-      "golden ticket love coupon",
+      "photo chocolate box online",
+      "chocolate box with our photos",
       "chocolate day 2027",
       "9 february chocolate day",
       "chocolate day wishes with photos",
@@ -2665,22 +2665,22 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
     ],
     faqs: [
       {
-        question: "What happens when they open the Midnight Chocolatier?",
+        question: "What happens when they open La Boîte?",
         answer:
-          "A rainy shop door says \"CLOSED · except for\" their name. Inside, the lamps flicker on and they tilt a copper pot to pour a chocolate heart, pop the bubbles and turn it out of the mould. Three taps of a gold hammer crack it and it shatters as your song's chorus drops, revealing truffles. Each truffle they taste carries a reason, the wrapper of a bar hides a golden ticket with your promise, your letter is piped in chocolate, your photos sit in a lit display case, and they pipe a word and tie the box with a ribbon.",
+          "A matte chocolatier's box waits for them with your initials in gold foil and a satin ribbon. They pull the ribbon and your song starts, then lift the lid: on the chorus it comes off, the tissue parts, and every bonbon inside is topped with one of your photos, with a foil sheen that follows the tilt of their phone. They tap a piece to turn it over to its flavour and the memory it tastes of, brush the cocoa off a last heart-shaped piece, read your letter on the box's menu card, hear your voice, and keep the lid as a card.",
       },
       ...premiumFaqs({
         day: "Chocolate Day",
         twin: "Chocolate Day",
-        keepsake: "Certificate of Craft with their photo and the golden ticket",
-        voiceAt: "as a word from the chocolatier beside your letter",
+        keepsake: "keepsake card made from the box's lid (plus a poster of the photo bonbons)",
+        voiceAt: "after the menu card with your letter",
         yesEmail: false,
       }),
     ],
     howTo: premiumHowTo({
       name: "How to Make a Premium Chocolate Day Website",
-      description: "Open a midnight chocolate shop for one person — a heart to smash on your song, truffles of reasons and a golden ticket — and send the link.",
-      write: { name: "Stock the Shop", text: "Choose the flavour and the box colour, write the note on the counter, the line before the smash, what the golden ticket is good for, the word they pipe and your letter — or let the AI write it from a few lines about the two of you." },
+      description: "Fill a chocolatier's box with your photos as bonbons, set it to open on your song, and send the link.",
+      write: { name: "Fill the Box", text: "Add up to nine photos (each becomes a bonbon), name the flavours and the memory each one tastes of, choose the box colour, write the lines over the box and the last piece and your letter, or let the AI write it from a few lines about you two." },
     }),
   },
 

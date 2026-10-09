@@ -1,160 +1,203 @@
-// happy-chocolate-day-premium — "The Midnight Chocolatier" (the ✦ Premium twin of happy-chocolate-day).
+// happy-chocolate-day-premium — "La Boîte" (the ✦ Premium twin of happy-chocolate-day).
 //
-// After hours, a tiny chocolate atelier lights up for one person. They flip the
-// CLOSED sign, pour a heart, tap out the bubbles, watch it temper, smash it with
-// a gold hammer (the song drops), taste truffles of reasons, unwrap a golden
-// ticket, read a letter piped in chocolate, browse the display case, pipe a
-// word onto the last bonbon and tie the box themselves.
+// A chocolatier's box, made for one person. A matte cacao lid with their initials in gold foil and a satin ribbon;
+// they pull the ribbon (the song starts), lift the lid, and on the song's drop the tissue parts on nine glossy
+// bonbons, each topped with one of their photos like a cocoa-butter transfer, the foil sheen following the tilt of
+// the phone. Tap a bonbon to lift and turn it over: its flavour, and the memory it tastes of. The last piece is a
+// heart, dusted in cocoa, saved for the letter ("Notes from the chocolatier"), then the voice note and a keepsake
+// card: the lid itself.
 //
-// Keys + limits mirror server/src/config/premiumDays/happy-chocolate-day-premium.ts
-// (pinned in valentineDays.test.ts). AI fill: server/src/config/aiFill/happy-chocolate-day-premium.ts.
+// Extras keys + limits are mirrored in server/src/config/premiumDays/happy-chocolate-day-premium.ts and pinned in
+// server/src/config/valentineDays.test.ts. The chorus second is the shared premium.songDropAt, not an extra.
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
+import type { LovePhoto } from "../../_love/types";
 import { premiumDay } from "./_premium";
 import { chocolateDay } from "./happy-chocolate-day";
 
-export type TruffleFlavour = "hazelnut" | "sea-salt" | "raspberry" | "gold-leaf" | "pistachio" | "rose" | "heart";
+export type BoxColor = "cacao" | "raspberry" | "midnight" | "ivory";
 
 export interface ChocolateExtrasPremium {
-  welcomeNote: string;
-  reasons: { flavour: TruffleFlavour; reason: string }[];
-  embossNames: boolean;
-  crackLine: string;
-  ticketPromise: string;
-  letterTitle: string;
-  drizzleWord: string;
-  insideNote: string;
-  boxColor: "raspberry" | "midnight" | "ivory" | "blush";
+  houseName: string;
+  openingLine: string;
+  boxLine: string;
+  flavours: { name: string }[];
+  heartLine: string;
+  sinceDate: string;
   signOff: string;
+  boxColor: BoxColor;
   [k: string]: unknown;
 }
 
+// Two quiet sticker spots: the page is carried by photos and type. The ids (and their GIFs on the CDN) are v1's.
 const GIFS: GifSlot[] = [
-  { id: "pc1-open", label: "Lights on", moment: "The lamps flicker on inside the atelier", file: "pc1-open.gif", emoji: "👩‍🍳", anim: "wiggle" },
-  { id: "pc2-smash", label: "The smash", moment: "Right after the heart shatters", file: "pc2-smash.gif", emoji: "🤯", anim: "bounce" },
-  { id: "pc3-yum", label: "Yum", moment: "Every truffle tasted", file: "pc3-yum.gif", emoji: "🤤", anim: "pulse" },
-  { id: "pc4-ticket", label: "Golden ticket", moment: "The golden ticket slides out", file: "pc4-ticket.gif", emoji: "🎫", anim: "float" },
-  { id: "pc5-photos", label: "Display case", moment: "Over the display case of photos", file: "pc5-photos.gif", emoji: "📸", anim: "wiggle" },
-  { id: "pc6-box", label: "Box tied", moment: "The box is tied, the ending", file: "pc6-box.gif", emoji: "🎁", anim: "pulse" },
+  { id: "pc3-yum", label: "Yum", moment: "Beside the open box, once a piece is tasted", file: "pc3-yum.gif", emoji: "🤤", anim: "pulse" },
+  { id: "pc6-box", label: "Keepsake", moment: "On the corner of the keepsake lid", file: "pc6-box.gif", emoji: "🎁", anim: "pulse" },
 ];
 
-/** Sweet, warm, slow-dance picks — official uploads, checked against YouTube oEmbed 2026-10-08. */
-const SONGS: readonly SongSuggestion[] = [
+/** research §E (oEmbed 200 + playableInEmbed, 2026-10-09), then two v1 picks. The first one is the demo song. */
+export const BOITE_SONGS: readonly SongSuggestion[] = [
   { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5" },
-  { id: "ElZfdU54Cp8", title: "Apna Bana Le", artist: "Arijit Singh · Bhediya" },
+  { id: "WMweEpGlu_U", title: "Butter", artist: "BTS" },
+  { id: "58r8MDf5sxQ", title: "Sweetheart", artist: "Dev Negi · Kedarnath" },
+  { id: "6uvUTu716rU", title: "Cupid (Twin Ver.)", artist: "FIFTY FIFTY" },
   { id: "E07s5ZYygMg", title: "Watermelon Sugar", artist: "Harry Styles" },
-  { id: "BddP6PYo2gs", title: "Kesariya", artist: "Arijit Singh · Brahmāstra" },
-  { id: "PEM0Vs8jf1w", title: "golden hour", artist: "JVKE" },
-  { id: "-BjZmE2gtdo", title: "Lover", artist: "Taylor Swift" },
-  { id: "P3cffdsEXXw", title: "Golden", artist: "Harry Styles" },
-  { id: "lp-EO5I60KA", title: "Thinking Out Loud", artist: "Ed Sheeran" },
+  { id: "ElZfdU54Cp8", title: "Apna Bana Le", artist: "Arijit Singh · Bhediya" },
 ];
+/** Sugar's most-replayed phrase; the drop lands back on it as the lid comes off. */
+const DEMO_START = 74;
 
-export const FLAVOUR_OPTIONS = [
-  { value: "hazelnut", label: "Hazelnut", emoji: "🌰" },
-  { value: "sea-salt", label: "Sea salt", emoji: "🧂" },
-  { value: "raspberry", label: "Raspberry", emoji: "🍓" },
-  { value: "gold-leaf", label: "Gold leaf", emoji: "✨" },
-  { value: "pistachio", label: "Pistachio", emoji: "🟢" },
-  { value: "rose", label: "Rose", emoji: "🌹" },
-  { value: "heart", label: "Heart", emoji: "❤️" },
+/** The chocolatier's pick, in box order, for any bonbon the sender leaves unnamed. */
+export const HOUSE_FLAVOURS = [
+  "Salted caramel",
+  "Raspberry ganache",
+  "Hazelnut praline",
+  "Dark 70%",
+  "Rose & cardamom",
+  "Pistachio cream",
+  "Passion fruit",
+  "Coffee crème",
+  "Gold leaf",
 ] as const;
+
+const A = "https://cdn.subhsandesh.in/gifts-media/assets";
+const photo = (path: string, caption: string, note: string, cropY = 45): LovePhoto => ({ url: `${A}/${path}.webp`, caption, note, cropX: 50, cropY, scale: 100 });
+const DEMO_PHOTOS: LovePhoto[] = [
+  photo("couple1", "the evening you said yes to coffee", "I had a speech ready. I said “hi” and forgot the rest.", 55),
+  photo("couple2", "our first proper date", "You laughed before I reached the punchline.", 40),
+  photo("couple3", "the blossoms in Shimla", "You made me stand still for one photo. I'm glad.", 60),
+  photo("couple4", "the night we counted stars", "You fell asleep at forty-two. I kept counting.", 55),
+  photo("Aniversary/aniversary", "our first anniversary", "One year, and you still look at me like that."),
+  photo("TemplateComingSoon/sorry2", "the day we made up", "We were both wrong. You were nicer about it."),
+  photo("TemplateComingSoon/valentine", "our first Valentine's", "You ate the last truffle. I let you. That's love."),
+  photo("TemplateComingSoon/wddinganiversary", "your sister's wedding", "Everyone watched the bride. I watched you."),
+  photo("hero-bg", "us, on an ordinary Sunday", "My favourite flavour is still this one.", 40),
+];
 
 const base = premiumDay<ChocolateExtrasPremium>(chocolateDay, {
   slug: "happy-chocolate-day-premium",
-  title: "The Midnight Chocolatier",
+  title: "La Boîte",
   gifSlots: GIFS,
+  demoSong: { id: BOITE_SONGS[0].id, start: DEMO_START },
   demoPremium: {
-    voiceCaption: "Shop's closed. I stayed back anyway, because it's you.",
+    songDropAt: DEMO_START,
+    voiceCaption: "I tried to describe how you taste in my life. I just ended up smiling.",
     psLetter:
-      "Open only if you're craving something sweet at 2 a.m.\n\nCall me. I'll pretend I was awake anyway. There's a bar of the good dark one hidden behind the atta tin. You didn't hear it from me.",
+      "Open only if you ever doubt you're my favourite.\n\nThere's no flavour I'd swap you for. I checked. I've been checking for three years, and it's still you, every single time.",
   },
   copy: {
-    letterPlaceholder: "Start with the first time you noticed them, then the little things you'd put in their recipe…",
-    letterHint: "Piped in chocolate on the marble, then written out on the atelier's cream “Recipe for us” card.",
-    photosHint: "Your photos become bonbons in a lit glass display case — the caption is the little label.",
-    captionHint: "the label on the bonbon — e.g. Goa sunset · salted caramel",
-    noteHint: "what that moment tasted like…",
-    endLinePlaceholder: "Made by hand, at midnight, for one person.",
-    endLineHint: "The last line, under the tied box.",
-    sheetTitle: "Open your atelier 🍫",
-    sheetSub: "They pour, smash and taste a heart you made. Everything is pre-filled — make it yours.",
-    extrasTitle: "The atelier",
-    extrasSub: "The note on the counter, the truffles, the golden ticket and the box",
-    publishing: "Turning the lights on…",
-    storyTitle: "Let's stock your midnight atelier 🍫",
-    replyText: "I'm redeeming my golden ticket 🎫",
+    letterPlaceholder: "Start with the first time you noticed them. Then the little things that make them your favourite flavour…",
+    letterHint: "Printed on the chocolatier's cream menu card, “Notes from the chocolatier”, after the last piece.",
+    photosHint: "Each photo becomes a bonbon in the box (up to 9), like a glossy photo transfer. Tap one and it turns over to show its memory.",
+    captionHint: "the memory it tastes of, e.g. the night we got lost in Lonavala",
+    noteHint: "one small line about that moment…",
+    endLinePlaceholder: "Every piece of it was you.",
+    endLineHint: "The last line, over the keepsake lid.",
+    sheetTitle: "Fill their box of photo bonbons 🍫",
+    sheetSub: "A chocolatier's box where every bonbon is one of your photos. It opens on your song. Everything is pre-filled: make it yours.",
+    extrasTitle: "The box",
+    extrasSub: "Your chocolatier's name, the lines around the box, the flavours and the colour",
+    publishing: "Tying the ribbon…",
+    storyTitle: "Let's fill their box of photo bonbons 🍫",
+    replyText: "I tasted every single piece 🍫 You're my favourite flavour.",
   },
-  share: { title: "The shop is closed. Except for you 🍫", accent: "#A82B58" },
+  share: { title: "A box of chocolates, made only for you 🍫", accent: "#B0324B" },
 });
 
 export const chocolateDayPremium: DayConfig<ChocolateExtrasPremium> = {
   ...base,
   melody: "cocoa",
   photoAspect: 1,
-  music: { audioOnly: true, suggestions: SONGS, suggestionsNote: "sweet & slow · tap to use" },
+  music: { audioOnly: true, suggestions: BOITE_SONGS, suggestionsNote: "sweet & warm · tap to use", demoStart: DEMO_START },
+  theme: {
+    bg: "radial-gradient(90% 60% at 50% 35%, #3A2018 0%, #1E0F0B 55%, #0E0705 100%)",
+    base: "#140A07",
+    paper: "#F3E6D3",
+    glass: "rgba(243,230,211,0.08)",
+    ink: "#F3E6D3",
+    inkSoft: "#D9C2A8",
+    paperInk: "#2A1712",
+    accent: "#C9A45C",
+    accentDeep: "#8A6A2F",
+    accentInk: "#1E0F0B",
+    soft: "#3A2218",
+    edge: "rgba(243,230,211,0.18)",
+    gold: "#C9A45C",
+    dark: true,
+    particles: ["🍫", "✨", "🤎"],
+    confetti: ["#4A2A1F", "#9C6B4E", "#B0324B", "#F3E6D3", "#C9A45C"],
+  },
   extras: [
     {
-      key: "welcomeNote", kind: "text", max: 80, label: "Note on the counter",
-      placeholder: "what the handwritten note by the till says — e.g. I kept the shop open late. Just for you.",
-      suggestions: ["I kept the shop open late. Just for you.", "Closed for everyone. Open for you."],
+      key: "houseName", kind: "text", max: 28, label: "Your chocolatier's name",
+      placeholder: "e.g. Maison Aryan",
+      hint: "Foil-stamped on the lid and printed on the menu card. Blank = “Maison” + your name.",
+      suggestions: ["Maison Aryan", "Chocolaterie de Nous"],
     },
     {
-      key: "reasons", kind: "objlist", maxItems: 6, minItems: 3, itemTitle: "Truffle", addLabel: "+ add a truffle",
-      label: "Truffles — a flavour and a reason",
-      hint: "They sit inside the heart they smash. Each bite reveals one reason. Pick a flavour that fits it.",
-      item: [
-        { key: "flavour", kind: "enum", label: "Flavour", display: "chips", default: "hazelnut", options: FLAVOUR_OPTIONS },
-        { key: "reason", kind: "text", max: 90, label: "The reason inside", placeholder: "one thing about them you love — e.g. you remember every tiny thing I say" },
-      ],
-    },
-    { key: "embossNames", kind: "bool", default: true, label: "Emboss both names on the heart", hint: "Your initials, pressed into the chocolate before they smash it." },
-    {
-      key: "crackLine", kind: "text", max: 50, label: "Line before the smash",
-      placeholder: "what you say as you hand them the hammer",
-      suggestions: ["Go on. Break my heart (the good way).", "Tap it. Something's inside."],
+      key: "openingLine", kind: "text", max: 60, label: "The line over the closed box",
+      placeholder: "what they read before they lift the lid",
+      suggestions: ["I couldn't pick one favourite, so I made you nine.", "Made by hand. For one person.", "Lift slowly. Every piece is us."],
     },
     {
-      key: "ticketPromise", kind: "text", max: 70, min: 6, label: "Golden ticket: what it's good for",
-      hint: "A real, doable promise. It's printed on the ticket and they can redeem it.",
-      placeholder: "a date you will actually take them on — e.g. one rooftop café date, my treat",
-      suggestions: ["One rooftop café date. My treat. Every month, forever.", "A whole Sunday. No phones. Your plan."],
+      key: "boxLine", kind: "text", max: 60, label: "The line over the open box",
+      placeholder: "what they read when they see every bonbon is a photo of you two",
+      suggestions: ["Every piece is a day with you.", "Taste slowly. These are ours.", "Nine pieces. All of them us."],
     },
-    { key: "letterTitle", kind: "text", max: 24, label: "Written in chocolate (first line)", placeholder: "how your letter opens — e.g. Meri Meethi,", suggestions: ["My sweetest,", "Meri Meethi,"] },
-    { key: "drizzleWord", kind: "text", max: 6, label: "Word they pipe onto the last bonbon", hint: "Up to 6 letters. Blank = their name.", placeholder: "their name, or US" },
-    { key: "insideNote", kind: "text", max: 60, label: "Folded note inside the heart (with photo 1)", placeholder: "a line about your first photo — e.g. This one's from Goa." },
     {
-      key: "boxColor", kind: "enum", label: "Box colour", display: "swatches", default: "raspberry",
+      key: "flavours", kind: "objlist", maxItems: 9, itemTitle: "Bonbon", addLabel: "+ name a bonbon",
+      label: "Name the flavours (in photo order)",
+      hint: "Bonbon 1 sits on photo 1, and so on. Leave any blank and the chocolatier picks: salted caramel, raspberry ganache, hazelnut praline…",
+      item: [{ key: "name", kind: "text", max: 28, label: "Flavour", placeholder: "e.g. Salted caramel, the Lonavala one" }],
+    },
+    {
+      key: "heartLine", kind: "text", max: 60, label: "The line on the last piece",
+      placeholder: "what they read when the heart is uncovered",
+      hint: "The last piece is a heart, dusted in cocoa. They brush it clean to read this.",
+      suggestions: ["I saved the last piece for you. I always will.", "The last one was always yours."],
+    },
+    { key: "sinceDate", kind: "text", max: 24, label: "Together since", placeholder: "any way you like: 2022, 14 Feb 2022, our first monsoon", hint: "Printed on the lid like a chocolatier's “Est.”." },
+    { key: "signOff", kind: "text", max: 40, label: "Sign-off", placeholder: "how you sign the menu card, e.g. Forever yours, Aryan" },
+    {
+      key: "boxColor", kind: "enum", label: "The box", display: "swatches", default: "cacao",
+      hint: "The colour of the lid and its ribbon.",
       options: [
-        { value: "raspberry", label: "Raspberry", swatch: "#B0204F" },
-        { value: "midnight", label: "Midnight", swatch: "#1E2240" },
-        { value: "ivory", label: "Ivory", swatch: "#F3E9D8" },
-        { value: "blush", label: "Blush", swatch: "#E9A9B6" },
+        { value: "cacao", label: "Cacao & raspberry", swatch: "#2A1712" },
+        { value: "raspberry", label: "Raspberry & gold", swatch: "#7E1F33" },
+        { value: "midnight", label: "Midnight & gold", swatch: "#151A2E" },
+        { value: "ivory", label: "Ivory & cacao", swatch: "#EFE4D2" },
       ],
     },
-    { key: "signOff", kind: "text", max: 40, label: "Sign-off", placeholder: "how you sign the recipe card — e.g. Forever yours, Aryan" },
   ],
   demo: {
     ...base.demo,
-    endLine: "Made by hand, at midnight, for one person.",
+    recipientName: "Riya",
+    senderName: "Aryan",
+    petName: "Meethi",
+    photos: DEMO_PHOTOS,
+    letter:
+      "A chocolatier once told me the trick is patience: you temper it slowly, you don't rush the set, and you never, ever skip the good cocoa. I think that's how I fell for you. Slowly, then completely, and with nothing cheap in it.\n\nYou make ordinary days taste like something. Chai on the balcony. The wrong turn in Lonavala. The way you steal the last piece and then offer me half, as if that was always the plan.\n\nSo this year I didn't want to buy you a box from a shop. I wanted to make you one out of us. Nine pieces, and every one of them is a day I'd live again.\n\nHappy Chocolate Day, Meethi. You're still my favourite flavour.",
+    endLine: "Every piece of it was you.",
     extras: {
-      welcomeNote: "I kept the shop open late. Just for you.",
-      reasons: [
-        { flavour: "hazelnut", reason: "You remember every tiny thing I say." },
-        { flavour: "sea-salt", reason: "You make my worst days a little sweeter." },
-        { flavour: "raspberry", reason: "Your laugh. Obviously." },
-        { flavour: "pistachio", reason: "You steal my fries and then offer me one. Generous." },
-        { flavour: "heart", reason: "You. Simply, completely you." },
+      houseName: "Maison Aryan",
+      openingLine: "I couldn't pick one favourite, so I made you nine.",
+      boxLine: "Every piece is a day with you.",
+      flavours: [
+        { name: "Salted caramel" },
+        { name: "Raspberry ganache" },
+        { name: "Hazelnut praline" },
+        { name: "Dark 70%, like your coffee" },
+        { name: "Rose & cardamom" },
+        { name: "Pistachio cream" },
+        { name: "Passion fruit" },
+        { name: "Coffee crème" },
+        { name: "Gold leaf" },
       ],
-      embossNames: true,
-      crackLine: "Go on. Break my heart (the good way).",
-      ticketPromise: "One rooftop café date. My treat. Every month, forever.",
-      letterTitle: "Meri Meethi,",
-      drizzleWord: "RIYA",
-      insideNote: "This one's from Goa. My favourite version of you.",
-      boxColor: "raspberry",
+      heartLine: "I saved the last piece for you. I always will.",
+      sinceDate: "2022",
       signOff: "Forever yours, Aryan",
+      boxColor: "cacao",
     },
   },
 };

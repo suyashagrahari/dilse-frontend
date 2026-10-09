@@ -9,7 +9,7 @@ export const config: TemplatePageConfig = {
   ...base,
   slug: "happy-chocolate-day-premium",
   coverImage: templateMedia("happy-chocolate-day-premium", "cover-poster.webp"),
-  title: "Chocolate Day ✦ Premium — The Midnight Chocolatier",
+  title: "Chocolate Day ✦ Premium: La Boîte",
   description:
-    "A chocolate shop opens at midnight for them: they pour a heart, smash it as your song drops, taste truffles of reasons, find a golden ticket and tie the box.",
+    "A chocolatier's box made for them. They pull the ribbon, lift the lid on your song's chorus, and every bonbon inside is one of your photos; tap one to taste the memory. Then a cocoa-dusted heart, your letter on the menu card, your voice, and the lid to keep.",
 };
