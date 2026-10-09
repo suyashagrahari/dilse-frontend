@@ -56,7 +56,7 @@ export const CARNIVAL_CSS = `
   display: grid; justify-items: center; gap: 4px; pointer-events: none; width: max-content; }
 .vc-foot > * { pointer-events: auto; }
 .vc-next { animation: vc-popIn .5s cubic-bezier(.34,1.56,.64,1) both, vc-beat 2.4s 1s ease-in-out infinite; }
-.vc-skip { all: unset; cursor: pointer; font: 600 13px/1 var(--ui); color: var(--deep); opacity: .75; padding: 10px 14px; border-radius: 99px; background: rgba(255,255,255,.7); }
+.vc-skip { all: unset; pointer-events: auto; cursor: pointer; font: 600 13px/1 var(--ui); color: var(--deep); opacity: .75; padding: 10px 14px; border-radius: 99px; background: rgba(255,255,255,.7); }
 @keyframes vc-beat { 0%,100% { transform: scale(1); } 10% { transform: scale(1.08); } 20% { transform: scale(1); } 30% { transform: scale(1.05); } 40% { transform: scale(1); } }
 @keyframes vc-popIn { from { opacity: 0; transform: scale(.4) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 
