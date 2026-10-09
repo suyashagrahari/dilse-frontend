@@ -6,7 +6,7 @@ Everything here is exported from `../index.ts`, so a premium Experience imports 
 import { ShaderBackdrop, FilmGrain, Vignette, Fluent3D, RevealText, PremiumCTA } from "../../_valentine/kit/premium";
 ```
 
-Eyeball it all at `/cinema-lab?preset=velvet&particles=petals` (dev only; `fog` + `bats` + `tone=ember` for Halloween).
+(The dev-only `/cinema-lab` page that showed every component was removed before release; see commit a5c80ce to restore it.)
 
 ## The page stack (z order)
 
