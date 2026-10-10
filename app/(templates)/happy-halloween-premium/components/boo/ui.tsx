@@ -5,10 +5,11 @@
 // the night backdrop (stars, a sleepy moon that becomes a heart, hills), and
 // the shared CSS. Research §C3 shapes, §C5 motion values.
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { ValentineDayData } from "../../../_valentine/types";
-import { sfx } from "../../../_valentine/kit/premium";
+import { loadSample, playSample, sfx, usePremium } from "../../../_valentine/kit/premium";
+import { MEDIA_BASE } from "@/lib/templateMedia";
 import { Ghost, Moon } from "./art";
 import { BODY, DISPLAY, HAND } from "./fonts";
 import { GIF, SLOT_DEFAULT } from "./gifs";
@@ -91,13 +92,39 @@ export function NextButton({ children = "Next stop", onClick, delay = 0, disable
   );
 }
 
-/** The witch seal on her broom, flying across the sky on each Next press. */
-export function WitchFly({ off }: { off?: boolean }) {
+const WITCH_LAUGH = "bn-witchLaugh";
+const WITCH_LAUGH_URL = `${MEDIA_BASE}/templates/_halloween/witch-laugh.mp3`;
+/** No repeat cackle within this long (a quick double Next flies twice). */
+const LAUGH_GAP_MS = 10000;
+
+/**
+ * The witch seal on her broom, flying across the sky on each Next press. v7:
+ * every flight cackles (witch-laugh.mp3 through the SFX bus, layered over the
+ * music, never ducking it), except a repeat within 10 s; silent on kids pages,
+ * when the music is off or the visitor turned it off (playSample itself stays
+ * quiet before the gate tap and while muted).
+ */
+export function WitchFly({ off, laugh = true }: { off?: boolean; laugh?: boolean }) {
   const [flights, setFlights] = useState<number[]>([]);
+  const p = usePremium();
+  const music = p.music;
+  const canLaugh = useRef(false);
+  useEffect(() => {
+    canLaugh.current = laugh && !(music && (music.mode === "off" || music.userOff));
+  }, [laugh, music]);
+  useEffect(() => {
+    if (!off && laugh) void loadSample(WITCH_LAUGH, WITCH_LAUGH_URL);
+  }, [off, laugh]);
   useEffect(() => {
     if (off) return;
     let n = 0;
+    let lastLaugh = -Infinity;
     const go = () => {
+      const now = performance.now();
+      if (canLaugh.current && now - lastLaugh > LAUGH_GAP_MS) {
+        lastLaugh = now;
+        playSample(WITCH_LAUGH, { gain: 0.6, maxLateMs: 600 });
+      }
       n += 1;
       const id = n;
       setFlights((f) => [...f.slice(-1), id]);
@@ -211,7 +238,7 @@ const STARS = Array.from({ length: 22 }, (_, i) => ({
   d: Number(((i * 0.37) % 3).toFixed(2)),
 }));
 
-export function Backdrop({ peak }: { peak: boolean }) {
+export const Backdrop = memo(function Backdrop({ peak }: { peak: boolean }) {
   return (
     <div className={`bn-sky${peak ? " is-peak" : ""}`} aria-hidden>
       <span className="bn-blob bn-blob1" />
@@ -233,7 +260,7 @@ export function Backdrop({ peak }: { peak: boolean }) {
       </svg>
     </div>
   );
-}
+});
 
 // ── CSS ──────────────────────────────────────────────────────────────────────
 export const BOO_CSS = `

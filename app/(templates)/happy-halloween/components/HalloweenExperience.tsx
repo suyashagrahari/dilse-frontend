@@ -43,7 +43,8 @@ import Hallway from "./halloween/Hallway";
 import Potion, { type Ingredient } from "./halloween/Potion";
 import Question from "./halloween/Question";
 import TrickOrTreat from "./halloween/TrickOrTreat";
-import { HW_STAGE_CSS, HwStage, PumpkinTrail, useNext } from "./halloween/stage";
+import { HAUNTS_CSS } from "./halloween/haunts";
+import { HW_GIF, HW_STAGE_CSS, HwStage, PumpkinTrail, useNext } from "./halloween/stage";
 import { HW, clean } from "./halloween/ui";
 
 const day = getDay("happy-halloween");
@@ -151,7 +152,7 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       // content inside it at a comfortable width (see .hw-scene).
       layout="full"
     >
-      <style>{HW_STAGE_CSS}</style>
+      <style>{HW_STAGE_CSS + HAUNTS_CSS}</style>
       <Atmosphere warm={warm} grand={step === "door"} />
       {/* seven little pumpkins, one per room, small in the top-left corner: tap an earlier one to go back */}
       <PumpkinTrail at={i} rooms={ROOMS} ending={step === "ending"} onJump={jumpTo} />
@@ -195,12 +196,24 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
   );
 }
 
-/** After YES: their sticker, the sender's line, the moon turning into a heart. */
+/** After YES: their sticker, the sender's line, the floating ghosts, the moon turning into a heart. */
 function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { recipient: string; yesLine: string; dodges: number; gentle: boolean; sticker: ReactNode; onNext: () => void }) {
   useNext("Your Boo License", onNext, "heart");
   return (
+    <>
+    <style>{`
+.hw-yes-ghosts { position: absolute; left: -3%; top: 16%; width: min(42cqw, 32cqh, calc(190px * var(--vw-s, 1))); height: auto; pointer-events: none; opacity: 0;
+  animation: hw-yes-rise 2.2s cubic-bezier(.2,.8,.2,1) .4s forwards, hw-yes-float 4.6s ease-in-out 2.6s infinite alternate; }
+@keyframes hw-yes-rise { from { opacity: 0; transform: translateY(60px) scale(.8) } to { opacity: 1; transform: translateY(0) scale(1) } }
+@keyframes hw-yes-float { from { transform: translate(0, 0) rotate(-2deg) } to { transform: translate(10px, -12px) rotate(3deg) } }
+@media (min-width: 768px) { .hw-yes-ghosts { left: 0; top: 8%; } }
+@media (prefers-reduced-motion: reduce) { .hw-yes-ghosts { animation: none; opacity: 1; } }
+`}</style>
     <div className="hw-fill" style={{ alignContent: "center", gap: "clamp(8px, 1.8dvh, 16px)", display: "grid" }}>
-      <div className="hw-zoom" style={{ display: "grid", gap: "inherit", justifyItems: "center" }}>
+      {/* the owner's two top-hat ghosts float up to celebrate */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="hw-yes-ghosts" src={HW_GIF.ghosts} alt="" aria-hidden width={300} height={300} decoding="async" draggable={false} />
+      <div className="hw-zoom" style={{ position: "relative", display: "grid", gap: "inherit", justifyItems: "center" }}>
       <div style={{ display: "grid", placeItems: "center", height: "min(34cqh, 140px)" }}>{sticker}</div>
       <h2 style={{ margin: 0, font: `400 clamp(32px, min(10.5vw, 5.6dvh), 46px)/1.05 ${HW_DISPLAY}`, color: VW.ink, textShadow: "0 2px 24px rgba(255,158,196,.5)", overflowWrap: "anywhere" }}>
         {recipient} said YES! 💜
@@ -216,5 +229,6 @@ function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { reci
       <p style={{ margin: 0, font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>The moon noticed. Look up 🌙→💗</p>
       </div>
     </div>
+    </>
   );
 }

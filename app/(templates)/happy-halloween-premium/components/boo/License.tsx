@@ -10,7 +10,7 @@
 // (not on kids pages) counts 3·2·1 and BOOs whoever she's holding the phone up to.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CroppedPhoto, haptic, type KeepsakeItem, type KeepsakeLayout } from "../../../_valentine/kit";
 import { ReplyBox, saveOrSharePoster, sfx } from "../../../_valentine/kit/premium";
@@ -119,7 +119,8 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      setStamped(true);
+      // (a transition: the re-render is sliced, not one long task right after the scene change)
+      startTransition(() => setStamped(true));
       sfx("bn-stamp", { gain: 0.8 });
       haptic([30, 20]);
     }, 900);

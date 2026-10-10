@@ -259,9 +259,12 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
           <div className="hw-fill">
             <div style={{ display: "grid", justifyItems: "center", gap: 2 }}>
               <div style={{ height: "min(30cqh, calc(96px * var(--vw-s, 1)))", display: "grid", placeItems: "end center" }}>{sticker}</div>
-              <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ width: "min(56cqh, calc(170px * var(--vw-s, 1)))" }}>
-                <CandyBucket size="100%" fill={0.15} />
-              </motion.div>
+              <div style={{ position: "relative" }}>
+                <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ width: "min(56cqh, calc(170px * var(--vw-s, 1)))" }}>
+                  <CandyBucket size="100%" fill={0.15} />
+                </motion.div>
+                <PorchPumpkin />
+              </div>
             </div>
           </div>
           <div className="hw-row" style={{ flex: "none", gap: 14, minHeight: 60, alignContent: "start" }}>
@@ -287,8 +290,9 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
         <div className="hw-fill">
           <motion.div initial={reduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "grid", gap: "clamp(6px, 1.4dvh, 12px)", justifyItems: "center" }}>
             {phase === "done" ? <div style={{ height: "min(26cqh, 96px)", display: "grid", placeItems: "end center" }}>{sticker}</div> : null}
-            <div style={{ width: "min(44cqh, calc(160px * var(--vw-s, 1)))" }}>
+            <div style={{ position: "relative", width: "min(44cqh, calc(160px * var(--vw-s, 1)))" }}>
               <CandyBucket size="100%" fill={1} />
+              <PorchPumpkin />
             </div>
             <p style={{ margin: 0, font: `400 clamp(22px, 3.6dvh, 28px) ${HW_DISPLAY}`, color: HW.candle }}>{phase === "done" ? "Treat unlocked! 🍬" : "…fine, have a treat anyway 🍬"}</p>
             <p style={{ margin: 0, maxWidth: 320, font: `500 clamp(13px, 2dvh, 15px)/1.4 ${FONTS.ui}`, color: VW.inkSoft, overflowWrap: "anywhere" }}>
@@ -298,5 +302,22 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
         </div>
       )}
     </>
+  );
+}
+
+/** The owner's witch-hat jack-o'-lantern, bouncing on the porch step beside the pail (the one handing out the sweets). */
+function PorchPumpkin() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={HW_GIF.witchPumpkin}
+      alt=""
+      aria-hidden
+      width={240}
+      height={285}
+      decoding="async"
+      draggable={false}
+      style={{ position: "absolute", left: "80%", bottom: "-4%", width: "78%", height: "auto", pointerEvents: "none", filter: "drop-shadow(0 8px 10px rgba(0,0,0,.5))" }}
+    />
   );
 }

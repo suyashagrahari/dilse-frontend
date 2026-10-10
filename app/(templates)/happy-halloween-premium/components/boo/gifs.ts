@@ -39,6 +39,9 @@ export const GIF = {
   ghostsFloat: W("floating-ghosts"),
   /** A bouncing jack-o'-lantern in a witch hat (240×285): on the porch. */
   witchPumpkin: W("witch-hat-pumpkin"),
+  // v7
+  /** A cute ghost running, facing right (220×220, 5 frames, ≈ 23 KB): dashes across at random moments. */
+  ghostRun: W("ghost-running"),
   // halloween library
   bucket: H("ghost-pumpkin-bucket"),
   pinkPumpkin: H("pink-pumpkin-smile"),

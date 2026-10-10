@@ -3,7 +3,7 @@
 // The night around the haunted house: stars, a big soft moon with clouds
 // drifting over it, three low fog bands sliding at different speeds, a bat or
 // two crossing on a slow sine path every 10–14 s (never a swarm), fireflies on
-// a small canvas, and cobwebs in the corners. After YES the moon turns into a
+// a small canvas, and the owner's web GIFs flush in the top corners. After YES the moon turns into a
 // heart and the whole night warms from indigo to amber.
 //
 // Wide screens (768px+) get the whole night, full-bleed: a big moon, the
@@ -14,11 +14,12 @@
 //
 // Fixed, behind the rooms, pointer-events none, aria-hidden. Everything moves
 // on transform/opacity only. Reduced motion: still fog, no bats, fireflies
-// drawn once, the moon/heart swap is a plain fade.
+// drawn once, the moon/heart swap is a plain fade, both corner webs are the
+// still one.
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "../../../_valentine/kit";
-import { Bat, BigWeb, MoonHeart } from "./art";
+import { Bat, MoonHeart } from "./art";
 import { HW_GIF } from "./stage";
 
 const CSS = `
@@ -59,12 +60,17 @@ const CSS = `
 @keyframes hw-flap { from { transform: scaleY(1) } to { transform: scaleY(.45) } }
 .hw-moon { transition: opacity .8s ease; }
 .hw-atmo.is-grand .hw-moon { opacity: 0; }
-/* Big corner webs: grand on the doorstep, smaller in the other rooms (scaled, so it is one composited change). */
-.hw-web { position: absolute; top: 0; width: min(50vw, 250px); opacity: .95; transform-origin: top left; transition: transform .9s cubic-bezier(.3,.7,.2,1), opacity .9s; }
-.hw-web.r { transform-origin: top right; }
-.hw-atmo:not(.is-grand) .hw-web { transform: scale(.62); opacity: .7; }
-/* the right web is the left one mirrored: flip its drawing, not the box (a flipped box would swing off-screen) */
-.hw-web.r > * { transform: scaleX(-1); }
+/* The owner's web GIFs, flush in the true screen corners (zero margin): grand on the doorstep, a little
+   smaller in the other rooms (scaled, so it is one composited change). Top-left: the pale web with the cute
+   spider, behind the trail. Top-right: the corner web whose red spider lowers itself, mirrored, and its black
+   silk turned to moonlit white (invert + a half-turn of hue keeps the spider red). */
+.hw-web { position: absolute; top: 0; height: auto; pointer-events: none; transform-origin: top left; transition: transform .9s cubic-bezier(.3,.7,.2,1), opacity .9s; }
+.hw-web.l { left: 0; width: min(48vw, 230px); opacity: .92; }
+.hw-web.r { right: 0; width: min(40vw, 196px); transform-origin: top right; opacity: .9; }
+.hw-web.r.is-moon { filter: invert(1) hue-rotate(180deg) brightness(.92); }
+.hw-web.r img, .hw-web.l img { display: block; width: 100%; height: auto; }
+.hw-web.r img { transform: scaleX(-1); }
+.hw-atmo:not(.is-grand) .hw-web { transform: scale(.74); opacity: .78; }
 .hw-warm { position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(255,170,90,.38), rgba(255,120,150,.20) 50%, rgba(255,190,110,.10) 100%); opacity: 0; transition: opacity 2s ease; }
 .hw-warm.is-on { opacity: 1; }
 .hw-flies { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -79,7 +85,8 @@ const CSS = `
   .hw-moon { top: 10vh; right: 9vw; transform: scale(1.9); transform-origin: top right; }
   .hw-cloud.c1 { top: 16vh; width: 260px; height: 54px; }
   .hw-cloud.c2 { top: 24vh; width: 180px; height: 44px; }
-  .hw-web { width: clamp(190px, 19vw, 360px); }
+  .hw-web.l { width: clamp(220px, 19vw, 360px); }
+  .hw-web.r { width: clamp(190px, 16vw, 300px); }
   .hw-gifbats { display: block; position: absolute; left: 7vw; top: 15vh; width: clamp(110px, 9vw, 170px); height: auto; opacity: .95; }
   .hw-bat.b3 { display: block; top: 12%; animation: hw-batx 21s linear infinite 5s; }
   .hw-fog.f1 { height: 30vh; }
@@ -184,6 +191,7 @@ function Fireflies({ count = 16, warm }: { count?: number; warm: boolean }) {
 }
 
 export default function Atmosphere({ warm = false, grand = false }: { warm?: boolean; grand?: boolean }) {
+  const reduced = useReducedMotion();
   return (
     <div className={`hw-atmo${grand ? " is-grand" : ""}`} aria-hidden>
       <style>{CSS}</style>
@@ -230,11 +238,14 @@ export default function Atmosphere({ warm = false, grand = false }: { warm?: boo
       <div className="hw-fog f1" />
       <div className="hw-fog f2" />
       <div className="hw-fog f3" />
-      <span className="hw-web" style={{ left: "var(--vw-gutter, 0px)" }}>
-        <BigWeb size="100%" />
+      <span className="hw-web l">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HW_GIF.cuteWeb} alt="" width={300} height={300} decoding="async" draggable={false} />
       </span>
-      <span className="hw-web r" style={{ right: "var(--vw-gutter, 0px)" }}>
-        <BigWeb size="100%" />
+      {/* reduced motion: the still web in this corner too */}
+      <span className={`hw-web r${reduced ? "" : " is-moon"}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={reduced ? HW_GIF.cuteWeb : HW_GIF.cornerWeb} alt="" width={reduced ? 300 : 280} height={reduced ? 300 : 362} decoding="async" draggable={false} />
       </span>
     </div>
   );

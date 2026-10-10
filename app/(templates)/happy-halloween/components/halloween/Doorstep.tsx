@@ -4,7 +4,8 @@
 // gasp: a big crooked haunted house fills the night under a huge moon, with a
 // witchy tower, flickering candle-lit windows, a bare tree, a picket fence,
 // pumpkins on the steps, ground fog rolling past and bats circling the tower
-// (the giant corner webs and the dangling spider live in ./Atmosphere.tsx).
+// (the corner webs live in ./Atmosphere.tsx; the tarantula on its silk is
+// ./haunts.tsx's DropSpider).
 // The sender's sign hangs on the fence and an envelope with her name waits on
 // the path. Knock three times: each knock shakes the house and lights more
 // windows; the third creaks the door open and — BOO — a ghost bursts out of a
@@ -20,7 +21,8 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
-import { Bat, Pumpkin, Spider } from "./art";
+import { Bat, Pumpkin } from "./art";
+import { DropSpider } from "./haunts";
 import { HW_DISPLAY } from "./fonts";
 import { HW_GIF, preload, useHw, useNext } from "./stage";
 import { HW, RoomTitle } from "./ui";
@@ -221,11 +223,8 @@ export default function Doorstep({
     <>
       <style>{CSS}</style>
       <RoomTitle as="h1" kicker="Someone left something on your doorstep…" title={<>A little haunted house</>} />
-      {/* a little spider drops in from the big corner web and bobs on its thread */}
-      <span className="hw-spider" aria-hidden>
-        <i />
-        <Spider size={28} thread={0} />
-      </span>
+      {/* the owner's tarantula lowers itself from the top edge under the moonlit corner web, now and then */}
+      <DropSpider side="r" x="4%" first={2200} />
 
       <div className="hw-fill hw-door-fill">
         <motion.div
@@ -394,11 +393,6 @@ const CSS = `
   .hw-house { width: min(112cqw, calc(100cqh * ${VB_W} / ${VB_H}), calc(720px * var(--vw-s, 1))); }
 }
 @media (max-height: 760px) { .hw-door-moon { left: 50%; top: 3%; width: 44%; } .hw-door-halo { left: 30%; top: -20%; width: 86%; } }
-.hw-spider { position: fixed; z-index: 3; top: -60px; right: calc(var(--vw-gutter, 0px) + 6%); height: calc(var(--vw-top-space, 0px) + 300px); width: 28px; pointer-events: none;
-  display: flex; flex-direction: column; align-items: center; animation: hw-spider-in 1.8s cubic-bezier(.3,1.35,.5,1) both, hw-spider-bob 3.4s ease-in-out 1.8s infinite alternate; }
-.hw-spider i { flex: 1; width: 1px; background: linear-gradient(rgba(247,243,255,.15), rgba(247,243,255,.6)); }
-@keyframes hw-spider-in { from { transform: translateY(-270px) } to { transform: translateY(0) } }
-@keyframes hw-spider-bob { from { transform: translateY(0) rotate(-2deg) } to { transform: translateY(14px) rotate(2deg) } }
 /* The house: as big as the room allows, bleeding a little past the sides on phones. */
 .hw-house { position: relative; width: min(132cqw, calc(100cqh * ${VB_W} / ${VB_H}), calc(640px * var(--vw-s, 1))); aspect-ratio: ${VB_W} / ${VB_H}; container-type: inline-size; }
 .hw-door-moon { position: absolute; left: 45%; top: -14%; width: 54%; aspect-ratio: 1; border-radius: 50%;
@@ -456,7 +450,7 @@ const CSS = `
 @media (min-width: 768px) { .hw-door-note { bottom: 46px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .hw-door-halo, .hw-glow.is-on, .hw-obat, .hw-obat > span, .hw-gfog, .hw-spider { animation: none !important; }
+  .hw-door-halo, .hw-glow.is-on, .hw-obat, .hw-obat > span, .hw-gfog { animation: none !important; }
   .hw-obat { display: none; }
 }
 `;

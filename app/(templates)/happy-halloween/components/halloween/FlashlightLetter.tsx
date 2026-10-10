@@ -24,6 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { HW_DISPLAY } from "./fonts";
+import { DropSpider } from "./haunts";
 import { useHw, useNext } from "./stage";
 import { Hint, HW, RoomTitle } from "./ui";
 
@@ -252,6 +253,8 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
   return (
     <>
       <style>{LETTER_CSS}</style>
+      {/* an attic spider lowers itself from the rafters to read along */}
+      <DropSpider side="l" x="5%" first={5000} again={[15000, 22000]} />
       <RoomTitle kicker="Room 5 · the attic" title="A letter in the dark" sub={lit ? (total > 1 ? `Lights on. Page ${at + 1} of ${total}.` : "Lights on. Take your time.") : "Somebody left a letter up here. Move the flashlight to read it."} />
 
       {/* the bulb — pull it on (a real button, so keyboards and anyone who can't sweep get the light) */}

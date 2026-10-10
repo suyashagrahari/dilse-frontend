@@ -25,6 +25,8 @@ import { haptic, useReducedMotion } from "../../../_valentine/kit";
 import { useDayMusic } from "../../../_valentine/music/context";
 import { useScare, useUnlockAudioOnFirstTap } from "../../../_valentine/kit/premium/useScare";
 import { sfx, type CueId, type CueOptions } from "../../../_valentine/kit/premium/sfx";
+import { loadSample, playSample } from "../../../_valentine/kit/premium/samples";
+import { Haunts } from "./haunts";
 import { FONTS } from "../../../_valentine/theme";
 import { HW_DISPLAY } from "./fonts";
 
@@ -42,7 +44,31 @@ export const HW_GIF = {
   panda: g("panda-scream-mask.webp"),
   /** "HAPPY HALLOWEEN" + a penguin peeking out of a pumpkin (the title card) */
   title: g("happy-halloween-pumpkin.webp"),
+  // v7: the owner's spider / ghost / grave / pumpkin set
+  /** a tarantula climbing down (180×419, one ≈4 s descent, then it loops): lowers itself from the top edge (./haunts.tsx) */
+  spiderDrop: g("spider-drop-from-top.gif"),
+  /** a black corner web whose red spider lowers itself (280×362): the top-right corner, mirrored and moonlit */
+  cornerWeb: g("corner-web-spider.webp"),
+  /** a pale web with a cute spider hanging under it (300×300): the top-left corner, behind the trail */
+  cuteWeb: g("cute-spider-web.webp"),
+  /** a spider walking, front view (260×260): walks the ceiling upside down now and then */
+  crawl: g("spider-crawl.webp"),
+  /** a round web with a widow running round it (288×288, ≈720 KB): strung behind a portrait in the hallway */
+  webFrame: g("web-frame-spider.webp"),
+  /** tombstone + a waving zombie hand (150×139): the balcony's little grave */
+  grave: g("grave-zombie-hand.webp"),
+  /** a bouncing jack-o'-lantern in a witch hat (240×285): on the porch beside the candy pail */
+  witchPumpkin: g("witch-hat-pumpkin.webp"),
+  /** two pastel top-hat ghosts floating (300×300, ≈430 KB): the YES celebration */
+  ghosts: g("floating-ghosts.webp"),
+  /** a cute ghost running, facing right (220px, 5 frames): dashes across at random moments */
+  ghostRun: g("ghost-running.webp"),
 } as const;
+
+/** The witch's cackle (5.6 s): laid over the music every time the witch-seal flies across. */
+const WITCH_LAUGH = { id: "hw-witch-laugh", url: g("witch-laugh.mp3") };
+/** If she flies again within this, she keeps quiet (no cackle spam on quick page turns). */
+const LAUGH_GAP_MS = 10000;
 
 /** Warm the HTTP cache for an image (idempotent). */
 const warmed = new Set<string>();
@@ -148,8 +174,19 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
       preload(HW_GIF.witch);
       preload(HW_GIF.panda);
     }, 1200);
+    void loadSample(WITCH_LAUGH.id, WITCH_LAUGH.url);
     return () => window.clearTimeout(t);
   }, []);
+
+  // The witch laughs every time she flies — over the music (no duck), never twice within 10 s,
+  // and quiet exactly when a scare would be: muted / "no music" / kids mode.
+  const lastLaugh = useRef(-1e9);
+  const cackle = () => {
+    const now = performance.now();
+    if (gentle || quiet || now - lastLaugh.current < LAUGH_GAP_MS) return;
+    lastLaugh.current = now;
+    playSample(WITCH_LAUGH.id, { gain: 0.6, maxLateMs: 600 });
+  };
 
   const reduced = useReducedMotion();
   const press = () => {
@@ -160,6 +197,7 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
     // The scene change: the witch-seal flies across and a fog bank wipes the
     // room away; the next room is swapped in while the fog covers the screen.
     if (!reduced) {
+      cackle();
       setFlights((f) => [...f.slice(-1), id]);
       window.setTimeout(() => setFlights((f) => f.filter((x) => x !== id)), WIPE_MS + 100);
     }
@@ -177,6 +215,8 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
   return (
     <Ctx.Provider value={api}>
       {children}
+      {/* the running ghost and the ceiling spider: never during a scare or a scene change */}
+      <Haunts paused={!!scareReq || flights.length > 0} />
       <CandyNext spec={scareReq ? null : next} onPress={press} />
       {flights.map((id) => (
         <SceneWipe key={id} />

@@ -19,7 +19,7 @@ import type { LovePhoto } from "../../../_valentine/types";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { Ghost } from "./art";
 import { HW_DISPLAY } from "./fonts";
-import { useHw, useNext } from "./stage";
+import { HW_GIF, useHw, useNext } from "./stage";
 import { Hint, HW, RoomTitle } from "./ui";
 
 const TILTS = [-3, 2.5, 1.5, -2, -1.5, 3];
@@ -162,6 +162,8 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
                 const last = i === list.length - 1;
                 return (
                   <div key={`${p.url}-${i}`} style={{ position: "relative" }}>
+                    {/* the owner's round web, strung behind the first portrait on each wall; its widow runs round her photo */}
+                    {k === 0 && <WebFrame w={onPage.length > 1 ? W2 : W1} />}
                     <Frame tilt={TILTS[i % TILTS.length]} closedEyes={shown} caption={p.caption?.trim() || `Memory ${i + 1}`} style={{ width: onPage.length > 1 ? W2 : W1, marginTop: k % 2 ? 22 : 0 }}>
                       <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5" }}>
                         {shown ? (
@@ -252,5 +254,23 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
 
       <PhotoLightbox photos={list} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
     </>
+  );
+}
+
+/** Sized from the portrait's own width (the wrapper div can be narrower than its tilted frame). */
+function WebFrame({ w }: { w: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={HW_GIF.webFrame}
+      alt=""
+      aria-hidden
+      width={288}
+      height={288}
+      decoding="async"
+      draggable={false}
+      // before the frame in the DOM, so the (transformed) frame paints over it: the web shows round the edges
+      style={{ position: "absolute", left: "50%", top: "44%", width: `calc(${w} * 1.6)`, maxWidth: "none", height: "auto", transform: "translate(-50%, -50%) rotate(-8deg)", pointerEvents: "none", opacity: 0.9 }}
+    />
   );
 }
