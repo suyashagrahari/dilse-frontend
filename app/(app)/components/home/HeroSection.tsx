@@ -185,9 +185,10 @@ export default function HeroSection() {
           background: linear-gradient(135deg, #fff6f3, #ffe7e2); color: #7a1028; border: 1.5px solid rgba(179,36,63,0.35);
           padding: 15px 18px 15px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; cursor: pointer; border-radius: 4px;
           box-shadow: 0 10px 24px -16px rgba(179,36,63,0.6); }
-        .hero-wish::after { content: ""; position: absolute; top: 0; bottom: 0; width: 34%; left: -50%; transform: skewX(-20deg);
+        .hero-wish::after { content: ""; position: absolute; top: 0; bottom: 0; width: 34%; left: 0; transform: translateX(-147%) skewX(-20deg);
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent); animation: heroWishSheen 4s ease-in-out infinite; }
-        @keyframes heroWishSheen { 0%, 60% { left: -50%; } 92%, 100% { left: 130%; } }
+        /* transform, not left: an animated left is reported as a layout shift every frame */
+        @keyframes heroWishSheen { 0%, 60% { transform: translateX(-147%) skewX(-20deg); } 92%, 100% { transform: translateX(382%) skewX(-20deg); } }
         .hero-wish-h { font-size: 14px; letter-spacing: 0; animation: heroWishBeat 1.8s ease-in-out infinite; display: inline-block; }
         @keyframes heroWishBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.14); } 56% { transform: scale(1); } }
         .hero-wish-off { padding: 4px 7px; border-radius: 99px; background: #b3243f; color: #fff4f1; font-size: 9.5px; letter-spacing: 1px; }
