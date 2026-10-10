@@ -12,7 +12,7 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "../../../_valentine/kit";
-import { Bat, Cobweb, MoonHeart } from "./art";
+import { Bat, BigWeb, MoonHeart } from "./art";
 
 const CSS = `
 .hw-atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -50,12 +50,20 @@ const CSS = `
 @keyframes hw-batx { 0% { transform: translateX(-12vw); opacity: 0 } 3% { opacity: .85 } 45% { opacity: .85 } 50% { transform: translateX(112vw); opacity: 0 } 100% { transform: translateX(112vw); opacity: 0 } }
 @keyframes hw-baty { from { transform: translateY(-14px) } to { transform: translateY(14px) } }
 @keyframes hw-flap { from { transform: scaleY(1) } to { transform: scaleY(.45) } }
-.hw-web { position: absolute; top: 0; opacity: .9; }
+.hw-moon { transition: opacity .8s ease; }
+.hw-atmo.is-grand .hw-moon { opacity: 0; }
+/* Big corner webs: grand on the doorstep, smaller in the other rooms (scaled, so it is one composited change). */
+.hw-web { position: absolute; top: 0; width: min(50vw, 250px); opacity: .95; transform-origin: top left; transition: transform .9s cubic-bezier(.3,.7,.2,1), opacity .9s; }
+.hw-web.r { transform-origin: top right; }
+.hw-atmo:not(.is-grand) .hw-web { transform: scale(.62); opacity: .7; }
+.hw-atmo:not(.is-grand) .hw-web.r { transform: scaleX(-1) scale(.62); }
+.hw-web.r { transform: scaleX(-1); }
 .hw-warm { position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(255,170,90,.38), rgba(255,120,150,.20) 50%, rgba(255,190,110,.10) 100%); opacity: 0; transition: opacity 2s ease; }
 .hw-warm.is-on { opacity: 1; }
 .hw-flies { position: absolute; inset: 0; width: 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .hw-stars > div, .hw-cloud, .hw-fog, .hw-bat, .hw-bat > span, .hw-bat > span > span { animation: none !important; }
+  .hw-web { transition: none; }
   .hw-bat { display: none; }
   .hw-stars .tw1 i, .hw-stars .tw2 i { opacity: .55; }
 }
@@ -151,9 +159,9 @@ function Fireflies({ count = 16, warm }: { count?: number; warm: boolean }) {
   return <canvas ref={ref} className="hw-flies" aria-hidden />;
 }
 
-export default function Atmosphere({ warm = false }: { warm?: boolean }) {
+export default function Atmosphere({ warm = false, grand = false }: { warm?: boolean; grand?: boolean }) {
   return (
-    <div className="hw-atmo" aria-hidden>
+    <div className={`hw-atmo${grand ? " is-grand" : ""}`} aria-hidden>
       <style>{CSS}</style>
       <div className="hw-stars">
         {(["tw1", "tw2", "still"] as const).map((layer, g) => (
@@ -188,11 +196,11 @@ export default function Atmosphere({ warm = false }: { warm?: boolean }) {
       <div className="hw-fog f1" />
       <div className="hw-fog f2" />
       <div className="hw-fog f3" />
-      <span className="hw-web" style={{ left: "var(--vw-gutter, 0px)", top: 52 }}>
-        <Cobweb size={74} />
+      <span className="hw-web" style={{ left: "var(--vw-gutter, 0px)" }}>
+        <BigWeb size="100%" />
       </span>
-      <span className="hw-web" style={{ right: "var(--vw-gutter, 0px)", top: 52, transform: "scaleX(-1)" }}>
-        <Cobweb size={60} />
+      <span className="hw-web r" style={{ right: "var(--vw-gutter, 0px)" }}>
+        <BigWeb size="100%" />
       </span>
     </div>
   );

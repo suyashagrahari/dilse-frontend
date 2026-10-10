@@ -179,14 +179,34 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
 
   const R = reduced ? 120 : 92;
 
+  const litAt = useRef(0);
   const lightsOn = () => {
     if (lit) return;
     haptic([10, 30, 10]);
     cue("tick", { gain: 0.8 });
+    litAt.current = performance.now();
     setLit(true);
   };
 
-  useNext(lit ? (last ? "To the potion room" : "Turn the page") : null, () => (last ? onNext() : (cue("page-turn"), setPage(at + 1))), last ? "pumpkin" : "ghost");
+  // Never hurry the letter: pages turn on her tap (the pill, or the paper itself). On the last page
+  // it moves on only after a generous reading time, or soon after she taps the paper ("done").
+  const [doneReading, setDoneReading] = useState(false);
+  const lastWords = last ? (pages[at]?.paras ?? []).join(" ").split(/\s+/).filter(Boolean).length : 0;
+  const readMs = Math.min(24000, Math.max(9000, 5000 + lastWords * 320));
+  useNext(
+    lit ? (last ? "To the potion room" : "Turn the page") : null,
+    () => (last ? onNext() : (cue("page-turn"), setPage(at + 1))),
+    last ? "pumpkin" : "ghost",
+    lit && last ? (doneReading ? 1400 : readMs) : null,
+  );
+  const tapPaper = () => {
+    if (!lit || performance.now() - litAt.current < 700) return;
+    if (last) setDoneReading(true);
+    else {
+      cue("page-turn");
+      setPage(at + 1);
+    }
+  };
 
   const shine = (clientX: number, clientY: number) => {
     const box = boxRef.current;
@@ -265,6 +285,7 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
           ref={boxRef}
           onPointerMove={(e) => shine(e.clientX, e.clientY)}
           onPointerDown={(e) => shine(e.clientX, e.clientY)}
+          onClick={tapPaper}
           style={{
             position: "relative",
             width: "100%",
@@ -274,7 +295,7 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
             ["--x" as string]: "50%",
             ["--y" as string]: "30%",
             ["--r" as string]: `${R}px`,
-            cursor: lit ? "auto" : "none",
+            cursor: lit ? "pointer" : "none",
             touchAction: lit ? "auto" : "none",
           }}
         >
@@ -343,12 +364,14 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
             </button>
           </div>
         ) : (
-          total > 1 &&
-          at > 0 && (
-            <button type="button" onClick={() => setPage(at - 1)} style={{ minHeight: 36, padding: "4px 14px", borderRadius: 99, border: "1px solid rgba(247,243,255,.25)", background: "rgba(247,243,255,.08)", color: VW.ink, font: `600 13px ${FONTS.ui}`, cursor: "pointer" }}>
-              ‹ previous page
-            </button>
-          )
+          <div className="hw-row" style={{ gap: 8 }}>
+            {total > 1 && at > 0 && (
+              <button type="button" onClick={() => setPage(at - 1)} style={{ minHeight: 36, padding: "4px 14px", borderRadius: 99, border: "1px solid rgba(247,243,255,.25)", background: "rgba(247,243,255,.08)", color: VW.ink, font: `600 13px ${FONTS.ui}`, cursor: "pointer" }}>
+                ‹ previous page
+              </button>
+            )}
+            <span style={{ font: `500 12.5px ${FONTS.ui}`, color: VW.inkSoft }}>{last ? (doneReading ? "💜" : "Tap the letter when you're done") : "Tap the letter to turn the page"}</span>
+          </div>
         )}
       </div>
     </>

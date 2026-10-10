@@ -87,7 +87,9 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
     return !!r && x >= r.left - 20 && x <= r.right + 20 && y >= r.top - 40 && y <= r.bottom;
   };
 
-  useNext(brewed ? "One last room" : null, onNext, "heart");
+  // Brewed → time to read the spell, then on.
+  const spellWords = (spell || "").split(/\s+/).filter(Boolean).length;
+  useNext(brewed ? "One last room" : null, onNext, "heart", brewed ? Math.min(9000, 3800 + spellWords * 260) : null);
 
   return (
     <>

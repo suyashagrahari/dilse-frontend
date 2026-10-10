@@ -26,7 +26,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { getDay } from "../../_valentine/days";
 import { HALLOWEEN_TONES, type HalloweenExtras, type HalloweenTone } from "../../_valentine/days/happy-halloween";
-import { DayRoot, MusicToggle, Sticker, burst, useReducedMotion, useSynthMusic } from "../../_valentine/kit";
+import { DayRoot, Sticker, burst, useReducedMotion } from "../../_valentine/kit";
 import { FONTS, VW } from "../../_valentine/theme";
 import type { ExperienceProps, GifSlot } from "../../_valentine/types";
 import { Ghost, Pumpkin } from "./halloween/art";
@@ -40,7 +40,7 @@ import Hallway from "./halloween/Hallway";
 import Potion, { type Ingredient } from "./halloween/Potion";
 import Question from "./halloween/Question";
 import TrickOrTreat from "./halloween/TrickOrTreat";
-import { HW_STAGE_CSS, HwStage, useNext } from "./halloween/stage";
+import { HW_STAGE_CSS, HwStage, PumpkinTrail, useNext } from "./halloween/stage";
 import { HW, clean } from "./halloween/ui";
 
 const day = getDay("happy-halloween");
@@ -61,7 +61,6 @@ const isToneDefault = (q: string) => TONES.some((t) => HALLOWEEN_TONES[t].questi
 export default function HalloweenExperience({ data, mode, react }: ExperienceProps) {
   const x = data.extras as HalloweenExtras;
   const reduced = useReducedMotion();
-  const music = useSynthMusic({ melody: day.melody, enabled: mode === "live" && data.music });
 
   const tone: HalloweenTone = TONES.includes(x.tone) ? x.tone : "romantic";
   const T = HALLOWEEN_TONES[tone];
@@ -85,6 +84,13 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
     setAnswered(null);
     setRound((r) => r + 1);
     setI(0);
+  };
+  // A tap on an earlier pumpkin: back to that room. A new round, so its GIFs
+  // restart and its scare can be earned again; the YES (if given) is kept.
+  const jumpTo = (k: number) => {
+    if (k >= i) return;
+    setRound((r) => r + 1);
+    setI(k);
   };
 
   useEffect(() => {
@@ -122,8 +128,9 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       // the main thread every frame of the change).
       initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={reduced ? undefined : { opacity: 0, y: -12 }}
-      transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
+      // The fog wipe (./halloween/stage.tsx) covers the swap: a quick exit, a soft rise out of the fog.
+      exit={reduced ? undefined : { opacity: 0, transition: { duration: 0.18 } }}
+      transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
     >
       {children}
     </motion.section>
@@ -147,31 +154,9 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       }
     >
       <style>{HW_STAGE_CSS}</style>
-      <Atmosphere warm={warm} />
-      {/* the melody's own button (track / YouTube show the engine's radio instead) — beside the pumpkins, clear of the top-right bar */}
-      {mode === "live" && <MusicToggle music={music} style={{ left: "calc(var(--vw-gutter, 0px) + 184px)", top: "calc(var(--vw-top-space, 0px) + 6px)", width: 36, height: 36, fontSize: 15 }} />}
-
-      {/* seven little pumpkins: one per room */}
-      <div
-        aria-label={`Room ${Math.min(i + 1, ROOMS)} of ${ROOMS}`}
-        role="img"
-        style={{ position: "fixed", top: "calc(var(--vw-top-space, 0px) + 8px)", left: "calc(var(--vw-gutter, 0px) + 12px)", display: "flex", gap: 5, padding: "5px 10px", borderRadius: 99, background: "rgba(23,18,43,.66)", border: "1px solid rgba(247,243,255,.12)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", zIndex: 20 }}
-      >
-        {Array.from({ length: ROOMS }, (_, k) => {
-          const done = k < i;
-          const here = k === i;
-          return (
-            <motion.span
-              key={k}
-              animate={here && !reduced ? { y: [0, -3, 0] } : { y: 0 }}
-              transition={{ duration: 1.4, repeat: here ? Infinity : 0 }}
-              style={{ fontSize: 15, lineHeight: 1, filter: done || here || step === "ending" ? (done || step === "ending" ? "drop-shadow(0 0 4px #FFB347)" : "none") : "grayscale(1) brightness(.6)", opacity: done || here || step === "ending" ? 1 : 0.55 }}
-            >
-              🎃
-            </motion.span>
-          );
-        })}
-      </div>
+      <Atmosphere warm={warm} grand={step === "door"} />
+      {/* seven little pumpkins, one per room: tap an earlier one to go back (the music icon sits right of them, see .vm-icon) */}
+      <PumpkinTrail at={i} rooms={ROOMS} ending={step === "ending"} onJump={jumpTo} />
 
       {/* initial={false}: the first room (and its h1, the LCP element) paints at
           its final state instead of waiting on hydration at opacity 0. Later
@@ -214,7 +199,8 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
 
 /** After YES: their sticker, the sender's line, the moon turning into a heart. */
 function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { recipient: string; yesLine: string; dodges: number; gentle: boolean; sticker: ReactNode; onNext: () => void }) {
-  useNext("Your Boo License", onNext, "heart");
+  // a generous beat to enjoy the YES, then the license
+  useNext("Your Boo License", onNext, "heart", 5200);
   return (
     <div className="hw-fill" style={{ alignContent: "center", gap: "clamp(8px, 1.8dvh, 16px)", display: "grid" }}>
       <div style={{ display: "grid", placeItems: "center", height: "min(34cqh, 140px)" }}>{sticker}</div>
