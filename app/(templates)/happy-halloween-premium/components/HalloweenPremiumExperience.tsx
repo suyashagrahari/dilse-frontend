@@ -32,10 +32,17 @@
 // curtain covers each scene change. No auto-advance and no skip: one Next pill
 // per scene, shown once its moment is done. The music is the engine's small
 // round icon (music.compact, bottom-left); the viewer shows the stacked brand mark.
+//
+// v7: the gate's manor is much bigger (it dominates the scene on phone and
+// desktop); the trail sits in the very top-left corner; both corner webs are
+// flush in the true screen corners on every scene; the owner's running ghost
+// dashes across at random moments (a trailing shadow, a flicker, the lights dim
+// for a beat; tap it to spook it); the witch cackles on every fly-by, over the
+// music.
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getDay } from "../../_valentine/days";
 import { DayRoot, useReducedMotion } from "../../_valentine/kit";
 import { GlowParticles, PremiumRoot, usePremium } from "../../_valentine/kit/premium";
@@ -48,7 +55,7 @@ import { readNight } from "./boo/model";
 import { BooProvider, SCARE_CSS } from "./boo/Scare";
 import Treats from "./boo/Treats";
 import { BOO_CSS, Backdrop, slotSrc, WitchFly } from "./boo/ui";
-import { Crawler, DropSpider, Haunt, HAUNT_CSS, Trail, Veil, VEIL_MS, VEIL_SWAP_MS } from "./boo/haunt";
+import { Crawler, DropSpider, Haunt, HAUNT_CSS, RunningGhost, Trail, Veil, VEIL_SWAP_MS, type VeilControl } from "./boo/haunt";
 
 registerBooCues();
 
@@ -88,6 +95,8 @@ const LABEL: Record<Scene, string> = {
 const DROPS: Partial<Record<Scene, "l" | "r">> = { gate: "r", carve: "l", potion: "r", radio: "l" };
 /** Where a spider crosses the ground (once per visit to the scene). */
 const CRAWLS = new Set<Scene>(["treats", "booth", "letter", "license"]);
+const HEART_COLORS = ["#FF9EC4", "#FFD27A", "#FFFFFF"];
+const SPARK_COLORS = ["#FFF3C9", "#C9B6FF", "#9BE7C4", "#FF9EC4"];
 
 function Night({ data, mode, react }: ExperienceProps) {
   const p = usePremium();
@@ -104,21 +113,23 @@ function Night({ data, mode, react }: ExperienceProps) {
   }, [scene]);
 
   // Every scene change rises a mist curtain over the screen; the next scene is
-  // swapped in under it (reduced motion: a plain swap).
-  const [veils, setVeils] = useState<number[]>([]);
+  // swapped in under it (reduced motion: a plain swap). v7: the veil is mounted
+  // once and replayed (no render on the tap), and the swap is a transition, so
+  // React builds the next scene in slices instead of one long task.
+  const veil = useRef<VeilControl | null>(null);
   const swapT = useRef(0);
   useEffect(() => () => window.clearTimeout(swapT.current), []);
   const go = useCallback(
     (to: Scene, bump = false) => {
       const swap = () => {
-        setScene(to);
-        if (bump) setRound((r) => r + 1);
+        startTransition(() => {
+          setScene(to);
+          if (bump) setRound((r) => r + 1);
+        });
         if (typeof window !== "undefined") window.scrollTo({ top: 0 });
       };
       if (reduce) return swap();
-      const id = performance.now();
-      setVeils((v) => [...v.slice(-1), id]);
-      window.setTimeout(() => setVeils((v) => v.filter((x) => x !== id)), VEIL_MS + 80);
+      veil.current?.play();
       window.clearTimeout(swapT.current);
       swapT.current = window.setTimeout(swap, VEIL_SWAP_MS);
     },
@@ -222,7 +233,7 @@ function Night({ data, mode, react }: ExperienceProps) {
       <Haunt reduce={reduce} peak={peak} gate={scene === "gate"} />
       <GlowParticles
         preset={sparkle ? "hearts" : "sparkles"}
-        colors={sparkle ? ["#FF9EC4", "#FFD27A", "#FFFFFF"] : ["#FFF3C9", "#C9B6FF", "#9BE7C4", "#FF9EC4"]}
+        colors={sparkle ? HEART_COLORS : SPARK_COLORS}
         density={sparkle ? 0.4 : 0.22}
         z={1}
       />
@@ -245,10 +256,9 @@ function Night({ data, mode, react }: ExperienceProps) {
       <Trail labels={trail.map((s) => LABEL[s])} at={at} onJump={jumpTo} />
       {spiders && dropSide && <DropSpider run={visit} side={dropSide} />}
       {spiders && CRAWLS.has(scene) && <Crawler key={visit} run={visit} />}
-      {veils.map((id) => (
-        <Veil key={id} />
-      ))}
-      <WitchFly off={reduce} />
+      {!reduce && scene !== "gate" && <RunningGhost horror={n.tone !== "kids"} />}
+      {!reduce && <Veil ctlRef={veil} />}
+      <WitchFly off={reduce} laugh={n.tone !== "kids"} />
       <style>{BOO_CSS + SCARE_CSS + HAUNT_CSS}</style>
     </div>
     </BooProvider>

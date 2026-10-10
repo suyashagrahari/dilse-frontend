@@ -19,21 +19,27 @@
 //                  heads rises over the screen, the next scene swaps in under
 //                  it, and it lifts away (one composited translate).
 //   <Manor>        the gate's big pastel haunted house (SVG).
+//   <RunningGhost> v7: the owner's running ghost dashes across at random
+//                  moments (behind the scene, or a quick small whoosh in front
+//                  near the top); a shadow trails it, it flickers mid-run and,
+//                  on some passes, the lights dim for a beat. Tap: it zooms off.
 //
 // Everything animates transform/opacity only. Reduced motion: no drop, no
 // crawl, no bats; the spiders are static ones.
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { haptic } from "../../../_valentine/kit";
 import { sfx } from "../../../_valentine/kit/premium";
 import { Bat, Ghost } from "./art";
 import { HAND } from "./fonts";
 import { freshGif, GIF, preloadGif } from "./gifs";
 import { BN } from "./model";
+import { useBoo } from "./Scare";
 
 // ── The fixed atmosphere ─────────────────────────────────────────────────────
 
-export function Haunt({ reduce, peak, gate }: { reduce: boolean; peak: boolean; gate: boolean }) {
+/** (memo: a scene change must not re-render the town, the yards and the manor) */
+export const Haunt = memo(function Haunt({ reduce, peak, gate }: { reduce: boolean; peak: boolean; gate: boolean }) {
   return (
     <div className={`bn-haunt${peak ? " is-peak" : ""}${gate ? " is-gate" : ""}`} aria-hidden>
       <span className="bn-vignette" />
@@ -66,15 +72,16 @@ export function Haunt({ reduce, peak, gate }: { reduce: boolean; peak: boolean; 
           </span>
         </>
       )}
-      {/* top-left: the corner web (its red spider lowers itself); reduced motion: the still one */}
+      {/* v7: both webs sit flush in the true top corners, on every scene and every screen.
+          top-left: the corner web (its red spider lowers itself); reduced motion: the still one */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className={`bn-cornerWeb${reduce ? " is-still" : ""}`} src={reduce ? GIF.cuteWeb : GIF.cornerWeb} alt="" width={280} height={362} decoding="async" draggable={false} />
-      {/* the other corner, on wide screens (the editor's bar sits above it) */}
+      {/* top-right: the cute spider web, mirrored (the editor's bar sits above it) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="bn-cuteWeb" src={GIF.cuteWeb} alt="" width={300} height={300} loading="lazy" decoding="async" draggable={false} />
     </div>
   );
-}
+});
 
 /** A row of little haunted houses on the hills: two on phones, five across a desktop. */
 function Skyline() {
@@ -297,6 +304,122 @@ export function Crawler({ run, delay = 6500 }: { run: number; delay?: number }) 
   );
 }
 
+// ── The running ghost (ghost-running.webp, v7) ───────────────────────────────
+
+interface Dash {
+  id: number;
+  /** a quick small whoosh in front, near the top (else: a slower pass behind the scene) */
+  front: boolean;
+  /** vertical position, in vh */
+  y: number;
+  ms: number;
+  size: number;
+  /** the lights dim for a beat as it passes */
+  dim: boolean;
+}
+
+/**
+ * Every 8–20 s (the first 5–9 s in) the ghost dashes left → right at a random
+ * height and speed. Most passes run behind the scene's content (never over the
+ * Next pill or the text); about one in four is a small, fast whoosh in front
+ * across the top band. Horror (not on kids pages): a dark shadow trails it, it
+ * flickers mid-run, and every other slow pass dims the lights for a beat with a
+ * soft "woo". Skipped while a scare or a scene change is on screen, or the tab
+ * is hidden. Tap it (a document-level hit test, like the crawler): it gets
+ * spooked and zooms off.
+ */
+export function RunningGhost({ horror }: { horror: boolean }) {
+  const boo = useBoo();
+  const busy = useRef(boo.busy);
+  useEffect(() => {
+    busy.current = boo.busy;
+  }, [boo.busy]);
+  const [dash, setDash] = useState<Dash | null>(null);
+  const el = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    let t = 0;
+    let k = 0;
+    const plan = (ms: number) => {
+      t = window.setTimeout(fire, ms);
+    };
+    const fire = () => {
+      if (document.hidden || busy.current || document.querySelector(".bn-veil.is-on, .bn-scareStage")) return plan(2500);
+      k += 1;
+      const front = k > 1 && Math.random() < 0.28;
+      const wide = window.innerWidth >= 768;
+      setDash({
+        id: k,
+        front,
+        y: front ? 7 + Math.random() * 7 : 24 + Math.random() * 40,
+        ms: (front ? 1150 + Math.random() * 450 : 2700 + Math.random() * 2300) * (wide ? 1.35 : 1),
+        size: front ? (wide ? 74 : 58) : (wide ? 128 : 92) * (0.85 + Math.random() * 0.35),
+        dim: horror && !front && k % 2 === 1,
+      });
+      plan(8000 + Math.random() * 12000);
+    };
+    plan(5000 + Math.random() * 4000);
+    return () => window.clearTimeout(t);
+  }, [horror]);
+
+  useEffect(() => {
+    const node = el.current;
+    if (!dash || !node) return;
+    const w = window.innerWidth;
+    const s = dash.size;
+    const anim = node.animate(
+      [
+        { transform: `translate(${-s - 30}px, 0)` },
+        { transform: `translate(${w * 0.25}px, -14px)` },
+        { transform: `translate(${w * 0.5}px, 8px)` },
+        { transform: `translate(${w * 0.75}px, -12px)` },
+        { transform: `translate(${w + 30}px, 0)` },
+      ],
+      { duration: dash.ms, easing: "linear", fill: "forwards" },
+    );
+    anim.onfinish = () => setDash(null);
+    if (dash.front) sfx("swoosh-soft", { gain: 0.3 });
+    if (dash.dim) sfx("bn-woo", { gain: 0.3, at: dash.ms / 2600 });
+    const hit = (e: PointerEvent) => {
+      const tg = e.target as Element | null;
+      if (!dash.front && tg?.closest?.("button, a, input, textarea, select, [role='slider'], .bn-gateBox")) return;
+      const r = node.getBoundingClientRect();
+      const pad = 12;
+      if (e.clientX < r.left - pad || e.clientX > r.right + pad || e.clientY < r.top - pad || e.clientY > r.bottom + pad) return;
+      if (anim.playbackRate > 1) return;
+      anim.playbackRate = 6;
+      node.classList.add("is-spooked");
+      haptic(10);
+      sfx("swoosh-soft", { gain: 0.45 });
+      sfx("bn-giggle", { gain: 0.35, at: 0.1 });
+    };
+    document.addEventListener("pointerdown", hit, true);
+    return () => {
+      document.removeEventListener("pointerdown", hit, true);
+      anim.cancel();
+    };
+  }, [dash]);
+
+  if (!dash) return null;
+  return (
+    <>
+      {dash.dim && <span className="bn-dim" style={{ animationDuration: `${dash.ms}ms` }} aria-hidden />}
+      <span
+        ref={el}
+        key={dash.id}
+        className={`bn-runGhost${dash.front ? " is-front" : ""}${horror ? " is-horror" : ""}`}
+        style={{ top: `${dash.y}vh`, width: dash.size, height: dash.size, ["--run" as string]: `${dash.ms}ms` }}
+        aria-hidden
+      >
+        <span className="bn-runIn">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={GIF.ghostRun} alt="" width={220} height={220} decoding="async" draggable={false} />
+        </span>
+      </span>
+    </>
+  );
+}
+
 // ── The progress trail ───────────────────────────────────────────────────────
 
 function MiniPumpkin() {
@@ -353,9 +476,42 @@ export function Trail({ labels, at, onJump }: { labels: string[]; at: number; on
 export const VEIL_MS = 1250;
 export const VEIL_SWAP_MS = 520;
 
-export function Veil() {
+export interface VeilControl {
+  play: () => void;
+}
+
+/**
+ * v7: one veil, mounted once and parked off-screen (hidden); each scene change
+ * replays it with the Web Animations API, so the Next tap itself mounts and
+ * re-renders nothing (the old per-change <Veil> cost a long task on the tap).
+ */
+export const Veil = memo(function Veil({ ctlRef }: { ctlRef: RefObject<VeilControl | null> }) {
+  const el = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    ctlRef.current = {
+      play: () => {
+        const node = el.current;
+        if (!node) return;
+        node.getAnimations().forEach((a) => a.cancel());
+        node.classList.add("is-on");
+        const a = node.animate(
+          [
+            { transform: "translateY(100vh)", offset: 0 },
+            { transform: "translateY(-30vh)", offset: 0.42 },
+            { transform: "translateY(-62vh)", offset: 0.58 },
+            { transform: "translateY(-250vh)", offset: 1 },
+          ],
+          { duration: VEIL_MS, easing: "cubic-bezier(.45,.05,.55,.95)" },
+        );
+        a.onfinish = () => node.classList.remove("is-on");
+      },
+    };
+    return () => {
+      ctlRef.current = null;
+    };
+  }, [ctlRef]);
   return (
-    <span className="bn-veil" aria-hidden>
+    <span ref={el} className="bn-veil" aria-hidden>
       <span className="bn-veilGhosts">
         {[0, 1, 2, 3, 4].map((i) => (
           <Ghost key={i} size={74} mood={i === 2 ? "wink" : i % 2 ? "shy" : "happy"} tint="#E9E1FF" />
@@ -371,7 +527,7 @@ export function Veil() {
       </span>
     </span>
   );
-}
+});
 
 // ── The gate's haunted house ─────────────────────────────────────────────────
 
@@ -499,9 +655,9 @@ export const HAUNT_CSS = `
 .bn-haunt.is-peak .bn-flash { display: none; }
 .bn-yardSil { position: absolute; bottom: 0; width: clamp(150px, 44vw, 230px); height: auto; transition: opacity 1.4s ease; }
 .bn-yardSil.is-l { left: -24px; } .bn-yardSil.is-r { right: -24px; }
-@media (max-width: 767px) { .bn-yardSil { display: none; } .bn-haunt:not(.is-gate) .bn-cornerWeb { display: none; } }
+@media (max-width: 767px) { .bn-yardSil { display: none; } }
 .bn-haunt .bn-bigManor { display: none; }
-@media (min-width: 1100px) { .bn-haunt .bn-bigManor { display: block; position: absolute; left: 1.5vw; bottom: 3vh; width: clamp(300px, 27vw, 520px); opacity: .92; transition: opacity 1.4s ease; } .bn-haunt.is-peak .bn-bigManor { opacity: .3; } .bn-h1 { display: none; } }
+@media (min-width: 1100px) { .bn-haunt .bn-bigManor { display: block; position: absolute; left: 1.5vw; bottom: 2vh; width: clamp(340px, 31vw, 640px); opacity: .92; transition: opacity 1.4s ease; } .bn-haunt.is-peak .bn-bigManor { opacity: .3; } .bn-h1 { display: none; } }
 .bn-haunt.is-peak .bn-yardSil { opacity: .3; }
 
 .bn-skyline { position: absolute; inset: auto 0 0 0; height: 30vh; }
@@ -535,18 +691,19 @@ export const HAUNT_CSS = `
 @keyframes bn-batB { 0% { transform: translate(110vw, 40vh) scale(.8) } 25% { transform: translate(70vw, 31vh) scale(.8) rotate(8deg) } 50%, 100% { transform: translate(-80px, 36vh) scale(.8) } }
 @keyframes bn-batC { 0%, 45% { transform: translate(-70px, 8vh) scale(.9) } 70% { transform: translate(45vw, 14vh) scale(.9) rotate(-8deg) } 100% { transform: translate(112vw, 6vh) scale(.9) } }
 
-.bn-cornerWeb { position: absolute; left: calc(var(--vw-gutter, 0px) - 8px); top: calc(var(--vw-top-space, 0px) + 40px); width: clamp(68px, 19vw, 92px); height: auto; opacity: .95;
+/* v7: the webs are flush in the true screen corners (zero margin), generous, on every scene */
+.bn-cornerWeb { position: absolute; left: 0; top: 0; width: clamp(112px, 31vw, 150px); height: auto; opacity: .95;
   filter: drop-shadow(0 0 .8px rgba(237,228,255,.95)) drop-shadow(0 0 .8px rgba(237,228,255,.8)); }
 .bn-cornerWeb.is-still { filter: none; }
-.bn-cuteWeb { display: none; position: absolute; right: 18px; top: 70px; width: 150px; height: auto; transform: scaleX(-1); opacity: .9; }
+.bn-cuteWeb { position: absolute; right: -2px; top: -2px; width: clamp(122px, 35vw, 164px); height: auto; transform: scaleX(-1); transform-origin: 50% 0; opacity: .92; }
 
 @media (min-width: 768px) {
   .bn-house { width: clamp(110px, 11vw, 190px); bottom: 8vh; }
   .bn-h1 { left: 2vw; } .bn-h5 { right: 2vw; width: clamp(110px, 10vw, 170px); }
   .bn-h2 { display: block; left: 14vw; bottom: 12vh; width: clamp(80px, 7vw, 120px); opacity: .7; }
   .bn-h4 { display: block; right: 15vw; bottom: 11vh; width: clamp(80px, 7.5vw, 130px); opacity: .75; }
-  .bn-cornerWeb { left: -10px; top: 60px; width: clamp(150px, 13vw, 230px); }
-  .bn-cuteWeb { display: block; }
+  .bn-cornerWeb { width: clamp(190px, 15vw, 300px); }
+  .bn-cuteWeb { width: clamp(190px, 15vw, 300px); }
   .bn-yardSil { width: clamp(220px, 22vw, 340px); } .bn-yardSil.is-l { left: 0; } .bn-yardSil.is-r { right: 0; }
   .bn-flyBat svg { scale: 1.5; }
 }
@@ -587,8 +744,8 @@ export const HAUNT_CSS = `
 .bn-crawl img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 1.5px rgba(255,255,255,.75)) drop-shadow(0 4px 4px rgba(20,10,40,.5)); }
 @media (min-width: 768px) { .bn-crawl { width: 84px; height: 84px; bottom: 4px; } }
 
-/* the trail: a small pumpkin trail, far top-left (under the editor's bar via --vw-top-space) */
-.bn-trail { position: fixed; z-index: 62; top: calc(var(--vw-top-space, 0px) + max(10px, env(safe-area-inset-top, 0px))); left: max(10px, env(safe-area-inset-left, 0px));
+/* the trail: a small pumpkin trail in the very top-left corner (level with the editor's top-right bar) */
+.bn-trail { position: fixed; z-index: 62; top: max(8px, env(safe-area-inset-top, 0px)); left: max(8px, env(safe-area-inset-left, 0px));
   display: flex; align-items: center; height: 28px; padding: 0 4px; border-radius: 99px;
   background: rgba(36,26,70,.62); border: 1px solid rgba(255,210,122,.28); box-shadow: 0 0 16px -6px rgba(255,154,60,.55), inset 0 1px 0 rgba(255,255,255,.1);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
@@ -605,10 +762,25 @@ export const HAUNT_CSS = `
 @keyframes bn-tkBob { from { transform: translateY(1px) scale(1.1) } to { transform: translateY(-2px) scale(1.28) } }
 @keyframes bn-tkNope { 0%,100% { transform: rotate(0) } 20% { transform: rotate(-16deg) } 45% { transform: rotate(13deg) } 70% { transform: rotate(-8deg) } }
 
+/* the running ghost (v7): behind the scene (z 1) or a small whoosh in front (z 70) */
+.bn-runGhost { position: fixed; z-index: 1; left: 0; pointer-events: none; will-change: transform; }
+.bn-runGhost.is-front { z-index: 70; }
+.bn-runIn { display: block; width: 100%; height: 100%; animation: bn-runBob .34s ease-in-out infinite alternate; }
+.bn-runGhost img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 10px rgba(201,182,255,.55)); }
+.bn-runGhost.is-horror img { filter: drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 12px rgba(155,231,196,.55)) drop-shadow(-26px 14px 7px rgba(10,4,26,.6)); }
+.bn-runGhost.is-horror .bn-runIn { animation: bn-runBob .34s ease-in-out infinite alternate, bn-runFlicker var(--run, 3s) steps(1) forwards; }
+.bn-runGhost.is-spooked .bn-runIn { animation: bn-runSpook .5s cubic-bezier(.3,1.6,.5,1) forwards; }
+@keyframes bn-runBob { from { translate: 0 0 } to { translate: 0 -5px } }
+@keyframes bn-runFlicker { 0%, 40%, 49%, 100% { opacity: 1 } 42% { opacity: .15 } 44% { opacity: .9 } 46% { opacity: .05 } 47.5% { opacity: .7 } }
+@keyframes bn-runSpook { 0% { transform: scale(1) rotate(0) } 30% { transform: scale(1.3) rotate(-12deg) } 100% { transform: scale(.7) rotate(8deg) } }
+/* the lights dim for a beat as it passes (the night behind the scene; the ghost glows over it) */
+.bn-dim { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0; animation: bn-dim 3s linear forwards;
+  background: radial-gradient(130% 100% at 50% 45%, rgba(10,4,26,.25), rgba(10,4,26,.7)); }
+@keyframes bn-dim { 0%, 18% { opacity: 0 } 24% { opacity: .9 } 27% { opacity: .35 } 30%, 62% { opacity: .85 } 64% { opacity: .5 } 66% { opacity: .8 } 88%, 100% { opacity: 0 } }
+
 /* the scene change: a mist curtain with ghost heads rises and lifts away */
-.bn-veil { position: fixed; z-index: 85; left: 0; right: 0; top: 0; height: 250vh; pointer-events: none; will-change: transform; contain: strict;
-  animation: bn-veil ${VEIL_MS}ms cubic-bezier(.45,.05,.55,.95) forwards; }
-@keyframes bn-veil { 0% { transform: translateY(100vh) } 42% { transform: translateY(-30vh) } 58% { transform: translateY(-62vh) } 100% { transform: translateY(-250vh) } }
+.bn-veil { position: fixed; z-index: 85; left: 0; right: 0; top: 0; height: 250vh; pointer-events: none; contain: strict; transform: translateY(100vh); visibility: hidden; }
+.bn-veil.is-on { visibility: visible; will-change: transform; }
 .bn-veilGhosts { position: absolute; left: -4vw; right: -4vw; top: 0; height: 60px; display: flex; justify-content: space-around; align-items: flex-end; }
 .bn-veilGhosts svg { width: clamp(60px, 9vw, 110px); height: auto; margin-bottom: -26px; filter: drop-shadow(0 -6px 14px rgba(201,182,255,.45)); }
 .bn-veilGhosts svg:nth-child(odd) { margin-bottom: -38px; }

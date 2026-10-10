@@ -170,18 +170,22 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
 const GATE_CSS = `
 .bn-gate { z-index: 20; transition: opacity .6s ease; }
 .bn-gate.is-out { opacity: 0; pointer-events: none; }
-.bn-gateTop { display: grid; justify-items: center; gap: clamp(2px, .8dvh, 8px); flex: none; max-width: 100%; }
-.bn-gateTop .bn-sub { max-width: 30ch; }
+.bn-gateTop { position: relative; z-index: 5; display: grid; justify-items: center; gap: clamp(2px, .8dvh, 8px); flex: none; max-width: 100%; }
+.bn-gateTop .bn-sub { max-width: 30ch; text-shadow: 0 1px 2px rgba(20,10,40,.9), 0 0 12px rgba(20,10,40,.75); }
 .bn-gateCard { width: clamp(92px, 19dvh, 176px) !important; height: clamp(92px, 19dvh, 176px) !important; margin: -2px 0 -4px; }
 .bn-gateName { margin: 0; font: 400 clamp(36px, min(12vw, 7dvh), 62px)/1 ${DISPLAY}; color: #fff; text-shadow: 0 4px 0 rgba(42,31,61,.4); }
 .bn-gateName span { color: #FFD27A; }
 .bn-gateBox { all: unset; flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; grid-template-rows: minmax(0, 1fr); place-items: end center; cursor: pointer; -webkit-tap-highlight-color: transparent; position: relative; z-index: 4; }
-.bn-manorWrap { position: absolute; z-index: 0; left: 50%; bottom: 4px; width: min(112cqw, 128cqh, 760px); transform: translateX(-50%); display: grid; align-items: end; pointer-events: none; }
+/* v7: the manor dominates the gate (sized off the screen, not the box; it rises behind the headline) */
+.bn-manorWrap { position: absolute; z-index: 0; left: 50%; bottom: 0; width: calc(min(142vw, 66dvh, 660px) / var(--bn-z, 1)); transform: translateX(-50%); display: grid; align-items: end; pointer-events: none; }
+@media (min-width: 768px) { .bn-manorWrap { width: calc(min(88vw, 76dvh, 1280px) / var(--bn-z, 1)); bottom: -6px; } .bn-mbWrap { height: min(74%, 340px) !important; } }
 .bn-gate.is-out .bn-manorWrap, .bn-gate.is-out .bn-yard { opacity: 0; transition: opacity .5s ease; }
 .bn-yard { position: absolute; z-index: 3; bottom: 0; pointer-events: none; }
 .bn-yard img { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 8px rgba(20,10,40,.45)); }
 .bn-yard.is-l { left: 0; width: 21%; }
 .bn-yard.is-r { right: 1%; width: 17%; }
+/* phones: the manor overflows the screen sides, so its yard steps in */
+@media (max-width: 767px) { .bn-yard.is-l { left: 19%; width: 17%; } .bn-yard.is-r { right: 19%; width: 13%; } }
 .bn-mbWrap { position: relative; z-index: 2; height: min(68%, 280px); aspect-ratio: 220 / 300; display: grid; align-items: end; justify-items: center; }
 .bn-mb { position: relative; z-index: 1; display: block; width: 100%; height: auto; transform-origin: 50% 100%; }
 .bn-mb svg { display: block; width: 100%; height: auto; }
@@ -197,7 +201,7 @@ const GATE_CSS = `
 .bn-door { transition: transform .3s ease; }
 .bn-flag { transform: rotate(0); transition: transform .4s cubic-bezier(.34,1.56,.64,1); }
 .bn-flagUp { transform: rotate(-80deg); transition: transform .5s cubic-bezier(.34,1.56,.64,1) .15s; }
-.bn-gateMeta { display: grid; justify-items: center; gap: 0; flex: none; }
+.bn-gateMeta { position: relative; z-index: 5; display: grid; justify-items: center; gap: 0; flex: none; }
 .bn-tuning { display: inline-flex; align-items: center; gap: 2px; margin: 0; font: 700 13px/1 ${BODY}; color: rgba(237,228,255,.8); min-height: 36px; }
 .bn-seal { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 99px; background: rgba(42,31,61,.4); font: 800 12px/1 ${BODY}; letter-spacing: .1em; text-transform: uppercase; color: #FFD27A; }
 @media (prefers-reduced-motion: reduce) { .bn-shake { animation: none; } }
