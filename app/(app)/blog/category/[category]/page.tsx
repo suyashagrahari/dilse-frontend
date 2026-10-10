@@ -6,7 +6,9 @@ import InfiniteBlogGrid from "@/components/blog/InfiniteBlogGrid";
 import CategoryChips from "@/components/blog/CategoryChips";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import FollowUs from "@/components/blog/FollowUs";
-import { PromoMarquee } from "@/components/promo/PromoBanners";
+import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
+import { SeasonProvider } from "@/hooks/useSeason";
+import { getSeasonServer } from "@/lib/season.server";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -59,7 +61,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     getAllCategoryLinks(category),
   ]);
 
+  // Hourly, like the page itself — see lib/season.server.ts.
+  const season = await getSeasonServer(3600);
+
   return (
+    <SeasonProvider season={season}>
     <main className="min-h-screen overflow-x-hidden" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
       <BreadcrumbJsonLd
         items={[
@@ -69,7 +75,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         ]}
       />
       <section className="relative mx-auto max-w-6xl px-5 pt-12 pb-24 md:pt-32">
-        <PromoMarquee source="blog-banner" />
+        <SeasonalMarquee source="blog-banner" critters />
         <header className="mx-auto mb-10 max-w-2xl text-center">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: "#7d5f18" }}>
             Category
@@ -115,5 +121,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         )}
       </section>
     </main>
+    </SeasonProvider>
   );
 }

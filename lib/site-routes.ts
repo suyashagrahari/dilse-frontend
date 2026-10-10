@@ -108,6 +108,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/help", priority: 0.5, changeFrequency: "monthly" },
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },
   { path: "/valentine-wishlist", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/halloween-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
   { path: "/refund-policy", priority: 0.3, changeFrequency: "yearly" },

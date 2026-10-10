@@ -17,14 +17,18 @@
 
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
+import { getSeasonServer } from "@/lib/season.server";
+import { SeasonProvider } from "@/hooks/useSeason";
 import TemplatesPageClient from "./TemplatesPageClient";
 
 export default async function TemplatesPage() {
-  const hidden = await getHiddenTemplatesServer();
+  const [hidden, season] = await Promise.all([getHiddenTemplatesServer(), getSeasonServer()]);
 
   return (
     <TemplateVisibilityProvider hidden={hidden}>
-      <TemplatesPageClient />
+      <SeasonProvider season={season}>
+        <TemplatesPageClient />
+      </SeasonProvider>
     </TemplateVisibilityProvider>
   );
 }

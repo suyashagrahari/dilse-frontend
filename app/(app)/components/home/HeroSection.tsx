@@ -7,6 +7,9 @@ import { templateList } from "@/data/template-registry";
 import TrendingShowcase from "./TrendingShowcase";
 import { useWishlist } from "@/hooks/useWishlist";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
+import { useSeason } from "@/hooks/useSeason";
+import { HALLOWEEN_PATH } from "@/lib/season";
+import HalloweenCritters from "@/components/promo/HalloweenCritters";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
@@ -21,6 +24,11 @@ export default function HeroSection() {
   const goWishlist = useCallback(() => router.push(VALENTINE_PATH), [router]);
   const wishlist = useWishlist(VALENTINE_CAMPAIGN);
   const onList = wishlist.status === "joined";
+  // In Halloween mode the second button is the Halloween drop instead.
+  const season = useSeason();
+  const halloween = season?.mode === "halloween";
+  const hwPct = halloween && season.sale.enabled ? season.sale.percent : 0;
+  const goHalloween = useCallback(() => router.push(HALLOWEEN_PATH), [router]);
   return (
     <section id="hero" className="hero-section" style={{
       background: '#f5ede6', display: 'flex', alignItems: 'center',
@@ -29,6 +37,10 @@ export default function HeroSection() {
       {/* Subtle radial glow */}
       <div style={{ position: 'absolute', top: '18%', right: '12%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.08) 0%,transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '12%', left: '4%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle,rgba(61,12,17,0.04) 0%,transparent 70%)', pointerEvents: 'none' }} />
+
+      {/* Halloween mode: a ghost, spiders and bats wander through now and then.
+          Loads after idle, keeps clear of the buttons, off under reduced motion. */}
+      <HalloweenCritters scope="parent" avoid=".hero-btns, .hero-kicker, .hwb-wrap" />
 
       <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">
@@ -106,17 +118,30 @@ export default function HeroSection() {
                 style={{ background: '#3d0c11', color: '#f5ede6', border: 'none', padding: '15px 30px', fontSize: 11, fontWeight: 700, letterSpacing: '1.6px', cursor: 'pointer', transition: 'background-color 0.22s', borderRadius: 4 }}>
                 🎉 CREATE YOUR PAGE
               </motion.button>
-              {/* The Valentine's week wishlist — joining happens on its page. */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={goWishlist}
-                className={`hero-wish${onList ? " is-on" : ""}`}
-                aria-label={onList ? "You're on the Valentine's week wishlist" : `Join the Valentine's week wishlist — ${VALENTINE_DISCOUNT}% off`}>
-                <span className="hero-wish-h" aria-hidden>{onList ? "💖" : "💌"}</span>
-                {onList ? "ON THE VALENTINE LIST" : "VALENTINE WISHLIST"}
-                {!onList && <span className="hero-wish-off">{VALENTINE_DISCOUNT}% OFF</span>}
-              </motion.button>
+              {halloween ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={goHalloween}
+                  className="hero-wish hero-boo"
+                  aria-label={hwPct ? `The Halloween drop — ${hwPct}% off` : "The Halloween drop"}>
+                  <span className="hero-wish-h" aria-hidden>🎃</span>
+                  HALLOWEEN DROP
+                  {hwPct > 0 && <span className="hero-wish-off">{hwPct}% OFF</span>}
+                </motion.button>
+              ) : (
+                // The Valentine's week wishlist — joining happens on its page.
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={goWishlist}
+                  className={`hero-wish${onList ? " is-on" : ""}`}
+                  aria-label={onList ? "You're on the Valentine's week wishlist" : `Join the Valentine's week wishlist — ${VALENTINE_DISCOUNT}% off`}>
+                  <span className="hero-wish-h" aria-hidden>{onList ? "💖" : "💌"}</span>
+                  {onList ? "ON THE VALENTINE LIST" : "VALENTINE WISHLIST"}
+                  {!onList && <span className="hero-wish-off">{VALENTINE_DISCOUNT}% OFF</span>}
+                </motion.button>
+              )}
             </motion.div>
 
             <motion.p className="hero-note"
@@ -167,6 +192,10 @@ export default function HeroSection() {
         @keyframes heroWishBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.14); } 56% { transform: scale(1); } }
         .hero-wish-off { padding: 4px 7px; border-radius: 99px; background: #b3243f; color: #fff4f1; font-size: 9.5px; letter-spacing: 1px; }
         .hero-wish.is-on { background: #fff; }
+        .hero-boo { background: linear-gradient(135deg, #2a080c, #4a1015); color: #ffd9a0; border-color: rgba(201,168,76,0.55);
+          box-shadow: 0 10px 24px -14px rgba(232,116,42,0.9), inset 0 -8px 16px -10px rgba(245,138,53,0.6); }
+        .hero-boo .hero-wish-off { background: linear-gradient(180deg, #ffc37a, #f0862f); color: #2a0a0e; }
+        .hero-boo::after { background: linear-gradient(90deg, transparent, rgba(255,190,120,0.35), transparent); }
         .hero-wish.is-on::after { display: none; }
         @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h { animation: none; } }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
