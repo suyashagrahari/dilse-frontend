@@ -1,9 +1,9 @@
 // ─── /halloween-offer — the Halloween drop ───────────────────────────────────
 //
 // Where the running Halloween strip, the blog card and the gallery teaser all
-// lead. The two Halloween templates as big showcase cards with their real
-// (sale) prices, a countdown to 31 October and a little haunted night around
-// them. Built like /valentine-wishlist: a server shell for metadata and the
+// lead. A full-bleed haunted night, the drop's templates (the season's
+// sale.slugs) as gallery cards with their real (sale) prices, and a countdown
+// to 31 October. Built like /valentine-wishlist: a server shell for metadata and the
 // season, a client page for everything that moves.
 //
 // When the site is not in Halloween mode the page still renders — the
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: pct
       ? `Halloween Drop — ${pct}% Off Spooky Love Letter Templates | SubhSandesh`
       : "Halloween Drop — Spooky Love Letter Templates | SubhSandesh",
-    description: `Ask “Will you be my boo?” with a tiny haunted house or a boo-tiful night: two cute-spooky Halloween love letter pages with your photos, music and letter.${pct ? ` ${pct}% off till 31 October.` : ""}`,
+    description: `Ask “Will you be my boo?” with a tiny haunted house or a boo-tiful night: cute-spooky Halloween love letter pages with your photos, music and letter.${pct ? ` ${pct}% off till 31 October.` : ""}`,
     alternates: { canonical: `${SITE_URL}/halloween-offer` },
     keywords: ["halloween love letter", "will you be my boo", "halloween gift for girlfriend", "halloween card online", "spooky love message", "halloween offer"],
   });
