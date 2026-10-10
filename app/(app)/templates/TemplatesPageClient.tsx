@@ -20,7 +20,9 @@ import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
-import { PromoMarquee } from "@/components/promo/PromoBanners";
+import HalloweenTeaser, { HALLOWEEN_TEASER_CSS } from "./HalloweenTeaser";
+import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
+import { useIsHalloween } from "@/hooks/useSeason";
 
 // Slugs temporarily treated as coming-soon even though they have a coverImage
 const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
@@ -314,6 +316,8 @@ function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: bool
 
 function TemplatesContent({ room }: { room: GalleryTab }) {
   const router = useRouter();
+  // The teaser beside Premium follows the season: Halloween drop or Valentine wishlist.
+  const isHalloween = useIsHalloween();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
@@ -510,7 +514,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -641,7 +645,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
 
       <div className="px-3 pt-4 pb-12 md:px-6 md:pt-6 md:pb-20" style={{ position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }} ref={panelTopRef}>
-          <PromoMarquee source="templates-banner" />
+          <SeasonalMarquee source="templates-banner" />
 
           {isPremium && (
             <Link href="/templates" className="pxBack">
@@ -717,7 +721,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                         {premiumShowcase.length > 0 && (
                           <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                         )}
-                        <ValentineTeaser />
+                        {isHalloween ? <HalloweenTeaser /> : <ValentineTeaser />}
                       </div>
                     )}
 

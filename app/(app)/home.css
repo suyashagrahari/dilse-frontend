@@ -452,3 +452,33 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 900px;
 }
+
+/* ── The running Halloween strip (HalloweenOfferBar, className "hwb-home") ──
+   Desktop and tablet: the navbar is a fixed pill floating 14px from the top
+   and 60px tall, and the hero's top padding leaves the band beneath it empty,
+   so the strip is laid over that band at the pill's width — it takes no space
+   in the flow and cannot move the hero. Phones: the brand pill is fixed at the
+   top and the page already leaves an empty band beneath it, so the strip sits
+   in the flow, pulled up into that band. Either way the mode is known at render (page.tsx), so the
+   strip is in the first paint. */
+.hwb-wrap.hwb-home { margin: 0 !important; }
+@media (min-width: 769px) {
+  .hwb-wrap.hwb-home { position: absolute; z-index: 20; top: 80px; left: 50%; transform: translateX(-50%); width: min(1180px, calc(100vw - 56px)); }
+}
+@media (max-width: 768px) {
+  /* LuxuryMobileTopBrand's 84px spacer plus the shell's 58px leave ~70px of
+     empty band under the 70px brand pill; the strip is pulled up into it and
+     keeps the hero exactly where it was. */
+  .hwb-wrap.hwb-home { position: relative; z-index: 2; margin: -54px 12px 12px !important; }
+}
+/* 768px exactly: the desktop pill is showing (md) while the phone layout
+   still applies, so clear the pill. */
+@media (min-width: 768px) and (max-width: 768px) {
+  .hwb-wrap.hwb-home { margin-top: 24px !important; }
+}
+/* The "someone made…" toast sits top-right under the navbar; while the strip
+   is showing, drop it below the strip instead of over its end. */
+@media (min-width: 640px) {
+  body:has(.hwb-wrap.hwb-home) .activity-toast { top: 138px !important; }
+  html[data-hw-bar-off] body .activity-toast { top: 96px !important; }
+}

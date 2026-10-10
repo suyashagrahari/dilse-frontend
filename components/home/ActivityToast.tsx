@@ -175,7 +175,7 @@ export default function ActivityToast() {
   return (
     <div
       aria-live="polite"
-      className="hidden sm:block"
+      className="activity-toast hidden sm:block"
       style={{ position: "fixed", top: 96, right: 18, zIndex: 60, pointerEvents: "none" }}
     >
       <AnimatePresence mode="wait">
