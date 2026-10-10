@@ -108,11 +108,11 @@ export const HALLOWEEN_TRACK = {
 } as const;
 
 const GIFS: GifSlot[] = [
-  { id: "h1-doorstep", label: "Hello ghost", moment: "The door opens and a ghost peeks out", file: "h1-doorstep.gif", emoji: "👻", anim: "wiggle" },
-  { id: "h2-treat", label: "Treats", moment: "Trick or treat?", file: "h2-treat.gif", emoji: "🍬", anim: "bounce" },
-  { id: "h3-portrait", label: "Peekaboo", moment: "Behind the last portrait in the hallway", file: "h3-portrait.gif", emoji: "🫣", anim: "float" },
-  { id: "h4-potion", label: "Potion", moment: "Stirring the love potion", file: "h4-potion.gif", emoji: "🧪", anim: "pulse" },
-  { id: "h5-boo", label: "You're my boo", moment: "After they say YES", file: "h5-boo.gif", emoji: "💜", anim: "pulse" },
+  { id: "h1-doorstep", label: "Hello ghost", moment: "The door opens and a ghost peeks out", file: "../_premium/gifs/halloween/ghost-heart-eyes-blush.webp", emoji: "👻", anim: "wiggle" },
+  { id: "h2-treat", label: "Treats", moment: "Trick or treat?", file: "../_premium/gifs/halloween/ghost-pumpkin-bucket.webp", emoji: "🍬", anim: "bounce" },
+  { id: "h3-portrait", label: "Peekaboo", moment: "Behind the last portrait in the hallway", file: "../_premium/gifs/halloween/black-cat-pumpkin-peek.webp", emoji: "🫣", anim: "float" },
+  { id: "h4-potion", label: "Potion", moment: "Stirring the love potion", file: "../_premium/gifs/halloween/ghost-spooky-love.webp", emoji: "🧪", anim: "pulse" },
+  { id: "h5-boo", label: "You're my boo", moment: "After they say YES", file: "../_premium/gifs/halloween/ghosts-cuddling.webp", emoji: "💜", anim: "pulse" },
 ];
 
 export const halloweenDay: DayConfig<HalloweenExtras> = {
