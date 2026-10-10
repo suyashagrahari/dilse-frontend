@@ -91,8 +91,9 @@ const LABEL: Record<Scene, string> = {
   question: "the question",
   license: "your Boo License",
 };
-/** Where the spider drops from the top edge (a fresh GIF each time, so only a few), and from which side. */
-const DROPS: Partial<Record<Scene, "l" | "r">> = { gate: "r", carve: "l", potion: "r", radio: "l" };
+/** Where the spider drops from the top edge (a fresh GIF each time, so only a few), and from which side.
+ *  (v8: not on the gate: its thread hung across the kicker and the title card) */
+const DROPS: Partial<Record<Scene, "l" | "r">> = { carve: "l", potion: "r", radio: "l" };
 /** Where a spider crosses the ground (once per visit to the scene). */
 const CRAWLS = new Set<Scene>(["treats", "booth", "letter", "license"]);
 const HEART_COLORS = ["#FF9EC4", "#FFD27A", "#FFFFFF"];
