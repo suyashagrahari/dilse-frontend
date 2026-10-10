@@ -134,7 +134,7 @@ export function RoomTitle({ kicker, title, sub, as = "h2" }: { kicker?: ReactNod
   return (
     <header style={{ display: "grid", gap: "clamp(2px, .7dvh, 6px)", justifyItems: "center", flex: "none" }}>
       {kicker && <p style={{ margin: 0, font: `700 clamp(10.5px, 1.6dvh, 12px) ${FONTS.ui}`, letterSpacing: ".18em", textTransform: "uppercase", color: VW.gold }}>{kicker}</p>}
-      <H style={{ margin: 0, font: `400 clamp(25px, min(8.4vw, 4.6dvh), 38px)/1.06 ${HW_DISPLAY}`, color: VW.ink, letterSpacing: ".01em", textWrap: "balance", textShadow: "0 2px 18px rgba(255,138,61,.25)" }}>{title}</H>
+      <H style={{ margin: 0, font: `400 clamp(25px, min(8.4vw, 4.6dvh), 38px)/1.06 ${HW_DISPLAY}`, color: VW.ink, letterSpacing: ".01em", textWrap: "balance", textShadow: "0 2px 3px rgba(20,8,40,.75), 0 0 14px rgba(20,8,40,.55), 0 2px 18px rgba(255,138,61,.25)" }}>{title}</H>
       {sub && <p style={{ margin: 0, maxWidth: 360, font: `500 clamp(13px, 2.05dvh, 15px)/1.4 ${FONTS.ui}`, color: VW.inkSoft, textWrap: "pretty" }}>{sub}</p>}
     </header>
   );
