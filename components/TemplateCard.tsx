@@ -2,6 +2,7 @@
 
 import React, { memo } from "react";
 import Link from "next/link";
+import { useWitchPortal, warmWitch, isHalloweenTemplateHref } from "@/components/promo/WitchPortal";
 import Image from "next/image";
 import { PlayCircle } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -44,6 +45,8 @@ const TemplateCard = memo(function TemplateCard({
   // cards share one module-level fetch, so it is a map read per card.
   const { pricingFor } = useTemplatePricing();
   const pricing = pricingFor(template.slug);
+  const openWitch = useWitchPortal();
+  const witchy = isHalloweenTemplateHref(template.slug);
 
   return (
     // ── WHY NO FRAMER-MOTION HERE ──────────────────────────────────────────────
@@ -63,13 +66,16 @@ const TemplateCard = memo(function TemplateCard({
       <Link
         href={`/${template.slug}`}
         className="block group tplLink"
-        onClick={() =>
+        onPointerEnter={witchy ? warmWitch : undefined}
+        onClick={(e) => {
           track(EVENTS.TEMPLATE_CARD_CLICKED, {
             template: template.slug,
             position: index,
             is_premium: !pricing.isFree,
-          })
-        }
+          });
+          // A Halloween template opens through the witch portal (Halloween mode only).
+          if (witchy) openWitch(e, `/${template.slug}`);
+        }}
       >
         <div className="tplInner relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden">
           {/* Background */}

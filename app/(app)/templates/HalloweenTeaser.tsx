@@ -8,7 +8,7 @@
 // with its one warm window, corner webs, and the ghost. The art is inline
 // SVG/CSS; the ghost GIF loads after idle into a box that is already sized.
 
-import Link from "next/link";
+import { WitchLink } from "@/components/promo/WitchPortal";
 import { ArrowRight } from "lucide-react";
 import { useSeason } from "@/hooks/useSeason";
 import { HALLOWEEN_GIF, HALLOWEEN_PATH } from "@/lib/season";
@@ -55,7 +55,7 @@ export default function HalloweenTeaser() {
       <span className="htzStars" aria-hidden />
       <Web className="htzWeb l" />
       <Web className="htzWeb r" />
-      <Link href={HALLOWEEN_PATH} className="htzLink" prefetch={false}
+      <WitchLink href={HALLOWEEN_PATH} className="htzLink" prefetch={false}
         aria-label={pct ? `The Halloween drop — ${pct}% off spooky love letter templates` : "The Halloween drop — spooky love letter templates"}>
         <div className="htzBody">
           <span className="htzBadge">🎃 Halloween drop{pct ? ` · ${pct}% off` : ""}</span>
@@ -83,7 +83,7 @@ export default function HalloweenTeaser() {
           </span>
           <span className="htzMiniGo"><ArrowRight size={16} /></span>
         </span>
-      </Link>
+      </WitchLink>
     </section>
   );
 }

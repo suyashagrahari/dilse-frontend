@@ -262,6 +262,18 @@ export const HS_CSS = `
 @keyframes hsRun { 0% { transform: translateX(-90px); } 55%, 100% { transform: translateX(calc(100vw + 40px)); } }
 .hsGrave { position: absolute; left: 3%; bottom: 6px; z-index: 2; width: 84px; height: 78px; }
 
+@media (max-width: 767px) {
+  /* phones: the house stands under the glass, roofline just clearing it, the
+     moon rising behind the tower, the witch flying low across the porch */
+  .hsHouse { right: -5vw; width: min(86vw, 380px); bottom: 0; }
+  .hsMoon { bottom: auto; top: calc(100% - min(86vw, 380px) * 1.05 - 18px); right: 3%; width: 118px; height: 118px; }
+  .hsWeb { width: 132px; height: 132px; }
+  .hsWeb.tr { width: 112px; height: 145px; }
+  .hsDrop { display: none; }
+  .hsWitch { top: auto; bottom: 34%; width: 84px; height: 84px; animation-duration: 15s; }
+  .hsGhosts { left: -6%; top: 22%; width: 30%; }
+  .hsOrb.o1 { top: 56%; }
+}
 @media (min-width: 640px) {
   .hsHouse { right: -8vw; width: 80vw; }
   .hsWeb { width: 170px; height: 170px; }
@@ -276,7 +288,10 @@ export const HS_CSS = `
   .hsWeb { width: 220px; height: 220px; }
   .hsWeb.tr { width: 190px; height: 246px; }
   .hsDrop { left: 50%; width: 64px; height: 149px; }
-  .hsWitch { width: 130px; height: 130px; top: 12%; }
+  /* desktop: the witch crosses the moon and the house only — never the headline */
+  .hsWitch { width: 130px; height: 130px; top: 34%; animation-name: hsWitchD; animation-duration: 15s; }
+  @keyframes hsWitchD { 0% { transform: translate(130px, 0) rotate(-4deg); opacity: 1; } 34% { transform: translate(-20vw, -50px) rotate(3deg); opacity: 1; }
+    48% { transform: translate(-36vw, -20px) rotate(-2deg); opacity: 0; } 100% { transform: translate(-36vw, -20px); opacity: 0; } }
   .hsRun { width: 96px; height: 96px; bottom: 26px; animation-duration: 14s; }
   .hsGrave { left: 42%; width: 140px; height: 130px; }
 }
