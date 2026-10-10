@@ -5,7 +5,7 @@
 // cover). Wipe the fog to find the sender's photos. Each frame has a pair of
 // painted eyes on its crest that follow your finger around — until you've
 // wiped that portrait, then they close happily. A revealed portrait opens
-// the lightbox. "Wipe them all for me" clears the lot; no photos = a hallway
+// the lightbox. The way on shows once a wall is wiped; no photos = a hallway
 // of little ghost paintings waiting for memories.
 //
 // One screen: the hallway walks two portraits at a time (the candy pill says
@@ -20,7 +20,7 @@ import { FONTS, VW } from "../../../_valentine/theme";
 import { Ghost } from "./art";
 import { HW_DISPLAY } from "./fonts";
 import { useHw, useNext } from "./stage";
-import { Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { Hint, HW, RoomTitle } from "./ui";
 
 const TILTS = [-3, 2.5, 1.5, -2, -1.5, 3];
 
@@ -112,14 +112,13 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
   const { cue } = useHw();
   const list = photos.filter((p) => p && p.url).slice(0, 6);
   const [wiped, setWiped] = useState<boolean[]>(() => list.map(() => false));
-  const [forced, setForced] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
-  const done = list.length === 0 || forced || wiped.every(Boolean);
+  const done = list.length === 0 || wiped.every(Boolean);
   const count = wiped.filter(Boolean).length;
   const onPage = list.map((p, i) => ({ p, i })).slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
-  const pageDone = forced || onPage.every(({ i }) => wiped[i]);
+  const pageDone = onPage.every(({ i }) => wiped[i]);
   const lastPage = page >= pages - 1;
 
   // The fog clears mid-swipe, so the photo button mounts under the finger and
@@ -136,9 +135,8 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
     });
   };
 
-  // Every portrait on the page wiped → a beat to look, then on (never while one is open up close).
-  const auto = open !== null ? null : list.length === 0 ? 3500 : pageDone ? (lastPage ? 2400 : 1700) : null;
-  useNext(lastPage ? "Up to the attic" : "More portraits", () => (lastPage ? onNext() : setPage((p) => p + 1)), lastPage ? "moon" : "ghost", auto);
+  // The way on shows once every portrait on this wall is wiped (straight away when there are no photos).
+  useNext(pageDone || list.length === 0 ? (lastPage ? "Up to the attic" : "More portraits") : null, () => (lastPage ? onNext() : setPage((p) => p + 1)), lastPage ? "moon" : "ghost");
 
   return (
     <>
@@ -160,7 +158,7 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
               style={{ position: "relative", display: "flex", gap: 18, alignItems: "center", justifyContent: "center", width: "100%" }}
             >
               {onPage.map(({ p, i }, k) => {
-                const shown = forced || wiped[i];
+                const shown = wiped[i];
                 const last = i === list.length - 1;
                 return (
                   <div key={`${p.url}-${i}`} style={{ position: "relative" }}>
@@ -189,7 +187,8 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
                             threshold={0.5}
                             brush={26}
                             radius={2}
-                            revealLinkAfterMs={5000}
+                            // no visible "reveal" shortcut for touch (no skips); keyboard users still get it on focus
+                            revealLinkAfterMs={1e9}
                             onReveal={() => markWiped(i)}
                             style={{ position: "absolute", inset: 0 }}
                           >
@@ -248,7 +247,6 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
             )}
           </div>
           {!done && !pageDone && <Hint>Rub the misty glass with your finger</Hint>}
-          {!done && <SkipChip onClick={() => setForced(true)}>Wipe them all for me</SkipChip>}
         </div>
       )}
 

@@ -137,7 +137,7 @@ export default function Question({
   return (
     <>
       <RoomTitle kicker="Room 7 · the moonlit balcony" title={<span style={{ font: "inherit" }}>{question}</span>} />
-      <motion.div animate={reduced ? undefined : { y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "relative", flex: "none", width: "clamp(72px, 14dvh, 120px)" }}>
+      <motion.div animate={reduced ? undefined : { y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "relative", flex: "none", width: "clamp(72px, 14dvh, calc(120px * var(--vw-s, 1)))" }}>
         {/* three cute bats keeping the ghost company on the balcony */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HW_GIF.bats} alt="" aria-hidden width={360} height={360} decoding="async" style={{ position: "absolute", left: "96%", top: "2%", width: "100%", height: "auto", pointerEvents: "none" }} />

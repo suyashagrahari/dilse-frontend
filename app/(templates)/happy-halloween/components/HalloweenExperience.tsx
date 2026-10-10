@@ -11,16 +11,20 @@
 // my boo?" with a No that ghosts them → YES warms the whole night (moon →
 // heart, indigo → amber) → the Boo License + "Boo someone back".
 //
-// Seven little pumpkins at the top light up room by room. Every room is ONE
-// screen (no scrolling at 360×640 and up): the rooms fit by design, long text
-// pages, and the way forward is always the same candy pill at the bottom
-// (./halloween/stage.tsx), which sends the witch-seal flying across.
+// Seven small pumpkins in the top-left corner light up room by room (tap an
+// earlier one to go back). Every room is ONE screen (no scrolling at 360×640
+// and up): the rooms fit by design, long text pages, and the way forward is
+// always the same candy pill at the bottom (./halloween/stage.tsx). Nothing
+// moves on by itself and nothing is skipped: her tap on the pill sends the
+// witch-seal flying across in a fog wipe. On wide screens the night is
+// full-bleed (moon, graveyard, fence, corner webs, bats) and the rooms sit in
+// a comfortable column inside it.
 //
 // Sound: the Haunted Piano (music mode "track") starts on the first tap — the
 // first knock. Two jump-scares are earned on the way (the ghost at the door,
 // the pumpkin lighting up in the kitchen), three if they dare pick TRICK; each
 // ends on a cute "got you! 💜". Kids mode has no scares at all. Every
-// interaction has a "do it for me"; reduced motion keeps every beat still.
+// interaction also works by plain taps; reduced motion keeps every beat still.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -29,7 +33,6 @@ import { HALLOWEEN_TONES, type HalloweenExtras, type HalloweenTone } from "../..
 import { DayRoot, Sticker, burst, useReducedMotion } from "../../_valentine/kit";
 import { FONTS, VW } from "../../_valentine/theme";
 import type { ExperienceProps, GifSlot } from "../../_valentine/types";
-import { Ghost, Pumpkin } from "./halloween/art";
 import Atmosphere from "./halloween/Atmosphere";
 import CarvePumpkin from "./halloween/CarvePumpkin";
 import Doorstep from "./halloween/Doorstep";
@@ -143,19 +146,14 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       className={hwDisplay.variable}
       // Every room is exactly one screen and keeps its own bottom strip for the pill (see .hw-scene).
       style={{ paddingBottom: 0 }}
-      line={clean(x.houseName) || day.title}
-      art={
-        <div style={{ position: "relative", height: "100%", aspectRatio: "1 / 1", display: "grid", placeItems: "end center" }}>
-          <Pumpkin size={150} face lit />
-          <span style={{ position: "absolute", right: "-6%", top: "-4%" }}>
-            <Ghost size={70} wave mood="happy" />
-          </span>
-        </div>
-      }
+      // Wide screens: no phone column and no side cards — the haunted night
+      // (./halloween/Atmosphere.tsx) is full-bleed and each room composes its
+      // content inside it at a comfortable width (see .hw-scene).
+      layout="full"
     >
       <style>{HW_STAGE_CSS}</style>
       <Atmosphere warm={warm} grand={step === "door"} />
-      {/* seven little pumpkins, one per room: tap an earlier one to go back (the music icon sits right of them, see .vm-icon) */}
+      {/* seven little pumpkins, one per room, small in the top-left corner: tap an earlier one to go back */}
       <PumpkinTrail at={i} rooms={ROOMS} ending={step === "ending"} onJump={jumpTo} />
 
       {/* initial={false}: the first room (and its h1, the LCP element) paints at
@@ -199,10 +197,10 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
 
 /** After YES: their sticker, the sender's line, the moon turning into a heart. */
 function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { recipient: string; yesLine: string; dodges: number; gentle: boolean; sticker: ReactNode; onNext: () => void }) {
-  // a generous beat to enjoy the YES, then the license
-  useNext("Your Boo License", onNext, "heart", 5200);
+  useNext("Your Boo License", onNext, "heart");
   return (
     <div className="hw-fill" style={{ alignContent: "center", gap: "clamp(8px, 1.8dvh, 16px)", display: "grid" }}>
+      <div className="hw-zoom" style={{ display: "grid", gap: "inherit", justifyItems: "center" }}>
       <div style={{ display: "grid", placeItems: "center", height: "min(34cqh, 140px)" }}>{sticker}</div>
       <h2 style={{ margin: 0, font: `400 clamp(32px, min(10.5vw, 5.6dvh), 46px)/1.05 ${HW_DISPLAY}`, color: VW.ink, textShadow: "0 2px 24px rgba(255,158,196,.5)", overflowWrap: "anywhere" }}>
         {recipient} said YES! 💜
@@ -216,6 +214,7 @@ function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { reci
         </p>
       )}
       <p style={{ margin: 0, font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>The moon noticed. Look up 🌙→💗</p>
+      </div>
     </div>
   );
 }

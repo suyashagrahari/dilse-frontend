@@ -23,7 +23,7 @@ import { FONTS, VW } from "../../../_valentine/theme";
 import { Bat, Pumpkin, Spider } from "./art";
 import { HW_DISPLAY } from "./fonts";
 import { HW_GIF, preload, useHw, useNext } from "./stage";
-import { Btn, HW, RoomTitle, SkipChip } from "./ui";
+import { HW, RoomTitle } from "./ui";
 
 /** The drawing's own units (the house box keeps this ratio). */
 const VB_W = 400;
@@ -214,14 +214,8 @@ export default function Doorstep({
     setKnocks(k);
     if (k === 3) opened();
   };
-  const openNow = () => {
-    if (open) return;
-    setKnocks(3);
-    opened();
-  };
-
-  // the ghost waves from the doorway for a beat, then in we go
-  useNext(greeted ? "Step inside" : null, onEnter, "ghost", greeted ? 2200 : null);
+  // the ghost waves from the doorway; she steps inside when she's ready
+  useNext(greeted ? "Step inside" : null, onEnter, "ghost");
 
   return (
     <>
@@ -270,7 +264,7 @@ export default function Doorstep({
           </span>
           {/* three cute bats (GIF) by the chimney */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={HW_GIF.bats} alt="" aria-hidden width={360} height={360} decoding="async" style={{ position: "absolute", left: "8%", top: "2%", width: "28%", height: "auto", pointerEvents: "none" }} />
+          <img className="hw-door-gifbats" src={HW_GIF.bats} alt="" aria-hidden width={360} height={360} decoding="async" style={{ position: "absolute", left: "8%", top: "2%", width: "28%", height: "auto", pointerEvents: "none" }} />
 
           {/* ground fog rolling past the house's feet */}
           <span className="hw-gfog f1" aria-hidden />
@@ -350,44 +344,55 @@ export default function Doorstep({
         {houseName && <div className="hw-sign">{houseName}</div>}
       </div>
 
-      <div className="hw-door-ctrls">
-        {!open ? (
-          <>
-            <Btn onClick={knock} style={{ minHeight: 52, padding: "10px 20px", display: "inline-flex", alignItems: "center", gap: 10 }}>
-              <span>Knock knock ✊</span>
-              <span aria-hidden style={{ display: "inline-flex", gap: 5 }}>
-                {[1, 2, 3].map((n) => (
-                  <span key={n} style={{ width: 9, height: 9, borderRadius: "50%", background: knocks >= n ? "#FFF1B8" : "rgba(58,22,6,.3)", boxShadow: knocks >= n ? "0 0 8px #FFF1B8" : undefined, transition: "background .3s" }} />
-                ))}
-              </span>
-            </Btn>
-            <SkipChip onClick={openNow}>Just open it</SkipChip>
-          </>
-        ) : (
-          <motion.p
-            initial={reduced ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: greeted ? 0 : 1, y: 0 }}
-            transition={{ delay: reduced ? 0 : 0.4 }}
-            style={{ margin: 0, font: `600 clamp(14px, 2.2dvh, 16px) ${FONTS.ui}`, color: VW.ink }}
-          >
-            The door is creaking open…
-          </motion.p>
-        )}
-      </div>
+      {/* The knock lives in the candy pill's spot (the pill itself only appears once the door is open and the ghost said hello). */}
+      {!open ? (
+        <div className="hw-next-wrap">
+          <button type="button" className="hw-next hw-knock" onClick={knock} aria-label={`Knock on the door (${knocks} of 3)`}>
+            <span className="hw-next-stripes" aria-hidden />
+            <span className="hw-next-gloss" aria-hidden />
+            {knocks === 0 && <span className="hw-next-ring" aria-hidden />}
+            <span className="hw-next-ico" aria-hidden>
+              ✊
+            </span>
+            <span className="hw-next-label">Knock knock</span>
+            <span aria-hidden className="hw-knock-dots">
+              {[1, 2, 3].map((n) => (
+                <i key={n} className={knocks >= n ? "is-on" : undefined} />
+              ))}
+            </span>
+          </button>
+        </div>
+      ) : (
+        <motion.p
+          className="hw-door-note"
+          initial={reduced ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: greeted ? 0 : 1, y: 0 }}
+          transition={{ delay: reduced ? 0 : 0.4 }}
+          style={{ font: `600 clamp(14px, 2.2dvh, 16px) ${FONTS.ui}`, color: VW.ink }}
+        >
+          The door is creaking open…
+        </motion.p>
+      )}
     </>
   );
 }
 
 const CSS = `
-/* The doorstep owns the bottom strip until the door opens (the pill only shows after the greeting). */
-.hw-scene[data-hw-scene="door"] { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); gap: clamp(4px, 1dvh, 10px); }
+/* The doorstep: the house takes every pixel between the title and the knock (which sits in the pill's spot). */
+.hw-scene[data-hw-scene="door"] { gap: clamp(4px, 1.2dvh, 12px); }
 .hw-door-fill { overflow: visible; place-items: end center; }
 .hw-scene[data-hw-scene="door"] > header { position: relative; z-index: 5; }
 .hw-scene[data-hw-scene="door"] header > p { text-shadow: 0 1px 0 #2B1E3F, 0 0 10px rgba(23,18,43,.95), 0 0 18px rgba(23,18,43,.8); }
 .hw-scene[data-hw-scene="door"] h1 { text-shadow: 0 2px 0 #2B1E3F, 0 0 14px rgba(23,18,43,.95), 0 0 30px rgba(255,138,61,.3) !important; }
 /* Short screens: no slack above the house, so the moon stays inside its box (never behind the title). */
 /* Wide screens: the stage column is the frame, so the house fits it instead of bleeding. */
-@media (min-width: 768px) { .hw-house { width: min(100cqw, calc(100cqh * ${VB_W} / ${VB_H}), calc(640px * var(--vw-s, 1))); } }
+/* Wide screens: the night around it is full-bleed, so nothing clips here; the house grows up into the sky behind the title. */
+@media (min-width: 768px) {
+  .hw-scene[data-hw-scene="door"] { overflow: visible; }
+  .hw-door-fill { margin-top: -12dvh; }
+  .hw-door-gifbats { display: none; }
+  .hw-house { width: min(112cqw, calc(100cqh * ${VB_W} / ${VB_H}), calc(720px * var(--vw-s, 1))); }
+}
 @media (max-height: 760px) { .hw-door-moon { left: 50%; top: 3%; width: 44%; } .hw-door-halo { left: 30%; top: -20%; width: 86%; } }
 .hw-spider { position: fixed; z-index: 3; top: -60px; right: calc(var(--vw-gutter, 0px) + 6%); height: calc(var(--vw-top-space, 0px) + 300px); width: 28px; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; animation: hw-spider-in 1.8s cubic-bezier(.3,1.35,.5,1) both, hw-spider-bob 3.4s ease-in-out 1.8s infinite alternate; }
@@ -443,7 +448,12 @@ const CSS = `
 .hw-envelope { position: absolute; left: 50%; bottom: -2%; z-index: 4; margin-left: -29%; width: 58%; box-sizing: border-box; display: flex; align-items: baseline; justify-content: center; gap: 7px; flex-wrap: wrap;
   padding: 6px 16px 7px; border-radius: 10px; background: ${VW.paper}; color: ${VW.paperInk}; box-shadow: 0 14px 30px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(255,210,122,.25); }
 
-.hw-door-ctrls { position: relative; z-index: 6; flex: none; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center; align-items: center; min-height: 56px; margin-top: clamp(6px, 1.4dvh, 14px); }
+.hw-knock-dots { position: relative; display: inline-flex; gap: 5px; margin-left: 4px; }
+.hw-knock-dots i { display: block; width: 9px; height: 9px; border-radius: 50%; background: rgba(58,22,6,.3); transition: background .3s, box-shadow .3s; }
+.hw-knock-dots i.is-on { background: #FFF1B8; box-shadow: 0 0 8px #FFF1B8; }
+.hw-door-note { position: fixed; z-index: 6; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); margin: 0; text-align: center; pointer-events: none;
+  text-shadow: 0 1px 0 #2B1E3F, 0 0 12px rgba(23,18,43,.95); }
+@media (min-width: 768px) { .hw-door-note { bottom: 46px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .hw-door-halo, .hw-glow.is-on, .hw-obat, .hw-obat > span, .hw-gfog, .hw-spider { animation: none !important; }

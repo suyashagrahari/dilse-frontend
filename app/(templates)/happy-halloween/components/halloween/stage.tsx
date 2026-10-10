@@ -6,7 +6,8 @@
 //     the little sound cues, the kids-mode flag.
 //   • useNext(label, onPress) — a room declares its way forward; the shell draws
 //     ONE candy pill for it, fixed in the same spot at the bottom, so nothing
-//     ever jumps. Pressing it sends the witch-seal flying across the screen.
+//     ever jumps. Nothing ever moves on by itself: only her tap on the pill
+//     does, and that tap sends the witch-seal flying across in a fog wipe.
 //   • hw.scare({ kind }) — the jump-scare: a full-screen GIF bursts toward the
 //     viewer (scale-up + a small shake, transform/opacity only), the engine's
 //     scare() plays the BOO on the GIF's BOO frame (music ducks, phone buzzes),
@@ -76,8 +77,6 @@ interface NextSpec {
   label: string;
   icon: NextIcon;
   onPress: () => void;
-  /** Auto-advance: press it by itself after this many ms (the pill shows the countdown). */
-  auto?: number;
 }
 
 interface HwApi {
@@ -98,20 +97,19 @@ export function useHw(): HwApi {
 }
 
 /**
- * A room's way forward: the shell draws it as the candy pill. `null` hides it.
- * `auto` (ms): once the room's moment is done, go on by itself after that beat
- * (the pill fills up as a countdown and stays a "skip ahead"). Never pass it
- * while there is something left to do or read.
+ * A room's way forward: the shell draws it as the candy pill. `null` hides it
+ * (pass null until the room's moment is done). It only ever moves on when she
+ * taps it — there is no auto-advance and no skip.
  */
-export function useNext(label: string | null, onPress: () => void, icon: NextIcon = "pumpkin", auto?: number | null) {
+export function useNext(label: string | null, onPress: () => void, icon: NextIcon = "pumpkin") {
   const { setNext } = useHw();
   const fn = useRef(onPress);
   useLayoutEffect(() => {
     fn.current = onPress;
   });
   useEffect(() => {
-    setNext(label ? { label, icon, onPress: () => fn.current(), ...(auto ? { auto } : null) } : null);
-  }, [label, icon, auto, setNext]);
+    setNext(label ? { label, icon, onPress: () => fn.current() } : null);
+  }, [label, icon, setNext]);
   useEffect(() => () => setNext(null), [setNext]);
 }
 
@@ -154,9 +152,9 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
   }, []);
 
   const reduced = useReducedMotion();
-  const press = (byItself = false) => {
+  const press = () => {
     if (!next) return;
-    if (!byItself) haptic(12);
+    haptic(12);
     cue("whoosh", { gain: 0.6 });
     const id = performance.now();
     // The scene change: the witch-seal flies across and a fog bank wipes the
@@ -174,25 +172,12 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
     if (reduced) spec.onPress();
     else window.setTimeout(() => spec.onPress(), WIPE_SWAP_MS);
   };
-  const pressRef = useRef(press);
-  useLayoutEffect(() => {
-    pressRef.current = press;
-  });
-
-  // Auto-advance: the room said it's done. Wait out its beat (never under a scare), then go.
-  const autoMs = !scareReq && next?.auto ? next.auto : 0;
-  useEffect(() => {
-    if (!autoMs) return;
-    const t = window.setTimeout(() => pressRef.current(true), autoMs);
-    return () => window.clearTimeout(t);
-  }, [autoMs, next]);
-
   const api = useMemo<HwApi>(() => ({ setNext, scare, cue, gentle, round }), [setNext, scare, cue, gentle, round]);
 
   return (
     <Ctx.Provider value={api}>
       {children}
-      <CandyNext spec={scareReq ? null : next} onPress={() => press()} auto={autoMs} />
+      <CandyNext spec={scareReq ? null : next} onPress={press} />
       {flights.map((id) => (
         <SceneWipe key={id} />
       ))}
@@ -220,17 +205,15 @@ export function HwStage({ gentle, round, children }: { gentle: boolean; round: n
 
 // ─── The candy pill ───────────────────────────────────────────────────────────
 
-function CandyNext({ spec, onPress, auto }: { spec: NextSpec | null; onPress: () => void; auto: number }) {
+function CandyNext({ spec, onPress }: { spec: NextSpec | null; onPress: () => void }) {
   // Keep the last label while the pill fades out, so it never flashes empty.
   const [shown, setShown] = useState<NextSpec | null>(spec);
   if (spec && spec !== shown) setShown(spec);
   const s = spec ?? shown;
   return (
     <div className="hw-next-wrap">
-      <button type="button" className={`hw-next${spec ? "" : " is-hidden"}${auto ? " is-auto" : ""}`} onClick={onPress} disabled={!spec} aria-hidden={!spec} tabIndex={spec ? 0 : -1}>
+      <button type="button" className={`hw-next${spec ? "" : " is-hidden"}`} onClick={onPress} disabled={!spec} aria-hidden={!spec} tabIndex={spec ? 0 : -1}>
         <span className="hw-next-stripes" aria-hidden />
-        {/* the auto-advance countdown: a warm fill sweeping across the candy (transform only) */}
-        {spec && auto > 0 && <span key={`${spec.label}-${auto}`} className="hw-next-fill" style={{ animationDuration: `${auto}ms` }} aria-hidden />}
         <span className="hw-next-gloss" aria-hidden />
         {/* keyed by label: the 2 s idle pulse restarts on every new step */}
         {spec && <span key={spec.label} className="hw-next-ring" aria-hidden />}
@@ -408,41 +391,62 @@ function ScareOverlay({ req, gentle, fire, onClose }: { req: ScareRequest; gentl
 // ─── CSS (one block for the whole template) ──────────────────────────────────
 
 export const HW_STAGE_CSS = `
-/* One room = one screen. The room owns the whole viewport (the shell zeroes DayRoot's dock padding) and
-   keeps a bottom strip for the candy pill: 84px, or the engine's reserve (--vw-dock-space, 137px on phones
-   with a song) when that is taller — the spirit radio folds into a tab at the right edge of that strip and
-   must never sit on a room's buttons. The pill shares the strip, left of the tab. */
+/* One room = one screen, airy: a calm top band (the pumpkin trail sits in the corner, level with the
+   editor's top bar / the viewer's logo), the room's content, then a clear bottom strip that belongs to
+   the candy pill alone (the music icon sits bottom-left beside it, see .vm-icon below). */
 .hw-scene { position: relative; z-index: 1; box-sizing: border-box; height: 100vh; height: 100dvh;
-  display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(6px, 1.4dvh, 14px);
-  padding: max(60px, calc(var(--vw-top-space, 0px) + 46px)) 16px max(calc(env(safe-area-inset-bottom, 0px) + 84px), var(--vw-dock-space, 0px));
-  width: 100%; max-width: calc(560px * var(--vw-s, 1)); margin: 0 auto; overflow: hidden; }
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(10px, 2.2dvh, 22px);
+  padding: calc(env(safe-area-inset-top, 0px) + clamp(60px, 8.4dvh, 76px)) 20px max(calc(env(safe-area-inset-bottom, 0px) + 94px), var(--vw-dock-space, 0px));
+  width: 100%; max-width: calc(520px * var(--vw-s, 1)); margin: 0 auto; overflow: hidden; }
+/* Wide screens: the night is full-bleed (./Atmosphere.tsx); the room's content sits in a comfortable column inside it. */
+@media (min-width: 768px) { .hw-scene { max-width: 680px; padding-top: calc(var(--vw-top-space, 0px) + 40px); padding-bottom: 110px; gap: clamp(12px, 2.4dvh, 26px); } }
+@media (min-width: 1100px) { .hw-scene { max-width: min(760px, 56vw); padding-top: 64px; } }
+/* Wide screens: everything a size up (the night is big, the room should be too). */
+@media (min-width: 1100px) {
+  [data-vw-root="happy-halloween"][data-vw-layout="full"] { --vw-s: 1.4; }
+  .hw-head h1, .hw-head h2 { font-size: clamp(38px, 5.4dvh, 56px) !important; }
+  .hw-head > p:first-child { font-size: 13px !important; }
+  .hw-head > p:last-child:not(:first-child) { font-size: 16.5px !important; max-width: 480px !important; }
+  .hw-next-wrap .hw-next { transform: scale(1.12); transform-origin: 50% 100%; }
+  .hw-next-wrap .hw-next.is-hidden { transform: translateY(18px) scale(1); }
+}
+@media (min-width: 1100px) and (min-height: 1000px) { [data-vw-root="happy-halloween"][data-vw-layout="full"] { --vw-s: 1.55; } }
+/* Paper cards with small print (the spell, the license, the YES, the ending's buttons) scale up as a whole. */
+@media (min-width: 1100px) { .hw-zoom { zoom: 1.2; } }
+@media (min-width: 1100px) and (min-height: 1000px) { .hw-zoom { zoom: 1.35; } }
 .hw-fill { position: relative; flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; }
 .hw-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
 
-.hw-next-wrap { position: fixed; z-index: 60; left: var(--vw-gutter, 0px); right: var(--vw-gutter, 0px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-  display: flex; justify-content: center; pointer-events: none; padding: 0 16px; box-sizing: border-box; }
+/* The one way forward: always the same spot, bottom centre, clear of the music icon on its left. */
+.hw-next-wrap { position: fixed; z-index: 60; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  display: flex; justify-content: center; pointer-events: none; padding: 0 62px; box-sizing: border-box; }
+@media (min-width: 768px) { .hw-next-wrap { bottom: 30px; } }
 
-/* The pumpkin trail: far top-left (under the editor's top bar there, via --vw-top-space). */
-.hw-trail { position: fixed; z-index: 62; top: calc(var(--vw-top-space, 0px) + 8px); left: calc(var(--vw-gutter, 0px) + 8px);
-  display: flex; align-items: center; height: 36px; padding: 0 5px; border-radius: 99px; box-sizing: border-box;
-  background: linear-gradient(180deg, rgba(43,30,74,.86), rgba(23,18,43,.86)); border: 1px solid rgba(255,210,122,.24);
-  box-shadow: 0 0 18px -4px rgba(255,138,61,.45), inset 0 1px 0 rgba(255,255,255,.08), 0 8px 18px -10px rgba(0,0,0,.8); }
-.hw-pk { width: 22px; height: 34px; padding: 0; margin: 0; border: 0; background: none; cursor: default; display: grid; place-items: center;
-  font-size: 15px; line-height: 1; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.hw-pk > span { display: block; filter: grayscale(1) brightness(.55); opacity: .6; }
+/* The pumpkin trail: small, top-left, level with the editor's top bar (which sits top-right). */
+.hw-trail { position: fixed; z-index: 62; top: calc(max(10px, env(safe-area-inset-top, 0px)) + 8px); left: max(12px, env(safe-area-inset-left, 0px));
+  display: flex; align-items: center; height: 30px; padding: 0 4px; border-radius: 99px; box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(43,30,74,.78), rgba(23,18,43,.78)); border: 1px solid rgba(255,210,122,.2);
+  box-shadow: 0 0 14px -5px rgba(255,138,61,.4), inset 0 1px 0 rgba(255,255,255,.07); }
+@media (min-width: 768px) { .hw-trail { top: 22px; left: 24px; } }
+.hw-pk { width: 16px; height: 30px; padding: 0; margin: 0; border: 0; background: none; cursor: default; display: grid; place-items: center;
+  font-size: 12.5px; line-height: 1; touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; }
+/* a bigger invisible hit area for the small pumpkins (they don't overlap: 16px apart, 30px tall) */
+.hw-pk.is-done::after { content: ""; position: absolute; inset: -7px -1px; }
+@media (min-width: 768px) { .hw-pk { width: 20px; font-size: 15px; } }
+.hw-pk > span { display: block; filter: grayscale(1) brightness(.55); opacity: .55; }
 .hw-pk.is-done { cursor: pointer; }
-.hw-pk.is-done > span { filter: drop-shadow(0 0 4px rgba(255,179,71,.95)); opacity: 1; }
+.hw-pk.is-done > span { filter: drop-shadow(0 0 3px rgba(255,179,71,.95)); opacity: 1; }
+.hw-pk.is-done:hover > span { transform: scale(1.18); }
 .hw-pk.is-done:active > span { transform: scale(.85); }
-.hw-pk.is-here > span { filter: drop-shadow(0 0 6px rgba(255,210,122,1)) drop-shadow(0 0 2px #FF8A3D); opacity: 1; animation: hw-pk-bob 1.3s ease-in-out infinite alternate; }
+.hw-pk.is-here > span { filter: drop-shadow(0 0 5px rgba(255,210,122,1)) drop-shadow(0 0 2px #FF8A3D); opacity: 1; animation: hw-pk-bob 1.3s ease-in-out infinite alternate; }
 .hw-pk:focus-visible { outline: 2px solid #9BE7C4; outline-offset: -2px; border-radius: 8px; }
 .hw-pk > span.hw-pk-nope { animation: hw-pk-nope .42s ease-in-out; }
-@keyframes hw-pk-bob { from { transform: translateY(1px) scale(1.06) } to { transform: translateY(-3px) scale(1.18) } }
+@keyframes hw-pk-bob { from { transform: translateY(1px) scale(1.04) } to { transform: translateY(-2px) scale(1.16) } }
 @keyframes hw-pk-nope { 0%,100% { transform: rotate(0) } 20% { transform: rotate(-16deg) } 45% { transform: rotate(13deg) } 70% { transform: rotate(-8deg) } }
-/* The music icon (engine, DayConfig.music.compact) sits right of the trail. Mirrors DayRoot's stage column. */
-body .vm-icon { top: calc(var(--vw-top-space, 0px) + 6px); bottom: auto; left: 180px; }
-@media (min-width: 768px) { body .vm-icon { left: calc((100vw - min(660px, calc(100vw - 112px))) / 2 + 180px); } }
-@media (min-width: 1100px) { body .vm-icon { left: calc((100vw - clamp(560px, 40vw, 640px)) / 2 + 180px); } }
-.hw-next { pointer-events: auto; position: relative; display: inline-flex; align-items: center; gap: 9px; height: 58px; max-width: 100%; min-width: 0; padding: 0 18px 0 8px;
+/* The music icon (engine, DayConfig.music.compact) stays bottom-left; here it lines up with the pill's middle. */
+body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 27px); }
+@media (min-width: 768px) { body .vm-icon { left: 24px; bottom: 39px; } }
+.hw-next { pointer-events: auto; position: relative; display: inline-flex; align-items: center; gap: 9px; height: 56px; max-width: 100%; min-width: 0; padding: 0 20px 0 7px;
   border: 0; border-radius: 999px; cursor: pointer; color: #3A1606; background: linear-gradient(180deg, #FFC98A 0%, #FF9A4D 46%, #F2721F 100%);
   box-shadow: 0 5px 0 #B84E14, 0 0 0 3px rgba(255,210,122,.32), 0 0 34px -4px rgba(255,150,70,.75), 0 18px 30px -12px rgba(0,0,0,.6);
   transition: transform .45s cubic-bezier(.2,.9,.25,1.2), opacity .3s ease, box-shadow .2s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -459,12 +463,8 @@ body .vm-icon { top: calc(var(--vw-top-space, 0px) + 6px); bottom: auto; left: 1
 .hw-next-ico { position: relative; width: 42px; height: 42px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 25px; line-height: 1;
   background: radial-gradient(circle at 40% 35%, #FFFDF6, #FFE9C9); box-shadow: inset 0 -3px 0 rgba(184,78,20,.22), 0 2px 6px rgba(122,52,16,.35); animation: hw-bob 1.3s ease-in-out infinite alternate; }
 @keyframes hw-bob { from { transform: translateY(-3px) rotate(-8deg) } to { transform: translateY(2px) rotate(7deg) } }
-.hw-next-label { position: relative; min-width: 0; font: 400 20px/1 ${HW_DISPLAY}; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(255,236,200,.7); }
+.hw-next-label { position: relative; min-width: 0; font: 400 19px/1 ${HW_DISPLAY}; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(255,236,200,.7); }
 .hw-next-arrow { position: relative; font: 700 26px/1 ${FONTS.ui}; margin-left: 2px; margin-top: -3px; }
-.hw-next-fill { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transform-origin: 0 50%; transform: scaleX(0);
-  background: linear-gradient(90deg, rgba(255,241,184,.0), rgba(255,241,184,.55)); animation: hw-fill linear forwards; }
-@keyframes hw-fill { to { transform: scaleX(1) } }
-.hw-next.is-auto .hw-next-ring { animation: none; }
 
 /* The scene wipe: a fog bank rolls across (one composited translate) while the witch flies through it. */
 .hw-wipe { position: fixed; z-index: 74; top: 0; bottom: 0; left: 0; width: 180vw; pointer-events: none; will-change: transform; contain: strict;
@@ -496,7 +496,6 @@ body .vm-icon { top: calc(var(--vw-top-space, 0px) + 6px); bottom: auto; left: 1
 
 @media (prefers-reduced-motion: reduce) {
   .hw-next-stripes::before, .hw-next-ring, .hw-next-ico, .hw-pk > span, .hw-pk > span.hw-pk-nope { animation: none !important; }
-  .hw-next-fill { animation-name: none; transform: scaleX(.5); opacity: .5; }
   .hw-witch { animation-duration: 2.4s; }
   .hw-witch img { animation: none; }
 }

@@ -7,7 +7,7 @@
 // near gets a glowing cut mark — and at ~70% the piece pops out and falls.
 // Tapping a shape twice cuts it too (about a quarter of people never think
 // to "draw", per the Halloween Artist write-up), keyboard users get each
-// shape as a button, and "Carve it for me" does the lot. When all four are
+// shape as a button (no "do it for me": it's the wow). When all four are
 // out they tap "Light the candle" and the pumpkin comes alive — the second
 // jump-scare: a jack-o'-lantern whose eyes and grin flare up lunges at them
 // with a BOO (./stage.tsx), then "got you! 💜". The candle is lit after that
@@ -26,7 +26,7 @@ import { burst, haptic, useReducedMotion } from "../../../_valentine/kit";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { HW_DISPLAY } from "./fonts";
 import { HW_GIF, preload, useHw, useNext } from "./stage";
-import { Btn, GhostBtn, Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { Btn, GhostBtn, Hint, HW, RoomTitle } from "./ui";
 
 const PIECES = [
   { id: "left eye", d: "M88 132 L124 94 L138 142 Z" },
@@ -215,13 +215,8 @@ export default function CarvePumpkin({ word, recipient, onNext }: { word: string
     });
   };
 
-  const carveAll = () => {
-    setTouched(true);
-    PIECES.forEach((_, i) => window.setTimeout(() => doCut(i), reduced ? 0 : i * 260));
-  };
-
   // on once the pumpkin has turned round and their word has glowed for a moment
-  useNext(lit ? "Into the hallway" : null, onNext, "pumpkin", back ? 2600 : null);
+  useNext(lit ? "Into the hallway" : null, onNext, "pumpkin");
 
   const fontSize = useMemo(() => {
     const n = word.length;
@@ -400,7 +395,7 @@ export default function CarvePumpkin({ word, recipient, onNext }: { word: string
 
       </div>
 
-      <div style={{ flex: "none", display: "grid", gap: 6, justifyItems: "center", alignContent: "start", minHeight: "clamp(92px, 14dvh, 104px)" }}>
+      <div style={{ flex: "none", display: "grid", gap: 6, justifyItems: "center", alignContent: "start", minHeight: "clamp(52px, 8dvh, 64px)" }}>
         {!allCut && (
           <>
             <div className="hw-row" style={{ gap: 12 }}>
@@ -411,7 +406,6 @@ export default function CarvePumpkin({ word, recipient, onNext }: { word: string
               </div>
               <Hint>{touched ? "Keep tracing… or tap a shape twice ✂️" : "Trace the dotted lines ✂️"}</Hint>
             </div>
-            <SkipChip onClick={carveAll}>Carve it for me</SkipChip>
           </>
         )}
         {allCut && !lit && (
