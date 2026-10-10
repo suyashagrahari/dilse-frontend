@@ -696,9 +696,9 @@ export const HAUNT_CSS = `
   filter: drop-shadow(0 0 .8px rgba(237,228,255,.95)) drop-shadow(0 0 .8px rgba(237,228,255,.8)); }
 .bn-cornerWeb.is-still { filter: none; }
 .bn-cuteWeb { position: absolute; right: -2px; top: -2px; width: clamp(122px, 35vw, 164px); height: auto; transform: scaleX(-1); transform-origin: 50% 0; opacity: .92; }
-/* v8: on a phone's gate the kicker sits right under the top bar, so both webs (and their
+/* v8: on phones every scene's kicker sits right under the top bar, so both webs (and their
    dangling spiders) tuck into the corners above it and never cross the text */
-@media (max-width: 767px) { .bn-haunt.is-gate .bn-cornerWeb { width: 66px; } .bn-haunt.is-gate .bn-cuteWeb { width: 84px; } }
+@media (max-width: 767px) { .bn-cornerWeb { width: 56px; } .bn-cuteWeb { width: 64px; } }
 
 @media (min-width: 768px) {
   .bn-house { width: clamp(110px, 11vw, 190px); bottom: 8vh; }
@@ -734,6 +734,15 @@ export const HAUNT_CSS = `
 .bn-eek.is-r { right: calc(var(--vw-gutter, 0px) + 54px); border-radius: 14px 14px 4px 14px; }
 .bn-eek.is-l { left: calc(var(--vw-gutter, 0px) + 54px); }
 @keyframes bn-eek { 0% { opacity: 0; transform: scale(.4) } 18% { opacity: 1; transform: scale(1.08) } 30%, 75% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: translateY(-14px) scale(.9) } }
+/* v8: phones: a small, short drop hugging the screen edge, ending above the scene's text */
+@media (max-width: 767px) {
+  .bn-drop { --dw: 40px; }
+  .bn-drop.is-r { right: calc(var(--vw-gutter, 0px) + 2px); }
+  .bn-drop.is-l { left: calc(var(--vw-gutter, 0px) + 2px); }
+  .bn-eek { top: 70px; }
+  .bn-eek.is-r { right: calc(var(--vw-gutter, 0px) + 40px); }
+  .bn-eek.is-l { left: calc(var(--vw-gutter, 0px) + 40px); }
+}
 @media (min-width: 768px) {
   .bn-drop { --dw: 104px; }
   .bn-drop.is-r { right: 13vw; }
