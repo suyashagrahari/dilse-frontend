@@ -24,22 +24,31 @@
 // a fixed foot slot and the witch seal flies across on each press. Kids pages:
 // no scares. One fixed CSS sky (stars, a sleepy moon, hills), one GlowParticles layer.
 // Scenes after the first stop are code-split and prefetched one ahead.
+//
+// v6 (./boo/haunt.tsx): a full-bleed haunted night on every screen (a candy-lit
+// haunted town, a big manor on desktop, a graveyard, fog, bats, a corner web);
+// a spider drops from the top edge on four scenes and one crawls the ground on
+// others (tap either); a small pumpkin trail top-left jumps back; a mist
+// curtain covers each scene change. No auto-advance and no skip: one Next pill
+// per scene, shown once its moment is done. The music is the engine's small
+// round icon (music.compact, bottom-left); the viewer shows the stacked brand mark.
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getDay } from "../../_valentine/days";
 import { DayRoot, useReducedMotion } from "../../_valentine/kit";
-import { GlowParticles, PremiumRoot, SkipChip, usePremium } from "../../_valentine/kit/premium";
+import { GlowParticles, PremiumRoot, usePremium } from "../../_valentine/kit/premium";
 import type { ExperienceProps } from "../../_valentine/types";
 import { Ghost } from "./boo/art";
 import { registerBooCues } from "./boo/cues";
-import { BN_FONT_VARS, BODY } from "./boo/fonts";
+import { BN_FONT_VARS } from "./boo/fonts";
 import Gate from "./boo/Gate";
 import { readNight } from "./boo/model";
 import { BooProvider, SCARE_CSS } from "./boo/Scare";
 import Treats from "./boo/Treats";
 import { BOO_CSS, Backdrop, slotSrc, WitchFly } from "./boo/ui";
+import { Crawler, DropSpider, Haunt, HAUNT_CSS, Trail, Veil, VEIL_MS, VEIL_SWAP_MS } from "./boo/haunt";
 
 registerBooCues();
 
@@ -64,7 +73,21 @@ const License = dynamic(load.license, { ssr: false });
 
 type Scene = "gate" | "treats" | "carve" | "booth" | "potion" | "letter" | "radio" | "question" | "license";
 const ALL: Scene[] = ["gate", "treats", "carve", "booth", "potion", "letter", "radio", "question", "license"];
-const SKIPPABLE = new Set<Scene>(["treats", "carve", "booth", "potion", "letter", "radio"]);
+const LABEL: Record<Scene, string> = {
+  gate: "the mailbox",
+  treats: "the treat bag",
+  carve: "the pumpkin",
+  booth: "the photo booth",
+  potion: "the love potion",
+  letter: "the letter",
+  radio: "the spirit radio",
+  question: "the question",
+  license: "your Boo License",
+};
+/** Where the spider drops from the top edge (a fresh GIF each time, so only a few), and from which side. */
+const DROPS: Partial<Record<Scene, "l" | "r">> = { gate: "r", carve: "l", potion: "r", radio: "l" };
+/** Where a spider crosses the ground (once per visit to the scene). */
+const CRAWLS = new Set<Scene>(["treats", "booth", "letter", "license"]);
 
 function Night({ data, mode, react }: ExperienceProps) {
   const p = usePremium();
@@ -75,10 +98,50 @@ function Night({ data, mode, react }: ExperienceProps) {
   const [scene, setScene] = useState<Scene>(() => (p.opened ? order[1] : "gate"));
   const [round, setRound] = useState(0);
   const [peak, setPeak] = useState(false);
+  const sceneRef = useRef(scene);
+  useEffect(() => {
+    sceneRef.current = scene;
+  }, [scene]);
+
+  // Every scene change rises a mist curtain over the screen; the next scene is
+  // swapped in under it (reduced motion: a plain swap).
+  const [veils, setVeils] = useState<number[]>([]);
+  const swapT = useRef(0);
+  useEffect(() => () => window.clearTimeout(swapT.current), []);
+  const go = useCallback(
+    (to: Scene, bump = false) => {
+      const swap = () => {
+        setScene(to);
+        if (bump) setRound((r) => r + 1);
+        if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+      };
+      if (reduce) return swap();
+      const id = performance.now();
+      setVeils((v) => [...v.slice(-1), id]);
+      window.setTimeout(() => setVeils((v) => v.filter((x) => x !== id)), VEIL_MS + 80);
+      window.clearTimeout(swapT.current);
+      swapT.current = window.setTimeout(swap, VEIL_SWAP_MS);
+    },
+    [reduce],
+  );
   const next = useCallback(() => {
-    setScene((s) => order[Math.min(order.length - 1, order.indexOf(s) + 1)]);
-    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
-  }, [order]);
+    go(order[Math.min(order.length - 1, order.indexOf(sceneRef.current) + 1)]);
+  }, [order, go]);
+
+  // The trail: one stop per scene after the gate; an earlier one goes back
+  // there (a new round, so its GIFs restart and its scare can be earned again).
+  const trail = order.slice(1);
+  const at = trail.indexOf(scene);
+  const jumpTo = (k: number) => {
+    if (k >= at || k < 0) return;
+    // back before the question: the night is purple again (the YES is asked anew there)
+    if (trail.indexOf("question") > k) window.setTimeout(() => setPeak(false), VEIL_SWAP_MS);
+    go(trail[k], true);
+  };
+  // Spiders: a drop from the top edge on a few scenes, a crawler on others (never for kids, never under reduced motion).
+  const spiders = n.tone !== "kids" && !reduce;
+  const visit = round * 10 + order.indexOf(scene) + 1;
+  const dropSide = DROPS[scene];
 
   useEffect(() => {
     const nx = order[order.indexOf(scene) + 1] as keyof typeof load | undefined;
@@ -101,10 +164,8 @@ function Night({ data, mode, react }: ExperienceProps) {
   });
 
   const replay = () => {
-    setRound((r) => r + 1);
     setPeak(false);
-    setScene(order[1]);
-    window.scrollTo({ top: 0 });
+    go(order[1], true);
   };
 
   const step = stops.indexOf(scene) + 1;
@@ -158,6 +219,7 @@ function Night({ data, mode, react }: ExperienceProps) {
     <BooProvider enabled={n.tone !== "kids"}>
     <div className={`bn-root${peak ? " is-peak" : ""}`}>
       <Backdrop peak={peak} />
+      <Haunt reduce={reduce} peak={peak} gate={scene === "gate"} />
       <GlowParticles
         preset={sparkle ? "hearts" : "sparkles"}
         colors={sparkle ? ["#FF9EC4", "#FFD27A", "#FFFFFF"] : ["#FFF3C9", "#C9B6FF", "#9BE7C4", "#FF9EC4"]}
@@ -171,26 +233,23 @@ function Night({ data, mode, react }: ExperienceProps) {
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={`${scene}-${round}`}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0, transition: reduce ? { duration: 0.15 } : { type: "spring", stiffness: 260, damping: 22 } }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, scale: 0.96, y: -12, transition: { duration: 0.25 } }}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0, transition: reduce ? { duration: 0.15 } : { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] } }}
+            exit={{ opacity: 0, transition: { duration: reduce ? 0.15 : 0.12 } }}
           >
             {body}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {SKIPPABLE.has(scene) && (
-        <SkipChip
-          key={`skip-${scene}-${round}`}
-          onSkip={next}
-          label="Skip ›"
-          delay={p.repeatVisit ? 0 : 4000}
-          style={{ right: "auto", left: "calc(max(12px, env(safe-area-inset-left, 0px)) + 52px)", top: "max(12px, env(safe-area-inset-top, 0px))", background: "rgba(42,31,61,.55)", color: "#FFF7EC", border: "2px solid rgba(255,247,236,.25)", font: `800 14px/1 ${BODY}`, minHeight: 44 }}
-        />
-      )}
+      <Trail labels={trail.map((s) => LABEL[s])} at={at} onJump={jumpTo} />
+      {spiders && dropSide && <DropSpider run={visit} side={dropSide} />}
+      {spiders && CRAWLS.has(scene) && <Crawler key={visit} run={visit} />}
+      {veils.map((id) => (
+        <Veil key={id} />
+      ))}
       <WitchFly off={reduce} />
-      <style>{BOO_CSS + SCARE_CSS}</style>
+      <style>{BOO_CSS + SCARE_CSS + HAUNT_CSS}</style>
     </div>
     </BooProvider>
   );
@@ -198,8 +257,8 @@ function Night({ data, mode, react }: ExperienceProps) {
 
 export default function HalloweenPremiumExperience(props: ExperienceProps) {
   return (
-    <PremiumRoot data={props.data} mode={props.mode} slug="happy-halloween-premium" chipStyle={{ background: "rgba(42,31,61,.55)", color: "#FFF7EC", borderColor: "rgba(255,247,236,.25)" }}>
-      <DayRoot day={day} data={props.data} layout="column" className={BN_FONT_VARS} art={<Ghost size={150} mood="happy" hold="heart" />}>
+    <PremiumRoot data={props.data} mode={props.mode} slug="happy-halloween-premium" chipStyle={{ display: "none" }}>
+      <DayRoot day={day} data={props.data} layout="full" className={BN_FONT_VARS} art={<Ghost size={150} mood="happy" hold="heart" />}>
         <Night {...props} />
       </DayRoot>
     </PremiumRoot>

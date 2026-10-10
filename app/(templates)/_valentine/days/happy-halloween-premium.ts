@@ -112,10 +112,12 @@ const base = premiumDay<HalloweenExtrasPremium>(halloweenDay, {
 
 export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   ...base,
-  // The $2 twin's stacked recipient-page mark is its own; premium keeps the default pill.
-  brandMark: undefined,
+  // The recipient page: the SubhSandesh logo with the word under it, top-right (like the $2 twin).
+  brandMark: "stacked",
   music: {
     audioOnly: true,
+    // One small round play/stop icon, placed by the template beside its progress trail (.vm-icon).
+    compact: true,
     track: HALLOWEEN_TRACK,
     suggestions: HALLOWEEN_PREMIUM_SONGS,
     suggestionsNote: "romantic, a little spooky · tap to use",

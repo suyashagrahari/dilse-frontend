@@ -22,6 +22,23 @@ export const GIF = {
   panda: W("panda-scream-mask"),
   /** "HAPPY HALLOWEEN" + a penguin peeking out of a pumpkin: the title card. */
   titleCard: W("happy-halloween-pumpkin"),
+  // v6 — the owner's spider set (transparent, on the same CDN folder)
+  /** A tarantula climbing down (180×419, 67 frames × 60 ms ≈ 4 s, head 10% → 77% of the box). Dangles from the top edge. */
+  spiderDrop: `${MEDIA_BASE}/templates/_halloween/spider-drop-from-top.gif`,
+  /** A corner web; a red spider lowers itself on a thread and climbs back (280×362). */
+  cornerWeb: W("corner-web-spider"),
+  /** A realistic spider walking, front view (260×260): crosses the ground once per scene. */
+  spiderCrawl: W("spider-crawl"),
+  /** A cute spider hanging under a web (still, 300×300). */
+  cuteWeb: W("cute-spider-web"),
+  /** A round web with a spider running round it (288×288, ≈ 720 KB): only in the booth, around her photo. */
+  webFrame: W("web-frame-spider"),
+  /** Tombstone "That's Scary" → a zombie hand waves → "Happy Halloween" (150×139). */
+  grave: W("grave-zombie-hand"),
+  /** Two pastel top-hat ghosts floating (300×300, ≈ 430 KB): the YES celebration. */
+  ghostsFloat: W("floating-ghosts"),
+  /** A bouncing jack-o'-lantern in a witch hat (240×285): on the porch. */
+  witchPumpkin: W("witch-hat-pumpkin"),
   // halloween library
   bucket: H("ghost-pumpkin-bucket"),
   pinkPumpkin: H("pink-pumpkin-smile"),

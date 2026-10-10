@@ -234,6 +234,9 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
             <img src={GIF.panda} alt="" width={30} height={28} aria-hidden /> Scare your boo
           </button>
         )}
+        <button type="button" className="bn-pill is-ghost is-round" onClick={onReplay} aria-label="Replay the night" title="Replay the night">
+          ↺
+        </button>
         {mode === "live" && (
           <Link href="/happy-halloween-premium" className="bn-pill is-make">
             Make one 👻
@@ -256,9 +259,6 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
           <Puffy tone="cream" small onClick={() => save("feed")} disabled={!!saving} ariaLabel="Save a 4:5 version for a post">
             {saving === "feed" ? "…" : "4:5"}
           </Puffy>
-          <button type="button" className="bn-pill is-ghost is-round" onClick={onReplay} aria-label="Replay the night" title="Replay the night">
-            ↺
-          </button>
         </div>
       </div>
 
@@ -338,8 +338,8 @@ const LICENSE_CSS = `
 .bn-pill.is-ghost { background: rgba(42,31,61,.45); color: #FFF7EC; box-shadow: 0 0 0 2px rgba(255,247,236,.25) inset; }
 .bn-pill.is-make { background: ${BN.candle}; box-shadow: 0 4px 0 #D9A640, 0 8px 18px rgba(30,16,60,.3); }
 .bn-saveRow { display: flex; align-items: center; gap: 8px; }
-.bn-saveRow .bn-puffy { white-space: nowrap; padding: 0 20px; }
-.bn-saveRow .bn-puffy.is-small { padding: 0 14px; }
+.bn-saveRow .bn-puffy { white-space: nowrap; padding: 0 16px; font-size: 16px; }
+.bn-saveRow .bn-puffy.is-small { padding: 0 12px; font-size: 14px; }
 .bn-saved { position: absolute; bottom: calc(100% + 2px); margin: 0; padding: 6px 12px; border-radius: 99px; background: rgba(42,31,61,.75); font: 700 14px/1.3 var(--font-bn-body), sans-serif; color: #fff; white-space: nowrap; }
 .bn-sheetBack { position: fixed; inset: 0; z-index: 110; background: rgba(20,12,36,.6); display: flex; align-items: flex-end; justify-content: center; }
 .bn-sheet { width: min(100%, 460px); max-height: 88dvh; overflow: auto; overscroll-behavior: contain; padding: 16px 16px max(18px, env(safe-area-inset-bottom, 0px)); border-radius: 28px 28px 0 0;
