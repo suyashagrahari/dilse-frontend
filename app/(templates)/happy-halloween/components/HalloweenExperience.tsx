@@ -11,10 +11,16 @@
 // my boo?" with a No that ghosts them → YES warms the whole night (moon →
 // heart, indigo → amber) → the Boo License + "Boo someone back".
 //
-// Seven little pumpkins at the top light up room by room. Every interaction
-// has a "do it for me"; nothing needs two hands; reduced motion keeps every
-// beat with the movement taken out. Sound-free — the page's music is the only
-// audio (YouTube songs play as audio only for this day, see day.music).
+// Seven little pumpkins at the top light up room by room. Every room is ONE
+// screen (no scrolling at 360×640 and up): the rooms fit by design, long text
+// pages, and the way forward is always the same candy pill at the bottom
+// (./halloween/stage.tsx), which sends the witch-seal flying across.
+//
+// Sound: the Haunted Piano (music mode "track") starts on the first tap — the
+// first knock. Two jump-scares are earned on the way (the ghost at the door,
+// the pumpkin lighting up in the kitchen), three if they dare pick TRICK; each
+// ends on a cute "got you! 💜". Kids mode has no scares at all. Every
+// interaction has a "do it for me"; reduced motion keeps every beat still.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -34,7 +40,8 @@ import Hallway from "./halloween/Hallway";
 import Potion, { type Ingredient } from "./halloween/Potion";
 import Question from "./halloween/Question";
 import TrickOrTreat from "./halloween/TrickOrTreat";
-import { Btn, HW, clean } from "./halloween/ui";
+import { HW_STAGE_CSS, HwStage, useNext } from "./halloween/stage";
+import { HW, clean } from "./halloween/ui";
 
 const day = getDay("happy-halloween");
 
@@ -106,31 +113,17 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
 
   const warm = answered !== null;
 
-  const screen = (key: string, children: ReactNode, opts: { center?: boolean } = {}) => (
+  const screen = (key: string, children: ReactNode) => (
     <motion.section
       key={`${key}-${round}`}
-      // Opacity + translate only: a blur() on a full-screen room is repainted on
-      // the main thread every frame of the 0.5 s change (and the leftover
-      // filter: blur(0px) kept every room a non-composited filter layer).
-      initial={reduced ? false : { opacity: 0, y: 18 }}
+      className="hw-scene"
+      data-hw-scene={key}
+      // Opacity + translate only (a blur() on a full-screen room repaints on
+      // the main thread every frame of the change).
+      initial={reduced ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={reduced ? undefined : { opacity: 0, y: -14 }}
-      transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-      style={{
-        minHeight: "calc(100dvh - var(--vw-dock-space, 0px))",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: opts.center === false ? "flex-start" : "center",
-        gap: 16,
-        padding: `100px 18px ${mode === "preview" ? 40 : 48}px`,
-        textAlign: "center",
-        position: "relative",
-        zIndex: 1,
-        maxWidth: "calc(560px * var(--vw-s, 1))",
-        margin: "0 auto",
-        boxSizing: "border-box",
-      }}
+      exit={reduced ? undefined : { opacity: 0, y: -12 }}
+      transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
     >
       {children}
     </motion.section>
@@ -141,6 +134,8 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       day={day}
       data={data}
       className={hwDisplay.variable}
+      // Every room is exactly one screen and keeps its own bottom strip for the pill (see .hw-scene).
+      style={{ paddingBottom: 0 }}
       line={clean(x.houseName) || day.title}
       art={
         <div style={{ position: "relative", height: "100%", aspectRatio: "1 / 1", display: "grid", placeItems: "end center" }}>
@@ -151,14 +146,16 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
         </div>
       }
     >
+      <style>{HW_STAGE_CSS}</style>
       <Atmosphere warm={warm} />
-      {mode === "live" && <MusicToggle music={music} />}
+      {/* the melody's own button (track / YouTube show the engine's radio instead) — beside the pumpkins, clear of the top-right bar */}
+      {mode === "live" && <MusicToggle music={music} style={{ left: "calc(var(--vw-gutter, 0px) + 184px)", top: "calc(var(--vw-top-space, 0px) + 6px)", width: 36, height: 36, fontSize: 15 }} />}
 
       {/* seven little pumpkins: one per room */}
       <div
         aria-label={`Room ${Math.min(i + 1, ROOMS)} of ${ROOMS}`}
         role="img"
-        style={{ position: "fixed", top: 62, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5, padding: "5px 10px", borderRadius: 99, background: "rgba(23,18,43,.66)", border: "1px solid rgba(247,243,255,.12)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", zIndex: 20 }}
+        style={{ position: "fixed", top: "calc(var(--vw-top-space, 0px) + 8px)", left: "calc(var(--vw-gutter, 0px) + 12px)", display: "flex", gap: 5, padding: "5px 10px", borderRadius: 99, background: "rgba(23,18,43,.66)", border: "1px solid rgba(247,243,255,.12)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", zIndex: 20 }}
       >
         {Array.from({ length: ROOMS }, (_, k) => {
           const done = k < i;
@@ -179,56 +176,60 @@ export default function HalloweenExperience({ data, mode, react }: ExperiencePro
       {/* initial={false}: the first room (and its h1, the LCP element) paints at
           its final state instead of waiting on hydration at opacity 0. Later
           rooms still fade in. */}
-      <AnimatePresence mode="wait" initial={false}>
-        {step === "door" && screen("door", <Doorstep recipient={recipient} petName={data.petName} houseName={clean(x.houseName)} sticker={sticker("h1-doorstep", 64)} onEnter={next} />)}
-        {step === "treat" && screen("treat", <TrickOrTreat trickLine={clean(x.trickLine)} gentle={T.gentle} sticker={sticker("h2-treat", 84)} onNext={next} />)}
-        {step === "carve" && screen("carve", <CarvePumpkin word={carveWord} onNext={next} />)}
-        {step === "hallway" && screen("hallway", <Hallway photos={data.photos} preview={mode === "preview"} sticker={sticker("h3-portrait", 72)} onNext={next} />, { center: false })}
-        {step === "letter" && screen("letter", <FlashlightLetter letter={data.letter || "Happy Halloween."} sender={sender} recipient={recipient} onNext={next} />, { center: false })}
-        {step === "potion" && screen("potion", <Potion ingredients={ingredients} spell={clean(x.potionSpell)} sticker={sticker("h4-potion", 70)} onNext={next} />)}
-        {step === "question" &&
-          answered === null &&
-          screen("question", <Question question={question} yesLabel={T.yes} noLines={T.noLines} gentle={T.gentle} onYes={sayYes} />)}
-        {step === "question" &&
-          answered !== null &&
-          screen(
-            "yes",
-            <>
-              {sticker("h5-boo", 130)}
-              <h2 style={{ margin: 0, font: `400 calc(40px * var(--vw-s, 1))/1.05 ${HW_DISPLAY}`, color: VW.ink, textShadow: "0 2px 24px rgba(255,158,196,.5)" }}>
-                {recipient} said YES! 💜
-              </h2>
-              <p style={{ margin: 0, maxWidth: 360, font: `italic 400 20px/1.45 ${FONTS.serif}`, color: VW.ink, overflowWrap: "anywhere" }}>
-                {clean(x.yesLine) || "Booked. Booed. Yours."}
-              </p>
-              {answered > 0 && !T.gentle && (
-                <p style={{ margin: 0, font: `400 18px ${HW_DISPLAY}`, color: HW.mint }}>
-                  …after the No button ghosted you {answered} {answered === 1 ? "time" : "times"} 👻
-                </p>
-              )}
-              <p style={{ margin: 0, font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>The moon noticed. Look up 🌙→💗</p>
-              <Btn onClick={next}>Get your Boo License →</Btn>
-            </>,
-          )}
-        {step === "ending" &&
-          screen(
-            "ending",
-            <Ending
-              day={day}
-              data={data}
-              mode={mode}
-              recipient={recipient}
-              sender={sender}
-              costume={x.costume}
-              costumeWhy={clean(x.costumeWhy)}
-              licenseTitle={T.license(sender)}
-              replyText={T.reply}
-              sticker={null}
-              onReplay={replay}
-            />,
-            { center: false },
-          )}
-      </AnimatePresence>
+      <HwStage gentle={T.gentle} round={round}>
+        <AnimatePresence mode="wait" initial={false}>
+          {step === "door" && screen("door", <Doorstep recipient={recipient} petName={data.petName} houseName={clean(x.houseName)} sticker={sticker("h1-doorstep", 60)} onEnter={next} />)}
+          {step === "treat" && screen("treat", <TrickOrTreat trickLine={clean(x.trickLine)} sticker={sticker("h2-treat", 72)} onNext={next} />)}
+          {step === "carve" && screen("carve", <CarvePumpkin word={carveWord} recipient={recipient} onNext={next} />)}
+          {step === "hallway" && screen("hallway", <Hallway photos={data.photos} preview={mode === "preview"} sticker={sticker("h3-portrait", 60)} onNext={next} />)}
+          {step === "letter" && screen("letter", <FlashlightLetter letter={data.letter || "Happy Halloween."} sender={sender} recipient={recipient} onNext={next} />)}
+          {step === "potion" && screen("potion", <Potion ingredients={ingredients} spell={clean(x.potionSpell)} sticker={sticker("h4-potion", 60)} onNext={next} />)}
+          {step === "question" &&
+            answered === null &&
+            screen("question", <Question question={question} yesLabel={T.yes} noLines={T.noLines} gentle={T.gentle} onYes={sayYes} />)}
+          {step === "question" &&
+            answered !== null &&
+            screen("yes", <YesRoom recipient={recipient} yesLine={clean(x.yesLine)} dodges={answered} gentle={T.gentle} sticker={sticker("h5-boo", 120)} onNext={next} />)}
+          {step === "ending" &&
+            screen(
+              "ending",
+              <Ending
+                day={day}
+                data={data}
+                mode={mode}
+                recipient={recipient}
+                sender={sender}
+                costume={x.costume}
+                costumeWhy={clean(x.costumeWhy)}
+                licenseTitle={T.license(sender)}
+                replyText={T.reply}
+                onReplay={replay}
+              />,
+            )}
+        </AnimatePresence>
+      </HwStage>
     </DayRoot>
+  );
+}
+
+/** After YES: their sticker, the sender's line, the moon turning into a heart. */
+function YesRoom({ recipient, yesLine, dodges, gentle, sticker, onNext }: { recipient: string; yesLine: string; dodges: number; gentle: boolean; sticker: ReactNode; onNext: () => void }) {
+  useNext("Your Boo License", onNext, "heart");
+  return (
+    <div className="hw-fill" style={{ alignContent: "center", gap: "clamp(8px, 1.8dvh, 16px)", display: "grid" }}>
+      <div style={{ display: "grid", placeItems: "center", height: "min(34cqh, 140px)" }}>{sticker}</div>
+      <h2 style={{ margin: 0, font: `400 clamp(32px, min(10.5vw, 5.6dvh), 46px)/1.05 ${HW_DISPLAY}`, color: VW.ink, textShadow: "0 2px 24px rgba(255,158,196,.5)", overflowWrap: "anywhere" }}>
+        {recipient} said YES! 💜
+      </h2>
+      <p style={{ margin: "0 auto", maxWidth: 360, font: `italic 400 clamp(17px, 2.6dvh, 20px)/1.45 ${FONTS.serif}`, color: VW.ink, overflowWrap: "anywhere" }}>
+        {yesLine || "Booked. Booed. Yours."}
+      </p>
+      {dodges > 0 && !gentle && (
+        <p style={{ margin: 0, font: `400 clamp(15px, 2.3dvh, 18px) ${HW_DISPLAY}`, color: HW.mint }}>
+          …after the No button ghosted you {dodges} {dodges === 1 ? "time" : "times"} 👻
+        </p>
+      )}
+      <p style={{ margin: 0, font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>The moon noticed. Look up 🌙→💗</p>
+    </div>
   );
 }

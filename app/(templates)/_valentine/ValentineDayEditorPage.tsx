@@ -71,32 +71,37 @@ function Inner({ slug }: { slug: DaySlug }) {
       : { label: "Create", onClick: e.handleEditClick };
 
   const setEditMode = useCallback((m: Parameters<typeof e.setEditMode>[0]) => e.setEditMode(m), [e]);
+  // Premium days, and $2 days that opt in (DayConfig.topBar), get the top-right bar.
+  const topBar = !!day.premium || !!day.topBar;
 
   return (
     // --vw-dock-space: room under the scene so the floating EditorDock never
     // sits on top of a day's last button or hint (DayRoot pads by it).
-    // ✦ Premium days have no bottom dock: their controls sit top-right
-    // (PremiumTopBar), so the bottom of the screen belongs to the scene.
-    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: day.premium ? "0px" : "96px", ["--vw-top-space" as string]: day.premium ? "60px" : "0px" }}>
+    // ✦ Premium days (and `topBar` days) have no bottom dock: their controls sit
+    // top-right (PremiumTopBar), so the bottom of the screen belongs to the scene.
+    <div style={{ minHeight: "100dvh", position: "relative", background: day.theme.bg, backgroundColor: day.theme.base, ["--vw-dock-space" as string]: topBar ? "0px" : "96px", ["--vw-top-space" as string]: topBar ? "60px" : "0px" }}>
       {/* The sender's music plays in the preview too (and from the form's
           Listen button). It waits for a tap until they've saved once, so the
-          demo stays quiet while they look around. */}
+          demo stays quiet while they look around — except a template's own
+          track ("track" mode), which is part of the demo and starts on the
+          first tap like on the live page ($2 days; a premium gate starts it). */}
       <DayMusicProvider
         settings={e.displayData}
         melody={day.melody}
-        autoStart={e.isPersonalized && e.editMode !== "manual"}
+        autoStart={(e.isPersonalized || (!day.premium && e.displayData.musicMode === "track")) && e.editMode !== "manual"}
         dark={day.theme.dark}
         overSheet={e.editMode === "manual"}
-        dockBase={day.premium ? "0px" : "96px"}
+        dockBase={topBar ? "0px" : "96px"}
         audioOnly={!!day.music?.audioOnly}
         songs={day.music?.suggestions}
         chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}
+        track={day.music?.track}
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 
       {e.reactions && <ReactionsChip r={e.reactions} asks={day.asksQuestion} yes={day.copy.yesChip} />}
 
-      {day.premium ? (
+      {topBar ? (
         <PremiumTopBar
           dark={!!day.theme.dark}
           accent={`linear-gradient(135deg, ${day.theme.accent}, ${day.theme.accentDeep})`}

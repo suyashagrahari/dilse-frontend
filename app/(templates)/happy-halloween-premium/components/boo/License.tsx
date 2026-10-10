@@ -5,17 +5,21 @@
 // license number and an orange CERTIFIED BOO stamp that thumps down. Saved as
 // a 9:16 story card (or a 4:5 post) she can post. Then "Boo him back" (the
 // ReplyBox), replay, and "make one" for the recipient.
+// v4: one screen. The perks fold out on the back of the card (tap to turn it
+// over), "Boo him back" opens the reply as a bottom sheet, and "Scare your boo"
+// (not on kids pages) counts 3·2·1 and BOOs whoever she's holding the phone up to.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CroppedPhoto, haptic, type KeepsakeItem, type KeepsakeLayout } from "../../../_valentine/kit";
 import { ReplyBox, saveOrSharePoster, sfx } from "../../../_valentine/kit/premium";
 import { Ghost } from "./art";
-import { DISPLAY, HAND } from "./fonts";
+import { BODY, DISPLAY, HAND } from "./fonts";
 import { GIF } from "./gifs";
 import { BN, type Night } from "./model";
-import { Gif, POP, Puffy, TextLink } from "./ui";
+import { useBoo } from "./Scare";
+import { Gif, POP, Puffy } from "./ui";
 
 const licenseNo = (n: Night) => {
   const ini = n.initials.replace(/[^A-Z]/gi, "").toUpperCase().slice(0, 2) || "BO";
@@ -105,9 +109,12 @@ function posterLayout(n: Night, endLine: string, format: "story" | "feed"): Keep
 }
 
 export default function License({ n, endLine, mode, onReplay }: { n: Night; endLine: string; mode: "preview" | "live"; onReplay: () => void }) {
+  const boo = useBoo();
   const [saving, setSaving] = useState<"" | "story" | "feed">("");
   const [saved, setSaved] = useState("");
   const [stamped, setStamped] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const [reply, setReply] = useState(false);
   const line = endLine.trim() || "Happy Halloween, my boo. 👻";
 
   useEffect(() => {
@@ -118,6 +125,16 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
     }, 900);
     return () => window.clearTimeout(t);
   }, []);
+  // the "scare your boo" ghost: warm a fresh copy now, so 3·2·1 never waits
+  const { warm } = boo;
+  useEffect(() => {
+    warm();
+  }, [warm]);
+  useEffect(() => {
+    if (!saved) return;
+    const t = window.setTimeout(() => setSaved(""), 3200);
+    return () => window.clearTimeout(t);
+  }, [saved]);
 
   const save = async (format: "story" | "feed") => {
     if (saving) return;
@@ -129,6 +146,16 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
     setSaved(r === "failed" ? "Couldn't save here. A screenshot works too." : r === "shared" ? "Shared 👻" : "Saved to your phone 👻");
     if (r !== "failed") sfx("chime", { gain: 0.6 });
   };
+  const flip = () => {
+    setFlipped((f) => !f);
+    haptic(8);
+    sfx("paper-rustle", { gain: 0.4 });
+  };
+  const scareThem = () =>
+    boo.countdown({
+      line: "Got them! 💜",
+      sub: `Now hand the phone back to ${n.recipient}. Gently.`,
+    });
 
   return (
     <div className="bn-scene bn-license">
@@ -137,80 +164,130 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
         {line}
       </motion.h2>
 
-      <div className="bn-endGrid">
-        <div className="bn-endKeep">
-          <motion.div className="bn-card" initial={{ y: 40, rotate: 4, opacity: 0 }} animate={{ y: 0, rotate: -1.5, opacity: 1 }} transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.2 }}>
-            <div className="bn-cardHead">
-              <span className="bn-cardTitle">👻 {n.copy.license}</span>
-              <span className="bn-cardHouse">{n.house}</span>
-            </div>
-            <div className="bn-cardBody">
-              <div className="bn-cardPhoto">
-                {n.hero ? <CroppedPhoto photo={n.hero} /> : <span style={{ display: "grid", placeItems: "center", height: "100%" }}><Ghost size={80} /></span>}
+      <div className="bn-cardZone">
+        <motion.div className="bn-cardIn" initial={{ y: 40, rotate: 4, opacity: 0 }} animate={{ y: 0, rotate: -1.5, opacity: 1 }} transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.2 }}>
+          <button type="button" className={`bn-card3d${flipped ? " is-flipped" : ""}`} onClick={flip} aria-label={flipped ? "Turn the license back over" : "Turn the license over for the perks"} aria-pressed={flipped}>
+            <div className="bn-card bn-cardFront" aria-hidden={flipped}>
+              <div className="bn-cardHead">
+                <span className="bn-cardTitle">👻 {n.copy.license}</span>
+                <span className="bn-cardHouse">{n.house}</span>
               </div>
-              <dl className="bn-fields">
-                <dt>Name</dt>
-                <dd className="bn-hand bn-big">{n.recipient}</dd>
-                {n.sender && (
-                  <>
-                    <dt>{n.copy.licensed}</dt>
-                    <dd className="bn-hand">{n.sender}</dd>
-                  </>
-                )}
-                {n.duo && (
-                  <>
-                    <dt>Costume</dt>
-                    <dd>{n.duo}</dd>
-                  </>
-                )}
-                <dt>License no.</dt>
-                <dd className="bn-mono">{licenseNo(n)}</dd>
-              </dl>
-            </div>
-            <ul className="bn-perks">
-              {n.perks.map((p, i) => (
-                <li key={i}>
-                  <span aria-hidden>🍬</span> {p}
-                </li>
-              ))}
-            </ul>
-            <p className="bn-valid">valid every October, forever</p>
-            <span className={`bn-stamp${stamped ? " is-on" : ""}`} aria-label="Certified boo">
-              <small>certified</small>
-              <b>BOO</b>
-            </span>
-            <Gif src={GIF.bride} size={76} tilt={10} className="bn-cardGif" />
-          </motion.div>
-
-          <div className="bn-saveRow">
-            <Puffy onClick={() => save("story")} disabled={!!saving}>
-              {saving === "story" ? "Printing…" : "Save my license 📲"}
-            </Puffy>
-            <TextLink onClick={() => save("feed")}>{saving === "feed" ? "Printing…" : "or a square-ish one for a post"}</TextLink>
-            {saved && (
-              <p className="bn-saved" role="status">
-                {saved}
+              <div className="bn-cardBody">
+                <div className="bn-cardPhoto">
+                  {n.hero ? <CroppedPhoto photo={n.hero} /> : <span style={{ display: "grid", placeItems: "center", height: "100%" }}><Ghost size={80} /></span>}
+                </div>
+                <dl className="bn-fields">
+                  <dt>Name</dt>
+                  <dd className="bn-hand bn-big">{n.recipient}</dd>
+                  {n.sender && (
+                    <>
+                      <dt>{n.copy.licensed}</dt>
+                      <dd className="bn-hand">{n.sender}</dd>
+                    </>
+                  )}
+                  <dt>License no.</dt>
+                  <dd className="bn-mono">{licenseNo(n)}</dd>
+                </dl>
+              </div>
+              <p className="bn-flipHint">
+                <span aria-hidden>↻</span> tap to turn over: the perks
               </p>
-            )}
-          </div>
-        </div>
+              <span className={`bn-stamp${stamped ? " is-on" : ""}`} aria-label="Certified boo">
+                <small>certified</small>
+                <b>BOO</b>
+              </span>
+            </div>
+            <div className="bn-card bn-cardBack" aria-hidden={!flipped}>
+              <div className="bn-cardHead">
+                <span className="bn-cardTitle">🍬 Perks</span>
+                <span className="bn-cardHouse">{n.copy.license}</span>
+              </div>
+              <ul className="bn-perks">
+                {n.perks.map((p, i) => (
+                  <li key={i}>
+                    <span aria-hidden>🍬</span> {p}
+                  </li>
+                ))}
+              </ul>
+              {n.duo && (
+                <p className="bn-duo">
+                  <span>Costume</span> {n.duo}
+                </p>
+              )}
+              <p className="bn-valid">valid every October, forever</p>
+              <p className="bn-flipHint">
+                <span aria-hidden>↻</span> tap to turn back
+              </p>
+            </div>
+          </button>
+          <Gif src={GIF.cuddle} size={70} tilt={10} className="bn-cardGif" />
+        </motion.div>
+      </div>
 
-        <div className="bn-endWrite">
-          <div className="bn-replyHead">
-            <Gif src={GIF.heartEyes} size={64} tilt={-8} />
-            <span>{n.sender ? `Boo ${n.sender} back 👻` : "Boo them back 👻"}</span>
-          </div>
-          <ReplyBox title={n.sender ? `Write back to ${n.sender}` : "Write back"} placeholder="A line, a memory, a yes…" accent={BN.orangeDeep} className="bn-reply" />
-          <div className="bn-endRow">
-            <TextLink onClick={onReplay}>↺ Replay the night</TextLink>
-            {mode === "live" && (
-              <Link href="/happy-halloween-premium" className="bn-make">
-                Make one for someone 👻
-              </Link>
-            )}
-          </div>
+      <div className="bn-endActions">
+        <button type="button" className="bn-pill" onClick={() => setReply(true)}>
+          💌 {n.sender ? `Boo ${n.sender} back` : "Boo them back"}
+        </button>
+        {boo.enabled && (
+          <button type="button" className="bn-pill is-scare" onClick={scareThem}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GIF.panda} alt="" width={30} height={28} aria-hidden /> Scare your boo
+          </button>
+        )}
+        {mode === "live" && (
+          <Link href="/happy-halloween-premium" className="bn-pill is-make">
+            Make one 👻
+          </Link>
+        )}
+      </div>
+
+      <div className="bn-foot">
+        <AnimatePresence>
+          {saved && (
+            <motion.p className="bn-saved" role="status" initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }}>
+              {saved}
+            </motion.p>
+          )}
+        </AnimatePresence>
+        <div className="bn-saveRow">
+          <Puffy onClick={() => save("story")} disabled={!!saving}>
+            {saving === "story" ? "Printing…" : "Save my license 📲"}
+          </Puffy>
+          <Puffy tone="cream" small onClick={() => save("feed")} disabled={!!saving} ariaLabel="Save a 4:5 version for a post">
+            {saving === "feed" ? "…" : "4:5"}
+          </Puffy>
+          <button type="button" className="bn-pill is-ghost is-round" onClick={onReplay} aria-label="Replay the night" title="Replay the night">
+            ↺
+          </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {reply && (
+          <motion.div className="bn-sheetBack" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setReply(false)}>
+            <motion.div
+              className="bn-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Write back"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bn-replyHead">
+                <Gif src={GIF.heartEyes} size={56} tilt={-8} />
+                <span>{n.sender ? `Boo ${n.sender} back 👻` : "Boo them back 👻"}</span>
+                <button type="button" className="bn-sheetX" onClick={() => setReply(false)} aria-label="Close">
+                  ×
+                </button>
+              </div>
+              <ReplyBox title={n.sender ? `Write back to ${n.sender}` : "Write back"} placeholder="A line, a memory, a yes…" accent={BN.orangeDeep} className="bn-reply" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <style>{LICENSE_CSS}</style>
     </div>
   );
@@ -218,38 +295,58 @@ export default function License({ n, endLine, mode, onReplay }: { n: Night; endL
 
 const LICENSE_CSS = `
 .bn-license { justify-content: flex-start; }
-.bn-endH { font-size: clamp(28px, 8vw, 44px); max-width: 16ch; }
-.bn-endGrid { display: grid; justify-items: center; gap: 22px; width: 100%; max-width: 1040px; margin-top: 6px; }
-.bn-endKeep, .bn-endWrite { display: grid; justify-items: center; gap: 14px; width: 100%; }
-.bn-card { position: relative; width: min(100%, 380px); background: ${BN.cream}; color: ${BN.ink}; border-radius: 28px; overflow: visible; text-align: left;
-  box-shadow: 0 0 0 5px #fff inset, 0 18px 40px rgba(30,16,60,.45); padding-bottom: 14px; }
-.bn-cardHead { display: grid; gap: 2px; padding: 14px 20px 12px; border-radius: 28px 28px 0 0; background: ${BN.lilac}; box-shadow: 0 0 0 5px #fff inset; }
-.bn-cardTitle { font: 400 26px/1 ${DISPLAY}; letter-spacing: .02em; }
-.bn-cardHouse { font: 800 12px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #4A3A80; }
-.bn-cardBody { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 14px; padding: 16px 18px 4px; }
-.bn-cardPhoto { aspect-ratio: 4 / 5; border-radius: 6px; overflow: hidden; background: #fff; border: 6px solid #fff; box-shadow: 0 6px 14px rgba(30,16,60,.25); transform: rotate(-3deg); }
+.bn-endH { font-size: clamp(26px, min(8vw, 4.8dvh), 44px); max-width: 16ch; flex: none; }
+.bn-cardZone { flex: 1 1 0; min-height: 0; width: 100%; display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; }
+.bn-cardIn { position: relative; width: min(100%, 360px); perspective: 1100px; }
+.bn-card3d { all: unset; box-sizing: border-box; cursor: pointer; display: grid; width: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,1.3,.5,1); -webkit-tap-highlight-color: transparent; }
+.bn-card3d.is-flipped { transform: rotateY(180deg); }
+.bn-card3d:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 28px; }
+.bn-card { grid-area: 1 / 1; position: relative; background: ${BN.cream}; color: ${BN.ink}; border-radius: 26px; text-align: left; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: 0 0 0 5px #fff inset, 0 18px 40px rgba(30,16,60,.45); padding-bottom: 10px; display: flex; flex-direction: column; }
+.bn-cardBack { transform: rotateY(180deg); }
+.bn-cardHead { display: grid; gap: 2px; padding: 12px 18px 10px; border-radius: 26px 26px 0 0; background: ${BN.lilac}; box-shadow: 0 0 0 5px #fff inset; }
+.bn-cardTitle { font: 400 clamp(20px, 3.4dvh, 26px)/1 ${DISPLAY}; letter-spacing: .02em; }
+.bn-cardHouse { font: 800 11px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #4A3A80; }
+.bn-cardBody { display: grid; grid-template-columns: clamp(84px, 14dvh, 120px) minmax(0, 1fr); gap: 12px; padding: clamp(10px, 1.6dvh, 16px) 16px 2px; }
+.bn-cardPhoto { aspect-ratio: 4 / 5; border-radius: 6px; overflow: hidden; background: #fff; border: 5px solid #fff; box-shadow: 0 6px 14px rgba(30,16,60,.25); transform: rotate(-3deg); }
 .bn-fields { margin: 0; display: grid; gap: 1px; align-content: start; min-width: 0; }
-.bn-fields dt { font: 800 10.5px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .12em; text-transform: uppercase; color: ${BN.lilacDeep}; margin-top: 6px; }
-.bn-fields dd { margin: 0; font: 700 15px/1.2 var(--font-bn-body), sans-serif; overflow-wrap: anywhere; }
-.bn-fields dd.bn-hand { font: 400 22px/1 ${HAND}; }
-.bn-fields dd.bn-big { font-size: 30px; color: ${BN.orangeDeep}; }
+.bn-fields dt { font: 800 10px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .12em; text-transform: uppercase; color: ${BN.lilacDeep}; margin-top: 5px; }
+.bn-fields dd { margin: 0; font: 700 14px/1.2 var(--font-bn-body), sans-serif; overflow-wrap: anywhere; }
+.bn-fields dd.bn-hand { font: 400 clamp(18px, 2.8dvh, 22px)/1 ${HAND}; }
+.bn-fields dd.bn-big { font-size: clamp(24px, 3.8dvh, 30px); color: ${BN.orangeDeep}; }
 .bn-mono { letter-spacing: .08em; }
-.bn-perks { list-style: none; margin: 10px 18px 0; padding: 10px 12px; border-radius: 16px; background: #fff; display: grid; gap: 6px; font: 700 15px/1.25 var(--font-bn-body), sans-serif; }
-.bn-valid { margin: 10px 0 0; text-align: center; font: 400 17px/1 ${HAND}; color: ${BN.inkSoft}; }
-.bn-stamp { position: absolute; right: 12px; bottom: 30px; width: 96px; height: 96px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+.bn-flipHint { margin: 8px 0 0; text-align: center; font: 800 12px/1 var(--font-bn-body), sans-serif; letter-spacing: .06em; color: ${BN.lilacDeep}; }
+.bn-flipHint span { display: inline-block; font-size: 15px; margin-right: 2px; }
+.bn-perks { list-style: none; margin: 12px 14px 0; padding: 10px 12px; border-radius: 16px; background: #fff; display: grid; gap: 6px; font: 700 clamp(14px, 2.2dvh, 15px)/1.25 var(--font-bn-body), sans-serif; }
+.bn-duo { margin: 10px 18px 0; font: 700 14px/1.25 var(--font-bn-body), sans-serif; }
+.bn-duo span { display: block; font: 800 10px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .12em; text-transform: uppercase; color: ${BN.lilacDeep}; }
+.bn-valid { margin: auto 0 0; padding-top: 10px; text-align: center; font: 400 17px/1 ${HAND}; color: ${BN.inkSoft}; }
+.bn-stamp { position: absolute; right: -10px; bottom: -16px; z-index: 2; width: clamp(72px, 11dvh, 88px); aspect-ratio: 1; border-radius: 50%; display: grid; place-content: center; text-align: center;
   border: 5px solid ${BN.orangeDeep}; color: ${BN.orangeDeep}; background: rgba(255,154,60,.14); transform: rotate(-14deg) scale(2.4); opacity: 0; transition: transform .28s cubic-bezier(.5,0,.6,1.6), opacity .2s ease; }
 .bn-stamp.is-on { transform: rotate(-14deg) scale(1); opacity: .92; }
-.bn-stamp small { font: 800 11px/1 var(--font-bn-body), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.bn-stamp b { font: 400 30px/1 ${DISPLAY}; }
-.bn-cardGif { position: absolute; right: -14px; top: -34px; }
-.bn-saveRow { display: grid; justify-items: center; gap: 2px; }
-.bn-saved { margin: 0; font: 700 15px/1.3 var(--font-bn-body), sans-serif; color: #fff; }
-.bn-replyHead { display: flex; align-items: center; gap: 8px; font: 400 26px/1 ${DISPLAY}; color: #fff; }
-.bn-reply { width: 100%; max-width: 420px; background: ${BN.card} !important; color: ${BN.ink} !important; border: 0 !important; border-radius: 26px !important; box-shadow: 0 0 0 4px #fff inset, 0 14px 30px rgba(30,16,60,.35) !important; }
+.bn-stamp small { font: 800 10px/1 var(--font-bn-body), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.bn-stamp b { font: 400 clamp(22px, 3.6dvh, 28px)/1 ${DISPLAY}; }
+.bn-cardGif { position: absolute; right: -10px; top: -30px; z-index: 3; }
+.bn-endActions { flex: none; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 400px; }
+.bn-pill { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px; border-radius: 99px; background: ${BN.card}; color: ${BN.ink};
+  font: 800 14px/1 var(--font-bn-body), sans-serif; box-shadow: 0 4px 0 #E6D2B4, 0 8px 18px rgba(30,16,60,.3); text-decoration: none; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.bn-pill:active { transform: translateY(2px); box-shadow: 0 2px 0 #E6D2B4; }
+.bn-pill:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.bn-pill.is-scare { background: #2A1F3D; color: #FFD27A; box-shadow: 0 4px 0 #120B20, 0 0 0 2px rgba(255,210,122,.4) inset, 0 8px 18px rgba(30,16,60,.4); padding-left: 6px; }
+.bn-pill.is-scare img { width: 30px; height: auto; }
+.bn-pill.is-round { width: 42px; padding: 0; justify-content: center; font-size: 20px; }
+.bn-pill.is-ghost { background: rgba(42,31,61,.45); color: #FFF7EC; box-shadow: 0 0 0 2px rgba(255,247,236,.25) inset; }
+.bn-pill.is-make { background: ${BN.candle}; box-shadow: 0 4px 0 #D9A640, 0 8px 18px rgba(30,16,60,.3); }
+.bn-saveRow { display: flex; align-items: center; gap: 8px; }
+.bn-saveRow .bn-puffy { white-space: nowrap; padding: 0 20px; }
+.bn-saveRow .bn-puffy.is-small { padding: 0 14px; }
+.bn-saved { position: absolute; bottom: calc(100% + 2px); margin: 0; padding: 6px 12px; border-radius: 99px; background: rgba(42,31,61,.75); font: 700 14px/1.3 var(--font-bn-body), sans-serif; color: #fff; white-space: nowrap; }
+.bn-sheetBack { position: fixed; inset: 0; z-index: 110; background: rgba(20,12,36,.6); display: flex; align-items: flex-end; justify-content: center; }
+.bn-sheet { width: min(100%, 460px); max-height: 88dvh; overflow: auto; overscroll-behavior: contain; padding: 16px 16px max(18px, env(safe-area-inset-bottom, 0px)); border-radius: 28px 28px 0 0;
+  background: linear-gradient(180deg, #4A3A80, #3B2D6E); box-shadow: 0 -10px 40px rgba(0,0,0,.4); display: grid; gap: 10px; }
+.bn-replyHead { display: flex; align-items: center; gap: 8px; font: 400 24px/1 ${DISPLAY}; color: #fff; }
+.bn-sheetX { all: unset; cursor: pointer; margin-left: auto; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; font: 400 30px/1 ${BODY}; color: #fff; background: rgba(255,255,255,.12); }
+.bn-reply { width: 100%; background: ${BN.card} !important; color: ${BN.ink} !important; border: 0 !important; border-radius: 26px !important; box-shadow: 0 0 0 4px #fff inset, 0 14px 30px rgba(30,16,60,.35) !important; }
 .bn-reply textarea { background: #fff !important; color: ${BN.ink} !important; font-family: var(--font-bn-body), sans-serif !important; border-radius: 16px !important; }
-.bn-endRow { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; align-items: center; }
-.bn-make { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 99px; text-decoration: none; color: ${BN.ink}; background: ${BN.candle};
-  font: 800 15px/1 var(--font-bn-body), sans-serif; box-shadow: 0 4px 0 #D9A640; }
-.bn-make:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .bn-stamp { transition: opacity .2s ease; } }
+@media (prefers-reduced-motion: reduce) { .bn-stamp { transition: opacity .2s ease; } .bn-card3d { transition: none; } }
 `;

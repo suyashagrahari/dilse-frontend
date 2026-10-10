@@ -7,10 +7,14 @@ import type { CSSProperties } from "react";
 import type { HalloweenCostume } from "../../../_valentine/days/happy-halloween";
 import { HW } from "./ui";
 
+/** A number is px; a string (e.g. "100%") makes the drawing fluid — it fills its box's width. */
+type Size = number | string;
+const dims = (size: Size, ratio: number) => (typeof size === "number" ? { width: size, height: size * ratio } : { width: size });
+
 /** A round little ghost with blushing cheeks. `heart` = holding a heart. */
-export function Ghost({ size = 90, heart, wave, style, mood = "happy" }: { size?: number; heart?: boolean; wave?: boolean; style?: CSSProperties; mood?: "happy" | "boo" | "shy" }) {
+export function Ghost({ size = 90, heart, wave, style, mood = "happy" }: { size?: Size; heart?: boolean; wave?: boolean; style?: CSSProperties; mood?: "happy" | "boo" | "shy" }) {
   return (
-    <svg viewBox="0 0 100 110" width={size} height={size * 1.1} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
+    <svg viewBox="0 0 100 110" {...dims(size, 1.1)} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
       <defs>
         <radialGradient id="hw-ghost-g" cx="40%" cy="30%" r="80%">
           <stop offset="0" stopColor="#FFFFFF" />
@@ -111,9 +115,9 @@ export function Cobweb({ size = 90, style }: { size?: number; style?: CSSPropert
 }
 
 /** The cauldron, with a brew of `color` and bubbles. */
-export function Cauldron({ color, size = 220, stirring = 0, style }: { color: string; size?: number; stirring?: number; style?: CSSProperties }) {
+export function Cauldron({ color, size = 220, stirring = 0, style }: { color: string; size?: Size; stirring?: number; style?: CSSProperties }) {
   return (
-    <svg viewBox="0 0 220 190" width={size} height={size * (190 / 220)} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
+    <svg viewBox="0 0 220 190" {...dims(size, 190 / 220)} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
       <defs>
         <radialGradient id="hw-brew" cx="50%" cy="40%" r="60%">
           <stop offset="0" stopColor="#ffffff" stopOpacity=".55" />
@@ -171,13 +175,13 @@ export function Bottle({ color, size = 64, shape = 0 }: { color: string; size?: 
 }
 
 /** The trick-or-treat pail: a pumpkin bucket with a handle. `fill` 0–1. */
-export function CandyBucket({ size = 150, fill = 0 }: { size?: number; fill?: number }) {
+export function CandyBucket({ size = 150, fill = 0 }: { size?: Size; fill?: number }) {
   const candies = Math.round(fill * 7);
   const spots: [number, number, string][] = [
     [62, 48, "#FF9EC4"], [88, 44, "#9BE7C4"], [112, 50, "#FFD27A"], [74, 36, "#B79CFF"], [100, 34, "#FF6FA0"], [124, 40, "#9BE7C4"], [86, 26, "#FFD27A"],
   ];
   return (
-    <svg viewBox="0 0 180 160" width={size} height={size * (160 / 180)} style={{ display: "block", overflow: "visible" }} aria-hidden>
+    <svg viewBox="0 0 180 160" {...dims(size, 160 / 180)} style={{ display: "block", overflow: "visible" }} aria-hidden>
       <path d="M38 58 Q90 -18 142 58" stroke="#3A2257" strokeWidth="6" fill="none" strokeLinecap="round" />
       {spots.slice(0, candies).map(([x, y, c], i) => (
         <g key={i} transform={`translate(${x} ${y}) rotate(${i * 37})`}>

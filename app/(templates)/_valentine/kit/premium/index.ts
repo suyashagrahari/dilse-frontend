@@ -9,6 +9,8 @@ export { default as PremiumGate, type PremiumGateProps } from "./PremiumGate";
 export { useSongDrop, DROP_RISER_SEC } from "./useSongDrop";
 export { sfx, registerCue, CUE_IDS, type CueId, type CueOptions, type CueHandle } from "./sfx";
 export { unlockAudioInGesture, setAudioMuted, getAudioContext, noiseBuffer, SFX_LEVEL, BED_LEVEL } from "./audio";
+export { loadSample, playSample, sampleReady, type SampleOptions } from "./samples";
+export { useScare, useUnlockAudioOnFirstTap, BOO_SCARE_URL, SCARE_DUCK_MS, SCARE_HAPTIC, type ScareOptions, type ScareCallOptions } from "./useScare";
 export { default as KineticName, type KineticNameProps } from "./KineticName";
 export { default as ParticleField, type ParticlePreset, type ParticleFieldProps } from "./ParticleField";
 export { default as FilmReel, type FilmReelProps } from "./FilmReel";

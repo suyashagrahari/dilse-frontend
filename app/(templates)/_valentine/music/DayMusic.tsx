@@ -10,6 +10,9 @@
 //                 lazily only for these pages, in a small "now playing" card
 //                 that stays visible (≥ 200×113, YouTube's minimum) whenever it
 //                 plays, and can be tucked into the corner;
+//   • "track"   — the template's own looping MP3 (DayConfig.music.track), one
+//                 <audio> element (useTrackEngine), shown in the same audio-only
+//                 card as below (the chip on premium days, the radio otherwise);
 //   • "off"     — nothing.
 //   • "youtube" + `audioOnly` (a per-day flag, DayConfig.music.audioOnly —
 //                 Halloween uses it at the user's request): the same player,
@@ -28,7 +31,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { MusicButton, useSynthEngine, type MelodyId } from "../kit/useSynthMusic";
 import { FONTS } from "../theme";
-import type { MusicMode } from "../types";
+import type { DayTrack, MusicMode } from "../types";
 import { DayMusicContext, isIOSDevice, type DayMusicApi } from "./context";
 import { loadYouTubeApi, suggestionFor, youTubeThumb, type SongSuggestion, type YTPlayer } from "./youtube";
 
@@ -439,6 +442,234 @@ function useYouTubeEngine({
   );
 }
 
+// ─── The template's own track: one looping <audio> ───────────────────────────
+//
+// For days that ship a background MP3 (DayConfig.music.track, mode "track").
+// The element is made at mount with preload="auto", so the gate tap's
+// start() calls el.play() synchronously inside the gesture — the only thing
+// iOS needs. Plain HTMLAudio, not Web Audio: no CORS, no decode cost, and the
+// browser streams it. Same contract as the YouTube engine: fade in, loop,
+// pause while hidden, retry on the next tap if play() was refused, duck.
+
+const TRACK_VOLUME = 0.7;
+
+interface TrackEngine extends Omit<YouTubeEngine, "title"> {
+  el: () => HTMLAudioElement | null;
+}
+
+function useTrackEngine({ url, autoStart }: { url: string; autoStart: boolean }): TrackEngine {
+  const elRef = useRef<HTMLAudioElement | null>(null);
+  const userOff = useRef(false);
+  const resumeOnShow = useRef(false);
+  const duckedPaused = useRef(false);
+  const levelRef = useRef(1);
+  const fadeRef = useRef<number | null>(null);
+  const mutedRef = useRef(false);
+  const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [off, setOff] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [everPlayed, setEverPlayed] = useState(false);
+  const [ios] = useState(() => isIOSDevice());
+
+  const clearFade = () => {
+    if (fadeRef.current != null) window.clearInterval(fadeRef.current);
+    fadeRef.current = null;
+  };
+  /** Ramp el.volume (0–1) to `to` over `ms`. Non-iOS only (iOS media volume is read-only). */
+  const ramp = useCallback((to: number, ms: number, from?: number) => {
+    clearFade();
+    const el = elRef.current;
+    if (!el) return;
+    const start = from ?? el.volume;
+    if (from != null) el.volume = Math.min(1, Math.max(0, from));
+    const steps = Math.max(1, Math.round(ms / 40));
+    let i = 0;
+    fadeRef.current = window.setInterval(() => {
+      i += 1;
+      const v = start + ((to - start) * i) / steps;
+      if (elRef.current) elRef.current.volume = Math.min(1, Math.max(0, v));
+      if (i >= steps) clearFade();
+    }, 40);
+  }, []);
+
+  const play = useCallback(() => {
+    const el = elRef.current;
+    if (!el) return;
+    clearFade();
+    duckedPaused.current = false;
+    el.muted = mutedRef.current;
+    if (!ios) el.volume = 0;
+    setLoading(el.readyState < 3);
+    // Synchronous inside the tap — WebKit only honours play() there.
+    const p = el.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => setBlocked(false)).catch((err: unknown) => {
+        setLoading(false);
+        if ((err as { name?: string })?.name === "NotAllowedError" && !userOff.current) setBlocked(true);
+      });
+    }
+    if (!ios) ramp(levelRef.current * TRACK_VOLUME, 900, 0);
+  }, [ios, ramp]);
+
+  const pause = useCallback(() => {
+    clearFade();
+    setLoading(false);
+    elRef.current?.pause();
+  }, []);
+
+  // The element, once per URL.
+  useEffect(() => {
+    if (!url || typeof Audio === "undefined") return;
+    const el = new Audio();
+    el.loop = true;
+    el.preload = "auto";
+    el.setAttribute("playsinline", "");
+    el.src = url;
+    elRef.current = el;
+    const onPlaying = () => {
+      setPlaying(true);
+      setEverPlayed(true);
+      setLoading(false);
+      setBlocked(false);
+    };
+    const onPause = () => setPlaying(false);
+    const onWaiting = () => setLoading(true);
+    const onError = () => {
+      setLoading(false);
+      setPlaying(false);
+    };
+    el.addEventListener("playing", onPlaying);
+    el.addEventListener("pause", onPause);
+    el.addEventListener("waiting", onWaiting);
+    el.addEventListener("error", onError);
+    return () => {
+      clearFade();
+      el.removeEventListener("playing", onPlaying);
+      el.removeEventListener("pause", onPause);
+      el.removeEventListener("waiting", onWaiting);
+      el.removeEventListener("error", onError);
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+      if (elRef.current === el) elRef.current = null;
+      setPlaying(false);
+      setLoading(false);
+    };
+  }, [url]);
+
+  // Any tap starts it (unless they turned it off), retrying each tap until it really plays.
+  useEffect(() => {
+    if (!url || !autoStart || everPlayed) return;
+    const go = () => {
+      const el = elRef.current;
+      if (userOff.current || !el || !el.paused) return;
+      play();
+    };
+    const evs = ["pointerdown", "touchend", "click", "keydown"] as const;
+    for (const ev of evs) window.addEventListener(ev, go, { passive: true });
+    return () => {
+      for (const ev of evs) window.removeEventListener(ev, go);
+    };
+  }, [url, autoStart, play, everPlayed]);
+
+  // Hidden tab → pause; back → resume if it was playing.
+  useEffect(() => {
+    const onVis = () => {
+      const el = elRef.current;
+      if (!el) return;
+      if (document.hidden) {
+        resumeOnShow.current = !el.paused;
+        if (resumeOnShow.current) pause();
+      } else if (resumeOnShow.current) {
+        resumeOnShow.current = false;
+        if (!userOff.current) play();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [play, pause]);
+
+  const start = useCallback(() => {
+    userOff.current = false;
+    setOff(false);
+    setBlocked(false);
+    play();
+  }, [play]);
+  const stop = useCallback(() => {
+    userOff.current = true;
+    setOff(true);
+    setBlocked(false);
+    pause();
+  }, [pause]);
+  const toggle = useCallback(() => (playing ? stop() : start()), [playing, start, stop]);
+  const toggleMute = useCallback(() => {
+    const next = !mutedRef.current;
+    mutedRef.current = next;
+    setMuted(next);
+    if (elRef.current) elRef.current.muted = next;
+  }, []);
+  const resume = useCallback(() => {
+    if (!userOff.current) play();
+  }, [play]);
+  const seekTo = useCallback((sec: number) => {
+    const el = elRef.current;
+    if (!el) return;
+    try {
+      el.currentTime = Math.max(0, sec);
+    } catch {
+      /* not seekable yet */
+    }
+  }, []);
+  const currentTime = useCallback(() => elRef.current?.currentTime ?? 0, []);
+  const fadeTo = useCallback(
+    (level: number, ms = 800) => {
+      levelRef.current = Math.min(1, Math.max(0, level));
+      if (ios) return;
+      ramp(levelRef.current * TRACK_VOLUME, ms);
+    },
+    [ios, ramp],
+  );
+  const duck = useCallback(
+    (level = 0.25, ms = 400) => {
+      const el = elRef.current;
+      if (!el) return;
+      if (ios) {
+        if (!el.paused) {
+          duckedPaused.current = true;
+          el.pause();
+        }
+        return;
+      }
+      ramp(Math.min(1, Math.max(0, level)) * levelRef.current * TRACK_VOLUME, ms);
+    },
+    [ios, ramp],
+  );
+  const unduck = useCallback(
+    (ms = 600) => {
+      if (ios) {
+        if (duckedPaused.current && !userOff.current) {
+          duckedPaused.current = false;
+          void elRef.current?.play().catch(() => {});
+        }
+        return;
+      }
+      ramp(levelRef.current * TRACK_VOLUME, ms);
+    },
+    [ios, ramp],
+  );
+  const getEl = useCallback(() => elRef.current, []);
+
+  return useMemo(
+    () => ({
+      playing, loading, ready: true, blocked, muted, userOff: off,
+      start, stop, toggle, toggleMute, play: resume, pause, seekTo, currentTime, fadeTo, duck, unduck, canFade: !ios, el: getEl,
+    }),
+    [playing, loading, blocked, muted, off, start, stop, toggle, toggleMute, resume, pause, seekTo, currentTime, fadeTo, duck, unduck, ios, getEl],
+  );
+}
+
 // ─── The floating "now playing" card ─────────────────────────────────────────
 
 function Disc({ spinning }: { spinning: boolean }) {
@@ -560,20 +791,21 @@ function YouTubeDock({
 
 function SpiritRadioDock({
   api,
-  videoId,
+  title,
+  artist,
   host,
   overSheet,
   dockBase,
-  songs,
   muted,
   onMute,
 }: {
   api: DayMusicApi;
-  videoId: string;
-  host: React.RefObject<HTMLDivElement | null>;
+  title: string;
+  artist: string;
+  /** The YouTube player's mount (absent for a template track: nothing to cover). */
+  host?: React.RefObject<HTMLDivElement | null>;
   overSheet: boolean;
   dockBase: string;
-  songs?: readonly SongSuggestion[];
   muted: boolean;
   onMute: () => void;
 }) {
@@ -620,8 +852,6 @@ function SpiritRadioDock({
     }
   };
   const hidden = overSheet && !api.playing && !api.loading;
-  const title = api.title ?? suggestionFor(videoId, songs)?.title ?? "Your song";
-  const artist = suggestionFor(videoId, songs)?.artist ?? "";
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   // Tucking only ever happens on a right-hand corner.
   const at: Corner = overSheet ? "br" : phone ? (corner[0] === "t" ? "tr" : "br") : corner;
@@ -642,7 +872,7 @@ function SpiritRadioDock({
     <div className="vm-dock vm-radio" style={style} onPointerDown={stop} onKeyDown={stop} role="region" aria-label="Now playing">
       <div className="vr-box">
         {/* The real player — full size, under the cover. Never visible. */}
-        <div ref={host} className="vr-host" aria-hidden />
+        {host && <div ref={host} className="vr-host" aria-hidden />}
         <div className="vr-cover">
           <span className={`vr-disc${api.playing && !muted ? " is-on" : ""}`} aria-hidden>
             <i />
@@ -753,21 +983,22 @@ const CHIP_RESERVE = 68;
 
 function NowPlayingChip({
   api,
-  videoId,
+  title,
+  artist,
   host,
   overSheet,
   dockBase,
-  songs,
   muted,
   onMute,
   theme,
 }: {
   api: DayMusicApi;
-  videoId: string;
-  host: React.RefObject<HTMLDivElement | null>;
+  title: string;
+  artist: string;
+  /** The YouTube player's mount (absent for a template track). */
+  host?: React.RefObject<HTMLDivElement | null>;
   overSheet: boolean;
   dockBase: string;
-  songs?: readonly SongSuggestion[];
   muted: boolean;
   onMute: () => void;
   theme: NowPlayingChipTheme;
@@ -806,8 +1037,6 @@ function NowPlayingChip({
     }
   };
   const hidden = overSheet && !api.playing && !api.loading;
-  const title = api.title ?? suggestionFor(videoId, songs)?.title ?? "Your song";
-  const artist = suggestionFor(videoId, songs)?.artist ?? "";
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const at: Corner = overSheet ? "br" : corner;
   const expanded = open || overSheet;
@@ -846,7 +1075,7 @@ function NowPlayingChip({
       aria-label="Now playing"
     >
       {/* The real player — 200×113, clipped by the chip, under its opaque face. Never visible. */}
-      <div ref={host} className="vp-host" aria-hidden />
+      {host && <div ref={host} className="vp-host" aria-hidden />}
       <div className="vp-face">
         <button
           type="button"
@@ -1007,6 +1236,7 @@ export function DayMusicProvider({
   audioOnly = false,
   songs,
   chip,
+  track,
   children,
 }: {
   settings: DayMusicSettings;
@@ -1025,18 +1255,22 @@ export function DayMusicProvider({
   songs?: readonly SongSuggestion[];
   /** With `audioOnly`: draw the compact themed chip (premium days) instead of the spirit radio. */
   chip?: NowPlayingChipTheme;
+  /** The day's own looping MP3 (DayConfig.music.track) — plays in mode "track". */
+  track?: DayTrack;
   children: ReactNode;
 }) {
   const requested = settings.musicMode;
   const ytId = requested === "youtube" ? settings.musicYoutubeId : "";
   const [failedId, setFailedId] = useState<string | null>(null);
   const broken = !!ytId && failedId === ytId;
-  const mode: MusicMode = requested === "youtube" ? (ytId && !broken ? "youtube" : "melody") : requested;
+  const mode: MusicMode =
+    requested === "youtube" ? (ytId && !broken ? "youtube" : "melody") : requested === "track" ? (track?.url ? "track" : "melody") : requested;
 
   const host = useRef<HTMLDivElement | null>(null);
   const onFail = useCallback((id: string) => setFailedId(id), []);
   const synth = useSynthEngine({ melody, enabled: mode === "melody", autoStart });
   const yt = useYouTubeEngine({ videoId: mode === "youtube" ? ytId : "", startAt: settings.musicStart, autoStart, host, onFail, songs });
+  const tr = useTrackEngine({ url: mode === "track" && track ? track.url : "", autoStart });
 
   const [toggles, setToggles] = useState(0);
   const registerToggle = useCallback(() => {
@@ -1072,7 +1306,7 @@ export function DayMusicProvider({
     };
   }, [melodyStart, melodyStop, synth.playing]);
 
-  const api = useMemo<DayMusicApi>(
+  const base = useMemo<Omit<DayMusicApi, "duckFor">>(
     () =>
       mode === "youtube"
         ? {
@@ -1081,55 +1315,99 @@ export function DayMusicProvider({
             ready: yt.ready, blocked: yt.blocked, userOff: yt.userOff, play: yt.play, pause: yt.pause, seekTo: yt.seekTo,
             currentTime: yt.currentTime, duck: yt.duck, unduck: yt.unduck, fadeTo: yt.fadeTo, canFade: yt.canFade, audioOnly,
           }
-        : {
-            mode,
-            available: mode === "melody",
-            playing: synth.playing,
-            loading: false,
-            error,
-            title: null,
-            toggle: synthApi.toggle,
-            start: synthApi.start,
-            stop: synthApi.stop,
-            registerToggle,
-            ready: true,
-            blocked: false,
-            userOff: melodyOff,
-            play: synthApi.play,
-            pause: melodyStop,
-            seekTo: () => synth.restartPhrase?.(),
-            currentTime: () => synth.elapsed?.() ?? 0,
-            duck: (level = 0.25, ms = 400) => synth.setLevel?.(level, ms),
-            unduck: (ms = 600) => synth.setLevel?.(1, ms),
-            fadeTo: (level: number, ms = 800) => synth.setLevel?.(level, ms),
-            canFade: true,
-            audioOnly,
-          },
-    [mode, yt, synth, synthApi, melodyOff, melodyStop, error, registerToggle, audioOnly],
+        : mode === "track"
+          ? {
+              mode, available: true, playing: tr.playing, loading: tr.loading, error, title: track?.title ?? null,
+              toggle: tr.toggle, start: tr.start, stop: tr.stop, registerToggle,
+              ready: tr.ready, blocked: tr.blocked, userOff: tr.userOff, play: tr.play, pause: tr.pause, seekTo: tr.seekTo,
+              currentTime: tr.currentTime, duck: tr.duck, unduck: tr.unduck, fadeTo: tr.fadeTo, canFade: tr.canFade, audioOnly,
+            }
+          : {
+              mode,
+              available: mode === "melody",
+              playing: synth.playing,
+              loading: false,
+              error,
+              title: null,
+              toggle: synthApi.toggle,
+              start: synthApi.start,
+              stop: synthApi.stop,
+              registerToggle,
+              ready: true,
+              blocked: false,
+              userOff: melodyOff,
+              play: synthApi.play,
+              pause: melodyStop,
+              seekTo: () => synth.restartPhrase?.(),
+              currentTime: () => synth.elapsed?.() ?? 0,
+              duck: (level = 0.25, ms = 400) => synth.setLevel?.(level, ms),
+              unduck: (ms = 600) => synth.setLevel?.(1, ms),
+              fadeTo: (level: number, ms = 800) => synth.setLevel?.(level, ms),
+              canFade: true,
+              audioOnly,
+            },
+    [mode, yt, tr, track?.title, synth, synthApi, melodyOff, melodyStop, error, registerToggle, audioOnly],
   );
+
+  // duckFor: one timer for the whole page, so overlapping scares extend the hold
+  // instead of un-ducking under the second one. Always talks to the CURRENT engine.
+  const baseRef = useRef(base);
+  useEffect(() => {
+    baseRef.current = base;
+  });
+  const duckTimer = useRef<number | null>(null);
+  const duckFor = useCallback((holdMs: number, level = 0.2) => {
+    const b = baseRef.current;
+    if (!b.available) return;
+    if (duckTimer.current == null) b.duck(level, 120);
+    else window.clearTimeout(duckTimer.current);
+    duckTimer.current = window.setTimeout(() => {
+      duckTimer.current = null;
+      baseRef.current.unduck(700);
+    }, Math.max(0, holdMs));
+  }, []);
+  useEffect(
+    () => () => {
+      if (duckTimer.current != null) window.clearTimeout(duckTimer.current);
+    },
+    [],
+  );
+
+  const api = useMemo<DayMusicApi>(() => ({ ...base, duckFor }), [base, duckFor]);
+
+  const ytTitle = yt.title ?? suggestionFor(ytId, songs)?.title ?? "Your song";
+  const ytArtist = suggestionFor(ytId, songs)?.artist ?? "";
+  const cardTitle = mode === "track" ? (track?.title ?? "Background music") : ytTitle;
+  const cardArtist = mode === "track" ? (track?.artist ?? "") : ytArtist;
+  const muted = mode === "track" ? tr.muted : yt.muted;
+  const onMute = mode === "track" ? tr.toggleMute : yt.toggleMute;
+  const cardHost = mode === "youtube" ? host : undefined;
+  const hasCard = mode === "youtube" || mode === "track";
+  // A track has no video to show: it always gets the audio-only card.
+  const coverCard = mode === "track" || audioOnly;
 
   return (
     <DayMusicContext.Provider value={api}>
       {/* DayRoot pads its bottom by --vw-dock-space; with a YouTube song it grows by the
           player's height on phones. Always the same wrapper, so a mode change never remounts the day. */}
       <div
-        className={mode === "youtube" ? "vm-reserve" : undefined}
-        style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: `calc(${dockBase} + ${audioOnly && chip ? CHIP_RESERVE : 137}px)` }}
+        className={hasCard ? "vm-reserve" : undefined}
+        style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: `calc(${dockBase} + ${coverCard && chip ? CHIP_RESERVE : 137}px)` }}
       >
         {children}
       </div>
       {mode === "melody" && toggles === 0 && !overSheet && <MusicButton music={api} />}
-      {mode === "youtube" && (
+      {hasCard && (
         <>
-          {audioOnly && chip ? (
-            <NowPlayingChip api={api} videoId={ytId} host={host} overSheet={overSheet} dockBase={dockBase} songs={songs} muted={yt.muted} onMute={yt.toggleMute} theme={chip} />
-          ) : audioOnly ? (
-            <SpiritRadioDock api={api} videoId={ytId} host={host} overSheet={overSheet} dockBase={dockBase} songs={songs} muted={yt.muted} onMute={yt.toggleMute} />
+          {coverCard && chip ? (
+            <NowPlayingChip api={api} title={cardTitle} artist={cardArtist} host={cardHost} overSheet={overSheet} dockBase={dockBase} muted={muted} onMute={onMute} theme={chip} />
+          ) : coverCard ? (
+            <SpiritRadioDock api={api} title={cardTitle} artist={cardArtist} host={cardHost} overSheet={overSheet} dockBase={dockBase} muted={muted} onMute={onMute} />
           ) : (
             <YouTubeDock api={api} videoId={ytId} host={host} dark={dark} overSheet={overSheet} dockBase={dockBase} />
           )}
           <style>{DOCK_CSS}</style>
-          {audioOnly && <style>{chip ? CHIP_CSS : RADIO_CSS}</style>}
+          {coverCard && <style>{chip ? CHIP_CSS : RADIO_CSS}</style>}
         </>
       )}
     </DayMusicContext.Provider>

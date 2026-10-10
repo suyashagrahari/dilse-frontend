@@ -8,9 +8,10 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { ValentineDayData } from "../../../_valentine/types";
-import { Moon } from "./art";
+import { sfx } from "../../../_valentine/kit/premium";
+import { Ghost, Moon } from "./art";
 import { BODY, DISPLAY, HAND } from "./fonts";
-import { SLOT_DEFAULT } from "./gifs";
+import { GIF, SLOT_DEFAULT } from "./gifs";
 import { BN } from "./model";
 
 export const POP = { type: "spring", stiffness: 500, damping: 15, mass: 0.8 } as const;
@@ -43,6 +44,79 @@ export function Puffy({
     >
       {children}
     </motion.button>
+  );
+}
+
+// ── The "next" button ────────────────────────────────────────────────────────
+/** Fired on every Next press: the witch seal flies across the screen (WitchFly). */
+export const WITCH_EVENT = "bn-witch";
+
+/**
+ * The one forward button of every scene: a glowing candy pill with a bobbing
+ * ghost, a soft pulse after 2 s idle, and the witch seal flies across on
+ * press. It lives in the scene's fixed foot slot, so nothing ever shifts.
+ */
+export function NextButton({ children = "Next stop", onClick, delay = 0, disabled, ariaLabel, quiet }: { children?: ReactNode; onClick: () => void; delay?: number; disabled?: boolean; ariaLabel?: string; quiet?: boolean }) {
+  const press = () => {
+    if (disabled) return;
+    if (!quiet) {
+      sfx("swoosh-soft", { gain: 0.45 });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event(WITCH_EVENT));
+    }
+    onClick();
+  };
+  return (
+    <motion.button
+      type="button"
+      className="bn-next"
+      onClick={press}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      initial={{ scale: 0.6, opacity: 0, y: 10 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      transition={{ ...POP, delay }}
+      whileTap={disabled ? undefined : { scale: 0.92, y: 3 }}
+    >
+      <span className="bn-nextIn" style={{ animationDelay: `${delay + 2}s` }}>
+        <span className="bn-nextIcon" aria-hidden>
+          <Ghost size={30} mood="happy" />
+        </span>
+        <span className="bn-nextLabel">{children}</span>
+        <span className="bn-nextArrow" aria-hidden>
+          →
+        </span>
+      </span>
+    </motion.button>
+  );
+}
+
+/** The witch seal on her broom, flying across the sky on each Next press. */
+export function WitchFly({ off }: { off?: boolean }) {
+  const [flights, setFlights] = useState<number[]>([]);
+  useEffect(() => {
+    if (off) return;
+    let n = 0;
+    const go = () => {
+      n += 1;
+      const id = n;
+      setFlights((f) => [...f.slice(-1), id]);
+      window.setTimeout(() => setFlights((f) => f.filter((x) => x !== id)), 1900);
+    };
+    window.addEventListener(WITCH_EVENT, go);
+    return () => window.removeEventListener(WITCH_EVENT, go);
+  }, [off]);
+  return (
+    <>
+      {/* warm it, so the first flight isn't a blank box */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {!off && <img src={GIF.witchSeal} alt="" width={1} height={1} loading="lazy" className="bn-witchWarm" aria-hidden />}
+      {flights.map((id) => (
+        <span key={id} className={`bn-witch${id % 2 ? "" : " is-low"}`} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={GIF.witchSeal} alt="" width={150} height={150} draggable={false} />
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -168,9 +242,9 @@ export function Backdrop({ peak }: { peak: boolean }) {
 
 // ── CSS ──────────────────────────────────────────────────────────────────────
 export const BOO_CSS = `
-.bn-root { position: relative; min-height: 100dvh; font-family: ${BODY}; color: ${BN.onNight}; isolation: isolate; }
+.bn-root { position: relative; min-height: 100dvh; overflow-x: clip; font-family: ${BODY}; color: ${BN.onNight}; isolation: isolate; }
 .bn-root *, .bn-root *::before, .bn-root *::after { box-sizing: border-box; }
-.bn-stage { position: relative; z-index: 2; min-height: 100dvh; }
+.bn-stage { position: relative; z-index: 2; height: 100dvh; }
 
 /* sky */
 .bn-sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -191,24 +265,64 @@ export const BOO_CSS = `
 .bn-sky.is-peak .bn-hills { opacity: .35; }
 @media (max-width: 520px) { .bn-moonWrap { top: 200px; right: -22px; transform: scale(.6); } .bn-sky.is-peak .bn-moonWrap { top: 17%; right: 50%; transform: translateX(50%) scale(1.7); } }
 
-/* scene shell */
-.bn-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; min-height: calc(100dvh / var(--bn-z, 1)); width: 100%; zoom: var(--bn-z, 1);
-  padding: max(66px, calc(env(safe-area-inset-top, 0px) + 60px)) 18px calc(var(--vw-dock-space, 0px) + max(28px, env(safe-area-inset-bottom, 0px))); text-align: center; }
-.bn-head { display: grid; justify-items: center; gap: 6px; max-width: 30ch; position: relative; z-index: 3; }
-.bn-dots { display: flex; gap: 6px; padding: 5px 9px; border-radius: 99px; background: rgba(42,31,61,.35); margin-bottom: 4px; }
+/* scene shell: exactly one screen (research §C5 + v4 brief). The content
+   column is the scene's padding box; the forward button lives in a fixed
+   foot slot at the bottom, so it never covers content or moves anything. */
+/* The music card reserves --vw-dock-space under DayRoot (68 px on phones) so it never
+   sits on a button; our chip folds into an edge tab and every scene is exactly one
+   screen, so we give that strip back (no page scroll) and keep the centre foot clear. */
+.bn-root { margin-bottom: calc(-1 * var(--vw-dock-space, 0px));
+  --bn-top: max(58px, calc(env(safe-area-inset-top, 0px) + 54px)); --bn-footH: 74px;
+  --bn-bot: max(12px, env(safe-area-inset-bottom, 0px));
+  --bn-gap: clamp(4px, 1.3dvh, 14px); }
+.bn-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bn-gap); height: calc(100dvh / var(--bn-z, 1)); width: 100%; zoom: var(--bn-z, 1); overflow: hidden;
+  padding: var(--bn-top) 16px calc(var(--bn-bot) + var(--bn-footH) + 4px); text-align: center; }
+.bn-head { display: grid; justify-items: center; gap: clamp(2px, .6dvh, 6px); max-width: 30ch; position: relative; z-index: 3; flex: none; }
+.bn-dots { display: flex; gap: 6px; padding: 5px 9px; border-radius: 99px; background: rgba(42,31,61,.35); margin-bottom: 2px; }
 .bn-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,247,236,.25); transition: background .4s ease, transform .4s ease; }
 .bn-dot.is-done { background: ${BN.orange}; }
 .bn-dot.is-now { transform: scale(1.35); background: ${BN.candle}; box-shadow: 0 0 10px ${BN.candle}; }
 .bn-kicker { margin: 0; font: 800 12px/1.2 ${BODY}; letter-spacing: .16em; text-transform: uppercase; color: ${BN.candle}; }
-.bn-title { margin: 0; font: 400 clamp(32px, 9vw, 46px)/1.02 ${DISPLAY}; color: #fff; text-shadow: 0 3px 0 rgba(42,31,61,.35); text-wrap: balance; letter-spacing: .01em; }
-.bn-sub { margin: 0; font: 600 16px/1.4 ${BODY}; color: #EDE4FF; text-wrap: balance; }
+.bn-title { margin: 0; font: 400 clamp(28px, min(9vw, 5.2dvh), 46px)/1.02 ${DISPLAY}; color: #fff; text-shadow: 0 3px 0 rgba(42,31,61,.35); text-wrap: balance; letter-spacing: .01em; }
+.bn-sub { margin: 0; font: 600 clamp(14px, 2.2dvh, 16px)/1.35 ${BODY}; color: #EDE4FF; text-wrap: balance; }
 .bn-hand { font-family: ${HAND}; }
+/* a flexible middle: takes the room that's left, never more */
+.bn-fill { flex: 1 1 0; min-height: 0; width: 100%; display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; position: relative; }
 
 /* tall tablets and big desktops: the phone-sized scene grows with the screen */
-@media (min-width: 700px) { .bn-scene { padding-bottom: calc(var(--vw-dock-space, 0px) + 84px); } }
 @media (min-width: 700px) and (min-height: 940px) { .bn-root { --bn-z: 1.22; } }
 @media (min-width: 1300px) and (min-height: 1000px) { .bn-root { --bn-z: 1.18; } }
 @media (min-width: 1700px) and (min-height: 1050px) { .bn-root { --bn-z: 1.26; } }
+@media (min-width: 700px) { .bn-root { --bn-footH: 84px; } }
+
+/* the foot slot + the next button */
+.bn-foot { position: absolute; left: 0; right: 0; bottom: var(--bn-bot); height: var(--bn-footH); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; z-index: 6; pointer-events: none; padding: 0 16px; }
+.bn-foot > * { pointer-events: auto; }
+.bn-next { all: unset; box-sizing: border-box; cursor: pointer; position: relative; display: inline-flex; -webkit-tap-highlight-color: transparent; border-radius: 999px; }
+.bn-next:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.bn-next[disabled] { opacity: .5; cursor: default; }
+.bn-nextIn { position: relative; display: inline-flex; align-items: center; gap: 10px; min-height: 58px; padding: 0 22px 0 10px; border-radius: 999px; isolation: isolate;
+  background: linear-gradient(180deg, #FFC27A 0%, #FF9A3C 55%, #FF8A2A 100%); color: #3A1A04; font: 800 19px/1 ${BODY}; letter-spacing: .01em; white-space: nowrap;
+  box-shadow: 0 5px 0 ${BN.orangeDeep}, 0 0 0 3px rgba(255,255,255,.55) inset, 0 12px 28px rgba(30,16,60,.4);
+  animation: bn-nextPulse 2.2s ease-in-out 2s infinite; }
+.bn-nextIn::before { content: ""; position: absolute; inset: -10px; border-radius: inherit; z-index: -1; background: radial-gradient(closest-side, rgba(255,210,122,.75), rgba(255,154,60,0)); opacity: .55; animation: bn-nextGlow 2.2s ease-in-out infinite; }
+.bn-nextIn::after { content: ""; position: absolute; left: 18px; right: 18px; top: 5px; height: 12px; border-radius: 99px; background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0)); pointer-events: none; }
+.bn-nextIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #FFF4E3; box-shadow: 0 2px 0 #E6D2B4, 0 0 0 2px #fff inset; animation: bn-nextBob 1.6s ease-in-out infinite; }
+.bn-nextIcon svg { width: 28px; height: auto; margin-top: 2px; }
+.bn-nextArrow { display: inline-block; font-size: 22px; animation: bn-nextNudge 1.6s ease-in-out infinite; }
+.bn-next:active .bn-nextIn { box-shadow: 0 2px 0 ${BN.orangeDeep}, 0 0 0 3px rgba(255,255,255,.55) inset, 0 6px 14px rgba(30,16,60,.35); }
+@keyframes bn-nextPulse { 0%, 70%, 100% { transform: scale(1) } 80% { transform: scale(1.06) } 90% { transform: scale(.99) } }
+@keyframes bn-nextGlow { 0%,100% { opacity: .4; transform: scale(.96) } 50% { opacity: .85; transform: scale(1.06) } }
+@keyframes bn-nextBob { 0%,100% { transform: translateY(0) rotate(-6deg) } 50% { transform: translateY(-4px) rotate(6deg) } }
+@keyframes bn-nextNudge { 0%,100% { transform: translateX(0) } 50% { transform: translateX(4px) } }
+
+/* the witch seal's flight */
+.bn-witchWarm { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
+.bn-witch { position: fixed; z-index: 90; left: 0; top: 18dvh; width: 150px; height: 150px; pointer-events: none; animation: bn-witchFly 1.8s cubic-bezier(.45,.05,.4,1) both; will-change: transform; }
+.bn-witch.is-low { top: 42dvh; animation-name: bn-witchFly2; }
+.bn-witch img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 8px 12px rgba(30,16,60,.35)); }
+@keyframes bn-witchFly { 0% { transform: translate(-170px, 40px) rotate(-8deg) } 50% { transform: translate(calc(50vw - 75px), -24px) rotate(4deg) } 100% { transform: translate(calc(100vw + 30px), 20px) rotate(-4deg) } }
+@keyframes bn-witchFly2 { 0% { transform: translate(-170px, -20px) rotate(-4deg) } 50% { transform: translate(calc(50vw - 75px), 26px) rotate(6deg) } 100% { transform: translate(calc(100vw + 30px), -40px) rotate(-6deg) } }
 
 /* puffy buttons (research §C3) */
 .bn-puffy { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; padding: 0 28px; border-radius: 999px;
@@ -242,10 +356,12 @@ export const BOO_CSS = `
 .bn-wingR { animation: bn-flapR .32s ease-in-out infinite alternate; }
 @keyframes bn-flapL { from { transform: rotate(10deg) scaleY(.9) } to { transform: rotate(-14deg) scaleY(1.05) } }
 @keyframes bn-flapR { from { transform: rotate(-10deg) scaleY(.9) } to { transform: rotate(14deg) scaleY(1.05) } }
-.bn-foot { display: grid; justify-items: center; gap: 8px; margin-top: auto; padding-top: 10px; position: relative; z-index: 3; }
+
+/* the foot ignores taps except on its controls (all: unset would inherit "none") */
+.bn-foot > *, .bn-foot .bn-next, .bn-foot .bn-puffy, .bn-foot .bn-link, .bn-foot a { pointer-events: auto; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bn-star, .bn-gif.is-float, .bn-hint, .bn-wiggle, .bn-ants, .bn-wingL, .bn-wingR { animation: none !important; }
+  .bn-star, .bn-gif.is-float, .bn-hint, .bn-wiggle, .bn-ants, .bn-wingL, .bn-wingR, .bn-nextIn, .bn-nextIn::before, .bn-nextIcon, .bn-nextArrow { animation: none !important; }
   .bn-carved { animation-duration: .01s; }
 }
 `;

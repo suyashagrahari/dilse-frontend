@@ -18,3 +18,5 @@ export const meta = (slug: DaySlug) => DAY_META[slug];
 
 /** Every day's demo starts on its own built-in melody (no YouTube song). */
 export const MUSIC_DEMO = { music: true, musicMode: "melody", musicYoutubeId: "", musicStart: 0 } as const;
+/** A demo that plays the day's own track (DayConfig.music.track); withDemoSong keeps it. */
+export const TRACK_DEMO = { music: true, musicMode: "track", musicYoutubeId: "", musicStart: 0 } as const;

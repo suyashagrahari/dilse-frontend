@@ -4,19 +4,25 @@
 //
 // Cute-spooky and romantic, never scary (research §D9): a warm candy-coloured
 // night with blushing ghosts and a GIF sticker reacting in every scene.
-//   gate      the haunted mailbox: tap it, a ghost pops out with a letter, BOO;
-//             the tap starts the song (same synchronous contract as PremiumGate)
+//   gate      the haunted mailbox: tap it, a ghost BURSTS out at you (scare #1, the
+//             boo sample + duck + buzz), then giggles; the tap starts the haunted
+//             piano (track mode; same synchronous contract as PremiumGate)
 //   treats    1 · tap/shake the treat bag; catch the candies (sweet lines + cute dares)
-//   carve     2 · carve a pumpkin: pick eyes + smile, hold to light it; initials glow
-//   booth     3 · ghosts are hiding their photos; shoo each one away
+//   carve     2 · carve a pumpkin: pick eyes + smile, hold to light it; initials glow;
+//             then a pumpkin facing away: turn it round (scare #2, pumpkin-light-up)
+//   booth     3 · ghosts are hiding their photos; shoo each one away; the last
+//             photo hides behind a pumpkin (scare #3, pumpkin-ghost-boo on its BOO frame)
 //   potion    4 · drag three ingredients into the cauldron, stir it, it puffs a heart
 //   letter    5 · a bat brings the letter; tap it; the scroll unrolls (+ sealed P.S.)
 //   radio     6 · tune the spirit radio to Boo FM; his voice comes through
 //   question  7 · THE MONEY MOMENT: "Will you be my boo?" — the No ghosts away;
 //             YES on the song's drop: the night turns pink, the moon becomes a
 //             heart, a swarm of bats forms a heart around her photo, ghosts kiss
-//   license   the Boo License keepsake (9:16 / 4:5), reply, replay
-// One fixed CSS sky (stars, a sleepy moon, hills), one GlowParticles layer.
+//   license   the Boo License keepsake (9:16 / 4:5), reply, replay, and
+//             "Scare your boo" (3·2·1 → the BOO ghost, for the person next to her)
+// Every scene is exactly one screen (no page scroll); the forward button sits in
+// a fixed foot slot and the witch seal flies across on each press. Kids pages:
+// no scares. One fixed CSS sky (stars, a sleepy moon, hills), one GlowParticles layer.
 // Scenes after the first stop are code-split and prefetched one ahead.
 
 import dynamic from "next/dynamic";
@@ -31,8 +37,9 @@ import { registerBooCues } from "./boo/cues";
 import { BN_FONT_VARS, BODY } from "./boo/fonts";
 import Gate from "./boo/Gate";
 import { readNight } from "./boo/model";
+import { BooProvider, SCARE_CSS } from "./boo/Scare";
 import Treats from "./boo/Treats";
-import { BOO_CSS, Backdrop, slotSrc } from "./boo/ui";
+import { BOO_CSS, Backdrop, slotSrc, WitchFly } from "./boo/ui";
 
 registerBooCues();
 
@@ -148,6 +155,7 @@ function Night({ data, mode, react }: ExperienceProps) {
   const sparkle = peak || scene === "license";
 
   return (
+    <BooProvider enabled={n.tone !== "kids"}>
     <div className={`bn-root${peak ? " is-peak" : ""}`}>
       <Backdrop peak={peak} />
       <GlowParticles
@@ -181,8 +189,10 @@ function Night({ data, mode, react }: ExperienceProps) {
           style={{ right: "auto", left: "calc(max(12px, env(safe-area-inset-left, 0px)) + 52px)", top: "max(12px, env(safe-area-inset-top, 0px))", background: "rgba(42,31,61,.55)", color: "#FFF7EC", border: "2px solid rgba(255,247,236,.25)", font: `800 14px/1 ${BODY}`, minHeight: 44 }}
         />
       )}
-      <style>{BOO_CSS}</style>
+      <WitchFly off={reduce} />
+      <style>{BOO_CSS + SCARE_CSS}</style>
     </div>
+    </BooProvider>
   );
 }
 

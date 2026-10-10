@@ -8,6 +8,10 @@
 // night turns pink-orange, the moon becomes a heart (parent backdrop), a swarm
 // of tiny bats flies in from every side and forms a heart around her photo,
 // and two ghosts float in from the sides and kiss above it.
+// v4 (haunted piano, track mode): drop() dips the loop under the riser and
+// swells it back, no seek, so the moment is carried by the picture: a pink
+// heart shockwave from her photo, a stamped "SHE SAID YES" (her name), the
+// bats, the kissing ghosts, confetti. Everything fits one screen.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,7 +21,7 @@ import { Bat, Ghost, heartPath } from "./art";
 import { DISPLAY, HAND } from "./fonts";
 import { GIF } from "./gifs";
 import { BN, type Night } from "./model";
-import { Gif, Note, POP, Puffy, WOBBLY } from "./ui";
+import { Gif, NextButton, Note, POP, Puffy, WOBBLY } from "./ui";
 
 type Phase = "ask" | "rise" | "peak" | "after";
 const BATS = 40;
@@ -49,7 +53,9 @@ export default function Question({
   }, []);
 
   // Client-only scene (next/dynamic, ssr: false), so the viewport is known here.
-  const [k] = useState(() => (typeof window === "undefined" ? 10.5 : Math.max(9, Math.min(12.5, (Math.min(window.innerWidth, 520) - 30) / 34))));
+  const [k] = useState(() =>
+    typeof window === "undefined" ? 10.5 : Math.max(8, Math.min(12.5, (Math.min(window.innerWidth, 520) - 30) / 34, (window.innerHeight - 380) / 30)),
+  );
   const hearts = useMemo(() => heartPoints(BATS, k), [k]);
   const starts = useMemo(
     () =>
@@ -145,36 +151,49 @@ export default function Question({
           </div>
         )}
 
-        <motion.div className="bn-heroPol" animate={phase === "rise" ? { scale: 1.06, rotate: 0 } : peaked ? { scale: 0.86, rotate: -2 } : { scale: 1, rotate: -3 }} transition={WOBBLY}>
-          <span className="bn-tape" style={{ background: BN.pink }} aria-hidden />
-          <div className="bn-heroImg">
-            {n.hero ? (
-              <CroppedPhoto photo={n.hero} eager />
-            ) : (
-              <span style={{ display: "grid", placeItems: "center", height: "100%" }}>
-                <Ghost size={120} mood="shy" hold="heart" />
-              </span>
-            )}
-          </div>
-          <span className="bn-heroCap">{n.hero?.caption || n.house}</span>
-        </motion.div>
+        <div className="bn-heroBox">
+          {peaked && !reduce && (
+            <span className="bn-wave" aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
+          <motion.div className="bn-heroPol" animate={phase === "rise" ? { scale: 1.06, rotate: 0 } : peaked ? { scale: 0.86, rotate: -2 } : { scale: 1, rotate: -3 }} transition={WOBBLY}>
+            <span className="bn-tape" style={{ background: BN.pink }} aria-hidden />
+            <div className="bn-heroImg">
+              {n.hero ? (
+                <CroppedPhoto photo={n.hero} eager />
+              ) : (
+                <span style={{ display: "grid", placeItems: "center", height: "100%" }}>
+                  <Ghost size={120} mood="shy" hold="heart" />
+                </span>
+              )}
+            </div>
+            <span className="bn-heroCap">{n.hero?.caption || n.house}</span>
+          </motion.div>
 
-        {/* two ghosts float in and kiss above the photo */}
-        {peaked && (
-          <>
-            <motion.span className="bn-kissL" initial={{ x: -190, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 70, damping: 12, delay: reduce ? 0 : 0.9 }} aria-hidden>
-              <Ghost size={78} mood="kiss" />
-            </motion.span>
-            <motion.span className="bn-kissR" initial={{ x: 190, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 70, damping: 12, delay: reduce ? 0 : 0.9 }} aria-hidden>
-              <Ghost size={78} mood="kiss" tint="#FFF1F7" style={{ transform: "scaleX(-1)" }} />
-            </motion.span>
-            <motion.svg className="bn-kissHeart" viewBox="0 0 40 40" width="44" height="44" initial={{ scale: 0, y: 0 }} animate={{ scale: [0, 1.4, 1], y: -18 }} transition={{ delay: reduce ? 0.2 : 1.7, duration: 0.7 }} aria-hidden>
-              <path d={heartPath(20, 20, 38)} fill="#FF4F93" stroke="#fff" strokeWidth="2.5" />
-            </motion.svg>
-            <Gif src={couple} size={104} tilt={8} className="bn-qCouple" eager />
-            <Gif src={GIF.bearsHug} size={84} tilt={-8} className="bn-qBears" eager />
-          </>
-        )}
+          {/* two ghosts float in and kiss above the photo */}
+          {peaked && (
+            <>
+              <motion.span className="bn-kissL" initial={{ x: -190, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 70, damping: 12, delay: reduce ? 0 : 0.9 }} aria-hidden>
+                <Ghost size={70} mood="kiss" />
+              </motion.span>
+              <motion.span className="bn-kissR" initial={{ x: 190, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 70, damping: 12, delay: reduce ? 0 : 0.9 }} aria-hidden>
+                <Ghost size={70} mood="kiss" tint="#FFF1F7" style={{ transform: "scaleX(-1)" }} />
+              </motion.span>
+              <motion.svg className="bn-kissHeart" viewBox="0 0 40 40" width="44" height="44" initial={{ scale: 0, y: 0 }} animate={{ scale: [0, 1.4, 1], y: -18 }} transition={{ delay: reduce ? 0.2 : 1.7, duration: 0.7 }} aria-hidden>
+                <path d={heartPath(20, 20, 38)} fill="#FF4F93" stroke="#fff" strokeWidth="2.5" />
+              </motion.svg>
+              <motion.span className="bn-yesStamp" initial={{ scale: 3, rotate: -24, opacity: 0 }} animate={{ scale: 1, rotate: -10, opacity: 1 }} transition={{ type: "spring", stiffness: 520, damping: 17, delay: reduce ? 0 : 0.15 }} aria-hidden>
+                <small>{n.gentle ? "it's official" : `${n.recipient} said`}</small>
+                <b>YES!</b>
+              </motion.span>
+              <Gif src={couple} size={92} tilt={8} className="bn-qCouple" eager />
+            </>
+          )}
+        </div>
+        {peaked && <Gif src={GIF.cuteBats} size={110} tilt={-4} className="bn-qBats" eager />}
       </div>
 
       {phase === "ask" && (
@@ -213,55 +232,64 @@ export default function Question({
         </div>
       )}
 
-      {phase === "rise" && <p className="bn-hint" style={{ fontFamily: DISPLAY, fontSize: 22 }}>wait for it… 🦇</p>}
+      {phase !== "ask" && (
+        <div className="bn-qAfter">
+          {phase === "rise" && <p className="bn-hint" style={{ fontFamily: DISPLAY, fontSize: 22 }}>wait for it… 🦇</p>}
+          {phase === "after" && n.yesLine && (
+            <Note tilt={-1.5} className="bn-yesLine" style={{ fontFamily: HAND, fontWeight: 400, lineHeight: 1.22 }}>
+              {n.yesLine}
+            </Note>
+          )}
+        </div>
+      )}
 
-      <div className="bn-foot">
-        {phase === "after" && (
-          <motion.div style={{ display: "grid", justifyItems: "center", gap: 12 }} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={POP}>
-            {n.yesLine && (
-              <Note tilt={-1.5} style={{ fontFamily: HAND, fontWeight: 400, fontSize: 22, lineHeight: 1.25 }}>
-                {n.yesLine}
-              </Note>
-            )}
-            <Puffy onClick={onNext}>Get your {n.copy.license} →</Puffy>
-          </motion.div>
-        )}
-      </div>
+      <div className="bn-foot">{phase === "after" && <NextButton onClick={onNext}>{`Get your ${n.copy.license}`}</NextButton>}</div>
       <style>{Q_CSS}</style>
     </div>
   );
 }
 
 const Q_CSS = `
-.bn-qTitle { font-size: clamp(28px, 8vw, 42px); max-width: 15ch; }
+.bn-qTitle { font-size: clamp(26px, min(8vw, 4.8dvh), 42px); max-width: 15ch; }
 .bn-q.is-peak .bn-title, .bn-q.is-after .bn-title { color: #fff; text-shadow: 0 3px 0 rgba(224,97,156,.6); }
 .bn-q.is-peak .bn-kicker, .bn-q.is-after .bn-kicker { color: #fff; }
-.bn-heroArea { position: relative; display: grid; place-items: center; width: 100%; min-height: 330px; margin-top: 8px; }
-.bn-heroPol { position: relative; z-index: 2; width: min(56vw, 220px); background: #fff; padding: 10px 10px 0; border-radius: 6px; box-shadow: 0 16px 34px rgba(30,16,60,.45); }
+.bn-heroArea { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; width: 100%; flex: 1 1 0; min-height: 0; }
+.bn-heroBox { position: relative; display: grid; place-items: center; }
+.bn-heroPol { position: relative; z-index: 2; width: clamp(118px, min(54vw, calc((100dvh - 430px) * .62)), 220px); background: #fff; padding: 8px 8px 0; border-radius: 6px; box-shadow: 0 16px 34px rgba(30,16,60,.45); }
+.bn-q.is-peak .bn-heroPol, .bn-q.is-after .bn-heroPol, .bn-q.is-rise .bn-heroPol { width: clamp(118px, min(50vw, calc((100dvh - 400px) * .62)), 210px); }
 .bn-q.is-rise .bn-heroPol { box-shadow: 0 0 0 6px rgba(255,210,122,.6), 0 0 60px rgba(255,210,122,.8); }
 .bn-heroImg { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 3px; background: ${BN.lilac}; }
-.bn-heroCap { display: block; padding: 8px 4px 10px; font: 400 20px/1.1 ${HAND}; color: ${BN.ink}; text-align: center; }
+.bn-heroCap { display: block; padding: 6px 4px 8px; font: 400 clamp(15px, 2.6dvh, 20px)/1.1 ${HAND}; color: ${BN.ink}; text-align: center; }
 .bn-heroPol .bn-tape { position: absolute; top: -10px; left: 50%; width: 70px; height: 20px; margin-left: -35px; opacity: .9; transform: rotate(-4deg); z-index: 2; }
 .bn-swarm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
 .bn-swarmBat { position: absolute; left: -22px; top: -16px; }
-.bn-q.is-peak .bn-heroArea, .bn-q.is-after .bn-heroArea { margin-top: 40px; }
 .bn-swarmBob { display: inline-block; animation: bn-swarmBob 1.6s ease-in-out infinite; }
 @keyframes bn-swarmBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
-.bn-kissL, .bn-kissR { position: absolute; top: -34px; z-index: 3; }
-.bn-kissL { left: calc(50% - 82px); }
-.bn-kissR { left: calc(50% + 4px); }
-.bn-kissHeart { position: absolute; top: -40px; left: 50%; margin-left: -22px; z-index: 4; }
-.bn-qCouple { position: absolute; right: max(0px, calc(50% - 200px)); bottom: -14px; z-index: 4; }
-.bn-qBears { position: absolute; left: max(0px, calc(50% - 196px)); bottom: -8px; z-index: 4; }
-.bn-ansField { position: relative; width: min(100%, 360px); height: 168px; margin-top: 8px; }
+.bn-kissL, .bn-kissR { position: absolute; top: -46px; z-index: 3; }
+.bn-kissL { left: calc(50% - 72px); }
+.bn-kissR { left: calc(50% + 2px); }
+.bn-kissHeart { position: absolute; top: -52px; left: 50%; margin-left: -22px; z-index: 4; }
+.bn-qCouple { position: absolute; right: -58px; bottom: -18px; z-index: 4; }
+.bn-qBats { position: absolute !important; left: 6px; top: 0; z-index: 1; }
+.bn-wave { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 0; pointer-events: none; }
+.bn-wave i { position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; border: 6px solid rgba(255,127,181,.85); box-shadow: 0 0 30px rgba(255,127,181,.7); opacity: 0; animation: bn-wave 1.6s cubic-bezier(.2,.8,.3,1) both; }
+.bn-wave i:nth-child(2) { animation-delay: .25s; border-color: rgba(255,210,122,.85); }
+.bn-wave i:nth-child(3) { animation-delay: .5s; border-color: rgba(255,255,255,.8); }
+@keyframes bn-wave { 0% { transform: scale(.3); opacity: 1 } 100% { transform: scale(3.4); opacity: 0 } }
+.bn-yesStamp { position: absolute; left: -54px; bottom: 6px; z-index: 5; display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%; text-align: center;
+  background: rgba(255,244,227,.95); border: 5px solid #F06BA4; color: #E0459A; box-shadow: 0 10px 24px rgba(30,16,60,.35); }
+.bn-yesStamp small { font: 800 10px/1.1 var(--font-bn-body), sans-serif; letter-spacing: .12em; text-transform: uppercase; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 14px; }
+.bn-yesStamp b { font: 400 34px/1 ${DISPLAY}; margin-top: -18px; }
+.bn-qAfter { flex: none; min-height: clamp(64px, 11dvh, 92px); display: grid; place-items: center; width: 100%; }
+.bn-yesLine { font-size: clamp(18px, 2.8dvh, 22px); padding: clamp(10px, 1.5dvh, 14px) 18px; }
+.bn-ansField { flex: none; position: relative; width: min(100%, 360px); height: clamp(118px, 19dvh, 168px); }
 .bn-ansField.is-gentle { height: 90px; }
 .bn-yesSlot { position: absolute; left: 50%; top: 50%; translate: -50% -50%; transition: transform .35s cubic-bezier(.34,1.56,.64,1); z-index: 2; }
 .bn-ansField.is-gentle .bn-yesSlot { top: 50%; }
-.bn-sad { position: absolute; left: calc(34% - 32px); top: -6px; }
+.bn-sad { position: absolute; left: calc(34% - 32px); top: -10px; }
 .bn-noSlot { position: absolute; translate: -50% -50%; transition: opacity .35s ease, scale .35s ease; z-index: 3; touch-action: none; }
 .bn-noSlot.is-gone { opacity: 0; scale: .5; pointer-events: none; }
-.bn-ansField .bn-yesSlot { top: 56%; left: 34%; }
+.bn-ansField .bn-yesSlot { top: 58%; left: 34%; }
 .bn-ansField.is-gentle .bn-yesSlot { left: 50%; }
 @media (prefers-reduced-motion: reduce) { .bn-swarmBob { animation: none; } }
-@media (max-height: 740px) { .bn-heroArea { min-height: 290px; } .bn-heroPol { width: min(48vw, 190px); } }
 `;

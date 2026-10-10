@@ -2,16 +2,21 @@
 //
 // Cute-spooky and romantic, never scary: a warm candy-coloured night, ghosts
 // with blush cheeks, and a GIF sticker reacting in every scene.
-//   gate     the haunted mailbox: tap it, a ghost pops out with a letter, BOO (the song starts)
+//   gate     the haunted mailbox: tap it, a ghost bursts out at you, BOO (scare #1; the haunted piano starts)
 //   treats   tap the treat bag; candies fly out; catch each one for a sweet line or a cute dare
-//   carve    carve a pumpkin together: pick the eyes, pick the smile, hold to light the candle
-//   booth    the ghost photo booth: ghosts are hiding their photos; shoo each one away
+//   carve    carve a pumpkin together: pick the eyes, pick the smile, hold to light the candle;
+//            then turn round the pumpkin facing away (scare #2, it lights up green)
+//   booth    the ghost photo booth: ghosts are hiding their photos; shoo each one away; the
+//            last one hides behind a pumpkin that BOOs (scare #3)
 //   potion   drag three ingredients into the cauldron, stir it, it puffs a heart + the spell
 //   letter   a bat flies in with the letter; tap the bat; the scroll unrolls (+ the sealed P.S.)
 //   radio    the spirit radio: tune the dial to Boo FM and his voice comes through
-//   question "Will you be my boo?" — the No ghosts away; YES on the song's drop turns the
+//   question "Will you be my boo?" — the No ghosts away; YES swells the music and turns the
 //            night pink, the moon becomes a heart and a swarm of bats makes a heart around her
-//   license  the Boo License keepsake (9:16 story / 4:5 post), a reply, replay
+//   license  the Boo License keepsake (9:16 story / 4:5 post), a reply, replay, "Scare your boo"
+// Music: the Haunted Piano loop (track mode) by default; the buyer can pick a
+// YouTube song from the suggestions instead (and set its chorus for the YES).
+// Kids pages get no scares.
 // Server twin: server/src/config/premiumDays/happy-halloween-premium.ts (same
 // keys + limits; valentineDays.test.ts pins them). Keys shared with the $2 day
 // (tone, houseName, ingredients, potionSpell, question, yesLine) keep its names
@@ -19,9 +24,9 @@
 
 import type { SongSuggestion } from "../music/youtube";
 import type { DayConfig, GifSlot } from "../types";
-import { demoPhotos } from "./_shared";
+import { TRACK_DEMO, demoPhotos } from "./_shared";
 import { premiumDay } from "./_premium";
-import { halloweenDay, type HalloweenTone } from "./happy-halloween";
+import { HALLOWEEN_TRACK, halloweenDay, type HalloweenTone } from "./happy-halloween";
 
 export interface PotionIngredient {
   name: string;
@@ -43,9 +48,10 @@ export interface HalloweenExtrasPremium {
 
 /**
  * Romantic first, with a wink of spooky (each id: YouTube oEmbed 200 +
- * playableInEmbed, 2026-10-09). The first one is the demo song, from
- * DEMO_START: "Until I Found You" lands on its chorus there (YouTube's
- * most-replayed marker is 37 s), and the YES drops back onto it.
+ * playableInEmbed, 2026-10-09). Suggestions for a buyer who swaps the
+ * Haunted Piano for a song; the demo plays the piano (track mode), so there
+ * is no demo start or drop second any more: a buyer's own song gets its
+ * chorus from the editor's ChorusPicker (premium.songDropAt).
  */
 export const HALLOWEEN_PREMIUM_SONGS: readonly SongSuggestion[] = [
   { id: "GxldQ9eX2wo", title: "Until I Found You", artist: "Stephen Sanchez" },
@@ -56,20 +62,20 @@ export const HALLOWEEN_PREMIUM_SONGS: readonly SongSuggestion[] = [
   { id: "LXuSOkf2M3c", title: "Abracadabra", artist: "Lady Gaga" },
   { id: "ZVuToMilP0A", title: "This Is Halloween", artist: "The Nightmare Before Christmas" },
 ];
-const DEMO_START = 35;
-const DEMO_DROP = 36;
 
 // Six sticker slots, each defaulting to a real GIF from the premium library
-// (gifts-media/templates/_premium/gifs/halloween/…). `file` is relative to the
-// template's own media folder, so "../_premium/…" resolves to the shared one
-// (browsers normalise the dot segment before the request).
+// (gifts-media/templates/_premium/gifs/halloween/…) or the owner's v4 picks
+// (gifts-media/templates/_halloween/…). `file` is relative to the template's
+// own media folder, so "../_premium/…" resolves to the shared one (browsers
+// normalise the dot segment before the request).
 const G = (name: string) => `../_premium/gifs/halloween/${name}.webp`;
+const V4 = (name: string) => `../_halloween/${name}.webp`;
 const GIFS: GifSlot[] = [
-  { id: "hb1-hello", label: "Hello ghost", moment: "Peeks out of the mailbox at the start", file: G("ghost-boo-pumpkins"), emoji: "👻", anim: "wiggle" },
+  { id: "hb1-hello", label: "Title card", moment: "Says Happy Halloween over the mailbox at the start", file: V4("happy-halloween-pumpkin"), emoji: "🎃", anim: "wiggle" },
   { id: "hb2-treats", label: "Trick or treat", moment: "Next to the treat bag", file: G("ghost-pumpkin-bucket"), emoji: "🎃", anim: "bounce" },
   { id: "hb3-pumpkin", label: "Pumpkin pal", moment: "Watches you carve the pumpkin", file: G("pink-pumpkin-smile"), emoji: "🎃", anim: "wiggle" },
   { id: "hb4-booth", label: "Ghost booth", moment: "Pops up when every photo is found", file: G("ghosts-cuddling"), emoji: "👻", anim: "float" },
-  { id: "hb5-potion", label: "Potion helper", moment: "Flies past while the potion brews", file: G("witch-bears-broom"), emoji: "🧙", anim: "float" },
+  { id: "hb5-potion", label: "Potion helper", moment: "Flies round the cauldron while the potion brews", file: V4("witch-seal-broom"), emoji: "🧙", anim: "float" },
   { id: "hb6-yes", label: "After the YES", moment: "Two ghosts hugging after they say yes", file: G("ghost-couple-hearts"), emoji: "💜", anim: "pulse" },
 ];
 
@@ -77,12 +83,10 @@ const base = premiumDay<HalloweenExtrasPremium>(halloweenDay, {
   slug: "happy-halloween-premium",
   title: "Boo-tiful Night",
   gifSlots: GIFS,
-  demoSong: { id: HALLOWEEN_PREMIUM_SONGS[0].id, start: DEMO_START },
   demoPremium: {
     voiceCaption: "Hi Pumpkin. The ghosts found you. Happy Halloween, I'm all yours.",
     psLetter:
       "P.S. Check your bag tonight. There's real candy in it, a note, and probably me, hiding behind the door.",
-    songDropAt: DEMO_DROP,
   },
   copy: {
     recipientPlaceholder: "who it's for, e.g. Meera",
@@ -110,9 +114,9 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   ...base,
   music: {
     audioOnly: true,
+    track: HALLOWEEN_TRACK,
     suggestions: HALLOWEEN_PREMIUM_SONGS,
     suggestionsNote: "romantic, a little spooky · tap to use",
-    demoStart: DEMO_START,
   },
   extras: [
     {
@@ -201,6 +205,8 @@ export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   },
   demo: {
     ...base.demo,
+    // The haunted piano (premiumDay() would otherwise pick the first YouTube suggestion).
+    ...TRACK_DEMO,
     recipientName: "Meera",
     senderName: "Arjun",
     petName: "Pumpkin",

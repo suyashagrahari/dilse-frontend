@@ -11,10 +11,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { burst, haptic } from "../../../_valentine/kit";
 import { sfx } from "../../../_valentine/kit/premium";
 import { Bucket, Candy, CANDY_COLORS } from "./art";
-import { DISPLAY } from "./fonts";
 import { GIF } from "./gifs";
 import { BN, splitTreat, type Night } from "./model";
-import { Gif, Header, Hint, Later, Note, POP, Puffy, TextLink } from "./ui";
+import { Gif, Header, Hint, Later, NextButton, Note, Puffy, TextLink } from "./ui";
 
 const SPOTS = [
   { x: 10, y: 16, r: -14 },
@@ -81,7 +80,7 @@ export default function Treats({ n, reactor, step, total, onNext }: { n: Night; 
 
   return (
     <div className="bn-scene bn-treats">
-      <Header step={step} total={total} kicker="Stop 1 · Trick or treat" title={open ? "Catch the candy!" : "Shake the treat bag"} sub={open ? `${count} of ${n.treats.length} caught` : "Every candy has something inside."} />
+      <Header step={step} total={total} kicker="Stop 1 · Trick or treat" title={all ? "The whole bag is yours 🍬" : open ? "Catch the candy!" : "Shake the treat bag"} sub={all ? "Sweet. Now come this way…" : open ? `${count} of ${n.treats.length} caught` : "Every candy has something inside."} />
 
       <div className="bn-field">
         <AnimatePresence>
@@ -118,7 +117,7 @@ export default function Treats({ n, reactor, step, total, onNext }: { n: Night; 
         >
           <Bucket size={180} empty={open} />
         </motion.button>
-        <Gif src={all ? GIF.blush : reactor} size={104} tilt={8} className="bn-treatGif" eager />
+        <Gif src={all ? GIF.blush : reactor} size={96} tilt={8} className="bn-treatGif" eager />
       </div>
 
       <div className="bn-treatNote">
@@ -137,10 +136,7 @@ export default function Treats({ n, reactor, step, total, onNext }: { n: Night; 
       <div className="bn-foot">
         {!open && <Puffy onClick={openBag}>Tap the bag 🎃</Puffy>}
         {all ? (
-          <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP} style={{ display: "grid", justifyItems: "center", gap: 6 }}>
-            <p className="bn-sub" style={{ fontFamily: DISPLAY, fontSize: 22 }}>The whole bag is yours 🍬</p>
-            <Puffy onClick={onNext}>Next stop →</Puffy>
-          </motion.div>
+          <NextButton onClick={onNext} delay={0.5} />
         ) : (
           open && (
             <Later ms={7000}>
@@ -155,18 +151,20 @@ export default function Treats({ n, reactor, step, total, onNext }: { n: Night; 
 }
 
 const TREATS_CSS = `
-.bn-field { position: relative; width: min(100%, 380px); height: 330px; flex: none; }
-.bn-bag { all: unset; cursor: pointer; position: absolute; left: 50%; bottom: 0; margin-left: -90px; -webkit-tap-highlight-color: transparent; transform-origin: 50% 100%; }
+.bn-field { position: relative; width: min(100%, 380px); flex: 1 1 0; min-height: 0; max-height: 440px; }
+.bn-bag { all: unset; cursor: pointer; position: absolute; left: 50%; bottom: 0; translate: -50% 0; -webkit-tap-highlight-color: transparent; transform-origin: 50% 100%; }
+.bn-bag svg { display: block; width: clamp(112px, min(21dvh, 46vw), 180px); height: auto; }
 .bn-bag:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 30px; }
-.bn-treatGif { position: absolute; right: -6px; bottom: 6px; }
-.bn-candy { all: unset; cursor: pointer; position: absolute; width: 86px; height: 70px; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; z-index: 2; }
+.bn-treatGif { position: absolute; right: -6px; bottom: 4px; width: clamp(64px, 11dvh, 96px) !important; height: clamp(64px, 11dvh, 96px) !important; }
+.bn-candy { all: unset; cursor: pointer; position: absolute; width: clamp(64px, 11dvh, 86px); height: clamp(50px, 9dvh, 70px); display: grid; place-items: center; -webkit-tap-highlight-color: transparent; z-index: 2; }
+.bn-candy svg { width: clamp(56px, 9.5dvh, 78px); height: auto; }
 .bn-candy:focus-visible { outline: 3px solid #fff; outline-offset: 2px; border-radius: 20px; }
 .bn-candyBob { display: inline-block; animation: bn-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 6px 8px rgba(30,16,60,.35)); }
 @keyframes bn-bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-9px) } }
-.bn-treatNote { min-height: 96px; display: grid; place-items: center; width: 100%; }
+.bn-treatNote { flex: none; min-height: clamp(76px, 13dvh, 100px); display: grid; place-items: center; width: 100%; }
+.bn-treatNote .bn-note { font-size: clamp(15px, 2.3dvh, 18px); padding: clamp(10px, 1.6dvh, 16px) 18px; }
 .bn-chip { display: inline-block; margin: 0 8px 4px 0; padding: 4px 10px; border-radius: 99px; font: 800 12px/1.2 var(--font-bn-body), sans-serif; letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
 .bn-chip.is-treat { background: ${BN.mint}; color: #173A2C; }
 .bn-chip.is-trick { background: ${BN.lilac}; color: ${BN.ink}; }
 @media (prefers-reduced-motion: reduce) { .bn-candyBob { animation: none; } }
-@media (max-height: 720px) { .bn-field { height: 280px; } }
 `;

@@ -7,7 +7,8 @@
 
 import type { DayConfig, GifSlot } from "../types";
 import type { SongSuggestion } from "../music/youtube";
-import { MUSIC_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
+import { templateMedia } from "@/lib/templateMedia";
+import { TRACK_DEMO, defaultGifs, demoPhotos, meta } from "./_shared";
 
 const SLUG = "happy-halloween" as const;
 
@@ -99,12 +100,19 @@ export const HALLOWEEN_SONGS: readonly SongSuggestion[] = [
   { id: "fb0KjR4bik8", title: "Love Potion No. 9", artist: "The Searchers" },
 ];
 
+/** Both Halloween templates' default background music (music mode "track"); the songs above stay as alternatives. */
+export const HALLOWEEN_TRACK = {
+  url: templateMedia("_halloween", "haunted-piano-loop.mp3"),
+  title: "Haunted Piano",
+  artist: "Boo-tiful Night",
+} as const;
+
 const GIFS: GifSlot[] = [
-  { id: "h1-doorstep", label: "Hello ghost", moment: "The door opens and a ghost peeks out", file: "h1-doorstep.gif", emoji: "👻", anim: "wiggle" },
-  { id: "h2-treat", label: "Treats", moment: "Trick or treat?", file: "h2-treat.gif", emoji: "🍬", anim: "bounce" },
-  { id: "h3-portrait", label: "Peekaboo", moment: "Behind the last portrait in the hallway", file: "h3-portrait.gif", emoji: "🫣", anim: "float" },
-  { id: "h4-potion", label: "Potion", moment: "Stirring the love potion", file: "h4-potion.gif", emoji: "🧪", anim: "pulse" },
-  { id: "h5-boo", label: "You're my boo", moment: "After they say YES", file: "h5-boo.gif", emoji: "💜", anim: "pulse" },
+  { id: "h1-doorstep", label: "Hello ghost", moment: "The door opens and a ghost peeks out", file: "../_premium/gifs/halloween/ghost-heart-eyes-blush.webp", emoji: "👻", anim: "wiggle" },
+  { id: "h2-treat", label: "Treats", moment: "Trick or treat?", file: "../_premium/gifs/halloween/ghost-pumpkin-bucket.webp", emoji: "🍬", anim: "bounce" },
+  { id: "h3-portrait", label: "Peekaboo", moment: "Behind the last portrait in the hallway", file: "../_premium/gifs/halloween/black-cat-pumpkin-peek.webp", emoji: "🫣", anim: "float" },
+  { id: "h4-potion", label: "Potion", moment: "Stirring the love potion", file: "../_premium/gifs/halloween/ghost-spooky-love.webp", emoji: "🧪", anim: "pulse" },
+  { id: "h5-boo", label: "You're my boo", moment: "After they say YES", file: "../_premium/gifs/halloween/ghosts-cuddling.webp", emoji: "💜", anim: "pulse" },
 ];
 
 export const halloweenDay: DayConfig<HalloweenExtras> = {
@@ -118,8 +126,11 @@ export const halloweenDay: DayConfig<HalloweenExtras> = {
   melody: "spooky",
   photoAspect: 4 / 5,
   gifSlots: GIFS,
+  // Editor controls top-right (PremiumTopBar), like the premium twin.
+  topBar: true,
   music: {
     audioOnly: true,
+    track: HALLOWEEN_TRACK,
     suggestions: HALLOWEEN_SONGS,
     suggestionsNote: "Halloween favourites · tap to use",
   },
@@ -226,7 +237,7 @@ export const halloweenDay: DayConfig<HalloweenExtras> = {
       ["us, after dark", "My favourite thing about October is you."],
     ]),
     gifs: defaultGifs(GIFS.map((g) => g.id)),
-    ...MUSIC_DEMO,
+    ...TRACK_DEMO,
     endLine: "Happy Halloween, my favourite boo 🎃",
     extras: {
       tone: "romantic",

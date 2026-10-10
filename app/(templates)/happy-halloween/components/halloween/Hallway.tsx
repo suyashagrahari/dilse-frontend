@@ -7,15 +7,20 @@
 // wiped that portrait, then they close happily. A revealed portrait opens
 // the lightbox. "Wipe them all for me" clears the lot; no photos = a hallway
 // of little ghost paintings waiting for memories.
+//
+// One screen: the hallway walks two portraits at a time (the candy pill says
+// "More portraits" until the last pair), each frame sized to the room with
+// container units, so six photos never mean a scroll.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { CroppedPhoto, PhotoLightbox, ScratchCanvas, haptic, useReducedMotion } from "../../../_valentine/kit";
 import type { LovePhoto } from "../../../_valentine/types";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { Ghost } from "./art";
 import { HW_DISPLAY } from "./fonts";
-import { Btn, Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { useHw, useNext } from "./stage";
+import { Hint, HW, RoomTitle, SkipChip } from "./ui";
 
 const TILTS = [-3, 2.5, 1.5, -2, -1.5, 3];
 
@@ -71,9 +76,9 @@ function Eyes({ closed }: { closed: boolean }) {
   );
 }
 
-function Frame({ children, tilt, closedEyes, caption, wide }: { children: ReactNode; tilt: number; closedEyes: boolean; caption: string; wide?: boolean }) {
+function Frame({ children, tilt, closedEyes, caption, style }: { children: ReactNode; tilt: number; closedEyes: boolean; caption: string; style?: CSSProperties }) {
   return (
-    <figure style={{ margin: 0, display: "grid", justifyItems: "center", gap: 6, transform: `rotate(${tilt}deg)`, gridColumn: wide ? "1 / -1" : undefined, width: wide ? "min(100%, calc(50% - 7px))" : "100%", justifySelf: "center" }}>
+    <figure style={{ margin: 0, display: "grid", justifyItems: "center", gap: 6, transform: `rotate(${tilt}deg)`, ...style }}>
       <div style={{ marginBottom: -12, zIndex: 2 }}>
         <Eyes closed={closedEyes} />
       </div>
@@ -97,21 +102,33 @@ function Frame({ children, tilt, closedEyes, caption, wide }: { children: ReactN
   );
 }
 
+const PER_PAGE = 2;
+/** One portrait's width: fills its half of the room, never taller than the room (4:5 photo + frame + eyes + caption ≈ 70px). */
+const W2 = "min(calc((100cqw - 40px) / 2), calc((100cqh - 72px) * .8 + 18px))";
+const W1 = "min(72cqw, calc((100cqh - 72px) * .8 + 18px))";
+
 export default function Hallway({ photos, preview, sticker, onNext }: { photos: LovePhoto[]; preview: boolean; sticker: ReactNode; onNext: () => void }) {
   const reduced = useReducedMotion();
+  const { cue } = useHw();
   const list = photos.filter((p) => p && p.url).slice(0, 6);
   const [wiped, setWiped] = useState<boolean[]>(() => list.map(() => false));
   const [forced, setForced] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
   const done = list.length === 0 || forced || wiped.every(Boolean);
   const count = wiped.filter(Boolean).length;
+  const onPage = list.map((p, i) => ({ p, i })).slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  const pageDone = forced || onPage.every(({ i }) => wiped[i]);
+  const lastPage = page >= pages - 1;
 
   // The fog clears mid-swipe, so the photo button mounts under the finger and
   // would catch the lift as a click. Ignore clicks just after a reveal.
   const revealedAt = useRef<number[]>([]);
   const markWiped = (i: number) => {
-    revealedAt.current[i] = Date.now();
+    revealedAt.current[i] = performance.now();
     haptic(12);
+    cue("sparkle", { gain: 0.55 });
     setWiped((w) => {
       const n = w.slice();
       n[i] = true;
@@ -119,90 +136,119 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
     });
   };
 
+  useNext(lastPage ? "Up to the attic" : "More portraits", () => (lastPage ? onNext() : setPage((p) => p + 1)), lastPage ? "moon" : "ghost");
+
   return (
     <>
-      <RoomTitle kicker="Room 4 · the hallway" title="The haunted hallway" sub={list.length ? "The portraits are all fogged up. Wipe the glass to see who's inside." : undefined} />
+      <RoomTitle
+        kicker="Room 4 · the hallway"
+        title="The haunted hallway"
+        sub={list.length ? (done ? "Tap a portrait to see it up close." : "The portraits are fogged up. Wipe the glass to see who's inside.") : undefined}
+      />
 
-      {list.length > 0 ? (
-        <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "22px 14px", width: "100%", maxWidth: "calc(440px * var(--vw-s, 1))", paddingTop: 6 }}>
-          {list.map((p, i) => {
-            const shown = forced || wiped[i];
-            const last = i === list.length - 1;
-            return (
-              <div key={`${p.url}-${i}`} style={{ position: "relative", display: "contents" }}>
-                <Frame tilt={TILTS[i % TILTS.length]} closedEyes={shown} caption={p.caption?.trim() || `Memory ${i + 1}`} wide={last && list.length % 2 === 1}>
-                  <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5" }}>
-                    {shown ? (
-                      <motion.button
-                        type="button"
-                        onClick={() => {
-                          if (Date.now() - (revealedAt.current[i] ?? 0) < 600) return;
-                          setOpen(i);
-                        }}
-                        aria-label={`Open photo ${i + 1}${p.caption ? `: ${p.caption}` : ""}`}
-                        initial={reduced ? false : { filter: "blur(6px)" }}
-                        animate={{ filter: "blur(0px)" }}
-                        transition={{ duration: 0.6 }}
-                        style={{ position: "absolute", inset: 0, padding: 0, border: 0, background: "transparent", cursor: "zoom-in" }}
-                      >
-                        <CroppedPhoto photo={p} alt={p.caption || `Photo ${i + 1}`} />
-                      </motion.button>
-                    ) : (
-                      <ScratchCanvas
-                        cover={["#8E84AC", "#CFC6E8"]}
-                        label="wipe the fog"
-                        labelColor="rgba(43,30,63,.75)"
-                        threshold={0.5}
-                        brush={26}
-                        radius={2}
-                        revealLinkAfterMs={5000}
-                        onReveal={() => markWiped(i)}
-                        style={{ position: "absolute", inset: 0 }}
-                      >
-                        <div style={{ position: "absolute", inset: 0 }}>
-                          <CroppedPhoto photo={p} alt="" />
-                        </div>
-                      </ScratchCanvas>
+      <div className="hw-fill">
+        {list.length > 0 ? (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={page}
+              initial={reduced ? false : { opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reduced ? undefined : { opacity: 0, x: -40 }}
+              transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+              style={{ position: "relative", display: "flex", gap: 18, alignItems: "center", justifyContent: "center", width: "100%" }}
+            >
+              {onPage.map(({ p, i }, k) => {
+                const shown = forced || wiped[i];
+                const last = i === list.length - 1;
+                return (
+                  <div key={`${p.url}-${i}`} style={{ position: "relative" }}>
+                    <Frame tilt={TILTS[i % TILTS.length]} closedEyes={shown} caption={p.caption?.trim() || `Memory ${i + 1}`} style={{ width: onPage.length > 1 ? W2 : W1, marginTop: k % 2 ? 22 : 0 }}>
+                      <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5" }}>
+                        {shown ? (
+                          <motion.button
+                            type="button"
+                            onClick={() => {
+                              if (performance.now() - (revealedAt.current[i] ?? -1e9) < 600) return;
+                              setOpen(i);
+                            }}
+                            aria-label={`Open photo ${i + 1}${p.caption ? `: ${p.caption}` : ""}`}
+                            initial={reduced ? false : { opacity: 0.4 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            style={{ position: "absolute", inset: 0, padding: 0, border: 0, background: "transparent", cursor: "zoom-in" }}
+                          >
+                            <CroppedPhoto photo={p} alt={p.caption || `Photo ${i + 1}`} />
+                          </motion.button>
+                        ) : (
+                          <ScratchCanvas
+                            cover={["#8E84AC", "#CFC6E8"]}
+                            label="wipe the fog"
+                            labelColor="rgba(43,30,63,.75)"
+                            threshold={0.5}
+                            brush={26}
+                            radius={2}
+                            revealLinkAfterMs={5000}
+                            onReveal={() => markWiped(i)}
+                            style={{ position: "absolute", inset: 0 }}
+                          >
+                            <div style={{ position: "absolute", inset: 0 }}>
+                              <CroppedPhoto photo={p} alt="" />
+                            </div>
+                          </ScratchCanvas>
+                        )}
+                      </div>
+                    </Frame>
+                    {last && (
+                      <span aria-hidden style={{ position: "absolute", right: -14, bottom: -6, transform: "rotate(10deg)", zIndex: 3, pointerEvents: "none" }}>
+                        {sticker}
+                      </span>
                     )}
                   </div>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div style={{ display: "grid", gap: 10, justifyItems: "center", width: "100%" }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", width: "100%" }}>
+              {[0, 1, 2].map((i) => (
+                <Frame key={i} tilt={TILTS[i]} closedEyes caption={["us, soon", "this one's yours", "next memory"][i]} style={{ width: "min(calc((100cqw - 48px) / 3), calc((100cqh - 110px) * .8))" }}>
+                  <div style={{ aspectRatio: "4 / 5", display: "grid", placeItems: "center", background: `radial-gradient(80% 70% at 50% 40%, ${HW.plum}, ${HW.night})` }}>
+                    <Ghost size="62%" mood={i === 1 ? "shy" : "happy"} heart={i === 2} />
+                  </div>
                 </Frame>
-                {last && (
-                  <span aria-hidden style={{ position: "absolute", right: -8, bottom: -20, transform: "rotate(10deg)", zIndex: 3, pointerEvents: "none" }}>
-                    {sticker}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, width: "100%", maxWidth: 420 }}>
-          {[0, 1, 2].map((i) => (
-            <Frame key={i} tilt={TILTS[i]} closedEyes caption={["us, soon", "this one's yours", "next memory"][i]}>
-              <div style={{ aspectRatio: "4 / 5", display: "grid", placeItems: "center", background: `radial-gradient(80% 70% at 50% 40%, ${HW.plum}, ${HW.night})` }}>
-                <Ghost size={52} mood={i === 1 ? "shy" : "happy"} heart={i === 2} />
-              </div>
-            </Frame>
-          ))}
-          <p style={{ gridColumn: "1 / -1", margin: "8px 0 0", font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>
-            {preview ? "Add photos in the form and they'll hang here behind fogged glass." : "A hallway of memories we're still making."}
-          </p>
-        </div>
-      )}
+              ))}
+            </div>
+            <p style={{ margin: 0, font: `500 14px ${FONTS.ui}`, color: VW.inkSoft }}>
+              {preview ? "Add photos in the form and they'll hang here behind fogged glass." : "A hallway of memories we're still making."}
+            </p>
+          </div>
+        )}
+      </div>
 
-      {list.length > 0 && !done && (
-        <>
-          <p aria-live="polite" style={{ margin: 0, font: `400 18px ${HW_DISPLAY}`, color: HW.candle }}>
-            {count} of {list.length} wiped
-          </p>
-          <Hint>Rub the misty glass with your finger</Hint>
-          <SkipChip onClick={() => setForced(true)}>Wipe them all for me</SkipChip>
-        </>
+      {list.length > 0 && (
+        <div style={{ flex: "none", display: "grid", gap: 4, justifyItems: "center", minHeight: 84, alignContent: "start" }}>
+          <div className="hw-row" style={{ gap: 12 }}>
+            {page > 0 && (
+              <button type="button" onClick={() => setPage((p) => p - 1)} aria-label="Previous portraits" style={{ minHeight: 36, padding: "4px 12px", borderRadius: 99, border: "1px solid rgba(247,243,255,.25)", background: "rgba(247,243,255,.08)", color: VW.ink, font: `600 13px ${FONTS.ui}`, cursor: "pointer" }}>
+                ‹ back
+              </button>
+            )}
+            <p aria-live="polite" style={{ margin: 0, font: `400 clamp(16px, 2.5dvh, 18px) ${HW_DISPLAY}`, color: HW.candle }}>
+              {done ? `All ${list.length} portraits found 💜` : `${count} of ${list.length} wiped`}
+            </p>
+            {pages > 1 && (
+              <span aria-label={`Wall ${page + 1} of ${pages}`} role="img" style={{ display: "inline-flex", gap: 5 }}>
+                {Array.from({ length: pages }, (_, k) => (
+                  <span key={k} style={{ width: 7, height: 7, borderRadius: "50%", background: k === page ? HW.candle : "rgba(247,243,255,.28)" }} />
+                ))}
+              </span>
+            )}
+          </div>
+          {!done && !pageDone && <Hint>Rub the misty glass with your finger</Hint>}
+          {!done && <SkipChip onClick={() => setForced(true)}>Wipe them all for me</SkipChip>}
+        </div>
       )}
-      {done && list.length > 0 && <p style={{ margin: 0, font: `500 15px ${FONTS.ui}`, color: VW.inkSoft }}>Tap a portrait to see it up close.</p>}
-      <Btn onClick={onNext} style={done ? undefined : { opacity: 0.85 }}>
-        Up to the attic →
-      </Btn>
 
       <PhotoLightbox photos={list} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
     </>
