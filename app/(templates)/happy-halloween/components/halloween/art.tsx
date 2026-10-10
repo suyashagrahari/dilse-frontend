@@ -114,6 +114,83 @@ export function Cobweb({ size = 90, style }: { size?: number; style?: CSSPropert
   );
 }
 
+// A big corner web, generated once (deterministic: no hydration mismatch).
+// Spokes fan out from the top-left corner; each ring sags between spokes like
+// real silk, slightly irregular; a few dew drops catch the moonlight.
+const WEB_R = [18, 34, 52, 72, 94, 118, 144, 172];
+const WEB = (() => {
+  const spokes = [2, 13, 25, 37, 49, 61, 73, 85].map((d) => (d * Math.PI) / 180);
+  const pt = (r: number, a: number) => [Math.cos(a) * r, Math.sin(a) * r] as const;
+  const f = (n: number) => n.toFixed(1);
+  const jit = (r: number, i: number, k: number) => r * (1 + 0.05 * Math.sin(i * 2.3 + k));
+  const spoke = spokes
+    .map((a) => {
+      const [x, y] = pt(214, a);
+      return `M0 0L${f(x)} ${f(y)}`;
+    })
+    .join("");
+  const rings = WEB_R.map((r0, k) => {
+    let d = "";
+    spokes.forEach((a, i) => {
+      if (i === spokes.length - 1) return;
+      const r1 = jit(r0, i, k);
+      const r2 = jit(r0, i + 1, k);
+      const [x1, y1] = pt(r1, a);
+      const [x2, y2] = pt(r2, spokes[i + 1]);
+      const [cx, cy] = pt(((r1 + r2) / 2) * 0.86, (a + spokes[i + 1]) / 2);
+      d += `${i === 0 ? `M${f(x1)} ${f(y1)}` : ""}Q${f(cx)} ${f(cy)} ${f(x2)} ${f(y2)}`;
+    });
+    return d;
+  });
+  const dew = [[3, 2], [5, 4], [6, 1], [4, 6], [2, 5], [7, 3], [5, 7], [3, 5]].map(([k, s]) => {
+    const [x, y] = pt(jit(WEB_R[k], s, k), spokes[s]);
+    return { x: f(x), y: f(y), r: k > 4 ? 1.6 : 1.2 };
+  });
+  return { spoke, rings, dew };
+})();
+
+/** A big, detailed corner cobweb (top-left; mirror with scaleX(-1)). */
+export function BigWeb({ size = 220, style }: { size?: Size; style?: CSSProperties }) {
+  return (
+    <svg viewBox="0 0 200 200" {...dims(size, 1)} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
+      <g fill="none" strokeLinecap="round">
+        <path d={WEB.spoke} stroke="rgba(247,243,255,.42)" strokeWidth=".9" />
+        {WEB.rings.map((d, k) => (
+          <path key={k} d={d} stroke={`rgba(247,243,255,${(0.46 - k * 0.035).toFixed(2)})`} strokeWidth={k < 4 ? 0.8 : 0.7} />
+        ))}
+        {/* a torn strand hanging loose */}
+        <path d="M150 64 Q156 92 146 118 Q140 132 148 146" stroke="rgba(247,243,255,.22)" strokeWidth=".7" />
+      </g>
+      {WEB.dew.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={p.r} fill="rgba(255,241,184,.75)" />
+      ))}
+    </svg>
+  );
+}
+
+/** A cute little spider; its thread runs up out of the top (`thread` px in its own units). */
+export function Spider({ size = 34, thread = 80, style }: { size?: number; thread?: number; style?: CSSProperties }) {
+  return (
+    <svg viewBox={`0 ${-thread} 40 ${thread + 44}`} width={size} height={(size * (thread + 44)) / 40} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
+      <line x1="20" y1={-thread} x2="20" y2="8" stroke="rgba(247,243,255,.55)" strokeWidth=".9" />
+      <g stroke="#0E0A1C" strokeWidth="2.4" fill="none" strokeLinecap="round">
+        <path d="M14 18 Q4 12 2 4 M13 22 Q2 20 0 14 M13 26 Q2 28 1 36 M15 29 Q8 36 8 42" />
+        <path d="M26 18 Q36 12 38 4 M27 22 Q38 20 40 14 M27 26 Q38 28 39 36 M25 29 Q32 36 32 42" />
+      </g>
+      <circle cx="20" cy="24" r="10" fill="#2B1E48" stroke="#0E0A1C" strokeWidth="1.5" />
+      <circle cx="20" cy="12" r="6.5" fill="#3A2860" stroke="#0E0A1C" strokeWidth="1.5" />
+      <circle cx="17.4" cy="11.5" r="2.3" fill="#fff" />
+      <circle cx="22.6" cy="11.5" r="2.3" fill="#fff" />
+      <circle cx="17.8" cy="12" r="1.1" fill="#17122B" />
+      <circle cx="23" cy="12" r="1.1" fill="#17122B" />
+      <circle cx="15.2" cy="15" r="1.3" fill="#FF9EC4" opacity=".7" />
+      <circle cx="24.8" cy="15" r="1.3" fill="#FF9EC4" opacity=".7" />
+      {/* a tiny heart on its back */}
+      <path d="M20 29.5 C14.5 25.5 16 21 18.6 21.6 C19.4 21.8 20 22.6 20 22.6 C20 22.6 20.6 21.8 21.4 21.6 C24 21 25.5 25.5 20 29.5Z" fill="#FF9EC4" opacity=".9" />
+    </svg>
+  );
+}
+
 /** The cauldron, with a brew of `color` and bubbles. */
 export function Cauldron({ color, size = 220, stirring = 0, style }: { color: string; size?: Size; stirring?: number; style?: CSSProperties }) {
   return (

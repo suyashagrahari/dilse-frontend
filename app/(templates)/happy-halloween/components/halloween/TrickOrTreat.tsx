@@ -240,7 +240,7 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
     });
   };
 
-  useNext(phase === "anyway" || phase === "done" ? "Come inside" : null, onNext, "candy");
+  useNext(phase === "anyway" || phase === "done" ? "Come inside" : null, onNext, "candy", phase === "done" ? 2000 : phase === "anyway" ? 2600 : null);
 
   return (
     <>

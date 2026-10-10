@@ -120,7 +120,35 @@ export default function DayRoot({ day, children, style, className, data, layout 
   );
 }
 
-export function BrandMark({ dark }: { dark?: boolean }) {
+export function BrandMark({ dark, stacked = false }: { dark?: boolean; stacked?: boolean }) {
+  if (stacked)
+    // The logo with the word under it, small, in the top-right corner (DayConfig.brandMark "stacked").
+    return (
+      <Link
+        href="/templates"
+        aria-label="SubhSandesh — make your own"
+        className="vw-brand-stacked"
+        style={{
+          position: "fixed",
+          right: "max(10px, env(safe-area-inset-right, 0px))",
+          top: "calc(8px + env(safe-area-inset-top, 0px))",
+          zIndex: 95,
+          display: "grid",
+          justifyItems: "center",
+          gap: 2,
+          padding: "5px 6px 4px",
+          minWidth: 44,
+          borderRadius: 12,
+          textDecoration: "none",
+          background: dark ? "rgba(23,18,43,.42)" : "rgba(255,255,255,.6)",
+          border: `1px solid ${dark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.06)"}`,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.webp" alt="" width={26} height={26} style={{ width: 26, height: 26, borderRadius: 7, filter: dark ? "drop-shadow(0 0 6px rgba(255,210,122,.35))" : undefined }} />
+        <span style={{ font: `700 9.5px/1 ${FONTS.ui}`, letterSpacing: ".02em", color: dark ? "rgba(255,255,255,.9)" : "#2a1a22" }}>SubhSandesh</span>
+      </Link>
+    );
   return (
     <Link
       href="/templates"

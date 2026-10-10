@@ -136,7 +136,9 @@ export default function Hallway({ photos, preview, sticker, onNext }: { photos: 
     });
   };
 
-  useNext(lastPage ? "Up to the attic" : "More portraits", () => (lastPage ? onNext() : setPage((p) => p + 1)), lastPage ? "moon" : "ghost");
+  // Every portrait on the page wiped → a beat to look, then on (never while one is open up close).
+  const auto = open !== null ? null : list.length === 0 ? 3500 : pageDone ? (lastPage ? 2400 : 1700) : null;
+  useNext(lastPage ? "Up to the attic" : "More portraits", () => (lastPage ? onNext() : setPage((p) => p + 1)), lastPage ? "moon" : "ghost", auto);
 
   return (
     <>

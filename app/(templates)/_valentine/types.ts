@@ -193,6 +193,11 @@ export interface DayConfig<E extends Extras = Extras> {
    * this opts a $2 day in. Scenes keep the top-right ≈200×56 clear.
    */
   topBar?: boolean;
+  /**
+   * The recipient page's SubhSandesh mark (viewer only): "pill" (default, logo +
+   * word side by side) or "stacked" (logo with the word under it, top-right).
+   */
+  brandMark?: "pill" | "stacked";
 }
 
 export interface DayMusicConfig {
@@ -203,6 +208,13 @@ export interface DayMusicConfig {
    * music/DayMusic.tsx for the trade-off and how to switch it off.
    */
   audioOnly?: boolean;
+  /**
+   * Phones and desktop: draw the music as ONE 40px round play/stop icon (a
+   * tiny equaliser while it plays) instead of the radio card / chip / melody
+   * button, with no bottom reserve. Implies audio-only for a YouTube song.
+   * It sits bottom-left by default; the day can move it with CSS on `.vm-icon`.
+   */
+  compact?: boolean;
   /** One-tap song chips in the form (default: the romantic list in music/youtube.ts). */
   suggestions?: readonly SongSuggestion[];
   /** Small line next to "Suggestions" ("romantic favourites · tap to use"). */

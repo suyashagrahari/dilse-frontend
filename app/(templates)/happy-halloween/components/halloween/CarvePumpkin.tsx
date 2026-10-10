@@ -220,7 +220,8 @@ export default function CarvePumpkin({ word, recipient, onNext }: { word: string
     PIECES.forEach((_, i) => window.setTimeout(() => doCut(i), reduced ? 0 : i * 260));
   };
 
-  useNext(lit ? "Into the hallway" : null, onNext, "pumpkin");
+  // on once the pumpkin has turned round and their word has glowed for a moment
+  useNext(lit ? "Into the hallway" : null, onNext, "pumpkin", back ? 2600 : null);
 
   const fontSize = useMemo(() => {
     const n = word.length;
