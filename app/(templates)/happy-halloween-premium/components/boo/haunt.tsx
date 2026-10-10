@@ -577,7 +577,7 @@ export function Manor({ style, className }: { style?: CSSProperties; className?:
 
       {/* main house */}
       <rect x="110" y="138" width="180" height="162" fill="url(#bnWall)" />
-      <path d="M96 142 L200 58 L304 142 Z" fill="url(#bnRoof)" />
+      <path d="M96 142 L200 58 L304 142 Z" fill="url(#bnRoof)" data-roof="" />
       <path d="M118 126 L282 126 M134 112 L266 112 M150 98 L250 98" stroke="#3A2C6E" strokeWidth="2" />
       <path d="M200 98 a7 7 0 0 1 10 10 l-10 10 l-10 -10 a7 7 0 0 1 10 -10 Z" fill="#FFB0D0" className="bn-win is-3" />
       {[
@@ -696,6 +696,9 @@ export const HAUNT_CSS = `
   filter: drop-shadow(0 0 .8px rgba(237,228,255,.95)) drop-shadow(0 0 .8px rgba(237,228,255,.8)); }
 .bn-cornerWeb.is-still { filter: none; }
 .bn-cuteWeb { position: absolute; right: -2px; top: -2px; width: clamp(122px, 35vw, 164px); height: auto; transform: scaleX(-1); transform-origin: 50% 0; opacity: .92; }
+/* v8: on phones every scene's kicker sits right under the top bar, so both webs (and their
+   dangling spiders) tuck into the corners above it and never cross the text */
+@media (max-width: 767px) { .bn-cornerWeb { width: 56px; } .bn-cuteWeb { width: 64px; } }
 
 @media (min-width: 768px) {
   .bn-house { width: clamp(110px, 11vw, 190px); bottom: 8vh; }
@@ -731,6 +734,15 @@ export const HAUNT_CSS = `
 .bn-eek.is-r { right: calc(var(--vw-gutter, 0px) + 54px); border-radius: 14px 14px 4px 14px; }
 .bn-eek.is-l { left: calc(var(--vw-gutter, 0px) + 54px); }
 @keyframes bn-eek { 0% { opacity: 0; transform: scale(.4) } 18% { opacity: 1; transform: scale(1.08) } 30%, 75% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: translateY(-14px) scale(.9) } }
+/* v8: phones: a small, short drop hugging the screen edge, ending above the scene's text */
+@media (max-width: 767px) {
+  .bn-drop { --dw: 40px; }
+  .bn-drop.is-r { right: calc(var(--vw-gutter, 0px) + 2px); }
+  .bn-drop.is-l { left: calc(var(--vw-gutter, 0px) + 2px); }
+  .bn-eek { top: 70px; }
+  .bn-eek.is-r { right: calc(var(--vw-gutter, 0px) + 40px); }
+  .bn-eek.is-l { left: calc(var(--vw-gutter, 0px) + 40px); }
+}
 @media (min-width: 768px) {
   .bn-drop { --dw: 104px; }
   .bn-drop.is-r { right: 13vw; }
