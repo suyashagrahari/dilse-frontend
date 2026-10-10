@@ -8,10 +8,10 @@ export default function CornerOrnaments() {
       {/* Desktop fixed corners (hidden on mobile) */}
       <div className="hidden md:block" style={{ position: 'fixed', inset: 0, zIndex: 20, pointerEvents: 'none', overflow: 'hidden' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true"
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" data-corner-top=""
           style={{ position: 'fixed', top: 0, left: 0, width: 240, height: 240, opacity: 0.62, zIndex: 20, pointerEvents: 'none', transform: 'scaleY(-1)', filter: F }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true"
+        <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" data-corner-top=""
           style={{ position: 'fixed', top: 0, right: 0, width: 240, height: 240, opacity: 0.62, zIndex: 20, pointerEvents: 'none', transform: 'scale(-1,-1)', filter: F }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true"
