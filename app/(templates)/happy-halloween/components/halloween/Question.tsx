@@ -141,6 +141,9 @@ export default function Question({
         {/* three cute bats keeping the ghost company on the balcony */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HW_GIF.bats} alt="" aria-hidden width={360} height={360} decoding="async" style={{ position: "absolute", left: "96%", top: "2%", width: "100%", height: "auto", pointerEvents: "none" }} />
+        {/* …and on the other side, a little grave whose zombie hand waves her on to YES */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={HW_GIF.grave} alt="" aria-hidden width={150} height={139} decoding="async" style={{ position: "absolute", right: "104%", bottom: "-6%", width: "104%", height: "auto", pointerEvents: "none" }} />
         <Ghost size="100%" heart mood="shy" />
       </motion.div>
 
