@@ -23,10 +23,10 @@ export default function CornerOrnaments() {
 
       {/* Mobile overlay corners (kept below nav bars) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" className="md:hidden"
+      <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" className="md:hidden" data-corner-top=""
         style={{ position: 'fixed', top: 0, left: 0, width: 110, height: 110, opacity: 0.55, zIndex: 30, pointerEvents: 'none', transform: 'scaleY(-1)', filter: F }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" className="md:hidden"
+      <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" className="md:hidden" data-corner-top=""
         style={{ position: 'fixed', top: 0, right: 0, width: 110, height: 110, opacity: 0.55, zIndex: 30, pointerEvents: 'none', transform: 'scale(-1,-1)', filter: F }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="https://cdn.subhsandesh.in/gifts-media/indianFestival/alekhancorner2.svg" alt="" aria-hidden="true" className="md:hidden"

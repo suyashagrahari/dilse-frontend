@@ -15,7 +15,7 @@
 // behind it; the GIFs arrive after idle into sized boxes, so nothing shifts.
 // Every animation stops under reduced motion.
 
-import Link from "next/link";
+import { WitchLink } from "@/components/promo/WitchPortal";
 import { ArrowRight, Sparkles } from "lucide-react";
 import LuxuryMobileTopBrand from "@/components/LuxuryMobileTopBrand";
 import IdleGif from "@/components/promo/IdleGif";
@@ -89,20 +89,26 @@ export default function HalloweenOfferClient() {
               <span className="hwoTitleC">Will you be my boo?</span>
             )}
           </h1>
-          <p className="hwoSub">
+          <p className="hwoSub hwoSubLong">
             Spooky-cute love letters for the one who makes your heart go <em>boo</em> — with your photos, your song and your
             letter.{pct ? " The sale price is applied automatically when you publish." : ""}
+          </p>
+          {/* Phones get the one-breath version, so the haunted house fits on the first screen. */}
+          <p className="hwoSub hwoSubShort">
+            Spooky-cute love letters for your <em>boo</em> — your photos, your song, your words.
           </p>
           <div className="hwoGlass">
             {on && <Countdown />}
             <div className="hwoCtas">
               <a href="#hwo-templates" className="hwoBtn primary">
-                <span aria-hidden>👻</span> See the {countWord} template{n === 1 ? "" : "s"}
+                <span aria-hidden>👻</span>
+                <span className="hwoBtnLong">See the {countWord} template{n === 1 ? "" : "s"}</span>
+                <span className="hwoBtnShort">See the drop</span>
               </a>
               {first && (
-                <Link href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
+                <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
                   Try one free <ArrowRight size={16} aria-hidden />
-                </Link>
+                </WitchLink>
               )}
             </div>
             <p className="hwoTrust"><Sparkles size={13} aria-hidden /> Free to try · pay only to publish · ready in 2 minutes</p>
@@ -152,9 +158,9 @@ export default function HalloweenOfferClient() {
         <p className="hwoSub">{on ? "The drop vanishes at midnight on 31 October." : "Spooky love letters, ready in minutes."}</p>
         <div className="hwoCtas">
           {drop.slice(0, 2).map((t, i) => (
-            <Link key={t.slug} href={`/${t.slug}`} className={`hwoBtn ${i === 0 ? "primary" : "ghost"}`} prefetch={false}>
+            <WitchLink key={t.slug} href={`/${t.slug}`} className={`hwoBtn ${i === 0 ? "primary" : "ghost"}`} prefetch={false}>
               <span aria-hidden>{i === 0 ? "🏚️" : "👻"}</span> {t.title}
-            </Link>
+            </WitchLink>
           ))}
         </div>
         <div className="hwoEndGround" aria-hidden>
@@ -245,9 +251,35 @@ const HWO_CSS = `
 .hwoEndGrave { position: absolute; left: 7%; bottom: 0; width: 112px; height: 104px; }
 .hwoEndPumpkin { position: absolute; right: 7%; bottom: 0; width: 104px; height: 104px; }
 
+.hwoSubShort, .hwoBtnShort { display: none; }
 @media (max-width: 767px) {
   /* The layout shell pads 96px under every page for the tab bar; paint it night, not cream. */
   .hwo { margin-bottom: -96px; padding-bottom: 200px; }
+  /* The night starts at y=0: the hero slides up under the mobile brand bar's
+     84px spacer, so the sky and the corner webs run to the very top edge. */
+  .hwoHero { margin-top: -84px; padding: 86px 14px 0; min-height: max(640px, calc(100svh - 34px)); }
+  .hwoHero::after { height: 60px; }
+  .hwoKick { padding: 7px 12px; font-size: 9.5px; }
+  .hwoTitle { margin-top: 12px; gap: 0; }
+  .hwoTitleA { font-size: clamp(30px, 9vw, 40px); }
+  .hwoPct { font-size: clamp(64px, 19vw, 84px); }
+  .hwoTitleB small { font-size: 16px; }
+  .hwoSubLong { display: none; }
+  .hwoSubShort { display: block; max-width: 22rem; margin-top: 8px; font-size: 14px; line-height: 1.5; }
+  /* compact glass: a slim clock and the two buttons side by side */
+  .hwoGlass { margin-top: 14px; padding: 12px 12px 12px; border-radius: 22px; max-width: 380px; }
+  .hwoClockWrap { gap: 7px; margin-bottom: 11px; }
+  .hwoClockKick { font-size: 9px; }
+  .hwoClock { gap: 6px; }
+  .hwoCell { gap: 4px; padding: 8px 0 7px; border-radius: 12px; }
+  .hwoCell b { font-size: 21px; }
+  .hwoCell small { font-size: 8px; }
+  .hwoCell i { top: 8px; right: -5.5px; font-size: 14px; }
+  .hwoGlass .hwoCtas { flex-wrap: nowrap; gap: 8px; width: 100%; }
+  .hwoGlass .hwoBtn { flex: 1 1 0; min-width: 0; padding: 13px 10px; font-size: 13.5px; white-space: nowrap; }
+  .hwoGlass .hwoTrust { display: none; }
+  .hwoBtnLong { display: none; }
+  .hwoBtnShort { display: inline; }
 }
 @media (max-width: 420px) { .hwoKickX { display: none; } }
 @media (min-width: 640px) {
