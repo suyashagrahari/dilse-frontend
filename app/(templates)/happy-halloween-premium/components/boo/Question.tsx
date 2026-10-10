@@ -194,6 +194,13 @@ export default function Question({
           )}
         </div>
         {peaked && <Gif src={GIF.cuteBats} size={110} tilt={-4} className="bn-qBats" eager />}
+        {/* v6: the pastel top-hat ghosts drift over the pink night to celebrate */}
+        {peaked && (
+          <span className={`bn-yesGhosts${reduce ? " is-still" : ""}`} aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GIF.ghostsFloat} alt="" width={300} height={300} decoding="async" draggable={false} />
+          </span>
+        )}
       </div>
 
       {phase === "ask" && (
@@ -243,7 +250,7 @@ export default function Question({
         </div>
       )}
 
-      <div className="bn-foot">{phase === "after" && <NextButton onClick={onNext}>{`Get your ${n.copy.license}`}</NextButton>}</div>
+      <div className="bn-foot">{phase === "after" && <NextButton onClick={onNext}>{`Your ${n.copy.license}`}</NextButton>}</div>
       <style>{Q_CSS}</style>
     </div>
   );
@@ -271,6 +278,10 @@ const Q_CSS = `
 .bn-kissHeart { position: absolute; top: -52px; left: 50%; margin-left: -22px; z-index: 4; }
 .bn-qCouple { position: absolute; right: -58px; bottom: -18px; z-index: 4; }
 .bn-qBats { position: absolute !important; left: 6px; top: 0; z-index: 1; }
+.bn-yesGhosts { position: absolute; z-index: 0; left: 0; bottom: 4%; width: clamp(96px, 30%, 150px); aspect-ratio: 1; pointer-events: none; animation: bn-yesGhosts 9s ease-in-out .8s both; }
+.bn-yesGhosts img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 6px 10px rgba(120,40,90,.3)); }
+.bn-yesGhosts.is-still { animation: none; left: auto; right: 0; }
+@keyframes bn-yesGhosts { 0% { transform: translate(-110%, 24px); opacity: 0 } 15% { opacity: 1 } 55% { transform: translate(60%, -18px) } 100% { transform: translate(10%, 0); opacity: 1 } }
 .bn-wave { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 0; pointer-events: none; }
 .bn-wave i { position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; border: 6px solid rgba(255,127,181,.85); box-shadow: 0 0 30px rgba(255,127,181,.7); opacity: 0; animation: bn-wave 1.6s cubic-bezier(.2,.8,.3,1) both; }
 .bn-wave i:nth-child(2) { animation-delay: .25s; border-color: rgba(255,210,122,.85); }

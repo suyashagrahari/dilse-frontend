@@ -114,7 +114,9 @@ export default function Ending({
         <p style={{ flex: "none", margin: 0, font: `500 clamp(13px, 2dvh, 15px) ${FONTS.ui}`, color: VW.inkSoft }}>
           Your Boo License is yours forever. Save it, then boo someone back 👻
         </p>
-        <EndingActions day={day} data={data} mode={mode} onReplay={onReplay} keepsake={keepsake} replyText={replyText} replyLabel={`💬 Reply to ${sender}`} style={{ flex: "none" }} />
+        <div className="hw-zoom" style={{ flex: "none", width: "100%", maxWidth: 420 }}>
+          <EndingActions day={day} data={data} mode={mode} onReplay={onReplay} keepsake={keepsake} replyText={replyText} replyLabel={`💬 Reply to ${sender}`} />
+        </div>
       </>
     );
 
@@ -125,12 +127,13 @@ export default function Ending({
       <div className="hw-fill">
       <motion.section
         aria-label="Boo License"
+        className="hw-zoom"
         initial={reduced ? false : { opacity: 0, rotate: -6, y: 30 }}
         animate={{ opacity: 1, rotate: -1.5, y: 0 }}
         transition={{ type: "spring", stiffness: 140, damping: 16 }}
         style={{
           position: "relative",
-          width: "min(calc(100cqw - 10px), calc(360px * var(--vw-s, 1)))",
+          width: "min(calc(100cqw - 10px), 360px)",
           borderRadius: 20,
           overflow: "visible",
           background: VW.paper,

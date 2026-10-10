@@ -5,8 +5,8 @@
 // The attic is pitch dark; the letter is there, but all you can see is the
 // circle of a flashlight. Move your finger (or the mouse) and the beam
 // follows — a CSS radial-gradient driven by --x/--y custom properties: each
-// move repaints only that overlay layer, never a React re-render per move. Sweep about 60% of
-// the page and a bulb clicks on; "Turn the lights on" is always there too.
+// move repaints only that overlay layer, never a React re-render per move. Sweep about half of
+// the page and the bulb clicks on (the bulb itself is a button too: pull the light on).
 //
 // One screen: the letter never scrolls. It is laid out into pages that fit
 // the paper exactly (measured with the real fonts in a hidden twin, words
@@ -29,7 +29,7 @@ import { Hint, HW, RoomTitle } from "./ui";
 
 const COLS = 6;
 const ROWS = 8;
-const NEED = 0.6;
+const NEED = 0.5;
 
 /**
  * The page prints "Dear <name>," above and "— <sender>" below, so a letter that
@@ -188,24 +188,13 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
     setLit(true);
   };
 
-  // Never hurry the letter: pages turn on her tap (the pill, or the paper itself). On the last page
-  // it moves on only after a generous reading time, or soon after she taps the paper ("done").
-  const [doneReading, setDoneReading] = useState(false);
-  const lastWords = last ? (pages[at]?.paras ?? []).join(" ").split(/\s+/).filter(Boolean).length : 0;
-  const readMs = Math.min(24000, Math.max(9000, 5000 + lastWords * 320));
-  useNext(
-    lit ? (last ? "To the potion room" : "Turn the page") : null,
-    () => (last ? onNext() : (cue("page-turn"), setPage(at + 1))),
-    last ? "pumpkin" : "ghost",
-    lit && last ? (doneReading ? 1400 : readMs) : null,
-  );
+  // Never hurry the letter: pages turn only on her tap (the pill, or the paper itself), and it
+  // never moves on by itself — on the last page the pill says "To the potion room" and waits.
+  useNext(lit ? (last ? "To the potion room" : "Turn the page") : null, () => (last ? onNext() : (cue("page-turn"), setPage(at + 1))), last ? "pumpkin" : "ghost");
   const tapPaper = () => {
-    if (!lit || performance.now() - litAt.current < 700) return;
-    if (last) setDoneReading(true);
-    else {
-      cue("page-turn");
-      setPage(at + 1);
-    }
+    if (!lit || last || performance.now() - litAt.current < 700) return;
+    cue("page-turn");
+    setPage(at + 1);
   };
 
   const shine = (clientX: number, clientY: number) => {
@@ -265,10 +254,18 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
       <style>{LETTER_CSS}</style>
       <RoomTitle kicker="Room 5 · the attic" title="A letter in the dark" sub={lit ? (total > 1 ? `Lights on. Page ${at + 1} of ${total}.` : "Lights on. Take your time.") : "Somebody left a letter up here. Move the flashlight to read it."} />
 
-      {/* the bulb */}
-      <div aria-hidden style={{ display: "grid", justifyItems: "center", marginTop: -4, flex: "none" }}>
-        <span style={{ width: 2, height: 12, background: "rgba(247,243,255,.35)" }} />
+      {/* the bulb — pull it on (a real button, so keyboards and anyone who can't sweep get the light) */}
+      <button
+        type="button"
+        onClick={lightsOn}
+        disabled={lit}
+        aria-label="Turn the light on"
+        className="hw-bulb"
+        style={{ display: "grid", justifyItems: "center", marginTop: -4, flex: "none", padding: "0 10px 2px", border: 0, background: "transparent", cursor: lit ? "default" : "pointer", touchAction: "manipulation" }}
+      >
+        <span aria-hidden style={{ width: 2, height: 12, background: "rgba(247,243,255,.35)" }} />
         <span
+          aria-hidden
           style={{
             width: 22,
             height: 27,
@@ -278,7 +275,7 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
             transition: "background .5s, box-shadow .5s",
           }}
         />
-      </div>
+      </button>
 
       <div className="hw-fill" style={{ placeItems: "stretch center" }}>
         <div
@@ -351,18 +348,9 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
         </div>
       </div>
 
-      <div style={{ flex: "none", display: "grid", gap: 6, justifyItems: "center", alignContent: "start", minHeight: 50 }}>
+      <div style={{ flex: "none", display: "grid", gap: 6, justifyItems: "center", alignContent: "start", minHeight: 38 }}>
         {!lit ? (
-          <div className="hw-row" style={{ gap: 8 }}>
-            <Hint>{moved ? `Keep looking… ${pct}%` : "Drag over the page 🔦"}</Hint>
-            <button
-              type="button"
-              onClick={lightsOn}
-              style={{ minHeight: 40, padding: "8px 14px", borderRadius: 14, border: "1.5px solid rgba(255,210,122,.5)", background: "rgba(255,210,122,.1)", color: HW.candle, font: `600 14px ${FONTS.ui}`, cursor: "pointer" }}
-            >
-              💡 Lights on
-            </button>
-          </div>
+          <Hint>{moved ? `Keep looking… ${pct}%` : "Drag over the page 🔦"}</Hint>
         ) : (
           <div className="hw-row" style={{ gap: 8 }}>
             {total > 1 && at > 0 && (
@@ -370,7 +358,7 @@ export default function FlashlightLetter({ letter, sender, recipient, onNext }: 
                 ‹ previous page
               </button>
             )}
-            <span style={{ font: `500 12.5px ${FONTS.ui}`, color: VW.inkSoft }}>{last ? (doneReading ? "💜" : "Tap the letter when you're done") : "Tap the letter to turn the page"}</span>
+            <span style={{ font: `500 12.5px ${FONTS.ui}`, color: VW.inkSoft }}>{last ? "Take your time 💜" : "Tap the letter to turn the page"}</span>
           </div>
         )}
       </div>

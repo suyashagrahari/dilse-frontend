@@ -1,8 +1,8 @@
 "use client";
 
 // Room 2 — Trick or Treat? Mini-game A, about ten seconds.
-//   TREAT → sweets rain down; slide the pumpkin pail (or tap the sweets) to
-//           catch five. "Fill it for me" does it for them.
+//   TREAT → sweets rain down; slide the pumpkin pail (or tap the sweets, or
+//           use the arrow keys) to catch five.
 //   TRICK → asked for it: the prankster panda in a Scream mask jumps at them
 //           with a BOO (the optional third scare, ./stage.tsx), then "got you!
 //           💜", the sender's trick line and "…fine, have a treat anyway".
@@ -16,7 +16,7 @@ import { FONTS, VW } from "../../../_valentine/theme";
 import { CandyBucket } from "./art";
 import { HW_DISPLAY } from "./fonts";
 import { HW_GIF, preload, useHw, useNext } from "./stage";
-import { Btn, Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { Btn, Hint, HW, RoomTitle } from "./ui";
 
 const GOAL = 5;
 const SWEETS = ["🍬", "🍭", "🍫", "🍬", "🍭", "🧁"];
@@ -120,9 +120,14 @@ function CatchGame({ onDone }: { onDone: () => void }) {
     bucketX.current = Math.min(1 - BUCKET_W / 2 / r.width, Math.max(BUCKET_W / 2 / r.width, (clientX - r.left) / r.width));
   };
 
-  const fillForMe = () => {
-    const left = GOAL - caughtRef.current;
-    for (let k = 0; k < left; k++) window.setTimeout(() => catchOne((arenaRef.current?.clientWidth ?? 300) / 2, (arenaRef.current?.clientHeight ?? 300) - 96), k * 140);
+  // Keyboard: the arrow keys slide the pail.
+  const onKey = (e: { key: string; preventDefault: () => void }) => {
+    const w = arenaRef.current?.clientWidth ?? 300;
+    const half = BUCKET_W / 2 / w;
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault();
+      bucketX.current = Math.min(1 - half, Math.max(half, bucketX.current + (e.key === "ArrowLeft" ? -0.08 : 0.08)));
+    }
   };
 
   return (
@@ -132,6 +137,10 @@ function CatchGame({ onDone }: { onDone: () => void }) {
       </p>
       <div
         ref={arenaRef}
+        tabIndex={0}
+        role="application"
+        aria-label="Catch the sweets: slide the pail with your finger or the arrow keys"
+        onKeyDown={onKey}
         onPointerMove={(e) => move(e.clientX)}
         onPointerDown={(e) => move(e.clientX)}
         style={{
@@ -140,7 +149,7 @@ function CatchGame({ onDone }: { onDone: () => void }) {
           minHeight: 0,
           width: "100%",
           maxWidth: "calc(420px * var(--vw-s, 1))",
-          maxHeight: 420,
+          maxHeight: 460,
           borderRadius: 24,
           overflow: "hidden",
           background: "linear-gradient(180deg, rgba(247,243,255,.04), rgba(247,243,255,.10))",
@@ -201,9 +210,8 @@ function CatchGame({ onDone }: { onDone: () => void }) {
           ))}
         </AnimatePresence>
       </div>
-      <div style={{ flex: "none", display: "grid", gap: 4, justifyItems: "center", minHeight: 76 }}>
+      <div style={{ flex: "none", display: "grid", justifyItems: "center", minHeight: 34 }}>
         {!finished && <Hint>{reduced ? "Tap the sweets to drop them in the pail" : "Slide the pail to catch 5 sweets (or tap them)"}</Hint>}
-        {!finished && <SkipChip onClick={fillForMe}>Fill it for me</SkipChip>}
       </div>
     </>
   );
@@ -240,7 +248,7 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
     });
   };
 
-  useNext(phase === "anyway" || phase === "done" ? "Come inside" : null, onNext, "candy", phase === "done" ? 2000 : phase === "anyway" ? 2600 : null);
+  useNext(phase === "anyway" || phase === "done" ? "Come inside" : null, onNext, "candy");
 
   return (
     <>
@@ -250,13 +258,13 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
         <>
           <div className="hw-fill">
             <div style={{ display: "grid", justifyItems: "center", gap: 2 }}>
-              <div style={{ height: "min(30cqh, 96px)", display: "grid", placeItems: "end center" }}>{sticker}</div>
-              <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ width: "min(56cqh, 170px)" }}>
+              <div style={{ height: "min(30cqh, calc(96px * var(--vw-s, 1)))", display: "grid", placeItems: "end center" }}>{sticker}</div>
+              <motion.div animate={reduced ? undefined : { rotate: [-3, 3, -3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ width: "min(56cqh, calc(170px * var(--vw-s, 1)))" }}>
                 <CandyBucket size="100%" fill={0.15} />
               </motion.div>
             </div>
           </div>
-          <div className="hw-row" style={{ flex: "none", gap: 12, minHeight: 76, alignContent: "start" }}>
+          <div className="hw-row" style={{ flex: "none", gap: 14, minHeight: 60, alignContent: "start" }}>
             <Btn onClick={trick} style={{ background: HW.lavender, color: HW.paperInk, boxShadow: `0 5px 0 #6E55B8, 0 16px 34px -14px rgba(183,156,255,.5)`, minWidth: 140 }}>
               TRICK 👻
             </Btn>
@@ -279,7 +287,7 @@ export default function TrickOrTreat({ trickLine, sticker, onNext }: { trickLine
         <div className="hw-fill">
           <motion.div initial={reduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "grid", gap: "clamp(6px, 1.4dvh, 12px)", justifyItems: "center" }}>
             {phase === "done" ? <div style={{ height: "min(26cqh, 96px)", display: "grid", placeItems: "end center" }}>{sticker}</div> : null}
-            <div style={{ width: "min(44cqh, 160px)" }}>
+            <div style={{ width: "min(44cqh, calc(160px * var(--vw-s, 1)))" }}>
               <CandyBucket size="100%" fill={1} />
             </div>
             <p style={{ margin: 0, font: `400 clamp(22px, 3.6dvh, 28px) ${HW_DISPLAY}`, color: HW.candle }}>{phase === "done" ? "Treat unlocked! 🍬" : "…fine, have a treat anyway 🍬"}</p>

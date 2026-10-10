@@ -6,7 +6,7 @@
 // a bubble, the brew changes colour and sparks pop. With everything in, hold
 // to stir (the kit's useHoldProgress — it springs back if you let go early;
 // five quick taps work too), then a poof of smoke reveals the potion's spell
-// on a scroll. "Brew it for me" does the lot.
+// on a scroll, which stays up until she taps on.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,7 +15,7 @@ import { FONTS, VW } from "../../../_valentine/theme";
 import { Bottle, Cauldron } from "./art";
 import { HW_DISPLAY } from "./fonts";
 import { useHw, useNext } from "./stage";
-import { Hint, HW, RoomTitle, SkipChip } from "./ui";
+import { Hint, HW, RoomTitle } from "./ui";
 
 export interface Ingredient {
   name: string;
@@ -73,23 +73,13 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
     return () => window.clearTimeout(t);
   }, [bubble]);
 
-  const brewForMe = () => {
-    ingredients.forEach((_, i) => window.setTimeout(() => pour(i), reduced ? 0 : i * 280));
-    window.setTimeout(() => {
-      setBrewed(true);
-      cue("chime-cascade", { gain: 0.6 });
-      burst({ kind: "sparkles", emojis: ["✨", "💜", "🧡", "⭐"], origin: { x: 0.5, y: 0.55 }, count: 30 });
-    }, reduced ? 50 : ingredients.length * 280 + 500);
-  };
-
   const inPot = (x: number, y: number) => {
     const r = potRef.current?.getBoundingClientRect();
     return !!r && x >= r.left - 20 && x <= r.right + 20 && y >= r.top - 40 && y <= r.bottom;
   };
 
-  // Brewed → time to read the spell, then on.
-  const spellWords = (spell || "").split(/\s+/).filter(Boolean).length;
-  useNext(brewed ? "One last room" : null, onNext, "heart", brewed ? Math.min(9000, 3800 + spellWords * 260) : null);
+  // Brewed → the spell stays up until she taps on.
+  useNext(brewed ? "One last room" : null, onNext, "heart");
 
   return (
     <>
@@ -144,7 +134,7 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
         {/* the cauldron */}
         {!brewed && (
           <div style={{ position: "relative", flex: "1 1 0", minHeight: 0, width: "100%", containerType: "size", display: "grid", placeItems: "center" }}>
-            <div ref={potRef} style={{ position: "relative", width: "min(62cqw, calc(100cqh * 220 / 190), 230px)" }}>
+            <div ref={potRef} style={{ position: "relative", width: "min(62cqw, calc(100cqh * 220 / 190), calc(230px * var(--vw-s, 1)))" }}>
               <AnimatePresence>
                 {bubble != null && ingredients[bubble] && (
                   <motion.div
@@ -172,6 +162,7 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
         {brewed && (
           <div style={{ flex: "1 1 0", minHeight: 0, width: "100%", display: "grid", placeItems: "center" }}>
             <motion.div
+              className="hw-zoom"
               initial={reduced ? false : { opacity: 0, scaleY: 0.2 }}
               animate={{ opacity: 1, scaleY: 1 }}
               transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
@@ -195,7 +186,7 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
         )}
       </div>
 
-      <div style={{ flex: "none", display: "grid", gap: 4, justifyItems: "center", alignContent: "start", minHeight: brewed ? 0 : 92 }}>
+      <div style={{ flex: "none", display: "grid", gap: 4, justifyItems: "center", alignContent: "start", minHeight: brewed ? 0 : 56 }}>
         {poured.length > 0 && !all && (
           <p aria-live="polite" style={{ margin: 0, font: `400 17px ${HW_DISPLAY}`, color: HW.candle }}>
             {poured.length} of {ingredients.length} in the brew
@@ -204,7 +195,6 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
         {!all && !brewed && (
           <>
             {poured.length === 0 && <Hint>{reduced ? "Tap a bottle to pour it in" : "Drag a bottle into the cauldron 🧪"}</Hint>}
-            <SkipChip onClick={brewForMe}>Brew it for me</SkipChip>
           </>
         )}
         {all && !brewed && (
@@ -232,15 +222,6 @@ export default function Potion({ ingredients, spell, sticker, onNext }: { ingred
               <span aria-hidden style={{ position: "absolute", inset: 0, width: `${Math.round(stir.progress * 100)}%`, background: "linear-gradient(90deg, #B79CFF, #FF9EC4)", opacity: 0.55, transition: stir.holding ? "none" : "width .3s" }} />
               <span style={{ position: "relative" }}>{stir.holding ? "Stirring… 🌀" : "Hold to stir 🥄 (or tap ×5)"}</span>
             </button>
-            <SkipChip
-              onClick={() => {
-                setBrewed(true);
-                cue("chime-cascade", { gain: 0.6 });
-                burst({ kind: "sparkles", emojis: ["✨", "💜", "🧡"], origin: { x: 0.5, y: 0.55 }, count: 24 });
-              }}
-            >
-              Stir it for me
-            </SkipChip>
           </>
         )}
       </div>

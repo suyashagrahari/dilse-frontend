@@ -17,6 +17,8 @@ import { Ghost, Mailbox } from "./art";
 import { BODY, DISPLAY, HAND } from "./fonts";
 import type { Night } from "./model";
 import { useBoo } from "./Scare";
+import { GIF } from "./gifs";
+import { Manor } from "./haunt";
 import { Gif, NextButton, POP, TextLink } from "./ui";
 
 type Phase = "idle" | "boo" | "giggle" | "out";
@@ -79,6 +81,18 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
       </div>
 
       <button type="button" className="bn-gateBox" onClick={() => open()} aria-label="Open the mailbox" tabIndex={-1}>
+        {/* v6: the haunted house behind the mailbox, a grave whose zombie hand waves, a pumpkin in a witch hat */}
+        <span className="bn-manorWrap" aria-hidden>
+          <Manor />
+          <span className="bn-yard is-l" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GIF.grave} alt="" width={150} height={139} decoding="async" draggable={false} />
+          </span>
+          <span className="bn-yard is-r" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GIF.witchPumpkin} alt="" width={240} height={285} decoding="async" draggable={false} />
+          </span>
+        </span>
         <span className="bn-mbWrap">
           <AnimatePresence>
             {out && (
@@ -145,7 +159,7 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
 
       <div className="bn-foot">
         <NextButton quiet onClick={() => open()} disabled={out}>
-          Open the mailbox 💌
+          Open the mailbox
         </NextButton>
       </div>
       <style>{GATE_CSS}</style>
@@ -161,8 +175,14 @@ const GATE_CSS = `
 .bn-gateCard { width: clamp(92px, 19dvh, 176px) !important; height: clamp(92px, 19dvh, 176px) !important; margin: -2px 0 -4px; }
 .bn-gateName { margin: 0; font: 400 clamp(36px, min(12vw, 7dvh), 62px)/1 ${DISPLAY}; color: #fff; text-shadow: 0 4px 0 rgba(42,31,61,.4); }
 .bn-gateName span { color: #FFD27A; }
-.bn-gateBox { all: unset; flex: 1 1 0; min-height: 0; width: 100%; display: grid; grid-template-rows: minmax(0, 1fr); place-items: end center; cursor: pointer; -webkit-tap-highlight-color: transparent; position: relative; z-index: 4; }
-.bn-mbWrap { position: relative; height: min(100%, 350px); aspect-ratio: 220 / 300; display: grid; align-items: end; justify-items: center; }
+.bn-gateBox { all: unset; flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; grid-template-rows: minmax(0, 1fr); place-items: end center; cursor: pointer; -webkit-tap-highlight-color: transparent; position: relative; z-index: 4; }
+.bn-manorWrap { position: absolute; z-index: 0; left: 50%; bottom: 4px; width: min(112cqw, 128cqh, 760px); transform: translateX(-50%); display: grid; align-items: end; pointer-events: none; }
+.bn-gate.is-out .bn-manorWrap, .bn-gate.is-out .bn-yard { opacity: 0; transition: opacity .5s ease; }
+.bn-yard { position: absolute; z-index: 3; bottom: 0; pointer-events: none; }
+.bn-yard img { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 8px rgba(20,10,40,.45)); }
+.bn-yard.is-l { left: 0; width: 21%; }
+.bn-yard.is-r { right: 1%; width: 17%; }
+.bn-mbWrap { position: relative; z-index: 2; height: min(68%, 280px); aspect-ratio: 220 / 300; display: grid; align-items: end; justify-items: center; }
 .bn-mb { position: relative; z-index: 1; display: block; width: 100%; height: auto; transform-origin: 50% 100%; }
 .bn-mb svg { display: block; width: 100%; height: auto; }
 .bn-gateGhost { position: absolute; top: 0; left: 50%; width: 130px; margin-left: -65px; z-index: 0; display: grid; justify-items: center; transform-origin: 50% 70%; }

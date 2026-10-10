@@ -77,7 +77,7 @@ export default function Booth({ n, cuddle, step, total, onNext }: { n: Night; cu
 
       <div className={`bn-strip is-${photos.length}`}>
         {photos.map((ph, i) => (
-          <div key={i} className="bn-polaroid" style={{ ["--t" as string]: `${TILTS[i % 4]}deg` }}>
+          <div key={i} className={`bn-polaroid${i === pk && gone[i] ? " has-web" : ""}`} style={{ ["--t" as string]: `${TILTS[i % 4]}deg` }}>
             <span className="bn-tape" style={{ background: TAPES[i % 4] }} aria-hidden />
             <div className="bn-polImg">
               <CroppedPhoto photo={ph} eager={i < 2} />
@@ -114,6 +114,13 @@ export default function Booth({ n, cuddle, step, total, onNext }: { n: Night; cu
             </div>
             <span className="bn-polCap">{gone[i] ? ph.caption || " " : i === pk ? "a pumpkin?" : "· · ·"}</span>
             {i === 0 && gone[i] && <Gif src={GIF.heartEyes} size={44} tilt={12} className="bn-polSticker" float={false} />}
+            {/* v6: the photo the booth's oldest ghost guarded: a spider spins a web round it (≈ 720 KB, only mounted now) */}
+            {i === pk && gone[i] && (
+              <span className="bn-webFrame" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={GIF.webFrame} alt="" width={288} height={288} decoding="async" draggable={false} />
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -157,7 +164,9 @@ const BOOTH_CSS = `
 .bn-strip.is-3 .bn-polaroid:nth-child(2) { margin-top: 22px; }
 @media (min-height: 760px) { .bn-strip.is-3 { --pw: clamp(110px, calc((100dvh - 490px) / 2.5), 150px); grid-template-columns: repeat(2, var(--pw)); gap: 14px; } .bn-strip.is-3 .bn-polaroid:nth-child(2) { margin-top: 18px; } .bn-strip.is-3 .bn-polaroid:nth-child(3) { grid-column: 1 / -1; justify-self: center; width: var(--pw); margin-top: -12px; } }
 @media (max-height: 700px) { .bn-strip.is-4 { --pw: clamp(70px, calc((100vw - 64px) / 4), 92px); grid-template-columns: repeat(4, var(--pw)); gap: 8px; } .bn-strip.is-4 .bn-polaroid:nth-child(even) { margin-top: 18px; } }
-.bn-polaroid { position: relative; background: #fff; padding: 7px 7px 0; border-radius: 6px; transform: rotate(var(--t)); box-shadow: 0 12px 26px rgba(30,16,60,.4); align-self: start; }
+.bn-polaroid { position: relative; z-index: 1; background: #fff; padding: 7px 7px 0; border-radius: 6px; transform: rotate(var(--t)); box-shadow: 0 12px 26px rgba(30,16,60,.4); align-self: start; }
+.bn-polaroid.has-web { z-index: 0; }
+.bn-strip.is-3 .bn-webFrame, .bn-strip.is-4 .bn-webFrame { width: 138%; }
 .bn-polImg { position: relative; aspect-ratio: 4 / 5; border-radius: 3px; overflow: hidden; background: ${BN.lilac}; }
 .bn-hider { all: unset; cursor: pointer; position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(180deg, #DCCBFF, #C9B6FF); -webkit-tap-highlight-color: transparent; }
 .bn-hider svg { width: 72%; height: auto; }
@@ -171,6 +180,10 @@ const BOOTH_CSS = `
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .bn-tape { position: absolute; top: -9px; left: 50%; width: 54px; height: 18px; margin-left: -27px; opacity: .85; transform: rotate(-4deg); z-index: 2; border-radius: 2px;
   -webkit-mask: linear-gradient(90deg, transparent 0 3px, #000 3px calc(100% - 3px), transparent calc(100% - 3px)); }
+.bn-webFrame { position: absolute; z-index: -1; left: 50%; top: 46%; width: 178%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(calc(-1 * var(--t))); pointer-events: none;
+  animation: bn-webIn .7s cubic-bezier(.3,1.4,.5,1) both; }
+.bn-webFrame img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px rgba(255,255,255,.8)); }
+@keyframes bn-webIn { from { opacity: 0; transform: translate(-50%, -50%) rotate(calc(-1 * var(--t))) scale(.4) } to { opacity: 1; transform: translate(-50%, -50%) rotate(calc(-1 * var(--t))) scale(1) } }
 .bn-polSticker { position: absolute; right: -14px; top: -16px; z-index: 3; }
 .bn-boothNote { flex: none; min-height: clamp(70px, 12dvh, 96px); display: grid; place-items: center; width: 100%; }
 .bn-boothNote .bn-note { font-size: clamp(14px, 2.2dvh, 16px); padding: clamp(10px, 1.5dvh, 14px) 18px; }

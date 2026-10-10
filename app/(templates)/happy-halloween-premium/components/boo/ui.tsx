@@ -54,7 +54,8 @@ export const WITCH_EVENT = "bn-witch";
 /**
  * The one forward button of every scene: a glowing candy pill with a bobbing
  * ghost, a soft pulse after 2 s idle, and the witch seal flies across on
- * press. It lives in the scene's fixed foot slot, so nothing ever shifts.
+ * press. It lives in the scene's fixed foot slot (same spot on every page) and
+ * only appears once the scene's moment is done. No auto-advance: she decides.
  */
 export function NextButton({ children = "Next stop", onClick, delay = 0, disabled, ariaLabel, quiet }: { children?: ReactNode; onClick: () => void; delay?: number; disabled?: boolean; ariaLabel?: string; quiet?: boolean }) {
   const press = () => {
@@ -157,16 +158,10 @@ export function slotSrc(data: ValentineDayData, id: string): string | null {
 }
 
 // ── Scene header ─────────────────────────────────────────────────────────────
-export function Header({ step, total, kicker, title, sub }: { step?: number; total?: number; kicker?: ReactNode; title: ReactNode; sub?: ReactNode }) {
+/** The scene's kicker + title + line. (`step`/`total` are drawn by the fixed trail now.) */
+export function Header({ kicker, title, sub }: { step?: number; total?: number; kicker?: ReactNode; title: ReactNode; sub?: ReactNode }) {
   return (
     <header className="bn-head">
-      {step !== undefined && total !== undefined && (
-        <div className="bn-dots" aria-label={`Stop ${step} of ${total}`}>
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={`bn-dot${i < step ? " is-done" : ""}${i === step - 1 ? " is-now" : ""}`} />
-          ))}
-        </div>
-      )}
       {kicker && <p className="bn-kicker">{kicker}</p>}
       <motion.h2 className="bn-title" initial={{ scale: 0.6, rotate: -4, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ ...POP, delay: 0.1 }}>
         {title}
@@ -263,6 +258,7 @@ export const BOO_CSS = `
 .bn-sky.is-peak .bn-moonGlow { background: radial-gradient(circle, rgba(255,127,181,.6), transparent 66%); }
 .bn-hills { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 18vh; min-height: 90px; transition: opacity 1.4s ease; }
 .bn-sky.is-peak .bn-hills { opacity: .35; }
+@media (min-width: 1100px) { .bn-moonWrap { right: 16vw; top: 11vh; transform: scale(1.45); } .bn-sky.is-peak .bn-moonWrap { top: 16%; right: 50%; transform: translateX(50%) scale(2.2); } }
 @media (max-width: 520px) { .bn-moonWrap { top: 200px; right: -22px; transform: scale(.6); } .bn-sky.is-peak .bn-moonWrap { top: 17%; right: 50%; transform: translateX(50%) scale(1.7); } }
 
 /* scene shell: exactly one screen (research §C5 + v4 brief). The content
@@ -272,16 +268,12 @@ export const BOO_CSS = `
    sits on a button; our chip folds into an edge tab and every scene is exactly one
    screen, so we give that strip back (no page scroll) and keep the centre foot clear. */
 .bn-root { margin-bottom: calc(-1 * var(--vw-dock-space, 0px));
-  --bn-top: max(58px, calc(env(safe-area-inset-top, 0px) + 54px)); --bn-footH: 74px;
+  --bn-top: calc(var(--vw-top-space, 0px) + max(52px, calc(env(safe-area-inset-top, 0px) + 48px))); --bn-footH: 74px;
   --bn-bot: max(12px, env(safe-area-inset-bottom, 0px));
-  --bn-gap: clamp(4px, 1.3dvh, 14px); }
+  --bn-gap: clamp(6px, 1.8dvh, 20px); }
 .bn-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bn-gap); height: calc(100dvh / var(--bn-z, 1)); width: 100%; zoom: var(--bn-z, 1); overflow: hidden;
-  padding: var(--bn-top) 16px calc(var(--bn-bot) + var(--bn-footH) + 4px); text-align: center; }
+  padding: var(--bn-top) max(16px, calc(50% - 390px)) calc(var(--bn-bot) + var(--bn-footH) + 6px); text-align: center; }
 .bn-head { display: grid; justify-items: center; gap: clamp(2px, .6dvh, 6px); max-width: 30ch; position: relative; z-index: 3; flex: none; }
-.bn-dots { display: flex; gap: 6px; padding: 5px 9px; border-radius: 99px; background: rgba(42,31,61,.35); margin-bottom: 2px; }
-.bn-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,247,236,.25); transition: background .4s ease, transform .4s ease; }
-.bn-dot.is-done { background: ${BN.orange}; }
-.bn-dot.is-now { transform: scale(1.35); background: ${BN.candle}; box-shadow: 0 0 10px ${BN.candle}; }
 .bn-kicker { margin: 0; font: 800 12px/1.2 ${BODY}; letter-spacing: .16em; text-transform: uppercase; color: ${BN.candle}; }
 .bn-title { margin: 0; font: 400 clamp(28px, min(9vw, 5.2dvh), 46px)/1.02 ${DISPLAY}; color: #fff; text-shadow: 0 3px 0 rgba(42,31,61,.35); text-wrap: balance; letter-spacing: .01em; }
 .bn-sub { margin: 0; font: 600 clamp(14px, 2.2dvh, 16px)/1.35 ${BODY}; color: #EDE4FF; text-wrap: balance; }
@@ -294,22 +286,28 @@ export const BOO_CSS = `
 @media (min-width: 1300px) and (min-height: 1000px) { .bn-root { --bn-z: 1.18; } }
 @media (min-width: 1700px) and (min-height: 1050px) { .bn-root { --bn-z: 1.26; } }
 @media (min-width: 700px) { .bn-root { --bn-footH: 84px; } }
+/* full-bleed desktop: a wider headline measure, so titles take two lines, not five */
+@media (min-width: 768px) { .bn-head { max-width: 640px; } }
 
 /* the foot slot + the next button */
-.bn-foot { position: absolute; left: 0; right: 0; bottom: var(--bn-bot); height: var(--bn-footH); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; z-index: 6; pointer-events: none; padding: 0 16px; }
+.bn-foot { position: absolute; left: 0; right: 0; bottom: var(--bn-bot); height: var(--bn-footH); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; z-index: 6; pointer-events: none;
+  /* the engine's small music icon sits bottom-left (40px + 12px): keep both sides clear */ padding: 0 56px; }
 .bn-foot > * { pointer-events: auto; }
 .bn-next { all: unset; box-sizing: border-box; cursor: pointer; position: relative; display: inline-flex; -webkit-tap-highlight-color: transparent; border-radius: 999px; }
 .bn-next:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 .bn-next[disabled] { opacity: .5; cursor: default; }
 .bn-nextIn { position: relative; display: inline-flex; align-items: center; gap: 10px; min-height: 58px; padding: 0 22px 0 10px; border-radius: 999px; isolation: isolate;
-  background: linear-gradient(180deg, #FFC27A 0%, #FF9A3C 55%, #FF8A2A 100%); color: #3A1A04; font: 800 19px/1 ${BODY}; letter-spacing: .01em; white-space: nowrap;
+  background: linear-gradient(180deg, #FFC27A 0%, #FF9A3C 55%, #FF8A2A 100%); color: #3A1A04; font: 800 clamp(16px, 4.8vw, 19px)/1 ${BODY}; letter-spacing: .01em; white-space: nowrap;
   box-shadow: 0 5px 0 ${BN.orangeDeep}, 0 0 0 3px rgba(255,255,255,.55) inset, 0 12px 28px rgba(30,16,60,.4);
   animation: bn-nextPulse 2.2s ease-in-out 2s infinite; }
 .bn-nextIn::before { content: ""; position: absolute; inset: -10px; border-radius: inherit; z-index: -1; background: radial-gradient(closest-side, rgba(255,210,122,.75), rgba(255,154,60,0)); opacity: .55; animation: bn-nextGlow 2.2s ease-in-out infinite; }
 .bn-nextIn::after { content: ""; position: absolute; left: 18px; right: 18px; top: 5px; height: 12px; border-radius: 99px; background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0)); pointer-events: none; }
-.bn-nextIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #FFF4E3; box-shadow: 0 2px 0 #E6D2B4, 0 0 0 2px #fff inset; animation: bn-nextBob 1.6s ease-in-out infinite; }
+.bn-next { max-width: 100%; } .bn-nextIn { max-width: 100%; min-width: 0; }
+.bn-nextLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.bn-nextIcon { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #FFF4E3; box-shadow: 0 2px 0 #E6D2B4, 0 0 0 2px #fff inset; animation: bn-nextBob 1.6s ease-in-out infinite; }
 .bn-nextIcon svg { width: 28px; height: auto; margin-top: 2px; }
-.bn-nextArrow { display: inline-block; font-size: 22px; animation: bn-nextNudge 1.6s ease-in-out infinite; }
+.bn-nextLabel { position: relative; }
+.bn-nextArrow { position: relative; display: inline-block; font-size: 22px; animation: bn-nextNudge 1.6s ease-in-out infinite; }
 .bn-next:active .bn-nextIn { box-shadow: 0 2px 0 ${BN.orangeDeep}, 0 0 0 3px rgba(255,255,255,.55) inset, 0 6px 14px rgba(30,16,60,.35); }
 @keyframes bn-nextPulse { 0%, 70%, 100% { transform: scale(1) } 80% { transform: scale(1.06) } 90% { transform: scale(.99) } }
 @keyframes bn-nextGlow { 0%,100% { opacity: .4; transform: scale(.96) } 50% { opacity: .85; transform: scale(1.06) } }
@@ -359,6 +357,9 @@ export const BOO_CSS = `
 
 /* the foot ignores taps except on its controls (all: unset would inherit "none") */
 .bn-foot > *, .bn-foot .bn-next, .bn-foot .bn-puffy, .bn-foot .bn-link, .bn-foot a { pointer-events: auto; }
+
+/* narrow phones: the pill drops its arrow so the label never truncates */
+@media (max-width: 399px) { .bn-nextArrow { display: none; } .bn-nextIn { padding-right: 18px; gap: 8px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .bn-star, .bn-gif.is-float, .bn-hint, .bn-wiggle, .bn-ants, .bn-wingL, .bn-wingR, .bn-nextIn, .bn-nextIn::before, .bn-nextIcon, .bn-nextArrow { animation: none !important; }
