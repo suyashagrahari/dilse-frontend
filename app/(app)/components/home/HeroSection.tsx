@@ -10,6 +10,7 @@ import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wi
 import { useSeason } from "@/hooks/useSeason";
 import { HALLOWEEN_PATH } from "@/lib/season";
 import HalloweenCritters from "@/components/promo/HalloweenCritters";
+import { HalloweenHeroNight } from "@/components/promo/HalloweenCornerWebs";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
@@ -38,9 +39,12 @@ export default function HeroSection() {
       <div style={{ position: 'absolute', top: '18%', right: '12%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,0.08) 0%,transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '12%', left: '4%', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle,rgba(61,12,17,0.04) 0%,transparent 70%)', pointerEvents: 'none' }} />
 
-      {/* Halloween mode: a ghost, spiders and bats wander through now and then.
-          Loads after idle, keeps clear of the buttons, off under reduced motion. */}
-      <HalloweenCritters scope="parent" avoid=".hero-btns, .hero-kicker, .hwb-wrap" />
+      {/* Halloween mode: a moonlit night behind the hero (moon, fog, corner
+          webs) and waves of ghosts, spiders and bats. Decoration only — CSS and
+          inline SVG behind the content; the GIFs load right after mount and
+          keep clear of the buttons; off under reduced motion. */}
+      <HalloweenHeroNight />
+      <HalloweenCritters scope="parent" avoid=".hero-btns, .hero-kicker, .hero-copy-pane h1, .hwb-wrap" />
 
       <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">

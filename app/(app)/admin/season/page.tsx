@@ -15,17 +15,27 @@
 // — the server applies it to every price read for the two Halloween templates
 // (gallery, quote, publish gate, order) while the mode is Halloween and the sale
 // is on. Super admin only; the server refuses everyone else.
+//
+// And which templates are IN the drop: any templates from the registry —
+// Halloween or not — picked from a searchable checklist and saved as
+// `saleSlugs`. The sale discounts exactly those, and /halloween-offer shows
+// exactly those as gallery cards.
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, ExternalLink, Ghost, Loader2, Percent, Save } from "lucide-react";
+import { CalendarClock, ExternalLink, Ghost, LayoutGrid, Loader2, Percent, RotateCcw, Save, Search, X } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
 import { HALLOWEEN_PATH, HALLOWEEN_SLUGS, setSeason, type SeasonMode } from "@/lib/season";
+import { GALLERY_BY_SLUG, GALLERY_LIST } from "@/lib/galleryRules";
+import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
 import { A, AdminPage, Hero, HeroStat, Loading, Panel } from "../adminKit";
+
+const DEFAULT_DROP: string[] = [...HALLOWEEN_SLUGS];
+const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 type View = {
   mode: SeasonMode;
@@ -75,6 +85,9 @@ export default function AdminSeasonPage() {
   const [mode, setMode] = useState<SeasonMode>("halloween");
   const [saleOn, setSaleOn] = useState(true);
   const [pct, setPct] = useState("49");
+  const [slugs, setSlugs] = useState<string[]>(DEFAULT_DROP);
+  const [q, setQ] = useState("");
+  const { tiers } = useTemplateMeta();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -93,6 +106,7 @@ export default function AdminSeasonPage() {
     setMode(v.mode);
     setSaleOn(v.saleEnabled);
     setPct(String(v.salePercent || 49));
+    setSlugs(v.saleSlugs.length ? v.saleSlugs : DEFAULT_DROP);
   }, []);
 
   useEffect(() => {
@@ -115,17 +129,29 @@ export default function AdminSeasonPage() {
 
   const pctNum = Math.round(Number(pct));
   const pctValid = Number.isFinite(pctNum) && pctNum >= 1 && pctNum <= 90;
-  const dirty = !!view && (mode !== view.mode || saleOn !== view.saleEnabled || (pctValid && pctNum !== view.salePercent));
+  const slugsChanged = !!view && !sameSet(slugs, view.saleSlugs.length ? view.saleSlugs : DEFAULT_DROP);
+  const dirty = !!view && (mode !== view.mode || saleOn !== view.saleEnabled || (pctValid && pctNum !== view.salePercent) || slugsChanged);
+
+  // The whole registry, Halloween first, then gallery order; searched by name or slug.
+  const catalogue = useMemo(() => {
+    const hw = new Set<string>(HALLOWEEN_SLUGS);
+    return [...GALLERY_LIST]
+      .sort((a, b) => Number(hw.has(b.slug)) - Number(hw.has(a.slug)))
+      .map((t) => ({ slug: t.slug, title: t.title, emoji: t.emoji, ultra: Boolean(t.ultra), premium: isPremiumSlug(t.slug, tiers) }));
+  }, [tiers]);
+  const needle = q.trim().toLowerCase();
+  const shown = needle ? catalogue.filter((t) => t.title.toLowerCase().includes(needle) || t.slug.includes(needle)) : catalogue;
+  const toggleSlug = (slug: string) => setSlugs((cur) => (cur.includes(slug) ? cur.filter((x) => x !== slug) : [...cur, slug]));
 
   const save = async () => {
-    if (!accessToken || busy || !pctValid) return;
+    if (!accessToken || busy || !pctValid || slugs.length === 0) return;
     setBusy(true);
     setError(null);
     try {
       const res = await fetch(`${API_URL}/admin/super/season`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, saleEnabled: saleOn, salePercent: pctNum }),
+        body: JSON.stringify({ mode, saleEnabled: saleOn, salePercent: pctNum, saleSlugs: slugs }),
       });
       const json = await res.json().catch(() => null);
       const v = res.ok ? parseView(json) : null;
@@ -152,7 +178,7 @@ export default function AdminSeasonPage() {
   return (
     <AdminPage
       title="Season & offers"
-      subtitle="What the whole site is wearing: the Valentine wishlist, the Halloween drop, or nothing seasonal. In Halloween mode the running strip shows under the navbar on home, blog and gallery, posts show the Halloween card, and the two Halloween templates are sold at the sale percent — a real discount applied by the server at quote, publish and checkout."
+      subtitle="What the whole site is wearing: the Valentine wishlist, the Halloween drop, or nothing seasonal. In Halloween mode the running strip shows under the navbar on home, blog and gallery, posts show the Halloween card, and the templates you put in the drop are sold at the sale percent — a real discount applied by the server at quote, publish and checkout."
       icon={<Ghost size={18} />}
       width={980}
     >
@@ -163,7 +189,7 @@ export default function AdminSeasonPage() {
           <HeroStat
             label="Halloween sale"
             value={view ? (saleLive ? `${view.salePercent}% off` : view.saleEnabled ? "Armed" : "Off") : "…"}
-            sub={view ? (saleLive ? "live on both Halloween templates" : view.saleEnabled ? "applies once mode is Halloween" : "full price") : undefined}
+            sub={view ? (saleLive ? `live on ${view.saleSlugs.length || 2} drop template${view.saleSlugs.length === 1 ? "" : "s"}` : view.saleEnabled ? "applies once mode is Halloween" : "full price") : undefined}
           />
           <HeroStat
             label="Last updated"
@@ -201,7 +227,7 @@ export default function AdminSeasonPage() {
           <Panel
             title="Halloween sale"
             icon={<Percent size={15} color={A.goldDeep} />}
-            note={HALLOWEEN_SLUGS.join(" · ")}
+            note={`${slugs.length} template${slugs.length === 1 ? "" : "s"} in the drop`}
             delay={0.1}
             right={
               <button
@@ -242,11 +268,59 @@ export default function AdminSeasonPage() {
               <p className="ssn-help">
                 {saleOn
                   ? mode === "halloween"
-                    ? `Both Halloween templates sell at ${pctValid ? pctNum : "…"}% off, with the original price struck through on the paywall.`
+                    ? `Every template in the drop sells at ${pctValid ? pctNum : "…"}% off, with the original price struck through on the paywall.`
                     : "Armed — it takes effect when the mode is Halloween."
                   : "Off — the Halloween drop still shows, at full price and without a percent."}
               </p>
             </div>
+          </Panel>
+
+          <Panel
+            title="Templates in the drop"
+            icon={<LayoutGrid size={15} color={A.goldDeep} />}
+            note={`${slugs.length} selected`}
+            delay={0.15}
+            right={
+              <button type="button" className="ssn-reset" disabled={sameSet(slugs, DEFAULT_DROP)} onClick={() => setSlugs(DEFAULT_DROP)}>
+                <RotateCcw size={13} /> Reset to the two Halloween templates
+              </button>
+            }
+          >
+            <p className="ssn-help ssn-pick-help">
+              Any templates, Halloween or not. These are the cards on the offer page and the templates the sale discounts. At least one.
+            </p>
+            <div className="ssn-chips" aria-label="Selected templates">
+              {slugs.map((s) => {
+                const t = GALLERY_BY_SLUG.get(s);
+                return (
+                  <span key={s} className={`ssn-chip${t ? "" : " is-unknown"}`} title={t ? s : "Not in the registry — skipped on the site"}>
+                    {t ? t.title : s}
+                    <button type="button" aria-label={`Remove ${t?.title ?? s}`} onClick={() => toggleSlug(s)}><X size={12} /></button>
+                  </span>
+                );
+              })}
+              {slugs.length === 0 && <span className="ssn-warn">Pick at least one template.</span>}
+            </div>
+            <label className="ssn-search">
+              <Search size={15} aria-hidden />
+              <input type="search" placeholder="Search templates by name or slug" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search templates" />
+            </label>
+            <ul className="ssn-list" role="group" aria-label="Templates">
+              {shown.map((t) => {
+                const on = slugs.includes(t.slug);
+                return (
+                  <li key={t.slug}>
+                    <label className={`ssn-row${on ? " on" : ""}`}>
+                      <input type="checkbox" checked={on} onChange={() => toggleSlug(t.slug)} />
+                      <span className="ssn-row-e" aria-hidden>{t.emoji}</span>
+                      <span className="ssn-row-t"><b>{t.title}</b><code>{t.slug}</code></span>
+                      {(t.ultra || t.premium) && <i className="ssn-prem">{t.ultra ? "✦ Premium" : "Premium"}</i>}
+                    </label>
+                  </li>
+                );
+              })}
+              {shown.length === 0 && <li className="ssn-help ssn-empty">No template matches “{q}”.</li>}
+            </ul>
           </Panel>
 
           <div className="ssn-bar">
@@ -256,7 +330,7 @@ export default function AdminSeasonPage() {
               <Link href="/blog" target="_blank">Blog <ExternalLink size={12} /></Link>
               <Link href="/templates" target="_blank">Gallery <ExternalLink size={12} /></Link>
             </div>
-            <button type="button" className="ssn-save" disabled={!dirty || busy || !pctValid} onClick={save}>
+            <button type="button" className="ssn-save" disabled={!dirty || busy || !pctValid || slugs.length === 0} onClick={save}>
               {busy ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {dirty ? "Save changes" : "Saved"}
             </button>
           </div>
@@ -278,7 +352,8 @@ const SSN_CSS = `
 .ssn-mode > span:not(.ssn-mode-e) { font: 400 12.5px/1.45 'Inter', sans-serif; color: #7f5f5f; }
 .ssn-mode-e { font-size: 26px; line-height: 1; }
 .ssn-mode.on { border-color: #3d0c11; box-shadow: 0 10px 24px -14px rgba(61,12,17,.6), inset 0 0 0 1px #3d0c11; }
-.ssn-mode.is-halloween.on { border-color: #c4521c; background: linear-gradient(180deg, #fff7ef, #ffe9d6); box-shadow: 0 10px 24px -14px rgba(196,82,28,.7), inset 0 0 0 1px #c4521c; }
+.ssn-mode.is-halloween.on { border-color: #5a4a7c; color: #f3eefe; background: linear-gradient(180deg, #2b2245, #17132a); box-shadow: 0 10px 24px -14px rgba(23,19,42,.8), inset 0 0 0 1px #b9a6f0; }
+.ssn-mode.is-halloween.on > span:not(.ssn-mode-e) { color: rgba(226,216,250,.75); }
 .ssn-mode.is-valentine.on { background: linear-gradient(180deg, #fff6f4, #ffe6e1); }
 .ssn-live { position: absolute; top: 12px; right: 12px; padding: 4px 7px; border-radius: 999px; font: 800 9px/1 'Inter', sans-serif; font-style: normal; letter-spacing: .12em; color: #fff; background: #1e7a4b; }
 .ssn-switch { position: relative; width: 46px; height: 26px; border: 0; border-radius: 999px; cursor: pointer; background: rgba(61,12,17,.18); transition: background .25s ease; }
@@ -306,5 +381,30 @@ const SSN_CSS = `
   background: linear-gradient(135deg, #3d0c11, #5a1620); box-shadow: 0 10px 22px -12px rgba(61,12,17,.8); }
 .ssn-save:disabled { opacity: .5; cursor: default; }
 @media (max-width: 1023px) { .ssn-bar { bottom: 100px; } }
+.ssn-reset { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(61,12,17,.16); background: #fffdfb; cursor: pointer;
+  font: 700 12px/1 'Inter', sans-serif; color: #2a0a0e; }
+.ssn-reset:disabled { opacity: .45; cursor: default; }
+.ssn-pick-help { margin-bottom: 10px; }
+.ssn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ssn-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 11px; border-radius: 999px; font: 700 12px/1 'Inter', sans-serif; color: #f3eefe;
+  background: linear-gradient(135deg, #2b2245, #3a2f58); box-shadow: inset 0 0 0 1px rgba(185,166,240,.35); }
+.ssn-chip.is-unknown { background: #b3261e; }
+.ssn-chip button { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; cursor: pointer; color: #f3eefe; background: rgba(255,255,255,.14); }
+.ssn-search { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: 12px; border: 1.5px solid rgba(61,12,17,.16); background: #fff; color: #7f5f5f; }
+.ssn-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: 500 14px/1 'Inter', sans-serif; color: #2a0a0e; }
+.ssn-list { list-style: none; margin: 10px 0 0; padding: 4px; max-height: 420px; overflow-y: auto; border-radius: 14px; border: 1px solid rgba(61,12,17,.1); background: #fffdfb;
+  display: grid; grid-template-columns: minmax(0,1fr); gap: 2px; }
+@media (min-width: 720px) { .ssn-list { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.ssn-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
+.ssn-row:hover { background: rgba(61,12,17,.04); }
+.ssn-row.on { background: rgba(90,74,124,.1); box-shadow: inset 0 0 0 1px rgba(90,74,124,.35); }
+.ssn-row input { width: 16px; height: 16px; accent-color: #5a4a7c; flex: none; }
+.ssn-row-e { font-size: 18px; flex: none; }
+.ssn-row-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.ssn-row-t b { font: 600 13px/1.25 'Inter', sans-serif; color: #2a0a0e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ssn-row-t code { font: 500 11px/1 ui-monospace, monospace; color: #8b6b6b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ssn-prem { flex: none; padding: 4px 8px; border-radius: 999px; font: 800 9.5px/1 'Inter', sans-serif; font-style: normal; letter-spacing: .08em; text-transform: uppercase;
+  color: #3a2505; background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); }
+.ssn-empty { padding: 12px; }
 .ssn-toast { position: fixed; left: 50%; bottom: 170px; transform: translateX(-50%); z-index: 90; padding: 10px 16px; border-radius: 999px; color: #fff; background: #1e7a4b; font: 700 13px/1 'Inter', sans-serif; box-shadow: 0 10px 24px -10px rgba(0,0,0,.4); }
 `;
