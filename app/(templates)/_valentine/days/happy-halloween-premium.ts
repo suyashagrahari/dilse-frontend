@@ -112,6 +112,8 @@ const base = premiumDay<HalloweenExtrasPremium>(halloweenDay, {
 
 export const halloweenDayPremium: DayConfig<HalloweenExtrasPremium> = {
   ...base,
+  // The $2 twin's stacked recipient-page mark is its own; premium keeps the default pill.
+  brandMark: undefined,
   music: {
     audioOnly: true,
     track: HALLOWEEN_TRACK,

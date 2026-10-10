@@ -1175,6 +1175,107 @@ const CHIP_CSS = `
 @media (prefers-reduced-motion: reduce) { .vp-chip { transition: none; } .vp-disc.is-on .vp-ring { animation: none; } }
 `;
 
+// ─── Compact: one 40px round icon (DayConfig.music.compact) ──────────────────
+//
+// Opt-in per day. Replaces the radio card / chip (and the melody's round
+// button) with a single 40px button: a tap plays or stops the music, a tiny
+// equaliser bounces while it plays, a struck-through note shows when it is
+// stopped. A YouTube song's player stays mounted at 200×113 inside it, clipped
+// and covered (the same audio-only trade-off as the chip above).
+//
+// Placement: bottom-left above the dock by default. A day moves it with plain
+// CSS on `.vm-icon` (e.g. next to its own top chrome); while the edit form is
+// open (`overSheet`) inline styles lift it above the form, bottom-left.
+
+function CompactMusicIcon({
+  api,
+  title,
+  host,
+  overSheet,
+  dockBase,
+  muted,
+  onMute,
+}: {
+  api: DayMusicApi;
+  title: string;
+  host?: React.RefObject<HTMLDivElement | null>;
+  overSheet: boolean;
+  dockBase: string;
+  muted: boolean;
+  onMute?: () => void;
+}) {
+  const on = api.playing && !muted;
+  const hidden = overSheet && !api.playing && !api.loading;
+  const style: CSSProperties = {
+    ["--vm-icon-base" as string]: dockBase,
+    ...(overSheet ? { zIndex: 195, top: "auto", right: "auto", left: 12, bottom: "calc(112px + env(safe-area-inset-bottom, 0px))" } : null),
+    visibility: hidden ? "hidden" : "visible",
+    pointerEvents: hidden ? "none" : "auto",
+  };
+  const label = on ? `Stop the music (${title})` : `Play the music (${title})`;
+  return (
+    <div className={`vm-icon${on ? " is-on" : ""}${api.loading ? " is-loading" : ""}`} style={style}>
+      {/* The real player (YouTube only) — 200×113, clipped by the 40px circle, under the face. Never visible. */}
+      {host && <div ref={host} className="vm-icon-host" aria-hidden />}
+      <button
+        type="button"
+        className="vm-icon-btn"
+        // Keep this tap away from the "first gesture starts the music" listener,
+        // or the same tap would start it and then toggle it straight back off.
+        onPointerDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (api.playing && muted && onMute) onMute();
+          else api.toggle();
+        }}
+        aria-pressed={on}
+        aria-label={label}
+        title={label}
+      >
+        <span className="vm-icon-ring" aria-hidden />
+        <span className="vm-icon-eq" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+        <svg className="vm-icon-off" width="18" height="18" viewBox="0 0 18 18" aria-hidden focusable="false">
+          <path d="M7 13.2V4.4l7-1.6v8.6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+          <ellipse cx="5" cy="13.4" rx="2.3" ry="1.8" fill="currentColor" />
+          <ellipse cx="12" cy="11.6" rx="2.3" ry="1.8" fill="currentColor" />
+          <path d="M2.5 2.5l13 13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+const ICON_CSS = `
+.vm-icon { position: fixed; z-index: 96; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; isolation: isolate;
+  left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(var(--vm-icon-base, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 8px 20px -8px rgba(0,0,0,.7), 0 0 0 1px rgba(255,210,122,.4); }
+.vm-icon-host, .vm-icon-host iframe { position: absolute; left: 0; top: 0; width: 200px; height: 113px; border: 0; pointer-events: none; }
+.vm-icon-btn { position: absolute; inset: 0; z-index: 2; border: 0; padding: 0; margin: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+  color: #FFD27A; background: radial-gradient(circle at 50% 38%, #3A2257, #1B1330 70%); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.vm-icon-btn:focus-visible { outline: 3px solid #FFD27A; outline-offset: -3px; }
+.vm-icon-ring { position: absolute; inset: 2px; border-radius: 50%; opacity: 0; transition: opacity .3s;
+  background: conic-gradient(from 0deg, #FFD27A, transparent 30%, #FF8A3D 52%, transparent 78%, #FFD27A);
+  -webkit-mask: radial-gradient(circle, transparent 0 15px, #000 15.5px 18px, transparent 18.5px); mask: radial-gradient(circle, transparent 0 15px, #000 15.5px 18px, transparent 18.5px); }
+.vm-icon.is-on .vm-icon-ring { opacity: 1; animation: vm-icon-spin 3.2s linear infinite; }
+@keyframes vm-icon-spin { to { transform: rotate(360deg); } }
+.vm-icon-eq { position: absolute; display: flex; align-items: flex-end; gap: 2.5px; height: 14px; opacity: 0; transition: opacity .2s; }
+.vm-icon-eq i { display: block; width: 3px; height: 14px; border-radius: 2px; background: #FFD27A; transform-origin: 50% 100%; transform: scaleY(.35); }
+.vm-icon.is-on .vm-icon-eq { opacity: 1; }
+.vm-icon.is-on .vm-icon-eq i { animation: vm-icon-eq .9s ease-in-out infinite; }
+.vm-icon.is-on .vm-icon-eq i:nth-child(2) { animation-delay: .2s; }
+.vm-icon.is-on .vm-icon-eq i:nth-child(3) { animation-delay: .4s; }
+@keyframes vm-icon-eq { 0%,100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+.vm-icon-off { position: absolute; opacity: .9; transition: opacity .2s; }
+.vm-icon.is-on .vm-icon-off { opacity: 0; }
+.vm-icon.is-loading .vm-icon-off { opacity: .45; }
+@media (prefers-reduced-motion: reduce) { .vm-icon.is-on .vm-icon-ring, .vm-icon.is-on .vm-icon-eq i { animation: none; } .vm-icon.is-on .vm-icon-eq i { transform: scaleY(.7); } }
+`;
+
 type Corner = "br" | "bl" | "tl" | "tr";
 const CORNERS: Corner[] = ["br", "bl", "tl", "tr"];
 const CORNER_KEY = "vw_music_corner";
@@ -1237,6 +1338,7 @@ export function DayMusicProvider({
   songs,
   chip,
   track,
+  compact = false,
   children,
 }: {
   settings: DayMusicSettings;
@@ -1257,6 +1359,8 @@ export function DayMusicProvider({
   chip?: NowPlayingChipTheme;
   /** The day's own looping MP3 (DayConfig.music.track) — plays in mode "track". */
   track?: DayTrack;
+  /** DayConfig.music.compact: one 40px play/stop icon instead of the card / chip / melody button. */
+  compact?: boolean;
   children: ReactNode;
 }) {
   const requested = settings.musicMode;
@@ -1392,12 +1496,29 @@ export function DayMusicProvider({
           player's height on phones. Always the same wrapper, so a mode change never remounts the day. */}
       <div
         className={hasCard ? "vm-reserve" : undefined}
-        style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: `calc(${dockBase} + ${coverCard && chip ? CHIP_RESERVE : 137}px)` }}
+        style={{ display: "contents", ["--vm-base" as string]: dockBase, ["--vm-reserve" as string]: compact ? dockBase : `calc(${dockBase} + ${coverCard && chip ? CHIP_RESERVE : 137}px)` }}
       >
         {children}
       </div>
-      {mode === "melody" && toggles === 0 && !overSheet && <MusicButton music={api} />}
-      {hasCard && (
+      {compact ? (
+        (hasCard || (mode === "melody" && toggles === 0 && !overSheet)) && (
+          <>
+            <CompactMusicIcon
+              api={api}
+              title={hasCard ? cardTitle : "Melody"}
+              host={cardHost}
+              overSheet={overSheet}
+              dockBase={dockBase}
+              muted={hasCard ? muted : false}
+              onMute={hasCard ? onMute : undefined}
+            />
+            <style>{ICON_CSS}</style>
+          </>
+        )
+      ) : (
+        mode === "melody" && toggles === 0 && !overSheet && <MusicButton music={api} />
+      )}
+      {hasCard && !compact && (
         <>
           {coverCard && chip ? (
             <NowPlayingChip api={api} title={cardTitle} artist={cardArtist} host={cardHost} overSheet={overSheet} dockBase={dockBase} muted={muted} onMute={onMute} theme={chip} />

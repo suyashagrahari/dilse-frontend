@@ -128,8 +128,12 @@ export const halloweenDay: DayConfig<HalloweenExtras> = {
   gifSlots: GIFS,
   // Editor controls top-right (PremiumTopBar), like the premium twin.
   topBar: true,
+  // The recipient page: the SubhSandesh logo with the word under it, top-right.
+  brandMark: "stacked",
   music: {
     audioOnly: true,
+    // One 40px play/stop icon beside the pumpkin progress pill (placed by the template's CSS on .vm-icon).
+    compact: true,
     track: HALLOWEEN_TRACK,
     suggestions: HALLOWEEN_SONGS,
     suggestionsNote: "Halloween favourites · tap to use",

@@ -96,6 +96,7 @@ function Inner({ slug }: { slug: DaySlug }) {
         songs={day.music?.suggestions}
         chip={day.premium ? chipThemeFrom(day.theme, day.emoji) : undefined}
         track={day.music?.track}
+        compact={!!day.music?.compact}
       >
       <Experience key={e.previewVersion} data={e.displayData} mode="preview" react={noopReact} />
 
