@@ -1183,9 +1183,13 @@ const CHIP_CSS = `
 // stopped. A YouTube song's player stays mounted at 200×113 inside it, clipped
 // and covered (the same audio-only trade-off as the chip above).
 //
-// Placement: bottom-left above the dock by default. A day moves it with plain
-// CSS on `.vm-icon` (e.g. next to its own top chrome); while the edit form is
-// open (`overSheet`) inline styles lift it above the form, bottom-left.
+// Placement: bottom-left, above the dock and the safe area, by default (a day
+// can nudge it with plain CSS on `.vm-icon`, e.g. to centre it on its own
+// bottom button). While the edit form is open (`overSheet`) it must never sit
+// on the form: inline styles move it into the strip of dimmed page ABOVE the
+// sheet, top-left, a little smaller (the phone sheet is 94dvh tall, so that
+// strip is 6dvh: 40px at 667, 50px at 844; on wide screens the sheet is a
+// centred card with at least 6vh above it).
 
 function CompactMusicIcon({
   api,
@@ -1208,7 +1212,9 @@ function CompactMusicIcon({
   const hidden = overSheet && !api.playing && !api.loading;
   const style: CSSProperties = {
     ["--vm-icon-base" as string]: dockBase,
-    ...(overSheet ? { zIndex: 195, top: "auto", right: "auto", left: 12, bottom: "calc(112px + env(safe-area-inset-bottom, 0px))" } : null),
+    ...(overSheet
+      ? { zIndex: 195, top: "max(4px, calc(3dvh - 16px))", bottom: "auto", right: "auto", left: "max(12px, env(safe-area-inset-left, 0px))", transform: "scale(.8)", transformOrigin: "0 0" }
+      : null),
     visibility: hidden ? "hidden" : "visible",
     pointerEvents: hidden ? "none" : "auto",
   };
