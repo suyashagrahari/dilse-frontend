@@ -2,12 +2,13 @@
 // and the client page. Plain data, so a server component can read it. Which
 // templates are in the drop is the season's `sale.slugs` (see ./DropTemplates).
 
-export function halloweenFaqs(pct: number): { q: string; a: string }[] {
+export function halloweenFaqs(pct: number, upTo = false): { q: string; a: string }[] {
+  const off = `${upTo ? "up to " : ""}${pct}%`;
   return [
     {
-      q: pct ? `Is it really ${pct}% off?` : "Is there a Halloween discount?",
+      q: pct ? `Is it really ${off} off?` : "Is there a Halloween discount?",
       a: pct
-        ? `Yes. Every template in the drop is ${pct}% off until 31 October, 11:59 pm India time. The sale price is what you pay when you publish — nothing to apply, no code.`
+        ? `Yes. ${upTo ? "Templates in the drop are" : "Every template in the drop is"} ${off} off until 31 October, 11:59 pm India time. The sale price is what you pay when you publish — nothing to apply, no code.`
         : "The drop's templates are available at their regular price. Watch this page — when a Halloween sale is running, the discount is applied automatically when you publish.",
     },
     {

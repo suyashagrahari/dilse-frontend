@@ -3,8 +3,8 @@
 // The gate: the title card (slot hb1: "HAPPY HALLOWEEN" with a penguin peeking
 // out of a pumpkin) over a haunted mailbox with a face that wiggles. Tap it:
 // the door flips down, the flag pops up and a ghost BURSTS out at the screen
-// (scare #1: the boo sample, the piano ducks, a buzz, a little shake), then
-// shrinks back, giggles and holds up the letter. Like the kit's PremiumGate,
+// (scare #1, v9: the BOO GIF alone on a dark blurred full-screen veil, with the
+// boo sample, the piano ducking and a buzz), then peeks out, giggles and holds up the letter. Like the kit's PremiumGate,
 // everything audible starts synchronously inside the tap: p.open() (audio
 // session, AudioContext, the haunted piano), then the cues; onOpen() follows
 // once the ghost has said sorry. Kids pages: a cute pop, no scare.
@@ -34,7 +34,10 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
     const t = timers.current;
     return () => t.forEach((x) => window.clearTimeout(x));
   }, []);
-  const scary = boo.enabled && !reduce;
+  // v9 (owner, 11 Oct): the BOO is a full-screen moment of its own (./Scare.tsx: the
+  // pumpkin-ghost-boo GIF alone on a dark blurred veil, the boo sample on its BOO
+  // frame); when it fades, the ghost peeks out of the mailbox with the letter.
+  const scary = boo.enabled;
 
   // (v8: no "open quietly" link; the engine's music icon bottom-left mutes)
   const open = () => {
@@ -43,22 +46,20 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
     void requestTiltPermission();
     p.sfx("pop", { gain: 0.5 });
     setPhase("boo");
-    if (boo.enabled) {
-      // the ghost lunges at ~0.26 s: the boo + duck + buzz land with it
-      boo.sound(reduce ? 0 : 270);
-      later(() => boo.shake(), 280);
-    } else {
-      p.sfx("bn-woo", { gain: 0.9, at: 0.18 });
-      haptic([15, 40, 25]);
-    }
-    const t = scary ? 1250 : 500;
-    later(() => {
+    const giggle = () => {
       setPhase("giggle");
       p.sfx("bn-giggle", { gain: 0.7 });
       burst({ kind: "hearts", origin: { x: 0.5, y: 0.5 }, count: 18, emojis: ["💜", "🧡", "✨", "🍬"] });
-    }, t);
-    later(() => setPhase("out"), t + (reduce ? 700 : 1700));
-    later(onOpen, t + (reduce ? 950 : 2300));
+      later(() => setPhase("out"), reduce ? 700 : 1700);
+      later(onOpen, reduce ? 950 : 2300);
+    };
+    if (boo.enabled) {
+      boo.ghost({ onDone: giggle });
+    } else {
+      p.sfx("bn-woo", { gain: 0.9, at: 0.18 });
+      haptic([15, 40, 25]);
+      later(giggle, 500);
+    }
   };
 
   const out = phase !== "idle";
@@ -89,22 +90,14 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
         </span>
         <span className="bn-mbWrap">
           <AnimatePresence>
-            {out && (
+            {out && !(phase === "boo" && scary) && (
               <motion.span
                 key="g"
                 className="bn-gateGhost"
                 initial={{ y: 90, scale: 0.3, opacity: 0 }}
-                animate={
-                  phase === "boo" && scary
-                    ? { y: [90, -10, 60], scale: [0.3, 1, 2.5], opacity: [0, 1, 1] }
-                    : { y: 0, scale: 1, opacity: 1 }
-                }
+                animate={{ y: 0, scale: 1, opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={
-                  phase === "boo" && scary
-                    ? { duration: 0.5, times: [0, 0.5, 1], ease: ["easeOut", [0.2, 1.4, 0.4, 1]] }
-                    : { type: "spring", stiffness: 260, damping: 13 }
-                }
+                transition={{ type: "spring", stiffness: 260, damping: 13 }}
               >
                 <AnimatePresence>
                   {phase === "boo" && (
@@ -114,7 +107,7 @@ export default function Gate({ n, hello, justUnsealed, onOpen }: { n: Night; hel
                       initial={{ scale: 0.2, opacity: 0, rotate: -14 }}
                       animate={{ scale: 1, opacity: 1, rotate: -6 }}
                       exit={{ scale: 0.6, opacity: 0 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 14, delay: scary ? 0.24 : 0.1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.1 }}
                     >
                       BOO!
                     </motion.span>
