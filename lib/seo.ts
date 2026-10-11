@@ -124,6 +124,7 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
   "happy-halloween":      { emoji: "🎃", label: "Halloween" },
   "dandiya-partner":      { emoji: "🪔", label: "Dandiya invitation" },
+  "happy-diwali":         { emoji: "🪔", label: "Diwali" },
   // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
   "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
   "happy-propose-day-premium": { emoji: "💍", label: "Propose Day" },
@@ -161,6 +162,10 @@ const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { ti
   "happy-halloween": (r, s) => ({
     title: `🎃 A little haunted house was built for ${r}`,
     description: `${s} left something on your doorstep… open it with the lights off 👻`,
+  }),
+  "happy-diwali": (r, s) => ({
+    title: `🪔 Psst, ${r}… someone left a diya at your door`,
+    description: `${s} lit up a little Diwali night just for you. Sound on ✨`,
   }),
   "happy-halloween-premium": (r, s) => ({
     title: `🎃 Trick or treat, ${r}? A night at the manor is waiting`,

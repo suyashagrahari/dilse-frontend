@@ -37,6 +37,8 @@ const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorTy
   // Dandiya: a bright Mixolydian garba hook over a soft dhol pulse (steps 0, 3, 4, 6 —
   // the lilting "dha-ge-na-dhin" feel), lively but never loud.
   garba: { root: 67, bpm: 112, wave: "triangle", dhol: [0, 3, 4, 6], bars: [[0, 4, 7, 9, 7, 4, 5, 4], [2, 5, 9, 10, 9, 5, 4, 2], [0, 4, 7, 12, 10, 9, 7, -1], [5, 4, 2, 0, -1, 0, -1, -1]] },
+  // Diwali: a warm major-pentatonic lilt (sa re ga pa dha), like temple bells at dusk.
+  diya: { root: 67, bpm: 76, wave: "sine", bars: [[0, 4, 7, 9, 12, 9, 7, -1], [2, 4, 7, 9, 7, 4, 2, -1], [-3, 0, 4, 7, 9, 7, 4, -1], [0, 2, 4, 7, 4, 2, 0, -1]] },
 };
 
 const freq = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);

@@ -99,6 +99,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.
   // Be My Dandiya Partner (/dandiya-partner) is NOT listed either, for the same
   // reason: its TEMPLATE_DATA entry in lib/seo-data.ts puts it in the sitemap.
+  // Diwali (/happy-diwali) likewise: its TEMPLATE_DATA entry puts it in the sitemap.
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card

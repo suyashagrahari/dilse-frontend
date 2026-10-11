@@ -176,7 +176,7 @@ export interface DayConfig<E extends Extras = Extras> {
   copy: DayCopy;
   share: { title: string; accent: string };
   /** Which synthesised melody useSynthMusic plays. */
-  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern" | "spooky" | "garba";
+  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern" | "spooky" | "garba" | "diya";
   /** The frame (width / height) this day shows photos in — the crop editor uses the same shape. */
   photoAspect: number;
   /**

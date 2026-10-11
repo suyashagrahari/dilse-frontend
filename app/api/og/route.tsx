@@ -16,6 +16,8 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   "happy-halloween-premium": { emoji: "👻", gradient: ["#3A1E5C", "#FF9A3C"], label: "Boo-tiful Night" },
   // Be My Dandiya Partner: Navratri navy → marigold, the invitation wording.
   "dandiya-partner": { emoji: "🪔", gradient: ["#141C52", "#D17A00"], label: "A Dandiya night invitation" },
+  // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
+  "happy-diwali": { emoji: "🪔", gradient: ["#0A1030", "#C25E0A"], label: "A diya at your door" },
 };
 
 export async function GET(req: NextRequest) {

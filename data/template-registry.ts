@@ -63,6 +63,7 @@ import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
 import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
 import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
 import { config as dandiyaPartnerCfg } from "@/app/(templates)/dandiya-partner/config";
+import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
 import { config as chocolateDayPremiumCfg } from "@/app/(templates)/happy-chocolate-day-premium/config";
@@ -95,6 +96,10 @@ const allConfigs = [
   //    after 31 October. ────────────────────────────────────────────────────
   halloweenCfg,
   halloweenPremiumCfg,
+
+  // ── Diwali (8 Nov 2026) — the festive drop. Ships hidden on the apex
+  //    (server DEFAULT_HIDDEN) until released in /admin/templates. ─────────
+  diwaliCfg,
 
   // ── Valentine's week (7–14 Feb), in week order. Ship hidden on the apex
   //    (server DEFAULT_HIDDEN); the super admin releases each day. ─────────
