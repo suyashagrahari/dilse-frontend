@@ -84,6 +84,8 @@ const DECO: Record<string, Deco> = {
   "happy-valentines-day": { shapes: ["star", "star", "sparkle", "heart"], drift: "twinkle", count: 34, halo: "rgba(255,190,150,.10)" },
   // Halloween: fireflies and stars twinkling, a few bats flitting on the spot.
   "happy-halloween": { shapes: ["light", "star", "bat", "light", "star"], drift: "twinkle", count: 30, halo: "rgba(183,156,255,.12)" },
+  // Diwali: warm diya lights rising, gold sparkles.
+  "happy-diwali": { shapes: ["light", "sparkle", "light", "star"], drift: "rise", count: 26, halo: "rgba(255,190,90,.12)" },
 };
 // ✦ Premium twins start on their $2 day's motif (a builder may add its own entry above).
 for (const [p, b] of Object.entries(PREMIUM_BASE)) if (!DECO[p]) DECO[p] = DECO[b];

@@ -23,7 +23,7 @@ import IdleGif from "@/components/promo/IdleGif";
 import { HW, HW_SKY } from "@/components/promo/halloweenTheme";
 import { useSeason } from "@/hooks/useSeason";
 import { useNow, countdown, pad2 } from "@/hooks/usePromo";
-import { HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
+import { dropSaleOf, HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
 import { halloweenFaqs } from "./content";
 import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
@@ -69,7 +69,9 @@ export default function HalloweenOfferClient() {
   const season = useSeason();
   const on = season?.mode === "halloween";
   const seasonPct = on && season.sale.enabled ? season.sale.percent : 0;
-  const slugs = season?.sale.slugs;
+  // This drop's own slugs, whichever season this visitor's side wears (with the
+  // India/abroad split a visitor can land here from the other side's link).
+  const slugs = dropSaleOf(season, "halloween")?.slugs;
   const drop = useDropTemplates(slugs);
   // The super admin's numbers: the season percent, unless every template in the
   // drop carries its own discount (from /payment/pricing) — then that one, or

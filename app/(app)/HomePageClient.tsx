@@ -13,6 +13,8 @@ import SubhSandeshFooter from "./components/home/SubhSandeshFooter";
 import ActivityToast from "@/components/home/ActivityToast";
 import HydrateOnVisible from "@/components/HydrateOnVisible";
 import HalloweenOfferBar from "@/components/promo/HalloweenOfferBar";
+import FestivalOfferBar from "@/components/promo/FestivalOfferBar";
+import SeasonPendingStrip from "@/components/promo/SeasonPendingStrip";
 
 // ── Everything below the fold hydrates on approach ──────────────────────────
 //
@@ -43,8 +45,13 @@ export default function HomePageClient() {
       <main className="app-main-shell">
         {/* The running Halloween strip, just under the navbar. Its mode comes
             from the server render (page.tsx), so it is in the first paint and
-            moves nothing; home.css places it. */}
+            moves nothing; home.css places it. With India and abroad wearing
+            different seasons the server cannot pick, so the strip's box is
+            held (SeasonPendingStrip) until the visitor's own answer lands. */}
+        <SeasonPendingStrip className="hwb-home" />
         <HalloweenOfferBar source="home-banner" className="hwb-home" />
+        <FestivalOfferBar kind="dandiya" source="home-banner" className="fsb-home" />
+        <FestivalOfferBar kind="diwali" source="home-banner" className="fsb-home" />
         <HeroSection />
         <HydrateOnVisible><ProblemSection /></HydrateOnVisible>
         <HydrateOnVisible><HowItWorksSection /></HydrateOnVisible>

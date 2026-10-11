@@ -16,7 +16,8 @@
 //   ~1.3 s   once the new page is on screen the veil dissolves into it
 //
 // Tap anywhere to skip. Under reduced motion it is only a quick fade, no
-// flight and no sound. Open in a new tab / with a modifier key → the browser's
+// flight and no sound. The run itself (overlay, timings, skip, dissolve) is
+// the shared seasonPortal.ts; this file is the Halloween scene. Open in a new tab / with a modifier key → the browser's
 // own behaviour, untouched. Outside Halloween mode the links behave normally.
 //
 // The overlay is plain DOM on <body>, not React state: it has to survive the
@@ -30,16 +31,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useIsHalloween } from "@/hooks/useSeason";
 import { HALLOWEEN_GIF, HALLOWEEN_SLUGS } from "@/lib/season";
+import { isModifiedClick, runPortal, slugOfHref, type Prefetch, type PortalScene, type Push } from "./seasonPortal";
 
 const WITCH_SRC = HALLOWEEN_GIF("witch-seal-broom.webp");
 const LAUGH_SRC = HALLOWEEN_GIF("witch-laugh.mp3");
 const FLIGHT_MS = 1150;
 const PUSH_AT_MS = 600;
 
-type Push = (href: string) => void;
-type Prefetch = (href: string) => void;
-
-let running = false;
 let witchWarm = false;
 
 /** Fetch the witch GIF ahead of the click (pointer down / hover), so she flies at once. */
@@ -53,7 +51,7 @@ export function warmWitch() {
 
 /** True for a /happy-halloween… template path. */
 export function isHalloweenTemplateHref(href: string): boolean {
-  const slug = href.replace(/^https?:\/\/[^/]+/, "").replace(/^\//, "").split(/[?#/]/)[0];
+  const slug = slugOfHref(href);
   return (HALLOWEEN_SLUGS as readonly string[]).includes(slug);
 }
 
@@ -80,85 +78,28 @@ function playCackle(): HTMLAudioElement | null {
   }
 }
 
-const pathOf = (href: string) => href.replace(/^https?:\/\/[^/]+/, "").split(/[?#]/)[0] || "/";
-/** The new route is on screen: the URL changed and no route skeleton (loading.tsx) is still showing. */
-const onScreen = (target: string) =>
-  pathOf(window.location.pathname) === target && !document.querySelector('[aria-busy="true"].skRoot');
+const WITCH_SCENE: PortalScene = {
+  cls: "wpo",
+  css: "",
+  html: (reduced) =>
+    `<span class="wpo-scene">${SCENE_HTML}</span>` +
+    (reduced
+      ? ""
+      : `<span class="wpo-path">${Array.from({ length: 9 }, (_, i) => `<i class="wpo-spark" style="--k:${i}"></i>`).join("")}` +
+        `<span class="wpo-witch"><img src="${WITCH_SRC}" alt="" width="280" height="280" decoding="async" /></span></span>`) +
+    `<span class="wpo-cap"><em>Opening your haunted letter…</em><i class="wpo-glow"></i></span>`,
+  pushAtMs: PUSH_AT_MS,
+  minShowMs: FLIGHT_MS + 160,
+  onStart: () => { playCackle(); },
+};
 
 /**
  * Run the portal and navigate to `href`. Safe to call from any click handler;
  * a second call while one is running is ignored.
  */
 export function openWithWitch(href: string, push: Push, prefetch?: Prefetch) {
-  if (typeof window === "undefined") return push(href);
-  if (running) return;
-  running = true;
-  try { prefetch?.(href); } catch {}
-
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  if (!reduced) playCackle();
-
-  const root = document.createElement("div");
-  root.className = "wpo" + (reduced ? " wpo-rm" : "");
-  root.setAttribute("aria-hidden", "true");
-  root.innerHTML =
-    `<style>${WPO_CSS}</style><span class="wpo-scene">${SCENE_HTML}</span>` +
-    (reduced
-      ? ""
-      : `<span class="wpo-path">${Array.from({ length: 9 }, (_, i) => `<i class="wpo-spark" style="--k:${i}"></i>`).join("")}` +
-        `<span class="wpo-witch"><img src="${WITCH_SRC}" alt="" width="280" height="280" decoding="async" /></span></span>`) +
-    `<span class="wpo-cap"><em>Opening your haunted letter…</em><i class="wpo-glow"></i></span>`;
-  document.body.appendChild(root);
-  // let the browser paint the start state, then run
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("wpo-on")));
-
-  const target = pathOf(href);
-  let pushed = false;
-  const doPush = () => {
-    if (pushed) return;
-    pushed = true;
-    push(href);
-  };
-  const t0 = performance.now();
-  const minShow = reduced ? 220 : FLIGHT_MS + 160;
-  const pushTimer = window.setTimeout(doPush, reduced ? 160 : PUSH_AT_MS);
-
-  let finished = false;
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    window.clearTimeout(pushTimer);
-    window.clearInterval(poll);
-    root.classList.add("wpo-out");
-    window.setTimeout(() => { root.remove(); running = false; }, reduced ? 260 : 520);
-  };
-  // Dissolve once the new page is on screen (or give up after 6 s and reveal whatever is there).
-  const poll = window.setInterval(() => {
-    const arrived = pushed && onScreen(target);
-    const elapsed = performance.now() - t0;
-    if ((arrived && elapsed >= minShow) || elapsed > 6000) {
-      // one more frame so the template has painted under the veil
-      requestAnimationFrame(() => requestAnimationFrame(finish));
-      window.clearInterval(poll);
-    }
-  }, 50);
-
-  // Tap to skip: navigate now, dissolve as soon as the page is there.
-  root.addEventListener("pointerdown", () => {
-    doPush();
-    root.classList.add("wpo-skip");
-    const wait = window.setInterval(() => {
-      if (onScreen(target) || performance.now() - t0 > 6000) {
-        window.clearInterval(wait);
-        finish();
-      }
-    }, 40);
-  }, { once: true });
-}
-
-/** True when a click should open normally (new tab, download, middle click…). */
-function isModified(e: ReactMouseEvent) {
-  return e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+  // The CSS strings are defined below this point in the module; read them at call time.
+  runPortal({ ...WITCH_SCENE, css: WPO_CSS }, href, push, prefetch);
 }
 
 /**
@@ -170,7 +111,7 @@ export function useWitchPortal() {
   const on = useIsHalloween();
   return useCallback(
     (e: ReactMouseEvent, href: string) => {
-      if (!on || isModified(e)) return false;
+      if (!on || isModifiedClick(e)) return false;
       e.preventDefault();
       openWithWitch(href, (h) => router.push(h), (h) => router.prefetch(h));
       return true;

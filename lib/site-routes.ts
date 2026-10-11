@@ -97,6 +97,9 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // Halloween (/happy-halloween) is NOT listed here: it has a TEMPLATE_DATA entry
   // in lib/seo-data.ts (FAQs + HowTo), so sitemap.ts already emits it from
   // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.
+  // Be My Dandiya Partner (/dandiya-partner) is NOT listed either, for the same
+  // reason: its TEMPLATE_DATA entry in lib/seo-data.ts puts it in the sitemap.
+  // Diwali (/happy-diwali) likewise: its TEMPLATE_DATA entry puts it in the sitemap.
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card
@@ -109,6 +112,8 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },
   { path: "/valentine-wishlist", priority: 0.5, changeFrequency: "monthly" },
   { path: "/halloween-offer", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/dandiya-offer", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/diwali-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
   { path: "/refund-policy", priority: 0.3, changeFrequency: "yearly" },
@@ -135,6 +140,7 @@ export const NON_INDEXABLE_ROUTES: Record<string, string> = {
   "/profile": "private — per-user account area (also robots.txt Disallow)",
   "/favorites": "private — per-user saved templates (also robots.txt Disallow)",
   "/saves": "redirects (307)",
+  "/festive-offer": "redirects (307) to /dandiya-offer or /diwali-offer — the retired merged festive drop",
   "/auth/google-bridge": "OAuth plumbing, not a page",
   "/admin": "staff only — robots.txt Disallow (covers /admin/* children)",
   "/love": "generic fallback metadata, duplicates /love-gf",

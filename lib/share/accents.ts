@@ -36,6 +36,8 @@ const ACCENTS: Record<string, string> = {
   "happy-kiss-day": "#9D174D",
   "happy-valentines-day": "#C48F2E",
   "happy-halloween": "#B84E14",
+  "dandiya-partner": "#B8650A",
+  "happy-diwali": "#B3121B",
   // ✦ Premium v2: each one's own palette (its day file's share accent, or its
   // accentDeep where that accent is too light to carry white button text).
   "happy-rose-day-premium": "#D63F72",

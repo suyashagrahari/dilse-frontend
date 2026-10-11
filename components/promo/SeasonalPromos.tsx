@@ -9,11 +9,17 @@
 //   "valentine" → the Valentine banners, exactly as before (they still show
 //                 only while their own countdown runs — /admin/wishlist)
 //   "halloween" → the Halloween strip, card, critters and corner webs —
-//                 never a Valentine banner
+//                 never a Valentine or festival banner
+//   "dandiya"   → the Navratri Dandiya strip, card, critters and mirror-work
+//                 torans — never a Diwali, Valentine or Halloween banner
+//   "diwali"    → the Diwali strip, card, critters and marigold garlands —
+//                 never a Dandiya, Valentine or Halloween banner
 //   "off"       → nothing (Premium promos are not seasonal and stay put)
 //
 // Until the season is known (no server answer, fetch in flight) nothing renders,
-// which is what these spots did before their own fetches landed anyway.
+// which is what these spots did before their own fetches landed anyway. With
+// India and abroad wearing different seasons, the strip's box is held meanwhile
+// when both sides have one (SeasonPendingStrip), so the right one lands in place.
 
 import { useSeason } from "@/hooks/useSeason";
 import { PromoCountdownCard, PromoMarquee } from "./PromoBanners";
@@ -21,6 +27,12 @@ import HalloweenOfferBar from "./HalloweenOfferBar";
 import HalloweenOfferCard from "./HalloweenOfferCard";
 import HalloweenCritters from "./HalloweenCritters";
 import HalloweenCornerWebs from "./HalloweenCornerWebs";
+import { isFestivalMode } from "@/lib/season";
+import FestivalOfferBar from "./FestivalOfferBar";
+import FestivalOfferCard from "./FestivalOfferCard";
+import FestivalCritters from "./FestivalCritters";
+import { FestivalCorners } from "./FestivalDecor";
+import SeasonPendingStrip from "./SeasonPendingStrip";
 
 /**
  * What a creature on the blog must keep clear of: the running bar, the offer
@@ -28,11 +40,11 @@ import HalloweenCornerWebs from "./HalloweenCornerWebs";
  * navbars need no entry — the layer sits beneath them (z-index 39), so a
  * creature passing there goes behind them.
  */
-export const CRITTER_AVOID_BLOG = ".hwb-wrap, .hoc-glass, main button, [data-critter-avoid]";
+export const CRITTER_AVOID_BLOG = ".hwb-wrap, .hoc-glass, .fsb-wrap, .foc-glass, main button, [data-critter-avoid]";
 
 export function SeasonalMarquee({ source, critters = false, className }: { source: string; critters?: boolean; className?: string }) {
   const s = useSeason();
-  if (!s) return null;
+  if (!s) return <SeasonPendingStrip className={className} />;
   if (s.mode === "halloween") {
     return (
       <>
@@ -40,6 +52,15 @@ export function SeasonalMarquee({ source, critters = false, className }: { sourc
         {/* The blog's decorations: creatures in waves and webs in the corners. */}
         {critters && <HalloweenCritters scope="page" kinds={["ghost", "crawl", "drop", "bats"]} avoid={CRITTER_AVOID_BLOG} />}
         {critters && <HalloweenCornerWebs scope="page" />}
+      </>
+    );
+  }
+  if (isFestivalMode(s.mode)) {
+    return (
+      <>
+        <FestivalOfferBar kind={s.mode} source={source} className={className} />
+        {critters && <FestivalCritters kind={s.mode} scope="page" avoid={CRITTER_AVOID_BLOG} />}
+        {critters && <FestivalCorners kind={s.mode} scope="page" />}
       </>
     );
   }
@@ -51,6 +72,7 @@ export function SeasonalCountdownCard({ source, className }: { source: string; c
   const s = useSeason();
   if (!s) return null;
   if (s.mode === "halloween") return <HalloweenOfferCard className={className} />;
+  if (isFestivalMode(s.mode)) return <FestivalOfferCard kind={s.mode} className={className} />;
   if (s.mode === "valentine") return <PromoCountdownCard source={source} className={className} />;
   return null;
 }

@@ -83,7 +83,8 @@ export interface ValentineDayData<E = Extras> {
 export interface ValentineReactions {
   openedAt: string | null;
   completedAt: string | null;
-  answer: "yes" | null;
+  /** "no" only on pages whose sender allowed it (extras.answerMode "noAfterTries"). */
+  answer: "yes" | "no" | null;
   answeredAt: string | null;
   noDodges: number | null;
   count: number | null;
@@ -92,7 +93,7 @@ export interface ValentineReactions {
 }
 
 export type ReactionEvent = "opened" | "completed" | "answered";
-export type ReactFn = (event: ReactionEvent, extra?: { noDodges?: number; count?: number }) => void;
+export type ReactFn = (event: ReactionEvent, extra?: { noDodges?: number; count?: number; answer?: "yes" | "no" }) => void;
 
 /** What every day's Experience receives. */
 export interface ExperienceProps {
@@ -176,7 +177,7 @@ export interface DayConfig<E extends Extras = Extras> {
   copy: DayCopy;
   share: { title: string; accent: string };
   /** Which synthesised melody useSynthMusic plays. */
-  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern" | "spooky";
+  melody: "garden" | "velvet" | "cocoa" | "arcade" | "paper" | "cafe" | "blush" | "lantern" | "spooky" | "garba" | "diya";
   /** The frame (width / height) this day shows photos in — the crop editor uses the same shape. */
   photoAspect: number;
   /**
@@ -299,7 +300,7 @@ export function parseReactions(raw: unknown): ValentineReactions {
   return {
     openedAt: d(r.openedAt),
     completedAt: d(r.completedAt),
-    answer: r.answer === "yes" ? "yes" : null,
+    answer: r.answer === "yes" || r.answer === "no" ? r.answer : null,
     answeredAt: d(r.answeredAt),
     noDodges: n(r.noDodges),
     count: n(r.count),

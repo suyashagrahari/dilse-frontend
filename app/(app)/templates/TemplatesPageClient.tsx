@@ -22,8 +22,9 @@ import {
 } from "./PremiumShowcase";
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
 import HalloweenTeaser, { HALLOWEEN_TEASER_CSS } from "./HalloweenTeaser";
+import FestivalTeaser, { FESTIVAL_TEASER_CSS } from "./FestivalTeaser";
 import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
-import { useSeason } from "@/hooks/useSeason";
+import { useSeason, useSeasonPending } from "@/hooks/useSeason";
 import { SEASON_FALLBACK } from "@/lib/season";
 
 
@@ -301,9 +302,17 @@ function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: bool
 
 function TemplatesContent({ room }: { room: GalleryTab }) {
   const router = useRouter();
-  // The teaser beside Premium follows the season: Halloween drop, Valentine
-  // wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
-  const seasonMode = useSeason()?.mode ?? SEASON_FALLBACK.mode;
+  // The teaser beside Premium follows the season: Halloween, Dandiya or Diwali
+  // drop, Valentine wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
+  const knownMode = useSeason()?.mode;
+  // India and abroad wearing different seasons, this visitor's not known yet
+  // (lib/season.server.ts): hold the teaser's place with a neutral box instead
+  // of showing the fallback (Valentine) teaser and then swapping it. Only when
+  // both sides have a teaser there — one side "off" has none.
+  const seasonPending = useSeasonPending();
+  const teaserPending = !!seasonPending && seasonPending.india !== "off" && seasonPending.abroad !== "off";
+  // Pending with one side "off": show no teaser yet rather than the fallback one.
+  const seasonMode = knownMode ?? (seasonPending ? "off" : SEASON_FALLBACK.mode);
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
@@ -491,7 +500,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS + FESTIVAL_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -694,9 +703,10 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                     </header>
 
                     {/* Premium is always there; beside it, whichever season the site is
-                        wearing (Halloween drop OR Valentine wishlist, never both). With the
+                        wearing (Halloween drop, Navratri Dandiya drop, Diwali drop OR Valentine wishlist —
+                        exactly one). With the
                         season off, Premium stands alone in its own full-width layout. */}
-                    {!hasActiveFilters && (seasonMode === "off" ? (
+                    {!hasActiveFilters && (seasonMode === "off" && !teaserPending ? (
                       premiumShowcase.length > 0 && (
                         <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                       )
@@ -705,7 +715,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                         {premiumShowcase.length > 0 && (
                           <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                         )}
-                        {seasonMode === "halloween" ? <HalloweenTeaser /> : <ValentineTeaser />}
+                        {teaserPending ? <div className="txSkel" aria-hidden data-season-pending="" /> : seasonMode === "halloween" ? <HalloweenTeaser /> : seasonMode === "dandiya" || seasonMode === "diwali" ? <FestivalTeaser kind={seasonMode} /> : <ValentineTeaser />}
                       </div>
                     ))}
 

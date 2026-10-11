@@ -14,6 +14,10 @@ const TEMPLATE_CONFIG: Record<string, { emoji: string; gradient: string[]; label
   // "Gift for …" (lib/seo.ts TEASER_PREVIEW uses the same line as the og:title).
   "happy-halloween": { emoji: "🎃", gradient: ["#17122B", "#B84E14"], label: "A little haunted house" },
   "happy-halloween-premium": { emoji: "👻", gradient: ["#3A1E5C", "#FF9A3C"], label: "Boo-tiful Night" },
+  // Be My Dandiya Partner: Navratri navy → marigold, the invitation wording.
+  "dandiya-partner": { emoji: "🪔", gradient: ["#7A0F12", "#D17A00"], label: "A Dandiya night invitation" },
+  // Happy Diwali: navy night → diya gold, the teaser wording (lib/seo.ts TEASER_PREVIEW).
+  "happy-diwali": { emoji: "🪔", gradient: ["#4A0A0D", "#F6A821"], label: "A diya at your door" },
 };
 
 export async function GET(req: NextRequest) {
