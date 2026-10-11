@@ -57,6 +57,15 @@ export default function ValentineTeaser() {
 
 export const VALENTINE_TEASER_CSS = `
 /* ── the pair of invitations above the grid ─────────────────────────────── */
+/* The season teaser's place while India/abroad resolves (TemplatesPageClient):
+   a quiet neutral card the size of a season teaser, so it lands without a shift. */
+.txSkel { border-radius: 18px; min-height: 74px; /* the phone teaser's compact row */
+  background: linear-gradient(100deg, rgba(61,12,17,.05) 30%, rgba(61,12,17,.09) 50%, rgba(61,12,17,.05) 70%);
+  background-size: 300% 100%; animation: txSkel 1.4s ease-in-out infinite; }
+@keyframes txSkel { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (min-width: 768px) { .txSkel { border-radius: 26px; min-height: 340px; } }
+@media (min-width: 1024px) { .txSkel { min-height: 0; } /* stretches to the Premium teaser beside it */ }
+@media (prefers-reduced-motion: reduce) { .txSkel { animation: none; } }
 .txDuo { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; margin: 0 auto 22px; }
 .txDuo .pxTz { margin: 0; }
 @media (min-width: 768px) { .txDuo { gap: 16px; margin-bottom: 30px; } }

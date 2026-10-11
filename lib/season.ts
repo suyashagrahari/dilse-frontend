@@ -12,6 +12,19 @@
 // server's answer down through `SeasonProvider` so the first paint is already
 // right; this store then corrects it if the admin flipped it since.
 //
+// ── INDIA AND ABROAD ────────────────────────────────────────────────────────
+//
+// A super admin can show visitors in India one season and visitors abroad
+// another (Diwali here, Halloween there). The server decides the side from its
+// own country lookup of the REQUEST'S address, so the answer is only right when
+// the BROWSER asks: a server render asks from the server's own address. When
+// the server says the answer depends on the country (`split`),
+// lib/season.server.ts hands the page a `pending` season instead: nothing
+// seasonal paints until this store's fetch lands (space is reserved where the
+// strip/teaser would go — `stripOnBothSides`), so no visitor ever sees the other
+// side's season first. With the split off nothing changes: the server's answer
+// is everyone's answer and is in the first paint, as before.
+//
 // ── WHY A FAILED FETCH MEANS "valentine" ────────────────────────────────────
 //
 // The server never errors on this route (it answers with its defaults on a DB
@@ -32,12 +45,30 @@ export const isFestivalMode = (m: unknown): m is FestivalId => m === "dandiya" |
 
 export type DropSale = { enabled: boolean; percent: number; slugs: string[] };
 
+export type Audience = "india" | "abroad";
+
 export type Season = {
+  /** What THIS visitor's side wears. */
   mode: SeasonMode;
   /** The ACTIVE mode's drop sale (for "valentine"/"off" the server still sends Halloween's). */
   sale: DropSale;
   /** Every drop's settings — servers from before per-season drops leave this out. */
   drops?: Partial<Record<DropId, DropSale>>;
+  /** This visitor's side (servers from before the split leave it out). */
+  audience?: Audience;
+  /** True when India and abroad wear different seasons right now. */
+  split?: boolean;
+  /** Both sides' modes. */
+  audiences?: Record<Audience, SeasonMode>;
+  /**
+   * Set only by lib/season.server.ts on a split season: the server render does
+   * not know this visitor's side, so `mode`/`sale` must NOT be shown. `useSeason`
+   * reads a pending season as "not known yet"; `audiences` and `drops` (the same
+   * for everybody) still are.
+   */
+  pending?: boolean;
+  /** Set when a super admin is previewing the site as one side (see SEASON_PREVIEW_KEY). */
+  previewing?: Audience;
 };
 
 export const HALLOWEEN_PATH = "/halloween-offer";
@@ -120,8 +151,56 @@ const MODES: readonly SeasonMode[] = ["valentine", ...DROP_IDS, "off"];
  * server/src/config/seasonSale.ts, which enforces the same rule on publish.
  */
 export function dropSlugsOf(s: Season | null | undefined): string[] {
-  if (!s || !isDropMode(s.mode)) return [];
+  if (!s) return [];
+  // India/abroad split: the union of both sides' drops, as the server allows
+  // (a link sent from one side opens on the other). The same for every visitor,
+  // so it is safe to read from a pending server season.
+  if (s.split && s.audiences) {
+    const out = new Set<string>();
+    for (const m of [s.audiences.india, s.audiences.abroad]) {
+      if (!isDropMode(m)) continue;
+      const slugs = s.drops?.[m]?.slugs ?? (s.mode === m ? s.sale.slugs : []);
+      for (const x of slugs) {
+        const k = String(x).trim().toLowerCase();
+        if (k) out.add(k);
+      }
+    }
+    return [...out];
+  }
+  if (!isDropMode(s.mode)) return [];
   return s.sale.slugs.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+}
+
+/** Every mode some visitor sees right now (one, or both sides' while split). */
+export function modesOf(s: Season | null | undefined): SeasonMode[] {
+  if (!s) return [];
+  if (s.split && s.audiences) return [s.audiences.india, s.audiences.abroad];
+  return [s.mode];
+}
+
+/**
+ * The percent a drop is offered at to SOMEBODY right now — for what a server
+ * render writes for every visitor (page titles, FAQ JSON-LD): the drop's percent
+ * while either side wears it with its sale on, else 0. On the page itself, use
+ * `livePercentOf` (this visitor's side).
+ */
+export function offerPercentOf(s: Season | null | undefined, id: DropId): number {
+  if (!s) return 0;
+  if (!s.split) return livePercentOf(s, id);
+  if (!modesOf(s).includes(id)) return 0;
+  const d = dropSaleOf(s, id);
+  return d?.enabled ? d.percent : 0;
+}
+
+/**
+ * While a split season is still resolving for this visitor, a spot can hold
+ * space only when BOTH sides will put something of the same size there —
+ * otherwise holding it leaves a gap for one side instead of a shift for the
+ * other. `stripOnBothSides`: both sides wear a drop (each has a running strip
+ * of the same height).
+ */
+export function stripOnBothSides(a: Record<Audience, SeasonMode> | null | undefined): boolean {
+  return !!a && isDropMode(a.india) && isDropMode(a.abroad);
 }
 
 function parseSale(raw: { enabled?: unknown; percent?: unknown; slugs?: unknown } | undefined): DropSale {
@@ -146,6 +225,22 @@ export function parseSeason(json: unknown): Season | null {
   const mode = MODES.includes(raw as SeasonMode) ? (raw as SeasonMode) : null;
   if (!mode) return null;
   const out: Season = { mode, sale: parseSale(d.sale) };
+  const any = d as { audience?: unknown; split?: unknown; audiences?: unknown };
+  if (any.audience === "india" || any.audience === "abroad") out.audience = any.audience;
+  if (any.split === true) {
+    const a = (any.audiences && typeof any.audiences === "object" ? any.audiences : {}) as Record<string, unknown>;
+    const fix = (v: unknown): SeasonMode | null => {
+      const r = v === "festive" ? "diwali" : v;
+      return MODES.includes(r as SeasonMode) ? (r as SeasonMode) : null;
+    };
+    const india = fix(a.india);
+    const abroad = fix(a.abroad);
+    // A split we cannot read is treated as no split: this visitor's `mode` stands.
+    if (india && abroad) {
+      out.split = true;
+      out.audiences = { india, abroad };
+    }
+  }
   const rawDrops = (d as { drops?: unknown }).drops;
   if (rawDrops && typeof rawDrops === "object") {
     const drops: Partial<Record<DropId, DropSale>> = {};
@@ -179,11 +274,65 @@ export function subscribeSeason(l: () => void) {
 export const getSeasonSnapshot = (): Season | null => season;
 export const getSeasonServerSnapshot = (): Season | null => null;
 
+// ── Super admin: "Preview as India / abroad" ────────────────────────────────
+//
+// /admin/season links to the site with `?seasonPreview=india|abroad`. The
+// choice is kept for this tab (sessionStorage; `?seasonPreview=off` clears it)
+// and, while set, the store asks GET /admin/super/season/preview with the
+// signed-in token instead of /season. The SERVER decides who may: that route is
+// super-admin only, so for anybody else the request fails and the store falls
+// back to the public answer — the param can never change what the public sees.
+// Only what the site wears is previewed; prices still follow the real country.
+export const SEASON_PREVIEW_KEY = "ss:season-preview";
+
+function readPreview(): Audience | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const q = new URLSearchParams(window.location.search).get("seasonPreview");
+    if (q === "off") sessionStorage.removeItem(SEASON_PREVIEW_KEY);
+    else if (q === "india" || q === "abroad") sessionStorage.setItem(SEASON_PREVIEW_KEY, q);
+    const v = sessionStorage.getItem(SEASON_PREVIEW_KEY);
+    return v === "india" || v === "abroad" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPreview(audience: Audience): Promise<Season | null> {
+  let token: string | null = null;
+  try {
+    token = localStorage.getItem("gifts_access_token");
+  } catch {
+    /* storage blocked */
+  }
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_URL}/admin/super/season/preview?audience=${audience}`, {
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}`, ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
+    });
+    if (!res.ok) return null;
+    const s = parseSeason(await res.json().catch(() => null));
+    return s ? { ...s, previewing: audience } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The side a super admin is previewing as in this tab, or null. */
+export const seasonPreviewOf = (s: Season | null | undefined): Audience | null => s?.previewing ?? null;
+
 export function loadSeason(fresh = false): Promise<void> {
   if (inflight) return inflight;
   if (!fresh && fetchedAt && Date.now() - fetchedAt < 60_000) return Promise.resolve();
   inflight = (async () => {
     try {
+      const preview = readPreview();
+      const previewed = preview ? await fetchPreview(preview) : null;
+      if (previewed) {
+        season = previewed;
+        return;
+      }
       const res = await fetch(`${API_URL}/season`, {
         cache: fresh ? "no-store" : "default",
         headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
@@ -204,6 +353,11 @@ export function loadSeason(fresh = false): Promise<void> {
 
 /** For the admin panel after it saves: adopt the server's answer at once. */
 export function setSeason(next: Season) {
+  if (readPreview()) {
+    // Previewing in this tab: refetch the previewed side rather than adopt an answer for another.
+    void loadSeason(true);
+    return;
+  }
   season = next;
   fetchedAt = Date.now();
   emit();

@@ -15,11 +15,14 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { SeasonProvider } from "@/hooks/useSeason";
 import { getSeasonServer } from "@/lib/season.server";
+import { offerPercentOf } from "@/lib/season";
 import HalloweenOfferClient from "./HalloweenOfferClient";
 import { halloweenFaqs } from "./content";
 
-const salePct = (s: Awaited<ReturnType<typeof getSeasonServer>>) =>
-  s?.mode === "halloween" && s.sale.enabled ? s.sale.percent : 0;
+// What the server writes is the same for every visitor (title, FAQ JSON-LD), so
+// it names the percent the drop is offered at to whichever side wears it — see
+// `offerPercentOf`. The page itself shows this visitor's own (useSeason).
+const salePct = (s: Awaited<ReturnType<typeof getSeasonServer>>) => offerPercentOf(s, "halloween");
 
 export async function generateMetadata(): Promise<Metadata> {
   const pct = salePct(await getSeasonServer());

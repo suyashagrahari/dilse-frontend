@@ -12,6 +12,7 @@ import FeedbackHost from "@/components/FeedbackHost";
 import WelcomeHost from "@/components/WelcomeHost";
 import SubdomainOnboardingHost from "@/components/subdomain/SubdomainOnboardingHost";
 import ToastHost from "@/components/toast/ToastHost";
+import SeasonPreviewBadge from "@/components/promo/SeasonPreviewBadge";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import SwipeTabs from "@/components/SwipeTabs";
 
@@ -63,6 +64,8 @@ export default function AppLayout({
         <WelcomeHost />
         <ToastHost />
         <SubdomainOnboardingHost />
+        {/* Super admins only: "Previewing as India / abroad" (see /admin/season). */}
+        <SeasonPreviewBadge />
       </AppLayoutShell>
     </TemplateSearchProvider>
   );

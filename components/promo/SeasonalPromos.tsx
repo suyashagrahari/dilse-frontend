@@ -17,7 +17,9 @@
 //   "off"       → nothing (Premium promos are not seasonal and stay put)
 //
 // Until the season is known (no server answer, fetch in flight) nothing renders,
-// which is what these spots did before their own fetches landed anyway.
+// which is what these spots did before their own fetches landed anyway. With
+// India and abroad wearing different seasons, the strip's box is held meanwhile
+// when both sides have one (SeasonPendingStrip), so the right one lands in place.
 
 import { useSeason } from "@/hooks/useSeason";
 import { PromoCountdownCard, PromoMarquee } from "./PromoBanners";
@@ -30,6 +32,7 @@ import FestivalOfferBar from "./FestivalOfferBar";
 import FestivalOfferCard from "./FestivalOfferCard";
 import FestivalCritters from "./FestivalCritters";
 import { FestivalCorners } from "./FestivalDecor";
+import SeasonPendingStrip from "./SeasonPendingStrip";
 
 /**
  * What a creature on the blog must keep clear of: the running bar, the offer
@@ -41,7 +44,7 @@ export const CRITTER_AVOID_BLOG = ".hwb-wrap, .hoc-glass, .fsb-wrap, .foc-glass,
 
 export function SeasonalMarquee({ source, critters = false, className }: { source: string; critters?: boolean; className?: string }) {
   const s = useSeason();
-  if (!s) return null;
+  if (!s) return <SeasonPendingStrip className={className} />;
   if (s.mode === "halloween") {
     return (
       <>
