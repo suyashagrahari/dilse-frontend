@@ -283,8 +283,10 @@ export const HS_CSS = `
 }
 @media (min-width: 1024px) {
   /* desktop: the house fills the right half of the night, under a giant moon */
-  .hsMoon { top: 9%; bottom: auto; right: 9%; width: 380px; height: 380px; }
-  .hsHouse { right: 2vw; bottom: 0; width: auto; height: 90%; max-width: none; }
+  /* sized off the hero's height (one screen), so the whole house, its ground,
+     the grave and the ghosts always stand inside the first screen */
+  .hsMoon { top: max(70px, 9%); bottom: auto; right: 9%; width: clamp(240px, 46vh, 400px); height: clamp(240px, 46vh, 400px); }
+  .hsHouse { right: 2vw; bottom: 0; width: auto; height: 86%; max-width: 44vw; max-height: calc(44vw * ${VB_H} / ${VB_W}); }
   .hsWeb { width: 220px; height: 220px; }
   .hsWeb.tr { width: 190px; height: 246px; }
   .hsDrop { left: 50%; width: 64px; height: 149px; }
@@ -293,7 +295,7 @@ export const HS_CSS = `
   @keyframes hsWitchD { 0% { transform: translate(130px, 0) rotate(-4deg); opacity: 1; } 34% { transform: translate(-20vw, -50px) rotate(3deg); opacity: 1; }
     48% { transform: translate(-36vw, -20px) rotate(-2deg); opacity: 0; } 100% { transform: translate(-36vw, -20px); opacity: 0; } }
   .hsRun { width: 96px; height: 96px; bottom: 26px; animation-duration: 14s; }
-  .hsGrave { left: 42%; width: 140px; height: 130px; }
+  .hsGrave { left: 42%; width: clamp(104px, 15vh, 140px); height: clamp(96px, 14vh, 130px); }
 }
 @media (min-width: 1600px) { .hsHouse { right: 6vw; } .hsMoon { right: 13%; } }
 @media (prefers-reduced-motion: reduce) {

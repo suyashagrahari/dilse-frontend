@@ -25,7 +25,7 @@ import { useNow, countdown, pad2 } from "@/hooks/usePromo";
 import { HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
 import { halloweenFaqs } from "./content";
 import HauntedScene, { HS_CSS } from "./HauntedScene";
-import DropTemplates, { useDropTemplates } from "./DropTemplates";
+import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
 
 function Countdown() {
   const t = useNow();
@@ -64,10 +64,17 @@ function SmallBat() {
 export default function HalloweenOfferClient() {
   const season = useSeason();
   const on = season?.mode === "halloween";
-  const pct = on && season.sale.enabled ? season.sale.percent : 0;
+  const seasonPct = on && season.sale.enabled ? season.sale.percent : 0;
   const slugs = season?.sale.slugs;
   const drop = useDropTemplates(slugs);
-  const faqs = halloweenFaqs(pct);
+  // The super admin's numbers: the season percent, unless every template in the
+  // drop carries its own discount (from /payment/pricing) — then that one, or
+  // "up to" the largest when they differ. Never computed here.
+  const own = useDropDiscount(drop);
+  const pct = on ? (own?.pct ?? seasonPct) : 0;
+  const upTo = Boolean(on && own?.upTo);
+  const pctText = `${upTo ? "up to " : ""}${pct}%`;
+  const faqs = halloweenFaqs(pct, upTo);
   const first = drop[0];
   const n = drop.length;
   const countWord = n === 1 ? "one" : n === 2 ? "two" : n === 3 ? "three" : n === 4 ? "four" : String(n);
@@ -84,7 +91,7 @@ export default function HalloweenOfferClient() {
           <h1 id="hwo-title" className="hwoTitle">
             <span className="hwoTitleA">Halloween Drop</span>
             {pct ? (
-              <span className="hwoTitleB"><span className="hwoPct">{pct}%</span><small>OFF</small></span>
+              <span className="hwoTitleB">{upTo && <small className="hwoUpTo">up to</small>}<span className="hwoPct">{pct}%</span><small>OFF</small></span>
             ) : (
               <span className="hwoTitleC">Will you be my boo?</span>
             )}
@@ -123,7 +130,7 @@ export default function HalloweenOfferClient() {
         </h2>
         <p className="hwoSecSub">
           Pick one, write your letter (AI can help), add photos and a song, and send them one link.
-          {pct ? ` Every template here is ${pct}% off till 31 October.` : ""}
+          {pct ? (upTo ? ` Templates here are up to ${pct}% off till 31 October.` : ` Every template here is ${pct}% off till 31 October.`) : ""}
         </p>
         <div className="hwoFrame">
           <DropTemplates slugs={slugs} />
@@ -135,7 +142,7 @@ export default function HalloweenOfferClient() {
         <ol className="hwoSteps">
           <li><span className="hwoStepIc">🎃</span><b>Pick your haunt</b><span>Any template in the drop — the ✦ Premium ones included.</span></li>
           <li><span className="hwoStepIc">🕯️</span><b>Make it yours</b><span>Your letter, your photos, your song. Preview everything free.</span></li>
-          <li><span className="hwoStepIc">💌</span><b>Send the link</b><span>Publish{pct ? ` at ${pct}% off` : ""} and share it — WhatsApp, Instagram or a QR code.</span></li>
+          <li><span className="hwoStepIc">💌</span><b>Send the link</b><span>Publish{pct ? ` at ${pctText} off` : ""} and share it — WhatsApp, Instagram or a QR code.</span></li>
         </ol>
       </section>
 
@@ -194,6 +201,7 @@ const HWO_CSS = `
   background: linear-gradient(180deg, #fff1c9 6%, ${HW.window} 40%, ${HW.pumpkin} 68%, ${HW.pumpkinDeep} 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 6px 34px rgba(255,154,60,.55)); animation: hwoFlicker 5s ease-in-out infinite; }
 .hwoTitleB small { margin-top: .5em; font: 800 clamp(18px, 3vw, 30px)/1 'Inter', sans-serif; letter-spacing: .16em; color: ${HW.moon}; }
+.hwoTitleB .hwoUpTo { letter-spacing: .1em; text-transform: uppercase; }
 @keyframes hwoFlicker { 0%, 46%, 100% { opacity: 1; } 47% { opacity: .7; } 48% { opacity: 1; } 51% { opacity: .82; } 52% { opacity: 1; } }
 .hwoTitleC { font: italic 600 clamp(28px, 4.6vw, 48px)/1.1 var(--font-playfair), 'Playfair Display', serif; color: ${HW.pumpkin}; text-shadow: 0 0 26px rgba(255,154,60,.5); }
 .hwoSub { max-width: 32rem; margin: 16px auto 0; font: 400 15px/1.6 'Inter', sans-serif; color: ${HW.muted}; text-shadow: 0 1px 12px rgba(23,19,42,.9); }
@@ -294,17 +302,27 @@ const HWO_CSS = `
   .hwoEnd { margin: 80px auto 0; border-radius: 40px; }
 }
 @media (min-width: 1024px) {
-  /* desktop: copy on the left, the house on the right, one full-bleed night */
-  .hwoHero { min-height: max(760px, min(100svh, 940px)); padding: 150px 0 120px; display: flex; align-items: center; }
-  .hwoHeroIn { margin: 0 0 0 max(6vw, calc((100vw - 1240px) / 2)); max-width: 640px; align-items: flex-start; text-align: left; }
-  .hwoTitle { align-items: flex-start; }
-  .hwoTitleA { font-size: clamp(52px, 4.6vw, 70px); white-space: nowrap; }
-  .hwoHero .hwoSub { margin-left: 0; font-size: 16px; max-width: 30rem; }
-  .hwoGlass { align-items: stretch; max-width: 470px; padding: 22px 22px 18px; }
+  /* desktop: copy on the left, the house on the right, one full-bleed night that is
+     exactly one screen (the floating navbar included): every size keys on the
+     viewport height as well as its width, so 1280×720 and 1920×1080 both fit. */
+  .hwoHero { height: 100vh; height: 100svh; min-height: 600px; box-sizing: border-box; display: flex; align-items: center;
+    padding: clamp(80px, 11.5vh, 116px) 0 clamp(18px, 4vh, 48px); }
+  .hwoHeroIn { margin: 0 0 0 max(6vw, calc((100vw - 1240px) / 2)); max-width: min(600px, 46vw); align-items: flex-start; text-align: left; }
+  .hwoKick { padding: clamp(6px, .9vh, 8px) 13px; font-size: clamp(9.5px, 1.35vh, 10.5px); }
+  .hwoTitle { align-items: flex-start; margin-top: clamp(8px, 1.8vh, 18px); gap: 0; }
+  .hwoTitleA { font-size: clamp(40px, min(4.4vw, 7.2vh), 70px); white-space: nowrap; }
+  .hwoPct { font-size: clamp(72px, min(10.5vw, 15.5vh), 160px); }
+  .hwoTitleB small { font-size: clamp(16px, 2.7vh, 28px); }
+  .hwoUpTo { margin-right: 2px; }
+  .hwoHero .hwoSub { margin: clamp(6px, 1.4vh, 14px) 0 0; font-size: clamp(13.5px, 1.95vh, 16px); line-height: 1.55; max-width: 30rem; }
+  .hwoGlass { align-items: stretch; max-width: 460px; margin-top: clamp(12px, 2.4vh, 24px); padding: clamp(12px, 2.1vh, 22px) clamp(16px, 2vh, 22px) clamp(11px, 1.8vh, 18px); }
   .hwoGlass .hwoCtas { justify-content: flex-start; }
-  .hwoClockWrap { align-items: flex-start; }
-  .hwoCell b { font-size: 30px; }
-  .hwoTrust { align-self: flex-start; }
+  .hwoClockWrap { align-items: flex-start; gap: clamp(6px, 1.1vh, 10px); margin-bottom: clamp(9px, 1.9vh, 18px); }
+  .hwoCell { padding: clamp(7px, 1.25vh, 12px) 0 clamp(6px, 1.05vh, 10px); gap: clamp(3px, .6vh, 6px); }
+  .hwoCell b { font-size: clamp(21px, 3.3vh, 30px); }
+  .hwoCell i { top: clamp(7px, 1.25vh, 12px); }
+  .hwoBtn { padding: clamp(11px, 1.75vh, 15px) 22px; }
+  .hwoTrust { align-self: flex-start; margin-top: clamp(8px, 1.5vh, 14px); }
   .hwoEndGrave { width: 150px; height: 139px; }
   .hwoEndPumpkin { width: 140px; height: 140px; }
 }
