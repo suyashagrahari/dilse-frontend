@@ -7,6 +7,8 @@ import ToastHost from "@/components/toast/ToastHost";
 import { TemplateAvailabilityGate } from "@/components/TemplateAvailabilityGate";
 import { TemplateVisibilityProvider } from "@/components/TemplateVisibilityProvider";
 import { getHiddenTemplatesServer } from "@/lib/templateVisibility.server";
+import { SeasonProvider } from "@/hooks/useSeason";
+import { getSeasonServer } from "@/lib/season.server";
 
 /**
  * The share sheet is mounted here, once, for every template.
@@ -25,9 +27,12 @@ export default async function TemplatesLayout({
   // Resolved here, before the HTML is written, so the gate below decides on its
   // FIRST render. Fetching it from the client instead is what made a live
   // template open on "Not available yet" and then replace itself a moment later.
-  const hidden = await getHiddenTemplatesServer();
+  // The season too: a template hidden from the gallery still opens while it is
+  // in the active drop, and the gate needs that on its first render as well.
+  const [hidden, season] = await Promise.all([getHiddenTemplatesServer(), getSeasonServer()]);
 
   return (
+    <SeasonProvider season={season}>
     <TemplateVisibilityProvider hidden={hidden}>
       {/* One gate for every route in this group. It reads the slug off the URL,
           so a template switched off in the admin screen closes its builder here
@@ -58,5 +63,6 @@ export default async function TemplatesLayout({
           Publish click raises too. */}
       <SubdomainOnboardingHost />
     </TemplateVisibilityProvider>
+    </SeasonProvider>
   );
 }

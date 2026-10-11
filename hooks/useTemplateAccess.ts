@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { useHiddenTemplates, useTemplateVisibilityConfirmed } from "@/hooks/useHiddenTemplates";
+import { useActiveDrop } from "@/hooks/useSeason";
 
 /**
  * Which templates this visitor cannot use, and whether we know yet.
@@ -24,6 +25,23 @@ import { useHiddenTemplates, useTemplateVisibilityConfirmed } from "@/hooks/useH
  * So the merge happens here, once, and the gallery, the favourites list and the
  * builder gate all read the answer without learning that grants exist.
  *
+ * ── LISTED vs OPENABLE: `hidden` AND `blocked` ──────────────────────────────
+ *
+ * Two answers, for two kinds of caller:
+ *
+ *   hidden  = gallery-hidden − granted      → for LISTING (gallery, home,
+ *                                              favourites, ranks). A drop
+ *                                              template stays out of these.
+ *   blocked = hidden − active drop           → for OPENING (the builder gate,
+ *                                              the drop page's cards, links
+ *                                              into a builder).
+ *
+ * The active drop is the season's `sale.slugs` while the mode is "halloween"
+ * (`dropSlugsOf`), the same rule the server's `isTemplateReachable` enforces on
+ * create/publish. So a template hidden in /admin/templates but put in the drop
+ * in /admin/season is sold on /halloween-offer and opens, yet never appears in
+ * the gallery.
+ *
  * ── `resolved` IS THE PART THAT MATTERS ─────────────────────────────────────
  *
  * `earlyAccess` lands with `/auth/me`, which resolves AFTER the first paint.
@@ -41,8 +59,14 @@ import { useHiddenTemplates, useTemplateVisibilityConfirmed } from "@/hooks/useH
  * storage means an answer is on its way.
  */
 export function useTemplateAccess(): {
-  /** Slugs this visitor cannot use — hidden, minus anything granted to them. */
+  /** Slugs not LISTED for this visitor — gallery-hidden, minus their grants. */
   hidden: ReadonlySet<string>;
+  /** Slugs this visitor cannot OPEN — `hidden` minus the active drop. */
+  blocked: ReadonlySet<string>;
+  /** Slugs in the active drop (reachable even when hidden from the gallery). */
+  drop: ReadonlySet<string>;
+  /** True once this page load has fetched `/season` itself. See `useActiveDrop`. */
+  dropKnown: boolean;
   /** False while a grant list is still on its way. Do not refuse anyone yet. */
   resolved: boolean;
   /**
@@ -71,6 +95,14 @@ export function useTemplateAccess(): {
     return next;
   }, [publiclyHidden, granted]);
 
+  const { slugs: drop, known: dropKnown } = useActiveDrop();
+  const blocked = useMemo(() => {
+    if (drop.size === 0) return hidden;
+    const next = new Set(hidden);
+    for (const slug of drop) next.delete(slug);
+    return next;
+  }, [hidden, drop]);
+
   // A token in storage means `/auth/me` is in flight or about to be. Reading it
   // directly rather than trusting `isLoading` alone, because `isLoading` starts
   // false: on a hard refresh the first commit happens before `checkAuth` runs,
@@ -80,5 +112,5 @@ export function useTemplateAccess(): {
 
   const resolved = !isLoading && (!hasToken || !!user);
 
-  return { hidden, resolved, confirmed };
+  return { hidden, blocked, drop, dropKnown, resolved, confirmed };
 }

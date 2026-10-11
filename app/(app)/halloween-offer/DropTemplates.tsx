@@ -3,10 +3,15 @@
 // ─── The drop's templates, as gallery cards ──────────────────────────────────
 //
 // Which templates are in the drop is the season's `sale.slugs` — the super
-// admin picks them in /admin/season, Halloween or not — resolved against the
-// template registry. Unknown slugs and templates hidden from this visitor are
-// skipped; with nothing usable (or no answer yet) it falls back to the two
-// Halloween templates.
+// admin picks them in /admin/season — resolved against the template registry.
+// Unknown slugs are skipped, and so are templates this visitor cannot OPEN
+// (`blocked`). A template hidden from the gallery in /admin/templates is NOT
+// skipped while it is in the active drop (mode "halloween"): the drop is how it
+// is sold, and its builder and publish are open for exactly that reason (see
+// `useTemplateAccess` and the server's `isTemplateReachable`). With the mode
+// off or valentine the drop opens nothing, so hidden ones drop out. With
+// nothing usable (or no answer yet) it falls back to the two Halloween
+// templates, under the same filter.
 //
 // Each card IS the gallery card: `TemplateCard` for a normal template and
 // `PremiumTemplateCard` for a premium / ✦ ultra one, fed the same rank,
@@ -34,7 +39,7 @@ type DropItem = TemplateListItem & { premium: boolean };
 
 /** The drop's templates for this visitor, in the admin's order. */
 export function useDropTemplates(slugs: readonly string[] | null | undefined): DropItem[] {
-  const { hidden } = useTemplateAccess();
+  const { blocked } = useTemplateAccess();
   const { tiers } = useTemplateMeta();
   return useMemo(() => {
     const pick = (list: readonly string[]) => {
@@ -43,7 +48,7 @@ export function useDropTemplates(slugs: readonly string[] | null | undefined): D
       for (const raw of list) {
         const slug = String(raw).trim().toLowerCase();
         const t = GALLERY_BY_SLUG.get(slug);
-        if (!t || seen.has(slug) || hidden.has(slug)) continue;
+        if (!t || seen.has(slug) || blocked.has(slug)) continue;
         seen.add(slug);
         out.push({ ...t, premium: isPremiumSlug(slug, tiers) });
       }
@@ -51,7 +56,7 @@ export function useDropTemplates(slugs: readonly string[] | null | undefined): D
     };
     const chosen = slugs && slugs.length ? pick(slugs) : [];
     return chosen.length ? chosen : pick(HALLOWEEN_SLUGS);
-  }, [slugs, hidden, tiers]);
+  }, [slugs, blocked, tiers]);
 }
 
 /**

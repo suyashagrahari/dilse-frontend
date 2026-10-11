@@ -8,9 +8,9 @@
 // the first client render is the provider's value, exactly what the server
 // wrote. The store's fetch then lands and moves everyone together.
 
-import { createContext, createElement, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import {
-  getSeasonServerSnapshot, getSeasonSnapshot, isHalloweenBarDismissed, loadSeason, subscribeSeason, type Season,
+  dropSlugsOf, getSeasonServerSnapshot, getSeasonSnapshot, isHalloweenBarDismissed, loadSeason, subscribeSeason, type Season,
 } from "@/lib/season";
 
 const SeasonCtx = createContext<Season | null>(null);
@@ -26,6 +26,22 @@ export function useSeason(): Season | null {
     void loadSeason();
   }, []);
   return s ?? provided;
+}
+
+/**
+ * The active drop's slugs (see `dropSlugsOf`), and whether this page load has
+ * asked `/season` itself (`known`) rather than trusting the copy in the HTML.
+ *
+ * Deliberately does NOT start a fetch: it is read by `useTemplateAccess`, which
+ * every gallery and builder mounts, and only the builder gate needs a fresh
+ * answer — and only for a hidden slug. It calls `loadSeason` itself then.
+ */
+export function useActiveDrop(): { slugs: ReadonlySet<string>; known: boolean } {
+  const provided = useContext(SeasonCtx);
+  const stored = useSyncExternalStore(subscribeSeason, getSeasonSnapshot, getSeasonServerSnapshot);
+  const s = stored ?? provided;
+  const slugs = useMemo(() => new Set(dropSlugsOf(s)), [s]);
+  return { slugs, known: stored !== null };
 }
 
 /** True when the Halloween drop is what the site is wearing. */
