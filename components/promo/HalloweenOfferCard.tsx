@@ -114,8 +114,10 @@ const HOC_CSS = `
 .hoc-tag { display: inline-block; padding: 7px 13px; border-radius: 999px; font: 800 10.5px/1 'Inter', sans-serif; letter-spacing: .16em;
   color: #2a1206; background: linear-gradient(180deg, #ffc37a, ${HW.pumpkin}); box-shadow: 0 0 18px rgba(255,154,60,.5); }
 .hoc-pct { margin: 14px 0 10px; display: flex; align-items: flex-start; justify-content: center; gap: 6px; line-height: .9; }
-.hoc-pct b { font: 700 78px/0.9 'Playfair Display', serif; background: linear-gradient(180deg, #ffe2ad 10%, ${HW.pumpkin} 60%, ${HW.pumpkinDeep}); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 4px 22px rgba(255,154,60,.55)); }
+.hoc-pct b { font: 700 78px/0.9 'Playfair Display', serif; background: linear-gradient(180deg, #ffe2ad 16%, ${HW.pumpkin} 53%, ${HW.pumpkinDeep} 83%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 22px rgba(255,154,60,.55));
+  /* clip-text paints only the padding box; pad past the .9 line box so no glyph is cut */
+  padding: .1em .04em .2em; margin: -.1em -.04em -.2em; }
 .hoc-pct span { margin-top: 10px; font: 800 18px/1 'Inter', sans-serif; letter-spacing: .14em; color: ${HW.lilac}; }
 .hoc-title { margin: 16px 0 10px; font: 700 40px/1 'Playfair Display', serif; color: #ffd9a0; text-shadow: 0 4px 24px rgba(255,154,60,.5); }
 .hoc-sub { max-width: 31rem; margin: 6px auto 0; font: 400 14px/1.55 'Inter', sans-serif; color: ${HW.muted}; }
