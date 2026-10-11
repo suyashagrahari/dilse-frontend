@@ -79,7 +79,7 @@ export default function Ending({
       { type: "text", text: `— ${sender}`, x: W / 2, y: 1590, size: 60, face: "script", weight: 700, color: "#A8430C", maxWidth: 800, maxLines: 1 },
       { type: "text", text: "A diya was left at my door on subhsandesh.in 🪔", x: W / 2, y: 1830, size: 30, color: DW.mist, face: "ui" },
     );
-    return { background: { stops: [[0, DW.indigo], [0.55, DW.navy], [1, DW.night]] }, items };
+    return { background: { stops: [[0, DW.red], [0.55, DW.maroon], [1, DW.night]] }, items };
   };
 
   useNext(sheet === "card" ? "Keep it forever" : "Pass it on", sheet === "card" ? () => setSheet("share") : passOn, sheet === "card" ? "heart" : "diya");

@@ -10,13 +10,13 @@ export const config: TemplatePageConfig = {
   category: "festival",
   title: "Happy Diwali — A Diya at Your Door",
   description:
-    "Leave a diya at their door: they light it, light a row of wish diyas, colour a rangoli, write their name with a sparkler, launch fireworks for your letter and open a box of mithai.",
+    "Leave a diya at their door: they light it, light a row of wish diyas, colour a rangoli, write their name with a sparkler, light a whole tray of crackers, open your letter from a red-and-gold liffafa and a box of mithai.",
   coverImage: templateMedia("happy-diwali", "cover-poster.webp"),
   emoji: "🪔",
-  color: "from-amber-400 to-indigo-900",
+  color: "from-amber-400 to-red-900",
   previewText: "someone left a diya at your door 🪔",
   bodyText: "Light it.",
-  bgGradient: "from-indigo-950 via-blue-950 to-amber-900",
+  bgGradient: "from-red-950 via-red-900 to-amber-800",
   tabs: [
     { id: "open", icon: Flame, label: "Diya" },
     { id: "letter", icon: Mail, label: "Letter" },
@@ -29,7 +29,7 @@ export const config: TemplatePageConfig = {
   floatStyle: "stars",
   pages: {
     cover: { subtitle: "someone left a diya at your door 🪔", ctaText: "Light it", floatingEmojis: ["🪔", "✨", "🎆"] },
-    letter: { headerEmoji: "🪔", title: "A letter in the glow", greeting: "Dear you,", decorEmojis: ["🪔", "🌼", "✨"] },
+    letter: { headerEmoji: "🪔", title: "A letter in a liffafa", greeting: "Dear you,", decorEmojis: ["🪔", "🌼", "✨"] },
     final: {
       headerEmoji: "🪔",
       title: "Shubh Deepavali",

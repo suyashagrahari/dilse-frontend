@@ -59,7 +59,7 @@ export function preload(url: string) {
   img.src = url;
 }
 
-export type NextIcon = "diya" | "rangoli" | "sparkle" | "lantern" | "rocket" | "sweet" | "heart";
+export type NextIcon = "diya" | "rangoli" | "sparkle" | "lantern" | "rocket" | "letter" | "sweet" | "heart";
 
 interface NextSpec {
   label: string;
@@ -167,14 +167,14 @@ export function MiniDiya({ lit = true, size = 22 }: { lit?: boolean; size?: numb
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden style={{ display: "block", overflow: "visible" }}>
       {lit && <path d="M12 2.5 C14.6 7 15.2 9.4 12 12.6 C8.8 9.4 9.4 7 12 2.5 Z" fill="#FFB23F" />}
       {lit && <path d="M12 6 C13.2 8.2 13.4 9.6 12 11.4 C10.6 9.6 10.8 8.2 12 6 Z" fill="#FFF3C4" />}
-      <path d="M2.5 13.2 Q12 11 21.5 13.2 Q20.4 21 12 21.2 Q3.6 21 2.5 13.2 Z" fill={lit ? "#D9621F" : "#5B4A6E"} />
-      <path d="M2.5 13.2 Q12 15.2 21.5 13.2" fill="none" stroke={lit ? "#FFD36E" : "#7E6E95"} strokeWidth="1.3" />
-      <circle cx="12" cy="17.3" r="1.3" fill={lit ? "#FFD36E" : "#7E6E95"} />
+      <path d="M2.5 13.2 Q12 11 21.5 13.2 Q20.4 21 12 21.2 Q3.6 21 2.5 13.2 Z" fill={lit ? "#D9621F" : "#6E2A24"} />
+      <path d="M2.5 13.2 Q12 15.2 21.5 13.2" fill="none" stroke={lit ? "#FFD36E" : "#9A5A48"} strokeWidth="1.3" />
+      <circle cx="12" cy="17.3" r="1.3" fill={lit ? "#FFD36E" : "#9A5A48"} />
     </svg>
   );
 }
 
-const ICON_EMOJI: Record<Exclude<NextIcon, "diya">, string> = { rangoli: "🌸", sparkle: "✨", lantern: "🏮", rocket: "🎆", sweet: "🍬", heart: "💛" };
+const ICON_EMOJI: Record<Exclude<NextIcon, "diya">, string> = { rangoli: "🌸", sparkle: "✨", lantern: "🏮", rocket: "🎆", letter: "💌", sweet: "🍬", heart: "💛" };
 
 // ─── The marigold pill ────────────────────────────────────────────────────────
 
@@ -290,7 +290,7 @@ export const DW_STAGE_CSS = `
 /* The diya trail: small, top-left, level with the editor's top bar (top-right). */
 .dw-trail { position: fixed; z-index: 62; top: calc(max(10px, env(safe-area-inset-top, 0px)) + 8px); left: max(12px, env(safe-area-inset-left, 0px));
   display: flex; align-items: center; height: 30px; padding: 0 5px; border-radius: 99px; box-sizing: border-box;
-  background: linear-gradient(180deg, rgba(29,44,102,.85), rgba(10,16,48,.85)); border: 1px solid rgba(255,211,110,.26);
+  background: linear-gradient(180deg, rgba(122,15,18,.88), rgba(42,5,7,.88)); border: 1px solid rgba(255,207,90,.32);
   box-shadow: 0 0 14px -5px rgba(255,178,63,.45), inset 0 1px 0 rgba(255,255,255,.07); }
 @media (min-width: 768px) { .dw-trail { top: 22px; left: 24px; height: 34px; } }
 .dw-pk { width: 18px; height: 30px; padding: 0; margin: 0; border: 0; background: none; cursor: default; display: grid; place-items: center;
@@ -303,22 +303,23 @@ export const DW_STAGE_CSS = `
 .dw-pk.is-done:hover > span { transform: scale(1.18); }
 .dw-pk.is-done:active > span { transform: scale(.85); }
 .dw-pk.is-here > span { opacity: 1; filter: drop-shadow(0 0 5px rgba(255,211,110,1)); animation: dw-pk-bob 1.2s ease-in-out infinite alternate; }
-.dw-pk:focus-visible { outline: 2px solid #2EC4B6; outline-offset: -2px; border-radius: 8px; }
+.dw-pk:focus-visible { outline: 2px solid #FFF1B8; outline-offset: -2px; border-radius: 8px; }
 .dw-pk > span.dw-pk-nope { animation: dw-pk-nope .42s ease-in-out; }
 @keyframes dw-pk-bob { from { transform: translateY(1px) scale(1.02) } to { transform: translateY(-2px) scale(1.14) } }
 @keyframes dw-pk-nope { 0%,100% { transform: rotate(0) } 20% { transform: rotate(-16deg) } 45% { transform: rotate(13deg) } 70% { transform: rotate(-8deg) } }
 /* The music icon (engine, DayConfig.music.compact) stays bottom-left; here it lines up with the pill's middle. */
 body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 27px); }
+[data-vw-root="happy-diwali"] .vm-icon-btn, body:has([data-vw-root="happy-diwali"]) .vm-icon-btn { background: radial-gradient(circle at 50% 38%, #A8161C, #4A0A0D 72%); color: #FFCF5A; }
 @media (min-width: 768px) { body .vm-icon { left: 24px; bottom: 39px; } }
 
 .dw-next { pointer-events: auto; position: relative; display: inline-flex; align-items: center; gap: 9px; height: 56px; max-width: 100%; min-width: 0; padding: 0 20px 0 7px;
-  border: 0; border-radius: 999px; cursor: pointer; color: #3A1606; overflow: hidden;
-  background: linear-gradient(180deg, #FFE08A 0%, #FFB23F 48%, #F2851C 100%);
-  box-shadow: 0 5px 0 #A84C08, 0 0 0 3px rgba(255,211,110,.32), 0 0 36px -4px rgba(255,170,60,.8), 0 18px 30px -12px rgba(0,0,0,.6);
+  border: 0; border-radius: 999px; cursor: pointer; color: #4A0A0D; overflow: hidden;
+  background: linear-gradient(180deg, #FFE69A 0%, #FFCF5A 40%, #F6A821 100%);
+  box-shadow: 0 5px 0 #8F1416, 0 0 0 3px rgba(255,207,90,.34), 0 0 40px -4px rgba(255,180,60,.85), 0 18px 30px -12px rgba(0,0,0,.6);
   transition: transform .45s cubic-bezier(.2,.9,.25,1.2), opacity .3s ease, box-shadow .2s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .dw-next.is-hidden { opacity: 0; transform: translateY(18px) scale(.9); pointer-events: none; transition-duration: .25s; }
-.dw-next:active { transform: translateY(4px) scale(.97); box-shadow: 0 1px 0 #A84C08, 0 0 0 3px rgba(255,211,110,.4), 0 0 26px -4px rgba(255,170,60,.7); transition-duration: .08s; }
-.dw-next:focus-visible { outline: 3px solid #2EC4B6; outline-offset: 4px; }
+.dw-next:active { transform: translateY(4px) scale(.97); box-shadow: 0 1px 0 #8F1416, 0 0 0 3px rgba(255,211,110,.4), 0 0 26px -4px rgba(255,170,60,.7); transition-duration: .08s; }
+.dw-next:focus-visible { outline: 3px solid #FFF1B8; outline-offset: 4px; }
 /* a slow glint across the pill (one composited translate) */
 .dw-next-shine { position: absolute; top: 0; bottom: 0; left: 0; width: 46px; pointer-events: none;
   background: linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.55), rgba(255,255,255,0)); transform: translateX(-60px) skewX(-18deg); animation: dw-shine 3.2s ease-in-out 1s infinite; }
@@ -336,10 +337,10 @@ body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 27px); }
 .dw-sweep { position: fixed; z-index: 74; top: 0; bottom: 0; left: 0; width: 180vw; pointer-events: none; will-change: transform; contain: strict;
   animation: dw-sweep ${SWEEP_MS}ms cubic-bezier(.45,.05,.55,.95) forwards; }
 .dw-sweep::before { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(10,16,48,0) 0%, rgba(26,30,80,.9) 10%, #141C4A 16%, #141C4A 84%, rgba(26,30,80,.9) 90%, rgba(10,16,48,0) 100%); }
+  background: linear-gradient(90deg, rgba(42,5,7,0) 0%, rgba(110,14,18,.92) 10%, #5A0A0E 16%, #5A0A0E 84%, rgba(110,14,18,.92) 90%, rgba(42,5,7,0) 100%); }
 .dw-sweep i { position: absolute; inset: 0; display: block;
   background: radial-gradient(16% 30% at 22% 34%, rgba(255,190,80,.34), transparent 70%), radial-gradient(14% 24% at 26% 74%, rgba(255,95,162,.2), transparent 70%),
-    radial-gradient(16% 30% at 78% 36%, rgba(255,211,110,.32), transparent 70%), radial-gradient(14% 24% at 76% 76%, rgba(46,196,182,.18), transparent 70%),
+    radial-gradient(16% 30% at 78% 36%, rgba(255,211,110,.32), transparent 70%), radial-gradient(14% 24% at 76% 76%, rgba(255,138,30,.22), transparent 70%),
     radial-gradient(22% 36% at 50% 50%, rgba(255,178,63,.24), transparent 70%); }
 @keyframes dw-sweep { 0% { transform: translateX(100vw) } 37% { transform: translateX(-29vw) } 62% { transform: translateX(-51vw) } 100% { transform: translateX(-180vw) } }
 .dw-sweep-stars { position: fixed; z-index: 75; left: 0; top: 32%; width: clamp(150px, 40vw, 240px); pointer-events: none; will-change: transform;

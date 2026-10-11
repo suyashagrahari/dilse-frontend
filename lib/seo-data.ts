@@ -2587,7 +2587,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
   "happy-diwali": {
     title: "Interactive Diwali Wishes Card with Photos & Music",
     description:
-      "Send a Diwali card they can play: light a diya at their door, light a row of wish diyas, colour a rangoli, write with a sparkler, launch fireworks and open a box of mithai.",
+      "Send a Diwali card they can play: light a diya at their door, light a row of wish diyas, colour a rangoli, write with a sparkler, light a whole tray of crackers, open a red-and-gold liffafa and a box of mithai.",
     category: "Festival",
     emoji: "🪔",
 
@@ -2628,7 +2628,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       {
         question: "What happens when they open it?",
         answer:
-          "They find a diya waiting at their door with a little tag from you and light it. Then they light a row of diyas, each one lifting one of your wishes; colour a rangoli until your initials glow in the middle; write their name in the air with a sparkler; light paper sky lanterns that hold your photos; launch fireworks until your letter appears in the glow; and open a box of mithai onto a Shubh Deepavali card signed by you.",
+          "They find a diya waiting at their door with a little tag from you and light it. Then they light a row of diyas, each one lifting one of your wishes; colour a rangoli until your initials glow in the middle; write their name in the air with a sparkler; light paper sky lanterns that hold your photos; light crackers in a playground of their own (anar, chakri, rockets, phuljhadi) until the sky fills with fireworks; open your letter from a red-and-gold shagun liffafa into warm diya light; and open a box of mithai onto a Shubh Deepavali card signed by you.",
       },
       {
         question: "Can I send it to family or a friend instead of a partner?",
@@ -2643,7 +2643,7 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       {
         question: "Does it work on any phone?",
         answer:
-          "Yes. Every scene fits one screen on phones, tablets and laptops, and every interaction works with a simple tap. Motion is reduced automatically for anyone whose phone asks for less motion, and the fireworks are drawn by the page, so there is no noise or smoke.",
+          "Yes. Every scene fits one screen on phones, tablets and laptops, and every interaction works with a simple tap. Motion is reduced automatically for anyone whose phone asks for less motion, and the crackers and fireworks are drawn by the page, so there is no noise or smoke.",
       },
       {
         question: "When is Diwali 2026?",
@@ -2665,12 +2665,12 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
     howTo: {
       name: "How to Send an Interactive Diwali Card",
       description:
-        "Build a little Diwali night for someone — a diya at their door, your wishes, a rangoli, fireworks with your letter and a box of sweets — and send it as a link.",
+        "Build a little Diwali night for someone — a diya at their door, your wishes, a rangoli, a crackers playground, your letter in a liffafa and a box of sweets — and send it as a link.",
       totalTime: "PT5M",
       steps: [
         { name: "Open the Template", text: "Go to the Happy Diwali page on SubhSandesh and press Create." },
         { name: "Choose Who It's For", text: "Pick your love, family or a friend; the default wishes, blessing and reply follow the choice." },
-        { name: "Write the Wishes", text: "Add both names, the tag on the diya, a wish for each diya and the letter that appears in the fireworks — or let the AI write it from a short story." },
+        { name: "Write the Wishes", text: "Add both names, the tag on the diya, a wish for each diya and the letter sealed in the liffafa — or let the AI write it from a short story." },
         { name: "Add Photos and Music", text: "Upload up to six photos for the sky lanterns, then paste a YouTube song or pick a Diwali favourite." },
         { name: "Finish the Night", text: "Set the initials for the rangoli, the word for the sparkler, their favourite sweet and your blessing." },
         { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on Diwali evening." },

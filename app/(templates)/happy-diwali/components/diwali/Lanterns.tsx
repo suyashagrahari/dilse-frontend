@@ -22,17 +22,17 @@ const CSS = `
 .dw-lan { --w: min(calc((100cqw - (var(--cols) - 1) * 14px) / var(--cols)), calc(((100cqh - (var(--rows) - 1) * 10px) / var(--rows) - 66px) * .8), 190px);
   position: relative; width: var(--w); display: grid; justify-items: center; border: 0; padding: 0; background: none; cursor: pointer; color: inherit;
   transform-origin: 50% 0; animation: dw-sway 4.4s ease-in-out infinite alternate; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.dw-lan:focus-visible { outline: 3px solid #2EC4B6; outline-offset: 4px; border-radius: 12px; }
+.dw-lan:focus-visible { outline: 3px solid #FFF1B8; outline-offset: 4px; border-radius: 12px; }
 @keyframes dw-sway { from { transform: rotate(-2.2deg) } to { transform: rotate(2.2deg) } }
 .dw-lan-str { width: 1.5px; height: 14px; background: linear-gradient(#FFD36E, #C98A3A); }
 .dw-lan-cap { width: 62%; height: 10px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #FFD36E, #B9802C); box-shadow: 0 2px 0 #7A4A12; }
 .dw-lan-body { position: relative; display: block; width: 100%; padding: 8px; box-sizing: border-box; border-radius: 14px;
-  background: linear-gradient(180deg, #5A2440, #3A1530); box-shadow: inset 0 0 0 2px rgba(255,211,110,.35); transition: background .6s ease, box-shadow .6s ease; }
+  background: linear-gradient(180deg, #7A1418, #3A0709); box-shadow: inset 0 0 0 2px rgba(255,211,110,.35); transition: background .6s ease, box-shadow .6s ease; }
 .dw-lan-body::before, .dw-lan-body::after { content: ""; position: absolute; left: 6px; right: 6px; height: 6px;
   background: repeating-linear-gradient(90deg, #FFD36E 0 6px, transparent 6px 12px); opacity: .55; }
 .dw-lan-body::before { top: 1px; } .dw-lan-body::after { bottom: 1px; }
 .dw-lan.is-lit .dw-lan-body { background: linear-gradient(180deg, #FF9A3C, #E0527A); box-shadow: inset 0 0 0 2px #FFD36E, 0 0 26px 4px rgba(255,170,60,.55), 0 0 60px 6px rgba(255,120,60,.25); }
-.dw-lan-photo { position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; border-radius: 9px; overflow: hidden; background: #241133; }
+.dw-lan-photo { position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; border-radius: 9px; overflow: hidden; background: #2A0507; }
 .dw-lan-photo > span:first-child { filter: brightness(.22) saturate(.4); transition: filter .8s ease; }
 .dw-lan.is-lit .dw-lan-photo > span:first-child { filter: none; }
 .dw-lan-photo::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 18px rgba(255,190,90,.0); transition: box-shadow .8s; pointer-events: none; }
@@ -87,7 +87,7 @@ export default function Lanterns({ photos, onNext }: { photos: LovePhoto[]; onNe
     if (now() - (litAt.current[i] ?? 0) > 350) setOpen(i);
   };
 
-  useNext(done ? "Fireworks!" : null, onNext, "rocket");
+  useNext(done ? "Crackers time!" : null, onNext, "rocket");
 
   return (
     <>
