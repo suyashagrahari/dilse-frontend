@@ -17,7 +17,7 @@ import type { DayConfig, ValentineDayData } from "../../../_valentine/types";
 import { FONTS, VW } from "../../../_valentine/theme";
 import { CrossedSticks } from "./art";
 import { DD_DISPLAY } from "./fonts";
-import { DD_GIF, useNext } from "./stage";
+import { DD_GIF, useDd, useNext } from "./stage";
 import { BANDHANI, DD, MIRROR_ROW, RoomTitle, navratriYear, prettyDate } from "./ui";
 
 export default function Ending({
@@ -97,7 +97,8 @@ export default function Ending({
     return { background: { stops: [[0, DD.royal], [0.55, DD.indigo], [1, DD.night]] }, items };
   };
 
-  useNext(sheet === "pass" ? "Keep my pass" : "Pass it on", sheet === "pass" ? () => setSheet("share") : invite, sheet === "pass" ? "heart" : "sticks");
+  const { go } = useDd();
+  useNext(sheet === "pass" ? "Keep my pass" : "Pass it on", sheet === "pass" ? () => setSheet("share") : invite, sheet === "pass" ? "heart" : "sticks", sheet === "pass");
 
   if (sheet === "share")
     return (
@@ -112,7 +113,7 @@ export default function Ending({
         </div>
         <p style={{ flex: "none", margin: 0, font: `500 clamp(13px, 2dvh, 15px) ${FONTS.ui}`, color: VW.inkSoft }}>Your pass is yours to keep. Save it, then tell {sender} 💛</p>
         <div className="dd-zoom" style={{ flex: "none", width: "100%", maxWidth: 420 }}>
-          <EndingActions day={day} data={data} mode={mode} onReplay={onReplay} keepsake={keepsake} replyText={replyText} replyLabel={`💬 Reply to ${sender}`} />
+          <EndingActions day={day} data={data} mode={mode} onReplay={() => go(onReplay)} keepsake={keepsake} replyText={replyText} replyLabel={`💬 Reply to ${sender}`} />
         </div>
       </>
     );
