@@ -14,7 +14,8 @@ import { API_URL, IS_NGROK } from "@/lib/config";
 import { useAppSelector } from "@/store/hooks";
 import { getDay } from "@/app/(templates)/_valentine/days";
 import { getExperience, teaserArtFor } from "@/app/(templates)/_valentine/experiences";
-import { fromDb, type DaySlug, type ReactFn } from "@/app/(templates)/_valentine/types";
+import { fromDb, parseReactions, type DaySlug, type ReactFn, type ValentineReactions } from "@/app/(templates)/_valentine/types";
+import OwnerBanner from "@/app/(templates)/_valentine/kit/OwnerBanner";
 import { BrandMark } from "@/app/(templates)/_valentine/kit/DayRoot";
 import { FONTS } from "@/app/(templates)/_valentine/theme";
 import { DayMusicProvider, chipThemeFrom } from "@/app/(templates)/_valentine/music/DayMusic";
@@ -90,6 +91,25 @@ export default function ValentineDayViewer({
     askedAsOwner.current = true;
     refetch();
   }, [teaser, accessToken, refetch]);
+  // The signed-in sender opening their own link: ask the owner-only GET how it
+  // went (it 404s for anyone else, and does not count a view) → OwnerBanner.
+  const [ownerView, setOwnerView] = useState<ValentineReactions | null>(null);
+  const pageId = typeof raw._id === "string" ? raw._id : "";
+  useEffect(() => {
+    if (!accessToken || !pageId || teaser) return;
+    let live = true;
+    fetch(`${API_URL}/${slug}-pages/${encodeURIComponent(pageId)}`, {
+      headers: { Authorization: `Bearer ${accessToken}`, ...(IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : {}) },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (live && j?.success && j.data) setOwnerView(parseReactions(j.data.reactions));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [accessToken, pageId, slug, teaser]);
   const shareInfo = useMemo(() => ({ slug, shareId, replySent: raw.replySent === true }), [slug, shareId, raw.replySent]);
   const [unlocked, setUnlocked] = useState(() => initialUnlocked(hasPassword, slug, shareId));
   const unlock = useCallback(() => setUnlocked(true), []);
@@ -154,6 +174,7 @@ export default function ValentineDayViewer({
         </PremiumShareContext.Provider>
       </DayMusicProvider>
       <BrandMark dark={day.theme.dark} stacked={day.brandMark === "stacked"} />
+      {ownerView && <OwnerBanner r={ownerView} asks={day.asksQuestion} yes={day.copy.yesChip} />}
     </MotionConfig>
   );
 }

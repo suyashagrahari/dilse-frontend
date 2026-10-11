@@ -26,6 +26,8 @@ interface Ui {
   hint?: string;
   /** Ask for ONE specific detail — never "Enter text". */
   placeholder?: string;
+  /** Only shown in the form while another (enum) extra has this value — e.g. "how many tries" under answer mode. */
+  showIf?: { key: string; value: string };
 }
 
 export type TextSpec = Ui & {

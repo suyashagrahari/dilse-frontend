@@ -12,9 +12,10 @@ import { useReducedMotion } from "../../../_valentine/kit";
 import { DD_DISPLAY } from "./fonts";
 
 export const DD = {
-  night: "#0A0F33",
-  indigo: "#141C52",
-  royal: "#22307A",
+  // The kumkum night: deepest sindoor-maroon → kumkum → sindoor red.
+  night: "#3E0609",
+  indigo: "#7A0F12",
+  royal: "#B3121B",
   marigold: "#FFB627",
   marigoldDeep: "#D17A00",
   saffron: "#FF8A1F",
@@ -29,7 +30,7 @@ export const DD = {
   cream: "#FFF4DE",
   maroon: "#3B0F1E",
   ink: "#FFF7E8",
-  mist: "#CBD0F0",
+  mist: "#FFD9C2",
   flame: "#FFE9A8",
 } as const;
 
@@ -81,7 +82,7 @@ export function RoomTitle({ kicker, title, sub, as = "h2" }: { kicker?: ReactNod
           font: `400 clamp(26px, min(8.6vw, 4.8dvh), 40px)/1.12 ${DD_DISPLAY}`,
           color: VW.ink,
           textWrap: "balance",
-          textShadow: "0 2px 3px rgba(5,8,30,.8), 0 0 18px rgba(5,8,30,.6), 0 0 26px rgba(255,182,39,.28)",
+          textShadow: "0 2px 3px rgba(40,2,4,.75), 0 0 18px rgba(40,2,4,.55), 0 0 26px rgba(255,182,39,.28)",
         }}
       >
         {title}

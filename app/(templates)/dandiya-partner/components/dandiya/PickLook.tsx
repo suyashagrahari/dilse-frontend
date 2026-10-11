@@ -52,7 +52,7 @@ export default function PickLook({ myColor, lookLine, sender, onPick, onNext }: 
               animate={reduced || twirl === 0 ? undefined : { rotateY: [0, 360, 720], scaleX: [1, 1.08, 1] }}
               transition={{ duration: 1.1, ease: [0.3, 0.7, 0.3, 1] }}
             >
-              <Ghagra base={pick ? c.base : "#5A6396"} deep={pick ? c.deep : "#2A3268"} light={pick ? c.light : "#8F98C8"} size="100%" spin={twirl} />
+              <Ghagra base={pick ? c.base : "#B56A5A"} deep={pick ? c.deep : "#6E1E1A"} light={pick ? c.light : "#E3A58F"} size="100%" spin={twirl} />
             </motion.div>
             {/* mirror sparkles fly off the hem on every twirl */}
             {!reduced && twirl > 0 && (
