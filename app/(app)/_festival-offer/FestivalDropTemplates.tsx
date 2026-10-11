@@ -1,24 +1,26 @@
 "use client";
 
-// ─── The festive drop's templates, as gallery cards ──────────────────────────
+// ─── A festival drop's templates, as gallery cards ───────────────────────────
 //
 // The same rules as the Halloween drop (../halloween-offer/DropTemplates):
-// which templates are in the drop is the festive drop's slugs — the super admin
+// which templates are in the drop is that festival drop's slugs — the super admin
 // picks them in /admin/season — resolved against the template registry, in the
 // admin's order, skipping what this visitor cannot OPEN (`blocked`; a template
 // hidden from the gallery stays openable while it is in the ACTIVE drop).
 //
-// One difference: the two festive templates may not be in the registry yet
-// (they ship separately). A slug from the default festive pair that the
-// registry does not know gets a registry-independent card — a name, a blurb and
-// festive CDN art as its cover — so the page never shows an empty drop; the
+// One difference: the festival templates may not be in the registry yet
+// (they ship separately). A default festival slug that the registry does not
+// know gets a registry-independent card — a name, a blurb and festival CDN
+// art as its cover — so the page never shows an empty drop; the
 // moment the registry entry lands, the real card (and its poster) takes over.
 //
 // Each card IS the gallery card (`TemplateCard` / `PremiumTemplateCard`, same
 // rank, favourite and tier data the gallery feeds them), so the paid/premium
-// behaviour is identical; around it one festive plate: navy glass, a marigold
-// toran along the top, diyas in the corners, the sale tag in a band ABOVE the
-// card, and the admin's price underneath.
+// behaviour is identical; around it one festival plate in that festival's red
+// (Dandiya: kumkum glass, a mirror-work bandhanwar along the top, mirror discs
+// in the corners; Diwali: maroon glass, a marigold toran, diyas in the
+// corners), the sale tag in a band ABOVE the card, and the admin's price
+// underneath.
 
 import { useCallback, useEffect, useMemo } from "react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
@@ -30,18 +32,19 @@ import { useTemplatePricing } from "@/hooks/useTemplatePricing";
 import { formatINR } from "@/config/templatePricing";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
 import { GALLERY_BY_SLUG, GALLERY_LIST, isComingSoon, rankRooms } from "@/lib/galleryRules";
-import { FESTIVE_GIF, FESTIVE_SLUGS } from "@/lib/season";
-import { Diya } from "@/components/promo/festiveArt";
+import { DROPS, FESTIVE_GIF, type FestivalId } from "@/lib/season";
+import { Bandhanwar, Diya, Mirror } from "@/components/promo/festivalArt";
+import { ftVars } from "@/components/promo/festivalTheme";
 import type { TemplateListItem } from "@/types/template-config";
 
-export type FestiveDropItem = TemplateListItem & { premium: boolean; fallback: boolean };
+export type FestivalDropItem = TemplateListItem & { premium: boolean; fallback: boolean };
 
 // The art is drawn by this file over a cover-less TemplateCard (see `fdArt`):
 // TemplateCard would ask for pre-sized poster variants (`coverSrcSet`) that
 // exist only for real gallery covers, and these are plain animated stickers.
 const FALLBACK_COVER = (file: string) => FESTIVE_GIF(file);
 
-/** Cards for the festive pair while their registry entries have not landed. */
+/** Cards for the festival templates while their registry entries have not landed. */
 const FALLBACK: Record<string, TemplateListItem> = {
   "dandiya-partner": {
     slug: "dandiya-partner",
@@ -49,9 +52,9 @@ const FALLBACK: Record<string, TemplateListItem> = {
     category: "festival",
     title: "Be My Dandiya Partner",
     description: "A playful Navratri invitation: ask them to be your Dandiya partner — they answer with a tap.",
-    emoji: "🪔",
-    color: "#ffb020",
-    bgGradient: "linear-gradient(160deg, #232a66, #0d0f2e)",
+    emoji: "🥢",
+    color: "#ffb000",
+    bgGradient: "linear-gradient(160deg, #b3121b, #5a070c)",
     coverImage: FALLBACK_COVER("dandiyapartyner.webp"),
   },
   "happy-diwali": {
@@ -61,20 +64,20 @@ const FALLBACK: Record<string, TemplateListItem> = {
     title: "Happy Diwali",
     description: "A Diwali wish they light up themselves — diyas, rangoli, sparklers and fireworks with your photos.",
     emoji: "🪔",
-    color: "#ffd36b",
-    bgGradient: "linear-gradient(160deg, #232a66, #0d0f2e)",
+    color: "#ffcf5a",
+    bgGradient: "linear-gradient(160deg, #8f1416, #33060a)",
     coverImage: FALLBACK_COVER("happy-diwali-diya.webp"),
   },
 };
 
-/** The festive drop's templates for this visitor, in the admin's order. */
-export function useFestiveDropTemplates(slugs: readonly string[] | null | undefined): FestiveDropItem[] {
+/** A festival drop's templates for this visitor, in the admin's order. */
+export function useFestivalDropTemplates(kind: FestivalId, slugs: readonly string[] | null | undefined): FestivalDropItem[] {
   const { blocked } = useTemplateAccess();
   const { tiers } = useTemplateMeta();
   return useMemo(() => {
     const pick = (list: readonly string[]) => {
       const seen = new Set<string>();
-      const out: FestiveDropItem[] = [];
+      const out: FestivalDropItem[] = [];
       for (const raw of list) {
         const slug = String(raw).trim().toLowerCase();
         if (seen.has(slug)) continue;
@@ -91,12 +94,12 @@ export function useFestiveDropTemplates(slugs: readonly string[] | null | undefi
       return out;
     };
     const chosen = slugs && slugs.length ? pick(slugs) : [];
-    return chosen.length ? chosen : pick(FESTIVE_SLUGS);
-  }, [slugs, blocked, tiers]);
+    return chosen.length ? chosen : pick(DROPS[kind].slugs);
+  }, [kind, slugs, blocked, tiers]);
 }
 
 /** The drop's own sale percent from /payment/pricing (see the Halloween twin). */
-export function useFestiveDropDiscount(items: readonly FestiveDropItem[]): { pct: number; upTo: boolean } | null {
+export function useFestivalDropDiscount(items: readonly FestivalDropItem[]): { pct: number; upTo: boolean } | null {
   const { pricingFor, settled } = useTemplatePricing();
   return useMemo(() => {
     if (!settled) return null;
@@ -169,7 +172,7 @@ function ComingSoonTile({ t }: { t: TemplateListItem }) {
   );
 }
 
-/** A marigold toran strung along the plate's top edge. */
+/** A marigold toran strung along the plate's top edge (Diwali). */
 function Toran() {
   const n = 15;
   return (
@@ -189,8 +192,8 @@ function Toran() {
   );
 }
 
-export default function FestiveDropTemplates({ slugs }: { slugs: readonly string[] | null | undefined }) {
-  const items = useFestiveDropTemplates(slugs);
+export default function FestivalDropTemplates({ kind, slugs }: { kind: FestivalId; slugs: readonly string[] | null | undefined }) {
+  const items = useFestivalDropTemplates(kind, slugs);
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
   const favFetched = useAppSelector((s) => s.favorites.fetched);
@@ -220,7 +223,7 @@ export default function FestiveDropTemplates({ slugs }: { slugs: readonly string
   return (
     <>
       <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + FD_CSS}</style>
-      <div className={`fdGrid n${Math.min(items.length, 3)}`}>
+      <div className={`fdGrid fd-k-${kind} n${Math.min(items.length, 3)}`} style={ftVars(kind)}>
         {items.map((t, i) => {
           const soon = !t.fallback && isComingSoon(t);
           const fancy = Boolean(t.ultra || t.premium);
@@ -235,10 +238,20 @@ export default function FestiveDropTemplates({ slugs }: { slugs: readonly string
           return (
             <div key={t.slug} className={`fdSlot${fancy ? " is-premium" : ""}`} style={{ animationDelay: `${Math.min(i, 6) * 110}ms` }}>
               <span className="fdGlow" aria-hidden />
-              <Toran />
-              <span className="fdDiya l" aria-hidden><Diya size={22} /></span>
-              <span className="fdDiya r" aria-hidden><Diya size={22} /></span>
-              <div className="fdBand">
+              {kind === "dandiya" ? (
+                <>
+                  <Bandhanwar n={12} className="fdBand" />
+                  <span className="fdDiya l" aria-hidden><Mirror size={24} /></span>
+                  <span className="fdDiya r" aria-hidden><Mirror size={24} thread="#ff3d9a" /></span>
+                </>
+              ) : (
+                <>
+                  <Toran />
+                  <span className="fdDiya l" aria-hidden><Diya size={22} /></span>
+                  <span className="fdDiya r" aria-hidden><Diya size={22} /></span>
+                </>
+              )}
+              <div className="fdTagBand">
                 <SaleTag slug={t.slug} soon={soon} />
               </div>
               <div className={`fdCard${t.fallback ? " is-fallback" : ""}`}>
@@ -256,7 +269,7 @@ export default function FestiveDropTemplates({ slugs }: { slugs: readonly string
                 {t.fallback && (
                   <span className="fdCap" aria-hidden>
                     <b>{t.title}</b>
-                    <span>{t.slug === "dandiya-partner" ? "Navratri invitation" : "Diwali wishes"}</span>
+                    <span>{kind === "dandiya" ? "Navratri invitation" : "Diwali wishes"}</span>
                   </span>
                 )}
               </div>
@@ -278,7 +291,7 @@ const FD_CSS = `
 @media (min-width: 640px) and (max-width: 1023px) { .fdGrid > .fdSlot:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 11px); } }
 @media (min-width: 1024px) { .fdGrid.n3 { grid-template-columns: repeat(3, minmax(0, 340px)); gap: 34px; } .fdGrid.n2 { gap: 40px; } }
 .fdSlot { position: relative; isolation: isolate; display: flex; flex-direction: column; padding: 0 14px 18px; border-radius: 28px;
-  background: radial-gradient(120% 60% at 50% 0%, rgba(255,176,32,.16), transparent 60%), linear-gradient(180deg, rgba(36,42,108,.7), rgba(13,15,46,.86));
+  background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--ft-cta) 18%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--ft-sky0) 72%, transparent), color-mix(in srgb, var(--ft-sky2) 90%, transparent));
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   box-shadow: inset 0 1px 0 rgba(255,227,163,.18), 0 34px 60px -36px rgba(0,0,0,.95), 0 0 0 1px rgba(5,6,24,.35);
   animation: fdIn .8s cubic-bezier(.22,1,.36,1) backwards; transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease; }
@@ -286,6 +299,12 @@ const FD_CSS = `
 @keyframes fdIn { from { opacity: 0; transform: translateY(26px) scale(.98); } }
 .fdGlow { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s ease;
   background: radial-gradient(90% 50% at 50% 104%, rgba(255,176,32,.42), transparent 70%), radial-gradient(80% 40% at 50% -6%, rgba(255,93,143,.22), transparent 70%); }
+.fdBand { position: absolute; z-index: 2; top: 0; left: 22px; width: calc(100% - 44px); height: 30px; pointer-events: none; filter: drop-shadow(0 3px 4px rgba(40,0,4,.4)); }
+.fd-k-dandiya .fdSlot::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: .35;
+  background: radial-gradient(circle at 50% 50%, rgba(255,240,220,.6) 0 1.1px, transparent 1.5px) 0 0 / 16px 16px; }
+.fd-k-dandiya .fdDiya { top: 36px; animation: fdGlint 3s ease-in-out infinite; }
+.fd-k-dandiya .fdDiya.r { animation-delay: -1.5s; }
+@keyframes fdGlint { 0%, 100% { transform: rotate(0) scale(.92); filter: drop-shadow(0 0 4px rgba(255,255,255,.5)); } 50% { transform: rotate(40deg) scale(1.1); filter: drop-shadow(0 0 10px rgba(255,255,255,.9)); } }
 .fdToran { position: absolute; z-index: 2; top: 0; left: 26px; right: 26px; width: calc(100% - 52px); height: 22px; pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transform-origin: 50% 0; animation: fdSwing 6s ease-in-out infinite; }
 @keyframes fdSwing { 0%, 100% { transform: rotate(-.6deg); } 50% { transform: rotate(.6deg); } }
@@ -295,7 +314,7 @@ const FD_CSS = `
 .fdDiya .fv-flame { animation: fdFlick 1.5s ease-in-out infinite; }
 .fdDiya.r .fv-flame { animation-delay: -.7s; }
 @keyframes fdFlick { 0%, 100% { transform: scale(1, 1); } 35% { transform: scale(.88, 1.1); } 65% { transform: scale(1.06, .94); } }
-.fdBand { position: relative; z-index: 3; height: 48px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; box-sizing: border-box; }
+.fdTagBand { position: relative; z-index: 3; height: 48px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; box-sizing: border-box; }
 .fdTag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
   font: 800 11px/1 'Inter', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #2a1606;
   background: linear-gradient(180deg, #ffe3a3, #ffb020 65%, #f07c0a); box-shadow: 0 6px 16px -6px rgba(255,140,20,.85), inset 0 1px 0 rgba(255,255,255,.55); }
@@ -306,8 +325,8 @@ const FD_CSS = `
 .fdCard .tplCard, .fdCard .pmFrame { animation: none; content-visibility: visible; }
 .fdCard .tplInner { border-color: rgba(255,211,107,.18); }
 .fdCard .tplLink:hover .tplInner, .fdCard .tplLink:hover::after, .fdCard .pmFrame:hover { transform: none; }
-/* a registry-independent card: festive art on a lit night instead of a poster */
-.fdCard.is-fallback .tplInner > div:first-child { background: radial-gradient(80% 60% at 50% 30%, rgba(255,176,32,.35), transparent 70%), radial-gradient(70% 50% at 50% 100%, rgba(255,93,143,.25), transparent 70%), linear-gradient(170deg, #2a3278, #12153f) !important; }
+/* a registry-independent card: festival art on a lit night instead of a poster */
+.fdCard.is-fallback .tplInner > div:first-child { background: radial-gradient(80% 60% at 50% 30%, rgba(255,176,32,.35), transparent 70%), radial-gradient(70% 50% at 50% 100%, rgba(255,93,143,.25), transparent 70%), linear-gradient(170deg, var(--ft-sky0), var(--ft-sky2)) !important; }
 .fdArt { position: absolute; z-index: 14; left: 8%; right: 8%; top: 7%; height: 66%; width: 84%; object-fit: contain; pointer-events: none;
   filter: drop-shadow(0 10px 22px rgba(0,0,0,.45)); animation: fdBob 3.2s ease-in-out infinite; }
 @keyframes fdBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
@@ -325,13 +344,13 @@ const FD_CSS = `
 .fdOff { font: 700 13px/1 'Inter', sans-serif; color: #ffc457; }
 .fdPriceNote { font: 500 12px/1 'Inter', sans-serif; color: rgba(255,238,205,.6); }
 .fdSoon { position: relative; aspect-ratio: 3 / 4; border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-  background: #141742; box-shadow: inset 0 0 0 1px rgba(255,211,107,.2); }
+  background: var(--ft-sky2); box-shadow: inset 0 0 0 1px rgba(255,211,107,.2); }
 .fdSoon img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; filter: grayscale(.4); }
 .fdSoonTag { position: relative; padding: 6px 14px; border-radius: 999px; background: rgba(0,0,0,.7); color: rgba(255,255,255,.88); font: 700 10px/1 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase; }
 .fdSoonName { position: relative; color: rgba(255,255,255,.7); font: 600 13px/1.2 'Inter', sans-serif; text-align: center; padding: 0 10px; }
 @media (min-width: 768px) {
   .fdSlot { padding: 0 16px 20px; border-radius: 32px; }
-  .fdBand { height: 54px; }
+  .fdTagBand { height: 54px; }
   .fdTag { font-size: 11.5px; }
   .fdName { font-size: 18px; }
   .fdPrice b { font-size: 24px; }

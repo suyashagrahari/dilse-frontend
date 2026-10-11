@@ -22,7 +22,7 @@ import {
 } from "./PremiumShowcase";
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
 import HalloweenTeaser, { HALLOWEEN_TEASER_CSS } from "./HalloweenTeaser";
-import FestiveTeaser, { FESTIVE_TEASER_CSS } from "./FestiveTeaser";
+import FestivalTeaser, { FESTIVAL_TEASER_CSS } from "./FestivalTeaser";
 import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
 import { useSeason } from "@/hooks/useSeason";
 import { SEASON_FALLBACK } from "@/lib/season";
@@ -302,8 +302,8 @@ function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: bool
 
 function TemplatesContent({ room }: { room: GalleryTab }) {
   const router = useRouter();
-  // The teaser beside Premium follows the season: Halloween drop, Valentine
-  // wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
+  // The teaser beside Premium follows the season: Halloween, Dandiya or Diwali
+  // drop, Valentine wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
   const seasonMode = useSeason()?.mode ?? SEASON_FALLBACK.mode;
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
@@ -492,7 +492,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS + FESTIVE_TEASER_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS + FESTIVAL_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -695,7 +695,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                     </header>
 
                     {/* Premium is always there; beside it, whichever season the site is
-                        wearing (Halloween drop, Navratri & Diwali drop OR Valentine wishlist —
+                        wearing (Halloween drop, Navratri Dandiya drop, Diwali drop OR Valentine wishlist —
                         exactly one). With the
                         season off, Premium stands alone in its own full-width layout. */}
                     {!hasActiveFilters && (seasonMode === "off" ? (
@@ -707,7 +707,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                         {premiumShowcase.length > 0 && (
                           <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                         )}
-                        {seasonMode === "halloween" ? <HalloweenTeaser /> : seasonMode === "festive" ? <FestiveTeaser /> : <ValentineTeaser />}
+                        {seasonMode === "halloween" ? <HalloweenTeaser /> : seasonMode === "dandiya" || seasonMode === "diwali" ? <FestivalTeaser kind={seasonMode} /> : <ValentineTeaser />}
                       </div>
                     ))}
 

@@ -1,24 +1,24 @@
 "use client";
 
-// ─── The festival night behind the /festive-offer hero ───────────────────────
+// ─── The Diwali night behind the /diwali-offer hero ──────────────────────────
 //
 // Diwali falls on amavasya — the moonless night — so there is no moon here:
-// an indigo sky full of stars, fireworks blooming over a lit haveli (onion
-// dome, two chhatris, arched jharokha windows, a marigold toran over the gate
-// and diyas flickering along every parapet), sky lanterns rising, a rangoli on
-// the forecourt and a Dandiya couple dancing beside it.
+// a deep maroon-red sky full of stars, fireworks blooming in gold and red over
+// a lit haveli (onion dome, two chhatris, arched jharokha windows, a marigold
+// toran over the gate and diyas flickering along every parapet), sky lanterns
+// rising, a rangoli on the forecourt, the sparkler penguin and the painted diya.
 //
 // Performance: sky, haveli, bursts, lanterns and rangoli are inline SVG/CSS —
 // no request, so the headline stays the LCP. Every moving layer animates
 // transform or opacity only. The CDN GIFs (two light skyshots, sparkles, the
-// dancing couple, the diya) come through IdleGif: requested after load + idle
+// rangoli, the sparkler penguin, the diya) come through IdleGif: requested after load + idle
 // into boxes already sized, so nothing shifts. The two heavy fireworks GIFs
 // are never used here. Reduced motion stills everything.
 
 import type { CSSProperties } from "react";
 import IdleGif from "@/components/promo/IdleGif";
-import { Burst, Lantern, Rangoli } from "@/components/promo/festiveArt";
-import { FV } from "@/components/promo/festiveTheme";
+import { Burst, Lantern, Rangoli } from "@/components/promo/festivalArt";
+import { FT } from "@/components/promo/festivalTheme";
 import { FESTIVE_GIF } from "@/lib/season";
 
 const VB_W = 400;
@@ -65,18 +65,18 @@ function Chhatri({ x }: { x: number }) {
 }
 
 function HaveliSvg() {
-  const sil = "#11143d";
+  const sil = "#2a0408";
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="fsHaveliSvg" aria-hidden preserveAspectRatio="xMidYMax meet">
       <defs>
         <linearGradient id="fs-wall" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1d2260" />
-          <stop offset="1" stopColor="#0f1238" />
+          <stop offset="0" stopColor="#5e0b10" />
+          <stop offset="1" stopColor="#33060a" />
         </linearGradient>
         <linearGradient id="fs-dome" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#262d78" />
-          <stop offset=".6" stopColor="#1a1f58" />
-          <stop offset="1" stopColor="#11143d" />
+          <stop offset="0" stopColor="#7a1013" />
+          <stop offset=".6" stopColor="#4f090d" />
+          <stop offset="1" stopColor="#2a0408" />
         </linearGradient>
         <radialGradient id="fs-win" cx="50%" cy="70%" r="75%">
           <stop offset="0" stopColor="#fff3c4" />
@@ -91,7 +91,7 @@ function HaveliSvg() {
       </defs>
 
       {/* the forecourt */}
-      <path d="M0 300 H400 V330 H0 Z" fill="#0b0d2b" />
+      <path d="M0 300 H400 V330 H0 Z" fill="#22040a" />
       <path d="M0 300 H400" stroke="rgba(255,211,107,.25)" strokeWidth="1.2" />
 
       {/* the side wings */}
@@ -140,7 +140,7 @@ function HaveliSvg() {
         <path d="M188 228 v-34 a12 13 0 0 1 24 0 v34 z" />
       </g>
       {/* the balcony ledges */}
-      <g fill="#0c0f30">
+      <g fill="#22040a">
         {[102, 132, 162, 220, 250, 280].map((x) => <rect key={`b${x}`} x={x} y={226} width={18} height={3} rx={1} />)}
         <rect x={185} y={228} width={30} height={3} rx={1} />
       </g>
@@ -168,7 +168,7 @@ function HaveliSvg() {
       <path d={LADI_R} stroke="rgba(255,211,107,.35)" strokeWidth=".7" fill="none" />
       <g className="fsLadi">
         {DOTS.map(([x, y], i) => (
-          <circle key={`l${i}`} cx={x} cy={y} r={1.5} fill={i % 3 === 0 ? "#ff5d8f" : i % 3 === 1 ? "#ffd36b" : "#2fd3c0"} style={{ animationDelay: `${-(i % 6) * 0.35}s` }} />
+          <circle key={`l${i}`} cx={x} cy={y} r={1.5} fill={i % 3 === 0 ? "#ff4d4d" : i % 3 === 1 ? "#ffd36b" : "#fff0c8"} style={{ animationDelay: `${-(i % 6) * 0.35}s` }} />
         ))}
       </g>
 
@@ -189,12 +189,13 @@ function HaveliSvg() {
 }
 
 type BurstSpec = { left: string; top: string; size: number; color: string; delay: number; dur: number };
+const T = FT.diwali;
 const BURSTS: BurstSpec[] = [
-  { left: "12%", top: "12%", size: 120, color: FV.flame, delay: 0.2, dur: 3.6 },
-  { left: "70%", top: "6%", size: 150, color: FV.rose, delay: 1.4, dur: 4.2 },
-  { left: "44%", top: "18%", size: 90, color: FV.teal, delay: 2.5, dur: 3.4 },
-  { left: "86%", top: "28%", size: 100, color: FV.goldSoft, delay: 0.9, dur: 3.9 },
-  { left: "28%", top: "4%", size: 80, color: FV.marigold, delay: 3.1, dur: 4.4 },
+  { left: "12%", top: "12%", size: 120, color: T.flame, delay: 0.2, dur: 3.6 },
+  { left: "70%", top: "6%", size: 150, color: "#ff4d4d", delay: 1.4, dur: 4.2 },
+  { left: "44%", top: "18%", size: 90, color: T.a2, delay: 2.5, dur: 3.4 },
+  { left: "86%", top: "28%", size: 100, color: T.goldSoft, delay: 0.9, dur: 3.9 },
+  { left: "28%", top: "4%", size: 80, color: T.cta, delay: 3.1, dur: 4.4 },
 ];
 
 const LANTERNS = [
@@ -209,7 +210,7 @@ const pctBox = (x: number, y: number, w: number, h: number): CSSProperties => ({
   position: "absolute", left: `${(x / VB_W) * 100}%`, top: `${(y / VB_H) * 100}%`, width: `${(w / VB_W) * 100}%`, height: `${(h / VB_H) * 100}%`,
 });
 
-export default function FestiveScene() {
+export default function DiwaliScene() {
   return (
     <div className="fs" aria-hidden>
       <span className="fsStars" />
@@ -233,9 +234,10 @@ export default function FestiveScene() {
         <span className="fsGateGlow" style={pctBox(150, 220, 100, 100)} />
         {/* a rangoli on the forecourt in front of the gate, seen at an angle */}
         <span className="fsRangoli" style={pctBox(152, 296, 96, 34)}><Rangoli size={96} /></span>
+        <IdleGif src={FESTIVE_GIF("dawaii-colorful-rangoli.webp")} width={498} height={498} className="fsRangoliGif" style={pctBox(140, 292, 120, 40)} />
         <IdleGif src={FESTIVE_GIF("diwali-sparkles-stars.gif")} width={498} height={467} className="fsSparkle" />
         <span className="fsCouple">
-          <IdleGif src={FESTIVE_GIF("dandiyapartyner.webp")} width={498} height={498} className="fsCoupleImg" />
+          <IdleGif src={FESTIVE_GIF("celebration-with-crackers-dudu.webp")} width={498} height={498} className="fsCoupleImg" />
         </span>
         <IdleGif src={FESTIVE_GIF("happy-diwali-diya.webp")} width={451} height={498} className="fsDiya" />
       </div>
@@ -244,7 +246,7 @@ export default function FestiveScene() {
   );
 }
 
-export const FS_CSS = `
+export const DIWALI_SCENE_CSS = `
 .fs { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .fsStars { position: absolute; inset: 0 0 30% 0; opacity: .85;
   background-image: radial-gradient(1.4px 1.4px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 28% 8%, #fff 50%, transparent 51%),
@@ -257,7 +259,7 @@ export const FS_CSS = `
 @keyframes fsTwinkle { from { opacity: .45; } to { opacity: .95; } }
 /* the city's glow on the horizon — Diwali night has no moon */
 .fsHorizon { position: absolute; left: -10%; right: -10%; bottom: 0; height: 55%;
-  background: radial-gradient(60% 70% at 70% 100%, rgba(240,124,10,.32), transparent 70%), radial-gradient(40% 50% at 15% 100%, rgba(255,93,143,.16), transparent 70%); }
+  background: radial-gradient(60% 70% at 70% 100%, rgba(255,160,40,.36), transparent 70%), radial-gradient(40% 50% at 15% 100%, rgba(226,52,60,.24), transparent 70%); }
 
 /* CSS fireworks: a burst blooms, hangs, fades — transform + opacity only */
 .fsBurst { position: absolute; display: block; opacity: 0; transform: scale(.2); animation: fsBoom 3.8s cubic-bezier(.2,.8,.3,1) infinite; }
@@ -290,13 +292,14 @@ export const FS_CSS = `
 @keyframes fsSway { 0%, 100% { transform: rotate(-3deg) translateY(0); } 25% { transform: rotate(0deg) translateY(-6px); } 50% { transform: rotate(3deg) translateY(0); } 75% { transform: rotate(0deg) translateY(-4px); } }
 .fsDiya { position: absolute; right: 2%; bottom: 0; width: 20%; aspect-ratio: 451 / 498; filter: drop-shadow(0 0 18px rgba(255,176,32,.5)); }
 
+.fsRangoliGif { position: absolute; transform: scaleY(.42); transform-origin: 50% 60%; filter: drop-shadow(0 0 8px rgba(255,176,32,.5)); }
 .fsRangoli { display: flex; align-items: center; justify-content: center; }
 .fsRangoli svg { width: 100%; height: auto; aspect-ratio: 1; transform: scaleY(.34); filter: drop-shadow(0 0 6px rgba(255,176,32,.5)); }
 
 @media (max-width: 639px) {
   /* phones: the CSS bursts carry the sky (the GIF skyshots would sit on the headline),
      lanterns rise only along the edges, the couple and the diya stay on screen */
-  .fsSky { display: none; }
+  .fsSky { display: none !important; }
   .fsLantern.mid { display: none; }
   .fsCouple { left: 8%; width: 28%; }
   .fsDiya { right: 9%; width: 18%; }

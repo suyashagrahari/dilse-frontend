@@ -10,7 +10,8 @@
 
 import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import {
-  dropSlugsOf, getSeasonServerSnapshot, getSeasonSnapshot, isHalloweenBarDismissed, loadSeason, subscribeSeason, type Season, type SeasonMode,
+  dropSlugsOf, getSeasonServerSnapshot, getSeasonSnapshot, isFestivalMode, isHalloweenBarDismissed, loadSeason, subscribeSeason,
+  type FestivalId, type Season, type SeasonMode,
 } from "@/lib/season";
 
 const SeasonCtx = createContext<Season | null>(null);
@@ -49,9 +50,10 @@ export function useSeasonMode(): SeasonMode | null {
   return useSeason()?.mode ?? null;
 }
 
-/** True when the Navratri & Diwali drop is what the site is wearing. */
-export function useIsFestive(): boolean {
-  return useSeason()?.mode === "festive";
+/** The Hindu-festival drop the site is wearing ("dandiya" or "diwali"), or null. */
+export function useFestival(): FestivalId | null {
+  const m = useSeason()?.mode;
+  return isFestivalMode(m) ? m : null;
 }
 
 /** True when the Halloween drop is what the site is wearing. */

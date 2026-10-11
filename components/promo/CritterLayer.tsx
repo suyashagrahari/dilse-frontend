@@ -4,8 +4,8 @@
 //
 // Little visitors that wander through the home hero or the blog while a drop
 // season is on: Halloween's ghosts, spiders and bats (HalloweenCritters.tsx),
-// the festive diyas, lanterns, fireworks and the dancing dandiya panda
-// (FestiveCritters.tsx). Each season brings only its kinds and a `plan`
+// Navratri's twirling sticks, mirrors and dancing panda and Diwali's diyas,
+// lanterns and fireworks (FestivalCritters.tsx). Each season brings only its kinds and a `plan`
 // function that places one appearance; this layer runs them all the same way.
 //
 // They come in waves — the first right after the page settles (~0.5 s), then

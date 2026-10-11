@@ -453,7 +453,7 @@
   contain-intrinsic-size: auto 900px;
 }
 
-/* ── The running season strip (HalloweenOfferBar "hwb-home" / FestiveOfferBar "fsb-home") ──
+/* ── The running season strip (HalloweenOfferBar "hwb-home" / FestivalOfferBar "fsb-home") ──
    Desktop and tablet: the navbar is a fixed pill floating 14px from the top
    and 60px tall, and the hero's top padding leaves the band beneath it empty,
    so the strip is laid over that band at the pill's width — it takes no space

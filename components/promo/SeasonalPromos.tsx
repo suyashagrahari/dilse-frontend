@@ -9,9 +9,11 @@
 //   "valentine" → the Valentine banners, exactly as before (they still show
 //                 only while their own countdown runs — /admin/wishlist)
 //   "halloween" → the Halloween strip, card, critters and corner webs —
-//                 never a Valentine or festive banner
-//   "festive"   → the Navratri & Diwali strip, card, critters and corner
-//                 garlands — never a Valentine or Halloween banner
+//                 never a Valentine or festival banner
+//   "dandiya"   → the Navratri Dandiya strip, card, critters and mirror-work
+//                 torans — never a Diwali, Valentine or Halloween banner
+//   "diwali"    → the Diwali strip, card, critters and marigold garlands —
+//                 never a Dandiya, Valentine or Halloween banner
 //   "off"       → nothing (Premium promos are not seasonal and stay put)
 //
 // Until the season is known (no server answer, fetch in flight) nothing renders,
@@ -23,10 +25,11 @@ import HalloweenOfferBar from "./HalloweenOfferBar";
 import HalloweenOfferCard from "./HalloweenOfferCard";
 import HalloweenCritters from "./HalloweenCritters";
 import HalloweenCornerWebs from "./HalloweenCornerWebs";
-import FestiveOfferBar from "./FestiveOfferBar";
-import FestiveOfferCard from "./FestiveOfferCard";
-import FestiveCritters from "./FestiveCritters";
-import FestiveCorners from "./FestiveDecor";
+import { isFestivalMode } from "@/lib/season";
+import FestivalOfferBar from "./FestivalOfferBar";
+import FestivalOfferCard from "./FestivalOfferCard";
+import FestivalCritters from "./FestivalCritters";
+import { FestivalCorners } from "./FestivalDecor";
 
 /**
  * What a creature on the blog must keep clear of: the running bar, the offer
@@ -49,12 +52,12 @@ export function SeasonalMarquee({ source, critters = false, className }: { sourc
       </>
     );
   }
-  if (s.mode === "festive") {
+  if (isFestivalMode(s.mode)) {
     return (
       <>
-        <FestiveOfferBar source={source} className={className} />
-        {critters && <FestiveCritters scope="page" avoid={CRITTER_AVOID_BLOG} />}
-        {critters && <FestiveCorners scope="page" />}
+        <FestivalOfferBar kind={s.mode} source={source} className={className} />
+        {critters && <FestivalCritters kind={s.mode} scope="page" avoid={CRITTER_AVOID_BLOG} />}
+        {critters && <FestivalCorners kind={s.mode} scope="page" />}
       </>
     );
   }
@@ -66,7 +69,7 @@ export function SeasonalCountdownCard({ source, className }: { source: string; c
   const s = useSeason();
   if (!s) return null;
   if (s.mode === "halloween") return <HalloweenOfferCard className={className} />;
-  if (s.mode === "festive") return <FestiveOfferCard className={className} />;
+  if (isFestivalMode(s.mode)) return <FestivalOfferCard kind={s.mode} className={className} />;
   if (s.mode === "valentine") return <PromoCountdownCard source={source} className={className} />;
   return null;
 }

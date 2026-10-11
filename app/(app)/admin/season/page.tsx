@@ -9,11 +9,13 @@
 //   🎃 Halloween drop — the running strip under the navbar on home, blog and
 //      gallery, the Halloween card in blog posts, the gallery teaser, the
 //      critters on the home hero and blog, and /halloween-offer with the sale
-//   🪔 Navratri & Diwali drop — the festive twin: strip, blog card, gallery
-//      teaser, diyas/lanterns/fireworks on the hero and blog, /festive-offer
+//   🥢 Navratri Dandiya drop — kumkum-red garba theme: strip, blog card,
+//      gallery teaser, sticks/mirrors/panda on the hero and blog, /dandiya-offer
+//   🪔 Diwali drop — maroon-gold theme: strip, blog card, gallery teaser,
+//      diyas/lanterns/fireworks on the hero and blog, /diwali-offer
 //   ⏸  Off — no seasonal banners anywhere
 //
-// Each DROP season (Halloween, Navratri & Diwali) keeps its own sale — on/off
+// Each DROP season (Halloween, Navratri Dandiya, Diwali) keeps its own sale — on/off
 // and the percent — and its own list of templates, edited under that season's
 // tab. Switching the mode never loses the other season's settings. The
 // discount is real: the server applies the ACTIVE mode's sale to every price
@@ -34,7 +36,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
 import {
-  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVE_PERCENT_DEFAULT, isDropMode, setSeason, type DropId, type DropSale, type SeasonMode,
+  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, setSeason, type DropId, type DropSale, type SeasonMode,
 } from "@/lib/season";
 import { GALLERY_BY_SLUG, GALLERY_LIST } from "@/lib/galleryRules";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
@@ -46,11 +48,13 @@ type Draft = { saleOn: boolean; pct: string; slugs: string[] };
 /** Each drop's settings when the server has none: what the server defaults to. */
 const DROP_DEFAULT: Record<DropId, Drop> = {
   halloween: { saleEnabled: true, salePercent: 49, saleSlugs: [...DROPS.halloween.slugs] },
-  festive: { saleEnabled: true, salePercent: FESTIVE_PERCENT_DEFAULT, saleSlugs: [...DROPS.festive.slugs] },
+  dandiya: { saleEnabled: true, salePercent: FESTIVAL_PERCENT_DEFAULT, saleSlugs: [...DROPS.dandiya.slugs] },
+  diwali: { saleEnabled: true, salePercent: FESTIVAL_PERCENT_DEFAULT, saleSlugs: [...DROPS.diwali.slugs] },
 };
 const DROP_UI: Record<DropId, { emoji: string; tab: string; reset: string }> = {
   halloween: { emoji: "🎃", tab: "Halloween drop", reset: "Reset to the two Halloween templates" },
-  festive: { emoji: "🪔", tab: "Navratri & Diwali drop", reset: "Reset to the two festive templates" },
+  dandiya: { emoji: "🥢", tab: "Navratri Dandiya drop", reset: "Reset to Be My Dandiya Partner" },
+  diwali: { emoji: "🪔", tab: "Diwali drop", reset: "Reset to Happy Diwali" },
 };
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
@@ -64,7 +68,8 @@ type View = {
 const MODES: { value: SeasonMode; emoji: string; label: string; note: string }[] = [
   { value: "valentine", emoji: "💘", label: "Valentine wishlist", note: "The wishlist banners on the blog and gallery, as before — they show while a countdown runs in Wishlist." },
   { value: "halloween", emoji: "🎃", label: "Halloween drop", note: "Running strip under the navbar on home, blog and gallery; Halloween card in posts; critters on the home hero and blog; the offer page." },
-  { value: "festive", emoji: "🪔", label: "Navratri & Diwali drop", note: "Festive strip, blog card and gallery teaser; diyas, lanterns, fireworks and the dandiya panda on the hero and blog; /festive-offer." },
+  { value: "dandiya", emoji: "🥢", label: "Navratri Dandiya drop", note: "Kumkum-red garba theme: Dandiya strip, blog card and gallery teaser; twirling sticks, mirrors and the dancing panda on the hero and blog; /dandiya-offer. Ends 20 Oct." },
+  { value: "diwali", emoji: "🪔", label: "Diwali drop", note: "Maroon-gold Diwali theme: Diwali strip, blog card and gallery teaser; diyas, lanterns, fireworks and rangoli on the hero and blog; /diwali-offer. Ends 8 Nov." },
   { value: "off", emoji: "⏸️", label: "Off", note: "No seasonal banners anywhere. The offer pages still open, without the sale." },
 ];
 
@@ -90,14 +95,16 @@ function parseView(json: unknown): View | null {
   const root = json as { data?: unknown } | null;
   const d = ((root && typeof root === "object" && root.data) || root) as Record<string, unknown> | null;
   if (!d || typeof d !== "object") return null;
-  const mode = d.mode as SeasonMode;
+  // A round-1 server still says "festive" (the merged Navratri & Diwali season): that is the Diwali season now.
+  const mode = (d.mode === "festive" ? "diwali" : d.mode) as SeasonMode;
   if (!MODES.some((m) => m.value === mode)) return null;
   const by = d.updatedBy as unknown;
   const byText =
     typeof by === "string" ? by
       : by && typeof by === "object" ? String((by as Record<string, unknown>).email ?? (by as Record<string, unknown>).name ?? "")
         : typeof d.updatedByEmail === "string" ? d.updatedByEmail : null;
-  const rawDrops = (d.drops && typeof d.drops === "object" ? d.drops : {}) as Record<string, unknown>;
+  const rawDrops = { ...((d.drops && typeof d.drops === "object" ? d.drops : {}) as Record<string, unknown>) };
+  if (rawDrops.diwali === undefined && rawDrops.festive !== undefined) rawDrops.diwali = rawDrops.festive;
   // Without `drops`, the flat fields (or `sale`) describe the drop of the active mode — Halloween's on older servers.
   const flat = { saleEnabled: d.saleEnabled, salePercent: d.salePercent, saleSlugs: d.saleSlugs, ...(d.sale && typeof d.sale === "object" ? (d.sale as object) : {}) };
   const flatFor: DropId = isDropMode(mode) ? mode : "halloween";
@@ -256,7 +263,7 @@ export default function AdminSeasonPage() {
   return (
     <AdminPage
       title="Season & offers"
-      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, or Navratri & Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates."
+      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, Navratri Dandiya or Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates."
       icon={<Ghost size={18} />}
       width={1280}
     >
@@ -446,7 +453,7 @@ const SSN_CSS = `
 .ssn-err { margin: 12px 0; padding: 12px 14px; border-radius: 12px; color: #b3261e; background: #fff1ef; border: 1px solid rgba(179,38,30,.25); font: 500 13px/1.4 'Inter', sans-serif; }
 .ssn-modes { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
 @media (min-width: 720px) { .ssn-modes { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-@media (min-width: 1100px) { .ssn-modes { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+@media (min-width: 1100px) { .ssn-modes { grid-template-columns: repeat(5, minmax(0,1fr)); } }
 .ssn-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 14px 16px; border-radius: 16px; text-align: left; cursor: pointer;
   border: 1.5px solid rgba(61,12,17,.12); background: #fffdfb; color: #2a0a0e; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .ssn-mode:hover { transform: translateY(-1px); }
@@ -456,18 +463,23 @@ const SSN_CSS = `
 .ssn-mode.on { border-color: #3d0c11; box-shadow: 0 10px 24px -14px rgba(61,12,17,.6), inset 0 0 0 1px #3d0c11; }
 .ssn-mode.is-halloween.on { border-color: #5a4a7c; color: #f3eefe; background: linear-gradient(180deg, #2b2245, #17132a); box-shadow: 0 10px 24px -14px rgba(23,19,42,.8), inset 0 0 0 1px #b9a6f0; }
 .ssn-mode.is-halloween.on > span:not(.ssn-mode-e) { color: rgba(226,216,250,.75); }
-.ssn-mode.is-festive.on { border-color: #f4c95d; color: #fff7e8; background: radial-gradient(120% 90% at 85% 0%, rgba(255,176,32,.25), transparent 55%), linear-gradient(180deg, #232a66, #0d0f2e);
-  box-shadow: 0 10px 24px -14px rgba(13,15,46,.8), inset 0 0 0 1px #ffb020; }
-.ssn-mode.is-festive.on > span:not(.ssn-mode-e) { color: rgba(255,238,205,.78); }
+.ssn-mode.is-dandiya.on { border-color: #ffb000; color: #fff6ea;
+  background: radial-gradient(circle at 50% 50%, rgba(255,240,220,.28) 0 1.1px, transparent 1.5px) 0 0 / 14px 14px, radial-gradient(120% 90% at 85% 0%, rgba(255,61,154,.35), transparent 55%), linear-gradient(180deg, #b3121b, #7a0f12);
+  box-shadow: 0 10px 24px -14px rgba(90,7,12,.8), inset 0 0 0 1px #ffb000; }
+.ssn-mode.is-dandiya.on > span:not(.ssn-mode-e) { color: rgba(255,230,214,.82); }
+.ssn-mode.is-diwali.on { border-color: #ffcf5a; color: #ffe7a8; background: radial-gradient(120% 90% at 50% 120%, rgba(255,190,70,.35), transparent 55%), linear-gradient(180deg, #5e0b10, #2b0508);
+  box-shadow: 0 10px 24px -14px rgba(51,6,10,.8), inset 0 0 0 1px #ffcf5a; }
+.ssn-mode.is-diwali.on > span:not(.ssn-mode-e) { color: rgba(255,228,196,.8); }
 .ssn-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 2px; }
 .ssn-tab { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 999px; cursor: pointer;
   border: 1.5px solid rgba(61,12,17,.14); background: #fffdfb; color: #2a0a0e; font: 700 13px/1 'Inter', sans-serif; }
 .ssn-tab.on.is-halloween { color: #f3eefe; border-color: #b9a6f0; background: linear-gradient(135deg, #17132a, #3b2f62); }
-.ssn-tab.on.is-festive { color: #fff7e8; border-color: #ffb020; background: linear-gradient(135deg, #0d0f2e, #2b3480); }
+.ssn-tab.on.is-dandiya { color: #fff6ea; border-color: #ffb000; background: linear-gradient(135deg, #7a0f12, #c8141f); }
+.ssn-tab.on.is-diwali { color: #ffe7a8; border-color: #ffcf5a; background: linear-gradient(135deg, #2b0508, #8f1416); }
 .ssn-tab .ssn-live-in { position: static; padding: 3px 6px; font-size: 8.5px; }
 .ssn-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3742a; }
 .ssn-tabs-note { flex: 1 1 260px; font: 500 12.5px/1.4 'Inter', sans-serif; color: #7f5f5f; }
-.ssn-chip.is-soon { background: linear-gradient(135deg, #1a1f52, #2b3480); box-shadow: inset 0 0 0 1px rgba(244,201,93,.5); }
+.ssn-chip.is-soon { background: linear-gradient(135deg, #5e0b10, #8f1416); box-shadow: inset 0 0 0 1px rgba(255,207,90,.5); }
 .ssn-soon { background: linear-gradient(135deg, #ffe3a3, #ffb020); }
 .ssn-mode.is-valentine.on { background: linear-gradient(180deg, #fff6f4, #ffe6e1); }
 .ssn-live { position: absolute; top: 12px; right: 12px; padding: 4px 7px; border-radius: 999px; font: 800 9px/1 'Inter', sans-serif; font-style: normal; letter-spacing: .12em; color: #fff; background: #1e7a4b; }

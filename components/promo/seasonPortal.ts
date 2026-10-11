@@ -1,8 +1,8 @@
 // ─── The seasonal portal machinery ───────────────────────────────────────────
 //
 // A drop's templates open through a short full-screen transition instead of a
-// plain route change: the Halloween witch (WitchPortal.tsx), the festive
-// firework (FestivePortal.tsx). Each season brings only its scene (HTML + CSS
+// plain route change: the Halloween witch (WitchPortal.tsx), the Dandiya
+// twirl and the Diwali firework (FestivalPortal.tsx). Each season brings only its scene (HTML + CSS
 // strings) and timings; this file runs it the same way for all of them:
 //
 //   0 ms        the overlay (plain DOM on <body>, so it survives the route
