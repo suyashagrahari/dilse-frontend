@@ -2,8 +2,8 @@ import { Mail, Flame, Image as ImageIcon, Sparkles, Download } from "lucide-reac
 import type { TemplatePageConfig } from "@/types/template-config";
 import { templateMedia } from "@/lib/templateMedia";
 
-// Gallery card. The cover is the Diwali night poster
-// (source: media-src/templates/happy-diwali/cover-poster.webp, uploaded to the CDN).
+// Gallery card. The cover is the red-gold Diwali night poster
+// (source: media-src/templates/happy-diwali/cover-poster-red.webp + @360/540/720w, on the CDN).
 export const config: TemplatePageConfig = {
   slug: "happy-diwali",
   type: "festival",
@@ -11,7 +11,7 @@ export const config: TemplatePageConfig = {
   title: "Happy Diwali — A Diya at Your Door",
   description:
     "Leave a diya at their door: they light it, light a row of wish diyas, colour a rangoli, write their name with a sparkler, light a whole tray of crackers, open your letter from a red-and-gold liffafa and a box of mithai.",
-  coverImage: templateMedia("happy-diwali", "cover-poster.webp"),
+  coverImage: templateMedia("happy-diwali", "cover-poster-red.webp"),
   emoji: "🪔",
   color: "from-amber-400 to-red-900",
   previewText: "someone left a diya at your door 🪔",
