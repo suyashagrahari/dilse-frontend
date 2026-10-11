@@ -147,7 +147,15 @@ export default function Question({
 
   const lines = canSayNo ? PLEADING : noLines.length ? noLines : ["oops, my sticks slipped"];
   const noLabel = surrendered ? "Okay fine… YES 💛" : unlocked ? "No 😔" : dodges === 0 ? "No" : lines[(dodges - 1) % lines.length];
-  const yesScale = Math.min(1.3, Math.pow(1.06, dodges));
+  // YES grows a little per dodge, but never past what fits the arena with a margin.
+  const [fit, setFit] = useState(1.3);
+  useLayoutEffect(() => {
+    const a = arenaRef.current;
+    const y = yesRef.current;
+    if (!a || !y || !y.offsetWidth) return;
+    setFit(Math.max(1, Math.min(1.3, (a.clientWidth - 24) / y.offsetWidth)));
+  }, [dodges]);
+  const yesScale = tired ? 1 : Math.min(fit, Math.pow(1.06, dodges));
 
   const pressNo = () => {
     // The click that follows the last dodge's pointerdown is not a choice.
@@ -169,14 +177,15 @@ export default function Question({
         <img src={DD_GIF.couple} alt="" width={500} height={500} decoding="async" />
       </div>
 
-      <div ref={arenaRef} className="dd-q-arena" data-dd-answer-mode={rule.mode}>
+      <div ref={arenaRef} className={`dd-q-arena${tired ? " is-settled" : ""}`} data-dd-answer-mode={rule.mode}>
         <motion.button
           ref={yesRef}
           type="button"
           onClick={yes}
           className="dd-q-yes"
           data-dd-yes
-          animate={{ scale: yesScale }}
+          initial={false}
+          animate={{ x: "-50%", y: "-50%", scale: yesScale }}
           transition={{ type: "spring", stiffness: 260, damping: 14 }}
         >
           {yesLabel}
@@ -199,7 +208,7 @@ export default function Question({
             }
           }}
           onClick={pressNo}
-          style={{ left: pos ? pos.x : "74%", top: pos ? pos.y : "50%", transform: pos ? undefined : "translate(-50%, -50%)" }}
+          style={tired ? undefined : { left: pos ? pos.x : "74%", top: pos ? pos.y : "74%", transform: pos ? undefined : "translate(-50%, -50%)" }}
         >
           {dodges > 0 && !tired ? "💫 " : ""}
           {noLabel}
@@ -269,8 +278,8 @@ const Q_CSS = `
 .dd-q-couple img { width: 100%; height: 100%; object-fit: contain; animation: dd-q-sway 1.4s ease-in-out infinite alternate; transform-origin: 50% 90%; filter: drop-shadow(0 10px 18px rgba(30,0,2,.5)); }
 @keyframes dd-q-sway { from { transform: rotate(-4deg) } to { transform: rotate(4deg) translateY(-4px) } }
 .dd-q-arena { position: relative; flex: 1 1 0; min-height: 150px; width: 100%; max-width: calc(420px * var(--vw-s, 1)); max-height: 300px; }
-.dd-q-yes { position: absolute; left: 26%; top: 50%; margin-left: -72px; margin-top: -29px; min-width: 144px; min-height: 58px; padding: 14px 22px; border-radius: 999px; border: 0;
-  background: linear-gradient(180deg, #FFE08A, #FFB627 50%, #F08A0C); color: #3A1404; font: 700 18px ${FONTS.ui}; white-space: nowrap; cursor: pointer; z-index: 2;
+.dd-q-yes { position: absolute; left: 50%; top: 32%; min-width: 144px; max-width: calc(100% - 24px); min-height: 58px; padding: 14px 22px; border-radius: 999px; border: 0;
+  background: linear-gradient(180deg, #FFE08A, #FFB627 50%, #F08A0C); color: #3A1404; font: 700 18px ${FONTS.ui}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; z-index: 2;
   box-shadow: 0 5px 0 #A8580A, 0 0 30px -4px rgba(255,182,39,.7); touch-action: manipulation; }
 .dd-q-yes:focus-visible { outline: 3px solid #7FD8F2; outline-offset: 4px; }
 .dd-q-no { position: absolute; min-height: 48px; min-width: 88px; max-width: calc(100% - 16px); padding: 12px 20px; border-radius: 999px;
@@ -281,6 +290,9 @@ const Q_CSS = `
 .dd-q-no.is-yes { border: 0; background: linear-gradient(180deg, #FFE08A, #FFB627 50%, #F08A0C); color: #3A1404; box-shadow: 0 5px 0 #A8580A; }
 .dd-q-no.is-free { border-style: solid; border-color: rgba(255,247,232,.45); background: rgba(40,2,4,.35); font-weight: 600; }
 .dd-q-no:focus-visible { outline: 3px solid #7FD8F2; outline-offset: 4px; }
+/* No has stopped running (or turned into YES): a calm centred pair — YES primary on top, the other below. */
+.dd-q-arena.is-settled .dd-q-yes { top: 36%; }
+.dd-q-arena.is-settled .dd-q-no { left: 50%; top: calc(36% + 42px); transform: translateX(-50%); transition: none; }
 .dd-q-sure { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(30,2,4,.62); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
 .dd-q-sure-card { width: min(340px, 100%); box-sizing: border-box; padding: 22px 20px 18px; border-radius: 24px; text-align: center; display: grid; gap: 10px; justify-items: center;
   background: linear-gradient(180deg, #FFF9EC, #FFEBC2); color: ${DD.maroon}; box-shadow: 0 0 0 3px #F6D27A inset, 0 0 0 6px #FFF4DE inset, 0 0 0 7px #B8862E inset, 0 30px 60px -20px rgba(20,0,2,.8); }
