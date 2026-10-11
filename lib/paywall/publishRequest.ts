@@ -48,6 +48,18 @@ export type PublishGateResult =
   /** The user closed the paywall without paying. The caller must stop. */
   | "cancelled";
 
+/**
+ * A priced template the server let through for free, by the gate's reason. Shown
+ * where the price would have been, so it reads as a gift rather than a price
+ * that silently vanished. Reasons not listed (free, already paid, already
+ * published, early access) say nothing — nothing about them is news.
+ */
+const FREE_NOTES: Record<string, { title: string; message: string }> = {
+  free_in_india: { title: "🇮🇳 Free for you in India", message: "This premium template costs nothing to publish from India." },
+  super_admin: { title: "Free for you · super admin", message: "No paywall — switch on “Pay like a customer” in Admin → Pricing to test checkout." },
+  free_access: { title: "Free for you · gift from SubhSandesh", message: "Every template is free for you to publish." },
+};
+
 function headers(token: string | null | undefined): HeadersInit {
   return {
     "Content-Type": "application/json",
@@ -122,9 +134,8 @@ export async function ensurePublishAllowed(
     pricing = json.data?.pricing;
     // A priced template, free because "Only visitors outside India pay" is on.
     // Say so, so it reads as a gift rather than a price that silently vanished.
-    if (json.data?.reason === "free_in_india") {
-      pushToast({ type: "success", title: "🇮🇳 Free for you in India", message: "This premium template costs nothing to publish from India." });
-    }
+    const note = FREE_NOTES[String(json.data?.reason)];
+    if (note) pushToast({ type: "success", ...note });
   } catch {
     setBusy?.(true);
     return "allowed";

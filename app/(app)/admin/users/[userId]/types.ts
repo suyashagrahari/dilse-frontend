@@ -21,6 +21,8 @@ export interface ProfileUser {
   lastSeenCountry?: string | null;
   isVerified: boolean;
   tokenVersion?: number;
+  /** "All templates free", granted by a super admin. Kept with enabled:false after a revoke. */
+  freeAccess?: { enabled: boolean; grantedByEmail?: string; grantedAt?: string; note?: string } | null;
   createdAt: string;
   updatedAt: string;
 }

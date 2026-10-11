@@ -26,6 +26,9 @@ import { HALLOWEEN_ENDS_AT, HALLOWEEN_GIF } from "@/lib/season";
 import { halloweenFaqs } from "./content";
 import HauntedScene, { HS_CSS } from "./HauntedScene";
 import DropTemplates, { useDropDiscount, useDropTemplates } from "./DropTemplates";
+import { useTemplatePricing } from "@/hooks/useTemplatePricing";
+import { formatINR } from "@/config/templatePricing";
+import { useAppSelector } from "@/store/hooks";
 
 function Countdown() {
   const t = useNow();
@@ -75,7 +78,19 @@ export default function HalloweenOfferClient() {
   const upTo = Boolean(on && own?.upTo);
   const pctText = `${upTo ? "up to " : ""}${pct}%`;
   const faqs = halloweenFaqs(pct, upTo);
-  const first = drop[0];
+  // The paid entry point: the cheapest priced template in the drop, at the
+  // price the super admin set ("From ₹49"). Until prices land, a plain "Make yours".
+  const { pricingFor, settled } = useTemplatePricing();
+  const cheapest = settled
+    ? drop
+        .map((t) => ({ t, p: pricingFor(t.slug) }))
+        .filter(({ p }) => p && !p.isFree && p.finalPrice > 0)
+        .sort((a, b) => a.p.finalPrice - b.p.finalPrice)[0]
+    : undefined;
+  const first = cheapest?.t ?? drop[0];
+  // Super admin / "All templates free": the gate lets them publish free, so the
+  // CTA does not quote a price they will never be charged.
+  const freeFor = useAppSelector((s) => s.auth.user?.publishesFree ?? null);
   const n = drop.length;
   const countWord = n === 1 ? "one" : n === 2 ? "two" : n === 3 ? "three" : n === 4 ? "four" : String(n);
 
@@ -114,11 +129,11 @@ export default function HalloweenOfferClient() {
               </a>
               {first && (
                 <WitchLink href={`/${first.slug}`} className="hwoBtn ghost" prefetch={false}>
-                  Try one free <ArrowRight size={16} aria-hidden />
+                  {cheapest && freeFor ? <>Make yours · <b className="hwoFrom">free for you</b></> : cheapest ? <>From <b className="hwoFrom">{formatINR(cheapest.p.finalPrice)}</b></> : "Make yours"} <ArrowRight size={16} aria-hidden />
                 </WitchLink>
               )}
             </div>
-            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> Free to try · pay only to publish · ready in 2 minutes</p>
+            <p className="hwoTrust"><Sparkles size={13} aria-hidden /> {pct ? `${pctText} off till 31 Oct · ` : ""}one-time payment · ready in 2 minutes</p>
           </div>
         </div>
       </section>
@@ -141,7 +156,7 @@ export default function HalloweenOfferClient() {
         <h2 id="hwo-how" className="hwoSecTitle">Three steps, <em>no tricks</em></h2>
         <ol className="hwoSteps">
           <li><span className="hwoStepIc">🎃</span><b>Pick your haunt</b><span>Any template in the drop — the ✦ Premium ones included.</span></li>
-          <li><span className="hwoStepIc">🕯️</span><b>Make it yours</b><span>Your letter, your photos, your song. Preview everything free.</span></li>
+          <li><span className="hwoStepIc">🕯️</span><b>Make it yours</b><span>Your letter, your photos, your song — see every scene before you publish.</span></li>
           <li><span className="hwoStepIc">💌</span><b>Send the link</b><span>Publish{pct ? ` at ${pctText} off` : ""} and share it — WhatsApp, Instagram or a QR code.</span></li>
         </ol>
       </section>
@@ -180,6 +195,7 @@ export default function HalloweenOfferClient() {
 }
 
 const HWO_CSS = `
+.hwoFrom { font-weight: 800; color: #ffb35c; margin-left: 2px; }
 .hwo { position: relative; min-height: 100vh; overflow-x: clip; color: ${HW.text}; padding: 0 0 110px;
   background: linear-gradient(180deg, ${HW.sky1} 0%, ${HW.sky2} 38%, #100c1e 100%); }
 .hwo em { font-style: italic; color: ${HW.pumpkin}; }
@@ -198,8 +214,12 @@ const HWO_CSS = `
   text-shadow: 0 0 30px rgba(185,166,240,.45), 0 3px 0 ${HW.ink}; }
 .hwoTitleB { display: inline-flex; align-items: flex-start; gap: 8px; }
 .hwoPct { font: 800 clamp(80px, 17vw, 168px)/.9 var(--font-playfair), 'Playfair Display', serif;
-  background: linear-gradient(180deg, #fff1c9 6%, ${HW.window} 40%, ${HW.pumpkin} 68%, ${HW.pumpkinDeep} 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 6px 34px rgba(255,154,60,.55)); animation: hwoFlicker 5s ease-in-out infinite; }
+  background: linear-gradient(180deg, #fff1c9 13%, ${HW.window} 38%, ${HW.pumpkin} 59%, ${HW.pumpkinDeep} 83%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 6px 34px rgba(255,154,60,.55)); animation: hwoFlicker 5s ease-in-out infinite;
+  /* background-clip:text only paints inside the padding box, and the tight .9 line box
+     is shorter than Playfair's digits: pad the box so the 9's tail and the % are painted,
+     then pull the margins back so the layout (and the one-screen hero) is unchanged. */
+  padding: .1em .04em .2em; margin: -.1em -.04em -.2em; }
 .hwoTitleB small { margin-top: .5em; font: 800 clamp(18px, 3vw, 30px)/1 'Inter', sans-serif; letter-spacing: .16em; color: ${HW.moon}; }
 .hwoTitleB .hwoUpTo { letter-spacing: .1em; text-transform: uppercase; }
 @keyframes hwoFlicker { 0%, 46%, 100% { opacity: 1; } 47% { opacity: .7; } 48% { opacity: 1; } 51% { opacity: .82; } 52% { opacity: 1; } }
@@ -311,7 +331,7 @@ const HWO_CSS = `
   .hwoKick { padding: clamp(6px, .9vh, 8px) 13px; font-size: clamp(9.5px, 1.35vh, 10.5px); }
   .hwoTitle { align-items: flex-start; margin-top: clamp(8px, 1.8vh, 18px); gap: 0; }
   .hwoTitleA { font-size: clamp(40px, min(4.4vw, 7.2vh), 70px); white-space: nowrap; }
-  .hwoPct { font-size: clamp(72px, min(10.5vw, 15.5vh), 160px); }
+  .hwoPct { font-size: clamp(72px, min(10.5vw, 15.5vh), 160px); margin-bottom: -.13em; }
   .hwoTitleB small { font-size: clamp(16px, 2.7vh, 28px); }
   .hwoUpTo { margin-right: 2px; }
   .hwoHero .hwoSub { margin: clamp(6px, 1.4vh, 14px) 0 0; font-size: clamp(13.5px, 1.95vh, 16px); line-height: 1.55; max-width: 30rem; }
