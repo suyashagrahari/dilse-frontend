@@ -97,6 +97,9 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   // Halloween (/happy-halloween) is NOT listed here: it has a TEMPLATE_DATA entry
   // in lib/seo-data.ts (FAQs + HowTo), so sitemap.ts already emits it from
   // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.
+  // Be My Dandiya Partner (/dandiya-partner) is NOT listed either, for the same
+  // reason: its TEMPLATE_DATA entry in lib/seo-data.ts puts it in the sitemap.
+  // Diwali (/happy-diwali) likewise: its TEMPLATE_DATA entry puts it in the sitemap.
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card
@@ -109,6 +112,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },
   { path: "/valentine-wishlist", priority: 0.5, changeFrequency: "monthly" },
   { path: "/halloween-offer", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/festive-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
   { path: "/refund-policy", priority: 0.3, changeFrequency: "yearly" },

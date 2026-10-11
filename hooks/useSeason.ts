@@ -10,7 +10,7 @@
 
 import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import {
-  dropSlugsOf, getSeasonServerSnapshot, getSeasonSnapshot, isHalloweenBarDismissed, loadSeason, subscribeSeason, type Season,
+  dropSlugsOf, getSeasonServerSnapshot, getSeasonSnapshot, isHalloweenBarDismissed, loadSeason, subscribeSeason, type Season, type SeasonMode,
 } from "@/lib/season";
 
 const SeasonCtx = createContext<Season | null>(null);
@@ -42,6 +42,16 @@ export function useActiveDrop(): { slugs: ReadonlySet<string>; known: boolean } 
   const s = stored ?? provided;
   const slugs = useMemo(() => new Set(dropSlugsOf(s)), [s]);
   return { slugs, known: stored !== null };
+}
+
+/** The mode the site is wearing, or null before it is known. */
+export function useSeasonMode(): SeasonMode | null {
+  return useSeason()?.mode ?? null;
+}
+
+/** True when the Navratri & Diwali drop is what the site is wearing. */
+export function useIsFestive(): boolean {
+  return useSeason()?.mode === "festive";
 }
 
 /** True when the Halloween drop is what the site is wearing. */

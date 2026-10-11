@@ -10,6 +10,8 @@ import { hugDay } from "./happy-hug-day";
 import { kissDay } from "./happy-kiss-day";
 import { valentinesDay } from "./happy-valentines-day";
 import { halloweenDay } from "./happy-halloween";
+import { dandiyaDay } from "./dandiya-partner";
+import { diwaliDay } from "./happy-diwali";
 import { roseDayPremium } from "./happy-rose-day-premium";
 import { proposeDayPremium } from "./happy-propose-day-premium";
 import { chocolateDayPremium } from "./happy-chocolate-day-premium";
@@ -46,6 +48,8 @@ export const DAYS: Record<DaySlug, DayConfig> = {
   "happy-kiss-day": kissDay as unknown as DayConfig,
   "happy-valentines-day": valentinesDay as unknown as DayConfig,
   "happy-halloween": halloweenDay as unknown as DayConfig,
+  "dandiya-partner": dandiyaDay as unknown as DayConfig,
+  "happy-diwali": diwaliDay as unknown as DayConfig,
   // ✦ Premium twins
   "happy-rose-day-premium": withDemoSong(roseDayPremium as unknown as DayConfig),
   "happy-propose-day-premium": withDemoSong(proposeDayPremium as unknown as DayConfig),

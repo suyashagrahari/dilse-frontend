@@ -2487,6 +2487,196 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Be My Dandiya Partner — a Navratri Dandiya-night invitation on the
+  // Valentine-week engine. Searchers: people asking someone to be their dandiya
+  // or garba partner (a crush, a partner, a best friend), and people after an
+  // "online Navratri invitation / card". No `aggregateRating` (no real uses yet)
+  // and no price (set in /admin/pricing).
+  "dandiya-partner": {
+    title: "Be My Dandiya Partner — Navratri Invitation Card",
+    description:
+      "Ask them to be your Dandiya partner with an interactive Navratri invitation: nine diyas, a dhol-beat game, your photos in a garba circle and a cute Yes/No.",
+    category: "Festival",
+    emoji: "🪔",
+
+    keywords: [
+      // ── PRIMARY ──
+      "be my dandiya partner",
+      "dandiya partner invitation",
+      "will you be my dandiya partner",
+      "garba partner proposal",
+      "navratri invitation card online",
+      "dandiya night invitation",
+      "interactive navratri card",
+      "navratri 2026 wishes",
+      // ── ROMANTIC / CRUSH / FRIENDS ──
+      "ask crush to dandiya",
+      "dandiya proposal for girlfriend",
+      "garba night with boyfriend",
+      "garba buddy invite for best friend",
+      "navratri message for crush",
+      // ── THE PAGE ──
+      "dandiya invitation with photos and music",
+      "garba invitation on whatsapp",
+      "navratri card with add to calendar",
+      "dandiya pass",
+    ],
+
+    faqs: [
+      {
+        question: "How do I ask someone to be my Dandiya partner online?",
+        answer:
+          "Open the Be My Dandiya Partner template, press Create and add their name and yours, nine short lines (one for each night of Navratri), a note, up to six photos and the night's details — date, time, venue and dress code. Or describe the two of you in a few lines and let the AI fill it in. Press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone or laptop browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open the invitation?",
+        answer:
+          "They clash a pair of dandiya sticks to open an embroidered envelope, light nine diyas round a garbo (each one shows one of your lines), play a short dhol-beat dandiya game, pick the colour they will twirl in and see yours beside it, watch your photos dance round the garba circle, read your note, see the invitation ticket and answer \"Will you be my Dandiya partner?\". It ends with a Dandiya Pass they can download.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "They can try. The No button drops its sticks and twirls away a few times, each time with a new excuse, and after five tries it turns into a second Yes. You get an email the first time they say yes, with how many times No twirled away first.",
+      },
+      {
+        question: "Can I add the date, time and venue of the garba night?",
+        answer:
+          "Yes. The invitation ticket shows the date, time, venue and dress code you enter, and has Add to calendar buttons for Google Calendar and Apple or Outlook. Leave the date empty and it says \"Any night you pick\" instead.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose who you are inviting — your love, your crush, or your best friend as a garba buddy — and the question, the pass and the reply change with it, for example \"Will you be my garba buddy, all nine nights?\" for a friend. Every line stays editable.",
+      },
+      {
+        question: "Can I add a garba song?",
+        answer:
+          "Yes. Paste a YouTube link (with an optional start time) and only the sound plays while they go through the invitation, or pick one of eight garba and dandiya favourites such as Chogada, Nagada Sang Dhol or Shubhaarambh. There is also a built-in dhol-and-melody tune. Music starts only after their first tap.",
+      },
+      {
+        question: "What is the Dandiya Pass?",
+        answer:
+          "The keepsake at the end: a 1080×1920 card (Instagram Story size) with your photo, both names, the night's date and venue, the colour they picked and a Partner Confirmed stamp. They can download it as a PNG and reply to you on WhatsApp in one tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Invite Your Dandiya Partner Online",
+      description:
+        "Build a Navratri Dandiya-night invitation — nine diyas, a dhol game, your photos and the big question — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Be My Dandiya Partner page on SubhSandesh and press Create." },
+        { name: "Choose Who You're Inviting", text: "Pick your love, your crush or your bestie; the question, the pass and the reply follow the choice." },
+        { name: "Write the Nine Nights", text: "Add both names, a line for each of the nine diyas and the note tucked in the dupatta — or let the AI write them from a short story." },
+        { name: "Add the Night's Details", text: "Enter the date, time, venue and dress code, and pick the colour you will wear." },
+        { name: "Add Photos and Music", text: "Upload up to six photos for the garba circle, then paste a YouTube song or pick a garba favourite." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp before the first night of Navratri." },
+      ],
+    },
+  },
+  // Happy Diwali — an occasion on the Valentine engine (Diwali 2026 is
+  // 8 November). Searchers want an "online Diwali card / Diwali wishes with
+  // photos" they can send on WhatsApp, and a good share is for a partner or
+  // family far away — the FAQs answer both. No rating, no price.
+  "happy-diwali": {
+    title: "Interactive Diwali Wishes Card with Photos & Music",
+    description:
+      "Send a Diwali card they can play: light a diya at their door, light a row of wish diyas, colour a rangoli, write with a sparkler, launch fireworks and open a box of mithai.",
+    category: "Festival",
+    emoji: "🪔",
+
+    keywords: [
+      // ── PRIMARY ──
+      "happy diwali card online",
+      "interactive diwali card",
+      "diwali wishes with photos",
+      "diwali ecard with music",
+      "personalised diwali greeting",
+      "send diwali wishes on whatsapp",
+      "happy diwali 2026",
+      "shubh deepavali wishes",
+      // ── ROMANTIC ──
+      "diwali wishes for girlfriend",
+      "diwali wishes for boyfriend",
+      "diwali wishes for husband",
+      "diwali wishes for wife",
+      "romantic diwali message",
+      "diwali surprise for long distance partner",
+      // ── FAMILY / FRIENDS ──
+      "diwali wishes for family",
+      "diwali wishes for parents",
+      "diwali wishes for best friend",
+      // ── THE PAGE ──
+      "light a diya online",
+      "online rangoli for diwali",
+      "virtual fireworks diwali",
+      "diwali card with our song",
+    ],
+
+    faqs: [
+      {
+        question: "How do I send an interactive Diwali card?",
+        answer:
+          "Open the Happy Diwali template, press Create and add their name and yours, a letter, up to six photos and a wish for each diya — or describe the two of you in a few lines and let the AI write it for you. Press Save to preview, then Publish and send the private link on WhatsApp, Instagram or by text. It opens in any phone or laptop browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open it?",
+        answer:
+          "They find a diya waiting at their door with a little tag from you and light it. Then they light a row of diyas, each one lifting one of your wishes; colour a rangoli until your initials glow in the middle; write their name in the air with a sparkler; light paper sky lanterns that hold your photos; launch fireworks until your letter appears in the glow; and open a box of mithai onto a Shubh Deepavali card signed by you.",
+      },
+      {
+        question: "Can I send it to family or a friend instead of a partner?",
+        answer:
+          "Yes. Choose who it is for — your love, family or a friend — and the default wishes, the blessing card and the reply change with it. Every line stays editable.",
+      },
+      {
+        question: "Can I add a Diwali song?",
+        answer:
+          "Yes. Paste a YouTube link (with an optional start time) and only the sound plays while they explore, or pick a Diwali favourite such as Happy Diwali, Aayee Hai Diwali or Deepavali Manayi Suhani. You can also keep the soft built-in festive melody. Music starts only after they light the first diya.",
+      },
+      {
+        question: "Does it work on any phone?",
+        answer:
+          "Yes. Every scene fits one screen on phones, tablets and laptops, and every interaction works with a simple tap. Motion is reduced automatically for anyone whose phone asks for less motion, and the fireworks are drawn by the page, so there is no noise or smoke.",
+      },
+      {
+        question: "When is Diwali 2026?",
+        answer:
+          "Diwali (Lakshmi Puja) falls on Sunday, 8 November 2026. Good moments to send the link are that evening, as the first diyas are lit, or at midnight going into the day; for someone far away, open it together on a video call. The page works on any date.",
+      },
+      {
+        question: "Can they keep it?",
+        answer:
+          "Yes. The Shubh Deepavali card at the end can be saved as a 1080×1920 image (Instagram Story size), and the link keeps working, so they can open it again any evening.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Send an Interactive Diwali Card",
+      description:
+        "Build a little Diwali night for someone — a diya at their door, your wishes, a rangoli, fireworks with your letter and a box of sweets — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Happy Diwali page on SubhSandesh and press Create." },
+        { name: "Choose Who It's For", text: "Pick your love, family or a friend; the default wishes, blessing and reply follow the choice." },
+        { name: "Write the Wishes", text: "Add both names, the tag on the diya, a wish for each diya and the letter that appears in the fireworks — or let the AI write it from a short story." },
+        { name: "Add Photos and Music", text: "Upload up to six photos for the sky lanterns, then paste a YouTube song or pick a Diwali favourite." },
+        { name: "Finish the Night", text: "Set the initials for the rangoli, the word for the sparkler, their favourite sweet and your blessing." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on Diwali evening." },
+      ],
+    },
+  },
   // ── ✦ Premium twins (Stage 7, 2026-10-08) ─────────────────────────────────
   // Nine cinematic, several-scene versions of the Valentine-week days and
   // Halloween. Search intent is split from the $2 twin on purpose: the twin is

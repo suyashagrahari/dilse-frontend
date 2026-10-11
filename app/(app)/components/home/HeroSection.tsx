@@ -8,9 +8,12 @@ import TrendingShowcase from "./TrendingShowcase";
 import { useWishlist } from "@/hooks/useWishlist";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
 import { useSeason } from "@/hooks/useSeason";
-import { HALLOWEEN_PATH } from "@/lib/season";
+import { FESTIVE_PATH, HALLOWEEN_PATH } from "@/lib/season";
 import HalloweenCritters from "@/components/promo/HalloweenCritters";
 import { HalloweenHeroNight } from "@/components/promo/HalloweenCornerWebs";
+import FestiveCritters from "@/components/promo/FestiveCritters";
+import { FestiveHeroNight } from "@/components/promo/FestiveDecor";
+import { Diya } from "@/components/promo/festiveArt";
 
 const STATS = [
   { n: "50K+", l: "Pages Created" },
@@ -25,11 +28,14 @@ export default function HeroSection() {
   const goWishlist = useCallback(() => router.push(VALENTINE_PATH), [router]);
   const wishlist = useWishlist(VALENTINE_CAMPAIGN);
   const onList = wishlist.status === "joined";
-  // In Halloween mode the second button is the Halloween drop instead.
+  // In a drop season the second button is that season's drop instead.
   const season = useSeason();
   const halloween = season?.mode === "halloween";
-  const hwPct = halloween && season.sale.enabled ? season.sale.percent : 0;
+  const festive = season?.mode === "festive";
+  const dropPct = (halloween || festive) && season.sale.enabled ? season.sale.percent : 0;
   const goHalloween = useCallback(() => router.push(HALLOWEEN_PATH), [router]);
+  const goFestive = useCallback(() => router.push(FESTIVE_PATH), [router]);
+  const avoid = ".hero-btns, .hero-kicker, .hero-copy-pane h1, .hwb-wrap, .fsb-wrap";
   return (
     <section id="hero" className="hero-section" style={{
       background: '#f5ede6', display: 'flex', alignItems: 'center',
@@ -44,7 +50,12 @@ export default function HeroSection() {
           inline SVG behind the content; the GIFs load right after mount and
           keep clear of the buttons; off under reduced motion. */}
       <HalloweenHeroNight />
-      <HalloweenCritters scope="parent" avoid=".hero-btns, .hero-kicker, .hero-copy-pane h1, .hwb-wrap" />
+      <HalloweenCritters scope="parent" avoid={avoid} />
+      {/* Festive mode: a warm festival evening (fairy lights, corner garlands
+          with hanging diyas) and waves of lanterns, diyas, fireworks and the
+          dancing dandiya panda — same rules as the Halloween layer. */}
+      <FestiveHeroNight />
+      <FestiveCritters scope="parent" avoid={avoid} />
 
       <div className="hero-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
         <div className="hero-grid">
@@ -128,12 +139,25 @@ export default function HeroSection() {
                   whileTap={{ scale: 0.97 }}
                   onClick={goHalloween}
                   className="hero-wish hero-boo"
-                  aria-label={hwPct ? `The Halloween drop — ${hwPct}% off` : "The Halloween drop"}>
+                  aria-label={dropPct ? `The Halloween drop — ${dropPct}% off` : "The Halloween drop"}>
                   <span className="hero-wish-h" aria-hidden>🎃</span>
                   HALLOWEEN DROP
-                  {hwPct > 0 && <span className="hero-wish-off">{hwPct}% OFF</span>}
+                  {dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
                 </motion.button>
-              ) : (
+              ) : festive ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={goFestive}
+                  className="hero-wish hero-fest"
+                  aria-label={dropPct ? `The Navratri and Diwali drop — ${dropPct}% off` : "The Navratri and Diwali drop"}>
+                  <span className="hero-fest-d" aria-hidden><Diya size={17} /></span>
+                  {/* Laptops: short enough to sit beside "Create your page"; phones (full-width button): the full name. */}
+                  <span className="hero-fest-s">NAVRATRI · DIWALI</span>
+                  <span className="hero-fest-l">NAVRATRI &amp; DIWALI DROP</span>
+                  {dropPct > 0 && <span className="hero-wish-off">{dropPct}% OFF</span>}
+                </motion.button>
+              ) : season?.mode === "valentine" ? (
                 // The Valentine's week wishlist — joining happens on its page.
                 <motion.button
                   whileHover={{ scale: 1.03 }}
@@ -145,7 +169,7 @@ export default function HeroSection() {
                   {onList ? "ON THE VALENTINE LIST" : "VALENTINE WISHLIST"}
                   {!onList && <span className="hero-wish-off">{VALENTINE_DISCOUNT}% OFF</span>}
                 </motion.button>
-              )}
+              ) : null}
             </motion.div>
 
             <motion.p className="hero-note"
@@ -197,12 +221,28 @@ export default function HeroSection() {
         @keyframes heroWishBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.14); } 56% { transform: scale(1); } }
         .hero-wish-off { padding: 4px 7px; border-radius: 99px; background: #b3243f; color: #fff4f1; font-size: 9.5px; letter-spacing: 1px; }
         .hero-wish.is-on { background: #fff; }
-        .hero-boo { background: linear-gradient(135deg, #2a080c, #4a1015); color: #ffd9a0; border-color: rgba(201,168,76,0.55);
-          box-shadow: 0 10px 24px -14px rgba(232,116,42,0.9), inset 0 -8px 16px -10px rgba(245,138,53,0.6); }
-        .hero-boo .hero-wish-off { background: linear-gradient(180deg, #ffc37a, #f0862f); color: #2a0a0e; }
-        .hero-boo::after { background: linear-gradient(90deg, transparent, rgba(255,190,120,0.35), transparent); }
+        /* Halloween: the haunted-house navy night (components/promo/halloweenTheme.ts), glowing, with the pumpkin pill. */
+        .hero-boo { background: linear-gradient(135deg, #17132a 0%, #2b2245 55%, #3b2f62 100%); color: #f3eefe; border-color: rgba(185,166,240,.55);
+          box-shadow: 0 0 0 1px rgba(185,166,240,.18), 0 10px 26px -12px rgba(23,19,42,.9), 0 0 22px -2px rgba(185,166,240,.55), inset 0 -10px 18px -12px rgba(255,154,60,.75);
+          animation: heroBooGlow 3s ease-in-out infinite; }
+        .hero-boo .hero-wish-off { background: linear-gradient(180deg, #ffc37a, #ff9a3c 60%, #e36b1c); color: #2a1206; box-shadow: 0 0 0 1px rgba(255,214,150,.7), 0 0 12px rgba(255,154,60,.75); }
+        .hero-boo::after { background: linear-gradient(90deg, transparent, rgba(255,195,90,.32), transparent); }
+        @keyframes heroBooGlow { 50% { box-shadow: 0 0 0 1px rgba(185,166,240,.28), 0 10px 26px -12px rgba(23,19,42,.9), 0 0 30px 2px rgba(255,154,60,.5), inset 0 -10px 18px -12px rgba(255,154,60,.9); } }
+        /* Festive: the festival-night navy (components/promo/festiveTheme.ts) with a marigold glow, a live diya and the marigold pill. */
+        .hero-fest { background: linear-gradient(135deg, #0d0f2e 0%, #1a1f52 55%, #2b3480 100%); color: #fff7e8; border-color: rgba(244,201,93,.6);
+          box-shadow: 0 0 0 1px rgba(244,201,93,.18), 0 10px 26px -12px rgba(13,15,46,.9), 0 0 22px -2px rgba(255,176,32,.55), inset 0 -10px 18px -12px rgba(255,176,32,.8);
+          animation: heroFestGlow 3s ease-in-out infinite; }
+        .hero-fest .hero-wish-off { background: linear-gradient(180deg, #ffe3a3, #ffb020 60%, #f07c0a); color: #2a1206; box-shadow: 0 0 0 1px rgba(255,227,163,.75), 0 0 12px rgba(255,176,32,.8); }
+        .hero-fest::after { background: linear-gradient(90deg, transparent, rgba(255,211,107,.34), transparent); }
+        .hero-fest { letter-spacing: 1.2px; padding-left: 16px; padding-right: 14px; }
+        .hero-fest-l { display: none; }
+        @media (max-width: 768px) { .hero-fest { letter-spacing: 1.6px; } .hero-fest-s { display: none; } .hero-fest-l { display: inline; } }
+        .hero-fest-d { display: inline-flex; margin: -2px 0; filter: drop-shadow(0 0 6px rgba(255,196,77,.9)); }
+        .hero-fest-d .fv-flame { animation: heroFestFlick 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+        @keyframes heroFestFlick { from { transform: scale(1, 1) rotate(-4deg); } to { transform: scale(.86, 1.16) rotate(4deg); } }
+        @keyframes heroFestGlow { 50% { box-shadow: 0 0 0 1px rgba(244,201,93,.3), 0 10px 26px -12px rgba(13,15,46,.9), 0 0 32px 3px rgba(255,176,32,.6), inset 0 -10px 18px -12px rgba(255,176,32,1); } }
         .hero-wish.is-on::after { display: none; }
-        @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .hero-wish::after, .hero-wish-h, .hero-boo, .hero-fest, .hero-fest-d .fv-flame { animation: none; } }
         .hero-pills{scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;}
         .hero-pills::-webkit-scrollbar{display:none;}
         .hero-pills button{scroll-snap-align:center;}

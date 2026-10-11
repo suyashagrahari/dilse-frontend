@@ -62,6 +62,8 @@ import { config as hugDayCfg } from "@/app/(templates)/happy-hug-day/config";
 import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
 import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
 import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
+import { config as dandiyaPartnerCfg } from "@/app/(templates)/dandiya-partner/config";
+import { config as diwaliCfg } from "@/app/(templates)/happy-diwali/config";
 import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
 import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
 import { config as chocolateDayPremiumCfg } from "@/app/(templates)/happy-chocolate-day-premium/config";
@@ -82,12 +84,22 @@ import { config as halloweenPremiumCfg } from "@/app/(templates)/happy-halloween
 // a page nobody is shopping for. Move one back to the top only in the fortnight
 // before its date.
 const allConfigs = [
+  // ── Navratri (Dandiya nights) — in season, so it leads the shop window.
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
+  //    releases it in /admin/templates. Move it to the dated-festival tail
+  //    once Navratri is over. ────────────────────────────────────────────────
+  dandiyaPartnerCfg,
+
   // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
   //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
   //    releases it in /admin/templates. Move it to the dated-festival tail
   //    after 31 October. ────────────────────────────────────────────────────
   halloweenCfg,
   halloweenPremiumCfg,
+
+  // ── Diwali (8 Nov 2026) — the festive drop. Ships hidden on the apex
+  //    (server DEFAULT_HIDDEN) until released in /admin/templates. ─────────
+  diwaliCfg,
 
   // ── Valentine's week (7–14 Feb), in week order. Ship hidden on the apex
   //    (server DEFAULT_HIDDEN); the super admin releases each day. ─────────

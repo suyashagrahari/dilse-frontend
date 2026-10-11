@@ -22,7 +22,7 @@ import { DayMusicContext } from "../music/context";
 export type MelodyId = DayConfig["melody"];
 
 /** Semitone offsets from the root, 8 steps per bar, -1 = rest. */
-const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorType; bars: number[][] }> = {
+const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorType; bars: number[][]; dhol?: readonly number[] }> = {
   garden: { root: 72, bpm: 84, wave: "sine", bars: [[0, 4, 7, 12, 7, 4, 2, -1], [-3, 0, 4, 9, 4, 0, -1, -1], [-7, -3, 0, 5, 9, 5, 4, -1], [-5, -1, 2, 7, 2, -1, -1, -1]] },
   velvet: { root: 69, bpm: 72, wave: "triangle", bars: [[0, 3, 7, 10, 7, 3, -1, -1], [-4, 0, 3, 8, 3, 0, -1, -1], [-7, -4, 0, 5, 8, 5, 3, -1], [-5, -2, 2, 7, 2, -1, -1, -1]] },
   cocoa: { root: 67, bpm: 90, wave: "triangle", bars: [[0, 4, 7, 4, 9, 7, 4, -1], [-3, 0, 4, 0, 5, 4, 0, -1], [-5, -1, 2, 5, 7, 5, 2, -1], [0, 4, 7, 12, -1, -1, -1, -1]] },
@@ -34,6 +34,11 @@ const MELODIES: Record<MelodyId, { root: number; bpm: number; wave: OscillatorTy
   // Halloween: a minor-key music box — A minor with a sneaky leading tone and a
   // tiptoeing E7, cute rather than scary.
   spooky: { root: 69, bpm: 80, wave: "triangle", bars: [[0, 3, 7, 12, 11, 7, 3, -1], [-4, 0, 3, 8, 7, 3, -1, -1], [-5, -1, 2, 8, 7, 2, -1, -1], [0, 3, 7, 6, 3, 0, -1, -1]] },
+  // Dandiya: a bright Mixolydian garba hook over a soft dhol pulse (steps 0, 3, 4, 6 —
+  // the lilting "dha-ge-na-dhin" feel), lively but never loud.
+  garba: { root: 67, bpm: 112, wave: "triangle", dhol: [0, 3, 4, 6], bars: [[0, 4, 7, 9, 7, 4, 5, 4], [2, 5, 9, 10, 9, 5, 4, 2], [0, 4, 7, 12, 10, 9, 7, -1], [5, 4, 2, 0, -1, 0, -1, -1]] },
+  // Diwali: a warm major-pentatonic lilt (sa re ga pa dha), like temple bells at dusk.
+  diya: { root: 67, bpm: 76, wave: "sine", bars: [[0, 4, 7, 9, 12, 9, 7, -1], [2, 4, 7, 9, 7, 4, 2, -1], [-3, 0, 4, 7, 9, 7, 4, -1], [0, 2, 4, 7, 4, 2, 0, -1]] },
 };
 
 const freq = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
@@ -100,6 +105,20 @@ export function useSynthEngine({ melody, enabled, volume = 0.5, autoStart = true
         o.connect(g).connect(master);
         o.start(t);
         o.stop(t + stepDur * 3.4);
+      }
+      if (m.dhol?.includes(s % 8)) {
+        // A soft dhol thump: a sine that drops in pitch, louder on the bar's first beat.
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(s % 8 === 0 ? 120 : 165, t);
+        o.frequency.exponentialRampToValueAtTime(55, t + 0.16);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(s % 8 === 0 ? 0.16 : 0.09, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + 0.24);
+        o.connect(g).connect(master);
+        o.start(t);
+        o.stop(t + 0.26);
       }
       if (s % 8 === 0) {
         // Soft pad on the bar's first note, an octave down.
