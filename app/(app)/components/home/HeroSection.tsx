@@ -7,7 +7,7 @@ import { templateList } from "@/data/template-registry";
 import TrendingShowcase from "./TrendingShowcase";
 import { useWishlist } from "@/hooks/useWishlist";
 import { VALENTINE_CAMPAIGN, VALENTINE_DISCOUNT, VALENTINE_PATH } from "@/lib/wishlist/valentine";
-import { useSeason } from "@/hooks/useSeason";
+import { useSeason, useSeasonPending } from "@/hooks/useSeason";
 import { DANDIYA_PATH, DIWALI_PATH, HALLOWEEN_PATH } from "@/lib/season";
 import HalloweenCritters from "@/components/promo/HalloweenCritters";
 import { HalloweenHeroNight } from "@/components/promo/HalloweenCornerWebs";
@@ -30,6 +30,11 @@ export default function HeroSection() {
   const onList = wishlist.status === "joined";
   // In a drop season the second button is that season's drop instead.
   const season = useSeason();
+  // India and abroad on different seasons and this visitor's side not known yet:
+  // hold the second button's place (invisible) so the right one lands without
+  // moving the row — only when both sides have a button there (none is "off").
+  const pendingSides = useSeasonPending();
+  const holdButton = !!pendingSides && pendingSides.india !== "off" && pendingSides.abroad !== "off";
   const halloween = season?.mode === "halloween";
   const dandiya = season?.mode === "dandiya";
   const diwali = season?.mode === "diwali";
@@ -186,6 +191,11 @@ export default function HeroSection() {
                   {onList ? "ON THE VALENTINE LIST" : "VALENTINE WISHLIST"}
                   {!onList && <span className="hero-wish-off">{VALENTINE_DISCOUNT}% OFF</span>}
                 </motion.button>
+              ) : holdButton ? (
+                <span className="hero-wish" aria-hidden data-season-pending="" style={{ visibility: "hidden" }}>
+                  <span className="hero-wish-h">🎃</span>
+                  HALLOWEEN DROP
+                </span>
               ) : null}
             </motion.div>
 

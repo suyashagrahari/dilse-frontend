@@ -6,11 +6,14 @@
 
 import { redirect } from "next/navigation";
 import { getSeasonServer } from "@/lib/season.server";
-import { DANDIYA_PATH, DIWALI_PATH } from "@/lib/season";
+import { DANDIYA_PATH, DIWALI_PATH, modesOf } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
 export default async function FestiveOfferRedirect(): Promise<never> {
   const season = await getSeasonServer();
-  redirect(season?.mode === "dandiya" ? DANDIYA_PATH : DIWALI_PATH);
+  // With India and abroad on different seasons, either side wearing Dandiya
+  // (and neither Diwali) still counts as "the site is wearing Dandiya".
+  const modes = modesOf(season);
+  redirect(modes.includes("dandiya") && !modes.includes("diwali") ? DANDIYA_PATH : DIWALI_PATH);
 }

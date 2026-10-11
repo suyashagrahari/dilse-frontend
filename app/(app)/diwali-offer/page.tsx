@@ -15,12 +15,14 @@ import { buildMeta, SITE_URL } from "@/lib/seo";
 import { BreadcrumbJsonLd, FAQJsonLd } from "@/components/JsonLd";
 import { SeasonProvider } from "@/hooks/useSeason";
 import { getSeasonServer } from "@/lib/season.server";
-import { DIWALI_PATH, livePercentOf } from "@/lib/season";
+import { DIWALI_PATH, offerPercentOf } from "@/lib/season";
 import FestivalOfferClient from "../_festival-offer/FestivalOfferClient";
 import { festivalFaqs } from "../_festival-offer/content";
 
+// Server-written, so the same for every visitor: the percent the drop is offered
+// at to whichever side wears it (`offerPercentOf`); the page shows this visitor's own.
 export async function generateMetadata(): Promise<Metadata> {
-  const pct = livePercentOf(await getSeasonServer(), "diwali");
+  const pct = offerPercentOf(await getSeasonServer(), "diwali");
   return buildMeta({
     title: pct
       ? `Diwali Drop — ${pct}% Off Happy Diwali Wishes Online | SubhSandesh`
@@ -40,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DiwaliOfferPage() {
   const season = await getSeasonServer();
-  const pct = livePercentOf(season, "diwali");
+  const pct = offerPercentOf(season, "diwali");
   return (
     <SeasonProvider season={season}>
       <BreadcrumbJsonLd

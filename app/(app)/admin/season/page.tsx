@@ -22,6 +22,16 @@
 // read for that drop's templates (gallery, quote, publish gate, order). Super
 // admin only; the server refuses everyone else.
 //
+// WHO SEES WHAT: with "Different season for India and abroad" on, visitors in
+// India and visitors abroad each get their own mode (e.g. Diwali here,
+// Halloween there). The server picks the side from its own country lookup on
+// every request; unknown / VPN visitors get the India side. Drops stay per
+// season and are shared: a side wearing Diwali sells the one Diwali drop. A
+// drop template opens for everybody while EITHER side wears its season (so a
+// shared link works for the recipient); the discount follows the visitor's side.
+// "Preview as" opens the site with `?seasonPreview=india|abroad`, honoured only
+// for a signed-in super admin (lib/season.ts) — never for the public.
+//
 // Which templates are IN a drop: any templates from the registry picked from
 // a searchable checklist (plus the season's own templates even before they are
 // in the registry) and saved as that drop's `saleSlugs`. The sale discounts
@@ -36,7 +46,7 @@ import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { refreshPricing } from "@/lib/pricing";
 import {
-  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, setSeason, type DropId, type DropSale, type SeasonMode,
+  DROP_IDS, DROP_TEMPLATE_FALLBACK, DROPS, FESTIVAL_PERCENT_DEFAULT, isDropMode, loadSeason, type DropId, type SeasonMode,
 } from "@/lib/season";
 import { GALLERY_BY_SLUG, GALLERY_LIST } from "@/lib/galleryRules";
 import { isPremiumSlug, useTemplateMeta } from "@/lib/templateMeta";
@@ -60,6 +70,10 @@ const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.l
 
 type View = {
   mode: SeasonMode;
+  /** Different seasons for India and abroad (else `mode` for everyone). */
+  split: boolean;
+  modeIndia: SeasonMode;
+  modeAbroad: SeasonMode;
   drops: Record<DropId, Drop>;
   updatedAt: string | null;
   updatedBy: string | null;
@@ -74,6 +88,38 @@ const MODES: { value: SeasonMode; emoji: string; label: string; note: string }[]
 ];
 
 const QUICK = [25, 30, 40, 49];
+
+const modeMeta = (m: SeasonMode) => MODES.find((x) => x.value === m) ?? MODES[MODES.length - 1];
+/** "Diwali drop", "Valentine wishlist", "nothing seasonal". */
+const sees = (m: SeasonMode) => (m === "off" ? "nothing seasonal" : modeMeta(m).label);
+/** The modes some visitor sees under these settings. */
+const modesSeen = (v: { split: boolean; mode: SeasonMode; modeIndia: SeasonMode; modeAbroad: SeasonMode }): SeasonMode[] =>
+  v.split ? [v.modeIndia, v.modeAbroad] : [v.mode];
+
+/** One column of the five modes. `compact` drops the notes (the India / abroad pair side by side). */
+function ModePicker({ label, value, live, onPick, compact = false }: {
+  label: string; value: SeasonMode; live: SeasonMode | null; onPick: (m: SeasonMode) => void; compact?: boolean;
+}) {
+  return (
+    <div className={`ssn-modes${compact ? " is-compact" : ""}`} role="radiogroup" aria-label={label}>
+      {MODES.map((m) => (
+        <button
+          key={m.value}
+          type="button"
+          role="radio"
+          aria-checked={value === m.value}
+          className={`ssn-mode is-${m.value}${value === m.value ? " on" : ""}`}
+          onClick={() => onPick(m.value)}
+        >
+          <span className="ssn-mode-e" aria-hidden>{m.emoji}</span>
+          <b>{m.label}</b>
+          {!compact && <span>{m.note}</span>}
+          {live === m.value && <i className="ssn-live">LIVE NOW</i>}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function readDrop(raw: unknown, fallback: Drop): Drop {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -111,8 +157,16 @@ function parseView(json: unknown): View | null {
   const drops = Object.fromEntries(
     DROP_IDS.map((id) => [id, readDrop(rawDrops[id] ?? (id === flatFor && !d.drops ? flat : undefined), DROP_DEFAULT[id])]),
   ) as Record<DropId, Drop>;
+  const sideMode = (v: unknown): SeasonMode => {
+    const m = (v === "festive" ? "diwali" : v) as SeasonMode;
+    return MODES.some((x) => x.value === m) ? m : mode;
+  };
   return {
     mode,
+    // Servers from before the India/abroad split send none of these: split off, both sides at `mode`.
+    split: d.split === true,
+    modeIndia: sideMode(d.modeIndia),
+    modeAbroad: sideMode(d.modeAbroad),
     drops,
     updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : null,
     updatedBy: byText || null,
@@ -127,6 +181,9 @@ export default function AdminSeasonPage() {
   const [allowed, setAllowed] = useState(false);
   const [view, setView] = useState<View | null>(null);
   const [mode, setMode] = useState<SeasonMode>("halloween");
+  const [split, setSplit] = useState(false);
+  const [modeIndia, setModeIndia] = useState<SeasonMode>("halloween");
+  const [modeAbroad, setModeAbroad] = useState<SeasonMode>("halloween");
   /** Which drop's sale and templates the panels below edit. */
   const [tab, setTab] = useState<DropId>("halloween");
   const [drafts, setDrafts] = useState<Record<DropId, Draft>>(() =>
@@ -150,7 +207,11 @@ export default function AdminSeasonPage() {
   const adopt = useCallback((v: View) => {
     setView(v);
     setMode(v.mode);
-    if (isDropMode(v.mode)) setTab(v.mode);
+    setSplit(v.split);
+    setModeIndia(v.modeIndia);
+    setModeAbroad(v.modeAbroad);
+    const first = modesSeen(v).find(isDropMode);
+    if (first) setTab(first);
     setDrafts(Object.fromEntries(DROP_IDS.map((id) => [id, toDraft(v.drops[id])])) as Record<DropId, Draft>);
   }, []);
 
@@ -163,10 +224,15 @@ export default function AdminSeasonPage() {
   const setSaleOn = (f: (v: boolean) => boolean) => patchDraft((d) => ({ saleOn: f(d.saleOn) }));
   const setPct = (v: string) => patchDraft({ pct: v });
   const setSlugs = (v: string[]) => patchDraft({ slugs: v });
-  const pickMode = (m: SeasonMode) => {
-    setMode(m);
+  const pickMode = (set: (m: SeasonMode) => void) => (m: SeasonMode) => {
+    set(m);
     if (isDropMode(m)) setTab(m);
   };
+  // Each side keeps the mode it last had (a row from before the split starts
+  // both at the single mode), so switching the split off and on loses nothing.
+  const toggleSplit = () => setSplit((on) => !on);
+  /** The modes some visitor will see once this draft is saved. */
+  const draftModes = modesSeen({ split, mode, modeIndia, modeAbroad });
 
   useEffect(() => {
     if (!allowed || !accessToken) return;
@@ -196,7 +262,9 @@ export default function AdminSeasonPage() {
   const pctNum = pctOf(draft);
   const pctValid = Number.isFinite(pctNum) && pctNum >= 1 && pctNum <= 90;
   const allValid = DROP_IDS.every((id) => validDraft(drafts[id]));
-  const dirty = !!view && (mode !== view.mode || DROP_IDS.some(draftDirty));
+  const dirty =
+    !!view &&
+    (mode !== view.mode || split !== view.split || modeIndia !== view.modeIndia || modeAbroad !== view.modeAbroad || DROP_IDS.some(draftDirty));
   const defaults = DROP_DEFAULT[tab].saleSlugs;
   const ui = DROP_UI[tab];
 
@@ -227,6 +295,9 @@ export default function AdminSeasonPage() {
         // Every drop's settings, so one save covers edits made under both tabs.
         body: JSON.stringify({
           mode,
+          split,
+          modeIndia,
+          modeAbroad,
           drops: Object.fromEntries(
             DROP_IDS.map((id) => [id, { saleEnabled: drafts[id].saleOn, salePercent: pctOf(drafts[id]), saleSlugs: drafts[id].slugs }]),
           ),
@@ -236,14 +307,10 @@ export default function AdminSeasonPage() {
       const v = res.ok ? parseView(json) : null;
       if (!v) throw new Error(json?.error || json?.message || `Save failed (HTTP ${res.status})`);
       adopt(v);
-      // This tab sees the change at once: the banners read the season store,
+      // This tab sees the change at once: the banners read the season store
+      // (re-asked, because which side THIS browser is on is the server's call),
       // and the gallery/offer page read the (now discounted) pricing store.
-      const pub = (d: Drop): DropSale => ({ enabled: d.saleEnabled && d.salePercent > 0, percent: d.salePercent, slugs: d.saleSlugs });
-      setSeason({
-        mode: v.mode,
-        sale: pub(v.drops[isDropMode(v.mode) ? v.mode : "halloween"]),
-        drops: Object.fromEntries(DROP_IDS.map((id) => [id, pub(v.drops[id])])) as Record<DropId, DropSale>,
-      });
+      void loadSeason(true);
       void refreshPricing();
       setToast("Saved — live for visitors within a minute");
       setTimeout(() => setToast(null), 2800);
@@ -256,26 +323,48 @@ export default function AdminSeasonPage() {
 
   if (!allowed) return <Loading />;
 
-  const liveMode = MODES.find((m) => m.value === view?.mode);
-  const activeDrop = view && isDropMode(view.mode) ? view.drops[view.mode] : null;
-  const saleLive = !!activeDrop && activeDrop.saleEnabled && activeDrop.salePercent > 0;
+  const liveModes = view ? modesSeen(view) : [];
+  const liveSplit = !!view && view.split && view.modeIndia !== view.modeAbroad;
+  const wearing = !view
+    ? "…"
+    : liveSplit
+      ? `🇮🇳 ${modeMeta(view.modeIndia).emoji} · 🌍 ${modeMeta(view.modeAbroad).emoji}`
+      : `${modeMeta(liveModes[0]).emoji} ${modeMeta(liveModes[0]).label}`;
+  const saleText = (m: SeasonMode) => {
+    if (!view || !isDropMode(m)) return "None";
+    const d = view.drops[m];
+    return d.saleEnabled && d.salePercent > 0 ? `${d.salePercent}% off` : "Off";
+  };
+  const liveSale = !view ? "…" : liveSplit ? `🇮🇳 ${saleText(view.modeIndia)} · 🌍 ${saleText(view.modeAbroad)}` : saleText(liveModes[0]);
+  const liveSaleSub = !view
+    ? undefined
+    : liveModes.some(isDropMode)
+      ? liveSplit ? "each side sells its own drop" : saleText(liveModes[0]) === "Off" ? "drop at full price" : `live on ${view.drops[liveModes[0] as DropId].saleSlugs.length} drop template${view.drops[liveModes[0] as DropId].saleSlugs.length === 1 ? "" : "s"}`
+      : "no drop season is on";
+  /** Where the draft's tab is worn, for the tab note: "India", "abroad", "everyone" or nobody. */
+  const wornBy = (id: DropId): string | null => {
+    if (!split) return mode === id ? "everyone" : null;
+    const i = modeIndia === id, a = modeAbroad === id;
+    return i && a ? "everyone" : i ? "visitors in India" : a ? "visitors abroad" : null;
+  };
+  const liveBy = (id: DropId): string | null => {
+    if (!view) return null;
+    if (!liveSplit) return liveModes[0] === id ? "LIVE" : null;
+    return view.modeIndia === id ? "LIVE · 🇮🇳" : view.modeAbroad === id ? "LIVE · 🌍" : null;
+  };
 
   return (
     <AdminPage
       title="Season & offers"
-      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, Navratri Dandiya or Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates."
+      subtitle="What the whole site is wearing: the Valentine wishlist, a drop season (Halloween, Navratri Dandiya or Diwali), or nothing seasonal. In a drop season its running strip shows under the navbar on home, blog and gallery, posts show its card, and the templates in that drop are sold at its sale percent — a real discount applied by the server at quote, publish and checkout. Each drop keeps its own sale and templates. Visitors in India and abroad can wear different seasons (Who sees what)."
       icon={<Ghost size={18} />}
       width={1280}
     >
       <style>{SSN_CSS}</style>
       <Hero>
         <div className="adk-hero-grid">
-          <HeroStat label="Site is wearing" value={view ? `${liveMode?.emoji ?? ""} ${liveMode?.label ?? view.mode}` : "…"} />
-          <HeroStat
-            label="Live sale"
-            value={view ? (saleLive && activeDrop ? `${activeDrop.salePercent}% off` : activeDrop ? "Off" : "None") : "…"}
-            sub={view ? (activeDrop ? (saleLive ? `live on ${activeDrop.saleSlugs.length} drop template${activeDrop.saleSlugs.length === 1 ? "" : "s"}` : "drop at full price") : "no drop season is on") : undefined}
-          />
+          <HeroStat label="Site is wearing" value={wearing} sub={liveSplit ? "India · abroad" : undefined} />
+          <HeroStat label="Live sale" value={liveSale} sub={liveSaleSub} />
           <HeroStat
             label="Last updated"
             value={view?.updatedAt ? new Date(view.updatedAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : view ? "Never (defaults)" : "…"}
@@ -289,23 +378,62 @@ export default function AdminSeasonPage() {
 
       {view && (
         <>
-          <Panel title="Which season?" icon={<CalendarClock size={15} color={A.goldDeep} />} note="one at a time" delay={0.05}>
-            <div className="ssn-modes" role="radiogroup" aria-label="Season">
-              {MODES.map((m) => (
+          <Panel
+            title="Who sees what"
+            icon={<CalendarClock size={15} color={A.goldDeep} />}
+            note={split ? "India and abroad" : "everyone sees one season"}
+            delay={0.05}
+            right={
+              <label className="ssn-split-toggle">
+                <span>Different season for India and abroad</span>
                 <button
-                  key={m.value}
                   type="button"
-                  role="radio"
-                  aria-checked={mode === m.value}
-                  className={`ssn-mode is-${m.value}${mode === m.value ? " on" : ""}`}
-                  onClick={() => pickMode(m.value)}
+                  role="switch"
+                  aria-checked={split}
+                  aria-label="Different season for India and abroad"
+                  className={`ssn-switch${split ? " on" : ""}`}
+                  onClick={toggleSplit}
                 >
-                  <span className="ssn-mode-e" aria-hidden>{m.emoji}</span>
-                  <b>{m.label}</b>
-                  <span>{m.note}</span>
-                  {view.mode === m.value && <i className="ssn-live">LIVE NOW</i>}
+                  <span />
                 </button>
-              ))}
+              </label>
+            }
+          >
+            {split ? (
+              <div className="ssn-split">
+                <div className="ssn-side">
+                  <h3><span aria-hidden>🇮🇳</span> Visitors in India</h3>
+                  <ModePicker label="Season for visitors in India" value={modeIndia} onPick={pickMode(setModeIndia)}
+                    live={liveSplit ? view.modeIndia : null} compact />
+                </div>
+                <div className="ssn-side">
+                  <h3><span aria-hidden>🌍</span> Visitors abroad</h3>
+                  <ModePicker label="Season for visitors abroad" value={modeAbroad} onPick={pickMode(setModeAbroad)}
+                    live={liveSplit ? view.modeAbroad : null} compact />
+                </div>
+              </div>
+            ) : (
+              <ModePicker label="Season" value={mode} onPick={pickMode(setMode)} live={liveSplit ? null : liveModes[0] ?? null} />
+            )}
+            <div className="ssn-summary" aria-live="polite">
+              {split ? (
+                <p><b>India sees:</b> {sees(modeIndia)} <span aria-hidden>·</span> <b>Abroad sees:</b> {sees(modeAbroad)}</p>
+              ) : (
+                <p><b>Everyone sees:</b> {sees(mode)}</p>
+              )}
+              <p className="ssn-help">
+                {split
+                  ? "Unknown / VPN visitors see the India side. A drop’s templates open for everyone while either side wears it (so a shared link always works); its discount applies only to the side wearing it."
+                  : "Switch on “Different season for India and abroad” to show visitors in India one season and visitors abroad another."}
+                {dirty && " — not saved yet."}
+              </p>
+              <p className="ssn-preview">
+                <span>Preview as</span>
+                <a href="/?seasonPreview=india" target="_blank" rel="noreferrer">🇮🇳 India <ExternalLink size={11} /></a>
+                <a href="/?seasonPreview=abroad" target="_blank" rel="noreferrer">🌍 Abroad <ExternalLink size={11} /></a>
+                <a href="/?seasonPreview=off" target="_blank" rel="noreferrer">End preview</a>
+                <i>Shows the saved settings in that tab, for you only (super admins). Prices still follow your real country.</i>
+              </p>
             </div>
           </Panel>
 
@@ -320,12 +448,14 @@ export default function AdminSeasonPage() {
                 onClick={() => setTab(id)}
               >
                 <span aria-hidden>{DROP_UI[id].emoji}</span> {DROP_UI[id].tab}
-                {view.mode === id && <i className="ssn-live ssn-live-in">LIVE</i>}
+                {liveBy(id) && <i className="ssn-live ssn-live-in">{liveBy(id)}</i>}
                 {draftDirty(id) && <i className="ssn-dot" title="Unsaved changes" />}
               </button>
             ))}
             <span className="ssn-tabs-note">
-              {mode === tab ? "Editing the drop that is live once you save." : `Editing the ${DROP_UI[tab].tab} — it goes live only when the season above is “${DROP_UI[tab].tab}”.`}
+              {wornBy(tab)
+                ? `Editing the drop ${wornBy(tab)} will see once you save.`
+                : `Editing the ${DROP_UI[tab].tab} — it goes live only when a side above wears “${DROP_UI[tab].tab}”.`}
             </span>
           </div>
 
@@ -372,9 +502,9 @@ export default function AdminSeasonPage() {
               {!pctValid && <p className="ssn-warn">Pick a percent from 1 to 90.</p>}
               <p className="ssn-help">
                 {saleOn
-                  ? mode === tab
+                  ? draftModes.includes(tab)
                     ? `Every template in the drop sells at ${pctValid ? pctNum : "…"}% off, with the original price struck through on the paywall.`
-                    : `Armed — it takes effect when the season is the ${ui.tab}.`
+                    : `Armed — it takes effect when a side wears the ${ui.tab}.`
                   : `Off — the ${ui.tab} still shows, at full price and without a percent.`}
               </p>
             </div>
@@ -534,5 +664,20 @@ const SSN_CSS = `
 .ssn-prem { flex: none; padding: 4px 8px; border-radius: 999px; font: 800 9.5px/1 'Inter', sans-serif; font-style: normal; letter-spacing: .08em; text-transform: uppercase;
   color: #3a2505; background: linear-gradient(135deg, #fff1bf, #e2b44a 45%, #a6751c); }
 .ssn-empty { padding: 12px; }
+.ssn-split-toggle { display: inline-flex; align-items: center; gap: 10px; font: 600 12.5px/1.2 'Inter', sans-serif; color: #2a0a0e; cursor: pointer; }
+.ssn-split { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; }
+@media (min-width: 720px) { .ssn-split { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.ssn-side { padding: 12px; border-radius: 18px; background: rgba(61,12,17,.03); box-shadow: inset 0 0 0 1px rgba(61,12,17,.08); }
+.ssn-side h3 { display: flex; align-items: center; gap: 8px; margin: 2px 4px 10px; font: 800 14px/1.2 'Inter', sans-serif; color: #2a0a0e; }
+.ssn-modes.is-compact { grid-template-columns: minmax(0,1fr) !important; gap: 6px; }
+.ssn-modes.is-compact .ssn-mode { flex-direction: row; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; }
+.ssn-modes.is-compact .ssn-mode-e { font-size: 20px; }
+.ssn-modes.is-compact .ssn-live { top: 50%; transform: translateY(-50%); }
+.ssn-summary { margin-top: 14px; display: grid; gap: 6px; }
+.ssn-summary > p:first-child { margin: 0; font: 500 14px/1.45 'Inter', sans-serif; color: #2a0a0e; }
+.ssn-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 4px 0 0; font: 600 12.5px/1.3 'Inter', sans-serif; color: #2a0a0e; }
+.ssn-preview a { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(61,12,17,.16); background: #fffdfb; color: #8b5a2b; text-decoration: none; }
+.ssn-preview a:hover { border-color: #8b5a2b; }
+.ssn-preview i { flex-basis: 100%; font: 400 12px/1.4 'Inter', sans-serif; font-style: normal; color: #7f5f5f; }
 .ssn-toast { position: fixed; left: 50%; bottom: 170px; transform: translateX(-50%); z-index: 90; padding: 10px 16px; border-radius: 999px; color: #fff; background: #1e7a4b; font: 700 13px/1 'Inter', sans-serif; box-shadow: 0 10px 24px -10px rgba(0,0,0,.4); }
 `;

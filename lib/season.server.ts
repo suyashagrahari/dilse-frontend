@@ -13,8 +13,29 @@
 // correct a stale answer — which only differs within an hour of a mode switch.
 //
 // `null` means "could not find out", and the client store then asks for itself.
+//
+// ── INDIA AND ABROAD: WHY A SPLIT SEASON COMES BACK `pending` ───────────────
+//
+// GET /season answers for the side of the split the REQUEST comes from, and
+// this request comes from the Next server, not the visitor — and the page it
+// renders is cached and served to every country anyway. So when the answer
+// depends on the country (`split`), this render must not paint either side:
+// it returns the season marked `pending` (lib/season.ts), which `useSeason`
+// reads as "not known yet" until the browser's own fetch lands. The parts that
+// are the same for everybody — both sides' modes, every drop, the union of
+// reachable drop templates — are still used, to reserve space and to let the
+// builder gate decide on its first render.
+//
+// Forwarding the visitor's address to the API instead was rejected: the API
+// trusts only nginx's X-Forwarded-For (see server/src/services/geo.service.ts),
+// and these pages are statically regenerated, so there is no per-visitor
+// render to forward it from.
+//
+// A pending season also preloads /season, so the browser's request starts
+// with the HTML instead of after hydration.
 
 import { cache } from "react";
+import { preload } from "react-dom";
 import { API_URL, IS_NGROK } from "@/lib/config";
 import { parseSeason, type Season } from "@/lib/season";
 
@@ -26,10 +47,20 @@ async function fetchSeason(revalidate: number): Promise<Season | null> {
       headers: IS_NGROK ? { "ngrok-skip-browser-warning": "true" } : undefined,
     });
     if (!res.ok) return null;
-    return parseSeason(await res.json());
+    const s = parseSeason(await res.json());
+    if (!s || !s.split) return s;
+    return { ...s, pending: true };
   } catch {
     return null;
   }
 }
 
-export const getSeasonServer = cache((revalidate: number = 60) => fetchSeason(revalidate));
+const fetchSeasonOnce = cache((revalidate: number) => fetchSeason(revalidate));
+
+export async function getSeasonServer(revalidate: number = 60): Promise<Season | null> {
+  const s = await fetchSeasonOnce(revalidate);
+  // Start the browser's own /season request with the HTML. Matches the store's
+  // fetch (CORS, no credentials), so the browser reuses the preloaded response.
+  if (s?.pending && API_URL && !IS_NGROK) preload(`${API_URL}/season`, { as: "fetch", crossOrigin: "anonymous" });
+  return s;
+}
