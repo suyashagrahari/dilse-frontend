@@ -21,7 +21,7 @@ export const VALENTINE_WEEK_SLUGS = [
 ] as const;
 
 /** Occasions outside Valentine's week that run on the same engine. */
-export const OCCASION_SLUGS = ["happy-halloween"] as const;
+export const OCCASION_SLUGS = ["happy-halloween", "dandiya-partner"] as const;
 
 /**
  * The ULTRA-PREMIUM tier ($4): one cinematic twin per base template, on the
@@ -88,6 +88,8 @@ const BASE_META: Record<BaseDaySlug, DayMeta> = {
     VALENTINE_WEEK_SLUGS.map((slug, i) => [slug, { name: WISHLIST_DAYS[i].name, emoji: WISHLIST_DAYS[i].emoji, date: WISHLIST_DAYS[i].date, month: "February" }]),
   ) as Record<(typeof VALENTINE_WEEK_SLUGS)[number], DayMeta>),
   "happy-halloween": { name: "Halloween", emoji: "🎃", date: 31, month: "October" },
+  // Sharad Navratri 2026 begins on 11 October.
+  "dandiya-partner": { name: "Navratri", emoji: "🪔", date: 11, month: "October" },
 };
 export const DAY_META: Record<DaySlug, DayMeta> = {
   ...BASE_META,

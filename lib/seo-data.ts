@@ -2487,6 +2487,99 @@ export const TEMPLATE_DATA: Record<string, TemplateData> = {
       ],
     },
   },
+  // Be My Dandiya Partner — a Navratri Dandiya-night invitation on the
+  // Valentine-week engine. Searchers: people asking someone to be their dandiya
+  // or garba partner (a crush, a partner, a best friend), and people after an
+  // "online Navratri invitation / card". No `aggregateRating` (no real uses yet)
+  // and no price (set in /admin/pricing).
+  "dandiya-partner": {
+    title: "Be My Dandiya Partner — Navratri Invitation Card",
+    description:
+      "Ask them to be your Dandiya partner with an interactive Navratri invitation: nine diyas, a dhol-beat game, your photos in a garba circle and a cute Yes/No.",
+    category: "Festival",
+    emoji: "🪔",
+
+    keywords: [
+      // ── PRIMARY ──
+      "be my dandiya partner",
+      "dandiya partner invitation",
+      "will you be my dandiya partner",
+      "garba partner proposal",
+      "navratri invitation card online",
+      "dandiya night invitation",
+      "interactive navratri card",
+      "navratri 2026 wishes",
+      // ── ROMANTIC / CRUSH / FRIENDS ──
+      "ask crush to dandiya",
+      "dandiya proposal for girlfriend",
+      "garba night with boyfriend",
+      "garba buddy invite for best friend",
+      "navratri message for crush",
+      // ── THE PAGE ──
+      "dandiya invitation with photos and music",
+      "garba invitation on whatsapp",
+      "navratri card with add to calendar",
+      "dandiya pass",
+    ],
+
+    faqs: [
+      {
+        question: "How do I ask someone to be my Dandiya partner online?",
+        answer:
+          "Open the Be My Dandiya Partner template, press Create and add their name and yours, nine short lines (one for each night of Navratri), a note, up to six photos and the night's details — date, time, venue and dress code. Or describe the two of you in a few lines and let the AI fill it in. Press Save to preview, Publish, and send the private link on WhatsApp or Instagram. It opens in any phone or laptop browser with no app and no account.",
+      },
+      {
+        question: "What happens when they open the invitation?",
+        answer:
+          "They clash a pair of dandiya sticks to open an embroidered envelope, light nine diyas round a garbo (each one shows one of your lines), play a short dhol-beat dandiya game, pick the colour they will twirl in and see yours beside it, watch your photos dance round the garba circle, read your note, see the invitation ticket and answer \"Will you be my Dandiya partner?\". It ends with a Dandiya Pass they can download.",
+      },
+      {
+        question: "Can they say no?",
+        answer:
+          "They can try. The No button drops its sticks and twirls away a few times, each time with a new excuse, and after five tries it turns into a second Yes. You get an email the first time they say yes, with how many times No twirled away first.",
+      },
+      {
+        question: "Can I add the date, time and venue of the garba night?",
+        answer:
+          "Yes. The invitation ticket shows the date, time, venue and dress code you enter, and has Add to calendar buttons for Google Calendar and Apple or Outlook. Leave the date empty and it says \"Any night you pick\" instead.",
+      },
+      {
+        question: "Is it only for a girlfriend or boyfriend?",
+        answer:
+          "No. Choose who you are inviting — your love, your crush, or your best friend as a garba buddy — and the question, the pass and the reply change with it, for example \"Will you be my garba buddy, all nine nights?\" for a friend. Every line stays editable.",
+      },
+      {
+        question: "Can I add a garba song?",
+        answer:
+          "Yes. Paste a YouTube link (with an optional start time) and only the sound plays while they go through the invitation, or pick one of eight garba and dandiya favourites such as Chogada, Nagada Sang Dhol or Shubhaarambh. There is also a built-in dhol-and-melody tune. Music starts only after their first tap.",
+      },
+      {
+        question: "What is the Dandiya Pass?",
+        answer:
+          "The keepsake at the end: a 1080×1920 card (Instagram Story size) with your photo, both names, the night's date and venue, the colour they picked and a Partner Confirmed stamp. They can download it as a PNG and reply to you on WhatsApp in one tap.",
+      },
+      {
+        question: "Can I lock the page with a password or edit it later?",
+        answer:
+          "Yes to both. You can set an optional password when you publish, and you can edit and republish the page any time; the same link always shows the latest version.",
+      },
+    ],
+
+    howTo: {
+      name: "How to Invite Your Dandiya Partner Online",
+      description:
+        "Build a Navratri Dandiya-night invitation — nine diyas, a dhol game, your photos and the big question — and send it as a link.",
+      totalTime: "PT5M",
+      steps: [
+        { name: "Open the Template", text: "Go to the Be My Dandiya Partner page on SubhSandesh and press Create." },
+        { name: "Choose Who You're Inviting", text: "Pick your love, your crush or your bestie; the question, the pass and the reply follow the choice." },
+        { name: "Write the Nine Nights", text: "Add both names, a line for each of the nine diyas and the note tucked in the dupatta — or let the AI write them from a short story." },
+        { name: "Add the Night's Details", text: "Enter the date, time, venue and dress code, and pick the colour you will wear." },
+        { name: "Add Photos and Music", text: "Upload up to six photos for the garba circle, then paste a YouTube song or pick a garba favourite." },
+        { name: "Publish and Send", text: "Press Save to preview, Publish, then send the private link on WhatsApp before the first night of Navratri." },
+      ],
+    },
+  },
   // ── ✦ Premium twins (Stage 7, 2026-10-08) ─────────────────────────────────
   // Nine cinematic, several-scene versions of the Valentine-week days and
   // Halloween. Search intent is split from the $2 twin on purpose: the twin is
