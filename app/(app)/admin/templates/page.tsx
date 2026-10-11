@@ -27,6 +27,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { refreshTemplateVisibility } from "@/lib/templateVisibility";
+import { coverSmall, coverSrcSet } from "@/lib/templateMedia";
 import { Eye, EyeOff, Loader2, Check, RotateCcw, Globe, AlertTriangle, LayoutGrid, Search } from "lucide-react";
 import { A, AdminPage, Hero, HeroStat, ChipGroup, SearchBox, Loading, EmptyState, Tag } from "../adminKit";
 
@@ -217,7 +218,7 @@ export default function AdminTemplatesPage() {
       title="Template visibility"
       subtitle="What this deployment shows in the gallery, and what users can build. Hidden templates disappear from the gallery and their builder closes — pages already published from them keep working."
       icon={<LayoutGrid size={18} />}
-      width={1100}
+      width={1280}
       actions={
         <button
           type="button"
@@ -308,7 +309,19 @@ export default function AdminTemplatesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i, 14) * 0.025, duration: 0.3 }}
               >
-                <span className="tv-emoji" aria-hidden="true">{t.emoji}</span>
+                {t.coverImage ? (
+                  <span className="tv-thumb" aria-hidden="true">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={coverSrcSet(t.coverImage) ? coverSmall(t.coverImage) : t.coverImage}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </span>
+                ) : (
+                  <span className="tv-emoji" aria-hidden="true">{t.emoji}</span>
+                )}
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
@@ -412,12 +425,15 @@ const TV_CSS = `
     background: rgba(179,38,30,0.08); border: 1px solid rgba(179,38,30,0.3); }
   .tv-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 7px; }
   @media (min-width: 760px) { .tv-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; } }
-  .tv-card { display: flex; align-items: center; gap: 10px; padding: 10px 11px; }
+  .tv-card { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 11px; }
   .tv-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px -16px rgba(61,12,17,.45); border-color: rgba(201,168,76,.55); }
   .tv-card::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
     background: ${OFF}; opacity: .55; transition: background .25s; }
   .tv-card[data-live="1"]::before { background: ${OK}; }
-  .tv-emoji { width: 36px; height: 36px; flex: none; border-radius: 11px; display: grid; place-items: center; font-size: 19px; background: rgba(201,168,76,.13); }
+  .tv-thumb { width: 50px; aspect-ratio: 3/4; flex: none; border-radius: 10px; overflow: hidden; background: #f1e6da;
+    box-shadow: 0 0 0 1px ${A.edge}, 0 4px 10px -6px rgba(61,12,17,.35); }
+  .tv-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .tv-emoji { width: 50px; height: 50px; flex: none; border-radius: 11px; display: grid; place-items: center; font-size: 22px; background: rgba(201,168,76,.13); }
   .tv-name { font-size: 13.5px; font-weight: 800; color: ${A.ink}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .tv-slug { margin-top: 3px; font-size: 11px; color: ${A.muted}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tv-reset { flex: none; width: 30px; height: 30px; border-radius: 9px; cursor: pointer; display: grid; place-items: center;

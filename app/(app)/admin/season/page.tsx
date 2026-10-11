@@ -180,7 +180,7 @@ export default function AdminSeasonPage() {
       title="Season & offers"
       subtitle="What the whole site is wearing: the Valentine wishlist, the Halloween drop, or nothing seasonal. In Halloween mode the running strip shows under the navbar on home, blog and gallery, posts show the Halloween card, and the templates you put in the drop are sold at the sale percent — a real discount applied by the server at quote, publish and checkout."
       icon={<Ghost size={18} />}
-      width={980}
+      width={1280}
     >
       <style>{SSN_CSS}</style>
       <Hero>
@@ -394,8 +394,9 @@ const SSN_CSS = `
 .ssn-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: 500 14px/1 'Inter', sans-serif; color: #2a0a0e; }
 .ssn-list { list-style: none; margin: 10px 0 0; padding: 4px; max-height: 420px; overflow-y: auto; border-radius: 14px; border: 1px solid rgba(61,12,17,.1); background: #fffdfb;
   display: grid; grid-template-columns: minmax(0,1fr); gap: 2px; }
-@media (min-width: 720px) { .ssn-list { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-.ssn-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
+@media (min-width: 720px) { .ssn-list { grid-template-columns: repeat(2, minmax(0,1fr)); max-height: 480px; } }
+@media (min-width: 1100px) { .ssn-list { grid-template-columns: repeat(3, minmax(0,1fr)); max-height: 540px; } }
+.ssn-row { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
 .ssn-row:hover { background: rgba(61,12,17,.04); }
 .ssn-row.on { background: rgba(90,74,124,.1); box-shadow: inset 0 0 0 1px rgba(90,74,124,.35); }
 .ssn-row input { width: 16px; height: 16px; accent-color: #5a4a7c; flex: none; }
