@@ -53,6 +53,24 @@ import { config as profilePro } from "@/app/(templates)/profile-pro/config";
 import { config as rakshaBandhan } from "@/app/(templates)/happy-rakshabandhan-to-brother/config";
 import { config as rakshaBandhanSister } from "@/app/(templates)/happy-rakshabandhan-to-sister/config";
 import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chaturthi/config";
+import { config as roseDayCfg } from "@/app/(templates)/happy-rose-day/config";
+import { config as proposeDayCfg } from "@/app/(templates)/happy-propose-day/config";
+import { config as chocolateDayCfg } from "@/app/(templates)/happy-chocolate-day/config";
+import { config as teddyDayCfg } from "@/app/(templates)/happy-teddy-day/config";
+import { config as promiseDayCfg } from "@/app/(templates)/happy-promise-day/config";
+import { config as hugDayCfg } from "@/app/(templates)/happy-hug-day/config";
+import { config as kissDayCfg } from "@/app/(templates)/happy-kiss-day/config";
+import { config as valentinesDayCfg } from "@/app/(templates)/happy-valentines-day/config";
+import { config as halloweenCfg } from "@/app/(templates)/happy-halloween/config";
+import { config as roseDayPremiumCfg } from "@/app/(templates)/happy-rose-day-premium/config";
+import { config as proposeDayPremiumCfg } from "@/app/(templates)/happy-propose-day-premium/config";
+import { config as chocolateDayPremiumCfg } from "@/app/(templates)/happy-chocolate-day-premium/config";
+import { config as teddyDayPremiumCfg } from "@/app/(templates)/happy-teddy-day-premium/config";
+import { config as promiseDayPremiumCfg } from "@/app/(templates)/happy-promise-day-premium/config";
+import { config as hugDayPremiumCfg } from "@/app/(templates)/happy-hug-day-premium/config";
+import { config as kissDayPremiumCfg } from "@/app/(templates)/happy-kiss-day-premium/config";
+import { config as valentinesDayPremiumCfg } from "@/app/(templates)/happy-valentines-day-premium/config";
+import { config as halloweenPremiumCfg } from "@/app/(templates)/happy-halloween-premium/config";
 
 // The gallery renders in this order, so the first row is the shop window: it is
 // what someone sees before they have decided whether this site is for them.
@@ -64,6 +82,36 @@ import { config as ganeshChaturthi } from "@/app/(templates)/happy-ganesh-chatur
 // a page nobody is shopping for. Move one back to the top only in the fortnight
 // before its date.
 const allConfigs = [
+  // ── Halloween (31 Oct) — in its fortnight, so it leads the shop window.
+  //    Ships hidden on the apex (server DEFAULT_HIDDEN) until the super admin
+  //    releases it in /admin/templates. Move it to the dated-festival tail
+  //    after 31 October. ────────────────────────────────────────────────────
+  halloweenCfg,
+  halloweenPremiumCfg,
+
+  // ── Valentine's week (7–14 Feb), in week order. Ship hidden on the apex
+  //    (server DEFAULT_HIDDEN); the super admin releases each day. ─────────
+  roseDayCfg,
+  proposeDayCfg,
+  chocolateDayCfg,
+  teddyDayCfg,
+  promiseDayCfg,
+  hugDayCfg,
+  kissDayCfg,
+  valentinesDayCfg,
+
+  // ── ✦ Premium ($4) twins of the Valentine days. In the MAIN grid (gold
+  //    premium frame) AND the Premium tab — see ULTRA_PREMIUM_SLUGS. Hidden on
+  //    the apex until released (server DEFAULT_HIDDEN). ─────────────────────
+  roseDayPremiumCfg,
+  proposeDayPremiumCfg,
+  chocolateDayPremiumCfg,
+  teddyDayPremiumCfg,
+  promiseDayPremiumCfg,
+  hugDayPremiumCfg,
+  kissDayPremiumCfg,
+  valentinesDayPremiumCfg,
+
   // ── new & just rebuilt ────────────────────────────────────────────────────
   kundliMilan,
   dateInvitation,
@@ -135,9 +183,28 @@ export const PREMIUM_SLUGS = new Set([
   "profile-pro", "searched", "streak", "rewind",
 ]);
 
+/**
+ * The ✦ Premium ($4) tier: cinematic twins of the engine templates. Unlike
+ * PREMIUM_SLUGS they stay in the MAIN (freemium) grid — with the gold premium
+ * card — and ALSO show in the Premium tab. Never add them to PREMIUM_SLUGS:
+ * that moves a template OUT of the main grid.
+ */
+export const ULTRA_PREMIUM_SLUGS: ReadonlySet<string> = new Set([
+  "happy-rose-day-premium",
+  "happy-propose-day-premium",
+  "happy-chocolate-day-premium",
+  "happy-teddy-day-premium",
+  "happy-promise-day-premium",
+  "happy-hug-day-premium",
+  "happy-kiss-day-premium",
+  "happy-valentines-day-premium",
+  "happy-halloween-premium",
+]);
+
 function toListItem(c: typeof allConfigs[number]): TemplateListItem {
   return {
     premium: PREMIUM_SLUGS.has(c.slug),
+    ultra: ULTRA_PREMIUM_SLUGS.has(c.slug),
     slug:        c.slug,
     type:        c.type,
     category:    c.category,

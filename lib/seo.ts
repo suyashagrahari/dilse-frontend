@@ -112,6 +112,27 @@ const TEMPLATE_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   // fallback composes both names into the image, and a static cover would lose
   // that. See `getSharePageMeta`.
   "raksha-bandhan-sister": { emoji: "🪢", label: "Raksha Bandhan" },
+  "happy-rose-day":       { emoji: "🌹", label: "Rose Day" },
+  "happy-propose-day":    { emoji: "💍", label: "Propose Day" },
+  "happy-chocolate-day":  { emoji: "🍫", label: "Chocolate Day" },
+  "happy-teddy-day":      { emoji: "🧸", label: "Teddy Day" },
+  "happy-promise-day":    { emoji: "🤞", label: "Promise Day" },
+  "happy-hug-day":        { emoji: "🤗", label: "Hug Day" },
+  // Kiss Day previews neutrally (see NEUTRAL_PREVIEW below) — the label is
+  // only used if that override is ever removed.
+  "happy-kiss-day":       { emoji: "💌", label: "Surprise" },
+  "happy-valentines-day": { emoji: "💘", label: "Valentine's Day" },
+  "happy-halloween":      { emoji: "🎃", label: "Halloween" },
+  // ✦ Premium twins (same wording as their $2 day; the gate inside is the premium signal).
+  "happy-rose-day-premium": { emoji: "🌹", label: "Rose Day" },
+  "happy-propose-day-premium": { emoji: "💍", label: "Propose Day" },
+  "happy-chocolate-day-premium": { emoji: "🍫", label: "Chocolate Day" },
+  "happy-teddy-day-premium": { emoji: "🧸", label: "Teddy Day" },
+  "happy-promise-day-premium": { emoji: "🤞", label: "Promise Day" },
+  "happy-hug-day-premium": { emoji: "🤗", label: "Hug Day" },
+  "happy-kiss-day-premium": { emoji: "💌", label: "Surprise" },
+  "happy-valentines-day-premium": { emoji: "💘", label: "Valentine's Day" },
+  "happy-halloween-premium": { emoji: "🎃", label: "Halloween" },
   gift:          { emoji: "🎁", label: "Gift" },
 };
 
@@ -127,6 +148,21 @@ const TEMPLATE_COVER_IMAGES: Record<string, { path: string; width: number; heigh
   holi:          { path: "https://cdn.subhsandesh.in/gifts-media/assets/Holi/hero_holi.webp", width: 1024, height: 1536 },
 };
 
+/** Templates whose share preview must stay neutral (Kiss Day). */
+const NEUTRAL_PREVIEW: ReadonlySet<string> = new Set(["happy-kiss-day", "happy-kiss-day-premium"]);
+
+/** Templates with their own teaser preview (the brief's delivery plan). */
+const TEASER_PREVIEW: Record<string, (recipient: string, sender: string) => { title: string; description: string }> = {
+  "happy-halloween": (r, s) => ({
+    title: `🎃 A little haunted house was built for ${r}`,
+    description: `${s} left something on your doorstep… open it with the lights off 👻`,
+  }),
+  "happy-halloween-premium": (r, s) => ({
+    title: `🎃 Trick or treat, ${r}? A night at the manor is waiting`,
+    description: `${s} left the manor door open for you. Sound on 🎧`,
+  }),
+};
+
 interface SharePageSeo {
   templateType: string;
   recipientName: string;
@@ -137,8 +173,16 @@ interface SharePageSeo {
 export function getSharePageMeta({ templateType, recipientName, senderName, shareId }: SharePageSeo): Metadata {
   const info = TEMPLATE_TYPE_INFO[templateType] ?? { emoji: "🎁", label: "Gift" };
 
-  const title = `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
-  const description = `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
+  // A link preview can surface on a shared family phone; for these templates
+  // it names nothing about what is inside.
+  const neutral = NEUTRAL_PREVIEW.has(templateType);
+  const teaser = TEASER_PREVIEW[templateType]?.(recipientName, senderName);
+  const title = neutral ? "A little something for you 💌" : teaser ? teaser.title : `${info.emoji} ${info.label} for ${recipientName} from ${senderName}`;
+  const description = neutral
+    ? `${senderName} made you something. Open it when you have a quiet minute ✨`
+    : teaser
+      ? teaser.description
+      : `${senderName} created a special ${info.label.toLowerCase()} surprise for ${recipientName}. Open to see the magic! ✨`;
 
   const cover = TEMPLATE_COVER_IMAGES[templateType];
   const ogImageUrl = cover

@@ -354,8 +354,8 @@ const PS_CSS = `
   .ps-burst { position: absolute; right: 16px; top: 18px; width: 0; height: 0; pointer-events: none; }
   .ps-burst i { position: absolute; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #f5d77e; box-shadow: 0 0 8px #f5d77e; }
 
-  .ps-list { display: grid; gap: 8px; max-height: 70vh; overflow-y: auto; padding: 2px; scrollbar-width: thin; }
-  .ps-card { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 6px; border-radius: 16px; cursor: grab;
+  .ps-list { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; max-height: 70vh; overflow-y: auto; padding: 2px; scrollbar-width: thin; }
+  .ps-card { position: relative; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 6px; border-radius: 16px; cursor: grab;
     background: #fff; border: 1px solid ${A.edge}; box-shadow: 0 6px 16px -12px rgba(61,12,17,.35); }
   .ps-card:active { cursor: grabbing; }
   .ps-card[data-vault="1"] { background: linear-gradient(135deg, rgba(255,241,191,.10), rgba(255,255,255,.03)); border-color: rgba(230,199,126,.28); box-shadow: 0 10px 22px -14px rgba(0,0,0,.8); }
@@ -367,7 +367,8 @@ const PS_CSS = `
   .ps-emoji { font-size: 20px; }
   .ps-crown { position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg,#fff1bf,#e2b44a); color: #3a2505; }
   .ps-meta { min-width: 0; flex: 1; }
-  .ps-title { font-size: 13px; font-weight: 800; color: ${A.ink}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ps-title { font-size: 13px; font-weight: 800; line-height: 1.3; color: ${A.ink}; overflow: hidden; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .ps-slug { font-size: 10.5px; color: ${A.muted}; font-family: ui-monospace, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ps-card[data-vault="1"] .ps-title { color: #fbf3e4; }
   .ps-card[data-vault="1"] .ps-slug { color: rgba(246,236,217,.5); }

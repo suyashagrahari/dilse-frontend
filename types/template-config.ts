@@ -65,4 +65,6 @@ export interface TemplateListItem {
   coverImage?: string;
   /** Part of the premium collection — shown in its own gallery section with a luxury card. */
   premium?: boolean;
+  /** ✦ Premium ($4) tier: gold card in the MAIN grid, and also listed in the Premium tab. */
+  ultra?: boolean;
 }

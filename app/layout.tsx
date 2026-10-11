@@ -270,6 +270,15 @@ var landing=location.pathname==='/'&&(!sub||sub==='www'||sub==='dev'||sub==='sta
 if(!landing)load();})();`,
           }}
         />
+        {/* A running Halloween strip dismissed earlier this session must be
+            hidden before first paint, not painted and then collapsed (a layout
+            shift). The strip's CSS hides it while this attribute is set; the key
+            is HW_BAR_DISMISS_KEY in lib/season.ts. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem('ss:hw-bar-off')==='1')document.documentElement.setAttribute('data-hw-bar-off','')}catch(e){}`,
+          }}
+        />
         <noscript>
           <link rel="stylesheet" href={FONTS_HREF} />
         </noscript>

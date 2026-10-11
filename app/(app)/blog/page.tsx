@@ -6,7 +6,9 @@ import BlogCard from "@/components/blog/BlogCard";
 import CategoryChips from "@/components/blog/CategoryChips";
 import BlogSearch from "@/components/blog/BlogSearch";
 import { BlogIndexJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
-import { PromoMarquee } from "@/components/promo/PromoBanners";
+import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
+import { SeasonProvider } from "@/hooks/useSeason";
+import { getSeasonServer } from "@/lib/season.server";
 import FollowUs from "@/components/blog/FollowUs";
 
 // Time-based ISR fallback; the Strapi webhook revalidates instantly on publish.
@@ -45,7 +47,11 @@ export default async function BlogPage({
   const featured = page === 1 ? articles[0] : undefined;
   const rest = featured ? articles.slice(1) : articles;
 
+  // Hourly, like the page itself — see lib/season.server.ts.
+  const season = await getSeasonServer(3600);
+
   return (
+    <SeasonProvider season={season}>
     <main className="min-h-screen overflow-x-hidden" style={{ background: "#f5ede6", color: "#2a0a0e" }}>
       <BlogIndexJsonLd
         url={`${SITE_URL}/blog`}
@@ -64,7 +70,7 @@ export default async function BlogPage({
       />
 
       <section className="relative mx-auto max-w-6xl px-5 pt-12 pb-24 md:pt-32">
-        <PromoMarquee source="blog-banner" />
+        <SeasonalMarquee source="blog-banner" critters />
 
         {/* Header */}
         <header className="mx-auto mb-10 max-w-2xl text-center">
@@ -124,5 +130,6 @@ export default async function BlogPage({
         </BlogSearch>
       </section>
     </main>
+    </SeasonProvider>
   );
 }

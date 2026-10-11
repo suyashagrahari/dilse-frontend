@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { templateList, webpageTemplateList, categories, templateTypes } from "@/data/template-registry";
+import { categories, templateTypes } from "@/data/template-registry";
+import { FORCE_COMING_SOON, GALLERY_LIST, rankRooms } from "@/lib/galleryRules";
 import type { TemplateListItem } from "@/types/template-config";
 import { Search, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import TemplateCard, { TEMPLATE_CARD_CSS } from "@/components/TemplateCard";
@@ -20,10 +21,11 @@ import {
   LUX, PREMIUM_TAB_CSS, PremiumBackdrop, PremiumHero, PremiumPerks, PremiumSpotlight, PremiumTeaser,
 } from "./PremiumShowcase";
 import ValentineTeaser, { VALENTINE_TEASER_CSS } from "./ValentineTeaser";
-import { PromoMarquee } from "@/components/promo/PromoBanners";
+import HalloweenTeaser, { HALLOWEEN_TEASER_CSS } from "./HalloweenTeaser";
+import { SeasonalMarquee } from "@/components/promo/SeasonalPromos";
+import { useSeason } from "@/hooks/useSeason";
+import { SEASON_FALLBACK } from "@/lib/season";
 
-// Slugs temporarily treated as coming-soon even though they have a coverImage
-const FORCE_COMING_SOON = new Set(["anniversary-gf"]);
 
 const COMING_SOON_IMAGES: Record<string, string> = {
   // Temporarily coming soon (have real cover images)
@@ -69,21 +71,6 @@ const CORNERS: { pos: React.CSSProperties; size: string; opacity: number; transf
   { pos: { bottom: 0, right: 0 }, size: "clamp(86px, 24vw, 170px)", opacity: 0.54, transform: "scaleX(-1)" },
 ];
 
-/**
- * One gallery list. The "webpage" templates used to sit behind an App UI /
- * Webpage UI toggle; they now live with the rest, each one next to its
- * closest sibling (christian-wedding-2 beside christian-wedding). Hidden
- * templates are still removed per visitor below, exactly as before.
- */
-const GALLERY_LIST: TemplateListItem[] = (() => {
-  const list = [...templateList];
-  for (const w of webpageTemplateList) {
-    const sibling = list.findIndex((t) => w.slug.startsWith(`${t.slug}-`));
-    if (sibling >= 0) list.splice(sibling + 1, 0, w);
-    else list.push(w);
-  }
-  return list;
-})();
 
 function FilterModal({
   show, onClose,
@@ -314,6 +301,9 @@ function ComingSoonGrid({ items, dark }: { items: TemplateListItem[]; dark: bool
 
 function TemplatesContent({ room }: { room: GalleryTab }) {
   const router = useRouter();
+  // The teaser beside Premium follows the season: Halloween drop, Valentine
+  // wishlist, or nothing. Unknown (no answer yet) reads as the pre-season default.
+  const seasonMode = useSeason()?.mode ?? SEASON_FALLBACK.mode;
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const favSlugs = useAppSelector((s) => s.favorites.slugs);
@@ -398,23 +388,15 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
   // The five most-created templates in each room get a rank badge. Ranked
   // against the whole room, not the filtered view, so a badge means the same
   // thing whatever you searched for.
-  const rankOf = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const room of [true, false]) {
-      visible
-        .filter((t) => Boolean(t.premium) === room && t.coverImage && (createdBy.get(t.slug) ?? 0) > 0)
-        .slice(0, 5)
-        .forEach((t, i) => m.set(t.slug, i + 1));
-    }
-    return m;
-  }, [visible, createdBy]);
+  const rankOf = useMemo(() => rankRooms(visible, createdBy), [visible, createdBy]);
 
   const q = search.trim().toLowerCase();
   const matchBase = (t: TemplateListItem) =>
     (selectedType === "all" || t.type === selectedType) && (!q || t.title.toLowerCase().includes(q));
   const matchCategory = (t: TemplateListItem) => selectedCategory === "all" || t.category === selectedCategory;
 
-  const inTab = (t: TemplateListItem, which: GalleryTab) => (which === "premium") === Boolean(t.premium);
+  // ✦ Premium-tier (ultra) templates live in BOTH rooms: the main grid (gold card) and the Premium tab.
+  const inTab = (t: TemplateListItem, which: GalleryTab) => Boolean(t.ultra) || (which === "premium") === Boolean(t.premium);
   const tabBase = visible.filter((t) => inTab(t, tab) && matchBase(t));
   const filtered = tabBase.filter(matchCategory);
   const otherTab: GalleryTab = tab === "premium" ? "freemium" : "premium";
@@ -509,7 +491,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
         minHeight: "100dvh",
       }}
     >
-      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS}</style>
+      <style>{TEMPLATE_CARD_CSS + PREMIUM_CARD_CSS + GALLERY_CSS + PREMIUM_TAB_CSS + PREMIUM_BACK_CSS + VALENTINE_TEASER_CSS + HALLOWEEN_TEASER_CSS}</style>
 
       {/* The Premium room: fades in over the cream page */}
       <PremiumBackdrop active={isPremium} />
@@ -640,7 +622,7 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
 
       <div className="px-3 pt-4 pb-12 md:px-6 md:pt-6 md:pb-20" style={{ position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }} ref={panelTopRef}>
-          <PromoMarquee source="templates-banner" />
+          <SeasonalMarquee source="templates-banner" />
 
           {isPremium && (
             <Link href="/templates" className="pxBack">
@@ -711,30 +693,49 @@ function TemplatesContent({ room }: { room: GalleryTab }) {
                       </div>
                     </header>
 
-                    {!hasActiveFilters && (
+                    {/* Premium is always there; beside it, whichever season the site is
+                        wearing (Halloween drop OR Valentine wishlist, never both). With the
+                        season off, Premium stands alone in its own full-width layout. */}
+                    {!hasActiveFilters && (seasonMode === "off" ? (
+                      premiumShowcase.length > 0 && (
+                        <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
+                      )
+                    ) : (
                       <div className="txDuo">
                         {premiumShowcase.length > 0 && (
                           <PremiumTeaser items={premiumShowcase} count={premiumShowcase.length} onExplore={() => setTab("premium")} />
                         )}
-                        <ValentineTeaser />
+                        {seasonMode === "halloween" ? <HalloweenTeaser /> : <ValentineTeaser />}
                       </div>
-                    )}
+                    ))}
 
                     {crossHint}
 
                     {readyTemplates.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                        {readyTemplates.map((template, i) => (
-                          <TemplateCard
-                            key={template.slug}
-                            template={template}
-                            rank={rankOf.get(template.slug)}
-                            created={createdBy.get(template.slug)}
-                            isFav={favSlugs.includes(template.slug)}
-                            index={i}
-                            onFavorite={handleFavorite}
-                          />
-                        ))}
+                        {readyTemplates.map((template, i) =>
+                          template.ultra ? (
+                            <PremiumTemplateCard
+                              key={template.slug}
+                              template={template}
+                              rank={rankOf.get(template.slug)}
+                              created={createdBy.get(template.slug)}
+                              isFav={favSlugs.includes(template.slug)}
+                              index={i}
+                              onFavorite={handleFavorite}
+                            />
+                          ) : (
+                            <TemplateCard
+                              key={template.slug}
+                              template={template}
+                              rank={rankOf.get(template.slug)}
+                              created={createdBy.get(template.slug)}
+                              isFav={favSlugs.includes(template.slug)}
+                              index={i}
+                              onFavorite={handleFavorite}
+                            />
+                          ),
+                        )}
                       </div>
                     )}
                     {comingSoonTemplates.length > 0 && <ComingSoonGrid items={comingSoonTemplates} dark={false} />}

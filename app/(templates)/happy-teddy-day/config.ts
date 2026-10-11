@@ -1,0 +1,42 @@
+import { Mail, Heart, Image as ImageIcon, Sparkles, Download } from "lucide-react";
+import type { TemplatePageConfig } from "@/types/template-config";
+import { templateMedia } from "@/lib/templateMedia";
+
+// Gallery card. The cover is the day's poster (three real screens of the page)
+// (source: media-src/templates/happy-teddy-day/cover-poster.webp).
+export const config: TemplatePageConfig = {
+  slug: "happy-teddy-day",
+  type: "valentine",
+  category: "gf",
+  title: "Teddy Day — Teddy Catcher",
+  description:
+    'A claw machine rigged to win the teddy you named and dressed — it brings your letter.',
+  coverImage: templateMedia("happy-teddy-day", "cover-poster.webp"),
+  emoji: "🧸",
+  color: "from-violet-700 to-pink-400",
+  previewText: '1 free play for you 🧸',
+  bodyText: "The arcade they can't lose.",
+  bgGradient: "from-violet-50 via-pink-50 to-amber-50",
+  tabs: [
+    { id: "open", icon: Sparkles, label: "Open" },
+    { id: "letter", icon: Mail, label: "Letter" },
+    { id: "photos", icon: ImageIcon, label: "Photos" },
+    { id: "love", icon: Heart, label: "Love" },
+    { id: "save", icon: Download, label: "Save" },
+  ],
+  navActiveColor: "text-pink-600",
+  navActiveBg: "bg-pink-600/10",
+  floatStyle: "hearts",
+  pages: {
+    cover: { subtitle: '1 free play for you 🧸', ctaText: "Open", floatingEmojis: ["🧸", "💗", "✨"] },
+    letter: { headerEmoji: "🧸", title: "A letter for you", greeting: "Hey you,", decorEmojis: ["🧸", "💌", "✨"] },
+    final: {
+      headerEmoji: "🧸",
+      title: "Happy Teddy Day",
+      subtitle: "Made with love",
+      wishes: ["Made just for you 💗", "Open it again anytime ✨", "Send one back 💌"],
+      closingEmoji: "🧸",
+      closingSubtext: "SubhSandesh",
+    },
+  },
+};

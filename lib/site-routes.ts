@@ -82,6 +82,21 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/flags", priority: 0.8, changeFrequency: "monthly" },
   { path: "/app", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal-notice", priority: 0.8, changeFrequency: "monthly" },
+  // Valentine's week — seasonal: indexed early so they can rank by February.
+  { path: "/happy-rose-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-propose-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-chocolate-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-teddy-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-promise-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-hug-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-kiss-day", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/happy-valentines-day", priority: 0.8, changeFrequency: "monthly" },
+  // ✦ Premium twins (ship hidden on the apex until released in /admin/templates):
+  // the nine (/happy-*-day-premium, /happy-halloween-premium) are NOT listed here: they have TEMPLATE_DATA entries (FAQs + HowTo), so
+  // sitemap.ts emits them from TEMPLATE_SEO — a row here would duplicate the <loc>.
+  // Halloween (/happy-halloween) is NOT listed here: it has a TEMPLATE_DATA entry
+  // in lib/seo-data.ts (FAQs + HowTo), so sitemap.ts already emits it from
+  // TEMPLATE_SEO — listing it twice would put a duplicate <loc> in the sitemap.
   // ── Product guides ───────────────────────────────────────────────────────
   // The hub carries template priority rather than informational: a guide page
   // ranks for "how to" intent around a template ("how to make a rakhi card
@@ -93,6 +108,7 @@ export const STANDALONE_INDEXABLE_PAGES: IndexablePage[] = [
   { path: "/help", priority: 0.5, changeFrequency: "monthly" },
   { path: "/manifesto", priority: 0.5, changeFrequency: "yearly" },
   { path: "/valentine-wishlist", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/halloween-offer", priority: 0.7, changeFrequency: "weekly" },
   { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changeFrequency: "yearly" },
   { path: "/refund-policy", priority: 0.3, changeFrequency: "yearly" },

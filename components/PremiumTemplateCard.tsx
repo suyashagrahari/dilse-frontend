@@ -28,10 +28,14 @@ const PremiumTemplateCard = memo(function PremiumTemplateCard(props: PremiumTemp
       <div className="pmBody">
         <TemplateCard {...props} />
         <span className="pmShine" aria-hidden />
-        <span className="pmSeal" aria-hidden>
-          <svg viewBox="0 0 24 24" width="11" height="11"><path d="M3 18h18l-1.6-9.2-4.6 3.9L12 5.5l-2.8 7.2-4.6-3.9z" fill="currentColor" /></svg>
-          Premium
-        </span>
+        {/* Ultra posters print their own "✦ PREMIUM" badge at the top; a seal
+            here would sit on the poster's feature pills at the bottom. */}
+        {!props.template.ultra && (
+          <span className="pmSeal" aria-hidden>
+            <svg viewBox="0 0 24 24" width="11" height="11"><path d="M3 18h18l-1.6-9.2-4.6 3.9L12 5.5l-2.8 7.2-4.6-3.9z" fill="currentColor" /></svg>
+            Premium
+          </span>
+        )}
       </div>
     </div>
   );
