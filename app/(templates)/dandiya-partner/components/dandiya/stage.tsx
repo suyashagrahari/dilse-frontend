@@ -383,7 +383,7 @@ export const DD_STAGE_CSS = `
 /* The diya trail: small, top-left, level with the editor's top bar (which sits top-right). */
 .dd-trail { position: fixed; z-index: 62; top: calc(max(10px, env(safe-area-inset-top, 0px)) + 8px); left: max(12px, env(safe-area-inset-left, 0px));
   display: flex; align-items: center; height: 30px; padding: 0 5px; border-radius: 99px; box-sizing: border-box;
-  background: linear-gradient(180deg, rgba(20,28,82,.94), rgba(10,15,51,.94)); border: 1px solid rgba(246,210,122,.28);
+  background: linear-gradient(180deg, rgba(122,15,18,.94), rgba(62,6,9,.94)); border: 1px solid rgba(246,210,122,.28);
   box-shadow: 0 0 14px -5px rgba(255,182,39,.45), inset 0 1px 0 rgba(255,255,255,.08); }
 @media (min-width: 768px) { .dd-trail { top: 22px; left: 24px; height: 36px; } }
 .dd-pk { width: 19px; height: 30px; padding: 0; margin: 0; border: 0; background: none; cursor: default; display: grid; place-items: center;
@@ -402,13 +402,14 @@ export const DD_STAGE_CSS = `
 @keyframes dd-pk-nope { 0%,100% { transform: rotate(0) } 20% { transform: rotate(-16deg) } 45% { transform: rotate(13deg) } 70% { transform: rotate(-8deg) } }
 /* The music icon (engine, DayConfig.music.compact) stays bottom-left, level with the pill's middle. */
 body .vm-icon { bottom: calc(env(safe-area-inset-bottom, 0px) + 26px); }
+body .vm-icon-btn { background: radial-gradient(circle at 50% 38%, #A3141E, #4A080C 72%); }
 @media (min-width: 768px) { body .vm-icon { left: 24px; bottom: 38px; } }
 
 /* The scene change: a bandhani dupatta sweeps across (one composited translate), the crossed sticks twirl through it. */
 .dd-wipe { position: fixed; z-index: 74; top: 0; bottom: 0; left: 0; width: 180vw; pointer-events: none; will-change: transform; contain: strict;
   animation: dd-wipe ${WIPE_MS}ms cubic-bezier(.45,.05,.55,.95) forwards; }
 .dd-wipe::before { content: ""; position: absolute; inset: 0 8vw;
-  background: ${BANDHANI}, linear-gradient(90deg, #8E1022 0%, #D7263D 22%, #E5489B 50%, #D7263D 78%, #8E1022 100%); }
+  background: ${BANDHANI}, linear-gradient(90deg, #C46A00 0%, #FFB627 22%, #E5489B 50%, #FFB627 78%, #C46A00 100%); }
 /* zari borders + tassels on the dupatta's two edges */
 .dd-wipe i { position: absolute; inset: 0 calc(8vw - 14px); display: block;
   background: linear-gradient(90deg, #F6D27A 0 6px, #B8862E 6px 8px, transparent 8px calc(100% - 8px), #B8862E calc(100% - 8px) calc(100% - 6px), #F6D27A calc(100% - 6px));

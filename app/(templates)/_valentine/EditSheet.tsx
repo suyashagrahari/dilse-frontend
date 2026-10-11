@@ -728,7 +728,7 @@ export default function EditSheet({ day, editMode, setEditMode, mf, updateMf, up
 
                 <section className="vs-sec" id="vs-sec-details" aria-labelledby="vs-h-details">
                   <SecHead n={2} done={status.details} title={<span id="vs-h-details">{c.extrasTitle} {day.emoji}</span>} sub={c.extrasSub} />
-                  {day.extras.map((spec) => (
+                  {day.extras.filter((spec) => !spec.showIf || String(mf.extras[spec.showIf.key] ?? "") === spec.showIf.value).map((spec) => (
                     <SpecField key={spec.key} spec={spec} value={mf.extras[spec.key]} onChange={(v) => updateExtra(spec.key, v)} />
                   ))}
                 </section>

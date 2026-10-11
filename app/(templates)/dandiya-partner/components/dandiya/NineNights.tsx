@@ -42,7 +42,7 @@ export default function NineNights({ lines, photos, onNext }: { lines: readonly 
     }
   };
 
-  useNext(all ? "To the dhol" : null, onNext, "diya");
+  useNext(all ? "Clash sticks" : null, onNext, "diya");
 
   return (
     <>

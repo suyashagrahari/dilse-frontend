@@ -32,6 +32,9 @@ export interface DandiyaExtras {
   dressCode: string;
   question: string;
   yesLine: string;
+  /** "yesOnly" — No dodges forever · "noAfterTries" — No can be pressed after `noTries` dodges. */
+  answerMode: "yesOnly" | "noAfterTries";
+  noTries: "4" | "5";
   [k: string]: unknown;
 }
 
@@ -109,7 +112,7 @@ export const DANDIYA_SONGS: readonly SongSuggestion[] = [
 const F = (f: string) => `../_festive/${f}`;
 const GIFS: GifSlot[] = [
   { id: "d1-gate", label: "Hello", moment: "Peeking from behind the invitation", file: F("bubudubu-dandiya-playing.webp"), emoji: "🐼", anim: "wiggle" },
-  { id: "d2-beat", label: "Dhol beat", moment: "Beside the dandiya game", file: F("dandiya-dhamal.webp"), emoji: "✨", anim: "wiggle" },
+  { id: "d2-beat", label: "Clash buddy", moment: "Hops beside the dandiya clash game", file: F("bubudubu-dandiya-playing.webp"), emoji: "🐼", anim: "bounce" },
   { id: "d3-garba", label: "Garba pair", moment: "Dancing in the middle of the garba circle", file: F("dandiyapartyner.webp"), emoji: "💃", anim: "float" },
   { id: "d4-invite", label: "Invitation", moment: "On the invitation ticket", file: F("dandiyapartyner.webp"), emoji: "🪔", anim: "float" },
   { id: "d5-yes", label: "We said YES", moment: "After they say YES", file: F("bubudubu-dandiya-playing.webp"), emoji: "💛", anim: "bounce" },
@@ -196,14 +199,31 @@ export const dandiyaDay: DayConfig<DandiyaExtras> = {
       placeholder: "what you'd say back the second they say yes",
       suggestions: ["Then it's a date. Every song, every round, every night."],
     },
+    {
+      key: "answerMode", kind: "enum", label: "How can they answer?", display: "cards", default: "yesOnly",
+      hint: "Either way you'll see their answer on your page card and when you open your own link.",
+      options: [
+        { value: "yesOnly", label: "Only Yes", emoji: "💛", hint: "No keeps running away" },
+        { value: "noAfterTries", label: "Yes or No", emoji: "🤞", hint: "No unlocks after a few tries" },
+      ],
+    },
+    {
+      key: "noTries", kind: "enum", label: "No unlocks after", display: "chips", default: "4",
+      hint: "No dodges this many times with cute lines, then they can really pick it (we ask “Are you sure?” first).",
+      showIf: { key: "answerMode", value: "noAfterTries" },
+      options: [
+        { value: "4", label: "4 tries" },
+        { value: "5", label: "5 tries" },
+      ],
+    },
   ],
   theme: {
-    bg: "radial-gradient(130% 80% at 50% 0%, #22307A 0%, #141C52 44%, #0A0F33 100%)",
-    base: "#0A0F33",
+    bg: "radial-gradient(130% 80% at 50% 0%, #B3121B 0%, #7A0F12 46%, #3E0609 100%)",
+    base: "#4A080C",
     paper: "#FFF4DE",
     glass: "rgba(255,244,222,0.08)",
     ink: "#FFF7E8",
-    inkSoft: "#CBD0F0",
+    inkSoft: "#FFD9C2",
     paperInk: "#3B0F1E",
     accent: "#FFB627",
     accentDeep: "#B8650A",
@@ -242,6 +262,8 @@ export const dandiyaDay: DayConfig<DandiyaExtras> = {
       dressCode: "Traditional · mirror-work welcome",
       question: "Will you be my Dandiya partner? 💛",
       yesLine: "Then it's a date. Every song, every round, every night.",
+      answerMode: "yesOnly",
+      noTries: "4",
     },
   },
   copy: {
@@ -262,7 +284,7 @@ export const dandiyaDay: DayConfig<DandiyaExtras> = {
     publishing: "Lighting the diyas…",
     storyTitle: "Let's invite your Dandiya partner 🪔",
     replyText: "YES! I'm your Dandiya partner 💛 Save me every single song.",
-    yesChip: "Said YES 💃",
+    yesChip: "Said YES 💛",
   },
   share: { title: "You've been invited to a Dandiya night 🪔", accent: "#B8650A" },
 };

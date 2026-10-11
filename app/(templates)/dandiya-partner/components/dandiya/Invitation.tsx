@@ -178,7 +178,7 @@ const INVITE_CSS = `
 .dd-ticket-rows dt { font: 700 11px ${FONTS.ui}; letter-spacing: .12em; text-transform: uppercase; color: #8A5A3A; white-space: nowrap; }
 .dd-ticket-rows dd { margin: 0; font: 600 clamp(14.5px, 2.2dvh, 16.5px)/1.3 ${FONTS.ui}; overflow-wrap: anywhere; }
 .dd-ticket-stub { position: relative; margin-top: 8px; padding: 10px 18px 14px; border-top: 2px dashed rgba(142,16,34,.35); display: grid; justify-items: center; gap: 0; }
-.dd-ticket-stub::before, .dd-ticket-stub::after { content: ""; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: #141C52; }
+.dd-ticket-stub::before, .dd-ticket-stub::after { content: ""; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: #6E0D11; }
 .dd-ticket-stub::before { left: -11px; } .dd-ticket-stub::after { right: -11px; }
 .dd-ticket-stub > span:first-child { font: 700 10.5px ${FONTS.ui}; letter-spacing: .2em; text-transform: uppercase; color: ${DD.kumkum}; }
 .dd-ticket-stub b { font: 700 clamp(19px, 3dvh, 23px)/1.2 ${FONTS.script}; color: ${DD.kumkumDeep}; overflow-wrap: anywhere; }
