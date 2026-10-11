@@ -4,7 +4,7 @@
 // render time, and a build without network would then ship a blank square.
 import { ImageResponse } from "next/og";
 
-export const alt = "Happy Diwali — an interactive card: light a diya, colour a rangoli, launch fireworks and open a box of mithai";
+export const alt = "Happy Diwali — an interactive card: light a diya, colour a rangoli, light crackers and open a liffafa";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -24,7 +24,7 @@ export default function OpengraphImage() {
           justifyContent: "space-between",
           padding: "0 90px",
           position: "relative",
-          background: "linear-gradient(165deg, #060B24 0%, #121C47 50%, #3A1E3A 100%)",
+          background: "linear-gradient(165deg, #2A0507 0%, #6E0F12 50%, #8F1416 100%)",
           color: "#FFF6E3",
           fontFamily: "sans-serif",
         }}
@@ -35,8 +35,8 @@ export default function OpengraphImage() {
         <div style={{ display: "flex", flexDirection: "column", maxWidth: 640 }}>
           <div style={{ fontSize: 26, letterSpacing: 6, color: "#FFD36E", fontWeight: 700 }}>HAPPY DIWALI</div>
           <div style={{ fontSize: 66, fontWeight: 800, lineHeight: 1.08, marginTop: 18 }}>Leave a diya at their door</div>
-          <div style={{ fontSize: 28, lineHeight: 1.4, marginTop: 24, color: "#D9D2EC" }}>
-            They light it, colour a rangoli, launch fireworks for your letter and open a box of mithai.
+          <div style={{ fontSize: 28, lineHeight: 1.4, marginTop: 24, color: "#F3D9C4" }}>
+            They light it, colour a rangoli, light a tray of crackers, open your liffafa and a box of mithai.
           </div>
           <div style={{ fontSize: 24, marginTop: 34, color: "#FFB23F", fontWeight: 700 }}>subhsandesh.in</div>
         </div>

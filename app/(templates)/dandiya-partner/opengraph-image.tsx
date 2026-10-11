@@ -33,7 +33,7 @@ export default function OpengraphImage() {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "0 90px",
-          background: "linear-gradient(160deg, #0A0F33 0%, #141C52 50%, #22307A 100%)",
+          background: "linear-gradient(160deg, #3E0609 0%, #7A0F12 50%, #B3121B 100%)",
           color: "#FFF7E8",
           fontFamily: "sans-serif",
         }}
@@ -41,7 +41,7 @@ export default function OpengraphImage() {
         <div style={{ display: "flex", flexDirection: "column", maxWidth: 640 }}>
           <div style={{ fontSize: 26, letterSpacing: 6, color: "#F6D27A", fontWeight: 700 }}>HAPPY NAVRATRI</div>
           <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.08, marginTop: 18 }}>Will you be my Dandiya partner?</div>
-          <div style={{ fontSize: 28, lineHeight: 1.4, marginTop: 24, color: "#CBD0F0" }}>
+          <div style={{ fontSize: 28, lineHeight: 1.4, marginTop: 24, color: "#FFD9C2" }}>
             Light nine diyas, clash the sticks on the dhol beat, twirl in your colour, then answer the big question.
           </div>
           <div style={{ fontSize: 24, marginTop: 34, color: "#FFB627", fontWeight: 700 }}>subhsandesh.in</div>

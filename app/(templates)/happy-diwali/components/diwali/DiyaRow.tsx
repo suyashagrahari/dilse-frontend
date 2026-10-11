@@ -31,7 +31,7 @@ const CSS = `
   background: repeating-linear-gradient(90deg, #FF5FA2 0 8px, #FFD36E 8px 16px, #2EC4B6 16px 24px, #FF8A1E 24px 32px); opacity: .8; border-radius: 3px; z-index: -1; }
 .dw-rdiya { position: relative; flex: none; width: min(calc((100cqw - 60px) / var(--n)), 104px); aspect-ratio: 200 / 150; border: 0; padding: 0; background: none; cursor: pointer; touch-action: none;
   -webkit-tap-highlight-color: transparent; }
-.dw-rdiya:focus-visible { outline: 3px solid #2EC4B6; outline-offset: 4px; border-radius: 30%; }
+.dw-rdiya:focus-visible { outline: 3px solid #FFF1B8; outline-offset: 4px; border-radius: 30%; }
 .dw-rdiya.is-unlit:not(:disabled) { animation: dw-wait 2.2s ease-in-out infinite; }
 @keyframes dw-wait { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
 .dw-carry { position: fixed; z-index: 70; width: 30px; height: 46px; margin: -46px 0 0 -15px; pointer-events: none; }

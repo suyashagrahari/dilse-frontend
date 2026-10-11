@@ -1,7 +1,7 @@
 // ─── Which seasonal campaign the site is wearing ─────────────────────────────
 //
 // A super admin flips the site between the Valentine wishlist, a seasonal
-// DROP (Halloween, or Navratri & Diwali — "festive") and nothing at all from
+// DROP (Halloween, Navratri Dandiya or Diwali) and nothing at all from
 // /admin/season. Each drop season has its own templates, sale and end date
 // (`DROPS` below); only the active mode's drop is ever shown. Everything seasonal — the running
 // bar under the navbar, the blog cards, the gallery teaser, the critters on the
@@ -22,9 +22,13 @@
 import { API_URL, IS_NGROK } from "@/lib/config";
 
 /** The seasons that have a drop: their own templates, sale, strip and offer page. */
-export type DropId = "halloween" | "festive";
-export const DROP_IDS: readonly DropId[] = ["halloween", "festive"];
+export type DropId = "halloween" | "dandiya" | "diwali";
+export const DROP_IDS: readonly DropId[] = ["halloween", "dandiya", "diwali"];
 export type SeasonMode = "valentine" | DropId | "off";
+/** The two Hindu-festival drops, each with its own red theme (components/promo/festivalTheme.ts). */
+export type FestivalId = "dandiya" | "diwali";
+export const FESTIVAL_IDS: readonly FestivalId[] = ["dandiya", "diwali"];
+export const isFestivalMode = (m: unknown): m is FestivalId => m === "dandiya" || m === "diwali";
 
 export type DropSale = { enabled: boolean; percent: number; slugs: string[] };
 
@@ -43,23 +47,31 @@ export const HALLOWEEN_ENDS_AT = Date.parse("2026-10-31T23:59:59+05:30");
 /** The template GIFs, served from the CDN. */
 export const HALLOWEEN_GIF = (file: string) => `https://cdn.subhsandesh.in/gifts-media/templates/_halloween/${file}`;
 
-export const FESTIVE_PATH = "/festive-offer";
-export const FESTIVE_SLUGS = ["dandiya-partner", "happy-diwali"] as const;
-/** Navratri & Diwali: the drop ends on Diwali night — Sunday 8 November 2026 — at the last minute, India time. */
-export const FESTIVE_ENDS_AT = Date.parse("2026-11-08T23:59:59+05:30");
-export const FESTIVE_PERCENT_DEFAULT = 30;
-/** The festive GIFs, served from the CDN (see .template-factory/festive/MEDIA.md). */
+/** The Navratri & Diwali GIFs, served from the CDN (see .template-factory/festive/MEDIA.md). */
 export const FESTIVE_GIF = (file: string) => `https://cdn.subhsandesh.in/gifts-media/templates/_festive/${file}`;
+
+export const DANDIYA_PATH = "/dandiya-offer";
+export const DANDIYA_SLUGS = ["dandiya-partner"] as const;
+/** Navratri 2026 ends on Dussehra, Tuesday 20 October: the drop ends at its last minute, India time. */
+export const DANDIYA_ENDS_AT = Date.parse("2026-10-20T23:59:59+05:30");
+
+export const DIWALI_PATH = "/diwali-offer";
+export const DIWALI_SLUGS = ["happy-diwali"] as const;
+/** Diwali night — Sunday 8 November 2026 — at the last minute, India time. */
+export const DIWALI_ENDS_AT = Date.parse("2026-11-08T23:59:59+05:30");
+
+export const FESTIVAL_PERCENT_DEFAULT = 30;
 
 /** Per-drop facts the client owns (the server owns slugs and sale). */
 export const DROPS: Record<DropId, { label: string; path: string; slugs: readonly string[]; endsAt: number; endsLabel: string }> = {
   halloween: { label: "Halloween drop", path: HALLOWEEN_PATH, slugs: HALLOWEEN_SLUGS, endsAt: HALLOWEEN_ENDS_AT, endsLabel: "31 Oct" },
-  festive: { label: "Navratri & Diwali drop", path: FESTIVE_PATH, slugs: FESTIVE_SLUGS, endsAt: FESTIVE_ENDS_AT, endsLabel: "Diwali night, 8 Nov" },
+  dandiya: { label: "Navratri Dandiya drop", path: DANDIYA_PATH, slugs: DANDIYA_SLUGS, endsAt: DANDIYA_ENDS_AT, endsLabel: "Dussehra, 20 Oct" },
+  diwali: { label: "Diwali drop", path: DIWALI_PATH, slugs: DIWALI_SLUGS, endsAt: DIWALI_ENDS_AT, endsLabel: "Diwali night, 8 Nov" },
 };
 
 /**
  * Names and art for drop templates that may not be in the registry yet (the
- * festive templates ship on their own branches). Anything that shows a drop
+ * festival templates ship on their own branches). Anything that shows a drop
  * card uses the registry entry when present and this otherwise.
  */
 export const DROP_TEMPLATE_FALLBACK: Record<string, { title: string; emoji: string; blurb: string; cover: string }> = {
@@ -102,7 +114,7 @@ const MODES: readonly SeasonMode[] = ["valentine", ...DROP_IDS, "off"];
 
 /**
  * The slugs in the ACTIVE drop: `sale.slugs` while the mode is a drop season
- * (halloween, festive), nothing otherwise. A drop template is reachable (its
+ * (halloween, dandiya, diwali), nothing otherwise. A drop template is reachable (its
  * builder opens, it publishes) even when /admin/templates hides it from the
  * gallery; it still stays out of every gallery listing. Mirrors `dropSlugs` in
  * server/src/config/seasonSale.ts, which enforces the same rule on publish.
@@ -129,14 +141,17 @@ export function parseSeason(json: unknown): Season | null {
     | { mode?: unknown; sale?: { enabled?: unknown; percent?: unknown; slugs?: unknown } }
     | null;
   if (!d || typeof d !== "object") return null;
-  const mode = MODES.includes(d.mode as SeasonMode) ? (d.mode as SeasonMode) : null;
+  // Round 1's merged "festive" season (never on prod) is the Diwali season now — the server migrates it the same way.
+  const raw = d.mode === "festive" ? "diwali" : d.mode;
+  const mode = MODES.includes(raw as SeasonMode) ? (raw as SeasonMode) : null;
   if (!mode) return null;
   const out: Season = { mode, sale: parseSale(d.sale) };
   const rawDrops = (d as { drops?: unknown }).drops;
   if (rawDrops && typeof rawDrops === "object") {
     const drops: Partial<Record<DropId, DropSale>> = {};
     for (const id of DROP_IDS) {
-      const r = (rawDrops as Record<string, unknown>)[id];
+      const all = rawDrops as Record<string, unknown>;
+      const r = all[id] ?? (id === "diwali" ? all.festive : undefined);
       if (r && typeof r === "object") drops[id] = parseSale(r as Parameters<typeof parseSale>[0]);
     }
     out.drops = drops;

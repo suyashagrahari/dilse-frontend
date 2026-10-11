@@ -25,7 +25,7 @@ const CSS = `
 .dw-rg-p.is-on { animation: dw-pop .5s cubic-bezier(.3,1.6,.5,1) both; }
 @keyframes dw-pop { 0% { transform: scale(.4) } 100% { transform: scale(1) } }
 .dw-rg-hit { cursor: pointer; }
-.dw-rg-hit:focus-visible { outline: none; stroke: rgba(46,196,182,.6) !important; }
+.dw-rg-hit:focus-visible { outline: none; stroke: rgba(255,241,184,.8) !important; }
 .dw-rg-gif { position: absolute; inset: -6%; display: grid; place-items: center; pointer-events: none; }
 .dw-rg-gif img { width: 100%; height: 100%; object-fit: contain; }
 .dw-rg-mid { position: absolute; left: 39.5%; top: 39.5%; width: 21%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
@@ -35,7 +35,7 @@ const CSS = `
 .dw-swatch { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255,246,227,.18); padding: 0; cursor: pointer; touch-action: manipulation;
   box-shadow: inset 0 -4px 0 rgba(0,0,0,.18), 0 4px 10px -4px rgba(0,0,0,.6); transition: transform .2s, border-color .2s; }
 .dw-swatch.is-on { border-color: #FFF6E3; transform: translateY(-4px) scale(1.08); }
-.dw-swatch:focus-visible { outline: 3px solid #2EC4B6; outline-offset: 3px; }
+.dw-swatch:focus-visible { outline: 3px solid #FFF1B8; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .dw-rg-svg.is-done, .dw-rg-p.is-on { animation: none; } }
 `;
 

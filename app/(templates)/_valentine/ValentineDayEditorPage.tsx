@@ -21,6 +21,7 @@ import { getExperience } from "./experiences";
 import { FONTS } from "./theme";
 import type { DaySlug, ValentineReactions } from "./types";
 import { useValentineDayEditor } from "./useValentineDayEditor";
+import { answeredWhen } from "./kit/answer";
 
 const noopReact = () => {};
 
@@ -42,8 +43,10 @@ function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactio
       </motion.button>
     );
   }
-  const label = r.answer === "yes" && asks
-    ? `${yes}${r.noDodges ? ` · dodged No ×${r.noDodges}` : ""}`
+  const label = r.answer === "no" && asks
+    ? `Said no 💔${answeredWhen(r.answeredAt) ? ` · ${answeredWhen(r.answeredAt)}` : ""}`
+    : r.answer === "yes" && asks
+    ? `${yes}${r.noDodges ? ` · dodged No ×${r.noDodges}` : ""}${answeredWhen(r.answeredAt) ? ` · ${answeredWhen(r.answeredAt)}` : ""}`
     : r.completedAt
       ? "Seen it all ✓✓"
       : "Seen ✓";
@@ -52,6 +55,7 @@ function ReactionsChip({ r, asks, yes = "Said YES 💍" }: { r: ValentineReactio
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       role="status"
+      data-owner-answer={r.answer ?? undefined}
       style={{ position: "fixed", top: 44, left: "50%", transform: "translateX(-50%)", zIndex: 140, padding: "8px 14px", borderRadius: 99, background: "rgba(255,255,255,.94)", color: "#2a1a22", font: `600 13px ${FONTS.ui}`, boxShadow: "0 10px 30px -12px rgba(0,0,0,.4)", whiteSpace: "nowrap" }}
     >
       {label}

@@ -26,6 +26,7 @@ import ProfileWishlist from "@/components/wishlist/ProfileWishlist";
 import { templateList, webpageTemplateList } from "@/data/template-registry";
 import { ProfileSkeleton } from "@/components/skeleton/Skeletons";
 import ProfileInfluencerStrip from "@/components/influencer/ProfileInfluencerStrip";
+import { answerChip } from "@/app/(templates)/_valentine/kit/answer";
 
 function apiHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
@@ -171,6 +172,8 @@ interface MyCreation extends TemplateMetaRow {
   _id: string; shareId: string; templateType: string; recipientName: string;
   senderName: string; isPublished: boolean; hasPassword: boolean; passwordRaw: string;
   viewCount: number; installCount: number; updatedAt: string; createdAt: string;
+  /** Question days only, once the recipient answered (server: answerOfRow). */
+  answer?: "yes" | "no"; answeredAt?: string | null;
 }
 interface ReceivedPage extends TemplateMetaRow {
   shareId: string; templateType: string; recipientName: string; senderName: string;
@@ -941,6 +944,15 @@ export default function ProfilePage() {
                 <span><Eye size={12} /> {page.viewCount ?? 0} views</span>
                 <span><Users size={12} /> {page.installCount} installs</span>
                 {page.hasPassword && <span><Lock size={12} /> Locked</span>}
+                {page.answer && (() => {
+                  const chip = answerChip({ answer: page.answer, answeredAt: page.answeredAt ?? null });
+                  return chip ? (
+                    <span data-page-answer={page.answer} title={page.answeredAt ? new Date(page.answeredAt).toLocaleString() : undefined}
+                      style={{ fontWeight: 700, color: chip.tone === "no" ? "#b4233a" : "#a16207" }}>
+                      {chip.text}
+                    </span>
+                  ) : null;
+                })()}
               </div>
 
               <div className="pfActions">

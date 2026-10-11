@@ -11,11 +11,13 @@ import { useReducedMotion } from "../../../_valentine/kit";
 import { DW_DISPLAY } from "./fonts";
 
 export const DW = {
-  night: "#0A1030",
-  navy: "#121C47",
-  indigo: "#1D2C66",
-  gold: "#FFD36E",
-  diya: "#FFB23F",
+  /** the red Diwali night (ROUND2 palette): deepest → kumkum */
+  night: "#2A0507",
+  maroon: "#4A0A0D",
+  red: "#8F1416",
+  kumkum: "#B3121B",
+  gold: "#FFCF5A",
+  diya: "#F6A821",
   flame: "#FFF3C4",
   marigold: "#FF8A1E",
   marigoldDeep: "#C25E0A",
@@ -26,10 +28,9 @@ export const DW = {
   teal: "#2EC4B6",
   purple: "#8E4FD8",
   cream: "#FFF6E3",
-  mist: "#D9D2EC",
+  mist: "#F3D9C4",
   paper: "#FFF7E8",
   paperInk: "#3A1A0C",
-  maroon: "#7A1631",
 } as const;
 
 /** The five rangoli colours (powder colours: marigold, rani pink, peacock teal, violet, haldi yellow). */
@@ -47,7 +48,7 @@ export function Hint({ children, style }: { children: ReactNode; style?: CSSProp
         margin: 0,
         padding: "6px 14px",
         borderRadius: 99,
-        background: "rgba(255,240,214,.1)",
+        background: "rgba(42,5,7,.42)",
         border: "1px solid rgba(255,211,110,.28)",
         color: VW.ink,
         font: `600 clamp(12.5px, 1.9dvh, 14px) ${FONTS.ui}`,
@@ -74,7 +75,7 @@ export function SceneTitle({ kicker, title, sub, as = "h2" }: { kicker?: ReactNo
           letterSpacing: ".005em",
           textWrap: "balance",
           overflowWrap: "anywhere",
-          textShadow: "0 2px 3px rgba(6,10,36,.8), 0 0 18px rgba(255,178,63,.35)",
+          textShadow: "0 2px 3px rgba(40,4,6,.85), 0 0 22px rgba(255,190,70,.45)",
         }}
       >
         {title}

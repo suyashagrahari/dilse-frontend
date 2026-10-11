@@ -24,11 +24,11 @@ const CSS = `
 .dw-tray { position: absolute; left: 7%; right: 7%; top: 9%; bottom: 9%; border-radius: 10px; background: radial-gradient(circle at 50% 40%, #FFE6A3, #E9B04A);
   display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); padding: 4%; gap: 4%; box-sizing: border-box; box-shadow: inset 0 3px 10px rgba(122,42,12,.45); }
 .dw-sweet { border: 0; padding: 6%; background: radial-gradient(circle, rgba(255,255,255,.35), transparent 70%); border-radius: 50%; cursor: pointer; touch-action: manipulation; }
-.dw-sweet:focus-visible { outline: 3px solid #2EC4B6; }
+.dw-sweet:focus-visible { outline: 3px solid #FFF1B8; }
 .dw-lid { position: absolute; left: -2%; right: -2%; top: 0; height: 74%; border-radius: 16px; cursor: pointer; border: 0; padding: 0;
   background: linear-gradient(180deg, #A82446, #6E1430); box-shadow: inset 0 0 0 3px #E8B65A, inset 0 0 0 9px #A82446, inset 0 0 0 10.5px rgba(255,211,110,.7), 0 18px 30px -12px rgba(0,0,0,.8);
   display: grid; place-items: center; color: #FFE6A3; touch-action: manipulation; }
-.dw-lid:focus-visible { outline: 3px solid #2EC4B6; outline-offset: 4px; }
+.dw-lid:focus-visible { outline: 3px solid #FFF1B8; outline-offset: 4px; }
 .dw-ribbon-v { position: absolute; top: 0; bottom: 0; left: 50%; width: 14%; transform: translateX(-50%); background: linear-gradient(90deg, #E8B65A, #FFE6A3, #E8B65A); }
 .dw-ribbon-h { position: absolute; left: 0; right: 0; top: 50%; height: 14%; transform: translateY(-50%); background: linear-gradient(180deg, #E8B65A, #FFE6A3, #E8B65A); }
 .dw-bow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 30%; aspect-ratio: 1.6; }
