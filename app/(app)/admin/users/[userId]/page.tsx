@@ -289,7 +289,9 @@ function ProfileInner() {
               <DraftsTab userId={String(userId)} userEmail={user.email} hdr={hdr} />
             )}
             {tab === "Points" && <PointsTab data={data} hdr={hdr} reload={load} />}
-            {tab === "Access" && <AccessTab userId={String(userId)} hdr={hdr} />}
+            {tab === "Access" && (
+              <AccessTab userId={String(userId)} hdr={hdr} user={data.user} accessToken={accessToken} onFreeAccess={load} />
+            )}
             {tab === "Activity" && <ActivityTab userId={String(userId)} hdr={hdr} />}
             {tab === "Danger Zone" && <DangerTab data={data} hdr={hdr} reload={load} />}
           </motion.div>

@@ -46,6 +46,7 @@ import { refreshPricing } from "@/lib/pricing";
 import { isPremiumSlug } from "@/lib/templateMeta";
 import { UNPRICEABLE } from "./UNPRICEABLE";
 import IntlPricingPanel from "./IntlPricingPanel";
+import SuperAdminPaysCard from "./SuperAdminPaysCard";
 import {
   Search, Loader2, Check, RotateCcw, Globe, AlertTriangle, Ban, IndianRupee, Gift, Tag as TagIcon, Crown, Layers,
 } from "lucide-react";
@@ -481,6 +482,8 @@ export default function AdminPricingPage() {
           </span>
         </div>
       </Hero>
+
+      <SuperAdminPaysCard headers={hdr} />
 
       <IntlPricingPanel headers={hdr} onRate={setInrPerUsd} />
 

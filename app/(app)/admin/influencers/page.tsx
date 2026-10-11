@@ -17,6 +17,7 @@ import { useAppSelector } from "@/store/hooks";
 import { API_URL } from "@/lib/config";
 import { isSuperAdmin } from "@/lib/roles";
 import { rupees, fmtDate } from "@/lib/influencer";
+import FreeAccessToggle from "../FreeAccessToggle";
 import { A, AdminPage, Hero, HeroStat, Panel, ChipGroup, SearchBox, Loading, EmptyState, rise } from "../adminKit";
 
 interface Row {
@@ -38,6 +39,10 @@ interface Row {
   earnedPaise: number;
   paidOutPaise: number;
   pendingPaise: number;
+  /** "All templates free" is on for this account. */
+  freeAccess?: boolean;
+  /** A super admin publishes free already; the toggle does not apply. */
+  isSuperAdmin?: boolean;
 }
 
 interface Settings { defaultCommissionPercent: number; attributionDays: number; updatedByEmail?: string; updatedAt?: string }
@@ -206,7 +211,11 @@ export default function AdminInfluencersPage() {
           <div className="infa-grid">
             {shown.map((r, i) => (
               <motion.div key={r.id} {...rise(i)} style={{ minWidth: 0 }}>
-                <InfluencerCard r={r} />
+                <InfluencerCard
+                  r={r}
+                  accessToken={accessToken}
+                  onFreeAccess={(on) => setRows((prev) => (prev || []).map((x) => (x.id === r.id ? { ...x, freeAccess: on } : x)))}
+                />
               </motion.div>
             ))}
           </div>
@@ -218,12 +227,15 @@ export default function AdminInfluencersPage() {
   );
 }
 
-function InfluencerCard({ r }: { r: Row }) {
+function InfluencerCard({ r, accessToken, onFreeAccess }: { r: Row; accessToken: string | null; onFreeAccess: (on: boolean) => void }) {
   const paused = r.status === "suspended";
   const paidShare = r.earnedPaise > 0 ? Math.min(100, Math.round((r.paidOutPaise / r.earnedPaise) * 100)) : 0;
   const handle = [r.instagram ? `@${r.instagram}` : null, r.subdomain].filter(Boolean).join(" · ");
   return (
-    <Link href={`/admin/influencers/${r.id}`} className={`infa-card ${paused ? "paused" : ""} ${r.pendingPaise > 0 ? "owed" : ""}`}>
+    <div className={`infa-card ${paused ? "paused" : ""} ${r.pendingPaise > 0 ? "owed" : ""}`}>
+    {/* The switch sits outside the link: a control nested in an <a> is invalid
+        and a tap on it would also navigate. */}
+    <Link href={`/admin/influencers/${r.id}`} className="infa-card-link">
       <div className="infa-card-top">
         <span className="infa-ava">
           {r.avatar ? (
@@ -272,6 +284,15 @@ function InfluencerCard({ r }: { r: Row }) {
         <span className="infa-open">Open <ChevronRight size={14} /></span>
       </div>
     </Link>
+      <FreeAccessToggle
+        compact
+        userId={r.id}
+        enabled={!!r.freeAccess}
+        accessToken={accessToken}
+        onChange={onFreeAccess}
+        disabledReason={r.isSuperAdmin ? "Super admins already publish free." : null}
+      />
+    </div>
   );
 }
 
@@ -295,6 +316,7 @@ const CSS = `
   .infa-chips::-webkit-scrollbar { display: none; }
   .infa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
   .infa-card { position: relative; display: flex; flex-direction: column; gap: 12px; height: 100%; min-width: 0; padding: 14px; border-radius: 18px; background: ${A.paper}; border: 1px solid ${A.edge}; text-decoration: none; color: inherit; overflow: hidden; box-shadow: 0 2px 10px rgba(61,12,17,.04); transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .infa-card-link { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; text-decoration: none; color: inherit; }
   .infa-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, ${A.gold}, #f2cf74); opacity: .0; transition: opacity .2s; }
   .infa-card.owed::before { opacity: 1; }
   .infa-card.paused { background: #fbf7f4; }

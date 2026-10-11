@@ -37,6 +37,15 @@ export interface AuthUser {
   earlyAccess?: string[];
   /** Present once the user has registered as an influencer. */
   influencer?: { status: "active" | "suspended" } | null;
+  /**
+   * Why this user publishes every priced template free, or null — a super admin
+   * not paying like a customer, or an "All templates free" grant. From
+   * `GET /auth/me`; display only (the server's publish gate decides). Under
+   * impersonation it is the impersonated user's answer.
+   */
+  publishesFree?: "super_admin" | "free_access" | null;
+  /** Super admins only: their own "Pay like a customer" switch. */
+  paysAsCustomer?: boolean;
 }
 
 interface AuthState {
@@ -462,6 +471,14 @@ const authSlice = createSlice({
     setPoints(state, action: PayloadAction<number>) {
       if (state.user) state.user.points = action.payload;
     },
+    /** After a super admin flips "Pay like a customer" — no /auth/me round trip. */
+    setPaysAsCustomer(state, action: PayloadAction<boolean>) {
+      if (!state.user) return;
+      state.user.paysAsCustomer = action.payload;
+      if (state.user.role === "superadmin") {
+        state.user.publishesFree = action.payload ? null : "super_admin";
+      }
+    },
     clearPendingVerification(state) {
       state.pendingVerification = null;
     },
@@ -597,5 +614,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearAuthError, setAuthData, hydrateAuth, setPoints, clearPendingVerification } = authSlice.actions;
+export const { logout, clearAuthError, setAuthData, hydrateAuth, setPoints, setPaysAsCustomer, clearPendingVerification } = authSlice.actions;
 export default authSlice.reducer;
